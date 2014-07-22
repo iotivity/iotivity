@@ -1,0 +1,377 @@
+//******************************************************************
+//
+// Copyright 2014 Intel Corporation All Rights Reserved.
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <net/if.h>
+#include <errno.h>
+
+#ifdef __ANDROID__
+#include <sys/ioctl.h>
+#else
+#include <ifaddrs.h>
+#include <linux/if_link.h>
+#endif
+
+#include <logger.h>
+#include <ocsocket.h>
+
+/// Module Name
+#define MOD_NAME ("ocsocket")
+
+/// Macro to verify the validity of input argument
+#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, MOD_NAME, #arg " is NULL"); return ERR_INVALID_INPUT;} }
+
+/// Builds a socket interface address using IP address and port number
+int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t port, OCDevAddr *ipAddr)
+{
+    struct sockaddr_in *sa;
+    uint32_t ip = a;
+
+    VERIFY_NON_NULL(ipAddr);
+    memset(ipAddr, 0, sizeof(OCDevAddr));
+
+    ip <<= 8;
+    ip |= b;
+    ip <<= 8;
+    ip |= c;
+    ip <<= 8;
+    ip |= d;
+
+    ipAddr->size = sizeof(struct sockaddr_in);
+    sa = (struct sockaddr_in*)ipAddr->addr;
+    sa->sin_family = AF_INET;
+    sa->sin_addr.s_addr = htonl(ip);
+    sa->sin_port = htons(port);
+
+    return ERR_SUCCESS;
+}
+
+#ifdef __ANDROID__
+/// Retrieves the IP address assigned to specified wireless interface
+int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addrType,
+             uint8_t *addr,  uint32_t addrLen)
+{
+    int32_t ret = ERR_UNKNOWN;
+    int32_t sfd = 0xFFFFFFFF;
+    struct ifreq ifr;
+
+    VERIFY_NON_NULL(addr);
+    VERIFY_NON_NULL(ifName);
+    if (ifNameLen > (IFNAMSIZ - 1) ) {
+        return ERR_INVALID_INPUT;
+    }
+    if (addrType != AF_INET) {
+        return ERR_INVALID_INPUT;
+    }
+
+    sfd = socket(addrType, SOCK_DGRAM, 0);
+    if (sfd < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "socket API ret val %d", sfd);
+        goto exit;
+    }
+
+    ifr.ifr_addr.sa_family = addrType;
+
+    strncpy(ifr.ifr_name, (const char*)ifName, ifNameLen);
+
+    if (ioctl(sfd, SIOCGIFADDR, &ifr) != 0) {
+        OC_LOG(FATAL, MOD_NAME, "ioctl call failed");
+        goto exit;
+    }
+
+    strncpy((char *)addr,
+            inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
+            addrLen);
+    ret = ERR_SUCCESS;
+
+exit:
+    if (sfd >= 0) {
+        close(sfd);
+    }
+    return ret;
+}
+
+#else
+/// Retrieves the IP address assigned to specified wireless interface
+int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addrType,
+             uint8_t *addr,  uint32_t addrLen)
+{
+    struct ifaddrs *myaddrs = NULL, *ifa = NULL;
+    int32_t ret = ERR_UNKNOWN;
+
+    VERIFY_NON_NULL(addr);
+
+    if (addrType != AF_INET) {
+        return ERR_INVALID_INPUT;
+    }
+
+    if(getifaddrs(&myaddrs) != 0) {
+        goto exit;
+    }
+
+    for (ifa = myaddrs; ifa != NULL; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == NULL)
+            continue;
+        if (!(ifa->ifa_flags & IFF_UP))
+            continue;
+        if (!(ifa->ifa_flags & IFF_RUNNING))
+            continue;
+
+        if (ifName && ifa->ifa_name) {
+           if(strncmp((const char*)ifName, ifa->ifa_name, ifNameLen) != 0)
+            continue;
+        }
+
+        switch (ifa->ifa_addr->sa_family)
+        {
+            case AF_INET:
+                {
+                    struct sockaddr_in *s4 = (struct sockaddr_in *)ifa->ifa_addr;
+                    if(inet_ntop(AF_INET, &(s4->sin_addr), (char *)addr, addrLen))
+                        ret = ERR_SUCCESS;
+                    goto exit;
+                }
+
+            default:
+                continue;
+        }
+    }
+
+exit:
+    if (myaddrs) {
+        freeifaddrs(myaddrs);
+    }
+    return ret;
+}
+#endif //__ANDROID__
+
+/// Creates a BSD socket and binds it specified port for UDP
+int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t *sockfd)
+{
+    int32_t ret = ERR_UNKNOWN;
+    int32_t sfd = 0xFFFFFFFF;
+    int set_option_on = 1;
+
+    VERIFY_NON_NULL(ipAddr);
+    VERIFY_NON_NULL(sockfd);
+
+    OC_LOG_V(DEBUG, MOD_NAME, "%s Begin", __func__ );
+    //Create a datagram socket on which to recv/send.
+    sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sfd < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "socket API ret val %d", sfd);
+        goto exit;
+    }
+
+    if ((ret = setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (char*) &set_option_on,
+                sizeof(set_option_on))) < 0) {
+        OC_LOG(FATAL, MOD_NAME, "setsockopt API failed");
+        goto exit;
+    }
+
+    if (bind(sfd, (struct sockaddr*)ipAddr->addr, ipAddr->size) < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "bind API failed with errno %s", strerror(errno));
+        goto exit;
+    }
+
+    ret = ERR_SUCCESS;
+
+exit:
+    if ((ret != ERR_SUCCESS) && (sfd >= 0)) {
+        close(sfd);
+    } else {
+        *sockfd = sfd;
+    }
+
+    OC_LOG_V(DEBUG, MOD_NAME, "%s End", __func__ );
+    return ret;
+}
+
+
+
+/// Creates a BSD socket and binds the specified port for UDP multicast.
+int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
+{
+    int32_t ret = ERR_UNKNOWN;
+    int32_t sfd = 0xFFFFFFFF;
+    char loopch=1;
+    int set_option_on = 1;
+
+    VERIFY_NON_NULL(ipmcastaddr);
+    VERIFY_NON_NULL(sockfd);
+
+    OC_LOG_V(DEBUG, MOD_NAME, "%s Begin", __func__ );
+    //Create a datagram socket on which to recv/send.
+    sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sfd < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "socket API ret val %d", sfd);
+        goto exit;
+
+    }
+
+    if ((ret = setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (char*) &set_option_on,
+                sizeof(set_option_on))) < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "setsockopt API for SO_REUSEADDR failed with errno %s", strerror(errno));
+        goto exit;
+    }
+
+    // bind to multicast port
+    struct sockaddr_in sa;
+    struct sockaddr_in *sin;
+
+    sin = (struct sockaddr_in *)(ipmcastaddr->addr);
+    memset(&sa, 0, sizeof(sa));
+    sa.sin_family = AF_INET;
+    sa.sin_addr.s_addr = INADDR_ANY;
+    sa.sin_port = sin->sin_port;
+
+    if ((ret = bind(sfd, (struct sockaddr*)&sa, sizeof(sa))) < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "bind API failed with errno %s", strerror(errno));
+        goto exit;
+    }
+
+    // add membership to receiving socket
+    struct ip_mreq mreq;
+    memset(&mreq, 0, sizeof(struct ip_mreq));
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    mreq.imr_multiaddr.s_addr = sin->sin_addr.s_addr;
+    if ((ret = setsockopt(sfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mreq, sizeof(mreq))) < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "setsockopt API for IP_ADD_MEMBERSHIP failed with errno %s", strerror(errno));
+        goto exit;
+    }
+
+    //Enable loopback so we can receive our own datagrams.
+    if ((ret = setsockopt(sfd, IPPROTO_IP, IP_MULTICAST_LOOP,
+                (char *)&loopch, sizeof(loopch))) < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "setsockopt API for IP_MULTICAST_LOOP failed with errno %s", strerror(errno));
+        goto exit;
+    }
+
+    ret = ERR_SUCCESS;
+
+exit:
+    if (ret == ERR_SUCCESS) {
+        *sockfd = sfd;
+    } else {
+        close(sfd);
+    }
+
+    OC_LOG_V(DEBUG, MOD_NAME, "%s End", __func__ );
+    return ret;
+}
+
+
+
+/// Send data to requested end-point using UDP socket
+int32_t OCSendTo(int32_t sockfd, const uint8_t* buf, uint32_t bufLen, uint32_t flags,
+            OCDevAddr * ipAddr)
+{
+    int32_t ret;
+
+    VERIFY_NON_NULL(buf);
+    VERIFY_NON_NULL(ipAddr);
+
+    OC_LOG_V(DEBUG, MOD_NAME, "%s Begin", __func__ );
+    ret = sendto(sockfd, buf, bufLen, flags,
+            (struct sockaddr*)ipAddr->addr, ipAddr->size);
+
+    OC_LOG_V(DEBUG, MOD_NAME, "%s End", __func__ );
+    return ret;
+}
+
+
+/// Retrieve any available data from UDP socket. This is a non-blocking call.
+int32_t OCRecvFrom(int32_t sockfd, uint8_t* buf, uint32_t bufLen, uint32_t flags,
+            OCDevAddr * ipAddr)
+{
+    int32_t ret = 0;
+
+    VERIFY_NON_NULL(buf);
+    VERIFY_NON_NULL(ipAddr);
+
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 5000;
+    fd_set reads;
+
+    OC_LOG_V(DEBUG, MOD_NAME, "%s Begin", __func__ );
+
+    FD_ZERO(&reads);
+    FD_SET(sockfd, &reads);
+    ret = select(sockfd + 1, &reads, NULL, NULL, &timeout);
+    if( ret < 0) {
+        OC_LOG(FATAL, MOD_NAME, "select API failed");
+        return ret;
+    }
+    if (!FD_ISSET(sockfd, &reads)) {
+        OC_LOG(DEBUG, MOD_NAME, "No data to read");
+        return ERR_SUCCESS;
+    }
+
+    // Read available data.
+    ret = recvfrom(sockfd, buf, bufLen, flags,
+            (struct sockaddr*)ipAddr->addr, (socklen_t*)&(ipAddr->size));
+    if (ret < 1) {
+        OC_LOG(FATAL, MOD_NAME, "OCRecvFrom ERR");
+    }
+    OC_LOG_V(DEBUG, MOD_NAME, "%s End", __func__ );
+    return ret;
+}
+
+
+/// Close the socket and release all system resources.
+int32_t OCClose(int32_t sockfd)
+{
+    return (close(sockfd));
+}
+
+
+/// Retrieve the IPv4 address embedded inside OCDev address data structure
+int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
+            uint8_t *c, uint8_t *d )
+{
+    struct sockaddr_in *sa;
+    uint32_t ip;
+
+    if ( !ipAddr || !a || !b || !c || !d ) {
+        OC_LOG(FATAL, MOD_NAME, "Invalid argument");
+        return ERR_INVALID_INPUT;
+    }
+
+    sa = (struct sockaddr_in*)ipAddr->addr;
+    ip = ntohl(sa->sin_addr.s_addr);
+    *d = *((uint8_t*)&ip + 0);
+    *c = *((uint8_t*)&ip + 1);
+    *b = *((uint8_t*)&ip + 2);
+    *a = *((uint8_t*)&ip + 3);
+
+    return ERR_SUCCESS;
+}
+
+
+/// Retrieve the IPv4 address embedded inside OCDev address data structure
+int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
+{
+    struct sockaddr_in *sa;
+    if ( !ipAddr || !port ) {
+        OC_LOG(FATAL, MOD_NAME, "Invalid argument");
+        return ERR_INVALID_INPUT;
+    }
+
+    sa = (struct sockaddr_in*)ipAddr->addr;
+    *port = ntohs(sa->sin_port);
+
+    return ERR_SUCCESS;
+}

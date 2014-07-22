@@ -1,0 +1,13 @@
+stacktests.cpp contain several stack tests that can be used in an Android JNI app.
+
+Note:  to enable the logger for Android, TB_LOG should be defined in the ./jni/Android.mk file as
+LOCAL_CFLAGS	:= -DTB_LOG
+
+Note: add the following to the ./jni/Android.mk file
+LOCAL_SRC_FILES += logger.c
+LOCAL_SRC_FILES += loggertests.cpp
+LOCAL_SRC_FILES += ocstack.c
+LOCAL_SRC_FILES += occoap.c
+LOCAL_SRC_FILES += stacktests.cpp
+
+

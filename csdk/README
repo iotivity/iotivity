@@ -1,0 +1,7 @@
+To make the OCTBStack library, run "make" from this directory.
+
+To clean, you have two options:
+
+make clean	//Cleans all the *.o and *.a files generated directly from this makefile.
+
+make deepclean  //Also cleans the *.o and *.a files generated indirecty from this makefile.

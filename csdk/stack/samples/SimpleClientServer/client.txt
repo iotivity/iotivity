@@ -1,0 +1,83 @@
+INFO: occlient: Starting occlient on address 
+INFO: OCStack: Entering OCInit
+INFO: OCStack: IP Address = 
+INFO: OCStack: Client mode
+INFO: OCCoAP: Entering OCInitCoAP
+INFO: OCCoAP: Parsed IP Address 0.0.0.0
+DEBUG: ocsocket: OCInitUDP Begin
+DEBUG: ocsocket: OCInitUDP End
+INFO: OCStack: Entering OCDoResource
+INFO: OCStack: Token generated 8 bytes..........9e:10:4a:13:a3:a1:a6:ab
+INFO: OCCoAP: Entering OCDoCoAPResource
+INFO: OCCoAP: URI = coap://224.0.1.187:5683/oc/core?rt=core.led
+DEBUG: OCCoAP: uri.host.s 224.0.1.187:5683/oc/core?rt=core.led
+DEBUG: OCCoAP: uri.path.s oc/core?rt=core.led
+DEBUG: OCCoAP: uri.port 5683
+DEBUG: OCCoAP: uri.query.s rt=core.led
+v:1 t:1 tkl:8 c:1 id:58622
+DEBUG: ocsocket: OCSendTo Begin
+DEBUG: ocsocket: OCSendTo End
+bytes_written 32
+INFO: OCCoAP: TID 41504
+INFO: OCCoAP: Deleting PDU
+INFO: OCCoAP: Done Deleting PDU
+INFO: OCStack: Done with this function
+INFO: occlient: Entering occlient main loop...
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:36 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:37 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:38 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:39 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:40 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:41 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:42 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:43 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:44 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:45 DEBG coap_read: discarded invalid frame
+INFO: OCStack: Entering OCProcess
+INFO: OCCoAP: Entering OCProcessCoAP
+DEBUG: ocsocket: OCRecvFrom Begin
+DEBUG: ocsocket: No data to read
+Jul 21 15:43:46 DEBG coap_read: discarded invalid frame
+INFO: occlient: Exiting occlient main loop...
+INFO: OCStack: Entering OCStop
+INFO: OCCoAP: Entering OCStopCoAP
