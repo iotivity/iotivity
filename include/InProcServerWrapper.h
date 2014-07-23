@@ -25,7 +25,7 @@ namespace OC
 
         void registerResource(  const std::string& resourceURI, 
                                 const std::string& resourceTypeName,
-                                named_property_binding_vector properties); 
+                                named_property_binding_vector& properties); 
 								
 	private:
 		void processFunc();

@@ -45,7 +45,7 @@ int main()
 	// Create PlatformConfig object
 
 	PlatformConfig cfg;
-	cfg.ipAddress = "134.134.161.166";
+	cfg.ipAddress = "134.134.161.33";
 	cfg.port = 5683;
 	cfg.mode = ModeType::Client;
 	cfg.serviceType = ServiceType::InProc;

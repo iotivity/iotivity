@@ -65,7 +65,7 @@ namespace OC
 
     void InProcServerWrapper::registerResource(const std::string& resourceURI,
                                 const std::string& resourceTypeName,
-                                named_property_binding_vector properties)
+                                named_property_binding_vector& properties)
     {
         using OC::OCReflect::property_type;
         using OC::OCReflect::named_property_binding;
@@ -73,25 +73,20 @@ namespace OC
 
         std::vector<std::string> reps { convert(properties) };
 
-        for(const auto& r : reps)
-            std::cout << r << '\n';
+        char *resourceTypeRepresentation = flatten(reps);
 
-        char *resourTypeRepresentation = flatten(reps);
-
-        std::cout << resourTypeRepresentation << "\n";
+        std::cout << "Resource type representation: " << resourceTypeRepresentation << "\n";
 
         OCResourceHandle resourceHandle;
 
 		{
 			std::lock_guard<std::mutex> lock(m_csdkLock);
 
-            cout << "Creating a resource" << endl;
-
 			OCStackResult  result;
 
 			result = OCCreateResource(&resourceHandle, // OCResourceHandle *handl
 							resourceTypeName.c_str(), // const char * resourceTypeName
-							resourTypeRepresentation, //const char * resourceTypeRepresentation
+							resourceTypeRepresentation, //const char * resourceTypeRepresentation
 							"core.rw", //const char * resourceInterfaceName
 							OC_REST_GET | OC_REST_PUT, // uint8_t allowedMethods
 							resourceURI.c_str(), // const char * uri

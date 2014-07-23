@@ -22,10 +22,9 @@ namespace OC
 
         virtual ~IServerWrapper(){};
 
-        // TODO: SASHI : parameters by reference???
         virtual void registerResource(  const std::string& resourceURI, 
                                 const std::string& resourceTypeName,
-                                named_property_binding_vector properties) = 0; 
+                                named_property_binding_vector& properties) = 0; 
     };
 }
 

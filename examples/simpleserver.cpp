@@ -65,13 +65,21 @@ public:
 	/// This function binds the properties and methods to the server. 
 	void createResourceWithPropeties(OC::OCPlatform& platform)
 	{
-		using OC::OCReflect::property_type;
-		using OC::OCReflect::named_property_binding;
+        /*
+        We could typedef to simpler namers! :)
+        typedef named_property_binding_vector OCPropertyBindings;
+        typedef named_property_binding OCPropertyBinding;
 
-		named_property_binding_vector properties {
-			named_property_binding("state", property_type::boolean),
-			named_property_binding("power", property_type::integer)
+        OCPropertyBindings properties {
+			OCPropertyBinding("state", property_type::boolean),
+			OCPropertyBidning("power", property_type::integer)
 		};
+        */
+
+        auto properties {
+			named_property_binding{"state", property_type::boolean},
+			named_property_binding{"power", property_type::integer}
+        };
 
 		std::string resourceURI = "/a/light";
 		std::string resourceTypeName = "light";
@@ -89,7 +97,7 @@ int main()
 
 	PlatformConfig cfg;
 	//cfg.ipAddress = "192.168.1.5";
-	cfg.ipAddress = "134.134.161.166";
+	cfg.ipAddress = "134.134.161.33";
 	cfg.port = 5683;
 	cfg.mode = ModeType::Server;
 	cfg.serviceType = ServiceType::InProc;
