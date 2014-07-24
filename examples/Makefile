@@ -5,7 +5,8 @@ CXX_FLAGS=-std=c++11 -Wall -pthread
 
 CXX_INC=-I../include/ -I./client/ -I../csdk/stack/include -I../csdk/ocsocket/include -I../csdk/ocrandom/include -I../csdk/logger/include
 
-LIB_SRC0=../OCLib/OCReflect.cpp ../OCLib/OCProperties.cpp ../OCLib/OCObserver.cpp ../OCLib/OCResource.cpp ./client/MyObserverHandler.cpp  ../OCLib/OCServer.cpp
+# LIB_SRC0=../OCLib/OCReflect.cpp ../OCLib/OCProperties.cpp ../OCLib/OCObserver.cpp ../OCLib/OCResource.cpp ./client/MyObserverHandler.cpp  ../OCLib/OCServer.cpp
+LIB_SRC0=../OCLib/OCReflect.cpp ../OCLib/OCProperties.cpp ../OCLib/OCObserver.cpp ../OCLib/OCResource.cpp ../OCLib/OCServer.cpp
 
 LIB_SRC1=../OCLib/OCReflect.cpp ../OCLib/OCObserver.cpp ./client/MyObserverHandler.cpp ../OCLib/OCResource.cpp ../OCLib/OCSecurityModel.cpp ../OCLib/InProcClientWrapper.cpp ../OCLib/OCPlatform.cpp ../OCLib/InProcServerWrapper.cpp ../csdk/liboctbstack.a ../OCLib/OCServer.cpp
 

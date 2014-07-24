@@ -84,7 +84,7 @@ namespace OC
     {
         using OC::OCReflect::property_type;
         using OC::OCReflect::property_binding;
-        using namespace OC::OCReflect::to_OCStack;
+        using namespace OC::OCReflect::OCStack;
 
         std::vector<std::string> reps { convert(properties) };
 

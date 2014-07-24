@@ -221,6 +221,7 @@ class light
 
                 server.bind(b_manufacturer);
 */
+/*
                 // The canonical way to bind a property to a server in one step:
                 bind_property(
                                 server,                                      // server to bind to
@@ -229,6 +230,7 @@ class light
                                 OC::OCReflect::property_type::string,        // property
                                 OC::OCReflect::property_attribute::r         // type decoration
                 );
+*/
         }
 };
 

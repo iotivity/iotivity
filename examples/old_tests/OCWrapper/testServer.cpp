@@ -43,7 +43,7 @@ void rep_test()
 	       named_property_binding("power", property_type::integer),
 	};
 
-	using namespace OC::OCReflect::to_OCStack;
+	using namespace OC::OCReflect::OCStack;
 
 	std::vector<std::string> reps { convert(sigs) };
 

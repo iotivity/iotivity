@@ -82,8 +82,8 @@ public:
 	{
         /*
         We could typedef to simpler names! :)
-        typedef named_property_binding_vector OCPropertyBindings;
-        typedef named_property_binding OCPropertyBinding;
+        typedef property_binding_vector OCPropertyBindings;
+        typedef property_binding OCPropertyBinding;
 
         OCPropertyBindings properties {
 			OCPropertyBinding("state", property_type::boolean),
@@ -99,8 +99,8 @@ public:
         */
 
         auto properties {
-			named_property_binding{"state", property_type::boolean},
-			named_property_binding{"power", property_type::integer}
+			property_binding{"state", property_type::boolean},
+			property_binding{"power", property_type::integer}
         };
 
 		std::string resourceURI = "/a/light";
