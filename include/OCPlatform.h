@@ -39,7 +39,7 @@ using namespace OC::OCReflect;
 namespace OC
 {
 	using OC::OCReflect::property_type;
-	using OC::OCReflect::named_property_binding;
+	using OC::OCReflect::property_binding;
 
 	/**
 	*	@brief	The core OC platform object initialized by the application or service via a static accessor.
@@ -114,7 +114,7 @@ namespace OC
 		* 
 		*/
 		void registerResource(const std::string& resourceURI, const std::string& resourceTypeName, 
-			named_property_binding_vector properties);
+			property_binding_vector properties);
 
 	private:
 		std::unique_ptr<WrapperFactory> m_WrapperInstance;

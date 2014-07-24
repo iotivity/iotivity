@@ -146,7 +146,7 @@ void Test_OCFunction_0(int functionIndex)
 {
     bool                    bResult = true;
     PlatformConfig          cfg;
-    named_property_binding_vector vc;
+    property_binding_vector vc;
     
     try
     {
@@ -243,7 +243,7 @@ void Test_OCFunction_3(int functionIndex)
 {
     bool                    bResult = true;
     PlatformConfig          cfg;
-    named_property_binding_vector vc;
+    property_binding_vector vc;
     
     try
     {

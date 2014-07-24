@@ -104,18 +104,25 @@ class method
 }} // namespace OC::OCReflect
 
 // Convert to underlying OCStack C API (and, some handy C-wrangling utilities):
-namespace OC { namespace OCReflect { namespace to_OCStack  {
+namespace OC { namespace OCReflect { namespace OCStack  {
 
+void release(char *in);
 void release(char **in);
 char *strdup(const char *s);
 char *strdup(const std::string& s);
 size_t length(char **in);
 char **convert(const std::vector<std::string>& vs);
-std::string convert(const named_property_binding& npb);
-std::vector<std::string> convert(const named_property_binding_vector& psv);
+
+std::string convert(const property_binding& npb);
+std::vector<std::string> convert(const property_binding_vector& psv);
+
+OC::OCReflect::property_type as_property_type(const std::string& pt_rep);
+OC::OCReflect::property_binding as_property_binding(const std::string& pb_rep);
+OC::OCReflect::property_binding_vector as_property_binding_vector(const std::vector<std::string>& pb_reps);
 
 char *flatten(const std::vector<std::string>& input, const std::string& delim = ";");
+std::vector<std::string> expand(const char *flattened_string, const std::string& delim = ";");
 
-}}} // namespace OC::OCReflect::to_OCStack
+}}} // namespace OC::OCReflect::OCStack
 
 #endif

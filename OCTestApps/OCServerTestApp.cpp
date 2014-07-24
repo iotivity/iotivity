@@ -194,7 +194,7 @@ void Test_OCFunction_2(int functionIndex)
 {
     bool                    bResult = true;
     string		    resName, resType;
-    named_property_binding_vector vc;
+    property_binding_vector vc;
     
     try
     {
@@ -225,8 +225,8 @@ void Test_OCFunction_2(int functionIndex)
 void Test_OCFunction_3(int functionIndex)
 {
     bool                    bResult = true;
-    string		    resName, resType;
-    named_property_binding_vector vc;
+    string	        	    resName, resType;
+    property_binding_vector vc;
     
     try
     {

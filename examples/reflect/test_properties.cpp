@@ -33,6 +33,22 @@
 
 using namespace OC::OCReflect;
 
+using std::cout;
+
+template <class InputT>
+void convert_and_compare(const InputT& input, const std::string name = "property")
+{
+ auto p = make_property::apply(input, name);
+
+ cout << p << '\n';
+
+ auto x = concretize<InputT>(p);
+
+ cout << x << '\n';
+
+ assert(input == x);
+}
+
 // Convert a native type to a property:
 void convert_test()
 {
@@ -42,68 +58,32 @@ void convert_test()
  // Nil (JSON: null):
  {
     property_signature ps(property_type::nil);
-    named_property_binding npb("nil_property", ps); 
+    property_binding npb("nil_property", ps); 
  }
 */
 
  // Boolean:
  {
-    OC::OCReflect::property my_bool     = OC::OCReflect::make_property::apply(true, "my_bool");
-    OC::OCReflect::property my_bool_too = make_property::apply(false, "my_bool_too");
-
-    cout << my_bool << '\n' << my_bool_too << '\n';
-
-    auto x = concretize<bool>(my_bool);
-    auto y = concretize<bool>(my_bool_too);
-
-    cout << "got back: " << x << '\n';
-    cout << "got back: " << y << '\n';
-
-	assert(x == true);
-	assert(y == false);
+    convert_and_compare(true, "bool");
+    convert_and_compare(false, "bool");
  }
 
  // Integer:
  {
     const int64_t input { 1024 };
-    auto my_int = make_property::apply(input, "my int");
-
-    cout << my_int << '\n';
-
-    auto x = concretize<int64_t>(my_int);
-
-    cout << x << '\n';
-
-	assert(input == x);
+    convert_and_compare(input, "int64_t");
  }
 
  // Rational (JSON: number):
  {
 	const double input { 1024.0 };
-	auto my_float = make_property::apply(input, "my float");
-
-	cout << my_float << '\n';
-
-	auto x = concretize<double>(my_float);
-
-	cout << x << '\n';
-
-	assert(input == x);
+    convert_and_compare(input, "double");
  }
 
  // String:
  {
 	const std::string input { "Hello, World!" };
-
-	auto my_string = make_property::apply(input, "my string");
-
-	cout << my_string << '\n';
-
-	auto x = concretize<std::string>(my_string);
-
-	cout << x << '\n';
-
-	assert(input == x);
+    convert_and_compare(input, "string");
  }
 
 /*
@@ -283,18 +263,18 @@ void call_test()
 */
 }
 
-// Demo of how to generate OCStack stuff:
+// Demo of how to generate OCStack stuff (talk to the C library):
 void rep_test()
 {
  using OC::OCReflect::property_type;
- using OC::OCReflect::named_property_binding;
+ using OC::OCReflect::property_binding;
 
- named_property_binding_vector sigs {
-	named_property_binding("state", property_type::boolean),
-	named_property_binding("power", property_type::integer)
+ property_binding_vector sigs {
+	property_binding("state", property_type::boolean),
+	property_binding("power", property_type::integer)
  };
 
- using namespace OC::OCReflect::to_OCStack;
+ using namespace OC::OCReflect::OCStack;
 
  /* JFW: note:
  char *LEDrep[] = { "state;b", "power;i", NULL};
@@ -306,19 +286,26 @@ void rep_test()
 
  CREATE_RESOURCE_TYPE(LED, "core.led", LEDrep);
  */
-std::vector<std::string> reps { convert(sigs) }; 
+
+ std::vector<std::string> reps { convert(sigs) }; 
  for(const auto& r : reps)
-  std::cout << r << '\n';
+  std::cout << "converted representation: " << r << '\n';
 
  // Example of flattening to a single string:
  char *flattened = flatten(reps);
+ if(nullptr == flattened)
+  throw std::runtime_error("couldn't flatten");
+
  std::cout << "FLATTENED: " << flattened << '\n';
 
  // Example of converting to an array of char*s:
  char **handle = convert(reps);	
 
  if(nullptr == handle)
-  throw std::runtime_error("handle is a nullptr");
+  {
+        release(flattened);
+        throw std::runtime_error("handle is a nullptr"); 
+  }
 
  std::for_each(handle, handle + length(handle), [](const char *s) { std::cout << s << '\n'; });
 
@@ -327,30 +314,92 @@ std::vector<std::string> reps { convert(sigs) };
   printf("%s\n", *cursor);
  */
 
- release(handle); // remember to free the memory!
+ release(handle); // remember to free the memory! (Note: nobody said you couldn't wrap this in a smart ptr --JFW)
+ release(flattened);
 }
 
+// Convert to and from OCStack representation:
 void from_rep_test()
 {
- using std::cout;
+ property_binding_vector sigs {
+	property_binding("state", property_type::boolean),
+	property_binding("power", property_type::integer)
+ };
 
- std::cout << "from_rep_test() doesn't do much yet :-)\n";
-/*
- const char *LEDrep[] = { "state;b", "power;i", NULL };
+ using OC::OCReflect::OCStack::length;
+ using OC::OCReflect::OCStack::convert;
 
- named_property_binding_vector npbv(LEDrep);
+ using OC::OCReflect::OCStack::expand;
+ using OC::OCReflect::OCStack::flatten;
 
- cout << npbv << '\n'; 
-*/
+ using OC::OCReflect::OCStack::as_property_binding_vector;
+
+ std::vector<std::string> reps { convert(sigs) };   // convert a property_binding_vector to a std::vector of std::string
+
+ /* First, let's make some C data from OCReflect stuff: 
+    IMPORTANT: error checking is ignored below, DO NOT do this in real code. :-) */
+ char *flattened = flatten(reps);   // convert a vector of std::string to a single C string
+ char **handle   = convert(reps);   // convert a vector of std::string into a C array of C strings
+
+ /* Great, now let's convert back to OCReflect: */ 
+ // C array to std::vector of std::string (just normal C++):
+ std::vector<std::string> reps_in1 { handle, length(handle) + handle };
+
+ std::cout << "Retreived from C array:\n";
+ for(const auto& s : reps_in1)
+  std::cout << s << '\n';
+
+ // C string into std::vector of std::string:
+ std::vector<std::string> reps_in2 { expand(flattened) };
+
+ std::cout << "Retrieved from flattened C string:\n";
+ for(const auto& s : reps_in2)
+  std::cout << s << '\n';
+
+ /* Now, convert a std::vector of std::string into a vector of property bindings: */
+ property_binding_vector sigs_in1 { as_property_binding_vector(reps_in1) };
+ std::cout << "Retreived properties from vector<string>:\n";
+ for(const auto sig : sigs_in1)
+  std::cout << sig << '\n';
+
+ // Notice that either representation /source/ is fine, it's just a vector of strings! 
+ property_binding_vector sigs_in2 { as_property_binding_vector(reps_in2) };
+ for(const auto sig : sigs_in1)
+  std::cout << sig << '\n';
 }
+
+void simple_test()
+{
+ using namespace std;
+ 
+ OC::OCReflect::property p = make_property::apply("Sashi", "p_first_name");
+
+ string lname = "Penta";
+
+ auto p2 = make_property::apply(lname, "p_last_name");
+
+ cout << p << '\n'; 
+
+ std::string fname = concretize<std::string>(p);
+ cout << "string back from property: " << fname << '\n'; 
+}
+
+/* Note:
+template <class OutT>
+void concretize(const property& p, OutT& out)
+{
+ out = concretize<OutT>(p);
+}
+*/
 
 int main()
 {
- using namespace OC::OCReflect;
 
  convert_test(); 
 
  call_test();
+
+ simple_test();
 
  rep_test();
 

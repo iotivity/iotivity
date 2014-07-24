@@ -36,7 +36,7 @@ namespace OC
 
         void registerResource( const std::string& resourceURI,
                                                     const std::string& resourceTypeName,
-                                                    named_property_binding_vector properties)
+                                                    property_binding_vector properties)
         {
         }
 

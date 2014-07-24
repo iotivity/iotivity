@@ -51,4 +51,3 @@ clean:
 
 	cd csdk && $(MAKE) clean
 	cd csdk && $(MAKE) deepclean
-

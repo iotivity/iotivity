@@ -92,20 +92,22 @@ void bind_service(OC::OCServer& server, InstanceT *self, MethodT const& method, 
                                    return_type, property_type_vector { param_types... });
 
  server.bind(fmb);
- 
-/*
- call_through<decltype(b)> ct(b, return_type, ptypes);
-
- // then, at the call site...
- auto r = ct(1); // call the function
- 
- std::function<property_type(ParameterT...)> f = ct;
-*/
 }
 
 template <typename PropertyT>
-void bind_property(OC::OCServer& server, PropertyT& property, const std::string& binding_name, const property_type& pt, const property_attribute& pas)
+void bind_property(OC::OCServer& server, PropertyT& property, const std::string& binding_name, const property_type& pt, const property_attribute& pa)
 {
+
+ OC::OCReflect::property_binding npb { binding_name, { pt, pa } }; 
+ OC::OCReflect::property_binding pb { binding_name, 
+                                        npb }; //{ binding_name, { pt, pa } } };
+
+ server.bind(pb);
+
+/*
+ server.bind({ binding_name,
+                { binding_name, { pt, pa } } });
+*/
 }
 
 }} // namespace OC::OCReflect
@@ -211,14 +213,14 @@ class light
                 // Example to bind a read-only property in individual steps:
                 property_signature p_manufacturer_signature(property_type::string, OC::OCReflect::property_attribute::r); // read-only
 
-                OC::OCReflect::named_property_binding p_manufacturer("manufacturer", p_manufacturer_signature);
+                OC::OCReflect::property_binding p_manufacturer("manufacturer", p_manufacturer_signature);
 
                 property_binding b_manufacturer(
                         this->manufacturer,
                         p_manufacturer);
 
                 server.bind(b_manufacturer);
-
+*/
                 // The canonical way to bind a property to a server in one step:
                 bind_property(
                                 server,                                      // server to bind to
@@ -227,7 +229,6 @@ class light
                                 OC::OCReflect::property_type::string,        // property
                                 OC::OCReflect::property_attribute::r         // type decoration
                 );
-*/
         }
 };
 

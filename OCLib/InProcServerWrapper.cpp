@@ -80,10 +80,10 @@ namespace OC
 
     void InProcServerWrapper::registerResource(const std::string& resourceURI,
                                 const std::string& resourceTypeName,
-                                named_property_binding_vector& properties)
+                                property_binding_vector properties)
     {
         using OC::OCReflect::property_type;
-        using OC::OCReflect::named_property_binding;
+        using OC::OCReflect::property_binding;
         using namespace OC::OCReflect::to_OCStack;
 
         std::vector<std::string> reps { convert(properties) };

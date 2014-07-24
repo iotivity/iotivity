@@ -64,6 +64,12 @@ std::ostream& operator<<(std::ostream& os, const OC::OCReflect::property_signatu
  return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const OC::OCReflect::property_binding& pb)
+{
+ os << "property binding \"" << std::get<0>(pb) << "\": " << std::get<1>(pb);
+ return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const OC::OCReflect::property& p)
 {
  using std::get;
@@ -193,6 +199,8 @@ OC::OCReflect::tagged_property convert(const std::string& in)
 
 }}} // namespace OC::OCReflect::to_property
 
+namespace OC { namespace OCReflect {
+
 pd_iter_tuple consume_typecheck(const property_type expected_pt, const OC::OCReflect::property_data& in) 
 {
  OC::OCReflect::property_data::const_iterator begin = in.begin();
@@ -210,5 +218,7 @@ pd_iter_tuple consume_typecheck(const property_type expected_pt, const OC::OCRef
 
  return std::forward_as_tuple(++begin, in.end());
 }
+
+}} // namespace OC::OCReflect
 
 

@@ -95,7 +95,7 @@ namespace OC
     
 
 	void OCPlatform::registerResource(const std::string& resourceURI, const std::string& resourceTypeName, 
-			named_property_binding_vector properties)
+			property_binding_vector properties)
 	{
 		if(m_server)
 		{

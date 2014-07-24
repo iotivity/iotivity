@@ -20,8 +20,10 @@
 
 #include "OCServer.h"
 #include "OCReflect.h"
+#include "OCProperties.h"
 
 namespace OC {
+
 	OCServer::OCServer(void)
 	{
 	}
@@ -46,8 +48,15 @@ namespace OC {
 	void OCServer::stop() {
 	}
 
+    // Method and property wrangling:
     void OCServer::bind(const OC::OCReflect::method_binding& mb)
     {
-        method_bindings[mb.name] = mb;            
+        method_bindings[mb.name] = mb;           
+    }
+
+    void OCServer::bind(const OC::OCReflect::property_binding& pb)
+    {
+std::cout << "OCServer::bind() property " << std::get<0>(pb) << '\n';
+        property_bindings[std::get<0>(pb)] = pb;
     }
 }

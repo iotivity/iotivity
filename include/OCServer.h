@@ -31,14 +31,8 @@
 #include <string>
 
 #include "OCObject.h"
+#include "OCPropertyTypes.h"
 #include "OCSecurityModel.h"
-
-namespace OC { namespace OCReflect {
-
-struct method_binding;
-struct property_binding;
-
-}} // namespace OC::OCReflect
 
 namespace OC 
 {
@@ -48,8 +42,14 @@ namespace OC
 	*/
 	class OCServer
 	{
+    /* 1) It may be worth considering Boost's lock-free containers here;
+       2) The only reason bindings rather than the "real things" are shown in this case is because of
+       an assumption that the real things lie within the C layer. In practice, there's no firm reason
+       why it needs to be one way or the other-- in fact, a pure C++ implementation might as well
+       just store all the actual methods and properties in one place: */
     private:
-        std::map<std::string, OC::OCReflect::method_binding>    method_bindings;
+        std::map<std::string, OC::OCReflect::method_binding>      method_bindings;
+        std::map<std::string, OC::OCReflect::property_binding>    property_bindings; 
 
 	public:
 		OCServer(void);
@@ -96,16 +96,28 @@ namespace OC
 
 		public:
 		void bind(const OC::OCReflect::method_binding& mb);
-
- 		void bind(const OC::OCReflect::property_binding& pb)
- 		{}
+ 		void bind(const OC::OCReflect::property_binding& pb);
 
  		template <class T>
  		void registerResource(T *object, const std::string& base_URI)
  		{}
 
+        // Note that these transfer the /binding information/ (signatures, etc.) not data (which could be /very/ expensive):
         public:
-        const std::map<std::string, OC::OCReflect::method_binding>& methods() const { return method_bindings; }
+        const std::map<std::string, OC::OCReflect::method_binding>& methods()       const { return method_bindings; }
+        const std::map<std::string, OC::OCReflect::property_binding>& properties()  const { return property_bindings; }
+
+        // Transfer data:
+        public:
+        // Look up the method from the binding, call the function, return a full property as result:
+        // OC::OCReflect::property call(const std::pair<std::string, OC::OCReflect::method_binding>& method); // other signatures possible, this is an example
+
+        // Look up the property from the binding, return a full property (ie. with a data value):
+        OC::OCReflect::property get(const std::string& p_name);
+        OC::OCReflect::property get(const OC::OCReflect::property_binding& pb);
+
+        // Set a property's value:
+        void set(const OC::OCReflect::property& p);
 	};
 }
 

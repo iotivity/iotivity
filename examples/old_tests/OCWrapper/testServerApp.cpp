@@ -86,11 +86,11 @@ public:
 	void bindTo(OC::OCPlatform& platform)
 	{
 		using OC::OCReflect::property_type;
-		using OC::OCReflect::named_property_binding;
+		using OC::OCReflect::property_binding;
 
-		named_property_binding_vector properties {
-			named_property_binding("state", property_type::boolean),
-			named_property_binding("power", property_type::integer)
+		property_binding_vector properties {
+			property_binding("state", property_type::boolean),
+			property_binding("power", property_type::integer)
 		};
 
 		std::string resourceURI = "/a/light";

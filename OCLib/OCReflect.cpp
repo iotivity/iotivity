@@ -18,8 +18,14 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+
 #include <string>
+#include <vector>
 #include <cstring>
+#include <iterator>
+
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>  
 
 #include "OCReflect.h"
 
@@ -28,7 +34,16 @@ OC::OCReflect::entity OC::OCReflect::remote_resource::operator()(const std::stri
  return OC::OCReflect::entity();
 }
 
-namespace OC { namespace OCReflect { namespace to_OCStack {
+namespace OC { namespace OCReflect { namespace OCStack {
+
+// Free a char *:
+void release(char *in)
+{
+ if(nullptr == in)
+  return;
+
+ free(in);
+}
 
 // Free a C array of char *:
 void release(char **in)
@@ -37,10 +52,7 @@ void release(char **in)
   return;
 
  for(char **cursor = in; nullptr != *cursor; ++cursor)
-  {
-    if(nullptr != *cursor)
-     free(*cursor);
-  }
+  release(*cursor);
 
  free(in);
 }
@@ -97,7 +109,7 @@ char **convert(const std::vector<std::string>& vs)
 	size_t i = 0;
 	for(; vs.size() != i; ++i)
 	 {
-		out[i] = to_OCStack::strdup(vs[i]);
+		out[i] = OCStack::strdup(vs[i]);
 
 		if(nullptr == out[i])
 		 throw;
@@ -116,7 +128,7 @@ char **convert(const std::vector<std::string>& vs)
  return nullptr;
 }
 
-std::string convert(const OC::OCReflect::named_property_binding& npb)
+std::string convert(const OC::OCReflect::property_binding& npb)
 {
  const std::string& name 					= std::get<0>(npb);
  const OC::OCReflect::property_signature ps	= std::get<1>(npb);
@@ -131,10 +143,14 @@ std::string convert(const OC::OCReflect::named_property_binding& npb)
   {
 	case property_type::nil:
 	case property_type::rational:
-	case property_type::string:		
 	case property_type::list:	
+	case property_type::string:		
+									os << "convert(): request to convert valid, but unimplemented type: " << ps.type;
+									throw std::runtime_error(os.str());
+									break;
+
 	case property_type::INVALID:	
-									throw std::runtime_error("not implemented"); 
+									throw std::runtime_error("convert(): request to convert invalid type");
 									break;
 
 	case property_type::boolean:	os << "bt." << 'b';	
@@ -147,17 +163,71 @@ std::string convert(const OC::OCReflect::named_property_binding& npb)
  return os.str();
 }
 
-std::vector<std::string> convert(const OC::OCReflect::named_property_binding_vector& psv)
+OC::OCReflect::property_type as_property_type(const std::string& pb_code)
+{
+ // We expect: "oc.bt.<char typecode>":
+ const size_t code_length   = 7,
+              code_pos      = 6; 
+
+ if(code_length != pb_code.length())
+  return OC::OCReflect::property_type::INVALID;
+
+ switch(pb_code[code_pos])
+ {
+    default:    break;
+
+    case 'b':   return OC::OCReflect::property_type::boolean;
+    case 'i':   return OC::OCReflect::property_type::integer;
+
+/* These don't have codes yet:
+	case property_type::nil:
+	case property_type::rational:
+	case property_type::string:		
+	case property_type::list:	
+*/
+ }
+
+ return OC::OCReflect::property_type::INVALID;
+}
+
+OC::OCReflect::property_binding as_property_binding(const std::string& pb_rep)
+{
+ auto delim_pos = pb_rep.find_first_of(':');
+
+ if(pb_rep.length() == delim_pos)
+  throw OC::OCReflect::reflection_exception("convert(): invalid property string (missing delimiter)");
+  
+ std::string pname { pb_rep.substr(0, delim_pos) };
+
+ auto ptype = as_property_type(pb_rep.substr(1 + delim_pos));
+
+ auto pattr = OC::OCReflect::property_attribute::rw;    // We aren't handling attributes right now...
+ 
+ return OC::OCReflect::property_binding { pname, { ptype, pattr } };
+}
+
+OC::OCReflect::property_binding_vector as_property_binding_vector(const std::vector<std::string>& pb_reps)
+{
+ OC::OCReflect::property_binding_vector pbv;
+
+ for(const auto& s : pb_reps)
+  pbv.emplace_back(as_property_binding(s));
+
+ return pbv;   
+}
+
+std::vector<std::string> convert(const OC::OCReflect::property_binding_vector& psv)
 {
  std::vector<std::string> out;
 
  for(const auto& ps : psv)
-  out.emplace_back(convert(ps));
+  out.push_back(convert(ps));
 
  return out;
 }
 
 char *flatten(const std::vector<std::string>& input, const std::string& delim)
+try
 {
  std::string out;
 
@@ -166,10 +236,27 @@ char *flatten(const std::vector<std::string>& input, const std::string& delim)
     out += input[i];
 
     if(i < input.size() - 1)
-     out += ";";
+     out += delim;
   }
 
- return OC::OCReflect::to_OCStack::strdup(out);
+ return OC::OCReflect::OCStack::strdup(out);
+}
+catch(...)
+{
+ return nullptr;
 }
 
-}}} // namespace OC::OCReflect::to_OCStack
+// Note: expects output of flatten():
+std::vector<std::string> expand(const char *flattened_string, const std::string& delim)
+{
+ if(nullptr == flattened_string)
+  throw OC::OCReflect::reflection_exception("nullptr passed to expand()");
+
+  std::vector<std::string> ret;
+  std::string flattened = flattened_string;
+  boost::split(ret, flattened, boost::is_any_of(delim));
+
+  return ret;
+}
+
+}}} // namespace OC::OCReflect::OCStack

@@ -81,13 +81,20 @@ public:
 	void createResourceWithPropeties(OC::OCPlatform& platform)
 	{
         /*
-        We could typedef to simpler namers! :)
+        We could typedef to simpler names! :)
         typedef named_property_binding_vector OCPropertyBindings;
         typedef named_property_binding OCPropertyBinding;
 
         OCPropertyBindings properties {
 			OCPropertyBinding("state", property_type::boolean),
 			OCPropertyBidning("power", property_type::integer)
+
+		using OC::OCReflect::property_type;
+		using OC::OCReflect::property_binding;
+
+		property_binding_vector properties {
+			property_binding("state", property_type::boolean),
+			property_binding("power", property_type::integer)
 		};
         */
 

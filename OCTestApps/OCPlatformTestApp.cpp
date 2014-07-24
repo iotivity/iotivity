@@ -140,7 +140,7 @@ void Test_OCPlatform_1(int functionIndex)
     bool                    bResult = false;
     PlatformConfig          cfg;
     string		    resType, hostName;
-    named_property_binding_vector vc;
+    property_binding_vector vc;
     
     try
     {
@@ -192,7 +192,7 @@ void Test_OCPlatform_3(int functionIndex)
     bool                    bResult = false;
     PlatformConfig          cfg;
     string		    serviceURL, resourceType;
-    named_property_binding_vector vc;
+    property_binding_vector vc;
     
     try
     {
@@ -229,7 +229,7 @@ void Test_OCPlatform_4(int functionIndex)
 {
     bool                    bResult = false; 
     string                  resourceURI, resourceTypeName;
-    named_property_binding_vector vc;
+    property_binding_vector vc;
 
     try
     {
