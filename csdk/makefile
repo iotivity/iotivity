@@ -1,6 +1,6 @@
 # override with `make BUILD=release`
-# default to debug build
-BUILD	 := debug
+# default to release build
+BUILD	 := release
 PLATFORM := linux
 CC	 := gcc
 
@@ -42,8 +42,8 @@ INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
 
-CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic -DTB_LOG -L./libcoap-4.1.1/
-CC_FLAGS.release	:= -O0 -g3 -Wall -c -fmessage-length=0 -std=c99 -fpic -L./libcoap-4.1.1/
+CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic -DTB_LOG
+CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -std=c99 -fpic
 
 CFLAGS		+= $(CC_FLAGS.$(BUILD)) -DWITH_POSIX $(INC_DIRS)
 LDLIBS		+= -lcoap

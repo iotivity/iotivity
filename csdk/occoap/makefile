@@ -1,6 +1,6 @@
 # override with `make BUILD=release`
-# default to debug build
-BUILD := debug
+# default to release build
+BUILD := release
 
 # You must create the file "local.properties" on your local machine which contains any local paths, etc
 # local_settings.mk should NOT be committed to repo
@@ -23,12 +23,12 @@ TEST_DIR:= ./test
 #LOG_DIR := ../logger
 #STACK_DIR := ../stack
 
-CC_FLAGS.debug := -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic -D TB_LOG
-CC_FLAGS.release := -O0 -g3 -Wall -c -fmessage-length=0 -std=c99 -fpic 
+CC_FLAGS.debug := -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic -DTB_LOG
+CC_FLAGS.release := -Os -Wall -c -fmessage-length=0 -std=c99 -fpic 
 CC_FLAGS := $(CC_FLAGS.$(BUILD))
 
-CXX_FLAGS.debug := -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c++0x -fpic -D TB_LOG
-CXX_FLAGS.release := -O0 -g3 -Wall -c -fmessage-length=0 -std=c++0x -fpic 
+CXX_FLAGS.debug := -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c++0x -fpic -DTB_LOG
+CXX_FLAGS.release := -Os -Wall -c -fmessage-length=0 -std=c++0x -fpic 
 CXX_FLAGS := $(CXX_FLAGS.$(BUILD))
 
 #INC	:= -I$(SRC_DIR)  
@@ -62,9 +62,9 @@ LD_FLAGS := -L/usr/lib
 LD_FLAGS += -L$(GTEST_DIR)/lib/.libs
 
 
-LIBS := -lpthread
-LIBS += -lgtest
+LIBS := -lgtest
 LIBS += -lgtest_main
+LIBS += -lpthread
 
 
 all: $(PROG)

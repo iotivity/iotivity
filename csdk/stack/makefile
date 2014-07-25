@@ -1,6 +1,6 @@
 # override with `make BUILD=release`
-# default to debug build
-BUILD := debug
+# default to release build
+BUILD := release
 
 # You must create the file "local.properties" on your local machine which contains any local paths, etc
 # local.properties should NOT be committed to repo
@@ -28,13 +28,12 @@ LIBCOAP_DIR := ../libcoap-4.1.1
 UTIL_DIR := ../../../../ccf-utilities/tb
 JSON_DIR := $(UTIL_DIR)/cJSON
 
-CC_FLAGS.debug := -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions -DTB_LOG -DWITH_POSIX -D__USE_MISC
-#CC_FLAGS.debug := -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic -D TB_LOG -D WITH_POSIX -D __USE_MISC
-CC_FLAGS.release := -O0 -g3 -Wall -c -fmessage-length=0 -std=c99 -fpic 
+CC_FLAGS.debug := -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions -DWITH_POSIX -D__USE_MISC -DTB_LOG
+CC_FLAGS.release := -Os -Wall -c -fmessage-length=0 -std=c99 -fpic -DWITH_POSIX -D__USE_MISC
 CC_FLAGS := $(CC_FLAGS.$(BUILD))
 
 CXX_FLAGS.debug := -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c++0x -fpic -DTB_LOG
-CXX_FLAGS.release := -O0 -g3 -Wall -c -fmessage-length=0 -std=c++0x -fpic 
+CXX_FLAGS.release := -Os -Wall -c -fmessage-length=0 -std=c++0x -fpic -DWITH_POSIX 
 CXX_FLAGS := $(CXX_FLAGS.$(BUILD))
 
 INC	:= -I$(SRC_DIR)  
@@ -80,9 +79,9 @@ LD_FLAGS := -L/usr/lib
 LD_FLAGS += -L$(GTEST_DIR)/lib/.libs
 
 
-LIBS := -lpthread
-LIBS += -lgtest
+LIBS := -lgtest
 LIBS += -lgtest_main
+LIBS += -lpthread
 
 DEP_LIBS := $(LIBCOAP_DIR)/libcoap.a
 

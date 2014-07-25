@@ -29,7 +29,7 @@ endif
 DEP_LIBS = ../libcoap.a
 
 CFLAGS += -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
-    -Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DWITH_POSIX -DTB_LOG
+    -Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DWITH_POSIX
 
 PROGRAMS = coap-server coap-client
 

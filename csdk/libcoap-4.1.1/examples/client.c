@@ -146,7 +146,6 @@ coap_new_request(coap_context_t *ctx, method_t m, coap_list_t *options ) {
   if ( !coap_add_token(pdu, the_token.length, the_token.s)) {
     debug("cannot add token to request\n");
   }
-
   coap_show_pdu(pdu);
 
   for (opt = options; opt; opt = opt->next) {

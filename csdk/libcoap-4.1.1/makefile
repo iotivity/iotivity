@@ -1,3 +1,6 @@
+# override with `make BUILD=release`
+# default to release build
+BUILD	 := release
 #other options are android, arduino
 PLATFORM=linux
 
@@ -24,8 +27,12 @@ else
    $(error Wrong value for PLATFORM !!)
 endif
 
-CFLAGS += -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
+CC_FLAGS.debug := -O0 -g3 -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
 	-Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DWITH_POSIX -DTB_LOG
+CC_FLAGS.release := -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
+	-Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DWITH_POSIX
+
+CFLAGS		+= $(CC_FLAGS.$(BUILD))
 
 SUBDIRS:= examples doc
 

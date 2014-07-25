@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <string.h>
 #include "ocstack.h"
 #include "ocstackinternal.h"
 #include "ocserverrequest.h"

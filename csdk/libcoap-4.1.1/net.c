@@ -360,36 +360,6 @@ coap_new_context(const coap_address_t *listen_addr) {
     coap_register_option(c, COAP_OPTION_BLOCK1);
 
 #ifdef WITH_POSIX
-#if 0
-    c->sockfd = socket(listen_addr->addr.sa.sa_family, SOCK_DGRAM, 0);
-    if ( c->sockfd < 0 ) {
-#ifndef NDEBUG
-        coap_log(LOG_EMERG, "coap_new_context: socket\n");
-#endif /* WITH_NDEBUG */
-        goto onerror;
-    }
-
-    if ( setsockopt( c->sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse) ) < 0 ) {
-#ifndef NDEBUG
-        coap_log(LOG_WARNING, "setsockopt SO_REUSEADDR\n");
-#endif
-    }
-
-    if (bind(c->sockfd, &listen_addr->addr.sa, listen_addr->size) < 0) {
-#ifndef NDEBUG
-        coap_log(LOG_EMERG, "coap_new_context: bind\n");
-#endif
-        goto onerror;
-    }
-
-    return c;
-
-    onerror:
-    if ( c->sockfd >= 0 )
-    close ( c->sockfd );
-    coap_free( c );
-    return NULL;
-#endif //0
     if (OCInitUDP((OCDevAddr *)listen_addr, (int32_t *)&(c->sockfd)) != ERR_SUCCESS) {
         coap_free( c);
         return NULL;
@@ -397,7 +367,6 @@ coap_new_context(const coap_address_t *listen_addr) {
     else {
         return c;
     }
-
 #endif /* WITH_POSIX */
 #ifdef WITH_CONTIKI
     c->conn = udp_new(NULL, 0, NULL);
@@ -581,11 +550,9 @@ coap_send_impl(coap_context_t *context,
     if ( !context || !dst || !pdu )
     return id;
 
-    //bytes_written = sendto( context->sockfd, pdu->hdr, pdu->length, 0,
-    //			  &dst->addr.sa, dst->size);
     bytes_written = OCSendTo( context->sockfd, (uint8_t*)(pdu->hdr), pdu->length, 0,
             (OCDevAddr*)dst);
-    printf("bytes_written %d\n", (int)bytes_written);
+    debug("bytes_written %d\n", (int)bytes_written);
 
     if (bytes_written >= 0) {
         coap_transaction_id(dst, pdu, &id);
@@ -863,9 +830,6 @@ int coap_read(coap_context_t *ctx, int sockfd) {
     coap_address_init(&src);
 
 #ifdef WITH_POSIX
-    //bytes_read = recvfrom(ctx->sockfd, buf, sizeof(buf), 0,
-    //			&src.addr.sa, &src.size);
-
     bytes_read = OCRecvFrom( sockfd, (uint8_t*)buf, sizeof(buf), 0,
             (OCDevAddr*)&src);
 #endif /* WITH_POSIX */
