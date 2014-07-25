@@ -145,7 +145,8 @@ std::string convert(const OC::OCReflect::property_binding& npb)
 	case property_type::rational:
 	case property_type::list:	
 	case property_type::string:		
-									os << "convert(): request to convert valid, but unimplemented type: " << ps.type;
+                                    // Sashi commented this line to fix the build error
+									//os << "convert(): request to convert valid, but unimplemented type: " << ps.type;
 									throw std::runtime_error(os.str());
 									break;
 

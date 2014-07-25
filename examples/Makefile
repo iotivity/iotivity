@@ -12,7 +12,7 @@ LIB_SRC1=../OCLib/OCReflect.cpp ../OCLib/OCObserver.cpp ./client/MyObserverHandl
 
 CXX_LIBS=-lboost_regex
 
-.PHONY: ocreflect resources test_OCReflect test_OCClient test_properties
+.PHONY: ocreflect test_OCReflect test_OCClient test_properties
 
 all: .PHONY
 
@@ -27,14 +27,6 @@ test_OCReflect:
 
 test_OCClient:
 	$(CXX) $(CXX_FLAGS) -o test_OCClient reflect/test_OCClient.cpp $(LIB_SRC0) $(CXX_INC) $(CXX_LIBS)
-
-resources: single_resource multiple_resources
-
-single_resource:
-	$(CXX) $(CXX_FLAGS) -o single_resource ./server/single_resource.cpp $(LIB_SRC1) $(CXX_INC) $(CXX_LIBS)
-
-multiple_resources:
-	#$(CXX) $(CXX_FLAGS) -o multiple_resources ./server/multiple_resources.cpp $(LIB_SRC1) $(CXX_INC) $(CXX_LIBS)
 
 clean:
 	rm -f -v test_properties test_OCReflect test_OCClient 
