@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 namespace OC {
 
@@ -39,37 +40,65 @@ struct entity;
 namespace OC {
 
  enum class OCPlatformStatus {
-	PlatformUp,
-	PlatformDown
+    PlatformUp,
+    PlatformDown
  };
 
  enum class OCAdvertisementStatus{
-	None
+    None
  };
 
  typedef std::string URI;
 
  enum class ServiceType
  {
-	 InProc,
-	 OutOfProc
+     InProc,
+     OutOfProc
  };
 
  enum class ModeType
  {
-	 Server,
-	 Client,
-	 Both
+     Server,
+     Client,
+     Both
  };
 
  struct PlatformConfig
  {
-	 ServiceType serviceType; // This will indicate whether it is InProc or OutOfProc
-	 ModeType mode; // This will indicate whether we want to do server, client or both
-	 std::string ipAddress; // This is the ipAddress of the server to connect to
+     ServiceType serviceType; // This will indicate whether it is InProc or OutOfProc
+     ModeType mode; // This will indicate whether we want to do server, client or both
+     std::string ipAddress; // This is the ipAddress of the server to connect to
      uint16_t port; // Port of the server
  };
 
+ enum class RequestHandlerFlag
+ {
+    InitFlag,
+    RequestFlag,
+    ObserverFlag
+ };
+
+ enum class ResourceFlag
+ {
+     DiscoverableFlag,
+     ObserverFlag
+ };
+
+ // TODO: To find the complete JSon data structure and modify map value type
+ typedef std::vector<std::string> AttributeValues;
+ typedef std::map<std::string, AttributeValues> AttributeMap; 
+
+ typedef std::map<std::string, std::string> QueryParamsMap;
+
+ typedef std::map<std::string, std::string> HeadersMap;
+
+ const std::string LINK_INTERFACE = "oc.mi.ll";
+ const std::string BATCH_INTERFACE = "oc.mi.b";
+ const std::string SENSOR_INTERFACE = "oc.mi.s";
+ const std::string ACTUATOR_INTERFACE = "oc.mi.a";
+ const std::string PARAMETER_INTERFACE = "oc.mi.p";
+ const std::string READ_PARAMETER_INTERFACE = "oc.mi.rp";
+
 } // namespace OC
 
-#endif	
+#endif  

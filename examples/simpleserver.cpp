@@ -25,129 +25,192 @@
 
 #include <functional>
 
-#include "OCReflect.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
 
 using namespace OC;
-using namespace OC::OCReflect;
+
+// This is just a sample implementation of entity handler. 
+// Entity handler can be implemented in several ways by the manufacturer
+void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+{
+    // add the headers in this map before sending the response
+    HeadersMap headersMap; 
+    headersMap["content-type"] = "text";
+    headersMap["server"] = "serverName";
+
+    if(request)
+    {
+        // Get the request type and request flag
+        std::string requestType = request->getRequestType();
+        RequestHandlerFlag requestFlag = request->getRequestHandlerFlag();
+
+        if(requestFlag == RequestHandlerFlag::InitFlag)
+        {
+            // entity handler to perform resource initialization operations
+        }
+        else if(requestFlag == RequestHandlerFlag::RequestFlag)
+        {
+            // If the request type is GET
+            if(requestType == "GET")
+            {
+                // Check for query params (if any)
+                QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+                // Process query params and do required operations ..
+
+                // Get the representation of this resource at this point and send it as response
+                AttributeMap attributeMap; 
+                AttributeValues stateVal; 
+                stateVal.push_back("false");
+
+                AttributeValues powerVal; 
+                powerVal.push_back("0");
+
+                attributeMap["state"] = stateVal;
+                attributeMap["power"] = powerVal; 
+
+                if(response)
+                {
+                    response->setResponseHeaders(headersMap);
+                    response->setHTTPErrorCode(200);
+                    response->setResourceRepresentation(attributeMap);
+                }
+            }
+            else if(requestType == "PUT")
+            {
+                // Check for query params (if any)
+                QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+                // Check queryParamsMap and do required operations ..
+
+                // Get the representation from the request
+                AttributeMap attributeMap = request->getResourceRepresentation();
+                
+                // Do related operations related to PUT request 
+                // Change the attribute map accordingly and send a response
+
+                AttributeValues stateVal; 
+                stateVal.push_back("true");
+
+                AttributeValues powerVal; 
+                powerVal.push_back("100");
+
+                attributeMap["state"] = stateVal;
+                attributeMap["power"] = powerVal; 
+
+                if(response)
+                {
+                    response->setResponseHeaders(headersMap);
+                    response->setHTTPErrorCode(200);
+                    response->setResourceRepresentation(attributeMap);
+                }
+            }
+            else if(requestType == "POST")
+            {
+                // POST request operations
+            }
+            else if(requestType == "DELETE")
+            {
+                // DELETE request operations
+            }
+        }
+        else if(requestFlag == RequestHandlerFlag::ObserverFlag)
+        {
+            // perform observe related operations on the resource. 
+            // Add the attributes to the map and send a response
+
+            // on any attribute change on the light resource hardware, 
+            // set the attributes and send response
+            AttributeMap attributeMap;
+            
+            AttributeValues stateVal; 
+            stateVal.push_back("false");
+
+            AttributeValues powerVal; 
+            powerVal.push_back("0");
+
+            attributeMap["state"] = stateVal;
+            attributeMap["power"] = powerVal; 
+
+            if(response)
+            {
+                response->setResponseHeaders(headersMap);
+                response->setHTTPErrorCode(200);
+                response->setResourceRepresentation(attributeMap);
+            }
+        }
+    }
+    else
+    {
+        std::cout << "Request invalid" << std::endl;
+    }
+}
 
 /// This class represents a single resource named 'lightResource'. This resource has 
-/// two simple properties named 'state' and 'power' and they have respective setter
-/// and getter methods.
+/// two simple properties named 'state' and 'power' 
 
 class LightResource
 {
-private:
-	/// Access this property from a TB client 
-	bool m_state;
-	int m_power;
+public:
+    /// Access this property from a TB client 
+    bool m_state;
+    int m_power;
 
 public:
-	LightResource()
-		: m_state(false), m_power(0)
-	{}
+    /// Constructor
+    LightResource(): m_state(false), m_power(0){}
 
-public:
-	/// Setter method for the setting the power of this light resource
-	void setPower(int powerValue)             
-	{ 
-		m_power = powerValue; 
-	}
+    /* Note that this does not need to be a member function: for classes you do not have
+    access to, you can accomplish this with a free function: */
+    
+    /// This function internally calls registerResource API.
+    void createResource(OC::OCPlatform& platform)
+    {
+        std::string resourceURI = "a/light"; // URI of the resource
+        std::string resourceTypeName = "light"; // resource type name. In this case, it is light
+        std::string resourceInterface = LINK_INTERFACE; // resource interface.
+        ResourceFlag resourceFlag = ResourceFlag::ObserverFlag; // set the resource flag to Observerable
 
-	/// Getter method for the getting the power of this light resource
-	int getPower() const                           
-	{ 
-		return m_power; 
-	}
-
-	/// Setter method for the setting the state of this light resource
-	void setState(bool state)             
-	{ 
-		m_state = state; 
-	}
-
-	/// Getter method for the getting the state of this light resource
-	bool getState() const                           
-	{ 
-		return m_state; 
-	}
-	
-public:
-	/* Note that this does not need to be a member function: for classes you do not have
-	access to, you can accomplish this with a free function: */
-	
-	/// This function binds the properties and methods to the server. 
-	void createResourceWithPropeties(OC::OCPlatform& platform)
-	{
-        /*
-        We could typedef to simpler names! :)
-        typedef property_binding_vector OCPropertyBindings;
-        typedef property_binding OCPropertyBinding;
-
-        OCPropertyBindings properties {
-			OCPropertyBinding("state", property_type::boolean),
-			OCPropertyBidning("power", property_type::integer)
-
-		using OC::OCReflect::property_type;
-		using OC::OCReflect::property_binding;
-
-		property_binding_vector properties {
-			property_binding("state", property_type::boolean),
-			property_binding("power", property_type::integer)
-		};
-        */
-
-        auto properties {
-			property_binding{"state", property_type::boolean},
-			property_binding{"power", property_type::integer}
-        };
-
-		std::string resourceURI = "/a/light";
-		std::string resourceTypeName = "light";
-
-		// This will internally invoke registerResource method (which would eventually create 
-		// resource). 
-
-		platform.registerResource(resourceURI, resourceTypeName, properties);
-	}
+        // This will internally create and register the resource. 
+        platform.registerResource(resourceURI, resourceTypeName, resourceInterface, &entityHandler, resourceFlag); 
+    }
 };
 
 int main()
 {
-	// Create PlatformConfig object
+    // Create PlatformConfig object
 
-	PlatformConfig cfg;
-	//cfg.ipAddress = "192.168.1.5";
-	cfg.ipAddress = "134.134.161.33";
-	cfg.port = 5683;
-	cfg.mode = ModeType::Server;
-	cfg.serviceType = ServiceType::InProc;
-	
-	// Create a OCPlatform instance. 
-	// Note: Platform creation is synchronous call. 
-	try
-	{
-		OCPlatform platform(cfg);
+    PlatformConfig cfg;
+    cfg.ipAddress = "134.134.161.33";
+    cfg.port = 5683;
+    cfg.mode = ModeType::Server;
+    cfg.serviceType = ServiceType::InProc;
+    
+    // Create a OCPlatform instance. 
+    // Note: Platform creation is synchronous call. 
+    try
+    {
+        OCPlatform platform(cfg);
 
-		// Create the instance of the resource class (in this case instance of class 'LightResource'). 
-		// Invoke bindTo function of class light. 
+        // Create the instance of the resource class (in this case instance of class 'LightResource'). 
+        // Invoke bindTo function of class light. 
 
-		LightResource myLightResource;
-		myLightResource.createResourceWithPropeties(platform);
-		
-		// Perform app tasks
-		while(true)
-		{
-			// some tasks
-		}
-	}
-	catch(OCException e)
-	{
-		//log(e.what());
-	}
+        LightResource myLightResource;
+        myLightResource.createResource(platform);
+        
+        // Perform app tasks
+        while(true)
+        {
+            // some tasks
+        }
+    }
+    catch(OCException e)
+    {
+        //log(e.what());
+    }
 
-		
-	// No explicit call to stop the platform. 
-	// When OCPlatform destructor is invoked, internally we do platform cleanup
+        
+    // No explicit call to stop the platform. 
+    // When OCPlatform destructor is invoked, internally we do platform cleanup
 }
