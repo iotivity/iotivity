@@ -27,7 +27,7 @@
 
 typedef struct ClientCB {
     // callback method defined in application address space
-    OCClientApplicationCBType callBack;
+    OCClientResponseHandler callBack;
     // callback context data
     void * context;
     //  when a response is recvd with this token, above callback will be invoked
@@ -49,7 +49,7 @@ typedef struct ClientCB {
  * @retval 0 for Success, otherwise some error value
  */
 //------------------------------------------------------------------------
-int AddClientCB(OCCallbackData *cbData, OCToken * token);
+OCStackResult AddClientCB(OCCallbackData *cbData, OCToken * token);
 
 //-- DeleteClientCB -----------------------------------------------------------
 /** @ingroup ocstack

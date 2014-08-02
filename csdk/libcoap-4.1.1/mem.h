@@ -10,9 +10,17 @@
 #ifndef _COAP_MEM_H_
 #define _COAP_MEM_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 
 #define coap_malloc(size) malloc(size)
 #define coap_free(size) free(size)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _COAP_MEM_H_ */

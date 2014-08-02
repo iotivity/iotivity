@@ -25,6 +25,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(__ANDROID__) || defined(__linux__)
 #include <time.h>
 #elif defined ARDUINO
@@ -60,5 +64,9 @@ uint8_t OCGetRandomByte(void);
  *              length of array to be filled with random bytes
  */
 void OCFillRandomMem(uint8_t * location, uint16_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_RANDOM_H

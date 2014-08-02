@@ -25,7 +25,9 @@
 #include "ocstack.h"
 #include "ocstackinternal.h"
 #include "ocserverrequest.h"
+#include "ocresource.h"
 #include "occlientcb.h"
+#include "ocrandom.h"
 #include "debug.h"
 #include "occoap.h"
 #include "cJSON.h"
@@ -57,7 +59,7 @@ OCResource *headResource = NULL;
 //-----------------------------------------------------------------------------
 
 //This function will be called back by occoap layer when a request is received
-OCStackResult OCStackHandleReceiveRequest(OCRequest * request) {
+OCStackResult HandleStackRequests(OCRequest * request) {
     OC_LOG(INFO, TAG, "Entering OCStackHandleReceiveRequest (OCStack Layer)");
 
     char *filterValue;
@@ -67,37 +69,45 @@ OCStackResult OCStackHandleReceiveRequest(OCRequest * request) {
     VERIFY_NON_NULL(request, ERROR, OC_STACK_ERROR);
     VERIFY_NON_NULL(request->entityHandlerRequest, ERROR, OC_STACK_ERROR);
 
-    result = validateUrlQuery(request->resourceUrl, request->query, &filterOn,
-            &filterValue);
+    if (IsVirtualResource((const char*)request->resourceUrl))
+    {
+        result = ValidateUrlQuery(request->resourceUrl,
+                                  request->entityHandlerRequest->query, &filterOn,
+                                  &filterValue);
 
-    if (OC_STACK_OK != result) {
-        return result;
+        if (result == OC_STACK_OK)
+        {
+            result = ProcessResourceDiscoverReq(
+                    (const char*) request->entityHandlerRequest->reqJSONPayload,
+                    (char *) request->entityHandlerRequest->resJSONPayload, filterOn,
+                    filterValue);
+        }
+    }
+    else
+    {
+        OCResource* resource = FindResourceByUri((const char*)request->resourceUrl);
+        if (resource)
+        {
+            result = resource->entityHandler(OC_REQUEST_FLAG, request->entityHandlerRequest);
+        }
+        else
+        {
+            result = OC_STACK_NO_RESOURCE;
+        }
     }
 
-    result = processResourceDiscoverReq(
-            request->entityHandlerRequest->reqJSONPayload,
-            request->entityHandlerRequest->resJSONPayload, filterOn,
-            filterValue);
-
-    if (OC_STACK_OK != result) {
-        return result;
-    }
-
-    // TODO: lookup and service the resource
-    // TODO: call the entity handler
-    // for now just do this
-    //sprintf((char *) request->entityHandlerRequest->resJSONPayload,
-    //        "Thank you, I got it!!!");
-    return OC_STACK_OK;
+    return result;
 }
 
 //This function will be called back by occoap layer when a response is received
-void OCStackHandleReceiveResponse(OCResponse * response) {
+void HandleStackResponses(OCResponse * response) {
     ClientCB * cbNode = NULL;
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
     OC_LOG(INFO, TAG, "Entering OCHandleClientReceiveResponse (OCStack Layer)");
+
+    TODO ("What does the stack does in case of error");
     if (response->clientResponse->result != OC_STACK_OK) {
-        OC_LOG(DEBUG, TAG, "There is a problem in OCSTACK in OCStackHandleReceiveResponseeeeeeeeeeeeeeeeee");
+        OC_LOG(DEBUG, TAG, "The response has an error, should we do anything?");
     }
 
     cbNode = GetClientCB(response->token);
@@ -107,15 +117,49 @@ void OCStackHandleReceiveResponse(OCResponse * response) {
         if (result == OC_STACK_DELETE_TRANSACTION) {
             DeleteClientCB(cbNode);
         }
-    }TODO ("What does the stack does in case of error");
+    }
+    TODO ("What does the stack does in case of error");
 }
 
+int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr) {
+    size_t index = 0;
+    unsigned char *itr, *coap;
+    uint8_t dotCount = 0;
+
+    /* search for scheme */
+    itr = ipAddrStr;
+    if (!isdigit((unsigned char) *ipAddrStr)) {
+        coap = (unsigned char *) OC_COAP_SCHEME;
+        while (*coap && tolower(*itr) == *coap) {
+            coap++;
+            itr++;
+        }
+    }
+    ipAddrStr = itr;
+
+    while (*ipAddrStr) {
+        if (isdigit((unsigned char) *ipAddrStr)) {
+            ipAddr[index] *= 10;
+            ipAddr[index] += *ipAddrStr - '0';
+        } else if ((unsigned char) *ipAddrStr == '.') {
+            index++;
+            dotCount++;
+        } else {
+            break;
+        }
+        ipAddrStr++;
+    }
+
+    if (ipAddr[0] < 255 && ipAddr[1] < 255 && ipAddr[2] < 255 && ipAddr[3] < 255
+            && dotCount == 3) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
-// TODO: ultimately OCMalloc and OCFree should be defined in a different module
-static void *OCMalloc(size_t size);
-static void OCFree(void *ptr);
 
 static void initResources();
 static void insertResource(OCResource *resource);
@@ -243,54 +287,50 @@ OCStackResult OCStop() {
  */
 
 OCStackResult OCDoResource(OCMethod method, const char *requiredUri,
-        const char *referenceUri, const char *request, OCQualityOfService qos,
-//        OCClientApplicationCBType clientApplicationCB) {
-        OCCallbackData *cbData) {
-
+                           const char *referenceUri, const char *request,
+                           OCQualityOfService qos, OCCallbackData *cbData)
+{
     OCToken * token;
-
-    // TODO: Remove silence unused parameter warnings.
     (void) referenceUri;
-    (void) request;
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
 
-    // TODO: Eventually, we want to allow for the caller to pass a null on the callback function.
-    // For now however, ensure that the callback is valid
-    // Storing the return function here, used later to call back the application
-    if (!cbData || !cbData->cb) {
-        return OC_STACK_INVALID_CALLBACK;
-    }
+    // Validate input parameters
+    VERIFY_NON_NULL(cbData, FATAL, OC_STACK_INVALID_CALLBACK);
+    VERIFY_NON_NULL(cbData->cb, FATAL, OC_STACK_INVALID_CALLBACK);
 
-    // Generate token here, it will be deleted when the transaction is deleted
-    token = (OCToken *) malloc(sizeof(OCToken));
-    token->tokenLength = MAX_TOKEN_LENGTH;
-    OCFillRandomMem(token->token, token->tokenLength);
-    OC_LOG_V(INFO,TAG,"Token generated %d bytes..........%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
-            token->tokenLength,token->token[0],token->token[1],token->token[2],token->token[3],
-            token->token[4],token->token[5],token->token[6],token->token[7]);
-
-    // TODO: Form and insert transaction structure
-    // for now just store it here
-    //storedCB = clientApplicationCB;
-
-    // Validate method
-    if (method != OC_REST_GET) {
-        return OC_STACK_INVALID_METHOD;
+    switch (method)
+    {
+        case OC_REST_GET:
+        case OC_REST_PUT:
+            break;
+        default:
+            return OC_STACK_INVALID_METHOD;
     }
 
     TODO ("Need to form the final query by concatenating require and reference URI's");
     // Validate required URI
     VERIFY_NON_NULL(requiredUri, FATAL, OC_STACK_INVALID_URI);
 
+    // Generate token here, it will be deleted when the transaction is deleted
+    token = (OCToken *) malloc(sizeof(OCToken));
+    VERIFY_NON_NULL(token, FATAL, OC_STACK_NO_MEMORY);
+
+    token->tokenLength = MAX_TOKEN_LENGTH;
+    OCFillRandomMem(token->token, token->tokenLength);
+    OC_LOG_BUFFER(INFO,TAG, token->token, token->tokenLength);
+
     // Make call to OCCoAP layer
-    if (OCDoCoAPResource(method, qos, token, requiredUri) == OC_COAP_OK) {
+    if (OCDoCoAPResource(method, qos, token, requiredUri, request) == OC_COAP_OK) {
         OC_LOG(INFO, TAG, "Done with this function");
-        AddClientCB(cbData, token);
-        return OC_STACK_OK;
+        if (AddClientCB(cbData, token) == OC_STACK_OK)
+        {
+            return OC_STACK_OK;
+        }
     }
 
     OC_LOG(ERROR, TAG, PCF("Stack stop error"));
+    free(token);
     return OC_STACK_ERROR;
 }
 
@@ -397,7 +437,8 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     pointer->uri = str;
 
     // Set properties.  Set OC_ACTIVE
-    pointer->resourceProperties = resourceProperties | OC_ACTIVE;
+    pointer->resourceProperties = (OCResourceProperty) (resourceProperties
+            | OC_ACTIVE);
 
     // Add the resourcetype to the resource
     result = OCBindResourceTypeToResource((OCResourceHandle) pointer,
@@ -414,6 +455,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
         goto exit;
     }
+
+	// added [CL]
+	result = OCBindResourceHandler((OCResourceHandle) pointer, entityHandler);
+	if (result != OC_STACK_OK) {
+		OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
+		goto exit;
+	}
 
     *handle = pointer;
     result = OC_STACK_OK;
@@ -452,7 +500,7 @@ OCStackResult OCBindContainedResourceToResource(
     }
 
     // Use the handle to find the resource in the resource linked list
-    resource = findResource(containerHandle);
+    resource = findResource((OCResource *) containerHandle);
     if (!resource) {
         OC_LOG(ERROR, TAG, PCF("Resource not found"));
         return OC_STACK_INVALID_PARAM;
@@ -462,7 +510,7 @@ OCStackResult OCBindContainedResourceToResource(
     // If found, add it and return success
     for (i = 0; i < MAX_CONTAINED_RESOURCES; i++) {
         if (!resource->rsrcResources[i]) {
-            resource->rsrcResources[i] = addedResourceHandle;
+            resource->rsrcResources[i] = (OCResourceHandle) addedResourceHandle;
             OC_LOG(INFO, TAG, PCF("resource bound"));
             return OC_STACK_OK;
         }

@@ -25,6 +25,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __ANDROID__
     #include <android/log.h>
 #elif defined ARDUINO
@@ -136,5 +140,9 @@ typedef enum {
     #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
     #define OC_LOG_INIT()
 #endif
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif /* LOGGER_H_ */

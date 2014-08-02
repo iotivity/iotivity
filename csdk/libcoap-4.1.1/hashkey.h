@@ -14,6 +14,10 @@
 #ifndef _COAP_HASHKEY_H_
 #define _COAP_HASHKEY_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "str.h"
 
 typedef unsigned char coap_key_t[4];
@@ -53,5 +57,9 @@ void coap_hash_impl(const unsigned char *s, unsigned int len, coap_key_t h);
     memset((H), 0, sizeof(coap_key_t));		\
     coap_hash((H), (Str)->s, (Str)->length);	\
   }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _COAP_HASHKEY_H_ */

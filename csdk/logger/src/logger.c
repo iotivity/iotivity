@@ -58,7 +58,6 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
  * @param format - variadic log string
  */
 void OCLogv(LogLevel level, const char * tag, const char * format, ...) {
-#ifdef TB_LOG
     if (!format || !tag) {
         return;
     }
@@ -69,7 +68,6 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...) {
     vsnprintf(buffer, sizeof buffer - 1, format, args);
     va_end(args);
     OCLog(level, tag, buffer);
-#endif
 }
 
 /**
@@ -81,7 +79,6 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...) {
  * @param logStr - log string
  */
 void OCLog(LogLevel level, const char * tag, const char * logStr) {
-#ifdef TB_LOG
     if (!logStr || !tag) {
         return;
     }
@@ -91,7 +88,6 @@ void OCLog(LogLevel level, const char * tag, const char * logStr) {
     #elif defined __linux__
         printf("%s: %s: %s\n", LEVEL[level], tag, logStr);
     #endif
-#endif
 }
 
 /**
@@ -103,7 +99,6 @@ void OCLog(LogLevel level, const char * tag, const char * logStr) {
  * @param bufferSize - max number of byte in buffer
  */
 void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize) {
-#ifdef TB_LOG
     if (!buffer || !tag || (bufferSize == 0)) {
         return;
     }
@@ -126,7 +121,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
     if (bufferSize % 16) {
         OCLog(level, tag, lineBuffer);
     }
-#endif
 }
 
 #endif

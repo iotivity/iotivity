@@ -51,10 +51,12 @@ LDLIBS		+= -lcoap
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
 
 OCCOAP_SOURCES		:= $(OCCOAP_SRC)/occoap.c
+OCCOAP_SOURCES		+= $(OCCOAP_SRC)/occoaphelper.c
 
 OCTBSTACK_SOURCES	:= $(OCTBSTACK_SRC)/ocstack.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/occlientcb.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocserverrequest.c
+OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocresource.c
 
 SOURCES			:= $(CJSON_SOURCES)
 SOURCES			+= $(OCCOAP_SOURCES)
@@ -71,12 +73,15 @@ objdirs: $(ROOT_DIR)
 
 obj_build:
 	@echo "Building $@"
-	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/$(BUILD)/%, $(notdir $(source))));) # Output all *.o files to $(OBJ_DIR)/$(BUILD)
+	# Output all *.o files to $(OBJ_DIR)/$(BUILD)
+	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/$(BUILD)/%, $(notdir $(source))));) 
 
 liboctbstack.a:
 	@echo "Building $@" 
-	@cd $(OBJ_DIR)/$(BUILD) && ar -x $(LCOAP_DIR)/libcoap.a # Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	ar -r $@ $(OBJ_DIR)/$(BUILD)/*.o # Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
+	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
+	@cd $(OBJ_DIR)/$(BUILD) && ar -x $(LCOAP_DIR)/libcoap.a 
+	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
+	ar -r $@ $(OBJ_DIR)/$(BUILD)/*.o 
 
 .PHONY: clean print_vars
 
@@ -84,11 +89,13 @@ clean:	$(ROOT_DIR)
 	@echo "Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a
+	rm -rf $(OBJ_DIR)
 
 deepclean: $(ROOT_DIR)
 	@echo "Deep-Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a
+	rm -rf $(OBJ_DIR)
 	$(MAKE) clean -C $(LCOAP_DIR)
 
 print_vars:

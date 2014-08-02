@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include "ocstack.h"
+#include "ocresource.h"
 #include "ocstackinternal.h"
 #include "ocserverrequest.h"
 #include "debug.h"
@@ -35,7 +36,7 @@
 
 extern OCResource *headResource;
 
-OCStackResult processResourceDiscoverReq (const char *request, char *response,
+OCStackResult ProcessResourceDiscoverReq (const char *request, char *response,
                                  uint8_t filterOn, char *filterValue)
 {
     OCResource *resourcePtr = headResource;
@@ -45,16 +46,17 @@ OCStackResult processResourceDiscoverReq (const char *request, char *response,
     char *jsonStr;
     uint8_t encodeRes = 0;
 
+    OC_LOG_V(INFO, TAG, PCF("Entering ProcessResourceDiscoverReq"));
     ocObj = cJSON_CreateObject();
     cJSON_AddItemToObject (ocObj, OC_RSRVD_OC, pLoadObj = cJSON_CreateObject());
     cJSON_AddItemToObject (pLoadObj, OC_RSRVD_PAYLOAD, resArray = cJSON_CreateArray());
 
-    while (resourcePtr != NULL)
+    while (resourcePtr)
     {
         encodeRes = 0;
         if (filterOn == STACK_RES_DISCOVERY_RT_FILTER) {
             resourceTypePtr = resourcePtr->rsrcType;
-            while (resourceTypePtr != NULL) {
+            while (resourceTypePtr) {
                 if (strcmp (resourceTypePtr->resourcetypename, filterValue) == 0) {
                     encodeRes = 1;
                     break;
@@ -63,7 +65,7 @@ OCStackResult processResourceDiscoverReq (const char *request, char *response,
             }
         } else if (filterOn == STACK_RES_DISCOVERY_IF_FILTER) {
             interfacePtr = resourcePtr->rsrcInterface;
-            while (interfacePtr != NULL) {
+            while (interfacePtr) {
                 if (strcmp (interfacePtr->name, filterValue) == 0) {
                     encodeRes = 1;
                     break;
@@ -84,7 +86,7 @@ OCStackResult processResourceDiscoverReq (const char *request, char *response,
             // Add resource types
             cJSON_AddItemToObject (resObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
             resourceTypePtr = resourcePtr->rsrcType;
-            while (resourceTypePtr != NULL) {
+            while (resourceTypePtr) {
                 cJSON_AddItemToArray (rtArray,
                                       cJSON_CreateString(resourceTypePtr->resourcetypename));
                 resourceTypePtr = resourceTypePtr->next;
@@ -92,7 +94,7 @@ OCStackResult processResourceDiscoverReq (const char *request, char *response,
             // Add interface types
             cJSON_AddItemToObject (resObj, OC_RSRVD_INTERFACE, rtArray = cJSON_CreateArray());
             interfacePtr = resourcePtr->rsrcInterface;
-            while (interfacePtr != NULL) {
+            while (interfacePtr) {
                 cJSON_AddItemToArray (rtArray, cJSON_CreateString(interfacePtr->name));
                 interfacePtr = interfacePtr->next;
             }
@@ -110,22 +112,25 @@ OCStackResult processResourceDiscoverReq (const char *request, char *response,
     cJSON_Delete (ocObj);
     free (jsonStr);
 
+    OC_LOG_V(INFO, TAG, PCF("Exiting ProcessResourceDiscoverReq"));
     return OC_STACK_OK;
 }
 
-OCStackResult validateUrlQuery (char *url, char *query, uint8_t *filterOn, char **filterValue)
+OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
+                                uint8_t *filterOn, char **filterValue)
 {
     char *filterParam;
 
-    if (NULL == url)
+    OC_LOG_V(INFO, TAG, PCF("Exiting ValidateUrlQuery"));
+    if (!url)
         return OC_STACK_INVALID_URI;
 
-    if (strcmp (url, OC_RESOURCE_DISCOVERY_URI) == 0) {
+    if (strcmp ((char *)url, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0) {
         *filterOn = STACK_RES_DISCOVERY_NOFILTER;
-        if (*query != NULL) {
-            filterParam = strtok (query, "=");
+        if (query && *query) {
+            filterParam = strtok ((char *)query, "=");
             *filterValue = strtok (NULL, " ");
-            if (*filterValue == NULL) {
+            if (!(*filterValue)) {
                 return OC_STACK_INVALID_QUERY;
             } else if (strcmp (filterParam, OC_RSRVD_INTERFACE) == 0) {
                 // Resource discovery with interface filter
@@ -142,6 +147,7 @@ OCStackResult validateUrlQuery (char *url, char *query, uint8_t *filterOn, char 
         // Other URIs not yet supported
         return OC_STACK_INVALID_URI;
     }
+    OC_LOG_V(INFO, TAG, PCF("Exiting ValidateUrlQuery"));
     return OC_STACK_OK;
 }
 

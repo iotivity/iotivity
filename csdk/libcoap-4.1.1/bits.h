@@ -15,7 +15,13 @@
 #ifndef _BITS_H_
 #define _BITS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <stdint.h>
 
 /** 
@@ -75,5 +81,9 @@ bits_getb(const uint8_t *vec, size_t size, uint8_t bit) {
 
   return (*(vec + (bit >> 3)) & (1 << (bit & 0x07))) != 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _BITS_H_ */

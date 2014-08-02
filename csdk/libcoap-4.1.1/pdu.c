@@ -24,6 +24,10 @@
 #include "option.h"
 #include "encode.h"
 
+#ifdef WITH_ARDUINO
+#include "util.h"
+#endif
+
 #ifdef WITH_CONTIKI
 #include "memb.h"
 
@@ -92,8 +96,8 @@ coap_pdu_init(unsigned char type, unsigned char code,
     return NULL;
 
   /* size must be large enough for hdr */
-#ifdef WITH_POSIX
-  pdu = (coap_pdu_t*)coap_malloc(sizeof(coap_pdu_t) + size);
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+  pdu = (coap_pdu_t *)coap_malloc(sizeof(coap_pdu_t) + size);
 #endif
 #ifdef WITH_CONTIKI
   pdu = (coap_pdu_t *)memb_alloc(&pdu_storage);
@@ -141,7 +145,7 @@ coap_new_pdu() {
 
 void
 coap_delete_pdu(coap_pdu_t *pdu) {
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
   coap_free( pdu );
 #endif
 #ifdef WITH_LWIP
@@ -277,7 +281,7 @@ coap_get_data(coap_pdu_t *pdu, size_t *len, unsigned char **data) {
 #ifndef SHORT_ERROR_RESPONSE
 typedef struct {
   unsigned char code;
-  char *phrase;
+  const char *phrase;
 } error_desc_t;
 
 /* if you change anything here, make sure, that the longest string does not
@@ -306,7 +310,7 @@ error_desc_t coap_error[] = {
   { 0, NULL }			/* end marker */
 };
 
-char *
+const char *
 coap_response_phrase(unsigned char code) {
   int i;
   for (i = 0; coap_error[i].code; ++i) {

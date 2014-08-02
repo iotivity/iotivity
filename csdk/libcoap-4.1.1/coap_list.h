@@ -9,6 +9,10 @@
 #ifndef _COAP_LIST_H_
 #define _COAP_LIST_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct coap_linkedlistnode {
   struct coap_linkedlistnode *next;
   void *data;
@@ -41,5 +45,9 @@ void coap_delete_list(coap_list_t *queue);
  * new list node.
  */
 coap_list_t *coap_new_listnode(void *data, void (*delete_func)(void *) );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _COAP_LIST_H_ */

@@ -37,6 +37,7 @@ extern "C" {
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
+#define OC_COAP_SCHEME "coap://"
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -119,8 +120,6 @@ typedef struct rsrc_t {
 typedef struct {
     // resourceUrl will be filled in occoap using the path options in received request PDU
     unsigned char * resourceUrl;
-    // resourceUrl will be filled in occoap using the query options in received request PDU
-    unsigned char * query;
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
     // this structure will be passed to entity handler
@@ -139,9 +138,13 @@ typedef struct {
 // Internal function prototypes
 //-----------------------------------------------------------------------------
 
-OCStackResult OCStackHandleReceiveRequest(OCRequest * request);
-void OCStackHandleReceiveResponse(OCResponse * response);
+OCStackResult HandleStackRequests(OCRequest * request);
+void HandleStackResponses(OCResponse * response);
+int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr);
 
+// TODO: ultimately OCMalloc and OCFree should be defined in a different module
+void OCFree(void *ptr);
+void *OCMalloc(size_t size);
 
 #ifdef __cplusplus
 }

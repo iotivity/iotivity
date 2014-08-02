@@ -9,10 +9,16 @@
 #ifndef _COAP_ENCODE_H_
 #define _COAP_ENCODE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if (BSD >= 199103) || defined(WITH_CONTIKI)
 # include <string.h>
 #else
+#ifndef WITH_ARDUINO
 # include <strings.h>
+#endif
 #endif
 
 #define Nn 8  /* duplicate definition of N if built on sky motes */
@@ -48,5 +54,9 @@ unsigned int coap_decode_var_bytes(unsigned char *buf,unsigned int len);
  * val or 0 on error.
  */
 unsigned int coap_encode_var_bytes(unsigned char *buf, unsigned int val);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _COAP_ENCODE_H_ */
