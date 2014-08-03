@@ -35,7 +35,7 @@ typedef enum {
     STACK_RES_DISCOVERY_RT_FILTER
 } StackQueryTypes;
 
-OCStackResult ProcessResourceDiscoverReq (const char *request, char *response,
+OCStackResult ProcessResourceDiscoverReq (const unsigned char *request, unsigned char *response,
                                  uint8_t filterOn, char *filterValue);
 
 OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,

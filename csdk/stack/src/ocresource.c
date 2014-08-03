@@ -36,7 +36,7 @@ static const char * VIRTUAL_RSRCS[] = {
        "/oc/core/types/d",
 };
 
-TODO ("Does it make sense to make this method as inline");
+TODO ("Does it make sense to make this method as inline")
 const char * GetVirtualResourceUri( OCVirtualResources resource)
 {
     if (resource < OC_MAX_RESOURCES)

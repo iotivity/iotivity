@@ -39,7 +39,6 @@ extern "C" {
 #define OC_MULTICAST_PREFIX                  PCF("coap://224.0.1.187:5683")
 
 #define USE_RANDOM_PORT (0)
-#define MAX_TOKEN_LENGTH (8)
 #define MAX_RESPONSE_LENGTH (128)
 #define MAX_REQUEST_LENGTH (128)
 #define MAX_URI_LENGTH (64)
@@ -65,11 +64,12 @@ typedef enum {
  */
 typedef enum {
     OC_REST_NOMETHOD = 0,
-    OC_REST_GET      = (1 << 0),  // Read
-    OC_REST_PUT      = (1 << 1),  // Write
-    OC_REST_POST     = (1 << 2),  // Update
-    OC_REST_DELETE   = (1 << 3),  // Delete
-    OC_REST_OBSERVE  = (1 << 4)   // Register observe request
+    OC_REST_GET      = (1 << 0),      // Read
+    OC_REST_PUT      = (1 << 1),      // Write
+    OC_REST_POST     = (1 << 2),      // Update
+    OC_REST_DELETE   = (1 << 3),      // Delete
+    OC_REST_OBSERVE  = (1 << 4),      // Register observe request for most up date notifications ONLY.
+    OC_REST_OBSERVE_ALL  = (1 << 5)   // Register observe request for all notifications, including stale notifications.
 } OCMethod;
 
 /**
@@ -110,9 +110,9 @@ typedef enum {
     OC_STACK_INVALID_PORT,
     OC_STACK_INVALID_CALLBACK,
     OC_STACK_INVALID_METHOD,
+    OC_STACK_INVALID_PARAM,
     OC_STACK_NO_MEMORY,
     OC_STACK_COMM_ERROR,
-    OC_STACK_INVALID_PARAM,
     OC_STACK_NOTIMPL,
     OC_STACK_NO_RESOURCE, /* resource not found*/
     OC_STACK_RESOURCE_ERROR, /*ex: not supported method or interface*/
@@ -121,14 +121,14 @@ typedef enum {
 } OCStackResult;
 
 /**
+ * Handle to an @ref OCDoResource invocation.
+ */
+typedef void * OCDoHandle;
+
+/**
  * Handle to an OCResource object owned by the OCStack.
  */
 typedef void * OCResourceHandle;
-
-typedef struct {
-    uint8_t token[MAX_TOKEN_LENGTH];
-    size_t tokenLength;
-} OCToken;
 
 /**
  * Incoming requests handled by the server. Requests are passed in as a parameter to the @ref OCEntityHandler callback API.
@@ -143,8 +143,6 @@ typedef struct {
     OCMethod method;
     // reqJSON is retrieved from the payload of the received request PDU
     unsigned const char * reqJSONPayload;
-    // token is copied from the received request PDU
-    OCToken * token;
     // resJSON is allocated in the stack and will be used by entity handler to fill in its response
     unsigned char * resJSONPayload;
     // Length of maximum allowed response
@@ -159,6 +157,8 @@ typedef struct {
     OCStackResult result;
     // Address of remote server
     OCDevAddr * addr;
+    // If associated with observe, this will represent the sequence of notifications from server.
+    uint8_t sequenceNumber;
     // resJSONPayload is retrieved from the payload of the received request PDU
     unsigned  const char * resJSONPayload;
 }OCClientResponse;
@@ -192,8 +192,6 @@ typedef struct {
     void *context;
     OCClientResponseHandler cb;
 } OCCallbackData;
-
-
 
 /**
  * Application server implementations must implement this callback to consume requests OTA.
@@ -241,9 +239,10 @@ OCStackResult OCStop();
 OCStackResult OCProcess();
 
 /**
- * Discover OC resources.
+ * Discover or Perform requests on a specified resource (specified by that Resource's respective URI).
  *
- * @param method             - method to perform on the resource
+ * @param handle             - @ref OCDoHandle to refer to the request sent out on behalf of calling this API.
+ * @param method             - @ref OCMethod to perform on the resource
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource
  * @param request            - JSON encoded request
@@ -257,10 +256,19 @@ OCStackResult OCProcess();
  *     OC_STACK_INVALID_METHOD   - invalid resource method
  *     OC_STACK_INVALID_URI      - invalid required or reference URI
  */
-OCStackResult OCDoResource(OCMethod method, const char  *requiredUri, const char  *referenceUri,
+OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *requiredUri, const char  *referenceUri,
                 const char *request, OCQualityOfService qos, OCCallbackData *cbData);
 
-
+/**
+ * Cancel a request associated with a specific @ref OCDoResource invocation.
+ *
+ * @param handle - Used to identify a specific OCDoResource invocation.
+ *
+ * @return
+ *     OC_STACK_OK               - No errors; Success
+ *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
+ */
+OCStackResult OCCancel(OCDoHandle handle);
 
 /**
  * Create a resource.

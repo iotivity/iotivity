@@ -33,7 +33,6 @@
 // Typedefs
 //-----------------------------------------------------------------------------
 
-
 typedef enum {
     OC_COAP_OK = 0,
     OC_COAP_ERR
@@ -72,7 +71,7 @@ int OCInitCoAP(const char *address, uint16_t port, OCMode mode);
  *   0   - success
  *   TBD - TBD error
  */
-int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCToken * token,
+int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * token,
                      const char *Uri, const char *payload);
 
 
@@ -91,5 +90,6 @@ int OCStopCoAP();
  */
 int OCProcessCoAP();
 
+OCCoAPToken * OCGenerateCoAPToken();
 
 #endif /* OCCOAP_H_ */

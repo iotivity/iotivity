@@ -71,10 +71,10 @@ OCStackApplicationResult clientApplicationGETCb(void* ctx, OCClientResponse * cl
 		OCCallbackData cbData;
 		cbData.cb = clientApplicationPUTCb;
 		cbData.context = (void*)CTX_VAL;
-		//OCDoHandle handle;
+		OCDoHandle handle;
 
 		OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());	
-		if (OCDoResource(OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(), OC_NON_CONFIRMABLE, &cbData)
+		if (OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(), OC_NON_CONFIRMABLE, &cbData)
 				!= OC_STACK_OK) {
 			OC_LOG_V(ERROR, TAG, "OCStack resource error");
 			//reOC_LOG_Vturn 0;
@@ -89,6 +89,7 @@ OCStackApplicationResult clientApplicationCB(void* ctx,
         OCClientResponse * clientResponse) {
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
+    OCDoHandle handle;
 
     OC_LOG(INFO, TAG,
             "Entering clientApplicationCB (Application Layer CB)");
@@ -114,7 +115,7 @@ OCStackApplicationResult clientApplicationCB(void* ctx,
 	OCCallbackData cbData;
 	cbData.cb = clientApplicationGETCb;
 	cbData.context = (void*)CTX_VAL;
-	if (OCDoResource(OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData)
+	if (OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData)
 			!= OC_STACK_OK) {
 		OC_LOG(ERROR, TAG, "OCStack resource error");
 		//return 0;
@@ -130,6 +131,7 @@ int main() {
 	uint16_t port = USE_RANDOM_PORT;
 	uint8_t ifname[] = "eth0";
 	OCCallbackData cbData;
+    OCDoHandle handle;
 
 	/*Get Ip address on defined interface and initialize coap on it with random port number
 	 * this port number will be used as a source port in all coap communications*/
@@ -151,7 +153,7 @@ int main() {
 	strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
 	cbData.cb = clientApplicationCB;
 	cbData.context = (void*)CTX_VAL;
-	if (OCDoResource(OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData)
+	if (OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData)
 			!= OC_STACK_OK) {
 		OC_LOG(ERROR, TAG, "OCStack resource error");
 		return 0;

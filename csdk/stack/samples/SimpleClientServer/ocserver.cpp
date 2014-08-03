@@ -80,7 +80,6 @@ OCStackResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest
 	return OC_STACK_OK;
 }
 
-
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
 void handleSigInt(int signum) {
 	if (signum == SIGINT) {

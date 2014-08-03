@@ -164,11 +164,11 @@ OCStackResult FormOCEntityHandlerRequest(const coap_queue_t * rcvdRequest,
 }
 
 // Retrieve the token from the PDU
-OCStackResult RetrieveOCToken(const coap_queue_t * rcvdRequest,
-        OCToken * * rcvdTokenLoc) {
-    OCToken * rcvdToken = NULL;
+OCStackResult RetrieveOCCoAPToken(const coap_queue_t * rcvdRequest,
+        OCCoAPToken * * rcvdTokenLoc) {
+    OCCoAPToken * rcvdToken = NULL;
 
-    rcvdToken = (OCToken *) OCMalloc(sizeof(OCToken));
+    rcvdToken = (OCCoAPToken *) OCMalloc(sizeof(OCCoAPToken));
     if (!rcvdToken) {
         return OC_STACK_NO_MEMORY;
     }

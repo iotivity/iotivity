@@ -128,8 +128,8 @@ typedef struct {
 
 // following structure will be created in occoap and passed up the stack on the client side
 typedef struct {
-    // token is copied from the received response PDU
-    OCToken * token;
+    // handle is retrieved by comparing the token-handle pair in the PDU.
+    OCDoHandle * handle;
     // this structure will be passed to client
     OCClientResponse * clientResponse;
 } OCResponse;

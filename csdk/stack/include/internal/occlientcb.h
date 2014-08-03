@@ -31,7 +31,11 @@ typedef struct ClientCB {
     // callback context data
     void * context;
     //  when a response is recvd with this token, above callback will be invoked
-    OCToken * token;
+    OCCoAPToken * token;
+    // Invocation handle tied to original call to OCDoResource()
+    OCDoHandle * handle;
+    // This is used to determine if all responses should be consumed or not. (For now, only pertains to OC_REST_OBSERVE_ALL Vs. OC_REST_OBSERVE functionality)
+    OCMethod method;
     // next node in this list
     struct ClientCB    *next;
 } ClientCB;
@@ -41,15 +45,21 @@ typedef struct ClientCB {
  *
  * This method is used to add a client callback method in cbList.
  *
+ * @param[out] clientCB
+ *              The resulting node from making this call. Null if out of memory.
  * @param[in] cb
  *              address to client callback function.
- * @param[out] token
- *              address to token.
+ * @param[in] token
+ *              identifier for OTA CoAP comms.
+ * @param[in] handle
+ *              Masked in the public API as an 'invocation handle' - Used for callback management.
  *
- * @retval 0 for Success, otherwise some error value
+ * @brief If the handle you're looking for does not exist, the stack will reply with a RST message.
+ *
+ * @retval OC_STACK_OK for Success, otherwise some error value
  */
 //------------------------------------------------------------------------
-OCStackResult AddClientCB(OCCallbackData *cbData, OCToken * token);
+OCStackResult AddClientCB(ClientCB* clientCB, OCCallbackData *cbData, OCCoAPToken * token, OCDoHandle * handle, OCMethod method);
 
 //-- DeleteClientCB -----------------------------------------------------------
 /** @ingroup ocstack
@@ -70,11 +80,15 @@ void DeleteClientCB(ClientCB *cbNode);
  *
  * @param[in] token
  *              token to search for.
+ * @param[in] handle
+ *              handle to search for.
+ *
+ * @brief You can search by token OR by handle. Not both.
  *
  * @retval address of the node if found, otherwise NULL
  */
 //------------------------------------------------------------------------
-ClientCB* GetClientCB(OCToken * token);
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle);
 
 //-- DeleteClientCBList -----------------------------------------------------------
 /** @ingroup ocstack

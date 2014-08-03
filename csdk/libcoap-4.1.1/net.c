@@ -428,6 +428,7 @@ coap_new_context(const coap_address_t *listen_addr) {
 
     return c;
 #endif
+    return NULL;
 }
 
 void coap_free_context(coap_context_t *context) {
@@ -485,6 +486,7 @@ int coap_join_wellknown_group(coap_context_t *ctx,
     }
     return 0;
 #endif
+    return 0;
 }
 
 int coap_option_check_critical(coap_context_t *ctx, coap_pdu_t *pdu,
@@ -503,7 +505,7 @@ int coap_option_check_critical(coap_context_t *ctx, coap_pdu_t *pdu,
          * the largest known option, we know that everything beyond is
          * bad.
          */
-        if (opt_iter.type & 0x01
+        if ((opt_iter.type & 0x01)
                 && coap_option_getb(ctx->known_options, opt_iter.type) < 1) {
             debug("unknown critical option %d\n", opt_iter.type);
 
@@ -1125,6 +1127,7 @@ coap_new_error_response(coap_pdu_t *request, unsigned char code,
         case 0x0e:
             size++;
             /* fall through */
+            continue;
         case 0x0d:
             size++;
             break;

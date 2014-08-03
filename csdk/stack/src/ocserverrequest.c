@@ -36,7 +36,7 @@
 
 extern OCResource *headResource;
 
-OCStackResult ProcessResourceDiscoverReq (const char *request, char *response,
+OCStackResult ProcessResourceDiscoverReq (const unsigned char *request, unsigned char *response,
                                  uint8_t filterOn, char *filterValue)
 {
     OCResource *resourcePtr = headResource;

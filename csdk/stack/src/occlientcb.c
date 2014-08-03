@@ -29,30 +29,49 @@
 
 static struct ClientCB *cbList = NULL;
 
-OCStackResult AddClientCB(OCCallbackData* cbData, OCToken * token) {
+OCStackResult AddClientCB(ClientCB* clientCB, OCCallbackData* cbData, OCCoAPToken * token, OCDoHandle * handle, OCMethod method) {
     ClientCB *cbNode;
     cbNode = (ClientCB*) OCMalloc(sizeof(ClientCB));
     if (cbNode) {
         cbNode->callBack = cbData->cb;
         cbNode->context = cbData->context;
         cbNode->token = token;
+        cbNode->handle = handle;
+        cbNode->method = method;
         LL_APPEND(cbList, cbNode);
+        clientCB = cbNode;
         return OC_STACK_OK;
     }
+    clientCB = NULL;
     return OC_STACK_NO_MEMORY;
 }
 
 void DeleteClientCB(ClientCB * cbNode) {
-    LL_DELETE(cbList, cbNode);
-    OCFree(cbNode->token);
-    OCFree(cbNode);
+    if(cbNode) {
+        LL_DELETE(cbList, cbNode);
+        if(cbNode->token) {
+            OCFree(cbNode->token);
+            cbNode->token = NULL;
+        }
+        OCFree(cbNode);
+        cbNode = NULL;
+    }
 }
 
-ClientCB* GetClientCB(OCToken *token) {
-    ClientCB* out;
-    LL_FOREACH(cbList, out) {
-        if((out->token->tokenLength == token->tokenLength) && (memcmp(out->token->token, token->token, token->tokenLength) == 0) ) {
-            return out;
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle) {
+    ClientCB* out = NULL;
+    if(token) {
+        LL_FOREACH(cbList, out) {
+            if((out->token->tokenLength == token->tokenLength) && (memcmp(out->token->token, token->token, token->tokenLength) == 0) ) {
+                return out;
+            }
+        }
+    }
+    else if(handle) {
+        LL_FOREACH(cbList, out) {
+            if(memcmp(out->handle, handle, sizeof(OCDoHandle)) == 0) {
+                return out;
+            }
         }
     }
     OC_LOG(INFO, MOD_NAME, PCF("Callback Not found !!"));

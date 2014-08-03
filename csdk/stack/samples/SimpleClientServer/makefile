@@ -31,10 +31,10 @@ INC_DIRS	+= -I$(LCOAP_INC)
 INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 
-CC_FLAGS.debug 		:= -O0 -g3 -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
-    					-Wextra -Wno-variadic-macros -pedantic $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
-CC_FLAGS.release	:= -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-    					-Wextra -Wno-variadic-macros $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
+CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
+                        -pedantic $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
+CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
+                        $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
     					
 LDLIBS		+= -loctbstack
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)

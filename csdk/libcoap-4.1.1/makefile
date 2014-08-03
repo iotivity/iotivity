@@ -46,10 +46,9 @@ else
    $(error Wrong value for PLATFORM !!)
 endif
 
-CC_FLAGS.debug := -O0 -g3 -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
-	-Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DTB_LOG
-CC_FLAGS.release := -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
-	-Wextra -Wno-variadic-macros -pedantic -std=gnu99
+CC_FLAGS.debug := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions -pedantic \
+-std=gnu99 -DTB_LOG
+CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions -std=gnu99 \
 
 CFLAGS		+= $(CC_FLAGS.$(BUILD))
 

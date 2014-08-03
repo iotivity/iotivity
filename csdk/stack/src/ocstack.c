@@ -78,8 +78,8 @@ OCStackResult HandleStackRequests(OCRequest * request) {
         if (result == OC_STACK_OK)
         {
             result = ProcessResourceDiscoverReq(
-                    (const char*) request->entityHandlerRequest->reqJSONPayload,
-                    (char *) request->entityHandlerRequest->resJSONPayload, filterOn,
+                    (const unsigned char*) request->entityHandlerRequest->reqJSONPayload,
+                    (unsigned char *) request->entityHandlerRequest->resJSONPayload, filterOn,
                     filterValue);
         }
     }
@@ -110,7 +110,7 @@ void HandleStackResponses(OCResponse * response) {
         OC_LOG(DEBUG, TAG, "The response has an error, should we do anything?");
     }
 
-    cbNode = GetClientCB(response->token);
+    cbNode = GetClientCB(NULL, response->handle);
     if (cbNode) {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
         result = cbNode->callBack(cbNode->context, response->clientResponse);
@@ -161,6 +161,7 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr) {
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
 
+OCDoHandle *generateInvocationHandle();
 static void initResources();
 static void insertResource(OCResource *resource);
 static OCResource *findResource(OCResource *resource);
@@ -269,14 +270,15 @@ OCStackResult OCStop() {
 }
 
 /**
- * Discover OC resources.
+ * Discover or Perform requests on a specified resource (specified by that Resource's respective URI).
  *
- * @param method             - method to perform on the resource
+ * @param handle             - @ref OCDoHandle to refer to the request sent out on behalf of calling this API.
+ * @param method             - @ref OCMethod to perform on the resource
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource
  * @param request            - JSON encoded request
  * @param qos                - quality of service
- * @param asyncApplicationCB - asynchronous callback function that is invoked
+ * @param cbData             - struct that contains asynchronous callback function that is invoked
  *                             by the stack when discovery or resource interaction is complete
  *
  * @return
@@ -286,11 +288,13 @@ OCStackResult OCStop() {
  *     OC_STACK_INVALID_URI      - invalid required or reference URI
  */
 
-OCStackResult OCDoResource(OCMethod method, const char *requiredUri,
+OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
                            const char *referenceUri, const char *request,
                            OCQualityOfService qos, OCCallbackData *cbData)
 {
-    OCToken * token;
+    OCDoHandle * _handle;
+    OCCoAPToken * _token;
+    ClientCB *clientCB = NULL;
     (void) referenceUri;
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
@@ -299,12 +303,22 @@ OCStackResult OCDoResource(OCMethod method, const char *requiredUri,
     VERIFY_NON_NULL(cbData, FATAL, OC_STACK_INVALID_CALLBACK);
     VERIFY_NON_NULL(cbData->cb, FATAL, OC_STACK_INVALID_CALLBACK);
 
+    _handle = generateInvocationHandle();
+    *handle = *_handle;
+    _token = OCGenerateCoAPToken();
+    if(AddClientCB(clientCB, cbData, _token, handle, method) != OC_STACK_OK) {
+        return OC_STACK_NO_MEMORY;
+    }
+
     switch (method)
     {
         case OC_REST_GET:
         case OC_REST_PUT:
+        case OC_REST_OBSERVE:
+        case OC_REST_OBSERVE_ALL:
             break;
         default:
+            DeleteClientCB(clientCB);
             return OC_STACK_INVALID_METHOD;
     }
 
@@ -312,26 +326,36 @@ OCStackResult OCDoResource(OCMethod method, const char *requiredUri,
     // Validate required URI
     VERIFY_NON_NULL(requiredUri, FATAL, OC_STACK_INVALID_URI);
 
-    // Generate token here, it will be deleted when the transaction is deleted
-    token = (OCToken *) malloc(sizeof(OCToken));
-    VERIFY_NON_NULL(token, FATAL, OC_STACK_NO_MEMORY);
-
-    token->tokenLength = MAX_TOKEN_LENGTH;
-    OCFillRandomMem(token->token, token->tokenLength);
-    OC_LOG_BUFFER(INFO,TAG, token->token, token->tokenLength);
-
     // Make call to OCCoAP layer
-    if (OCDoCoAPResource(method, qos, token, requiredUri, request) == OC_COAP_OK) {
+    if (OCDoCoAPResource(method, qos, _token, requiredUri, request) == OC_COAP_OK) {
         OC_LOG(INFO, TAG, "Done with this function");
-        if (AddClientCB(cbData, token) == OC_STACK_OK)
-        {
-            return OC_STACK_OK;
-        }
+        return OC_STACK_OK;
     }
 
     OC_LOG(ERROR, TAG, PCF("Stack stop error"));
-    free(token);
+    DeleteClientCB(clientCB);
     return OC_STACK_ERROR;
+}
+
+/**
+ * Cancel a request associated with a specific @ref OCDoResource invocation.
+ *
+ * @param handle - Used to identify a specific OCDoResource invocation.
+ *
+ * @return
+ *     OC_STACK_OK               - No errors; Success
+ *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
+ */
+OCStackResult OCCancel(OCDoHandle handle) {
+    if(!handle) {
+        return OC_STACK_INVALID_PARAM;
+    }
+    ClientCB *clientCB = GetClientCB(NULL, handle);
+    if(clientCB) {
+        DeleteClientCB(clientCB);
+        return OC_STACK_OK;
+    }
+    return OC_STACK_INVALID_PARAM;
 }
 
 /**
@@ -455,13 +479,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
         goto exit;
     }
-
-	// added [CL]
-	result = OCBindResourceHandler((OCResourceHandle) pointer, entityHandler);
-	if (result != OC_STACK_OK) {
-		OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
-		goto exit;
-	}
+    
+    // added [CL]
+    result = OCBindResourceHandler((OCResourceHandle) pointer, entityHandler);
+    if (result != OC_STACK_OK) {
+        OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
+        goto exit;
+    }
 
     *handle = pointer;
     result = OC_STACK_OK;
@@ -1046,6 +1070,19 @@ OCStackResult OCNotifyObservers(OCResourceHandle handle) {
 //-----------------------------------------------------------------------------
 // Private internal function definitions
 //-----------------------------------------------------------------------------
+/**
+ * Generate handle of OCDoResource invocation for callback management.
+ */
+OCDoHandle *generateInvocationHandle() {
+    OCDoHandle *handle = NULL;
+    uint8_t val = sizeof(uint8_t[MAX_TOKEN_LENGTH]);
+    // Generate token here, it will be deleted when the transaction is deleted
+    handle = (OCDoHandle *) malloc(sizeof(uint8_t[MAX_TOKEN_LENGTH]));
+    memset(handle, 0, sizeof(uint8_t[MAX_TOKEN_LENGTH]));
+    OCFillRandomMem((uint8_t*)handle, val);
+
+    return handle;
+}
 
 /**
  * Initialize resource data structures, variables, etc.
@@ -1308,6 +1345,8 @@ void *OCMalloc(size_t size) {
 
 void OCFree(void *ptr) {
     TODO ("This should be moved into an ocmalloc dir and implemented as a separate OC module");
-    free(ptr);
+    if(ptr) {
+        free(ptr);
+    }
 }
 

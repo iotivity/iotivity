@@ -32,6 +32,13 @@
 #include <limits.h>
 #include <ctype.h>
 
+#define MAX_TOKEN_LENGTH (8)
+
+typedef struct {
+    uint8_t token[MAX_TOKEN_LENGTH];
+    size_t tokenLength;
+} OCCoAPToken;
+
 // Convert OCStack code to CoAP code
 uint8_t OCToCoAPResponseCode(OCStackResult result);
 
@@ -60,8 +67,8 @@ OCStackResult FormOCEntityHandlerRequest(const coap_queue_t * rcvdRequest,
         unsigned char * bufRes, unsigned char * query);
 
 // Internal function to retrieve a Token from received coap pdu
-OCStackResult RetrieveOCToken(const coap_queue_t * rcvdRequest,
-        OCToken * * rcvdTokenLoc);
+OCStackResult RetrieveOCCoAPToken(const coap_queue_t * rcvdRequest,
+        OCCoAPToken * * rcvdTokenLoc);
 
 // Internal function to create OCResponse struct at the client from a received coap pdu
 OCStackResult FormOCResponse(const coap_queue_t * rcvdResponse,

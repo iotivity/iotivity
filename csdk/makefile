@@ -42,7 +42,8 @@ INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
 
-CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic -DTB_LOG
+CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic \
+			-DTB_LOG
 CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -std=c99 -fpic
 
 CFLAGS		+= $(CC_FLAGS.$(BUILD)) -DWITH_POSIX $(INC_DIRS)
