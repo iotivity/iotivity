@@ -111,12 +111,14 @@ typedef enum {
     OC_STACK_INVALID_CALLBACK,
     OC_STACK_INVALID_METHOD,
     OC_STACK_INVALID_PARAM,
+    OC_STACK_INVALID_OBSERVE_PARAM,
     OC_STACK_NO_MEMORY,
     OC_STACK_COMM_ERROR,
     OC_STACK_NOTIMPL,
     OC_STACK_NO_RESOURCE, /* resource not found*/
     OC_STACK_RESOURCE_ERROR, /*ex: not supported method or interface*/
     OC_STACK_SLOW_RESOURCE,
+    OC_STACK_NO_OBSERVERS, /* resource has no registered observers */
     OC_STACK_ERROR
 } OCStackResult;
 

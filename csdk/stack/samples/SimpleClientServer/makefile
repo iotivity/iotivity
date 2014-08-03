@@ -36,7 +36,7 @@ CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-ex
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
                         $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
     					
-LDLIBS		+= -loctbstack
+LDLIBS		+= -loctbstack -lpthread
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
 PROGRAMS	+= ocserver

@@ -24,19 +24,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
 #include <ocstack.h>
 #include <logger.h>
-
 
 char *getResult(OCStackResult result);
 
 #define TAG PCF("ocserver")
 
 int gQuitFlag = 0;
+int gLEDUnderObservation = 0;
 void createLEDResource();
 typedef struct LEDRESOURCE{
 	OCResourceHandle handle;
-	bool power;
+	bool state;
+    int power;
 } LEDResource;
 
 static LEDResource LED;
@@ -47,6 +49,7 @@ static unsigned char responsePayloadPut[] = "{\"oc\": {\"payload\": {\"state\" :
 
 OCStackResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
 	const char* typeOfMessage;
+
 	switch (flag) {
 		case OC_INIT_FLAG:
 			typeOfMessage = "OC_INIT_FLAG";
@@ -61,7 +64,7 @@ OCStackResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest
 			typeOfMessage = "UNKNOWN";
 	}
 	OC_LOG_V(INFO, TAG, "Receiving message type: %s", typeOfMessage);
-	if(entityHandlerRequest){ //[CL]
+	if(entityHandlerRequest && flag == OC_REQUEST_FLAG){ //[CL]
 	if(OC_REST_GET == entityHandlerRequest->method)
 			//entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char*>(const_cast<unsigned char*> (responsePayloadGet.c_str()));
 			entityHandlerRequest->resJSONPayload = responsePayloadGet;
@@ -73,7 +76,9 @@ OCStackResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest
 			//responsePayloadGet = responsePayloadPut; // just a bad hack!
 			}
 
-	}
+	} else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG) {
+        gLEDUnderObservation = 1;
+    }
 
 	//OC_LOG_V(INFO, TAG, "/nReceiving message type:/n/t %s. /n/nWith request:/n/t %s", typeOfMessage, request);
 
@@ -87,12 +92,35 @@ void handleSigInt(int signum) {
 	}
 }
 
+void * ChangeLEDRepresentation (void *param)
+{
+    (void)param;
+    OCStackResult result = OC_STACK_ERROR;
+
+    while (1)
+    {
+        sleep (15);
+        LED.power += 5;
+        if (gLEDUnderObservation)
+        {
+	        OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", LED.power);
+            result = OCNotifyObservers (LED.handle);
+            printf ("==========> Result from stack: %s\n", getResult(result));
+            if (OC_STACK_NO_OBSERVERS == result)
+            {
+                gLEDUnderObservation = 0;
+            }
+        }
+    }
+}
+
 int main() {
 	OC_LOG(DEBUG, TAG, "OCServer is starting...");
 	uint8_t addr[20] = {0};
 	uint8_t* paddr = NULL;
 	uint16_t port = USE_RANDOM_PORT;
 	uint8_t ifname[] = "eth0";
+    pthread_t threadId;
 
 	/*Get Ip address on defined interface and initialize coap on it with random port number
 	 * this port number will be used as a source port in all coap communications*/
@@ -113,6 +141,11 @@ int main() {
 	 */
 	createLEDResource();
 
+    /*
+     * Create a thread for changing the representation of the LED
+     */
+    pthread_create (&threadId, NULL, ChangeLEDRepresentation, (void *)NULL);
+
 	// Break from loop with Ctrl-C
 	OC_LOG(INFO, TAG, "Entering ocserver main loop...");
 	signal(SIGINT, handleSigInt);
@@ -121,7 +154,7 @@ int main() {
 			OC_LOG(ERROR, TAG, "OCStack process error");
 			return 0;
 		}
-		sleep(1);
+		sleep(3);
 	}
 
 	OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
@@ -133,7 +166,7 @@ int main() {
 	return 0;
 }
 void createLEDResource() {
-	LED.power = false;
+	LED.state = false;
 	OCStackResult res = OCCreateResource(&LED.handle,
 			"core.led",
 			"state:oc.bt.b;power:oc.bt.i",
@@ -190,6 +223,9 @@ char *getResult(OCStackResult result) {
         break;
     case OC_STACK_SLOW_RESOURCE:
         strcat(resString, "OC_STACK_SLOW_RESOURCE");
+        break;
+    case OC_STACK_NO_OBSERVERS:
+        strcat(resString, "OC_STACK_NO_OBSERVERS");
         break;
     case OC_STACK_ERROR:
         strcat(resString, "OC_STACK_ERROR");

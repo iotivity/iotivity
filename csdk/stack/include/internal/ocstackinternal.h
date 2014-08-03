@@ -29,6 +29,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "ocstack.h"
+#include "occoaptoken.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,7 +115,21 @@ typedef struct rsrc_t {
     // NOTE: Methods supported by this resource should be based on the interface targeted
     // i.e. look into the interface structure based on the query request Can be removed here; place holder for the note above
     /* method_t methods; */
+    // Sequence number for observable resources. Per the CoAP standard it is a 24 bit value.
+    uint32_t sequenceNum;
 } OCResource;
+
+/* Vijay: TODO add comments */
+typedef struct {
+    // xxxxxxxxxxxxxxxx
+    unsigned char *option;
+    // xxxxxxxxxxxxxxxx
+    OCDevAddr *subAddr;
+    // xxxxxxxxxxxxxxxx
+    uint8_t *coapToken;
+    // xxxxxxxxxxxxxxxx
+    size_t coapTokenLen;
+} OCObserveReq;
 
 // following structure will be created in occoap and passed up the stack on the server side
 typedef struct {
@@ -122,6 +137,8 @@ typedef struct {
     unsigned char * resourceUrl;
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
+    // this structure points to the information for processing observe option 
+    OCObserveReq *observe;
     // this structure will be passed to entity handler
     OCEntityHandlerRequest * entityHandlerRequest;
 } OCRequest;

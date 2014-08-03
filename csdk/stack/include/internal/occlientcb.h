@@ -23,6 +23,7 @@
 #define OC_CLIENT_CB
 
 #include <ocstack.h>
+#include <occoaptoken.h>
 #include <occoap.h>
 
 typedef struct ClientCB {

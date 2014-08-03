@@ -27,17 +27,11 @@
 //-----------------------------------------------------------------------------
 #include "coap.h"
 #include "ocstack.h"
+#include "occoaptoken.h"
 #include "ocstackinternal.h"
 #include <unistd.h>
 #include <limits.h>
 #include <ctype.h>
-
-#define MAX_TOKEN_LENGTH (8)
-
-typedef struct {
-    uint8_t token[MAX_TOKEN_LENGTH];
-    size_t tokenLength;
-} OCCoAPToken;
 
 // Convert OCStack code to CoAP code
 uint8_t OCToCoAPResponseCode(OCStackResult result);

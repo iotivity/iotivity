@@ -65,6 +65,7 @@ OCStackApplicationResult clientApplicationGETCb(void* ctx, OCClientResponse * cl
 	if(ctx == (void*)CTX_VAL) {
 		OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
 		OC_LOG_V(INFO, TAG, "JSON = %s =============> Discovered", clientResponse->resJSONPayload);
+#if 0
 	//* Make a GET query*/
 		std::ostringstream getQuery;
 		getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
@@ -79,6 +80,7 @@ OCStackApplicationResult clientApplicationGETCb(void* ctx, OCClientResponse * cl
 			OC_LOG_V(ERROR, TAG, "OCStack resource error");
 			//reOC_LOG_Vturn 0;
 		}
+#endif
 	}
 	return OC_STACK_KEEP_TRANSACTION;
 }
@@ -108,7 +110,19 @@ OCStackApplicationResult clientApplicationCB(void* ctx,
             "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
             clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
             remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
-
+   
+	std::ostringstream obsReg;
+	obsReg << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
+	OCCallbackData cbData;
+	cbData.cb = clientApplicationGETCb;
+	cbData.context = (void*)CTX_VAL;
+	if (OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData)
+			!= OC_STACK_OK) {
+		OC_LOG(ERROR, TAG, "OCStack resource error");
+		//return 0;
+	}
+	return OC_STACK_KEEP_TRANSACTION;
+#if 0
 	//* Make a GET query*/
 	std::ostringstream getQuery;
 	getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
@@ -122,6 +136,7 @@ OCStackApplicationResult clientApplicationCB(void* ctx,
 	}
 
 	return OC_STACK_KEEP_TRANSACTION;
+#endif
 }
 //This function is called back when a resource is discovered.
 
@@ -169,7 +184,7 @@ int main() {
 			return 0;
 		}
 
-		sleep(1);
+		sleep(3);
 	}
 	OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 

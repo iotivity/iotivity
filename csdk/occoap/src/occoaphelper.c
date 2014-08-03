@@ -69,6 +69,7 @@ OCStackResult FormOCRequest(const coap_queue_t * rcvdRequest,
         unsigned char * queryBuf) {
 
     OCRequest * request = NULL;
+    OCObserveReq *obsReq = NULL;
     size_t bufLen;
     size_t optLen;
     coap_opt_filter_t filter;
@@ -128,6 +129,46 @@ OCStackResult FormOCRequest(const coap_queue_t * rcvdRequest,
     }
     // delete last '&'
     queryBuf[bufLen ? (bufLen - 1) : (bufLen)] = '\0';
+
+    // fill in observe, if present
+    request->observe = NULL;
+    coap_option_filter_clear(filter);
+    coap_option_setb(filter, COAP_OPTION_OBSERVE);
+    coap_option_iterator_init(rcvdRequest->pdu, &opt_iter, filter);
+    while ((option = coap_option_next(&opt_iter))) {
+        printf ("\n\n ******************* OBS ********** %d, %s\n\n\n", COAP_OPT_LENGTH(option), COAP_OPT_VALUE(option));
+        request->observe = (OCObserveReq *)OCMalloc(sizeof(OCObserveReq));
+        if (request->observe)
+        {
+            obsReq = request->observe;
+            obsReq->option = NULL;
+            obsReq->option = (unsigned char *)OCMalloc(COAP_OPT_LENGTH(option)+1);
+            if (obsReq->option)
+            {
+                memcpy(obsReq->option, COAP_OPT_VALUE(option),COAP_OPT_LENGTH(option));
+                (obsReq->option)[COAP_OPT_LENGTH(option)] = '\0';
+            }
+            else
+            {
+                OCFree (request->observe);
+                return OC_STACK_NO_MEMORY;
+            }
+            /*
+            // Vijay: TODO: Remove this code block before final commit
+            // TODO: Should we copy sizeof OCDevAddr or introspect the addr for size
+            memcpy (&(obsReq->subAddr), (OCDevAddr *) &(rcvdRequest->remote),sizeof(OCDevAddr));
+            coapTok = obsReq->coapTok;
+            coapTok->tokenLength = rcvdRequest->pdu->hdr->token_length;
+            memcpy(coapTok->token, rcvdRequest->pdu->hdr->token, coapTok->tokenLength);
+            */
+            obsReq->subAddr = (OCDevAddr *)&(rcvdRequest->remote);
+            obsReq->coapToken = rcvdRequest->pdu->hdr->token;
+            obsReq->coapTokenLen = rcvdRequest->pdu->hdr->token_length;
+        } else {
+            return OC_STACK_NO_MEMORY;
+        }
+    }
+    OC_LOG_V(INFO, TAG, "Observe option %d", request->observe);
 
     *requestLoc = request;
     return OC_STACK_OK;

@@ -25,6 +25,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "ocstack.h"
+#include "occoaptoken.h"
 #include "ocstackinternal.h"
 #include "occoaphelper.h"
 #include <stdint.h>
@@ -91,5 +92,10 @@ int OCStopCoAP();
 int OCProcessCoAP();
 
 OCCoAPToken * OCGenerateCoAPToken();
+/* Vijay: TODO: Add description */
+
+int OCCoAPSendMessage (OCDevAddr *dstAddr, OCStackResult msgCode, 
+                       OCQualityOfService qos, OCCoAPToken * token,
+                       const char *payload, uint32_t seqNum);
 
 #endif /* OCCOAP_H_ */

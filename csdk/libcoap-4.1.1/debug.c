@@ -265,7 +265,8 @@ coap_show_pdu(const coap_pdu_t *pdu) {
 	opt_iter.type == COAP_OPTION_URI_HOST ||
 	opt_iter.type == COAP_OPTION_LOCATION_PATH ||
 	opt_iter.type == COAP_OPTION_LOCATION_QUERY ||
-	  opt_iter.type == COAP_OPTION_URI_PATH ||
+    opt_iter.type == COAP_OPTION_URI_PATH ||
+    opt_iter.type == COAP_OPTION_OBSERVE ||
 	opt_iter.type == COAP_OPTION_URI_QUERY) {
       encode = 0;
     } else {

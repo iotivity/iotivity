@@ -148,11 +148,11 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     }
 
     OC_LOG_V(INFO, TAG, "TID %d", tid);
-    OC_LOG(INFO, TAG, "Deleting PDU");
     // unlike stock libcoap (deletion in handle_request in net.c), we are deleting the response here
     // in the future, the response might be queued for SLOW resources
     if (pdu->hdr->type != COAP_MESSAGE_CON || tid == COAP_INVALID_TID)
     {
+        OC_LOG(INFO, TAG, "Deleting PDU");
         coap_delete_pdu(pdu);
     }
 
@@ -329,6 +329,8 @@ int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * toke
     int res;
     uint8_t coapMsgType;
     uint8_t coapMethod;
+    // Vijay: TODO Observation registration is hardcoded here - change
+    unsigned char obs[] = "0";
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoCoAPResource"));
 
@@ -407,6 +409,9 @@ int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * toke
         case OC_REST_OBSERVE_ALL:
         case OC_REST_OBSERVE:
             coapMethod = COAP_REQUEST_GET;
+#if 0
+            // Joey's add for observation registration: not working.
+            // Vijay's change below
             buflen = BUF_SIZE;
             buf = _buf;
             res = coap_split_query(uri.query.s, uri.query.length, buf, &buflen);
@@ -419,6 +424,10 @@ int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * toke
 
                 buf += COAP_OPT_SIZE(buf);
             }
+#endif
+            coap_insert(&optList, CreateNewOptionNode(COAP_OPTION_OBSERVE,
+                        strlen((const char *)obs), (obs)), OrderOptions);
+
             break;
         default:
             coapMethod = 0;
@@ -456,6 +465,49 @@ exit:
         coap_delete_pdu(pdu);
     }
     return ret;
+}
+
+int OCCoAPSendMessage (OCDevAddr *dstAddr, OCStackResult msgCode, 
+                       OCQualityOfService qos, OCCoAPToken * token,
+                       const char *payload, uint32_t seqNum)
+{
+    coap_list_t *optList = NULL;
+    coap_pdu_t *pdu;
+    unsigned char tempBuf[BUF_SIZE_ENCODE_OPTION];
+    uint8_t coapMsgType = COAP_MESSAGE_NON;
+    coap_tid_t tid = COAP_INVALID_TID;
+
+    OC_LOG(INFO, TAG, PCF("Entering OCCoAPSendMessage"));
+
+    printf ("Payload: %s\n", payload);
+    OC_LOG_V(INFO, TAG, "OCStack payload: %s", payload);
+    coap_insert(&optList, CreateNewOptionNode(COAP_OPTION_CONTENT_TYPE,
+                coap_encode_var_bytes(tempBuf, COAP_MEDIATYPE_APPLICATION_JSON),
+                tempBuf), OrderOptions);
+    coap_insert(&optList, CreateNewOptionNode(COAP_OPTION_MAXAGE,
+                coap_encode_var_bytes(tempBuf, 0x2ffff), tempBuf), OrderOptions);
+    coap_insert(&optList, CreateNewOptionNode(COAP_OPTION_OBSERVE,
+                coap_encode_var_bytes(tempBuf, seqNum), tempBuf), OrderOptions);
+
+    pdu = GenerateCoAPPdu (coapMsgType, OCToCoAPResponseCode(msgCode),
+                           coap_new_message_id(gCoAPCtx), token->tokenLength, token->token,
+                           (unsigned char*) payload, optList);
+    VERIFY_NON_NULL(pdu);
+    coap_show_pdu(pdu);
+
+    tid = coap_send(gCoAPCtx, (coap_address_t*)dstAddr, pdu);
+    OC_LOG_V(INFO, TAG, "TID %d", tid);
+    if (pdu->hdr->type != COAP_MESSAGE_CON || tid == COAP_INVALID_TID)
+    {
+        OC_LOG(INFO, TAG, "Deleting PDU");
+        coap_delete_pdu(pdu);
+        pdu = NULL;
+    }
+    return OC_COAP_OK;
+
+exit:
+    coap_delete_list(optList);
+    return OC_COAP_ERR;
 }
 
 /**

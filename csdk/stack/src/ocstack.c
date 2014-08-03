@@ -27,6 +27,7 @@
 #include "ocserverrequest.h"
 #include "ocresource.h"
 #include "occlientcb.h"
+#include "ocobserve.h"
 #include "ocrandom.h"
 #include "debug.h"
 #include "occoap.h"
@@ -89,6 +90,11 @@ OCStackResult HandleStackRequests(OCRequest * request) {
         if (resource)
         {
             result = resource->entityHandler(OC_REQUEST_FLAG, request->entityHandlerRequest);
+            if (request->observe != NULL)
+            {
+                printf ("\n *** An observe is included in message \n");
+                ProcessObserveRequest (resource, request);
+            }
         }
         else
         {
@@ -326,6 +332,10 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     // Validate required URI
     VERIFY_NON_NULL(requiredUri, FATAL, OC_STACK_INVALID_URI);
 
+    if (method == OC_REST_OBSERVE)
+    {
+        printf ("\n\n ********* OBSERVE REGISTRATION ******* \n\n");
+    }
     // Make call to OCCoAP layer
     if (OCDoCoAPResource(method, qos, _token, requiredUri, request) == OC_COAP_OK) {
         OC_LOG(INFO, TAG, "Done with this function");
@@ -1048,7 +1058,6 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle) {
 /**
  * Notify observers that an observed value has changed.
  *
- *   **NOTE: This API has NOT been finalized!!!**
  *
  * @param handle - handle of resource
  *
@@ -1057,14 +1066,23 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle) {
  *     OC_STACK_ERROR - stack not initialized
  */
 OCStackResult OCNotifyObservers(OCResourceHandle handle) {
+    OCResource *resPtr = NULL;
+    OCStackResult result;
 
-    TODO ("This API has NOT been finalized");
+    OC_LOG(INFO, TAG, PCF("====>Entering OCNotifyObservers"));
 
-    OC_LOG(INFO, TAG, PCF("Entering OCNotifyObservers"));
+    VERIFY_NON_NULL(handle, ERROR, OC_STACK_ERROR);
 
-    (void) handle;
-
-    return OC_STACK_NOTIMPL;
+    // Verify that the resource exists
+    printf ("====> Finding resource\n");
+    resPtr = findResource ((OCResource *) handle);
+    if (NULL == resPtr)
+    {
+        return OC_STACK_NO_RESOURCE;
+    } else {
+        result = SendObserverNotification (handle, resPtr);
+        return result;
+    }
 }
 
 //-----------------------------------------------------------------------------
