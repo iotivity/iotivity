@@ -9,6 +9,10 @@
 #ifndef _PDU_H_
 #define _PDU_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "config.h"
 #include "coap_list.h"
 #include "uri.h"
@@ -105,7 +109,7 @@
  * @return A zero-terminated string describing the error, or @c NULL
  * if not found.
  */
-char *coap_response_phrase(unsigned char code);
+const char *coap_response_phrase(unsigned char code);
 
 #define COAP_ERROR_PHRASE_LENGTH 32 /**< maximum length of error phrase */
 
@@ -342,5 +346,9 @@ int coap_add_data(coap_pdu_t *pdu, unsigned int len, const unsigned char *data);
  * destroyed with the pdu.
  */
 int coap_get_data(coap_pdu_t *pdu, size_t *len, unsigned char **data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _PDU_H_ */

@@ -26,6 +26,7 @@
 //-----------------------------------------------------------------------------
 #include "ocstack.h"
 #include "ocstackinternal.h"
+#include "occoaphelper.h"
 #include <stdint.h>
 
 //-----------------------------------------------------------------------------
@@ -52,7 +53,7 @@ typedef enum {
  * @param mode
  *     Host device is client, server, or client-server
  *
-  * @return
+ * @return
  *   0   - success
  *   TBD - TBD error
  */
@@ -62,14 +63,17 @@ int OCInitCoAP(const char *address, uint16_t port, OCMode mode);
  * Discover OC resources
  *
  * @param method          - method to perform on the resource
+ * @param qos             - CON or NON requests
+ * @param token           - pointer to the token data structure
  * @param Uri             - URI of the resource to interact with
- * @param asyncReturnFunc - asynchronous callback function that is invoked
- *                          by the stack when discovery or resource interaction is complete
+ * @param payload         - CoAP PDU payload
+ *
  * @return
  *   0   - success
  *   TBD - TBD error
  */
-int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCToken * token, const char *Uri);
+int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCToken * token,
+                     const char *Uri, const char *payload);
 
 
 /**

@@ -18,26 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef OC_SERVER_REQUEST_H
-#define OC_SERVER_REQUEST_H
+#include "ocstack.h"
+#include "ocstackinternal.h"
 
-#define OC_RSRVD_OC             "oc"
-#define OC_RSRVD_PAYLOAD        "payload"
-#define OC_RSRVD_HREF           "href"
-#define OC_RSRVD_RESOURCE_TYPE  "rt"
-#define OC_RSRVD_INTERFACE      "if"
-#define OC_RSRVD_OBSERVABLE     "obs"
-#define OC_RESOURCE_OBSERVABLE   1
+const char * GetVirtualResourceUri( OCVirtualResources resource);
+OCResource *FindResourceByUri(const char* resourceUri);
+uint8_t IsVirtualResource(const char* resourceUri);
 
-typedef enum {
-    STACK_RES_DISCOVERY_NOFILTER = 0,
-    STACK_RES_DISCOVERY_IF_FILTER,
-    STACK_RES_DISCOVERY_RT_FILTER
-} StackQueryTypes;
-
-OCStackResult ProcessResourceDiscoverReq (const char *request, char *response,
-                                 uint8_t filterOn, char *filterValue);
-
-OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
-                                uint8_t *filterOn, char **filterValue);
-#endif //OC_SERVER_REQUEST_H

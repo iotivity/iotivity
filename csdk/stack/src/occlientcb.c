@@ -29,9 +29,9 @@
 
 static struct ClientCB *cbList = NULL;
 
-int AddClientCB(OCCallbackData* cbData, OCToken * token) {
+OCStackResult AddClientCB(OCCallbackData* cbData, OCToken * token) {
     ClientCB *cbNode;
-    cbNode = (ClientCB*)malloc(sizeof(ClientCB));
+    cbNode = (ClientCB*) OCMalloc(sizeof(ClientCB));
     if (cbNode) {
         cbNode->callBack = cbData->cb;
         cbNode->context = cbData->context;
@@ -44,8 +44,8 @@ int AddClientCB(OCCallbackData* cbData, OCToken * token) {
 
 void DeleteClientCB(ClientCB * cbNode) {
     LL_DELETE(cbList, cbNode);
-    free(cbNode->token);
-    free(cbNode);
+    OCFree(cbNode->token);
+    OCFree(cbNode);
 }
 
 ClientCB* GetClientCB(OCToken *token) {

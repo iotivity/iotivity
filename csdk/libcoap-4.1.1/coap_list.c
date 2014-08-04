@@ -15,6 +15,10 @@
 #include "mem.h"
 #include "coap_list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int
 coap_insert(coap_list_t **queue, coap_list_t *node,
 	    int (*order)(void *, void *node) ) {
@@ -85,4 +89,8 @@ coap_new_listnode(void *data, void (*delete_func)(void *) ) {
   node->delete_func = delete_func;
   return node;
 }
+
+#ifdef __cplusplus
+}
+#endif
 

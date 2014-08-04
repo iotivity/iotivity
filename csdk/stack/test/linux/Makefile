@@ -44,7 +44,7 @@ VPATH = $(OCCOAP_DIR)/src:$(OCSTACK_DIR)/src
 
 PROGRAMS = ocserver occlient
 
-SOURCES:= occlient.c ocserver.c ocstack.c occoap.c occlientcb.c ocserverrequest.c
+SOURCES:= occlient.c ocserver.c ocstack.c occoap.c occlientcb.c ocserverrequest.c occoaphelper.c
 
 OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 
@@ -54,10 +54,10 @@ all: $(PROGRAMS)
 	$(CC) -c $(CFLAGS) $(CFLAGS_ANDROID) $(INC_DIRS) $< -o $@
 
 ##Added -lm as needed by json calling floor()
-occlient: occlient.o ocstack.o occoap.o occlientcb.o ocserverrequest.o $(DEP_LIBS)
+occlient: occlient.o ocstack.o occoap.o occlientcb.o ocserverrequest.o occoaphelper.o $(DEP_LIBS)
 	$(CC) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $^ -o $@ -lm
 
-ocserver: ocserver.o ocstack.o occoap.o occlientcb.o ocserverrequest.o $(DEP_LIBS)
+ocserver: ocserver.o ocstack.o occoap.o occlientcb.o ocserverrequest.o occoaphelper.o $(DEP_LIBS)
 	$(CC) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $^ -o $@ -lm
 
 install: all

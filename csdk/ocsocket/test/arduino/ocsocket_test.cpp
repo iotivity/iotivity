@@ -24,7 +24,7 @@
 #include <logger.h>
 
 //Mac address of my ethernet shield
-static uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0F, 0x24, 0xCC };
+static uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0F, 0x2B, 0x72 };
 //IP address of the peer whom I wish to send some data
 static uint8_t PEER_IP_ADDR[] = {192, 168, 1, 125};
 static uint8_t MULTICAST_IP_ADDR[] = {224, 0, 1, 187};

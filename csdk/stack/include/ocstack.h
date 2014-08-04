@@ -21,8 +21,6 @@
 #ifndef OCSTACK_H_
 #define OCSTACK_H_
 
-#include <netinet/ip.h>
-
 #include <ocsocket.h>
 #include <logger.h>
 #include <ocrandom.h>
@@ -36,8 +34,9 @@ extern "C" {
 //-----------------------------------------------------------------------------
 
 //May want to refactor this in upcoming sprints. Don't want to expose to application layer that lower level stack is using CoAP.
-#define OC_WELL_KNOWN_QUERY                  PCF("coap://224.0.1.187:5683/.well-known/core")
+#define OC_WELL_KNOWN_QUERY                  PCF("coap://224.0.1.187:5683/oc/core")
 #define OC_EXPLICIT_DEVICE_DISCOVERY_URI     PCF("coap://224.0.1.187:5683/oc/core?rt=core.led")
+#define OC_MULTICAST_PREFIX                  PCF("coap://224.0.1.187:5683")
 
 #define USE_RANDOM_PORT (0)
 #define MAX_TOKEN_LENGTH (8)
@@ -50,6 +49,16 @@ extern "C" {
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
+
+/**
+ * OC Virtual resources supported by every OC device
+ */
+typedef enum {
+    OC_WELL_KNOWN_URI= 0,    // "/oc/core"
+    OC_DEVICE_URI,           // "/oc/core/d"
+    OC_RESOURCE_TYPES_URI,   // "/oc/core/d/type"
+    OC_MAX_RESOURCES         // Max items in the list
+} OCVirtualResources;
 
 /**
  * Standard RESTful HTTP Methods
@@ -128,6 +137,8 @@ typedef struct {
 typedef struct {
     // Associated resource
     OCResourceHandle resource;
+    // resource query send by client
+    unsigned char * query;
     // the REST method retrieved from received request PDU
     OCMethod method;
     // reqJSON is retrieved from the payload of the received request PDU
@@ -148,7 +159,7 @@ typedef struct {
     OCStackResult result;
     // Address of remote server
     OCDevAddr * addr;
-    // reqJSON is retrieved from the payload of the received request PDU
+    // resJSONPayload is retrieved from the payload of the received request PDU
     unsigned  const char * resJSONPayload;
 }OCClientResponse;
 
@@ -167,17 +178,28 @@ typedef enum {
 //-----------------------------------------------------------------------------
 // Callback function definitions
 //-----------------------------------------------------------------------------
-typedef OCStackApplicationResult (* OCClientApplicationCBType)(void *ctx, OCClientResponse * clientResponse);
 
+/**
+ * Client applications implement this callback to consume responses received from Servers.
+ */
+typedef OCStackApplicationResult (* OCClientResponseHandler)(void *context, OCClientResponse * clientResponse);
+
+
+/*
+ * This info is passed from application to OC Stack when initiating a request to Server
+ */
 typedef struct {
     void *context;
-    OCClientApplicationCBType cb;
+    OCClientResponseHandler cb;
 } OCCallbackData;
+
+
 
 /**
  * Application server implementations must implement this callback to consume requests OTA.
+ * TODO: Need a clear explanation that the Entity handler callback needs to fill in the data inside the OCEntityHandlerRequest and then simply return from the callback.
  */
-typedef void (*OCEntityHandler) (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest);
+typedef OCStackResult (*OCEntityHandler) (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest);
 
 
 //-----------------------------------------------------------------------------
@@ -236,7 +258,6 @@ OCStackResult OCProcess();
  *     OC_STACK_INVALID_URI      - invalid required or reference URI
  */
 OCStackResult OCDoResource(OCMethod method, const char  *requiredUri, const char  *referenceUri,
-//                const char *request, OCQualityOfService qos, OCClientApplicationCBType clientApplicationCB);
                 const char *request, OCQualityOfService qos, OCCallbackData *cbData);
 
 

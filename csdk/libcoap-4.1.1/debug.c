@@ -35,6 +35,10 @@
 #include "net/uip-debug.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static coap_log_t maxlog = LOG_WARNING;	/* default maximum log level */
 
 coap_log_t
@@ -373,3 +377,6 @@ coap_log_impl(coap_log_t level, const char *format, ...) {
   va_end(ap);
 }
 #endif /* WITH_CONTIKI */
+#ifdef __cplusplus
+}
+#endif

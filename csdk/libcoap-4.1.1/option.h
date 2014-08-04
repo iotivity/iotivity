@@ -15,6 +15,10 @@
 #ifndef _OPTION_H_
 #define _OPTION_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bits.h"
 #include "pdu.h"
 
@@ -318,5 +322,9 @@ unsigned char *coap_opt_value(coap_opt_t *opt);
 #define COAP_OPT_VALUE(opt) coap_opt_value((coap_opt_t *)opt)
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OPTION_H_ */

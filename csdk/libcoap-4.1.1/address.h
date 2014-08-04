@@ -14,6 +14,10 @@
 #ifndef _COAP_ADDRESS_H_
 #define _COAP_ADDRESS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "config.h"
 
 #ifdef HAVE_ASSERT_H
@@ -27,11 +31,11 @@
 
 #include <string.h>
 #include <stdint.h>
+#include "ocsocket.h"
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-
 #ifdef HAVE_NETINET_IN_H
 #include <sys/socket.h>
 #endif
@@ -70,6 +74,7 @@ typedef struct coap_address_t {
 
 #define _coap_is_mcast_impl(Address) uip_is_addr_mcast(&((Address)->addr))
 #endif /* WITH_CONTIKI */
+
 #ifdef WITH_POSIX
 
 #pragma pack(push, 1)
@@ -123,7 +128,41 @@ case  AF_INET6:
   }
  return 0;
 }
+
 #endif /* WITH_POSIX */
+
+#ifdef WITH_ARDUINO
+typedef OCDevAddr coap_address_t;
+
+static inline int 
+_coap_address_equals_impl(const coap_address_t *a,
+        const coap_address_t *b) {
+    uint32_t i;
+
+    if ((a == NULL) || (b == NULL))
+        return 0;
+
+    if (a->size != b->size)
+        return 0;
+
+    for (i = 0; i < a->size; i++)
+    {
+        if (a->addr[i] != b->addr[i])
+            return 0;
+    }
+    return 1;
+}
+
+static inline int
+_coap_is_mcast_impl(const coap_address_t *a) {
+    if (!a)
+        return 0;
+
+    /* TODO */
+    return 1;
+}
+
+#endif /* WITH_ARDUINO */
 
 /** 
  * Resets the given coap_address_t object @p addr to its default
@@ -162,4 +201,8 @@ coap_is_mcast(const coap_address_t *a) {
   return a && _coap_is_mcast_impl(a);
 }
  
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _COAP_ADDRESS_H_ */

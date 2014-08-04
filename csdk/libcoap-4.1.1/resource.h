@@ -16,6 +16,11 @@
 
 #include "config.h"
 #include "t_list.h"
+#include "async.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
@@ -35,7 +40,6 @@
 #else /* WITH_CONTIKI */
 #endif /* WITH_CONTIKI */
 #include "hashkey.h"
-#include "async.h"
 #include "str.h"
 #include "pdu.h"
 #include "net.h"
@@ -320,5 +324,9 @@ void coap_delete_observer(coap_resource_t *resource,
 void coap_check_notify(coap_context_t *context);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _COAP_RESOURCE_H_ */

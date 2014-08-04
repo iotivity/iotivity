@@ -108,12 +108,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(INC_DIR)/%.h $(H_FILES)
 
 # occlientcb
 $(OBJ_DIR)/occlientcb.o: $(SRC_DIR)/occlientcb.c $(H_FILES)
-	echo "** Building ocstack" 
-	mkdir -p ./$(OBJ_DIR)
-	$(CC) $(CC_FLAGS) $(INC) -c -o $@ $<	
-		
-$(OBJ_DIR)/ocserverrequest.o: $(SRC_DIR)/ocserverrequest.c $(H_FILES)
-	echo "** Building ocstack" 
+	echo "** Building occlientcb" 
 	mkdir -p ./$(OBJ_DIR)
 	$(CC) $(CC_FLAGS) $(INC) -c -o $@ $<	
 		
