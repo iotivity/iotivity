@@ -24,7 +24,6 @@
 
 #include <ocstack.h>
 #include <occoaptoken.h>
-#include <occoap.h>
 
 typedef struct ClientCB {
     // callback method defined in application address space
@@ -34,9 +33,11 @@ typedef struct ClientCB {
     //  when a response is recvd with this token, above callback will be invoked
     OCCoAPToken * token;
     // Invocation handle tied to original call to OCDoResource()
-    OCDoHandle * handle;
+    OCDoHandle handle;
     // This is used to determine if all responses should be consumed or not. (For now, only pertains to OC_REST_OBSERVE_ALL Vs. OC_REST_OBSERVE functionality)
     OCMethod method;
+    // This is the sequence identifier the server applies to the invocation tied to 'handle'.
+    uint32_t sequenceNumber;
     // next node in this list
     struct ClientCB    *next;
 } ClientCB;
@@ -60,7 +61,7 @@ typedef struct ClientCB {
  * @retval OC_STACK_OK for Success, otherwise some error value
  */
 //------------------------------------------------------------------------
-OCStackResult AddClientCB(ClientCB* clientCB, OCCallbackData *cbData, OCCoAPToken * token, OCDoHandle * handle, OCMethod method);
+OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData *cbData, OCCoAPToken * token, OCDoHandle handle, OCMethod method);
 
 //-- DeleteClientCB -----------------------------------------------------------
 /** @ingroup ocstack

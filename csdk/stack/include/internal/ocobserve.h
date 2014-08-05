@@ -26,17 +26,17 @@
 #define OC_RESOURCE_OBSERVE_REGISTER     "0"
 #define OC_RESOURCE_OBSERVE_DEREGISTER   "1"
 
-/* Vijay: TODO add comments */
+/* This information is stored for each registerd observer */
 typedef struct ObserveResourceServer {
-    // xxxxxxxxxxxxxxxx
+    // URI of observed resource
     unsigned char *resUri;
-    // xxxxxxxxxxxxxxxxx
+    // Query
     unsigned char *query;
-    // xxxxxxxxxxxxxxxxx
-    OCCoAPToken *coapTok;
-    // xxxxxxxxxxxxxxxxx
+    // CoAP token for the observe request
+    OCCoAPToken *token;
+    // Resource handle
     OCResource *resource;
-    // xxxxxxxxxxxxxxxxx
+    // IP address & port of client registered for observe
     OCDevAddr *addr;
     // next node in this list
     struct ObserveResourceServer *next;
@@ -45,5 +45,7 @@ typedef struct ObserveResourceServer {
 OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request);
 
 OCStackResult SendObserverNotification (OCResourceHandle handle, OCResource *resPtr);
+
+void DeleteObserverList();
 
 #endif //OC_OBSERVE_H

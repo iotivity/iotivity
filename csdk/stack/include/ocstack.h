@@ -160,7 +160,7 @@ typedef struct {
     // Address of remote server
     OCDevAddr * addr;
     // If associated with observe, this will represent the sequence of notifications from server.
-    uint8_t sequenceNumber;
+    uint32_t sequenceNumber;
     // resJSONPayload is retrieved from the payload of the received request PDU
     unsigned  const char * resJSONPayload;
 }OCClientResponse;
@@ -184,7 +184,7 @@ typedef enum {
 /**
  * Client applications implement this callback to consume responses received from Servers.
  */
-typedef OCStackApplicationResult (* OCClientResponseHandler)(void *context, OCClientResponse * clientResponse);
+typedef OCStackApplicationResult (* OCClientResponseHandler)(void *context, OCDoHandle handle, OCClientResponse * clientResponse);
 
 
 /*

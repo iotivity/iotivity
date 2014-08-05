@@ -1520,6 +1520,23 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                         == 0)
                     goto cleanup;
                 break;
+            case COAP_MESSAGE_RST:
+               /* We have sent something the receiver disliked, so we remove
+                * not only the transaction but also the subscriptions we might
+                * have. */
+
+               coap_log(LOG_ALERT, "got RST for message %u\n",
+                       ntohs(rcvd->pdu->hdr->id));
+
+               // Handing this up, hoping there's enough info to remove an observe if at all possible.
+               handle_response(context, rcvd);
+
+               /* find transaction in sendqueue to stop retransmission */
+               coap_remove_from_queue(&context->sendqueue, rcvd->id, &sent);
+
+               if (sent)
+               coap_handle_rst(context, sent);
+               goto cleanup;
             default:
                 debug(
                         "TODO: Need to handle other message types in coap_dispatch");

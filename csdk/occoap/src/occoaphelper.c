@@ -34,7 +34,7 @@
 // Helper Functions
 //=============================================================================
 
-//convert OCStack code to CoAP code
+// Convert OCStack code to CoAP code
 uint8_t OCToCoAPResponseCode(OCStackResult result)
 {
     uint8_t ret;
@@ -48,20 +48,58 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
             ret = COAP_RESPONSE_400;
             break;
 
-        case OC_STACK_INVALID_METHOD :
-            ret = COAP_RESPONSE_405;
+        case OC_STACK_NO_RESOURCE :
+            ret = COAP_RESPONSE_404;
             break;
 
-        case OC_STACK_NO_RESOURCE :
+        case OC_STACK_INVALID_METHOD :
             ret = COAP_RESPONSE_405;
             break;
 
         default:
             ret = COAP_RESPONSE_500;
-
     }
     return ret;
 }
+
+
+// Convert CoAP code to OCStack code
+OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
+{
+    OCStackResult ret;
+    int decimal;
+    switch(coapCode)
+    {
+        case COAP_RESPONSE_200 :
+            ret = OC_STACK_OK;
+            break;
+
+        case COAP_RESPONSE_400 :
+            ret = OC_STACK_INVALID_QUERY;
+            break;
+
+        case COAP_RESPONSE_404 :
+            ret = OC_STACK_NO_RESOURCE;
+            break;
+
+        case COAP_RESPONSE_405 :
+            ret = OC_STACK_INVALID_METHOD;
+            break;
+
+        default:
+            decimal = ((coapCode >> 5) * 100) + (coapCode && 31);
+            if (decimal >= 200 && decimal <= 231)
+            {
+                ret = OC_STACK_OK;
+            }
+            else
+            {
+                ret = OC_STACK_ERROR;
+            }
+    }
+    return ret;
+}
+
 
 // Form the OCRequest struct
 OCStackResult FormOCRequest(const coap_queue_t * rcvdRequest,
@@ -136,7 +174,6 @@ OCStackResult FormOCRequest(const coap_queue_t * rcvdRequest,
     coap_option_setb(filter, COAP_OPTION_OBSERVE);
     coap_option_iterator_init(rcvdRequest->pdu, &opt_iter, filter);
     while ((option = coap_option_next(&opt_iter))) {
-        printf ("\n\n ******************* OBS ********** %d, %s\n\n\n", COAP_OPT_LENGTH(option), COAP_OPT_VALUE(option));
         request->observe = (OCObserveReq *)OCMalloc(sizeof(OCObserveReq));
         if (request->observe)
         {
@@ -151,20 +188,25 @@ OCStackResult FormOCRequest(const coap_queue_t * rcvdRequest,
             else
             {
                 OCFree (request->observe);
+                OCFree (request);
                 return OC_STACK_NO_MEMORY;
             }
-            /*
-            // Vijay: TODO: Remove this code block before final commit
-            // TODO: Should we copy sizeof OCDevAddr or introspect the addr for size
-            memcpy (&(obsReq->subAddr), (OCDevAddr *) &(rcvdRequest->remote),sizeof(OCDevAddr));
-            coapTok = obsReq->coapTok;
-            coapTok->tokenLength = rcvdRequest->pdu->hdr->token_length;
-            memcpy(coapTok->token, rcvdRequest->pdu->hdr->token, coapTok->tokenLength);
-            */
+            obsReq->token = (OCCoAPToken *)OCMalloc(sizeof(MAX_TOKEN_LENGTH));
+            if(obsReq->token)
+            {
+                memcpy (&obsReq->token->token, rcvdRequest->pdu->hdr->token, 
+                        rcvdRequest->pdu->hdr->token_length);
+                obsReq->token->tokenLength = rcvdRequest->pdu->hdr->token_length;
+            }
+            else
+            {
+                OCFree (request->observe);
+                OCFree (request);
+                return OC_STACK_NO_MEMORY;
+            }
             obsReq->subAddr = (OCDevAddr *)&(rcvdRequest->remote);
-            obsReq->coapToken = rcvdRequest->pdu->hdr->token;
-            obsReq->coapTokenLen = rcvdRequest->pdu->hdr->token_length;
         } else {
+            OCFree (request);
             return OC_STACK_NO_MEMORY;
         }
     }
@@ -233,7 +275,10 @@ OCStackResult FormOCResponse(const coap_queue_t * rcvdResponse,
 
 OCStackResult FormOCClientResponse(const coap_queue_t * rcvdResponse,
         OCClientResponse * * clientResponseLoc) {
-    //OCClientResponse * * clientResponseLoc, unsigned char * resBuf) {
+
+    coap_opt_filter_t filter;
+    coap_opt_iterator_t opt_iter;
+    coap_opt_t *option;
     unsigned char * pRes = NULL;
     size_t bufLen = 0;
 
@@ -242,21 +287,26 @@ OCStackResult FormOCClientResponse(const coap_queue_t * rcvdResponse,
     if (!clientResponse) {
         return OC_STACK_NO_MEMORY;
     }
-
+    clientResponse->sequenceNumber = 0;
     clientResponse->result = OC_STACK_ERROR;
     clientResponse->addr = (OCDevAddr *) &(rcvdResponse->remote);
+    // fill in observe, if present
+    coap_option_filter_clear(filter);
+    coap_option_setb(filter, COAP_OPTION_OBSERVE);
+    coap_option_iterator_init(rcvdResponse->pdu, &opt_iter, filter);
+    while ((option = coap_option_next(&opt_iter))) {
+        if (option)
+        {
+            memcpy(&clientResponse->sequenceNumber, COAP_OPT_VALUE(option),COAP_OPT_LENGTH(option));
+        }
+        else
+        {
+            return OC_STACK_NO_MEMORY;
+        }
+    }
 
     coap_get_data(rcvdResponse->pdu, &bufLen, &pRes);
     clientResponse->resJSONPayload = pRes;
-    //clientResponse->resJSONPayloadLen = bufLen;
-
-    /*if (bufLen >= MAX_RESPONSE_LENGTH) {
-     return OC_STACK_NO_MEMORY;
-     }
-
-     memcpy(resBuf, pRes, bufLen);
-     resBuf[bufLen] = '\0';
-     clientResponse->resJSONPayload = resBuf;*/
 
     *clientResponseLoc = clientResponse;
     return OC_STACK_OK;
@@ -314,29 +364,29 @@ int OrderOptions(void *a, void *b) {
 
 //a function to create a coap option
 coap_list_t *
-CreateNewOptionNode(unsigned short key, unsigned int length,
-        unsigned char *data) {
-    coap_option *option;
+CreateNewOptionNode(unsigned short key, unsigned int length, unsigned char *data)
+{
+    coap_option *option = NULL;
     coap_list_t *node;
 
+    VERIFY_NON_NULL(data);
     option = coap_malloc(sizeof(coap_option) + length);
-    if (!option) {
-        goto exit;
-    }
+    VERIFY_NON_NULL(option);
 
     COAP_OPTION_KEY(*option) = key;
     COAP_OPTION_LENGTH(*option) = length;
-    VERIFY_NON_NULL(data);
     memcpy(COAP_OPTION_DATA(*option), data, length);
 
     /* we can pass NULL here as delete function since option is released automatically  */
     node = coap_new_listnode(option, NULL);
 
-    if (node) {
+    if (node)
+    {
         return node;
     }
 
-    exit: OC_LOG(ERROR,TAG,"new_option_node: malloc: was not created");
+exit:
+    OC_LOG(ERROR,TAG,"new_option_node: malloc: was not created");
     coap_free(option);
     return NULL;
 }

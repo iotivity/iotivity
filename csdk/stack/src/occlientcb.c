@@ -20,6 +20,7 @@
 
 
 #include "occlientcb.h"
+#include "occoap.h"
 #include "utlist.h"
 #include "logger.h"
 #include <string.h>
@@ -29,7 +30,7 @@
 
 static struct ClientCB *cbList = NULL;
 
-OCStackResult AddClientCB(ClientCB* clientCB, OCCallbackData* cbData, OCCoAPToken * token, OCDoHandle * handle, OCMethod method) {
+OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData, OCCoAPToken * token, OCDoHandle handle, OCMethod method) {
     ClientCB *cbNode;
     cbNode = (ClientCB*) OCMalloc(sizeof(ClientCB));
     if (cbNode) {
@@ -38,21 +39,20 @@ OCStackResult AddClientCB(ClientCB* clientCB, OCCallbackData* cbData, OCCoAPToke
         cbNode->token = token;
         cbNode->handle = handle;
         cbNode->method = method;
+        cbNode->sequenceNumber = 0;
         LL_APPEND(cbList, cbNode);
-        clientCB = cbNode;
+        *clientCB = cbNode;
         return OC_STACK_OK;
     }
-    clientCB = NULL;
+    *clientCB = NULL;
     return OC_STACK_NO_MEMORY;
 }
 
 void DeleteClientCB(ClientCB * cbNode) {
     if(cbNode) {
         LL_DELETE(cbList, cbNode);
-        if(cbNode->token) {
-            OCFree(cbNode->token);
-            cbNode->token = NULL;
-        }
+        OCFree(cbNode->token);
+        OCFree(cbNode->handle);
         OCFree(cbNode);
         cbNode = NULL;
     }

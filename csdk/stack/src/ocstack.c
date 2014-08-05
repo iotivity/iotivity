@@ -31,9 +31,6 @@
 #include "ocrandom.h"
 #include "debug.h"
 #include "occoap.h"
-#include "cJSON.h"
-#include <string.h>
-#include <stdlib.h>
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -89,16 +86,17 @@ OCStackResult HandleStackRequests(OCRequest * request) {
         OCResource* resource = FindResourceByUri((const char*)request->resourceUrl);
         if (resource)
         {
+            request->entityHandlerRequest->resource = (OCResourceHandle)resource;
             result = resource->entityHandler(OC_REQUEST_FLAG, request->entityHandlerRequest);
-            if (request->observe != NULL)
-            {
-                printf ("\n *** An observe is included in message \n");
-                ProcessObserveRequest (resource, request);
-            }
         }
         else
         {
+            OC_LOG(INFO, TAG, "Resource Not found");
             result = OC_STACK_NO_RESOURCE;
+        }
+        if (request->observe != NULL)
+        {
+            result = ProcessObserveRequest (resource, request);
         }
     }
 
@@ -107,24 +105,16 @@ OCStackResult HandleStackRequests(OCRequest * request) {
 
 //This function will be called back by occoap layer when a response is received
 void HandleStackResponses(OCResponse * response) {
-    ClientCB * cbNode = NULL;
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
-    OC_LOG(INFO, TAG, "Entering OCHandleClientReceiveResponse (OCStack Layer)");
+    OC_LOG(INFO, TAG, "Entering HandleStackResponses (OCStack Layer)");
 
-    TODO ("What does the stack does in case of error");
-    if (response->clientResponse->result != OC_STACK_OK) {
-        OC_LOG(DEBUG, TAG, "The response has an error, should we do anything?");
-    }
-
-    cbNode = GetClientCB(NULL, response->handle);
-    if (cbNode) {
+    if (response->cbNode) {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
-        result = cbNode->callBack(cbNode->context, response->clientResponse);
+        result = response->cbNode->callBack(response->cbNode->context, response->cbNode->handle, response->clientResponse);
         if (result == OC_STACK_DELETE_TRANSACTION) {
-            DeleteClientCB(cbNode);
+            DeleteClientCB(response->cbNode);
         }
     }
-    TODO ("What does the stack does in case of error");
 }
 
 int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr) {
@@ -167,7 +157,7 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr) {
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
 
-OCDoHandle *generateInvocationHandle();
+static OCDoHandle GenerateInvocationHandle();
 static void initResources();
 static void insertResource(OCResource *resource);
 static OCResource *findResource(OCResource *resource);
@@ -265,6 +255,8 @@ OCStackResult OCStop() {
 
     // Make call to OCCoAP layer
     if (OCStopCoAP() == 0) {
+        // Remove all observers
+        DeleteObserverList();
         // Remove all the client callbacks
         DeleteClientCBList();
         stackState = OC_STACK_UNINITIALIZED;
@@ -298,8 +290,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
                            const char *referenceUri, const char *request,
                            OCQualityOfService qos, OCCallbackData *cbData)
 {
-    OCDoHandle * _handle;
-    OCCoAPToken * _token;
+    OCStackResult result = OC_STACK_ERROR;
+    OCCoAPToken * token = NULL;
     ClientCB *clientCB = NULL;
     (void) referenceUri;
 
@@ -309,17 +301,14 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     VERIFY_NON_NULL(cbData, FATAL, OC_STACK_INVALID_CALLBACK);
     VERIFY_NON_NULL(cbData->cb, FATAL, OC_STACK_INVALID_CALLBACK);
 
-    _handle = generateInvocationHandle();
-    *handle = *_handle;
-    _token = OCGenerateCoAPToken();
-    if(AddClientCB(clientCB, cbData, _token, handle, method) != OC_STACK_OK) {
-        return OC_STACK_NO_MEMORY;
-    }
+    TODO ("Need to form the final query by concatenating require and reference URI's");
+    VERIFY_NON_NULL(requiredUri, FATAL, OC_STACK_INVALID_URI);
 
     switch (method)
     {
         case OC_REST_GET:
         case OC_REST_PUT:
+            break;
         case OC_REST_OBSERVE:
         case OC_REST_OBSERVE_ALL:
             break;
@@ -328,23 +317,37 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             return OC_STACK_INVALID_METHOD;
     }
 
-    TODO ("Need to form the final query by concatenating require and reference URI's");
-    // Validate required URI
-    VERIFY_NON_NULL(requiredUri, FATAL, OC_STACK_INVALID_URI);
-
-    if (method == OC_REST_OBSERVE)
+    *handle = GenerateInvocationHandle();
+    VERIFY_NON_NULL(*handle, FATAL, OC_STACK_ERROR);
+    token = OCGenerateCoAPToken();
+    if (!token)
     {
-        printf ("\n\n ********* OBSERVE REGISTRATION ******* \n\n");
+        goto exit;
     }
-    // Make call to OCCoAP layer
-    if (OCDoCoAPResource(method, qos, _token, requiredUri, request) == OC_COAP_OK) {
-        OC_LOG(INFO, TAG, "Done with this function");
-        return OC_STACK_OK;
+    if((result = AddClientCB(&clientCB, cbData, token, *handle, method)) != OC_STACK_OK)
+    {
+        goto exit;
     }
 
-    OC_LOG(ERROR, TAG, PCF("Stack stop error"));
-    DeleteClientCB(clientCB);
-    return OC_STACK_ERROR;
+    // Make call to OCCoAP layer
+    result = OCDoCoAPResource(method, qos, token, requiredUri, request);
+
+exit:
+
+    if (result != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
+        if (clientCB)
+        {
+            DeleteClientCB(clientCB);
+        }
+        else
+        {
+            OCFree(token);
+            OCFree(*handle);
+        }
+    }
+    return result;
 }
 
 /**
@@ -357,15 +360,40 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
  *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
  */
 OCStackResult OCCancel(OCDoHandle handle) {
+    /*
+     * This ftn can be implemented one of two ways:
+     *
+     * 1. When observe is unobserved..Remove the callback associated on client side.
+     *      When the next notification comes in from server, reply with RST message to server.
+     *
+     * 2. When OCCancel is called, and it is associated with an observe request
+     *      (i.e. ClientCB->method == OC_REST_OBSERVE || OC_REST_OBSERVE_ALL),
+     *      Send Observe request to server with observe flag = OC_RESOURCE_OBSERVE_DEREGISTER.
+     *      Remove the callback associated on client side.
+     *
+     *      Number 1 is implemented here.
+     */
     if(!handle) {
         return OC_STACK_INVALID_PARAM;
     }
+
+    OC_LOG(INFO, TAG, PCF("Entering OCCancel"));
+
     ClientCB *clientCB = GetClientCB(NULL, handle);
+
     if(clientCB) {
-        DeleteClientCB(clientCB);
-        return OC_STACK_OK;
+        switch (clientCB->method)
+        {
+            case OC_REST_OBSERVE:
+            case OC_REST_OBSERVE_ALL:
+                // Make call to OCCoAP layer
+                    DeleteClientCB(clientCB);
+                break;
+            default:
+                return OC_STACK_INVALID_METHOD;
+        }
     }
-    return OC_STACK_INVALID_PARAM;
+    return OC_STACK_OK;
 }
 
 /**
@@ -489,7 +517,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
         goto exit;
     }
-    
+
     // added [CL]
     result = OCBindResourceHandler((OCResourceHandle) pointer, entityHandler);
     if (result != OC_STACK_OK) {
@@ -500,7 +528,9 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     *handle = pointer;
     result = OC_STACK_OK;
 
-    exit: if (result != OC_STACK_OK) {
+exit:
+    if (result != OC_STACK_OK)
+    {
         OCFree(pointer);
         OCFree(str);
     }
@@ -1069,12 +1099,11 @@ OCStackResult OCNotifyObservers(OCResourceHandle handle) {
     OCResource *resPtr = NULL;
     OCStackResult result;
 
-    OC_LOG(INFO, TAG, PCF("====>Entering OCNotifyObservers"));
+    OC_LOG(INFO, TAG, PCF("Entering OCNotifyObservers"));
 
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_ERROR);
 
     // Verify that the resource exists
-    printf ("====> Finding resource\n");
     resPtr = findResource ((OCResource *) handle);
     if (NULL == resPtr)
     {
@@ -1091,13 +1120,15 @@ OCStackResult OCNotifyObservers(OCResourceHandle handle) {
 /**
  * Generate handle of OCDoResource invocation for callback management.
  */
-OCDoHandle *generateInvocationHandle() {
-    OCDoHandle *handle = NULL;
-    uint8_t val = sizeof(uint8_t[MAX_TOKEN_LENGTH]);
+static OCDoHandle GenerateInvocationHandle()
+{
+    OCDoHandle handle = NULL;
     // Generate token here, it will be deleted when the transaction is deleted
-    handle = (OCDoHandle *) malloc(sizeof(uint8_t[MAX_TOKEN_LENGTH]));
-    memset(handle, 0, sizeof(uint8_t[MAX_TOKEN_LENGTH]));
-    OCFillRandomMem((uint8_t*)handle, val);
+    handle = (OCDoHandle) malloc(sizeof(uint8_t[MAX_TOKEN_LENGTH]));
+    if (handle)
+    {
+        OCFillRandomMem((uint8_t*)handle, sizeof(uint8_t[MAX_TOKEN_LENGTH]));
+    }
 
     return handle;
 }
@@ -1363,8 +1394,6 @@ void *OCMalloc(size_t size) {
 
 void OCFree(void *ptr) {
     TODO ("This should be moved into an ocmalloc dir and implemented as a separate OC module");
-    if(ptr) {
-        free(ptr);
-    }
+    free(ptr);
 }
 

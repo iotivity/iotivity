@@ -92,26 +92,26 @@ void handleSigInt(int signum) {
 	}
 }
 
-void * ChangeLEDRepresentation (void *param)
+void *ChangeLEDRepresentation (void *param)
 {
     (void)param;
     OCStackResult result = OC_STACK_ERROR;
 
     while (1)
     {
-        sleep (15);
+        sleep(10);
         LED.power += 5;
         if (gLEDUnderObservation)
         {
 	        OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", LED.power);
             result = OCNotifyObservers (LED.handle);
-            printf ("==========> Result from stack: %s\n", getResult(result));
             if (OC_STACK_NO_OBSERVERS == result)
             {
                 gLEDUnderObservation = 0;
             }
         }
     }
+    return NULL;
 }
 
 int main() {

@@ -30,6 +30,7 @@
 //-----------------------------------------------------------------------------
 #include "ocstack.h"
 #include "occoaptoken.h"
+#include "occlientcb.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -119,16 +120,13 @@ typedef struct rsrc_t {
     uint32_t sequenceNum;
 } OCResource;
 
-/* Vijay: TODO add comments */
 typedef struct {
-    // xxxxxxxxxxxxxxxx
+    // Observe option field
     unsigned char *option;
-    // xxxxxxxxxxxxxxxx
+    // IP address & port of client registered for observe
     OCDevAddr *subAddr;
-    // xxxxxxxxxxxxxxxx
-    uint8_t *coapToken;
-    // xxxxxxxxxxxxxxxx
-    size_t coapTokenLen;
+    // CoAP token for the observe request
+    OCCoAPToken *token;
 } OCObserveReq;
 
 // following structure will be created in occoap and passed up the stack on the server side
@@ -139,6 +137,8 @@ typedef struct {
     OCQualityOfService qos;
     // this structure points to the information for processing observe option 
     OCObserveReq *observe;
+    // If a subscription update, this is count of observe notifications from server perspective.
+    uint32_t sequenceNum;
     // this structure will be passed to entity handler
     OCEntityHandlerRequest * entityHandlerRequest;
 } OCRequest;
@@ -146,7 +146,7 @@ typedef struct {
 // following structure will be created in occoap and passed up the stack on the client side
 typedef struct {
     // handle is retrieved by comparing the token-handle pair in the PDU.
-    OCDoHandle * handle;
+    ClientCB * cbNode;
     // this structure will be passed to client
     OCClientResponse * clientResponse;
 } OCResponse;

@@ -25,16 +25,19 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <unistd.h>
+#include <limits.h>
+#include <ctype.h>
 #include "coap.h"
 #include "ocstack.h"
 #include "occoaptoken.h"
 #include "ocstackinternal.h"
-#include <unistd.h>
-#include <limits.h>
-#include <ctype.h>
 
 // Convert OCStack code to CoAP code
 uint8_t OCToCoAPResponseCode(OCStackResult result);
+
+// Convert CoAP code to OCStack code
+OCStackResult CoAPToOCResponseCode(uint8_t coapCode);
 
 // Internal function to generate a coap pdu based on passed parameters
 coap_pdu_t *

@@ -32,9 +32,9 @@ INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 
 CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
-                        -pedantic $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-                        $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
     					
 LDLIBS		+= -loctbstack -lpthread
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)

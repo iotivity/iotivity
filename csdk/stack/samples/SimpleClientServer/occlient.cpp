@@ -38,7 +38,16 @@ std::string getQueryStrForGetPut(unsigned  const char * responsePayload);
 #define MAX_LENGTH_IPv4_ADDR 16
 #endif
 
+#define MAX_TEST_CASES 5
+
+static int UNICAST_DISCOVERY = 0;
+static int TEST_CASE = 0;
 static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
+
+// The handle for the observe registration
+OCDoHandle gObserveDoHandle;
+// After this crosses a threshold client deregisters for further observations
+int gNumNotifies = 1;
 
 int gQuitFlag = 0;
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
@@ -48,53 +57,67 @@ void handleSigInt(int signum) {
 	}
 }
 
-OCStackApplicationResult clientApplicationGETCb(void* ctx, OCClientResponse * clientResponse);
+// Forward Declaration
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse);
+int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse);
+int InitObserveRequest(OCClientResponse * clientResponse);
+int InitPutRequest(OCClientResponse * clientResponse);
+int InitGetRequest(OCClientResponse * clientResponse);
+int InitDiscovery();
 
-OCStackApplicationResult clientApplicationPUTCb(void* ctx, OCClientResponse * clientResponse) {	
+void PrintUsage()
+{
+    OC_LOG(INFO, TAG, "Usage : occlient <Unicast Discovery> <Test Case>");
+    OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources");
+    OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources and Initiate Get Request");
+    OC_LOG(INFO, TAG, "Test Case 3 : Discover Resources and Initiate Get/Put Requests");
+    OC_LOG(INFO, TAG, "Test Case 4 : Discover Resources and Initiate Observe Requests");
+    OC_LOG(INFO, TAG, "Test Case 5 : Discover Resources and Initiate Get Request for a resource which is unavailable");
+}
+
+OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
 	if(clientResponse) {}
 	if(ctx == (void*)CTX_VAL) {
 		OC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
-		OC_LOG_V(INFO, TAG, "JSON = %s =============> Discovered", clientResponse->resJSONPayload);	
+		OC_LOG_V(INFO, TAG, "JSON = %s =============> Discovered", clientResponse->resJSONPayload);
 	}
 
 	return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult clientApplicationGETCb(void* ctx, OCClientResponse * clientResponse) {
-	if(clientResponse) {}
-	if(ctx == (void*)CTX_VAL) {
-		OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
-		OC_LOG_V(INFO, TAG, "JSON = %s =============> Discovered", clientResponse->resJSONPayload);
-#if 0
-	//* Make a GET query*/
-		std::ostringstream getQuery;
-		getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
-		OCCallbackData cbData;
-		cbData.cb = clientApplicationPUTCb;
-		cbData.context = (void*)CTX_VAL;
-		OCDoHandle handle;
-
-		OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());	
-		if (OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(), OC_NON_CONFIRMABLE, &cbData)
-				!= OC_STACK_OK) {
-			OC_LOG_V(ERROR, TAG, "OCStack resource error");
-			//reOC_LOG_Vturn 0;
-		}
-#endif
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
+    OC_LOG_V(INFO, TAG, "StackResult: %s",
+            getResult(clientResponse->result));
+    if(ctx == (void*)CTX_VAL) {
+        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+        if(clientResponse->sequenceNumber == 0) {
+            OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
+            OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
+        }
+        else {
+            OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumNotifies);
+            OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
+            gNumNotifies++;
+            if (gNumNotifies == 3)
+            {
+                if (OCCancel (gObserveDoHandle) != OC_STACK_OK){
+                    OC_LOG(ERROR, TAG, "Observe cancel error");
+                }
+            }
+        }
 	}
 	return OC_STACK_KEEP_TRANSACTION;
 }
 
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult clientApplicationCB(void* ctx,
+OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse) {
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
-    OCDoHandle handle;
 
     OC_LOG(INFO, TAG,
-            "Entering clientApplicationCB (Application Layer CB)");
+            "Entering discoveryReqCB (Application Layer CB)");
     OC_LOG_V(INFO, TAG, "StackResult: %s",
             getResult(clientResponse->result));
 
@@ -110,43 +133,155 @@ OCStackApplicationResult clientApplicationCB(void* ctx,
             "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
             clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
             remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
-   
-	std::ostringstream obsReg;
-	obsReg << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
-	OCCallbackData cbData;
-	cbData.cb = clientApplicationGETCb;
-	cbData.context = (void*)CTX_VAL;
-	if (OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData)
-			!= OC_STACK_OK) {
-		OC_LOG(ERROR, TAG, "OCStack resource error");
-		//return 0;
-	}
-	return OC_STACK_KEEP_TRANSACTION;
-#if 0
-	//* Make a GET query*/
-	std::ostringstream getQuery;
-	getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
-	OCCallbackData cbData;
-	cbData.cb = clientApplicationGETCb;
-	cbData.context = (void*)CTX_VAL;
-	if (OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData)
-			!= OC_STACK_OK) {
-		OC_LOG(ERROR, TAG, "OCStack resource error");
-		//return 0;
-	}
 
+    if (TEST_CASE == 2)
+    {
+        InitGetRequest(clientResponse);
+    }
+    else if (TEST_CASE == 3)
+    {
+        InitPutRequest(clientResponse);
+    }
+    else if (TEST_CASE == 4)
+    {
+        InitObserveRequest(clientResponse);
+    }
+    else if (TEST_CASE == 5)
+    {
+        InitGetRequestToUnavailableResource(clientResponse);
+    }
 	return OC_STACK_KEEP_TRANSACTION;
-#endif
 }
-//This function is called back when a resource is discovered.
 
-int main() {
+
+int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
+{
+    OCStackResult ret;
+	OCCallbackData cbData;
+    OCDoHandle handle;
+    std::ostringstream getQuery;
+    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << "/SomeUnknownResource";
+    cbData.cb = getReqCB;
+    cbData.context = (void*)CTX_VAL;
+    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
+    if (ret != OC_STACK_OK)
+    {
+		OC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+    return ret;
+}
+
+
+int InitObserveRequest(OCClientResponse * clientResponse)
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+    OCDoHandle handle;
+    std::ostringstream obsReg;
+    obsReg << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
+    cbData.cb = getReqCB;
+    cbData.context = (void*)CTX_VAL;
+    OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
+    ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
+    if (ret != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+    else 
+    {
+        gObserveDoHandle = handle;
+    }
+    return ret;
+}
+
+
+int InitPutRequest(OCClientResponse * clientResponse)
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+    OCDoHandle handle;
+    //* Make a PUT query*/
+    std::ostringstream getQuery;
+    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
+    cbData.cb = putReqCB;
+    cbData.context = (void*)CTX_VAL;
+    OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
+    ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(), OC_NON_CONFIRMABLE, &cbData);
+    if (ret != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+    return ret;
+}
+
+
+int InitGetRequest(OCClientResponse * clientResponse)
+{
+    OCStackResult ret;
+	OCCallbackData cbData;
+    OCDoHandle handle;
+    //* Make a GET query*/
+    std::ostringstream getQuery;
+    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
+    cbData.cb = getReqCB;
+    cbData.context = (void*)CTX_VAL;
+    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
+    if (ret != OC_STACK_OK)
+    {
+		OC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+    return ret;
+}
+
+#define TEST_APP_UNICAST_DISCOVERY_QUERY                  PCF("coap://0.0.0.0:5683/oc/core")
+int InitDiscovery()
+{
+    OCStackResult ret;
+	OCCallbackData cbData;
+    OCDoHandle handle;
+	/* Start a discovery query*/
+	char szQueryUri[64] = { 0 };
+    if (UNICAST_DISCOVERY)
+    {
+        strcpy(szQueryUri, TEST_APP_UNICAST_DISCOVERY_QUERY);
+    }
+    else
+    {
+        strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
+    }
+	cbData.cb = discoveryReqCB;
+	cbData.context = (void*)CTX_VAL;
+	ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData);
+    if (ret != OC_STACK_OK)
+    {
+		OC_LOG(ERROR, TAG, "OCStack resource error");
+    }
+    return ret;
+}
+
+int main(int argc, char* argv[]) {
 	uint8_t addr[20] = {0};
 	uint8_t* paddr = NULL;
 	uint16_t port = USE_RANDOM_PORT;
 	uint8_t ifname[] = "eth0";
-	OCCallbackData cbData;
-    OCDoHandle handle;
+
+    if (argc == 3)
+    {
+        UNICAST_DISCOVERY = atoi(argv[1]);
+        TEST_CASE = atoi(argv[2]);
+        if ((UNICAST_DISCOVERY != 0 && UNICAST_DISCOVERY != 1) ||
+            (TEST_CASE < 1 || TEST_CASE > MAX_TEST_CASES) )
+        {
+            PrintUsage();
+            return -1;
+        }
+    }
+    else
+    {
+        PrintUsage();
+        return -1;
+    }
+
 
 	/*Get Ip address on defined interface and initialize coap on it with random port number
 	 * this port number will be used as a source port in all coap communications*/
@@ -163,16 +298,7 @@ int main() {
 		return 0;
 	}
 
-	/* Start a discovery query*/
-	char szQueryUri[64] = { 0 };
-	strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
-	cbData.cb = clientApplicationCB;
-	cbData.context = (void*)CTX_VAL;
-	if (OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData)
-			!= OC_STACK_OK) {
-		OC_LOG(ERROR, TAG, "OCStack resource error");
-		return 0;
-	}
+    InitDiscovery();
 
 	// Break from loop with Ctrl+C
 	OC_LOG(INFO, TAG, "Entering occlient main loop...");

@@ -92,8 +92,12 @@ int OCStopCoAP();
 int OCProcessCoAP();
 
 OCCoAPToken * OCGenerateCoAPToken();
-/* Vijay: TODO: Add description */
 
+/**
+ * Initiate sending of CoAP messages. Example: server uses it to send observe messages
+ *
+ * @return OC_COAP_OK - success, OC_COAP_ERR
+ */
 int OCCoAPSendMessage (OCDevAddr *dstAddr, OCStackResult msgCode, 
                        OCQualityOfService qos, OCCoAPToken * token,
                        const char *payload, uint32_t seqNum);
