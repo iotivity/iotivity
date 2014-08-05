@@ -23,10 +23,6 @@
 
 #include <OCApi.h>
 
-#include <OCReflect.h>
-
-using namespace OC::OCReflect;
-
 namespace OC
 {
     class OutOfProcServerWrapper : public IServerWrapper
@@ -34,12 +30,18 @@ namespace OC
     public:
         OutOfProcServerWrapper(PlatformConfig cfg) {};
 
-        void registerResource( const std::string& resourceURI,
-                                                    const std::string& resourceTypeName,
-                                                    property_binding_vector properties)
-        {
-        }
+        virtual OCStackResult registerResource(
+                    OCResourceHandle& resourceHandle,
+                    std::string& resourceURI,
+                    const std::string& resourceTypeName,
+                    const std::string& resourceInterface,
+                    std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
+                    uint8_t resourceProperty)
 
+        {
+            // Not implemented
+            return OC_STACK_ERROR;
+        }
     };
 }
 

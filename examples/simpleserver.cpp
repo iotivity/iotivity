@@ -25,19 +25,136 @@
 
 #include <functional>
 
+#include <pthread.h>
+
 #include "OCPlatform.h"
 #include "OCApi.h"
 
 using namespace OC;
+using namespace std;
+
+int gObservation = 0;
+
+// Forward declaring the entityHandler
+void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
+
+/// This class represents a single resource named 'lightResource'. This resource has 
+/// two simple properties named 'state' and 'power' 
+
+class LightResource
+{
+public:
+    /// Access this property from a TB client 
+    bool m_state;
+    int m_power;
+    OCResourceHandle m_resourceHandle;
+
+public:
+    /// Constructor
+    LightResource(): m_state(false), m_power(0){}
+
+    /* Note that this does not need to be a member function: for classes you do not have
+    access to, you can accomplish this with a free function: */
+    
+    /// This function internally calls registerResource API.
+    void createResource(OC::OCPlatform& platform)
+    {
+        std::string resourceURI = "/a/light"; // URI of the resource
+        std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
+        std::string resourceInterface = PARAMETER_INTERFACE; // resource interface.
+
+        // OCResourceProperty is defined ocstack.h
+        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+
+        // This will internally create and register the resource. 
+        OCStackResult result = platform.registerResource(
+                                    m_resourceHandle, resourceURI, resourceTypeName, 
+                                    resourceInterface, &entityHandler, resourceProperty); 
+
+        if (OC_STACK_OK != result)
+        {
+            cout << "Resource creation was unsuccessful\n";
+        }
+    }
+
+    OCResourceHandle getHandle()
+    {
+        return m_resourceHandle;
+    }
+
+    void setRepresentation(AttributeMap& attributeMap)
+    {
+        cout << "\t\t\t" << "Received representation: " << endl;
+        cout << "\t\t\t\t" << "power: " << attributeMap["power"][0] << endl;
+        cout << "\t\t\t\t" << "state: " << attributeMap["state"][0] << endl;
+
+        m_state = attributeMap["state"][0].compare("true") == 0;
+        m_power = std::stoi(attributeMap["power"][0]);
+    }
+
+    void getRepresentation(AttributeMap& attributeMap)
+    {
+        AttributeValues stateVal;
+        if(m_state)
+        {
+            stateVal.push_back("true");
+        }
+        else
+        {
+            stateVal.push_back("false");
+        }
+
+        AttributeValues powerVal;
+        powerVal.push_back(to_string(m_power));
+
+        attributeMap["state"] = stateVal;
+        attributeMap["power"] = powerVal;
+    }
+};
+
+// Create the instance of the resource class (in this case instance of class 'LightResource'). 
+LightResource myLightResource;
+
+// ChangeLightRepresentaion is an observation function,
+// which notifies any changes to the resource to stack
+// via notifyObservers
+void * ChangeLightRepresentation (void *param)
+{
+    // This function continuously monitors for the changes
+    while (1)
+    {
+        sleep (5);
+        
+        if (gObservation)
+        {
+            // If under observation if there are any changes to the light resource
+            // we call notifyObservors
+            //
+            // For demostration we are changing the power value and notifying.
+            myLightResource.m_power += 10; 
+
+            cout << "\nPower updated to : " << myLightResource.m_power << endl;
+            cout << "Notifying observers with resource handle: " << myLightResource.getHandle() << endl;
+            
+            OCStackResult result = OCPlatform::notifyObservers(myLightResource.getHandle());
+
+            if(OC_STACK_NO_OBSERVERS == result)
+            {
+                cout << "No More observers, stopping notifications" << endl;
+                gObservation = 0;
+            }
+        }
+    }
+
+    return NULL;
+}
+
 
 // This is just a sample implementation of entity handler. 
 // Entity handler can be implemented in several ways by the manufacturer
 void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
-    // add the headers in this map before sending the response
-    HeadersMap headersMap; 
-    headersMap["content-type"] = "text";
-    headersMap["server"] = "serverName";
+    cout << "\tIn Server CPP entity handler:\n";
 
     if(request)
     {
@@ -47,13 +164,19 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
 
         if(requestFlag == RequestHandlerFlag::InitFlag)
         {
+            cout << "\t\trequestFlag : Init\n";
+
             // entity handler to perform resource initialization operations
         }
         else if(requestFlag == RequestHandlerFlag::RequestFlag)
         {
+            cout << "\t\trequestFlag : Request\n";
+
             // If the request type is GET
             if(requestType == "GET")
             {
+                cout << "\t\t\trequestType : GET\n";
+
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
@@ -61,24 +184,20 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
 
                 // Get the representation of this resource at this point and send it as response
                 AttributeMap attributeMap; 
-                AttributeValues stateVal; 
-                stateVal.push_back("false");
 
-                AttributeValues powerVal; 
-                powerVal.push_back("0");
-
-                attributeMap["state"] = stateVal;
-                attributeMap["power"] = powerVal; 
+                myLightResource.getRepresentation(attributeMap);
 
                 if(response)
-                {
-                    response->setResponseHeaders(headersMap);
-                    response->setHTTPErrorCode(200);
+                {   
+                    // TODO Error Code
+                    response->setErrorCode(200);
                     response->setResourceRepresentation(attributeMap);
                 }
             }
             else if(requestType == "PUT")
             {
+                cout << "\t\t\trequestType : PUT\n";
+
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
@@ -86,23 +205,16 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
 
                 // Get the representation from the request
                 AttributeMap attributeMap = request->getResourceRepresentation();
-                
+
+                myLightResource.setRepresentation(attributeMap);
+
                 // Do related operations related to PUT request 
-                // Change the attribute map accordingly and send a response
-
-                AttributeValues stateVal; 
-                stateVal.push_back("true");
-
-                AttributeValues powerVal; 
-                powerVal.push_back("100");
-
-                attributeMap["state"] = stateVal;
-                attributeMap["power"] = powerVal; 
+                
+                myLightResource.getRepresentation(attributeMap);
 
                 if(response)
                 {
-                    response->setResponseHeaders(headersMap);
-                    response->setHTTPErrorCode(200);
+                    response->setErrorCode(200);
                     response->setResourceRepresentation(attributeMap);
                 }
             }
@@ -117,28 +229,21 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
         }
         else if(requestFlag == RequestHandlerFlag::ObserverFlag)
         {
-            // perform observe related operations on the resource. 
-            // Add the attributes to the map and send a response
-
-            // on any attribute change on the light resource hardware, 
-            // set the attributes and send response
-            AttributeMap attributeMap;
+            pthread_t threadId;
             
-            AttributeValues stateVal; 
-            stateVal.push_back("false");
+            cout << "\t\trequestFlag : Observer\n";
+            gObservation = 1;
 
-            AttributeValues powerVal; 
-            powerVal.push_back("0");
-
-            attributeMap["state"] = stateVal;
-            attributeMap["power"] = powerVal; 
-
-            if(response)
+            static int startedThread = 0;
+            
+            // Observation happens on a different thread in ChangeLightRepresentation function.
+            // If we have not created the thread already, we will create one here.
+            if(!startedThread)
             {
-                response->setResponseHeaders(headersMap);
-                response->setHTTPErrorCode(200);
-                response->setResourceRepresentation(attributeMap);
+                pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
+                startedThread = 1;
             }
+            
         }
     }
     else
@@ -147,43 +252,13 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
     }
 }
 
-/// This class represents a single resource named 'lightResource'. This resource has 
-/// two simple properties named 'state' and 'power' 
-
-class LightResource
-{
-public:
-    /// Access this property from a TB client 
-    bool m_state;
-    int m_power;
-
-public:
-    /// Constructor
-    LightResource(): m_state(false), m_power(0){}
-
-    /* Note that this does not need to be a member function: for classes you do not have
-    access to, you can accomplish this with a free function: */
-    
-    /// This function internally calls registerResource API.
-    void createResource(OC::OCPlatform& platform)
-    {
-        std::string resourceURI = "a/light"; // URI of the resource
-        std::string resourceTypeName = "light"; // resource type name. In this case, it is light
-        std::string resourceInterface = LINK_INTERFACE; // resource interface.
-        ResourceFlag resourceFlag = ResourceFlag::ObserverFlag; // set the resource flag to Observerable
-
-        // This will internally create and register the resource. 
-        platform.registerResource(resourceURI, resourceTypeName, resourceInterface, &entityHandler, resourceFlag); 
-    }
-};
-
 int main()
 {
     // Create PlatformConfig object
 
     PlatformConfig cfg;
     cfg.ipAddress = "134.134.161.33";
-    cfg.port = 5683;
+    cfg.port = 56832;
     cfg.mode = ModeType::Server;
     cfg.serviceType = ServiceType::InProc;
     
@@ -193,12 +268,10 @@ int main()
     {
         OCPlatform platform(cfg);
 
-        // Create the instance of the resource class (in this case instance of class 'LightResource'). 
-        // Invoke bindTo function of class light. 
+        // Invoke createResource function of class light. 
 
-        LightResource myLightResource;
         myLightResource.createResource(platform);
-        
+
         // Perform app tasks
         while(true)
         {

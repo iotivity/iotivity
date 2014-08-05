@@ -31,6 +31,7 @@
 #include <random>
 
 #include "OCPlatform.h"
+#include "OCApi.h"
 
 namespace OC 
 {
@@ -45,6 +46,11 @@ namespace OC
     {
         std::cout << "platform destructor called" << std::endl;
         cleanup();
+    }
+
+    OCStackResult OCPlatform::notifyObservers(OCResourceHandle resourceHandle)
+    {
+        return OCNotifyObservers(resourceHandle);
     }
 
     void OCPlatform::init(const PlatformConfig& config)
@@ -84,30 +90,42 @@ namespace OC
     }
 
     
-    void OCPlatform::findResource(const std::string& host, const std::string& resourceName, 
+    OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName, 
         std::function<void(OCResource::Ptr)> resourceHandler)
     {
+        OCStackResult result = OC_STACK_OK;
+
         if(m_client)
         {
+            // TODO this should return
             m_client->ListenForResource(host, resourceName, resourceHandler);
         }
+        
+        return result;
     }
     
 
-    void OCPlatform::registerResource(std::string& resourceURI, const std::string& resourceTypeName, const std::string& resourceInterface, 
-            std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler, ResourceFlag resourceFlag)
+    OCStackResult OCPlatform::registerResource(OCResourceHandle& resourceHandle, 
+                std::string& resourceURI, 
+                const std::string& resourceTypeName, 
+                const std::string& resourceInterface, 
+                std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler, 
+                uint8_t resourceProperty)
     {
+        OCStackResult result = OC_STACK_OK;
+
         if(m_server)
         {
             try{
-                                // Adding below statement for compilation sake
-                                property_binding_vector properties;
-                m_server->registerResource(resourceURI, resourceTypeName, properties); 
-            }catch(std::exception e) // define our own expception. 
+                result = m_server->registerResource(resourceHandle, resourceURI, resourceTypeName, resourceInterface, entityHandler, resourceProperty); 
+            }
+            catch(std::exception e) // define our own expception. 
             {
                 throw e;
             }
         }
+
+        return result;
     }
 
 } //namespace OC

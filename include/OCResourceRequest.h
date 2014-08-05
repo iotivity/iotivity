@@ -26,6 +26,9 @@
 #ifndef __OCRESOURCEREQUEST_H
 #define __OCRESOURCEREQUEST_H
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 #include "OCApi.h"
 
 namespace OC
@@ -41,7 +44,9 @@ namespace OC
         /**
         *  Virtual destructor 
         */
-        virtual ~OCResourceRequest(void);
+        virtual ~OCResourceRequest(void)
+        {
+        }
 
         /**
         *  Retrieves the type of request string for the entity handler function to operate
@@ -50,21 +55,13 @@ namespace OC
         std::string getRequestType() const {return m_requestType;}
         
         /**
-        *  Retrieves the payload from the request.
-        *  NOTE: Query parameters are retrived in a separate API (see 'getRequestPayload')
-        *  @return std:string request payload
-        */
-        std::string getRequestPayload() const {return m_requestPayload;}
-
-        /**
         *  Retrieves the query parameters from the request
         *  @return std::string query parameters in the request
         */
         const QueryParamsMap& getQueryParameters() const {return m_queryParameters;}
 
         /**
-        *  Retrieves the request handler flag type. This can be either INIT flag or REQUEST flag 
-        *  OBSERVE flag. 
+        *  Retrieves the request handler flag type. This can be either INIT flag or REQUEST flag or OBSERVE flag. 
         *  NOTE: 
         *  INIT indicates that the vendor's entity handler should go and perform initialization operations
         *  REQUEST indicates that it is a request of certain type (GET/PUT/POST/DELETE) and entity handler needs to perform 
@@ -82,17 +79,57 @@ namespace OC
 
     private:
         std::string m_requestType;
-        std::string m_requestPayload;
         QueryParamsMap m_queryParameters;
         RequestHandlerFlag m_requestHandlerFlag;
         AttributeMap m_attributeMap;
 
-    private:
-        void setRequestType(const std::string& requestType);
-        void setRequestPayload(const std::string& requestPayload);
-        void setQueryParams(QueryParamsMap& queryParams);
-        void setRequestHandlerFlag(RequestHandlerFlag requestHandlerFlag);
-        void setResourceRepresentation(AttributeMap& attributeMap);
+    public:
+        // TODO: This is not a public API for app developers. 
+        // This function will not be exposed in future 
+        void setRequestType(const std::string& requestType)
+        {
+            m_requestType = requestType;
+        }
+
+        // TODO: This is not a public API for app developers. 
+        // This function will not be exposed in future
+        void setPayload(const std::string& requestPayload)
+        {
+            // TODO: The following JSON Parse implementation should be seperated into utitilites
+            // and used wherever required.
+            // e.g. parse(std::string& payload, Attributemap& attributeMap)
+            
+            std::stringstream requestStream;
+            requestStream << requestPayload;
+            boost::property_tree::ptree root;
+            boost::property_tree::read_json(requestStream, root);
+            boost::property_tree::ptree payload = root.get_child("oc.payload", boost::property_tree::ptree());
+
+            for(auto& item : payload)
+            {
+                std::string name = item.first.data();
+                std::string value = item.second.data();
+
+                AttributeValues values;
+                values.push_back(value);
+
+                m_attributeMap[name] = values;
+            }
+        }
+
+        // TODO: This is not a public API for app developers. 
+        // This function will not be exposed in future
+        void setQueryParams(QueryParamsMap& queryParams)
+        {
+
+        }
+
+        // TODO: This is not a public API for app developers. 
+        // This function will not be exposed in future
+        void setRequestHandlerFlag(RequestHandlerFlag requestHandlerFlag)
+        {
+            m_requestHandlerFlag = requestHandlerFlag;
+        }
     };
 
 } // namespace OC

@@ -19,11 +19,10 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
-#include "OCResource.h"
 #include "InProcClientWrapper.h"
-
 #include "ocstack.h"
 
+#include "OCResource.h"
 using namespace std;
 
 
@@ -57,20 +56,20 @@ namespace OC
     {
         while(m_threadRun)
         {
-			OCStackResult result;
-			{
-				std::lock_guard<std::mutex> lock(m_csdkLock);
-				result = OCProcess();
-			}
+            OCStackResult result;
+            {
+                std::lock_guard<std::mutex> lock(m_csdkLock);
+                result = OCProcess();
+            }
 
             if(result != OC_STACK_OK)
             {
                 // TODO: @Erich do something with result if failed?
             }
 
-            std::this_thread::yield();
+            //std::this_thread::yield();
             // To minimize CPU utilization we may wish to do this with sleep
-			//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 
@@ -78,72 +77,357 @@ namespace OC
  
     std::string convertOCAddrToString(OCDevAddr* addr)
     {
-	if(addr->size != 4) { return "NOT SUPPORTED ADDR;";}
+        // TODO: we currently assume this is a IPV4 address, need to figure out the actual value
 
-	if(addr->size == 4) // IPV4
-	{
-		std::ostringstream address;
-		address<<"coap://"<<addr->addr[0]<<"."<<addr->addr[1]<<"."<<addr->addr[2]<<"."<<addr->addr[3]<<"/";
-		return address.str();
-	}
+        uint8_t a, b, c, d;
+        uint16_t port;
 
-	// TODO: @Erich Convert the device address to a valid string!
-	return "";
+        if(OCDevAddrToIPv4Addr(addr, &a, &b, &c, &d) ==0 && OCDevAddrToPort(addr, &port)==0)
+        {
+            ostringstream os;
+            os << "coap://"<<(int)a<<'.'<<(int)b<<'.'<<(int)c<<'.'<<(int)d<<':'<<(int)port;
+            return os.str();
+        }
+        else
+        {
+            return "INVALID IP";
+        }
     }
 
-
-    OCStackApplicationResult listenCallback(void* ctx, OCClientResponse* clientResponse)
+    struct ListenContext
     {
-	auto &callback =*(std::function <void(OCResource::Ptr)>*)ctx;
-	std::stringstream requestStream;
-	requestStream << clientResponse->resJSONPayload;
+        std::function<void(std::shared_ptr<OCResource>)> callback;
+        IClientWrapper::Ptr clientWrapper;
+    };
 
+    
+    const std::string URIKEY = "href";
+    const std::string OBSERVABLEKEY = "obs";
+    const std::string RESOURCETYPESKEY= "rt";
+    const std::string INTERFACESKEY = "if";
 
-	boost::property_tree::ptree root;
-	boost::property_tree::read_json(requestStream, root);
-			
-	boost::property_tree::ptree payload = root.get_child("oc.payload", boost::property_tree::ptree());
-			
+    std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode)
+    {
+        std::string uri = resourceNode.get<std::string>(URIKEY, "");
+        bool obs = resourceNode.get<int>(OBSERVABLEKEY,0) == 1;
+        std::vector<std::string> rTs;
+        std::vector<std::string> ifaces;
+
+        boost::property_tree::ptree resourceTypes = resourceNode.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
+        for(auto itr : resourceTypes)
+        {
+            rTs.push_back(itr.second.data());
+        }
+
+        boost::property_tree::ptree interfaces = resourceNode.get_child(INTERFACESKEY, boost::property_tree::ptree());
+        for(auto itr : interfaces)
+        {
+            ifaces.push_back(itr.second.data());
+        }
+        return std::shared_ptr<OCResource>(new OCResource(clientWrapper, host, uri, obs, rTs, ifaces));
+    }
+    
+    OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    {
+        if(clientResponse->result == OC_STACK_OK)
+        {
+            ListenContext* context = (ListenContext*)ctx;
+    
+            std::stringstream requestStream;
+            requestStream << clientResponse->resJSONPayload;
+            boost::property_tree::ptree root;
+            boost::property_tree::read_json(requestStream, root);
             
-	for(auto payloadItr : payload)
-	{
-		try
-		{
-			std::string host = convertOCAddrToString(clientResponse->addr);
-			OCResource::Ptr resource = std::make_shared<OCResource>(host, payloadItr.second);
-		
-			// Note: the call to detach allows the underlying thread to continue until completion 
-			//  and allows us to destroy the exec object.  
-			//  This is apparently NOT a memory leak, as the thread will apparently take care of itself.
-			//  Additionally, the only parameter here is
-			//  a shared ptr, so OCResource will be disposed of properly upon completion of the callback handler.
-			std::thread exec(callback,resource);
-			exec.detach();
-		}
-		catch(ResourceInitException)
-		{
-			// TODO: Do we want to handle this somehow?  Perhaps we need to log this?
-		}
-			
-	}
-	delete clientResponse;
-	
-	return OC_STACK_KEEP_TRANSACTION;
+            boost::property_tree::ptree payload = root.get_child("oc.payload", boost::property_tree::ptree());
+            
+            for(auto payloadItr : payload)
+            {
+                try
+                {
+                    std::string host = convertOCAddrToString(clientResponse->addr);
+                    std::shared_ptr<OCResource> resource = context->clientWrapper->parseOCResource(context->clientWrapper, host, payloadItr.second);
+        
+                    // Note: the call to detach allows the underlying thread to continue until completion 
+                    //  and allows us to destroy the exec object.  
+                    //  This is apparently NOT a memory leak, as the thread will apparently take care of itself.
+                    //  Additionally, the only parameter here is
+                    //  a shared ptr, so OCResource will be disposed of properly upon completion of the callback handler.
+                    std::thread exec(context->callback,resource);
+                    exec.detach();
+                }
+                catch(ResourceInitException& e)
+                {
+                    std::cout << "Failed to create resource: "<< e.what() <<std::endl;
+                    // TODO: Do we want to handle this somehow?  Perhaps we need to log this?
+                }
+            
+            }
+            return OC_STACK_DELETE_TRANSACTION;
+
+        }
+        else
+        {
+            std::cout<<"listen Callback got failed result: " << clientResponse->result<<std::endl;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
     } 
 
-    int InProcClientWrapper::ListenForResource(const std::string& serviceUrl, const std::string& resourceType, std::function<void (OCResource::Ptr)>& callback)
+    OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl, const std::string& resourceType, std::function<void (std::shared_ptr<OCResource>)>& callback)
     {
-	OCStackResult result;
+        OCStackResult result;
 
-	OCCallbackData* cbdata = new OCCallbackData();
-	cbdata->context = (void*)(&callback);
-	cbdata->cb = &listenCallback;
-	{
-		std::lock_guard<std::mutex> lock(m_csdkLock);
+        OCCallbackData* cbdata = new OCCallbackData();
 
-		result = OCDoResource(OC_REST_GET, resourceType.c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+        ListenContext* context = new ListenContext();
+        context->callback = callback;
+        context->clientWrapper = shared_from_this();
 
-	}
-		return result;
+        cbdata->context =  (void*)context;
+        cbdata->cb = listenCallback;
+
+        {
+            std::lock_guard<std::mutex> lock(m_csdkLock);
+            OCDoHandle handle;
+            result = OCDoResource(&handle, OC_REST_GET, resourceType.c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+        }
+        return result;
+    }
+   
+    struct GetSetContext
+    {
+        std::function<void(const AttributeMap&, const int&)> callback;
+    };
+    
+    AttributeMap parseGetSetCallback(OCClientResponse* clientResponse)
+    {
+        std::stringstream requestStream;
+        requestStream<<clientResponse->resJSONPayload;
+
+        if(strlen((char*)clientResponse->resJSONPayload) == 0)
+        {
+            return AttributeMap();
+        }
+
+        boost::property_tree::ptree root;
+        boost::property_tree::read_json(requestStream, root);
+        boost::property_tree::ptree payload = root.get_child("oc.payload", boost::property_tree::ptree());
+        
+        AttributeMap attrs;
+        for(auto& item : payload)
+        {
+            if(item.first.data() == URIKEY)
+            {
+                continue;
+            }
+
+            std::string name = item.first.data();
+            std::string value = item.second.data();
+            AttributeValues values;
+            values.push_back(value);
+            attrs[name] = values;
+        }
+
+        return attrs;
+    }
+    OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    {
+        if(clientResponse->result == OC_STACK_OK)
+        {
+            GetSetContext* context = (GetSetContext*)ctx;
+            AttributeMap attrs = parseGetSetCallback(clientResponse);
+        
+            std::thread exec(context->callback,attrs, 200);
+            exec.detach();
+
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        else
+        {
+            std::cout<<"listen Callback got failed result: " << clientResponse->result<<std::endl;
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+    }
+    OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&)>& callback)
+    {
+        OCStackResult result;
+        OCCallbackData* cbdata = new OCCallbackData();
+        GetSetContext* ctx = new GetSetContext();
+        ctx->callback = callback;
+        cbdata->context = (void*)ctx;
+        cbdata->cb = &getResourceCallback;
+
+        // TODO: in the future the cstack should be combining these two strings!
+        ostringstream os;
+        os << host << uri;
+
+        // TODO: end of above
+
+        {
+            std::lock_guard<std::mutex> lock(m_csdkLock);
+            OCDoHandle handle;
+            //TODO: use above and this line! result = OCDoResource(&handle, OC_REST_GET, uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
+            result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+        }
+        return result;
+    }
+
+    
+    OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    {
+        if(clientResponse->result == OC_STACK_OK)
+        {
+            GetSetContext* context = (GetSetContext*)ctx;
+            AttributeMap attrs = parseGetSetCallback(clientResponse);
+
+            std::thread exec(context->callback, attrs, 200);
+            exec.detach();
+
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        else
+        {
+            std::cout<<"listen Callback got failed result: " << clientResponse->result<<std::endl;
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+    }
+    
+    std::string InProcClientWrapper::assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams)
+    {
+        if(uri.back() == '/') 
+        {
+            uri.pop_back();
+        }
+
+        ostringstream paramsList;
+        if(queryParams.size() > 0)
+        {
+            paramsList << '?';
+        }
+
+        for(auto& param : queryParams)
+        {
+            paramsList << param.first <<'='<<param.second<<'&';
+        }
+
+        std::string ret = uri + paramsList.str();
+        return ret;
+    }
+    
+    std::string InProcClientWrapper::assembleSetResourcePayload(const AttributeMap& attributes)
+    {
+        ostringstream payload;
+        payload << "{\"oc\":{\"payload\":{";
+
+        for(AttributeMap::const_iterator itr = attributes.begin(); itr!= attributes.end(); ++ itr)
+        {
+            if(itr != attributes.begin())
+            {
+                payload << ',';    
+            }
+            
+            payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
+        }
+        payload << "}}}";
+        return payload.str();
+    }
+
+    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap&,const int&)>& callback)
+    {
+        OCStackResult result; 
+        OCCallbackData* cbdata = new OCCallbackData();
+        GetSetContext* ctx = new GetSetContext();
+        ctx->callback = callback;
+        cbdata->cb = &setResourceCallback;
+
+        // TODO: in the future the cstack should be combining these two strings!
+        ostringstream os;
+        os << host << assembleSetResourceUri(uri, queryParams).c_str();
+
+        // TODO: end of above
+
+        cbdata->context = (void*)ctx;
+        {
+            std::lock_guard<std::mutex> lock(m_csdkLock);
+            OCDoHandle handle;
+            //OCDoResource(&handle, OC_REST_PUT, assembleSetResourceUri(uri.c_str(), queryParams).c_str(), host.c_str(), assembleSetResourcePayload(uri, attributes).c_str(), OC_CONFIRMABLE, cbdata);
+            //TODO: use above and this line! result = OCDoResource(&handle, OC_REST_GET, uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
+            result = OCDoResource(&handle, OC_REST_PUT, os.str().c_str(), nullptr, assembleSetResourcePayload(attributes).c_str(), OC_NON_CONFIRMABLE, cbdata);
+        }
+        return result;
+    }
+
+    struct ObserveContext
+    {
+        std::function<void(const AttributeMap&, const int&)> callback;
+    };
+
+    OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    {   
+        if(clientResponse->result == OC_STACK_OK)
+        {
+            ObserveContext* context = (ObserveContext*)ctx;
+            AttributeMap attrs = parseGetSetCallback(clientResponse);
+
+            std::thread exec(context->callback, attrs, 200);
+            exec.detach();
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+        else
+        {
+            std::cout<<"Observe Callback got failed result: "<<clientResponse->result << std::endl;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+    }
+    OCStackResult InProcClientWrapper::ObserveResource(OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&)>& callback)
+    {
+        OCStackResult result;
+        OCCallbackData* cbdata = new OCCallbackData();
+        ObserveContext* ctx = new ObserveContext();
+        ctx->callback = callback;
+        cbdata->context = (void*)ctx;
+        cbdata->cb = &observeResourceCallback;
+
+        ostringstream os;
+        os << host<< uri;
+
+        {
+            std::lock_guard<std::mutex> lock(m_csdkLock);
+            //result = OCDoResource(handle, OC_REST_OBSERVE,  uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
+            result = OCDoResource(handle, OC_REST_OBSERVE, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+        }
+        return result;
+    }
+
+    struct UnobserveContext
+    {
+        std::function<void(const int&)> callback;
+    };
+
+    OCStackApplicationResult unobserveResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    {
+        std::cout << "Unobserve callback called...."<<std::endl;
+        UnobserveContext* context = (UnobserveContext*)ctx;
+        if(clientResponse->result == OC_STACK_OK)
+        {
+            std::thread exec(context->callback, 200);
+            exec.detach();
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        else
+        {
+            std::cout<<"Unobserve callback got failed result: "<<clientResponse->result <<std::endl;
+            std::thread exec(context->callback, clientResponse->result);
+            exec.detach();
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+    }
+    OCStackResult InProcClientWrapper::CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)
+    {
+        OCStackResult result;
+        {
+            std::lock_guard<std::mutex> lock(m_csdkLock);
+            result = OCCancel(handle);  
+        }
+        return result;
     }
    }

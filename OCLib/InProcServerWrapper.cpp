@@ -23,22 +23,108 @@
 #include <cstdlib>
 #include <iostream>
 #include <algorithm>
+#include <map>
+#include <sstream>
+#include <string>
 
-#include "InProcServerWrapper.h"
+#include <InProcServerWrapper.h>
 #include <InitializeException.h>
 #include <OCReflect.h>
+#include <OCResourceRequest.h>
+#include <OCResourceResponse.h>
 #include <ocstack.h>
+#include <OCApi.h>
 
 
 using namespace OC::OCReflect;
 
 using namespace std;
 
-void entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest* eHandlerReq)
+std::map <OCResourceHandle, std::function<void(const OC::OCResourceRequest::Ptr, const OC::OCResourceResponse::Ptr)>> entityHandlerMap;
+
+void defaultEntityHandler(const OC::OCResourceRequest::Ptr request, const OC::OCResourceResponse::Ptr response)
 {
-    cout << "Resource Handler: " << eHandlerReq->resource << endl;
-    cout << "Method: "           << eHandlerReq->method << endl;
-    cout << "reqJSONPayLoad: "   << eHandlerReq->reqJSONPayload << endl;
+    cout << "\nSomething wrong: We are in default entity handler: " << endl;
+}
+
+OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
+   
+    // TODO @SASHI we need to have a better way of logging (with various levels of logging) 
+    cout << "\nIn C entity handler: " << endl;
+
+    // TODO @SASHI dow we need shared pointer?
+    auto pRequest = std::make_shared<OC::OCResourceRequest>();
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+
+    // TODO @ SASHI Utility to convert from C to C++ (every).
+    switch (flag) {
+        case OC_INIT_FLAG:
+            // TODO @SASHI We can fill the common data (resource Handle, etc.. )
+            // init time.
+            pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::InitFlag);
+            break;
+        case OC_REQUEST_FLAG:
+            pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::RequestFlag);
+
+            if(entityHandlerRequest)
+            {
+                if(OC_REST_GET == entityHandlerRequest->method)
+                {
+                    // TODO @SASHI Why strings : "GET"??
+                    pRequest->setRequestType("GET");
+                }
+                
+                if(OC_REST_PUT == entityHandlerRequest->method)
+                {
+                    pRequest->setRequestType("PUT");
+                    pRequest->setPayload(std::string(reinterpret_cast<const char*>(entityHandlerRequest->reqJSONPayload)));
+                }
+            }
+            break;
+        case OC_OBSERVE_FLAG:
+            pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::ObserverFlag);
+            break;
+    }
+
+
+    // Finding the corresponding CPP Application entityHandler for a given resource
+    auto entityHandlerEntry = entityHandlerMap.find(entityHandlerRequest->resource);
+
+    if(entityHandlerEntry != entityHandlerMap.end()) {
+        // Call CPP Application Entity Handler
+        entityHandlerEntry->second(pRequest, pResponse);
+    }
+    else {
+        std::cout << "No eintity handler found."  << endl;
+        return OC_STACK_ERROR;
+    }
+
+
+    if(flag == OC_REQUEST_FLAG)
+    {
+        // TODO @SASHI we could use const reference
+        std::string payLoad = pResponse->getPayload();
+
+        if(OC_REST_GET == entityHandlerRequest->method) 
+        {
+            cout << "\t\t\tGoing from stack for GET: " << payLoad << endl;    
+        }
+        else if (OC_REST_PUT == entityHandlerRequest->method)
+        {
+            cout << "\t\t\tGoing from stack for PUT: " << payLoad << endl;    
+        }
+
+        // TODO @SASHI Now there is memory that needs to be freed.
+        entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char *>(OC::OCReflect::OCStack::strdup(payLoad.c_str()));
+
+        if(nullptr == entityHandlerRequest->resJSONPayload)
+        {
+            // TODO @SASHI throw std::runtime_error("out of memory");
+            cout << "Out of memory in copying to resJSONPayload" << endl; 
+        } 
+    }
+      
+    return OC_STACK_OK;
 }
 
 namespace OC
@@ -47,24 +133,28 @@ namespace OC
     {
         OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, OC_SERVER);
 
+        // Setting default entity Handler
+        entityHandlerMap[(OCResourceHandle) 0] = defaultEntityHandler;
+
         if(OC_STACK_OK != result)
         {
             throw InitializeException("Error Initializing Stack", result);
         }
-		
-		m_threadRun = true;
+
+        m_threadRun = true;
         m_processThread = std::thread(&InProcServerWrapper::processFunc, this);
     }
-	
-	void InProcServerWrapper::processFunc()
+
+    void InProcServerWrapper::processFunc()
     {
         while(m_threadRun)
         {
-			OCStackResult result;
-			{
-				std::lock_guard<std::mutex> lock(m_csdkLock);
-				result = OCProcess();
-			}
+            OCStackResult result;
+            {
+                // TODO Fix Lock issue
+                // std::lock_guard<std::mutex> lock(m_csdkLock);
+                result = OCProcess();
+            }
 
             if(result != OC_STACK_OK)
             {
@@ -74,63 +164,64 @@ namespace OC
 
             std::this_thread::yield();
             // To minimize CPU utilization we may wish to do this with sleep
-			//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
 
-    void InProcServerWrapper::registerResource(const std::string& resourceURI,
-                                const std::string& resourceTypeName,
-                                property_binding_vector properties)
+    OCStackResult InProcServerWrapper::registerResource(
+                    OCResourceHandle& resourceHandle,
+                    std::string& resourceURI,
+                    const std::string& resourceTypeName,
+                    const std::string& resourceInterface, 
+                    std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> eHandler,
+                    uint8_t resourceProperties)
+
     {
-        using OC::OCReflect::property_type;
-        using OC::OCReflect::property_binding;
-        using namespace OC::OCReflect::OCStack;
+        OCStackResult  result;
 
-        std::vector<std::string> reps { convert(properties) };
+        cout << "Registering Resource: \n";
+        cout << "\tResource URI: " << resourceURI << endl;
+        cout << "\tResource TypeName: " << resourceTypeName  << endl;
+        cout << "\tResource Interface: " << resourceInterface << endl;
 
-        char *resourceTypeRepresentation = flatten(reps);
+        {
+            // TODO @SASHI : Something wrong with lock usage
+            // std::lock_guard<std::mutex> lock(m_csdkLock);
 
-        std::cout << "Resource type representation: " << resourceTypeRepresentation << "\n";
-
-        OCResourceHandle resourceHandle;
-
-		{
-			std::lock_guard<std::mutex> lock(m_csdkLock);
-
-			OCStackResult  result;
-
-			result = OCCreateResource(&resourceHandle, // OCResourceHandle *handl
-							resourceTypeName.c_str(), // const char * resourceTypeName
-							resourceTypeRepresentation, //const char * resourceTypeRepresentation
-							"core.rw", //const char * resourceInterfaceName
-							OC_REST_GET | OC_REST_PUT, // uint8_t allowedMethods
-							resourceURI.c_str(), // const char * uri
-							entityHandler, // OCEntityHandler entityHandler
-							OC_DISCOVERABLE | OC_OBSERVABLE // uint8_t resourceProperties
-							);
+            result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
+                            resourceTypeName.c_str(), // const char * resourceTypeName
+                            "state:oc.bt.b;power:oc.bt.i", // TODO @SASHI why are we still sending this??
+                            resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
+                            OC_REST_GET | OC_REST_PUT, // uint8_t allowedMethods
+                            resourceURI.c_str(), // const char * uri
+                            entityHandler, // OCEntityHandler entityHandler
+                            resourceProperties // uint8_t resourceProperties
+                            );
 
             if(result != OC_STACK_OK)
             {
-                cout << "Something wrong in OCCreateResource" << endl;
+                cout << "\tSomething wrong in creating the resource" << endl;
+                resourceHandle = (OCResourceHandle) 0;
                 // TODO: SASHI
             }
             else
             {
-                cout << "Resource creation is successful" << endl;
+                cout << "\tResource creation is successful with resource handle:  " << resourceHandle << endl;
+                entityHandlerMap[resourceHandle] = eHandler;
             }
-            
-		}
-
+        }
+    
+        return result;
     }
 
     InProcServerWrapper::~InProcServerWrapper()
     {
-		if(m_processThread.joinable())
+        if(m_processThread.joinable())
         {
             m_threadRun = false;
             m_processThread.join();
         }
-	
+
         OCStop();
     }
 }

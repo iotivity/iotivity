@@ -25,20 +25,23 @@
 #include <string>
 
 #include <OCApi.h>
-#include <OCResource.h>
-
 namespace OC
 {
-	class OCResource;
-    class IClientWrapper
+    class IClientWrapper : public std::enable_shared_from_this<IClientWrapper>
     {
     public:
         typedef std::shared_ptr<IClientWrapper> Ptr;
-
-        virtual int ListenForResource(const std::string& serviceUrl, const std::string& resourceType,
-            std::function<void(OCResource::Ptr)>& callback) = 0;
+        virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType,
+            std::function<void(std::shared_ptr<OCResource>)>& callback) = 0;
+        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&)>& callback)=0;
+        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap&,const int&)>& callback)=0;
+        virtual OCStackResult ObserveResource(OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&)>& callback)=0;
+        virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)=0;
         virtual ~IClientWrapper(){}
+       
 
+        // Note: this should never be called by anyone but the handler for the listen command.  It is public becuase that needs to be a non-instance callback
+        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode)=0;
     private:
     };
 }

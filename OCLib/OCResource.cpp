@@ -22,40 +22,67 @@
 #include "OCReflect.h"
 
 namespace OC {
-    OCResource::OCResource(const std::string host, boost::property_tree::ptree& resourceNode) : m_isCollection(false)
+    OCResource::OCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes, const std::vector<std::string>& interfaces) : 
+        m_clientWrapper(clientWrapper), m_uri(uri), m_host(host), m_isObservable(observable), m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces), m_observeHandle(nullptr)
     {
-        m_host = host;
-        m_uri = resourceNode.get<std::string>("href","");
-        m_isObservable = resourceNode.get<int>("obs",0)==1;
-        
-        boost::property_tree::ptree resourceTypes = resourceNode.get_child("rt", boost::property_tree::ptree());
-        for(auto itr : resourceTypes)
+        m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE) != m_interfaces.end();
+
+        if (m_uri.empty() || resourceTypes.empty() || interfaces.empty()|| ! m_clientWrapper)
         {
-            m_resourceTypes.push_back(itr.second.data());
-        }
-        
-        boost::property_tree::ptree interfaces = resourceNode.get_child("if", boost::property_tree::ptree());
-        for(auto itr : interfaces)
-        {
-            if(itr.second.data() == "oc.mi.ll")
-            {
-                m_isCollection = true;
-            }
-        
-            m_interfaces.push_back(itr.second.data());
-        }
-        
-        // TODO: If collection, load children, assuming this becomes a thing
-        
-        // TODO: Load attributes, assuming this becomes a 'thing'
-        
-        if (m_uri.empty() || resourceTypes.empty() || interfaces.empty())
-        {
-            throw ResourceInitException(m_uri.empty(), resourceTypes.empty(), interfaces.empty());
+            throw ResourceInitException(m_uri.empty(), resourceTypes.empty(), interfaces.empty(), m_clientWrapper.get() == nullptr);
         }
     }
-    
+
     OCResource::~OCResource()
     {
+    }
+
+    OCStackResult OCResource::get(std::function<void(const AttributeMap&, const int&)> attributeHandler)
+    {
+        return m_clientWrapper->GetResourceAttributes(m_host, m_uri, attributeHandler);
+    }
+
+    OCStackResult OCResource::put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function<void(const AttributeMap&, const int&)> attributeHandler)
+    {
+        return m_clientWrapper->SetResourceAttributes(m_host, m_uri, attributeMap, queryParametersMap, attributeHandler);
+    }
+
+    OCStackResult OCResource::observe(std::function<void(const AttributeMap&, const int&)> observeHandler)
+    {
+        if(m_observeHandle != nullptr)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+        else
+        {
+            return m_clientWrapper->ObserveResource(&m_observeHandle, m_host, m_uri, observeHandler);
+        }
+    }
+
+    OCStackResult OCResource::cancelObserve()
+    {
+        if(m_observeHandle == nullptr)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+        else
+        {
+            OCStackResult ret = m_clientWrapper->CancelObserveResource(m_observeHandle, m_host, m_uri);
+            m_observeHandle = nullptr;
+            return ret;
+        }
+    }
+
+    std::string OCResource::host() const 
+    {
+        return m_host;
+    }
+    std::string OCResource::uri() const 
+    {
+        return m_uri;
+    }
+    bool OCResource::isObservable() const 
+    {
+        return m_isObservable;
     }
 } // namespace OC

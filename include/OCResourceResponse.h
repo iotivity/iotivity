@@ -27,6 +27,10 @@
 #define __OCRESOURCERESPONSE_H
 
 #include "OCApi.h"
+#include <IServerWrapper.h>
+#include <ocstack.h>
+
+using namespace std;
 
 namespace OC
 {
@@ -39,59 +43,68 @@ namespace OC
         typedef std::shared_ptr<OCResourceResponse> Ptr;
 
         /**
-        *  OCResourceResponse Construtor
-        *  @param responseHeaders response header information in a map
-        *  @param eCode HTTP error code for this response.
-        *  @param attributeMap reference to AttributeMap which contains the full attribute representation
-        *  of the resource.
+        *  Default destructor 
         */
-        OCResourceResponse(HeadersMap& responseHeaders, int eCode, AttributeMap& attributeMap) : 
-                m_responseHeaders(responseHeaders), m_HTTPErrorCode(eCode), m_attributeMap(attributeMap) {}
+        OCResourceResponse() {}
 
         /**
         *  Virtual destructor 
         */
-        virtual ~OCResourceResponse(void);
+        virtual ~OCResourceResponse(void) {}
 
         /**
-        *  This API sets the response headers for the response
-        *  @param responseHeaders std::string reference 
+        *  This API sets the error code for this response
+        *  @param eCode error code to set
         */
-        void setResponseHeaders(HeadersMap& responseHeaders) { m_responseHeaders = responseHeaders; }
-        
-        /**
-        *  This API sets the HTTP error code for this response
-        *  @param eCode HTTP error code to set
-        */
-        void setHTTPErrorCode(const int eCode) { m_HTTPErrorCode = eCode; }
+        void setErrorCode(const int eCode) { m_errorCode = eCode; }
 
         /**
         *  API to set the entire resource attribute representation
         *  @param attributeMap reference containing the name value pairs representing the resource's attributes
         */
-        void setResourceRepresentation(AttributeMap& attributeMap) { m_attributeMap = attributeMap; }
+        void setResourceRepresentation(AttributeMap& attributes) { 
+
+            // TODO To be refactored
+            ostringstream payload;
+
+            payload << "{\"oc\":{\"payload\":{";
+
+            for(AttributeMap::const_iterator itr = attributes.begin(); itr!= attributes.end(); ++ itr)
+            {
+                if(itr != attributes.begin())
+                {
+                    payload << ',';
+                }
+                // cout << itr->first << ":" <, itr->second.front() << endl;
+                payload << "\""<<itr->first<<"\":" << itr->second.front();
+            }
+            payload << "}}}";
+
+            m_payload = payload.str();
+        }
 
     private:
-        HeadersMap m_responseHeaders;
-        int m_HTTPErrorCode; // TODO remove 'HTTP'. It can be any protocol and ISV need not know it 
-        AttributeMap m_attributeMap;
+        std::string m_payload;
+        int m_errorCode;
 
-    private:
+    // TODO only stack should have visibility and apps should not
+    public:
 
         /** 
-        * Get response headers
+        * Get error code 
         */
-        HeadersMap& getResponseHeaders() const; 
- 
-        /** 
-        * Get HTTP status error code 
-        */
-        int getHTTPErrorCode() const; 
+        int getErrorCode() const; 
 
         /**
         * Get the resource attribute representation
         */
         AttributeMap& getResourceRepresentation() const; 
+
+        // TODO This should go away & just use getResourceRepresentation 
+        std::string getPayload()
+        {
+            return m_payload;
+        }
     };
 
 } // namespace OC

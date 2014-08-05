@@ -1,11 +1,11 @@
 
 CXX=g++
 #CXX=clang
-CXX_FLAGS=-std=c++11 -Wall -pthread -ggdb
+CXX_FLAGS=-std=c++11 -Wall -pthread 
 CXX_INC=-I./include/ -I./csdk/stack/include -I./csdk/ocsocket/include -I./csdk/ocrandom/include -I./csdk/logger/include
 
 # Force metatargets to build:
-.PHONY: c_sdk simpleserver simpleclient examples
+.PHONY: c_sdk simpleserver simpleclient
 
 all: .PHONY
 
@@ -47,7 +47,5 @@ simpleclient.o : examples/simpleclient.cpp
 
 clean: 
 	rm -f -v OCLib.a *.o simpleserver simpleclient
-	cd examples && $(MAKE) clean
-
 	cd csdk && $(MAKE) clean
 	cd csdk && $(MAKE) deepclean

@@ -78,24 +78,28 @@ namespace OC {
     ObserverFlag
  };
 
- enum class ResourceFlag
- {
-     DiscoverableFlag,
-     ObserverFlag
- };
-
  // TODO: To find the complete JSon data structure and modify map value type
+ // Typedef for attribute values and attribute map. 
  typedef std::vector<std::string> AttributeValues;
  typedef std::map<std::string, AttributeValues> AttributeMap; 
 
+ // Typedef for query parameter map
  typedef std::map<std::string, std::string> QueryParamsMap;
 
- typedef std::map<std::string, std::string> HeadersMap;
-
+ // const strings for different interfaces
+ // Used in discovering (GET) links to other resources of a container/collection.  
  const std::string LINK_INTERFACE = "oc.mi.ll";
+
+ // Used in GET, PUT, POST, DELETE methods on links to other resources of a container/collection. 
  const std::string BATCH_INTERFACE = "oc.mi.b";
+
+ // Used to signify that the resource supports ONLY GET method 
  const std::string SENSOR_INTERFACE = "oc.mi.s";
+
+ // Used to signify that the resource supports GET, PUT, POST, DELETE methods
  const std::string ACTUATOR_INTERFACE = "oc.mi.a";
+
+ // OPENS 
  const std::string PARAMETER_INTERFACE = "oc.mi.p";
  const std::string READ_PARAMETER_INTERFACE = "oc.mi.rp";
 

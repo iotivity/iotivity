@@ -21,81 +21,78 @@
 // OCClient.cpp : Defines the entry point for the console application.
 //
 #include <string>
-
+#include <cstdlib>
+#include <pthread.h>
 #include "OCPlatform.h"
 
 using namespace OC;
 
 const int SUCCESS_RESPONSE = 200; 
+std::shared_ptr<OCResource> curResource;
 
-// callback handler on GET request
-void onGet(const AttributeMap& attributeMap, const int& eCode)
+int observe_count()
 {
-    if(eCode == SUCCESS_RESPONSE)
-    {
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "Attribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout << *valueItr << " ";
-            }
-
-            std::cout << std::endl;
-        }
-    }
-    else
-    {
-        std::cout << "Response error: " << eCode << std::endl;
-    }
+    static int oc = 0;
+    return ++oc;
 }
 
-// callback handler on PUT request
-void onPut(const int& eCode)
-{
-    if(eCode == SUCCESS_RESPONSE)
-    {
-        std::cout << "Put request was successful" << std::endl;
-    }
-    else
-    {
-        std::cout << "Response error: " << eCode << std::endl;
-    }
-}
-
-// callback handler on observation
 void onObserve(const AttributeMap& attributeMap, const int& eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
-        std::cout << "Observe callback invoked" << std::endl;
+        std::cout << "OBSERVE RESULT:"<<std::endl;
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
         {
-            std::cout << "Attribute name: "<< it->first << " value: ";
+            std::cout << "\tAttribute name: "<< it->first << " value: ";
             for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
             {
-                std::cout << *valueItr << " ";
+                std::cout <<"\t"<< *valueItr << " ";
             }
 
             std::cout << std::endl;
         }
+        
+        if(observe_count() > 3)
+        {
+            std::cout<<"Cancelling Observe..."<<std::endl;
+            OCStackResult result = curResource->cancelObserve();
+
+            std::cout << "Cancel result: "<< result <<std::endl;
+            sleep(10);
+            std::cout << "DONE"<<std::endl;
+            std::exit(0);
+        }
     }
     else
     {
-        std::cout << "Response error: " << eCode << std::endl;
+        std::cout << "onObserve Response error: " << eCode << std::endl;
+        std::exit(-1);
     }
 }
 
-// callback handler for observe cancellation
-void onCancelObservation(const int& eCode)
+// callback handler on PUT request
+void onPut(const AttributeMap& attributeMap, const int& eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
-        std::cout << "Put request was successful" << std::endl;
+        std::cout << "PUT request was successful" << std::endl;
+        
+        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+        {
+            std::cout << "\tAttribute name: "<< it->first << " value: ";
+            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+            {
+                std::cout <<"\t"<< *valueItr << " ";
+            }
+
+            std::cout << std::endl;
+        }
+        curResource->observe(&onObserve);
     }
     else
     {
-        std::cout << "Response error: " << eCode << std::endl;
+        std::cout << "onPut Response error: " << eCode << std::endl;
+        std::exit(-1);
     }
 }
 
@@ -104,6 +101,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 {
     if(resource)
     {
+        std::cout << "Putting light representation..."<<std::endl;
         // Create AttributeMap
         AttributeMap attributeMap;
         // Add the attribute name and values in the attribute map
@@ -111,7 +109,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
         stateVal.push_back("true");
 
         AttributeValues powerVal; 
-        powerVal.push_back("100");
+        powerVal.push_back("10");
 
         attributeMap["state"] = stateVal;
         attributeMap["power"] = powerVal; 
@@ -124,39 +122,51 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
     }
 }
 
+// callback handler on GET request
+void onGet(const AttributeMap& attributeMap, const int& eCode)
+{
+    if(eCode == SUCCESS_RESPONSE)
+    {
+        std::cout << "GET Succeeded:"<<std::endl;
+        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+        {
+            std::cout << "\tAttribute name: "<< it->first << " value: ";
+            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+            {
+                std::cout <<"\t"<< *valueItr << " ";
+            }
+
+            std::cout << std::endl;
+        }
+
+        putLightRepresentation(curResource);
+    }
+    else
+    {
+        std::cout << "onGet Response error: " << eCode << std::endl;
+        std::exit(-1);
+    }
+}
 // Local function to get representation of light resource
 void getLightRepresentation(std::shared_ptr<OCResource> resource)
 {
     if(resource)
     {
+        std::cout << "Getting Light Representation..."<<std::endl;
         // Invoke resource's get API with the callback parameter
         resource->get(&onGet);
-    }
-}
-
-// Local function to observe on a resource (in this case light)
-void observeOnLight(std::shared_ptr<OCResource> resource)
-{
-    if(resource)
-    {
-        // Invoke resource's observe API with the callback parameter
-        resource->observe(&onObserve);
-    }
-}
-
-// Local function to cancel the observation on a resource
-void cancelObservation(std::shared_ptr<OCResource> resource)
-{
-    if(resource)
-    {
-        // Invoke resource's cancelObserve API with the callback parameter
-        resource->cancelObserve(&onCancelObservation);
     }
 }
 
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
+
+    if(curResource)
+    {
+        std::cout << "Found another resource, ignoring"<<std::endl;
+    }
+
     std::string resourceURI;
     std::string hostAddress;
     try
@@ -164,33 +174,20 @@ void foundResource(std::shared_ptr<OCResource> resource)
         // Do some operations with resource object. 
         if(resource)
         {
+            std::cout<<"DISCOVERED Resource:"<<std::endl;
             // Get the resource URI
             resourceURI = resource->uri();
-            std::cout << "URI of the resource: " << resourceURI << std::endl;
+            std::cout << "\tURI of the resource: " << resourceURI << std::endl;
             
             // Get the resource host address
             hostAddress = resource->host();
-            std::cout << "Host address of the resource: " << hostAddress << std::endl;      
+            std::cout << "\tHost address of the resource: " << hostAddress << std::endl;      
 
             if(resourceURI == "/a/light")
             {
+                curResource = resource;
                 // Call a local function which will internally invoke get API on the resource pointer
                 getLightRepresentation(resource); 
-
-                // Do some operations 
-
-                // Call a local function which will internally invoke get API on the resource pointer
-                putLightRepresentation(resource); 
-
-                // Do some operations 
-
-                // Call a local function which will internally observe on this resource for further notifications
-                observeOnLight(resource);
-
-                // Do some operations
-
-                // Call a local function which will internally cancel observation on this resource
-                cancelObservation(resource);
             }
         }
         else
@@ -223,10 +220,10 @@ int main()
     try
     {
         OCPlatform platform(cfg);
-
+        std::cout << "Created Platform..."<<std::endl;
         // Find all resources
-        platform.findResource("", "coap://224.0.1.187/oc/core", &foundResource);
-
+        platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+        std::cout<< "Finding Resource... " <<std::endl;
         while(true)
         {
             // some operations

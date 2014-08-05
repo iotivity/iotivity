@@ -29,52 +29,64 @@ namespace OC
     class ResourceInitException : public std::exception
     {
     public:
-        ResourceInitException(bool missingUri, bool missingType, bool missingInterface)
-		: m_missingUri(missingUri), m_missingType(missingType), m_missingInterface(missingInterface)
+        ResourceInitException(bool missingUri, bool missingType, bool missingInterface, bool missingClientWrapper)
+        : m_missingUri(missingUri), m_missingType(missingType), m_missingInterface(missingInterface), m_missingClientWrapper(missingClientWrapper)
         {
         }
-		
-		bool isUriMissing()
-		{
-			return m_missingUri;
-		}
-		
-		bool isTypeMissing()
-		{
-			return m_missingType;
-		}
-		
-		bool isInterfaceMissing()
-		{
-			return m_missingInterface;
-		}
-		
-		std::string Reason()
-		{
-			std::string ret;
-			
-			if(isUriMissing())
-			{
-				ret += "Missing URI;";
-			}
-			
-			if(isTypeMissing())
-			{
-				ret += "Missing Resource Type;";
-			}
-			
-			if(isInterfaceMissing())
-			{
-				ret += "Missing Interface;";
-			}
-			
-			return ret;
-		}
+        
+        bool isClientWrapperMissing() const
+        {
+            return m_missingClientWrapper;
+        }
+
+        bool isUriMissing() const
+        {
+            return m_missingUri;
+        }
+        
+        bool isTypeMissing() const
+        {
+            return m_missingType;
+        }
+        
+        bool isInterfaceMissing() const
+        {
+            return m_missingInterface;
+        }
+        
+        virtual const char* what() noexcept 
+        {
+            std::string ret;
+            
+            if(isUriMissing())
+            {
+                ret += "Missing URI;";
+            }
+            
+            if(isTypeMissing())
+            {
+                ret += "Missing Resource Type;";
+            }
+            
+            if(isInterfaceMissing())
+            {
+                ret += "Missing Interface;";
+            }
+            
+            if(isClientWrapperMissing())
+            {
+                ret += "Missing ClientWrapper;";
+            }
+
+            return ret.c_str();
+        }
 
     private:
+
         bool m_missingUri;
-		bool m_missingType;
-		bool m_missingInterface;
+        bool m_missingType;
+        bool m_missingInterface;
+        bool m_missingClientWrapper;
     };
 }
 

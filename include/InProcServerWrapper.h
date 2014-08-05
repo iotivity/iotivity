@@ -24,9 +24,8 @@
 #include <thread>
 #include <mutex>
 #include <ocstack.h>
-#include <OCApi.h>
+
 #include <IServerWrapper.h>
-#include <OCReflect.h>
 
 using namespace OC::OCReflect;
 
@@ -38,10 +37,14 @@ namespace OC
         InProcServerWrapper(PlatformConfig cfg);
         virtual ~InProcServerWrapper();
 
-        void registerResource(  const std::string& resourceURI, 
-                                const std::string& resourceTypeName,
-                                property_binding_vector properties); 
-								
+        virtual OCStackResult registerResource(
+                    OCResourceHandle& resourceHandle,
+                    std::string& resourceURI,
+                    const std::string& resourceTypeName,
+                    const std::string& resourceInterface,
+                    std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
+                    uint8_t resourceProperty);
+
 	private:
 		void processFunc();
 		std::thread m_processThread;

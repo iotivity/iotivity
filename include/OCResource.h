@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResource.h 
+/// @file OCResource.h
 
 /// @brief  This file contains the declaration of classes and its members related to 
 ///         Resource.
@@ -28,12 +28,15 @@
 
 #include <memory>
 #include <random>
+#include <algorithm>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
 #include <OCApi.h>
 #include <ResourceInitException.h>
+#include <IClientWrapper.h>
+#include <InProcClientWrapper.h>
 
 namespace OC
 {
@@ -47,86 +50,79 @@ namespace OC
     */
     class OCResource
     {
+    friend class InProcClientWrapper;
     public:
         typedef std::shared_ptr<OCResource> Ptr;
 
-        // TODO: This constructor needs to be removed when we give the final version
-        // TODO: See if we can do const prop tree
-        OCResource(const std::string host, boost::property_tree::ptree& resourceNode);
-
+        /**
+        * Virtual destructor
+        */
         virtual ~OCResource(void);
         
         /**
         * Function to get the attributes of a resource. 
-        * TODO : Need to have query params? Add implementation in .cpp
         * @param attributeHandler handles callback
         *        The callback function will be invoked with a map of attribute name and values. 
         *        The callback function will also have the result from this Get operation 
-        *        This will have HTTP error codes
+        *        This will have error codes
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
+        * NOTE: OCStackResult is defined in ocstack.h.
         */
-        void get(std::function<void(const AttributeMap&, const int&)> attributeHandler) { return; }
+        OCStackResult get(std::function<void(const AttributeMap&, const int&)> attributeHandler);
 
         /**
         * Function to set the attributes of a resource (via PUT)
-        * TODO Add implementation in .cpp
-        * @param AttributeMap Map which can either have all the attribute names and values 
-                 (which will represent entire state of the resource) or a 
-        *        set of attribute names and values which needs to be modified 
-        *        (which will represent part of the resoruce state) via PUT
-        * @param queryParametersMap a map which will have the query parameters (if any)
-        * NOTE: For the current release, only '&' semantics will be provided
-        * @param attributeHandler handles callback
-        *        The callback function will be invoked with a map of attribute name and values. 
-        *        The callback function will also have the result from this Put operation 
-        *        This will have HTTP error codes
+        * @param AttributeMap Map which can either have all the attribute names and values
+                 (which will represent entire state of the resource) or a
+        *        set of attribute names and values which needs to be modified
+        *        The callback function will be invoked with a map of attribute name and values.
+        *        The callback function will also have the result from this Put operation
+        *        This will have error codes
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
+        * NOTE: OCStackResult is defined in ocstack.h.
         */
-        void put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function<void(const int&)> attributeHandler) { return; } 
+        OCStackResult put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function< void(const AttributeMap&,const int&)> attributeHandler);
 
         /**
-        * Function to set observation on the resource 
-        * TODO Add implementation in .cpp
+        * Function to set observation on the resource
         * @param observeHandler handles callback
-        *        The callback function will be invoked with a map of attribute name and values. 
-        *        The callback function will also have the result from this observe operation 
-        *        This will have HTTP error codes
+        *        The callback function will be invoked with a map of attribute name and values.
+        *        The callback function will also have the result from this observe operation
+        *        This will have error codes
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
+        * NOTE: OCStackResult is defined in ocstack.h.
         */
-        void observe(std::function<void(const AttributeMap&, const int&)> observeHandler) { return; }
+        OCStackResult observe(std::function<void(const AttributeMap&, const int&)> observeHandler);
 
         /**
         * Function to cancel the observation on the resource
-        * TODO Add implementation in .cpp
         * @param observeCancellationHandler handles callback
-        *        The callback function will also have the result from this operation 
-        *        This will have HTTP error codes
+        *        The callback function will also have the result from this operation
+        *        This will have error codes
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
+        * NOTE: OCStackResult is defined in ocstack.h.
         */
-        void cancelObserve(std::function<void(const int&)> observeCancellationHandler) { return; }
+        OCStackResult cancelObserve();
 
         /**
         * Function to get the host address of this resource
         * @return std::string host address
         * NOTE: This might or might not be exposed in future due to security concerns
         */
-        std::string host() const {return m_host;}
-        
+        std::string host() const;
+
         /**
         * Function to get the URI for this resource
-        * @return std::string resource URI 
+        * @return std::string resource URI
         */
-        std::string uri() const {return m_uri;}
+        std::string uri() const;
 
         /**
         * Function to provide ability to check if this resource is observable or not
         * @return bool true indicates resource is observable; false indicates resource is
         *         not observable.
         */
-        bool isObservable() const {return m_isObservable;}
-
-        /*
-        * Allows the server to call notifyObserver
-        * @return bool true indicates this operation was success; false indicates this 
-        * operation failed
-        */
-        //static bool notifyObservers(const std::string& resourceURI); 
+        bool isObservable() const;
 
         // bool whether this is a collection type, and will have children that can be queried
         //bool isCollection() const {return m_isCollection;}
@@ -141,12 +137,13 @@ namespace OC
 
         /*void post(const AttributeMap&, std::function<void(const int&)> attributeHandler);
 
-        NOTE: dont expose the host ip .. so some kind of handle is required 
-        static OCResource::Ptr getResource(const std::string& host, const std::string& resourceURI, const std::string& resourceName, 
+        NOTE: dont expose the host ip .. so some kind of handle is required
+        static OCResource::Ptr getResource(const std::string& host, const std::string& resourceURI, const std::string& resourceName,
             const std::string interfaceName, bool observerable);*/
 
-    
-    private:    
+
+    private:
+        IClientWrapper::Ptr m_clientWrapper;
         std::string m_uri;
         std::string m_host;
         bool m_isObservable;
@@ -155,6 +152,11 @@ namespace OC
         std::vector<std::string> m_interfaces;
         std::vector<std::string> m_children;
         AttributeMap m_attributeMap;
+        OCDoHandle m_observeHandle;
+
+    private:
+        OCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const std::string& uri, 
+            bool observable, const std::vector<std::string>& resourceTypes, const std::vector<std::string>& interfaces); 
     };
 
 } // namespace OC

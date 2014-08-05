@@ -25,6 +25,9 @@
 #include <string>
 
 #include <OCReflect.h>
+#include <OCResourceRequest.h>
+#include <OCResourceResponse.h>
+#include <OCApi.h>
 
 using namespace OC::OCReflect;
 
@@ -37,9 +40,14 @@ namespace OC
 
         virtual ~IServerWrapper(){};
 
-        virtual void registerResource(  const std::string& resourceURI, 
-                                const std::string& resourceTypeName,
-                                property_binding_vector properties) = 0; 
+        virtual OCStackResult registerResource(
+                    OCResourceHandle& resourceHandle,
+                    std::string& resourceURI, 
+                    const std::string& resourceTypeName, 
+                    const std::string& resourceInterface,
+                    std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
+                    uint8_t resourceProperty) = 0;
+
     };
 }
 
