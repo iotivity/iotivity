@@ -59,10 +59,6 @@ typedef struct resourcetype_t {
     // This name is used in the “rt=” parameter of a resource description when resources are introspected
     // and is also use in the <base URI>/types list of available types
     char *resourcetypename;
-    // An array of strings; each string defines the attribute and attribute data type.
-    // NOTE: this is not the same as the request/response payload representation;
-    // but is the definition of attribute/value pairs that go into the payload
-    char *typerepresentation;
 } OCResourceType;
 
 typedef struct attr_t {
@@ -81,10 +77,7 @@ typedef struct resourceinterface_t {
     // a namespace and the final segment is the interface; usually only two segments would be defined.
     // Either way this string is opaque and not parsed by segment
     char *name ;
-    // Allowed methods on this resource through this interface
-    // Use the methods in OCMethod to create a bitmap
-    // Example: OC_REST_GET|OC_REST_PUT.
-    uint8_t allowedMethods;
+
     // Supported content types to serialize request and response on this interface
     // (REMOVE for V1 – only jSON for all but core.ll that uses Link Format)
 #if 0

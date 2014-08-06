@@ -416,10 +416,7 @@ OCStackResult OCProcess() {
  *
  * @param handle - pointer to handle to newly created resource.  Set by ocstack.  Used to refer to resource
  * @param resourceTypeName - name of resource type.  Example: "core.led"
- * @param resourceAttributeRepresentation - attribute representation.  list of attributes:type, with each pair
- *                                          separated by semicolons.  Example:  "state:oc.bt.b;power:oc.bt.i"
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
- * @param allowedMethods - methods permitted on interface.  Example: OC_REST_GET|OC_REST_PUT
  * @param uri - URI of the resource.  Example:  "/a/led"
  * @param entityHandler - entity handler function that is called by ocstack to handle requests, etc
  * @param resourceProperties - properties supported by resource.  Example: OC_DISCOVERABLE|OC_OBSERVABLE
@@ -430,8 +427,7 @@ OCStackResult OCProcess() {
  */
 OCStackResult OCCreateResource(OCResourceHandle *handle,
         const char *resourceTypeName,
-        const char *resourceAttributeRepresentation,
-        const char *resourceInterfaceName, uint8_t allowedMethods,
+        const char *resourceInterfaceName, 
         const char *uri, OCEntityHandler entityHandler,
         uint8_t resourceProperties) {
 
@@ -443,20 +439,9 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     OC_LOG(INFO, TAG, PCF("Entering OCCreateResource"));
 
     // Validate parameters
-    // TODO:  Does resource attribute representation really have to be maintained in stack?
     // Is it presented during resource discovery?
-    //    VERIFY_NON_NULL(resourceAttributeRepresentation, ERROR, OC_STACK_ERROR);
     if (!handle || !resourceTypeName || !resourceInterfaceName || !uri) {
         OC_LOG(ERROR, TAG, PCF("Input parameter is NULL"));
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    // Make sure allowedMethods bitmask has allowed methods specified
-    if ((allowedMethods
-            > (OC_REST_GET | OC_REST_PUT | OC_REST_POST | OC_REST_DELETE
-                    | OC_REST_OBSERVE))
-            || (allowedMethods == OC_REST_NOMETHOD)) {
-        OC_LOG(ERROR, TAG, PCF("Invalid method"));
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -504,7 +489,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     // Add the resourcetype to the resource
     result = OCBindResourceTypeToResource((OCResourceHandle) pointer,
-            resourceTypeName, resourceAttributeRepresentation);
+            resourceTypeName); 
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Error adding resourcetype"));
         goto exit;
@@ -512,7 +497,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     // Add the resourceinterface to the resource
     result = OCBindResourceInterfaceToResource((OCResourceHandle) pointer,
-            resourceInterfaceName, allowedMethods);
+            resourceInterfaceName);
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
         goto exit;
@@ -589,16 +574,13 @@ OCStackResult OCBindContainedResourceToResource(
  *
  * @param handle - handle to the container resource
  * @param resourceTypeName - name of resource type.  Example: "core.led"
- * @param resourceAttributeRepresentation - attribute representation.  list of attributes:type, with each pair
- *                                          separated by semicolons.  Example:  "state:oc.bt.b;power:oc.bt.i"
  *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
-        const char *resourceTypeName,
-        const char *resourceAttributeRepresentation) {
+        const char *resourceTypeName) {
 
     OCResourceType *pointer = NULL;
     char *str = NULL;
@@ -612,7 +594,6 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     VERIFY_NON_NULL(resourceTypeName, ERROR, OC_STACK_INVALID_PARAM);
     // TODO:  Does resource attribute resentation really have to be maintained in stack?
     // Is it presented during resource discovery?
-    // VERIFY_NON_NULL(resourceAttributeRepresentation, ERROR, OC_STACK_ERROR);
 
     // Make sure resource exists
     resource = findResource((OCResource *) handle);
@@ -639,17 +620,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     strncpy(str, resourceTypeName, size);
     pointer->resourcetypename = str;
 
-    // If the resourceAttributeRepresentation is defined, add it.
-    if (resourceAttributeRepresentation) {
-        size = strlen(resourceAttributeRepresentation) + 1;
-        str = (char *) OCMalloc(size);
-        if (!str) {
-            goto exit;
-        }
-        strncpy(str, resourceAttributeRepresentation, size);
-        pointer->typerepresentation = str;
-    }
-    // Bind the resourcetype to the resource
+   // Bind the resourcetype to the resource
     insertResourceType(resource, pointer);
 
     result = OC_STACK_OK;
@@ -666,14 +637,13 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
  *
  * @param handle - handle to the container resource
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
- * @param allowedMethods - methods permitted on interface.  Example: OC_REST_GET|OC_REST_PUT
  *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
-        const char *resourceInterfaceName, uint8_t allowedMethods) {
+        const char *resourceInterfaceName) {
 
     OCResourceInterface *pointer = NULL;
     char *str = NULL;
@@ -685,15 +655,6 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
 
     // Validate parameters
     VERIFY_NON_NULL(resourceInterfaceName, ERROR, OC_STACK_INVALID_PARAM);
-
-    // Make sure allowedMethods bitmask has allowed methods specified
-    if ((allowedMethods
-            > (OC_REST_GET | OC_REST_PUT | OC_REST_POST | OC_REST_DELETE
-                    | OC_REST_OBSERVE))
-            || (allowedMethods == OC_REST_NOMETHOD)) {
-        OC_LOG(ERROR, TAG, PCF("Invalid method"));
-        return OC_STACK_INVALID_PARAM;
-    }
 
     // Make sure resource exists
     resource = findResource((OCResource *) handle);
@@ -719,8 +680,6 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
     }
     strncpy(str, resourceInterfaceName, size);
     pointer->name = str;
-
-    pointer->allowedMethods = allowedMethods;
 
     // Bind the resourceinterface to the resource
     insertResourceInterface(resource, pointer);
@@ -899,28 +858,7 @@ const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index) {
     return (const char *) NULL;
 }
 
-/**
- * Get attributes of resource type of the resource.
- *
- * @param handle - handle of resource
- * @param index - index of resource, 0 to Count - 1
- *
- * @return
- *    resource type attributes - if resource found
- *    NULL - resource not found
- */
-const char *OCGetResourceAttributeRepresentation(OCResourceHandle handle,
-        uint8_t index) {
-    OCResourceType *resourceType;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCGetResourceAttributeRepresentation"));
-
-    resourceType = findResourceTypeAtIndex(handle, index);
-    if (resourceType) {
-        return resourceType->typerepresentation;
-    }
-    return (const char *) NULL;
-}
 
 /**
  * Get the number of resource interfaces of the resource.
@@ -975,29 +913,6 @@ const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index) {
         return resourceInterface->name;
     }
     return (const char *) NULL;
-}
-
-/**
- * Get methods of resource interface of the resource.
- *
- * @param handle - handle of resource
- * @param index - index of resource, 0 to Count - 1
- *
- * @return
- *    allowed methods - if resource found
- *    NULL - resource not found
- */
-uint8_t OCGetResourceInterfaceAllowedMethods(OCResourceHandle handle,
-        uint8_t index) {
-    OCResourceInterface *resourceInterface;
-
-    OC_LOG(INFO, TAG, PCF("Entering OCGetResourceInterfaceAllowedMethods"));
-
-    resourceInterface = findResourceInterfaceAtIndex(handle, index);
-    if (resourceInterface) {
-        return resourceInterface->allowedMethods;
-    }
-    return (uint8_t) 0;
 }
 
 /**
@@ -1247,7 +1162,6 @@ void deleteResourceType(OCResourceType *resourceType) {
     while (pointer) {
         next = pointer->next;
         OCFree(pointer->resourcetypename);
-        OCFree(pointer->typerepresentation);
         OCFree(pointer);
         pointer = next;
     }
