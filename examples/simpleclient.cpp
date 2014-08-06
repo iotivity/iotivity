@@ -27,7 +27,7 @@
 
 using namespace OC;
 
-const int SUCCESS_RESPONSE = 200; 
+const int SUCCESS_RESPONSE = 0; 
 std::shared_ptr<OCResource> curResource;
 
 int observe_count()
@@ -36,7 +36,7 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const AttributeMap& attributeMap, const int& eCode)
+void onObserve(const AttributeMap attributeMap, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -71,12 +71,12 @@ void onObserve(const AttributeMap& attributeMap, const int& eCode)
 }
 
 // callback handler on PUT request
-void onPut(const AttributeMap& attributeMap, const int& eCode)
+void onPut(const AttributeMap attributeMap, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "PUT request was successful" << std::endl;
-        
+        std::cout << "Put count: "<< attributeMap.size()<<std::endl;
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
         {
             std::cout << "\tAttribute name: "<< it->first << " value: ";
@@ -123,7 +123,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // callback handler on GET request
-void onGet(const AttributeMap& attributeMap, const int& eCode)
+void onGet(const AttributeMap attributeMap, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {

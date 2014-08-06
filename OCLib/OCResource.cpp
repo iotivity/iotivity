@@ -37,17 +37,17 @@ namespace OC {
     {
     }
 
-    OCStackResult OCResource::get(std::function<void(const AttributeMap&, const int&)> attributeHandler)
+    OCStackResult OCResource::get(std::function<void(const AttributeMap, const int)> attributeHandler)
     {
         return m_clientWrapper->GetResourceAttributes(m_host, m_uri, attributeHandler);
     }
 
-    OCStackResult OCResource::put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function<void(const AttributeMap&, const int&)> attributeHandler)
+    OCStackResult OCResource::put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function<void(const AttributeMap, const int)> attributeHandler)
     {
         return m_clientWrapper->SetResourceAttributes(m_host, m_uri, attributeMap, queryParametersMap, attributeHandler);
     }
 
-    OCStackResult OCResource::observe(std::function<void(const AttributeMap&, const int&)> observeHandler)
+    OCStackResult OCResource::observe(std::function<void(const AttributeMap, const int)> observeHandler)
     {
         if(m_observeHandle != nullptr)
         {
