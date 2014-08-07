@@ -33,9 +33,9 @@ namespace OC
         typedef std::shared_ptr<IClientWrapper> Ptr;
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType,
             std::function<void(std::shared_ptr<OCResource>)>& callback) = 0;
-        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&)>& callback)=0;
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap&,const int&)>& callback)=0;
-        virtual OCStackResult ObserveResource(OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&)>& callback)=0;
+        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback)=0;
+        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback)=0;
+        virtual OCStackResult ObserveResource(OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback)=0;
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)=0;
         virtual ~IClientWrapper(){}
        

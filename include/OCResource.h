@@ -68,7 +68,7 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult get(std::function<void(const AttributeMap&, const int&)> attributeHandler);
+        OCStackResult get(std::function<void(const AttributeMap, const int)> attributeHandler);
 
         /**
         * Function to set the attributes of a resource (via PUT)
@@ -81,7 +81,7 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function< void(const AttributeMap&,const int&)> attributeHandler);
+        OCStackResult put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function< void(const AttributeMap,const int)> attributeHandler);
 
         /**
         * Function to set observation on the resource
@@ -92,7 +92,7 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult observe(std::function<void(const AttributeMap&, const int&)> observeHandler);
+        OCStackResult observe(std::function<void(const AttributeMap, const int)> observeHandler);
 
         /**
         * Function to cancel the observation on the resource

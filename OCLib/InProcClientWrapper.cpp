@@ -67,7 +67,6 @@ namespace OC
                 // TODO: @Erich do something with result if failed?
             }
 
-            //std::this_thread::yield();
             // To minimize CPU utilization we may wish to do this with sleep
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
@@ -131,7 +130,7 @@ namespace OC
     {
         if(clientResponse->result == OC_STACK_OK)
         {
-            ListenContext* context = (ListenContext*)ctx;
+            ListenContext* context = static_cast<ListenContext*>(ctx);
     
             std::stringstream requestStream;
             requestStream << clientResponse->resJSONPayload;
@@ -162,7 +161,7 @@ namespace OC
                 }
             
             }
-            return OC_STACK_DELETE_TRANSACTION;
+            return OC_STACK_KEEP_TRANSACTION;
 
         }
         else
@@ -182,7 +181,7 @@ namespace OC
         context->callback = callback;
         context->clientWrapper = shared_from_this();
 
-        cbdata->context =  (void*)context;
+        cbdata->context =  static_cast<void*>(context);
         cbdata->cb = listenCallback;
 
         {
@@ -202,7 +201,6 @@ namespace OC
     {
         std::stringstream requestStream;
         requestStream<<clientResponse->resJSONPayload;
-
         if(strlen((char*)clientResponse->resJSONPayload) == 0)
         {
             return AttributeMap();
@@ -226,34 +224,30 @@ namespace OC
             values.push_back(value);
             attrs[name] = values;
         }
-
         return attrs;
     }
     OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
+        GetSetContext* context = static_cast<GetSetContext*>(ctx);
+        
+        AttributeMap attrs;
+
         if(clientResponse->result == OC_STACK_OK)
         {
-            GetSetContext* context = (GetSetContext*)ctx;
-            AttributeMap attrs = parseGetSetCallback(clientResponse);
-        
-            std::thread exec(context->callback,attrs, 200);
-            exec.detach();
+            attrs = parseGetSetCallback(clientResponse);
+        }        
 
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else
-        {
-            std::cout<<"listen Callback got failed result: " << clientResponse->result<<std::endl;
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+        std::thread exec(context->callback, attrs, clientResponse->result);
+        exec.detach();
+        return OC_STACK_DELETE_TRANSACTION;
     }
-    OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&)>& callback)
+    OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
         GetSetContext* ctx = new GetSetContext();
         ctx->callback = callback;
-        cbdata->context = (void*)ctx;
+        cbdata->context = static_cast<void*>(ctx);
         cbdata->cb = &getResourceCallback;
 
         // TODO: in the future the cstack should be combining these two strings!
@@ -274,21 +268,16 @@ namespace OC
     
     OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
+        GetSetContext* context = static_cast<GetSetContext*>(ctx);
+        AttributeMap attrs;
+
         if(clientResponse->result == OC_STACK_OK)
         {
-            GetSetContext* context = (GetSetContext*)ctx;
-            AttributeMap attrs = parseGetSetCallback(clientResponse);
-
-            std::thread exec(context->callback, attrs, 200);
-            exec.detach();
-
-            return OC_STACK_DELETE_TRANSACTION;
+            attrs = parseGetSetCallback(clientResponse);
         }
-        else
-        {
-            std::cout<<"listen Callback got failed result: " << clientResponse->result<<std::endl;
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+        std::thread exec(context->callback, attrs, clientResponse->result);
+        exec.detach();
+        return OC_STACK_DELETE_TRANSACTION;
     }
     
     std::string InProcClientWrapper::assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams)
@@ -331,7 +320,7 @@ namespace OC
         return payload.str();
     }
 
-    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap&,const int&)>& callback)
+    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback)
     {
         OCStackResult result; 
         OCCallbackData* cbdata = new OCCallbackData();
@@ -345,7 +334,7 @@ namespace OC
 
         // TODO: end of above
 
-        cbdata->context = (void*)ctx;
+        cbdata->context = static_cast<void*>(ctx);
         {
             std::lock_guard<std::mutex> lock(m_csdkLock);
             OCDoHandle handle;
@@ -362,29 +351,24 @@ namespace OC
     };
 
     OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
-    {   
+    {
+        ObserveContext* context = static_cast<ObserveContext*>(ctx);
+        AttributeMap attrs;
         if(clientResponse->result == OC_STACK_OK)
         {
-            ObserveContext* context = (ObserveContext*)ctx;
-            AttributeMap attrs = parseGetSetCallback(clientResponse);
-
-            std::thread exec(context->callback, attrs, 200);
-            exec.detach();
-            return OC_STACK_KEEP_TRANSACTION;
+            attrs = parseGetSetCallback(clientResponse);
         }
-        else
-        {
-            std::cout<<"Observe Callback got failed result: "<<clientResponse->result << std::endl;
-            return OC_STACK_KEEP_TRANSACTION;
-        }
+        std::thread exec(context->callback, attrs, clientResponse->result);
+        exec.detach();
+        return OC_STACK_KEEP_TRANSACTION;
     }
-    OCStackResult InProcClientWrapper::ObserveResource(OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&)>& callback)
+    OCStackResult InProcClientWrapper::ObserveResource(OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
         ObserveContext* ctx = new ObserveContext();
         ctx->callback = callback;
-        cbdata->context = (void*)ctx;
+        cbdata->context = static_cast<void*>(ctx);
         cbdata->cb = &observeResourceCallback;
 
         ostringstream os;
@@ -405,21 +389,10 @@ namespace OC
 
     OCStackApplicationResult unobserveResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
-        std::cout << "Unobserve callback called...."<<std::endl;
-        UnobserveContext* context = (UnobserveContext*)ctx;
-        if(clientResponse->result == OC_STACK_OK)
-        {
-            std::thread exec(context->callback, 200);
-            exec.detach();
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else
-        {
-            std::cout<<"Unobserve callback got failed result: "<<clientResponse->result <<std::endl;
-            std::thread exec(context->callback, clientResponse->result);
-            exec.detach();
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+        UnobserveContext* context = static_cast<UnobserveContext*>(ctx);
+        std::thread exec(context->callback, clientResponse->result);
+        exec.detach();
+        return OC_STACK_DELETE_TRANSACTION;
     }
     OCStackResult InProcClientWrapper::CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)
     {
