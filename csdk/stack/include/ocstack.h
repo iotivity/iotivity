@@ -277,10 +277,7 @@ OCStackResult OCCancel(OCDoHandle handle);
  *
  * @param handle - pointer to handle to newly created resource.  Set by ocstack.  Used to refer to resource
  * @param resourceTypeName - name of resource type.  Example: "core.led"
- * @param resourceAttributeRepresentation - attribute representation.  list of attributes:type, with each pair
- *                                          separated by semicolons.  Example:  "state:oc.bt.b;power:oc.bt.i"
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
- * @param allowedMethods - methods permitted on interface.  Example: OC_REST_GET|OC_REST_PUT
  * @param uri - URI of the resource.  Example:  "/a/led"
  * @param entityHandler - entity handler function that is called by ocstack to handle requests, etc
  * @param resourceProperties - properties supported by resource.  Example: OC_DISCOVERABLE|OC_OBSERVABLE
@@ -291,9 +288,7 @@ OCStackResult OCCancel(OCDoHandle handle);
  */
 OCStackResult OCCreateResource(OCResourceHandle *handle,
                                const char *resourceTypeName,
-                               const char *resourceAttributeRepresentation,
                                const char *resourceInterfaceName,
-                               uint8_t allowedMethods,
                                const char *uri,
                                OCEntityHandler entityHandler,
                                uint8_t resourceProperties);
@@ -315,30 +310,25 @@ OCStackResult OCBindContainedResourceToResource(OCResourceHandle containerHandle
  *
  * @param handle - handle to the container resource
  * @param resourceTypeName - name of resource type.  Example: "core.led"
- * @param resourceAttributeRepresentation - attribute representation.  list of attributes:type, with each pair
- *                                          separated by semicolons.  Example:  "state:oc.bt.b;power:oc.bt.i"
  *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
-                                           const char *resourceTypeName,
-                                           const char *resourceAttributeRepresentation);
+                                           const char *resourceTypeName);
 /**
  * Bind a resource interface to a resource.
  *
  * @param handle - handle to the container resource
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
- * @param allowedMethods - methods permitted on interface.  Example: OC_REST_GET|OC_REST_PUT
  *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
-                                                const char *resourceInterfaceName,
-                                                uint8_t allowedMethods);
+                                                const char *resourceInterfaceName);
 
 /**
  * Bind an entity handler to the resource.

@@ -190,9 +190,7 @@ namespace OC
 
             result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
                             resourceTypeName.c_str(), // const char * resourceTypeName
-                            "state:oc.bt.b;power:oc.bt.i", // TODO @SASHI why are we still sending this??
                             resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
-                            OC_REST_GET | OC_REST_PUT, // uint8_t allowedMethods
                             resourceURI.c_str(), // const char * uri
                             entityHandler, // OCEntityHandler entityHandler
                             resourceProperties // uint8_t resourceProperties
