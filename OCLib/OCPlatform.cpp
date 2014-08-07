@@ -93,15 +93,12 @@ namespace OC
     OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName, 
         std::function<void(OCResource::Ptr)> resourceHandler)
     {
-        OCStackResult result = OC_STACK_OK;
-
         if(m_client)
         {
-            // TODO this should return
-            m_client->ListenForResource(host, resourceName, resourceHandler);
+            return m_client->ListenForResource(host, resourceName, resourceHandler);
         }
         
-        return result;
+        return OC_STACK_ERROR;
     }
     
 
