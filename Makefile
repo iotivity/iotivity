@@ -1,51 +1,66 @@
+# override with `make BUILD=release`
+# default to release build
+BUILD	  := release
+CXX	  := g++
+#CXX	  := clang
+OUT_DIR	  := $(PWD)/$(BUILD)
+OBJ_DIR	  := $(OUT_DIR)/obj
+SAMPLES_OUT_DIR := $(OUT_DIR)/samples
 
-CXX=g++
-#CXX=clang
-CXX_FLAGS=-std=c++11 -Wall -pthread 
-CXX_INC=-I./include/ -I./csdk/stack/include -I./csdk/ocsocket/include -I./csdk/ocrandom/include -I./csdk/logger/include
+CXX_FLAGS.debug     := -g3 -std=c++11 -Wall -pthread
+
+CXX_FLAGS.release   := -std=c++11 -Wall -pthread
+
+CXX_INC	  := -I./include/
+CXX_INC	  += -I./csdk/stack/include
+CXX_INC	  += -I./csdk/ocsocket/include
+CXX_INC	  += -I./csdk/ocrandom/include
+CXX_INC	  += -I./csdk/logger/include
 
 # Force metatargets to build:
-.PHONY: c_sdk simpleserver simpleclient
+.PHONY: prep_dirs c_sdk simpleserver simpleclient
 
-all: .PHONY
+all:	.PHONY
+
+prep_dirs:
+	-mkdir $(OUT_DIR)
+	-mkdir $(OBJ_DIR)
+	-mkdir $(SAMPLES_OUT_DIR)
 
 c_sdk:
-	cd csdk && $(MAKE)
+	cd csdk && $(MAKE) "BUILD=$(BUILD)"
 
 examples:
-	cd examples && $(MAKE)
+	cd examples && $(MAKE) "BUILD=$(BUILD)"
 
-simpleserver: OCLib.a simpleserver.o
-	$(CXX) $(CXX_FLAGS) -o simpleserver simpleserver.o OCLib.a csdk/liboctbstack.a 
+simpleserver: OCLib.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleserver.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/liboctbstack.a 
 
-simpleclient: OCLib.a simpleclient.o
-	$(CXX) $(CXX_FLAGS) -o simpleclient simpleclient.o OCLib.a csdk/liboctbstack.a 
+simpleclient: OCLib.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleclient.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/liboctbstack.a 
 
 OCLib.a: OCPlatform.o OCResource.o OCReflect.o InProcServerWrapper.o InProcClientWrapper.o  
-	ar -cvq OCLib.a OCPlatform.o OCResource.o OCReflect.o InProcServerWrapper.o InProcClientWrapper.o 
+	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o 
 
 OCReflect.o: OCLib/OCReflect.cpp
-	$(CXX) $(CXX_FLAGS) -c OCLib/OCReflect.cpp $(CXX_INC)
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCReflect.cpp $(CXX_INC)
 
 OCPlatform.o: OCLib/OCPlatform.cpp
-	$(CXX) $(CXX_FLAGS) -c OCLib/OCPlatform.cpp $(CXX_INC)
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCPlatform.cpp $(CXX_INC)
  
 OCResource.o: OCLib/OCResource.cpp
-	$(CXX) $(CXX_FLAGS) -c OCLib/OCResource.cpp $(CXX_INC)
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCResource.cpp $(CXX_INC)
 	
 InProcServerWrapper.o: OCLib/InProcServerWrapper.cpp
-	$(CXX) $(CXX_FLAGS) -c OCLib/InProcServerWrapper.cpp $(CXX_INC)
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/InProcServerWrapper.cpp $(CXX_INC)
 
 InProcClientWrapper.o: OCLib/InProcClientWrapper.cpp
-	$(CXX) $(CXX_FLAGS) -c OCLib/InProcClientWrapper.cpp $(CXX_INC)
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/InProcClientWrapper.cpp $(CXX_INC)
 
-simpleserver.o : examples/simpleserver.cpp
-	$(CXX) $(CXX_FLAGS) -c examples/simpleserver.cpp $(CXX_INC)
-
-simpleclient.o : examples/simpleclient.cpp
-	$(CXX) $(CXX_FLAGS) -c examples/simpleclient.cpp $(CXX_INC)
-
-clean: 
-	rm -f -v OCLib.a *.o simpleserver simpleclient
+clean: clean_legacy
+	-rm -rf release
+	-rm -rf debug
 	cd csdk && $(MAKE) clean
 	cd csdk && $(MAKE) deepclean
+clean_legacy:
+	-rm -f -v OCLib.a *.o simpleserver simpleclient

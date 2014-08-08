@@ -2,7 +2,9 @@
 
 Builds with g++ 4.6, 4.8, 4.9.
 
-Run "make" to build OCLib.a and the examples. 
+Run "make" to build OCLib.a, the examples, and TBStack in RELEASE mode.
+
+Run "make BUILD=debug" to build OCLib.a, the examples, and TBStack in DEBUG mode.
 
 OCProject/
 ├── csdk
