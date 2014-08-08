@@ -5,19 +5,17 @@ PLATFORM=linux
 
 #peg_ccfl-core
 ROOT_DIR = ../../..
-LIBCOAP_DIR = $(ROOT_DIR)/libcoap-4.1.1
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
-OCCOAP_DIR = $(ROOT_DIR)/occoap
 OCSTACK_DIR = $(ROOT_DIR)/stack
 LOGGER_DIR = $(ROOT_DIR)/logger
 RANDOM_DIR = $(ROOT_DIR)/ocrandom
-JSON_DIR = $(ROOT_DIR)/../../ccf-utilities/tb/cJSON
 
 OBJ_DIR = ./
-INC_DIRS = -I$(LOGGER_DIR)/include/ -I$(OCCOAP_DIR)/include/ \
-    -I$(OCSTACK_DIR)/include/ -I$(OCSTACK_DIR)/include/internal \
-    -I$(LIBCOAP_DIR)/ -I$(OCSOCK_DIR)/include -I$(RANDOM_DIR)/include \
-    -I$(JSON_DIR)
+
+INC_DIRS := -I$(OCSTACK_DIR)/include
+INC_DIRS += -I$(OCSOCK_DIR)/include
+INC_DIRS += -I$(LOGGER_DIR)/include
+INC_DIRS += -I$(RANDOM_DIR)/include
 
 ifeq ($(PLATFORM),android)
     CCPLUS=arm-linux-androideabi-g++
@@ -35,16 +33,14 @@ else
    $(error Wrong value for PLATFORM !!)
 endif
 
-DEP_LIBS = $(LIBCOAP_DIR)/libcoap.a
+DEP_LIBS = $(ROOT_DIR)/liboctbstack.a
 
 CFLAGS += -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
     -Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DWITH_POSIX -DTB_LOG
 
-VPATH = $(OCCOAP_DIR)/src:$(OCSTACK_DIR)/src
-
 PROGRAMS = ocserver occlient
 
-SOURCES:= occlient.c ocserver.c ocstack.c occoap.c occlientcb.c ocserverrequest.c occoaphelper.c
+SOURCES:= occlient.c ocserver.c
 
 OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 
@@ -54,10 +50,10 @@ all: $(PROGRAMS)
 	$(CC) -c $(CFLAGS) $(CFLAGS_ANDROID) $(INC_DIRS) $< -o $@
 
 ##Added -lm as needed by json calling floor()
-occlient: occlient.o ocstack.o occoap.o occlientcb.o ocserverrequest.o occoaphelper.o $(DEP_LIBS)
+occlient: occlient.o $(DEP_LIBS)
 	$(CC) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $^ -o $@ -lm
 
-ocserver: ocserver.o ocstack.o occoap.o occlientcb.o ocserverrequest.o occoaphelper.o $(DEP_LIBS)
+ocserver: ocserver.o $(DEP_LIBS)
 	$(CC) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $^ -o $@ -lm
 
 install: all

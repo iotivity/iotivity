@@ -55,6 +55,7 @@ int main() {
     uint8_t addr[20];
     uint16_t port = USE_RANDOM_PORT;
     uint8_t ifname[] = "eth0";
+    OCDoHandle handle;
 
     /*Get Ip address on defined interface and initialize coap on it with random port number
      * this port number will be used as a source port in all coap communications*/
@@ -70,8 +71,8 @@ int main() {
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
     strcpy(szQueryUri, OC_EXPLICIT_DEVICE_DISCOVERY_URI);
-    if (OCDoResource(OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE,
-            applicationDiscoverCB) != OC_STACK_OK) {
+    if (OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE,
+            0) != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, "OCStack resource error");
         return 0;
     }

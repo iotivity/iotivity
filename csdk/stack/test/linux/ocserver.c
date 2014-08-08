@@ -30,7 +30,7 @@
 #define TAG PCF("ocserver")
 
 int gQuitFlag = 0;
-void createLEDResource();
+OCStackResult createLEDResource();
 
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
@@ -64,7 +64,10 @@ int main() {
     /*
      * Declare and create the example resource: LED
      */
-    createLEDResource();
+    if(createLEDResource() != OC_STACK_OK) 
+    {
+        OC_LOG(ERROR, TAG, "OCStack cannot create resource...");
+    }
 
     // Break from loop with Ctrl-C
     OC_LOG(INFO, TAG, "Entering ocserver main loop...");
@@ -88,7 +91,7 @@ int main() {
     return 0;
 }
 
-void createLEDResource() {
+OCStackResult createLEDResource() {
     LED.power = false;
     OCStackResult res = OCCreateResource(&LED.handle,
                     "core.led",
@@ -96,4 +99,5 @@ void createLEDResource() {
                     "/a/led",
                     0,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
+    return res;
 }
