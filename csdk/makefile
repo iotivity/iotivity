@@ -1,7 +1,7 @@
 # override with `make BUILD=release`
 # default to release build
 BUILD	 := release
-PLATFORM := linux
+PLATFORM := arduino
 CC	 := gcc
 
 ifeq ($(ROOT_DIR), )
@@ -67,7 +67,7 @@ SOURCES			+= $(OCTBSTACK_SOURCES)
 all:	make_lcoap objdirs obj_build liboctbstack.a #print_vars
 
 make_lcoap: 
-	$(MAKE) -C $(LCOAP_DIR)
+	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)"
 
 objdirs: $(ROOT_DIR)
 	mkdir -p $(OBJ_DIR)
@@ -81,19 +81,27 @@ obj_build:
 liboctbstack.a:
 	@echo "Building $@" 
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	@cd $(OBJ_DIR)/$(BUILD) && ar -x $(LCOAP_DIR)/libcoap.a 
+	@cd $(OBJ_DIR)/$(BUILD) && ar -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
 	ar -r $@ $(OBJ_DIR)/$(BUILD)/*.o 
 
 .PHONY: clean print_vars
 
-clean:	$(ROOT_DIR)
+clean: legacy_clean
+	-rm -rf release
+	-rm -rf debug
+
+deepclean: legacy_deepclean
+	-rm -rf release
+	-rm -rf debug
+
+legacy_clean:	$(ROOT_DIR)
 	@echo "Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a
 	rm -rf $(OBJ_DIR)
 
-deepclean: $(ROOT_DIR)
+legacy_deepclean: $(ROOT_DIR)
 	@echo "Deep-Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a

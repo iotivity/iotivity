@@ -3,6 +3,8 @@
 BUILD	 := release
 #other options are android, arduino
 PLATFORM=linux
+OUT_DIR	  := ./$(BUILD)
+OBJ_DIR	  := $(OUT_DIR)/obj
 
 ROOT_DIR = ..
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
@@ -48,10 +50,7 @@ endif
 
 CC_FLAGS.debug := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions -pedantic \
 -std=gnu99 -DTB_LOG
-CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions -std=gnu99 \
-
-CFLAGS		+= $(CC_FLAGS.$(BUILD))
-
+CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions -std=gnu99
 
 SOURCES:= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
           str.c option.c async.c subscribe.c block.c logger.c ocrandom.c 
@@ -67,18 +66,28 @@ endif
 
 OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 
+all: prep_dirs libcoap.a
+
+prep_dirs:
+	-mkdir $(OUT_DIR)
+	-mkdir $(OBJ_DIR)
+
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CC) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 %.o: %.cpp
-	$(CCPLUS) -c $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CCPLUS) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 libcoap.a: $(OBJECTS) $(OBJECTSCPP)
-	$(AR) rcs $@ $^
-	$(RANLIB) $@
+	$(AR) rcs $(OUT_DIR)/$@ $(addprefix $(OBJ_DIR)/,$^)
+	$(RANLIB) $(OUT_DIR)/$@
 
 .PHONY: clean
 
-clean:
+clean:	legacy_clean
+	-rm -rf release
+	-rm -rf debug
+
+legacy_clean:
 	rm -f *.o libcoap.a
 

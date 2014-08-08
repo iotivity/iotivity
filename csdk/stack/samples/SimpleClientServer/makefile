@@ -3,6 +3,8 @@
 BUILD	 := release
 PLATFORM := linux
 CC	 := gcc
+OUT_DIR	  := $(PWD)/$(BUILD)
+OBJ_DIR	  := $(OUT_DIR)/obj
 
 ifeq ($(ROOT_DIR), )
 ROOT_DIR	= $(PWD)/../../..
@@ -42,12 +44,20 @@ CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 PROGRAMS	+= ocserver
 PROGRAMS	+= occlient
 
-all:	$(PROGRAMS) 
+all:	prep_dirs $(PROGRAMS) 
+
+prep_dirs:
+	-mkdir $(OUT_DIR)
+	-mkdir $(OBJ_DIR)
 
 %.o: %.cpp
-	$(CC) -c $(CPPFLAGS) $< -o $@
+	$(CC) -c $(CPPFLAGS) $< -o $(OBJ_DIR)/$@
 
 .PHONY: clean
 
-clean:
+clean: legacy_clean
+	-rm -rf release
+	-rm -rf debug
+
+legacy_clean:
 	rm -f *.o $(PROGRAMS)
