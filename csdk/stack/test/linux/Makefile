@@ -11,7 +11,7 @@ OCCOAP_DIR = $(ROOT_DIR)/occoap
 OCSTACK_DIR = $(ROOT_DIR)/stack
 LOGGER_DIR = $(ROOT_DIR)/logger
 RANDOM_DIR = $(ROOT_DIR)/ocrandom
-JSON_DIR = $(ROOT_DIR)/../../../ccf-utilities/tb/cJSON
+JSON_DIR = $(ROOT_DIR)/../../ccf-utilities/tb/cJSON
 
 OBJ_DIR = ./
 INC_DIRS = -I$(LOGGER_DIR)/include/ -I$(OCCOAP_DIR)/include/ \
