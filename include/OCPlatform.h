@@ -143,7 +143,7 @@ namespace OC
         * Step 3: bindResourceToContainer(homeResourceHandle, kitchenResourceHandle);<br>
         * At the end of Step 3, resource "a/home" will contain a reference to "a/kitchen".<br> 
         */
-        OCStackResult bindResourceToContainer(OCResourceHandle containerHandle, OCResourceHandle addedResourceHandle);
+        OCStackResult bindResource(const OCResourceHandle containerHandle, const OCResourceHandle resourceHandle);
 
         /**
         * Add multiple resources to a container resource.
@@ -163,7 +163,7 @@ namespace OC
         * Step 5: bindResourceToContainer(homeResourceHandle, rList);<br>
         * At the end of Step 5, resource "a/home" will contain a references to "a/kitchen" and "a/room" <br>
         */
-        OCStackResult bindResourcesToContainer(OCResourceHandle containerHandle, std::vector<OCResourceHandle>& addedResourceHandleList);
+        OCStackResult bindResources(const OCResourceHandle containerHandle, const std::vector<OCResourceHandle>& addedResourceHandleList);
 
         /**
         * Unbind a resource from a container resource.
@@ -245,3 +245,5 @@ namespace OC
 }
 
 #endif //__OCPLATFORM_H
+
+

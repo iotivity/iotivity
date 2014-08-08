@@ -126,20 +126,6 @@ namespace OC
     }
 
     // TODO: Implement
-    OCStackResult OCPlatform::bindResourceToContainer(OCResourceHandle containerHandle, OCResourceHandle addedResourceHandle)
-    {
-        OCStackResult result = OC_STACK_OK;
-        return result;
-    }
-
-    // TODO: Implement
-    OCStackResult OCPlatform::bindResourcesToContainer(OCResourceHandle containerHandle, std::vector<OCResourceHandle>& addedResourceHandleList)
-    {
-        OCStackResult result = OC_STACK_OK;
-        return result;
-    }
-
-    // TODO: Implement
     OCStackResult OCPlatform::unbindResource(OCResourceHandle containerHandle, OCResourceHandle resourceHandle)
     {
         OCStackResult result = OC_STACK_OK;
@@ -150,6 +136,50 @@ namespace OC
     OCStackResult OCPlatform::unbindResources(OCResourceHandle containerHandle, std::vector<OCResourceHandle>& resourceHandleList)
     {
         OCStackResult result = OC_STACK_OK;
+        return result;
+    }
+
+    OCStackResult bindResource(const OCResourceHandle containerHandle, const OCResourceHandle resourceHandle)
+    {
+        OCStackResult result = OC_STACK_OK;
+
+        try {
+            result = OCBindContainedResourceToResource(containerHandle, resourceHandle);
+        }
+        catch(std::exception e)
+        {
+            throw e;
+        }
+
+        return result;
+    }
+
+    OCStackResult bindResources(const OCResourceHandle containerHandle, const std::vector<OCResourceHandle>& resourceHandles)
+    {
+        OCStackResult result = OC_STACK_OK;
+
+        try {
+
+            std::vector<OCResourceHandle>::const_iterator it;
+
+            for(it = resourceHandles.begin(); it != resourceHandles.end(); it++)
+            {
+                result = OCBindContainedResourceToResource(containerHandle, *it);
+
+                if(result != OC_STACK_OK)
+                {
+                    // TODO Should we unbind the previous successful ones?
+                    // TODO should we return which are succesful
+                    // Currently just returns with any failure
+                    return result;
+                }
+            }
+        }
+        catch(std::exception e)
+        {
+            throw e;
+        }
+
         return result;
     }
 
