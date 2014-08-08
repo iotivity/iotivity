@@ -42,12 +42,19 @@ namespace OC
 
         virtual OCStackResult registerResource(
                     OCResourceHandle& resourceHandle,
-                    std::string& resourceURI, 
-                    const std::string& resourceTypeName, 
+                    std::string& resourceURI,
+                    const std::string& resourceTypeName,
                     const std::string& resourceInterface,
                     std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
                     uint8_t resourceProperty) = 0;
 
+        virtual OCStackResult bindTypeToResource(
+                    const OCResourceHandle& resourceHandle,
+                    const std::string& resourceTypeName) = 0;
+
+        virtual OCStackResult bindInterfaceToResource(
+                    const OCResourceHandle& resourceHandle,
+                    const std::string& resourceInterfaceName) = 0;
     };
 }
 

@@ -25,7 +25,7 @@
 #include <iterator>
 
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>  
+#include <boost/algorithm/string/split.hpp>
 
 #include "OCReflect.h"
 
@@ -67,7 +67,7 @@ char *strdup(const char *s)
  if(nullptr == ret)
   return nullptr;
 
- return strcpy(ret, s); 
+ return strcpy(ret, s);
 }
 
 char *strdup(const std::string& s)
@@ -77,7 +77,7 @@ char *strdup(const std::string& s)
  if(nullptr == ret)
   return nullptr;
 
- return strcpy(ret, s.c_str()); 
+ return strcpy(ret, s.c_str());
 }
 
 // Count the number of elements in a NULL-terminated C array of char*:
@@ -89,9 +89,9 @@ size_t length(char **in)
  size_t ret = 0;
 
  for(char **cursor = in; nullptr != *cursor; ++cursor)
-  ++ret; 
+  ++ret;
 
- return ret; 
+ return ret;
 }
 
 // Note: caller is responsible for the returned memory:
@@ -143,21 +143,21 @@ std::string convert(const OC::OCReflect::property_binding& npb)
   {
 	case property_type::nil:
 	case property_type::rational:
-	case property_type::list:	
-	case property_type::string:		
+	case property_type::list:
+	case property_type::string:
                                     // Sashi commented this line to fix the build error
 									//os << "convert(): request to convert valid, but unimplemented type: " << ps.type;
 									throw std::runtime_error(os.str());
 									break;
 
-	case property_type::INVALID:	
+	case property_type::INVALID:
 									throw std::runtime_error("convert(): request to convert invalid type");
 									break;
 
-	case property_type::boolean:	os << "bt." << 'b';	
+	case property_type::boolean:	os << "bt." << 'b';
 									break;
 
-	case property_type::integer:	os << "bt." << 'i';	
+	case property_type::integer:	os << "bt." << 'i';
 									break;
   }
 
@@ -168,7 +168,7 @@ OC::OCReflect::property_type as_property_type(const std::string& pb_code)
 {
  // We expect: "oc.bt.<char typecode>":
  const size_t code_length   = 7,
-              code_pos      = 6; 
+              code_pos      = 6;
 
  if(code_length != pb_code.length())
   return OC::OCReflect::property_type::INVALID;
@@ -183,8 +183,8 @@ OC::OCReflect::property_type as_property_type(const std::string& pb_code)
 /* These don't have codes yet:
 	case property_type::nil:
 	case property_type::rational:
-	case property_type::string:		
-	case property_type::list:	
+	case property_type::string:
+	case property_type::list:
 */
  }
 
@@ -196,14 +196,14 @@ OC::OCReflect::property_binding as_property_binding(const std::string& pb_rep)
  auto delim_pos = pb_rep.find_first_of(':');
 
  if(pb_rep.length() == delim_pos)
-  throw OC::OCReflect::reflection_exception("convert(): invalid property string (missing delimiter)");
-  
+  throw OC::reflection_exception("convert(): invalid property string (missing delimiter)");
+
  std::string pname { pb_rep.substr(0, delim_pos) };
 
  auto ptype = as_property_type(pb_rep.substr(1 + delim_pos));
 
  auto pattr = OC::OCReflect::property_attribute::rw;    // We aren't handling attributes right now...
- 
+
  return OC::OCReflect::property_binding { pname, { ptype, pattr } };
 }
 
@@ -214,7 +214,7 @@ OC::OCReflect::property_binding_vector as_property_binding_vector(const std::vec
  for(const auto& s : pb_reps)
   pbv.emplace_back(as_property_binding(s));
 
- return pbv;   
+ return pbv;
 }
 
 std::vector<std::string> convert(const OC::OCReflect::property_binding_vector& psv)
@@ -251,7 +251,7 @@ catch(...)
 std::vector<std::string> expand(const char *flattened_string, const std::string& delim)
 {
  if(nullptr == flattened_string)
-  throw OC::OCReflect::reflection_exception("nullptr passed to expand()");
+  throw OC::reflection_exception("nullptr passed to expand()");
 
   std::vector<std::string> ret;
   std::string flattened = flattened_string;

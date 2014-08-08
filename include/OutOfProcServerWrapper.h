@@ -42,6 +42,19 @@ namespace OC
             // Not implemented
             return OC_STACK_ERROR;
         }
+        virtual OCStackResult bindTypeToResource(
+                     const OCResourceHandle& resourceHandle,
+                     const std::string& resourceTypeName)
+        {   //Not implemented yet
+            return OC_STACK_ERROR;
+        }
+
+        virtual OCStackResult bindInterfaceToResource(
+                     const OCResourceHandle& resourceHandle,
+                     const std::string& resourceInterfaceName)
+        {   //Not implemented yet
+            return OC_STACK_ERROR;
+        }
     };
 }
 
