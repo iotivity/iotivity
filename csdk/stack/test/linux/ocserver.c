@@ -92,9 +92,7 @@ void createLEDResource() {
     LED.power = false;
     OCStackResult res = OCCreateResource(&LED.handle,
                     "core.led",
-                    "state:oc.bt.b;power:oc.bt.i",
                     "core.rw",
-                    OC_REST_GET|OC_REST_PUT,
                     "/a/led",
                     0,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
