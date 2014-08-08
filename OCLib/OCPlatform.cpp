@@ -125,4 +125,31 @@ namespace OC
         return result;
     }
 
+    // TODO: Implement
+    OCStackResult OCPlatform::bindResourceToContainer(OCResourceHandle containerHandle, OCResourceHandle addedResourceHandle)
+    {
+        OCStackResult result = OC_STACK_OK;
+        return result;
+    }
+
+    // TODO: Implement
+    OCStackResult OCPlatform::bindResourcesToContainer(OCResourceHandle containerHandle, std::vector<OCResourceHandle>& addedResourceHandleList)
+    {
+        OCStackResult result = OC_STACK_OK;
+        return result;
+    }
+
+    // TODO: Implement
+    OCStackResult OCPlatform::unbindResource(OCResourceHandle containerHandle, OCResourceHandle resourceHandle)
+    {
+        OCStackResult result = OC_STACK_OK;
+        return result;
+    }
+
+    // TODO: Implement
+    OCStackResult OCPlatform::unbindResources(OCResourceHandle containerHandle, std::vector<OCResourceHandle>& resourceHandleList)
+    {
+        OCStackResult result = OC_STACK_OK;
+        return result;
+    }
 } //namespace OC
