@@ -20,7 +20,7 @@ OCPlatform.o: ../../../OCLib/OCPlatform.cpp
 
 OCResource.o: ../../../OCLib/OCResource.cpp
 	$(CXX) $(CXX_FLAGS) -c ../../../OCLib/OCResource.cpp -I../../../csdk/ -I../../../include/ -I../ -I../client/ -I../server/
-	
+
 ocstack_stub.o : ../../../csdk/ocstack_stub.c
 	gcc -c ../../../csdk/ocstack_stub.c -I../../../csdk/
 
@@ -39,6 +39,6 @@ testServerApp.o : testServerApp.cpp
 testClient.o : testClient.cpp
 	$(CXX) $(CXX_FLAGS) -c testClient.cpp -I../../../csdk/ -I../../../include -I../ -I../client/ -I../server/
 
-clean: 
+clean:
 	rm *.o server client serverApp
 

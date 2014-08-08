@@ -34,23 +34,23 @@ examples:
 	cd examples && $(MAKE) "BUILD=$(BUILD)"
 
 simpleserver: OCLib.a
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleserver.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/liboctbstack.a 
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleserver.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/liboctbstack.a
 
 simpleclient: OCLib.a
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleclient.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/liboctbstack.a 
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleclient.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/liboctbstack.a
 
-OCLib.a: OCPlatform.o OCResource.o OCReflect.o InProcServerWrapper.o InProcClientWrapper.o  
-	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o 
+OCLib.a: OCPlatform.o OCResource.o OCReflect.o InProcServerWrapper.o InProcClientWrapper.o
+	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
 
 OCReflect.o: OCLib/OCReflect.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCReflect.cpp $(CXX_INC)
 
 OCPlatform.o: OCLib/OCPlatform.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCPlatform.cpp $(CXX_INC)
- 
+
 OCResource.o: OCLib/OCResource.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCResource.cpp $(CXX_INC)
-	
+
 InProcServerWrapper.o: OCLib/InProcServerWrapper.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/InProcServerWrapper.cpp $(CXX_INC)
 
