@@ -27,7 +27,7 @@
 
 using namespace OC;
 
-const int SUCCESS_RESPONSE = 0; 
+const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 
 int observe_count()
@@ -51,7 +51,7 @@ void onObserve(const AttributeMap attributeMap, const int eCode)
 
             std::cout << std::endl;
         }
-        
+
         if(observe_count() > 3)
         {
             std::cout<<"Cancelling Observe..."<<std::endl;
@@ -76,7 +76,7 @@ void onPut(const AttributeMap attributeMap, const int eCode)
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "PUT request was successful" << std::endl;
-        std::cout << "Put count: "<< attributeMap.size()<<std::endl;
+
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
         {
             std::cout << "\tAttribute name: "<< it->first << " value: ";
@@ -105,18 +105,18 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
         // Create AttributeMap
         AttributeMap attributeMap;
         // Add the attribute name and values in the attribute map
-        AttributeValues stateVal; 
+        AttributeValues stateVal;
         stateVal.push_back("true");
 
-        AttributeValues powerVal; 
+        AttributeValues powerVal;
         powerVal.push_back("10");
 
         attributeMap["state"] = stateVal;
-        attributeMap["power"] = powerVal; 
+        attributeMap["power"] = powerVal;
 
         // Create QueryParameters Map and add query params (if any)
-        QueryParamsMap queryParamsMap; 
-        
+        QueryParamsMap queryParamsMap;
+
         // Invoke resource's pit API with attribute map, query map and the callback parameter
         resource->put(attributeMap, queryParamsMap, &onPut);
     }
@@ -171,31 +171,31 @@ void foundResource(std::shared_ptr<OCResource> resource)
     std::string hostAddress;
     try
     {
-        // Do some operations with resource object. 
+        // Do some operations with resource object.
         if(resource)
         {
             std::cout<<"DISCOVERED Resource:"<<std::endl;
             // Get the resource URI
             resourceURI = resource->uri();
             std::cout << "\tURI of the resource: " << resourceURI << std::endl;
-            
+
             // Get the resource host address
             hostAddress = resource->host();
-            std::cout << "\tHost address of the resource: " << hostAddress << std::endl;      
+            std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
 
             if(resourceURI == "/a/light")
             {
                 curResource = resource;
                 // Call a local function which will internally invoke get API on the resource pointer
-                getLightRepresentation(resource); 
+                getLightRepresentation(resource);
             }
         }
         else
         {
             // Resource is invalid
             std::cout << "Resource is invalid" << std::endl;
-        }   
-        
+        }
+
     }
     catch(std::exception& e)
     {
@@ -214,8 +214,8 @@ int main()
     cfg.mode = ModeType::Client;
     cfg.serviceType = ServiceType::InProc;
 
-    // Create a OCPlatform instance. 
-    // Note: Platform creation is synchronous call. 
+    // Create a OCPlatform instance.
+    // Note: Platform creation is synchronous call.
 
     try
     {
@@ -229,7 +229,7 @@ int main()
             // some operations
         }
 
-    }catch(OCException e)
+    }catch(OCException& e)
     {
         //log(e.what());
     }

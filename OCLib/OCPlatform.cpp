@@ -32,8 +32,9 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "OCException.h"
 
-namespace OC 
+namespace OC
 {
     // Constructor. Internally calls private init function
     OCPlatform::OCPlatform(const PlatformConfig& config)
@@ -60,7 +61,7 @@ namespace OC
 
         if(config.mode == ModeType::Server)
         {
-            // Call server wrapper init 
+            // Call server wrapper init
             m_server = m_WrapperInstance->CreateServerWrapper(config);
         }
         else if(config.mode == ModeType::Client)
@@ -68,7 +69,7 @@ namespace OC
             // Call client wrapper init
             m_client = m_WrapperInstance->CreateClientWrapper(config);
         }
-        else 
+        else
         {
             // This must be both server and client
             m_server = m_WrapperInstance->CreateServerWrapper(config);
@@ -89,24 +90,23 @@ namespace OC
         }
     }
 
-    
-    OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName, 
+
+    OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName,
         std::function<void(OCResource::Ptr)> resourceHandler)
     {
         if(m_client)
         {
             return m_client->ListenForResource(host, resourceName, resourceHandler);
         }
-        
         return OC_STACK_ERROR;
     }
-    
 
-    OCStackResult OCPlatform::registerResource(OCResourceHandle& resourceHandle, 
-                std::string& resourceURI, 
-                const std::string& resourceTypeName, 
-                const std::string& resourceInterface, 
-                std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler, 
+
+    OCStackResult OCPlatform::registerResource(OCResourceHandle& resourceHandle,
+                std::string& resourceURI,
+                const std::string& resourceTypeName,
+                const std::string& resourceInterface,
+                std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
                 uint8_t resourceProperty)
     {
         OCStackResult result = OC_STACK_OK;
@@ -114,9 +114,9 @@ namespace OC
         if(m_server)
         {
             try{
-                result = m_server->registerResource(resourceHandle, resourceURI, resourceTypeName, resourceInterface, entityHandler, resourceProperty); 
+                result = m_server->registerResource(resourceHandle, resourceURI, resourceTypeName, resourceInterface, entityHandler, resourceProperty);
             }
-            catch(std::exception e) // define our own expception. 
+            catch(std::exception e) // define our own expception.
             {
                 throw e;
             }
@@ -152,4 +152,46 @@ namespace OC
         OCStackResult result = OC_STACK_OK;
         return result;
     }
+
+    OCStackResult OCPlatform::bindTypeToResource(const OCResourceHandle& resourceHandle,
+                     const std::string& resourceTypeName) const
+    {
+        OCStackResult result = OC_STACK_ERROR;
+        if(m_server)
+        {
+            try
+            {
+                result = m_server->bindTypeToResource(resourceHandle, resourceTypeName);
+            }
+            catch (OCException& e)
+            {
+                cout << "Caught an exception..." << endl;
+                cout << "\tMessage: " << e.what()  << endl;
+                cout << "\t Reason: " << e.reason() << endl;
+            }
+        }
+        return result;
+    }
+
+    OCStackResult OCPlatform::bindInterfaceToResource(const OCResourceHandle& resourceHandle,
+                     const std::string& resourceInterfaceName) const
+    {
+        OCStackResult result = OC_STACK_ERROR;
+        if(m_server)
+        {
+            try
+            {
+                result = m_server->bindInterfaceToResource(resourceHandle, resourceInterfaceName);
+            }
+            catch (OCException& e)
+            {
+                cout << "Caught an exception..." << endl;
+                cout << "\tMessage: " << e.what()  << endl;
+                cout << "\t Reason: " << e.reason() << endl;
+            }
+        }
+        return result;
+
+    }
+
 } //namespace OC

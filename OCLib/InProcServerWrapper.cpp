@@ -48,8 +48,8 @@ void defaultEntityHandler(const OC::OCResourceRequest::Ptr request, const OC::OC
 }
 
 OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
-   
-    // TODO @SASHI we need to have a better way of logging (with various levels of logging) 
+
+    // TODO @SASHI we need to have a better way of logging (with various levels of logging)
     cout << "\nIn C entity handler: " << endl;
 
     // TODO @SASHI dow we need shared pointer?
@@ -73,7 +73,7 @@ OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * e
                     // TODO @SASHI Why strings : "GET"??
                     pRequest->setRequestType("GET");
                 }
-                
+
                 if(OC_REST_PUT == entityHandlerRequest->method)
                 {
                     pRequest->setRequestType("PUT");
@@ -105,25 +105,29 @@ OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * e
         // TODO @SASHI we could use const reference
         std::string payLoad = pResponse->getPayload();
 
-        if(OC_REST_GET == entityHandlerRequest->method) 
+        if(OC_REST_GET == entityHandlerRequest->method)
         {
-            cout << "\t\t\tGoing from stack for GET: " << payLoad << endl;    
+            cout << "\t\t\tGoing from stack for GET: " << payLoad << endl;
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            cout << "\t\t\tGoing from stack for PUT: " << payLoad << endl;    
+            cout << "\t\t\tGoing from stack for PUT: " << payLoad << endl;
         }
 
+        else
+        {
+            cout << "\t\t\t Unknown method...!!!" << endl;
+        }
         // TODO @SASHI Now there is memory that needs to be freed.
         entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char *>(OC::OCReflect::OCStack::strdup(payLoad.c_str()));
 
         if(nullptr == entityHandlerRequest->resJSONPayload)
         {
             // TODO @SASHI throw std::runtime_error("out of memory");
-            cout << "Out of memory in copying to resJSONPayload" << endl; 
-        } 
+            cout << "Out of memory in copying to resJSONPayload" << endl;
+        }
     }
-      
+
     return OC_STACK_OK;
 }
 
@@ -172,7 +176,7 @@ namespace OC
                     OCResourceHandle& resourceHandle,
                     std::string& resourceURI,
                     const std::string& resourceTypeName,
-                    const std::string& resourceInterface, 
+                    const std::string& resourceInterface,
                     std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> eHandler,
                     uint8_t resourceProperties)
 
@@ -208,9 +212,38 @@ namespace OC
                 entityHandlerMap[resourceHandle] = eHandler;
             }
         }
-    
+
         return result;
     }
+
+    OCStackResult InProcServerWrapper::bindTypeToResource(const OCResourceHandle& resourceHandle,
+                     const std::string& resourceTypeName)
+    {
+        cout << "Binding Type to Resource: \n";
+        cout << "\tTypeName: " << resourceTypeName  << endl;
+
+        OCStackResult result = OCBindResourceTypeToResource(resourceHandle, resourceTypeName.c_str());
+        if (result != OC_STACK_OK)
+        {
+            throw OCException("Bind Type to resource failed", result);
+        }
+        return result;
+    }
+
+    OCStackResult InProcServerWrapper::bindInterfaceToResource(const OCResourceHandle& resourceHandle,
+                     const std::string& resourceInterfaceName)
+    {
+        cout << "Binding Interface to Resource: \n";
+        cout << "\tInterfaceName: " << resourceInterfaceName  << endl;
+
+        OCStackResult result = OCBindResourceInterfaceToResource(resourceHandle, resourceInterfaceName.c_str());
+        if (result != OC_STACK_OK)
+        {
+            throw OCException("Bind Interface to resource failed", result);
+        }
+        return result;
+    }
+
 
     InProcServerWrapper::~InProcServerWrapper()
     {

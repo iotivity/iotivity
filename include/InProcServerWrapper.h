@@ -45,11 +45,18 @@ namespace OC
                     std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
                     uint8_t resourceProperty);
 
-	private:
-		void processFunc();
-		std::thread m_processThread;
+        virtual OCStackResult bindTypeToResource(
+                    const OCResourceHandle& resourceHandle,
+                    const std::string& resourceTypeName);
+
+        virtual OCStackResult bindInterfaceToResource(
+                    const OCResourceHandle& resourceHandle,
+                    const std::string& resourceInterface);
+    private:
+        void processFunc();
+        std::thread m_processThread;
         bool m_threadRun;
-		std::mutex m_csdkLock;
+        std::mutex m_csdkLock;
     };
 }
 
