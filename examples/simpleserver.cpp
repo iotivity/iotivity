@@ -61,7 +61,7 @@ public:
     {
         std::string resourceURI = "/a/light"; // URI of the resource
         std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
-        std::string resourceInterface = PARAMETER_INTERFACE; // resource interface.
+        std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
         // OCResourceProperty is defined ocstack.h
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;

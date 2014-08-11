@@ -87,21 +87,15 @@ namespace OC {
  typedef std::map<std::string, std::string> QueryParamsMap;
 
  // const strings for different interfaces
- // Used in discovering (GET) links to other resources of a container/collection.  
+
+ // Default interface
+ const std::string DEFAULT_INTERFACE = "oc.mi.def";
+
+ // Used in discovering (GET) links to other resources of a collection.  
  const std::string LINK_INTERFACE = "oc.mi.ll";
 
- // Used in GET, PUT, POST, DELETE methods on links to other resources of a container/collection. 
+ // Used in GET, PUT, POST, DELETE methods on links to other resources of a collection. 
  const std::string BATCH_INTERFACE = "oc.mi.b";
-
- // Used to signify that the resource supports ONLY GET method 
- const std::string SENSOR_INTERFACE = "oc.mi.s";
-
- // Used to signify that the resource supports GET, PUT, POST, DELETE methods
- const std::string ACTUATOR_INTERFACE = "oc.mi.a";
-
- // OPENS 
- const std::string PARAMETER_INTERFACE = "oc.mi.p";
- const std::string READ_PARAMETER_INTERFACE = "oc.mi.rp";
 
 } // namespace OC
 

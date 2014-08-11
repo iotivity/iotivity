@@ -69,6 +69,32 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult get(std::function<void(const AttributeMap, const int)> attributeHandler);
+        
+        /**
+        * Function to get the attributes of a resource. 
+        *
+        * @param resourceType resourceType of the resource operate on
+        * @param resourceInterface interface type of the resource to operate on
+        * @param attributeHandler handles callback
+        *        The callback function will be invoked with a map of attribute name and values. 
+        *        The callback function will be invoked with a list of URIs if 'get' is invoked on a resource container 
+        *        (list will be empty if not a container)
+        *        The callback function will also have the result from this Get operation. This will have error codes
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
+        * NOTE: OCStackResult is defined in ocstack.h.<br>
+        * <b>Example:</b><br>
+        * Consider resource "a/home" (with link interface and resource type as home) contains links to "a/kitchen" and "a/room". 
+        * Step 1: get("home", Link_Interface, &onGet)<br>
+        * Callback onGet will receive a) Empty attribute map because there are no attributes for a/home b) list with 
+        * full URI of "a/kitchen" and "a/room" resources and their properties c) error code for GET operation<br>
+        * NOTE: A resource may contain single or multiple resource types. Also, a resource may contain single or multiple interfaces.<br>
+        * Currently, single GET request is allowed to do operate on single resource type or resource interface. In future, a single GET <br>
+        * can operate on multiple resource types and interfaces. <br>
+        * NOTE: A client can traverse a tree or graph by doing successive GETs on the returned resources at a node.<br>
+        * TODO: Implementation
+        */
+        OCStackResult get(const std::string& resourceType, const std::string& resourceInterface,
+            std::function<void(const AttributeMap& attributeMap, const std::vector<std::string>& resourceUriList, const int& errorCode)> attributeHandler) { return OC_STACK_OK; }
 
         /**
         * Function to set the attributes of a resource (via PUT)
@@ -82,6 +108,26 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function< void(const AttributeMap,const int)> attributeHandler);
+
+        /**
+        * Function to set the attributes of a resource (via PUT)
+        * @param resourceType resource type of the resource to operate on
+        * @param resourceInterface interface type of the resource to operate on
+        * @param AttributeMap Map which can either have all the attribute names and values
+        *        (which will represent entire state of the resource) or a
+        *        set of attribute names and values which needs to be modified
+        * @param QueryParamsMap Map which can have the query parameter name and value 
+        * @param attributeHandler
+        *        The callback function will be invoked with a map of attribute name and values.
+        *        The callback function will also have the result from this Put operation
+        *        This will have error codes
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
+        * NOTE: OCStackResult is defined in ocstack.h. <br>
+        * TODO: consider to input hrefs for resource collection
+        * TODO: Implementation
+        */
+        OCStackResult put(const std::string& resourceType, const std::string& resourceInterface,
+            const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function< void(const AttributeMap&,const int&)> attributeHandler) { return OC_STACK_OK; }
 
         /**
         * Function to set observation on the resource
