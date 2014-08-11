@@ -249,7 +249,7 @@ int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
     sin = (struct sockaddr_in *)(ipmcastaddr->addr);
     memset(&sa, 0, sizeof(sa));
     sa.sin_family = AF_INET;
-    sa.sin_addr.s_addr = INADDR_ANY;
+    sa.sin_addr.s_addr = sin->sin_addr.s_addr;
     sa.sin_port = sin->sin_port;
 
     if ((ret = bind(sfd, (struct sockaddr*)&sa, sizeof(sa))) < 0) {

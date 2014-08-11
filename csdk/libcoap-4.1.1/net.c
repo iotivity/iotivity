@@ -3,7 +3,7 @@
  * Copyright (C) 2010--2014 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -18,7 +18,7 @@
 #elif HAVE_SYS_UNISTD_H
 #include <sys/unistd.h>
 #endif
-#ifdef HAVE_SYS_TYPES_H 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
@@ -279,7 +279,7 @@ coap_pop_next(coap_context_t *context) {
 
 #ifdef COAP_DEFAULT_WKC_HASHKEY
 /** Checks if @p Key is equal to the pre-defined hash key for.well-known/core. */
-#define is_wkc(Key)							\
+#define is_wkc(Key)                         \
   (memcmp((Key), COAP_DEFAULT_WKC_HASHKEY, sizeof(coap_key_t)) == 0)
 #else
 /* Implements a singleton to store a hash key for the .wellknown/core
@@ -554,7 +554,7 @@ void coap_transaction_id(const coap_address_t *peer, const coap_pdu_t *pdu,
 #if defined(WITH_LWIP) || defined(WITH_CONTIKI)
     /* FIXME: with lwip, we can do better */
     coap_hash((const unsigned char *)&peer->port, sizeof(peer->port), h);
-    coap_hash((const unsigned char *)&peer->addr, sizeof(peer->addr), h);  
+    coap_hash((const unsigned char *)&peer->addr, sizeof(peer->addr), h);
 #endif /* WITH_LWIP || WITH_CONTIKI */
 
     coap_hash((const unsigned char * )&pdu->hdr->id, sizeof(unsigned short), h);
@@ -835,7 +835,7 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
     return COAP_INVALID_TID;
 }
 
-/** 
+/**
  * Checks if @p opt fits into the message that ends with @p maxpos.
  * This function returns @c 1 on success, or @c 0 if the option @p opt
  * would exceed @p maxpos.
@@ -878,11 +878,10 @@ int coap_read(coap_context_t *ctx, int sockfd) {
     coap_address_init(&src);
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
-  //bytes_read = recvfrom(ctx->sockfd, buf, sizeof(buf), 0,
-  //			&src.addr.sa, &src.size);
 
   bytes_read = OCRecvFrom( sockfd, (uint8_t*)buf, sizeof(buf), 0,
-			  (OCDevAddr*)&src);
+              (OCDevAddr*)&src);
+
 #endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
     if(uip_newdata()) {
@@ -960,19 +959,19 @@ int coap_read(coap_context_t *ctx, int sockfd) {
     }
 #endif
 
-    return 0;
+    return bytes_read;
 
     error:
     /* FIXME: send back RST? */
     coap_delete_node(node);
-    return -1;
+    return bytes_read;
     error_early:
 #ifdef WITH_LWIP
     /* even if there was an error, clean up */
     pbuf_free(ctx->pending_package);
     ctx->pending_package = NULL;
 #endif
-    return -1;
+    return bytes_read;
 }
 
 int coap_remove_from_queue(coap_queue_t **queue, coap_tid_t id,
@@ -1304,7 +1303,7 @@ wellknown_response(coap_context_t *context, coap_pdu_t *request) {
     return resp;
 }
 
-#define WANT_WKC(Pdu,Key)					\
+#define WANT_WKC(Pdu,Key)                   \
   (((Pdu)->hdr->code == COAP_REQUEST_GET) && is_wkc(Key))
 
 /************************************************************************************************

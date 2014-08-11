@@ -534,10 +534,18 @@ int OCStopCoAP() {
  */
 int OCProcessCoAP() {
     OC_LOG(INFO, TAG, PCF("Entering OCProcessCoAP"));
-
-    coap_read(gCoAPCtx, gCoAPCtx->sockfd);
+    int read = 0;
+    read = coap_read(gCoAPCtx, gCoAPCtx->sockfd);
+    if(read > 0)
+    {
+        OC_LOG(INFO, TAG, "This is a Unicast<============");
+    }
     if (-1 != gCoAPCtx->sockfd_wellknown) {
-        coap_read(gCoAPCtx, gCoAPCtx->sockfd_wellknown);
+        read = coap_read(gCoAPCtx, gCoAPCtx->sockfd_wellknown);
+        if(read > 0)
+        {
+            OC_LOG(INFO, TAG, "This is a Multicast<===========");
+        }
     }
     coap_dispatch(gCoAPCtx);
     return 0;
