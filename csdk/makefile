@@ -1,7 +1,7 @@
 # override with `make BUILD=release`
 # default to release build
 BUILD	 := release
-PLATFORM := arduino
+PLATFORM := linux
 CC	 := gcc
 
 ifeq ($(ROOT_DIR), )
@@ -67,7 +67,7 @@ SOURCES			+= $(OCTBSTACK_SOURCES)
 all:	make_lcoap objdirs obj_build liboctbstack.a #print_vars
 
 make_lcoap: 
-	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)"
+	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)"
 
 objdirs: $(ROOT_DIR)
 	mkdir -p $(OBJ_DIR)
