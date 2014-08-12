@@ -28,7 +28,7 @@
 #include <ocstack.h>
 #include <logger.h>
 
-char *getResult(OCStackResult result);
+const char *getResult(OCStackResult result);
 
 #define TAG PCF("ocserver")
 
@@ -176,63 +176,4 @@ void createLEDResource() {
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 }
-char *getResult(OCStackResult result) {
-    char *resString = new char[40];
-    memset(resString, 0, 40);
-    strcpy(resString, "Result: ");
-    switch (result) {
-    case OC_STACK_OK:
-        strcat(resString, "OC_STACK_OK");
-        break;
-    case OC_STACK_INVALID_URI:
-        strcat(resString, "OC_STACK_INVALID_URI");
-        break;
-    case OC_STACK_INVALID_QUERY:
-        strcat(resString, "OC_STACK_INVALID_QUERY");
-        break;
-    case OC_STACK_INVALID_IP:
-        strcat(resString, "OC_STACK_INVALID_IP");
-        break;
-    case OC_STACK_INVALID_PORT:
-        strcat(resString, "OC_STACK_INVALID_PORT");
-        break;
-    case OC_STACK_INVALID_CALLBACK:
-        strcat(resString, "OC_STACK_INVALID_CALLBACK");
-        break;
-    case OC_STACK_INVALID_METHOD:
-        strcat(resString, "OC_STACK_INVALID_METHOD");
-        break;
-    case OC_STACK_NO_MEMORY:
-        strcat(resString, "OC_STACK_NO_MEMORY");
-        break;
-    case OC_STACK_COMM_ERROR:
-        strcat(resString, "OC_STACK_COMM_ERROR");
-        break;
-    case OC_STACK_INVALID_PARAM:
-        strcat(resString, "OC_STACK_INVALID_PARAM");
-        break;
-    case OC_STACK_NOTIMPL:
-        strcat(resString, "OC_STACK_NOTIMPL");
-        break;
-    case OC_STACK_NO_RESOURCE:
-        strcat(resString, "OC_STACK_NO_RESOURCE");
-        break;
-    case OC_STACK_RESOURCE_ERROR:
-        strcat(resString, "OC_STACK_RESOURCE_ERROR");
-        break;
-    case OC_STACK_SLOW_RESOURCE:
-        strcat(resString, "OC_STACK_SLOW_RESOURCE");
-        break;
-    case OC_STACK_NO_OBSERVERS:
-        strcat(resString, "OC_STACK_NO_OBSERVERS");
-        break;
-    case OC_STACK_ERROR:
-        strcat(resString, "OC_STACK_ERROR");
-        break;
-    default:
-        strcat(resString, "UNKNOWN");
-    }
-    return resString;
-}
-
 

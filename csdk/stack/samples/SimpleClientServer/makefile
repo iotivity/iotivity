@@ -2,7 +2,7 @@
 # default to debug build
 BUILD	 := release
 PLATFORM := linux
-CC	 := gcc
+CC	 := g++
 OUT_DIR	  := $(PWD)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
@@ -41,17 +41,27 @@ CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-e
 LDLIBS		+= -loctbstack -lpthread
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
+SOURCES     := occlient.cpp ocserver.cpp common.cpp
+
+OBJECTS:= $(patsubst %.c, $(OBJ_DIR)/%.o, $(SOURCES))
+
 PROGRAMS	+= ocserver
 PROGRAMS	+= occlient
 
-all:	prep_dirs $(PROGRAMS) 
+all:	prep_dirs $(OBJECTS) $(PROGRAMS) 
 
 prep_dirs:
-	-mkdir $(OUT_DIR)
-	-mkdir $(OBJ_DIR)
+	-mkdir -p $(OUT_DIR)
+	-mkdir -p $(OBJ_DIR)
 
-%.o: %.cpp
-	$(CC) -c $(CPPFLAGS) $< -o $(OBJ_DIR)/$@
+$(OBJ_DIR)/%.o: %.cpp
+	$(CC) -c $(CPPFLAGS) $< -o $@
+
+ocserver: $(OBJ_DIR)/ocserver.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $@
+
+occlient: $(OBJ_DIR)/occlient.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $@
 
 .PHONY: clean
 
