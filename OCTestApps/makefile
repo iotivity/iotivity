@@ -1,7 +1,7 @@
 CXX=g++
 #CXX=clang -lstdc++ -g
 
-CXX_FLAGS=-std=c++11 -Wall -pthread
+CXX_FLAGS=-std=c++0x -Wall -pthread
 
 CXX_INC=-I../OCProject/include/ -I../OCProject/OCLib/ -I../OCProject/OCLib/OCWrapper/ -I../OCProject/OCLib/OCWrapper/server -I../OCProject/OCLib/OCWrapper/client/ -I../OCProject/csdk/
 

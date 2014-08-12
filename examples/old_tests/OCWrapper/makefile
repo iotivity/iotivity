@@ -1,5 +1,5 @@
 CXX=g++
-CXX_FLAGS=-std=c++11 -Wall -pthread
+CXX_FLAGS=-std=c++0x -Wall -pthread
 
 final: server client serverApp
 

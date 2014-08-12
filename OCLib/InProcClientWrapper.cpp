@@ -284,7 +284,7 @@ namespace OC
     {
         if(uri.back() == '/') 
         {
-            uri.pop_back();
+            uri.resize(uri.size()-1);
         }
 
         ostringstream paramsList;

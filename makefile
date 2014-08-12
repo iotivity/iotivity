@@ -7,9 +7,9 @@ OUT_DIR	  := $(PWD)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 SAMPLES_OUT_DIR := $(OUT_DIR)/samples
 
-CXX_FLAGS.debug     := -g3 -std=c++11 -Wall -pthread
+CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread
 
-CXX_FLAGS.release   := -std=c++11 -Wall -pthread
+CXX_FLAGS.release   := -std=c++0x -Wall -pthread
 
 CXX_INC	  := -I./include/
 CXX_INC	  += -I./csdk/stack/include
