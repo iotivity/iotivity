@@ -24,11 +24,13 @@
 #include <cstdlib>
 #include <pthread.h>
 #include "OCPlatform.h"
+#include "OCApi.h"
 
 using namespace OC;
 
 const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
+static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
 int observe_count()
 {
@@ -36,11 +38,12 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const AttributeMap attributeMap, const int eCode)
+void onObserve(const AttributeMap& attributeMap, const int& eCode, const int& sequenceNumber)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "OBSERVE RESULT:"<<std::endl;
+        std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
         {
             std::cout << "\tAttribute name: "<< it->first << " value: ";
@@ -51,8 +54,8 @@ void onObserve(const AttributeMap attributeMap, const int eCode)
 
             std::cout << std::endl;
         }
-
-        if(observe_count() > 3)
+        
+        if(observe_count() > 30)
         {
             std::cout<<"Cancelling Observe..."<<std::endl;
             OCStackResult result = curResource->cancelObserve();
@@ -87,7 +90,14 @@ void onPut(const AttributeMap attributeMap, const int eCode)
 
             std::cout << std::endl;
         }
-        curResource->observe(&onObserve);
+
+        if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
+            std::cout << endl << "Observe is used." << endl << endl;
+        else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
+            std::cout << endl << "ObserveAll is used." << endl << endl;
+
+        curResource->observe(OBSERVE_TYPE_TO_USE, &onObserve);
+
     }
     else
     {
@@ -203,11 +213,36 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-
-int main()
+void PrintUsage()
 {
-    // Create PlatformConfig object
+    std::cout << endl;
+    std::cout << "Usage : simpleclient <ObserveType>" << endl;
+    std::cout << "   ObserveType : 1 - Observe" << endl;
+    std::cout << "   ObserveType : 2 - ObserveAll" << endl;
+}
 
+int main(int argc, char* argv[]) {
+    if (argc == 1)
+    {
+        OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+    }
+    else if (argc == 2)
+    {
+        int value = atoi(argv[1]);
+        if (value == 1)
+            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+        else if (value == 2)
+            OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
+        else
+            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+    }
+    else
+    {
+        PrintUsage();
+        return -1;
+    }
+
+    // Create PlatformConfig object
     PlatformConfig cfg;
     cfg.ipAddress = "134.134.161.33";
     cfg.port = 5683;

@@ -46,7 +46,7 @@ namespace OC
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, std::function<void(std::shared_ptr<OCResource>)>& callback);
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback);
         virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback);
-        virtual OCStackResult ObserveResource(OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback);
+        virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&, const int&)>& callback);
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri);
         
         // Note: this should never be called by anyone but the handler for the listen command.  It is public becuase that needs to be a non-instance callback

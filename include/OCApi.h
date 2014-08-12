@@ -78,6 +78,12 @@ namespace OC {
     ObserverFlag
  };
 
+ enum class ObserveType
+ {
+     Observe,
+     ObserveAll
+ };
+
  // TODO: To find the complete JSon data structure and modify map value type
  // Typedef for attribute values and attribute map. 
  typedef std::vector<std::string> AttributeValues;
@@ -91,10 +97,10 @@ namespace OC {
  // Default interface
  const std::string DEFAULT_INTERFACE = "oc.mi.def";
 
- // Used in discovering (GET) links to other resources of a collection.  
+ // Used in discovering (GET) links to other resources of a collection.
  const std::string LINK_INTERFACE = "oc.mi.ll";
 
- // Used in GET, PUT, POST, DELETE methods on links to other resources of a collection. 
+ // Used in GET, PUT, POST, DELETE methods on links to other resources of a collection.
  const std::string BATCH_INTERFACE = "oc.mi.b";
 
 } // namespace OC

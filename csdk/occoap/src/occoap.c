@@ -207,7 +207,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         {
             if(clientResponse->sequenceNumber != 0)
             {
-                if(clientResponse->sequenceNumber <= cbNode->sequenceNumber)
+                if(cbNode->method == OC_REST_OBSERVE && (clientResponse->sequenceNumber <= cbNode->sequenceNumber))
                 {
                     OC_LOG_V(DEBUG, TAG, "Observe notification came out of order. \
                              Ignoring Incoming:%d  Against Current:%d.",

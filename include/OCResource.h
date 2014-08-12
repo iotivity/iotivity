@@ -116,7 +116,7 @@ namespace OC
         * @param AttributeMap Map which can either have all the attribute names and values
         *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
-        * @param QueryParamsMap Map which can have the query parameter name and value 
+        * @param QueryParamsMap Map which can have the query parameter name and value
         * @param attributeHandler
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this Put operation
@@ -131,6 +131,7 @@ namespace OC
 
         /**
         * Function to set observation on the resource
+        * @param observeType allows the client to specify how it wants to observe.
         * @param observeHandler handles callback
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this observe operation
@@ -138,7 +139,7 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult observe(std::function<void(const AttributeMap, const int)> observeHandler);
+        OCStackResult observe(ObserveType observeType, std::function<void(const AttributeMap&, const int&, const int&)> observeHandler);
 
         /**
         * Function to cancel the observation on the resource

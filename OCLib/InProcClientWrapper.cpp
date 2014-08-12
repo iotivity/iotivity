@@ -347,22 +347,24 @@ namespace OC
 
     struct ObserveContext
     {
-        std::function<void(const AttributeMap&, const int&)> callback;
+        std::function<void(const AttributeMap&, const int&, const int&)> callback;
     };
 
     OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
         ObserveContext* context = static_cast<ObserveContext*>(ctx);
         AttributeMap attrs;
+        uint32_t sequenceNumber = clientResponse->sequenceNumber;
         if(clientResponse->result == OC_STACK_OK)
         {
             attrs = parseGetSetCallback(clientResponse);
         }
-        std::thread exec(context->callback, attrs, clientResponse->result);
+        std::thread exec(context->callback, attrs, clientResponse->result, sequenceNumber);
         exec.detach();
         return OC_STACK_KEEP_TRANSACTION;
     }
-    OCStackResult InProcClientWrapper::ObserveResource(OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback)
+
+    OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&, const int&)>& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -371,13 +373,27 @@ namespace OC
         cbdata->context = static_cast<void*>(ctx);
         cbdata->cb = &observeResourceCallback;
 
+        OCMethod method;
+        if (observeType == ObserveType::Observe)
+        {
+            method = OC_REST_OBSERVE;
+        }
+        else if (observeType == ObserveType::ObserveAll)
+        {
+            method = OC_REST_OBSERVE_ALL;
+        }
+        else
+        {
+            method = OC_REST_OBSERVE_ALL;
+        }
+
         ostringstream os;
         os << host<< uri;
 
         {
             std::lock_guard<std::mutex> lock(m_csdkLock);
             //result = OCDoResource(handle, OC_REST_OBSERVE,  uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
-            result = OCDoResource(handle, OC_REST_OBSERVE, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(handle, method, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
         }
         return result;
     }
