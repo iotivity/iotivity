@@ -90,9 +90,23 @@ namespace OC
         }
     }
 
+    OCResource::Ptr OCPlatform::constructResourceObject(const std::string& host, const std::string& uri,
+                bool isObservable, const std::vector<std::string>& resourceTypes,
+                const std::vector<std::string>& interfaces)
+    {
+        if(m_client)
+        {
+            return std::shared_ptr<OCResource>(new OCResource(m_client, host, uri, isObservable, resourceTypes, interfaces));
+        }
+
+        else
+        {
+            return std::shared_ptr<OCResource>();
+        }
+    }
 
     OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName,
-        std::function<void(OCResource::Ptr)> resourceHandler)
+                std::function<void(OCResource::Ptr)> resourceHandler)
     {
         if(m_client)
         {

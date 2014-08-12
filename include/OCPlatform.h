@@ -226,7 +226,34 @@ namespace OC
         OCStackResult bindInterfaceToResource(const OCResourceHandle& resourceHandle,
                         const std::string& resourceInterfaceName) const;
 
-
+        /**
+        * Creates a resource proxy object so that get/put/observe functionality
+        * can be used without discovering the object in advance.  Note that the
+        * consumer of this method needs to provide all of the details required to
+        * correctly contact and observe the object. If the consumer lacks any of 
+        * this information, they should discover the resource object normally. 
+        * Additionally, you can only create this object if OCPlatform was initialized
+        * to be a Client or Client/Server.  Otherwise, this will return an empty
+        * shared ptr.
+        *
+        * @param host - a string containing a resolvable host address of the server 
+        *           holding the resource. Currently this should be in the format 
+        *           coap://address:port, though in the future, we expect this to 
+        *           change to //address:port
+        *
+        * @param uri - the rest of the resource's URI that will permit messages to be
+        *           properly routed.  Example: /a/light
+        *
+        * @param isObservable - a boolean containing whether the resource supports observation
+        *
+        * @param resourceTypes - a collection of resource types implemented by the resource
+        *
+        * @param interfaces - a collection of interfaces that the resource supports/implements
+        * @return OCResource::Ptr - a shared pointer to the new resource object
+        */
+        OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
+                        bool isObservable, const std::vector<std::string>& resourceTypes,
+                        const std::vector<std::string>& interfaces);
     private:
         std::unique_ptr<WrapperFactory> m_WrapperInstance;
         IServerWrapper::Ptr m_server;
