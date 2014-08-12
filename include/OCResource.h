@@ -99,12 +99,14 @@ namespace OC
 
         /**
         * Function to set the attributes of a resource (via PUT)
-        * @param AttributeMap Map which can either have all the attribute names and values
+        * @param attributeMap Map which can either have all the attribute names and values
                  (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this Put operation
         *        This will have error codes
+        * @param queryParametersMap map which can have the query parameter name and value
+        * @param attributeHandler attribute handler
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
@@ -114,14 +116,15 @@ namespace OC
         * Function to set the attributes of a resource (via PUT)
         * @param resourceType resource type of the resource to operate on
         * @param resourceInterface interface type of the resource to operate on
-        * @param AttributeMap Map which can either have all the attribute names and values
-        *        (which will represent entire state of the resource) or a
-        *        set of attribute names and values which needs to be modified
-        * @param QueryParamsMap Map which can have the query parameter name and value
-        * @param attributeHandler
+        * @param attributeMap attribute map
+        * @param queryParametersMap Map which can have the query parameter name and value
+        * @param attributeHandler attribute handler
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this Put operation
-        *        This will have error codes
+        *        This will have error codes.
+        *        The AttributeMap parameter maps which can either have all the attribute names and values
+        *        (which will represent entire state of the resource) or a
+        *        set of attribute names and values which needs to be modified
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
         * TODO: consider to input hrefs for resource collection
@@ -144,9 +147,6 @@ namespace OC
 
         /**
         * Function to cancel the observation on the resource
-        * @param observeCancellationHandler handles callback
-        *        The callback function will also have the result from this operation
-        *        This will have error codes
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */

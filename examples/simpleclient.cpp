@@ -215,10 +215,10 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
 void PrintUsage()
 {
-    std::cout << endl;
-    std::cout << "Usage : simpleclient <ObserveType>" << endl;
-    std::cout << "   ObserveType : 1 - Observe" << endl;
-    std::cout << "   ObserveType : 2 - ObserveAll" << endl;
+    std::cout << std::endl;
+    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
+    std::cout << "   ObserveType : 1 - Observe" << std::endl;
+    std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
