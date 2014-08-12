@@ -28,7 +28,7 @@ namespace OC
     class OutOfProcClientWrapper : public IClientWrapper
     {
     public:
-        OutOfProcClientWrapper(PlatformConfig cfg) { }
+        OutOfProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg) { }
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, std::function<void(std::shared_ptr<OCResource>)>& callback) {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback){return OC_STACK_NOTIMPL;}

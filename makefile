@@ -18,7 +18,7 @@ CXX_INC	  += -I./csdk/ocrandom/include
 CXX_INC	  += -I./csdk/logger/include
 
 # Force metatargets to build:
-.PHONY: prep_dirs c_sdk simpleserver simpleclient
+.PHONY: prep_dirs c_sdk simpleserver simpleclient simpleclientserver
 
 all:	.PHONY
 
@@ -38,6 +38,9 @@ simpleserver: OCLib.a
 
 simpleclient: OCLib.a
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleclient.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/liboctbstack.a
+
+simpleclientserver: OCLib.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleclientserver.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/liboctbstack.a
 
 OCLib.a: OCPlatform.o OCResource.o OCReflect.o InProcServerWrapper.o InProcClientWrapper.o
 	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
@@ -63,4 +66,4 @@ clean: clean_legacy
 	cd csdk && $(MAKE) clean
 	cd csdk && $(MAKE) deepclean
 clean_legacy:
-	-rm -f -v OCLib.a *.o simpleserver simpleclient
+	-rm -f -v OCLib.a *.o simpleserver simpleclient simpleclientserver

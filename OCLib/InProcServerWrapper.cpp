@@ -133,9 +133,25 @@ OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * e
 
 namespace OC
 {
-    InProcServerWrapper::InProcServerWrapper(PlatformConfig cfg)
+    InProcServerWrapper::InProcServerWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
+                            :m_csdkLock(csdkLock)
     {
-        OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, OC_SERVER);
+        OCMode initType;
+        
+        if(cfg.mode == ModeType::Server)
+        {
+            initType = OC_SERVER;
+        }
+        else if (cfg.mode == ModeType::Both)
+        {
+            initType = OC_CLIENT_SERVER;
+        }
+        else
+        {
+            throw InitializeException("Cannot construct a Server when configured as a client", OC_STACK_INVALID_PARAM);
+        }
+
+        OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, initType);
 
         // Setting default entity Handler
         entityHandlerMap[(OCResourceHandle) 0] = defaultEntityHandler;
@@ -151,12 +167,12 @@ namespace OC
 
     void InProcServerWrapper::processFunc()
     {
-        while(m_threadRun)
+        auto cLock = m_csdkLock.lock();
+        while(cLock && m_threadRun)
         {
             OCStackResult result;
             {
-                // TODO Fix Lock issue
-                // std::lock_guard<std::mutex> lock(m_csdkLock);
+                std::lock_guard<std::mutex> lock(*cLock);
                 result = OCProcess();
             }
 
@@ -166,7 +182,7 @@ namespace OC
                 // TODO: SASHI
             }
 
-            std::this_thread::yield();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             // To minimize CPU utilization we may wish to do this with sleep
             //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
@@ -188,9 +204,11 @@ namespace OC
         cout << "\tResource TypeName: " << resourceTypeName  << endl;
         cout << "\tResource Interface: " << resourceInterface << endl;
 
+        auto cLock = m_csdkLock.lock();
+        
+        if(cLock)
         {
-            // TODO @SASHI : Something wrong with lock usage
-            // std::lock_guard<std::mutex> lock(m_csdkLock);
+            std::lock_guard<std::mutex> lock(*cLock);
 
             result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
                             resourceTypeName.c_str(), // const char * resourceTypeName
@@ -212,6 +230,10 @@ namespace OC
                 entityHandlerMap[resourceHandle] = eHandler;
             }
         }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
 
         return result;
     }
@@ -222,7 +244,18 @@ namespace OC
         cout << "Binding Type to Resource: \n";
         cout << "\tTypeName: " << resourceTypeName  << endl;
 
-        OCStackResult result = OCBindResourceTypeToResource(resourceHandle, resourceTypeName.c_str());
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result; 
+        if(cLock)
+        {
+            std::lock_guard<std::mutex> lock(*cLock);
+            result = OCBindResourceTypeToResource(resourceHandle, resourceTypeName.c_str());
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
         if (result != OC_STACK_OK)
         {
             throw OCException("Bind Type to resource failed", result);
@@ -236,7 +269,18 @@ namespace OC
         cout << "Binding Interface to Resource: \n";
         cout << "\tInterfaceName: " << resourceInterfaceName  << endl;
 
-        OCStackResult result = OCBindResourceInterfaceToResource(resourceHandle, resourceInterfaceName.c_str());
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result;
+        if(cLock)
+        {
+            std::lock_guard<std::mutex> lock(*cLock);
+            result = OCBindResourceInterfaceToResource(resourceHandle, resourceInterfaceName.c_str());
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
         if (result != OC_STACK_OK)
         {
             throw OCException("Bind Interface to resource failed", result);
@@ -252,7 +296,7 @@ namespace OC
             m_threadRun = false;
             m_processThread.join();
         }
-
+        
         OCStop();
     }
 }

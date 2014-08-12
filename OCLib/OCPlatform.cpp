@@ -56,24 +56,25 @@ namespace OC
 
     void OCPlatform::init(const PlatformConfig& config)
     {
+        m_csdkLock = make_shared<std::mutex>();
         std::unique_ptr<WrapperFactory> wrapperInstance(new WrapperFactory());
         m_WrapperInstance = std::move(wrapperInstance);
 
         if(config.mode == ModeType::Server)
         {
             // Call server wrapper init
-            m_server = m_WrapperInstance->CreateServerWrapper(config);
+            m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
         }
         else if(config.mode == ModeType::Client)
         {
             // Call client wrapper init
-            m_client = m_WrapperInstance->CreateClientWrapper(config);
+            m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
         }
         else
         {
             // This must be both server and client
-            m_server = m_WrapperInstance->CreateServerWrapper(config);
-            m_client = m_WrapperInstance->CreateClientWrapper(config);
+            m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
+            m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
         }
     }
 
@@ -81,12 +82,12 @@ namespace OC
     {
         if(m_server)
         {
-            //delete m_server;
+            m_server.reset();
         }
 
         if(m_client)
         {
-            //delete m_client;
+            m_client.reset();
         }
     }
 

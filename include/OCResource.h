@@ -191,7 +191,7 @@ namespace OC
 
 
     private:
-        IClientWrapper::Ptr m_clientWrapper;
+        std::weak_ptr<IClientWrapper> m_clientWrapper;
         std::string m_uri;
         std::string m_host;
         bool m_isObservable;
@@ -203,7 +203,7 @@ namespace OC
         OCDoHandle m_observeHandle;
 
     private:
-        OCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const std::string& uri, 
+        OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host, const std::string& uri, 
             bool observable, const std::vector<std::string>& resourceTypes, const std::vector<std::string>& interfaces); 
     };
 

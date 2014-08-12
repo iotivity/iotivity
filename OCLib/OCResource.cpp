@@ -22,14 +22,14 @@
 #include "OCReflect.h"
 
 namespace OC {
-    OCResource::OCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes, const std::vector<std::string>& interfaces) : 
+    OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host, const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes, const std::vector<std::string>& interfaces) : 
         m_clientWrapper(clientWrapper), m_uri(uri), m_host(host), m_isObservable(observable), m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces), m_observeHandle(nullptr)
     {
         m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE) != m_interfaces.end();
 
-        if (m_uri.empty() || resourceTypes.empty() || interfaces.empty()|| ! m_clientWrapper)
+        if (m_uri.empty() || resourceTypes.empty() || interfaces.empty()|| m_clientWrapper.expired())
         {
-            throw ResourceInitException(m_uri.empty(), resourceTypes.empty(), interfaces.empty(), m_clientWrapper.get() == nullptr);
+            throw ResourceInitException(m_uri.empty(), resourceTypes.empty(), interfaces.empty(), m_clientWrapper.expired());
         }
     }
 
@@ -39,12 +39,30 @@ namespace OC {
 
     OCStackResult OCResource::get(std::function<void(const AttributeMap, const int)> attributeHandler)
     {
-        return m_clientWrapper->GetResourceAttributes(m_host, m_uri, attributeHandler);
+        auto cw = m_clientWrapper.lock();
+
+        if(cw)
+        {
+            return cw->GetResourceAttributes(m_host, m_uri, attributeHandler);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
     }
 
     OCStackResult OCResource::put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function<void(const AttributeMap, const int)> attributeHandler)
     {
-        return m_clientWrapper->SetResourceAttributes(m_host, m_uri, attributeMap, queryParametersMap, attributeHandler);
+        auto cw = m_clientWrapper.lock();
+
+        if(cw)
+        {
+            return cw->SetResourceAttributes(m_host, m_uri, attributeMap, queryParametersMap, attributeHandler);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
     }
 
     OCStackResult OCResource::observe(ObserveType observeType, std::function<void(const AttributeMap&, const int&, const int&)> observeHandler)
@@ -55,7 +73,16 @@ namespace OC {
         }
         else
         {
-            return m_clientWrapper->ObserveResource(observeType, &m_observeHandle, m_host, m_uri, observeHandler);
+            auto cw = m_clientWrapper.lock();
+
+            if(cw)
+            {
+                return cw->ObserveResource(observeType, &m_observeHandle, m_host, m_uri, observeHandler);
+            }
+            else
+            {
+                return OC_STACK_ERROR;
+            }
         }
     }
 
@@ -67,9 +94,18 @@ namespace OC {
         }
         else
         {
-            OCStackResult ret = m_clientWrapper->CancelObserveResource(m_observeHandle, m_host, m_uri);
-            m_observeHandle = nullptr;
-            return ret;
+            auto cw = m_clientWrapper.lock();
+
+            if(cw)
+            {
+                OCStackResult ret = cw->CancelObserveResource(m_observeHandle, m_host, m_uri);
+                m_observeHandle = nullptr;
+                return ret;
+            }
+            else
+            {
+                return OC_STACK_ERROR;
+            }
         }
     }
 
