@@ -294,21 +294,35 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                uint8_t resourceProperties);
 
 /**
- * Add a resource to a container resource.
+ * Add a resource to a collection resource.
  *
- * @param containerHandle - handle to the container resource
- * @param addedResourceHandle - handle to resource to be added to the container resource
+ * @param collectionHandle - handle to the collection resource
+ * @param resourceHandle - handle to resource to be added to the collection resource
  *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
+ *     OC_STACK_INVALID_PARAM - invalid collectionhandle
  */
-OCStackResult OCBindContainedResourceToResource(OCResourceHandle containerHandle, OCResourceHandle addedResourceHandle);
+OCStackResult OCBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
+
+/**
+ * Remove a resource from a collection resource.
+ *
+ * @param collectionHandle - handle to the collection resource
+ * @param resourceHandle - handle to resource to be removed from the collection resource
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
+ *     OC_STACK_INVALID_PARAM - invalid collectionhandle
+ */
+OCStackResult OCUnBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
 
 /**
  * Bind a resourcetype to a resource.
  *
- * @param handle - handle to the container resource
+ * @param handle - handle to the resource
  * @param resourceTypeName - name of resource type.  Example: "core.led"
  *
  * @return
@@ -320,7 +334,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
 /**
  * Bind a resource interface to a resource.
  *
- * @param handle - handle to the container resource
+ * @param handle - handle to the resource
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
  *
  * @return
@@ -472,16 +486,16 @@ const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index);
 uint8_t OCGetResourceInterfaceAllowedMethods(OCResourceHandle handle, uint8_t index);
 
 /**
- * Get name of resource interface of the resource.
+ * Get resource handle from the collection resource by index.
  *
- * @param containerHandle - handle of container resource
+ * @param collectionHandle - handle of collection resource
  * @param index - index of contained resource, 0 to Count - 1
  *
  * @return
  *    handle to contained resource - if resource found
  *    NULL - resource not found
  */
-OCResourceHandle OCGetContainedResourceHandle(OCResourceHandle containerHandle, uint8_t index);
+OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHandle, uint8_t index);
 
 /**
  * Get the entity handler for a resource.

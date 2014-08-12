@@ -523,35 +523,36 @@ exit:
 }
 
 /**
- * Add a resource to a container resource.
+ * Add a resource to a collection resource.
  *
- * @param containerHandle - handle to the container resource
- * @param addedResourceHandle - handle to resource to be added to the container resource
+ * @param collectionHandle - handle to the collection resource
+ * @param resourceHandle - handle to resource to be added to the collection resource
  *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
+ *     OC_STACK_INVALID_PARAM - invalid collectionhandle
  */
-OCStackResult OCBindContainedResourceToResource(
-        OCResourceHandle containerHandle, OCResourceHandle addedResourceHandle) {
+OCStackResult OCBindResource(
+        OCResourceHandle collectionHandle, OCResourceHandle resourceHandle) {
     OCResource *resource;
     uint8_t i;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCBindContainedResourceToResource"));
+    OC_LOG(INFO, TAG, PCF("Entering OCBindResource"));
 
     // Validate parameters
-    VERIFY_NON_NULL(containerHandle, ERROR, OC_STACK_ERROR);
-    VERIFY_NON_NULL(addedResourceHandle, ERROR, OC_STACK_ERROR);
+    VERIFY_NON_NULL(collectionHandle, ERROR, OC_STACK_ERROR);
+    VERIFY_NON_NULL(resourceHandle, ERROR, OC_STACK_ERROR);
     // Container cannot contain itself
-    if (containerHandle == addedResourceHandle) {
-        OC_LOG(ERROR, TAG, PCF("Added handle equals container handle"));
+    if (collectionHandle == resourceHandle) {
+        OC_LOG(ERROR, TAG, PCF("Added handle equals collection handle"));
         return OC_STACK_INVALID_PARAM;
     }
 
     // Use the handle to find the resource in the resource linked list
-    resource = findResource((OCResource *) containerHandle);
+    resource = findResource((OCResource *) collectionHandle);
     if (!resource) {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        OC_LOG(ERROR, TAG, PCF("Collection handle not found"));
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -559,20 +560,71 @@ OCStackResult OCBindContainedResourceToResource(
     // If found, add it and return success
     for (i = 0; i < MAX_CONTAINED_RESOURCES; i++) {
         if (!resource->rsrcResources[i]) {
-            resource->rsrcResources[i] = (OCResourceHandle) addedResourceHandle;
+            resource->rsrcResources[i] = (OCResourceHandle) resourceHandle;
             OC_LOG(INFO, TAG, PCF("resource bound"));
             return OC_STACK_OK;
         }
     }
 
-    // Unable to add addedResourceHandle, so return error
+    // Unable to add resourceHandle, so return error
     return OC_STACK_ERROR;
 }
 
 /**
+ * Remove a resource from a collection resource.
+ *
+ * @param collectionHandle - handle to the collection resource
+ * @param resourceHandle - handle to resource to be added to the collection resource
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
+ *     OC_STACK_INVALID_PARAM - invalid collectionHandle
+ */
+OCStackResult OCUnBindResource(
+        OCResourceHandle collectionHandle, OCResourceHandle resourceHandle) {
+    OCResource *resource;
+    uint8_t i;
+
+    OC_LOG(INFO, TAG, PCF("Entering OCUnBindResource"));
+
+    // Validate parameters
+    VERIFY_NON_NULL(collectionHandle, ERROR, OC_STACK_ERROR);
+    VERIFY_NON_NULL(resourceHandle, ERROR, OC_STACK_ERROR);
+    // Container cannot contain itself
+    if (collectionHandle == resourceHandle) {
+        OC_LOG(ERROR, TAG, PCF("removing handle equals collection handle"));
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Use the handle to find the resource in the resource linked list
+    resource = findResource((OCResource *) collectionHandle);
+    if (!resource) {
+        OC_LOG(ERROR, TAG, PCF("Collection handle not found"));
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Look for an open slot to add add the child resource.
+    // If found, add it and return success
+    for (i = 0; i < MAX_CONTAINED_RESOURCES; i++) {
+        if (resourceHandle == resource->rsrcResources[i]) {
+            resource->rsrcResources[i] = (OCResourceHandle) 0; 
+            OC_LOG(INFO, TAG, PCF("resource unbound"));
+            return OC_STACK_OK;
+        }
+    }
+
+	OC_LOG(INFO, TAG, PCF("resource not found in collection"));
+
+    // Unable to add resourceHandle, so return error
+    return OC_STACK_ERROR;
+}
+
+
+/**
  * Bind a resourcetype to a resource.
  *
- * @param handle - handle to the container resource
+ * @param handle - handle to the resource
  * @param resourceTypeName - name of resource type.  Example: "core.led"
  *
  * @return
@@ -635,7 +687,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
 /**
  * Bind a resourceinterface to a resource.
  *
- * @param handle - handle to the container resource
+ * @param handle - handle to the resource
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
  *
  * @return
@@ -916,16 +968,16 @@ const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index) {
 }
 
 /**
- * Get name of resource interface of the resource.
+ * Get resource handle from the collection resource by index.
  *
- * @param containerHandle - handle of container resource
+ * @param collectionHandle - handle of collection resource
  * @param index - index of contained resource, 0 to Count - 1
  *
  * @return
- *    handle to contained resource - if resource found
+ *    handle to resource - if resource found
  *    NULL - resource not found
  */
-OCResourceHandle OCGetContainedResourceHandle(OCResourceHandle containerHandle,
+OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHandle,
         uint8_t index) {
     OCResource *resource;
 
@@ -935,7 +987,7 @@ OCResourceHandle OCGetContainedResourceHandle(OCResourceHandle containerHandle,
         return NULL;
     }
 
-    resource = findResource((OCResource *) containerHandle);
+    resource = findResource((OCResource *) collectionHandle);
     if (!resource) {
         return NULL;
     }

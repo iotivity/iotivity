@@ -128,83 +128,83 @@ namespace OC
                         uint8_t resourceProperty);
 
         /**
-        * Add a resource to a container resource.
+        * Add a resource to a collection resource.
         *
-        * @param containerHandle - handle to the container resource
-        * @param addedResourceHandle - handle to resource to be added to the container resource
+        * @param collectionHandle - handle to the collection resource
+        * @param addedResourceHandle - handle to resource to be added to the collection resource
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.<br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
-        * NOTE: bindResourceToContainer must be used only after the both container resource and 
-        * resource to add under a container are created and respective handles obtained<br>
+        * NOTE: bindResource must be used only after the both collection resource and 
+        * resource to add under a collections are created and respective handles obtained<br>
         * <b>Example:</b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface, entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface, entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
-        * Step 3: bindResourceToContainer(homeResourceHandle, kitchenResourceHandle);<br>
+        * Step 3: bindResource(homeResourceHandle, kitchenResourceHandle);<br>
         * At the end of Step 3, resource "a/home" will contain a reference to "a/kitchen".<br> 
         */
-        OCStackResult bindResource(const OCResourceHandle containerHandle, const OCResourceHandle resourceHandle);
+        OCStackResult bindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle);
 
         /**
-        * Add multiple resources to a container resource.
+        * Add multiple resources to a collection resource.
         *
-        * @param containerHandle - handle to the container resource
-        * @param addedResourceHandleList reference to list of resource handles to be added to the container resource
+        * @param collectionHandle - handle to the collection resource
+        * @param addedResourceHandleList reference to list of resource handles to be added to the collection resource
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
-        * NOTE: bindResourcesToContainer must be used only after the both container resource and 
-        * list of resources to add under a container are created and respective handles obtained <br>
+        * NOTE: bindResources must be used only after the both collection resource and 
+        * list of resources to add under a collection are created and respective handles obtained <br>
         * <b> Example: </b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface, homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface, kitchenEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 3: registerResource(roomResourceHandle, "a/room", "room", Link_Interface, roomEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 4: std::vector<OCResourceHandle> rList; rList.push_back(kitchenResourceHandle); rList.push_back(roomResourceHandle);<br>
-        * Step 5: bindResourceToContainer(homeResourceHandle, rList);<br>
+        * Step 5: bindResource(homeResourceHandle, rList);<br>
         * At the end of Step 5, resource "a/home" will contain a references to "a/kitchen" and "a/room" <br>
         */
-        OCStackResult bindResources(const OCResourceHandle containerHandle, const std::vector<OCResourceHandle>& addedResourceHandleList);
+        OCStackResult bindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& addedResourceHandleList);
 
         /**
-        * Unbind a resource from a container resource.
+        * Unbind a resource from a collection resource.
         *
-        * @param containerHandle - handle to the container resource
-        * @param resourceHandle resource handle to be unbound from the container resource
+        * @param collectionHandle - handle to the collection resource
+        * @param resourceHandle resource handle to be unbound from the collection resource
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h.<br>
-        * NOTE: unbindResource must be used only after the both container resource and 
-        * resource to unbind from a container are created and respective handles obtained<br>
+        * NOTE: unbindResource must be used only after the both collection resource and 
+        * resource to unbind from a collection are created and respective handles obtained<br>
         * <b> Example </b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface, entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface, entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
-        * Step 3: bindResourceToContainer(homeResourceHandle, kitchenResourceHandle);<br>
+        * Step 3: bindResource(homeResourceHandle, kitchenResourceHandle);<br>
         * Step 4: unbindResource(homeResourceHandle, kitchenResourceHandle);<br>
         * At the end of Step 4, resource "a/home" will no longer reference "a/kitchen". <br>
         */
-        OCStackResult unbindResource(OCResourceHandle containerHandle, OCResourceHandle resourceHandle);
+        OCStackResult unbindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle);
 
         /**
-        * Unbind resources from a container resource.
+        * Unbind resources from a collection resource.
         *
-        * @param containerHandle - handle to the container resource
-        * @param resourceHandleList List of resource handles to be unbound from the container resource
+        * @param collectionHandle - handle to the collection resource
+        * @param resourceHandleList List of resource handles to be unbound from the collection resource
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * 
         * NOTE: OCStackResult is defined in ocstack.h.<br>
-        * NOTE: unbindResources must be used only after the both container resource and 
-        * list of resources resource to unbind from a container are created and respective handles obtained. <br>
+        * NOTE: unbindResources must be used only after the both collection resource and 
+        * list of resources resource to unbind from a collection are created and respective handles obtained. <br>
         * <b>Example</b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface, homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface, kitchenEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 3: registerResource(roomResourceHandle, "a/room", "room", Link_Interface, roomEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 4: std::vector<OCResourceHandle> rList; rList.push_back(kitchenResourceHandle); rList.push_back(roomResourceHandle);<br>
-        * Step 5: bindResourceToContainer(homeResourceHandle, rList);<br>
+        * Step 5: bindResource(homeResourceHandle, rList);<br>
         * Step 6: unbindResources(homeResourceHandle, rList);<br>
         * At the end of Step 6, resource "a/home" will no longer reference to "a/kitchen" and "a/room"<br>
         */
-        OCStackResult unbindResources(OCResourceHandle containerHandle, std::vector<OCResourceHandle>& resourceHandleList);
+        OCStackResult unbindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandleList);
 
         /**
         * Binds a type to a particular resource

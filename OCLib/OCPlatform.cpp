@@ -130,7 +130,7 @@ namespace OC
             try{
                 result = m_server->registerResource(resourceHandle, resourceURI, resourceTypeName, resourceInterface, entityHandler, resourceProperty);
             }
-            catch(std::exception e) // define our own expception.
+            catch(std::exception e) // TODO: define our own expception.
             {
                 throw e;
             }
@@ -139,28 +139,14 @@ namespace OC
         return result;
     }
 
-    // TODO: Implement
-    OCStackResult OCPlatform::unbindResource(OCResourceHandle containerHandle, OCResourceHandle resourceHandle)
-    {
-        OCStackResult result = OC_STACK_OK;
-        return result;
-    }
-
-    // TODO: Implement
-    OCStackResult OCPlatform::unbindResources(OCResourceHandle containerHandle, std::vector<OCResourceHandle>& resourceHandleList)
-    {
-        OCStackResult result = OC_STACK_OK;
-        return result;
-    }
-
-    OCStackResult bindResource(const OCResourceHandle containerHandle, const OCResourceHandle resourceHandle)
+    OCStackResult OCPlatform::unbindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
     {
         OCStackResult result = OC_STACK_OK;
 
         try {
-            result = OCBindContainedResourceToResource(containerHandle, resourceHandle);
+            result = OCUnBindResource(collectionHandle, resourceHandle);
         }
-        catch(std::exception e)
+        catch(std::exception e) // TODO: define our own expception.
         {
             throw e;
         }
@@ -168,17 +154,15 @@ namespace OC
         return result;
     }
 
-    OCStackResult bindResources(const OCResourceHandle containerHandle, const std::vector<OCResourceHandle>& resourceHandles)
+    OCStackResult OCPlatform::unbindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
     {
         OCStackResult result = OC_STACK_OK;
 
         try {
 
-            std::vector<OCResourceHandle>::const_iterator it;
-
-            for(it = resourceHandles.begin(); it != resourceHandles.end(); it++)
+            for(const OCResourceHandle& handle : resourceHandles)
             {
-                result = OCBindContainedResourceToResource(containerHandle, *it);
+                result = OCUnBindResource(collectionHandle, handle);
 
                 if(result != OC_STACK_OK)
                 {
@@ -189,7 +173,49 @@ namespace OC
                 }
             }
         }
-        catch(std::exception e)
+        catch(std::exception e) // TODO : define our own exception 
+        {
+            throw e;
+        }
+
+        return result;
+    }
+
+    OCStackResult bindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle)
+    {
+        OCStackResult result = OC_STACK_OK;
+
+        try {
+            result = OCBindResource(collectionHandle, resourceHandle);
+        }
+        catch(std::exception e) // TODO : define our own exception
+        {
+            throw e;
+        }
+
+        return result;
+    }
+
+    OCStackResult bindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
+    {
+        OCStackResult result = OC_STACK_OK;
+
+        try {
+
+            for(const OCResourceHandle& handle : resourceHandles)
+            {
+                result = OCBindResource(collectionHandle, handle);
+
+                if(result != OC_STACK_OK)
+                {
+                    // TODO Should we unbind the previous successful ones?
+                    // TODO should we return which are succesful
+                    // Currently just returns with any failure
+                    return result;
+                }
+            }
+        }
+        catch(std::exception e) // TODO : define our own exception
         {
             throw e;
         }
