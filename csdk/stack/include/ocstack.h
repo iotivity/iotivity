@@ -280,6 +280,7 @@ OCStackResult OCCancel(OCDoHandle handle);
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
  * @param uri - URI of the resource.  Example:  "/a/led"
  * @param entityHandler - entity handler function that is called by ocstack to handle requests, etc
+ *                        NULL for default entity handler
  * @param resourceProperties - properties supported by resource.  Example: OC_DISCOVERABLE|OC_OBSERVABLE
  *
  * @return
@@ -435,18 +436,6 @@ OCStackResult OCGetNumberOfResourceTypes(OCResourceHandle handle, uint8_t *numRe
  *    NULL - resource not found
  */
 const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index);
-
-/**
- * Get attributes of resource type of the resource.
- *
- * @param handle - handle of resource
- * @param index - index of resource, 0 to Count - 1
- *
- * @return
- *    resource type attributes - if resource found
- *    NULL - resource not found
- */
-const char *OCGetResourceAttributeRepresentation(OCResourceHandle handle, uint8_t index);
 
 /**
  * Get the number of resource interfaces of the resource.

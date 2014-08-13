@@ -173,6 +173,7 @@ static void deleteResourceType(OCResourceType *resourceType);
 static void deleteResourceInterface(OCResourceInterface *resourceInterface);
 static void deleteResourceElements(OCResource *resource);
 static int deleteResource(OCResource *resource);
+static void deleteAllResources();
 
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
@@ -246,6 +247,8 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode) {
  *     OC_STACK_ERROR - stack not initialized
  */
 OCStackResult OCStop() {
+    OCStackResult result = OC_STACK_ERROR;
+
     OC_LOG(INFO, TAG, PCF("Entering OCStop"));
 
     if (stackState != OC_STACK_INITIALIZED) {
@@ -260,11 +263,19 @@ OCStackResult OCStop() {
         // Remove all the client callbacks
         DeleteClientCBList();
         stackState = OC_STACK_UNINITIALIZED;
-        return OC_STACK_OK;
+        result = OC_STACK_OK;
+    } else {
+        result = OC_STACK_ERROR;
     }
 
-    OC_LOG(ERROR, TAG, PCF("Stack stop error"));
-    return OC_STACK_ERROR;
+    // Free memory dynamically allocated for resources
+    deleteAllResources();
+
+    if (result != OC_STACK_OK) {
+        OC_LOG(ERROR, TAG, PCF("Stack stop error"));
+    }
+
+    return result;
 }
 
 /**
@@ -419,6 +430,7 @@ OCStackResult OCProcess() {
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
  * @param uri - URI of the resource.  Example:  "/a/led"
  * @param entityHandler - entity handler function that is called by ocstack to handle requests, etc
+ *                        NULL for default entity handler
  * @param resourceProperties - properties supported by resource.  Example: OC_DISCOVERABLE|OC_OBSERVABLE
  *
  * @return
@@ -503,11 +515,15 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         goto exit;
     }
 
-    // added [CL]
-    result = OCBindResourceHandler((OCResourceHandle) pointer, entityHandler);
-    if (result != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
-        goto exit;
+    // If an entity handler has been passed, attach it to the newly created
+    // resource.  Otherwise, set the default entity handler.
+    if (entityHandler)
+    {
+        pointer->entityHandler = entityHandler;
+    }
+    else
+    {
+        pointer->entityHandler = defaultResourceEHandler;
     }
 
     *handle = pointer;
@@ -516,7 +532,8 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 exit:
     if (result != OC_STACK_OK)
     {
-        OCFree(pointer);
+        // Deep delete of resource and other dynamic elements that it contains
+        deleteResource(pointer);
         OCFree(str);
     }
     return result;
@@ -1148,6 +1165,19 @@ OCResource *findResource(OCResource *resource) {
         pointer = pointer->next;
     }
     return NULL;
+}
+
+void deleteAllResources()
+{
+    OCResource *pointer = headResource;
+    OCResource *temp;
+
+    while (pointer)
+    {
+        temp = pointer->next;
+        deleteResource(pointer);
+        pointer = temp;
+    }
 }
 
 /**

@@ -48,12 +48,11 @@ using namespace std;
 // Private variables
 //-----------------------------------------------------------------------------
 static const char TAG[] = "TestHarness";
-static const char *SERVICE_URI = "coap://127.0.0.1:5683/";
 
 //-----------------------------------------------------------------------------
 // Callback functions
 //-----------------------------------------------------------------------------
-extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void *ctx, OCClientResponse * clientResponse) {
+extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     OC_LOG(INFO, TAG, "Entering asyncDoResourcesCallback");
 
     EXPECT_EQ(OC_STACK_OK, clientResponse->result);
@@ -62,70 +61,54 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void *ctx, OCClien
         OC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
     }
     OC_LOG_V(INFO, TAG, "result = %d", clientResponse->result);
+
+    return OC_STACK_KEEP_TRANSACTION;
 }
 
-//-----------------------------------------------------------------------------
-// Resource creation stuff
-//-----------------------------------------------------------------------------
-// TODO - remove, temporarily kept for reference purposes
-#if 0
-const char *LEDrep[] = { "state;b", "power;i", (char *)NULL};
-CREATE_RESOURCE_TYPE(LED, "core.led", LEDrep);
-
-// Create the state and power attributes
-char stateValue[] = "0";
-CREATE_RESOURCE_ATTRIBUTE(stateAttr, "state", stateValue);
-
-char powerValue[] = "5";
-CREATE_RESOURCE_ATTRIBUTE(powerAttr, "power", powerValue);
-
-// Define the interface
-CREATE_RESOURCE_INTERFACE(LED, "core.rw", OC_REST_GET|OC_REST_PUT);
-
-// Define the resource; the space is allocated;  but the resource has not been fully initialized
-CREATE_RESOURCE(LED, "/a/led", &LED_resourcetype, &LED_resourceinterface) ;
-
-
-// Define the entity handler for the resource
-void LED_ehandler(OCEntityHandlerFlag flag, const char *request, char *reponse, OCResourceHandle resource) {
-    /* Add code for entity handler */
-}
-#endif
 
 //-----------------------------------------------------------------------------
 //  Tests
 //-----------------------------------------------------------------------------
+#if 1
 TEST(StackTest, StackInitNullAddr) {
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackInitNullPort) {
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 0, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackInitNullAddrAndPort) {
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 0, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackInitInvalidMode) {
     EXPECT_EQ(OC_STACK_ERROR, OCInit(0, 0, (OCMode)10));
+    EXPECT_EQ(OC_STACK_ERROR, OCStop());
 }
 
 TEST(StackTest, StackStartSuccessClient) {
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackStartSuccessServer) {
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackStartSuccessClientServer) {
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackStartSuccessiveInits) {
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.2", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, DoResourceDeviceDiscovery) {
@@ -133,6 +116,7 @@ TEST(StackTest, DoResourceDeviceDiscovery) {
     uint16_t port = USE_RANDOM_PORT;
     uint8_t ifname[] = "eth0";
     OCCallbackData cbData;
+    OCDoHandle handle;
 
     /*Get Ip address on defined interface and initialize coap on it with random port number
      * this port number will be used as a source port in all coap communications*/
@@ -145,7 +129,7 @@ TEST(StackTest, DoResourceDeviceDiscovery) {
     strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)CTX_VAL;
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData));
     //EXPECT_EQ(OC_STACK_OK, OCUpdateResources(SERVICE_URI));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -161,6 +145,7 @@ TEST(StackTest, UpdateResourceNullURI) {
     uint16_t port = USE_RANDOM_PORT;
     uint8_t ifname[] = "eth0";
     OCCallbackData cbData;
+    OCDoHandle handle;
 
     /*Get Ip address on defined interface and initialize coap on it with random port number
      * this port number will be used as a source port in all coap communications*/
@@ -173,7 +158,7 @@ TEST(StackTest, UpdateResourceNullURI) {
     strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)CTX_VAL;
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData));
     //EXPECT_EQ(OC_STACK_INVALID_URI, OCUpdateResources(0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -191,52 +176,32 @@ TEST(StackTest, CreateResourceBadParams) {
     EXPECT_EQ(OC_STACK_OK, OCInit((char *) addr, port, OC_SERVER));
 
     OCResourceHandle handle;
-    EXPECT_EQ(OC_STACK_ERROR, OCCreateResource(NULL, //&handle,
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(NULL, //&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
-    EXPECT_EQ(OC_STACK_ERROR, OCCreateResource(&handle,
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle,
                                             NULL, //"core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
-    // Method bitmask out of range
-    EXPECT_EQ(OC_STACK_ERROR, OCCreateResource(&handle,
-                                            "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
-                                            "core.rw",
-                                            32, //OC_REST_GET|OC_REST_PUT,
-                                            "/a/led",
-                                            0,
-                                            OC_DISCOVERABLE|OC_OBSERVABLE));
-    // OC_REST_NOMETHOD
-    EXPECT_EQ(OC_STACK_ERROR, OCCreateResource(&handle,
-                                            "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
-                                            "core.rw",
-                                            OC_REST_NOMETHOD, //OC_REST_GET|OC_REST_PUT,
-                                            "/a/led",
-                                            0,
-                                            OC_DISCOVERABLE|OC_OBSERVABLE));
     // Property bitmask out of range
-    EXPECT_EQ(OC_STACK_ERROR, OCCreateResource(&handle,
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             16));//OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
+#endif
 
 TEST(StackTest, CreateResourceSuccess) {
     uint8_t addr[20];
@@ -253,14 +218,14 @@ TEST(StackTest, CreateResourceSuccess) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     const char *url = OCGetResourceUri(handle);
     EXPECT_STREQ("/a/led", url);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, CreateResourceFailDuplicateUri) {
@@ -278,23 +243,21 @@ TEST(StackTest, CreateResourceFailDuplicateUri) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     const char *url = OCGetResourceUri(handle);
     EXPECT_STREQ("/a/led", url);
 
-    EXPECT_EQ(OC_STACK_ERROR, OCCreateResource(&handle,
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, CreateResourceMultipleResources) {
@@ -312,9 +275,7 @@ TEST(StackTest, CreateResourceMultipleResources) {
     OCResourceHandle handle1;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led1",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -322,18 +283,14 @@ TEST(StackTest, CreateResourceMultipleResources) {
     OCResourceHandle handle2;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led2",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     OCResourceHandle handle3;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle3,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led3",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -347,6 +304,7 @@ TEST(StackTest, CreateResourceMultipleResources) {
     url = OCGetResourceUri(handle3);
     EXPECT_STREQ("/a/led3", url);
 
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, CreateResourceBadResoureType) {
@@ -362,14 +320,14 @@ TEST(StackTest, CreateResourceBadResoureType) {
     EXPECT_EQ(OC_STACK_OK, OCInit((char *) addr, port, OC_SERVER));
 
     OCResourceHandle handle;
-    EXPECT_EQ(OC_STACK_ERROR, OCCreateResource(&handle,
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle,
                                             NULL, //"core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, CreateResourceGoodResourceType) {
@@ -387,13 +345,12 @@ TEST(StackTest, CreateResourceGoodResourceType) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, ResourceTypeName) {
@@ -411,9 +368,7 @@ TEST(StackTest, ResourceTypeName) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -430,6 +385,8 @@ TEST(StackTest, ResourceTypeName) {
     // try getting resource type names with an invalid index
     resourceTypeName = OCGetResourceTypeName(handle, 10);
     EXPECT_STREQ(NULL, resourceTypeName);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindResourceTypeNameBad) {
@@ -447,9 +404,7 @@ TEST(StackTest, BindResourceTypeNameBad) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -460,7 +415,9 @@ TEST(StackTest, BindResourceTypeNameBad) {
     const char *resourceTypeName = OCGetResourceTypeName(handle, 0);
     EXPECT_STREQ("core.led", resourceTypeName);
 
-    EXPECT_EQ(OC_STACK_ERROR, OCBindResourceTypeToResource(handle, NULL, "state:oc.bt.b;power:oc.bt.i"));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceTypeToResource(handle, NULL));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindResourceTypeNameGood) {
@@ -478,9 +435,7 @@ TEST(StackTest, BindResourceTypeNameGood) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -491,18 +446,19 @@ TEST(StackTest, BindResourceTypeNameGood) {
     const char *resourceTypeName = OCGetResourceTypeName(handle, 0);
     EXPECT_STREQ("core.led", resourceTypeName);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "core.brightled", "state:oc.bt.b;power:oc.bt.i"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "core.brightled"));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
     EXPECT_EQ(2, numResourceTypes);
     resourceTypeName = OCGetResourceTypeName(handle, 1);
     EXPECT_STREQ("core.brightled", resourceTypeName);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "core.reallybrightled", "state:oc.bt.b;power:oc.bt.i"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "core.reallybrightled"));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
     EXPECT_EQ(3, numResourceTypes);
     resourceTypeName = OCGetResourceTypeName(handle, 2);
     EXPECT_STREQ("core.reallybrightled", resourceTypeName);
 
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, ResourceTypeAttrRepresentation) {
@@ -520,9 +476,7 @@ TEST(StackTest, ResourceTypeAttrRepresentation) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -530,15 +484,8 @@ TEST(StackTest, ResourceTypeAttrRepresentation) {
     uint8_t numResourceTypes;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
     EXPECT_EQ(1, numResourceTypes);
-    const char *resourceTypeAttrRepresentation = OCGetResourceAttributeRepresentation(handle, 0);
-    EXPECT_STREQ("state:oc.bt.b;power:oc.bt.i", resourceTypeAttrRepresentation);
 
-    // try getting resource type attribute representations with an invalid index
-    resourceTypeAttrRepresentation = OCGetResourceAttributeRepresentation(handle, 1);
-    EXPECT_STREQ(NULL, resourceTypeAttrRepresentation);
-    // try getting resource type names with an invalid index
-    resourceTypeAttrRepresentation = OCGetResourceAttributeRepresentation(handle, 10);
-    EXPECT_STREQ(NULL, resourceTypeAttrRepresentation);
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindResourceTypeAttribRepGood) {
@@ -556,9 +503,7 @@ TEST(StackTest, BindResourceTypeAttribRepGood) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -566,20 +511,16 @@ TEST(StackTest, BindResourceTypeAttribRepGood) {
     uint8_t numResourceTypes;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
     EXPECT_EQ(1, numResourceTypes);
-    const char *resourceTypeAttrRepresentation = OCGetResourceAttributeRepresentation(handle, 0);
-    EXPECT_STREQ("state:oc.bt.b", resourceTypeAttrRepresentation);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "core.brightled", "state:oc.bt.b;power:oc.bt.i"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "core.brightled"));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
     EXPECT_EQ(2, numResourceTypes);
-    resourceTypeAttrRepresentation = OCGetResourceAttributeRepresentation(handle, 1);
-    EXPECT_STREQ("state:oc.bt.b;power:oc.bt.i", resourceTypeAttrRepresentation);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "core.reallybrightled", "state:oc.bt.b;power:oc.bt.i;temp:oc.bt.i"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "core.reallybrightled"));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceTypes(handle, &numResourceTypes));
     EXPECT_EQ(3, numResourceTypes);
-    resourceTypeAttrRepresentation = OCGetResourceAttributeRepresentation(handle, 2);
-    EXPECT_STREQ("state:oc.bt.b;power:oc.bt.i;temp:oc.bt.i", resourceTypeAttrRepresentation);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, ResourceTypeInterface) {
@@ -597,9 +538,7 @@ TEST(StackTest, ResourceTypeInterface) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -616,6 +555,8 @@ TEST(StackTest, ResourceTypeInterface) {
     // try getting resource interface names with an invalid index
     resourceInterfaceName = OCGetResourceInterfaceName(handle, 10);
     EXPECT_STREQ(NULL, resourceInterfaceName);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindResourceInterfaceNameBad) {
@@ -633,9 +574,7 @@ TEST(StackTest, BindResourceInterfaceNameBad) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -646,7 +585,9 @@ TEST(StackTest, BindResourceInterfaceNameBad) {
     const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
-    EXPECT_EQ(OC_STACK_ERROR, OCBindResourceInterfaceToResource(handle, NULL, OC_REST_GET|OC_REST_PUT));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceInterfaceToResource(handle, NULL));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindResourceInterfaceNameGood) {
@@ -664,9 +605,7 @@ TEST(StackTest, BindResourceInterfaceNameGood) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -677,12 +616,14 @@ TEST(StackTest, BindResourceInterfaceNameGood) {
     const char *resourceInterfaceName = OCGetResourceInterfaceName(handle, 0);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r", OC_REST_GET|OC_REST_PUT));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r"));
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
     EXPECT_EQ(2, numResourceInterfaces);
     resourceInterfaceName = OCGetResourceInterfaceName(handle, 1);
     EXPECT_STREQ("core.r", resourceInterfaceName);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, ResourceTypeInterfaceMethods) {
@@ -700,9 +641,7 @@ TEST(StackTest, ResourceTypeInterfaceMethods) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -710,15 +649,8 @@ TEST(StackTest, ResourceTypeInterfaceMethods) {
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
     EXPECT_EQ(1, numResourceInterfaces);
-    uint8_t resourceInterfaceMethods = OCGetResourceInterfaceAllowedMethods(handle, 0);
-    EXPECT_EQ(OC_REST_GET|OC_REST_PUT, resourceInterfaceMethods);
 
-    // try getting resource interface methods with an invalid index
-    resourceInterfaceMethods = OCGetResourceInterfaceAllowedMethods(handle, 1);
-    EXPECT_EQ(0, resourceInterfaceMethods);
-    // try getting resource interface methods with an invalid index
-    resourceInterfaceMethods = OCGetResourceInterfaceAllowedMethods(handle, 10);
-    EXPECT_EQ(0, resourceInterfaceMethods);
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindResourceInterfaceMethodsBad) {
@@ -736,9 +668,7 @@ TEST(StackTest, BindResourceInterfaceMethodsBad) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -746,10 +676,10 @@ TEST(StackTest, BindResourceInterfaceMethodsBad) {
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
     EXPECT_EQ(1, numResourceInterfaces);
-    uint8_t resourceInterfaceMethods = OCGetResourceInterfaceAllowedMethods(handle, 0);
-    EXPECT_EQ(OC_REST_GET|OC_REST_PUT, resourceInterfaceMethods);
 
-    EXPECT_EQ(OC_STACK_ERROR, OCBindResourceInterfaceToResource(handle, "core.rw", OC_REST_NOMETHOD));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceInterfaceToResource(handle, 0));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindResourceInterfaceMethodsGood) {
@@ -767,9 +697,7 @@ TEST(StackTest, BindResourceInterfaceMethodsGood) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -777,15 +705,13 @@ TEST(StackTest, BindResourceInterfaceMethodsGood) {
     uint8_t numResourceInterfaces;
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
     EXPECT_EQ(1, numResourceInterfaces);
-    uint8_t resourceInterfaceMethods = OCGetResourceInterfaceAllowedMethods(handle, 0);
-    EXPECT_EQ(OC_REST_GET|OC_REST_PUT, resourceInterfaceMethods);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r", OC_REST_PUT));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle, "core.r"));
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
     EXPECT_EQ(2, numResourceInterfaces);
-    resourceInterfaceMethods = OCGetResourceInterfaceAllowedMethods(handle, 1);
-    EXPECT_EQ(OC_REST_PUT, resourceInterfaceMethods);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindContainedResourceBad) {
@@ -803,9 +729,7 @@ TEST(StackTest, BindContainedResourceBad) {
     OCResourceHandle containerHandle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/kitchen",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -813,17 +737,16 @@ TEST(StackTest, BindContainedResourceBad) {
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
-    EXPECT_EQ(OC_STACK_ERROR, OCBindContainedResourceToResource(containerHandle, containerHandle));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResource(containerHandle, containerHandle));
 
-    OCResourceHandle handle1;
-    EXPECT_EQ(OC_STACK_ERROR, OCBindContainedResourceToResource(handle1, handle0));
+    EXPECT_EQ(OC_STACK_ERROR, OCBindResource((OCResourceHandle) 0, handle0));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindContainedResourceGood) {
@@ -845,9 +768,7 @@ TEST(StackTest, BindContainedResourceGood) {
     OCResourceHandle containerHandle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/kitchen",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -857,9 +778,7 @@ TEST(StackTest, BindContainedResourceGood) {
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led0",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -869,9 +788,7 @@ TEST(StackTest, BindContainedResourceGood) {
     OCResourceHandle handle1;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led1",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -881,9 +798,7 @@ TEST(StackTest, BindContainedResourceGood) {
     OCResourceHandle handle2;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led2",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -893,9 +808,7 @@ TEST(StackTest, BindContainedResourceGood) {
     OCResourceHandle handle3;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle3,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led3",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -905,9 +818,7 @@ TEST(StackTest, BindContainedResourceGood) {
     OCResourceHandle handle4;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle4,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led4",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -917,9 +828,7 @@ TEST(StackTest, BindContainedResourceGood) {
     OCResourceHandle handle5;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle5,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led5",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -927,20 +836,22 @@ TEST(StackTest, BindContainedResourceGood) {
     EXPECT_EQ(7, numResources);
 
 
-    EXPECT_EQ(OC_STACK_OK, OCBindContainedResourceToResource(containerHandle, handle0));
-    EXPECT_EQ(OC_STACK_OK, OCBindContainedResourceToResource(containerHandle, handle1));
-    EXPECT_EQ(OC_STACK_OK, OCBindContainedResourceToResource(containerHandle, handle2));
-    EXPECT_EQ(OC_STACK_OK, OCBindContainedResourceToResource(containerHandle, handle3));
-    EXPECT_EQ(OC_STACK_OK, OCBindContainedResourceToResource(containerHandle, handle4));
-    EXPECT_EQ(OC_STACK_ERROR, OCBindContainedResourceToResource(containerHandle, handle5));
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle0));
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle1));
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle2));
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle3));
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle4));
+    EXPECT_EQ(OC_STACK_ERROR, OCBindResource(containerHandle, handle5));
 
-    EXPECT_EQ(handle0, OCGetContainedResourceHandle(containerHandle, 0));
-    EXPECT_EQ(handle1, OCGetContainedResourceHandle(containerHandle, 1));
-    EXPECT_EQ(handle2, OCGetContainedResourceHandle(containerHandle, 2));
-    EXPECT_EQ(handle3, OCGetContainedResourceHandle(containerHandle, 3));
-    EXPECT_EQ(handle4, OCGetContainedResourceHandle(containerHandle, 4));
+    EXPECT_EQ(handle0, OCGetResourceHandleFromCollection(containerHandle, 0));
+    EXPECT_EQ(handle1, OCGetResourceHandleFromCollection(containerHandle, 1));
+    EXPECT_EQ(handle2, OCGetResourceHandleFromCollection(containerHandle, 2));
+    EXPECT_EQ(handle3, OCGetResourceHandleFromCollection(containerHandle, 3));
+    EXPECT_EQ(handle4, OCGetResourceHandleFromCollection(containerHandle, 4));
 
-    EXPECT_EQ(NULL, OCGetContainedResourceHandle(containerHandle, 5));
+    EXPECT_EQ(NULL, OCGetResourceHandleFromCollection(containerHandle, 5));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, GetResourceByIndex) {
@@ -962,9 +873,7 @@ TEST(StackTest, GetResourceByIndex) {
     OCResourceHandle containerHandle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/kitchen",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -974,9 +883,7 @@ TEST(StackTest, GetResourceByIndex) {
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led0",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -986,9 +893,7 @@ TEST(StackTest, GetResourceByIndex) {
     OCResourceHandle handle1;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led1",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -998,9 +903,7 @@ TEST(StackTest, GetResourceByIndex) {
     OCResourceHandle handle2;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led2",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1010,9 +913,7 @@ TEST(StackTest, GetResourceByIndex) {
     OCResourceHandle handle3;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle3,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led3",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1022,9 +923,7 @@ TEST(StackTest, GetResourceByIndex) {
     OCResourceHandle handle4;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle4,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led4",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1034,9 +933,7 @@ TEST(StackTest, GetResourceByIndex) {
     OCResourceHandle handle5;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle5,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led5",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1051,6 +948,7 @@ TEST(StackTest, GetResourceByIndex) {
     EXPECT_EQ(handle4, OCGetResourceHandle(5));
     EXPECT_EQ(handle5, OCGetResourceHandle(6));
 
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, BindEntityHandlerBad) {
@@ -1068,20 +966,22 @@ TEST(StackTest, BindEntityHandlerBad) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
-    EXPECT_EQ(OC_STACK_ERROR, OCBindResourceHandler(handle, NULL));
-    EXPECT_EQ(OC_STACK_ERROR, OCBindResourceHandler(NULL, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceHandler(handle, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceHandler(NULL, NULL));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 
-void entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest) {
+OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest) {
     OC_LOG(INFO, TAG, "Entering entityHandler");
+
+    return OC_STACK_OK;
 }
 
 TEST(StackTest, BindEntityHandlerGood) {
@@ -1099,9 +999,7 @@ TEST(StackTest, BindEntityHandlerGood) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1111,6 +1009,8 @@ TEST(StackTest, BindEntityHandlerGood) {
     EXPECT_EQ(OC_STACK_OK, OCBindResourceHandler(handle, myHandler));
 
     EXPECT_EQ(myHandler, OCGetResourceHandler(handle));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, DeleteHeadResource) {
@@ -1132,9 +1032,7 @@ TEST(StackTest, DeleteHeadResource) {
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led0",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1144,6 +1042,8 @@ TEST(StackTest, DeleteHeadResource) {
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle0));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(0, numResources);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, DeleteHeadResource2) {
@@ -1165,9 +1065,7 @@ TEST(StackTest, DeleteHeadResource2) {
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led0",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1177,9 +1075,7 @@ TEST(StackTest, DeleteHeadResource2) {
     OCResourceHandle handle1;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led1",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1191,6 +1087,8 @@ TEST(StackTest, DeleteHeadResource2) {
     EXPECT_EQ(1, numResources);
 
     EXPECT_EQ(handle1, OCGetResourceHandle(0));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 
@@ -1213,9 +1111,7 @@ TEST(StackTest, DeleteLastResource) {
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led0",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1225,9 +1121,7 @@ TEST(StackTest, DeleteLastResource) {
     OCResourceHandle handle1;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led1",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1243,14 +1137,14 @@ TEST(StackTest, DeleteLastResource) {
     OCResourceHandle handle2;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led2",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(2, numResources);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, DeleteMiddleResource) {
@@ -1272,9 +1166,7 @@ TEST(StackTest, DeleteMiddleResource) {
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led0",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1284,9 +1176,7 @@ TEST(StackTest, DeleteMiddleResource) {
     OCResourceHandle handle1;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led1",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1296,9 +1186,7 @@ TEST(StackTest, DeleteMiddleResource) {
     OCResourceHandle handle2;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led2",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1318,6 +1206,8 @@ TEST(StackTest, DeleteMiddleResource) {
     EXPECT_EQ(1, numResourceInterfaces);
     const char *resourceInterfaceName = OCGetResourceInterfaceName(handle2, 0);
     EXPECT_STREQ("core.rw", resourceInterfaceName);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, GetResourceProperties) {
@@ -1335,31 +1225,33 @@ TEST(StackTest, GetResourceProperties) {
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackTestResourceDiscoverOneResourceBad) {
-    // Setting URI to null which is an error
-    char uri[] = "";
-    char query[] = "";
-    char req[1024] = {};
-    char rsp[1024] = {};
-    //OCServerRequestResult res;
+    uint8_t addr[20];
+    uint16_t port = USE_RANDOM_PORT;
+    uint8_t ifname[] = "eth0";
+
+    /*Get Ip address on defined interface and initialize coap on it with random port number
+     * this port number will be used as a source port in all coap communications*/
+    OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr, sizeof(addr));
+
+    OC_LOG_V(INFO, TAG, "Starting ocserver on address %s:%d",addr,port);
+    EXPECT_EQ(OC_STACK_OK, OCInit((char *) addr, port, OC_SERVER));
 
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a1/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1372,21 +1264,25 @@ TEST(StackTest, StackTestResourceDiscoverOneResourceBad) {
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(0, numResources);
 
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackTestResourceDiscoverOneResource) {
-    char uri[] = "/oc/core";
-    char query[] = "";
-    char req[1024] = {};
-    char rsp[1024] = {};
-    //OCServerRequestResult res;
+    uint8_t addr[20];
+    uint16_t port = USE_RANDOM_PORT;
+    uint8_t ifname[] = "eth0";
+
+    /*Get Ip address on defined interface and initialize coap on it with random port number
+     * this port number will be used as a source port in all coap communications*/
+    OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr, sizeof(addr));
+
+    OC_LOG_V(INFO, TAG, "Starting ocserver on address %s:%d",addr,port);
+    EXPECT_EQ(OC_STACK_OK, OCInit((char *) addr, port, OC_SERVER));
 
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
@@ -1395,17 +1291,14 @@ TEST(StackTest, StackTestResourceDiscoverOneResource) {
 
     //EXPECT_EQ(OC_STACK_OK, OCHandleServerRequest(&res, uri, query, req, rsp));
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackTest, StackTestResourceDiscoverManyResources) {
     uint8_t addr[20];
     uint16_t port = USE_RANDOM_PORT;
     uint8_t ifname[] = "eth0";
-    char uri[] = "/oc/core";
-    char query[] = "";
-    char req[1024] = {};
-    char rsp[1024] = {};
-    //OCServerRequestResult res;
 
     /*Get Ip address on defined interface and initialize coap on it with random port number
      * this port number will be used as a source port in all coap communications*/
@@ -1417,9 +1310,7 @@ TEST(StackTest, StackTestResourceDiscoverManyResources) {
     OCResourceHandle handle1;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led1",
                                             0,
                                             OC_DISCOVERABLE));
@@ -1429,59 +1320,50 @@ TEST(StackTest, StackTestResourceDiscoverManyResources) {
     OCResourceHandle handle2;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led2",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     url = OCGetResourceUri(handle2);
     EXPECT_STREQ("/a/led2", url);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle2, "core.brightled",
-                                                        "state:oc.bt.b;power:oc.bt.i"));
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle2, "core.colorled",
-                                                        "state:oc.bt.b;power:oc.bt.i"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle2, "core.brightled"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle2, "core.colorled"));
 
     OCResourceHandle handle3;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle3,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led3",
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     url = OCGetResourceUri(handle3);
     EXPECT_STREQ("/a/led3", url);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle3, "oc.mi.ll",
-                                                             OC_REST_GET|OC_REST_PUT));
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle3, "oc.mi.b",
-                                                             OC_REST_GET|OC_REST_PUT));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle3, "oc.mi.ll"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle3, "oc.mi.b"));
 
     OCResourceHandle handle4;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle4,
                                             "core.led",
-                                            "state:oc.bt.b;power:oc.bt.i",
                                             "core.rw",
-                                            OC_REST_GET|OC_REST_PUT,
                                             "/a/led4",
                                             0,
                                             OC_DISCOVERABLE));
     url = OCGetResourceUri(handle4);
     EXPECT_STREQ("/a/led4", url);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle4, "core.brightled",
-                                                        "state:oc.bt.b;power:oc.bt.i"));
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, "oc.mi.ll",
-                                                             OC_REST_GET|OC_REST_PUT));
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, "oc.mi.b",
-                                                             OC_REST_GET|OC_REST_PUT));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle4, "core.brightled"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, "oc.mi.ll"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, "oc.mi.b"));
 
     //EXPECT_EQ(OC_STACK_OK, OCHandleServerRequest(&res, uri, query, req, rsp));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+
+#if 0
 TEST(StackTest, StackTestResourceDiscoverIfFilteringBad) {
     uint8_t addr[20];
     uint16_t port = USE_RANDOM_PORT;
@@ -1532,3 +1414,4 @@ TEST(StackTest, StackTestResourceDiscoverRtFiltering) {
 
     //EXPECT_EQ(OC_STACK_OK, OCHandleServerRequest(&res, uri, query, req, rsp));
 }
+#endif
