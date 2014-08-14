@@ -1,0 +1,15 @@
+/*!
+
+@mainpage Welcome
+
+IoTivity runs as an open source project. This infrastructure can be used by OIC partners to contribute and co-work for the project. This document is for any developer trying to utilize the IoTivity project in building applications. This document includes:
+
+\li \ref OCGuides - High level overview of the API and how to use them
+
+\li \ref OCHowTo - contains guides and tutorials to help developers get started
+
+\li <a href="annotated.html"> API Reference </a> - provides a reference to all public APIs available to utilize the power of IoTivity.
+
+
+
+*/
