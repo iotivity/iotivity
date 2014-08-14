@@ -1,0 +1,32 @@
+/*!
+
+@page OCHowTo How To... Guides
+
+[@ref GuideBuildStack]
+
+
+---
+
+@section GuideBuildStack How to build the stack
+
+This guide will provide instructions on how to build the stack. Instructions provided in this guide are tested against Ubuntu 14.10, however, Ubuntu version 12.0.4 and above are supported.
+
+<b> Build Environment </b>
+
+Boost version 1.55 and G++ are required in order to build the stack. Install boot by running the following command in terminal window:
+
+    sudo apt-get install libboost-all-dev
+
+Followed by installing G++ by running the following command in the terminal window:
+
+    sudo apt-get install build-essential g++
+
+At this point, your development environment should be setup.
+
+<b> Building </b>
+
+Make sure oic-resource and oic-utilites are checked out in the same directory. Provided your build environment is properly setup, navigate into oic-resource repository using the terminal, which includes the make file needed the build the stack and samples. Run the <i>make</i> command which will build all the necessary components for the stack and the sample applications.
+
+All the compiled executables and libraries will be available in the same directory as the make file on successfully completing the build.
+
+*/

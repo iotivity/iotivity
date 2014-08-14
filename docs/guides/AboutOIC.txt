@@ -1,0 +1,51 @@
+/*!
+
+@page AboutOIC About Open Interconnect Consortium
+
+@section WhoAreWe Who are we?
+
+\li We want to connect the next 25 billion devices for the Internet of Things.
+
+\li We want to provide secure and reliable device discovery and connectivity across multiple OSs and platforms.
+
+\li There are multiple proposals and forums driving different approaches... but no single solution addresses the majority of key requirements.
+
+\li We need industry consolidation around a common, interoperable approach.
+
+\li We need a broad industry consortium of companies to create a scalable solution.
+
+
+@section WhyAreWeDoingThis Why are we doing this?
+
+\li We are defining the specification, certification & branding to deliver reliable interoperability - a connectivity framework that abstracts complexity
+
+\li This standard will be an open specification that anyone can implement and is easy for developers to use
+
+\li It will include IP protection & branding for certified devices (via compliance testing) and service-level interoperability
+
+\li There will also be an Open Source implementation of the standard
+
+\li This Open Source implementation will be designed to enable application developers and device manufacturers to deliver interoperable products across Android, iOS, Windows, Linux, Tizen, and more.
+
+@section WhoNeedsThis Who needs this?
+
+\li Consumers, Enterprise, Industrial, Automotive, Health, etc. who want smart devices to easily interconnect and communicate with appliances, embedded devices, etc.
+
+\li Developers of operating systems, platforms, and applications who want their products to interoperate seamlessly across many brands and ecosystems.
+
+\li End users who want consistent levels of security and identity across smart devices down to the smallest connected appliance
+
+@section HowWillWeDeliverIt How will we deliver it?
+
+\li Our goal is to define a comprehensive communications framework to enable emerging applications in all key vertical markets.
+
+\li The framework must enable multiple new modes of communication, such as Peer-to-Peer, Mesh & Bridging, Reporting & Control, etc.
+
+\li The framework should include a consistent implementation of identity, authentication and security across the modes of User ID, Enterprise / Industrial ID & Credentials.
+
+\li It should include a sense of proximity for the Internet of Things and Wearable devices and include support for Onboarding and Provisioning.
+
+\li And the framework must support a "building block" architecture and provide an Open Source implementation
+
+
+*/

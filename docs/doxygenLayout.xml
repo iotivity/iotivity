@@ -1,0 +1,13 @@
+<doxygenlayout version="1.0">
+    <navindex>
+        <tab type="mainpage" visible="yes" title="Home"/>
+        <tab type="user" url="@ref AboutOIC" 	title="About OIC" />
+        <tab type="user" url="@ref OCGuides" 	title="Programmer's Guide" />
+        <tab type="user" url="@ref OCHowTo" 	title="How To..." />
+        <tab type="classes" visible="yes" title="API Reference">
+            <tab type="classlist" visible="yes" title=""/>
+            <tab type="hierarchy" visible="yes" title="" intro=""/>
+            <tab type="classmembers" visible="yes" title="" intro=""/>
+        </tab>
+    </navindex>
+</doxygenlayout>

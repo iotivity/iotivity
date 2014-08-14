@@ -1,0 +1,28 @@
+/*!
+
+@page OCGuides Programmer's Guide
+
+@section Terminology
+
+<b>Device</b>
+A constrained device that has the Thin Block stack installed which enabled one or more services for other Thin Block or Unified Block devices to consume.
+
+<b>Resource</b>
+A resource is a component in a server that can be viewed and controlled by another Thin Block or Unified Block device. There are different resource types, for example a temperature sensor, a light controller etc.
+
+Resources can be arranged in a hierarchal manner to form a tree of resources. This generic method of structure enables one to model many different topologies of resources.
+
+\li Example: A light controller could be a resource.
+\li Example: A light array could be a set of resources organized in a flat (non-hierarchical manner).
+\li Example: A garage door opener could be a resource, it could host two resource – light and lock.
+
+A more detailed description of resources and management of resources along with code snippets is provided later in this document.
+
+<b>Operations</b>
+Operations are actions that a Thin Block or Unified Block can perform on attributes associated with a particular resource. Resource attributes can have different operations on it based on the nature of the resource type fundamentally these are GET and PUT operations. Additionally attributes can also be declared to be observable to support remote devices to subscribe to changes to it.
+
+\li Example: One of the child resources on the garage door opener is the light control; it has a GET operation that allows a device to get the current light state (on / off).
+
+
+
+*/
