@@ -75,10 +75,9 @@ OCStackResult HandleStackRequests(OCRequest * request) {
 
         if (result == OC_STACK_OK)
         {
-            result = ProcessResourceDiscoverReq(
-                    (const unsigned char*) request->entityHandlerRequest->reqJSONPayload,
-                    (unsigned char *) request->entityHandlerRequest->resJSONPayload, filterOn,
-                    filterValue);
+            result = ProcessResourceDiscoverReq(request->entityHandlerRequest,
+                                                filterOn,
+                                                filterValue);
         }
     }
     else
@@ -439,7 +438,7 @@ OCStackResult OCProcess() {
  */
 OCStackResult OCCreateResource(OCResourceHandle *handle,
         const char *resourceTypeName,
-        const char *resourceInterfaceName, 
+        const char *resourceInterfaceName,
         const char *uri, OCEntityHandler entityHandler,
         uint8_t resourceProperties) {
 
@@ -501,7 +500,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     // Add the resourcetype to the resource
     result = OCBindResourceTypeToResource((OCResourceHandle) pointer,
-            resourceTypeName); 
+            resourceTypeName);
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Error adding resourcetype"));
         goto exit;
@@ -625,13 +624,13 @@ OCStackResult OCUnBindResource(
     // If found, add it and return success
     for (i = 0; i < MAX_CONTAINED_RESOURCES; i++) {
         if (resourceHandle == resource->rsrcResources[i]) {
-            resource->rsrcResources[i] = (OCResourceHandle) 0; 
+            resource->rsrcResources[i] = (OCResourceHandle) 0;
             OC_LOG(INFO, TAG, PCF("resource unbound"));
             return OC_STACK_OK;
         }
     }
 
-	OC_LOG(INFO, TAG, PCF("resource not found in collection"));
+    OC_LOG(INFO, TAG, PCF("resource not found in collection"));
 
     // Unable to add resourceHandle, so return error
     return OC_STACK_ERROR;

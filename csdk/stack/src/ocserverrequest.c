@@ -36,7 +36,7 @@
 
 extern OCResource *headResource;
 
-OCStackResult ProcessResourceDiscoverReq (const unsigned char *request, unsigned char *response,
+OCStackResult ProcessResourceDiscoverReq (OCEntityHandlerRequest *request,
                                  uint8_t filterOn, char *filterValue)
 {
     OCResource *resourcePtr = headResource;
@@ -45,6 +45,7 @@ OCStackResult ProcessResourceDiscoverReq (const unsigned char *request, unsigned
     cJSON *ocObj, *pLoadObj, *resArray, *resObj, *rtArray;
     char *jsonStr;
     uint8_t encodeRes = 0;
+    OCStackResult ret = OC_STACK_OK;
 
     OC_LOG_V(INFO, TAG, PCF("Entering ProcessResourceDiscoverReq"));
     ocObj = cJSON_CreateObject();
@@ -108,12 +109,19 @@ OCStackResult ProcessResourceDiscoverReq (const unsigned char *request, unsigned
         resourcePtr = resourcePtr->next;
     }
     jsonStr = cJSON_PrintUnformatted (ocObj);
-    memcpy (response, jsonStr, strlen(jsonStr));
+    if (strlen(jsonStr) < request->resJSONPayloadLen)
+    {
+        strncpy((char *)request->resJSONPayload, jsonStr, request->resJSONPayloadLen);
+    }
+    else
+    {
+        ret = OC_STACK_ERROR;
+    }
     cJSON_Delete (ocObj);
     free (jsonStr);
 
     OC_LOG_V(INFO, TAG, PCF("Exiting ProcessResourceDiscoverReq"));
-    return OC_STACK_OK;
+    return ret;
 }
 
 OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
