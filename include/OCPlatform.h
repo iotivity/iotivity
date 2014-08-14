@@ -258,7 +258,7 @@ namespace OC
         std::unique_ptr<WrapperFactory> m_WrapperInstance;
         IServerWrapper::Ptr m_server;
         IClientWrapper::Ptr m_client;
-
+        std::shared_ptr<std::mutex> m_csdkLock;
         /**
         *  Private function to initalize the platfrom
         */

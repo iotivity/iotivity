@@ -38,8 +38,8 @@ namespace OC
     public:
         typedef std::shared_ptr<IWrapperFactory> Ptr;
 
-        virtual IClientWrapper::Ptr CreateClientWrapper(PlatformConfig cfg) =0;
-        virtual IServerWrapper::Ptr CreateServerWrapper(PlatformConfig cfg) =0;
+        virtual IClientWrapper::Ptr CreateClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg) =0;
+        virtual IServerWrapper::Ptr CreateServerWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg) =0;
         virtual ~IWrapperFactory(){}
     };
 
@@ -49,29 +49,29 @@ namespace OC
     public:
         WrapperFactory(){}
 
-        virtual IClientWrapper::Ptr CreateClientWrapper(PlatformConfig cfg)
+        virtual IClientWrapper::Ptr CreateClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
         {
             switch(cfg.serviceType)
             {
             case ServiceType::InProc:
-                return std::make_shared<InProcClientWrapper>(cfg);
+                return std::make_shared<InProcClientWrapper>(csdkLock, cfg);
                 break;
             case ServiceType::OutOfProc:
-                return std::make_shared<OutOfProcClientWrapper>(cfg);
+                return std::make_shared<OutOfProcClientWrapper>(csdkLock, cfg);
                 break;
             }
 			return nullptr;
         }
 
-        virtual IServerWrapper::Ptr CreateServerWrapper(PlatformConfig cfg)
+        virtual IServerWrapper::Ptr CreateServerWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
         {
             switch(cfg.serviceType)
             {
             case ServiceType::InProc:
-                return std::make_shared<InProcServerWrapper>(cfg);
+                return std::make_shared<InProcServerWrapper>(csdkLock, cfg);
                 break;
             case ServiceType::OutOfProc:
-              //  return std::make_shared<OutOfProcServerWrapper>(cfg);
+              //  return std::make_shared<OutOfProcServerWrapper>(csdkLock, cfg);
                 break;
             }
 			return nullptr;

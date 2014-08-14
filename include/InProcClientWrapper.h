@@ -40,7 +40,7 @@ namespace OC
     class InProcClientWrapper : public IClientWrapper
     {
     public:
-        InProcClientWrapper(PlatformConfig cfg);
+        InProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg);
         virtual ~InProcClientWrapper();
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, std::function<void(std::shared_ptr<OCResource>)>& callback);
@@ -57,8 +57,7 @@ namespace OC
         std::string assembleSetResourcePayload(const AttributeMap& attributes);
         std::thread m_listeningThread;
         bool m_threadRun;
-        std::mutex m_resourceListenerLock;
-        std::mutex m_csdkLock;
+        std::weak_ptr<std::mutex> m_csdkLock;
         std::vector<std::function<void(OCClientResponse*)>> callbackList;
 
     };

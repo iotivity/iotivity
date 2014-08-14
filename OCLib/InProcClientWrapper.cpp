@@ -28,22 +28,28 @@ using namespace std;
 
 namespace OC
 {
-    InProcClientWrapper::InProcClientWrapper(PlatformConfig cfg)
+    InProcClientWrapper::InProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
+            :m_threadRun(false), m_csdkLock(csdkLock)
     {
-        OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, OC_CLIENT);
-
-        if(OC_STACK_OK != result)
+        // if the config type is server, we ought to never get called.  If the config type
+        // is both, we count on the server to run the thread and do the initialize
+        if(cfg.mode == ModeType::Client)
         {
-            throw InitializeException("Error Initializing Stack", result);
-        }
+            OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, OC_CLIENT);
 
-        m_threadRun = true;
-        m_listeningThread = std::thread(&InProcClientWrapper::listeningFunc, this);
+            if(OC_STACK_OK != result)
+            {
+                throw InitializeException("Error Initializing Stack", result);
+            }
+
+            m_threadRun = true;
+            m_listeningThread = std::thread(&InProcClientWrapper::listeningFunc, this);
+        }
     }
 
     InProcClientWrapper::~InProcClientWrapper()
     {
-        if(m_listeningThread.joinable())
+        if(m_threadRun && m_listeningThread.joinable())
         {
             m_threadRun = false;
             m_listeningThread.join();
@@ -57,14 +63,20 @@ namespace OC
         while(m_threadRun)
         {
             OCStackResult result;
+            auto cLock = m_csdkLock.lock();
+            if(cLock)
             {
-                std::lock_guard<std::mutex> lock(m_csdkLock);
+                std::lock_guard<std::mutex> lock(*cLock);
                 result = OCProcess();
+            }
+            else
+            {
+                result = OC_STACK_ERROR;
             }
 
             if(result != OC_STACK_OK)
             {
-                // TODO: @Erich do something with result if failed?
+                // TODO: do something with result if failed?
             }
 
             // To minimize CPU utilization we may wish to do this with sleep
@@ -184,10 +196,16 @@ namespace OC
         cbdata->context =  static_cast<void*>(context);
         cbdata->cb = listenCallback;
 
+        auto cLock = m_csdkLock.lock();
+        if(cLock)
         {
-            std::lock_guard<std::mutex> lock(m_csdkLock);
+            std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
             result = OCDoResource(&handle, OC_REST_GET, resourceType.c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
         }
         return result;
     }
@@ -255,12 +273,17 @@ namespace OC
         os << host << uri;
 
         // TODO: end of above
-
+        auto cLock = m_csdkLock.lock();
+        if(cLock)
         {
-            std::lock_guard<std::mutex> lock(m_csdkLock);
+            std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
             //TODO: use above and this line! result = OCDoResource(&handle, OC_REST_GET, uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
             result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
         }
         return result;
     }
@@ -335,13 +358,21 @@ namespace OC
         // TODO: end of above
 
         cbdata->context = static_cast<void*>(ctx);
+        auto cLock = m_csdkLock.lock();
+
+        if(cLock)
         {
-            std::lock_guard<std::mutex> lock(m_csdkLock);
+            std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
             //OCDoResource(&handle, OC_REST_PUT, assembleSetResourceUri(uri.c_str(), queryParams).c_str(), host.c_str(), assembleSetResourcePayload(uri, attributes).c_str(), OC_CONFIRMABLE, cbdata);
             //TODO: use above and this line! result = OCDoResource(&handle, OC_REST_GET, uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
             result = OCDoResource(&handle, OC_REST_PUT, os.str().c_str(), nullptr, assembleSetResourcePayload(attributes).c_str(), OC_NON_CONFIRMABLE, cbdata);
         }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
         return result;
     }
 
@@ -389,12 +420,19 @@ namespace OC
 
         ostringstream os;
         os << host<< uri;
-
+        
+        auto cLock = m_csdkLock.lock();
+        if(cLock)
         {
-            std::lock_guard<std::mutex> lock(m_csdkLock);
+            std::lock_guard<std::mutex> lock(*cLock);
             //result = OCDoResource(handle, OC_REST_OBSERVE,  uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
             result = OCDoResource(handle, method, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
         }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+
         return result;
     }
 
@@ -413,10 +451,18 @@ namespace OC
     OCStackResult InProcClientWrapper::CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)
     {
         OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if(cLock)
         {
-            std::lock_guard<std::mutex> lock(m_csdkLock);
+            std::lock_guard<std::mutex> lock(*cLock);
             result = OCCancel(handle);  
         }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
         return result;
     }
    }
