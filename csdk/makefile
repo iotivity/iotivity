@@ -72,6 +72,7 @@ make_lcoap:
 objdirs: $(ROOT_DIR)
 	mkdir -p $(OBJ_DIR)
 	mkdir -p $(OBJ_DIR)/$(BUILD)
+	mkdir -p $(BUILD)
 
 obj_build:
 	@echo "Building $@"
@@ -83,7 +84,7 @@ liboctbstack.a:
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
 	@cd $(OBJ_DIR)/$(BUILD) && ar -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
-	ar -r $@ $(OBJ_DIR)/$(BUILD)/*.o 
+	ar -r $(BUILD)/$@ $(OBJ_DIR)/$(BUILD)/*.o 
 
 .PHONY: clean print_vars
 
@@ -98,7 +99,7 @@ deepclean: legacy_deepclean
 legacy_clean:	$(ROOT_DIR)
 	@echo "Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
-	rm -f $(ROOT_DIR)/liboctbstack.a
+	rm -f $(ROOT_DIR)/$(BUILD)/liboctbstack.a
 	rm -rf $(OBJ_DIR)
 
 legacy_deepclean: $(ROOT_DIR)

@@ -34,9 +34,9 @@ INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 
 CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
-                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
     					
 LDLIBS		+= -loctbstack -lpthread
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
@@ -58,10 +58,10 @@ $(OBJ_DIR)/%.o: %.cpp
 	$(CC) -c $(CPPFLAGS) $< -o $@
 
 ocserver: $(OBJ_DIR)/ocserver.o $(OBJ_DIR)/common.o
-	$(CC) $^ $(CPPFLAGS) -o $@
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 occlient: $(OBJ_DIR)/occlient.o $(OBJ_DIR)/common.o
-	$(CC) $^ $(CPPFLAGS) -o $@
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 .PHONY: clean
 

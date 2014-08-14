@@ -1,9 +1,12 @@
 VERSION:=4.1.1
 
+# override with `make BUILD=release`
+# default to release build
+BUILD	 := release
+
 #other options are android, arduino
 PLATFORM=linux
 
-#peg_ccfl-core
 ROOT_DIR = ../../..
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 OCSTACK_DIR = $(ROOT_DIR)/stack
@@ -18,25 +21,25 @@ INC_DIRS += -I$(LOGGER_DIR)/include
 INC_DIRS += -I$(RANDOM_DIR)/include
 
 ifeq ($(PLATFORM),android)
-    CCPLUS=arm-linux-androideabi-g++
-    CC=arm-linux-androideabi-gcc
-    AR=arm-linux-androideabi-ar
-    RANLIB=arm-linux-androideabi-ranlib
-    CFLAGS_ANDROID =  -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
-    LDFLAGS_ANDROID = -march=armv7-a -Wl,--fix-cortex-a8 -llog
+	CCPLUS=arm-linux-androideabi-g++
+	CC=arm-linux-androideabi-gcc
+	AR=arm-linux-androideabi-ar
+	RANLIB=arm-linux-androideabi-ranlib
+	CFLAGS_ANDROID =  -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+	LDFLAGS_ANDROID = -march=armv7-a -Wl,--fix-cortex-a8 -llog
 else ifeq ($(PLATFORM),linux)
-    CCPLUS=g++
-    CC=gcc
-    AR=ar
-    RANLIB=ranlib
+	CCPLUS=g++
+	CC=gcc
+	AR=ar
+	RANLIB=ranlib
 else
    $(error Wrong value for PLATFORM !!)
 endif
 
-DEP_LIBS = $(ROOT_DIR)/liboctbstack.a
+DEP_LIBS = $(ROOT_DIR)/$(BUILD)/liboctbstack.a
 
 CFLAGS += -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
-    -Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DWITH_POSIX -DTB_LOG
+	-Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DWITH_POSIX -DTB_LOG
 
 PROGRAMS = ocserver occlient
 
@@ -44,17 +47,20 @@ SOURCES:= occlient.c ocserver.c
 
 OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 
-all: $(PROGRAMS)
+all: objdirs $(PROGRAMS)
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(CFLAGS_ANDROID) $(INC_DIRS) $< -o $@
+	$(CC) -c $(CFLAGS) $(CFLAGS_ANDROID) $(INC_DIRS) $< -o $(BUILD)/$@
 
+objdirs: $(ROOT_DIR)
+	mkdir -p $(BUILD)
+	
 ##Added -lm as needed by json calling floor()
 occlient: occlient.o $(DEP_LIBS)
-	$(CC) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $^ -o $@ -lm
+	$(CC) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $(BUILD)/$^ -o $(BUILD)/$@ -lm
 
 ocserver: ocserver.o $(DEP_LIBS)
-	$(CC) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $^ -o $@ -lm
+	$(CC) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $(BUILD)/$^ -o $(BUILD)/$@ -lm
 
 install: all
 	@echo "Installing for PLATFORM $(PLATFORM)"
@@ -66,5 +72,5 @@ endif
 .PHONY: clean
 
 clean:
-	rm -f *.o $(PROGRAMS)
-
+	rm -rf debug
+	rm -rf release
