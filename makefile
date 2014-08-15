@@ -16,6 +16,7 @@ CXX_INC	  += -I./csdk/stack/include
 CXX_INC	  += -I./csdk/ocsocket/include
 CXX_INC	  += -I./csdk/ocrandom/include
 CXX_INC	  += -I./csdk/logger/include
+CXX_INC	  += -I./csdk/libcoap
 
 # Force metatargets to build:
 .PHONY: prep_dirs c_sdk simpleserver simpleclient simpleclientserver
@@ -42,8 +43,8 @@ simpleclient: OCLib.a
 simpleclientserver: OCLib.a
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleclientserver.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/$(BUILD)/liboctbstack.a
 
-OCLib.a: OCPlatform.o OCResource.o OCReflect.o InProcServerWrapper.o InProcClientWrapper.o
-	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
+OCLib.a: OCPlatform.o OCResource.o OCReflect.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
+	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
 
 OCReflect.o: OCLib/OCReflect.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCReflect.cpp $(CXX_INC)
@@ -53,6 +54,9 @@ OCPlatform.o: OCLib/OCPlatform.cpp
 
 OCResource.o: OCLib/OCResource.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCResource.cpp $(CXX_INC)
+
+OCUtilities.o: OCLib/OCUtilities.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCUtilities.cpp $(CXX_INC)
 
 InProcServerWrapper.o: OCLib/InProcServerWrapper.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/InProcServerWrapper.cpp $(CXX_INC)
