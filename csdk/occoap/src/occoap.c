@@ -25,6 +25,7 @@
 #include "occoap.h"
 #include "occlientcb.h"
 #include "ocobserve.h"
+#include "logger.h"
 #include <coap.h>
 
 #ifndef WITH_ARDUINO
@@ -38,8 +39,8 @@
 //-----------------------------------------------------------------------------
 #define TAG    PCF("OCCoAP")
 #define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
-            {OC_LOG(FATAL, TAG, #op " failed !!"); goto exit;} }
-#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
+            {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
+#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG_V(FATAL, TAG, "%s is NULL", #arg); goto exit;} }
 
 #define BUF_SIZE (64)
 #define BUF_SIZE_ENCODE_OPTION (3)
@@ -152,7 +153,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     // in the future, the response might be queued for SLOW resources
     if (pdu->hdr->type != COAP_MESSAGE_CON || tid == COAP_INVALID_TID)
     {
-        OC_LOG(INFO, TAG, "Deleting PDU");
+        OC_LOG(INFO, TAG, PCF("Deleting PDU"));
         coap_delete_pdu(pdu);
     }
 
@@ -238,12 +239,12 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
             OC_LOG_V(INFO, TAG, "TID %d", tid);
             if (tid != COAP_INVALID_TID)
             {
-                OC_LOG(INFO, TAG, "Deleting PDU");
+                OC_LOG(INFO, TAG, PCF("Deleting PDU"));
                 coap_delete_pdu(pdu);
             }
             else
             {
-                OC_LOG(INFO, TAG, "Keeping PDU, we should handle the retry of this pdu");
+                OC_LOG(INFO, TAG, PCF("Keeping PDU, we should handle the retry of this pdu"));
             }
             goto exit;
         }
@@ -253,7 +254,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     }
     else
     {
-        OC_LOG(DEBUG, TAG, "Do not accept other than NON in HandleCoAPResponses");
+        OC_LOG(DEBUG, TAG, PCF("Do not accept other than NON in HandleCoAPResponses"));
     }
 
 exit:
@@ -285,7 +286,7 @@ int OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
     int ret = OC_COAP_ERR;
 
     TODO ("Below should go away and be replaced by OC_LOG");
-    coap_log_t log_level = LOG_DEBUG + 1;
+    coap_log_t log_level = (coap_log_t)(LOG_DEBUG + 1);
     OCDevAddr devAddr;
     OCDevAddr mcastAddr;
     uint8_t ipAddr[4] = { 0 };
@@ -315,7 +316,6 @@ int OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
                 coap_join_wellknown_group(gCoAPCtx,
                         (coap_address_t* )&mcastAddr), 0);
     }
-
     coap_register_request_handler(gCoAPCtx, HandleCoAPRequests);
     coap_register_response_handler(gCoAPCtx, HandleCoAPResponses);
 
@@ -324,7 +324,7 @@ int OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
 exit:
     if (ret != OC_COAP_OK)
     {
-        OCStopCoAP(gCoAPCtx);
+        OCStopCoAP();
     }
     return ret;
 }
@@ -421,7 +421,7 @@ int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * toke
     // Decide message type
     if (qos == OC_CONFIRMABLE) {
         coapMsgType = COAP_MESSAGE_CON;
-        OC_LOG(FATAL, TAG, "qos == OC_CONFIRMABLE is not supported in OCDoCoAPResource");
+        OC_LOG(FATAL, TAG, PCF("qos == OC_CONFIRMABLE is not supported in OCDoCoAPResource"));
     }
     // Decide method type
     switch (method) {
@@ -440,7 +440,7 @@ int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * toke
             break;
         default:
             coapMethod = 0;
-            OC_LOG(FATAL, TAG, "OCDoCoAPResource only supports GET, PUT, & OBSERVE methods");
+            OC_LOG(FATAL, TAG, PCF("OCDoCoAPResource only supports GET, PUT, & OBSERVE methods"));
             break;
     }
 
@@ -456,7 +456,7 @@ int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * toke
     TODO ("Once CON implementation is available, pdu should be saved until ACK is received");
     //if (pdu->hdr->type != COAP_MESSAGE_CON || tid == COAP_INVALID_TID)
     {
-        OC_LOG(INFO, TAG, "Deleting PDU");
+        OC_LOG(INFO, TAG, PCF("Deleting PDU"));
         coap_delete_pdu(pdu);
         pdu = NULL;
     }
@@ -503,7 +503,7 @@ int OCCoAPSendMessage (OCDevAddr *dstAddr, OCStackResult msgCode,
     OC_LOG_V(INFO, TAG, "TID %d", tid);
     if (pdu->hdr->type != COAP_MESSAGE_CON || tid == COAP_INVALID_TID)
     {
-        OC_LOG(INFO, TAG, "Deleting PDU");
+        OC_LOG(INFO, TAG, PCF("Deleting PDU"));
         coap_delete_pdu(pdu);
         pdu = NULL;
     }
@@ -538,13 +538,13 @@ int OCProcessCoAP() {
     read = coap_read(gCoAPCtx, gCoAPCtx->sockfd);
     if(read > 0)
     {
-        OC_LOG(INFO, TAG, "This is a Unicast<============");
+        OC_LOG(INFO, TAG, PCF("This is a Unicast<============"));
     }
     if (-1 != gCoAPCtx->sockfd_wellknown) {
         read = coap_read(gCoAPCtx, gCoAPCtx->sockfd_wellknown);
         if(read > 0)
         {
-            OC_LOG(INFO, TAG, "This is a Multicast<===========");
+            OC_LOG(INFO, TAG, PCF("This is a Multicast<==========="));
         }
     }
     coap_dispatch(gCoAPCtx);

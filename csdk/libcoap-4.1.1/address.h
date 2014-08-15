@@ -159,7 +159,7 @@ _coap_is_mcast_impl(const coap_address_t *a) {
         return 0;
 
     /* TODO */
-    return 1;
+    return 0;
 }
 
 #endif /* WITH_ARDUINO */

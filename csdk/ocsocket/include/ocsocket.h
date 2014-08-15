@@ -69,10 +69,12 @@ extern "C" {
  * Data structure to encapsulate IPv4/IPv6/Contiki/lwIP device addresses
  *
 */
+#pragma pack(push, 1)
 typedef struct OCDevAddr {
     uint32_t     size;                    /**< length of the address stored in addr field. */
     uint8_t      addr[DEV_ADDR_SIZE_MAX]; /**< device address. */
 }OCDevAddr;
+#pragma pack(pop)
 
 //-- OCInitNetworkStack -----------------------------------------------------------
 /** @ingroup ocsocket

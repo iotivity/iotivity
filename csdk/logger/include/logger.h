@@ -25,15 +25,15 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef __ANDROID__
     #include <android/log.h>
 #elif defined ARDUINO
     #include "Arduino.h"
     #include <avr/pgmspace.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
@@ -115,6 +115,15 @@ typedef enum {
      * @param bufferSize - max number of byte in buffer
      */
     void OCLogBuffer(LogLevel level, const prog_char * tag, const uint8_t * buffer, uint16_t bufferSize);
+
+    /**
+     * Output a variable argument list log string with the specified priority level.
+     *
+     * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+     * @param tag    - Module name
+     * @param format - variadic log string
+     */
+    void OCLogv(LogLevel level, const char * tag, const char * format, ...);
 #endif
 
 #ifdef TB_LOG
@@ -126,7 +135,7 @@ typedef enum {
         // Use full namespace for logInit to avoid function name collision
         #define OC_LOG_INIT()    OCLogInit()
         // Don't define variable argument log function for Arduino
-        #define OC_LOG_V(level, tag, ...)
+        #define OC_LOG_V(level, tag, ...) OCLogv((level), (tag), __VA_ARGS__)
     #else
         // Don't define LOG_INIT for Linux and Android
         #define OC_LOG_INIT()

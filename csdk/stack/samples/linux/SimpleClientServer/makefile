@@ -7,7 +7,7 @@ OUT_DIR	  := $(PWD)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 ifeq ($(ROOT_DIR), )
-ROOT_DIR	= $(PWD)/../../..
+ROOT_DIR	= $(PWD)/../../../..
 endif
 
 OUT_DIR	= $(PWD)
@@ -37,7 +37,7 @@ CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-ex
                         -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
                         -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
-    					
+
 LDLIBS		+= -loctbstack -lpthread
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
@@ -48,7 +48,7 @@ OBJECTS:= $(patsubst %.c, $(OBJ_DIR)/%.o, $(SOURCES))
 PROGRAMS	+= ocserver
 PROGRAMS	+= occlient
 
-all:	prep_dirs $(OBJECTS) $(PROGRAMS) 
+all:	prep_dirs $(OBJECTS) $(PROGRAMS)
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)

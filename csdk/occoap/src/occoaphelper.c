@@ -28,7 +28,7 @@
 // Macros
 //-----------------------------------------------------------------------------
 #define TAG    PCF("OCCoAPHelper")
-#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
+#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG_V(FATAL, TAG, "%s is NULL", #arg); goto exit;} }
 
 //=============================================================================
 // Helper Functions
@@ -325,7 +325,7 @@ GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
 
     pdu->hdr->token_length = tokenLength;
     if (!coap_add_token(pdu, tokenLength, token)) {
-        OC_LOG(FATAL, TAG, "coap_add_token failed");
+        OC_LOG(FATAL, TAG, PCF("coap_add_token failed"));
     }
 
     for (opt = options; opt; opt = opt->next) {
@@ -370,7 +370,7 @@ CreateNewOptionNode(unsigned short key, unsigned int length, unsigned char *data
     coap_list_t *node;
 
     VERIFY_NON_NULL(data);
-    option = coap_malloc(sizeof(coap_option) + length);
+    option = (coap_option *)coap_malloc(sizeof(coap_option) + length);
     VERIFY_NON_NULL(option);
 
     COAP_OPTION_KEY(*option) = key;
@@ -386,7 +386,7 @@ CreateNewOptionNode(unsigned short key, unsigned int length, unsigned char *data
     }
 
 exit:
-    OC_LOG(ERROR,TAG,"new_option_node: malloc: was not created");
+    OC_LOG(ERROR,TAG, PCF("new_option_node: malloc: was not created"));
     coap_free(option);
     return NULL;
 }

@@ -58,7 +58,7 @@ OCResource *headResource = NULL;
 
 //This function will be called back by occoap layer when a request is received
 OCStackResult HandleStackRequests(OCRequest * request) {
-    OC_LOG(INFO, TAG, "Entering OCStackHandleReceiveRequest (OCStack Layer)");
+    OC_LOG(INFO, TAG, PCF("Entering OCStackHandleReceiveRequest (OCStack Layer)"));
 
     char *filterValue;
     uint8_t filterOn;
@@ -90,7 +90,7 @@ OCStackResult HandleStackRequests(OCRequest * request) {
         }
         else
         {
-            OC_LOG(INFO, TAG, "Resource Not found");
+            OC_LOG(INFO, TAG, PCF("Resource Not found"));
             result = OC_STACK_NO_RESOURCE;
         }
         if (request->observe != NULL)
@@ -105,7 +105,7 @@ OCStackResult HandleStackRequests(OCRequest * request) {
 //This function will be called back by occoap layer when a response is received
 void HandleStackResponses(OCResponse * response) {
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
-    OC_LOG(INFO, TAG, "Entering HandleStackResponses (OCStack Layer)");
+    OC_LOG(INFO, TAG, PCF("Entering HandleStackResponses (OCStack Layer)"));
 
     if (response->cbNode) {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
@@ -177,12 +177,13 @@ static void deleteAllResources();
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
 //-----------------------------------------------------------------------------
-void defaultResourceEHandler(OCEntityHandlerFlag flag,
+OCStackResult defaultResourceEHandler(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest * request) {
     TODO ("Implement me!!!!");
     // TODO:  remove silence unused param warnings
     (void) flag;
     (void) request;
+    return OC_STACK_OK;
 }
 
 //-----------------------------------------------------------------------------
@@ -339,7 +340,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
     // Make call to OCCoAP layer
-    result = OCDoCoAPResource(method, qos, token, requiredUri, request);
+    result = (OCStackResult)OCDoCoAPResource(method, qos, token, requiredUri, request);
 
 exit:
 
@@ -388,7 +389,7 @@ OCStackResult OCCancel(OCDoHandle handle) {
 
     OC_LOG(INFO, TAG, PCF("Entering OCCancel"));
 
-    ClientCB *clientCB = GetClientCB(NULL, handle);
+    ClientCB *clientCB = GetClientCB(NULL, &handle);
 
     if(clientCB) {
         switch (clientCB->method)
@@ -575,7 +576,7 @@ OCStackResult OCBindResource(
     // If found, add it and return success
     for (i = 0; i < MAX_CONTAINED_RESOURCES; i++) {
         if (!resource->rsrcResources[i]) {
-            resource->rsrcResources[i] = (OCResourceHandle) resourceHandle;
+            resource->rsrcResources[i] = (OCResource *) resourceHandle;
             OC_LOG(INFO, TAG, PCF("resource bound"));
             return OC_STACK_OK;
         }
@@ -623,7 +624,7 @@ OCStackResult OCUnBindResource(
     // If found, add it and return success
     for (i = 0; i < MAX_CONTAINED_RESOURCES; i++) {
         if (resourceHandle == resource->rsrcResources[i]) {
-            resource->rsrcResources[i] = (OCResourceHandle) 0;
+            resource->rsrcResources[i] = (OCResource *) NULL;
             OC_LOG(INFO, TAG, PCF("resource unbound"));
             return OC_STACK_OK;
         }
@@ -1030,7 +1031,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
     VERIFY_NON_NULL(entityHandler, ERROR, OC_STACK_INVALID_PARAM);
 
     // Use the handle to find the resource in the resource linked list
-    resource = findResource(handle);
+    resource = findResource((OCResource *)handle);
     if (!resource) {
         OC_LOG(ERROR, TAG, PCF("Resource not found"));
         return OC_STACK_ERROR;
@@ -1057,7 +1058,7 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle) {
     OC_LOG(INFO, TAG, PCF("Entering OCGetResourceHandler"));
 
     // Use the handle to find the resource in the resource linked list
-    resource = findResource(handle);
+    resource = findResource((OCResource *)handle);
     if (!resource) {
         OC_LOG(ERROR, TAG, PCF("Resource not found"));
         return NULL;

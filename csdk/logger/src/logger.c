@@ -22,8 +22,6 @@
 #include "logger.h"
 #include "string.h"
 
-
-
 static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
 
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
@@ -33,8 +31,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
     //static const char * LEVEL[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
     static const char * LEVEL[] __attribute__ ((unused)) = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
-
-    #define MAX_ARDUINO_LEVEL_STR_SIZE   (8)
+    #include <stdarg.h>
 
     prog_char level0[] PROGMEM = "DEBUG";
     prog_char level1[] PROGMEM = "INFO";
@@ -153,7 +150,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
           return;
         }
 
-        char buffer[MAX_ARDUINO_LEVEL_STR_SIZE] = {0};
+        char buffer[LINE_BUFFER_SIZE] = {0};
         strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
         Serial.print(buffer);
 
@@ -216,7 +213,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
           return;
         }
 
-        char buffer[MAX_ARDUINO_LEVEL_STR_SIZE] = {0};
+        char buffer[LINE_BUFFER_SIZE] = {0};
         strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
         Serial.print(buffer);
 
@@ -235,6 +232,91 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         Serial.println();
     #endif
     }
+
+    /**
+     * Output a variable argument list log string with the specified priority level.
+     * Only defined for Arduino as depicted below.
+     *
+     * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+     * @param tag    - Module name
+     * @param format - variadic log string
+     */
+    void OCLogv(LogLevel level, const prog_char * tag, const char *format, ...)
+    {
+    #ifdef TB_LOG
+        char buffer[LINE_BUFFER_SIZE];
+        va_list ap;
+        va_start(ap, format);
+        strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+        Serial.print(buffer);
+
+        char c;
+        Serial.print(F(": "));
+
+        while ((c = pgm_read_byte(tag))) {
+          Serial.write(c);
+          tag++;
+        }
+        Serial.print(F(": "));
+
+        vsnprintf(buffer, sizeof(buffer), format, ap);
+        for(char *p = &buffer[0]; *p; p++) // emulate cooked mode for newlines
+        {
+            if(*p == '\n')
+            {
+                Serial.write('\r');
+            }
+            Serial.write(*p);
+        }
+        Serial.println();
+        va_end(ap);
+    #endif
+    }
+    /**
+     * Output a variable argument list log string with the specified priority level.
+     * Only defined for Arduino as depicted below.
+     *
+     * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
+     * @param tag    - Module name
+     * @param format - variadic log string
+     */
+    void OCLogv(LogLevel level, const prog_char * tag, const __FlashStringHelper *format, ...)
+    {
+    #ifdef TB_LOG
+        char buffer[LINE_BUFFER_SIZE];
+        va_list ap;
+        va_start(ap, format);
+        strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+        Serial.print(buffer);
+
+        char c;
+        Serial.print(F(": "));
+
+        while ((c = pgm_read_byte(tag))) {
+          Serial.write(c);
+          tag++;
+        }
+        Serial.print(F(": "));
+
+        #ifdef __AVR__
+            vsnprintf_P(buffer, sizeof(buffer), (const char *)format, ap); // progmem for AVR
+        #else
+            vsnprintf(buffer, sizeof(buffer), (const char *)format, ap); // for the rest of the world
+        #endif
+        for(char *p = &buffer[0]; *p; p++) // emulate cooked mode for newlines
+        {
+            if(*p == '\n')
+            {
+                Serial.write('\r');
+            }
+            Serial.write(*p);
+        }
+        Serial.println();
+        va_end(ap);
+    #endif
+    }
+
+
 #endif
 
 

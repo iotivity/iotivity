@@ -22,13 +22,13 @@
 #include <stdlib.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include <stdint.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
-#include <ocstack.h>
+#include "ocstack.h"
+#include "logger.h"
 
 const char *getResult(OCStackResult result);
 std::string getIPAddrTBServer(OCClientResponse * clientResponse);

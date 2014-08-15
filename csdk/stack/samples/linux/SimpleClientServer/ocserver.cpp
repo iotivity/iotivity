@@ -25,8 +25,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
-#include <ocstack.h>
-#include <logger.h>
+#include "ocstack.h"
+#include "logger.h"
 
 const char *getResult(OCStackResult result);
 

@@ -365,7 +365,7 @@ get_context(const char *node, const char *port) {
         OCBuildIPv4Address(coap_wellknown_addr[0], coap_wellknown_addr[1],
             coap_wellknown_addr[2], coap_wellknown_addr[3], coap_def_port, &mcast_addr);
         if (coap_join_wellknown_group(ctx, (coap_address_t*)&mcast_addr) != 0) {
-            OC_LOG(ERROR, MOD_NAME, "Unable to join to wellknown multicast group" );
+            OC_LOG(ERROR, MOD_NAME, PCF("Unable to join to wellknown multicast group") );
         }
         goto finish;
       }
@@ -461,7 +461,7 @@ main(int argc, char **argv) {
       if (ctx->sockfd_wellknown != -1) {
         if ( FD_ISSET( ctx->sockfd_wellknown, &readfds ) ) {  /* read from multicast socket */
 
-       OC_LOG(DEBUG, MOD_NAME, "Device Discovery request at well-known address !!" );
+       OC_LOG(DEBUG, MOD_NAME, PCF("Device Discovery request at well-known address !!"));
        coap_read( ctx, ctx->sockfd_wellknown );	/* read received data */
        TODO("Do we need to call coap_dispatch separately for unicast and multicast sockets")
        coap_dispatch( ctx );	/* and dispatch PDUs from receivequeue */

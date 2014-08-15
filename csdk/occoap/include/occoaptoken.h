@@ -23,6 +23,8 @@
 #ifndef OCCOAPTOKEN_H_
 #define OCCOAPTOKEN_H_
 
+#include <stddef.h>
+
 #define MAX_TOKEN_LENGTH (8)
 
 typedef struct {

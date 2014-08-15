@@ -1,15 +1,43 @@
-# override with `make BUILD=release`
+# override with `make BUILD=debug`
+# override with `make PLATFORM=arduino`
 # default to release build
+# default to build for linux
 BUILD	 := release
 PLATFORM := linux
-CC	 := gcc
 
 ifeq ($(ROOT_DIR), )
 ROOT_DIR	= $(PWD)
 endif
 
 ifeq ($(OBJ_DIR), )
-OBJ_DIR	= $(ROOT_DIR)/obj
+OBJ_DIR	= obj
+endif
+
+#Arduino specific configurations
+INCD_ARD_CORE = -I$(ARDUINO_DIR)/hardware/arduino/cores/arduino
+INCD_ARD_VARIANT = -I$(ARDUINO_DIR)/hardware/arduino/variants/mega
+INCD_ARD_SPI = -I$(ARDUINO_DIR)/libraries/SPI
+INCD_ARD_ETH = -I$(ARDUINO_DIR)/libraries/Ethernet
+INCD_ARD_ETH_UTIL = -I$(ARDUINO_DIR)/libraries/Ethernet/utility
+INCD_ARD_TIME = -I$(ARDUINO_DIR)/libraries/Time
+SDIR_ARD_TIME = $(ARDUINO_DIR)/libraries/Time
+
+ifeq ($(PLATFORM),linux)
+    CCPLUS=g++
+    CC=gcc
+    AR=ar
+    RANLIB=ranlib
+    CFLAGS_PLATFORM = -DWITH_POSIX -std=c99
+else ifeq ($(PLATFORM),arduino)
+    include local.properties
+    CCPLUS=avr-g++
+    CC=avr-g++
+    AR=avr-ar
+    RANLIB=avr-ranlib
+    CFLAGS_PLATFORM = -std=c++0x -DATMEGA2560 -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=156 -DARDUINO_AVR_MEGA2560 -DARDUINO_ARCH_AVR -DWITH_ARDUINO -MMD -DNDEBUG
+    INC_DIR_PLATFORM = $(INCD_ARD_CORE) $(INCD_ARD_VARIANT) $(INCD_ARD_SPI) $(INCD_ARD_ETH) $(INCD_ARD_ETH_UTIL) $(INCD_ARD_TIME)
+else
+   $(error Wrong value for PLATFORM !!)
 endif
 
 OCLOGGER_DIR	= $(ROOT_DIR)/logger
@@ -42,11 +70,10 @@ INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
 
-CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -std=c99 -fpic \
-			-DTB_LOG
-CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -std=c99 -fpic
+CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
+CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic
 
-CFLAGS		+= $(CC_FLAGS.$(BUILD)) -DWITH_POSIX $(INC_DIRS)
+CFLAGS		+= $(CC_FLAGS.$(BUILD)) $(INC_DIRS) $(CFLAGS_PLATFORM) $(INC_DIR_PLATFORM)
 LDLIBS		+= -lcoap
 
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
@@ -70,21 +97,20 @@ make_lcoap:
 	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)"
 
 objdirs: $(ROOT_DIR)
-	mkdir -p $(OBJ_DIR)
-	mkdir -p $(OBJ_DIR)/$(BUILD)
 	mkdir -p $(BUILD)
+	mkdir -p $(BUILD)/$(OBJ_DIR)
 
 obj_build:
 	@echo "Building $@"
 	# Output all *.o files to $(OBJ_DIR)/$(BUILD)
-	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/$(BUILD)/%, $(notdir $(source))));) 
+	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(BUILD)/$(OBJ_DIR)/%, $(notdir $(source))));)
 
 liboctbstack.a:
 	@echo "Building $@" 
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	@cd $(OBJ_DIR)/$(BUILD) && ar -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
+	@cd $(BUILD)/$(OBJ_DIR) && ar -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
-	ar -r $(BUILD)/$@ $(OBJ_DIR)/$(BUILD)/*.o 
+	ar -r $(BUILD)/$@ $(BUILD)/$(OBJ_DIR)/*.o
 
 .PHONY: clean print_vars
 

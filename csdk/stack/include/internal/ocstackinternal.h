@@ -31,6 +31,8 @@
 #include "ocstack.h"
 #include "occoaptoken.h"
 #include "occlientcb.h"
+#include <logger.h>
+#include <ocrandom.h>
 
 #ifdef __cplusplus
 extern "C" {

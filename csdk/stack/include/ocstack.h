@@ -21,9 +21,7 @@
 #ifndef OCSTACK_H_
 #define OCSTACK_H_
 
-#include <ocsocket.h>
-#include <logger.h>
-#include <ocrandom.h>
+#include "ocsocket.h"
 
 #ifdef __cplusplus
 extern "C" {

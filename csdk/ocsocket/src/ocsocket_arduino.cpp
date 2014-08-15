@@ -34,7 +34,7 @@
 #define MOD_NAME PCF("ocsocket")
 
 /// Macro to verify the validity of input argument
-#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, MOD_NAME, PCF(#arg " is NULL")); \
+#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG_V(FATAL, MOD_NAME, "%s is NULL", #arg); \
          return ERR_INVALID_INPUT;} }
 
 /// Length of the IP address decimal notation string
@@ -181,7 +181,6 @@ int32_t OCSendTo(int32_t sockfd, const uint8_t* buf, uint32_t bufLen, uint32_t f
 
     VERIFY_NON_NULL(buf);
     VERIFY_NON_NULL(ardAddr);
-
     OC_LOG(DEBUG, MOD_NAME, PCF("OCSendTo Begin"));
     ret = sendto( sockfd, buf, bufLen, (uint8_t*)&(ardAddr->a), ardAddr->port);
     OC_LOG(DEBUG, MOD_NAME, PCF("OCSendTo End"));
@@ -234,7 +233,7 @@ int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
     ArduinoAddr* ardAddr = (ArduinoAddr*)ipAddr;
 
     if ( !ardAddr || !a || !b || !c || !d ) {
-        OC_LOG(FATAL, MOD_NAME, "Invalid argument");
+        OC_LOG(FATAL, MOD_NAME, PCF("Invalid argument"));
         return ERR_INVALID_INPUT;
     }
 
@@ -253,7 +252,7 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
     ArduinoAddr* ardAddr = (ArduinoAddr*)ipAddr;
 
     if ( !ardAddr || !port ) {
-        OC_LOG(FATAL, MOD_NAME, "Invalid argument");
+        OC_LOG(FATAL, MOD_NAME, PCF("Invalid argument"));
         return ERR_INVALID_INPUT;
     }
 

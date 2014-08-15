@@ -9,6 +9,8 @@
 #ifndef _COAP_H_
 #define _COAP_H_
 
+#include "net.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -19,7 +21,6 @@ extern "C" {
 #include "coap_list.h"
 #include "pdu.h"
 #include "option.h"
-#include "net.h"
 #include "encode.h"
 #include "str.h"
 #include "uri.h"

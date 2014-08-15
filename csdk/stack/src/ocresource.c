@@ -51,7 +51,7 @@ uint8_t IsVirtualResource(const char* resourceUri)
 {
     for (int i = 0; i < OC_MAX_RESOURCES; i++)
     {
-        if (strcmp(resourceUri, GetVirtualResourceUri(i)) == 0)
+        if (strcmp(resourceUri, GetVirtualResourceUri((OCVirtualResources)i)) == 0)
         {
             return 1;
         }

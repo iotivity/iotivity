@@ -47,7 +47,7 @@ OCStackResult ProcessResourceDiscoverReq (OCEntityHandlerRequest *request,
     uint8_t encodeRes = 0;
     OCStackResult ret = OC_STACK_OK;
 
-    OC_LOG_V(INFO, TAG, PCF("Entering ProcessResourceDiscoverReq"));
+    OC_LOG(INFO, TAG, PCF("Entering ProcessResourceDiscoverReq"));
     ocObj = cJSON_CreateObject();
     cJSON_AddItemToObject (ocObj, OC_RSRVD_OC, pLoadObj = cJSON_CreateObject());
     cJSON_AddItemToObject (pLoadObj, OC_RSRVD_PAYLOAD, resArray = cJSON_CreateArray());
@@ -120,7 +120,7 @@ OCStackResult ProcessResourceDiscoverReq (OCEntityHandlerRequest *request,
     cJSON_Delete (ocObj);
     free (jsonStr);
 
-    OC_LOG_V(INFO, TAG, PCF("Exiting ProcessResourceDiscoverReq"));
+    OC_LOG(INFO, TAG, PCF("Exiting ProcessResourceDiscoverReq"));
     return ret;
 }
 
@@ -129,7 +129,7 @@ OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
 {
     char *filterParam;
 
-    OC_LOG_V(INFO, TAG, PCF("Exiting ValidateUrlQuery"));
+    OC_LOG(INFO, TAG, PCF("Entering ValidateUrlQuery"));
     if (!url)
         return OC_STACK_INVALID_URI;
 
@@ -155,7 +155,7 @@ OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
         // Other URIs not yet supported
         return OC_STACK_INVALID_URI;
     }
-    OC_LOG_V(INFO, TAG, PCF("Exiting ValidateUrlQuery"));
+    OC_LOG(INFO, TAG, PCF("Exiting ValidateUrlQuery"));
     return OC_STACK_OK;
 }
 

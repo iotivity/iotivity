@@ -1,5 +1,7 @@
-# override with `make BUILD=release`
+# override with `make BUILD=debug`
+# override with `make PLATFORM=arduino`
 # default to release build
+# default to build for linux
 BUILD	 := release
 #other options are android, arduino
 PLATFORM=linux
@@ -10,6 +12,7 @@ ROOT_DIR = ..
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 LOGGER_DIR = $(ROOT_DIR)/logger
 RANDOM_DIR = $(ROOT_DIR)/ocrandom
+STACK_DIR  = $(ROOT_DIR)/stack
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include
 
 #Arduino specific configurations
@@ -35,7 +38,7 @@ else ifeq ($(PLATFORM),linux)
     CC=gcc
     AR=ar
     RANLIB=ranlib
-    CFLAGS_PLATFORM = -DWITH_POSIX
+    CFLAGS_PLATFORM = -std=gnu99 -DWITH_POSIX
 else ifeq ($(PLATFORM),arduino)
     include local.properties
     CCPLUS=avr-g++
@@ -49,8 +52,8 @@ else
 endif
 
 CC_FLAGS.debug := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions -pedantic \
--std=gnu99 -DTB_LOG
-CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions -std=gnu99
+-DTB_LOG
+CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions
 
 SOURCES:= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
           str.c option.c async.c subscribe.c block.c logger.c ocrandom.c 

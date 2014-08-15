@@ -49,7 +49,7 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
     OCEntityHandlerRequest *ehReq = request->entityHandlerRequest;
     OCObserveReq *obs = request->observe;
 
-    OC_LOG(INFO, TAG, "Entering ProcessObserveRequest");
+    OC_LOG(INFO, TAG, PCF("Entering ProcessObserveRequest"));
     if (strcmp ((char *)obs->option, OC_RESOURCE_OBSERVE_REGISTER) == 0) {
         if (NULL == resource)
         {
@@ -71,7 +71,7 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
         return result;
     } else {
         // Invalid option
-        OC_LOG(ERROR, TAG, "Invalid CoAP observe option");
+        OC_LOG(ERROR, TAG, PCF("Invalid CoAP observe option"));
         return OC_STACK_INVALID_OBSERVE_PARAM;
     }
 }
@@ -121,7 +121,7 @@ OCStackResult SendObserverNotification (OCResourceHandle handle, OCResource *res
     }
     if (numObs == 0)
     {
-        OC_LOG(INFO, TAG, "Resource has no observers");
+        OC_LOG(INFO, TAG, PCF("Resource has no observers"));
         return OC_STACK_NO_OBSERVERS;
     }
     return OC_STACK_OK;
