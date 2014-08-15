@@ -75,8 +75,8 @@ Other Notes:
 
 
 How to build:
-1.	In repo oic-core, root folder ccf-resource consists of ‘OIC’ folder.  Inside OIC folder there is a Makefile. 
-2.	Before building, make sure to have contents from oic-utilities repo at the folder level where oic-core is. This would be ccf-utilities. 
+1.	Root folder oic-resource consists of ‘OIC’ folder.  Inside OIC folder there is a Makefile. 
+2.	Before building, make sure to have contents from oic-utilities repo at the folder level where oic-resource is.  
 3.	Use ‘make’ to build the entire OIC code. This would build the C++ SDK, stack and samples. 
 
 Samples:
