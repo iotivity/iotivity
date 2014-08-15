@@ -1,8 +1,8 @@
-# override with `make BUILD=release`
-# default to debug build
-BUILD	 := debug
+# override with `make BUILD=debug`
+# default to release build
+BUILD	 := release
 PLATFORM := linux
-CC	 := gcc
+CC	 := g++
 
 # You must create the file "local.properties" on your local machine which contains any local paths, etc
 # local.properties should NOT be committed to repo
@@ -14,11 +14,14 @@ include ./local.properties
 # NOTE:  to run app, make sure that LD_LIBRARY_PATH env variable
 #        contains $(GTEST_DIR)/lib/.libs
 
+OUT_DIR	  := $(PWD)/$(BUILD)
+OBJ_DIR	  := $(OUT_DIR)/obj
+
 ifeq ($(ROOT_DIR), )
 ROOT_DIR	= $(PWD)/../..
 endif
 
-OUT_DIR	= $(PWD)
+OUT_DIR	  := $(PWD)
 
 OCLOGGER_DIR	= $(ROOT_DIR)/logger
 OCRANDOM_DIR	= $(ROOT_DIR)/ocrandom
@@ -44,21 +47,36 @@ INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS  += -I$(GTEST_DIR)/include
 
 CC_FLAGS.debug      := -g -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
-                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
-CC_FLAGS.release    := -g -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR) -DTB_LOG
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
+CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) 
     					
 LDLIBS		+= -loctbstack -lpthread -lgtest -lgtest_main
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS) -L$(GTEST_DIR)/lib/.libs
 
-PROGRAMS	= stacktests
+SOURCES := stacktests.cpp
 
-all:	$(PROGRAMS) 
+OBJECTS:= $(patsubst %.c, $(OBJ_DIR)/%.o, $(SOURCES))
 
-%.o: %.cpp
+PROGRAMS := stacktests
+
+all:	prep_dirs $(OBJECTS) $(PROGRAMS) 
+
+prep_dirs:
+	-mkdir -p $(OUT_DIR)
+	-mkdir -p $(OBJ_DIR)
+
+$(OBJ_DIR)/%.o: %.cpp
 	$(CC) -c $(CPPFLAGS) $< -o $@
+
+stacktests: $(OBJ_DIR)/stacktests.o 
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 .PHONY: clean
 
-clean:
+clean: legacy_clean
+	-rm -rf release
+	-rm -rf debug
+
+legacy_clean:
 	rm -f *.o $(PROGRAMS)
