@@ -75,7 +75,7 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData *cbData, OCCoAPTok
 void DeleteClientCB(ClientCB *cbNode);
 
 
-//-- GetClientCB -----------------------------------------------------------
+//-- GetClientCB ---------------------------------------------------------
 /** @ingroup ocstack
  *
  * This method is used to search a cb node in cbList.
@@ -92,7 +92,7 @@ void DeleteClientCB(ClientCB *cbNode);
 //------------------------------------------------------------------------
 ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle);
 
-//-- DeleteClientCBList -----------------------------------------------------------
+//-- DeleteClientCBList --------------------------------------------------
 /** @ingroup ocstack
  *
  * This method is used to clear the cbList.
@@ -100,5 +100,17 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle);
  */
 //------------------------------------------------------------------------
 void DeleteClientCBList();
+
+//-- FindAndDeleteClientCB -----------------------------------------------
+/** @ingroup ocstack
+ *
+ * This method is used to verify the presence of a cb node in cbList
+ * and then delete it.
+ *
+ * @param[in] cbNode
+ *              address to client callback node.
+ */
+//------------------------------------------------------------------------
+void FindAndDeleteClientCB(ClientCB * cbNode);
 
 #endif //OC_CLIENT_CB

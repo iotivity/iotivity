@@ -87,3 +87,19 @@ void DeleteClientCBList() {
     }
     cbList = NULL;
 }
+
+void FindAndDeleteClientCB(ClientCB * cbNode) {
+    ClientCB* tmp;
+    if(cbNode)
+    {
+        LL_FOREACH(cbList, tmp)
+        {
+            if (cbNode == tmp)
+            {
+                DeleteClientCB(tmp);
+                break;
+            }
+        }
+    }
+}
+

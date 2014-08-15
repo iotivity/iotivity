@@ -215,7 +215,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         }
     }
 
-    return (UNICAST_DISCOVERY) ? OC_STACK_KEEP_TRANSACTION : OC_STACK_DELETE_TRANSACTION ;
+    return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
 

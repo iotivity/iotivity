@@ -111,7 +111,7 @@ void HandleStackResponses(OCResponse * response) {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
         result = response->cbNode->callBack(response->cbNode->context, response->cbNode->handle, response->clientResponse);
         if (result == OC_STACK_DELETE_TRANSACTION) {
-            DeleteClientCB(response->cbNode);
+            FindAndDeleteClientCB(response->cbNode);
         }
     }
 }
@@ -323,7 +323,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         case OC_REST_OBSERVE_ALL:
             break;
         default:
-            DeleteClientCB(clientCB);
             return OC_STACK_INVALID_METHOD;
     }
 
