@@ -36,7 +36,6 @@
 #include <sys/ioctl.h>
 #else
 #include <ifaddrs.h>
-#include <linux/if_link.h>
 #endif
 
 #include <logger.h>
