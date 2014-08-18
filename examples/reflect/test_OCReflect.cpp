@@ -256,7 +256,7 @@ int main()
 	light l;
 	l.bindTo(server, "/foo/");
   }
- catch(OC::OCReflect::reflection_exception& e)
+ catch(OC::reflection_exception& e)
   {
 	std::cerr << "Oops: " << e.what() << '\n';
   }

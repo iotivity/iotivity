@@ -213,7 +213,7 @@ pd_iter_tuple consume_typecheck(const property_type expected_pt, const OC::OCRef
   {
     std::ostringstream os;
     os << "type error: " << "expected " << expected_pt << ", found " << found_pt;
-    throw OC::OCReflect::reflection_exception(os.str());
+    throw OC::reflection_exception(os.str());
   }
 
  return std::forward_as_tuple(++begin, in.end());

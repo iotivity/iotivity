@@ -96,7 +96,7 @@ void OC::MyMultiResourceHandler::performDimmerOperations(OC::OCResource myResour
 		//Example to unobserve a property
 		unbind_observer(&myObserverHandler, myResource, "powerState");
 	}
-	catch(OC::OCReflect::reflection_exception& e)
+	catch(OC::reflection_exception& e)
 	{
 		log(e.what());
 	}
@@ -137,7 +137,7 @@ void OC::MyMultiResourceHandler::performDoorOperations(OC::OCResource myResource
 		// Canonical one-step approach to access a property
 		std::string manufacturer = update->property<std::string>("manufacturer");
 	}
-	catch(OC::OCReflect::reflection_exception& e)
+	catch(OC::reflection_exception& e)
 	{
 		log(e.what());
 	}
