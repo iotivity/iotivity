@@ -232,12 +232,13 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     uint32_t sequenceNumber = 0;
     OCStackResult result = OC_STACK_ERROR;
     coap_pdu_t *sendPdu = NULL;
+    coap_pdu_t * recvPdu = NULL;
     //coap_list_t *optList = NULL;
     //uint8_t deregisterObserveOption = OC_RESOURCE_OBSERVE_DEREGISTER;
 
     VERIFY_NON_NULL(ctx);
     VERIFY_NON_NULL(rcvdResponse);
-    coap_pdu_t * recvPdu = rcvdResponse->pdu;
+    recvPdu = rcvdResponse->pdu;
 
     result = ParseCoAPPdu(recvPdu, NULL, NULL, &rcvObserveOption, &bufRes);
     VERIFY_SUCCESS(result, OC_STACK_OK);
@@ -329,7 +330,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
  */
 OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
 
-    int ret = OC_STACK_ERROR;
+    OCStackResult ret = OC_STACK_ERROR;
 
     TODO ("Below should go away and be replaced by OC_LOG");
     coap_log_t log_level = (coap_log_t)(LOG_DEBUG + 1);
@@ -398,7 +399,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
                      const char *Uri, const char *payload)
 {
 
-    int ret = OC_STACK_ERROR;
+    OCStackResult ret = OC_STACK_ERROR;
     coap_pdu_t *pdu = NULL;
     coap_uri_t uri;
     OCDevAddr dst;

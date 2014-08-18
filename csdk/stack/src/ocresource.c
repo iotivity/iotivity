@@ -50,7 +50,7 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
     // TODO:  remove silence unused param warnings
     (void) flag;
     (void) request;
-    return  OC_STACK_OK; // Making sure that the Default EH and the Vendor EH have matching signatures
+    return  OC_EH_OK; // Making sure that the Default EH and the Vendor EH have matching signatures
 }
 
 static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,

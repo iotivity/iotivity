@@ -1,7 +1,39 @@
-To make the OCTBStack library, run "make" from this directory.
+-------------------------------------------------------------------------------
+**Linux**
+-------------------------------------------------------------------------------
+To make octbstack.a in release mode:
 
-To clean, you have two options:
+	make
 
-make clean	//Cleans all the *.o and *.a files generated directly from this makefile.
+To make octbstack.a in debug mode:
 
-make deepclean  //Also cleans the *.o and *.a files generated indirecty from this makefile.
+	make BUILD=debug
+
+-------------------------------------------------------------------------------
+**Arduino**
+-------------------------------------------------------------------------------
+Touch (i.e. create) file named "local.properties" at this directory level with
+the following definition(s):
+
+	ARDUINO_DIR = <PATH_TO_ARDUINO_INSTALL_DIR>/arduino-1.0.5
+
+To make octbstack.a in release mode:
+
+	make PLATFORM=arduino
+
+To make octbstack.a in debug mode:
+
+	make PLATFORM=arduino BUILD=debug
+
+-------------------------------------------------------------------------------
+**Clean-Up**
+-------------------------------------------------------------------------------
+To clean only stack modules:
+
+	make clean
+
+To clean stack modules and libcoap (i.e. networking) modules & its
+dependencies:
+
+	make deepclean
+

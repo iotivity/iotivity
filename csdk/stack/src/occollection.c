@@ -217,10 +217,11 @@ static OCStackResult
 BuildCollectionBatchJSONResponse(OCEntityHandlerFlag flag,
                 OCResource *resource, OCEntityHandlerRequest *ehRequest)
 {
-    OCStackResult ret = OC_STACK_ERROR;
+    OCStackResult stackRet = OC_STACK_ERROR;
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
-    ret = BuildRootResourceJSON(resource, ehRequest);
-    if (ret == OC_STACK_OK)
+    stackRet = BuildRootResourceJSON(resource, ehRequest);
+    if (stackRet == OC_STACK_OK)
     {
         for  (int i = 0; i < MAX_CONTAINED_RESOURCES; i++)
         {
@@ -228,18 +229,26 @@ BuildCollectionBatchJSONResponse(OCEntityHandlerFlag flag,
             if (temp)
             {
                 //TODO ("Proper Error handling");
-                ret = temp->entityHandler(OC_REQUEST_FLAG, ehRequest);
-                unsigned char* buffer = ehRequest->resJSONPayload;
-                ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen - strlen((char*)buffer);
-
-                buffer += strlen((char*)buffer);
-                ehRequest->resJSONPayload = buffer;
-                if ( resource->rsrcResources[i+1] && ehRequest->resJSONPayloadLen > sizeof(OC_JSON_SEPARATOR) )
+                ehRet = temp->entityHandler(OC_REQUEST_FLAG, ehRequest);
+                if(ehRet == OC_EH_OK)
                 {
-                    *buffer = OC_JSON_SEPARATOR;
-                    buffer++;
+                    unsigned char* buffer = ehRequest->resJSONPayload;
+                    ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen - strlen((char*)buffer);
+
+                    buffer += strlen((char*)buffer);
                     ehRequest->resJSONPayload = buffer;
-                    ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen - 1;
+                    if ( resource->rsrcResources[i+1] && ehRequest->resJSONPayloadLen > sizeof(OC_JSON_SEPARATOR) )
+                    {
+                        *buffer = OC_JSON_SEPARATOR;
+                        buffer++;
+                        ehRequest->resJSONPayload = buffer;
+                        ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen - 1;
+                    }
+                }
+                else
+                {
+                    stackRet = OC_STACK_ERROR;
+                    break;
                 }
             }
             else
@@ -248,7 +257,7 @@ BuildCollectionBatchJSONResponse(OCEntityHandlerFlag flag,
             }
         }
     }
-    return ret;
+    return stackRet;
 }
 
 
@@ -265,7 +274,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
         return OC_STACK_ERROR;
 
     result = ValidateQuery ((const unsigned char *)ehRequest->query,
-                            ehRequest->resource, &ifQueryParam, &rtQueryParam);
+                            &ehRequest->resource, &ifQueryParam, &rtQueryParam);
 
     if (result != OC_STACK_OK)
         return result;
@@ -284,17 +293,17 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                 // operation is same as the GET on LL interface.
 
                 OC_LOG(INFO, TAG, "STACK_IF_DEFAULT\n");
-                return BuildCollectionJSONResponse( ehRequest->resource,
+                return BuildCollectionJSONResponse( (OCResource *)ehRequest->resource,
                              ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
 
             case STACK_IF_LL:
                 OC_LOG(INFO, TAG, "STACK_IF_LL\n");
-                return BuildCollectionJSONResponse( ehRequest->resource,
+                return BuildCollectionJSONResponse( (OCResource *)ehRequest->resource,
                              ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
 
             case STACK_IF_BATCH:
                 OC_LOG(INFO, TAG, "STACK_IF_BATCH\n");
-                return BuildCollectionBatchJSONResponse(flag, ehRequest->resource, ehRequest);
+                return BuildCollectionBatchJSONResponse(flag, (OCResource *)ehRequest->resource, ehRequest);
 
             default:
                 return OC_STACK_ERROR;
@@ -311,7 +320,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                 return OC_STACK_ERROR;
 
             case STACK_IF_BATCH:
-                return BuildCollectionBatchJSONResponse(flag, ehRequest->resource, ehRequest);
+                return BuildCollectionBatchJSONResponse(flag, (OCResource *)ehRequest->resource, ehRequest);
 
             default:
                 return OC_STACK_ERROR;

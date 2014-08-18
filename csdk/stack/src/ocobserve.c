@@ -99,7 +99,8 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
 
 OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
 {
-    OCStackResult result = OC_STACK_ERROR;
+    OCStackResult stackRet = OC_STACK_ERROR;
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OCEntityHandlerRequest *ehReq = request->entityHandlerRequest;
     OCObserveReq *obs = request->observe;
 
@@ -107,43 +108,50 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
 
     // Register new observation
     request->entityHandlerRequest->resource = (OCResourceHandle)resource;
-    result = resource->entityHandler(OC_OBSERVE_FLAG, request->entityHandlerRequest);
-
-    if (obs->option == OC_RESOURCE_OBSERVE_REGISTER)
+    ehRet = resource->entityHandler(OC_OBSERVE_FLAG, request->entityHandlerRequest);
+    if(ehRet == OC_EH_OK)
     {
-        // Add subscriber to the server observation list
-        // TODO: we need to check if the obsrever is already there using its OCDevAdd....
-        result = AddObserver ((const char*)(request->resourceUrl), (const char *)(ehReq->query),
-                obs->token, obs->subAddr, resource, request->qos);
-        if(result == OC_STACK_OK)
+        if (obs->option == OC_RESOURCE_OBSERVE_REGISTER)
         {
-            result = OC_STACK_OBSERVER_ADDED;
+            // Add subscriber to the server observation list
+            // TODO: we need to check if the obsrever is already there using its OCDevAdd....
+            stackRet = AddObserver ((const char*)(request->resourceUrl), (const char *)(ehReq->query),
+                    obs->token, obs->subAddr, resource, request->qos);
+            if(stackRet == OC_STACK_OK)
+            {
+                stackRet = OC_STACK_OBSERVER_ADDED;
+            }
+            OC_LOG(DEBUG, TAG, PCF("adding an observer"));
         }
-        OC_LOG(DEBUG, TAG, PCF("adding an observer"));
-    }
-    else if (obs->option == OC_RESOURCE_OBSERVE_DEREGISTER)
-    {
-        // Deregister observation
-        result = DeleteObserver (obs->token);
-        if(result == OC_STACK_OK)
+        else if (obs->option == OC_RESOURCE_OBSERVE_DEREGISTER)
         {
-            OC_LOG(DEBUG, TAG, PCF("removing an observer"));
-            result = OC_STACK_OBSERVER_REMOVED;
+            // Deregister observation
+            stackRet = DeleteObserver (obs->token);
+            if(stackRet == OC_STACK_OK)
+            {
+                OC_LOG(DEBUG, TAG, PCF("removing an observer"));
+                stackRet = OC_STACK_OBSERVER_REMOVED;
+            }
+        }
+        else
+        {
+            // Invalid option
+            OC_LOG(ERROR, TAG, PCF("Invalid CoAP observe option"));
+            stackRet = OC_STACK_INVALID_OBSERVE_PARAM;
         }
     }
     else
     {
-        // Invalid option
-        OC_LOG(ERROR, TAG, PCF("Invalid CoAP observe option"));
-        result = OC_STACK_INVALID_OBSERVE_PARAM;
+        stackRet = OC_STACK_ERROR;
     }
-    return result;
+    return stackRet;
 }
 
 OCStackResult SendObserverNotification (OCResource *resPtr)
 {
     uint8_t numObs = 0;
-    OCStackResult result = OC_STACK_ERROR;
+    OCStackResult stackRet = OC_STACK_ERROR;
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
     ResourceObserver *resourceObserver = serverObsList;
     OCEntityHandlerRequest * entityHandlerReq = NULL;
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
@@ -171,9 +179,10 @@ OCStackResult SendObserverNotification (OCResource *resPtr)
 
             // Even if entity handler for a resource is not successful
             // we continue calling entity handler for other resources
-            result = resPtr->entityHandler (OC_REQUEST_FLAG, entityHandlerReq);
-            if (OC_STACK_OK == result)
+            ehRet = resPtr->entityHandler (OC_REQUEST_FLAG, entityHandlerReq);
+            if (OC_EH_OK == ehRet)
             {
+                stackRet = OC_STACK_OK;
                 OC_LOG_V(INFO, TAG, "OCStack payload: %s",
                         entityHandlerReq->resJSONPayload);
 
@@ -199,10 +208,14 @@ OCStackResult SendObserverNotification (OCResource *resPtr)
                     }
                 }
 
-                OCSendCoAPNotification(resourceObserver->addr, result, qos,
+                OCSendCoAPNotification(resourceObserver->addr, stackRet, qos,
                         resourceObserver->token,
                         (unsigned char *)entityHandlerReq->resJSONPayload,
                         resPtr->sequenceNum);
+            }
+            else
+            {
+                stackRet = OC_STACK_ERROR;
             }
         }
         resourceObserver = resourceObserver->next;
@@ -210,9 +223,9 @@ OCStackResult SendObserverNotification (OCResource *resPtr)
     if (numObs == 0)
     {
         OC_LOG(INFO, TAG, PCF("Resource has no observers"));
-        return OC_STACK_NO_OBSERVERS;
+        stackRet = OC_STACK_NO_OBSERVERS;
     }
-    return OC_STACK_OK;
+    return stackRet;
 }
 
 OCStackResult AddObserver (const char   *resUri,
