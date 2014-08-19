@@ -41,12 +41,14 @@ CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-e
 LDLIBS		+= -loctbstack -lpthread
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
-SOURCES     := occlient.cpp ocserver.cpp common.cpp
+SOURCES     := occlient.cpp ocserver.cpp occlientcoll.cpp ocservercoll.cpp common.cpp
 
 OBJECTS:= $(patsubst %.c, $(OBJ_DIR)/%.o, $(SOURCES))
 
 PROGRAMS	+= ocserver
 PROGRAMS	+= occlient
+PROGRAMS	+= ocservercoll
+PROGRAMS	+= occlientcoll
 
 all:	prep_dirs $(OBJECTS) $(PROGRAMS)
 
@@ -60,7 +62,13 @@ $(OBJ_DIR)/%.o: %.cpp
 ocserver: $(OBJ_DIR)/ocserver.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
+ocservercoll: $(OBJ_DIR)/ocservercoll.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
+
 occlient: $(OBJ_DIR)/occlient.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
+
+occlientcoll: $(OBJ_DIR)/occlientcoll.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 .PHONY: clean

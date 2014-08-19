@@ -18,18 +18,16 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <string.h>
 #include "ocstack.h"
 #include "ocstackinternal.h"
 #include "ocobserve.h"
+#include "ocresource.h"
 #include "occoap.h"
 #include "utlist.h"
 #include "debug.h"
+#include <string.h>
 
-// Module Name
-#define MOD_NAME PCF("ocobserve")
-
-#define TAG  PCF("OCStackObserve")
+#define TAG  PCF("ocbserve")
 
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
@@ -61,9 +59,9 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
         if (OC_STACK_OK == result)
         {
             // Add subscriber to the server observation list
-            result = AddObserver ((const char*)(request->resourceUrl), (const char *)(ehReq->query), 
+            result = AddObserver ((const char*)(request->resourceUrl), (const char *)(ehReq->query),
                                    obs->token->token, obs->token->tokenLength, obs->subAddr, resource);
-        } 
+        }
         return result;
     } else if (strcmp ((char *)obs->option, OC_RESOURCE_OBSERVE_DEREGISTER) == 0) {
         // Deregister observation
@@ -76,16 +74,16 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
     }
 }
 
-OCStackResult SendObserverNotification (OCResourceHandle handle, OCResource *resPtr) 
+OCStackResult SendObserverNotification (OCResourceHandle handle, OCResource *resPtr)
 {
     uint8_t numObs = 0;
     OCStackResult result;
     ObserveResourceServer *obsRes = serverObsList;
     OCEntityHandlerRequest entityHandlerReq;
-    unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
-    /* 
+    unsigned char bufRes[MAX_RESPONSE_LENGTH] = { 0 } ;
+    /*
      * TODO: In the current releast all observes are set as non-confirmable since the
-     * entity handler does not have a way to specify the message QoS - add a parameter. 
+     * entity handler does not have a way to specify the message QoS - add a parameter.
      * Sending all observes NON does not confirm with the observe draft (ver14).
      */
     OCQualityOfService qos = OC_NON_CONFIRMABLE;
@@ -108,13 +106,14 @@ OCStackResult SendObserverNotification (OCResourceHandle handle, OCResource *res
             entityHandlerReq.resJSONPayload = bufRes;
             entityHandlerReq.resJSONPayloadLen = MAX_RESPONSE_LENGTH;
             // Even if entity handler for a resource is not successful we continue calling
-            // entity handler for other resources 
-            result = resPtr->entityHandler (OC_REQUEST_FLAG, &entityHandlerReq);
-            if (OC_STACK_OK == result)
+            // entity handler for other resources
+            if ( BuildObsJSONResponse((OCResource *)handle, &entityHandlerReq)
+                    == OC_EH_OK)
             {
+                result = OC_STACK_OK;
                 OCCoAPSendMessage (obsRes->addr, result, qos, obsRes->token,
                                    (const char *)entityHandlerReq.resJSONPayload,
-                                    resPtr->sequenceNum);
+                                   resPtr->sequenceNum);
             }
         }
         obsRes = obsRes->next;
@@ -172,9 +171,9 @@ ObserveResourceServer* GetObserver (const uint8_t *token, const size_t tokenLeng
 {
     ObserveResourceServer *out = NULL;
 
-    if(token) 
+    if(token)
     {
-        LL_FOREACH (serverObsList, out) 
+        LL_FOREACH (serverObsList, out)
         {
             if((out->token->tokenLength == tokenLength) &&
                (memcmp(out->token->token, token, tokenLength) == 0)) {
@@ -182,7 +181,7 @@ ObserveResourceServer* GetObserver (const uint8_t *token, const size_t tokenLeng
             }
         }
     }
-    OC_LOG(INFO, MOD_NAME, PCF("Observer node not found!!"));
+    OC_LOG(INFO, TAG, PCF("Observer node not found!!"));
     return NULL;
 }
 
@@ -203,11 +202,11 @@ OCStackResult DeleteObserver (uint8_t *token, size_t tokenLength)
     return OC_STACK_ERROR;
 }
 
-void DeleteObserverList() 
+void DeleteObserverList()
 {
     ObserveResourceServer *out;
     ObserveResourceServer *tmp;
-    LL_FOREACH_SAFE (serverObsList, out, tmp) 
+    LL_FOREACH_SAFE (serverObsList, out, tmp)
     {
         DeleteObserver (out->token->token, out->token->tokenLength);
     }

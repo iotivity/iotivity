@@ -54,7 +54,7 @@ typedef enum {
     OC_WELL_KNOWN_URI= 0,    // "/oc/core"
     OC_DEVICE_URI,           // "/oc/core/d"
     OC_RESOURCE_TYPES_URI,   // "/oc/core/d/type"
-    OC_MAX_RESOURCES         // Max items in the list
+    OC_MAX_VIRTUAL_RESOURCES         // Max items in the list
 } OCVirtualResources;
 
 /**
@@ -194,10 +194,19 @@ typedef struct {
 } OCCallbackData;
 
 /**
- * Application server implementations must implement this callback to consume requests OTA.
- * TODO: Need a clear explanation that the Entity handler callback needs to fill in the data inside the OCEntityHandlerRequest and then simply return from the callback.
+ * Possible returned values from entity handler
  */
-typedef OCStackResult (*OCEntityHandler) (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest);
+typedef enum {
+    OC_EH_OK = 0,
+    OC_EH_ERROR
+} OCEntityHandlerResult;
+
+/**
+ * Application server implementations must implement this callback to consume requests OTA.
+ * Entity handler callback needs to fill the resPayload of the entityHandlerRequest.
+ */
+typedef OCEntityHandlerResult (*OCEntityHandler)
+(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest);
 
 
 //-----------------------------------------------------------------------------

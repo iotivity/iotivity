@@ -24,7 +24,6 @@
 //-----------------------------------------------------------------------------
 #include "ocstack.h"
 #include "ocstackinternal.h"
-#include "ocserverrequest.h"
 #include "ocresource.h"
 #include "occlientcb.h"
 #include "ocobserve.h"
@@ -60,45 +59,19 @@ OCResource *headResource = NULL;
 OCStackResult HandleStackRequests(OCRequest * request) {
     OC_LOG(INFO, TAG, PCF("Entering OCStackHandleReceiveRequest (OCStack Layer)"));
 
-    char *filterValue;
-    uint8_t filterOn;
-    OCStackResult result;
+    OCStackResult result = OC_STACK_ERROR;
+    ResourceHandling resHandling;
+    OCResource *resource;
 
     VERIFY_NON_NULL(request, ERROR, OC_STACK_ERROR);
     VERIFY_NON_NULL(request->entityHandlerRequest, ERROR, OC_STACK_ERROR);
 
-    if (IsVirtualResource((const char*)request->resourceUrl))
-    {
-        result = ValidateUrlQuery(request->resourceUrl,
-                                  request->entityHandlerRequest->query, &filterOn,
-                                  &filterValue);
+    result = DetermineResourceHandling (request, &resHandling, &resource);
 
-        if (result == OC_STACK_OK)
-        {
-            result = ProcessResourceDiscoverReq(request->entityHandlerRequest,
-                                                filterOn,
-                                                filterValue);
-        }
-    }
-    else
+    if (result == OC_STACK_OK)
     {
-        OCResource* resource = FindResourceByUri((const char*)request->resourceUrl);
-        if (resource)
-        {
-            request->entityHandlerRequest->resource = (OCResourceHandle)resource;
-            result = resource->entityHandler(OC_REQUEST_FLAG, request->entityHandlerRequest);
-        }
-        else
-        {
-            OC_LOG(INFO, TAG, PCF("Resource Not found"));
-            result = OC_STACK_NO_RESOURCE;
-        }
-        if (request->observe != NULL)
-        {
-            result = ProcessObserveRequest (resource, request);
-        }
+        result = BuildJSONResponse(resHandling, resource, request);
     }
-
     return result;
 }
 
@@ -174,17 +147,6 @@ static void deleteResourceElements(OCResource *resource);
 static int deleteResource(OCResource *resource);
 static void deleteAllResources();
 
-//-----------------------------------------------------------------------------
-// Default resource entity handler function
-//-----------------------------------------------------------------------------
-OCStackResult defaultResourceEHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * request) {
-    TODO ("Implement me!!!!");
-    // TODO:  remove silence unused param warnings
-    (void) flag;
-    (void) request;
-    return OC_STACK_OK;
-}
 
 //-----------------------------------------------------------------------------
 // Public APIs
@@ -1028,7 +990,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
 
     // Validate parameters
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(entityHandler, ERROR, OC_STACK_INVALID_PARAM);
+    //VERIFY_NON_NULL(entityHandler, ERROR, OC_STACK_INVALID_PARAM);
 
     // Use the handle to find the resource in the resource linked list
     resource = findResource((OCResource *)handle);

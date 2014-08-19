@@ -18,26 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef OC_SERVER_REQUEST_H
-#define OC_SERVER_REQUEST_H
+#ifndef OC_COLLECTION_H
+#define OC_COLLECTION_H
 
-#define OC_RSRVD_OC             "oc"
-#define OC_RSRVD_PAYLOAD        "payload"
-#define OC_RSRVD_HREF           "href"
-#define OC_RSRVD_RESOURCE_TYPE  "rt"
-#define OC_RSRVD_INTERFACE      "if"
-#define OC_RSRVD_OBSERVABLE     "obs"
-#define OC_RESOURCE_OBSERVABLE   1
+#include "ocstack.h"
+#include "ocresource.h"
 
-typedef enum {
-    STACK_RES_DISCOVERY_NOFILTER = 0,
-    STACK_RES_DISCOVERY_IF_FILTER,
-    STACK_RES_DISCOVERY_RT_FILTER
-} StackQueryTypes;
+OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
+                                              OCEntityHandlerRequest *entityHandlerRequest);
 
-OCStackResult ProcessResourceDiscoverReq (OCEntityHandlerRequest *request,
-                                 uint8_t filterOn, char *filterValue);
-
-OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
-                                uint8_t *filterOn, char **filterValue);
-#endif //OC_SERVER_REQUEST_H
+#endif //OC_COLLECTION_H

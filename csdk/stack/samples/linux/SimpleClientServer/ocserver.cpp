@@ -44,11 +44,11 @@ typedef struct LEDRESOURCE{
 static LEDResource LED;
 
 // TODO: hard coded for now, change after Sprint4
-static unsigned char responsePayloadGet[] = "{\"oc\": {\"payload\": {\"state\" : \"on\",\"power\" : \"10\"}}}";
-static unsigned char responsePayloadPut[] = "{\"oc\": {\"payload\": {\"state\" : \"off\",\"power\" : \"0\"}}}";
+const char responsePayloadGet[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"power\":10}}";
+const char responsePayloadPut[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"off\",\"power\":0}}";
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
-OCStackResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
+OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
     const char* typeOfMessage;
 
     switch (flag) {
@@ -67,23 +67,17 @@ OCStackResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest
     OC_LOG_V(INFO, TAG, "Receiving message type: %s", typeOfMessage);
     if(entityHandlerRequest && flag == OC_REQUEST_FLAG){ //[CL]
     if(OC_REST_GET == entityHandlerRequest->method)
-            //entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char*>(const_cast<unsigned char*> (responsePayloadGet.c_str()));
-            entityHandlerRequest->resJSONPayload = responsePayloadGet;
+            strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadGet, entityHandlerRequest->resJSONPayloadLen);
         if(OC_REST_PUT == entityHandlerRequest->method) {
-            //std::cout << std::string(reinterpret_cast<const char*>(entityHandlerRequest->reqJSONPayload)) << std::endl;
             OC_LOG_V(INFO, TAG, "PUT JSON payload from client: %s", entityHandlerRequest->reqJSONPayload);
-            //entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char*>(const_cast<char*> (responsePayloadPut.c_str()));
-            entityHandlerRequest->resJSONPayload = responsePayloadPut;
-            //responsePayloadGet = responsePayloadPut; // just a bad hack!
+            strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadPut, entityHandlerRequest->resJSONPayloadLen);
             }
 
     } else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG) {
         gLEDUnderObservation = 1;
     }
 
-    //OC_LOG_V(INFO, TAG, "/nReceiving message type:/n/t %s. /n/nWith request:/n/t %s", typeOfMessage, request);
-
-    return OC_STACK_OK;
+    return OC_EH_OK;
 }
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */

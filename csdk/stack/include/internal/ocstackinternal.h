@@ -51,6 +51,14 @@ struct rsrc_t;
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
+
+// IF here stands for Interface
+typedef enum {
+    STACK_IF_DEFAULT = 0,
+    STACK_IF_LL,
+    STACK_IF_BATCH
+} OCStackIfTypes;
+
 typedef struct resourcetype_t {
     struct resourcetype_t *next; // linked list; for multiple types on resource
 
