@@ -48,7 +48,7 @@ void defaultEntityHandler(const OC::OCResourceRequest::Ptr request, const OC::OC
     cout << "\nSomething wrong: We are in default entity handler: " << endl;
 }
 
-OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
+OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
 
     // TODO @SASHI we need to have a better way of logging (with various levels of logging)
     cout << "\nIn C entity handler: " << endl;
@@ -104,7 +104,7 @@ OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * e
     }
     else {
         std::cout << "No eintity handler found."  << endl;
-        return OC_STACK_ERROR;
+        return OC_EH_ERROR;
     }
 
 
@@ -136,7 +136,7 @@ OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * e
         }
     }
 
-    return OC_STACK_OK;
+    return OC_EH_OK;
 }
 
 namespace OC
