@@ -198,6 +198,12 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
+                cout << "\t\t\tquery params: \n";
+                for(QueryParamsMap::iterator it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
+                {
+                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
+                }
+
                 // Process query params and do required operations ..
 
                 // Get the representation of this resource at this point and send it as response
@@ -222,7 +228,7 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                 // Check queryParamsMap and do required operations ..
 
                 // Get the representation from the request
-                AttributeMap attributeMap = request->getResourceRepresentation();
+                AttributeMap attributeMap = request->getAttributeRepresentation();
 
                 myLightResource.setRepresentation(attributeMap);
 

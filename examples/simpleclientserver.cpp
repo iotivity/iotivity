@@ -120,7 +120,8 @@ private:
             std::cout << "\tURI:  "<< resource->uri()<<std::endl;
 
             std::cout<<"Doing a get on q/foo."<<std::endl;
-            resource->get(std::function<void(const AttributeMap, const int)>(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
+            QueryParamsMap test;
+            resource->get(test, std::function<void(const AttributeMap, const int)>(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
         } 
     }
 
@@ -222,7 +223,7 @@ struct FooResource
                 {
                     std::cout<<"\t\t\trequestType : PUT"<<std::endl;
 
-                    setRepresentation(request->getResourceRepresentation());
+                    setRepresentation(request->getAttributeRepresentation());
 
                     if(response)
                     {

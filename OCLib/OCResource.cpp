@@ -37,13 +37,13 @@ namespace OC {
     {
     }
 
-    OCStackResult OCResource::get(std::function<void(const AttributeMap, const int)> attributeHandler)
+    OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap, std::function<void(const AttributeMap, const int)> attributeHandler)
     {
         auto cw = m_clientWrapper.lock();
 
         if(cw)
         {
-            return cw->GetResourceAttributes(m_host, m_uri, attributeHandler);
+            return cw->GetResourceAttributes(m_host, m_uri, queryParametersMap, attributeHandler);
         }
         else
         {
@@ -51,7 +51,8 @@ namespace OC {
         }
     }
 
-    OCStackResult OCResource::put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function<void(const AttributeMap, const int)> attributeHandler)
+    OCStackResult OCResource::put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, 
+        std::function<void(const AttributeMap, const int)> attributeHandler)
     {
         auto cw = m_clientWrapper.lock();
 
@@ -65,7 +66,8 @@ namespace OC {
         }
     }
 
-    OCStackResult OCResource::observe(ObserveType observeType, std::function<void(const AttributeMap&, const int&, const int&)> observeHandler)
+    OCStackResult OCResource::observe(ObserveType observeType, const QueryParamsMap& queryParametersMap, 
+        std::function<void(const AttributeMap&, const int&, const int&)> observeHandler)
     {
         if(m_observeHandle != nullptr)
         {
@@ -77,7 +79,7 @@ namespace OC {
 
             if(cw)
             {
-                return cw->ObserveResource(observeType, &m_observeHandle, m_host, m_uri, observeHandler);
+                return cw->ObserveResource(observeType, &m_observeHandle, m_host, m_uri, queryParametersMap, observeHandler);
             }
             else
             {

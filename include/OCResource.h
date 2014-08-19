@@ -62,6 +62,7 @@ namespace OC
         
         /**
         * Function to get the attributes of a resource. 
+        * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler handles callback
         *        The callback function will be invoked with a map of attribute name and values. 
         *        The callback function will also have the result from this Get operation 
@@ -69,13 +70,14 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult get(std::function<void(const AttributeMap, const int)> attributeHandler);
+        OCStackResult get(const QueryParamsMap& queryParametersMap, std::function<void(const AttributeMap, const int)> attributeHandler);
         
         /**
         * Function to get the attributes of a resource. 
         *
         * @param resourceType resourceType of the resource operate on
         * @param resourceInterface interface type of the resource to operate on
+        * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler handles callback
         *        The callback function will be invoked with a map of attribute name and values. 
         *        The callback function will be invoked with a list of URIs if 'get' is invoked on a resource container 
@@ -94,8 +96,9 @@ namespace OC
         * NOTE: A client can traverse a tree or graph by doing successive GETs on the returned resources at a node.<br>
         * TODO: Implementation
         */
-        OCStackResult get(const std::string& resourceType, const std::string& resourceInterface,
-            std::function<void(const AttributeMap& attributeMap, const std::vector<std::string>& resourceUriList, const int& errorCode)> attributeHandler) { return OC_STACK_OK; }
+        OCStackResult get(const std::string& resourceType, const std::string& resourceInterface, const QueryParamsMap& queryParametersMap,
+            std::function<void(const AttributeMap& attributeMap, const std::vector<std::string>& resourceUriList, const int& errorCode)> attributeHandler) 
+            { return OC_STACK_OK; }
 
         /**
         * Function to set the attributes of a resource (via PUT)
@@ -110,7 +113,8 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function< void(const AttributeMap,const int)> attributeHandler);
+        OCStackResult put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, 
+            std::function< void(const AttributeMap,const int)> attributeHandler);
 
         /**
         * Function to set the attributes of a resource (via PUT)
@@ -131,11 +135,13 @@ namespace OC
         * TODO: Implementation
         */
         OCStackResult put(const std::string& resourceType, const std::string& resourceInterface,
-            const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, std::function< void(const AttributeMap&,const int&)> attributeHandler) { return OC_STACK_OK; }
+            const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, 
+            std::function< void(const AttributeMap&,const int&)> attributeHandler) { return OC_STACK_OK; }
 
         /**
         * Function to set observation on the resource
         * @param observeType allows the client to specify how it wants to observe.
+        * @param queryParametersMap map which can have the query parameter name and value
         * @param observeHandler handles callback
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this observe operation
@@ -143,7 +149,8 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult observe(ObserveType observeType, std::function<void(const AttributeMap&, const int&, const int&)> observeHandler);
+        OCStackResult observe(ObserveType observeType, const QueryParamsMap& queryParametersMap, 
+            std::function<void(const AttributeMap&, const int&, const int&)> observeHandler);
 
         /**
         * Function to cancel the observation on the resource
