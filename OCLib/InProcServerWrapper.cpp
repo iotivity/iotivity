@@ -34,6 +34,7 @@
 #include <OCResourceResponse.h>
 #include <ocstack.h>
 #include <OCApi.h>
+#include <OCUtilities.h>
 
 
 using namespace OC::OCReflect;
@@ -68,6 +69,13 @@ OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * e
 
             if(entityHandlerRequest)
             {
+                if(entityHandlerRequest->query)
+                {
+                    std::string querystr(reinterpret_cast<char*>(entityHandlerRequest->query));
+                    OC::Utilities::QueryParamsKeyVal qp = OC::Utilities::getQueryParams(querystr);
+                    if(qp.size() > 0)
+                        pRequest->setQueryParams(qp);
+                }
                 if(OC_REST_GET == entityHandlerRequest->method)
                 {
                     // TODO @SASHI Why strings : "GET"??
@@ -137,7 +145,7 @@ namespace OC
                             :m_csdkLock(csdkLock)
     {
         OCMode initType;
-        
+
         if(cfg.mode == ModeType::Server)
         {
             initType = OC_SERVER;
@@ -205,7 +213,7 @@ namespace OC
         cout << "\tResource Interface: " << resourceInterface << endl;
 
         auto cLock = m_csdkLock.lock();
-        
+
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
@@ -245,7 +253,7 @@ namespace OC
         cout << "\tTypeName: " << resourceTypeName  << endl;
 
         auto cLock = m_csdkLock.lock();
-        OCStackResult result; 
+        OCStackResult result;
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
@@ -296,7 +304,7 @@ namespace OC
             m_threadRun = false;
             m_processThread.join();
         }
-        
+
         OCStop();
     }
 }

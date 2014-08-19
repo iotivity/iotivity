@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResourceRequest.h 
+/// @file OCResourceRequest.h
 
-/// @brief  This file contains the declaration of classes and its members related to 
+/// @brief  This file contains the declaration of classes and its members related to
 ///         ResourceRequest.
 
 #ifndef __OCRESOURCEREQUEST_H
@@ -42,7 +42,7 @@ namespace OC
         typedef std::shared_ptr<OCResourceRequest> Ptr;
 
         /**
-        *  Virtual destructor 
+        *  Virtual destructor
         */
         virtual ~OCResourceRequest(void)
         {
@@ -53,7 +53,7 @@ namespace OC
         *  @return std::string request type. This could be 'GET'/'PUT'/'POST'/'DELETE'
         */
         std::string getRequestType() const {return m_requestType;}
-        
+
         /**
         *  Retrieves the query parameters from the request
         *  @return std::string query parameters in the request
@@ -61,10 +61,10 @@ namespace OC
         const QueryParamsMap& getQueryParameters() const {return m_queryParameters;}
 
         /**
-        *  Retrieves the request handler flag type. This can be either INIT flag or REQUEST flag or OBSERVE flag. 
-        *  NOTE: 
+        *  Retrieves the request handler flag type. This can be either INIT flag or REQUEST flag or OBSERVE flag.
+        *  NOTE:
         *  INIT indicates that the vendor's entity handler should go and perform initialization operations
-        *  REQUEST indicates that it is a request of certain type (GET/PUT/POST/DELETE) and entity handler needs to perform 
+        *  REQUEST indicates that it is a request of certain type (GET/PUT/POST/DELETE) and entity handler needs to perform
         *  corresponding operations
         *  OBSERVE indicates that the request is of type Observe and entity handler needs to perform corresponding operations
         *  @return std::string type of request flag
@@ -84,21 +84,21 @@ namespace OC
         AttributeMap m_attributeMap;
 
     public:
-        // TODO: This is not a public API for app developers. 
-        // This function will not be exposed in future 
+        // TODO: This is not a public API for app developers.
+        // This function will not be exposed in future
         void setRequestType(const std::string& requestType)
         {
             m_requestType = requestType;
         }
 
-        // TODO: This is not a public API for app developers. 
+        // TODO: This is not a public API for app developers.
         // This function will not be exposed in future
         void setPayload(const std::string& requestPayload)
         {
             // TODO: The following JSON Parse implementation should be seperated into utitilites
             // and used wherever required.
             // e.g. parse(std::string& payload, Attributemap& attributeMap)
-            
+
             std::stringstream requestStream;
             requestStream << requestPayload;
             boost::property_tree::ptree root;
@@ -117,14 +117,14 @@ namespace OC
             }
         }
 
-        // TODO: This is not a public API for app developers. 
+        // TODO: This is not a public API for app developers.
         // This function will not be exposed in future
         void setQueryParams(QueryParamsMap& queryParams)
         {
-
+            m_queryParameters = queryParams;
         }
 
-        // TODO: This is not a public API for app developers. 
+        // TODO: This is not a public API for app developers.
         // This function will not be exposed in future
         void setRequestHandlerFlag(RequestHandlerFlag requestHandlerFlag)
         {
