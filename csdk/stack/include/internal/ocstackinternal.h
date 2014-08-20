@@ -125,7 +125,7 @@ typedef struct rsrc_t {
 
 typedef struct {
     // Observe option field
-    unsigned char *option;
+    uint8_t option;
     // IP address & port of client registered for observe
     OCDevAddr *subAddr;
     // CoAP token for the observe request

@@ -44,8 +44,13 @@ OCStackResult CoAPToOCResponseCode(uint8_t coapCode);
 // Internal function to generate a coap pdu based on passed parameters
 coap_pdu_t *
 GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
-        size_t tokenLength, uint8_t * token, unsigned char * payloadJSON,
+        OCCoAPToken * token, unsigned char * payloadJSON,
         coap_list_t *options);
+
+// Internal function to send a coap pdu, it also handles NON and CON
+OCStackResult
+SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
+        uint8_t delayFlag);
 
 // Call back function used by libcoap to order option in coap pdu
 int OrderOptions(void *a, void *b);
@@ -56,25 +61,46 @@ CreateNewOptionNode(unsigned short key, unsigned int length,
         unsigned char *data);
 
 // Internal function to create OCRequest struct at the server from a received coap pdu
-OCStackResult FormOCRequest(const coap_queue_t * rcvdRequest,
-        OCRequest * * requestLoc, unsigned char * uriBuf,
-        unsigned char * queryBuf);
+OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
+        unsigned char * uriBuf, OCObserveReq * observeReq,
+        OCEntityHandlerRequest * entityHandlerRequest);
 
 // Internal function to create OCEntityHandlerRequest at the server from a received coap pdu
-OCStackResult FormOCEntityHandlerRequest(const coap_queue_t * rcvdRequest,
-        OCEntityHandlerRequest * * entityHandlerRequestLoc,
-        unsigned char * bufRes, unsigned char * query);
+OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * * entityHandlerRequestLoc,
+        OCMethod method, unsigned char * resBuf, unsigned char * reqBuf,
+        unsigned char * queryBuf);
+
+// Internal function to retrieve Uri and Query from received coap pdu
+OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
+        unsigned char * queryBuf, uint8_t * * obsOptionLoc, unsigned char * * payloadLoc);
 
 // Internal function to retrieve a Token from received coap pdu
-OCStackResult RetrieveOCCoAPToken(const coap_queue_t * rcvdRequest,
+OCStackResult RetrieveOCCoAPToken(const coap_pdu_t * pdu,
         OCCoAPToken * * rcvdTokenLoc);
 
+// Internal function to create OCObserveReq at the server
+OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint8_t obsOption,
+            OCDevAddr * remote, OCCoAPToken * rcvdToken);
+
 // Internal function to create OCResponse struct at the client from a received coap pdu
-OCStackResult FormOCResponse(const coap_queue_t * rcvdResponse,
-        OCResponse * * responseLoc);
+OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
+        OCClientResponse * clientResponse);
 
 // Internal function to create OCClientResponse struct at the client from a received coap pdu
-OCStackResult FormOCClientResponse(const coap_queue_t * rcvdResponse,
-        OCClientResponse * * clientResponseLoc);
+OCStackResult FormOCClientResponse(OCClientResponse * * clientResponseLoc,
+        OCStackResult result, OCDevAddr * remote, uint32_t seqNum,
+        const unsigned char * resJSONPayload);
 
+// Internal function to handle the queued pdus in the send queue
+void HandleSendQueue(coap_context_t * gCoAPCtx);
+
+// Internal function to form the standard response option list
+OCStackResult FormResponseOptList(coap_list_t * * optList, uint8_t * addMediaType,
+        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr);
+
+// Internal function to retransmit a queue
+OCStackResult ReTXCoAPQueue(coap_context_t * ctx, coap_queue_t * queue);
+
+// Internal function called when sending/retransmission fails
+OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * queue);
 #endif /* OCCOAPHELPER_H_ */

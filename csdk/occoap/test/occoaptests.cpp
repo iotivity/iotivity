@@ -59,16 +59,3 @@ static const char TAG[] = "TestHarness";
 TEST(OCCoapTest, General) {
     EXPECT_EQ(0, 0);
 }
-
-/*TEST(OCCoapTest, ServiceDiscovery) {
-    OC_LOG(INFO, TAG, "Running ServiceDiscovery");
-
-    EXPECT_EQ(0, OCInitCoAP("127.0.0.1", 0, OC_CLIENT));
-
-    OCCoAPClientCallbackFunction asyncReturnFunc = discoverServicesAsync;
-    EXPECT_EQ(0, OCDoCoAPResource(OC_REST_GET, "oc/core/d", asyncReturnFunc));
-
-    EXPECT_EQ(0, OCProcessCoAP());
-
-    EXPECT_EQ(0, OCStopCoAP());
-}*/

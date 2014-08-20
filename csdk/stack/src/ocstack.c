@@ -56,7 +56,8 @@ OCResource *headResource = NULL;
 //-----------------------------------------------------------------------------
 
 //This function will be called back by occoap layer when a request is received
-OCStackResult HandleStackRequests(OCRequest * request) {
+OCStackResult HandleStackRequests(OCRequest * request)
+{
     OC_LOG(INFO, TAG, PCF("Entering OCStackHandleReceiveRequest (OCStack Layer)"));
 
     OCStackResult result = OC_STACK_ERROR;
@@ -76,29 +77,37 @@ OCStackResult HandleStackRequests(OCRequest * request) {
 }
 
 //This function will be called back by occoap layer when a response is received
-void HandleStackResponses(OCResponse * response) {
+void HandleStackResponses(OCResponse * response)
+{
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
     OC_LOG(INFO, TAG, PCF("Entering HandleStackResponses (OCStack Layer)"));
 
-    if (response->cbNode) {
+    if (response->cbNode)
+    {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
-        result = response->cbNode->callBack(response->cbNode->context, response->cbNode->handle, response->clientResponse);
-        if (result == OC_STACK_DELETE_TRANSACTION) {
+        result = response->cbNode->callBack(response->cbNode->context,
+                response->cbNode->handle, response->clientResponse);
+        if (result == OC_STACK_DELETE_TRANSACTION ||
+                response->clientResponse->result == OC_STACK_COMM_ERROR)
+        {
             FindAndDeleteClientCB(response->cbNode);
         }
     }
 }
 
-int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr) {
+int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr)
+{
     size_t index = 0;
     unsigned char *itr, *coap;
     uint8_t dotCount = 0;
 
     /* search for scheme */
     itr = ipAddrStr;
-    if (!isdigit((unsigned char) *ipAddrStr)) {
+    if (!isdigit((unsigned char) *ipAddrStr))
+    {
         coap = (unsigned char *) OC_COAP_SCHEME;
-        while (*coap && tolower(*itr) == *coap) {
+        while (*coap && tolower(*itr) == *coap)
+        {
             coap++;
             itr++;
         }
@@ -106,22 +115,30 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr) {
     ipAddrStr = itr;
 
     while (*ipAddrStr) {
-        if (isdigit((unsigned char) *ipAddrStr)) {
+        if (isdigit((unsigned char) *ipAddrStr))
+        {
             ipAddr[index] *= 10;
             ipAddr[index] += *ipAddrStr - '0';
-        } else if ((unsigned char) *ipAddrStr == '.') {
+        }
+        else if ((unsigned char) *ipAddrStr == '.')
+        {
             index++;
             dotCount++;
-        } else {
+        }
+        else
+        {
             break;
         }
         ipAddrStr++;
     }
 
     if (ipAddr[0] < 255 && ipAddr[1] < 255 && ipAddr[2] < 255 && ipAddr[3] < 255
-            && dotCount == 3) {
+            && dotCount == 3)
+    {
         return 1;
-    } else {
+    }
+    else
+    {
         return 0;
     }
 }
@@ -166,14 +183,17 @@ static void deleteAllResources();
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack init error
  */
-OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode) {
+OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
+{
     OC_LOG(INFO, TAG, PCF("Entering OCInit"));
 
-    if (ipAddr) {
+    if (ipAddr)
+    {
         OC_LOG_V(INFO, TAG, "IP Address = %s", ipAddr);
     }
 
-    switch (mode) {
+    switch (mode)
+    {
     case OC_CLIENT:
         OC_LOG(INFO, TAG, PCF("Client mode"));
         break;
@@ -193,7 +213,8 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode) {
     initResources();
 
     // Make call to OCCoAP layer
-    if (OCInitCoAP(ipAddr, (uint16_t) port, mode) == 0) {
+    if (OCInitCoAP(ipAddr, (uint16_t) port, mode) == OC_STACK_OK)
+    {
         stackState = OC_STACK_INITIALIZED;
         return OC_STACK_OK;
     }
@@ -208,18 +229,21 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode) {
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack not initialized
  */
-OCStackResult OCStop() {
+OCStackResult OCStop()
+{
     OCStackResult result = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Entering OCStop"));
 
-    if (stackState != OC_STACK_INITIALIZED) {
+    if (stackState != OC_STACK_INITIALIZED)
+    {
         OC_LOG(ERROR, TAG, PCF("Stack not initialized"));
         return OC_STACK_ERROR;
     }
 
     // Make call to OCCoAP layer
-    if (OCStopCoAP() == 0) {
+    if (OCStopCoAP() == OC_STACK_OK)
+    {
         // Remove all observers
         DeleteObserverList();
         // Remove all the client callbacks
@@ -286,18 +310,26 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         case OC_REST_OBSERVE_ALL:
             break;
         default:
-            return OC_STACK_INVALID_METHOD;
+            result = OC_STACK_INVALID_METHOD;
+            goto exit;
     }
 
     *handle = GenerateInvocationHandle();
-    VERIFY_NON_NULL(*handle, FATAL, OC_STACK_ERROR);
+    if(!*handle)
+    {
+        result = OC_STACK_NO_MEMORY;
+        goto exit;
+    }
+
     token = OCGenerateCoAPToken();
     if (!token)
     {
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
     if((result = AddClientCB(&clientCB, cbData, token, *handle, method)) != OC_STACK_OK)
     {
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
 
@@ -305,19 +337,12 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     result = (OCStackResult)OCDoCoAPResource(method, qos, token, requiredUri, request);
 
 exit:
-
     if (result != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
-        if (clientCB)
-        {
-            DeleteClientCB(clientCB);
-        }
-        else
-        {
-            OCFree(token);
-            OCFree(*handle);
-        }
+        FindAndDeleteClientCB(clientCB);
+        OCFree(token);
+        OCFree(*handle);
     }
     return result;
 }
@@ -336,7 +361,7 @@ OCStackResult OCCancel(OCDoHandle handle) {
      * This ftn can be implemented one of two ways:
      *
      * 1. When observe is unobserved..Remove the callback associated on client side.
-     *      When the next notification comes in from server, reply with RST message to server.
+     *      When the next notification comes in from server, reply with RESET message to server.
      *
      * 2. When OCCancel is called, and it is associated with an observe request
      *      (i.e. ClientCB->method == OC_REST_OBSERVE || OC_REST_OBSERVE_ALL),
@@ -358,8 +383,7 @@ OCStackResult OCCancel(OCDoHandle handle) {
         {
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
-                // Make call to OCCoAP layer
-                    DeleteClientCB(clientCB);
+                FindAndDeleteClientCB(clientCB);
                 break;
             default:
                 return OC_STACK_INVALID_METHOD;
@@ -1054,7 +1078,7 @@ OCStackResult OCNotifyObservers(OCResourceHandle handle) {
     {
         return OC_STACK_NO_RESOURCE;
     } else {
-        result = SendObserverNotification (handle, resPtr);
+        result = SendObserverNotification (resPtr);
         return result;
     }
 }

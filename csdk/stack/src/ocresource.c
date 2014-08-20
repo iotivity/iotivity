@@ -461,6 +461,9 @@ BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest 
             }
 
         case OC_RESOURCE_NOT_SPECIFIED:
+            // This case is not needed as the logic changed so OCCancel results in RESET
+            // rather than a GET. RESET is handled at lower layers.
+
             // TODO: This is a special case. In M1 this occurs only for observation
             // delete since OCCancel (on the client) only takes OCDoHandle param.
             // TODO: Remove comments below before release - only for code review

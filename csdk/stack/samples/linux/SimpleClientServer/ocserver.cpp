@@ -74,6 +74,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             }
 
     } else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG) {
+        //TODO : Should the OC_OBSERVE_FLAG behave just like a GET according to the standard?
         gLEDUnderObservation = 1;
     }
 
@@ -170,4 +171,3 @@ void createLEDResource() {
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 }
-
