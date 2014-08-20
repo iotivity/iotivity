@@ -34,14 +34,17 @@ namespace OC
             std::function<void(std::shared_ptr<OCResource>)>& callback) {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, 
-            const QueryParamsMap& queryParams, std::function<void(const AttributeMap, const int)>& callback){return OC_STACK_NOTIMPL;}
-        
+            const QueryParamsMap& queryParams, std::function<void(const OCRepresentation, const int)>& callback){return OC_STACK_NOTIMPL;}
+/*        
         virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, 
             const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback){return OC_STACK_NOTIMPL;}
-        
+ */       
+        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, 
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams, std::function<void(const OCRepresentation,const int)>& callback){return OC_STACK_NOTIMPL;}
+
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, 
             const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const AttributeMap&, const int&, const int&)>& callback){return OC_STACK_NOTIMPL;}
+            std::function<void(const OCRepresentation&, const int&, const int&)>& callback){return OC_STACK_NOTIMPL;}
         
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri){return OC_STACK_NOTIMPL;}
 

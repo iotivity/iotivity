@@ -25,6 +25,7 @@
 #include <string>
 
 #include <OCApi.h>
+
 namespace OC
 {
     class IClientWrapper : public std::enable_shared_from_this<IClientWrapper>
@@ -36,14 +37,14 @@ namespace OC
             std::function<void(std::shared_ptr<OCResource>)>& callback) = 0;
         
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const AttributeMap, const int)>& callback)=0;
-        
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, 
-            const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback)=0;
+            std::function<void(const OCRepresentation, const int)>& callback)=0;
+
+        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const OCRepresentation& attributes, 
+            const QueryParamsMap& queryParams, std::function<void(const OCRepresentation, const int)>& callback) = 0;
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, 
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const AttributeMap&, const int&, const int&)>& callback)=0;
+            std::function<void(const OCRepresentation&, const int&, const int&)>& callback)=0;
         
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)=0;
         

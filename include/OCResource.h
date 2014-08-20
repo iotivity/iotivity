@@ -37,6 +37,7 @@
 #include <ResourceInitException.h>
 #include <IClientWrapper.h>
 #include <InProcClientWrapper.h>
+#include <OCRepresentation.h>
 
 namespace OC
 {
@@ -70,7 +71,7 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult get(const QueryParamsMap& queryParametersMap, std::function<void(const AttributeMap, const int)> attributeHandler);
+        OCStackResult get(const QueryParamsMap& queryParametersMap, std::function<void(const OCRepresentation, const int)> attributeHandler);
         
         /**
         * Function to get the attributes of a resource. 
@@ -97,7 +98,7 @@ namespace OC
         * TODO: Implementation
         */
         OCStackResult get(const std::string& resourceType, const std::string& resourceInterface, const QueryParamsMap& queryParametersMap,
-            std::function<void(const AttributeMap& attributeMap, const std::vector<std::string>& resourceUriList, const int& errorCode)> attributeHandler) 
+            std::function<void(const OCRepresentation& rep, const std::vector<std::string>& resourceUriList, const int& errorCode)> attributeHandler) 
             { return OC_STACK_OK; }
 
         /**
@@ -113,8 +114,8 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult put(const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, 
-            std::function< void(const AttributeMap,const int)> attributeHandler);
+        OCStackResult put(const OCRepresentation& attributeMap, const QueryParamsMap& queryParametersMap, 
+            std::function< void(const OCRepresentation,const int)> attributeHandler);
 
         /**
         * Function to set the attributes of a resource (via PUT)
@@ -135,8 +136,8 @@ namespace OC
         * TODO: Implementation
         */
         OCStackResult put(const std::string& resourceType, const std::string& resourceInterface,
-            const AttributeMap& attributeMap, const QueryParamsMap& queryParametersMap, 
-            std::function< void(const AttributeMap&,const int&)> attributeHandler) { return OC_STACK_OK; }
+            const OCRepresentation& attributeMap, const QueryParamsMap& queryParametersMap, 
+            std::function< void(const OCRepresentation&,const int&)> attributeHandler) { return OC_STACK_OK; }
 
         /**
         * Function to set observation on the resource
@@ -150,7 +151,7 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult observe(ObserveType observeType, const QueryParamsMap& queryParametersMap, 
-            std::function<void(const AttributeMap&, const int&, const int&)> observeHandler);
+            std::function<void(const OCRepresentation&, const int&, const int&)> observeHandler);
 
         /**
         * Function to cancel the observation on the resource
@@ -206,7 +207,6 @@ namespace OC
         std::vector<std::string> m_resourceTypes;
         std::vector<std::string> m_interfaces;
         std::vector<std::string> m_children;
-        AttributeMap m_attributeMap;
         OCDoHandle m_observeHandle;
 
     private:

@@ -117,6 +117,7 @@ namespace OC
     const std::string RESOURCETYPESKEY= "rt";
     const std::string INTERFACESKEY = "if";
     const std::string PROPERTYKEY = "prop";
+    const std::string REPKEY = "rep";
 
     std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode)
     {
@@ -218,57 +219,128 @@ namespace OC
    
     struct GetSetContext
     {
-        std::function<void(const AttributeMap&, const int&)> callback;
+        std::function<void(const OCRepresentation&, const int&)> callback;
     };
-    
-    AttributeMap parseGetSetCallback(OCClientResponse* clientResponse)
+   
+        
+    OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
     {
         std::stringstream requestStream;
         requestStream<<clientResponse->resJSONPayload;
         if(strlen((char*)clientResponse->resJSONPayload) == 0)
         {
-            return AttributeMap();
+            return OCRepresentation();
         }
 
         boost::property_tree::ptree root;
         boost::property_tree::read_json(requestStream, root);
-        boost::property_tree::ptree payload = root.get_child("oc.payload", boost::property_tree::ptree());
-        
-        AttributeMap attrs;
-        for(auto& item : payload)
+        boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
+        OCRepresentation root_resource;
+        std::vector<OCRepresentation> children;
+        bool isRoot = true;
+        for ( auto payloadItr : payload)
         {
-            if(item.first.data() == URIKEY)
+            OCRepresentation child;
+            try
             {
-                continue;
+                auto resourceNode = payloadItr.second;
+                std::string uri = resourceNode.get<std::string>(URIKEY, "");
+
+                if (isRoot)
+                {
+                    root_resource.setUri(uri);
+                }
+                else
+                {
+                    child.setUri(uri);
+                }
+
+                if( resourceNode.count(PROPERTYKEY) != 0 )
+                {
+                    std::vector<std::string> rTs;
+                    std::vector<std::string> ifaces;
+                    boost::property_tree::ptree properties = resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
+
+                    boost::property_tree::ptree rT = properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
+                    for(auto itr : rT)
+                    {
+                        rTs.push_back(itr.second.data());
+                    }
+
+                    boost::property_tree::ptree iF = properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
+                    for(auto itr : iF)
+                    {
+                        ifaces.push_back(itr.second.data());
+                    }
+                    if (isRoot)
+                    {
+                        root_resource.setResourceInterfaces(ifaces);
+                        root_resource.setResourceTypes(rTs);
+                    }
+                    else
+                    {
+                        child.setResourceInterfaces(ifaces);
+                        child.setResourceTypes(rTs);
+                    }
+                }
+
+                if( resourceNode.count(REPKEY) != 0 )
+                {
+                    boost::property_tree::ptree rep = resourceNode.get_child(REPKEY, boost::property_tree::ptree());
+                    AttributeMap attrs;
+                    for( auto item : rep)
+                    {
+                        std::string name = item.first.data();
+                        std::string value = item.second.data();
+                        AttributeValues values;
+                        values.push_back(value);
+                        attrs[name] = values;
+                    }
+                    if (isRoot)
+                    {
+                        root_resource.setAttributeMap(attrs);
+                    }
+                    else
+                    {
+                        child.setAttributeMap(attrs);
+                    }
+                }
+
+                if (!isRoot)
+                    children.push_back(child);
+            }
+            catch (...)
+            {
+                // TODO
             }
 
-            std::string name = item.first.data();
-            std::string value = item.second.data();
-            AttributeValues values;
-            values.push_back(value);
-            attrs[name] = values;
-        }
-        return attrs;
+            isRoot = false;
+         }
+
+         root_resource.setChildren(children);
+
+        return root_resource;
     }
+
     OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
         GetSetContext* context = static_cast<GetSetContext*>(ctx);
 
         std::cout << "GET JSON: " << (char*) clientResponse->resJSONPayload << endl;
         
-        AttributeMap attrs;
+        OCRepresentation rep;
 
         if(clientResponse->result == OC_STACK_OK)
         {
-            attrs = parseGetSetCallback(clientResponse);
+            rep = parseGetSetCallback(clientResponse);
         }        
 
-        std::thread exec(context->callback, attrs, clientResponse->result);
+        std::thread exec(context->callback, rep, clientResponse->result);
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
     }
     OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host, const std::string& uri, 
-        const QueryParamsMap& queryParams, std::function<void(const AttributeMap, const int)>& callback)
+        const QueryParamsMap& queryParams, std::function<void(const OCRepresentation, const int)>& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -302,7 +374,7 @@ namespace OC
     OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
         GetSetContext* context = static_cast<GetSetContext*>(ctx);
-        AttributeMap attrs;
+        OCRepresentation attrs;
 
         if(clientResponse->result == OC_STACK_OK)
         {
@@ -341,8 +413,10 @@ namespace OC
         return ret;
     }
     
-    std::string InProcClientWrapper::assembleSetResourcePayload(const AttributeMap& attributes)
+    std::string InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
     {
+        AttributeMap attributes = rep.getAttributeMap();
+
         ostringstream payload;
         // TODO need to change the format to "{"oc":[]}"
         payload << "{\"oc\":{";
@@ -360,7 +434,7 @@ namespace OC
         return payload.str();
     }
 
-    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback)
+    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host, const std::string& uri, const OCRepresentation& attributes, const QueryParamsMap& queryParams, std::function<void(const OCRepresentation,const int)>& callback)
     {
         OCStackResult result; 
         OCCallbackData* cbdata = new OCCallbackData();
@@ -394,13 +468,13 @@ namespace OC
 
     struct ObserveContext
     {
-        std::function<void(const AttributeMap&, const int&, const int&)> callback;
+        std::function<void(const OCRepresentation&, const int&, const int&)> callback;
     };
 
     OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
         ObserveContext* context = static_cast<ObserveContext*>(ctx);
-        AttributeMap attrs;
+        OCRepresentation attrs;
         uint32_t sequenceNumber = clientResponse->sequenceNumber;
         if(clientResponse->result == OC_STACK_OK)
         {
@@ -412,7 +486,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, 
-       const std::string& uri, const QueryParamsMap& queryParams, std::function<void(const AttributeMap&, const int&, const int&)>& callback)
+       const std::string& uri, const QueryParamsMap& queryParams, std::function<void(const OCRepresentation&, const int&, const int&)>& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -468,6 +542,7 @@ namespace OC
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
     }
+
     OCStackResult InProcClientWrapper::CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)
     {
         OCStackResult result;

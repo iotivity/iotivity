@@ -48,14 +48,14 @@ namespace OC
             std::function<void(std::shared_ptr<OCResource>)>& callback);
         
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const AttributeMap, const int)>& callback);
+            std::function<void(const OCRepresentation, const int)>& callback);
         
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, 
-            const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback);
+        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const OCRepresentation& attributes, 
+            const QueryParamsMap& queryParams, std::function<void(const OCRepresentation, const int)>& callback);
         
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, 
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const AttributeMap&, const int&, const int&)>& callback);
+            std::function<void(const OCRepresentation&, const int&, const int&)>& callback);
         
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri);
         
@@ -66,7 +66,7 @@ namespace OC
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
-        std::string assembleSetResourcePayload(const AttributeMap& attributes);
+        std::string assembleSetResourcePayload(const OCRepresentation& attributes);
         std::thread m_listeningThread;
         bool m_threadRun;
         std::weak_ptr<std::mutex> m_csdkLock;

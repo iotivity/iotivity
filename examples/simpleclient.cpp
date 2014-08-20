@@ -74,11 +74,13 @@ void onObserve(const AttributeMap& attributeMap, const int& eCode, const int& se
 }
 
 // callback handler on PUT request
-void onPut(const AttributeMap attributeMap, const int eCode)
+void onPut(const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "PUT request was successful" << std::endl;
+
+        AttributeMap attributeMap = rep.getAttributeMap();
 
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
         {
@@ -91,15 +93,23 @@ void onPut(const AttributeMap attributeMap, const int eCode)
             std::cout << std::endl;
         }
 
-        if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
-            std::cout << endl << "Observe is used." << endl << endl;
-        else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
-            std::cout << endl << "ObserveAll is used." << endl << endl;
+        std::vector<OCRepresentation> children = rep.getChildren();
 
-        // TODO
-        QueryParamsMap test;
+        for(auto oit = children.begin(); oit != children.end(); ++oit)
+        {
+            attributeMap = oit->getAttributeMap();
 
-        curResource->observe(OBSERVE_TYPE_TO_USE, test, &onObserve);
+            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+            {
+                std::cout << "\tAttribute name: "<< it->first << " value: ";
+                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+                {
+                    std::cout <<"\t"<< *valueItr << " ";
+                }
+
+                std::cout << std::endl;
+            }
+        }
 
     }
     else
@@ -114,6 +124,8 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 {
     if(resource)
     {
+        OCRepresentation rep;
+        
         std::cout << "Putting light representation..."<<std::endl;
         // Create AttributeMap
         AttributeMap attributeMap;
@@ -130,17 +142,24 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
         // Create QueryParameters Map and add query params (if any)
         QueryParamsMap queryParamsMap;
 
+        rep.setAttributeMap(attributeMap);
+
         // Invoke resource's pit API with attribute map, query map and the callback parameter
-        resource->put(attributeMap, queryParamsMap, &onPut);
+        resource->put(rep, queryParamsMap, &onPut);
     }
 }
 
 // callback handler on GET request
-void onGet(const AttributeMap attributeMap, const int eCode)
+void onGet(const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
-        std::cout << "GET Succeeded:"<<std::endl;
+        std::cout << "GET request was successful" << std::endl;
+
+        AttributeMap attributeMap = rep.getAttributeMap();
+        
+        std::cout << "Resource URI: " << rep.getUri() << std::endl;
+
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
         {
             std::cout << "\tAttribute name: "<< it->first << " value: ";
@@ -152,14 +171,35 @@ void onGet(const AttributeMap attributeMap, const int eCode)
             std::cout << std::endl;
         }
 
+        std::vector<OCRepresentation> children = rep.getChildren();
+
+        for(auto oit = children.begin(); oit != children.end(); ++oit)
+        {
+            std::cout << "Child Resource URI: " << oit->getUri() << std::endl;
+
+            attributeMap = oit->getAttributeMap();
+
+            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+            {
+                std::cout << "\tAttribute name: "<< it->first << " value: ";
+                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+                {
+                    std::cout <<"\t"<< *valueItr << " ";
+                }
+
+                std::cout << std::endl;
+            }
+        }
+
         putLightRepresentation(curResource);
     }
     else
     {
-        std::cout << "onGet Response error: " << eCode << std::endl;
+        std::cout << "onGET Response error: " << eCode << std::endl;
         std::exit(-1);
     }
 }
+
 // Local function to get representation of light resource
 void getLightRepresentation(std::shared_ptr<OCResource> resource)
 {

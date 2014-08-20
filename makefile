@@ -19,7 +19,7 @@ CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs c_sdk simpleserver simpleclient simpleclientserver roomserver roomclient
+.PHONY: prep_dirs c_sdk simpleserver simpleclient roomserver roomclient
 
 all:	.PHONY
 

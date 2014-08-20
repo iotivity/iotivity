@@ -37,48 +37,20 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const AttributeMap& attributeMap, const int& eCode, const int& sequenceNumber)
-{
-    if(eCode == SUCCESS_RESPONSE)
-    {
-        std::cout << "OBSERVE RESULT:"<<std::endl;
-        std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "\tAttribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout <<"\t"<< *valueItr << " ";
-            }
+// Forward declaration
+void putRoomRepresentation(std::shared_ptr<OCResource> resource);
+void onPut(const OCRepresentation& rep, const int eCode);
 
-            std::cout << std::endl;
-        }
-        
-        if(observe_count() > 30)
-        {
-            std::cout<<"Cancelling Observe..."<<std::endl;
-            OCStackResult result = curResource->cancelObserve();
-
-            std::cout << "Cancel result: "<< result <<std::endl;
-            sleep(10);
-            std::cout << "DONE"<<std::endl;
-            std::exit(0);
-        }
-    }
-    else
-    {
-        std::cout << "onObserve Response error: " << eCode << std::endl;
-        std::exit(-1);
-    }
-}
-// callback handler on PUT request
-void onGetRep(OCRepresentation& rep, const int eCode)
+// callback handler on GET request
+void onGet(const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "GET request was successful" << std::endl;
 
         AttributeMap attributeMap = rep.getAttributeMap();
+        
+        std::cout << "Resource URI: " << rep.getUri() << std::endl;
 
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
         {
@@ -95,6 +67,8 @@ void onGetRep(OCRepresentation& rep, const int eCode)
 
         for(auto oit = children.begin(); oit != children.end(); ++oit)
         {
+            std::cout << "Child Resource URI: " << oit->getUri() << std::endl;
+
             attributeMap = oit->getAttributeMap();
 
             for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
@@ -109,81 +83,11 @@ void onGetRep(OCRepresentation& rep, const int eCode)
             }
         }
 
+        putRoomRepresentation(curResource);
     }
     else
     {
         std::cout << "onGET Response error: " << eCode << std::endl;
-        std::exit(-1);
-    }
-}
-
-// callback handler on PUT request
-void onPutRep(OCRepresentation& rep, const int eCode)
-{
-    if(eCode == SUCCESS_RESPONSE)
-    {
-        std::cout << "PUT request was successful" << std::endl;
-
-        AttributeMap attributeMap = rep.getAttributeMap();
-
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "\tAttribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout <<"\t"<< *valueItr << " ";
-            }
-
-            std::cout << std::endl;
-        }
-
-        std::vector<OCRepresentation> children = rep.getChildren();
-
-        for(auto oit = children.begin(); oit != children.end(); ++oit)
-        {
-            attributeMap = oit->getAttributeMap();
-
-            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-            {
-                std::cout << "\tAttribute name: "<< it->first << " value: ";
-                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-                {
-                    std::cout <<"\t"<< *valueItr << " ";
-                }
-
-                std::cout << std::endl;
-            }
-        }
-
-    }
-    else
-    {
-        std::cout << "onPut Response error: " << eCode << std::endl;
-        std::exit(-1);
-    }
-}
-
-// callback handler on PUT request
-void onPut(const AttributeMap attributeMap, const int eCode)
-{
-    if(eCode == SUCCESS_RESPONSE)
-    {
-        std::cout << "PUT request was successful" << std::endl;
-
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "\tAttribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout <<"\t"<< *valueItr << " ";
-            }
-
-            std::cout << std::endl;
-        }
-    }
-    else
-    {
-        std::cout << "onPut Response error: " << eCode << std::endl;
         std::exit(-1);
     }
 }
@@ -193,6 +97,7 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 {
     if(resource)
     {
+        OCRepresentation rep;
         std::cout << "Putting room representation..."<<std::endl;
         // Create AttributeMap
         AttributeMap attributeMap;
@@ -210,17 +115,22 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
         QueryParamsMap qp;
         qp["if"] = BATCH_INTERFACE;
 
+        rep.setAttributeMap(attributeMap);
+
         // Invoke resource's pit API with attribute map, query map and the callback parameter
-        resource->put(attributeMap, qp, &onPut);
+        resource->put(rep, qp, &onPut);
     }
 }
 
-// callback handler on GET request
-void onGet(const AttributeMap attributeMap, const int eCode)
+// callback handler on PUT request
+void onPut(const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
-        std::cout << "GET Succeeded:"<<std::endl;
+        std::cout << "PUT request was successful" << std::endl;
+
+        AttributeMap attributeMap = rep.getAttributeMap();
+
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
         {
             std::cout << "\tAttribute name: "<< it->first << " value: ";
@@ -232,14 +142,33 @@ void onGet(const AttributeMap attributeMap, const int eCode)
             std::cout << std::endl;
         }
 
-        putRoomRepresentation(curResource);
+        std::vector<OCRepresentation> children = rep.getChildren();
+
+        for(auto oit = children.begin(); oit != children.end(); ++oit)
+        {
+            attributeMap = oit->getAttributeMap();
+
+            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+            {
+                std::cout << "\tAttribute name: "<< it->first << " value: ";
+                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+                {
+                    std::cout <<"\t"<< *valueItr << " ";
+                }
+
+                std::cout << std::endl;
+            }
+        }
+
     }
     else
     {
-        std::cout << "onGet Response error: " << eCode << std::endl;
+        std::cout << "onPut Response error: " << eCode << std::endl;
         std::exit(-1);
     }
 }
+
+
 // Local function to get representation of light resource
 void getRoomRepresentation(std::shared_ptr<OCResource> resource)
 {
@@ -283,9 +212,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 curResource = resource;
                 // Call a local function which will internally invoke get API on the resource pointer
-                // TODO change this back when getRoomRepresentation works
                 getRoomRepresentation(resource);
-                 //putRoomRepresentation(resource);
             }
         }
         else
