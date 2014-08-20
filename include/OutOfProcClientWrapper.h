@@ -29,14 +29,24 @@ namespace OC
     {
     public:
         OutOfProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg) { }
-        virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, std::function<void(std::shared_ptr<OCResource>)>& callback) {return OC_STACK_NOTIMPL;}
+        
+        virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, 
+            std::function<void(std::shared_ptr<OCResource>)>& callback) {return OC_STACK_NOTIMPL;}
 
-        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback){return OC_STACK_NOTIMPL;}
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback){return OC_STACK_NOTIMPL;}
-        virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&, const int&)>& callback){return OC_STACK_NOTIMPL;}
+        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, 
+            const QueryParamsMap& queryParams, std::function<void(const AttributeMap, const int)>& callback){return OC_STACK_NOTIMPL;}
+        
+        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, 
+            const AttributeMap& attributes, const QueryParamsMap& queryParams, std::function<void(const AttributeMap,const int)>& callback){return OC_STACK_NOTIMPL;}
+        
+        virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, 
+            const std::string& uri, const QueryParamsMap& queryParams, 
+            std::function<void(const AttributeMap&, const int&, const int&)>& callback){return OC_STACK_NOTIMPL;}
+        
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri){return OC_STACK_NOTIMPL;}
 
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode) {return nullptr;}
+        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, 
+            const boost::property_tree::ptree resourceNode) {return nullptr;}
     };
 }
 

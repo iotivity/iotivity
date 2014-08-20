@@ -19,7 +19,7 @@ CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs c_sdk simpleserver simpleclient simpleclientserver
+.PHONY: prep_dirs c_sdk simpleserver simpleclient simpleclientserver roomserver roomclient
 
 all:	.PHONY
 
@@ -28,20 +28,23 @@ prep_dirs:
 	-mkdir $(OBJ_DIR)
 	-mkdir $(SAMPLES_OUT_DIR)
 
-c_sdk:
+c_sdk: 
 	cd csdk && $(MAKE) "BUILD=$(BUILD)"
 
-examples:
-	cd examples && $(MAKE) "BUILD=$(BUILD)"
-
-simpleserver: OCLib.a
+simpleserver: OCLib.a examples/simpleserver.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleserver.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/$(BUILD)/liboctbstack.a
 
-simpleclient: OCLib.a
+simpleclient: OCLib.a examples/simpleclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleclient.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/$(BUILD)/liboctbstack.a
 
-simpleclientserver: OCLib.a
+simpleclientserver: OCLib.a examples/simpleclientserver.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/simpleclientserver.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/$(BUILD)/liboctbstack.a
+
+roomserver: OCLib.a examples/roomserver.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/roomserver.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/$(BUILD)/liboctbstack.a
+
+roomclient: OCLib.a examples/roomclient.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ examples/roomclient.cpp $(CXX_INC) $(OBJ_DIR)/OCLib.a csdk/$(BUILD)/liboctbstack.a
 
 OCLib.a: OCPlatform.o OCResource.o OCReflect.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
 	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
@@ -70,4 +73,4 @@ clean: clean_legacy
 	cd csdk && $(MAKE) clean
 	cd csdk && $(MAKE) deepclean
 clean_legacy:
-	-rm -f -v OCLib.a *.o simpleserver simpleclient simpleclientserver
+	-rm -f -v $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/*.o $(SAMPLES_OUT_DIR)/*

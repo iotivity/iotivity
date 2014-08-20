@@ -34,6 +34,7 @@
 #include "WrapperFactory.h"
 #include "OCResourceRequest.h"
 #include "OCResourceResponse.h"
+#include "OCRepresentation.h"
 
 namespace OC
 {

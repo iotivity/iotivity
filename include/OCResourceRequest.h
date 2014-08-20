@@ -30,6 +30,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include "OCApi.h"
+#include "OCRepresentation.h"
 
 namespace OC
 {
@@ -75,13 +76,15 @@ namespace OC
         *  Provides the entire resource attribute representation
         *  @return std::map AttributeMap reference containing the name value pairs representing the resource's attributes
         */
-        const AttributeMap& getResourceRepresentation() const {return m_attributeMap;}
+        const AttributeMap& getAttributeRepresentation() const {return m_attributeMap;}
+        const OCRepresentation& getResourceRepresentation() const {return m_representation;}
 
     private:
         std::string m_requestType;
         QueryParamsMap m_queryParameters;
         RequestHandlerFlag m_requestHandlerFlag;
         AttributeMap m_attributeMap;
+        OCRepresentation m_representation;
 
     public:
         // TODO: This is not a public API for app developers.
@@ -98,14 +101,17 @@ namespace OC
             // TODO: The following JSON Parse implementation should be seperated into utitilites
             // and used wherever required.
             // e.g. parse(std::string& payload, Attributemap& attributeMap)
-
+            
             std::stringstream requestStream;
             requestStream << requestPayload;
             boost::property_tree::ptree root;
             boost::property_tree::read_json(requestStream, root);
-            boost::property_tree::ptree payload = root.get_child("oc.payload", boost::property_tree::ptree());
 
-            for(auto& item : payload)
+            // TODO this expects the representation oc:{} and not oc:[{}]
+            //      this representation is fine when setting for simple resource.
+            boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
+
+            for(auto& item: payload)
             {
                 std::string name = item.first.data();
                 std::string value = item.second.data();
@@ -115,6 +121,8 @@ namespace OC
 
                 m_attributeMap[name] = values;
             }
+    
+            m_representation.setAttributeMap(m_attributeMap);
         }
 
         // TODO: This is not a public API for app developers.

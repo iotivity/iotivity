@@ -72,7 +72,9 @@ OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
                 if(entityHandlerRequest->query)
                 {
                     std::string querystr(reinterpret_cast<char*>(entityHandlerRequest->query));
+
                     OC::Utilities::QueryParamsKeyVal qp = OC::Utilities::getQueryParams(querystr);
+
                     if(qp.size() > 0)
                         pRequest->setQueryParams(qp);
                 }
@@ -100,10 +102,11 @@ OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
 
     if(entityHandlerEntry != entityHandlerMap.end()) {
         // Call CPP Application Entity Handler
+        // TODO CPP Application also should return OC_EH_OK or OC_EH_ERROR
         entityHandlerEntry->second(pRequest, pResponse);
     }
     else {
-        std::cout << "No eintity handler found."  << endl;
+        std::cout << "No entity handler found."  << endl;
         return OC_EH_ERROR;
     }
 
@@ -115,24 +118,26 @@ OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
 
         if(OC_REST_GET == entityHandlerRequest->method)
         {
-            cout << "\t\t\tGoing from stack for GET: " << payLoad << endl;
+            cout << "\t\t\tGoing from stack for GET: ";
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            cout << "\t\t\tGoing from stack for PUT: " << payLoad << endl;
+            cout << "\t\t\tGoing from stack for PUT: ";
         }
-
         else
         {
-            cout << "\t\t\t Unknown method...!!!" << endl;
+            cout << "\t\t\tUnknown method...!!!" << endl;
         }
-        // TODO @SASHI Now there is memory that needs to be freed.
-        entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char *>(OC::OCReflect::OCStack::strdup(payLoad.c_str()));
 
-        if(nullptr == entityHandlerRequest->resJSONPayload)
+        if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
         {
-            // TODO @SASHI throw std::runtime_error("out of memory");
-            cout << "Out of memory in copying to resJSONPayload" << endl;
+            strncpy((char*)entityHandlerRequest->resJSONPayload, payLoad.c_str(), entityHandlerRequest->resJSONPayloadLen);
+            cout << (char*)entityHandlerRequest->resJSONPayload << endl;
+        }
+        else
+        {
+            // TODO throw appropriate runtime error
+            cout << "Payload is larger than the PayloadLen" << endl;
         }
     }
 

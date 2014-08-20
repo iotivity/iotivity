@@ -30,7 +30,6 @@ using namespace OC;
 
 const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
-static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
 int observe_count()
 {
@@ -72,6 +71,97 @@ void onObserve(const AttributeMap& attributeMap, const int& eCode, const int& se
         std::exit(-1);
     }
 }
+// callback handler on PUT request
+void onGetRep(OCRepresentation& rep, const int eCode)
+{
+    if(eCode == SUCCESS_RESPONSE)
+    {
+        std::cout << "GET request was successful" << std::endl;
+
+        AttributeMap attributeMap = rep.getAttributeMap();
+
+        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+        {
+            std::cout << "\tAttribute name: "<< it->first << " value: ";
+            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+            {
+                std::cout <<"\t"<< *valueItr << " ";
+            }
+
+            std::cout << std::endl;
+        }
+
+        std::vector<OCRepresentation> children = rep.getChildren();
+
+        for(auto oit = children.begin(); oit != children.end(); ++oit)
+        {
+            attributeMap = oit->getAttributeMap();
+
+            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+            {
+                std::cout << "\tAttribute name: "<< it->first << " value: ";
+                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+                {
+                    std::cout <<"\t"<< *valueItr << " ";
+                }
+
+                std::cout << std::endl;
+            }
+        }
+
+    }
+    else
+    {
+        std::cout << "onGET Response error: " << eCode << std::endl;
+        std::exit(-1);
+    }
+}
+
+// callback handler on PUT request
+void onPutRep(OCRepresentation& rep, const int eCode)
+{
+    if(eCode == SUCCESS_RESPONSE)
+    {
+        std::cout << "PUT request was successful" << std::endl;
+
+        AttributeMap attributeMap = rep.getAttributeMap();
+
+        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+        {
+            std::cout << "\tAttribute name: "<< it->first << " value: ";
+            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+            {
+                std::cout <<"\t"<< *valueItr << " ";
+            }
+
+            std::cout << std::endl;
+        }
+
+        std::vector<OCRepresentation> children = rep.getChildren();
+
+        for(auto oit = children.begin(); oit != children.end(); ++oit)
+        {
+            attributeMap = oit->getAttributeMap();
+
+            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+            {
+                std::cout << "\tAttribute name: "<< it->first << " value: ";
+                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
+                {
+                    std::cout <<"\t"<< *valueItr << " ";
+                }
+
+                std::cout << std::endl;
+            }
+        }
+
+    }
+    else
+    {
+        std::cout << "onPut Response error: " << eCode << std::endl;
+        std::exit(-1);
+    }
+}
 
 // callback handler on PUT request
 void onPut(const AttributeMap attributeMap, const int eCode)
@@ -90,17 +180,6 @@ void onPut(const AttributeMap attributeMap, const int eCode)
 
             std::cout << std::endl;
         }
-
-        if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
-            std::cout << endl << "Observe is used." << endl << endl;
-        else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
-            std::cout << endl << "ObserveAll is used." << endl << endl;
-
-        // TODO
-        QueryParamsMap test;
-
-        curResource->observe(OBSERVE_TYPE_TO_USE, test, &onObserve);
-
     }
     else
     {
@@ -110,11 +189,11 @@ void onPut(const AttributeMap attributeMap, const int eCode)
 }
 
 // Local function to put a different state for this resource
-void putLightRepresentation(std::shared_ptr<OCResource> resource)
+void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 {
     if(resource)
     {
-        std::cout << "Putting light representation..."<<std::endl;
+        std::cout << "Putting room representation..."<<std::endl;
         // Create AttributeMap
         AttributeMap attributeMap;
         // Add the attribute name and values in the attribute map
@@ -122,16 +201,17 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
         stateVal.push_back("true");
 
         AttributeValues powerVal;
-        powerVal.push_back("10");
+        powerVal.push_back("8");
 
         attributeMap["state"] = stateVal;
-        attributeMap["power"] = powerVal;
+        attributeMap["speed"] = powerVal;
 
         // Create QueryParameters Map and add query params (if any)
-        QueryParamsMap queryParamsMap;
+        QueryParamsMap qp;
+        qp["if"] = BATCH_INTERFACE;
 
         // Invoke resource's pit API with attribute map, query map and the callback parameter
-        resource->put(attributeMap, queryParamsMap, &onPut);
+        resource->put(attributeMap, qp, &onPut);
     }
 }
 
@@ -152,7 +232,7 @@ void onGet(const AttributeMap attributeMap, const int eCode)
             std::cout << std::endl;
         }
 
-        putLightRepresentation(curResource);
+        putRoomRepresentation(curResource);
     }
     else
     {
@@ -161,16 +241,16 @@ void onGet(const AttributeMap attributeMap, const int eCode)
     }
 }
 // Local function to get representation of light resource
-void getLightRepresentation(std::shared_ptr<OCResource> resource)
+void getRoomRepresentation(std::shared_ptr<OCResource> resource)
 {
     if(resource)
     {
-        std::cout << "Getting Light Representation..."<<std::endl;
+        std::cout << "Getting Room Representation..."<<std::endl;
         // Invoke resource's get API with the callback parameter
 
-        QueryParamsMap test;
-        test["if"] = BATCH_INTERFACE;
-        resource->get(test, &onGet);
+        QueryParamsMap qp;
+        qp["if"] = BATCH_INTERFACE; // LINK_INTERFACE; 
+        resource->get(qp, &onGet);
     }
 }
 
@@ -199,11 +279,13 @@ void foundResource(std::shared_ptr<OCResource> resource)
             hostAddress = resource->host();
             std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
 
-            if(resourceURI == "/a/light")
+            if(resourceURI == "/a/room")
             {
                 curResource = resource;
                 // Call a local function which will internally invoke get API on the resource pointer
-                getLightRepresentation(resource);
+                // TODO change this back when getRoomRepresentation works
+                getRoomRepresentation(resource);
+                 //putRoomRepresentation(resource);
             }
         }
         else
@@ -219,34 +301,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-void PrintUsage()
-{
-    std::cout << std::endl;
-    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
-    std::cout << "   ObserveType : 1 - Observe" << std::endl;
-    std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
-}
-
 int main(int argc, char* argv[]) {
-    if (argc == 1)
-    {
-        OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-    }
-    else if (argc == 2)
-    {
-        int value = atoi(argv[1]);
-        if (value == 1)
-            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-        else if (value == 2)
-            OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
-        else
-            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-    }
-    else
-    {
-        PrintUsage();
-        return -1;
-    }
 
     // Create PlatformConfig object
     PlatformConfig cfg;
@@ -263,7 +318,8 @@ int main(int argc, char* argv[]) {
         OCPlatform platform(cfg);
         std::cout << "Created Platform..."<<std::endl;
         // Find all resources
-        platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+        platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.room", &foundResource);
+        //platform.findResource("", "coap://224.0.1.187/oc/core", &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
         while(true)
         {

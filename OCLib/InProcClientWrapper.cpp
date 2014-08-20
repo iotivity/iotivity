@@ -116,6 +116,7 @@ namespace OC
     const std::string OBSERVABLEKEY = "obs";
     const std::string RESOURCETYPESKEY= "rt";
     const std::string INTERFACESKEY = "if";
+    const std::string PROPERTYKEY = "prop";
 
     std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode)
     {
@@ -124,17 +125,20 @@ namespace OC
         std::vector<std::string> rTs;
         std::vector<std::string> ifaces;
 
-        boost::property_tree::ptree resourceTypes = resourceNode.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
-        for(auto itr : resourceTypes)
+        boost::property_tree::ptree properties = resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
+
+        boost::property_tree::ptree rT = properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
+        for(auto itr : rT)
         {
             rTs.push_back(itr.second.data());
         }
 
-        boost::property_tree::ptree interfaces = resourceNode.get_child(INTERFACESKEY, boost::property_tree::ptree());
-        for(auto itr : interfaces)
+        boost::property_tree::ptree iF = properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
+        for(auto itr : iF)
         {
             ifaces.push_back(itr.second.data());
         }
+
         return std::shared_ptr<OCResource>(new OCResource(clientWrapper, host, uri, obs, rTs, ifaces));
     }
     
@@ -149,7 +153,7 @@ namespace OC
             boost::property_tree::ptree root;
             boost::property_tree::read_json(requestStream, root);
             
-            boost::property_tree::ptree payload = root.get_child("oc.payload", boost::property_tree::ptree());
+            boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
             
             for(auto payloadItr : payload)
             {
@@ -171,7 +175,9 @@ namespace OC
                     std::cout << "Failed to create resource: "<< e.what() <<std::endl;
                     // TODO: Do we want to handle this somehow?  Perhaps we need to log this?
                 }
-            
+          
+                // TODO break after first found resource; something wrong in collection should be fixed first 
+                break; 
             }
             return OC_STACK_KEEP_TRANSACTION;
 
@@ -247,6 +253,8 @@ namespace OC
     OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
         GetSetContext* context = static_cast<GetSetContext*>(ctx);
+
+        std::cout << "GET JSON: " << (char*) clientResponse->resJSONPayload << endl;
         
         AttributeMap attrs;
 
@@ -259,7 +267,8 @@ namespace OC
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
     }
-    OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host, const std::string& uri, std::function<void(const AttributeMap, const int)>& callback)
+    OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host, const std::string& uri, 
+        const QueryParamsMap& queryParams, std::function<void(const AttributeMap, const int)>& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -270,9 +279,10 @@ namespace OC
 
         // TODO: in the future the cstack should be combining these two strings!
         ostringstream os;
-        os << host << uri;
-
+        os << host << assembleSetResourceUri(uri, queryParams).c_str();
+        //std::cout << "GET URI: " << os.str() << std::endl;
         // TODO: end of above
+
         auto cLock = m_csdkLock.lock();
         if(cLock)
         {
@@ -321,14 +331,21 @@ namespace OC
             paramsList << param.first <<'='<<param.second<<'&';
         }
 
-        std::string ret = uri + paramsList.str();
+        std::string queryString = paramsList.str();
+        if(queryString.back() == '&')
+        {
+            queryString.resize(queryString.size() - 1);
+        }
+
+        std::string ret = uri + queryString;
         return ret;
     }
     
     std::string InProcClientWrapper::assembleSetResourcePayload(const AttributeMap& attributes)
     {
         ostringstream payload;
-        payload << "{\"oc\":{\"payload\":{";
+        // TODO need to change the format to "{"oc":[]}"
+        payload << "{\"oc\":{";
 
         for(AttributeMap::const_iterator itr = attributes.begin(); itr!= attributes.end(); ++ itr)
         {
@@ -339,7 +356,7 @@ namespace OC
             
             payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
         }
-        payload << "}}}";
+        payload << "}}";
         return payload.str();
     }
 
@@ -354,7 +371,6 @@ namespace OC
         // TODO: in the future the cstack should be combining these two strings!
         ostringstream os;
         os << host << assembleSetResourceUri(uri, queryParams).c_str();
-
         // TODO: end of above
 
         cbdata->context = static_cast<void*>(ctx);
@@ -395,7 +411,8 @@ namespace OC
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, const std::string& uri, std::function<void(const AttributeMap&, const int&, const int&)>& callback)
+    OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, 
+       const std::string& uri, const QueryParamsMap& queryParams, std::function<void(const AttributeMap&, const int&, const int&)>& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -418,8 +435,11 @@ namespace OC
             method = OC_REST_OBSERVE_ALL;
         }
 
+        // TODO: in the future the cstack should be combining these two strings!
         ostringstream os;
-        os << host<< uri;
+        os << host << assembleSetResourceUri(uri, queryParams).c_str();
+        // std::cout << "OBSERVE URI: " << os.str() << std::endl;
+        // TODO: end of above
         
         auto cLock = m_csdkLock.lock();
         if(cLock)
