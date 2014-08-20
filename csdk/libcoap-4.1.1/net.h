@@ -51,6 +51,11 @@ extern "C" {
 #include "pdu.h"
 #include "coap_time.h"
 
+#define SEND_NOW        (1) /*Flag used when sending non-confirmable, ACK and RESET coap pdus*/
+#define SEND_NOW_CON    (2) /*Flag used when sending confirmable coap pdu*/
+#define SEND_DELAYED    (3) /*Flag used to delay the transmission of coap pdu*/
+#define SEND_RETX       (4) /*Flag used to retransmit a confirmable pdu*/
+
 struct coap_queue_t;
 
 typedef struct coap_queue_t {
@@ -65,6 +70,8 @@ typedef struct coap_queue_t {
   coap_tid_t id;		/**< unique transaction id */
 
   coap_pdu_t *pdu;		/**< the CoAP PDU to send */
+
+  unsigned char delayedResponse;  /**< delayed response flag */
 } coap_queue_t;
 
 /** Adds node to given queue, ordered by node->t. */
@@ -92,6 +99,10 @@ typedef void (*coap_request_handler_t)(struct coap_context_t  *,
 /** Message handler for responses that is used as call-back in coap_context_t */
 typedef void (*coap_response_handler_t)(struct coap_context_t  *,
         const coap_queue_t * rcvd);
+
+/** Message handler for ack and rst that is used as call-back in coap_context_t */
+typedef void (*coap_ack_rst_handler_t)(struct coap_context_t  *, uint8_t msgType,
+        const coap_queue_t * sent);
 
 #define COAP_MID_CACHE_SIZE 3
 typedef struct {
@@ -149,6 +160,7 @@ typedef struct coap_context_t {
 
   coap_request_handler_t request_handler;
   coap_response_handler_t response_handler;
+  coap_ack_rst_handler_t ack_rst_handler;
 } coap_context_t;
 
 /**
@@ -175,6 +187,19 @@ static inline void
 coap_register_response_handler(coap_context_t *context, 
 			       coap_response_handler_t handler) {
   context->response_handler = handler;
+}
+
+/**
+ * Registers a new message handler that is called whenever ack or rst
+ * was received that matches an ongoing transaction.
+ *
+ * @param context The context to register the handler for.
+ * @param handler The handler to register.
+ */
+static inline void
+coap_register_ack_rst_handler(coap_context_t *context,
+                   coap_ack_rst_handler_t handler) {
+  context->ack_rst_handler = handler;
 }
 
 /** 
@@ -230,7 +255,6 @@ coap_new_message_id(coap_context_t *context) {
 /* CoAP stack context must be released with coap_free_context() */
 void coap_free_context( coap_context_t *context );
 
-
 /**
  * Sends a confirmed CoAP message to given destination. The memory
  * that is allocated by pdu will not be released by
@@ -241,7 +265,7 @@ void coap_free_context( coap_context_t *context );
  * @param pdu     The CoAP PDU to send.
  * @return The message id of the sent message or @c COAP_INVALID_TID on error.
  */
-coap_tid_t coap_send_confirmed(coap_context_t *context, 
+coap_tid_t coap_send_confirmed(coap_context_t *context,
 			       const coap_address_t *dst,
 			       coap_pdu_t *pdu);
 
@@ -266,18 +290,17 @@ coap_pdu_t *coap_new_error_response(coap_pdu_t *request,
 				    unsigned char code, 
 				    coap_opt_filter_t opts);
 /**
- * Sends a non-confirmed CoAP message to given destination. The memory
- * that is allocated by pdu will not be released by coap_send().
- * The caller must release the memory.
+ * Sends a CoAP message to given destination. The memory
+ * that is allocated by pdu will be released by coap_send().
  *
  * @param context The CoAP context to use.
  * @param dst     The address to send to.
  * @param pdu     The CoAP PDU to send.
+ * @param flag    The flag indicating if the message will be sent with delay
  * @return The message id of the sent message or @c COAP_INVALID_TID on error.
  */
-coap_tid_t coap_send(coap_context_t *context, 
-		     const coap_address_t *dst, 
-		     coap_pdu_t *pdu);
+
+coap_tid_t coap_send(coap_context_t *context, const coap_address_t *dst, coap_pdu_t *pdu, const uint8_t flag);
 
 /** 
  * Sends an error response with code @p code for request @p request to
@@ -354,7 +377,7 @@ coap_send_rst(coap_context_t *context,
 }
 
 /** Handles retransmissions of confirmable messages */
-coap_tid_t coap_retransmit( coap_context_t *context, coap_queue_t *node );
+coap_tid_t coap_retransmit( coap_context_t *context, coap_queue_t *node);
 
 /**
  * Reads data from the network and tries to parse as CoAP PDU. On success, 0 is returned

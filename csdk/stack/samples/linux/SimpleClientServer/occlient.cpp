@@ -33,7 +33,7 @@
 const char *getResult(OCStackResult result);
 std::string getIPAddrTBServer(OCClientResponse * clientResponse);
 std::string getPortTBServer(OCClientResponse * clientResponse);
-std::string getQueryStrForGetPut(unsigned  const char * responsePayload);
+std::string getQueryStrForGetPut(OCClientResponse * clientResponse);
 
 #define TAG PCF("occlient")
 #define CTX_VAL 0x99
@@ -44,10 +44,12 @@ std::string getQueryStrForGetPut(unsigned  const char * responsePayload);
 
 typedef enum {
     TEST_DISCOVER_REQ = 1,
-    TEST_GET_REQ,
-    TEST_PUT_REQ,
-    TEST_OBS_REQ,
-    TEST_GET_UNAVAILABLE_RES_REQ,
+    TEST_GET_REQ_NON,
+    TEST_PUT_REQ_NON,
+    TEST_OBS_REQ_NON,
+    TEST_GET_UNAVAILABLE_RES_REQ_NON,
+    TEST_GET_REQ_CON,
+    TEST_OBS_REQ_CON,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -55,6 +57,9 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
 static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
+static std::string coapServerIP = "255.255.255.255";
+static std::string coapServerPort = "5683";
+static std::string coapServerResource = "/a/led";
 
 // The handle for the observe registration
 OCDoHandle gObserveDoHandle;
@@ -70,24 +75,25 @@ void handleSigInt(int signum) {
 }
 
 // Forward Declaration
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse);
-int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse);
-int InitObserveRequest(OCClientResponse * clientResponse);
-int InitPutRequest(OCClientResponse * clientResponse);
-int InitGetRequest(OCClientResponse * clientResponse);
+int InitGetRequestToUnavailableResource();
+int InitObserveRequest(OCQualityOfService qos);
+int InitPutRequest();
+int InitGetRequest(OCQualityOfService qos);
 int InitDiscovery();
+void parseClientResponse(OCClientResponse * clientResponse);
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
-    OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Get Request");
-    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Put Requests");
-    OC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate Observe Requests");
-    OC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Get Request for a resource which is unavailable");
+    OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
+    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Nonconfirmable Put Requests");
+    OC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate Nonconfirmable Observe Requests");
+    OC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Nonconfirmable Get Request for a resource which is unavailable");
+    OC_LOG(INFO, TAG, "-t 6 : Discover Resources and Initiate Confirmable Get Request");
+    OC_LOG(INFO, TAG, "-t 7 : Discover Resources and Initiate Confirmable Observe Requests");
 }
-
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
                                  OCMethod method, OCQualityOfService qos,
@@ -196,22 +202,30 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
                 remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
 
+        parseClientResponse(clientResponse);
 
-        if (TEST_CASE == TEST_GET_REQ)
-        {
-            InitGetRequest(clientResponse);
-        }
-        else if (TEST_CASE == TEST_PUT_REQ)
-        {
-            InitPutRequest(clientResponse);
-        }
-        else if (TEST_CASE == TEST_OBS_REQ)
-        {
-            InitObserveRequest(clientResponse);
-        }
-        else if (TEST_CASE == TEST_GET_UNAVAILABLE_RES_REQ)
-        {
-            InitGetRequestToUnavailableResource(clientResponse);
+        switch(TEST_CASE){
+        case TEST_GET_REQ_NON:
+            InitGetRequest(OC_NON_CONFIRMABLE);
+            break;
+        case TEST_PUT_REQ_NON:
+            InitPutRequest();
+            break;
+        case TEST_OBS_REQ_NON:
+            InitObserveRequest(OC_NON_CONFIRMABLE);
+            break;
+        case TEST_GET_UNAVAILABLE_RES_REQ_NON:
+            InitGetRequestToUnavailableResource();
+            break;
+        case TEST_GET_REQ_CON:
+            InitGetRequest(OC_CONFIRMABLE);
+            break;
+        case TEST_OBS_REQ_CON:
+            InitObserveRequest(OC_CONFIRMABLE);
+            break;
+        default:
+            PrintUsage();
+            break;
         }
     }
 
@@ -219,40 +233,39 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
 }
 
-
-int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
+int InitGetRequestToUnavailableResource()
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << "/SomeUnknownResource";
+    query << "coap://" << coapServerIP << ":" << coapServerPort << "/SomeUnknownResource";
     return (InvokeOCDoResource(query, OC_REST_GET, OC_NON_CONFIRMABLE, getReqCB));
 }
 
 
-int InitObserveRequest(OCClientResponse * clientResponse)
+int InitObserveRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
-    return (InvokeOCDoResource(query, OC_REST_OBSERVE, OC_NON_CONFIRMABLE, obsReqCB));
+    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+    return (InvokeOCDoResource(query, OC_REST_OBSERVE, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, obsReqCB));
 }
 
 
-int InitPutRequest(OCClientResponse * clientResponse)
+int InitPutRequest()
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
+    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
     return (InvokeOCDoResource(query, OC_REST_PUT, OC_NON_CONFIRMABLE, putReqCB));
 }
 
 
-int InitGetRequest(OCClientResponse * clientResponse)
+int InitGetRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
-    return (InvokeOCDoResource(query, OC_REST_GET, OC_NON_CONFIRMABLE, getReqCB));
+    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+    return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, getReqCB));
 }
 
 int InitDiscovery()
@@ -372,12 +385,13 @@ std::string getPortTBServer(OCClientResponse * clientResponse){
     return ss.str();
 }
 
-std::string getQueryStrForGetPut(unsigned  const char * responsePayload){
-    //  JSON = {"oc":{"payload":[{"href":"/a/led","rt":["core.led"],"if":["core.rw"],"obs":1}]}}
-
-    //std::string jsonPayload(responsePayload, responsePayload + sizeof responsePayload / sizeof responsePayload[0]);
-    std::string jsonPayload(reinterpret_cast<char*>(const_cast<unsigned char*>(responsePayload)));
-    //std::cout << jsonPayload << std::endl;
+std::string getQueryStrForGetPut(OCClientResponse * clientResponse){
 
     return "/a/led";
+}
+
+void parseClientResponse(OCClientResponse * clientResponse){
+    coapServerIP = getIPAddrTBServer(clientResponse);
+    coapServerPort = getPortTBServer(clientResponse);
+    coapServerResource = getQueryStrForGetPut(clientResponse);
 }

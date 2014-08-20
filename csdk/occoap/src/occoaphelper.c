@@ -23,6 +23,8 @@
 //-----------------------------------------------------------------------------
 #include "occoaphelper.h"
 #include "logger.h"
+#include "ocobserve.h"
+#include "coap_time.h"
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -40,6 +42,8 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
     uint8_t ret;
     switch(result)
     {
+        case OC_STACK_OBSERVER_ADDED :
+        case OC_STACK_OBSERVER_REMOVED :
         case OC_STACK_OK :
             ret = COAP_RESPONSE_200;
             break;
@@ -100,130 +104,172 @@ OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
     return ret;
 }
 
-
-// Form the OCRequest struct
-OCStackResult FormOCRequest(const coap_queue_t * rcvdRequest,
-        OCRequest * * requestLoc, unsigned char * uriBuf,
-        unsigned char * queryBuf) {
-
-    OCRequest * request = NULL;
-    OCObserveReq *obsReq = NULL;
-    size_t bufLen;
-    size_t optLen;
+// Retrieve Uri and Query from received coap pdu
+OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
+        unsigned char * queryBuf, uint8_t * * observeOptionLoc, unsigned char * * payloadLoc)
+{
     coap_opt_filter_t filter;
     coap_opt_iterator_t opt_iter;
-    coap_opt_t *option;
+    coap_opt_t *option = NULL;
+    size_t bufLen = 0;
+    size_t optLen = 0;
+    uint8_t * observeOption = NULL;
+    uint8_t observeOptionFound = 0;
+
+    if(uriBuf)
+    {
+        // parse the Uri
+        coap_option_filter_clear(filter);
+        coap_option_setb(filter, COAP_OPTION_URI_PATH);
+        coap_option_iterator_init(pdu, &opt_iter, filter);
+        while ((option = coap_option_next(&opt_iter)))
+        {
+            optLen = COAP_OPT_LENGTH(option);
+            if (bufLen + 1 + optLen < MAX_URI_LENGTH)
+            {
+                //we still have room in the buffer
+                uriBuf[bufLen++] = '/';
+                memcpy(uriBuf + bufLen, COAP_OPT_VALUE(option), optLen);
+                bufLen += optLen;
+            }
+            else
+            {
+                // TODO: we should check that resources do not have long uri at the resource creation
+                return OC_STACK_NO_MEMORY;
+            }
+        }
+        uriBuf[bufLen] = '\0';
+    }
+
+    if(queryBuf)
+    {
+        // parse the Query
+        bufLen = 0;
+        coap_option_filter_clear(filter);
+        coap_option_setb(filter, COAP_OPTION_URI_QUERY);
+        coap_option_iterator_init(pdu, &opt_iter, filter);
+        while ((option = coap_option_next(&opt_iter)))
+        {
+            optLen = COAP_OPT_LENGTH(option);
+            if (bufLen + 1 + optLen < MAX_QUERY_LENGTH)
+            {
+                //we still have room in the buffer
+                memcpy(queryBuf + bufLen, COAP_OPT_VALUE(option), optLen);
+                bufLen += optLen;
+                queryBuf[bufLen++] = '&';
+            }
+            else
+            {
+                // TODO: should it be OC_STACK_NO_MEMORY
+                return OC_STACK_NO_MEMORY;
+            }
+        }
+        // delete last '&'
+        queryBuf[bufLen ? (bufLen - 1) : (bufLen)] = '\0';
+    }
+
+    if(observeOptionLoc)
+    {
+        // parse the observe option
+        coap_option_filter_clear(filter);
+        coap_option_setb(filter, COAP_OPTION_OBSERVE);
+        coap_option_iterator_init(pdu, &opt_iter, filter);
+        while ((option = coap_option_next(&opt_iter)))
+        {
+            observeOption = (uint8_t *) OCMalloc(COAP_OPT_LENGTH(option));
+            if(!observeOption)
+            {
+                return OC_STACK_NO_MEMORY;
+            }
+            memcpy(observeOption, COAP_OPT_VALUE(option),COAP_OPT_LENGTH(option));
+            observeOptionFound = 1;
+            break;
+        }
+        if(observeOptionFound)
+        {
+            *observeOptionLoc = observeOption;
+        }
+        else
+        {
+            OCFree(observeOption);
+            *observeOptionLoc = NULL;
+        }
+    }
+
+    // get the payload
+    if(payloadLoc)
+    {
+        coap_get_data(pdu, &bufLen, payloadLoc);
+    }
+
+    return OC_STACK_OK;
+}
+
+// Form the OCRequest struct
+OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
+        unsigned char * uriBuf, OCObserveReq * observeReq,
+        OCEntityHandlerRequest * entityHandlerRequest)
+{
+    OCRequest * request = NULL;
 
     // allocate it
     request = (OCRequest *) OCMalloc(sizeof(OCRequest));
-    if (!request) {
+    if (!request)
+    {
         return OC_STACK_NO_MEMORY;
     }
 
     // fill in qos
-    request->qos = OC_NON_CONFIRMABLE;
-    if (rcvdRequest->pdu->hdr->type == COAP_MESSAGE_CON) {
-        request->qos = OC_CONFIRMABLE;
-    }
+    request->qos = qos;
 
     // fill in uri
-    request->resourceUrl = NULL;
-    bufLen = 0;
-    coap_option_filter_clear(filter);
-    coap_option_setb(filter, COAP_OPTION_URI_PATH);
-    coap_option_iterator_init(rcvdRequest->pdu, &opt_iter, filter);
-    while ((option = coap_option_next(&opt_iter))) {
-        optLen = COAP_OPT_LENGTH(option);
-        if (bufLen + 1 + optLen < MAX_URI_LENGTH) {
-            //we still have room in the buffer
-            uriBuf[bufLen++] = '/';
-            memcpy(uriBuf + bufLen, COAP_OPT_VALUE(option), optLen);
-            bufLen += optLen;
-        } else {
-            // TODO: should it be OC_STACK_NO_MEMORY
-            // TODO: we should check that resources do not have long uri at the registration
-            return OC_STACK_INVALID_URI;
-        }
-    }
-    uriBuf[bufLen] = '\0';
     request->resourceUrl = uriBuf;
 
-    // fill in query
-    bufLen = 0;
-    coap_option_filter_clear(filter);
-    coap_option_setb(filter, COAP_OPTION_URI_QUERY);
-    coap_option_iterator_init(rcvdRequest->pdu, &opt_iter, filter);
-    while ((option = coap_option_next(&opt_iter))) {
-        optLen = COAP_OPT_LENGTH(option);
-        if (bufLen + 1 + optLen < MAX_QUERY_LENGTH) {
-            //we still have room in the buffer
-            memcpy(queryBuf + bufLen, COAP_OPT_VALUE(option), optLen);
-            bufLen += optLen;
-            queryBuf[bufLen++] = '&';
-        } else {
-            // TODO: should it be OC_STACK_NO_MEMORY
-            return OC_STACK_INVALID_QUERY;
-        }
-    }
-    // delete last '&'
-    queryBuf[bufLen ? (bufLen - 1) : (bufLen)] = '\0';
+    // fill in observe
+    request->observe = observeReq;
 
-    // fill in observe, if present
-    request->observe = NULL;
-    coap_option_filter_clear(filter);
-    coap_option_setb(filter, COAP_OPTION_OBSERVE);
-    coap_option_iterator_init(rcvdRequest->pdu, &opt_iter, filter);
-    while ((option = coap_option_next(&opt_iter))) {
-        request->observe = (OCObserveReq *)OCMalloc(sizeof(OCObserveReq));
-        if (request->observe)
-        {
-            obsReq = request->observe;
-            obsReq->option = NULL;
-            obsReq->option = (unsigned char *)OCMalloc(COAP_OPT_LENGTH(option)+1);
-            if (obsReq->option)
-            {
-                memcpy(obsReq->option, COAP_OPT_VALUE(option),COAP_OPT_LENGTH(option));
-                (obsReq->option)[COAP_OPT_LENGTH(option)] = '\0';
-            }
-            else
-            {
-                OCFree (request->observe);
-                OCFree (request);
-                return OC_STACK_NO_MEMORY;
-            }
-            obsReq->token = (OCCoAPToken *)OCMalloc(sizeof(MAX_TOKEN_LENGTH));
-            if(obsReq->token)
-            {
-                memcpy (&obsReq->token->token, rcvdRequest->pdu->hdr->token, 
-                        rcvdRequest->pdu->hdr->token_length);
-                obsReq->token->tokenLength = rcvdRequest->pdu->hdr->token_length;
-            }
-            else
-            {
-                OCFree (request->observe);
-                OCFree (request);
-                return OC_STACK_NO_MEMORY;
-            }
-            obsReq->subAddr = (OCDevAddr *)&(rcvdRequest->remote);
-        } else {
-            OCFree (request);
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-    OC_LOG_V(INFO, TAG, "Observe option %d", request->observe);
+    // add entityHandlerRequest
+    request->entityHandlerRequest = entityHandlerRequest;
+
+    //TODO: this needs to be filled in the future
+    request->sequenceNum = 0;
 
     *requestLoc = request;
     return OC_STACK_OK;
 }
 
+// Form the OCObserveReq struct
+OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint8_t observeOption,
+            OCDevAddr * remote, OCCoAPToken * rcvdToken)
+{
+    OCObserveReq * observeReq;
+
+    if(observeOption == OC_RESOURCE_NO_OBSERVE)
+    {
+        return OC_STACK_OK;
+    }
+
+    observeReq = (OCObserveReq *)OCMalloc(sizeof(OCObserveReq));
+    if(!observeReq)
+    {
+        *observeReqLoc = NULL;
+        return OC_STACK_NO_MEMORY;
+    }
+
+    observeReq->option = observeOption;
+    observeReq->subAddr = remote;
+    observeReq->token = rcvdToken;
+
+    *observeReqLoc = observeReq;
+    return OC_STACK_OK;
+}
+
 // Form the OCEntityHandlerRequest struct
-OCStackResult FormOCEntityHandlerRequest(const coap_queue_t * rcvdRequest,
-        OCEntityHandlerRequest * * entityHandlerRequestLoc,
-        unsigned char * resBuf, unsigned char * query)
+OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * * entityHandlerRequestLoc,
+        OCMethod method, unsigned char * resBuf, unsigned char * bufReqPayload,
+        unsigned char * queryBuf)
 {
     OCEntityHandlerRequest * entityHandlerRequest = NULL;
-    unsigned char * pReq = NULL;
-    size_t bufLen = 0;
 
     entityHandlerRequest = (OCEntityHandlerRequest *) OCMalloc(
             sizeof(OCEntityHandlerRequest));
@@ -231,13 +277,16 @@ OCStackResult FormOCEntityHandlerRequest(const coap_queue_t * rcvdRequest,
     {
         return OC_STACK_NO_MEMORY;
     }
+    //set it to NULL for now, it will be modified in ocstack
+    entityHandlerRequest->resource = NULL;
 
-    entityHandlerRequest->method = (rcvdRequest->pdu->hdr->code == COAP_REQUEST_GET) ?
-            OC_REST_GET : OC_REST_PUT;
+    entityHandlerRequest->method = method;
 
-    entityHandlerRequest->query = query;
-    coap_get_data(rcvdRequest->pdu, &bufLen, &pReq);
-    entityHandlerRequest->reqJSONPayload = pReq;
+    // fill in query
+    entityHandlerRequest->query = queryBuf;
+
+    // fill payload
+    entityHandlerRequest->reqJSONPayload = bufReqPayload;
 
     entityHandlerRequest->resJSONPayload = resBuf;
     entityHandlerRequest->resJSONPayloadLen = MAX_RESPONSE_LENGTH;
@@ -247,94 +296,173 @@ OCStackResult FormOCEntityHandlerRequest(const coap_queue_t * rcvdRequest,
 }
 
 // Retrieve the token from the PDU
-OCStackResult RetrieveOCCoAPToken(const coap_queue_t * rcvdRequest,
-        OCCoAPToken * * rcvdTokenLoc) {
+OCStackResult RetrieveOCCoAPToken(const coap_pdu_t * pdu,
+        OCCoAPToken * * rcvdTokenLoc)
+{
     OCCoAPToken * rcvdToken = NULL;
 
     rcvdToken = (OCCoAPToken *) OCMalloc(sizeof(OCCoAPToken));
-    if (!rcvdToken) {
+    if (!rcvdToken)
+    {
         return OC_STACK_NO_MEMORY;
     }
-    rcvdToken->tokenLength = rcvdRequest->pdu->hdr->token_length;
-    memcpy(rcvdToken->token, rcvdRequest->pdu->hdr->token,
+    rcvdToken->tokenLength = pdu->hdr->token_length;
+    memcpy(rcvdToken->token, pdu->hdr->token,
             rcvdToken->tokenLength);
 
     *rcvdTokenLoc = rcvdToken;
     return OC_STACK_OK;
 }
 
-OCStackResult FormOCResponse(const coap_queue_t * rcvdResponse,
-        OCResponse * * responseLoc) {
+OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
+        OCClientResponse * clientResponse)
+{
     OCResponse * response = (OCResponse *) OCMalloc(sizeof(OCResponse));
-    if (!response) {
+    if (!response)
+    {
         return OC_STACK_NO_MEMORY;
     }
+    response->cbNode = cbNode;
+    response->clientResponse = clientResponse;
+
     *responseLoc = response;
     return OC_STACK_OK;
 }
 
-OCStackResult FormOCClientResponse(const coap_queue_t * rcvdResponse,
-        OCClientResponse * * clientResponseLoc) {
-
-    coap_opt_filter_t filter;
-    coap_opt_iterator_t opt_iter;
-    coap_opt_t *option;
-    unsigned char * pRes = NULL;
-    size_t bufLen = 0;
+OCStackResult FormOCClientResponse(OCClientResponse * * clientResponseLoc,
+        OCStackResult result, OCDevAddr * remote, uint32_t seqNum,
+        const unsigned char * resJSONPayload)
+{
 
     OCClientResponse * clientResponse = (OCClientResponse *) OCMalloc(
             sizeof(OCClientResponse));
-    if (!clientResponse) {
+    if (!clientResponse)
+    {
         return OC_STACK_NO_MEMORY;
     }
-    clientResponse->sequenceNumber = 0;
-    clientResponse->result = OC_STACK_ERROR;
-    clientResponse->addr = (OCDevAddr *) &(rcvdResponse->remote);
-    // fill in observe, if present
-    coap_option_filter_clear(filter);
-    coap_option_setb(filter, COAP_OPTION_OBSERVE);
-    coap_option_iterator_init(rcvdResponse->pdu, &opt_iter, filter);
-    while ((option = coap_option_next(&opt_iter))) {
-        if (option)
-        {
-            memcpy(&clientResponse->sequenceNumber, COAP_OPT_VALUE(option),COAP_OPT_LENGTH(option));
-        }
-        else
-        {
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-
-    coap_get_data(rcvdResponse->pdu, &bufLen, &pRes);
-    clientResponse->resJSONPayload = pRes;
+    clientResponse->sequenceNumber = seqNum;
+    clientResponse->result = result;
+    clientResponse->addr = remote;
+    clientResponse->resJSONPayload = resJSONPayload;
 
     *clientResponseLoc = clientResponse;
     return OC_STACK_OK;
 }
 
+OCStackResult FormResponseOptList(coap_list_t * * optListLoc, uint8_t * addMediaType,
+        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr)
+{
+    coap_list_t * optNode = NULL;
+
+    if(addMediaType)
+    {
+        optNode = CreateNewOptionNode(COAP_OPTION_CONTENT_TYPE,
+                sizeof(*addMediaType), addMediaType);
+        VERIFY_NON_NULL(optNode);
+        coap_insert(optListLoc, optNode, OrderOptions);
+    }
+    if(addMaxAge)
+    {
+        optNode = CreateNewOptionNode(COAP_OPTION_MAXAGE,
+                sizeof(*addMaxAge), (uint8_t *)addMaxAge);
+        VERIFY_NON_NULL(optNode);
+        coap_insert(optListLoc, optNode, OrderOptions);
+    }
+    if(observeOptionPtr)
+    {
+        optNode = CreateNewOptionNode(COAP_OPTION_OBSERVE,
+                observeOptionLength, (uint8_t *)observeOptionPtr);
+        VERIFY_NON_NULL(optNode);
+        coap_insert(optListLoc, optNode, OrderOptions);
+    }
+
+    return OC_STACK_OK;
+    exit:
+        coap_delete_list(*optListLoc);
+        return OC_STACK_NO_MEMORY;
+}
+
+//Send a coap pdu
+OCStackResult
+SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
+        uint8_t delayFlag)
+{
+    coap_tid_t tid = COAP_INVALID_TID;
+    OCStackResult res = OC_STACK_COMM_ERROR;
+    uint8_t sendFlag = SEND_NOW;
+
+    if(delayFlag)
+    {
+        sendFlag = SEND_DELAYED;
+    }
+    else
+    {
+        if(pdu->hdr->type != COAP_MESSAGE_CON)
+        {
+            sendFlag = SEND_NOW;
+        }
+        else
+        {
+            sendFlag = SEND_NOW_CON;
+        }
+    }
+
+    tid = coap_send(gCoAPCtx, dst, pdu, sendFlag);
+    OC_LOG_V(INFO, TAG, "TID %d", tid);
+    if ((pdu->hdr->type != COAP_MESSAGE_CON && !delayFlag) || tid == COAP_INVALID_TID)
+    {
+        OC_LOG(INFO, TAG, PCF("Deleting PDU"));
+        coap_delete_pdu(pdu);
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, PCF("Keeping PDU, we will handle the retry/delay of this pdu"));
+    }
+
+    if(tid != COAP_INVALID_TID)
+    {
+        OC_LOG(INFO, TAG, PCF("Sending a pdu with Token:"));
+        OC_LOG_BUFFER(INFO,TAG, pdu->hdr->token, pdu->hdr->token_length);
+        res = OC_STACK_OK;
+    }
+
+    return res;
+}
+
 //generate a coap message
 coap_pdu_t *
 GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
-        size_t tokenLength, uint8_t * token, unsigned char * payloadJSON,
-        coap_list_t *options) {
+        OCCoAPToken * token, unsigned char * payloadJSON,
+        coap_list_t *options)
+{
     coap_pdu_t *pdu;
     coap_list_t *opt;
 
-    pdu = coap_pdu_init(msgType, code, id, COAP_MAX_PDU_SIZE);
-    VERIFY_NON_NULL(pdu);
-
-    pdu->hdr->token_length = tokenLength;
-    if (!coap_add_token(pdu, tokenLength, token)) {
-        OC_LOG(FATAL, TAG, PCF("coap_add_token failed"));
+    if(token)
+    {
+        pdu = coap_pdu_init(msgType, code, id, COAP_MAX_PDU_SIZE);
+        VERIFY_NON_NULL(pdu);
+        pdu->hdr->token_length = token->tokenLength;
+         if (!coap_add_token(pdu, token->tokenLength, token->token))
+         {
+            OC_LOG(FATAL, TAG, PCF("coap_add_token failed"));
+        }
+    }
+    else
+    {
+        pdu = coap_pdu_init(msgType, code, id, sizeof(coap_pdu_t));
+        VERIFY_NON_NULL(pdu);
     }
 
-    for (opt = options; opt; opt = opt->next) {
+    for (opt = options; opt; opt = opt->next)
+    {
         coap_add_option(pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
                 COAP_OPTION_LENGTH(*(coap_option *) opt->data),
                 COAP_OPTION_DATA(*(coap_option *) opt->data));
     }
 
-    if (payloadJSON) {
+    if (payloadJSON)
+    {
         coap_add_data(pdu, strlen((const char *) payloadJSON) + 1,
                 (unsigned char*) payloadJSON);
     }
@@ -342,19 +470,26 @@ GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
     // display the pdu for debugging purposes
     coap_show_pdu(pdu);
 
+    // clean up
+    coap_delete_list(options);
     return pdu;
 
-    exit: return NULL;
+    exit:
+    coap_delete_list(options);
+    return NULL;
 }
 
 //a function to help in ordering coap options
-int OrderOptions(void *a, void *b) {
-    if (!a || !b) {
+int OrderOptions(void *a, void *b)
+{
+    if (!a || !b)
+    {
         return a < b ? -1 : 1;
     }
 
     if (COAP_OPTION_KEY(*(coap_option *)a)
-            < COAP_OPTION_KEY(*(coap_option *)b) ) {
+            < COAP_OPTION_KEY(*(coap_option *)b) )
+    {
         return -1;
     }
 
@@ -389,4 +524,115 @@ exit:
     OC_LOG(ERROR,TAG, PCF("new_option_node: malloc: was not created"));
     coap_free(option);
     return NULL;
+}
+
+OCStackResult ReTXCoAPQueue(coap_context_t * ctx, coap_queue_t * queue)
+{
+    coap_tid_t tid = COAP_INVALID_TID;
+    OCStackResult result = OC_STACK_ERROR;
+    tid = coap_retransmit( ctx, queue);
+    if(tid == COAP_INVALID_TID)
+    {
+        OC_LOG_V(DEBUG, TAG, "Retransmission Failed TID %d",
+                queue->id);
+        result = OC_STACK_COMM_ERROR;
+    }
+    else
+    {
+        OC_LOG_V(DEBUG, TAG, "Retransmission TID %d, this is attempt %d",
+                queue->id, queue->retransmit_cnt);
+        result = OC_STACK_OK;
+    }
+    return result;
+}
+
+OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * queue)
+{
+    OCResponse * response = NULL;
+    ClientCB * cbNode = NULL;
+    ResourceObserver * observer = NULL;
+    OCClientResponse * clientResponse = NULL;
+    OCCoAPToken * token = NULL;
+    OCStackResult result = OC_STACK_OK;
+
+    result = RetrieveOCCoAPToken(queue->pdu, &token);
+    if(result != OC_STACK_OK)
+    {
+        goto exit;
+    }
+
+    cbNode = GetClientCB(token, NULL);
+    if(!cbNode)
+    {
+        goto observation;
+    }
+    result = FormOCClientResponse(&clientResponse, OC_STACK_COMM_ERROR,
+            (OCDevAddr *) &(queue->remote), 0, NULL);
+    if(result != OC_STACK_OK)
+    {
+        goto observation;
+    }
+    result = FormOCResponse(&response, cbNode, clientResponse);
+    if(result != OC_STACK_OK)
+    {
+        goto observation;
+    }
+    HandleStackResponses(response);
+
+observation:
+    observer = GetObserver(token);
+    if(!observer)
+    {
+        goto exit;
+    }
+
+    result = OCObserverStatus(token, OC_OBSERVER_FAILED_COMM);
+    if(result == OC_STACK_OBSERVER_REMOVED)
+    {
+        coap_cancel_all_messages(ctx, &queue->remote, token->token, token->tokenLength);
+    }
+
+    exit:
+        OCFree(token);
+        OCFree(clientResponse);
+        OCFree(response);
+    return result;
+}
+
+// a function to handle the send queue in the passed context
+void HandleSendQueue(coap_context_t * ctx)
+{
+    coap_tick_t now;
+    coap_queue_t *nextQueue = NULL;
+
+    coap_ticks(&now);
+    nextQueue = coap_peek_next( ctx );
+    while (nextQueue && nextQueue->t <= now - ctx->sendqueue_basetime)
+    {
+        nextQueue = coap_pop_next( ctx );
+        if((uint8_t)nextQueue->delayedResponse)
+        {
+            OC_LOG_V(DEBUG, TAG, "Sending Delayed response TID %d",
+                    nextQueue->id);
+            if(SendCoAPPdu(ctx, &nextQueue->remote, nextQueue->pdu, 0)
+                    == OC_STACK_COMM_ERROR)
+            {
+                OC_LOG(DEBUG, TAG, PCF("A problem occurred in sending a pdu"));
+                HandleFailedCommunication(ctx, nextQueue);
+            }
+            nextQueue->pdu = NULL;
+            coap_delete_node(nextQueue);
+        }
+        else
+        {
+            OC_LOG_V(DEBUG, TAG, "Retrying a CON pdu TID %d",nextQueue->id);
+            if(ReTXCoAPQueue(ctx, nextQueue) == OC_STACK_COMM_ERROR)
+            {
+                OC_LOG(DEBUG, TAG, PCF("A problem occurred in retransmitting a pdu"));
+                HandleFailedCommunication(ctx, nextQueue);
+                coap_delete_node(nextQueue);
+            }
+        }
+        nextQueue = coap_peek_next( ctx );
+    }
 }

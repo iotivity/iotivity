@@ -22,14 +22,24 @@
 #define OC_OBSERVE_H
 
 /* In CoAP sequence number is a 24 bit field */
-#define MAX_SEQUENCE_NUMBER              0xFFFFFF
-#define OC_RESOURCE_OBSERVE_REGISTER     "0"
-#define OC_RESOURCE_OBSERVE_DEREGISTER   "1"
+#define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
+#define OC_RESOURCE_OBSERVE_REGISTER     (0)
+#define OC_RESOURCE_OBSERVE_DEREGISTER   (1)
+#define OC_RESOURCE_NO_OBSERVE           (2)
+
+#define MAX_OBSERVER_FAILED_COMM         (2)
+#define MAX_OBSERVER_NON_COUNT           (3)
+
+#define OC_OBSERVER_NOT_INTERESTED       (0)
+#define OC_OBSERVER_STILL_INTERESTED     (1)
+#define OC_OBSERVER_FAILED_COMM          (2)
 
 /* This information is stored for each registerd observer */
-typedef struct ObserveResourceServer {
+typedef struct ResourceObserver {
     // URI of observed resource
     unsigned char *resUri;
+    //Quality of service of the request
+    OCQualityOfService qos;
     // Query
     unsigned char *query;
     // CoAP token for the observe request
@@ -38,14 +48,32 @@ typedef struct ObserveResourceServer {
     OCResource *resource;
     // IP address & port of client registered for observe
     OCDevAddr *addr;
+    // number of times the server failed to reach the observer
+    uint8_t failedCommCount;
+    // number of times the server sent NON notifications
+    uint8_t NONCount;
+    // force the qos value to CON
+    uint8_t forceCON;
     // next node in this list
-    struct ObserveResourceServer *next;
-} ObserveResourceServer;
+    struct ResourceObserver *next;
+} ResourceObserver;
+
+OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status);
 
 OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request);
 
-OCStackResult SendObserverNotification (OCResourceHandle handle, OCResource *resPtr);
+OCStackResult SendObserverNotification (OCResource *resPtr);
 
 void DeleteObserverList();
+
+OCStackResult AddObserver ( const char   *resUri,
+                            const char   *query,
+                            OCCoAPToken * token,
+                            OCDevAddr    *addr,
+                            OCResource   *resHandle,
+                            OCQualityOfService qos);
+OCStackResult DeleteObserver (OCCoAPToken * token);
+
+ResourceObserver* GetObserver (const OCCoAPToken * token);
 
 #endif //OC_OBSERVE_H

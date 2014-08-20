@@ -34,11 +34,6 @@
 // Typedefs
 //-----------------------------------------------------------------------------
 
-typedef enum {
-    OC_COAP_OK = 0,
-    OC_COAP_ERR
-} OCCoAPResult;
-
 //-----------------------------------------------------------------------------
 // Function Prototypes
 //-----------------------------------------------------------------------------
@@ -57,7 +52,7 @@ typedef enum {
  *   0   - success
  *   TBD - TBD error
  */
-int OCInitCoAP(const char *address, uint16_t port, OCMode mode);
+OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode);
 
 /**
  * Discover OC resources
@@ -72,7 +67,7 @@ int OCInitCoAP(const char *address, uint16_t port, OCMode mode);
  *   0   - success
  *   TBD - TBD error
  */
-int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * token,
+OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * token,
                      const char *Uri, const char *payload);
 
 
@@ -81,7 +76,7 @@ int OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * toke
  *
  * @return 0 - success, else - TBD error
  */
-int OCStopCoAP();
+OCStackResult OCStopCoAP();
 
 /**
  * Called in main loop of CoAP client or server.  Allows low-level CoAP processing of
@@ -89,17 +84,17 @@ int OCStopCoAP();
  *
  * @return 0 - success, else - TBD error
  */
-int OCProcessCoAP();
+OCStackResult OCProcessCoAP();
 
 OCCoAPToken * OCGenerateCoAPToken();
 
 /**
  * Initiate sending of CoAP messages. Example: server uses it to send observe messages
  *
- * @return OC_COAP_OK - success, OC_COAP_ERR
+ * @return 0 - success, else - TBD error
  */
-int OCCoAPSendMessage (OCDevAddr *dstAddr, OCStackResult msgCode, 
-                       OCQualityOfService qos, OCCoAPToken * token,
-                       const char *payload, uint32_t seqNum);
+OCStackResult OCSendCoAPNotification (OCDevAddr *dstAddr, OCStackResult result,
+        OCQualityOfService qos, OCCoAPToken * token,
+        unsigned char *payload, uint32_t seqNum);
 
 #endif /* OCCOAP_H_ */

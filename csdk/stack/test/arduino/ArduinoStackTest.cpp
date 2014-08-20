@@ -55,9 +55,9 @@ void EXPECT_EQ(int a, int b)  {
 
 void EXPECT_STREQ(const char *a, const char *b)  {
   if (strcmp(a, b) == 0) {
-    OC_LOG(INFO, TAG, "PASS");
+    OC_LOG(INFO, TAG, PCF("PASS"));
   } else {
-    OC_LOG(ERROR, TAG, "FAIL");
+    OC_LOG(ERROR, TAG, PCF("FAIL"));
   }
 }
 //-----------------------------------------------------------------------------

@@ -571,7 +571,7 @@ coap_tid_t coap_send_ack(coap_context_t *context, const coap_address_t *dst,
         response = coap_pdu_init(COAP_MESSAGE_ACK, 0, request->hdr->id,
                 sizeof(coap_pdu_t));
         if (response) {
-            result = coap_send(context, dst, response);
+            result = coap_send(context, dst, response, SEND_NOW);
             coap_delete_pdu(response);
         }
     }
@@ -580,31 +580,21 @@ coap_tid_t coap_send_ack(coap_context_t *context, const coap_address_t *dst,
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
 /* releases space allocated by PDU if free_pdu is set */
-coap_tid_t
+int
 coap_send_impl(coap_context_t *context,
         const coap_address_t *dst,
         coap_pdu_t *pdu) {
-#ifdef WITH_POSIX
-    ssize_t bytes_written;
-#else /* if it is Arduino */
-  int bytes_written;
-#endif
-    coap_tid_t id = COAP_INVALID_TID;
+
+    int bytes_written = -1;
 
     if ( !context || !dst || !pdu )
-    return id;
+    return bytes_written;
 
     bytes_written = OCSendTo( context->sockfd, (uint8_t*)(pdu->hdr), pdu->length, 0,
             (OCDevAddr*)dst);
     debug("bytes_written %d\n", (int)bytes_written);
 
-    if (bytes_written >= 0) {
-        coap_transaction_id(dst, pdu, &id);
-    } else {
-        coap_log(LOG_CRIT, "coap_send: sendto\n");
-    }
-
-    return id;
+    return bytes_written;
 }
 #endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
@@ -684,11 +674,6 @@ coap_send_impl(coap_context_t *context,
 }
 #endif /* WITH_LWIP */
 
-coap_tid_t coap_send(coap_context_t *context, const coap_address_t *dst,
-        coap_pdu_t *pdu) {
-    return coap_send_impl(context, dst, pdu);
-}
-
 coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request,
         const coap_address_t *dst, unsigned char code, coap_opt_filter_t opts) {
     coap_pdu_t *response;
@@ -699,7 +684,7 @@ coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request,
 
     response = coap_new_error_response(request, code, opts);
     if (response) {
-        result = coap_send(context, dst, response);
+        result = coap_send(context, dst, response, SEND_NOW);
         coap_delete_pdu(response);
     }
 
@@ -714,41 +699,55 @@ coap_tid_t coap_send_message_type(coap_context_t *context,
     if (request) {
         response = coap_pdu_init(type, 0, request->hdr->id, sizeof(coap_pdu_t));
         if (response) {
-            result = coap_send(context, dst, response);
+            result = coap_send(context, dst, response, SEND_NOW);
             coap_delete_pdu(response);
         }
     }
     return result;
 }
 
-coap_tid_t coap_send_confirmed(coap_context_t *context,
-        const coap_address_t *dst, coap_pdu_t *pdu) {
-    coap_queue_t *node;
+coap_tid_t coap_send(coap_context_t *context,
+        const coap_address_t *dst, coap_pdu_t *pdu, const uint8_t flag)
+{
+    coap_queue_t *node = NULL;
     coap_tick_t now;
+    coap_tid_t tid;
+    int bytesWritten;
     int r;
+
+    if (!context)
+        return COAP_INVALID_TID;
+    if(flag != SEND_RETX){
+        coap_transaction_id(dst, pdu, &tid);
+    }
+    if(flag == SEND_NOW || flag == SEND_RETX)
+    {
+        goto sending;
+    }
 
     node = coap_new_node();
     if (!node) {
-        debug("coap_send_confirmed: insufficient memory\n");
-        return COAP_INVALID_TID;
-    }
-
-    node->id = coap_send_impl(context, dst, pdu);
-    if (COAP_INVALID_TID == node->id) {
-        debug("coap_send_confirmed: error sending pdu\n");
-        coap_free_node(node);
+        debug("coap_send: insufficient memory\n");
         return COAP_INVALID_TID;
     }
 
     prng((unsigned char * )&r, sizeof(r));
-
     /* add randomized RESPONSE_TIMEOUT to determine retransmission timeout */
-    node->timeout = COAP_DEFAULT_RESPONSE_TIMEOUT * COAP_TICKS_PER_SECOND
-            + (COAP_DEFAULT_RESPONSE_TIMEOUT >> 1)
-                    * ((COAP_TICKS_PER_SECOND * (r & 0xFF)) >> 8);
+    if(flag == SEND_NOW_CON)
+    {
+        node->timeout = COAP_DEFAULT_RESPONSE_TIMEOUT * COAP_TICKS_PER_SECOND
+                + (COAP_DEFAULT_RESPONSE_TIMEOUT >> 1)
+                * ((COAP_TICKS_PER_SECOND * (r & 0xFF)) >> 8);
+    }
+    else
+    {
+        node->timeout = MAX_MULTICAST_DELAY_SEC * ((COAP_TICKS_PER_SECOND * (r & 0xFF)) >> 8);
+        node->delayedResponse = 1;
+    }
 
     memcpy(&node->remote, dst, sizeof(coap_address_t));
     node->pdu = pdu;
+    node->id = tid;
 
     /* Set timer for pdu retransmission. If this is the first element in
      * the retransmission queue, the base time is set to the current
@@ -757,23 +756,28 @@ coap_tid_t coap_send_confirmed(coap_context_t *context,
      * to be retransmitted earlier. Therefore, node->timeout is first
      * normalized to the base time and then inserted into the queue with
      * an adjusted relative time.
-     */coap_ticks(&now);
-    if (context->sendqueue == NULL) {
+     */
+
+    coap_ticks(&now);
+    if (context->sendqueue == NULL)
+    {
         node->t = node->timeout;
         context->sendqueue_basetime = now;
-    } else {
+    }
+    else
+    {
         /* make node->t relative to context->sendqueue_basetime */
         node->t = (now - context->sendqueue_basetime) + node->timeout;
     }
-
     coap_insert_node(&context->sendqueue, node);
 
-#ifdef WITH_LWIP
-    if (node == context->sendqueue) /* don't bother with timer stuff if there are earlier retransmits */
-    coap_retransmittimer_restart(context);
-#endif
+    #ifdef WITH_LWIP
+        if (node == context->sendqueue)
+            /* don't bother with timer stuff if there are earlier retransmits */
+            coap_retransmittimer_restart(context);
+    #endif
 
-#ifdef WITH_CONTIKI
+    #ifdef WITH_CONTIKI
     { /* (re-)initialize retransmission timer */
         coap_queue_t *nextpdu;
 
@@ -785,12 +789,28 @@ coap_tid_t coap_send_confirmed(coap_context_t *context,
         etimer_set(&context->retransmit_timer, nextpdu->t);
         PROCESS_CONTEXT_END(&coap_retransmit_process);
     }
-#endif /* WITH_CONTIKI */
+    #endif /* WITH_CONTIKI */
 
-    return node->id;
+    if(flag == SEND_NOW_CON)
+    {
+        goto sending;
+    }
+    return tid;
+
+    sending:
+        bytesWritten = coap_send_impl(context, dst, pdu);
+        if(bytesWritten > 0)
+        {
+            return tid;
+        }
+        debug("coap_send_impl: error sending pdu\n");
+        coap_free_node(node);
+        return COAP_INVALID_TID;
 }
 
 coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
+    coap_tid_t tid = COAP_INVALID_TID;
+
     if (!context || !node)
         return COAP_INVALID_TID;
 
@@ -806,9 +826,8 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
 
         debug("** retransmission #%d of transaction %d\n", node->retransmit_cnt,
                 ntohs(node->pdu->hdr->id));
-
-        node->id = coap_send_impl(context, &node->remote, node->pdu);
-        return node->id;
+        tid = coap_send(context, (coap_address_t *)&(node->remote),node->pdu, SEND_RETX);
+        return (tid == COAP_INVALID_TID)? COAP_INVALID_TID : node->id;
     }
 
     /* no more retransmissions, remove node from system */
@@ -830,8 +849,7 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
     }
 #endif /* WITHOUT_OBSERVE */
 
-    /* And finally delete the node */
-    coap_delete_node(node);
+    // deletion of node will happen in ocoap since we still need the info node has
     return COAP_INVALID_TID;
 }
 
@@ -856,13 +874,11 @@ int coap_read(coap_context_t *ctx, int sockfd) {
     char *buf;
 #endif
   coap_hdr_t *pdu;
-#ifndef WITH_ARDUINO
-  ssize_t bytes_read = -1;
-#else /* if it is Arduino */
   int bytes_read = -1;
-#endif
+
   coap_address_t src, dst;
   coap_queue_t *node;
+  unsigned char delayRes = 0;
 
 #ifdef WITH_CONTIKI
     buf = uip_appdata;
@@ -881,6 +897,11 @@ int coap_read(coap_context_t *ctx, int sockfd) {
 
   bytes_read = OCRecvFrom( sockfd, (uint8_t*)buf, sizeof(buf), 0,
               (OCDevAddr*)&src);
+
+  // Set the delayed response flag for responding to multicast requests
+  if (sockfd == ctx->sockfd_wellknown && bytes_read > 0) {
+      delayRes = 1;
+  }
 
 #endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
@@ -940,6 +961,9 @@ int coap_read(coap_context_t *ctx, int sockfd) {
         warn("discard malformed PDU");
         goto error;
     }
+
+    //set the delayed response flag
+    node->delayedResponse = delayRes;
 
     /* and add new node to receive queue */
     coap_transaction_id(&node->remote, node->pdu, &node->id);
@@ -1413,7 +1437,6 @@ handle_request(coap_context_t *context, coap_queue_t *node) {
 }
 #endif
 static void handle_request(coap_context_t *context, coap_queue_t *rcvd) {
-
     /* Call application-specific reponse handler when available.  If
      * not, we must acknowledge confirmable messages. */
     if (context->request_handler) {
@@ -1424,8 +1447,7 @@ static void handle_request(coap_context_t *context, coap_queue_t *rcvd) {
     }
 }
 
-static inline void handle_response(coap_context_t *context, coap_queue_t *rcvd) {
-
+static void handle_response(coap_context_t *context, coap_queue_t *rcvd) {
     /* Call application-specific reponse handler when available.  If
      * not, we must acknowledge confirmable messages. */
     if (context->response_handler) {
@@ -1433,6 +1455,14 @@ static inline void handle_response(coap_context_t *context, coap_queue_t *rcvd) 
     } else {
         /* send ACK if rcvd is confirmable (i.e. a separate response) */
         coap_send_ack(context, &rcvd->remote, rcvd->pdu);
+    }
+}
+
+static void handle_ack_rst(coap_context_t *context, uint8_t msgType, coap_queue_t *sent) {
+    /* Call application-specific reponse handler when available.  If
+     * not, we must acknowledge confirmable messages. */
+    if (context->ack_rst_handler) {
+        context->ack_rst_handler(context, msgType, sent);
     }
 }
 
@@ -1514,28 +1544,51 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
             }
 
             switch (rcvd->pdu->hdr->type) {
+            case COAP_MESSAGE_ACK:
+                /* find transaction in sendqueue to stop retransmission */
+                if(coap_remove_from_queue(&context->sendqueue, rcvd->id, &sent)){
+                    handle_ack_rst(context, COAP_MESSAGE_ACK, sent);
+                }
+
+                //delete empty messages, this is ACK only message no piggybacked response
+                if (rcvd->pdu->hdr->code == 0)
+                    goto cleanup;
+                break;
+
             case COAP_MESSAGE_NON: /* check for unknown critical options */
                 if (coap_option_check_critical(context, rcvd->pdu, opt_filter)
                         == 0)
                     goto cleanup;
                 break;
+
+            case COAP_MESSAGE_CON: /* check for unknown critical options */
+                if (coap_option_check_critical(context, rcvd->pdu, opt_filter)
+                        == 0) {
+                    /* FIXME: send response only if we have received a request. Otherwise,
+                     * send RST. */
+                    response = coap_new_error_response(rcvd->pdu,
+                            COAP_RESPONSE_CODE(402), opt_filter);
+                    if (!response)
+                        warn("coap_dispatch: cannot create error reponse\n");
+                    else {
+                        if (coap_send(context, &rcvd->remote,
+                                response, SEND_NOW) == COAP_INVALID_TID) {
+                            warn("coap_dispatch: error sending reponse\n");
+                        }
+                        coap_delete_pdu(response);
+                    }
+                    goto cleanup;
+                }
+                break;
+
             case COAP_MESSAGE_RST:
-               /* We have sent something the receiver disliked, so we remove
-                * not only the transaction but also the subscriptions we might
-                * have. */
+                /* find transaction in sendqueue to stop retransmission */
+                if(coap_remove_from_queue(&context->sendqueue, rcvd->id, &sent)){
+                    handle_ack_rst(context, COAP_MESSAGE_RST, sent);
+                }
+                goto cleanup;
+                break;
 
-               coap_log(LOG_ALERT, "got RST for message %u\n",
-                       ntohs(rcvd->pdu->hdr->id));
-
-               // Handing this up, hoping there's enough info to remove an observe if at all possible.
-               handle_response(context, rcvd);
-
-               /* find transaction in sendqueue to stop retransmission */
-               coap_remove_from_queue(&context->sendqueue, rcvd->id, &sent);
-
-               if (sent)
-               coap_handle_rst(context, sent);
-               goto cleanup;
             default:
                 debug(
                         "TODO: Need to handle other message types in coap_dispatch");
@@ -1612,10 +1665,12 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
             /* Pass message to upper layer if a specific handler was
              * registered for a request that should be handled locally. */
             if (handle_locally(context, rcvd)) {
-                if (COAP_MESSAGE_IS_REQUEST(rcvd->pdu->hdr))
+                if (COAP_MESSAGE_IS_REQUEST(rcvd->pdu->hdr)){
                     handle_request(context, rcvd);
-                else if (COAP_MESSAGE_IS_RESPONSE(rcvd->pdu->hdr))
+                }
+                else if (COAP_MESSAGE_IS_RESPONSE(rcvd->pdu->hdr)){
                     handle_response(context, rcvd);
+                }
                 else {
                     debug("dropped message with invalid code\n");
                     coap_send_message_type(context, &rcvd->remote, rcvd->pdu,
@@ -1623,9 +1678,10 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                 }
             }
 
-            // we should not retrying responses.....
-            cleanup: coap_delete_node(sent);
-            coap_delete_node(rcvd);
+            // we should not retry responses.....
+            cleanup:
+                coap_delete_node(sent);
+                coap_delete_node(rcvd);
         }
     }
 

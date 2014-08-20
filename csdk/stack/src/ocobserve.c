@@ -27,96 +27,185 @@
 #include "debug.h"
 #include <string.h>
 
-#define TAG  PCF("ocbserve")
+// Module Name
+#define MOD_NAME PCF("ocobserve")
+
+#define TAG  PCF("OCStackObserve")
 
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
-static struct ObserveResourceServer *serverObsList = NULL;
+static struct ResourceObserver * serverObsList = NULL;
 
-OCStackResult AddObserver (const char   *resUri,
-                           const char   *query,
-                           uint8_t      *token,
-                           size_t       tokenLength,
-                           OCDevAddr    *addr,
-                           OCResource   *resHandle);
-OCStackResult DeleteObserver (uint8_t *token, size_t tokenLength);
+OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    ResourceObserver * observer = NULL;
+
+    switch(status)
+    {
+    case OC_OBSERVER_NOT_INTERESTED:
+        OC_LOG(DEBUG, TAG, PCF("observer is not interested in our notifications anymore"));
+        //observer is dead, or it is not observing anymore
+        result = DeleteObserver (token);
+        if(result == OC_STACK_OK)
+        {
+            OC_LOG(DEBUG, TAG, PCF("removing an observer"));
+            result = OC_STACK_OBSERVER_REMOVED;
+        }
+        break;
+    case OC_OBSERVER_STILL_INTERESTED:
+        //observer is still interested
+        OC_LOG(DEBUG, TAG, PCF("observer is interested in our \
+                notifications, reset the failedCount"));
+        observer = GetObserver(token);
+        if(observer)
+        {
+            observer->forceCON = 0;
+            observer->failedCommCount = 0;
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            result = OC_STACK_OBSERVER_NOT_FOUND;
+        }
+        break;
+    case OC_OBSERVER_FAILED_COMM:
+        //observer is not reachable
+        OC_LOG(DEBUG, TAG, PCF("observer is not reachable"));
+        observer = GetObserver(token);
+        if(observer)
+        {
+            if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
+            {
+                result = DeleteObserver (token);
+                OC_LOG(DEBUG, TAG, PCF("removing an observer"));
+                result = OC_STACK_OBSERVER_REMOVED;
+            }
+            else
+            {
+                observer->failedCommCount++;
+                result = OC_STACK_OK;
+            }
+            observer->forceCON = 1;
+            OC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",observer->failedCommCount);
+        }
+        break;
+    default:
+        break;
+    }
+
+    return result;
+}
 
 OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
 {
-    OCStackResult result;
+    OCStackResult result = OC_STACK_ERROR;
     OCEntityHandlerRequest *ehReq = request->entityHandlerRequest;
     OCObserveReq *obs = request->observe;
 
     OC_LOG(INFO, TAG, PCF("Entering ProcessObserveRequest"));
-    if (strcmp ((char *)obs->option, OC_RESOURCE_OBSERVE_REGISTER) == 0) {
-        if (NULL == resource)
+
+    // Register new observation
+    request->entityHandlerRequest->resource = (OCResourceHandle)resource;
+    result = resource->entityHandler(OC_OBSERVE_FLAG, request->entityHandlerRequest);
+
+    if (obs->option == OC_RESOURCE_OBSERVE_REGISTER)
+    {
+        // Add subscriber to the server observation list
+        // TODO: we need to check if the obsrever is already there using its OCDevAdd....
+        result = AddObserver ((const char*)(request->resourceUrl), (const char *)(ehReq->query),
+                obs->token, obs->subAddr, resource, request->qos);
+        if(result == OC_STACK_OK)
         {
-            return OC_STACK_ERROR;
+            result = OC_STACK_OBSERVER_ADDED;
         }
-        // Register new observation
-        request->entityHandlerRequest->resource = (OCResourceHandle)resource;
-        result = resource->entityHandler(OC_OBSERVE_FLAG, request->entityHandlerRequest);
-        if (OC_STACK_OK == result)
-        {
-            // Add subscriber to the server observation list
-            result = AddObserver ((const char*)(request->resourceUrl), (const char *)(ehReq->query),
-                                   obs->token->token, obs->token->tokenLength, obs->subAddr, resource);
-        }
-        return result;
-    } else if (strcmp ((char *)obs->option, OC_RESOURCE_OBSERVE_DEREGISTER) == 0) {
+        OC_LOG(DEBUG, TAG, PCF("adding an observer"));
+    }
+    else if (obs->option == OC_RESOURCE_OBSERVE_DEREGISTER)
+    {
         // Deregister observation
-        result = DeleteObserver (obs->token->token, obs->token->tokenLength);
-        return result;
-    } else {
+        result = DeleteObserver (obs->token);
+        if(result == OC_STACK_OK)
+        {
+            OC_LOG(DEBUG, TAG, PCF("removing an observer"));
+            result = OC_STACK_OBSERVER_REMOVED;
+        }
+    }
+    else
+    {
         // Invalid option
         OC_LOG(ERROR, TAG, PCF("Invalid CoAP observe option"));
-        return OC_STACK_INVALID_OBSERVE_PARAM;
+        result = OC_STACK_INVALID_OBSERVE_PARAM;
     }
+    return result;
 }
 
-OCStackResult SendObserverNotification (OCResourceHandle handle, OCResource *resPtr)
+OCStackResult SendObserverNotification (OCResource *resPtr)
 {
     uint8_t numObs = 0;
-    OCStackResult result;
-    ObserveResourceServer *obsRes = serverObsList;
-    OCEntityHandlerRequest entityHandlerReq;
-    unsigned char bufRes[MAX_RESPONSE_LENGTH] = { 0 } ;
-    /*
-     * TODO: In the current releast all observes are set as non-confirmable since the
-     * entity handler does not have a way to specify the message QoS - add a parameter.
-     * Sending all observes NON does not confirm with the observe draft (ver14).
-     */
+    OCStackResult result = OC_STACK_ERROR;
+    ResourceObserver *resourceObserver = serverObsList;
+    OCEntityHandlerRequest * entityHandlerReq = NULL;
+    unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
+    // TODO: we should allow the server application to define qos for each notification
     OCQualityOfService qos = OC_NON_CONFIRMABLE;
 
     // Increment the sequence number
     resPtr->sequenceNum += 1;
     if (resPtr->sequenceNum == MAX_SEQUENCE_NUMBER)
+    {
         resPtr->sequenceNum = 1;
+    }
 
     // Find clients that are observing this resource
-    while (obsRes) {
-        if (obsRes->resource == handle) {
-            // Invoke the entity handler for the client to process the query according to
-            // the new representation
+    while (resourceObserver)
+    {
+        if (resourceObserver->resource == resPtr)
+        {
+            // Invoke the entity handler for the client to process
+            // the query according to the new representation
             numObs++;
-            entityHandlerReq.resource = handle;
-            entityHandlerReq.query = obsRes->query;
-            entityHandlerReq.method = OC_REST_GET;
-            entityHandlerReq.reqJSONPayload = NULL;
-            entityHandlerReq.resJSONPayload = bufRes;
-            entityHandlerReq.resJSONPayloadLen = MAX_RESPONSE_LENGTH;
-            // Even if entity handler for a resource is not successful we continue calling
-            // entity handler for other resources
-            if ( BuildObsJSONResponse((OCResource *)handle, &entityHandlerReq)
-                    == OC_EH_OK)
+            FormOCEntityHandlerRequest(&entityHandlerReq, OC_REST_GET, bufRes,
+                    NULL, resourceObserver->query);
+            entityHandlerReq->resource = (OCResourceHandle)resPtr;
+
+            // Even if entity handler for a resource is not successful
+            // we continue calling entity handler for other resources
+            result = resPtr->entityHandler (OC_REQUEST_FLAG, entityHandlerReq);
+            if (OC_STACK_OK == result)
             {
-                result = OC_STACK_OK;
-                OCCoAPSendMessage (obsRes->addr, result, qos, obsRes->token,
-                                   (const char *)entityHandlerReq.resJSONPayload,
-                                   resPtr->sequenceNum);
+                OC_LOG_V(INFO, TAG, "OCStack payload: %s",
+                        entityHandlerReq->resJSONPayload);
+
+                // send notifications based on the qos of the request
+                qos = resourceObserver->qos;
+                if(qos == OC_NON_CONFIRMABLE)
+                {
+                    OC_LOG_V(INFO, TAG, "Current NON count for this observer is %d",
+                            resourceObserver->NONCount);
+                    if(resourceObserver->forceCON ||
+                            resourceObserver->NONCount >= MAX_OBSERVER_NON_COUNT)
+                    {
+                        resourceObserver->NONCount = 0;
+                        // at some point we have to to send CON to check on the
+                        // availability of observer
+                        OC_LOG(INFO, TAG, PCF("This time we are sending the \
+                                notification as CON"));
+                        qos = OC_CONFIRMABLE;
+                    }
+                    else
+                    {
+                        resourceObserver->NONCount++;
+                    }
+                }
+
+                OCSendCoAPNotification(resourceObserver->addr, result, qos,
+                        resourceObserver->token,
+                        (unsigned char *)entityHandlerReq->resJSONPayload,
+                        resPtr->sequenceNum);
             }
         }
-        obsRes = obsRes->next;
+        resourceObserver = resourceObserver->next;
     }
     if (numObs == 0)
     {
@@ -128,18 +217,20 @@ OCStackResult SendObserverNotification (OCResourceHandle handle, OCResource *res
 
 OCStackResult AddObserver (const char   *resUri,
                            const char   *query,
-                           uint8_t      *token,
-                           size_t       tokenLength,
+                           OCCoAPToken * token,
                            OCDevAddr    *addr,
-                           OCResource   *resHandle)
+                           OCResource   *resHandle,
+                           OCQualityOfService qos)
 {
-    ObserveResourceServer *obsNode;
-    OCCoAPToken *tokPtr;
+    ResourceObserver *obsNode = NULL;
+    OCCoAPToken *tokPtr = NULL;
 
-    obsNode = (ObserveResourceServer *) OCMalloc(sizeof(ObserveResourceServer));
-    if (obsNode) {
+    obsNode = (ResourceObserver *) OCMalloc(sizeof(ResourceObserver));
+    if (obsNode)
+    {
         obsNode->resUri = (unsigned char *)OCMalloc(sizeof(strlen(resUri)+1));
         VERIFY_NON_NULL (obsNode->resUri);
+        obsNode->qos = qos;
         memcpy (obsNode->resUri, resUri, sizeof(strlen(resUri)+1));
         obsNode->query = (unsigned char *)OCMalloc(sizeof(strlen(query)+1));
         VERIFY_NON_NULL (obsNode->query);
@@ -147,12 +238,15 @@ OCStackResult AddObserver (const char   *resUri,
         obsNode->token = (OCCoAPToken *)OCMalloc(sizeof(OCCoAPToken));
         VERIFY_NON_NULL (obsNode->token);
         tokPtr = obsNode->token;
-        memcpy (tokPtr->token, token, sizeof(OCCoAPToken));
-        tokPtr->tokenLength = tokenLength;
+        tokPtr->tokenLength = token->tokenLength;
+        memcpy (tokPtr->token, token->token, tokPtr->tokenLength);
         obsNode->addr = (OCDevAddr *)OCMalloc(sizeof(OCDevAddr));
         VERIFY_NON_NULL (obsNode->addr);
         memcpy (obsNode->addr, addr, sizeof(OCDevAddr));
         obsNode->resource = resHandle;
+        obsNode->failedCommCount = 0;
+        obsNode->NONCount = 0;
+        obsNode->forceCON = 0;
 
         LL_APPEND (serverObsList, obsNode);
         return OC_STACK_OK;
@@ -167,16 +261,17 @@ exit:
     return OC_STACK_NO_MEMORY;
 }
 
-ObserveResourceServer* GetObserver (const uint8_t *token, const size_t tokenLength)
+ResourceObserver* GetObserver (const OCCoAPToken * token)
 {
-    ObserveResourceServer *out = NULL;
+    ResourceObserver *out = NULL;
 
-    if(token)
+    if(token) 
     {
-        LL_FOREACH (serverObsList, out)
+        LL_FOREACH (serverObsList, out) 
         {
-            if((out->token->tokenLength == tokenLength) &&
-               (memcmp(out->token->token, token, tokenLength) == 0)) {
+            if((out->token->tokenLength == token->tokenLength) &&
+               (memcmp(out->token->token, token->token, token->tokenLength) == 0))
+            {
                 return out;
             }
         }
@@ -185,30 +280,31 @@ ObserveResourceServer* GetObserver (const uint8_t *token, const size_t tokenLeng
     return NULL;
 }
 
-OCStackResult DeleteObserver (uint8_t *token, size_t tokenLength)
+OCStackResult DeleteObserver (OCCoAPToken * token)
 {
-    ObserveResourceServer *obsNode = NULL;
+    ResourceObserver *obsNode = NULL;
 
-    obsNode = GetObserver (token, tokenLength);
-    if (obsNode) {
+    obsNode = GetObserver (token);
+    if (obsNode)
+    {
         LL_DELETE (serverObsList, obsNode);
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);
         OCFree(obsNode->token);
         OCFree(obsNode->addr);
         OCFree(obsNode);
-        return OC_STACK_OK;
     }
-    return OC_STACK_ERROR;
+    // it is ok if we did not find the observer...
+    return OC_STACK_OK;
 }
 
 void DeleteObserverList()
 {
-    ObserveResourceServer *out;
-    ObserveResourceServer *tmp;
-    LL_FOREACH_SAFE (serverObsList, out, tmp)
+    ResourceObserver *out = NULL;
+    ResourceObserver *tmp = NULL;
+    LL_FOREACH_SAFE (serverObsList, out, tmp) 
     {
-        DeleteObserver (out->token->token, out->token->tokenLength);
+        DeleteObserver (out->token);
     }
     serverObsList = NULL;
 }
