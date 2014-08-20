@@ -36,7 +36,7 @@ LIB_SRC1 += ../OCLib/OCServer.cpp
 
 CXX_LIBS := -Lboost_regex
 
-.PHONY: prep_dirs ocreflect test_OCReflect test_OCClient test_properties
+.PHONY: prep_dirs ocreflect test_OCReflect test_OCClient test_properties ocicuc
 
 all: .PHONY
 
@@ -55,6 +55,9 @@ test_OCReflect:
 test_OCClient:
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ reflect/test_OCClient.cpp $(LIB_SRC0) $(CXX_INC) $(CXX_LIBS)
 
+ocicuc:
+	cd ocicuc && $(MAKE)
+
 clean:	clean_legacy
 	-rm -rf release/*
 	-rm -rf release/obj/*.o
@@ -64,6 +67,7 @@ clean:	clean_legacy
 	-rm -rf debug/obj/*.o
 	-rm -rf debug/obj/*.a
 	-rmdir debug
+	cd ocicuc && $(MAKE) clean
 
 clean_legacy:
 	-rm -f -v test_properties test_OCReflect test_OCClient

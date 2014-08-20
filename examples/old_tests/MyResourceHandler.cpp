@@ -90,7 +90,7 @@ void MyResourceHandler::onFoundResource(OCResourceResult *update, void *params){
 		//Example to unobserve a property
 		unbind_observer(&myObserverHandler, myResource, "PowerState");
 	}
-	catch(OC::OCReflect::reflection_exception& e)
+	catch(OC::reflection_exception& e)
 	{
 		log(e.what());
 	}
