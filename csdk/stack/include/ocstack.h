@@ -55,13 +55,14 @@ typedef enum {
  * Standard RESTful HTTP Methods
  */
 typedef enum {
-    OC_REST_NOMETHOD = 0,
-    OC_REST_GET      = (1 << 0),      // Read
-    OC_REST_PUT      = (1 << 1),      // Write
-    OC_REST_POST     = (1 << 2),      // Update
-    OC_REST_DELETE   = (1 << 3),      // Delete
-    OC_REST_OBSERVE  = (1 << 4),      // Register observe request for most up date notifications ONLY.
-    OC_REST_OBSERVE_ALL  = (1 << 5)   // Register observe request for all notifications, including stale notifications.
+    OC_REST_NOMETHOD    = 0,
+    OC_REST_GET         = (1 << 0),     // Read
+    OC_REST_PUT         = (1 << 1),     // Write
+    OC_REST_POST        = (1 << 2),     // Update
+    OC_REST_DELETE      = (1 << 3),     // Delete
+    OC_REST_OBSERVE     = (1 << 4),     // Register observe request for most up date notifications ONLY.
+    OC_REST_OBSERVE_ALL = (1 << 5),     // Register observe request for all notifications, including stale notifications.
+    OC_REST_PRESENCE    = (1 << 6)      // Subscribe for all presence notifications of a particular resource.
 } OCMethod;
 
 /**
