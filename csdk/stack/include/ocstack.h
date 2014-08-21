@@ -37,12 +37,6 @@ extern "C" {
 #define OC_MULTICAST_PREFIX                  PCF("coap://224.0.1.187:5683")
 
 #define USE_RANDOM_PORT (0)
-#define MAX_RESPONSE_LENGTH (256)
-#define MAX_REQUEST_LENGTH (128)
-#define MAX_URI_LENGTH (64)
-#define MAX_QUERY_LENGTH (64)
-#define MAX_CONTAINED_RESOURCES  (5)
-
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------

@@ -22,6 +22,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "occoaphelper.h"
+#include "ocstackconfig.h"
 #include "logger.h"
 #include "ocobserve.h"
 #include "coap_time.h"

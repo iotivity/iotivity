@@ -29,6 +29,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "ocstack.h"
+#include "ocstackconfig.h"
 #include "occoaptoken.h"
 #include "occlientcb.h"
 #include <logger.h>
@@ -138,7 +139,7 @@ typedef struct {
     unsigned char * resourceUrl;
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
-    // this structure points to the information for processing observe option 
+    // this structure points to the information for processing observe option
     OCObserveReq *observe;
     // If a subscription update, this is count of observe notifications from server perspective.
     uint32_t sequenceNum;
