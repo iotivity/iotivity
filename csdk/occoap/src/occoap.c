@@ -23,6 +23,7 @@
 // Includes
 //=============================================================================
 #include "occoap.h"
+#include "ocstackconfig.h"
 #include "occlientcb.h"
 #include "ocobserve.h"
 #include "logger.h"

@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ocstack.h"
+#include "ocstackconfig.h"
 #include "ocstackinternal.h"
 #include "ocobserve.h"
 #include "ocresource.h"

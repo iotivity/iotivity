@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include "ocstack.h"
+#include "ocstackconfig.h"
 #include "ocstackinternal.h"
 #include "ocresource.h"
 #include "ocobserve.h"
