@@ -57,7 +57,7 @@ auto make_description()
  return desc;
 }
 
-// Prettyprinter for AttributeMaps:
+// Prettyprinters:
 std::ostream& operator<<(std::ostream& os, const OC::AttributeMap& attrs)
 {
  for(const auto& attr : attrs)
@@ -165,9 +165,9 @@ class resource_handle
  // Callbacks (note that the signature after binding will match exactly:
  private:
  void onFoundResource(std::shared_ptr<OC::OCResource> in_resource);
- void onResourceGet(OC::AttributeMap attr_map, const int error_code);
- void onResourcePut(OC::AttributeMap attribute_map, const int error_code);
- void onObserve(const OC::AttributeMap attribute_map, const int error_code, const int& sequence_number);
+ void onResourceGet(OC::OCRepresentation rep, const int error_code);
+ void onResourcePut(const OC::OCRepresentation rep, const int error_code);
+ void onObserve(const OC::OCRepresentation rep, const int error_code, const int& sequence_number);
 };
 
 class resource_handler
@@ -296,7 +296,7 @@ void resource_handle::onFoundResource(std::shared_ptr<OC::OCResource> in_resourc
 
        call_timer.report_and_reset("find_resources");
 
-       // Now, fixup our own representation:
+       // Now, fixup our own representation ptr:
        resource = in_resource;
 
        /* Note: You can combine the host and URI to get a unique identifier, for
@@ -307,8 +307,10 @@ void resource_handle::onFoundResource(std::shared_ptr<OC::OCResource> in_resourc
 
        call_timer.mark("get_resource");
 
-       resource->get(std::bind(&resource_handle::onResourceGet, this, 
-                               std::placeholders::_1, std::placeholders::_2));
+       OC::QueryParamsMap qpm;
+
+       resource->get(qpm, std::bind(&resource_handle::onResourceGet, this, 
+                                    std::placeholders::_1, std::placeholders::_2));
   }
  catch(OC::OCException& e)
   {
@@ -320,7 +322,7 @@ void resource_handle::onFoundResource(std::shared_ptr<OC::OCResource> in_resourc
   }
 }
 
-void resource_handle::onResourceGet(const OC::AttributeMap attr_map, const int error_code)
+void resource_handle::onResourceGet(const OC::OCRepresentation rep, const int error_code)
 {
  using std::cout;
 
@@ -340,7 +342,7 @@ void resource_handle::onResourceGet(const OC::AttributeMap attr_map, const int e
         return;
   }
 
- std::cout << attr_map << '\n';
+ std::cout << "input attributes:\n" << rep.getAttributeMap() << '\n';
 
  // Now, make a change to the light representation (replacing, rather than parsing): 
  OC::AttributeMap attrs {
@@ -348,13 +350,18 @@ void resource_handle::onResourceGet(const OC::AttributeMap attr_map, const int e
                          { "power", { "10" } }
                         };
 
+ std::cout << "output attributes:\n" << attrs << '\n';
+
  call_timer.mark("put_resource");
 
- resource->put(attrs, OC::QueryParamsMap(), 
+ OC::OCRepresentation out_rep;
+ out_rep.setAttributeMap(attrs); 
+ 
+ resource->put(out_rep, OC::QueryParamsMap(), 
                std::bind(&resource_handle::onResourcePut, this, std::placeholders::_1, std::placeholders::_2));
 }
 
-void resource_handle::onResourcePut(const OC::AttributeMap attribute_map, const int error_code)
+void resource_handle::onResourcePut(const OC::OCRepresentation rep, const int error_code)
 {
  std::cout << "onResourcePut():\n";
 
@@ -369,16 +376,16 @@ void resource_handle::onResourcePut(const OC::AttributeMap attribute_map, const 
         throw OC::OCException(os.str());
   }
 
- std::cout << attribute_map << '\n';
+ std::cout << "input attributes:\n" << rep.getAttributeMap() << '\n';
 
  call_timer.mark("observe_resource");
 
  // Start an observer:
- resource->observe(OC::ObserveType::Observe,
+ resource->observe(OC::ObserveType::Observe, OC::QueryParamsMap(),
                     std::bind(&resource_handle::onObserve, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
-void resource_handle::onObserve(const OC::AttributeMap attribute_map, const int error_code, const int& sequence_number)
+void resource_handle::onObserve(const OC::OCRepresentation rep, const int error_code, const int& sequence_number)
 {
  if(0 != error_code)
   {
@@ -391,7 +398,7 @@ void resource_handle::onObserve(const OC::AttributeMap attribute_map, const int 
 
  call_timer.report_and_reset("observe_resource");
 
- std::cout << attribute_map << '\n';
+ std::cout << rep.getAttributeMap() << '\n';
 
  const auto oc = observe_count();
 
