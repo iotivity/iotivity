@@ -172,7 +172,7 @@ namespace OC
                 payload << "\""<<itr->first<<"\":" << itr->second.front();
             }
 
-            payload << "}},";
+            payload << "}}";
 
             // Children stuff
             std::vector<OCRepresentation> children = rep.getChildren();
@@ -232,16 +232,13 @@ namespace OC
             payload << "\"" ;
             payload << rep.getUri();
             payload << "\"" ;
-            payload << "},";
+            payload << "}";
 
             std::vector<OCRepresentation> children = rep.getChildren();
             
             for(auto oitr = children.begin(); oitr != children.end(); ++oitr)
             {
-                if(oitr != children.begin())
-                {
-                    payload << ',';
-                }
+                payload << ',';
 
                 payload << "{";
                 

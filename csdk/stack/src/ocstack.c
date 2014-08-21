@@ -73,6 +73,7 @@ OCStackResult HandleStackRequests(OCRequest * request)
     {
         result = BuildJSONResponse(resHandling, resource, request);
     }
+
     return result;
 }
 

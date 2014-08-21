@@ -91,7 +91,7 @@ public:
         // This will internally create and register the resource.
         OCStackResult result = platform.registerResource(
                                     m_roomHandle, m_roomUri, m_roomType,
-                                    m_roomInterface1, &entityHandlerRoom, 
+                                    m_roomInterface1, NULL, //entityHandlerRoom, 
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                   );
 
@@ -114,7 +114,7 @@ public:
 
         result = platform.registerResource(
                                     m_lightHandle, m_lightUri, m_lightType,
-                                    m_lightInterface, &entityHandlerLight, 
+                                    m_lightInterface, entityHandlerLight, 
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                    );
 
@@ -125,13 +125,25 @@ public:
 
         result = platform.registerResource(
                                     m_fanHandle, m_fanUri, m_fanType,
-                                    m_fanInterface, &entityHandlerFan, 
+                                    m_fanInterface, entityHandlerFan, 
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                    );
 
         if (OC_STACK_OK != result)
         {
             cout << "Resource creation (fan) was unsuccessful\n";
+        }
+
+        result = platform.bindResource(m_roomHandle, m_lightHandle);
+        if (OC_STACK_OK != result)
+        {
+            cout << "Binding fan resource to room was unsuccessful\n";
+        }
+
+        result = platform.bindResource(m_roomHandle, m_fanHandle);
+        if (OC_STACK_OK != result)
+        {
+            cout << "Binding light resource to room was unsuccessful\n";
         }
 
     }

@@ -186,7 +186,6 @@ void getRoomRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
@@ -245,8 +244,7 @@ int main(int argc, char* argv[]) {
         OCPlatform platform(cfg);
         std::cout << "Created Platform..."<<std::endl;
         // Find all resources
-        platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.room", &foundResource);
-        //platform.findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+        platform.findResource("", "coap://224.0.1.187/oc/core", &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
         while(true)
         {

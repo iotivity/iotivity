@@ -38,10 +38,12 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const AttributeMap& attributeMap, const int& eCode, const int& sequenceNumber)
+void onObserve(const OCRepresentation& rep, const int& eCode, const int& sequenceNumber)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
+        AttributeMap attributeMap = rep.getAttributeMap();
+
         std::cout << "OBSERVE RESULT:"<<std::endl;
         std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
         for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
@@ -110,6 +112,15 @@ void onPut(const OCRepresentation& rep, const int eCode)
                 std::cout << std::endl;
             }
         }
+
+        if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
+            std::cout << endl << "Observe is used." << endl << endl;
+        else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
+            std::cout << endl << "ObserveAll is used." << endl << endl;
+
+        QueryParamsMap test;
+
+        curResource->observe(OBSERVE_TYPE_TO_USE, test, &onObserve);
 
     }
     else
@@ -209,7 +220,6 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
         // Invoke resource's get API with the callback parameter
 
         QueryParamsMap test;
-        test["if"] = BATCH_INTERFACE;
         resource->get(test, &onGet);
     }
 }

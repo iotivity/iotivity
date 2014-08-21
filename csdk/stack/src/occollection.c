@@ -223,13 +223,19 @@ BuildCollectionBatchJSONResponse(OCEntityHandlerFlag flag,
     stackRet = BuildRootResourceJSON(resource, ehRequest);
     if (stackRet == OC_STACK_OK)
     {
+        OCResourceHandle origResourceHandle = ehRequest->resource;
+
         for  (int i = 0; i < MAX_CONTAINED_RESOURCES; i++)
         {
             OCResource* temp = resource->rsrcResources[i];
             if (temp)
             {
                 //TODO ("Proper Error handling");
+
+                ehRequest->resource = (OCResourceHandle) temp;
+
                 ehRet = temp->entityHandler(OC_REQUEST_FLAG, ehRequest);
+
                 if(ehRet == OC_EH_OK)
                 {
                     unsigned char* buffer = ehRequest->resJSONPayload;
@@ -239,7 +245,7 @@ BuildCollectionBatchJSONResponse(OCEntityHandlerFlag flag,
                     ehRequest->resJSONPayload = buffer;
                     if ( resource->rsrcResources[i+1] && ehRequest->resJSONPayloadLen > sizeof(OC_JSON_SEPARATOR) )
                     {
-                        *buffer = OC_JSON_SEPARATOR;
+                        * buffer = OC_JSON_SEPARATOR;
                         buffer++;
                         ehRequest->resJSONPayload = buffer;
                         ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen - 1;
@@ -256,6 +262,8 @@ BuildCollectionBatchJSONResponse(OCEntityHandlerFlag flag,
                break;
             }
         }
+
+        ehRequest->resource = origResourceHandle;
     }
     return stackRet;
 }

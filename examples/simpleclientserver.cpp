@@ -25,6 +25,7 @@
 ///
 #include <memory>
 #include <iostream>
+#include <stdexcept>
 #include <condition_variable>
 #include <map>
 #include <vector>
@@ -35,8 +36,13 @@ using namespace OC;
 class ClientWorker
 {
 private:
-    void putResourceInfo(const AttributeMap requestedPut, const AttributeMap attrMap, const int eCode)
+    void putResourceInfo(const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
     {
+       std::cout << "In PutResourceInfo" << std::endl;
+
+       AttributeMap requestedPut = rep.getAttributeMap();
+       AttributeMap attrMap = rep2.getAttributeMap();
+
        std::cout <<"Clientside Put response to get was: "<<std::endl;
        std::cout <<"ErrorCode: "<<eCode <<std::endl;
 
@@ -71,8 +77,10 @@ private:
        }
     }
 
-    void getResourceInfo(const AttributeMap attrMap, const int eCode)
+    void getResourceInfo(const OCRepresentation rep, const int eCode)
     {
+        std::cout << "In getResourceInfo" << std::endl;
+        AttributeMap attrMap = rep.getAttributeMap();
 
         std::cout<<"Clientside response to get was: "<<std::endl;
         std::cout<<"Error Code: "<<eCode<<std::endl;
@@ -93,16 +101,21 @@ private:
             }
 
             std::cout << "Doing a put on q/foo" <<std::endl;
-            AttributeMap attrMap2(attrMap);
-            attrMap2["isFoo"][0] ="false";
-            attrMap2["barCount"][0]="211";
+            OCRepresentation rep2(rep);
+            AttributeMap attrMap2 = rep2.getAttributeMap(); 
 
-            m_resource->put(attrMap2, QueryParamsMap(), std::function<void(const AttributeMap, const int)>(std::bind(&ClientWorker::putResourceInfo, this, attrMap2, std::placeholders::_1, std::placeholders::_2)));
+            attrMap2["isFoo"].push_back("false");
+            attrMap2["barCount"].push_back("211");
+
+            rep2.setAttributeMap(attrMap2);
+
+            m_resource->put(rep2, QueryParamsMap(), std::function<void(const OCRepresentation, const int)>(std::bind(&ClientWorker::putResourceInfo, this, rep2, std::placeholders::_1, std::placeholders::_2)));
         }
     }
 
     void foundResource(std::shared_ptr<OCResource> resource)
     {    
+        std::cout << "In foundResource" << std::endl;
         if(resource && resource->uri() == "/q/foo")
         {
             {
@@ -121,7 +134,7 @@ private:
 
             std::cout<<"Doing a get on q/foo."<<std::endl;
             QueryParamsMap test;
-            resource->get(test, std::function<void(const AttributeMap, const int)>(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
+            resource->get(test, std::function<void(const OCRepresentation, const int)>(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
         } 
     }
 
@@ -174,8 +187,10 @@ struct FooResource
         return true;
     }
 
-    void getRepresentation(AttributeMap& attributeMap)
+    void getRepresentation(OCRepresentation& rep)
     {
+        AttributeMap attributeMap;
+
         AttributeValues isFooVal;
         isFooVal.push_back(m_isFoo ? "true" : "false");
 
@@ -184,14 +199,26 @@ struct FooResource
 
         attributeMap["isFoo"] = isFooVal;
         attributeMap["barCount"] = barCt;
+        
+        rep.setAttributeMap(attributeMap);
     }
 
-    void setRepresentation(const AttributeMap& attributeMap)
+    void setRepresentation(OCRepresentation& rep)
     {
-        auto fooVector = attributeMap.at("isFoo");
-        m_isFoo = fooVector[0] == "true";
-        auto barVector = attributeMap.at("barCount");
-        m_barCount = std::stoi(barVector[0]);
+        AttributeMap attributeMap(rep.getAttributeMap());
+    
+        try
+         {
+            auto fooVector = attributeMap.at("isFoo");
+            m_isFoo = fooVector[0] == "true";
+            auto barVector = attributeMap.at("barCount");
+            m_barCount = std::stoi(barVector[0]);
+            rep.setAttributeMap(attributeMap);
+         }
+        catch(std::out_of_range& e)
+         {
+            std::cerr << "setRepresentation(): unable to look up values in attributeMap: " << e.what() << '\n';
+         }
     }
 
     void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
@@ -210,27 +237,28 @@ struct FooResource
                 {
                     std::cout<<"\t\t\trequestType : GET"<<std::endl;
 
-                    AttributeMap attrs;
-                    getRepresentation(attrs);
+                    OCRepresentation rep;
+                    getRepresentation(rep);
 
                     if(response)
                     {
                         response->setErrorCode(200);
-                        response->setResourceRepresentation(attrs);
+                        response->setResourceRepresentation(rep, "");
                     }
                 }
                 else if (request->getRequestType() == "PUT")
                 {
                     std::cout<<"\t\t\trequestType : PUT"<<std::endl;
 
-                    setRepresentation(request->getAttributeRepresentation());
+                    OCRepresentation rep = request->getResourceRepresentation();
+                    setRepresentation(rep);
 
                     if(response)
                     {
                         response->setErrorCode(200);
-                        AttributeMap attrs;
-                        getRepresentation(attrs);
-                        response->setResourceRepresentation(attrs);
+                        OCRepresentation rep;
+                        getRepresentation(rep);
+                        response->setResourceRepresentation(rep, "");
                     }
                 }
                 else

@@ -182,7 +182,7 @@ namespace OC
         return result;
     }
 
-    OCStackResult bindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle)
+    OCStackResult OCPlatform::bindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle)
     {
         OCStackResult result = OC_STACK_OK;
 
@@ -197,7 +197,7 @@ namespace OC
         return result;
     }
 
-    OCStackResult bindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
+    OCStackResult OCPlatform::bindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
     {
         OCStackResult result = OC_STACK_OK;
 

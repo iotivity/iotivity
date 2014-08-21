@@ -151,8 +151,22 @@ namespace OC
     
             std::stringstream requestStream;
             requestStream << clientResponse->resJSONPayload;
+
+            // TODO this should got logger
+            // std::cout << "Listen: " << clientResponse->resJSONPayload << std::endl;
+
             boost::property_tree::ptree root;
-            boost::property_tree::read_json(requestStream, root);
+
+            try
+            {
+                boost::property_tree::read_json(requestStream, root);
+            }
+            catch(boost::property_tree::json_parser::json_parser_error &e)
+            {
+                std::cout << "read_json failed: "<< e.what() <<std::endl;
+                // TODO: Do we want to handle this somehow? Perhaps we need to log this?
+                return OC_STACK_KEEP_TRANSACTION;
+            }
             
             boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
             
@@ -176,9 +190,6 @@ namespace OC
                     std::cout << "Failed to create resource: "<< e.what() <<std::endl;
                     // TODO: Do we want to handle this somehow?  Perhaps we need to log this?
                 }
-          
-                // TODO break after first found resource; something wrong in collection should be fixed first 
-                break; 
             }
             return OC_STACK_KEEP_TRANSACTION;
 
@@ -352,7 +363,7 @@ namespace OC
         // TODO: in the future the cstack should be combining these two strings!
         ostringstream os;
         os << host << assembleSetResourceUri(uri, queryParams).c_str();
-        //std::cout << "GET URI: " << os.str() << std::endl;
+        std::cout << "GET URI: " << os.str() << std::endl;
         // TODO: end of above
 
         auto cLock = m_csdkLock.lock();

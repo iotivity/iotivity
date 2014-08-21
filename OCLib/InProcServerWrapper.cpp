@@ -48,7 +48,7 @@ void defaultEntityHandler(const OC::OCResourceRequest::Ptr request, const OC::OC
     cout << "\nSomething wrong: We are in default entity handler: " << endl;
 }
 
-OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
+OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
 
     // TODO @SASHI we need to have a better way of logging (with various levels of logging)
     cout << "\nIn C entity handler: " << endl;
@@ -103,7 +103,15 @@ OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
     if(entityHandlerEntry != entityHandlerMap.end()) {
         // Call CPP Application Entity Handler
         // TODO CPP Application also should return OC_EH_OK or OC_EH_ERROR
-        entityHandlerEntry->second(pRequest, pResponse);
+        if(entityHandlerEntry->second)
+        {
+            entityHandlerEntry->second(pRequest, pResponse);
+        }
+        else
+        {
+            // TODO Logging
+            std::cout << "C stack should not call again for parent resource\n";
+        }
     }
     else {
         std::cout << "No entity handler found."  << endl;
@@ -132,7 +140,7 @@ OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
         if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
         {
             strncpy((char*)entityHandlerRequest->resJSONPayload, payLoad.c_str(), entityHandlerRequest->resJSONPayloadLen);
-            cout << (char*)entityHandlerRequest->resJSONPayload << endl;
+            cout << "Payload: " << (char*)entityHandlerRequest->resJSONPayload << endl;
         }
         else
         {
@@ -223,13 +231,26 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
 
-            result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
+            if(NULL != eHandler)
+            {
+                result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
                             resourceTypeName.c_str(), // const char * resourceTypeName
                             resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
                             resourceURI.c_str(), // const char * uri
-                            entityHandler, // OCEntityHandler entityHandler
+                            EntityHandler, // OCEntityHandler entityHandler
                             resourceProperties // uint8_t resourceProperties
                             );
+            }
+            else
+            {
+                result = OCCreateResource(&resourceHandle, // OCResourceHandle *handle
+                            resourceTypeName.c_str(), // const char * resourceTypeName
+                            resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
+                            resourceURI.c_str(), // const char * uri
+                            NULL, // OCEntityHandler entityHandler
+                            resourceProperties // uint8_t resourceProperties
+                            );
+            }
 
             if(result != OC_STACK_OK)
             {

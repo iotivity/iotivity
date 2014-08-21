@@ -74,7 +74,7 @@ OC::Utilities::QueryParamsKeyVal OC::Utilities::getQueryParams(const std::string
             break;
         }
 
-        coap_uri_t coapuri = {0};
+        coap_uri_t coapuri = {{0}};
         unsigned char* uristr = reinterpret_cast<unsigned char*>(const_cast<char*>(_uri.c_str()));
 
         if(coap_split_uri(uristr, _uri.length(), &coapuri) < 0)
