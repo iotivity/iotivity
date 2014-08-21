@@ -1,73 +1,48 @@
 # override with `make BUILD=release`
 # default to release build
-BUILD	:= release
-CXX	:= g++
-#CXX=clang -lstdc++ -g -O0
-OUT_DIR := $(PWD)/$(BUILD)
-OBJ_DIR	:= $(OUT_DIR)/obj
+BUILD	  := release
+CXX	      := g++
+#CXX	  := clang
+OUT_DIR	  := $(PWD)/$(BUILD)
+OBJ_DIR	  := $(OUT_DIR)/obj
+SAMPLES_OUT_DIR := $(OUT_DIR)/samples
 
 CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread
 
 CXX_FLAGS.release   := -std=c++0x -Wall -pthread
 
-CXX_INC	:= -I../include/
-CXX_INC += -I./client/
-CXX_INC += -I../csdk/stack/include
-CXX_INC += -I../csdk/ocsocket/include
-CXX_INC += -I../csdk/ocrandom/include
-CXX_INC += -I../csdk/logger/include
+CXX_INC	  := -I../include/
+CXX_INC	  += -I../csdk/stack/include
+CXX_INC	  += -I../csdk/ocsocket/include
+CXX_INC	  += -I../csdk/ocrandom/include
+CXX_INC	  += -I../csdk/logger/include
+CXX_INC	  += -I../csdk/libcoap
 
-LIB_SRC0 := ../OCLib/OCReflect.cpp
-LIB_SRC0 += ../OCLib/OCProperties.cpp
-LIB_SRC0 += ../OCLib/OCObserver.cpp
-LIB_SRC0 += ../OCLib/OCResource.cpp
-LIB_SRC0 += ../OCLib/OCServer.cpp
-
-LIB_SRC1 := ../OCLib/OCReflect.cpp
-LIB_SRC1 += ../OCLib/OCObserver.cpp
-LIB_SRC1 += ./client/MyObserverHandler.cpp
-LIB_SRC1 += ../OCLib/OCResource.cpp
-LIB_SRC1 += ../OCLib/OCSecurityModel.cpp
-LIB_SRC1 += ../OCLib/InProcClientWrapper.cpp
-LIB_SRC1 += ../OCLib/OCPlatform.cpp
-LIB_SRC1 += ../OCLib/InProcServerWrapper.cpp
-LIB_SRC1 += ../csdk/liboctbstack.a
-LIB_SRC1 += ../OCLib/OCServer.cpp
-
-CXX_LIBS := -Lboost_regex
-
-.PHONY: prep_dirs ocreflect test_OCReflect test_OCClient test_properties ocicuc
+# Force metatargets to build:
+.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient
 
 all: .PHONY
 
 prep_dirs:
 	-mkdir $(OUT_DIR)
 	-mkdir $(OBJ_DIR)
+	-mkdir $(SAMPLES_OUT_DIR)
 
-ocreflect: test_properties test_OCClient
+simpleserver: simpleserver.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ simpleserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
 
-test_properties:
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ reflect/test_properties.cpp $(LIB_SRC0) $(CXX_INC) $(CXX_LIBS)
+simpleclient: simpleclient.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ simpleclient.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
 
-test_OCReflect:
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ reflect/test_OCReflect.cpp ../OCLib/OCReflect.cpp ../OCLib/OCProperties.cpp ../OCLib/OCServer.cpp  $(CXX_INC) $(CXX_LIBS)
+simpleclientserver: simpleclientserver.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ simpleclientserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
 
-test_OCClient:
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ reflect/test_OCClient.cpp $(LIB_SRC0) $(CXX_INC) $(CXX_LIBS)
+roomserver: roomserver.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ roomserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
 
-ocicuc:
-	cd ocicuc && $(MAKE)
+roomclient: roomclient.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(SAMPLES_OUT_DIR)/$@ roomclient.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
 
-clean:	clean_legacy
-	-rm -rf release/*
-	-rm -rf release/obj/*.o
-	-rm -rf release/obj/*.a
-	-rmdir release
-	-rm -rf debug/*
-	-rm -rf debug/obj/*.o
-	-rm -rf debug/obj/*.a
-	-rmdir debug
-	cd ocicuc && $(MAKE) clean
+clean: 
+	rm -rf $(OUT_DIR)/*
 
-clean_legacy:
-	-rm -f -v test_properties test_OCReflect test_OCClient
