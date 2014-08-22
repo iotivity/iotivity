@@ -34,13 +34,13 @@ typedef struct LEDRESOURCE{
 
 static LEDResource LED;
 
-// TODO: hard coded for now, change after Sprint4
-static unsigned char responsePayloadGet[] = "{\"oc\": {\"payload\": {\"state\" : \"on\",\"power\" : \"10\"}}}";
-static unsigned char responsePayloadPut[] = "{\"oc\": {\"payload\": {\"state\" : \"off\",\"power\" : \"0\"}}}";
+static char responsePayloadGet[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"power\":10}}";
+static char responsePayloadPut[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"off\",\"power\":0}}";
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest )
 {
+    OCEntityHandlerResult ehRet = OC_EH_OK;
     const char* typeOfMessage;
 
     switch (flag)
@@ -58,20 +58,31 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             typeOfMessage = "UNKNOWN";
     }
     OC_LOG_V(INFO, TAG, "Receiving message type: %s", typeOfMessage);
+
     if(entityHandlerRequest && flag == OC_REQUEST_FLAG)
-    { //[CL]
+    {
         if(OC_REST_GET == entityHandlerRequest->method)
         {
-            //entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char*>(const_cast<unsigned char*> (responsePayloadGet.c_str()));
-            entityHandlerRequest->resJSONPayload = responsePayloadGet;
+            if (strlen(responsePayloadGet) < entityHandlerRequest->resJSONPayloadLen)
+            {
+                strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadGet, entityHandlerRequest->resJSONPayloadLen);
+            }
+            else
+            {
+                ehRet = OC_EH_ERROR;
+            }
         }
         if(OC_REST_PUT == entityHandlerRequest->method)
         {
-            //std::cout << std::string(reinterpret_cast<const char*>(entityHandlerRequest->reqJSONPayload)) << std::endl;
-            OC_LOG_V(INFO, TAG, "PUT JSON payload from client: %s", entityHandlerRequest->reqJSONPayload);
-            //entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char*>(const_cast<char*> (responsePayloadPut.c_str()));
-            entityHandlerRequest->resJSONPayload = responsePayloadPut;
-            //responsePayloadGet = responsePayloadPut; // just a bad hack!
+            //Do something with the 'put' payload
+            if (strlen(responsePayloadPut) < entityHandlerRequest->resJSONPayloadLen)
+            {
+                strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadPut, entityHandlerRequest->resJSONPayloadLen);
+            }
+            else
+            {
+                ehRet = OC_EH_ERROR;
+            }
          }
     }
     else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG)
@@ -79,10 +90,9 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
         gLEDUnderObservation = 1;
     }
 
-    //OC_LOG_V(INFO, TAG, "/nReceiving message type:/n/t %s. /n/nWith request:/n/t %s", typeOfMessage, request);
-
-    return OC_EH_OK;
+    return ehRet;
 }
+
 static uint8_t modCounter = 0;
 void *ChangeLEDRepresentation (void *param)
 {
@@ -160,64 +170,44 @@ void createLEDResource()
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 }
-const char *getResult(OCStackResult result)
-{
-    char resString[40] = {0};
-    strcpy(resString, "Result: ");
+
+const char *getResult(OCStackResult result) {
     switch (result) {
     case OC_STACK_OK:
-        strcat(resString, "OC_STACK_OK");
-        break;
+        return "OC_STACK_OK";
     case OC_STACK_INVALID_URI:
-        strcat(resString, "OC_STACK_INVALID_URI");
-        break;
+        return "OC_STACK_INVALID_URI";
     case OC_STACK_INVALID_QUERY:
-        strcat(resString, "OC_STACK_INVALID_QUERY");
-        break;
+        return "OC_STACK_INVALID_QUERY";
     case OC_STACK_INVALID_IP:
-        strcat(resString, "OC_STACK_INVALID_IP");
-        break;
+        return "OC_STACK_INVALID_IP";
     case OC_STACK_INVALID_PORT:
-        strcat(resString, "OC_STACK_INVALID_PORT");
-        break;
+        return "OC_STACK_INVALID_PORT";
     case OC_STACK_INVALID_CALLBACK:
-        strcat(resString, "OC_STACK_INVALID_CALLBACK");
-        break;
+        return "OC_STACK_INVALID_CALLBACK";
     case OC_STACK_INVALID_METHOD:
-        strcat(resString, "OC_STACK_INVALID_METHOD");
-        break;
+        return "OC_STACK_INVALID_METHOD";
     case OC_STACK_NO_MEMORY:
-        strcat(resString, "OC_STACK_NO_MEMORY");
-        break;
+        return "OC_STACK_NO_MEMORY";
     case OC_STACK_COMM_ERROR:
-        strcat(resString, "OC_STACK_COMM_ERROR");
-        break;
+        return "OC_STACK_COMM_ERROR";
     case OC_STACK_INVALID_PARAM:
-        strcat(resString, "OC_STACK_INVALID_PARAM");
-        break;
+        return "OC_STACK_INVALID_PARAM";
     case OC_STACK_NOTIMPL:
-        strcat(resString, "OC_STACK_NOTIMPL");
-        break;
+        return "OC_STACK_NOTIMPL";
     case OC_STACK_NO_RESOURCE:
-        strcat(resString, "OC_STACK_NO_RESOURCE");
-        break;
+        return "OC_STACK_NO_RESOURCE";
     case OC_STACK_RESOURCE_ERROR:
-        strcat(resString, "OC_STACK_RESOURCE_ERROR");
-        break;
+        return "OC_STACK_RESOURCE_ERROR";
     case OC_STACK_SLOW_RESOURCE:
-        strcat(resString, "OC_STACK_SLOW_RESOURCE");
-        break;
+        return "OC_STACK_SLOW_RESOURCE";
     case OC_STACK_NO_OBSERVERS:
-        strcat(resString, "OC_STACK_NO_OBSERVERS");
-        break;
+        return "OC_STACK_NO_OBSERVERS";
     case OC_STACK_ERROR:
-        strcat(resString, "OC_STACK_ERROR");
-        break;
+        return "OC_STACK_ERROR";
     default:
-        strcat(resString, "UNKNOWN");
+        return "UNKNOWN";
     }
-    char* retString = resString;
-    return retString;
 }
 #ifdef __cplusplus
 } // extern "C"
