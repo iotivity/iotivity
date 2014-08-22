@@ -180,6 +180,24 @@ namespace OC
         */
         bool isObservable() const;
 
+        /**
+        * Function to get the list of resource types
+        * @return vector of resource types 
+        */
+        std::vector<std::string> getResourceTypes() const
+        {
+            return m_resourceTypes;
+        }
+        
+        /**
+        * Function to get the list of resource interfaces
+        * @return vector of resource interface
+        */
+        std::vector<std::string> getResourceInterfaces(void) const
+        {
+            return m_interfaces;
+        }
+
         // bool whether this is a collection type, and will have children that can be queried
         //bool isCollection() const {return m_isCollection;}
         // a collection of the resource-type names
