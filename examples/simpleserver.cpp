@@ -47,11 +47,12 @@ public:
     /// Access this property from a TB client
     bool m_state;
     int m_power;
+    std::string m_lightUri;
     OCResourceHandle m_resourceHandle;
 
 public:
     /// Constructor
-    LightResource(): m_state(false), m_power(0){}
+    LightResource(): m_state(false), m_power(0), m_lightUri("/a/light") {}
 
     /* Note that this does not need to be a member function: for classes you do not have
     access to, you can accomplish this with a free function: */
@@ -59,7 +60,7 @@ public:
     /// This function internally calls registerResource API.
     void createResource(OC::OCPlatform& platform)
     {
-        std::string resourceURI = "/a/light"; // URI of the resource
+        std::string resourceURI = m_lightUri; // URI of the resource
         std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
         std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
@@ -82,18 +83,38 @@ public:
         return m_resourceHandle;
     }
 
-    void setRepresentation(AttributeMap& attributeMap)
+    void setRepresentation(OCRepresentation& light)
     {
-        cout << "\t\t\t" << "Received representation: " << endl;
-        cout << "\t\t\t\t" << "power: " << attributeMap["power"][0] << endl;
-        cout << "\t\t\t\t" << "state: " << attributeMap["state"][0] << endl;
+        AttributeMap attributeMap = light.getAttributeMap();
 
-        m_state = attributeMap["state"][0].compare("true") == 0;
-        m_power = std::stoi(attributeMap["power"][0]);
+        if(attributeMap.find("state") != attributeMap.end() && attributeMap.find("power") != attributeMap.end())
+        {
+            cout << "\t\t\t" << "Received representation: " << endl;
+            cout << "\t\t\t\t" << "power: " << attributeMap["power"][0] << endl;
+            cout << "\t\t\t\t" << "state: " << attributeMap["state"][0] << endl;
+
+            m_state = attributeMap["state"][0].compare("true") == 0;
+            m_power= std::stoi(attributeMap["power"][0]);
+        }
     }
 
-    void getRepresentation(AttributeMap& attributeMap)
+    OCRepresentation getRepresentation()
     {
+        OCRepresentation light;
+
+        light.setUri(m_lightUri);
+
+        std::vector<std::string> interfaces;
+        //interfaces.push_back(m_lightInterface);
+
+        light.setResourceInterfaces(interfaces);
+
+        std::vector<std::string> types;
+        //types.push_back(m_lightType);
+
+        light.setResourceTypes(types);
+
+        AttributeMap attributeMap;
         AttributeValues stateVal;
         if(m_state)
         {
@@ -109,6 +130,10 @@ public:
 
         attributeMap["state"] = stateVal;
         attributeMap["power"] = powerVal;
+
+        light.setAttributeMap(attributeMap);
+
+        return light;
     }
 
     void addType(const OC::OCPlatform& platform, const std::string& type) const
@@ -207,15 +232,25 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                 // Process query params and do required operations ..
 
                 // Get the representation of this resource at this point and send it as response
-                AttributeMap attributeMap;
-
-                myLightResource.getRepresentation(attributeMap);
+                // AttributeMap attributeMap;
+                OCRepresentation rep;
+                rep = myLightResource.getRepresentation();
 
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
-                    response->setResourceRepresentation(attributeMap);
+
+                    auto findRes = queryParamsMap.find("if");
+
+                    if(findRes != queryParamsMap.end())
+                    {
+                        response->setResourceRepresentation(rep, findRes->second);
+                    }
+                    else
+                    {
+                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                    }
                 }
             }
             else if(requestType == "PUT")
@@ -225,22 +260,37 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
-                // Check queryParamsMap and do required operations ..
+                cout << "\t\t\tquery params: \n";
+                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
+                {
+                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
+                }
 
                 // Get the representation from the request
-                AttributeMap attributeMap = request->getAttributeRepresentation();
+                OCRepresentation rep = request->getResourceRepresentation();
 
-                myLightResource.setRepresentation(attributeMap);
+                myLightResource.setRepresentation(rep);
 
                 // Do related operations related to PUT request
-
-                myLightResource.getRepresentation(attributeMap);
+                rep = myLightResource.getRepresentation();
 
                 if(response)
                 {
+                    // TODO Error Code
                     response->setErrorCode(200);
-                    response->setResourceRepresentation(attributeMap);
+
+                    auto findRes = queryParamsMap.find("if");
+
+                    if(findRes != queryParamsMap.end())
+                    {
+                        response->setResourceRepresentation(rep, findRes->second);
+                    }
+                    else
+                    {
+                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                    }
                 }
+
             }
             else if(requestType == "POST")
             {

@@ -198,24 +198,6 @@ namespace OC
             return m_interfaces;
         }
 
-        // bool whether this is a collection type, and will have children that can be queried
-        //bool isCollection() const {return m_isCollection;}
-        // a collection of the resource-type names
-        //const std::vector<std::string> resourceTypes() const {return m_resourceTypes;}
-        // a collection of the interfaces supported by this resource
-        //const std::vector<std::string> interfaces() const { return m_interfaces;}
-        // a collection of property objects that allow calling of properties on this Resource
-        //const std::vector<std::string> properties() const { return m_properties;}
-        // a collection of the names of the children of this resource, assuming it supports a collection interface
-        //const std::vector<std::string> children() const {return m_children;}
-
-        /*void post(const AttributeMap&, std::function<void(const int&)> attributeHandler);
-
-        NOTE: dont expose the host ip .. so some kind of handle is required
-        static OCResource::Ptr getResource(const std::string& host, const std::string& resourceURI, const std::string& resourceName,
-            const std::string interfaceName, bool observerable);*/
-
-
     private:
         std::weak_ptr<IClientWrapper> m_clientWrapper;
         std::string m_uri;
