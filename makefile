@@ -23,8 +23,8 @@ CXX_INC	  += -I./csdk/libcoap
 all:	.PHONY
 
 prep_dirs:
-	-mkdir $(OUT_DIR)
-	-mkdir $(OBJ_DIR)
+	-mkdir -p $(OUT_DIR)
+	-mkdir -p $(OBJ_DIR)
 
 c_sdk: 
 	cd csdk && $(MAKE) "BUILD=$(BUILD)"
