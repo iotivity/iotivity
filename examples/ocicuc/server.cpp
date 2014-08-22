@@ -284,15 +284,17 @@ void LightResource::handle_get_request(std::shared_ptr<OCResourceRequest> reques
 
 void LightResource::handle_put_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response) 
 {
+ // Here's how you would get any query parameters:
  const auto query_params_map = request->getQueryParameters();
+ // ...do something with the query parameters (if there were any)...
 
- // ...do something with the query parameters...
-
- auto attribute_map = request->getResourceRepresentation();
+ auto attribute_map = request->getAttributeRepresentation();
 
  setRepresentation(attribute_map);
+ getRepresentation(attribute_map);  // in case we changed something
 
- getRepresentation(attribute_map);
+ if(!response)
+  return;
 
  response->setErrorCode(200);
  response->setResourceRepresentation(attribute_map); 
@@ -303,7 +305,7 @@ void LightResource::handle_post_request(std::shared_ptr<OCResourceRequest> reque
  // ...demo-code...
  response->setErrorCode(200);
 
- auto attribute_map = request->getResourceRepresentation();
+ auto attribute_map = request->getAttributeRepresentation();
  getRepresentation(attribute_map);
  response->setResourceRepresentation(attribute_map);
 }
@@ -313,7 +315,7 @@ void LightResource::handle_delete_request(std::shared_ptr<OCResourceRequest> req
  // ...demo-code...
  response->setErrorCode(200);
 
- auto attribute_map = request->getResourceRepresentation();
+ auto attribute_map = request->getAttributeRepresentation();
  getRepresentation(attribute_map);
  response->setResourceRepresentation(attribute_map);
 }

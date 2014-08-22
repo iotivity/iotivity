@@ -32,8 +32,8 @@ c_sdk:
 examples: 
 	cd examples && $(MAKE) "BUILD=$(BUILD)"
 
-OCLib.a: OCPlatform.o OCResource.o OCReflect.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
-	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
+OCLib.a: OCPlatform.o OCResource.o OCReflect.o OCUtilities.o OCProperties.o InProcServerWrapper.o InProcClientWrapper.o
+	ar -cvq $(OBJ_DIR)/OCLib.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCProperties.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
 
 OCReflect.o: OCLib/OCReflect.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCReflect.cpp $(CXX_INC)
@@ -43,6 +43,9 @@ OCPlatform.o: OCLib/OCPlatform.cpp
 
 OCResource.o: OCLib/OCResource.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCResource.cpp $(CXX_INC)
+
+OCProperties.o: OCLib/OCProperties.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCProperties.cpp $(CXX_INC)
 
 OCUtilities.o: OCLib/OCUtilities.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c OCLib/OCUtilities.cpp $(CXX_INC)
