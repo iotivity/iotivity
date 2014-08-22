@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// copyright 2014 intel corporation all rights reserved.
+// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
