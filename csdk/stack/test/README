@@ -25,12 +25,15 @@ Unit Test Requirements:
    At the time of this writing this was done by running
    
    root/csdk/make deepclean
-   root/csdk/make
+   root/csdk/make BUILD=release    *default
+   root/csdk/make BUILD=debug
 
-5. Next, run
+5. Next, build the ocstack
    root/csdk/stack/test/make clean
-   root/csdk/stack/test/make
+   root/csdk/stack/test/make BUILD=release    *default
+   root/csdk/stack/test/make BUILD=debug
 
-6. Run the test by
-   root/csdk/stack/test/stacktests
+6. Run the unit test by
+   root/csdk/stack/test/release/stacktests
+   root/csdk/stack/test/debug/stacktests
 

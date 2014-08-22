@@ -319,6 +319,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if(!*handle)
     {
         result = OC_STACK_NO_MEMORY;
+        OCFree(*handle);
         goto exit;
     }
 
@@ -326,6 +327,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if (!token)
     {
         result = OC_STACK_NO_MEMORY;
+        OCFree(*handle);
+        OCFree(token);
         goto exit;
     }
     if((result = AddClientCB(&clientCB, cbData, token, *handle, method)) != OC_STACK_OK)
@@ -342,8 +345,6 @@ exit:
     {
         OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
         FindAndDeleteClientCB(clientCB);
-        OCFree(token);
-        OCFree(*handle);
     }
     return result;
 }

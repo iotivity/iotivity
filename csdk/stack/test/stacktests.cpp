@@ -978,10 +978,10 @@ TEST(StackTest, BindEntityHandlerBad) {
 }
 
 
-OCStackResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest) {
+OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest) {
     OC_LOG(INFO, TAG, "Entering entityHandler");
 
-    return OC_STACK_OK;
+    return OC_EH_OK;
 }
 
 TEST(StackTest, BindEntityHandlerGood) {
