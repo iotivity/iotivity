@@ -131,6 +131,20 @@ private:
             std::cout << "Found Resource: "<<std::endl;
             std::cout << "\tHost: "<< resource->host()<<std::endl;
             std::cout << "\tURI:  "<< resource->uri()<<std::endl;
+            
+            // Get the resource types 
+            std::cout << "\tList of resource types: " << std::endl;
+            for(auto &resourceTypes : resource->getResourceTypes())
+            {
+                std::cout << "\t\t" << resourceTypes << std::endl;
+            }
+            
+            // Get the resource interfaces
+            std::cout << "\tList of resource interfaces: " << std::endl;
+            for(auto &resourceInterfaces : resource->getResourceInterfaces())
+            {
+                std::cout << "\t\t" << resourceInterfaces << std::endl;
+            } 
 
             std::cout<<"Doing a get on q/foo."<<std::endl;
             QueryParamsMap test;
