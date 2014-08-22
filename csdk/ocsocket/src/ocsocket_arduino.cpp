@@ -28,7 +28,7 @@
 #include <logger.h>
 
 /// Ensures the literal string to be stored in Flash memory
-#define PCF(str) ((const prog_char*)(F(str)))
+#define PCF(str) ((PROGMEM const char *)(F(str)))
 
 /// Module Name
 #define MOD_NAME PCF("ocsocket")

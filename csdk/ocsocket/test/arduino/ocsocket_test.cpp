@@ -80,7 +80,7 @@ unsigned char TEST_BUF[] = {
 };
 unsigned int TEST_BUF_LEN = sizeof(TEST_BUF);
 
-#define PCF(str) ((const prog_char*)(F(str)))
+#define PCF(str) ((PROGMEM const char *)(F(str)))
 
 #define MOD_NAME PCF("ocsocket_test")
 

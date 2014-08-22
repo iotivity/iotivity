@@ -33,15 +33,15 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 #elif defined ARDUINO
     #include <stdarg.h>
 
-    prog_char level0[] PROGMEM = "DEBUG";
-    prog_char level1[] PROGMEM = "INFO";
-    prog_char level2[] PROGMEM = "WARNING";
-    prog_char level3[] PROGMEM = "ERROR";
-    prog_char level4[] PROGMEM = "FATAL";
+    PROGMEM char level0[] = "DEBUG";
+    PROGMEM char level1[] = "INFO";
+    PROGMEM char level2[] = "WARNING";
+    PROGMEM char level3[] = "ERROR";
+    PROGMEM char level4[] = "FATAL";
 
-    PROGMEM const prog_char * LEVEL[]  = {level0, level1, level2, level3, level4};
+    PROGMEM const char * LEVEL[]  = {level0, level1, level2, level3, level4};
 
-    static void OCLogString(LogLevel level, const prog_char * tag, const char * logStr);
+    static void OCLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
 #endif
 
 
@@ -144,7 +144,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param tag    - Module name
      * @param logStr - log string
      */
-    void OCLogString(LogLevel level, const prog_char * tag, const char * logStr) {
+    void OCLogString(LogLevel level, PROGMEM const char * tag, const char * logStr) {
     #ifdef TB_LOG
         if (!logStr || !tag) {
           return;
@@ -174,7 +174,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param buffer     - pointer to buffer of bytes
      * @param bufferSize - max number of byte in buffer
      */
-    void OCLogBuffer(LogLevel level, const prog_char * tag, const uint8_t * buffer, uint16_t bufferSize) {
+    void OCLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buffer, uint16_t bufferSize) {
     #ifdef TB_LOG
         if (!buffer || !tag || (bufferSize == 0)) {
             return;
@@ -207,7 +207,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param tag    - Module name
      * @param logStr - log string
      */
-    void OCLog(LogLevel level, const prog_char * tag, const prog_char * logStr) {
+    void OCLog(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr) {
     #ifdef TB_LOG
         if (!logStr || !tag) {
           return;
@@ -241,7 +241,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param tag    - Module name
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, const prog_char * tag, const char *format, ...)
+    void OCLogv(LogLevel level, PROGMEM const char * tag, const char * format, ...)
     {
     #ifdef TB_LOG
         char buffer[LINE_BUFFER_SIZE];
@@ -280,7 +280,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param tag    - Module name
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, const prog_char * tag, const __FlashStringHelper *format, ...)
+    void OCLogv(LogLevel level, PROGMEM const char * tag, const __FlashStringHelper *format, ...)
     {
     #ifdef TB_LOG
         char buffer[LINE_BUFFER_SIZE];

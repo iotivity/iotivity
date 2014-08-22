@@ -19,9 +19,9 @@ extern "C" {
 
 const char *getResult(OCStackResult result);
 
-#define PCF(str) ((const prog_char*)(F(str)))
+#define PCF(str) ((PROGMEM const char *)(F(str)))
 
-const prog_char TAG[] PROGMEM = "ArduinoServer";
+PROGMEM const char TAG[] = "ArduinoServer";
 
 int gQuitFlag = 0;
 int gLEDUnderObservation = 0;
