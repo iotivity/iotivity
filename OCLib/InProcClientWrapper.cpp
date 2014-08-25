@@ -244,7 +244,14 @@ namespace OC
         }
 
         boost::property_tree::ptree root;
-        boost::property_tree::read_json(requestStream, root);
+        try
+        {
+            boost::property_tree::read_json(requestStream, root);
+        }
+        catch(boost::property_tree::json_parser::json_parser_error &e)
+        {
+            return OCRepresentation();
+        }
         boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
         OCRepresentation root_resource;
         std::vector<OCRepresentation> children;

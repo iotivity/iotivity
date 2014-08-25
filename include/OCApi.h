@@ -22,10 +22,12 @@
  #define __INTEL_OCAPI_H_2014_07_10
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <map>
 
 namespace OC {
+
 
 class OCResource;
 
@@ -103,6 +105,9 @@ namespace OC {
  // Used in GET, PUT, POST, DELETE methods on links to other resources of a collection.
  const std::string BATCH_INTERFACE = "oc.mi.b";
 
+ // Helper function to escape character in a string.
+ std::string escapeString(const std::string& value);
+
  class OCRepresentation
     {
 
@@ -179,7 +184,6 @@ namespace OC {
             m_resourceInterfaces = resourceInterfaces;
         }
     };
-
 } // namespace OC
 
 #endif  
