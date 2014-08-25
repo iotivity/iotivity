@@ -713,7 +713,7 @@ coap_tid_t coap_send(coap_context_t *context,
     coap_tick_t now;
     coap_tid_t tid;
     int bytesWritten;
-    int r;
+    unsigned int r;
 
     if (!context)
         return COAP_INVALID_TID;
