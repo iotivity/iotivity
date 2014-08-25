@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <ocstack.h>
+#include <logger.h>
 
 #define TAG PCF("ocserver")
 

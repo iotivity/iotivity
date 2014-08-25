@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <ocstack.h>
+#include <logger.h>
 
 #define TAG PCF("occlient")
 
