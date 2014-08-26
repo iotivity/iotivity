@@ -31,8 +31,34 @@
 
 #define NUM_PARAM_IN_QUERY  2
 
+static OCStackResult CheckRTParamSupport(const OCResource* resource, const char* rtPtr)
+{
+    OCResourceType* rTPointer = resource->rsrcType;
+    while (rTPointer)
+    {
+        if( strcmp (rTPointer->resourcetypename, rtPtr) == 0)
+            return OC_STACK_OK;
+
+        rTPointer = rTPointer->next;
+    }
+    return OC_STACK_ERROR;
+}
+
+static OCStackResult CheckIFParamSupport(const OCResource* resource, const char* ifPtr)
+{
+    OCResourceInterface* iFPointer = resource->rsrcInterface;
+    while (iFPointer)
+    {
+        if( strcmp (iFPointer->name, ifPtr) == 0)
+             return OC_STACK_OK;
+
+        iFPointer = iFPointer->next;
+    }
+    return OC_STACK_ERROR;
+}
+
 static OCStackResult
-ValidateQuery (const unsigned char *query, OCResourceHandle *resource,
+ValidateQuery (const unsigned char *query, OCResourceHandle resource,
                              OCStackIfTypes *ifParam, char **rtParam)
 {
     uint8_t numFields = 0, numParam;
@@ -104,6 +130,9 @@ ValidateQuery (const unsigned char *query, OCResourceHandle *resource,
     }
     else
     {
+        if(CheckIFParamSupport((OCResource *)resource, ifPtr) != OC_STACK_OK)
+            return OC_STACK_INVALID_QUERY;
+
         if (strcmp (ifPtr, OC_RSRVD_DEFAULT) == 0)
             *ifParam = STACK_IF_DEFAULT;
         else if (strcmp (ifPtr, OC_RSRVD_INTERFACE_LL) == 0)
@@ -123,12 +152,13 @@ ValidateQuery (const unsigned char *query, OCResourceHandle *resource,
     }
     else
     {
-        *rtParam = rtPtr;
+        if (CheckRTParamSupport((OCResource *)resource, rtPtr) == OC_STACK_OK)
+            *rtParam = rtPtr;
+        else
+            return OC_STACK_INVALID_QUERY;
     }
     OC_LOG_V(INFO, TAG, "Query params: IF = %d, RT = %s\n", *ifParam, *rtParam);
 
-    // TODO: Validate that the resource supports specified IF param
-    // TODO: Validate that the resource supports specified RT param
     return OC_STACK_OK;
 }
 static OCStackResult BuildRootResourceJSON(OCResource *resource, OCEntityHandlerRequest *ehRequest)
@@ -282,7 +312,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
         return OC_STACK_ERROR;
 
     result = ValidateQuery ((const unsigned char *)ehRequest->query,
-                            &ehRequest->resource, &ifQueryParam, &rtQueryParam);
+                            ehRequest->resource, &ifQueryParam, &rtQueryParam);
 
     if (result != OC_STACK_OK)
         return result;
