@@ -244,11 +244,13 @@ void foundResource(std::shared_ptr<OCResource> resource)
 int main(int argc, char* argv[]) {
 
     // Create PlatformConfig object
-    PlatformConfig cfg;
-    cfg.ipAddress = "192.168.1.10";
-    cfg.port = 5683;
-    cfg.mode = ModeType::Client;
-    cfg.serviceType = ServiceType::InProc;
+    PlatformConfig cfg {
+        OC::ServiceType::InProc,
+        OC::ModeType::Client,
+        "192.168.1.10",
+        5683,
+        OC::QualityOfService::NonConfirmable
+    };
 
     // Create a OCPlatform instance.
     // Note: Platform creation is synchronous call.

@@ -24,7 +24,6 @@ auto parse_options(boost::program_options::options_description& desc, int argc, 
  po::store(po::command_line_parser(argc,argv).options(desc).positional(popts).run(), 
            vm);
 
- // JFW: po::store(po::parse_command_line(argc, argv, desc), vm);
  po::notify(vm);
 
  return vm;

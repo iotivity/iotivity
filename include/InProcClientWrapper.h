@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved. 
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -41,7 +41,6 @@ namespace OC
     {
     public:
         InProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg);
-        
         virtual ~InProcClientWrapper();
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, 
@@ -60,9 +59,7 @@ namespace OC
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri);
         
         // Note: this should never be called by anyone but the handler for the listen command.  It is public becuase that needs to be a non-instance callback
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, 
-            const boost::property_tree::ptree resourceNode);
-    
+        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode);
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
@@ -72,6 +69,8 @@ namespace OC
         std::weak_ptr<std::mutex> m_csdkLock;
         std::vector<std::function<void(OCClientResponse*)>> callbackList;
 
+    private:
+        PlatformConfig m_cfg;
     };
 }
 

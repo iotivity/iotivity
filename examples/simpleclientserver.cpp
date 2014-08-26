@@ -303,11 +303,13 @@ struct FooResource
 };
 int main()
 {
-    PlatformConfig cfg;
-    cfg.ipAddress = "134.134.161.33";
-    cfg.port = 56833;
-    cfg.mode = ModeType::Both;
-    cfg.serviceType = ServiceType::InProc;
+    PlatformConfig cfg {
+        OC::ServiceType::InProc,
+        OC::ModeType::Both,
+        "134.134.161.33",
+        56833,
+        OC::QualityOfService::NonConfirmable
+    };
 
     FooResource fooRes;
 

@@ -115,7 +115,7 @@ namespace OC
         * NOTE: "a/light" is a relative URI.
         * Above relative URI will be prepended (by core) with a host IP + namespace "oc"
         * Therefore, fully qualified URI format would be //HostIP-Address/namespace/relativeURI"
-        * Example, a relative URI: 'a/light' will result in a fully qualified URI: //134.134.161.33/oc/a/light"
+        * Example, a relative URI: 'a/light' will result in a fully qualified URI: //192.168.1.1/oc/a/light"
         * First parameter can take a relative URI and core will take care of preparing the fully qualified URI
         * OR
         * first paramter can take fully qualified URI and core will take that as is for further operations
@@ -255,20 +255,21 @@ namespace OC
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
+
+    private:
+        PlatformConfig m_cfg;
+
     private:
         std::unique_ptr<WrapperFactory> m_WrapperInstance;
         IServerWrapper::Ptr m_server;
         IClientWrapper::Ptr m_client;
         std::shared_ptr<std::mutex> m_csdkLock;
+
+    private:
         /**
         *  Private function to initalize the platfrom
         */
         void init(const PlatformConfig& config);
-
-        /**
-        *  Private function cleanup the platform
-        */
-        void cleanup();
     };
 }
 
