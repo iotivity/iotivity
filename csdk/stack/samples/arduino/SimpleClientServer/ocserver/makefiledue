@@ -1,0 +1,58 @@
+APP_NAME := ocserver
+BUILD := release
+PLATFORM := arduinodue
+ARDUINO_PORT := ttyACM0
+
+OBJ_DIR := ./bin
+
+ROOT_DIR = ../../../../..
+LOGGER_DIR = $(ROOT_DIR)/logger
+TBSTACK_DIR = $(ROOT_DIR)/stack
+TBSOCKET_DIR = $(ROOT_DIR)/ocsocket
+
+include $(ROOT_DIR)/local.properties
+include $(ROOT_DIR)/$(PLATFORM).properties
+
+VPATH := $(SDIR_ARD_PLATFORM)
+
+#include directories
+OCSOCK_DIR = $(ROOT_DIR)/ocsocket
+LOGGER_DIR = $(ROOT_DIR)/logger
+STACK_DIR  = $(ROOT_DIR)/stack
+INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
+
+CFLAGS		:= -Os -Wall -c -DTB_LOG
+
+all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).bin
+
+core.a: $(PLATFORM_OBJS)
+	@cd $(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/../$(BUILD)/liboctbstack.a
+	$(AR) rcs $@ $(CORE_COBJ) $(CORE_CPPOBJ) $(OBJ_DIR)/*.o
+	$(RANLIB) $@
+
+prep_dirs:
+	-mkdir $(OBJ_DIR)
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+
+%.o: %.cpp
+	$(CCPLUS) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+
+
+$(APP_NAME).elf: $(APP_NAME).o core.a
+	$(CCPLUS) -Os -Wl,--gc-sections -mcpu=cortex-m3 -T/$(SDIR_ARD_CORE_3)/linker_scripts/gcc/flash.ld -Wl,-Map,$(APP_NAME).map -o $@ -lm -lgcc -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $(APP_NAME).o $(SYSCALLS_SAM3_OBJ) $(SPI_OBJ) $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ) $(VARIANT_OBJ) $(SDIR_ARD_CORE_3)/libsam_sam3x8e_gcc_rel.a core.a -Wl,--end-group 
+
+$(APP_NAME).bin: $(APP_NAME).elf
+	$(ARDUINO_TOOLS_DIR)/arm-none-eabi-objcopy -O binary $< $@ 
+
+install: all
+	#Due needs Serial port speed to be set to 1200bps for uploading
+	stty -F /dev/$(ARDUINO_PORT) speed 1200 cs8 -cstopb -parenb
+	$(ARDUINO_DIR)/hardware/tools/bossac -i -d --port=$(ARDUINO_PORT) -U false -e -w -v -b $(APP_NAME).bin -R
+
+.PHONY: clean
+
+clean:
+	@rm -f *.o *.d *.elf *.eep *.a *.hex *.bin *.map *-
+	@rm -rf $(OBJ_DIR)

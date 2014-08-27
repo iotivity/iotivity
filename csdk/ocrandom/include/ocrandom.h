@@ -32,19 +32,18 @@ extern "C" {
 #if defined(__ANDROID__) || defined(__linux__)
 #include <time.h>
 #elif defined ARDUINO
-//#include <Arduino.h>
-//#include <wiring_analog.c>
-#define ANALOG_IN (15)
+// MEGA has 16 input pins whereas Due has only 12 input pins
+#define ANALOG_IN (10)
 #endif
 
-/** 
+/**
  * Seed the random number generator. Seeding depends on platform.
  * Android and Linux uses current time. Arduino uses Analog reading on pin ANALOG_IN
  * @retval 0 for Success, otherwise some error value
  */
 int8_t OCSeedRandom();
 
-/** 
+/**
  * Generate a uniformly [0,2^32] distributed random number
  * @retval On Success, it returns the random value.
  */

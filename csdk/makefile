@@ -13,14 +13,6 @@ ifeq ($(OBJ_DIR), )
 OBJ_DIR	= obj
 endif
 
-#Arduino specific configurations
-INCD_ARD_CORE = -I$(ARDUINO_DIR)/hardware/arduino/cores/arduino
-INCD_ARD_VARIANT = -I$(ARDUINO_DIR)/hardware/arduino/variants/mega
-INCD_ARD_SPI = -I$(ARDUINO_DIR)/libraries/SPI
-INCD_ARD_ETH = -I$(ARDUINO_DIR)/libraries/Ethernet
-INCD_ARD_ETH_UTIL = -I$(ARDUINO_DIR)/libraries/Ethernet/utility
-INCD_ARD_TIME = -I$(ARDUINO_DIR)/libraries/Time
-SDIR_ARD_TIME = $(ARDUINO_DIR)/libraries/Time
 
 ifeq ($(PLATFORM),linux)
     CCPLUS=g++
@@ -28,14 +20,14 @@ ifeq ($(PLATFORM),linux)
     AR=ar
     RANLIB=ranlib
     CFLAGS_PLATFORM = -DWITH_POSIX -std=c99
-else ifeq ($(PLATFORM),arduino)
+else ifeq ($(PLATFORM),arduinomega)
     include local.properties
-    CCPLUS=avr-g++
-    CC=avr-g++
-    AR=avr-ar
-    RANLIB=avr-ranlib
-    CFLAGS_PLATFORM = -std=c++0x -DATMEGA2560 -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=156 -DARDUINO_AVR_MEGA2560 -DARDUINO_ARCH_AVR -DWITH_ARDUINO -MMD -DNDEBUG
-    INC_DIR_PLATFORM = $(INCD_ARD_CORE) $(INCD_ARD_VARIANT) $(INCD_ARD_SPI) $(INCD_ARD_ETH) $(INCD_ARD_ETH_UTIL) $(INCD_ARD_TIME)
+    include $(PLATFORM).properties
+	CC=$(ARDUINO_TOOLS_DIR)/avr-g++
+else ifeq ($(PLATFORM),arduinodue)
+    include local.properties
+    include $(PLATFORM).properties
+	CC=$(ARDUINO_TOOLS_DIR)/arm-none-eabi-g++
 else
    $(error Wrong value for PLATFORM !!)
 endif
@@ -108,9 +100,9 @@ obj_build:
 liboctbstack.a:
 	@echo "Building $@" 
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	@cd $(BUILD)/$(OBJ_DIR) && ar -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
+	@cd $(BUILD)/$(OBJ_DIR) && $(AR) -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
-	ar -r $(BUILD)/$@ $(BUILD)/$(OBJ_DIR)/*.o
+	$(AR) -r $(BUILD)/$@ $(BUILD)/$(OBJ_DIR)/*.o
 
 .PHONY: clean print_vars
 

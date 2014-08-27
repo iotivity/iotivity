@@ -13,11 +13,13 @@ to determine what definitions are needed for your environment.
 
 To make ocserver in release mode:
 
-	make
+	make (arduinomega)
+    make -f makefiledue (arduinodue)
 
 To make & install ocserver in release mode, with <DEV_PORT> NOT specified:
 
-	make install
+	make install (arduinomega)
+    make -f makefiledue install (arduinodue)
 
 To make & install ocserver in release mode, with <DEV_PORT> specified:
 

@@ -59,7 +59,7 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
 {
     char *filterParam;
 
-    OC_LOG_V(INFO, TAG, PCF("Entering ValidateUrlQuery"));
+    OC_LOG(INFO, TAG, PCF("Entering ValidateUrlQuery"));
     if (!url)
         return OC_STACK_INVALID_URI;
 
@@ -85,7 +85,7 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
         // Other URIs not yet supported
         return OC_STACK_INVALID_URI;
     }
-    OC_LOG_V(INFO, TAG, PCF("Exiting ValidateUrlQuery"));
+    OC_LOG(INFO, TAG, PCF("Exiting ValidateUrlQuery"));
     return OC_STACK_OK;
 }
 
@@ -101,7 +101,7 @@ OCStackResult BuildDiscoveryResponse(OCResource *resourcePtr, uint8_t filterOn,
     OCStackResult ret = OC_STACK_OK;
     uint16_t jsonLen;
 
-    OC_LOG_V(INFO, TAG, PCF("Entering BuildDiscoveryResponse"));
+    OC_LOG(INFO, TAG, PCF("Entering BuildDiscoveryResponse"));
     resObj = cJSON_CreateObject();
 
     if (resourcePtr)
@@ -175,7 +175,7 @@ OCStackResult BuildDiscoveryResponse(OCResource *resourcePtr, uint8_t filterOn,
     free (jsonStr);
 
 
-    OC_LOG_V(INFO, TAG, PCF("Exiting BuildDiscoveryResponse"));
+    OC_LOG(INFO, TAG, PCF("Exiting BuildDiscoveryResponse"));
     return ret;
 }
 
@@ -262,7 +262,7 @@ OCStackResult DetermineResourceHandling (OCRequest *request,
                                          OCResource **resource)
 {
 
-    OC_LOG(INFO, TAG, "Entering DetermineResourceHandling");
+    OC_LOG(INFO, TAG, PCF("Entering DetermineResourceHandling"));
 
     // Check if virtual resource
     if (IsVirtualResource((const char*)request->resourceUrl))
@@ -323,7 +323,7 @@ HandleVirtualResource (OCRequest *request, OCResource* resource)
     uint16_t remaining;
     unsigned char *buffer;
 
-    OC_LOG(INFO, TAG, "Entering HandleVirtualResource");
+    OC_LOG(INFO, TAG, PCF("Entering HandleVirtualResource"));
 
     result = ValidateUrlQuery (request->resourceUrl,
             request->entityHandlerRequest->query, &filterOn,
@@ -370,7 +370,7 @@ HandleResourceWithEntityHandler (OCRequest *request,
     OCStackResult result = OC_STACK_OK;
     OCEntityHandlerRequest *ehRequest = request->entityHandlerRequest;
 
-    OC_LOG(INFO, TAG, "Entering HandleResourceWithEntityHandler");
+    OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithEntityHandler"));
 
     ehRequest->resource = (OCResourceHandle)resource;
     // status code from entity handler is ignored unless observe call
@@ -439,7 +439,7 @@ BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest 
 
         case OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER:
             {
-                OC_LOG_V(INFO, TAG, PCF("OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER"));
+                OC_LOG(INFO, TAG, PCF("OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER"));
                 return OC_STACK_ERROR;
             }
 
@@ -470,7 +470,7 @@ BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest 
             // TODO: Remove comments below before release - only for code review
             // OPEN: We had decided to revisit the OCDoHandle logic for this sprint. If it
             // changes and URI is passed this special case will not be needed.
-            OC_LOG_V(INFO, TAG, PCF("OC_RESOURCE_NOT_SPECIFIED"));
+            OC_LOG(INFO, TAG, PCF("OC_RESOURCE_NOT_SPECIFIED"));
             if (request->observe != NULL)
             {
                 ret = ProcessObserveRequest (resource, request);
@@ -479,7 +479,7 @@ BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest 
 
         default:
             {
-                OC_LOG_V(INFO, TAG, PCF("Invalid Resource Determination"));
+                OC_LOG(INFO, TAG, PCF("Invalid Resource Determination"));
                 return OC_STACK_ERROR;
             }
     }

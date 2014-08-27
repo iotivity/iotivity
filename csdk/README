@@ -16,15 +16,24 @@ Touch (i.e. create) file named "local.properties" at this directory level with
 the following definition(s):
 
 	ARDUINO_DIR = <PATH_TO_ARDUINO_INSTALL_DIR>/arduino-1.0.5
+    ARDUINO_TOOLS_DIR = <PATH_TO_ARDUINO_TOOLS> (location of avr-g++ and other avr tools)
 
 To make octbstack.a in release mode:
 
-	make PLATFORM=arduino
+	make PLATFORM=arduinomega (For Arduino Due, use <arduinodue>)
 
 To make octbstack.a in debug mode:
 
-	make PLATFORM=arduino BUILD=debug
+	make PLATFORM=arduinomega BUILD=debug (For Arduino Due, use <arduinodue>)
 
+Dependencies:
+    1) Patch the Wiznet Ethernet library with the patch available at :
+    oic-utilities/tb/arduino_linux_ethernet_socket_cpp.patch
+    2) Arduino builds are dependent on latest Time library. Download it from here:
+    http://www.pjrc.com/teensy/td_libs_Time.html
+    3) Arduino Due has been tested with Arduino 1.5.7 framework.
+    4) For Arduino Due, binary tools are located in:
+       /hardware/tools/gcc-arm-none-eabi-4.8.3-2014q1/bin
 -------------------------------------------------------------------------------
 **Clean-Up**
 -------------------------------------------------------------------------------
