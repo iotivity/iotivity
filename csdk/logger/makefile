@@ -1,10 +1,13 @@
 # override with `make BUILD=release`
 # default to release build
 BUILD := release
+PLATFORM := linux
+
+ROOT_DIR = ..
 
 # You must create the file "local.properties" on your local machine which contains any local paths, etc
 # local_settings.mk should NOT be committed to repo
-include ./local.properties
+include $(ROOT_DIR)/local.properties
 # GTEST_DIR contains the path to Google Test libs and must be defined in local.properties
 #  Example:
 #  GTEST_DIR := /home/johndoe/utils/gtest-1.7.0

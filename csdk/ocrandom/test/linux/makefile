@@ -1,10 +1,12 @@
 # override with `make BUILD=release`
 # default to debug build
 BUILD := debug
+PLATFORM := linux
 
 # You must create the file "local.propertiessudo" on your local machine which contains any local paths, etc
 # local_settings.mk should NOT be committed to repo
-include ../../local.properties
+ROOT_DIR = ../../..
+include $(ROOT_DIR)/local.properties
 # GTEST_DIR contains the path to Google Test libs and must be defined in local.properties
 #  Example:
 #  GTEST_DIR := /home/johndoe/utils/gtest-1.7.0

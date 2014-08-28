@@ -130,9 +130,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * Only defined for Arduino
      */
     void OCLogInit() {
-    #ifdef TB_LOG
         Serial.begin(115200);
-    #endif
     }
 
     /**
@@ -145,7 +143,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param logStr - log string
      */
     void OCLogString(LogLevel level, PROGMEM const char * tag, const char * logStr) {
-    #ifdef TB_LOG
         if (!logStr || !tag) {
           return;
         }
@@ -163,7 +160,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         Serial.print(F(": "));
 
         Serial.println(logStr);
-    #endif
     }
 
     /**
@@ -175,7 +171,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param bufferSize - max number of byte in buffer
      */
     void OCLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buffer, uint16_t bufferSize) {
-    #ifdef TB_LOG
         if (!buffer || !tag || (bufferSize == 0)) {
             return;
         }
@@ -196,7 +191,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         if (bufferSize % 16) {
             OCLogString(level, tag, lineBuffer);
         }
-    #endif
     }
 
     /**
@@ -208,7 +202,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param logStr - log string
      */
     void OCLog(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr) {
-    #ifdef TB_LOG
         if (!logStr || !tag) {
           return;
         }
@@ -230,7 +223,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
           logStr++;
         }
         Serial.println();
-    #endif
     }
 
     /**
@@ -243,7 +235,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      */
     void OCLogv(LogLevel level, PROGMEM const char * tag, const char * format, ...)
     {
-    #ifdef TB_LOG
         char buffer[LINE_BUFFER_SIZE];
         va_list ap;
         va_start(ap, format);
@@ -270,7 +261,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         }
         Serial.println();
         va_end(ap);
-    #endif
     }
     /**
      * Output a variable argument list log string with the specified priority level.
@@ -282,7 +272,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      */
     void OCLogv(LogLevel level, PROGMEM const char * tag, const __FlashStringHelper *format, ...)
     {
-    #ifdef TB_LOG
         char buffer[LINE_BUFFER_SIZE];
         va_list ap;
         va_start(ap, format);
@@ -313,7 +302,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         }
         Serial.println();
         va_end(ap);
-    #endif
     }
 
 

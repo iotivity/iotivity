@@ -183,7 +183,7 @@ int32_t OCSendTo(int32_t sockfd, const uint8_t* buf, uint32_t bufLen, uint32_t f
     VERIFY_NON_NULL(ardAddr);
     OC_LOG(DEBUG, MOD_NAME, PCF("OCSendTo Begin"));
     ret = sendto( sockfd, buf, bufLen, (uint8_t*)&(ardAddr->a), ardAddr->port);
-    OC_LOG(DEBUG, MOD_NAME, PCF("OCSendTo End"));
+    OC_LOG_V(DEBUG, MOD_NAME, "OCSendTo RetVal %d", ret);
     return ret;
 }
 

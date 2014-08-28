@@ -1,6 +1,7 @@
-include ../local.properties
+PLATFORM := arduinomega
 
 ROOT_DIR = ../../..
+include $(ROOT_DIR)/local.properties
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 LOGGER_DIR = $(ROOT_DIR)/logger
 BIN_DIR = $(OCSOCK_DIR)/bin/arduino/

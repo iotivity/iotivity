@@ -223,9 +223,6 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         case TEST_OBS_REQ_CON:
             InitObserveRequest(OC_CONFIRMABLE);
             break;
-        default:
-            PrintUsage();
-            break;
         }
     }
 

@@ -1,10 +1,12 @@
 # Override with `make BUILD=release`
 # default to debug build
 BUILD := debug
+PLATFORM := arduinomega
 
 # You must create the file "local.propertiessudo" on your local machine which contains any local paths, etc
 # local_settings.mk should NOT be committed to repo
-include ../../local.properties
+ROOT_DIR = ../../..
+include $(ROOT_DIR)/local.properties
 
 # Compilers                   
 CC := avr-gcc
