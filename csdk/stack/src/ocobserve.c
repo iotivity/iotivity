@@ -48,10 +48,13 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
         OC_LOG(DEBUG, TAG, PCF("observer is not interested in our notifications anymore"));
         //observer is dead, or it is not observing anymore
         result = DeleteObserver (token);
-        if(result == OC_STACK_OK)
+        if(result != OC_STACK_OK)
+        {
+            result = OC_STACK_OBSERVER_NOT_REMOVED;
+        }
+        else
         {
             OC_LOG(DEBUG, TAG, PCF("removing an observer"));
-            result = OC_STACK_OBSERVER_REMOVED;
         }
         break;
     case OC_OBSERVER_STILL_INTERESTED:
@@ -79,13 +82,19 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
             {
                 result = DeleteObserver (token);
-                OC_LOG(DEBUG, TAG, PCF("removing an observer"));
-                result = OC_STACK_OBSERVER_REMOVED;
+                if(result != OC_STACK_OK)
+                {
+                    result = OC_STACK_OBSERVER_NOT_REMOVED;
+                }
+                else
+                {
+                    OC_LOG(DEBUG, TAG, PCF("removing an observer"));
+                }
             }
             else
             {
                 observer->failedCommCount++;
-                result = OC_STACK_OK;
+                result = OC_STACK_OBSERVER_NOT_REMOVED;
             }
             observer->forceCON = 1;
             OC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",observer->failedCommCount);
@@ -100,7 +109,7 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
 
 OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
 {
-    OCStackResult stackRet = OC_STACK_ERROR;
+    OCStackResult stackRet = OC_STACK_OK;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OCEntityHandlerRequest *ehReq = request->entityHandlerRequest;
     OCObserveReq *obs = request->observe;
@@ -118,28 +127,35 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
             // TODO: we need to check if the obsrever is already there using its OCDevAdd....
             stackRet = AddObserver ((const char*)(request->resourceUrl), (const char *)(ehReq->query),
                     obs->token, obs->subAddr, resource, request->qos);
-            if(stackRet == OC_STACK_OK)
+            if(stackRet != OC_STACK_OK)
             {
-                stackRet = OC_STACK_OBSERVER_ADDED;
+                obs->result = OC_STACK_OBSERVER_NOT_ADDED;
             }
-            OC_LOG(DEBUG, TAG, PCF("adding an observer"));
+            else
+            {
+                OC_LOG(DEBUG, TAG, PCF("adding an observer"));
+            }
         }
         else if (obs->option == OC_RESOURCE_OBSERVE_DEREGISTER)
         {
             // Deregister observation
             stackRet = DeleteObserver (obs->token);
-            if(stackRet == OC_STACK_OK)
+            if(stackRet != OC_STACK_OK)
+            {
+                obs->result = OC_STACK_OBSERVER_NOT_REMOVED;
+            }
+            else
             {
                 OC_LOG(DEBUG, TAG, PCF("removing an observer"));
-                stackRet = OC_STACK_OBSERVER_REMOVED;
             }
         }
         else
         {
             // Invalid option
             OC_LOG(ERROR, TAG, PCF("Invalid CoAP observe option"));
-            stackRet = OC_STACK_INVALID_OBSERVE_PARAM;
+            obs->result = OC_STACK_INVALID_OBSERVE_PARAM;
         }
+        stackRet = OC_STACK_OK;
     }
     else
     {
@@ -180,7 +196,6 @@ OCStackResult SendObserverNotification (OCResource *resPtr)
 
             // Even if entity handler for a resource is not successful
             // we continue calling entity handler for other resources
-            //ehRet = resPtr->entityHandler (OC_REQUEST_FLAG, entityHandlerReq);
             ehRet = BuildObsJSONResponse((OCResource *) resPtr, entityHandlerReq);
             if (OC_EH_OK == ehRet)
             {

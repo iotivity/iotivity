@@ -43,8 +43,6 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
     uint8_t ret;
     switch(result)
     {
-        case OC_STACK_OBSERVER_ADDED :
-        case OC_STACK_OBSERVER_REMOVED :
         case OC_STACK_OK :
             ret = COAP_RESPONSE_200;
             break;
@@ -260,6 +258,7 @@ OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint8_t observeOpt
     observeReq->option = observeOption;
     observeReq->subAddr = remote;
     observeReq->token = rcvdToken;
+    observeReq->result = OC_STACK_OK;
 
     *observeReqLoc = observeReq;
     return OC_STACK_OK;
@@ -588,7 +587,7 @@ observation:
     }
 
     result = OCObserverStatus(token, OC_OBSERVER_FAILED_COMM);
-    if(result == OC_STACK_OBSERVER_REMOVED)
+    if(result == OC_STACK_OK)
     {
         coap_cancel_all_messages(ctx, &queue->remote, token->token, token->tokenLength);
     }

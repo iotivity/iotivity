@@ -131,6 +131,8 @@ typedef struct {
     OCDevAddr *subAddr;
     // CoAP token for the observe request
     OCCoAPToken *token;
+    // The result of the observe request
+    OCStackResult result;
 } OCObserveReq;
 
 // following structure will be created in occoap and passed up the stack on the server side

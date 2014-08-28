@@ -94,7 +94,7 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
     if(msgType == COAP_MESSAGE_RST){
         // now the observer should be deleted
         result = OCObserverStatus(sentToken, OC_OBSERVER_NOT_INTERESTED);
-        if(result == OC_STACK_OBSERVER_REMOVED){
+        if(result == OC_STACK_OK){
             OC_LOG_V(DEBUG, TAG, "Received RST, removing all queues associated with Token %d bytes",sentToken->tokenLength);
             OC_LOG_BUFFER(INFO, TAG, sentToken->token, sentToken->tokenLength);
             coap_cancel_all_messages(ctx, &sentQueue->remote, sentToken->token,
@@ -181,21 +181,27 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
              whether it is a sequence number or registration option!------------");
     OC_LOG_V(INFO, TAG, "Response from ocstack: %s", request->entityHandlerRequest->resJSONPayload);
 
-    switch(responseResult)
+    if(rcvdObsReq)
     {
-    case OC_STACK_OBSERVER_ADDED:
-        observeOption = OC_RESOURCE_OBSERVE_REGISTER;
-        result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
-        break;
-    case OC_STACK_OBSERVER_REMOVED:
-        observeOption = OC_RESOURCE_OBSERVE_DEREGISTER;
-        result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
-        break;
-    case OC_STACK_OK:
-    default:
-        result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
-        break;
+        switch(rcvdObsReq->result)
+        {
+        case OC_STACK_OK:
+            observeOption = rcvdObsReq->option;
+            result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
+            break;
+        case OC_STACK_OBSERVER_NOT_ADDED:
+        case OC_STACK_OBSERVER_NOT_REMOVED:
+        case OC_STACK_INVALID_OBSERVE_PARAM:
+        default:
+            result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
+            break;
+        }
     }
+    else
+    {
+        result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
+    }
+
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // generate the pdu, if the request was CON, then the response is ACK, otherwire NON

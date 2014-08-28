@@ -461,22 +461,6 @@ BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest 
                 break;
             }
 
-        case OC_RESOURCE_NOT_SPECIFIED:
-            // This case is not needed as the logic changed so OCCancel results in RESET
-            // rather than a GET. RESET is handled at lower layers.
-
-            // TODO: This is a special case. In M1 this occurs only for observation
-            // delete since OCCancel (on the client) only takes OCDoHandle param.
-            // TODO: Remove comments below before release - only for code review
-            // OPEN: We had decided to revisit the OCDoHandle logic for this sprint. If it
-            // changes and URI is passed this special case will not be needed.
-            OC_LOG(INFO, TAG, PCF("OC_RESOURCE_NOT_SPECIFIED"));
-            if (request->observe != NULL)
-            {
-                ret = ProcessObserveRequest (resource, request);
-            }
-            break;
-
         default:
             {
                 OC_LOG(INFO, TAG, PCF("Invalid Resource Determination"));
