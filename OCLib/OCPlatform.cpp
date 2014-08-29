@@ -43,9 +43,8 @@ namespace OC
         init(m_cfg);
     }
 
-    OCPlatform::~OCPlatform(void)
+    OCPlatform::~OCPlatform()
     {
-        std::cout << "platform destructor called" << std::endl;
     }
 
     OCStackResult OCPlatform::notifyObservers(OCResourceHandle resourceHandle)
