@@ -38,15 +38,14 @@ namespace OC
 {
     // Constructor. Internally calls private init function
     OCPlatform::OCPlatform(const PlatformConfig& config)
+     : m_cfg(config)
     {
-        init(config);
+        init(m_cfg);
     }
 
-    // Destructor
     OCPlatform::~OCPlatform(void)
     {
         std::cout << "platform destructor called" << std::endl;
-        cleanup();
     }
 
     OCStackResult OCPlatform::notifyObservers(OCResourceHandle resourceHandle)
@@ -75,19 +74,6 @@ namespace OC
             // This must be both server and client
             m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
             m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
-        }
-    }
-
-    void OCPlatform::cleanup()
-    {
-        if(m_server)
-        {
-            m_server.reset();
-        }
-
-        if(m_client)
-        {
-            m_client.reset();
         }
     }
 

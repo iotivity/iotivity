@@ -630,12 +630,13 @@ void entityHandlerFan(std::shared_ptr<OCResourceRequest> request, std::shared_pt
 int main()
 {
     // Create PlatformConfig object
-
-    PlatformConfig cfg;
-    cfg.ipAddress = "192.168.1.10";
-    cfg.port = 56832;
-    cfg.mode = ModeType::Server;
-    cfg.serviceType = ServiceType::InProc;
+    PlatformConfig cfg {
+        OC::ServiceType::InProc,
+        OC::ModeType::Server,
+        "192.168.1.10",
+        56832,
+        OC::QualityOfService::NonConfirmable
+    };
 
     // Create a OCPlatform instance.
     // Note: Platform creation is synchronous call.

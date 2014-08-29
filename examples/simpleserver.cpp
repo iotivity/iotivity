@@ -329,12 +329,13 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
 int main()
 {
     // Create PlatformConfig object
-
-    PlatformConfig cfg;
-    cfg.ipAddress = "134.134.161.33";
-    cfg.port = 56832;
-    cfg.mode = ModeType::Server;
-    cfg.serviceType = ServiceType::InProc;
+    PlatformConfig cfg {
+        OC::ServiceType::InProc,
+        OC::ModeType::Server,
+        "134.134.161.33",
+        56832,
+        OC::QualityOfService::NonConfirmable
+    };
 
     // Create a OCPlatform instance.
     // Note: Platform creation is synchronous call.

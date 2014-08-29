@@ -29,13 +29,14 @@ using namespace std;
 namespace OC
 {
     InProcClientWrapper::InProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
-            :m_threadRun(false), m_csdkLock(csdkLock)
+            : m_threadRun(false), m_csdkLock(csdkLock),
+              m_cfg { cfg }
     {
         // if the config type is server, we ought to never get called.  If the config type
         // is both, we count on the server to run the thread and do the initialize
-        if(cfg.mode == ModeType::Client)
+        if(m_cfg.mode == ModeType::Client)
         {
-            OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, OC_CLIENT);
+            OCStackResult result = OCInit(m_cfg.ipAddress.c_str(), m_cfg.port, OC_CLIENT);
 
             if(OC_STACK_OK != result)
             {
@@ -219,7 +220,11 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            result = OCDoResource(&handle, OC_REST_GET, resourceType.c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(&handle, OC_REST_GET, 
+                                  resourceType.c_str(), 
+                                  nullptr, nullptr, 
+                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+                                  cbdata);
         }
         else
         {
@@ -378,8 +383,10 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            //TODO: use above and this line! result = OCDoResource(&handle, OC_REST_GET, uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
-            result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(), 
+                                  nullptr, nullptr, 
+                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+                                  cbdata);
         }
         else
         {
@@ -472,9 +479,11 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            //OCDoResource(&handle, OC_REST_PUT, assembleSetResourceUri(uri.c_str(), queryParams).c_str(), host.c_str(), assembleSetResourcePayload(uri, attributes).c_str(), OC_CONFIRMABLE, cbdata);
-            //TODO: use above and this line! result = OCDoResource(&handle, OC_REST_GET, uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
-            result = OCDoResource(&handle, OC_REST_PUT, os.str().c_str(), nullptr, assembleSetResourcePayload(attributes).c_str(), OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(&handle, OC_REST_PUT, 
+                                  os.str().c_str(), nullptr, 
+                                  assembleSetResourcePayload(attributes).c_str(), 
+                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+                                  cbdata);
         }
         else
         {
@@ -537,8 +546,11 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            //result = OCDoResource(handle, OC_REST_OBSERVE,  uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
-            result = OCDoResource(handle, method, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(handle, method, 
+                                  os.str().c_str(), nullptr, 
+                                  nullptr, 
+                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+                                  cbdata);
         }
         else
         {
