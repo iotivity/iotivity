@@ -132,7 +132,7 @@ namespace OC
                         payload << ',';
                     }
 
-                    payload << *itr;
+                    payload << "\"" << *itr << "\"";
                 }
                 payload << "]";
 
@@ -196,7 +196,7 @@ namespace OC
                         payload << ',';
                     }
 
-                    payload << *itr;
+                    payload << "\"" << *itr << "\"";
                 }
                 payload << "],";
 
@@ -209,7 +209,7 @@ namespace OC
                         payload << ',';
                     }
 
-                    payload << *itr;
+                    payload << "\"" << *itr << "\"";
                 }
                 payload << "]";
 
