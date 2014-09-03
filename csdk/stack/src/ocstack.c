@@ -177,22 +177,6 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * por
     }
 }
 
-#ifdef PRESENCE_NOTIFICATION
-OCStackResult sendPresenceNotification()
-{
-    OCStackResult result = OC_STACK_ERROR;
-    if(SERVER_DISCOVERABLE == 1)
-    {
-        result = SendObserverNotification(presenceResource, OC_REST_PRESENCE);
-    }
-    else
-    {
-        result = OC_STACK_OK;
-    }
-    return result;
-}
-#endif
-
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------

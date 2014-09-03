@@ -61,8 +61,10 @@ void DeleteClientCB(ClientCB * cbNode) {
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
         #ifdef WITH_PRESENCE
-        OCFree(cbNode->presence->timeOut);
-        OCFree(cbNode->presence);
+        if(cbNode->presence) {
+            OCFree(cbNode->presence->timeOut);
+            OCFree(cbNode->presence);
+        }
         #endif
         OCFree(cbNode);
         cbNode = NULL;

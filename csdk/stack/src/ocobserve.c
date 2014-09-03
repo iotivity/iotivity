@@ -195,7 +195,6 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
 
                 // Even if entity handler for a resource is not successful
                 // we continue calling entity handler for other resources
-                //ehRet = resPtr->entityHandler (OC_REQUEST_FLAG, entityHandlerReq);
                 ehRet = BuildObsJSONResponse((OCResource *) resPtr, entityHandlerReq);
                 jsonPayload = (unsigned char *)entityHandlerReq->resJSONPayload;
             #ifdef WITH_PRESENCE

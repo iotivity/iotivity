@@ -25,9 +25,6 @@
 #include <ocstack.h>
 #include <occoaptoken.h>
 
-// TODO platform independence (for time_t)
-#include <time.h>
-
 typedef struct OCPresence {
     // This is the TTL associated with presence
     uint32_t TTL;

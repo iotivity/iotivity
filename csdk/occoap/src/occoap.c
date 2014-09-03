@@ -197,12 +197,6 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
         {
         case OC_STACK_OK:
             observeOption = rcvdObsReq->option;
-            /*
-            OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
-                                        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr,
-                                        uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
-                                        uint8_t queryLength, unsigned char * query)
-            */
             result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
                                     0, NULL, 0, NULL);
             break;
