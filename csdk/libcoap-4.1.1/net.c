@@ -313,6 +313,7 @@ coap_new_context(const coap_address_t *listen_addr) {
 #endif /* WITH_CONTIKI */
 
     if (!listen_addr) {
+        coap_free(c);
         coap_log(LOG_EMERG, "no listen address specified\n");
         return NULL;
     }

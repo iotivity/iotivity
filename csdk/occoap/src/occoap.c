@@ -43,8 +43,6 @@
             {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG_V(FATAL, TAG, "%s is NULL", #arg); goto exit;} }
 
-#define BUF_SIZE (64)
-
 //=============================================================================
 // Private Variables
 //=============================================================================
@@ -84,7 +82,7 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
     coap_pdu_t * sentPdu = sentQueue->pdu;
 
     // fill the buffers of Uri and Query
-    result = ParseCoAPPdu(sentPdu, NULL, NULL, &observeOption, NULL);
+    result = ParseCoAPPdu(sentPdu, NULL, NULL, &observeOption, NULL, NULL);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // fill OCCoAPToken structure
@@ -119,6 +117,12 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     // silence warnings
     (void) ctx;
 
+    if(myStackMode == OC_CLIENT)
+    {
+        //TODO: should the client be responding to requests?
+        return;
+    }
+
     OCStackResult result = OC_STACK_ERROR;
     OCStackResult responseResult = OC_STACK_ERROR;
     OCRequest * request = NULL;
@@ -140,7 +144,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     coap_pdu_t * recvPdu = rcvdRequest->pdu;
 
     // fill the buffers of Uri and Query
-    result = ParseCoAPPdu(recvPdu, rcvdUri, rcvdQuery, &rcvObserveOption, &bufReqPayload);
+    result = ParseCoAPPdu(recvPdu, rcvdUri, rcvdQuery, &rcvObserveOption, NULL, &bufReqPayload);
     VERIFY_SUCCESS(result, OC_STACK_OK);
     if(rcvObserveOption){
         observeOption = (uint8_t)(*rcvObserveOption);
@@ -176,6 +180,12 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 
     // process the request
     responseResult = HandleStackRequests(request);
+    #ifdef WITH_PRESENCE
+    if(responseResult == OC_STACK_PRESENCE_DO_NOT_HANDLE)
+    {
+        goto exit;
+    }
+    #endif
 
     TODO("we should return the same registration option; however, this will confuse the receiver \
              whether it is a sequence number or registration option!------------");
@@ -187,19 +197,28 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
         {
         case OC_STACK_OK:
             observeOption = rcvdObsReq->option;
-            result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
+            /*
+            OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
+                                        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr,
+                                        uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
+                                        uint8_t queryLength, unsigned char * query)
+            */
+            result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
+                                    0, NULL, 0, NULL);
             break;
         case OC_STACK_OBSERVER_NOT_ADDED:
         case OC_STACK_OBSERVER_NOT_REMOVED:
         case OC_STACK_INVALID_OBSERVE_PARAM:
         default:
-            result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
+            result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
+                    0, NULL, 0, NULL);
             break;
         }
     }
     else
     {
-        result = FormResponseOptList(&optList, &mediaType, &maxAge, 0, NULL);
+        result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
+                0, NULL, 0, NULL);
     }
 
     VERIFY_SUCCESS(result, OC_STACK_OK);
@@ -227,6 +246,13 @@ exit:
     OCFree(request);
 }
 
+uint32_t GetTime(float afterSeconds)
+{
+    coap_tick_t now;
+    coap_ticks(&now);
+    return now + (uint32_t)(afterSeconds * COAP_TICKS_PER_SECOND);
+}
+
 //This function is called back by libcoap when a response is received
 static void HandleCoAPResponses(struct coap_context_t *ctx,
         const coap_queue_t * rcvdResponse) {
@@ -236,25 +262,43 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     ClientCB * cbNode = NULL;
     unsigned char * bufRes = NULL;
     uint8_t * rcvObserveOption;
+    uint8_t * rcvMaxAgeOption;
     uint32_t sequenceNumber = 0;
+    uint32_t maxAge = 0;
     OCStackResult result = OC_STACK_ERROR;
     coap_pdu_t *sendPdu = NULL;
     coap_pdu_t * recvPdu = NULL;
-    //coap_list_t *optList = NULL;
-    //uint8_t deregisterObserveOption = OC_RESOURCE_OBSERVE_DEREGISTER;
+    uint8_t remoteIpAddr[4];
+    uint16_t remotePortNu;
+    unsigned char fullUri[MAX_URI_LENGTH] = { 0 };
+    unsigned char rcvdUri[MAX_URI_LENGTH] = { 0 };
+    #ifdef WITH_PRESENCE
+    uint8_t isPresenceUpdate = 0;
+    #endif
 
     VERIFY_NON_NULL(ctx);
     VERIFY_NON_NULL(rcvdResponse);
     recvPdu = rcvdResponse->pdu;
 
-    result = ParseCoAPPdu(recvPdu, NULL, NULL, &rcvObserveOption, &bufRes);
+    result = ParseCoAPPdu(recvPdu, rcvdUri, NULL, &rcvObserveOption, &rcvMaxAgeOption, &bufRes);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     if(rcvObserveOption){
         sequenceNumber = *((uint32_t *) rcvObserveOption);
     }
 
+    if(rcvMaxAgeOption){
+        maxAge = *((uint32_t *) rcvMaxAgeOption);
+    }
+
+    #ifdef WITH_PRESENCE
+    if(!strcmp((char *)rcvdUri, (char *)OC_PRESENCE_URI)){
+        isPresenceUpdate = 1;
+    }
+    #endif
+
     OC_LOG_V(DEBUG, TAG, "The sequence number of this response %d", sequenceNumber);
+    OC_LOG_V(DEBUG, TAG, "The max age of this response %d", maxAge);
     OC_LOG_V(DEBUG, TAG, "The response received is %s", bufRes);
 
     // fill OCCoAPToken structure
@@ -268,38 +312,134 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
             (OCDevAddr *) &(rcvdResponse->remote), sequenceNumber, bufRes);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    cbNode = GetClientCB(rcvdToken, NULL);
+    cbNode = GetClientCB(rcvdToken, NULL, NULL);
+    if(!cbNode)
+    {
+        // we should check if we are monitoring the presence of this resource
+        //get the address of the remote
+        OCDevAddrToIPv4Addr((OCDevAddr *) &(rcvdResponse->remote), remoteIpAddr,
+                remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
+        OCDevAddrToPort((OCDevAddr *) &(rcvdResponse->remote), &remotePortNu);
+        sprintf((char *)fullUri, "coap://%d.%d.%d.%d:%d%s",
+                remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
+                remotePortNu,rcvdUri);
+        cbNode = GetClientCB(NULL, NULL, fullUri);
+    }
 
     // fill OCResponse structure
-    result = FormOCResponse(&response, cbNode, clientResponse);
+    result = FormOCResponse(&response, cbNode, maxAge, clientResponse);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     if(cbNode)
     {
-        if(clientResponse->sequenceNumber != 0 &&
+        // following if statement is handling responses of
+        // observation/presence notifications
+        #ifdef WITH_PRESENCE
+        if((clientResponse->sequenceNumber != 0 || isPresenceUpdate) &&
                 (cbNode->method == OC_REST_OBSERVE ||
-                        cbNode->method == OC_REST_OBSERVE_ALL)){
-            OC_LOG(INFO, TAG, PCF("Received an observe notification"));
-            if(recvPdu->hdr->type == COAP_MESSAGE_CON){
+                        cbNode->method == OC_REST_OBSERVE_ALL ||
+                        cbNode->method == OC_REST_PRESENCE))
+        #else
+        if((clientResponse->sequenceNumber != 0) &&
+                (cbNode->method == OC_REST_OBSERVE ||
+                        cbNode->method == OC_REST_OBSERVE_ALL))
+        #endif
+        {
+            OC_LOG(INFO, TAG, PCF("Received an observe/presence notification"));
+            // we should not ACK when it is presence notification
+            // since presence notification is snet with muticast
+            #ifdef WITH_PRESENCE
+            if(recvPdu->hdr->type == COAP_MESSAGE_CON &&
+                    !isPresenceUpdate && cbNode->method != OC_REST_PRESENCE)
+            #else
+            if(recvPdu->hdr->type == COAP_MESSAGE_CON)
+            #endif
+                {
                 sendPdu = GenerateCoAPPdu(COAP_MESSAGE_ACK, 0,
                         recvPdu->hdr->id, NULL, NULL, NULL);
                 VERIFY_NON_NULL(sendPdu);
                 result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote,
                         sendPdu, 0);
             }
+            // we only process newer sequence numbers for OC_REST_OBSERVE and OC_REST_PRESENCE
+            #ifdef WITH_PRESENCE
+            if((cbNode->method == OC_REST_OBSERVE &&
+                    clientResponse->sequenceNumber <= cbNode->sequenceNumber) ||
+                    (cbNode->method == OC_REST_PRESENCE &&
+                            clientResponse->sequenceNumber < cbNode->sequenceNumber))
+            #else
             if(cbNode->method == OC_REST_OBSERVE &&
-                    clientResponse->sequenceNumber <= cbNode->sequenceNumber){
+                    clientResponse->sequenceNumber <= cbNode->sequenceNumber)
+            #endif
+            {
                 OC_LOG_V(DEBUG, TAG, "Observe notification came out of order. \
                         Ignoring Incoming:%d  Against Current:%d.",
                         clientResponse->sequenceNumber, cbNode->sequenceNumber);
                 goto exit;
             }
+            // in the case the presence update has the same sequence number
+            // as previous ones, we signal it as OC_STACK_PRESENCE_NO_UPDATE
+            // no change happend on server's resources
+            #ifdef WITH_PRESENCE
+            if(isPresenceUpdate && cbNode->sequenceNumber == clientResponse->sequenceNumber)
+            {
+                response->clientResponse->result = OC_STACK_PRESENCE_NO_UPDATE;
+            }
+            #endif
+            // update the monitored sequence number.
             if(clientResponse->sequenceNumber > cbNode->sequenceNumber){
                 cbNode->sequenceNumber = clientResponse->sequenceNumber;
             }
+            #ifdef WITH_PRESENCE
+            if(isPresenceUpdate && cbNode->method == OC_REST_PRESENCE){
+                if(!cbNode->presence){
+                    cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
+                    VERIFY_NON_NULL(cbNode->presence);
+                    cbNode->presence->timeOut = NULL;
+                    cbNode->presence->timeOut = (uint32_t *)
+                            OCMalloc(PresenceTimeOutSize * sizeof(uint32_t));
+                    if(!(cbNode->presence->timeOut)){
+                        OCFree(cbNode->presence);
+                        goto exit;
+                    }
+                }
+                cbNode->presence->TTL = maxAge;
+                uint32_t lowerBound;
+                uint32_t higherBound;
+                if(maxAge)
+                {
+                    uint32_t now = GetTime(0);
+                    OC_LOG_V(DEBUG, TAG, "----------------current ticks  %d", now);
+                    for(int index = 0; index < PresenceTimeOutSize; index++)
+                    {
+                        lowerBound = GetTime(((float)(PresenceTimeOut[index])
+                                /(float)100)*(float)cbNode->presence->TTL);
+                        higherBound = GetTime(((float)(PresenceTimeOut[index + 1])
+                                /(float)100)*(float)cbNode->presence->TTL);
+                        cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
+                        OC_LOG_V(DEBUG, TAG, "----------------lowerBound timeout  %d", lowerBound);
+                        OC_LOG_V(DEBUG, TAG, "----------------higherBound timeout %d", higherBound);
+                        OC_LOG_V(DEBUG, TAG, "----------------timeOut entry  %d", cbNode->presence->timeOut[index]);
+                    }
+                    cbNode->presence->TTLlevel = 0;
+                    OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
+                }
+                else
+                {
+                    OC_LOG(INFO, TAG, "===============Stopping presence");
+                    response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
+                }
+            }
+            #endif
         }
         HandleStackResponses(response);
-    }else if(!cbNode && clientResponse->sequenceNumber != 0){
+    }
+    #ifdef WITH_PRESENCE
+    else if(!cbNode && clientResponse->sequenceNumber != 0 && !isPresenceUpdate)
+    #else
+    else if(!cbNode && clientResponse->sequenceNumber != 0)
+    #endif
+    {
         OC_LOG(INFO, TAG, PCF("Received an observe notification, but I do not have callback \
                  ------------ sending RESET"));
         sendPdu = GenerateCoAPPdu(COAP_MESSAGE_RST, 0,
@@ -307,11 +447,21 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         VERIFY_NON_NULL(sendPdu);
         result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote, sendPdu, 0);
         VERIFY_SUCCESS(result, OC_STACK_OK);
-    }else{
+    }
+    #ifdef WITH_PRESENCE
+    else if(!cbNode && clientResponse->sequenceNumber != 0 && isPresenceUpdate)
+    {
+        OC_LOG(INFO, TAG, PCF("Received a presence notification, but I do not have callback \
+                         ------------ ignoring"));
+    }
+    #endif
+    else
+    {
         // TODO: we should send a RST here and..
     }
     exit:
         OCFree(rcvObserveOption);
+        OCFree(rcvMaxAgeOption);
         OCFree(rcvdToken);
         OCFree(clientResponse);
         OCFree(response);
@@ -344,6 +494,7 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
     OCDevAddr devAddr;
     OCDevAddr mcastAddr;
     uint8_t ipAddr[4] = { 0 };
+    uint16_t parsedPort = 0;
 
     OC_LOG(INFO, TAG, PCF("Entering OCInitCoAP"));
 
@@ -351,7 +502,7 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
 
     if (address)
     {
-        if (!ParseIPv4Address((unsigned char *) address, ipAddr))
+        if (!ParseIPv4Address((unsigned char *) address, ipAddr, &parsedPort))
         {
             ret = OC_STACK_ERROR;
             goto exit;
@@ -367,13 +518,14 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
 
     gCoAPCtx = coap_new_context((coap_address_t*) &devAddr);
     VERIFY_NON_NULL(gCoAPCtx);
-    if (mode != OC_CLIENT) {
-        OCBuildIPv4Address(coapWKIpAddr[0], coapWKIpAddr[1], coapWKIpAddr[2],
-                coapWKIpAddr[3], COAP_DEFAULT_PORT, &mcastAddr);
-        VERIFY_SUCCESS(
-                coap_join_wellknown_group(gCoAPCtx,
-                        (coap_address_t* )&mcastAddr), 0);
-    }
+
+    // To allow presence notification work we need to init socket gCoAPCtx->sockfd_wellknown
+    // for servers as well as clients
+    OCBuildIPv4Address(coapWKIpAddr[0], coapWKIpAddr[1], coapWKIpAddr[2],
+            coapWKIpAddr[3], COAP_DEFAULT_PORT, &mcastAddr);
+    VERIFY_SUCCESS(
+            coap_join_wellknown_group(gCoAPCtx,
+                    (coap_address_t* )&mcastAddr), 0);
 
     coap_register_request_handler(gCoAPCtx, HandleCoAPRequests);
     coap_register_response_handler(gCoAPCtx, HandleCoAPResponses);
@@ -411,11 +563,8 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
     coap_uri_t uri;
     OCDevAddr dst;
     uint8_t ipAddr[4] = { 0 };
+    uint16_t port = 0;
     coap_list_t *optList = NULL;
-    size_t buflen;
-    unsigned char _buf[BUF_SIZE];
-    unsigned char *buf = _buf;
-    int res;
     uint8_t coapMsgType;
     uint8_t coapMethod;
     uint8_t observeOption;
@@ -424,50 +573,19 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
 
     if (Uri) {
         OC_LOG_V(INFO, TAG, "URI = %s", Uri);
-        VERIFY_SUCCESS(coap_split_uri((unsigned char * )Uri, strlen(Uri), &uri), 0);
+        VERIFY_SUCCESS(coap_split_uri((unsigned char * )Uri, strlen(Uri), &uri), OC_STACK_OK);
 
         // Generate the destination address
-        if (uri.host.length && ParseIPv4Address(uri.host.s, ipAddr)) {
+        if (uri.host.length && ParseIPv4Address(uri.host.s, ipAddr, &port)) {
             OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], uri.port,
                     &dst);
         } else {
             goto exit;
         }
 
-        //create appropriate coap options
-        if (uri.port != COAP_DEFAULT_PORT) {
-            coap_insert(&optList, CreateNewOptionNode( COAP_OPTION_URI_PORT,
-                            sizeof(uri.port), (uint8_t *)&(uri.port)), OrderOptions);
-        }
-
-        if (uri.path.length) {
-            buflen = BUF_SIZE;
-            res = coap_split_path(uri.path.s, uri.path.length, buf, &buflen);
-
-            while (res--) {
-                coap_insert(&optList,
-                        CreateNewOptionNode(COAP_OPTION_URI_PATH,
-                                COAP_OPT_LENGTH(buf), COAP_OPT_VALUE(buf)),
-                        OrderOptions);
-
-                buf += COAP_OPT_SIZE(buf);
-            }
-        }
-
-        if (uri.query.length) {
-            buflen = BUF_SIZE;
-            buf = _buf;
-            res = coap_split_query(uri.query.s, uri.query.length, buf, &buflen);
-
-            while (res--) {
-                coap_insert(&optList,
-                        CreateNewOptionNode(COAP_OPTION_URI_QUERY,
-                                COAP_OPT_LENGTH(buf), COAP_OPT_VALUE(buf)),
-                        OrderOptions);
-
-                buf += COAP_OPT_SIZE(buf);
-            }
-        }
+        VERIFY_SUCCESS(FormOptionList(&optList, NULL, NULL, 0, NULL,
+                &uri.port, uri.path.length, uri.path.s, uri.query.length,
+                uri.query.s), OC_STACK_OK);
 
         OC_LOG_V(DEBUG, TAG, "uri.host.s %s", uri.host.s);
         OC_LOG_V(DEBUG, TAG, "uri.path.s %s", uri.path.s);
@@ -484,6 +602,9 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
     // Decide method type
     switch (method) {
         case OC_REST_GET:
+        #ifdef WITH_PRESENCE
+        case OC_REST_PRESENCE:
+        #endif
             coapMethod = COAP_REQUEST_GET;
             break;
         case OC_REST_PUT:
@@ -519,14 +640,13 @@ exit:
     return ret;
 }
 
-OCStackResult OCSendCoAPNotification (OCDevAddr *dstAddr, OCStackResult result,
+OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr, OCStackResult result,
                        OCQualityOfService qos, OCCoAPToken * token,
-                       unsigned char *payload, uint32_t seqNum)
+                       unsigned char *payload, uint32_t seqNum, uint32_t maxAge)
 {
     coap_list_t *optList = NULL;
     uint8_t coapMsgType = COAP_MESSAGE_NON;
     uint8_t mediaType = COAP_MEDIATYPE_APPLICATION_JSON;
-    uint32_t maxAge = 0x2ffff;
     coap_pdu_t *sendPdu;
 
     OC_LOG(INFO, TAG, PCF("Entering OCSendCoAPNotification"));
@@ -537,8 +657,10 @@ OCStackResult OCSendCoAPNotification (OCDevAddr *dstAddr, OCStackResult result,
         coapMsgType = COAP_MESSAGE_CON;
     }
 
-    result = FormResponseOptList(&optList, &mediaType, &maxAge, 4, (uint8_t *)(&seqNum));
+    result = FormOptionList(&optList, &mediaType, &maxAge, 4, (uint8_t *)(&seqNum),
+            NULL, strlen((char *)uri), uri, 0, NULL);
     VERIFY_SUCCESS(result, OC_STACK_OK);
+
     sendPdu = GenerateCoAPPdu(
             coapMsgType == COAP_MESSAGE_CON ? COAP_MESSAGE_CON : COAP_MESSAGE_NON,
                     OCToCoAPResponseCode(result), coap_new_message_id(gCoAPCtx),

@@ -64,6 +64,15 @@ uint8_t OCGetRandomByte(void);
  */
 void OCFillRandomMem(uint8_t * location, uint16_t len);
 
+/*
+ * Generate a uniformly distributed number on the defined bounded range
+ * @param[in] firstBound
+ *              the first bound of the range
+ * @param[in] secondBound
+ *              the second bound of the range
+ */
+uint32_t OCGetRandomRange(uint32_t firstBound, uint32_t secondBound);
+
 #ifdef __cplusplus
 }
 #endif

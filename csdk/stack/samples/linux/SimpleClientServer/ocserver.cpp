@@ -43,6 +43,10 @@ typedef struct LEDRESOURCE{
 
 static LEDResource LED;
 
+#ifdef WITH_PRESENCE
+static int stopPresenceCount = 10;
+#endif
+
 // TODO: hard coded for now, change after Sprint4
 const char responsePayloadGet[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"power\":10}}";
 const char responsePayloadPut[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"off\",\"power\":0}}";
@@ -106,6 +110,14 @@ void *ChangeLEDRepresentation (void *param)
                 gLEDUnderObservation = 0;
             }
         }
+        #ifdef WITH_PRESENCE
+        OC_LOG_V(INFO, TAG, "================ presence count %d",stopPresenceCount);
+        if(!stopPresenceCount--)
+        {
+            OC_LOG(INFO, TAG, "================ stopping presence");
+            OCStopPresence();
+        }
+        #endif
     }
     return NULL;
 }
@@ -131,7 +143,12 @@ int main() {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
-
+    #ifdef WITH_PRESENCE
+    if (OCStartPresence(0) != OC_STACK_OK) {
+        OC_LOG_V(ERROR, TAG, "OCStack presence/discovery error");
+        return 0;
+    }
+    #endif
     /*
      * Declare and create the example resource: LED
      */
@@ -150,6 +167,7 @@ int main() {
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
+
         sleep(3);
     }
 

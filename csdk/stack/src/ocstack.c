@@ -43,6 +43,12 @@ typedef enum {
 //-----------------------------------------------------------------------------
 static OCStackState stackState = OC_STACK_UNINITIALIZED;
 OCResource *headResource = NULL;
+#ifdef WITH_PRESENCE
+static PresenceResource presenceResource;
+uint8_t PresenceTimeOutSize = 4;
+uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
+#endif
+OCMode myStackMode;
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -83,25 +89,34 @@ void HandleStackResponses(OCResponse * response)
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
     OC_LOG(INFO, TAG, PCF("Entering HandleStackResponses (OCStack Layer)"));
 
+    //ToDo: if ttl is zero, we should notify the client!!!!
     if (response->cbNode)
     {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
         result = response->cbNode->callBack(response->cbNode->context,
                 response->cbNode->handle, response->clientResponse);
+        #ifdef WITH_PRESENCE
+        if (result == OC_STACK_DELETE_TRANSACTION ||
+                response->clientResponse->result == OC_STACK_COMM_ERROR ||
+                response->clientResponse->result == OC_STACK_PRESENCE_STOPPED)
+        #else
         if (result == OC_STACK_DELETE_TRANSACTION ||
                 response->clientResponse->result == OC_STACK_COMM_ERROR)
+        #endif
         {
             FindAndDeleteClientCB(response->cbNode);
         }
     }
 }
 
-int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr)
+int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
 {
     size_t index = 0;
     unsigned char *itr, *coap;
     uint8_t dotCount = 0;
 
+    ipAddr[index] = 0;
+    *port = 0;
     /* search for scheme */
     itr = ipAddrStr;
     if (!isdigit((unsigned char) *ipAddrStr))
@@ -125,6 +140,7 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr)
         {
             index++;
             dotCount++;
+            ipAddr[index] = 0;
         }
         else
         {
@@ -132,6 +148,23 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr)
         }
         ipAddrStr++;
     }
+    if(*ipAddrStr == ':')
+    {
+        ipAddrStr++;
+        while (*ipAddrStr){
+            if (isdigit((unsigned char) *ipAddrStr))
+            {
+                *port *= 10;
+                *port += *ipAddrStr - '0';
+            }
+            else
+            {
+                break;
+            }
+            ipAddrStr++;
+        }
+    }
+
 
     if (ipAddr[0] < 255 && ipAddr[1] < 255 && ipAddr[2] < 255 && ipAddr[3] < 255
             && dotCount == 3)
@@ -143,12 +176,29 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr)
         return 0;
     }
 }
+
+#ifdef PRESENCE_NOTIFICATION
+OCStackResult sendPresenceNotification()
+{
+    OCStackResult result = OC_STACK_ERROR;
+    if(SERVER_DISCOVERABLE == 1)
+    {
+        result = SendObserverNotification(presenceResource, OC_REST_PRESENCE);
+    }
+    else
+    {
+        result = OC_STACK_OK;
+    }
+    return result;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
 
 static OCDoHandle GenerateInvocationHandle();
-static void initResources();
+static OCStackResult initResources();
 static void insertResource(OCResource *resource);
 static OCResource *findResource(OCResource *resource);
 static void insertResourceType(OCResource *resource,
@@ -164,6 +214,7 @@ static void deleteResourceInterface(OCResourceInterface *resourceInterface);
 static void deleteResourceElements(OCResource *resource);
 static int deleteResource(OCResource *resource);
 static void deleteAllResources();
+static void incrementSequenceNumber(OCResource * resPtr);
 
 
 //-----------------------------------------------------------------------------
@@ -186,6 +237,7 @@ static void deleteAllResources();
  */
 OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
 {
+    OCStackResult result = OC_STACK_ERROR;
     OC_LOG(INFO, TAG, PCF("Entering OCInit"));
 
     if (ipAddr)
@@ -209,19 +261,23 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
         return OC_STACK_ERROR;
         break;
     }
-
-    // Initialize resource
-    initResources();
-
+    myStackMode = mode;
     // Make call to OCCoAP layer
-    if (OCInitCoAP(ipAddr, (uint16_t) port, mode) == OC_STACK_OK)
+    result = OCInitCoAP(ipAddr, (uint16_t) port, myStackMode);
+    if (result == OC_STACK_OK)
     {
         stackState = OC_STACK_INITIALIZED;
-        return OC_STACK_OK;
     }
-
-    OC_LOG(ERROR, TAG, PCF("Stack initialization error"));
-    return OC_STACK_ERROR;
+    // Initialize resource
+    if(result == OC_STACK_OK && myStackMode != OC_CLIENT)
+    {
+        result = initResources();
+    }
+    if(result != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("Stack initialization error"));
+    }
+    return result;
 }
 
 /**
@@ -291,6 +347,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     OCStackResult result = OC_STACK_ERROR;
     OCCoAPToken * token = NULL;
     ClientCB *clientCB = NULL;
+    unsigned char * requestUri = NULL;
     (void) referenceUri;
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
@@ -310,6 +367,17 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         case OC_REST_OBSERVE:
         case OC_REST_OBSERVE_ALL:
             break;
+        #ifdef WITH_PRESENCE
+        case OC_REST_PRESENCE:
+            requestUri = (unsigned char *) OCMalloc(strlen(requiredUri) + 1);
+            if(requestUri){
+                memcpy(requestUri, requiredUri, strlen(requiredUri) + 1);
+            }else{
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+            break;
+        #endif
         default:
             result = OC_STACK_INVALID_METHOD;
             goto exit;
@@ -331,14 +399,14 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         OCFree(token);
         goto exit;
     }
-    if((result = AddClientCB(&clientCB, cbData, token, *handle, method)) != OC_STACK_OK)
+    if((result = AddClientCB(&clientCB, cbData, token, *handle, method, requestUri)) != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
 
     // Make call to OCCoAP layer
-    result = (OCStackResult)OCDoCoAPResource(method, qos, token, requiredUri, request);
+    result = OCDoCoAPResource(method, qos, token, requiredUri, request);
 
 exit:
     if (result != OC_STACK_OK)
@@ -378,13 +446,16 @@ OCStackResult OCCancel(OCDoHandle handle) {
 
     OC_LOG(INFO, TAG, PCF("Entering OCCancel"));
 
-    ClientCB *clientCB = GetClientCB(NULL, &handle);
+    ClientCB *clientCB = GetClientCB(NULL, &handle, NULL);
 
     if(clientCB) {
         switch (clientCB->method)
         {
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
+            #ifdef WITH_PRESENCE
+            case OC_REST_PRESENCE:
+            #endif
                 FindAndDeleteClientCB(clientCB);
                 break;
             default:
@@ -393,6 +464,83 @@ OCStackResult OCCancel(OCDoHandle handle) {
     }
     return OC_STACK_OK;
 }
+#ifdef WITH_PRESENCE
+OCStackResult OCProcessPresence()
+{
+    OCStackResult result = OC_STACK_ERROR;
+    uint8_t ipAddr[4] = { 0 };
+    uint16_t port = 0;
+
+    OC_LOG(INFO, TAG, PCF("Entering RequestPresence"));
+    ClientCB* cbNode = NULL;
+    OCDevAddr dst;
+    OCClientResponse * clientResponse = NULL;
+    OCResponse * response = NULL;
+
+    LL_FOREACH(cbList, cbNode) {
+        if(OC_REST_PRESENCE == cbNode->method)
+        {
+            if(cbNode->presence)
+            {
+                uint32_t now = GetTime(0);
+                OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
+                OC_LOG_V(DEBUG, TAG, "----------------current ticks %d", now);
+                if(cbNode->presence->TTLlevel != PresenceTimeOutSize){
+                    OC_LOG_V(DEBUG, TAG, "----------------timeout ticks %d",
+                            cbNode->presence->timeOut[cbNode->presence->TTLlevel]);
+                }
+                if(cbNode->presence->TTLlevel == PresenceTimeOutSize)
+                {
+                    OC_LOG(DEBUG, TAG, "----------------No more timeout ticks");
+                    if (ParseIPv4Address( cbNode->requestUri, ipAddr, &port))
+                    {
+                        OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
+                                &dst);
+                        result = FormOCClientResponse(&clientResponse, OC_STACK_PRESENCE_STOPPED,
+                                (OCDevAddr *) &dst, 0, NULL);
+                        if(result != OC_STACK_OK)
+                        {
+                            goto exit;
+                        }
+                        result = FormOCResponse(&response, cbNode, 0, clientResponse);
+                        if(result != OC_STACK_OK)
+                        {
+                            goto exit;
+                        }
+                    }
+                    else
+                    {
+                        goto exit;
+                    }
+                    HandleStackResponses(response);
+                }
+                if(now >= cbNode->presence->timeOut[cbNode->presence->TTLlevel])
+                {
+                    OC_LOG(DEBUG, TAG, "time to test server presence ==========");
+                    OCCoAPToken * token = NULL;
+                    token = OCGenerateCoAPToken();
+                    if (!token)
+                    {
+                        result = OC_STACK_NO_MEMORY;
+                        OCFree(token);
+                        goto exit;
+                    }
+                    result = OCDoCoAPResource(OC_REST_GET, OC_NON_CONFIRMABLE,
+                            token, (const char *)cbNode->requestUri, NULL);
+                    cbNode->presence->TTLlevel++;
+                    OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d", cbNode->presence->TTLlevel);
+                }
+            }
+        }
+    }
+exit:
+    if (result != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("OCProcessPresence error"));
+    }
+    return result;
+}
+#endif
 
 /**
  * Called in main loop of OC client or server.  Allows low-level processing of
@@ -405,10 +553,72 @@ OCStackResult OCCancel(OCDoHandle handle) {
 OCStackResult OCProcess() {
 
     OC_LOG(INFO, TAG, PCF("Entering OCProcess"));
+    #ifdef WITH_PRESENCE
+    OCProcessPresence();
+    #endif
     OCProcessCoAP();
 
     return OC_STACK_OK;
 }
+
+#ifdef WITH_PRESENCE
+/**
+ * When operating in @ref OCServer or @ref OCClientServer mode, this API will start sending out
+ * presence notifications to clients via multicast. Once this API has been called with a success,
+ * clients may query for this server's presence and this server's stack will respond via multicast.
+ *
+ * @param ttl (Time To Live in seconds) - Used to set the time a server
+ * Note: If ttl is '0', then the default stack value will be used (60 Seconds).
+ *
+ * @return
+ *     OC_STACK_OK      - No errors; Success
+ *     OC_STACK_ERROR   - @ref OCStartPresence has already been called.
+ */
+OCStackResult OCStartPresence(const uint32_t ttl)
+{
+    if(((OCResource *)presenceResource.handle)->resourceProperties & OC_ACTIVE)
+    {
+        return OC_STACK_ERROR;
+    }
+    OCChangeResourceProperty(
+            &(((OCResource *)presenceResource.handle)->resourceProperties),
+            OC_ACTIVE, 1);
+    if(ttl > 0)
+    {
+        presenceResource.presenceTTL = ttl;
+    }
+    OCDevAddr multiCastAddr = {0};
+    OCCoAPToken * token = OCGenerateCoAPToken();
+    OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
+    //add the presence observer
+    AddObserver(OC_PRESENCE_URI, NULL, token, &multiCastAddr,
+            (OCResource *)presenceResource.handle, OC_NON_CONFIRMABLE);
+
+    return OCNotifyObservers(presenceResource.handle);
+}
+
+/**
+ * When operating in @ref OCServer or @ref OCClientServer mode, this API will stop sending out
+ * presence notifications to clients via multicast. Once this API has been called with a success,
+ * this server's stack will not respond to clients querying for this server's presence.
+ *
+ * @return
+ *     OC_STACK_OK      - No errors; Success
+ *     OC_STACK_ERROR   - @ref OCStartPresence has never been called or @ref OCStopPresence has
+ *                        already been called.
+ */
+OCStackResult OCStopPresence()
+{
+    OCStackResult result = OC_STACK_ERROR;
+    //make resource inactive
+    result = OCChangeResourceProperty(
+            &(((OCResource *) presenceResource.handle)->resourceProperties),
+            OC_ACTIVE, 0);
+    result = OCNotifyObservers(presenceResource.handle);
+    return result;
+}
+#endif
+
 /**
  * Create a resource
  *
@@ -437,6 +647,10 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     OC_LOG(INFO, TAG, PCF("Entering OCCreateResource"));
 
+    if(myStackMode == OC_CLIENT)
+    {
+        return result;
+    }
     // Validate parameters
     // Is it presented during resource discovery?
     if (!handle || !resourceTypeName || !resourceInterfaceName || !uri) {
@@ -516,6 +730,10 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     *handle = pointer;
     result = OC_STACK_OK;
 
+    #ifdef WITH_PRESENCE
+    incrementSequenceNumber((OCResource *)presenceResource.handle);
+    OCNotifyObservers(presenceResource.handle);
+    #endif
 exit:
     if (result != OC_STACK_OK)
     {
@@ -676,9 +894,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     strncpy(str, resourceTypeName, size);
     pointer->resourcetypename = str;
 
-   // Bind the resourcetype to the resource
     insertResourceType(resource, pointer);
-
     result = OC_STACK_OK;
 
     exit: if (result != OC_STACK_OK) {
@@ -925,7 +1141,6 @@ const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index) {
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
-
  */
 OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
         uint8_t *numResourceInterfaces) {
@@ -1056,6 +1271,17 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle) {
     return resource->entityHandler;
 }
 
+void incrementSequenceNumber(OCResource * resPtr)
+{
+    // Increment the sequence number
+    resPtr->sequenceNum += 1;
+    if (resPtr->sequenceNum == MAX_SEQUENCE_NUMBER)
+    {
+        resPtr->sequenceNum = 1;
+    }
+    return;
+}
+
 /**
  * Notify observers that an observed value has changed.
  *
@@ -1069,6 +1295,8 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle) {
 OCStackResult OCNotifyObservers(OCResourceHandle handle) {
     OCResource *resPtr = NULL;
     OCStackResult result;
+    OCMethod method = OC_REST_NOMETHOD;
+    uint32_t maxAge = 0;
 
     OC_LOG(INFO, TAG, PCF("Entering OCNotifyObservers"));
 
@@ -1076,11 +1304,35 @@ OCStackResult OCNotifyObservers(OCResourceHandle handle) {
 
     // Verify that the resource exists
     resPtr = findResource ((OCResource *) handle);
-    if (NULL == resPtr)
+    if (NULL == resPtr || myStackMode == OC_CLIENT)
     {
         return OC_STACK_NO_RESOURCE;
     } else {
-        result = SendObserverNotification (resPtr);
+        #ifdef WITH_PRESENCE
+        if(strcmp(resPtr->uri, OC_PRESENCE_URI))
+        {
+        #endif
+            //only increment in the case of regular observing (not presence)
+            incrementSequenceNumber(resPtr);
+            method = OC_REST_OBSERVE;
+            maxAge = 0x2FFFF;
+        #ifdef WITH_PRESENCE
+        }
+        else
+        {
+            method = OC_REST_PRESENCE;
+            if((((OCResource *) presenceResource.handle)->resourceProperties) & OC_ACTIVE)
+            {
+                maxAge = presenceResource.presenceTTL;
+            }
+            else
+            {
+                maxAge = 0;
+            }
+
+        }
+        #endif
+        result = SendObserverNotification (method, resPtr, maxAge);
         return result;
     }
 }
@@ -1103,14 +1355,50 @@ static OCDoHandle GenerateInvocationHandle()
 
     return handle;
 }
+#ifdef WITH_PRESENCE
+OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
+        OCResourceProperty resourceProperties, uint8_t enable)
+{
+    if (resourceProperties
+            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW)) {
+        OC_LOG(ERROR, TAG, PCF("Invalid property"));
+        return OC_STACK_INVALID_PARAM;
+    }
+    if(!enable)
+    {
+        *inputProperty = *inputProperty & ~(resourceProperties);
+    }
+    else
+    {
+        *inputProperty = *inputProperty | resourceProperties;
+    }
+    return OC_STACK_OK;
+}
+#endif
 
 /**
  * Initialize resource data structures, variables, etc.
  */
-void initResources() {
-    TODO ("Do we need to create a resource for /oc/core???");
-    // Init resource vars
+OCStackResult initResources() {
+    OCStackResult result = OC_STACK_OK;
+    // Init application resource vars
     headResource = NULL;
+    // Init Virtual Resources
+    #ifdef WITH_PRESENCE
+    presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL;
+    //presenceResource.token = OCGenerateCoAPToken();
+    result = OCCreateResource(&presenceResource.handle,
+            "core.presence",
+            "core.r",
+            OC_PRESENCE_URI,
+            NULL,
+            OC_OBSERVABLE);
+    //make resource inactive
+    result = OCChangeResourceProperty(
+            &(((OCResource *) presenceResource.handle)->resourceProperties),
+            OC_ACTIVE, 0);
+    #endif
+    return result;
 }
 
 /**

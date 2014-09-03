@@ -74,7 +74,7 @@ OCEntityHandlerResult
 BuildObsJSONResponse(OCResource *resource, OCEntityHandlerRequest *ehRequest);
 
 OCStackResult
-BuildDiscoveryResponse(OCResource *resourcePtr, uint8_t filterOn,
+BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
                         char *filterValue, char * out, uint16_t *remaining);
 
 #endif //OC_RESOURCE_H
