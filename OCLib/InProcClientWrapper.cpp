@@ -590,4 +590,65 @@ namespace OC
 
         return result;
     }
-   }
+
+    struct SubscribePresenceContext
+    {
+        std::function<void(OCStackResult, const int&)> callback;
+    };
+
+    OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    {
+        SubscribePresenceContext* context = static_cast<SubscribePresenceContext*>(ctx);
+        std::thread exec(context->callback, clientResponse->result, clientResponse->sequenceNumber);
+
+        exec.detach();
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OCStackResult InProcClientWrapper::subscribePresence(OCDoHandle* handle, const std::string& host,
+                std::function<void(OCStackResult, const int&)> presenceHandler)
+    {
+        OCStackResult result;
+        OCCallbackData* cbdata = new OCCallbackData();
+        SubscribePresenceContext* ctx = new SubscribePresenceContext();
+        ctx->callback = presenceHandler;
+        cbdata->cb = &subscribePresenceCallback;
+        cbdata->context = static_cast<void*>(ctx);
+
+        auto cLock = m_csdkLock.lock();
+
+        std::ostringstream os;
+
+        os << host << "/oc/presence";
+
+        std::cout << "Subscribe Presence: " << os.str() << std::endl;
+
+        if(cLock)
+        {
+            result = OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult InProcClientWrapper::unsubscribePresence(OCDoHandle handle)
+    {
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+        
+        if(cLock)
+        {
+            std::lock_guard<std::mutex> lock(*cLock);
+            result = OCCancel(handle);
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+}

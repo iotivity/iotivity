@@ -50,6 +50,11 @@ namespace OC
 
         virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, 
             const boost::property_tree::ptree resourceNode) {return nullptr;}
+
+        virtual OCStackResult subscribePresence(OCDoHandle* handle, const std::string& host,
+            std::function<void(OCStackResult, const int&)> presenceHandler){return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult unsubscribePresence(OCDoHandle handle){return OC_STACK_NOTIMPL;}
     };
 }
 

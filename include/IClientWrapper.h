@@ -48,6 +48,11 @@ namespace OC
         
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)=0;
         
+        virtual OCStackResult subscribePresence(OCDoHandle* handle, const std::string& host, 
+            std::function<void(OCStackResult, const int&)> presenceHandler)=0;
+
+        virtual OCStackResult unsubscribePresence(OCDoHandle handle) =0;
+
         virtual ~IClientWrapper(){}
        
 

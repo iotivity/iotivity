@@ -47,6 +47,9 @@ namespace OC
     class OCPlatform
     {
     public:
+        // typedef for handle to cancel presence info with
+        typedef OCDoHandle OCPresenceHandle;
+
         /**
         * Constructor for OCPlatform. Constructs a new OCPlatform from a given PlatformConfig with
         * appropriate fields
@@ -212,7 +215,7 @@ namespace OC
         * @param resourceHandle - handle to the resource
         * @param resourceTypeName - new typename to bind to the resource
 
-        * @return OCStackResult - return value of the API. Returns OCSTACk_OK if success <br>
+        * @return OCStackResult - return value of the API. Returns OCSTACK_OK if success <br>
         */
         OCStackResult bindTypeToResource(const OCResourceHandle& resourceHandle,
                         const std::string& resourceTypeName) const;
@@ -222,10 +225,51 @@ namespace OC
         * @param resourceHandle - handle to the resource
         * @param resourceTypeName - new interface  to bind to the resource
 
-        * @return OCStackResult - return value of the API. Returns OCSTACk_OK if success <br>
+        * @return OCStackResult - return value of the API. Returns OCSTACK_OK if success <br>
         */
         OCStackResult bindInterfaceToResource(const OCResourceHandle& resourceHandle,
                         const std::string& resourceInterfaceName) const;
+
+        public:
+        /** 
+        * Start or stop Presence announcements. 
+        * 
+        * @param announceDuration - Duration to keep presence duration active.
+        * @return OCStackResult - Returns OCSTACK_OK if success <br>
+        *
+        * These apply only if a server instance is active.
+        */
+        OCStackResult startPresence(const unsigned int announceDurationSeconds);
+
+        OCStackResult stopPresence();
+
+        /**
+        * subscribes to a server's presence change events.  By making this subscription,
+        * every time a server adds/removes/alters a resource, starts or is intentionally
+        * stopped (potentially more to be added later).
+        *
+        * @param presenceHandle - a handle object that can be used to identify this subscription
+        *               request.  It can be used to unsubscribe from these events in the future. 
+        *               It will be set upon successful return of this method.
+        * @param host - The IP address/addressable name of the server to subscribe to.
+        * @param presenceHandler - callback function that will receive notifications/subscription events
+        *
+        * @return OCStackResult - return value of the API.  Returns OCSTACK_OK if success <br>
+        */
+        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host, 
+                        std::function<void(OCStackResult, const int&)> presenceHandler);
+
+        /**
+        * unsubscribes from a previously subscribed server's presence events. Note that
+        * you may for a short time still receive events from the server since it may take time
+        * for the unsubscribe to take effect.
+        *
+        * @param presenceHandle - the handle object provided by the subscribePresence call that identifies
+        *               this subscription.
+        *
+        * @return OCStackResult - return value of the API.  Returns OCSTACK_OK if success <br>
+        */
+        OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle);
 
         /**
         * Creates a resource proxy object so that get/put/observe functionality

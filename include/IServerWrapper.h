@@ -55,6 +55,10 @@ namespace OC
         virtual OCStackResult bindInterfaceToResource(
                     const OCResourceHandle& resourceHandle,
                     const std::string& resourceInterfaceName) = 0;
+
+        virtual OCStackResult startPresence(const unsigned int seconds) = 0;
+
+        virtual OCStackResult stopPresence() = 0;
     };
 }
 

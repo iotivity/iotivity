@@ -58,6 +58,10 @@ namespace OC
         
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri);
         
+        virtual OCStackResult subscribePresence(OCDoHandle* handle, const std::string& host,
+            std::function<void(OCStackResult, const int&)> presenceHandler);
+
+        virtual OCStackResult unsubscribePresence(OCDoHandle handle);
         // Note: this should never be called by anyone but the handler for the listen command.  It is public becuase that needs to be a non-instance callback
         virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode);
     private:

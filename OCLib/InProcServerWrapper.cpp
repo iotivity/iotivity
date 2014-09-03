@@ -322,6 +322,39 @@ namespace OC
         return result;
     }
 
+    OCStackResult InProcServerWrapper::startPresence(const unsigned int seconds)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if(cLock)
+        {
+            std::lock_guard<std::mutex> lock(*cLock);
+            result = OCStartPresence(seconds);
+        }
+        
+        if(result != OC_STACK_OK)
+        {
+            throw OCException("startPresence failed", result);
+        }
+        return result;
+    }
+
+    OCStackResult InProcServerWrapper::stopPresence()
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if(cLock)
+        {
+            std::lock_guard<std::mutex> lock(*cLock);
+            result = OCStopPresence();
+        }
+        
+        if(result != OC_STACK_OK)
+        {
+            throw OCException("stopPresence failed", result);
+        }
+        return result;
+    }
 
     InProcServerWrapper::~InProcServerWrapper()
     {

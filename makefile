@@ -1,4 +1,4 @@
-# override with `make BUILD=release`
+# override with `make BUILD=debug`
 # default to release build
 BUILD	  := release
 CXX	      := g++
@@ -6,9 +6,8 @@ CXX	      := g++
 OUT_DIR	  := $(PWD)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
-CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0
-
-CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3
+CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0 
+CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3 
 
 CXX_INC	  := -I./include/
 CXX_INC	  += -I./csdk/stack/include

@@ -52,6 +52,10 @@ namespace OC
         virtual OCStackResult bindInterfaceToResource(
                     const OCResourceHandle& resourceHandle,
                     const std::string& resourceInterface);
+
+        virtual OCStackResult startPresence(const unsigned int seconds);
+
+        virtual OCStackResult stopPresence();
     private:
         void processFunc();
         std::thread m_processThread;

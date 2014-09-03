@@ -40,20 +40,30 @@ namespace OC
 
         {
             // Not implemented
-            return OC_STACK_ERROR;
+            return OC_STACK_NOTIMPL;
         }
         virtual OCStackResult bindTypeToResource(
                      const OCResourceHandle& resourceHandle,
                      const std::string& resourceTypeName)
         {   //Not implemented yet
-            return OC_STACK_ERROR;
+            return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult bindInterfaceToResource(
                      const OCResourceHandle& resourceHandle,
                      const std::string& resourceInterfaceName)
         {   //Not implemented yet
-            return OC_STACK_ERROR;
+            return OC_STACK_NOTIMPL;
+        }
+
+        virtual OCStackResult startPresence(const unsigned int seconds)
+        {   //Not implemented yet
+            return OC_STACK_NOTIMPL;
+        }
+
+        virtual OCStackResult stopPresence()
+        {   //Not implemented yet
+            return OC_STACK_NOTIMPL;
         }
     };
 }

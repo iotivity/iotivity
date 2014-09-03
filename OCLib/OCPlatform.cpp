@@ -43,8 +43,9 @@ namespace OC
         init(m_cfg);
     }
 
-    OCPlatform::~OCPlatform()
+    OCPlatform::~OCPlatform(void)
     {
+        std::cout << "platform destructor called" << std::endl;
     }
 
     OCStackResult OCPlatform::notifyObservers(OCResourceHandle resourceHandle)
@@ -248,6 +249,55 @@ namespace OC
         }
         return result;
 
+    }
+
+    OCStackResult OCPlatform::startPresence(const unsigned int announceDurationSeconds)            
+    { 
+        if(m_server)
+        {
+            return m_server->startPresence(announceDurationSeconds);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
+    OCStackResult OCPlatform::stopPresence()
+    {
+        if(m_server)
+        {
+            return m_server->stopPresence();
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
+    OCStackResult OCPlatform::subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host, 
+                    std::function<void(OCStackResult, const int&)> presenceHandler)
+    {
+        if(m_client)
+        {
+            return m_client->subscribePresence(&presenceHandle, host, presenceHandler);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
+    OCStackResult OCPlatform::unsubscribePresence(OCPresenceHandle presenceHandle)
+    {
+        if(m_client)
+        {
+            return m_client->unsubscribePresence(presenceHandle);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
     }
 
 } //namespace OC

@@ -5,7 +5,7 @@ CXX	      := g++
 #CXX	  := clang
 OUT_DIR	  := $(PWD)/$(BUILD)
 
-CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
+CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread 
 
 CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread 
 
@@ -17,7 +17,7 @@ CXX_INC	  += -I../csdk/logger/include
 CXX_INC	  += -I../csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient ocicuc
+.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient ocicuc presenceserver presenceclient
 
 all: .PHONY
 
@@ -29,6 +29,12 @@ simpleserver: simpleserver.cpp
 
 simpleclient: simpleclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclient.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+
+presenceserver: presenceserver.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+
+presenceclient: presenceclient.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceclient.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
 
 simpleclientserver: simpleclientserver.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclientserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
