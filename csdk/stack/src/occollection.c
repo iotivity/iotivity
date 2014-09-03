@@ -215,7 +215,7 @@ BuildCollectionJSONResponse(OCResource *resource, OCEntityHandlerRequest *ehRequ
             OCResource* temp = resource->rsrcResources[i];
             if (temp)
             {
-                ret = BuildDiscoveryResponse(temp, filterOn, filterValue, (char*)buffer, &remaining);
+                ret = BuildVirtualResourceResponse(temp, filterOn, filterValue, (char*)buffer, &remaining);
                 if (ret != OC_STACK_OK)
                 {
                     break;

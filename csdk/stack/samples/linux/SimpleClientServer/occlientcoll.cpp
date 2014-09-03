@@ -47,7 +47,7 @@ static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
 // The handle for the observe registration
 OCDoHandle gObserveDoHandle;
 // After this crosses a threshold client deregisters for further observations
-int gNumNotifies = 1;
+int gNumObserveNotifies = 1;
 
 int gQuitFlag = 0;
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
@@ -95,10 +95,10 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
         }
         else {
-            OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumNotifies);
+            OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumObserveNotifies);
             OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
-            gNumNotifies++;
-            if (gNumNotifies == 3)
+            gNumObserveNotifies++;
+            if (gNumObserveNotifies == 3)
             {
                 if (OCCancel (gObserveDoHandle) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");

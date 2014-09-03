@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-
+#define WITH_PRESENCE
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
@@ -37,6 +37,12 @@ extern "C" {
 #define OC_MULTICAST_PREFIX                  PCF("coap://224.0.1.187:5683")
 
 #define USE_RANDOM_PORT (0)
+#ifdef WITH_PRESENCE
+#define OC_DEFAULT_PRESENCE_TTL (60)
+#define OC_PRESENCE_URI                      PCF("/oc/presence")
+extern uint8_t PresenceTimeOutSize; // lenght of PresenceTimeOut - 1
+extern uint32_t PresenceTimeOut[];
+#endif
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -45,10 +51,13 @@ extern "C" {
  * OC Virtual resources supported by every OC device
  */
 typedef enum {
-    OC_WELL_KNOWN_URI= 0,    // "/oc/core"
-    OC_DEVICE_URI,           // "/oc/core/d"
-    OC_RESOURCE_TYPES_URI,   // "/oc/core/d/type"
-    OC_MAX_VIRTUAL_RESOURCES         // Max items in the list
+    OC_WELL_KNOWN_URI= 0,       // "/oc/core"
+    OC_DEVICE_URI,              // "/oc/core/d"
+    OC_RESOURCE_TYPES_URI,      // "/oc/core/d/type"
+    #ifdef WITH_PRESENCE
+    OC_PRESENCE,                // "/oc/presence"
+    #endif
+    OC_MAX_VIRTUAL_RESOURCES    // Max items in the list
 } OCVirtualResources;
 
 /**
@@ -62,7 +71,9 @@ typedef enum {
     OC_REST_DELETE      = (1 << 3),     // Delete
     OC_REST_OBSERVE     = (1 << 4),     // Register observe request for most up date notifications ONLY.
     OC_REST_OBSERVE_ALL = (1 << 5),     // Register observe request for all notifications, including stale notifications.
+    #ifdef WITH_PRESENCE
     OC_REST_PRESENCE    = (1 << 6)      // Subscribe for all presence notifications of a particular resource.
+    #endif
 } OCMethod;
 
 /**
@@ -74,6 +85,7 @@ typedef enum {
     OC_CLIENT_SERVER
 } OCMode;
 
+extern OCMode myStackMode;
 /**
  * Quality of Service
  */
@@ -115,6 +127,11 @@ typedef enum {
     OC_STACK_OBSERVER_NOT_FOUND,
     OC_STACK_OBSERVER_NOT_ADDED,
     OC_STACK_OBSERVER_NOT_REMOVED,
+    #ifdef WITH_PRESENCE
+    OC_STACK_PRESENCE_NO_UPDATE,
+    OC_STACK_PRESENCE_STOPPED,
+    OC_STACK_PRESENCE_DO_NOT_HANDLE,
+    #endif
     OC_STACK_ERROR
 } OCStackResult;
 
@@ -277,6 +294,33 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *req
  */
 OCStackResult OCCancel(OCDoHandle handle);
 
+#ifdef WITH_PRESENCE
+/**
+ * When operating in @ref OCServer or @ref OCClientServer mode, this API will start sending out
+ * presence notifications to clients via multicast. Once this API has been called with a success,
+ * clients may query for this server's presence and this server's stack will respond via multicast.
+ *
+ * @param ttl (Time To Live in seconds) - Used to set the time a server
+ * Note: If ttl is '0', then the default stack value will be used (60 Seconds).
+ *
+ * @return
+ *     OC_STACK_OK      - No errors; Success
+ *     OC_STACK_ERROR   - @ref OCStartPresence has already been called.
+ */
+OCStackResult OCStartPresence(const uint32_t ttl);
+
+/**
+ * When operating in @ref OCServer or @ref OCClientServer mode, this API will stop sending out
+ * presence notifications to clients via multicast. Once this API has been called with a success,
+ * this server's stack will not respond to clients querying for this server's presence.
+ *
+ * @return
+ *     OC_STACK_OK      - No errors; Success
+ *     OC_STACK_ERROR   - @ref OCStartPresence has never been called or @ref OCStopPresence has
+ *                        already been called.
+ */
+OCStackResult OCStopPresence();
+#endif
 /**
  * Create a resource.
  *

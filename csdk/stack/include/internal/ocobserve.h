@@ -62,7 +62,7 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status);
 
 OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request);
 
-OCStackResult SendObserverNotification (OCResource *resPtr);
+OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge);
 
 void DeleteObserverList();
 

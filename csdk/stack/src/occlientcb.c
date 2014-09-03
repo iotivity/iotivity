@@ -28,9 +28,11 @@
 /// Module Name
 #define MOD_NAME PCF("occlientcb")
 
-static struct ClientCB *cbList = NULL;
+struct ClientCB *cbList = NULL;
 
-OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData, OCCoAPToken * token, OCDoHandle handle, OCMethod method) {
+OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
+        OCCoAPToken * token, OCDoHandle handle, OCMethod method,
+        unsigned char * requestUri) {
     ClientCB *cbNode;
     cbNode = (ClientCB*) OCMalloc(sizeof(ClientCB));
     if (cbNode) {
@@ -40,6 +42,10 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData, OCCoAPTok
         cbNode->handle = handle;
         cbNode->method = method;
         cbNode->sequenceNumber = 0;
+        #ifdef WITH_PRESENCE
+        cbNode->presence = NULL;
+        #endif
+        cbNode->requestUri = requestUri;
         LL_APPEND(cbList, cbNode);
         *clientCB = cbNode;
         return OC_STACK_OK;
@@ -53,12 +59,17 @@ void DeleteClientCB(ClientCB * cbNode) {
         LL_DELETE(cbList, cbNode);
         OCFree(cbNode->token);
         OCFree(cbNode->handle);
+        OCFree(cbNode->requestUri);
+        #ifdef WITH_PRESENCE
+        OCFree(cbNode->presence->timeOut);
+        OCFree(cbNode->presence);
+        #endif
         OCFree(cbNode);
         cbNode = NULL;
     }
 }
 
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle) {
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle, unsigned char * requestUri) {
     ClientCB* out = NULL;
     if(token) {
         LL_FOREACH(cbList, out) {
@@ -70,6 +81,13 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle) {
     else if(handle) {
         LL_FOREACH(cbList, out) {
             if(memcmp(out->handle, handle, sizeof(OCDoHandle)) == 0) {
+                return out;
+            }
+        }
+    }
+    else if(requestUri) {
+        LL_FOREACH(cbList, out) {
+            if(out->requestUri && strcmp((char *)out->requestUri, (char *)requestUri) == 0) {
                 return out;
             }
         }

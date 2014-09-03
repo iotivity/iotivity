@@ -50,6 +50,9 @@ typedef enum {
     TEST_GET_UNAVAILABLE_RES_REQ_NON,
     TEST_GET_REQ_CON,
     TEST_OBS_REQ_CON,
+    #ifdef WITH_PRESENCE
+    TEST_OBS_PRESENCE,
+    #endif
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -63,8 +66,16 @@ static std::string coapServerResource = "/a/led";
 
 // The handle for the observe registration
 OCDoHandle gObserveDoHandle;
-// After this crosses a threshold client deregisters for further observations
-int gNumNotifies = 1;
+#ifdef WITH_PRESENCE
+// The handle for observe registration
+OCDoHandle gPresenceHandle;
+#endif
+// After this crosses a threshold client deregisters for further notifications
+int gNumObserveNotifies = 1;
+
+#ifdef WITH_PRESENCE
+int gNumPresenceNotifies = 1;
+#endif
 
 int gQuitFlag = 0;
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
@@ -75,6 +86,10 @@ void handleSigInt(int signum) {
 }
 
 // Forward Declaration
+#ifdef WITH_PRESENCE
+int InitPresence();
+#endif
+
 int InitGetRequestToUnavailableResource();
 int InitObserveRequest(OCQualityOfService qos);
 int InitPutRequest();
@@ -93,6 +108,9 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Nonconfirmable Get Request for a resource which is unavailable");
     OC_LOG(INFO, TAG, "-t 6 : Discover Resources and Initiate Confirmable Get Request");
     OC_LOG(INFO, TAG, "-t 7 : Discover Resources and Initiate Confirmable Observe Requests");
+    #ifdef WITH_PRESENCE
+    OC_LOG(INFO, TAG, "-t 8 : Discover Resources and Initiate Nonconfirmable presence");
+    #endif
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -117,8 +135,13 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     else if (method == OC_REST_OBSERVE)
     {
         gObserveDoHandle = handle;
-        printf ("Obs handle %016" PRIxPTR "\n", (uintptr_t)gObserveDoHandle);
     }
+    #ifdef WITH_PRESENCE
+    else if (method == OC_REST_PRESENCE)
+    {
+        gPresenceHandle = handle;
+    }
+    #endif
 
     return ret;
 }
@@ -162,10 +185,10 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumNotifies);
+        OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumObserveNotifies);
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Obs Response", clientResponse->resJSONPayload);
-        gNumNotifies++;
-        if (gNumNotifies == 3)
+        gNumObserveNotifies++;
+        if (gNumObserveNotifies == 3)
         {
             printf ("************************** CANCEL OBSERVE\n");
             if (OCCancel (gObserveDoHandle) != OC_STACK_OK){
@@ -176,7 +199,32 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     }
     return OC_STACK_KEEP_TRANSACTION;
 }
+#ifdef WITH_PRESENCE
+OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
+    if(ctx == (void*)CTX_VAL)
+    {
+        OC_LOG_V(INFO, TAG, "Callback Context for Presence recvd successfully");
+    }
 
+    if(clientResponse)
+    {
+        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OC_LOG_V(INFO, TAG, "NONCE NUMBER: %d", clientResponse->sequenceNumber);
+        OC_LOG_V(INFO, TAG, "Callback Context for Presence notification recvd successfully %d", gNumPresenceNotifies);
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Presence Response", clientResponse->resJSONPayload);
+        gNumPresenceNotifies++;
+        if (gNumPresenceNotifies == 15)
+        {
+            printf ("************************** CANCEL PRESENCE\n");
+            if (OCCancel (gPresenceHandle) != OC_STACK_OK){
+                OC_LOG(ERROR, TAG, "Presence cancel error");
+            }
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+    }
+    return OC_STACK_KEEP_TRANSACTION;
+}
+#endif
 
 // This is a function called back when a device is discovered
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
@@ -223,13 +271,29 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         case TEST_OBS_REQ_CON:
             InitObserveRequest(OC_CONFIRMABLE);
             break;
+        #ifdef WITH_PRESENCE
+        case TEST_OBS_PRESENCE:
+            InitPresence();
+            break;
+        #endif
+        default:
+            PrintUsage();
+            break;
         }
     }
 
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
-
+#ifdef WITH_PRESENCE
+int InitPresence()
+{
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    std::ostringstream query;
+    query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI;
+    return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_NON_CONFIRMABLE, presenceCB));
+}
+#endif
 int InitGetRequestToUnavailableResource()
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
