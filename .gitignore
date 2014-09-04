@@ -1,0 +1,9 @@
+# Ignore output dirs
+/release
+/csdk/release
+/csdk/libcoap-4.1.1/release/
+/examples/release
+
+# Ignore any object files
+*.o
+*.obj
