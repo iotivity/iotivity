@@ -161,7 +161,10 @@ const char *coap_response_phrase(unsigned char code);
 typedef int coap_tid_t;
 #define COAP_INVALID_TID -1
 
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-pedantic"
+#endif
 #ifdef WORDS_BIGENDIAN
 typedef struct {
   unsigned int version:2;	/* protocol version */
@@ -181,7 +184,9 @@ typedef struct {
   __extension__ unsigned char token[0];	/* the actual token, if any */
 } coap_hdr_t;
 #endif
-#pragma GCC diagnostic warning "-pedantic"
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#pragma GCC diagnostic pop
+#endif
 
 #define COAP_MESSAGE_IS_EMPTY(MSG)    ((MSG)->code == 0)
 #define COAP_MESSAGE_IS_REQUEST(MSG)  (!COAP_MESSAGE_IS_EMPTY(MSG)	\

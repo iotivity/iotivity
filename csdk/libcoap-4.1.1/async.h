@@ -51,9 +51,14 @@ typedef struct coap_async_state_t {
 
   coap_address_t peer;		/**< the peer to notify */
   size_t tokenlen;		/**< length of the token */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-pedantic"
+#endif
   __extension__ unsigned char token[];	/**< the token to use in a response */
-#pragma GCC diagnostic warning "-pedantic"
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#pragma GCC diagnostic pop
+#endif
 } coap_async_state_t;
 
 /* Definitions for Async Status Flags These flags can be used to
