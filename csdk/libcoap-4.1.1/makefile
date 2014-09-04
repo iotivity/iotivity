@@ -90,8 +90,8 @@ OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 all: prep_dirs libcoap.a
 
 prep_dirs:
-	-mkdir $(OUT_DIR)
-	-mkdir $(OBJ_DIR)
+	-mkdir -p $(OUT_DIR)
+	-mkdir -p $(OBJ_DIR)
 
 %.o: %.c
 	$(CC) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
