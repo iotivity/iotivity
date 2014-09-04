@@ -124,7 +124,7 @@ objdirs: $(ROOT_DIR)
 obj_build:
 	@echo "Building $@"
 	# Output all *.o files to $(OBJ_DIR)/$(BUILD)
-	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(BUILD)/$(OBJ_DIR)/%, $(notdir $(source))));)
+	$(foreach source,$(SOURCES), $(CC) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(BUILD)/$(OBJ_DIR)/%, $(notdir $(source))));)
 
 liboctbstack.a:
 	@echo "Building $@" 
