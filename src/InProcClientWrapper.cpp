@@ -233,9 +233,14 @@ namespace OC
         return result;
     }
    
-    struct GetSetContext
+    struct GetContext
     {
-        std::function<void(const OCRepresentation&, const int&)> callback;
+        GetCallback callback;
+    };
+
+    struct SetContext
+    {
+        PutCallback callback;
     };
    
         
@@ -347,7 +352,7 @@ namespace OC
 
     OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
-        GetSetContext* context = static_cast<GetSetContext*>(ctx);
+        GetContext* context = static_cast<GetContext*>(ctx);
 
         std::cout << "GET JSON: " << (char*) clientResponse->resJSONPayload << endl;
         
@@ -363,11 +368,11 @@ namespace OC
         return OC_STACK_DELETE_TRANSACTION;
     }
     OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host, const std::string& uri, 
-        const QueryParamsMap& queryParams, std::function<void(const OCRepresentation, const int)>& callback)
+        const QueryParamsMap& queryParams, GetCallback& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
-        GetSetContext* ctx = new GetSetContext();
+        GetContext* ctx = new GetContext();
         ctx->callback = callback;
         cbdata->context = static_cast<void*>(ctx);
         cbdata->cb = &getResourceCallback;
@@ -398,7 +403,7 @@ namespace OC
     
     OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
     {
-        GetSetContext* context = static_cast<GetSetContext*>(ctx);
+        SetContext* context = static_cast<SetContext*>(ctx);
         OCRepresentation attrs;
 
         if(clientResponse->result == OC_STACK_OK)
@@ -459,11 +464,12 @@ namespace OC
         return payload.str();
     }
 
-    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host, const std::string& uri, const OCRepresentation& attributes, const QueryParamsMap& queryParams, std::function<void(const OCRepresentation,const int)>& callback)
+    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host, const std::string& uri,
+        const OCRepresentation& attributes, const QueryParamsMap& queryParams, PutCallback& callback)
     {
         OCStackResult result; 
         OCCallbackData* cbdata = new OCCallbackData();
-        GetSetContext* ctx = new GetSetContext();
+        SetContext* ctx = new SetContext();
         ctx->callback = callback;
         cbdata->cb = &setResourceCallback;
 

@@ -37,7 +37,7 @@ namespace OC {
     {
     }
 
-    OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap, std::function<void(const OCRepresentation, const int)> attributeHandler)
+    OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap, GetCallback attributeHandler)
     {
         auto cw = m_clientWrapper.lock();
 
@@ -51,14 +51,67 @@ namespace OC {
         }
     }
 
+    OCStackResult OCResource::get(const std::string& resourceType, const std::string& resourceInterface,
+        const QueryParamsMap& queryParametersMap, GetCallback attributeHandler)
+    {
+        auto cw = m_clientWrapper.lock();
+
+        if(cw)
+        {
+            QueryParamsMap mapCpy(queryParametersMap);
+
+            if(!resourceType.empty())
+            {
+                mapCpy["rt"]=resourceType;
+            }
+            if(!resourceInterface.empty())
+            {
+                mapCpy["if"]= resourceInterface;
+            }
+
+            return get(mapCpy, attributeHandler);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
     OCStackResult OCResource::put(const OCRepresentation& rep, const QueryParamsMap& queryParametersMap, 
-        std::function<void(const OCRepresentation, const int)> attributeHandler)
+        PutCallback attributeHandler)
     {
         auto cw = m_clientWrapper.lock();
 
         if(cw)
         {
             return cw->SetResourceAttributes(m_host, m_uri, rep, queryParametersMap, attributeHandler);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
+    OCStackResult OCResource::put(const std::string& resourceType, const std::string& resourceInterface,
+        const OCRepresentation& rep, const QueryParamsMap& queryParametersMap,
+        PutCallback attributeHandler)
+    {
+        auto cw = m_clientWrapper.lock();
+
+        if(cw)
+        {
+            QueryParamsMap mapCpy(queryParametersMap);
+
+            if(!resourceType.empty())
+            {
+                mapCpy["rt"]=resourceType;
+            }
+            if(!resourceInterface.empty())
+            {
+                mapCpy["if"]=resourceInterface;
+            }
+
+            return put(rep, mapCpy, attributeHandler);
         }
         else
         {
