@@ -126,6 +126,20 @@ namespace OC
         return result;
     }
 
+
+    OCStackResult OCPlatform::unregisterResource(const OCResourceHandle& resourceHandle) const
+    {
+        OCStackResult result = OC_STACK_ERROR;
+
+        if(m_server)
+        {
+            result = m_server->unregisterResource(resourceHandle);
+        }
+        return result;
+    }
+
+
+
     OCStackResult OCPlatform::unbindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
     {
         OCStackResult result = OC_STACK_OK;

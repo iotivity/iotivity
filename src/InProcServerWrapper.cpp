@@ -272,6 +272,19 @@ namespace OC
         return result;
     }
 
+    OCStackResult InProcServerWrapper::unregisterResource(const OCResourceHandle& resourceHandle)
+    {
+        cout << "Unregistering Resource: \n";
+
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if(cLock)
+        {
+            std::lock_guard<std::mutex> lock(*cLock);
+            result = OCDeleteResource(resourceHandle);
+        }
+        return result;
+    }
     OCStackResult InProcServerWrapper::bindTypeToResource(const OCResourceHandle& resourceHandle,
                      const std::string& resourceTypeName)
     {

@@ -62,7 +62,7 @@ class LightResource
     public:
     // This function internally calls registerResource API.
     void createResource(OC::OCPlatform& platform, const unsigned int resource_number);
-
+    void unregisterResource(OC::OCPlatform& platform);
     OCResourceHandle getHandle() const { return m_resourceHandle; }
 
     void setRepresentation(AttributeMap& attributeMap);

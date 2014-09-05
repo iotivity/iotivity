@@ -42,7 +42,14 @@ namespace OC
             // Not implemented
             return OC_STACK_NOTIMPL;
         }
-        virtual OCStackResult bindTypeToResource(
+
+        virtual OCStackResult unregisterResource(
+                     const OCResourceHandle& resourceHandle)
+        {   //Not implemented yet
+            return OC_STACK_ERROR;
+        }
+
+       virtual OCStackResult bindTypeToResource(
                      const OCResourceHandle& resourceHandle,
                      const std::string& resourceTypeName)
         {   //Not implemented yet

@@ -132,6 +132,17 @@ namespace OC
                         uint8_t resourceProperty);
 
         /**
+        * This API unregisters a resource with the server
+        * NOTE: This API applies to server side only.
+        *
+        * @param resourceHandle - This is the resource handle which we which to unregister from the server
+        *
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+        * NOTE: OCStackResult is defined in ocstack.h.
+        */
+        OCStackResult unregisterResource(const OCResourceHandle& resourceHandle) const;
+
+        /**
         * Add a resource to a collection resource.
         *
         * @param collectionHandle - handle to the collection resource

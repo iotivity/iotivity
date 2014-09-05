@@ -44,14 +44,12 @@ void LightResource::createResource(OC::OCPlatform& platform, const unsigned int 
 
  cout << "registering resource: " << resourceURI << '\n';
  cout << "registering type name \"" << resourceTypeName << "\".\n";
-
  // This will internally create and register the resource, binding the current instance's method as a callback:
  OCStackResult result = platform.registerResource(
                                             m_resourceHandle, resourceURI, resourceTypeName,
                                             DEFAULT_INTERFACE, 
                                             std::bind(&LightResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2), 
                                             OC_DISCOVERABLE | OC_OBSERVABLE);
-
   if (OC_STACK_OK != result)
    std::cout << "Resource creation failed.\n";
 }
@@ -79,6 +77,22 @@ void LightResource::observe_function()
   }
 
  cerr << "Observation thread is shutting down.\n";
+}
+
+void LightResource::unregisterResource(OC::OCPlatform& platform)
+{
+    std::cout << "Unregistering light resource"<<std::endl;
+
+    OCStackResult result = platform.unregisterResource(m_resourceHandle);
+
+    if(result == OC_STACK_OK)
+    {
+        std::cout << "Resource unregistered."<<std::endl;
+    }
+    else
+    {
+        cerr << "Unregister resource failed: "<<std::endl;
+    }
 }
 
 // This is just a sample implementation of entity handler.

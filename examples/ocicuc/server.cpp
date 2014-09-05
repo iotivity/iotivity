@@ -40,6 +40,7 @@ auto make_description()
     ("host_port",   po::value<uint16_t>()->default_value(56832),          "port of host")
     ("interface",   po::value<string>()->default_value("eth0"),           "network interface name") 
     ("uri",     po::value<vector<string>>(),                              "resource URI")
+    ("runtime", po::value<unsigned int>()->default_value(3600),             "time in seconds to keep the server alive")
     ;
 
  return desc;
@@ -67,8 +68,6 @@ int exec(const boost::program_options::variables_map& vm)
 
  const unsigned long& nresources = vm["nres"].as<unsigned long>();
 
- lights.resize(nresources);
-
  for(unsigned int resource_number = 1; nresources >= resource_number; resource_number++)
   {
         cout << "Registering resource " << resource_number << ": " << std::flush;
@@ -85,9 +84,12 @@ int exec(const boost::program_options::variables_map& vm)
   }
 
  // Perform app tasks
- while(true)
+ cout << "Sleeping for "<< vm["runtime"].as<unsigned int>()<<" seconds."<<endl;
+ std::this_thread::sleep_for(std::chrono::seconds( vm["runtime"].as<unsigned int>()));
+
+ for(auto light: lights)
  {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    light->unregisterResource(platform);
  }
 
  return 1;

@@ -45,6 +45,9 @@ namespace OC
                     std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
                     uint8_t resourceProperty);
 
+        virtual OCStackResult unregisterResource(
+                    const OCResourceHandle& resourceHandle);
+
         virtual OCStackResult bindTypeToResource(
                     const OCResourceHandle& resourceHandle,
                     const std::string& resourceTypeName);
