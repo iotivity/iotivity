@@ -120,14 +120,14 @@ uint32_t OCGetRandomRange(uint32_t firstBound, uint32_t secondBound){
     uint32_t base;
     uint32_t diff;
     uint32_t result;
-    if(firstBound == secondBound){
-        return secondBound;
-    }else if(firstBound > secondBound){
+    if(firstBound > secondBound){
         base = secondBound;
         diff = firstBound - secondBound;
     }else if(firstBound < secondBound){
         base = firstBound;
         diff = secondBound - firstBound;
+    }else{
+        return secondBound;
     }
     result = ((float)OCGetRandom()/((float)(0xFFFFFFFF))*(float)diff) + (float) base;
     return result;
