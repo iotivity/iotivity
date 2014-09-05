@@ -42,7 +42,7 @@ namespace OC
                     std::string& resourceURI,
                     const std::string& resourceTypeName,
                     const std::string& resourceInterface,
-                    std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
+                    RegisterCallback& entityHandler,
                     uint8_t resourceProperty);
 
         virtual OCStackResult unregisterResource(

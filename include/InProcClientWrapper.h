@@ -44,7 +44,7 @@ namespace OC
         virtual ~InProcClientWrapper();
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, 
-            std::function<void(std::shared_ptr<OCResource>)>& callback);
+            FindCallback& callback);
 
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
             GetCallback& callback);
@@ -54,14 +54,14 @@ namespace OC
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, 
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const OCRepresentation&, const int&, const int&)>& callback);
+            ObserveCallback& callback);
 
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri);
 
-        virtual OCStackResult subscribePresence(OCDoHandle* handle, const std::string& host,
-            std::function<void(OCStackResult, const int&)> presenceHandler);
+        virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
+            SubscribeCallback& presenceHandler);
 
-        virtual OCStackResult unsubscribePresence(OCDoHandle handle);
+        virtual OCStackResult UnsubscribePresence(OCDoHandle handle);
         // Note: this should never be called by anyone but the handler for the listen command.  It is public becuase that needs to be a non-instance callback
         virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode);
     private:
@@ -71,7 +71,6 @@ namespace OC
         std::thread m_listeningThread;
         bool m_threadRun;
         std::weak_ptr<std::mutex> m_csdkLock;
-        std::vector<std::function<void(OCClientResponse*)>> callbackList;
 
     private:
         PlatformConfig m_cfg;

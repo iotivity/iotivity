@@ -145,7 +145,7 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult observe(ObserveType observeType, const QueryParamsMap& queryParametersMap, 
-            std::function<void(const OCRepresentation&, const int&, const int&)> observeHandler);
+            ObserveCallback observeHandler);
 
         /**
         * Function to cancel the observation on the resource

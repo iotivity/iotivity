@@ -98,7 +98,7 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
-            std::function<void(OCResource::Ptr)> resourceHandler);
+            FindCallback resourceHandler);
 
         /**
         * This API registers a resource with the server
@@ -128,7 +128,7 @@ namespace OC
                         std::string& resourceURI,
                         const std::string& resourceTypeName,
                         const std::string& resourceInterface,
-                        std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
+                        RegisterCallback entityHandler,
                         uint8_t resourceProperty);
 
         /**
@@ -268,7 +268,7 @@ namespace OC
         * @return OCStackResult - return value of the API.  Returns OCSTACK_OK if success <br>
         */
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host, 
-                        std::function<void(OCStackResult, const int&)> presenceHandler);
+                        SubscribeCallback presenceHandler);
 
         /**
         * unsubscribes from a previously subscribed server's presence events. Note that

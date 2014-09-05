@@ -109,7 +109,7 @@ private:
 
             rep2.setAttributeMap(attrMap2);
 
-            m_resource->put(rep2, QueryParamsMap(), std::function<void(const OCRepresentation, const int)>(std::bind(&ClientWorker::putResourceInfo, this, rep2, std::placeholders::_1, std::placeholders::_2)));
+            m_resource->put(rep2, QueryParamsMap(), PutCallback(std::bind(&ClientWorker::putResourceInfo, this, rep2, std::placeholders::_1, std::placeholders::_2)));
         }
     }
 
@@ -148,7 +148,7 @@ private:
 
             std::cout<<"Doing a get on q/foo."<<std::endl;
             QueryParamsMap test;
-            resource->get(test, std::function<void(const OCRepresentation, const int)>(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
+            resource->get(test, GetCallback(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
         } 
     }
 
@@ -156,7 +156,7 @@ public:
     void start(OCPlatform& platform)
     {
         std::cout<<"Starting Client find:"<<std::endl;
-        std::function<void(std::shared_ptr<OCResource>)> f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
+        FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
         std::cout<<"result:" << platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.foo", f)<< std::endl;
         std::cout<<"Finding Resource..."<<std::endl;
 
@@ -188,7 +188,7 @@ struct FooResource
 
         uint8_t resourceProperty = OC_DISCOVERABLE;
 
-        std::function<void(std::shared_ptr<OCResourceRequest>, std::shared_ptr<OCResourceResponse>)> eh(std::bind(&FooResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2));
+        RegisterCallback eh(std::bind(&FooResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2));
         OCStackResult result = platform.registerResource(m_resourceHandle, resourceURI, resourceTypeName,
                                     resourceInterface, 
                                     eh, resourceProperty);

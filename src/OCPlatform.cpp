@@ -78,8 +78,8 @@ namespace OC
     }
 
     OCResource::Ptr OCPlatform::constructResourceObject(const std::string& host, const std::string& uri,
-                bool isObservable, const std::vector<std::string>& resourceTypes,
-                const std::vector<std::string>& interfaces)
+        bool isObservable, const std::vector<std::string>& resourceTypes,
+        const std::vector<std::string>& interfaces)
     {
         if(m_client)
         {
@@ -93,7 +93,7 @@ namespace OC
     }
 
     OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName,
-                std::function<void(OCResource::Ptr)> resourceHandler)
+        FindCallback resourceHandler)
     {
         if(m_client)
         {
@@ -104,11 +104,11 @@ namespace OC
 
 
     OCStackResult OCPlatform::registerResource(OCResourceHandle& resourceHandle,
-                std::string& resourceURI,
-                const std::string& resourceTypeName,
-                const std::string& resourceInterface,
-                std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> entityHandler,
-                uint8_t resourceProperty)
+        std::string& resourceURI,
+        const std::string& resourceTypeName,
+        const std::string& resourceInterface,
+        RegisterCallback entityHandler,
+        uint8_t resourceProperty)
     {
         OCStackResult result = OC_STACK_OK;
 
@@ -225,7 +225,7 @@ namespace OC
     }
 
     OCStackResult OCPlatform::bindTypeToResource(const OCResourceHandle& resourceHandle,
-                     const std::string& resourceTypeName) const
+        const std::string& resourceTypeName) const
     {
         OCStackResult result = OC_STACK_ERROR;
         if(m_server)
@@ -245,7 +245,7 @@ namespace OC
     }
 
     OCStackResult OCPlatform::bindInterfaceToResource(const OCResourceHandle& resourceHandle,
-                     const std::string& resourceInterfaceName) const
+        const std::string& resourceInterfaceName) const
     {
         OCStackResult result = OC_STACK_ERROR;
         if(m_server)
@@ -290,11 +290,11 @@ namespace OC
     }
 
     OCStackResult OCPlatform::subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host, 
-                    std::function<void(OCStackResult, const int&)> presenceHandler)
+        SubscribeCallback presenceHandler)
     {
         if(m_client)
         {
-            return m_client->subscribePresence(&presenceHandle, host, presenceHandler);
+            return m_client->SubscribePresence(&presenceHandle, host, presenceHandler);
         }
         else
         {
@@ -306,7 +306,7 @@ namespace OC
     {
         if(m_client)
         {
-            return m_client->unsubscribePresence(presenceHandle);
+            return m_client->UnsubscribePresence(presenceHandle);
         }
         else
         {

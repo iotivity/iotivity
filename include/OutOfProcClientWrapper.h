@@ -31,7 +31,7 @@ namespace OC
         OutOfProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg) { }
         
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, 
-            std::function<void(std::shared_ptr<OCResource>)>& callback) {return OC_STACK_NOTIMPL;}
+            FindCallback& callback) {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, 
             const QueryParamsMap& queryParams, GetCallback& callback){return OC_STACK_NOTIMPL;}
@@ -41,17 +41,17 @@ namespace OC
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, 
             const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const OCRepresentation&, const int&, const int&)>& callback){return OC_STACK_NOTIMPL;}
+            ObserveCallback& callback){return OC_STACK_NOTIMPL;}
         
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri){return OC_STACK_NOTIMPL;}
 
         virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, 
             const boost::property_tree::ptree resourceNode) {return nullptr;}
 
-        virtual OCStackResult subscribePresence(OCDoHandle* handle, const std::string& host,
-            std::function<void(OCStackResult, const int&)> presenceHandler){return OC_STACK_NOTIMPL;}
+        virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
+            SubscribeCallback& presenceHandler){return OC_STACK_NOTIMPL;}
 
-        virtual OCStackResult unsubscribePresence(OCDoHandle handle){return OC_STACK_NOTIMPL;}
+        virtual OCStackResult UnsubscribePresence(OCDoHandle handle){return OC_STACK_NOTIMPL;}
     };
 }
 

@@ -41,7 +41,7 @@ using namespace OC::OCReflect;
 
 using namespace std;
 
-std::map <OCResourceHandle, std::function<void(const OC::OCResourceRequest::Ptr, const OC::OCResourceResponse::Ptr)>> entityHandlerMap;
+std::map <OCResourceHandle, OC::RegisterCallback>  entityHandlerMap;
 
 void defaultEntityHandler(const OC::OCResourceRequest::Ptr request, const OC::OCResourceResponse::Ptr response)
 {
@@ -214,7 +214,7 @@ namespace OC
                     std::string& resourceURI,
                     const std::string& resourceTypeName,
                     const std::string& resourceInterface,
-                    std::function<void(const OCResourceRequest::Ptr, const OCResourceResponse::Ptr)> eHandler,
+                    RegisterCallback& eHandler,
                     uint8_t resourceProperties)
 
     {

@@ -34,7 +34,7 @@ namespace OC
         typedef std::shared_ptr<IClientWrapper> Ptr;
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType,
-            std::function<void(std::shared_ptr<OCResource>)>& callback) = 0;
+            FindCallback& callback) = 0;
         
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
             GetCallback& callback)=0;
@@ -44,14 +44,14 @@ namespace OC
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, 
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const OCRepresentation&, const int&, const int&)>& callback)=0;
+            ObserveCallback& callback)=0;
         
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)=0;
         
-        virtual OCStackResult subscribePresence(OCDoHandle* handle, const std::string& host, 
-            std::function<void(OCStackResult, const int&)> presenceHandler)=0;
+        virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host, 
+            SubscribeCallback& presenceHandler)=0;
 
-        virtual OCStackResult unsubscribePresence(OCDoHandle handle) =0;
+        virtual OCStackResult UnsubscribePresence(OCDoHandle handle) =0;
 
         virtual ~IClientWrapper(){}
        

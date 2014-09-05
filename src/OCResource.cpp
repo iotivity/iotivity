@@ -120,7 +120,7 @@ namespace OC {
     }
 
     OCStackResult OCResource::observe(ObserveType observeType, const QueryParamsMap& queryParametersMap, 
-        std::function<void(const OCRepresentation&, const int&, const int&)> observeHandler)
+        ObserveCallback observeHandler)
     {
         if(m_observeHandle != nullptr)
         {

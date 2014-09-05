@@ -108,7 +108,7 @@ namespace OC
 
     struct ListenContext
     {
-        std::function<void(std::shared_ptr<OCResource>)> callback;
+        FindCallback callback;
         IClientWrapper::Ptr clientWrapper;
     };
 
@@ -202,7 +202,7 @@ namespace OC
         }
     } 
 
-    OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl, const std::string& resourceType, std::function<void (std::shared_ptr<OCResource>)>& callback)
+    OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl, const std::string& resourceType, FindCallback& callback)
     {
         OCStackResult result;
 
@@ -501,7 +501,7 @@ namespace OC
 
     struct ObserveContext
     {
-        std::function<void(const OCRepresentation&, const int&, const int&)> callback;
+        ObserveCallback callback;
     };
 
     OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
@@ -519,7 +519,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, 
-       const std::string& uri, const QueryParamsMap& queryParams, std::function<void(const OCRepresentation&, const int&, const int&)>& callback)
+       const std::string& uri, const QueryParamsMap& queryParams, ObserveCallback& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -566,19 +566,6 @@ namespace OC
         return result;
     }
 
-    struct UnobserveContext
-    {
-        std::function<void(const int&)> callback;
-    };
-
-    OCStackApplicationResult unobserveResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
-    {
-        UnobserveContext* context = static_cast<UnobserveContext*>(ctx);
-        std::thread exec(context->callback, clientResponse->result);
-        exec.detach();
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-
     OCStackResult InProcClientWrapper::CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)
     {
         OCStackResult result;
@@ -599,7 +586,7 @@ namespace OC
 
     struct SubscribePresenceContext
     {
-        std::function<void(OCStackResult, const int&)> callback;
+        SubscribeCallback callback;
     };
 
     OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
@@ -611,8 +598,8 @@ namespace OC
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    OCStackResult InProcClientWrapper::subscribePresence(OCDoHandle* handle, const std::string& host,
-                std::function<void(OCStackResult, const int&)> presenceHandler)
+    OCStackResult InProcClientWrapper::SubscribePresence(OCDoHandle* handle, const std::string& host,
+                SubscribeCallback& presenceHandler)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -640,7 +627,7 @@ namespace OC
         return result;
     }
 
-    OCStackResult InProcClientWrapper::unsubscribePresence(OCDoHandle handle)
+    OCStackResult InProcClientWrapper::UnsubscribePresence(OCDoHandle handle)
     {
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
