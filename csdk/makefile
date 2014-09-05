@@ -126,7 +126,7 @@ obj_build:
 	# Output all *.o files to $(OBJ_DIR)/$(BUILD)
 	$(foreach source,$(SOURCES), $(CC) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(BUILD)/$(OBJ_DIR)/%, $(notdir $(source))));)
 
-liboctbstack.a:
+liboctbstack.a: obj_build
 	@echo "Building $@" 
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
 	@cd $(BUILD)/$(OBJ_DIR) && $(AR) -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
