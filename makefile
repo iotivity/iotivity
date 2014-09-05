@@ -48,7 +48,7 @@ prep_dirs:
 c_sdk:
 	cd csdk && $(MAKE) "BUILD=$(BUILD)"
 
-examples:
+examples: liboc.a
 	cd examples && $(MAKE) "BUILD=$(BUILD)"
 
 liboc.a: OCPlatform.o OCResource.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
