@@ -47,12 +47,15 @@ public:
     int m_power;
     std::string m_lightUri;
     std::string m_lightUri2;
+    std::string m_lightUri3;
     OCResourceHandle m_resourceHandle;
     OCResourceHandle m_resourceHandle2;
+    OCResourceHandle m_resourceHandle3;
 
 public:
     /// Constructor
-    LightResource(): m_state(false), m_power(0), m_lightUri("/a/light"), m_lightUri2("/a/light2") {}
+    LightResource(): m_state(false), m_power(0), m_lightUri("/a/light"), 
+                     m_lightUri2("/a/light2"),m_lightUri3("/a/light3") {}
 
     /* Note that this does not need to be a member function: for classes you do not have
     access to, you can accomplish this with a free function: */
@@ -91,6 +94,26 @@ public:
         // This will internally create and register the resource.
         OCStackResult result = platform.registerResource(
                                     m_resourceHandle2, resourceURI, resourceTypeName,
+                                    resourceInterface, &entityHandler, resourceProperty);
+
+        if (OC_STACK_OK != result)
+        {
+            cout << "Resource creation was unsuccessful\n";
+        }
+    }
+
+    void createResource3(OC::OCPlatform& platform)
+    {
+        std::string resourceURI = m_lightUri3; // URI of the resource
+        std::string resourceTypeName = "core.light";
+        std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
+
+        // OCResourceProperty is defined ocstack.h
+        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+
+        // This will internally create and register the resource.
+        OCStackResult result = platform.registerResource(
+                                    m_resourceHandle3, resourceURI, resourceTypeName,
                                     resourceInterface, &entityHandler, resourceProperty);
 
         if (OC_STACK_OK != result)
@@ -315,16 +338,30 @@ int main()
     {
         OCPlatform platform(cfg);
 
-        // Time to Live is 100
-        platform.startPresence(100);
+        // Time to Live is 30 seconds
+        platform.startPresence(30);
 
         // Invoke createResource function of class light.
         myLightResource.createResource(platform);
 
-        printf("Enter a key to create the second resource\n");
+        printf("\nEnter a key to create the second resource\n");
         getchar();
 
         myLightResource.createResource2(platform);
+
+        printf("\nEnter a key to stop the presence\n");
+        getchar();
+        platform.stopPresence();
+
+        printf("\nEnter a key to restart the presence\n");
+        getchar();
+
+        platform.startPresence(30);
+
+        printf("\nEnter a key to create the third resource\n");
+        getchar();
+
+        myLightResource.createResource3(platform);
 
         // Perform app tasks
         while(true)
