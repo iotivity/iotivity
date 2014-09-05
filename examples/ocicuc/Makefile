@@ -11,7 +11,7 @@ OC_LOGGER=$(OC_CSDK)/logger
 OC_LIB=$(OC_CSDK)/liboctbstack.a
 
 OCLIB=../..
-OCLIB_LIB=../../$(BUILD)/obj/OCLib.a #$(OCLIB)/release/obj/OCLib.a
+OCLIB_LIB=../../$(BUILD)/obj/liboc.a #$(OCLIB)/release/obj/liboc.a
 
 BOOST_BASE=/usr/local/boost
 BOOST_INC=$(BOOST_BASE)/include
@@ -46,17 +46,17 @@ resources:
 client:
 	$(CXX_CC) -pthread  -c client.cpp -I../../include/ -I../../csdk/stack/include -I../../csdk/ocsocket/include -I../../csdk/ocrandom/include -I../../csdk/logger/include -I/usr/local/include/boost/ -I/usr/local/include $(CXX_INC) $(CXX_FLAGS)
 
-	$(CXX_CC) -std=c++0x -Wall -L/usr/local/boost/lib/ -I/usr/local/boost/include -pthread  -o client driver.o utility.o client.o ../../$(BUILD)/obj/OCLib.a ../../csdk/release/liboctbstack.a -lboost_program_options $(CXX_INC) $(CXX_FLAGS) 
+	$(CXX_CC) -std=c++0x -Wall -L/usr/local/boost/lib/ -I/usr/local/boost/include -pthread  -o client driver.o utility.o client.o ../../$(BUILD)/obj/liboc.a ../../csdk/release/liboctbstack.a -lboost_program_options $(CXX_INC) $(CXX_FLAGS) 
 
 server: resources
 	$(CXX_CC) -pthread  -c server.cpp -I../../include/ -I../../csdk/stack/include -I../../csdk/ocsocket/include -I../../csdk/ocrandom/include -I../../csdk/logger/include -I/usr/local/include/boost/ -I/usr/local/include $(CXX_INC) 
 
-	$(CXX_CC) -std=c++0x -Wall -L/usr/local/boost/lib/ -I/usr/local/boost/include -pthread  -o server driver.o utility.o server.o light_resource.o ../../$(BUILD)/obj/OCLib.a ../../csdk/release/liboctbstack.a -lboost_program_options $(CXX_INC) 
+	$(CXX_CC) -std=c++0x -Wall -L/usr/local/boost/lib/ -I/usr/local/boost/include -pthread  -o server driver.o utility.o server.o light_resource.o ../../$(BUILD)/obj/liboc.a ../../csdk/release/liboctbstack.a -lboost_program_options $(CXX_INC) 
 
 monoprocess: driver resources
 	$(CXX_CC) -pthread  -c monoprocess.cpp -I../../include/ -I../../csdk/stack/include -I../../csdk/ocsocket/include -I../../csdk/ocrandom/include -I../../csdk/logger/include -I/usr/local/include/boost/ -I/usr/local/include $(CXX_INC) 
 
-	$(CXX_CC) -std=c++0x -Wall -L/usr/local/boost/lib/ -I/usr/local/boost/include -pthread  -o monoprocess driver.o utility.o monoprocess.o light_resource.o ../../$(BUILD)/obj/OCLib.a ../../csdk/release/liboctbstack.a -lboost_program_options $(CXX_INC) 
+	$(CXX_CC) -std=c++0x -Wall -L/usr/local/boost/lib/ -I/usr/local/boost/include -pthread  -o monoprocess driver.o utility.o monoprocess.o light_resource.o ../../$(BUILD)/obj/liboc.a ../../csdk/release/liboctbstack.a -lboost_program_options $(CXX_INC) 
 
 clean:
 	rm -f server.o client.o driver.o monoprocess.o server client monoprocess
