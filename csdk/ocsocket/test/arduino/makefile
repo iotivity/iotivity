@@ -58,13 +58,13 @@ core.a: $(PLATFORM_OBJS)
 
 #logger needs to be compiled using C++ compiler
 logger.o: logger.c
-	$(CCPLUS) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
 
 %.o: %.cpp
-	$(CCPLUS) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
 
 $(APP_NAME).elf: $(APP_NAME).o $(OCSOCKET_CPPOBJ) logger.o core.a
 	$(CC) -Os -Wl,--gc-sections,--relax $(CFLAGS_PLATFORM) $^ -lm -o $@

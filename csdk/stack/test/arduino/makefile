@@ -61,7 +61,7 @@ COPTIONS_ARDUINO = -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=156 -DARDUINO_AV
 CFLAGS += -c -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions -felide-constructors -std=c++0x -DATMEGA2560 -DTB_LOG -DWITH_ARDUINO
 
 #Compilers
-CCPLUS=avr-g++
+CXX=avr-g++
 CC=avr-gcc
 AR=avr-ar
 RANLIB=avr-ranlib
@@ -86,10 +86,10 @@ all: core.a $(TESTAPP).o $(TESTAPP).elf $(TESTAPP).hex
 # Note for Arduino: The C files are compiled using C++ compiler since Arduino
 # build includes Time.h header file which has C++ style definitions.
 %.o: %.c
-	$(CCPLUS) $(CFLAGS) $(COPTIONS_ARDUINO) $(INC_DIRS) $< -o $@
+	$(CXX) $(CFLAGS) $(COPTIONS_ARDUINO) $(INC_DIRS) $< -o $@
 
 %.o: %.cpp
-	$(CCPLUS) $(CFLAGS) $(COPTIONS_ARDUINO) $(INC_DIRS) $< -o $@
+	$(CXX) $(CFLAGS) $(COPTIONS_ARDUINO) $(INC_DIRS) $< -o $@
 
 core.a: $(CORE_COBJ) $(CORE_CPPOBJ) $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ) $(LIBCOAP_DIR)/$(BUILD)/libcoap.a
 	$(AR) rcs $@ $^

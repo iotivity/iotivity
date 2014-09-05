@@ -29,7 +29,7 @@ BIN_DIR = $(OCSOCK_DIR)/bin/linux/
 OBJ_DIR = $(OCSOCK_DIR)/obj/linux/
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include
 
-CCPLUS = g++
+CXX = g++
 CC = gcc
 
 CFLAGS += -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions -DTB_LOG
@@ -49,10 +49,10 @@ all: $(TEST_APP)
 	$(CC) -c $(CFLAGS) $(INC_DIRS) $< -o $@
 
 $(TEST_APP).o: $(TEST_APP).cpp
-	$(CCPLUS) -c $(CFLAGS) -pthread $(INC_DIRS)  -I$(GTEST_LINUX_DIR)/include -o $@ $<
+	$(CXX) -c $(CFLAGS) -pthread $(INC_DIRS)  -I$(GTEST_LINUX_DIR)/include -o $@ $<
 
 $(TEST_APP): $(TEST_APP).o $(DEP_LIBS) $(COBJ)
-	$(CCPLUS) -Os -Wl,--gc-sections $^ -lpthread -o $@
+	$(CXX) -Os -Wl,--gc-sections $^ -lpthread -o $@
 
 .PHONY: clean
 

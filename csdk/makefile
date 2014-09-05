@@ -38,7 +38,7 @@ endif
 
 
 ifeq ($(PLATFORM),linux)
-    CCPLUS=g++
+    CXX=g++
     CC=gcc
     AR=ar
     RANLIB=ranlib

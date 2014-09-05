@@ -41,14 +41,14 @@ INC_DIRS += -I$(LOGGER_DIR)/include
 INC_DIRS += -I$(RANDOM_DIR)/include
 
 ifeq ($(PLATFORM),android)
-	CCPLUS=arm-linux-androideabi-g++
+	CXX=arm-linux-androideabi-g++
 	CC=arm-linux-androideabi-gcc
 	AR=arm-linux-androideabi-ar
 	RANLIB=arm-linux-androideabi-ranlib
 	CFLAGS_ANDROID =  -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
 	LDFLAGS_ANDROID = -march=armv7-a -Wl,--fix-cortex-a8 -llog
 else ifeq ($(PLATFORM),linux)
-	CCPLUS=g++
+	CXX=g++
 	CC=gcc
 	AR=ar
 	RANLIB=ranlib

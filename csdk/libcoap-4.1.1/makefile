@@ -41,14 +41,14 @@ INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/incl
 # Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
 # includes Time.h header file which has C++ style definitions.
 ifeq ($(PLATFORM),android)
-    CCPLUS=arm-linux-androideabi-g++
+    CXX=arm-linux-androideabi-g++
     CC=arm-linux-androideabi-gcc
     AR=arm-linux-androideabi-ar
     RANLIB=arm-linux-androideabi-ranlib
     CFLAGS_PLATFORM =  -DWITH_POSIX -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
     LDFLAGS_PLATFORM = -march=armv7-a -Wl,--fix-cortex-a8 -llog
 else ifeq ($(PLATFORM),linux)
-    CCPLUS=g++
+    CXX=g++
     CC=gcc
     AR=ar
     RANLIB=ranlib
@@ -97,7 +97,7 @@ prep_dirs:
 	$(CC) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 %.o: %.cpp
-	$(CCPLUS) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
+	$(CXX) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 libcoap.a: $(OBJECTS) $(OBJECTSCPP)
 	$(AR) rcs $(OUT_DIR)/$@ $(addprefix $(OBJ_DIR)/,$^)

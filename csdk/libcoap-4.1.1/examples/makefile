@@ -31,14 +31,14 @@ OBJ_DIR = ./
 INC_DIRS = -I.. -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include
 
 ifeq ($(PLATFORM),android)
-    CCPLUS=arm-linux-androideabi-g++
+    CXX=arm-linux-androideabi-g++
     CC=arm-linux-androideabi-gcc
     AR=arm-linux-androideabi-ar
     RANLIB=arm-linux-androideabi-ranlib
     CFLAGS_ANDROID =  -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
     LDFLAGS_ANDROID = -march=armv7-a -Wl,--fix-cortex-a8 -llog
 else ifeq ($(PLATFORM),linux)
-    CCPLUS=g++
+    CXX=g++
     CC=gcc
     AR=ar
     RANLIB=ranlib

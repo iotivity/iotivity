@@ -27,7 +27,7 @@ BIN_DIR = $(OCSOCK_DIR)/bin/android/
 OBJ_DIR = $(OCSOCK_DIR)/obj/android/
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include
 
-CCPLUS=arm-linux-androideabi-g++
+CXX=arm-linux-androideabi-g++
 CC=arm-linux-androideabi-gcc
 CFLAGS_ANDROID =  -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -DGTEST_HAS_PTHREAD=0
 LDFLAGS_ANDROID = -march=armv7-a -Wl,--fix-cortex-a8 -llog
@@ -49,13 +49,13 @@ all: $(TEST_APP)
 	cp *.o $(OBJ_DIR)
 
 %.o: %.c
-	$(CCPLUS) -c $(CFLAGS) $(CFLAGS_ANDROID) $(INC_DIRS) $< -o $@
+	$(CXX) -c $(CFLAGS) $(CFLAGS_ANDROID) $(INC_DIRS) $< -o $@
 
 $(TEST_APP).o: $(TEST_APP).cpp
-	$(CCPLUS) -c $(CFLAGS) $(CFLAGS_ANDROID) $(INC_DIRS) -I$(GTEST_ANDROID_DIR)/include -o $@ $<
+	$(CXX) -c $(CFLAGS) $(CFLAGS_ANDROID) $(INC_DIRS) -I$(GTEST_ANDROID_DIR)/include -o $@ $<
 
 $(TEST_APP): $(TEST_APP).o $(DEP_LIBS) $(COBJ)
-	$(CCPLUS) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $^ -o $@
+	$(CXX) -Os -Wl,--gc-sections $(LDFLAGS_ANDROID) $^ -o $@
 
 install: all
 #	adb remount

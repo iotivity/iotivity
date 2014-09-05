@@ -37,11 +37,11 @@ prep_dirs:
 	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
 
 %.o: %.cpp
-	$(CCPLUS) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
 
 
 $(APP_NAME).elf: $(APP_NAME).o core.a
-	$(CCPLUS) -Os -Wl,--gc-sections -mcpu=cortex-m3 -T/$(SDIR_ARD_CORE_3)/linker_scripts/gcc/flash.ld -Wl,-Map,$(APP_NAME).map -o $@ -lm -lgcc -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $(APP_NAME).o $(SYSCALLS_SAM3_OBJ) $(SPI_OBJ) $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ) $(VARIANT_OBJ) $(SDIR_ARD_CORE_3)/libsam_sam3x8e_gcc_rel.a core.a -Wl,--end-group 
+	$(CXX) -Os -Wl,--gc-sections -mcpu=cortex-m3 -T/$(SDIR_ARD_CORE_3)/linker_scripts/gcc/flash.ld -Wl,-Map,$(APP_NAME).map -o $@ -lm -lgcc -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $(APP_NAME).o $(SYSCALLS_SAM3_OBJ) $(SPI_OBJ) $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ) $(VARIANT_OBJ) $(SDIR_ARD_CORE_3)/libsam_sam3x8e_gcc_rel.a core.a -Wl,--end-group 
 
 $(APP_NAME).bin: $(APP_NAME).elf
 	$(ARDUINO_TOOLS_DIR)/arm-none-eabi-objcopy -O binary $< $@ 
