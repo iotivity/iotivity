@@ -1350,11 +1350,11 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
     }
     if(!enable)
     {
-        *inputProperty = *inputProperty & ~(resourceProperties);
+        *inputProperty = (OCResourceProperty) (*inputProperty & ~(resourceProperties));
     }
     else
     {
-        *inputProperty = *inputProperty | resourceProperties;
+        *inputProperty = (OCResourceProperty) (*inputProperty | resourceProperties);
     }
     return OC_STACK_OK;
 }

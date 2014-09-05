@@ -578,7 +578,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
         }
 
         VERIFY_SUCCESS(FormOptionList(&optList, NULL, NULL, 0, NULL,
-                &uri.port, uri.path.length, uri.path.s, uri.query.length,
+                (uint16_t*)&uri.port, uri.path.length, uri.path.s, uri.query.length,
                 uri.query.s), OC_STACK_OK);
 
         OC_LOG_V(DEBUG, TAG, "uri.host.s %s", uri.host.s);
