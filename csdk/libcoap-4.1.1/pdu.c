@@ -9,7 +9,7 @@
 #include "config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
-# include <assert.h>
+#include <assert.h>
 #endif
 
 #include <stdlib.h>

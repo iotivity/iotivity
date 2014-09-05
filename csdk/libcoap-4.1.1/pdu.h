@@ -169,7 +169,7 @@ typedef struct {
   unsigned int token_length:4;	/* length of Token */
   unsigned int code:8;	        /* request method (value 1--10) or response code (value 40-255) */
   unsigned short id;		/* message id */
-  unsigned char token[0];	/* the actual token, if any */
+  __extension__ unsigned char token[0];	/* the actual token, if any */
 } coap_hdr_t;
 #else
 typedef struct {
@@ -178,7 +178,7 @@ typedef struct {
   unsigned int version:2;	/* protocol version */
   unsigned int code:8;	        /* request method (value 1--10) or response code (value 40-255) */
   unsigned short id;		/* transaction id (network byte order!) */
-  unsigned char token[0];	/* the actual token, if any */
+  __extension__ unsigned char token[0];	/* the actual token, if any */
 } coap_hdr_t;
 #endif
 #pragma GCC diagnostic warning "-pedantic"
