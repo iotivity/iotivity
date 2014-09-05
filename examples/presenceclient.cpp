@@ -28,7 +28,6 @@
 
 using namespace OC;
 
-const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
