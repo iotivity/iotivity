@@ -25,25 +25,25 @@ prep_dirs:
 	-mkdir -p $(OUT_DIR)
 
 simpleserver: simpleserver.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleserver.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
 simpleclient: simpleclient.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclient.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclient.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
 presenceserver: presenceserver.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceserver.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
 presenceclient: presenceclient.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceclient.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceclient.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
 simpleclientserver: simpleclientserver.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclientserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclientserver.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
 roomserver: roomserver.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomserver.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomserver.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
 roomclient: roomclient.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomclient.cpp $(CXX_INC) ../$(BUILD)/obj/OCLib.a ../csdk/$(BUILD)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomclient.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
 ocicuc:
 	cd ocicuc && $(MAKE)
