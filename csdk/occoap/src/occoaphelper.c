@@ -90,7 +90,7 @@ OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
             break;
 
         default:
-            decimal = ((coapCode >> 5) * 100) + (coapCode && 31);
+            decimal = ((coapCode >> 5) * 100) + (coapCode & 31);
             if (decimal >= 200 && decimal <= 231)
             {
                 ret = OC_STACK_OK;
