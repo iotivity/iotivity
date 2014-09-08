@@ -43,7 +43,7 @@ void presenceHandler(OCStackResult result, const int& nonce)
             std::cout << "Nonce# " << nonce << std::endl;
             break;
         case OC_STACK_PRESENCE_NO_UPDATE:
-            std::cout << "No presence updated\n";
+            std::cout << "No presence update\n";
             break;
         case OC_STACK_PRESENCE_STOPPED:
             std::cout << "Presence Stopped\n";

@@ -243,14 +243,28 @@ namespace OC
 
         public:
         /** 
-        * Start or stop Presence announcements. 
-        * 
-        * @param announceDuration - Duration to keep presence duration active.
+        * Start Presence announcements.
+        *
+        * @param ttl - time to live
         * @return OCStackResult - Returns OCSTACK_OK if success <br>
         *
-        * These apply only if a server instance is active.
+        * Server can call this function when it comes online for the
+        * first time, or when it comes back online from offline mode,
+        * or when it re enters network.
+        *
         */
-        OCStackResult startPresence(const unsigned int announceDurationSeconds);
+
+        OCStackResult startPresence(const unsigned int ttl);
+
+        /**
+        * Stop Presence announcements.
+        *
+        * @return OCStackResult - Returns OCSTACK_OK if success <br>
+        *
+        * Server can call this function when it is terminating,
+        * going offline, or when going away from network.
+        *
+        */
 
         OCStackResult stopPresence();
 

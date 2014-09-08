@@ -38,12 +38,20 @@ typedef enum {
     OC_STACK_UNINITIALIZED = 0, OC_STACK_INITIALIZED
 } OCStackState;
 
+#ifdef WITH_PRESENCE
+typedef enum {
+    OC_PRESENCE_UNINITIALIZED = 0, OC_PRESENCE_INITIALIZED
+} OCPresenceState;
+#endif
+
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
 static OCStackState stackState = OC_STACK_UNINITIALIZED;
+
 OCResource *headResource = NULL;
 #ifdef WITH_PRESENCE
+static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
 static PresenceResource presenceResource;
 uint8_t PresenceTimeOutSize = 4;
 uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
@@ -95,14 +103,8 @@ void HandleStackResponses(OCResponse * response)
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
         result = response->cbNode->callBack(response->cbNode->context,
                 response->cbNode->handle, response->clientResponse);
-        #ifdef WITH_PRESENCE
-        if (result == OC_STACK_DELETE_TRANSACTION ||
-                response->clientResponse->result == OC_STACK_COMM_ERROR ||
-                response->clientResponse->result == OC_STACK_PRESENCE_STOPPED)
-        #else
         if (result == OC_STACK_DELETE_TRANSACTION ||
                 response->clientResponse->result == OC_STACK_COMM_ERROR)
-        #endif
         {
             FindAndDeleteClientCB(response->cbNode);
         }
@@ -551,7 +553,10 @@ OCStackResult OCProcess() {
  * presence notifications to clients via multicast. Once this API has been called with a success,
  * clients may query for this server's presence and this server's stack will respond via multicast.
  *
- * @param ttl (Time To Live in seconds) - Used to set the time a server
+ * Server can call this function when it comes online for the first time, or when it comes back
+ * online from offline mode, or when it re enters network.
+ *
+ * @param ttl - Time To Live in seconds
  * Note: If ttl is '0', then the default stack value will be used (60 Seconds).
  *
  * @return
@@ -560,23 +565,26 @@ OCStackResult OCProcess() {
  */
 OCStackResult OCStartPresence(const uint32_t ttl)
 {
-    if(((OCResource *)presenceResource.handle)->resourceProperties & OC_ACTIVE)
-    {
-        return OC_STACK_ERROR;
-    }
     OCChangeResourceProperty(
             &(((OCResource *)presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 1);
+
     if(ttl > 0)
     {
         presenceResource.presenceTTL = ttl;
     }
-    OCDevAddr multiCastAddr = {0};
-    OCCoAPToken * token = OCGenerateCoAPToken();
-    OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
-    //add the presence observer
-    AddObserver(OC_PRESENCE_URI, NULL, token, &multiCastAddr,
+
+    if(OC_PRESENCE_UNINITIALIZED == presenceState)
+    {
+        presenceState = OC_PRESENCE_INITIALIZED;
+
+        OCDevAddr multiCastAddr = {0};
+        OCCoAPToken * token = OCGenerateCoAPToken();
+        OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
+        //add the presence observer
+        AddObserver(OC_PRESENCE_URI, NULL, token, &multiCastAddr,
             (OCResource *)presenceResource.handle, OC_NON_CONFIRMABLE);
+    }
 
     return OCNotifyObservers(presenceResource.handle);
 }
@@ -585,6 +593,9 @@ OCStackResult OCStartPresence(const uint32_t ttl)
  * When operating in @ref OCServer or @ref OCClientServer mode, this API will stop sending out
  * presence notifications to clients via multicast. Once this API has been called with a success,
  * this server's stack will not respond to clients querying for this server's presence.
+ *
+ * Server can call this function when it is terminating, going offline, or when going
+ * away from network.
  *
  * @return
  *     OC_STACK_OK      - No errors; Success
