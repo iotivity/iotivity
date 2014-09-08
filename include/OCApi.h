@@ -208,7 +208,7 @@ namespace OC
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
     typedef std::function<void(const std::shared_ptr<OCResourceRequest>, const std::shared_ptr<OCResourceResponse>)> RegisterCallback;
-    typedef std::function<void(OCStackResult, const int)> SubscribeCallback;
+    typedef std::function<void(OCStackResult, const unsigned int)> SubscribeCallback;
     typedef std::function<void(const OCRepresentation&, const int)> GetCallback;
     typedef std::function<void(const OCRepresentation&, const int)> PutCallback;
     typedef std::function<void(const OCRepresentation&, const int, const int)> ObserveCallback;

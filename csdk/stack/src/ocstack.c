@@ -561,7 +561,6 @@ OCStackResult OCProcess() {
  *
  * @return
  *     OC_STACK_OK      - No errors; Success
- *     OC_STACK_ERROR   - @ref OCStartPresence has already been called.
  */
 OCStackResult OCStartPresence(const uint32_t ttl)
 {
@@ -586,6 +585,10 @@ OCStackResult OCStartPresence(const uint32_t ttl)
             (OCResource *)presenceResource.handle, OC_NON_CONFIRMABLE);
     }
 
+    // Each time OCStartPresence is called
+    // a different random 32-bit integer number is used
+    ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+
     return OCNotifyObservers(presenceResource.handle);
 }
 
@@ -599,8 +602,6 @@ OCStackResult OCStartPresence(const uint32_t ttl)
  *
  * @return
  *     OC_STACK_OK      - No errors; Success
- *     OC_STACK_ERROR   - @ref OCStartPresence has never been called or @ref OCStopPresence has
- *                        already been called.
  */
 OCStackResult OCStopPresence()
 {
@@ -1392,8 +1393,6 @@ OCStackResult initResources() {
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
-    //initialize the sequence number as a random 32-bit integer
-    ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
     #endif
     return result;
 }

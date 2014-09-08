@@ -299,12 +299,14 @@ OCStackResult OCCancel(OCDoHandle handle);
  * presence notifications to clients via multicast. Once this API has been called with a success,
  * clients may query for this server's presence and this server's stack will respond via multicast.
  *
- * @param ttl (Time To Live in seconds) - Used to set the time a server
+ * Server can call this function when it comes online for the first time, or when it comes back
+ * online from offline mode, or when it re enters network.
+ *
+ * @param ttl - Time To Live in seconds
  * Note: If ttl is '0', then the default stack value will be used (60 Seconds).
  *
  * @return
  *     OC_STACK_OK      - No errors; Success
- *     OC_STACK_ERROR   - @ref OCStartPresence has already been called.
  */
 OCStackResult OCStartPresence(const uint32_t ttl);
 
@@ -313,11 +315,13 @@ OCStackResult OCStartPresence(const uint32_t ttl);
  * presence notifications to clients via multicast. Once this API has been called with a success,
  * this server's stack will not respond to clients querying for this server's presence.
  *
+ * Server can call this function when it is terminating, going offline, or when going
+ * away from network.
+ *
  * @return
  *     OC_STACK_OK      - No errors; Success
- *     OC_STACK_ERROR   - @ref OCStartPresence has never been called or @ref OCStopPresence has
- *                        already been called.
  */
+
 OCStackResult OCStopPresence();
 #endif
 /**

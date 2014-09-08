@@ -35,7 +35,7 @@ static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 OCPlatform* platformPtr;
 
 // Callback to presence
-void presenceHandler(OCStackResult result, const int& nonce)
+void presenceHandler(OCStackResult result, const unsigned int nonce)
 {
     switch(result)
     {
