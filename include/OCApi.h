@@ -25,7 +25,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
-
+#include <memory>
 #include "ocstack.h"
 
 namespace OC {
@@ -207,6 +207,8 @@ namespace OC {
             m_resourceInterfaces = resourceInterfaces;
         }
     };
+ typedef std::function<void(const OCRepresentation&, const int)> GetCallback;
+ typedef std::function<void(const OCRepresentation&, const int)> PutCallback;
 } // namespace OC
 
 #endif  

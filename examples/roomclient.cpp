@@ -113,12 +113,10 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 
         // Create QueryParameters Map and add query params (if any)
         QueryParamsMap qp;
-        qp["if"] = BATCH_INTERFACE;
-
         rep.setAttributeMap(attributeMap);
 
         // Invoke resource's pit API with attribute map, query map and the callback parameter
-        resource->put(rep, qp, &onPut);
+        resource->put("core.room", BATCH_INTERFACE, rep, qp, &onPut);
     }
 }
 
@@ -178,8 +176,7 @@ void getRoomRepresentation(std::shared_ptr<OCResource> resource)
         // Invoke resource's get API with the callback parameter
 
         QueryParamsMap qp;
-        qp["if"] = BATCH_INTERFACE; // LINK_INTERFACE; 
-        resource->get(qp, &onGet);
+        resource->get("core.room", BATCH_INTERFACE, qp, &onGet);
     }
 }
 

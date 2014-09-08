@@ -55,7 +55,6 @@ namespace OC
     friend class InProcClientWrapper;
     public:
         typedef std::shared_ptr<OCResource> Ptr;
-
         /**
         * Virtual destructor
         */
@@ -71,7 +70,7 @@ namespace OC
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. 
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult get(const QueryParamsMap& queryParametersMap, std::function<void(const OCRepresentation, const int)> attributeHandler);
+        OCStackResult get(const QueryParamsMap& queryParametersMap, GetCallback attributeHandler);
         
         /**
         * Function to get the attributes of a resource. 
@@ -95,11 +94,8 @@ namespace OC
         * Currently, single GET request is allowed to do operate on single resource type or resource interface. In future, a single GET <br>
         * can operate on multiple resource types and interfaces. <br>
         * NOTE: A client can traverse a tree or graph by doing successive GETs on the returned resources at a node.<br>
-        * TODO: Implementation
         */
-        OCStackResult get(const std::string& resourceType, const std::string& resourceInterface, const QueryParamsMap& queryParametersMap,
-            std::function<void(const OCRepresentation& rep, const std::vector<std::string>& resourceUriList, const int& errorCode)> attributeHandler) 
-            { return OC_STACK_OK; }
+        OCStackResult get(const std::string& resourceType, const std::string& resourceInterface, const QueryParamsMap& queryParametersMap, GetCallback attributeHandler); 
 
         /**
         * Function to set the attributes of a resource (via PUT)
@@ -115,7 +111,7 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult put(const OCRepresentation& attributeMap, const QueryParamsMap& queryParametersMap, 
-            std::function< void(const OCRepresentation,const int)> attributeHandler);
+            PutCallback attributeHandler);
 
         /**
         * Function to set the attributes of a resource (via PUT)
@@ -132,12 +128,10 @@ namespace OC
         *        set of attribute names and values which needs to be modified
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
-        * TODO: consider to input hrefs for resource collection
-        * TODO: Implementation
         */
         OCStackResult put(const std::string& resourceType, const std::string& resourceInterface,
             const OCRepresentation& attributeMap, const QueryParamsMap& queryParametersMap, 
-            std::function< void(const OCRepresentation&,const int&)> attributeHandler) { return OC_STACK_OK; }
+            PutCallback attributeHandler);
 
         /**
         * Function to set observation on the resource

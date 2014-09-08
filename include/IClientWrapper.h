@@ -37,10 +37,10 @@ namespace OC
             std::function<void(std::shared_ptr<OCResource>)>& callback) = 0;
         
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const OCRepresentation, const int)>& callback)=0;
+            GetCallback& callback)=0;
 
         virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const OCRepresentation& attributes, 
-            const QueryParamsMap& queryParams, std::function<void(const OCRepresentation, const int)>& callback) = 0;
+            const QueryParamsMap& queryParams, PutCallback& callback) = 0;
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, 
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 

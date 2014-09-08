@@ -45,19 +45,19 @@ namespace OC
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, 
             std::function<void(std::shared_ptr<OCResource>)>& callback);
-        
+
         virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            std::function<void(const OCRepresentation, const int)>& callback);
-        
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const OCRepresentation& attributes, 
-            const QueryParamsMap& queryParams, std::function<void(const OCRepresentation, const int)>& callback);
-        
+            GetCallback& callback);
+
+        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, 
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams, PutCallback& callback);
+
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, 
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
             std::function<void(const OCRepresentation&, const int&, const int&)>& callback);
-        
+
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri);
-        
+
         virtual OCStackResult subscribePresence(OCDoHandle* handle, const std::string& host,
             std::function<void(OCStackResult, const int&)> presenceHandler);
 
