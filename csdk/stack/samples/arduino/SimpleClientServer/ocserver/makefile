@@ -1,7 +1,12 @@
-APP_NAME := ocserver
+
 BUILD := release
 PLATFORM := arduinomega
 ARDUINO_PORT := /dev/ttyACM0
+
+# override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
+ARDUINOWIFI := 0
+
+APP_NAME := ocserver
 
 OBJ_DIR := ./bin
 
@@ -22,6 +27,10 @@ STACK_DIR  = $(ROOT_DIR)/stack
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
 
 CFLAGS	:= -Os -Wall -c -DTB_LOG
+
+ifeq ($(ARDUINOWIFI),1)
+	CFLAGS += -DARDUINOWIFI
+endif
 
 all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
 

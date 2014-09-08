@@ -19,12 +19,13 @@ the following definition(s):
     ARDUINO_TOOLS_DIR = <PATH_TO_ARDUINO_TOOLS> (location of avr-g++ and other avr tools)
 
 To make octbstack.a in release mode:
-
 	make PLATFORM=arduinomega (For Arduino Due, use <arduinodue>)
 
 To make octbstack.a in debug mode:
-
 	make PLATFORM=arduinomega BUILD=debug (For Arduino Due, use <arduinodue>)
+
+To make octbstack.a with Arduino WiFi Shield support:
+	make PLATFORM=arduinomega ARDUINOWIFI=1 (For Arduino Due, use <arduinodue>)
 
 Dependencies:
     1) Patch the Wiznet Ethernet library with the patch available at :
@@ -34,6 +35,8 @@ Dependencies:
     3) Arduino Due has been tested with Arduino 1.5.7 framework.
     4) For Arduino Due, binary tools are located in:
        /hardware/tools/gcc-arm-none-eabi-4.8.3-2014q1/bin
+    5) For Arduino WiFi, update the WiFi shield with the firmware patches provided
+       by Intel.
 -------------------------------------------------------------------------------
 **Clean-Up**
 -------------------------------------------------------------------------------

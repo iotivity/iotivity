@@ -29,6 +29,9 @@ To make & install ocserver in debug mode, with <DEV_PORT> specified:
 
 	make install ARDUINO_PORT=<DEV_PORT> BUILD=debug
 
+To make ocserver_wifi with Arduino WiFi Shield support:
+
+	make ARDUINOWIFI=1 (arduinomega)
 -------------------------------------------------------------------------------
 **Clean-Up**
 -------------------------------------------------------------------------------

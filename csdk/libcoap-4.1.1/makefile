@@ -1,10 +1,13 @@
 # override with `make BUILD=debug`
-# override with `make PLATFORM=arduino`
+# override with `make PLATFORM=arduinomega` or `make PLATFORM=arduinodue`
 # default to release build
 # default to build for linux
 BUILD	 := release
 #other options are android, arduino
 PLATFORM=linux
+# override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
+ARDUINOWIFI := 0
+
 OUT_DIR	  := ./$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
@@ -50,7 +53,11 @@ SOURCES:= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
           str.c option.c async.c subscribe.c block.c logger.c ocrandom.c 
 VPATH := $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src
 ifeq (arduino, $(findstring arduino,$(PLATFORM)))
-	SOURCES += ocsocket_arduino.c
+	ifeq ($(ARDUINOWIFI),1)
+		SOURCES += ocsocket_arduino_wifi.c
+	else
+		SOURCES += ocsocket_arduino.c
+	endif
 	SOURCESCPP:= Time.cpp
 	OBJECTSCPP:= $(patsubst %.cpp, %.o, $(SOURCESCPP))
 	VPATH += $(SDIR_ARD_TIME)
