@@ -203,6 +203,9 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
             {
                 //we know it is the default entity handler
                 OC_LOG(DEBUG, TAG, "This notification is for Presence");
+                // we create the payload here
+                sprintf((char *)bufRes, "%u:%u", resPtr->sequenceNum, maxAge);
+                jsonPayload = bufRes;
                 ehRet = OC_EH_OK;
             }
             #endif

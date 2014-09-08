@@ -42,9 +42,6 @@ void presenceHandler(OCStackResult result, const int& nonce)
         case OC_STACK_OK:
             std::cout << "Nonce# " << nonce << std::endl;
             break;
-        case OC_STACK_PRESENCE_NO_UPDATE:
-            std::cout << "No presence update\n";
-            break;
         case OC_STACK_PRESENCE_STOPPED:
             std::cout << "Presence Stopped\n";
             break;

@@ -726,7 +726,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     result = OC_STACK_OK;
 
     #ifdef WITH_PRESENCE
-    incrementSequenceNumber((OCResource *)presenceResource.handle);
+    ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
     OCNotifyObservers(presenceResource.handle);
     #endif
 exit:
@@ -1392,6 +1392,8 @@ OCStackResult initResources() {
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
+    //initialize the sequence number as a random 32-bit integer
+    ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
     #endif
     return result;
 }

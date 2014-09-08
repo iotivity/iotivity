@@ -266,8 +266,12 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     uint16_t remotePortNu;
     unsigned char fullUri[MAX_URI_LENGTH] = { 0 };
     unsigned char rcvdUri[MAX_URI_LENGTH] = { 0 };
+    uint8_t isObserveNotification = 0;
     #ifdef WITH_PRESENCE
-    uint8_t isPresenceUpdate = 0;
+    uint8_t isPresenceNotification = 0;
+    uint32_t lowerBound;
+    uint32_t higherBound;
+    char * tok = NULL;
     #endif
 
     VERIFY_NON_NULL(ctx);
@@ -285,15 +289,29 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         maxAge = *((uint32_t *) rcvMaxAgeOption);
     }
 
+    OC_LOG_V(DEBUG, TAG, "The sequenceNumber/NONCE of this response %u", sequenceNumber);
+    OC_LOG_V(DEBUG, TAG, "The maxAge/TTL of this response %u", maxAge);
+    OC_LOG_V(DEBUG, TAG, "The response received is %s", bufRes);
+
+    if(sequenceNumber != 0)
+    {
+        isObserveNotification = 1;
+        OC_LOG(INFO, TAG, PCF("Received an observe notification"));
+    }
+
     #ifdef WITH_PRESENCE
     if(!strcmp((char *)rcvdUri, (char *)OC_PRESENCE_URI)){
-        isPresenceUpdate = 1;
+        isPresenceNotification = 1;
+        OC_LOG(INFO, TAG, PCF("Received a presence notification"));
+        tok = strtok((char *)bufRes, ":");
+        sequenceNumber = (uint32_t )atoi(tok);
+        OC_LOG_V(DEBUG, TAG, "The received NONCE is %u", sequenceNumber);
+        tok = strtok(NULL, ":");
+        maxAge = (uint32_t )atoi(tok);
+        OC_LOG_V(DEBUG, TAG, "The received TTL is %u", maxAge);
+        bufRes[strlen((char *)bufRes)] = ':';
     }
     #endif
-
-    OC_LOG_V(DEBUG, TAG, "The sequence number of this response %d", sequenceNumber);
-    OC_LOG_V(DEBUG, TAG, "The max age of this response %d", maxAge);
-    OC_LOG_V(DEBUG, TAG, "The response received is %s", bufRes);
 
     // fill OCCoAPToken structure
     result = RetrieveOCCoAPToken(recvPdu, &rcvdToken);
@@ -326,67 +344,37 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
 
     if(cbNode)
     {
-        // following if statement is handling responses of
-        // observation/presence notifications
-        #ifdef WITH_PRESENCE
-        if((clientResponse->sequenceNumber != 0 || isPresenceUpdate) &&
-                (cbNode->method == OC_REST_OBSERVE ||
-                        cbNode->method == OC_REST_OBSERVE_ALL ||
-                        cbNode->method == OC_REST_PRESENCE))
-        #else
-        if((clientResponse->sequenceNumber != 0) &&
-                (cbNode->method == OC_REST_OBSERVE ||
-                        cbNode->method == OC_REST_OBSERVE_ALL))
-        #endif
+        if(isObserveNotification)
         {
-            OC_LOG(INFO, TAG, PCF("Received an observe/presence notification"));
-            // we should not ACK when it is presence notification
-            // since presence notification is snet with muticast
-            #ifdef WITH_PRESENCE
-            if(recvPdu->hdr->type == COAP_MESSAGE_CON &&
-                    !isPresenceUpdate && cbNode->method != OC_REST_PRESENCE)
-            #else
+            OC_LOG(INFO, TAG, PCF("Received an observe notification"));
             if(recvPdu->hdr->type == COAP_MESSAGE_CON)
-            #endif
-                {
+            {
                 sendPdu = GenerateCoAPPdu(COAP_MESSAGE_ACK, 0,
                         recvPdu->hdr->id, NULL, NULL, NULL);
                 VERIFY_NON_NULL(sendPdu);
                 result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote,
                         sendPdu, 0);
             }
-            // we only process newer sequence numbers for OC_REST_OBSERVE and OC_REST_PRESENCE
-            #ifdef WITH_PRESENCE
-            if((cbNode->method == OC_REST_OBSERVE &&
-                    clientResponse->sequenceNumber <= cbNode->sequenceNumber) ||
-                    (cbNode->method == OC_REST_PRESENCE &&
-                            clientResponse->sequenceNumber < cbNode->sequenceNumber))
-            #else
             if(cbNode->method == OC_REST_OBSERVE &&
                     clientResponse->sequenceNumber <= cbNode->sequenceNumber)
-            #endif
             {
                 OC_LOG_V(DEBUG, TAG, "Observe notification came out of order. \
                         Ignoring Incoming:%d  Against Current:%d.",
                         clientResponse->sequenceNumber, cbNode->sequenceNumber);
                 goto exit;
             }
-            // in the case the presence update has the same sequence number
-            // as previous ones, we signal it as OC_STACK_PRESENCE_NO_UPDATE
-            // no change happend on server's resources
-            #ifdef WITH_PRESENCE
-            if(isPresenceUpdate && cbNode->sequenceNumber == clientResponse->sequenceNumber)
-            {
-                response->clientResponse->result = OC_STACK_PRESENCE_NO_UPDATE;
-            }
-            #endif
-            // update the monitored sequence number.
             if(clientResponse->sequenceNumber > cbNode->sequenceNumber){
                 cbNode->sequenceNumber = clientResponse->sequenceNumber;
             }
+        }
+        else
+        {
             #ifdef WITH_PRESENCE
-            if(isPresenceUpdate && cbNode->method == OC_REST_PRESENCE){
-                if(!cbNode->presence){
+            if(isPresenceNotification)
+            {
+                OC_LOG(INFO, TAG, PCF("Received a presence notification"));
+                if(!cbNode->presence)
+                {
                     cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
                     VERIFY_NON_NULL(cbNode->presence);
                     cbNode->presence->timeOut = NULL;
@@ -397,13 +385,15 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                         goto exit;
                     }
                 }
-                cbNode->presence->TTL = maxAge;
-                uint32_t lowerBound;
-                uint32_t higherBound;
-                if(maxAge)
+                if(maxAge == 0)
                 {
-                    uint32_t now = GetTime(0);
-                    OC_LOG_V(DEBUG, TAG, "----------------current ticks  %d", now);
+                    OC_LOG(INFO, TAG, "===============Stopping presence");
+                    response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
+                }
+                else
+                {
+                    OC_LOG_V(INFO, TAG, "===============Update presence TTL, now time is %d", GetTime(0));
+                    cbNode->presence->TTL = maxAge;
                     for(int index = 0; index < PresenceTimeOutSize; index++)
                     {
                         lowerBound = GetTime(((float)(PresenceTimeOut[index])
@@ -417,22 +407,20 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     }
                     cbNode->presence->TTLlevel = 0;
                     OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
-                }
-                else
-                {
-                    OC_LOG(INFO, TAG, "===============Stopping presence");
-                    response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
+                    if(cbNode->sequenceNumber == clientResponse->sequenceNumber)
+                    {
+                        OC_LOG(INFO, TAG, "===============No presence change");
+                        goto exit;
+                    }
+                    OC_LOG(INFO, TAG, "===============Presence changed, calling up the stack");
+                    cbNode->sequenceNumber = clientResponse->sequenceNumber;;
                 }
             }
             #endif
         }
         HandleStackResponses(response);
     }
-    #ifdef WITH_PRESENCE
-    else if(!cbNode && clientResponse->sequenceNumber != 0 && !isPresenceUpdate)
-    #else
-    else if(!cbNode && clientResponse->sequenceNumber != 0)
-    #endif
+    else if(!cbNode && isObserveNotification)
     {
         OC_LOG(INFO, TAG, PCF("Received an observe notification, but I do not have callback \
                  ------------ sending RESET"));
@@ -443,7 +431,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         VERIFY_SUCCESS(result, OC_STACK_OK);
     }
     #ifdef WITH_PRESENCE
-    else if(!cbNode && clientResponse->sequenceNumber != 0 && isPresenceUpdate)
+    else if(!cbNode && isPresenceNotification)
     {
         OC_LOG(INFO, TAG, PCF("Received a presence notification, but I do not have callback \
                          ------------ ignoring"));
@@ -651,8 +639,20 @@ OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr, O
         coapMsgType = COAP_MESSAGE_CON;
     }
 
-    result = FormOptionList(&optList, &mediaType, &maxAge, 4, (uint8_t *)(&seqNum),
-            NULL, strlen((char *)uri), uri, 0, NULL);
+    #ifdef WITH_PRESENCE
+    if(!strcmp((const char *)uri, OC_PRESENCE_URI))
+    {
+        result = FormOptionList(&optList, &mediaType, NULL, 0, NULL,
+                NULL, strlen((char *)uri), uri, 0, NULL);
+    }
+    else
+    {
+    #endif
+        result = FormOptionList(&optList, &mediaType, &maxAge, 4,
+                (uint8_t *)(&seqNum), NULL, strlen((char *)uri), uri, 0, NULL);
+    #ifdef WITH_PRESENCE
+    }
+    #endif
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     sendPdu = GenerateCoAPPdu(
