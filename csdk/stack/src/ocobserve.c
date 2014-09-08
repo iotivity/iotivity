@@ -248,6 +248,8 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
             {
                 stackRet = OC_STACK_ERROR;
             }
+
+            OCFree(entityHandlerReq);
         }
         resourceObserver = resourceObserver->next;
     }
