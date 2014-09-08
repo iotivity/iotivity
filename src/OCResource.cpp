@@ -19,17 +19,23 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "OCResource.h"
-#include "OCReflect.h"
 
 namespace OC {
-    OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host, const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes, const std::vector<std::string>& interfaces) : 
-        m_clientWrapper(clientWrapper), m_uri(uri), m_host(host), m_isObservable(observable), m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces), m_observeHandle(nullptr)
+    OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
+        const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes,
+        const std::vector<std::string>& interfaces) :
+        m_clientWrapper(clientWrapper), m_uri(uri), m_host(host), m_isObservable(observable),
+        m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces),
+        m_observeHandle(nullptr)
     {
-        m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE) != m_interfaces.end();
+        m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
+                            != m_interfaces.end();
 
-        if (m_uri.empty() || resourceTypes.empty() || interfaces.empty()|| m_clientWrapper.expired())
+        if (m_uri.empty() || resourceTypes.empty()
+            || interfaces.empty()|| m_clientWrapper.expired())
         {
-            throw ResourceInitException(m_uri.empty(), resourceTypes.empty(), interfaces.empty(), m_clientWrapper.expired());
+            throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                    interfaces.empty(), m_clientWrapper.expired());
         }
     }
 
@@ -37,7 +43,8 @@ namespace OC {
     {
     }
 
-    OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap, GetCallback attributeHandler)
+    OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
+        GetCallback attributeHandler)
     {
         auto cw = m_clientWrapper.lock();
 
@@ -51,8 +58,9 @@ namespace OC {
         }
     }
 
-    OCStackResult OCResource::get(const std::string& resourceType, const std::string& resourceInterface,
-        const QueryParamsMap& queryParametersMap, GetCallback attributeHandler)
+    OCStackResult OCResource::get(const std::string& resourceType,
+        const std::string& resourceInterface, const QueryParamsMap& queryParametersMap,
+        GetCallback attributeHandler)
     {
         auto cw = m_clientWrapper.lock();
 
@@ -77,14 +85,15 @@ namespace OC {
         }
     }
 
-    OCStackResult OCResource::put(const OCRepresentation& rep, const QueryParamsMap& queryParametersMap, 
-        PutCallback attributeHandler)
+    OCStackResult OCResource::put(const OCRepresentation& rep,
+        const QueryParamsMap& queryParametersMap, PutCallback attributeHandler)
     {
         auto cw = m_clientWrapper.lock();
 
         if(cw)
         {
-            return cw->SetResourceAttributes(m_host, m_uri, rep, queryParametersMap, attributeHandler);
+            return cw->SetResourceAttributes(m_host, m_uri, rep, queryParametersMap,
+                    attributeHandler);
         }
         else
         {
@@ -92,8 +101,9 @@ namespace OC {
         }
     }
 
-    OCStackResult OCResource::put(const std::string& resourceType, const std::string& resourceInterface,
-        const OCRepresentation& rep, const QueryParamsMap& queryParametersMap,
+    OCStackResult OCResource::put(const std::string& resourceType,
+        const std::string& resourceInterface, const OCRepresentation& rep,
+        const QueryParamsMap& queryParametersMap,
         PutCallback attributeHandler)
     {
         auto cw = m_clientWrapper.lock();
@@ -119,8 +129,8 @@ namespace OC {
         }
     }
 
-    OCStackResult OCResource::observe(ObserveType observeType, const QueryParamsMap& queryParametersMap, 
-        ObserveCallback observeHandler)
+    OCStackResult OCResource::observe(ObserveType observeType,
+        const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)
     {
         if(m_observeHandle != nullptr)
         {
@@ -132,7 +142,8 @@ namespace OC {
 
             if(cw)
             {
-                return cw->ObserveResource(observeType, &m_observeHandle, m_host, m_uri, queryParametersMap, observeHandler);
+                return cw->ObserveResource(observeType, &m_observeHandle, m_host,
+                        m_uri, queryParametersMap, observeHandler);
             }
             else
             {
@@ -164,15 +175,15 @@ namespace OC {
         }
     }
 
-    std::string OCResource::host() const 
+    std::string OCResource::host() const
     {
         return m_host;
     }
-    std::string OCResource::uri() const 
+    std::string OCResource::uri() const
     {
         return m_uri;
     }
-    bool OCResource::isObservable() const 
+    bool OCResource::isObservable() const
     {
         return m_isObservable;
     }

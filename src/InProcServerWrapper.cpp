@@ -29,7 +29,6 @@
 
 #include <InProcServerWrapper.h>
 #include <InitializeException.h>
-#include <OCReflect.h>
 #include <OCResourceRequest.h>
 #include <OCResourceResponse.h>
 #include <ocstack.h>
@@ -344,7 +343,7 @@ namespace OC
             std::lock_guard<std::mutex> lock(*cLock);
             result = OCStartPresence(seconds);
         }
-        
+
         if(result != OC_STACK_OK)
         {
             throw OCException("startPresence failed", result);
@@ -361,7 +360,7 @@ namespace OC
             std::lock_guard<std::mutex> lock(*cLock);
             result = OCStopPresence();
         }
-        
+
         if(result != OC_STACK_OK)
         {
             throw OCException("stopPresence failed", result);
