@@ -1,9 +1,12 @@
 # override with `make BUILD=debug`
-# override with `make PLATFORM=arduino`
+# override with `make PLATFORM=arduinomega` or `make PLATFORM=arduinodue`
 # default to release build
 # default to build for linux
 BUILD	 := release
 PLATFORM := linux
+
+# override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
+ARDUINOWIFI := 0
 
 ifeq ($(ROOT_DIR), )
 ROOT_DIR	= $(PWD)
@@ -86,7 +89,7 @@ SOURCES			+= $(OCTBSTACK_SOURCES)
 all:	make_lcoap objdirs obj_build liboctbstack.a #print_vars
 
 make_lcoap: 
-	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)"
+	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
 
 objdirs: $(ROOT_DIR)
 	mkdir -p $(BUILD)
