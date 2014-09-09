@@ -727,8 +727,11 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     result = OC_STACK_OK;
 
     #ifdef WITH_PRESENCE
-    ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-    OCNotifyObservers(presenceResource.handle);
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        OCNotifyObservers(presenceResource.handle);
+    }
     #endif
 exit:
     if (result != OC_STACK_OK)
@@ -784,6 +787,14 @@ OCStackResult OCBindResource(
         }
     }
 
+    #ifdef WITH_PRESENCE
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        OCNotifyObservers(presenceResource.handle);
+    }
+    #endif
+
     // Unable to add resourceHandle, so return error
     return OC_STACK_ERROR;
 }
@@ -833,6 +844,14 @@ OCStackResult OCUnBindResource(
     }
 
     OC_LOG(INFO, TAG, PCF("resource not found in collection"));
+
+    #ifdef WITH_PRESENCE
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        OCNotifyObservers(presenceResource.handle);
+    }
+    #endif
 
     // Unable to add resourceHandle, so return error
     return OC_STACK_ERROR;
@@ -892,6 +911,14 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
 
     insertResourceType(resource, pointer);
     result = OC_STACK_OK;
+
+    #ifdef WITH_PRESENCE
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        OCNotifyObservers(presenceResource.handle);
+    }
+    #endif
 
     exit: if (result != OC_STACK_OK) {
         OCFree(pointer);
@@ -953,6 +980,15 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
     insertResourceInterface(resource, pointer);
 
     result = OC_STACK_OK;
+
+    #ifdef WITH_PRESENCE
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        OCNotifyObservers(presenceResource.handle);
+    }
+    #endif
+
     exit: if (result != OC_STACK_OK) {
         OCFree(pointer);
         OCFree(str);
@@ -1028,6 +1064,14 @@ OCStackResult OCDeleteResource(OCResourceHandle handle) {
         OC_LOG(ERROR, TAG, PCF("Error deleting resource"));
         return OC_STACK_ERROR;
     }
+
+    #ifdef WITH_PRESENCE
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        OCNotifyObservers(presenceResource.handle);
+    }
+    #endif
 
     return OC_STACK_OK;
 }
@@ -1238,6 +1282,14 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
 
     // Bind the handler
     resource->entityHandler = entityHandler;
+
+    #ifdef WITH_PRESENCE
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        OCNotifyObservers(presenceResource.handle);
+    }
+    #endif
 
     return OC_STACK_OK;
 }
