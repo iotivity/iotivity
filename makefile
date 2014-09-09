@@ -6,8 +6,8 @@ CXX	      := g++
 OUT_DIR	  := $(PWD)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
-CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0 
-CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3 
+CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0
+CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3
 
 CXX_INC	  := -I./include/
 CXX_INC	  += -I./csdk/stack/include
@@ -17,7 +17,7 @@ CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs c_sdk liboc.a examples 
+.PHONY: prep_dirs c_sdk liboc.a examples
 
 all:	.PHONY
 
@@ -25,17 +25,14 @@ prep_dirs:
 	-mkdir -p $(OUT_DIR)
 	-mkdir -p $(OBJ_DIR)
 
-c_sdk: 
+c_sdk:
 	cd csdk && $(MAKE) "BUILD=$(BUILD)"
 
-examples: 
+examples:
 	cd examples && $(MAKE) "BUILD=$(BUILD)"
 
-liboc.a: OCPlatform.o OCResource.o OCReflect.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
-	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
-
-OCReflect.o: src/OCReflect.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCReflect.cpp $(CXX_INC)
+liboc.a: OCPlatform.o OCResource.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
+	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
 
 OCPlatform.o: src/OCPlatform.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform.cpp $(CXX_INC)
@@ -59,4 +56,4 @@ clean: clean_legacy
 	cd csdk && $(MAKE) deepclean
 	cd examples && $(MAKE) clean
 clean_legacy:
-	-rm -f -v $(OBJ_DIR)/liboc.a $(OBJ_DIR)/*.o 
+	-rm -f -v $(OBJ_DIR)/liboc.a $(OBJ_DIR)/*.o

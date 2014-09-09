@@ -24,9 +24,9 @@
 #include <memory>
 #include <string>
 
-#include <OCReflect.h>
 #include <OCResourceRequest.h>
 #include <OCResourceResponse.h>
+#include <OCException.h>
 #include <OCApi.h>
 
 using namespace OC::OCReflect;
