@@ -29,30 +29,30 @@ extern "C" {
 }
 namespace OC{
     // Helper function to escape special character.
-    std::string escapeString(const std::string& value) 
+    std::string escapeString(const std::string& value)
     {
         std::ostringstream stringStream;
-        for (auto iter = value.cbegin(); iter != value.cend(); iter++) 
+        for (const char& c : value)
         {
-            switch (*iter) 
+            switch (c)
             {
-                case '\\': stringStream << "\\\\"; 
+                case '\\': stringStream << "\\\\";
                     break;
-                case '"': stringStream << "\\\""; 
+                case '"': stringStream << "\\\"";
                     break;
-                case '/': stringStream << "\\/"; 
+                case '/': stringStream << "\\/";
                     break;
-                case '\b': stringStream << "\\b"; 
+                case '\b': stringStream << "\\b";
                     break;
-                case '\f': stringStream << "\\f"; 
+                case '\f': stringStream << "\\f";
                     break;
-                case '\n': stringStream << "\\n"; 
+                case '\n': stringStream << "\\n";
                     break;
-                case '\r': stringStream << "\\r"; 
+                case '\r': stringStream << "\\r";
                     break;
-                case '\t': stringStream << "\\t"; 
+                case '\t': stringStream << "\\t";
                     break;
-                default: stringStream << *iter; 
+                default: stringStream << c;
                     break;
            }
         }
@@ -74,10 +74,10 @@ static OC::Utilities::QueryParamsKeyVal tempPatch(const std::string& _uri)
     std::vector<std::string> queryparams;
     boost::split(queryparams, _uri, boost::is_any_of("&"));
 
-    for(std::vector<std::string>::iterator it = queryparams.begin(); it != queryparams.end(); ++it)
+    for(std::string& it: queryparams)
     {
         std::vector<std::string> keyval;
-        boost::split(keyval, *it, boost::is_any_of("="));
+        boost::split(keyval, it, boost::is_any_of("="));
         if(2 == keyval.size())
         {
             qp[keyval.at(0)] = keyval.at(1);
@@ -142,10 +142,10 @@ OC::Utilities::QueryParamsKeyVal OC::Utilities::getQueryParams(const std::string
         }
 
         //[TODO] use foreach
-        for(std::vector<std::string>::iterator it = queryparams.begin(); it != queryparams.end(); ++it)
+        for(std::string& it : queryparams)
         {
             std::vector<std::string> keyval;
-            boost::split(keyval, *it, boost::is_any_of("="));
+            boost::split(keyval, it, boost::is_any_of("="));
             if(2 == keyval.size())
             {
                 qp[keyval.at(0)] = keyval.at(1);

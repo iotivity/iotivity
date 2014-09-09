@@ -33,7 +33,7 @@ namespace OC
         : m_missingUri(missingUri), m_missingType(missingType), m_missingInterface(missingInterface), m_missingClientWrapper(missingClientWrapper)
         {
         }
-        
+
         bool isClientWrapperMissing() const
         {
             return m_missingClientWrapper;
@@ -43,36 +43,36 @@ namespace OC
         {
             return m_missingUri;
         }
-        
+
         bool isTypeMissing() const
         {
             return m_missingType;
         }
-        
+
         bool isInterfaceMissing() const
         {
             return m_missingInterface;
         }
-        
-        virtual const char* what() noexcept 
+
+        virtual const char* what() const noexcept
         {
             std::string ret;
-            
+
             if(isUriMissing())
             {
                 ret += "Missing URI;";
             }
-            
+
             if(isTypeMissing())
             {
                 ret += "Missing Resource Type;";
             }
-            
+
             if(isInterfaceMissing())
             {
                 ret += "Missing Interface;";
             }
-            
+
             if(isClientWrapperMissing())
             {
                 ret += "Missing ClientWrapper;";

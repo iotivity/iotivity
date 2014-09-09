@@ -167,12 +167,11 @@ namespace OC
         m_children = children;
         }
 
-        OCResource* getResource() const
+        std::weak_ptr<OCResource> getResource() const
         {
             // TODO Needs to be implemented
-            OCResource* res = NULL;
-
-            return res;
+            std::weak_ptr<OCResource> wp;
+            return wp;
         }
 
         AttributeMap getAttributeMap() const

@@ -86,15 +86,15 @@ namespace OC
     }
 
 
- 
-    std::string convertOCAddrToString(OCDevAddr* addr)
+
+    std::string convertOCAddrToString(OCDevAddr& addr)
     {
         // TODO: we currently assume this is a IPV4 address, need to figure out the actual value
 
         uint8_t a, b, c, d;
         uint16_t port;
 
-        if(OCDevAddrToIPv4Addr(addr, &a, &b, &c, &d) ==0 && OCDevAddrToPort(addr, &port)==0)
+        if(OCDevAddrToIPv4Addr(&addr, &a, &b, &c, &d) ==0 && OCDevAddrToPort(&addr, &port)==0)
         {
             ostringstream os;
             os << "coap://"<<(int)a<<'.'<<(int)b<<'.'<<(int)c<<'.'<<(int)d<<':'<<(int)port;
@@ -112,7 +112,7 @@ namespace OC
         IClientWrapper::Ptr clientWrapper;
     };
 
-    
+
     const std::string URIKEY = "href";
     const std::string OBSERVABLEKEY = "obs";
     const std::string RESOURCETYPESKEY= "rt";
@@ -120,36 +120,43 @@ namespace OC
     const std::string PROPERTYKEY = "prop";
     const std::string REPKEY = "rep";
 
-    std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode)
+    std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(
+        IClientWrapper::Ptr clientWrapper, const std::string& host,
+        const boost::property_tree::ptree resourceNode)
     {
         std::string uri = resourceNode.get<std::string>(URIKEY, "");
         bool obs = resourceNode.get<int>(OBSERVABLEKEY,0) == 1;
         std::vector<std::string> rTs;
         std::vector<std::string> ifaces;
 
-        boost::property_tree::ptree properties = resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
+        boost::property_tree::ptree properties =
+            resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
 
-        boost::property_tree::ptree rT = properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
+        boost::property_tree::ptree rT =
+            properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
         for(auto itr : rT)
         {
             rTs.push_back(itr.second.data());
         }
 
-        boost::property_tree::ptree iF = properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
+        boost::property_tree::ptree iF =
+            properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
         for(auto itr : iF)
         {
             ifaces.push_back(itr.second.data());
         }
 
-        return std::shared_ptr<OCResource>(new OCResource(clientWrapper, host, uri, obs, rTs, ifaces));
+        return std::shared_ptr<OCResource>(
+            new OCResource(clientWrapper, host, uri, obs, rTs, ifaces));
     }
-    
-    OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+
+    OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle,
+        OCClientResponse* clientResponse)
     {
         if(clientResponse->result == OC_STACK_OK)
         {
             ListenContext* context = static_cast<ListenContext*>(ctx);
-    
+
             std::stringstream requestStream;
             requestStream << clientResponse->resJSONPayload;
 
@@ -168,21 +175,24 @@ namespace OC
                 // TODO: Do we want to handle this somehow? Perhaps we need to log this?
                 return OC_STACK_KEEP_TRANSACTION;
             }
-            
-            boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
-            
+
+            boost::property_tree::ptree payload =
+                root.get_child("oc", boost::property_tree::ptree());
+
             for(auto payloadItr : payload)
             {
                 try
                 {
-                    std::string host = convertOCAddrToString(clientResponse->addr);
-                    std::shared_ptr<OCResource> resource = context->clientWrapper->parseOCResource(context->clientWrapper, host, payloadItr.second);
-        
-                    // Note: the call to detach allows the underlying thread to continue until completion 
-                    //  and allows us to destroy the exec object.  
-                    //  This is apparently NOT a memory leak, as the thread will apparently take care of itself.
-                    //  Additionally, the only parameter here is
-                    //  a shared ptr, so OCResource will be disposed of properly upon completion of the callback handler.
+                    std::string host = convertOCAddrToString(*clientResponse->addr);
+                    std::shared_ptr<OCResource> resource =
+                        context->clientWrapper->parseOCResource(context->clientWrapper, host,
+                        payloadItr.second);
+
+                    // Note: the call to detach allows the underlying thread to continue until
+                    // completion and allows us to destroy the exec object. This is apparently NOT
+                    // a memory leak, as the thread will apparently take care of itself.
+                    // Additionally, the only parameter here is a shared ptr, so OCResource will be
+                    // disposed of properly upon completion of the callback handler.
                     std::thread exec(context->callback,resource);
                     exec.detach();
                 }
@@ -200,9 +210,10 @@ namespace OC
             std::cout<<"listen Callback got failed result: " << clientResponse->result<<std::endl;
             return OC_STACK_KEEP_TRANSACTION;
         }
-    } 
+    }
 
-    OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl, const std::string& resourceType, FindCallback& callback)
+    OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl,
+        const std::string& resourceType, FindCallback& callback)
     {
         OCStackResult result;
 
@@ -220,10 +231,10 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            result = OCDoResource(&handle, OC_REST_GET, 
-                                  resourceType.c_str(), 
-                                  nullptr, nullptr, 
-                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+            result = OCDoResource(&handle, OC_REST_GET,
+                                  resourceType.c_str(),
+                                  nullptr, nullptr,
+                                  static_cast<OCQualityOfService>(m_cfg.QoS),
                                   cbdata);
         }
         else
@@ -232,7 +243,7 @@ namespace OC
         }
         return result;
     }
-   
+
     struct GetContext
     {
         GetCallback callback;
@@ -242,8 +253,8 @@ namespace OC
     {
         PutCallback callback;
     };
-   
-        
+
+
     OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
     {
         std::stringstream requestStream;
@@ -287,15 +298,18 @@ namespace OC
                 {
                     std::vector<std::string> rTs;
                     std::vector<std::string> ifaces;
-                    boost::property_tree::ptree properties = resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
+                    boost::property_tree::ptree properties =
+                        resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
 
-                    boost::property_tree::ptree rT = properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
+                    boost::property_tree::ptree rT =
+                        properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
                     for(auto itr : rT)
                     {
                         rTs.push_back(itr.second.data());
                     }
 
-                    boost::property_tree::ptree iF = properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
+                    boost::property_tree::ptree iF =
+                        properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
                     for(auto itr : iF)
                     {
                         ifaces.push_back(itr.second.data());
@@ -314,7 +328,8 @@ namespace OC
 
                 if( resourceNode.count(REPKEY) != 0 )
                 {
-                    boost::property_tree::ptree rep = resourceNode.get_child(REPKEY, boost::property_tree::ptree());
+                    boost::property_tree::ptree rep =
+                        resourceNode.get_child(REPKEY, boost::property_tree::ptree());
                     AttributeMap attrs;
                     for( auto item : rep)
                     {
@@ -350,25 +365,26 @@ namespace OC
         return root_resource;
     }
 
-    OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle,
+        OCClientResponse* clientResponse)
     {
         GetContext* context = static_cast<GetContext*>(ctx);
 
         std::cout << "GET JSON: " << (char*) clientResponse->resJSONPayload << endl;
-        
+
         OCRepresentation rep;
 
         if(clientResponse->result == OC_STACK_OK)
         {
             rep = parseGetSetCallback(clientResponse);
-        }        
+        }
 
         std::thread exec(context->callback, rep, clientResponse->result);
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
     }
-    OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host, const std::string& uri, 
-        const QueryParamsMap& queryParams, GetCallback& callback)
+    OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host,
+        const std::string& uri, const QueryParamsMap& queryParams, GetCallback& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -388,9 +404,9 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(), 
-                                  nullptr, nullptr, 
-                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+            result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(),
+                                  nullptr, nullptr,
+                                  static_cast<OCQualityOfService>(m_cfg.QoS),
                                   cbdata);
         }
         else
@@ -400,8 +416,9 @@ namespace OC
         return result;
     }
 
-    
-    OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+
+    OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle,
+        OCClientResponse* clientResponse)
     {
         SetContext* context = static_cast<SetContext*>(ctx);
         OCRepresentation attrs;
@@ -414,10 +431,11 @@ namespace OC
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
     }
-    
-    std::string InProcClientWrapper::assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams)
+
+    std::string InProcClientWrapper::assembleSetResourceUri(std::string uri,
+        const QueryParamsMap& queryParams)
     {
-        if(uri.back() == '/') 
+        if(uri.back() == '/')
         {
             uri.resize(uri.size()-1);
         }
@@ -442,7 +460,7 @@ namespace OC
         std::string ret = uri + queryString;
         return ret;
     }
-    
+
     std::string InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
     {
         AttributeMap attributes = rep.getAttributeMap();
@@ -455,19 +473,20 @@ namespace OC
         {
             if(itr != attributes.begin())
             {
-                payload << ',';    
+                payload << ',';
             }
-            
+
             payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
         }
         payload << "}}";
         return payload.str();
     }
 
-    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host, const std::string& uri,
-        const OCRepresentation& attributes, const QueryParamsMap& queryParams, PutCallback& callback)
+    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host,
+        const std::string& uri, const OCRepresentation& attributes,
+        const QueryParamsMap& queryParams, PutCallback& callback)
     {
-        OCStackResult result; 
+        OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
         SetContext* ctx = new SetContext();
         ctx->callback = callback;
@@ -485,10 +504,10 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            result = OCDoResource(&handle, OC_REST_PUT, 
-                                  os.str().c_str(), nullptr, 
-                                  assembleSetResourcePayload(attributes).c_str(), 
-                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+            result = OCDoResource(&handle, OC_REST_PUT,
+                                  os.str().c_str(), nullptr,
+                                  assembleSetResourcePayload(attributes).c_str(),
+                                  static_cast<OCQualityOfService>(m_cfg.QoS),
                                   cbdata);
         }
         else
@@ -504,7 +523,8 @@ namespace OC
         ObserveCallback callback;
     };
 
-    OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle,
+        OCClientResponse* clientResponse)
     {
         ObserveContext* context = static_cast<ObserveContext*>(ctx);
         OCRepresentation attrs;
@@ -518,8 +538,9 @@ namespace OC
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, 
-       const std::string& uri, const QueryParamsMap& queryParams, ObserveCallback& callback)
+    OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle,
+        const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
+        ObserveCallback& callback)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -547,15 +568,15 @@ namespace OC
         os << host << assembleSetResourceUri(uri, queryParams).c_str();
         // std::cout << "OBSERVE URI: " << os.str() << std::endl;
         // TODO: end of above
-        
+
         auto cLock = m_csdkLock.lock();
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            result = OCDoResource(handle, method, 
-                                  os.str().c_str(), nullptr, 
-                                  nullptr, 
-                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+            result = OCDoResource(handle, method,
+                                  os.str().c_str(), nullptr,
+                                  nullptr,
+                                  static_cast<OCQualityOfService>(m_cfg.QoS),
                                   cbdata);
         }
         else
@@ -566,7 +587,8 @@ namespace OC
         return result;
     }
 
-    OCStackResult InProcClientWrapper::CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)
+    OCStackResult InProcClientWrapper::CancelObserveResource(OCDoHandle handle,
+        const std::string& host, const std::string& uri)
     {
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
@@ -574,7 +596,7 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            result = OCCancel(handle);  
+            result = OCCancel(handle);
         }
         else
         {
@@ -589,7 +611,8 @@ namespace OC
         SubscribeCallback callback;
     };
 
-    OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle,
+        OCClientResponse* clientResponse)
     {
         SubscribePresenceContext* context = static_cast<SubscribePresenceContext*>(ctx);
         std::thread exec(context->callback, clientResponse->result, clientResponse->sequenceNumber);
@@ -598,8 +621,8 @@ namespace OC
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    OCStackResult InProcClientWrapper::SubscribePresence(OCDoHandle* handle, const std::string& host,
-                SubscribeCallback& presenceHandler)
+    OCStackResult InProcClientWrapper::SubscribePresence(OCDoHandle* handle,
+        const std::string& host, SubscribeCallback& presenceHandler)
     {
         OCStackResult result;
         OCCallbackData* cbdata = new OCCallbackData();
@@ -618,7 +641,8 @@ namespace OC
 
         if(cLock)
         {
-            result = OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr,
+                        OC_NON_CONFIRMABLE, cbdata);
         }
         else
         {
@@ -631,7 +655,7 @@ namespace OC
     {
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
-        
+
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);

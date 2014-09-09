@@ -29,24 +29,29 @@ namespace OC
     {
     public:
         OutOfProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg) { }
-        
-        virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType, 
-            FindCallback& callback) {return OC_STACK_NOTIMPL;}
 
-        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, 
+        virtual OCStackResult ListenForResource(const std::string& serviceUrl,
+            const std::string& resourceType, FindCallback& callback) {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri,
             const QueryParamsMap& queryParams, GetCallback& callback){return OC_STACK_NOTIMPL;}
 
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, 
-            const OCRepresentation& attributes, const QueryParamsMap& queryParams, PutCallback& callback){return OC_STACK_NOTIMPL;}
+        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri,
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
+            PutCallback& callback){return OC_STACK_NOTIMPL;}
 
-        virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, const std::string& host, 
-            const std::string& uri, const QueryParamsMap& queryParams, 
+        virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
+            const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
             ObserveCallback& callback){return OC_STACK_NOTIMPL;}
-        
-        virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri){return OC_STACK_NOTIMPL;}
 
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, 
-            const boost::property_tree::ptree resourceNode) {return nullptr;}
+        virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
+            const std::string& uri){return OC_STACK_NOTIMPL;}
+
+        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
+            const std::string& host, const boost::property_tree::ptree resourceNode)
+        {
+            return nullptr;
+        }
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
             SubscribeCallback& presenceHandler){return OC_STACK_NOTIMPL;}
