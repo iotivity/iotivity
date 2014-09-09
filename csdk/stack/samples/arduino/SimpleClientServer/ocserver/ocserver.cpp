@@ -120,7 +120,9 @@ int ConnectToNetwork()
         OC_LOG_V(ERROR, TAG, "error is: %d", error);
         return -1;
     }
-    OC_LOG_V(INFO, TAG, "IPAddress : %s", Serial.print(Ethernet.localIP()));
+
+    IPAddress ip = Ethernet.localIP();
+    OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     return 0;
 }
 #endif //ARDUINOWIFI
@@ -221,7 +223,7 @@ void setup()
     // Connect to Ethernet or WiFi network
     if (ConnectToNetwork() != 0)
     {
-        OC_LOG(ERROR, TAG, "Unable to connect to network");
+        OC_LOG(ERROR, TAG, PCF("Unable to connect to network"));
         return;
     }
 
