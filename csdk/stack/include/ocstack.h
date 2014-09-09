@@ -32,15 +32,15 @@ extern "C" {
 //-----------------------------------------------------------------------------
 
 //May want to refactor this in upcoming sprints. Don't want to expose to application layer that lower level stack is using CoAP.
-#define OC_WELL_KNOWN_QUERY                  PCF("coap://224.0.1.187:5683/oc/core")
-#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     PCF("coap://224.0.1.187:5683/oc/core?rt=core.led")
-#define OC_MULTICAST_PREFIX                  PCF("coap://224.0.1.187:5683")
+#define OC_WELL_KNOWN_QUERY                  "coap://224.0.1.187:5683/oc/core"
+#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "coap://224.0.1.187:5683/oc/core?rt=core.led"
+#define OC_MULTICAST_PREFIX                  "coap://224.0.1.187:5683"
 
 #define USE_RANDOM_PORT (0)
 #ifdef WITH_PRESENCE
 #define OC_DEFAULT_PRESENCE_TTL (60)
-#define OC_PRESENCE_URI                      PCF("/oc/presence")
-extern uint8_t PresenceTimeOutSize; // lenght of PresenceTimeOut - 1
+#define OC_PRESENCE_URI                      "/oc/presence"
+extern uint8_t PresenceTimeOutSize; // length of PresenceTimeOut - 1
 extern uint32_t PresenceTimeOut[];
 #endif
 //-----------------------------------------------------------------------------
