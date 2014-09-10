@@ -47,6 +47,12 @@ else ifeq ($(PLATFORM),arduinomega)
     include local.properties
     include $(PLATFORM).properties
 	CC=$(ARDUINO_TOOLS_DIR)/avr-g++
+	ifeq ($(wildcard $(ARDUINO_DIR)/libraries/Time/Time/),)
+        $(error Arduino Time library needs to be moved from <ARDUINO_DIR>/libraries/Time \
+        to <ARDUINO_DIR>/libraries/Time/Time. You may need to create \
+        <ARDUINO_DIR>/libraries/Time/Time directory. Please refer to the wiki or readme \
+        for more information)
+	endif
 else ifeq ($(PLATFORM),arduinodue)
     include local.properties
     include $(PLATFORM).properties
