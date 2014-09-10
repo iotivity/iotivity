@@ -1,0 +1,184 @@
+\hypertarget{namespaceOC}{}\section{O\+C Namespace Reference}
+\label{namespaceOC}\index{O\+C@{O\+C}}
+
+
+This file contains the declaration of classes and its members related to \hyperlink{classOC_1_1OCObject}{O\+C\+Object}.  
+
+
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classOC_1_1IClientWrapper}{I\+Client\+Wrapper}
+\item 
+class \hyperlink{classOC_1_1InitializeException}{Initialize\+Exception}
+\item 
+class \hyperlink{classOC_1_1InProcClientWrapper}{In\+Proc\+Client\+Wrapper}
+\item 
+class \hyperlink{classOC_1_1InProcServerWrapper}{In\+Proc\+Server\+Wrapper}
+\item 
+class \hyperlink{classOC_1_1IServerWrapper}{I\+Server\+Wrapper}
+\item 
+class \hyperlink{classOC_1_1IWrapperFactory}{I\+Wrapper\+Factory}
+\item 
+class \hyperlink{classOC_1_1MyMultiResourceHandler}{My\+Multi\+Resource\+Handler}
+\item 
+class \hyperlink{classOC_1_1MyObserverHandler}{My\+Observer\+Handler}
+\item 
+class \hyperlink{classOC_1_1OCException}{O\+C\+Exception}
+\item 
+class \hyperlink{classOC_1_1OCObject}{O\+C\+Object}
+\begin{DoxyCompactList}\small\item\em The \hyperlink{classOC_1_1OCObject}{O\+C\+Object} is the root abstract class from which many of the \hyperlink{namespaceOC}{O\+C} related objects derive from. It implements a common set of functionality supported by all the \hyperlink{namespaceOC}{O\+C} classes in the S\+D\+K such as object naming, I\+D, natural sort order and comparison. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OCObserver}{O\+C\+Observer}
+\item 
+class \hyperlink{classOC_1_1OCObserverHandler}{O\+C\+Observer\+Handler}
+\begin{DoxyCompactList}\small\item\em \hyperlink{classOC_1_1OCObserverHandler}{O\+C\+Observer\+Handler} is a pure abstract class and it can be used for observer related callbacks. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OCPlatform}{O\+C\+Platform}
+\begin{DoxyCompactList}\small\item\em Both server and client must initialize the core platform by instantiating \hyperlink{classOC_1_1OCPlatform}{O\+C\+Platform}. On successful initialization, an instance of the \hyperlink{classOC_1_1OCPlatform}{O\+C\+Platform} is returned. A\+P\+Is in \hyperlink{classOC_1_1OCPlatform}{O\+C\+Platform} provide mechanism to register a resource and host the resource on the server, find resources on the network etc. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OCPlatformHandler}{O\+C\+Platform\+Handler}
+\begin{DoxyCompactList}\small\item\em \hyperlink{classOC_1_1OCPlatformHandler}{O\+C\+Platform\+Handler} is a pure abstract class and it can be used for registering and getting callbacks. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OCRepresentation}{O\+C\+Representation}
+\item 
+class \hyperlink{classOC_1_1OCResource}{O\+C\+Resource}
+\begin{DoxyCompactList}\small\item\em \hyperlink{classOC_1_1OCResource}{O\+C\+Resource} represents an \hyperlink{namespaceOC}{O\+C} resource. A resource could be a light controller, temperature sensor, smoke detector, etc. A resource comes with a well-\/defined contract or interface onto which you can perform different operations, such as turning on the light, getting the current temperature or subscribing for event notifications from the smoke detector. A resource can be composed of one or more resources. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OCResourceHandler}{O\+C\+Resource\+Handler}
+\begin{DoxyCompactList}\small\item\em \hyperlink{classOC_1_1OCResourceHandler}{O\+C\+Resource\+Handler} is a pure abstract class and it can be used for resource related callbacks. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OCResourceRequest}{O\+C\+Resource\+Request}
+\begin{DoxyCompactList}\small\item\em \hyperlink{classOC_1_1OCResourceRequest}{O\+C\+Resource\+Request} provides A\+P\+Is to extract details from a request U\+R\+I. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OCResourceResponse}{O\+C\+Resource\+Response}
+\begin{DoxyCompactList}\small\item\em \hyperlink{classOC_1_1OCResourceResponse}{O\+C\+Resource\+Response} provides A\+P\+Is to set the response details. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OCSecurityModel}{O\+C\+Security\+Model}
+\begin{DoxyCompactList}\small\item\em This class provides the required security model to access a service or a particular resource. \end{DoxyCompactList}\item 
+class \hyperlink{classOC_1_1OutOfProcClientWrapper}{Out\+Of\+Proc\+Client\+Wrapper}
+\item 
+class \hyperlink{classOC_1_1OutOfProcServerWrapper}{Out\+Of\+Proc\+Server\+Wrapper}
+\item 
+struct \hyperlink{structOC_1_1PlatformConfig}{Platform\+Config}
+\item 
+class \hyperlink{classOC_1_1ResourceInitException}{Resource\+Init\+Exception}
+\item 
+class \hyperlink{classOC_1_1WrapperFactory}{Wrapper\+Factory}
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespaceOC_a5a45ee905cf6958fd93f6a15b8ec48f5}{}typedef std\+::string {\bfseries U\+R\+I}\label{namespaceOC_a5a45ee905cf6958fd93f6a15b8ec48f5}
+
+\item 
+\hypertarget{namespaceOC_a04bc0657950b19a82669fdb78f777eac}{}typedef std\+::vector$<$ std\+::string $>$ {\bfseries Attribute\+Values}\label{namespaceOC_a04bc0657950b19a82669fdb78f777eac}
+
+\item 
+\hypertarget{namespaceOC_ab16c9e154d9ee3038b8d609ef8c1d453}{}typedef std\+::map$<$ std\+::string, Attribute\+Values $>$ {\bfseries Attribute\+Map}\label{namespaceOC_ab16c9e154d9ee3038b8d609ef8c1d453}
+
+\item 
+\hypertarget{namespaceOC_a33c02cc76163f7747f0d8614eeaa8498}{}typedef std\+::map$<$ std\+::string, std\+::string $>$ {\bfseries Query\+Params\+Map}\label{namespaceOC_a33c02cc76163f7747f0d8614eeaa8498}
+
+\item 
+\hypertarget{namespaceOC_ad823e3b8335e73e26d4b9f1e992d0c47}{}typedef std\+::function$<$ void(std\+::shared\+\_\+ptr$<$ \hyperlink{classOC_1_1OCResource}{O\+C\+Resource} $>$)$>$ {\bfseries Find\+Callback}\label{namespaceOC_ad823e3b8335e73e26d4b9f1e992d0c47}
+
+\item 
+\hypertarget{namespaceOC_ac45b2075087ccf2d733383700854696c}{}typedef std\+::function$<$ void(const std\+::shared\+\_\+ptr$<$ \hyperlink{classOC_1_1OCResourceRequest}{O\+C\+Resource\+Request} $>$, const std\+::shared\+\_\+ptr$<$ \hyperlink{classOC_1_1OCResourceResponse}{O\+C\+Resource\+Response} $>$)$>$ {\bfseries Register\+Callback}\label{namespaceOC_ac45b2075087ccf2d733383700854696c}
+
+\item 
+\hypertarget{namespaceOC_a11105e64077702cf6f54ed3a8b2b4a40}{}typedef std\+::function$<$ void(O\+C\+Stack\+Result, const unsigned int)$>$ {\bfseries Subscribe\+Callback}\label{namespaceOC_a11105e64077702cf6f54ed3a8b2b4a40}
+
+\item 
+\hypertarget{namespaceOC_a98aa91f2ba6d69053a3d4139881828e5}{}typedef std\+::function$<$ void(const \hyperlink{classOC_1_1OCRepresentation}{O\+C\+Representation} \&, const int)$>$ {\bfseries Get\+Callback}\label{namespaceOC_a98aa91f2ba6d69053a3d4139881828e5}
+
+\item 
+\hypertarget{namespaceOC_a129b1c84cc5975da1ad42e4a0ac020bc}{}typedef std\+::function$<$ void(const \hyperlink{classOC_1_1OCRepresentation}{O\+C\+Representation} \&, const int)$>$ {\bfseries Put\+Callback}\label{namespaceOC_a129b1c84cc5975da1ad42e4a0ac020bc}
+
+\item 
+\hypertarget{namespaceOC_ad5fcc1928b4011f1fa552384ad8c5e7e}{}typedef std\+::function$<$ void(const \hyperlink{classOC_1_1OCRepresentation}{O\+C\+Representation} \&, const int, const int)$>$ {\bfseries Observe\+Callback}\label{namespaceOC_ad5fcc1928b4011f1fa552384ad8c5e7e}
+
+\item 
+\hypertarget{namespaceOC_a48d8ec42792dd0cfdd56ea31ad7c778c}{}typedef std\+::runtime\+\_\+error {\bfseries reflection\+\_\+exception}\label{namespaceOC_a48d8ec42792dd0cfdd56ea31ad7c778c}
+
+\end{DoxyCompactItemize}
+\subsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespaceOC_a818488f0dea9cf377962d476712b8437}{}enum {\bfseries O\+C\+Platform\+Status} \{ {\bfseries Platform\+Up}, 
+{\bfseries Platform\+Down}
+ \}\label{namespaceOC_a818488f0dea9cf377962d476712b8437}
+
+\item 
+\hypertarget{namespaceOC_ac666a65aaf2207f00071a72c1d3d0a47}{}enum {\bfseries O\+C\+Advertisement\+Status} \{ {\bfseries None}
+ \}\label{namespaceOC_ac666a65aaf2207f00071a72c1d3d0a47}
+
+\item 
+\hypertarget{namespaceOC_a6b26d3fd1265b9404ea949556c7803c6}{}enum {\bfseries Service\+Type} \{ {\bfseries In\+Proc}, 
+{\bfseries Out\+Of\+Proc}
+ \}\label{namespaceOC_a6b26d3fd1265b9404ea949556c7803c6}
+
+\item 
+\hypertarget{namespaceOC_a4addb2b99e14aaace7bf2d16e5cdcbf4}{}enum {\bfseries Mode\+Type} \{ {\bfseries Server}, 
+{\bfseries Client}, 
+{\bfseries Both}
+ \}\label{namespaceOC_a4addb2b99e14aaace7bf2d16e5cdcbf4}
+
+\item 
+\hypertarget{namespaceOC_aa6b5415cd75a9061b546d8c5e6faebde}{}enum {\bfseries Quality\+Of\+Service} \+: uint8\+\_\+t \{ {\bfseries Confirmable} = O\+C\+\_\+\+C\+O\+N\+F\+I\+R\+M\+A\+B\+L\+E, 
+{\bfseries Non\+Confirmable} = O\+C\+\_\+\+N\+O\+N\+\_\+\+C\+O\+N\+F\+I\+R\+M\+A\+B\+L\+E
+ \}\label{namespaceOC_aa6b5415cd75a9061b546d8c5e6faebde}
+
+\item 
+\hypertarget{namespaceOC_a23aa7c4621d163b3c35b3ccf0ed45972}{}enum {\bfseries Request\+Handler\+Flag} \{ {\bfseries Init\+Flag}, 
+{\bfseries Request\+Flag}, 
+{\bfseries Observer\+Flag}
+ \}\label{namespaceOC_a23aa7c4621d163b3c35b3ccf0ed45972}
+
+\item 
+\hypertarget{namespaceOC_a7e94a8d2bbe718ec9df27fc86ae7b556}{}enum {\bfseries Observe\+Type} \{ {\bfseries Observe}, 
+{\bfseries Observe\+All}
+ \}\label{namespaceOC_a7e94a8d2bbe718ec9df27fc86ae7b556}
+
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespaceOC_a520c465221b4903ab5efe76dbad2a26b}{}std\+::string {\bfseries escape\+String} (const std\+::string \&value)\label{namespaceOC_a520c465221b4903ab5efe76dbad2a26b}
+
+\item 
+\hypertarget{namespaceOC_a5f45556fe6d98f84e46c3f933c2e2059}{}{\footnotesize template$<$typename Handler\+T , typename Resource\+T $>$ }\\void {\bfseries bind\+\_\+observer} (Handler\+T handler, Resource\+T \&resource, const std\+::string \&name)\label{namespaceOC_a5f45556fe6d98f84e46c3f933c2e2059}
+
+\item 
+\hypertarget{namespaceOC_a5d4e246da1f4126e75b280f7026d6f0c}{}{\footnotesize template$<$typename Handler\+T , typename Resource\+T $>$ }\\void {\bfseries unbind\+\_\+observer} (Handler\+T handler, Resource\+T \&resource)\label{namespaceOC_a5d4e246da1f4126e75b280f7026d6f0c}
+
+\item 
+\hypertarget{namespaceOC_a62a6829f5baa57ee6110ba8c8992db9d}{}{\footnotesize template$<$typename Handler\+T , typename Resource\+T $>$ }\\void {\bfseries unbind\+\_\+observer} (Handler\+T handler, Resource\+T \&resource, const std\+::string \&name)\label{namespaceOC_a62a6829f5baa57ee6110ba8c8992db9d}
+
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespaceOC_a7e6e1b012a50ae24d9e905156f50f176}{}const std\+::string {\bfseries D\+E\+F\+A\+U\+L\+T\+\_\+\+I\+N\+T\+E\+R\+F\+A\+C\+E} = \char`\"{}oc.\+mi.\+def\char`\"{}\label{namespaceOC_a7e6e1b012a50ae24d9e905156f50f176}
+
+\item 
+\hypertarget{namespaceOC_af20aa7bfec3ecf78f44f95e22d4ee315}{}const std\+::string {\bfseries L\+I\+N\+K\+\_\+\+I\+N\+T\+E\+R\+F\+A\+C\+E} = \char`\"{}oc.\+mi.\+ll\char`\"{}\label{namespaceOC_af20aa7bfec3ecf78f44f95e22d4ee315}
+
+\item 
+\hypertarget{namespaceOC_a40c5c32028c75f13d93e71da0b9fa3d2}{}const std\+::string {\bfseries B\+A\+T\+C\+H\+\_\+\+I\+N\+T\+E\+R\+F\+A\+C\+E} = \char`\"{}oc.\+mi.\+b\char`\"{}\label{namespaceOC_a40c5c32028c75f13d93e71da0b9fa3d2}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This file contains the declaration of classes and its members related to \hyperlink{classOC_1_1OCObject}{O\+C\+Object}. 
+
+This file contains the declaration of classes and its members required to provide security model support.
+
+This file contains the declaration of classes and its members related to Resource\+Request.
+
+This file contains the declaration of classes and its members related to Resource\+Handler.
+
+This file contains the declaration of classes and its members related to Resource.
+
+This file contains the declaration of classes and its members related to \hyperlink{classOC_1_1OCRepresentation}{O\+C\+Representation}.
+
+This file contains the declaration of classes and its members related to \hyperlink{classOC_1_1OCPlatformHandler}{O\+C\+Platform\+Handler}.
+
+This file contains the declaration of classes and its members related to \hyperlink{classOC_1_1OCPlatform}{O\+C\+Platform}.
+
+This file contains the declaration of classes and its members related to Observer\+Handler.
+
+This file contains the declaration of classes and its members related to \hyperlink{classOC_1_1OCObserver}{O\+C\+Observer}. 

@@ -1,0 +1,40 @@
+\hypertarget{structcoap__uri__t}{}\section{coap\+\_\+uri\+\_\+t Struct Reference}
+\label{structcoap__uri__t}\index{coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}}
+
+
+{\ttfamily \#include $<$uri.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{structstr}{str} \hyperlink{structcoap__uri__t_a8259e330f511348f33532739930f7dad}{host}
+\item 
+unsigned short \hyperlink{structcoap__uri__t_a032197612d4eea039f5bf690b074998c}{port}
+\item 
+\hyperlink{structstr}{str} \hyperlink{structcoap__uri__t_ac6a10f366eb52282158abd163b2443b9}{path}
+\item 
+\hyperlink{structstr}{str} \hyperlink{structcoap__uri__t_ac0650ecfdcd7e5f7ba8142fbffba6068}{query}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Representation of parsed U\+R\+I. Components may be filled from a string with \hyperlink{group__uri__parse_gad92e0061b8752f304053f59f9da8b62d}{coap\+\_\+split\+\_\+uri()} and can be used as input for option-\/creation functions. 
+
+\subsection{Member Data Documentation}
+\hypertarget{structcoap__uri__t_a8259e330f511348f33532739930f7dad}{}\index{coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}!host@{host}}
+\index{host@{host}!coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}}
+\subsubsection[{host}]{\setlength{\rightskip}{0pt plus 5cm}{\bf str} coap\+\_\+uri\+\_\+t\+::host}\label{structcoap__uri__t_a8259e330f511348f33532739930f7dad}
+host part of the U\+R\+I \hypertarget{structcoap__uri__t_ac6a10f366eb52282158abd163b2443b9}{}\index{coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}!path@{path}}
+\index{path@{path}!coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}}
+\subsubsection[{path}]{\setlength{\rightskip}{0pt plus 5cm}{\bf str} coap\+\_\+uri\+\_\+t\+::path}\label{structcoap__uri__t_ac6a10f366eb52282158abd163b2443b9}
+Beginning of the first path segment. Use \hyperlink{group__uri__parse_gaf908e5dec2807e2591c9d4b7a2e1bdc9}{coap\+\_\+split\+\_\+path()} to create Uri-\/\+Path options \hypertarget{structcoap__uri__t_a032197612d4eea039f5bf690b074998c}{}\index{coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}!port@{port}}
+\index{port@{port}!coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}}
+\subsubsection[{port}]{\setlength{\rightskip}{0pt plus 5cm}unsigned short coap\+\_\+uri\+\_\+t\+::port}\label{structcoap__uri__t_a032197612d4eea039f5bf690b074998c}
+The port in host byte order \hypertarget{structcoap__uri__t_ac0650ecfdcd7e5f7ba8142fbffba6068}{}\index{coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}!query@{query}}
+\index{query@{query}!coap\+\_\+uri\+\_\+t@{coap\+\_\+uri\+\_\+t}}
+\subsubsection[{query}]{\setlength{\rightskip}{0pt plus 5cm}{\bf str} coap\+\_\+uri\+\_\+t\+::query}\label{structcoap__uri__t_ac0650ecfdcd7e5f7ba8142fbffba6068}
+The query part if present 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/uri.\+h\end{DoxyCompactItemize}

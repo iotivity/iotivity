@@ -1,0 +1,142 @@
+\hypertarget{group__coap__async}{}\section{Asynchronous Messaging}
+\label{group__coap__async}\index{Asynchronous Messaging@{Asynchronous Messaging}}
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t}
+\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{group__coap__async_gaf3c112eaa3f262731ed3507a228bf776}{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+C\+O\+N\+F\+I\+R\+M}~0x01
+\item 
+\#define \hyperlink{group__coap__async_ga0e2fc01767b333ad5badc838014049e6}{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+S\+E\+P\+A\+R\+A\+T\+E}~0x02
+\item 
+\#define \hyperlink{group__coap__async_gac7fcd5adcc9fb3cc90ba2ce6695ee6d0}{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+O\+B\+S\+E\+R\+V\+E\+D}~0x04
+\item 
+\#define \hyperlink{group__coap__async_gab13ab4a40fab483ee2eaef1ac39fd1d8}{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A}~0x08
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{group__coap__async_ga6e8319b71d55c3d7fb4dcfc7d5cab3ed}{}typedef struct \hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} {\bfseries coap\+\_\+async\+\_\+state\+\_\+t}\label{group__coap__async_ga6e8319b71d55c3d7fb4dcfc7d5cab3ed}
+
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} $\ast$ \hyperlink{group__coap__async_ga1c81eb1d464e9b5195acb7ae630e15c9}{coap\+\_\+register\+\_\+async} (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$context, coap\+\_\+address\+\_\+t $\ast$peer, \hyperlink{structcoap__pdu__t}{coap\+\_\+pdu\+\_\+t} $\ast$request, unsigned char flags, void $\ast$data)
+\item 
+int \hyperlink{group__coap__async_ga5ebdd339b85d066d741adf64ce51fe0b}{coap\+\_\+remove\+\_\+async} (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$context, coap\+\_\+tid\+\_\+t id, \hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} $\ast$$\ast$s)
+\item 
+void \hyperlink{group__coap__async_ga32024a34a383832e6692d3a439fc67c7}{coap\+\_\+free\+\_\+async} (\hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} $\ast$state)
+\item 
+\hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} $\ast$ \hyperlink{group__coap__async_ga3c064a99c809502d8b584dbbd0d96bd2}{coap\+\_\+find\+\_\+async} (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$context, coap\+\_\+tid\+\_\+t id)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Structure for managing asynchronous state of Co\+A\+P resources. A \hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} object holds a list of \hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} objects that can be used to generate a separate response in case a result of an operation cannot be delivered in time, or the resource has been explicitly subscribed to with the option {\ttfamily observe}. 
+
+\subsection{Macro Definition Documentation}
+\hypertarget{group__coap__async_gaf3c112eaa3f262731ed3507a228bf776}{}\index{Asynchronous Messaging@{Asynchronous Messaging}!C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+C\+O\+N\+F\+I\+R\+M@{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+C\+O\+N\+F\+I\+R\+M}}
+\index{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+C\+O\+N\+F\+I\+R\+M@{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+C\+O\+N\+F\+I\+R\+M}!Asynchronous Messaging@{Asynchronous Messaging}}
+\subsubsection[{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+C\+O\+N\+F\+I\+R\+M}]{\setlength{\rightskip}{0pt plus 5cm}\#define C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+C\+O\+N\+F\+I\+R\+M~0x01}\label{group__coap__async_gaf3c112eaa3f262731ed3507a228bf776}
+send confirmable response \hypertarget{group__coap__async_gac7fcd5adcc9fb3cc90ba2ce6695ee6d0}{}\index{Asynchronous Messaging@{Asynchronous Messaging}!C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+O\+B\+S\+E\+R\+V\+E\+D@{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+O\+B\+S\+E\+R\+V\+E\+D}}
+\index{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+O\+B\+S\+E\+R\+V\+E\+D@{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+O\+B\+S\+E\+R\+V\+E\+D}!Asynchronous Messaging@{Asynchronous Messaging}}
+\subsubsection[{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+O\+B\+S\+E\+R\+V\+E\+D}]{\setlength{\rightskip}{0pt plus 5cm}\#define C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+O\+B\+S\+E\+R\+V\+E\+D~0x04}\label{group__coap__async_gac7fcd5adcc9fb3cc90ba2ce6695ee6d0}
+the resource is being observed \hypertarget{group__coap__async_gab13ab4a40fab483ee2eaef1ac39fd1d8}{}\index{Asynchronous Messaging@{Asynchronous Messaging}!C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A@{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A}}
+\index{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A@{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A}!Asynchronous Messaging@{Asynchronous Messaging}}
+\subsubsection[{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A}]{\setlength{\rightskip}{0pt plus 5cm}\#define C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A~0x08}\label{group__coap__async_gab13ab4a40fab483ee2eaef1ac39fd1d8}
+release application data on destruction \hypertarget{group__coap__async_ga0e2fc01767b333ad5badc838014049e6}{}\index{Asynchronous Messaging@{Asynchronous Messaging}!C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+S\+E\+P\+A\+R\+A\+T\+E@{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+S\+E\+P\+A\+R\+A\+T\+E}}
+\index{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+S\+E\+P\+A\+R\+A\+T\+E@{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+S\+E\+P\+A\+R\+A\+T\+E}!Asynchronous Messaging@{Asynchronous Messaging}}
+\subsubsection[{C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+S\+E\+P\+A\+R\+A\+T\+E}]{\setlength{\rightskip}{0pt plus 5cm}\#define C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+S\+E\+P\+A\+R\+A\+T\+E~0x02}\label{group__coap__async_ga0e2fc01767b333ad5badc838014049e6}
+send separate response 
+
+\subsection{Function Documentation}
+\hypertarget{group__coap__async_ga3c064a99c809502d8b584dbbd0d96bd2}{}\index{Asynchronous Messaging@{Asynchronous Messaging}!coap\+\_\+find\+\_\+async@{coap\+\_\+find\+\_\+async}}
+\index{coap\+\_\+find\+\_\+async@{coap\+\_\+find\+\_\+async}!Asynchronous Messaging@{Asynchronous Messaging}}
+\subsubsection[{coap\+\_\+find\+\_\+async}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+async\+\_\+state\+\_\+t}$\ast$ coap\+\_\+find\+\_\+async (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+context\+\_\+t} $\ast$}]{context, }
+\item[{coap\+\_\+tid\+\_\+t}]{id}
+\end{DoxyParamCaption}
+)}\label{group__coap__async_ga3c064a99c809502d8b584dbbd0d96bd2}
+Retrieves the object identified by {\ttfamily id} from the list of asynchronous transactions that are registered with {\ttfamily context}. This function returns a pointer to that object or {\ttfamily N\+U\+L\+L} if not found.
+
+
+\begin{DoxyParams}{Parameters}
+{\em context} & The context where the asynchronous objects are registered with. \\
+\hline
+{\em id} & The id of the object to retrieve.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the object identified by {\ttfamily id} or {\ttfamily N\+U\+L\+L} if not found. 
+\end{DoxyReturn}
+\hypertarget{group__coap__async_ga32024a34a383832e6692d3a439fc67c7}{}\index{Asynchronous Messaging@{Asynchronous Messaging}!coap\+\_\+free\+\_\+async@{coap\+\_\+free\+\_\+async}}
+\index{coap\+\_\+free\+\_\+async@{coap\+\_\+free\+\_\+async}!Asynchronous Messaging@{Asynchronous Messaging}}
+\subsubsection[{coap\+\_\+free\+\_\+async}]{\setlength{\rightskip}{0pt plus 5cm}void coap\+\_\+free\+\_\+async (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+async\+\_\+state\+\_\+t} $\ast$}]{state}
+\end{DoxyParamCaption}
+)}\label{group__coap__async_ga32024a34a383832e6692d3a439fc67c7}
+Releases the memory that was allocated by coap\+\_\+async\+\_\+state\+\_\+init() for the object {\ttfamily s}. The registered application data will be released automatically if C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A is set.
+
+
+\begin{DoxyParams}{Parameters}
+{\em s} & The object to delete. \\
+\hline
+\end{DoxyParams}
+\hypertarget{group__coap__async_ga1c81eb1d464e9b5195acb7ae630e15c9}{}\index{Asynchronous Messaging@{Asynchronous Messaging}!coap\+\_\+register\+\_\+async@{coap\+\_\+register\+\_\+async}}
+\index{coap\+\_\+register\+\_\+async@{coap\+\_\+register\+\_\+async}!Asynchronous Messaging@{Asynchronous Messaging}}
+\subsubsection[{coap\+\_\+register\+\_\+async}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+async\+\_\+state\+\_\+t}$\ast$ coap\+\_\+register\+\_\+async (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+context\+\_\+t} $\ast$}]{context, }
+\item[{coap\+\_\+address\+\_\+t $\ast$}]{peer, }
+\item[{{\bf coap\+\_\+pdu\+\_\+t} $\ast$}]{request, }
+\item[{unsigned char}]{flags, }
+\item[{void $\ast$}]{data}
+\end{DoxyParamCaption}
+)}\label{group__coap__async_ga1c81eb1d464e9b5195acb7ae630e15c9}
+Allocates a new \hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} object and fills its fields according to the given {\ttfamily request}. The {\ttfamily flags} are used to control generation of empty A\+C\+K responses to stop retransmissions and to release registered {\ttfamily data} when the resource is deleted by \hyperlink{group__coap__async_ga32024a34a383832e6692d3a439fc67c7}{coap\+\_\+free\+\_\+async()}. This function returns a pointer to the registered coap\+\_\+async\+\_\+t object or {\ttfamily N\+U\+L\+L} on error. Note that this function will return {\ttfamily N\+U\+L\+L} in case that an object with the same identifier is already registered.
+
+
+\begin{DoxyParams}{Parameters}
+{\em context} & The context to use. \\
+\hline
+{\em peer} & The remote peer that is to be asynchronously notified. \\
+\hline
+{\em request} & The request that is handled asynchronously. \\
+\hline
+{\em flags} & Flags to control state management. \\
+\hline
+{\em data} & Opaque application data to register. Note that the storage occupied by {\ttfamily data} is released on destruction only if flag C\+O\+A\+P\+\_\+\+A\+S\+Y\+N\+C\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+D\+A\+T\+A is set.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the registered \hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} object or {\ttfamily N\+U\+L\+L} in case of an error. 
+\end{DoxyReturn}
+\hypertarget{group__coap__async_ga5ebdd339b85d066d741adf64ce51fe0b}{}\index{Asynchronous Messaging@{Asynchronous Messaging}!coap\+\_\+remove\+\_\+async@{coap\+\_\+remove\+\_\+async}}
+\index{coap\+\_\+remove\+\_\+async@{coap\+\_\+remove\+\_\+async}!Asynchronous Messaging@{Asynchronous Messaging}}
+\subsubsection[{coap\+\_\+remove\+\_\+async}]{\setlength{\rightskip}{0pt plus 5cm}int coap\+\_\+remove\+\_\+async (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+context\+\_\+t} $\ast$}]{context, }
+\item[{coap\+\_\+tid\+\_\+t}]{id, }
+\item[{{\bf coap\+\_\+async\+\_\+state\+\_\+t} $\ast$$\ast$}]{s}
+\end{DoxyParamCaption}
+)}\label{group__coap__async_ga5ebdd339b85d066d741adf64ce51fe0b}
+Removes the state object identified by {\ttfamily id} from {\ttfamily context}. The removed object is returned in {\ttfamily s}, if found. Otherwise, {\ttfamily s} is undefined. This function returns {\ttfamily 1} if the object was removed, {\ttfamily 0} otherwise. Note that the storage allocated for the stored object is not released by this functions. You will have to call \hyperlink{group__coap__async_ga32024a34a383832e6692d3a439fc67c7}{coap\+\_\+free\+\_\+async()} to do so.
+
+
+\begin{DoxyParams}{Parameters}
+{\em context} & The context where the async object is registered. \\
+\hline
+{\em id} & The identifier of the asynchronous transaction. \\
+\hline
+{\em s} & Will be set to the object identified by {\ttfamily id} after removal.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+{\ttfamily 1} if object was removed and {\ttfamily s} updated, or {\ttfamily 0} if no object was found with the given id. {\ttfamily s} is valid only if the return value is {\ttfamily 1}. 
+\end{DoxyReturn}

@@ -1,0 +1,46 @@
+\hypertarget{classOC_1_1IClientWrapper}{}\section{O\+C\+:\+:I\+Client\+Wrapper Class Reference}
+\label{classOC_1_1IClientWrapper}\index{O\+C\+::\+I\+Client\+Wrapper@{O\+C\+::\+I\+Client\+Wrapper}}
+Inheritance diagram for O\+C\+:\+:I\+Client\+Wrapper\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.876712cm]{classOC_1_1IClientWrapper}
+\end{center}
+\end{figure}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classOC_1_1IClientWrapper_ae5e1157742c91da0f59e75fc3ae8be45}{}typedef std\+::shared\+\_\+ptr$<$ \hyperlink{classOC_1_1IClientWrapper}{I\+Client\+Wrapper} $>$ {\bfseries Ptr}\label{classOC_1_1IClientWrapper_ae5e1157742c91da0f59e75fc3ae8be45}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classOC_1_1IClientWrapper_ad012eafe311711ae5a33ebe0d41c3f09}{}virtual O\+C\+Stack\+Result {\bfseries Listen\+For\+Resource} (const std\+::string \&service\+Url, const std\+::string \&resource\+Type, Find\+Callback \&callback)=0\label{classOC_1_1IClientWrapper_ad012eafe311711ae5a33ebe0d41c3f09}
+
+\item 
+\hypertarget{classOC_1_1IClientWrapper_abefeeea923fed4f9d6bb83fe0d1c8a1e}{}virtual O\+C\+Stack\+Result {\bfseries Get\+Resource\+Attributes} (const std\+::string \&host, const std\+::string \&uri, const Query\+Params\+Map \&query\+Params, Get\+Callback \&callback)=0\label{classOC_1_1IClientWrapper_abefeeea923fed4f9d6bb83fe0d1c8a1e}
+
+\item 
+\hypertarget{classOC_1_1IClientWrapper_ad55c3e80b33822504dcbb98139655a34}{}virtual O\+C\+Stack\+Result {\bfseries Set\+Resource\+Attributes} (const std\+::string \&host, const std\+::string \&uri, const \hyperlink{classOC_1_1OCRepresentation}{O\+C\+Representation} \&attributes, const Query\+Params\+Map \&query\+Params, Put\+Callback \&callback)=0\label{classOC_1_1IClientWrapper_ad55c3e80b33822504dcbb98139655a34}
+
+\item 
+\hypertarget{classOC_1_1IClientWrapper_a64334f436fb263f50e07a54908f468af}{}virtual O\+C\+Stack\+Result {\bfseries Observe\+Resource} (Observe\+Type observe\+Type, O\+C\+Do\+Handle $\ast$handle, const std\+::string \&host, const std\+::string \&uri, const Query\+Params\+Map \&query\+Params, Observe\+Callback \&callback)=0\label{classOC_1_1IClientWrapper_a64334f436fb263f50e07a54908f468af}
+
+\item 
+\hypertarget{classOC_1_1IClientWrapper_a1404240f1bd3efb05f0fbed032fe5a78}{}virtual O\+C\+Stack\+Result {\bfseries Cancel\+Observe\+Resource} (O\+C\+Do\+Handle handle, const std\+::string \&host, const std\+::string \&uri)=0\label{classOC_1_1IClientWrapper_a1404240f1bd3efb05f0fbed032fe5a78}
+
+\item 
+\hypertarget{classOC_1_1IClientWrapper_ac9e687574a99db40ce773f0f7ff1d067}{}virtual O\+C\+Stack\+Result {\bfseries Subscribe\+Presence} (O\+C\+Do\+Handle $\ast$handle, const std\+::string \&host, Subscribe\+Callback \&presence\+Handler)=0\label{classOC_1_1IClientWrapper_ac9e687574a99db40ce773f0f7ff1d067}
+
+\item 
+\hypertarget{classOC_1_1IClientWrapper_a6fc9f90a5a0b73acddd8088aa0c35fe1}{}virtual O\+C\+Stack\+Result {\bfseries Unsubscribe\+Presence} (O\+C\+Do\+Handle handle)=0\label{classOC_1_1IClientWrapper_a6fc9f90a5a0b73acddd8088aa0c35fe1}
+
+\item 
+\hypertarget{classOC_1_1IClientWrapper_a2d644e6bf3b8e54950892947c9db6166}{}virtual std\+::shared\+\_\+ptr$<$ \hyperlink{classOC_1_1OCResource}{O\+C\+Resource} $>$ {\bfseries parse\+O\+C\+Resource} (I\+Client\+Wrapper\+::\+Ptr client\+Wrapper, const std\+::string \&host, const boost\+::property\+\_\+tree\+::ptree resource\+Node)=0\label{classOC_1_1IClientWrapper_a2d644e6bf3b8e54950892947c9db6166}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/include/I\+Client\+Wrapper.\+h\end{DoxyCompactItemize}

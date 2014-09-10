@@ -1,0 +1,63 @@
+\hypertarget{structcoap__context__t}{}\section{coap\+\_\+context\+\_\+t Struct Reference}
+\label{structcoap__context__t}\index{coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}}
+
+
+{\ttfamily \#include $<$net.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structcoap__context__t_a907e852e962a4ecafc3706c6b0d2e2d2}{}\hyperlink{group__opt__filter_gace614f18a4f0133a72096094c11c3b19}{coap\+\_\+opt\+\_\+filter\+\_\+t} {\bfseries known\+\_\+options}\label{structcoap__context__t_a907e852e962a4ecafc3706c6b0d2e2d2}
+
+\item 
+struct \hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$ \hyperlink{structcoap__context__t_aaf441070f9b1f2aea225fc61b60a6bb8}{resources}
+\item 
+struct \hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} $\ast$ \hyperlink{structcoap__context__t_a4f287951eac36a9488fd9524eb1cbdb8}{async\+\_\+state}
+\item 
+coap\+\_\+tick\+\_\+t \hyperlink{structcoap__context__t_a080dc026c9eec48849d0140b433e04bb}{sendqueue\+\_\+basetime}
+\item 
+\hypertarget{structcoap__context__t_aa1e842d6431edb653dcfb117c237657f}{}\hyperlink{structcoap__queue__t}{coap\+\_\+queue\+\_\+t} $\ast$ {\bfseries sendqueue}\label{structcoap__context__t_aa1e842d6431edb653dcfb117c237657f}
+
+\item 
+\hypertarget{structcoap__context__t_a6230687bf6b5bd5c214bbfb908ff6fa5}{}\hyperlink{structcoap__queue__t}{coap\+\_\+queue\+\_\+t} $\ast$ {\bfseries recvqueue}\label{structcoap__context__t_a6230687bf6b5bd5c214bbfb908ff6fa5}
+
+\item 
+unsigned short \hyperlink{structcoap__context__t_a394ef9edc0510b05ddc7aeaa48110fcd}{message\+\_\+id}
+\item 
+unsigned int \hyperlink{structcoap__context__t_a0c362c57200374b1e7d2331ec3994485}{observe}
+\item 
+\hypertarget{structcoap__context__t_a3a1b2f824e50901b8c11543f263a651a}{}coap\+\_\+request\+\_\+handler\+\_\+t {\bfseries request\+\_\+handler}\label{structcoap__context__t_a3a1b2f824e50901b8c11543f263a651a}
+
+\item 
+\hypertarget{structcoap__context__t_aaeae5156b5641ce3a0bb6d13f5c226d2}{}coap\+\_\+response\+\_\+handler\+\_\+t {\bfseries response\+\_\+handler}\label{structcoap__context__t_aaeae5156b5641ce3a0bb6d13f5c226d2}
+
+\item 
+\hypertarget{structcoap__context__t_a9f095f3f2793a6102e70f1d60b696fe3}{}coap\+\_\+ack\+\_\+rst\+\_\+handler\+\_\+t {\bfseries ack\+\_\+rst\+\_\+handler}\label{structcoap__context__t_a9f095f3f2793a6102e70f1d60b696fe3}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+The Co\+A\+P stack's global state is stored in a \hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} object 
+
+\subsection{Member Data Documentation}
+\hypertarget{structcoap__context__t_a4f287951eac36a9488fd9524eb1cbdb8}{}\index{coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}!async\+\_\+state@{async\+\_\+state}}
+\index{async\+\_\+state@{async\+\_\+state}!coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}}
+\subsubsection[{async\+\_\+state}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf coap\+\_\+async\+\_\+state\+\_\+t}$\ast$ coap\+\_\+context\+\_\+t\+::async\+\_\+state}\label{structcoap__context__t_a4f287951eac36a9488fd9524eb1cbdb8}
+list of asynchronous transactions \hypertarget{structcoap__context__t_a394ef9edc0510b05ddc7aeaa48110fcd}{}\index{coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}!message\+\_\+id@{message\+\_\+id}}
+\index{message\+\_\+id@{message\+\_\+id}!coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}}
+\subsubsection[{message\+\_\+id}]{\setlength{\rightskip}{0pt plus 5cm}unsigned short coap\+\_\+context\+\_\+t\+::message\+\_\+id}\label{structcoap__context__t_a394ef9edc0510b05ddc7aeaa48110fcd}
+The last message id that was used is stored in this field. The initial value is set by coap\+\_\+new\+\_\+context() and is usually a random value. A new message id can be created with coap\+\_\+new\+\_\+message\+\_\+id(). \hypertarget{structcoap__context__t_a0c362c57200374b1e7d2331ec3994485}{}\index{coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}!observe@{observe}}
+\index{observe@{observe}!coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}}
+\subsubsection[{observe}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+context\+\_\+t\+::observe}\label{structcoap__context__t_a0c362c57200374b1e7d2331ec3994485}
+The next value to be used for Observe. This field is global for all resources and will be updated when notifications are created. \hypertarget{structcoap__context__t_aaf441070f9b1f2aea225fc61b60a6bb8}{}\index{coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}!resources@{resources}}
+\index{resources@{resources}!coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}}
+\subsubsection[{resources}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf coap\+\_\+resource\+\_\+t}$\ast$ coap\+\_\+context\+\_\+t\+::resources}\label{structcoap__context__t_aaf441070f9b1f2aea225fc61b60a6bb8}
+hash table or list of known resources \hypertarget{structcoap__context__t_a080dc026c9eec48849d0140b433e04bb}{}\index{coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}!sendqueue\+\_\+basetime@{sendqueue\+\_\+basetime}}
+\index{sendqueue\+\_\+basetime@{sendqueue\+\_\+basetime}!coap\+\_\+context\+\_\+t@{coap\+\_\+context\+\_\+t}}
+\subsubsection[{sendqueue\+\_\+basetime}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+tick\+\_\+t coap\+\_\+context\+\_\+t\+::sendqueue\+\_\+basetime}\label{structcoap__context__t_a080dc026c9eec48849d0140b433e04bb}
+The time stamp in the first element of the sendqeue is relative to sendqueue\+\_\+basetime. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/net.\+h\end{DoxyCompactItemize}
