@@ -337,9 +337,7 @@ namespace OC
                     {
                         std::string name = item.first.data();
                         std::string value = item.second.data();
-                        AttributeValues values;
-                        values.push_back(value);
-                        attrs[name] = values;
+                        attrs[name] = value;
                     }
                     if (isRoot)
                     {
@@ -480,14 +478,14 @@ namespace OC
                 payload << ',';
             }
 
-            payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
+            payload << "\""<<itr->first<<"\":\""<< itr->second <<"\"";
         }
         payload << "}}";
         return payload.str();
     }
 
     OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host,
-        const std::string& uri, const OCRepresentation& attributes,
+        const std::string& uri, const OCRepresentation& rep,
         const QueryParamsMap& queryParams, PutCallback& callback)
     {
         OCStackResult result;
@@ -512,7 +510,7 @@ namespace OC
             OCDoHandle handle;
             result = OCDoResource(&handle, OC_REST_PUT,
                                   os.str().c_str(), nullptr,
-                                  assembleSetResourcePayload(attributes).c_str(),
+                                  assembleSetResourcePayload(rep).c_str(),
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
                                   &cbdata);
         }

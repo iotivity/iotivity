@@ -32,6 +32,21 @@ const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
+class Light
+{
+public:
+
+    bool m_state;
+    int m_power;
+    std::string m_name;
+
+    Light() : m_state(false), m_power(0), m_name("")
+    {
+    }
+};
+
+Light mylight;
+
 int observe_count()
 {
     static int oc = 0;
@@ -42,21 +57,17 @@ void onObserve(const OCRepresentation& rep, const int& eCode, const int& sequenc
 {
     if(eCode == SUCCESS_RESPONSE)
     {
-        AttributeMap attributeMap = rep.getAttributeMap();
-
         std::cout << "OBSERVE RESULT:"<<std::endl;
         std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "\tAttribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout <<"\t"<< *valueItr << " ";
-            }
 
-            std::cout << std::endl;
-        }
-        
+        rep.getValue("state", mylight.m_state);
+        rep.getValue("power", mylight.m_power);
+        rep.getValue("name", mylight.m_name);
+
+        std::cout << "\tstate: " << mylight.m_state << std::endl;
+        std::cout << "\tpower: " << mylight.m_power << std::endl;
+        std::cout << "\tname: " << mylight.m_name << std::endl;
+
         if(observe_count() > 30)
         {
             std::cout<<"Cancelling Observe..."<<std::endl;
@@ -82,45 +93,20 @@ void onPut(const OCRepresentation& rep, const int eCode)
     {
         std::cout << "PUT request was successful" << std::endl;
 
-        AttributeMap attributeMap = rep.getAttributeMap();
+        rep.getValue("state", mylight.m_state);
+        rep.getValue("power", mylight.m_power);
+        rep.getValue("name", mylight.m_name);
 
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "\tAttribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout <<"\t"<< *valueItr << " ";
-            }
-
-            std::cout << std::endl;
-        }
-
-        std::vector<OCRepresentation> children = rep.getChildren();
-
-        for(auto oit = children.begin(); oit != children.end(); ++oit)
-        {
-            attributeMap = oit->getAttributeMap();
-
-            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-            {
-                std::cout << "\tAttribute name: "<< it->first << " value: ";
-                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-                {
-                    std::cout <<"\t"<< *valueItr << " ";
-                }
-
-                std::cout << std::endl;
-            }
-        }
+        std::cout << "\tstate: " << mylight.m_state << std::endl;
+        std::cout << "\tpower: " << mylight.m_power << std::endl;
+        std::cout << "\tname: " << mylight.m_name << std::endl;
 
         if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
             std::cout << endl << "Observe is used." << endl << endl;
         else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
             std::cout << endl << "ObserveAll is used." << endl << endl;
 
-        QueryParamsMap test;
-
-        curResource->observe(OBSERVE_TYPE_TO_USE, test, &onObserve);
+        curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
 
     }
     else
@@ -136,26 +122,19 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
     if(resource)
     {
         OCRepresentation rep;
-        
+
         std::cout << "Putting light representation..."<<std::endl;
-        // Create AttributeMap
-        AttributeMap attributeMap;
-        // Add the attribute name and values in the attribute map
-        AttributeValues stateVal;
-        stateVal.push_back("true");
 
-        AttributeValues powerVal;
-        powerVal.push_back("10");
+        mylight.m_state = true;
+        mylight.m_power = 15;
 
-        attributeMap["state"] = stateVal;
-        attributeMap["power"] = powerVal;
+        rep.setValue("state", mylight.m_state);
+        rep.setValue("power", mylight.m_power);
 
         // Create QueryParameters Map and add query params (if any)
         QueryParamsMap queryParamsMap;
 
-        rep.setAttributeMap(attributeMap);
-
-        // Invoke resource's pit API with attribute map, query map and the callback parameter
+        // Invoke resource's pit API with rep, query map and the callback parameter
         resource->put(rep, queryParamsMap, &onPut);
     }
 }
@@ -166,41 +145,15 @@ void onGet(const OCRepresentation& rep, const int eCode)
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "GET request was successful" << std::endl;
-
-        AttributeMap attributeMap = rep.getAttributeMap();
-        
         std::cout << "Resource URI: " << rep.getUri() << std::endl;
 
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "\tAttribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout <<"\t"<< *valueItr << " ";
-            }
+        rep.getValue("state", mylight.m_state);
+        rep.getValue("power", mylight.m_power);
+        rep.getValue("name", mylight.m_name);
 
-            std::cout << std::endl;
-        }
-
-        std::vector<OCRepresentation> children = rep.getChildren();
-
-        for(auto oit = children.begin(); oit != children.end(); ++oit)
-        {
-            std::cout << "Child Resource URI: " << oit->getUri() << std::endl;
-
-            attributeMap = oit->getAttributeMap();
-
-            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-            {
-                std::cout << "\tAttribute name: "<< it->first << " value: ";
-                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-                {
-                    std::cout <<"\t"<< *valueItr << " ";
-                }
-
-                std::cout << std::endl;
-            }
-        }
+        std::cout << "\tstate: " << mylight.m_state << std::endl;
+        std::cout << "\tpower: " << mylight.m_power << std::endl;
+        std::cout << "\tname: " << mylight.m_name << std::endl;
 
         putLightRepresentation(curResource);
     }
@@ -227,7 +180,6 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
@@ -249,19 +201,19 @@ void foundResource(std::shared_ptr<OCResource> resource)
             hostAddress = resource->host();
             std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
 
-            // Get the resource types 
+            // Get the resource types
             std::cout << "\tList of resource types: " << std::endl;
             for(auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
             }
-            
+
             // Get the resource interfaces
             std::cout << "\tList of resource interfaces: " << std::endl;
             for(auto &resourceInterfaces : resource->getResourceInterfaces())
             {
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
-            } 
+            }
 
             if(resourceURI == "/a/light")
             {

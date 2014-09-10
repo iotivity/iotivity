@@ -127,59 +127,6 @@ public:
         return m_resourceHandle;
     }
 
-    void setRepresentation(OCRepresentation& light)
-    {
-        AttributeMap attributeMap = light.getAttributeMap();
-
-        if(attributeMap.find("state") != attributeMap.end() && attributeMap.find("power") != attributeMap.end())
-        {
-            cout << "\t\t\t" << "Received representation: " << endl;
-            cout << "\t\t\t\t" << "power: " << attributeMap["power"][0] << endl;
-            cout << "\t\t\t\t" << "state: " << attributeMap["state"][0] << endl;
-
-            m_state = attributeMap["state"][0].compare("true") == 0;
-            m_power= std::stoi(attributeMap["power"][0]);
-        }
-    }
-
-    OCRepresentation getRepresentation()
-    {
-        OCRepresentation light;
-
-        light.setUri(m_lightUri);
-
-        std::vector<std::string> interfaces;
-        //interfaces.push_back(m_lightInterface);
-
-        light.setResourceInterfaces(interfaces);
-
-        std::vector<std::string> types;
-        //types.push_back(m_lightType);
-
-        light.setResourceTypes(types);
-
-        AttributeMap attributeMap;
-        AttributeValues stateVal;
-        if(m_state)
-        {
-            stateVal.push_back("true");
-        }
-        else
-        {
-            stateVal.push_back("false");
-        }
-
-        AttributeValues powerVal;
-        powerVal.push_back(to_string(m_power));
-
-        attributeMap["state"] = stateVal;
-        attributeMap["power"] = powerVal;
-
-        light.setAttributeMap(attributeMap);
-
-        return light;
-    }
-
     void addType(const OC::OCPlatform& platform, const std::string& type) const
     {
         OCStackResult result = platform.bindTypeToResource(m_resourceHandle, type);
@@ -197,128 +144,15 @@ public:
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
     }
+
 };
 
 // Create the instance of the resource class (in this case instance of class 'LightResource').
 LightResource myLightResource;
 
-// This is just a sample implementation of entity handler.
-// Entity handler can be implemented in several ways by the manufacturer
 void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
     cout << "\tIn Server CPP entity handler:\n";
-
-    if(request)
-    {
-        // Get the request type and request flag
-        std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = request->getRequestHandlerFlag();
-
-        if(requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            cout << "\t\trequestFlag : Init\n";
-
-            // entity handler to perform resource initialization operations
-        }
-        else if(requestFlag == RequestHandlerFlag::RequestFlag)
-        {
-            cout << "\t\trequestFlag : Request\n";
-
-            // If the request type is GET
-            if(requestType == "GET")
-            {
-                cout << "\t\t\trequestType : GET\n";
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(QueryParamsMap::iterator it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                // Process query params and do required operations ..
-
-                // Get the representation of this resource at this point and send it as response
-                // AttributeMap attributeMap;
-                OCRepresentation rep;
-                rep = myLightResource.getRepresentation();
-
-                if(response)
-                {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
-                }
-            }
-            else if(requestType == "PUT")
-            {
-                cout << "\t\t\trequestType : PUT\n";
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                // Get the representation from the request
-                OCRepresentation rep = request->getResourceRepresentation();
-
-                myLightResource.setRepresentation(rep);
-
-                // Do related operations related to PUT request
-                rep = myLightResource.getRepresentation();
-
-                if(response)
-                {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
-                }
-
-            }
-            else if(requestType == "POST")
-            {
-                // POST request operations
-            }
-            else if(requestType == "DELETE")
-            {
-                // DELETE request operations
-            }
-        }
-        else if(requestFlag == RequestHandlerFlag::ObserverFlag)
-        {
-            // OBSERVE flag operations
-        }
-    }
-    else
-    {
-        std::cout << "Request invalid" << std::endl;
-    }
 }
 
 int main()

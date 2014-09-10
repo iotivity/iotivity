@@ -29,7 +29,6 @@
 using namespace OC;
 
 std::shared_ptr<OCResource> curResource;
-static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
 OCPlatform* platformPtr;
 
@@ -56,7 +55,6 @@ void presenceHandler(OCStackResult result, const unsigned int nonce)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
@@ -112,35 +110,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-void PrintUsage()
-{
-    std::cout << std::endl;
-    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
-    std::cout << "   ObserveType : 1 - Observe" << std::endl;
-    std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
-}
-
-
 int main(int argc, char* argv[]) {
-    if (argc == 1)
-    {
-        OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-    }
-    else if (argc == 2)
-    {
-        int value = atoi(argv[1]);
-        if (value == 1)
-            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-        else if (value == 2)
-            OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
-        else
-            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-    }
-    else
-    {
-        PrintUsage();
-        return -1;
-    }
 
     // Create PlatformConfig object
     PlatformConfig cfg {

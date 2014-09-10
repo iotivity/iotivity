@@ -74,16 +74,14 @@ namespace OC
 
         /**
         *  Provides the entire resource attribute representation
-        *  @return std::map AttributeMap reference containing the name value pairs representing the resource's attributes
+        *  @return OCRepresentation reference containing the name value pairs representing the resource's attributes
         */
-        const AttributeMap& getAttributeRepresentation() const {return m_attributeMap;}
         const OCRepresentation& getResourceRepresentation() const {return m_representation;}
 
     private:
         std::string m_requestType;
         QueryParamsMap m_queryParameters;
         RequestHandlerFlag m_requestHandlerFlag;
-        AttributeMap m_attributeMap;
         OCRepresentation m_representation;
 
     public:
@@ -98,10 +96,11 @@ namespace OC
         // This function will not be exposed in future
         void setPayload(const std::string& requestPayload)
         {
+            AttributeMap attributeMap;
             // TODO: The following JSON Parse implementation should be seperated into utitilites
             // and used wherever required.
             // e.g. parse(std::string& payload, Attributemap& attributeMap)
-            
+
             std::stringstream requestStream;
             requestStream << requestPayload;
             boost::property_tree::ptree root;
@@ -124,13 +123,10 @@ namespace OC
                 std::string name = item.first.data();
                 std::string value = item.second.data();
 
-                AttributeValues values;
-                values.push_back(value);
-
-                m_attributeMap[name] = values;
+                attributeMap[name] = value;
             }
-    
-            m_representation.setAttributeMap(m_attributeMap);
+
+            m_representation.setAttributeMap(attributeMap);
         }
 
         // TODO: This is not a public API for app developers.
