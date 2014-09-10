@@ -123,7 +123,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 
     cbData.cb = cb;
     cbData.context = (void*)CTX_VAL;
-
+    cbData.cd = NULL;
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
                        (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
                        qos, &cbData);
@@ -346,6 +346,7 @@ int InitDiscovery()
     }
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)CTX_VAL;
+    cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData);
     if (ret != OC_STACK_OK)
     {

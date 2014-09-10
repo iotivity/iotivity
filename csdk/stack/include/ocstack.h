@@ -196,8 +196,14 @@ typedef enum {
 /**
  * Client applications implement this callback to consume responses received from Servers.
  */
-typedef OCStackApplicationResult (* OCClientResponseHandler)(void *context, OCDoHandle handle, OCClientResponse * clientResponse);
+typedef OCStackApplicationResult (* OCClientResponseHandler)(void *context, OCDoHandle handle,
+    OCClientResponse * clientResponse);
 
+/**
+ * Client applications using a context pointer implement this callback to delete the
+ * context upon removal of the callback/context pointer from the internal callback-list
+ */
+typedef void (* OCClientContextDeleter)(void *context);
 
 /*
  * This info is passed from application to OC Stack when initiating a request to Server
@@ -205,6 +211,7 @@ typedef OCStackApplicationResult (* OCClientResponseHandler)(void *context, OCDo
 typedef struct {
     void *context;
     OCClientResponseHandler cb;
+    OCClientContextDeleter cd;
 } OCCallbackData;
 
 /**

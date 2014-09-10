@@ -129,6 +129,7 @@ TEST(StackTest, DoResourceDeviceDiscovery) {
     strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)CTX_VAL;
+    cbData.cd = NULL;
     EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData));
     //EXPECT_EQ(OC_STACK_OK, OCUpdateResources(SERVICE_URI));
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -158,6 +159,7 @@ TEST(StackTest, UpdateResourceNullURI) {
     strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)CTX_VAL;
+    cbData.cd = NULL;
     EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData));
     //EXPECT_EQ(OC_STACK_INVALID_URI, OCUpdateResources(0));
     EXPECT_EQ(OC_STACK_OK, OCStop());

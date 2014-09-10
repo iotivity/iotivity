@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <new>
 
 #include "InProcClientWrapper.h"
 #include "ocstack.h"
@@ -217,14 +218,15 @@ namespace OC
     {
         OCStackResult result;
 
-        OCCallbackData* cbdata = new OCCallbackData();
+        OCCallbackData cbdata = {0};
 
         ListenContext* context = new ListenContext();
         context->callback = callback;
         context->clientWrapper = shared_from_this();
 
-        cbdata->context =  static_cast<void*>(context);
-        cbdata->cb = listenCallback;
+        cbdata.context =  static_cast<void*>(context);
+        cbdata.cb = listenCallback;
+        cbdata.cd = [](void* c){delete static_cast<ListenContext*>(c);};
 
         auto cLock = m_csdkLock.lock();
         if(cLock)
@@ -235,7 +237,7 @@ namespace OC
                                   resourceType.c_str(),
                                   nullptr, nullptr,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  cbdata);
+                                  &cbdata);
         }
         else
         {
@@ -387,11 +389,13 @@ namespace OC
         const std::string& uri, const QueryParamsMap& queryParams, GetCallback& callback)
     {
         OCStackResult result;
-        OCCallbackData* cbdata = new OCCallbackData();
+        OCCallbackData cbdata = {0};
+
         GetContext* ctx = new GetContext();
         ctx->callback = callback;
-        cbdata->context = static_cast<void*>(ctx);
-        cbdata->cb = &getResourceCallback;
+        cbdata.context = static_cast<void*>(ctx);
+        cbdata.cb = &getResourceCallback;
+        cbdata.cd = [](void* c){delete static_cast<GetContext*>(c);};
 
         // TODO: in the future the cstack should be combining these two strings!
         ostringstream os;
@@ -407,7 +411,7 @@ namespace OC
             result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(),
                                   nullptr, nullptr,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  cbdata);
+                                  &cbdata);
         }
         else
         {
@@ -487,17 +491,19 @@ namespace OC
         const QueryParamsMap& queryParams, PutCallback& callback)
     {
         OCStackResult result;
-        OCCallbackData* cbdata = new OCCallbackData();
+        OCCallbackData cbdata = {0};
+
         SetContext* ctx = new SetContext();
         ctx->callback = callback;
-        cbdata->cb = &setResourceCallback;
+        cbdata.cb = &setResourceCallback;
+        cbdata.cd = [](void* c){delete static_cast<SetContext*>(c);};
+        cbdata.context = static_cast<void*>(ctx);
 
         // TODO: in the future the cstack should be combining these two strings!
         ostringstream os;
         os << host << assembleSetResourceUri(uri, queryParams).c_str();
         // TODO: end of above
 
-        cbdata->context = static_cast<void*>(ctx);
         auto cLock = m_csdkLock.lock();
 
         if(cLock)
@@ -508,7 +514,7 @@ namespace OC
                                   os.str().c_str(), nullptr,
                                   assembleSetResourcePayload(attributes).c_str(),
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  cbdata);
+                                  &cbdata);
         }
         else
         {
@@ -543,11 +549,13 @@ namespace OC
         ObserveCallback& callback)
     {
         OCStackResult result;
-        OCCallbackData* cbdata = new OCCallbackData();
+        OCCallbackData cbdata = {0};
+
         ObserveContext* ctx = new ObserveContext();
         ctx->callback = callback;
-        cbdata->context = static_cast<void*>(ctx);
-        cbdata->cb = &observeResourceCallback;
+        cbdata.context = static_cast<void*>(ctx);
+        cbdata.cb = &observeResourceCallback;
+        cbdata.cd = [](void* c){delete static_cast<ObserveContext*>(c);};
 
         OCMethod method;
         if (observeType == ObserveType::Observe)
@@ -577,7 +585,7 @@ namespace OC
                                   os.str().c_str(), nullptr,
                                   nullptr,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  cbdata);
+                                  &cbdata);
         }
         else
         {
@@ -625,12 +633,13 @@ namespace OC
         const std::string& host, SubscribeCallback& presenceHandler)
     {
         OCStackResult result;
-        OCCallbackData* cbdata = new OCCallbackData();
+        OCCallbackData cbdata = {0};
+
         SubscribePresenceContext* ctx = new SubscribePresenceContext();
         ctx->callback = presenceHandler;
-        cbdata->cb = &subscribePresenceCallback;
-        cbdata->context = static_cast<void*>(ctx);
-
+        cbdata.cb = &subscribePresenceCallback;
+        cbdata.context = static_cast<void*>(ctx);
+        cbdata.cd = [](void* c){delete static_cast<SubscribePresenceContext*>(c);};
         auto cLock = m_csdkLock.lock();
 
         std::ostringstream os;
@@ -642,7 +651,7 @@ namespace OC
         if(cLock)
         {
             result = OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr,
-                        OC_NON_CONFIRMABLE, cbdata);
+                        OC_NON_CONFIRMABLE, &cbdata);
         }
         else
         {

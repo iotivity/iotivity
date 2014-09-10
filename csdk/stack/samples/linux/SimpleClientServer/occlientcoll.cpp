@@ -151,6 +151,7 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << "/SomeUnknownResource";
     cbData.cb = getReqCB;
     cbData.context = (void*)CTX_VAL;
+    cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
     if (ret != OC_STACK_OK)
     {
@@ -169,6 +170,7 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     obsReg << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
     cbData.cb = getReqCB;
     cbData.context = (void*)CTX_VAL;
+    cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
     ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
     if (ret != OC_STACK_OK)
@@ -194,6 +196,7 @@ int InitPutRequest(OCClientResponse * clientResponse)
     "/a/sroom?if=oc.mi.b";
     cbData.cb = putReqCB;
     cbData.context = (void*)CTX_VAL;
+    cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
     ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(), OC_NON_CONFIRMABLE, &cbData);
     if (ret != OC_STACK_OK)
@@ -228,6 +231,7 @@ int InitGetRequest(OCClientResponse * clientResponse)
 
     cbData.cb = getReqCB;
     cbData.context = (void*)CTX_VAL;
+    cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
     if (ret != OC_STACK_OK)
     {
@@ -250,6 +254,7 @@ int InitDiscovery()
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)CTX_VAL;
+    cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData);
     if (ret != OC_STACK_OK)
     {

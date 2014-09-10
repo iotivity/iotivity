@@ -38,6 +38,7 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
     if (cbNode) {
         cbNode->callBack = cbData->cb;
         cbNode->context = cbData->context;
+        cbNode->deleteCallback = cbData->cd;
         cbNode->token = token;
         cbNode->handle = handle;
         cbNode->method = method;
@@ -60,6 +61,11 @@ void DeleteClientCB(ClientCB * cbNode) {
         OCFree(cbNode->token);
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
+        if(cbNode->deleteCallback)
+        {
+            cbNode->deleteCallback(cbNode->context);
+        }
+
         #ifdef WITH_PRESENCE
         if(cbNode->presence) {
             OCFree(cbNode->presence->timeOut);
@@ -75,7 +81,8 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle, unsigned char * 
     ClientCB* out = NULL;
     if(token) {
         LL_FOREACH(cbList, out) {
-            if((out->token->tokenLength == token->tokenLength) && (memcmp(out->token->token, token->token, token->tokenLength) == 0) ) {
+            if((out->token->tokenLength == token->tokenLength) &&
+                (memcmp(out->token->token, token->token, token->tokenLength) == 0) ) {
                 return out;
             }
         }

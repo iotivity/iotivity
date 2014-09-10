@@ -37,11 +37,14 @@ typedef struct ClientCB {
     OCClientResponseHandler callBack;
     // callback context data
     void * context;
+    // callback method to delete context data
+    OCClientContextDeleter deleteCallback;
     //  when a response is recvd with this token, above callback will be invoked
     OCCoAPToken * token;
     // Invocation handle tied to original call to OCDoResource()
     OCDoHandle handle;
-    // This is used to determine if all responses should be consumed or not. (For now, only pertains to OC_REST_OBSERVE_ALL Vs. OC_REST_OBSERVE functionality)
+    // This is used to determine if all responses should be consumed or not.
+    // (For now, only pertains to OC_REST_OBSERVE_ALL Vs. OC_REST_OBSERVE functionality)
     OCMethod method;
     // This is the sequence identifier the server applies to the invocation tied to 'handle'.
     uint32_t sequenceNumber;
