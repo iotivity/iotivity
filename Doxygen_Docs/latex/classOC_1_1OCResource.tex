@@ -1,0 +1,258 @@
+\hypertarget{classOC_1_1OCResource}{}\section{O\+C\+:\+:O\+C\+Resource Class Reference}
+\label{classOC_1_1OCResource}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+
+
+\hyperlink{classOC_1_1OCResource}{O\+C\+Resource} represents an \hyperlink{namespaceOC}{O\+C} resource. A resource could be a light controller, temperature sensor, smoke detector, etc. A resource comes with a well-\/defined contract or interface onto which you can perform different operations, such as turning on the light, getting the current temperature or subscribing for event notifications from the smoke detector. A resource can be composed of one or more resources.  
+
+
+
+
+{\ttfamily \#include $<$O\+C\+Resource.\+h$>$}
+
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classOC_1_1OCResource_ab53adb7ab10b8fa21f4dffb4e714e92b}{}typedef std\+::shared\+\_\+ptr$<$ \hyperlink{classOC_1_1OCResource}{O\+C\+Resource} $>$ {\bfseries Ptr}\label{classOC_1_1OCResource_ab53adb7ab10b8fa21f4dffb4e714e92b}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual \hyperlink{classOC_1_1OCResource_afef4121f1e3f26d006d4e048f9e8adb8}{$\sim$\+O\+C\+Resource} (void)
+\item 
+O\+C\+Stack\+Result \hyperlink{classOC_1_1OCResource_a50277fe41aab5c2f2f44e5f48b20adce}{get} (const Query\+Params\+Map \&query\+Parameters\+Map, Get\+Callback attribute\+Handler)
+\item 
+O\+C\+Stack\+Result \hyperlink{classOC_1_1OCResource_a9cae757d4e055fce247d46495a14bb23}{get} (const std\+::string \&resource\+Type, const std\+::string \&resource\+Interface, const Query\+Params\+Map \&query\+Parameters\+Map, Get\+Callback attribute\+Handler)
+\item 
+O\+C\+Stack\+Result \hyperlink{classOC_1_1OCResource_a9d511e4b01f4a1c9b62a952dd6108316}{put} (const \hyperlink{classOC_1_1OCRepresentation}{O\+C\+Representation} \&attribute\+Map, const Query\+Params\+Map \&query\+Parameters\+Map, Put\+Callback attribute\+Handler)
+\item 
+O\+C\+Stack\+Result \hyperlink{classOC_1_1OCResource_a2f64359f8d1ee8da106ce8405dbc2d27}{put} (const std\+::string \&resource\+Type, const std\+::string \&resource\+Interface, const \hyperlink{classOC_1_1OCRepresentation}{O\+C\+Representation} \&attribute\+Map, const Query\+Params\+Map \&query\+Parameters\+Map, Put\+Callback attribute\+Handler)
+\item 
+O\+C\+Stack\+Result \hyperlink{classOC_1_1OCResource_a21067c10b2ced4d8f1460ec004a861ed}{observe} (Observe\+Type observe\+Type, const Query\+Params\+Map \&query\+Parameters\+Map, Observe\+Callback observe\+Handler)
+\item 
+O\+C\+Stack\+Result \hyperlink{classOC_1_1OCResource_a231a10e9e0cb82c01eaf52f70cd5e563}{cancel\+Observe} ()
+\item 
+std\+::string \hyperlink{classOC_1_1OCResource_a5c46e683fb2692d2f075734a871ae059}{host} () const 
+\item 
+std\+::string \hyperlink{classOC_1_1OCResource_a7cf20cfc16aecffcda44bff45f701bc2}{uri} () const 
+\item 
+bool \hyperlink{classOC_1_1OCResource_a2eba6b827fc308e8b69ff30675380639}{is\+Observable} () const 
+\item 
+std\+::vector$<$ std\+::string $>$ \hyperlink{classOC_1_1OCResource_a1a9f55284d25e9512fca799694d37e45}{get\+Resource\+Types} () const 
+\item 
+std\+::vector$<$ std\+::string $>$ \hyperlink{classOC_1_1OCResource_a0bd4b976d0ed40c3033c70803046bd77}{get\+Resource\+Interfaces} (void) const 
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classOC_1_1OCResource_a300ce6354c0ecd98e218635ee882876c}{}class {\bfseries O\+C\+Platform}\label{classOC_1_1OCResource_a300ce6354c0ecd98e218635ee882876c}
+
+\item 
+\hypertarget{classOC_1_1OCResource_a636037fb846f8a2378a12be89e0986e1}{}class {\bfseries In\+Proc\+Client\+Wrapper}\label{classOC_1_1OCResource_a636037fb846f8a2378a12be89e0986e1}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\hyperlink{classOC_1_1OCResource}{O\+C\+Resource} represents an \hyperlink{namespaceOC}{O\+C} resource. A resource could be a light controller, temperature sensor, smoke detector, etc. A resource comes with a well-\/defined contract or interface onto which you can perform different operations, such as turning on the light, getting the current temperature or subscribing for event notifications from the smoke detector. A resource can be composed of one or more resources. 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classOC_1_1OCResource_afef4121f1e3f26d006d4e048f9e8adb8}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!````~O\+C\+Resource@{$\sim$\+O\+C\+Resource}}
+\index{````~O\+C\+Resource@{$\sim$\+O\+C\+Resource}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{$\sim$\+O\+C\+Resource}]{\setlength{\rightskip}{0pt plus 5cm}virtual O\+C\+::\+O\+C\+Resource\+::$\sim$\+O\+C\+Resource (
+\begin{DoxyParamCaption}
+\item[{void}]{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{classOC_1_1OCResource_afef4121f1e3f26d006d4e048f9e8adb8}
+Virtual destructor 
+
+\subsection{Member Function Documentation}
+\hypertarget{classOC_1_1OCResource_a231a10e9e0cb82c01eaf52f70cd5e563}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!cancel\+Observe@{cancel\+Observe}}
+\index{cancel\+Observe@{cancel\+Observe}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{cancel\+Observe}]{\setlength{\rightskip}{0pt plus 5cm}O\+C\+Stack\+Result O\+C\+::\+O\+C\+Resource\+::cancel\+Observe (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}\label{classOC_1_1OCResource_a231a10e9e0cb82c01eaf52f70cd5e563}
+Function to cancel the observation on the resource \begin{DoxyReturn}{Returns}
+O\+C\+Stack\+Result return value of this A\+P\+I. Returns O\+C\+\_\+\+S\+T\+A\+C\+K\+\_\+\+O\+K if success. N\+O\+T\+E\+: O\+C\+Stack\+Result is defined in \hyperlink{ocstack_8h_source}{ocstack.\+h}. 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a50277fe41aab5c2f2f44e5f48b20adce}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!get@{get}}
+\index{get@{get}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{get}]{\setlength{\rightskip}{0pt plus 5cm}O\+C\+Stack\+Result O\+C\+::\+O\+C\+Resource\+::get (
+\begin{DoxyParamCaption}
+\item[{const Query\+Params\+Map \&}]{query\+Parameters\+Map, }
+\item[{Get\+Callback}]{attribute\+Handler}
+\end{DoxyParamCaption}
+)}\label{classOC_1_1OCResource_a50277fe41aab5c2f2f44e5f48b20adce}
+Function to get the attributes of a resource. 
+\begin{DoxyParams}{Parameters}
+{\em query\+Parameters\+Map} & map which can have the query parameter name and value \\
+\hline
+{\em attribute\+Handler} & handles callback The callback function will be invoked with a map of attribute name and values. The callback function will also have the result from this Get operation This will have error codes \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+O\+C\+Stack\+Result return value of this A\+P\+I. Returns O\+C\+\_\+\+S\+T\+A\+C\+K\+\_\+\+O\+K if success. N\+O\+T\+E\+: O\+C\+Stack\+Result is defined in \hyperlink{ocstack_8h_source}{ocstack.\+h}. 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a9cae757d4e055fce247d46495a14bb23}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!get@{get}}
+\index{get@{get}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{get}]{\setlength{\rightskip}{0pt plus 5cm}O\+C\+Stack\+Result O\+C\+::\+O\+C\+Resource\+::get (
+\begin{DoxyParamCaption}
+\item[{const std\+::string \&}]{resource\+Type, }
+\item[{const std\+::string \&}]{resource\+Interface, }
+\item[{const Query\+Params\+Map \&}]{query\+Parameters\+Map, }
+\item[{Get\+Callback}]{attribute\+Handler}
+\end{DoxyParamCaption}
+)}\label{classOC_1_1OCResource_a9cae757d4e055fce247d46495a14bb23}
+Function to get the attributes of a resource.
+
+
+\begin{DoxyParams}{Parameters}
+{\em resource\+Type} & resource\+Type of the resource operate on \\
+\hline
+{\em resource\+Interface} & interface type of the resource to operate on \\
+\hline
+{\em query\+Parameters\+Map} & map which can have the query parameter name and value \\
+\hline
+{\em attribute\+Handler} & handles callback The callback function will be invoked with a map of attribute name and values. The callback function will be invoked with a list of U\+R\+Is if 'get' is invoked on a resource container (list will be empty if not a container) The callback function will also have the result from this Get operation. This will have error codes \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+O\+C\+Stack\+Result return value of this A\+P\+I. Returns O\+C\+\_\+\+S\+T\+A\+C\+K\+\_\+\+O\+K if success. ~\newline
+ N\+O\+T\+E\+: O\+C\+Stack\+Result is defined in \hyperlink{ocstack_8h_source}{ocstack.\+h}.~\newline
+ {\bfseries Example\+:}~\newline
+ Consider resource \char`\"{}a/home\char`\"{} (with link interface and resource type as home) contains links to \char`\"{}a/kitchen\char`\"{} and \char`\"{}a/room\char`\"{}. Step 1\+: get(\char`\"{}home\char`\"{}, Link\+\_\+\+Interface, \&on\+Get)~\newline
+ Callback on\+Get will receive a) Empty attribute map because there are no attributes for a/home b) list with full U\+R\+I of \char`\"{}a/kitchen\char`\"{} and \char`\"{}a/room\char`\"{} resources and their properties c) error code for G\+E\+T operation~\newline
+ N\+O\+T\+E\+: A resource may contain single or multiple resource types. Also, a resource may contain single or multiple interfaces.~\newline
+ Currently, single G\+E\+T request is allowed to do operate on single resource type or resource interface. In future, a single G\+E\+T ~\newline
+ can operate on multiple resource types and interfaces. ~\newline
+ N\+O\+T\+E\+: A client can traverse a tree or graph by doing successive G\+E\+Ts on the returned resources at a node.~\newline
+ 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a0bd4b976d0ed40c3033c70803046bd77}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!get\+Resource\+Interfaces@{get\+Resource\+Interfaces}}
+\index{get\+Resource\+Interfaces@{get\+Resource\+Interfaces}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{get\+Resource\+Interfaces}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$std\+::string$>$ O\+C\+::\+O\+C\+Resource\+::get\+Resource\+Interfaces (
+\begin{DoxyParamCaption}
+\item[{void}]{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classOC_1_1OCResource_a0bd4b976d0ed40c3033c70803046bd77}
+Function to get the list of resource interfaces \begin{DoxyReturn}{Returns}
+vector of resource interface 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a1a9f55284d25e9512fca799694d37e45}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!get\+Resource\+Types@{get\+Resource\+Types}}
+\index{get\+Resource\+Types@{get\+Resource\+Types}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{get\+Resource\+Types}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$std\+::string$>$ O\+C\+::\+O\+C\+Resource\+::get\+Resource\+Types (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classOC_1_1OCResource_a1a9f55284d25e9512fca799694d37e45}
+Function to get the list of resource types \begin{DoxyReturn}{Returns}
+vector of resource types 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a5c46e683fb2692d2f075734a871ae059}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!host@{host}}
+\index{host@{host}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{host}]{\setlength{\rightskip}{0pt plus 5cm}std\+::string O\+C\+::\+O\+C\+Resource\+::host (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}\label{classOC_1_1OCResource_a5c46e683fb2692d2f075734a871ae059}
+Function to get the host address of this resource \begin{DoxyReturn}{Returns}
+std\+::string host address N\+O\+T\+E\+: This might or might not be exposed in future due to security concerns 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a2eba6b827fc308e8b69ff30675380639}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!is\+Observable@{is\+Observable}}
+\index{is\+Observable@{is\+Observable}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{is\+Observable}]{\setlength{\rightskip}{0pt plus 5cm}bool O\+C\+::\+O\+C\+Resource\+::is\+Observable (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}\label{classOC_1_1OCResource_a2eba6b827fc308e8b69ff30675380639}
+Function to provide ability to check if this resource is observable or not \begin{DoxyReturn}{Returns}
+bool true indicates resource is observable; false indicates resource is not observable. 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a21067c10b2ced4d8f1460ec004a861ed}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!observe@{observe}}
+\index{observe@{observe}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{observe}]{\setlength{\rightskip}{0pt plus 5cm}O\+C\+Stack\+Result O\+C\+::\+O\+C\+Resource\+::observe (
+\begin{DoxyParamCaption}
+\item[{Observe\+Type}]{observe\+Type, }
+\item[{const Query\+Params\+Map \&}]{query\+Parameters\+Map, }
+\item[{Observe\+Callback}]{observe\+Handler}
+\end{DoxyParamCaption}
+)}\label{classOC_1_1OCResource_a21067c10b2ced4d8f1460ec004a861ed}
+Function to set observation on the resource 
+\begin{DoxyParams}{Parameters}
+{\em observe\+Type} & allows the client to specify how it wants to observe. \\
+\hline
+{\em query\+Parameters\+Map} & map which can have the query parameter name and value \\
+\hline
+{\em observe\+Handler} & handles callback The callback function will be invoked with a map of attribute name and values. The callback function will also have the result from this observe operation This will have error codes \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+O\+C\+Stack\+Result return value of this A\+P\+I. Returns O\+C\+\_\+\+S\+T\+A\+C\+K\+\_\+\+O\+K if success. N\+O\+T\+E\+: O\+C\+Stack\+Result is defined in \hyperlink{ocstack_8h_source}{ocstack.\+h}. 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a9d511e4b01f4a1c9b62a952dd6108316}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!put@{put}}
+\index{put@{put}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{put}]{\setlength{\rightskip}{0pt plus 5cm}O\+C\+Stack\+Result O\+C\+::\+O\+C\+Resource\+::put (
+\begin{DoxyParamCaption}
+\item[{const {\bf O\+C\+Representation} \&}]{attribute\+Map, }
+\item[{const Query\+Params\+Map \&}]{query\+Parameters\+Map, }
+\item[{Put\+Callback}]{attribute\+Handler}
+\end{DoxyParamCaption}
+)}\label{classOC_1_1OCResource_a9d511e4b01f4a1c9b62a952dd6108316}
+Function to set the attributes of a resource (via P\+U\+T) 
+\begin{DoxyParams}{Parameters}
+{\em attribute\+Map} & Map which can either have all the attribute names and values (which will represent entire state of the resource) or a set of attribute names and values which needs to be modified The callback function will be invoked with a map of attribute name and values. The callback function will also have the result from this Put operation This will have error codes \\
+\hline
+{\em query\+Parameters\+Map} & map which can have the query parameter name and value \\
+\hline
+{\em attribute\+Handler} & attribute handler \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+O\+C\+Stack\+Result return value of this A\+P\+I. Returns O\+C\+\_\+\+S\+T\+A\+C\+K\+\_\+\+O\+K if success. N\+O\+T\+E\+: O\+C\+Stack\+Result is defined in \hyperlink{ocstack_8h_source}{ocstack.\+h}. 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a2f64359f8d1ee8da106ce8405dbc2d27}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!put@{put}}
+\index{put@{put}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{put}]{\setlength{\rightskip}{0pt plus 5cm}O\+C\+Stack\+Result O\+C\+::\+O\+C\+Resource\+::put (
+\begin{DoxyParamCaption}
+\item[{const std\+::string \&}]{resource\+Type, }
+\item[{const std\+::string \&}]{resource\+Interface, }
+\item[{const {\bf O\+C\+Representation} \&}]{attribute\+Map, }
+\item[{const Query\+Params\+Map \&}]{query\+Parameters\+Map, }
+\item[{Put\+Callback}]{attribute\+Handler}
+\end{DoxyParamCaption}
+)}\label{classOC_1_1OCResource_a2f64359f8d1ee8da106ce8405dbc2d27}
+Function to set the attributes of a resource (via P\+U\+T) 
+\begin{DoxyParams}{Parameters}
+{\em resource\+Type} & resource type of the resource to operate on \\
+\hline
+{\em resource\+Interface} & interface type of the resource to operate on \\
+\hline
+{\em attribute\+Map} & attribute map \\
+\hline
+{\em query\+Parameters\+Map} & Map which can have the query parameter name and value \\
+\hline
+{\em attribute\+Handler} & attribute handler The callback function will be invoked with a map of attribute name and values. The callback function will also have the result from this Put operation This will have error codes. The Attribute\+Map parameter maps which can either have all the attribute names and values (which will represent entire state of the resource) or a set of attribute names and values which needs to be modified \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+O\+C\+Stack\+Result return value of this A\+P\+I. Returns O\+C\+\_\+\+S\+T\+A\+C\+K\+\_\+\+O\+K if success. ~\newline
+ N\+O\+T\+E\+: O\+C\+Stack\+Result is defined in \hyperlink{ocstack_8h_source}{ocstack.\+h}. ~\newline
+ 
+\end{DoxyReturn}
+\hypertarget{classOC_1_1OCResource_a7cf20cfc16aecffcda44bff45f701bc2}{}\index{O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}!uri@{uri}}
+\index{uri@{uri}!O\+C\+::\+O\+C\+Resource@{O\+C\+::\+O\+C\+Resource}}
+\subsubsection[{uri}]{\setlength{\rightskip}{0pt plus 5cm}std\+::string O\+C\+::\+O\+C\+Resource\+::uri (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}\label{classOC_1_1OCResource_a7cf20cfc16aecffcda44bff45f701bc2}
+Function to get the U\+R\+I for this resource \begin{DoxyReturn}{Returns}
+std\+::string resource U\+R\+I 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/include/\hyperlink{OCResource_8h}{O\+C\+Resource.\+h}\end{DoxyCompactItemize}

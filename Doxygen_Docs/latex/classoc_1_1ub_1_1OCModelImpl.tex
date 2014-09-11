@@ -1,0 +1,161 @@
+\hypertarget{classoc_1_1ub_1_1OCModelImpl}{}\section{oc\+:\+:ub\+:\+:O\+C\+Model\+Impl Class Reference}
+\label{classoc_1_1ub_1_1OCModelImpl}\index{oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}}
+Inheritance diagram for oc\+:\+:ub\+:\+:O\+C\+Model\+Impl\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classoc_1_1ub_1_1OCModelImpl}
+\end{center}
+\end{figure}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classoc_1_1ub_1_1OCModelImpl_a5b323ffe75d8614854b0aa8b83fdf0e4}{}typedef std\+::shared\+\_\+ptr$<$ \hyperlink{classoc_1_1ub_1_1OCModelImpl}{O\+C\+Model\+Impl} $>$ {\bfseries Shared\+Ptr}\label{classoc_1_1ub_1_1OCModelImpl_a5b323ffe75d8614854b0aa8b83fdf0e4}
+
+\item 
+\hypertarget{classoc_1_1ub_1_1OCModelImpl_a0b39ccd354aa7b2b521cba85b87948e4}{}typedef std\+::weak\+\_\+ptr$<$ \hyperlink{classoc_1_1ub_1_1OCModelImpl}{O\+C\+Model\+Impl} $>$ {\bfseries Weak\+Ptr}\label{classoc_1_1ub_1_1OCModelImpl_a0b39ccd354aa7b2b521cba85b87948e4}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classoc_1_1ub_1_1OCModelImpl_ab30a99e6992ef75e5dd604507c0e4c69}{O\+C\+Model\+Impl} ()
+\item 
+virtual \hyperlink{classoc_1_1ub_1_1OCModelImpl_a116c96f3e9c1daa9d82608b4420ae7ff}{$\sim$\+O\+C\+Model\+Impl} ()
+\item 
+virtual bool \hyperlink{classoc_1_1ub_1_1OCModelImpl_a7c6ce055a165c371b1d193464510d94b}{start} (const std\+::string ip\+Addr, int16\+\_\+t port, O\+C\+Stack\+Mode mode)
+\item 
+virtual void \hyperlink{classoc_1_1ub_1_1OCModelImpl_a246179adaa5c8cd2288ef80f85a940dd}{discover\+Services} (O\+C\+Discover\+Services\+Function \&async\+Return\+Func)
+\item 
+virtual uint16\+\_\+t \hyperlink{classoc_1_1ub_1_1OCModelImpl_af4266972dedd3e3e3955f57795692d63}{add\+Service} (const std\+::string url)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static Shared\+Ptr \hyperlink{classoc_1_1ub_1_1OCModelImpl_a5097d6ac72eee4a7f0d9c1aac9f5fb5e}{create\+Model} ()
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{classoc_1_1ub_1_1OCModelImpl_a3f81e802eb9c5d3c901a4dca02dee6a3}{async\+Do\+Resources\+Callback} (O\+C\+Stack\+Result result, O\+C\+Representation\+Handle representation)
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classoc_1_1ub_1_1OCModelImpl_ab30a99e6992ef75e5dd604507c0e4c69}{}\index{oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}!O\+C\+Model\+Impl@{O\+C\+Model\+Impl}}
+\index{O\+C\+Model\+Impl@{O\+C\+Model\+Impl}!oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}}
+\subsubsection[{O\+C\+Model\+Impl}]{\setlength{\rightskip}{0pt plus 5cm}oc\+::ub\+::\+O\+C\+Model\+Impl\+::\+O\+C\+Model\+Impl (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}\label{classoc_1_1ub_1_1OCModelImpl_ab30a99e6992ef75e5dd604507c0e4c69}
+Constructor \hypertarget{classoc_1_1ub_1_1OCModelImpl_a116c96f3e9c1daa9d82608b4420ae7ff}{}\index{oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}!````~O\+C\+Model\+Impl@{$\sim$\+O\+C\+Model\+Impl}}
+\index{````~O\+C\+Model\+Impl@{$\sim$\+O\+C\+Model\+Impl}!oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}}
+\subsubsection[{$\sim$\+O\+C\+Model\+Impl}]{\setlength{\rightskip}{0pt plus 5cm}virtual oc\+::ub\+::\+O\+C\+Model\+Impl\+::$\sim$\+O\+C\+Model\+Impl (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{classoc_1_1ub_1_1OCModelImpl_a116c96f3e9c1daa9d82608b4420ae7ff}
+Destructor 
+
+\subsection{Member Function Documentation}
+\hypertarget{classoc_1_1ub_1_1OCModelImpl_af4266972dedd3e3e3955f57795692d63}{}\index{oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}!add\+Service@{add\+Service}}
+\index{add\+Service@{add\+Service}!oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}}
+\subsubsection[{add\+Service}]{\setlength{\rightskip}{0pt plus 5cm}virtual uint16\+\_\+t oc\+::ub\+::\+O\+C\+Model\+Impl\+::add\+Service (
+\begin{DoxyParamCaption}
+\item[{const std\+::string}]{url}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{classoc_1_1ub_1_1OCModelImpl_af4266972dedd3e3e3955f57795692d63}
+Add a service to the \hyperlink{classoc_1_1ub_1_1OCModelImpl}{O\+C\+Model\+Impl}
+
+
+\begin{DoxyParams}{Parameters}
+{\em url} & -\/ U\+R\+L of the service \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Total number of services in the \hyperlink{classoc_1_1ub_1_1OCModelImpl}{O\+C\+Model\+Impl} 
+\end{DoxyReturn}
+
+
+Implements \hyperlink{classoc_1_1ub_1_1OCModel_aa11c34b45df6a00aad454cb23a72ec6f}{oc\+::ub\+::\+O\+C\+Model}.
+
+\hypertarget{classoc_1_1ub_1_1OCModelImpl_a5097d6ac72eee4a7f0d9c1aac9f5fb5e}{}\index{oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}!create\+Model@{create\+Model}}
+\index{create\+Model@{create\+Model}!oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}}
+\subsubsection[{create\+Model}]{\setlength{\rightskip}{0pt plus 5cm}static Shared\+Ptr oc\+::ub\+::\+O\+C\+Model\+Impl\+::create\+Model (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\label{classoc_1_1ub_1_1OCModelImpl_a5097d6ac72eee4a7f0d9c1aac9f5fb5e}
+Factory pattern to create a \hyperlink{classoc_1_1ub_1_1OCModel}{O\+C\+Model} singleton \begin{DoxyReturn}{Returns}
+Shared pointer to the \hyperlink{classoc_1_1ub_1_1OCModel}{O\+C\+Model} 
+\end{DoxyReturn}
+\hypertarget{classoc_1_1ub_1_1OCModelImpl_a246179adaa5c8cd2288ef80f85a940dd}{}\index{oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}!discover\+Services@{discover\+Services}}
+\index{discover\+Services@{discover\+Services}!oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}}
+\subsubsection[{discover\+Services}]{\setlength{\rightskip}{0pt plus 5cm}virtual void oc\+::ub\+::\+O\+C\+Model\+Impl\+::discover\+Services (
+\begin{DoxyParamCaption}
+\item[{O\+C\+Discover\+Services\+Function \&}]{async\+Return\+Func}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{classoc_1_1ub_1_1OCModelImpl_a246179adaa5c8cd2288ef80f85a940dd}
+Get all services that have been discovered at time of call
+
+
+\begin{DoxyParams}{Parameters}
+{\em async\+Return\+Func} & -\/ asynchronous callback function that is invoked by the \hyperlink{classoc_1_1ub_1_1OCModelImpl}{O\+C\+Model\+Impl} when service discovery is complete. The callback will include status and a list of all discovered services \\
+\hline
+\end{DoxyParams}
+
+
+Implements \hyperlink{classoc_1_1ub_1_1OCModel_a415bb23e3d0cb7c0ff08166d46fd660b}{oc\+::ub\+::\+O\+C\+Model}.
+
+\hypertarget{classoc_1_1ub_1_1OCModelImpl_a7c6ce055a165c371b1d193464510d94b}{}\index{oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}!start@{start}}
+\index{start@{start}!oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}}
+\subsubsection[{start}]{\setlength{\rightskip}{0pt plus 5cm}virtual bool oc\+::ub\+::\+O\+C\+Model\+Impl\+::start (
+\begin{DoxyParamCaption}
+\item[{const std\+::string}]{ip\+Addr, }
+\item[{int16\+\_\+t}]{port, }
+\item[{O\+C\+Stack\+Mode}]{mode}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{classoc_1_1ub_1_1OCModelImpl_a7c6ce055a165c371b1d193464510d94b}
+Start the \hyperlink{namespaceOC}{O\+C} Stack.
+
+
+\begin{DoxyParams}{Parameters}
+{\em ip\+Addr} & I\+P Address of host device \\
+\hline
+{\em port} & Port of host device$\ast$ \\
+\hline
+{\em mode} & Host device is client, server, or client-\/server\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true -\/ successfully started the \hyperlink{namespaceOC}{O\+C} Stack false -\/ error starting the \hyperlink{namespaceOC}{O\+C} Stack 
+\end{DoxyReturn}
+
+
+Implements \hyperlink{classoc_1_1ub_1_1OCModel_ae9c3633d98ea85798de3c35f87a1e09c}{oc\+::ub\+::\+O\+C\+Model}.
+
+
+
+\subsection{Friends And Related Function Documentation}
+\hypertarget{classoc_1_1ub_1_1OCModelImpl_a3f81e802eb9c5d3c901a4dca02dee6a3}{}\index{oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}!async\+Do\+Resources\+Callback@{async\+Do\+Resources\+Callback}}
+\index{async\+Do\+Resources\+Callback@{async\+Do\+Resources\+Callback}!oc\+::ub\+::\+O\+C\+Model\+Impl@{oc\+::ub\+::\+O\+C\+Model\+Impl}}
+\subsubsection[{async\+Do\+Resources\+Callback}]{\setlength{\rightskip}{0pt plus 5cm}void async\+Do\+Resources\+Callback (
+\begin{DoxyParamCaption}
+\item[{O\+C\+Stack\+Result}]{result, }
+\item[{O\+C\+Representation\+Handle}]{representation}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [friend]}}\label{classoc_1_1ub_1_1OCModelImpl_a3f81e802eb9c5d3c901a4dca02dee6a3}
+Asynchronous callback friend function invoked by the \hyperlink{namespaceOC}{O\+C} Stack upon service discovery
+
+
+\begin{DoxyParams}{Parameters}
+{\em result} & -\/ \hyperlink{namespaceOC}{O\+C} stack result \\
+\hline
+{\em representation} & -\/ handle to the representation of the resource \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/csdk/ubstack/src/ocmodelimpl.\+h\end{DoxyCompactItemize}

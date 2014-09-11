@@ -1,0 +1,56 @@
+\hypertarget{structcoap__queue__t}{}\section{coap\+\_\+queue\+\_\+t Struct Reference}
+\label{structcoap__queue__t}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structcoap__queue__t_a75428f649543d0779fce28c8538247d6}{}struct \hyperlink{structcoap__queue__t}{coap\+\_\+queue\+\_\+t} $\ast$ {\bfseries next}\label{structcoap__queue__t_a75428f649543d0779fce28c8538247d6}
+
+\item 
+coap\+\_\+tick\+\_\+t \hyperlink{structcoap__queue__t_ab5edd7b3b3ddd98d8356febbd4726e7c}{t}
+\item 
+unsigned char \hyperlink{structcoap__queue__t_aff24f5a43b3d2182535bc7bd2b5f5341}{retransmit\+\_\+cnt}
+\item 
+unsigned int \hyperlink{structcoap__queue__t_a4d8b47a02fea39b9a9fc0501f81cbaa2}{timeout}
+\item 
+coap\+\_\+address\+\_\+t \hyperlink{structcoap__queue__t_a19d2b774c366900ac9b34869cec54ec5}{local}
+\item 
+coap\+\_\+address\+\_\+t \hyperlink{structcoap__queue__t_a15ba08baabdadfe7ec9179e7dba5b5f2}{remote}
+\item 
+coap\+\_\+tid\+\_\+t \hyperlink{structcoap__queue__t_aeded9dd536f54ee47418575711e7dbac}{id}
+\item 
+\hyperlink{structcoap__pdu__t}{coap\+\_\+pdu\+\_\+t} $\ast$ \hyperlink{structcoap__queue__t_a2bc9a6e3ed0442653e53b92f5fa92954}{pdu}
+\item 
+unsigned char \hyperlink{structcoap__queue__t_a9ac0e0094dba5cfbd24f6509c5c3f665}{delayed\+Response}
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{structcoap__queue__t_a9ac0e0094dba5cfbd24f6509c5c3f665}{}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}!delayed\+Response@{delayed\+Response}}
+\index{delayed\+Response@{delayed\+Response}!coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsubsection[{delayed\+Response}]{\setlength{\rightskip}{0pt plus 5cm}unsigned char coap\+\_\+queue\+\_\+t\+::delayed\+Response}\label{structcoap__queue__t_a9ac0e0094dba5cfbd24f6509c5c3f665}
+delayed response flag \hypertarget{structcoap__queue__t_aeded9dd536f54ee47418575711e7dbac}{}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}!id@{id}}
+\index{id@{id}!coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsubsection[{id}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+tid\+\_\+t coap\+\_\+queue\+\_\+t\+::id}\label{structcoap__queue__t_aeded9dd536f54ee47418575711e7dbac}
+unique transaction id \hypertarget{structcoap__queue__t_a19d2b774c366900ac9b34869cec54ec5}{}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}!local@{local}}
+\index{local@{local}!coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsubsection[{local}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+address\+\_\+t coap\+\_\+queue\+\_\+t\+::local}\label{structcoap__queue__t_a19d2b774c366900ac9b34869cec54ec5}
+local address \hypertarget{structcoap__queue__t_a2bc9a6e3ed0442653e53b92f5fa92954}{}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}!pdu@{pdu}}
+\index{pdu@{pdu}!coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsubsection[{pdu}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+pdu\+\_\+t}$\ast$ coap\+\_\+queue\+\_\+t\+::pdu}\label{structcoap__queue__t_a2bc9a6e3ed0442653e53b92f5fa92954}
+the Co\+A\+P P\+D\+U to send \hypertarget{structcoap__queue__t_a15ba08baabdadfe7ec9179e7dba5b5f2}{}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}!remote@{remote}}
+\index{remote@{remote}!coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsubsection[{remote}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+address\+\_\+t coap\+\_\+queue\+\_\+t\+::remote}\label{structcoap__queue__t_a15ba08baabdadfe7ec9179e7dba5b5f2}
+remote address \hypertarget{structcoap__queue__t_aff24f5a43b3d2182535bc7bd2b5f5341}{}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}!retransmit\+\_\+cnt@{retransmit\+\_\+cnt}}
+\index{retransmit\+\_\+cnt@{retransmit\+\_\+cnt}!coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsubsection[{retransmit\+\_\+cnt}]{\setlength{\rightskip}{0pt plus 5cm}unsigned char coap\+\_\+queue\+\_\+t\+::retransmit\+\_\+cnt}\label{structcoap__queue__t_aff24f5a43b3d2182535bc7bd2b5f5341}
+retransmission counter, will be removed when zero \hypertarget{structcoap__queue__t_ab5edd7b3b3ddd98d8356febbd4726e7c}{}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}!t@{t}}
+\index{t@{t}!coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsubsection[{t}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+tick\+\_\+t coap\+\_\+queue\+\_\+t\+::t}\label{structcoap__queue__t_ab5edd7b3b3ddd98d8356febbd4726e7c}
+when to send P\+D\+U for the next time \hypertarget{structcoap__queue__t_a4d8b47a02fea39b9a9fc0501f81cbaa2}{}\index{coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}!timeout@{timeout}}
+\index{timeout@{timeout}!coap\+\_\+queue\+\_\+t@{coap\+\_\+queue\+\_\+t}}
+\subsubsection[{timeout}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+queue\+\_\+t\+::timeout}\label{structcoap__queue__t_a4d8b47a02fea39b9a9fc0501f81cbaa2}
+the randomized timeout value 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/net.\+h\end{DoxyCompactItemize}

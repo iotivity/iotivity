@@ -1,0 +1,74 @@
+\hypertarget{structcoap__resource__t}{}\section{coap\+\_\+resource\+\_\+t Struct Reference}
+\label{structcoap__resource__t}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{structcoap__resource__t_a7320c5df49bb1fd5dd4c2ea6dba6bd9d}{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T} (subscribers)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+unsigned int \hyperlink{structcoap__resource__t_a09b8f3b601ad2e2e48f8ebb47a2f3bef}{dirty}\+:1
+\item 
+unsigned int \hyperlink{structcoap__resource__t_a1574825943641eaf8fd4229bcbb818c8}{partiallydirty}\+:1
+\item 
+unsigned int \hyperlink{structcoap__resource__t_ac398cbf0112b945e22176dbbf9790a87}{observable}\+:1
+\item 
+unsigned int \hyperlink{structcoap__resource__t_a608274b876671be27e2bd099fa112f75}{cacheable}\+:1
+\item 
+\hyperlink{resource_8h_ad2b83945efbc3230d64f81d0e966df56}{coap\+\_\+method\+\_\+handler\+\_\+t} \hyperlink{structcoap__resource__t_afcc8ff3f429a9e69e254665c42ac1e41}{handler} \mbox{[}4\mbox{]}
+\item 
+coap\+\_\+key\+\_\+t \hyperlink{structcoap__resource__t_ad055df551d64acc0806b1df89d727d75}{key}
+\item 
+\hypertarget{structcoap__resource__t_af63bf8fad6bf44a77599a57456bd919c}{}\hyperlink{structUT__hash__handle}{U\+T\+\_\+hash\+\_\+handle} {\bfseries hh}\label{structcoap__resource__t_af63bf8fad6bf44a77599a57456bd919c}
+
+\item 
+\hyperlink{structcoap__attr__t}{coap\+\_\+attr\+\_\+t} $\ast$ \hyperlink{structcoap__resource__t_a9359a93af7804828408cd7638bb2325a}{link\+\_\+attr}
+\item 
+\hyperlink{structstr}{str} \hyperlink{structcoap__resource__t_aa250947f8ad4cf5e4ebe60ea305c4607}{uri}
+\item 
+\hypertarget{structcoap__resource__t_aea7b315210c6674d4079fa2e0e45ebec}{}int {\bfseries flags}\label{structcoap__resource__t_aea7b315210c6674d4079fa2e0e45ebec}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{structcoap__resource__t_a7320c5df49bb1fd5dd4c2ea6dba6bd9d}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T@{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T}}
+\index{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T@{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+resource\+\_\+t\+::\+L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T (
+\begin{DoxyParamCaption}
+\item[{subscribers}]{}
+\end{DoxyParamCaption}
+)}\label{structcoap__resource__t_a7320c5df49bb1fd5dd4c2ea6dba6bd9d}
+list of observers for this resource 
+
+\subsection{Member Data Documentation}
+\hypertarget{structcoap__resource__t_a608274b876671be27e2bd099fa112f75}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!cacheable@{cacheable}}
+\index{cacheable@{cacheable}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{cacheable}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+resource\+\_\+t\+::cacheable}\label{structcoap__resource__t_a608274b876671be27e2bd099fa112f75}
+can be cached \hypertarget{structcoap__resource__t_a09b8f3b601ad2e2e48f8ebb47a2f3bef}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!dirty@{dirty}}
+\index{dirty@{dirty}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{dirty}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+resource\+\_\+t\+::dirty}\label{structcoap__resource__t_a09b8f3b601ad2e2e48f8ebb47a2f3bef}
+set to 1 if resource has changed \hypertarget{structcoap__resource__t_afcc8ff3f429a9e69e254665c42ac1e41}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!handler@{handler}}
+\index{handler@{handler}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{handler}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+method\+\_\+handler\+\_\+t} coap\+\_\+resource\+\_\+t\+::handler\mbox{[}4\mbox{]}}\label{structcoap__resource__t_afcc8ff3f429a9e69e254665c42ac1e41}
+Used to store handlers for the four coap methods {\ttfamily G\+E\+T}, {\ttfamily P\+O\+S\+T}, {\ttfamily P\+U\+T}, and {\ttfamily D\+E\+L\+E\+T\+E}. coap\+\_\+dispatch() will pass incoming requests to the handler that corresponds to its request method or generate a 4.\+05 response if no handler is available. \hypertarget{structcoap__resource__t_ad055df551d64acc0806b1df89d727d75}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!key@{key}}
+\index{key@{key}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{key}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+key\+\_\+t coap\+\_\+resource\+\_\+t\+::key}\label{structcoap__resource__t_ad055df551d64acc0806b1df89d727d75}
+the actual key bytes for this resource \hypertarget{structcoap__resource__t_a9359a93af7804828408cd7638bb2325a}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!link\+\_\+attr@{link\+\_\+attr}}
+\index{link\+\_\+attr@{link\+\_\+attr}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{link\+\_\+attr}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+attr\+\_\+t}$\ast$ coap\+\_\+resource\+\_\+t\+::link\+\_\+attr}\label{structcoap__resource__t_a9359a93af7804828408cd7638bb2325a}
+attributes to be included with the link format \hypertarget{structcoap__resource__t_ac398cbf0112b945e22176dbbf9790a87}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!observable@{observable}}
+\index{observable@{observable}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{observable}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+resource\+\_\+t\+::observable}\label{structcoap__resource__t_ac398cbf0112b945e22176dbbf9790a87}
+can be observed \hypertarget{structcoap__resource__t_a1574825943641eaf8fd4229bcbb818c8}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!partiallydirty@{partiallydirty}}
+\index{partiallydirty@{partiallydirty}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{partiallydirty}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+resource\+\_\+t\+::partiallydirty}\label{structcoap__resource__t_a1574825943641eaf8fd4229bcbb818c8}
+set to 1 if some subscribers have not yet been notified of the last change \hypertarget{structcoap__resource__t_aa250947f8ad4cf5e4ebe60ea305c4607}{}\index{coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}!uri@{uri}}
+\index{uri@{uri}!coap\+\_\+resource\+\_\+t@{coap\+\_\+resource\+\_\+t}}
+\subsubsection[{uri}]{\setlength{\rightskip}{0pt plus 5cm}{\bf str} coap\+\_\+resource\+\_\+t\+::uri}\label{structcoap__resource__t_aa250947f8ad4cf5e4ebe60ea305c4607}
+Request U\+R\+I for this resource. This field will point into the static memory. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/\hyperlink{resource_8h}{resource.\+h}\end{DoxyCompactItemize}

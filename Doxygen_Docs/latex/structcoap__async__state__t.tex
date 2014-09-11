@@ -1,0 +1,58 @@
+\hypertarget{structcoap__async__state__t}{}\section{coap\+\_\+async\+\_\+state\+\_\+t Struct Reference}
+\label{structcoap__async__state__t}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+unsigned char \hyperlink{structcoap__async__state__t_a34237f37d4c44962f4c4f0dbf39560c1}{flags}
+\item 
+coap\+\_\+tick\+\_\+t \hyperlink{structcoap__async__state__t_a2ce04f273a47df97dfb8af270c858007}{created}
+\item 
+void $\ast$ \hyperlink{structcoap__async__state__t_a8bfdf12963290e8284e1510b093b17c1}{appdata}
+\item 
+unsigned short \hyperlink{structcoap__async__state__t_a94feaa6adcb5c4c244dc33608a37ba3f}{message\+\_\+id}
+\item 
+coap\+\_\+tid\+\_\+t \hyperlink{structcoap__async__state__t_af6bd1cb2573d3b38e5c1c1175d52f471}{id}
+\item 
+struct \hyperlink{structcoap__async__state__t}{coap\+\_\+async\+\_\+state\+\_\+t} $\ast$ \hyperlink{structcoap__async__state__t_ac374efafdd91c332f92c8fc5f33f0a0e}{next}
+\item 
+coap\+\_\+address\+\_\+t \hyperlink{structcoap__async__state__t_a802335931b57f54c9bb134a46ef2322c}{peer}
+\item 
+size\+\_\+t \hyperlink{structcoap__async__state__t_a9ac15543c19c679be1f77442671454fb}{tokenlen}
+\item 
+\+\_\+\+\_\+extension\+\_\+\+\_\+ unsigned char \hyperlink{structcoap__async__state__t_a1473f5fc22ca794f1eff2d0c145bdb27}{token} \mbox{[}$\,$\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{structcoap__async__state__t_a8bfdf12963290e8284e1510b093b17c1}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!appdata@{appdata}}
+\index{appdata@{appdata}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{appdata}]{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ coap\+\_\+async\+\_\+state\+\_\+t\+::appdata}\label{structcoap__async__state__t_a8bfdf12963290e8284e1510b093b17c1}
+This field can be used to register opaque application data with the asynchronous state object. \hypertarget{structcoap__async__state__t_a2ce04f273a47df97dfb8af270c858007}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!created@{created}}
+\index{created@{created}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{created}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+tick\+\_\+t coap\+\_\+async\+\_\+state\+\_\+t\+::created}\label{structcoap__async__state__t_a2ce04f273a47df97dfb8af270c858007}
+Holds the internal time when the object was registered with a resource. This field will be updated whenever \hyperlink{group__coap__async_ga1c81eb1d464e9b5195acb7ae630e15c9}{coap\+\_\+register\+\_\+async()} is called for a specific resource. \hypertarget{structcoap__async__state__t_a34237f37d4c44962f4c4f0dbf39560c1}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!flags@{flags}}
+\index{flags@{flags}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{flags}]{\setlength{\rightskip}{0pt plus 5cm}unsigned char coap\+\_\+async\+\_\+state\+\_\+t\+::flags}\label{structcoap__async__state__t_a34237f37d4c44962f4c4f0dbf39560c1}
+holds the flags to control behaviour \hypertarget{structcoap__async__state__t_af6bd1cb2573d3b38e5c1c1175d52f471}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!id@{id}}
+\index{id@{id}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{id}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+tid\+\_\+t coap\+\_\+async\+\_\+state\+\_\+t\+::id}\label{structcoap__async__state__t_af6bd1cb2573d3b38e5c1c1175d52f471}
+transaction id \hypertarget{structcoap__async__state__t_a94feaa6adcb5c4c244dc33608a37ba3f}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!message\+\_\+id@{message\+\_\+id}}
+\index{message\+\_\+id@{message\+\_\+id}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{message\+\_\+id}]{\setlength{\rightskip}{0pt plus 5cm}unsigned short coap\+\_\+async\+\_\+state\+\_\+t\+::message\+\_\+id}\label{structcoap__async__state__t_a94feaa6adcb5c4c244dc33608a37ba3f}
+id of last message seen \hypertarget{structcoap__async__state__t_ac374efafdd91c332f92c8fc5f33f0a0e}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!next@{next}}
+\index{next@{next}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{next}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf coap\+\_\+async\+\_\+state\+\_\+t}$\ast$ coap\+\_\+async\+\_\+state\+\_\+t\+::next}\label{structcoap__async__state__t_ac374efafdd91c332f92c8fc5f33f0a0e}
+internally used for linking \hypertarget{structcoap__async__state__t_a802335931b57f54c9bb134a46ef2322c}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!peer@{peer}}
+\index{peer@{peer}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{peer}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+address\+\_\+t coap\+\_\+async\+\_\+state\+\_\+t\+::peer}\label{structcoap__async__state__t_a802335931b57f54c9bb134a46ef2322c}
+the peer to notify \hypertarget{structcoap__async__state__t_a1473f5fc22ca794f1eff2d0c145bdb27}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!token@{token}}
+\index{token@{token}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{token}]{\setlength{\rightskip}{0pt plus 5cm}\+\_\+\+\_\+extension\+\_\+\+\_\+ unsigned char coap\+\_\+async\+\_\+state\+\_\+t\+::token\mbox{[}$\,$\mbox{]}}\label{structcoap__async__state__t_a1473f5fc22ca794f1eff2d0c145bdb27}
+the token to use in a response \hypertarget{structcoap__async__state__t_a9ac15543c19c679be1f77442671454fb}{}\index{coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}!tokenlen@{tokenlen}}
+\index{tokenlen@{tokenlen}!coap\+\_\+async\+\_\+state\+\_\+t@{coap\+\_\+async\+\_\+state\+\_\+t}}
+\subsubsection[{tokenlen}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t coap\+\_\+async\+\_\+state\+\_\+t\+::tokenlen}\label{structcoap__async__state__t_a9ac15543c19c679be1f77442671454fb}
+length of the token 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/\hyperlink{async_8h}{async.\+h}\end{DoxyCompactItemize}

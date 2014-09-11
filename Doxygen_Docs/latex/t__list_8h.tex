@@ -1,0 +1,65 @@
+\hypertarget{t__list_8h}{}\section{/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.1.1/t\+\_\+list.h File Reference}
+\label{t__list_8h}\index{/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/t\+\_\+list.\+h@{/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/t\+\_\+list.\+h}}
+
+
+Wrappers for list structures and functions.  
+
+
+{\ttfamily \#include \char`\"{}uthash.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}utlist.\+h\char`\"{}}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structlist}{list}
+\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{t__list_8h_ad8951367826c57390a9f9892e0fc2659}{}\#define {\bfseries L\+I\+S\+T\+\_\+\+C\+O\+N\+C\+A\+T}(s1,  s2)~s1\#\#s2\label{t__list_8h_ad8951367826c57390a9f9892e0fc2659}
+
+\item 
+\#define {\bfseries L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T}(name)
+\item 
+\#define {\bfseries L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T\+\_\+\+I\+N\+I\+T}(struct\+\_\+ptr,  name)
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{t__list_8h_a9c248916bae1f0b13732686786be7108}{}typedef void $\ast$$\ast$ {\bfseries list\+\_\+t}\label{t__list_8h_a9c248916bae1f0b13732686786be7108}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Wrappers for list structures and functions. 
+
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{t__list_8h_ab5acb500a887e1957292f3dddc5c9b79}{}\index{t\+\_\+list.\+h@{t\+\_\+list.\+h}!L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T@{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T}}
+\index{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T@{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T}!t\+\_\+list.\+h@{t\+\_\+list.\+h}}
+\subsubsection[{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T(
+\begin{DoxyParamCaption}
+\item[{}]{name}
+\end{DoxyParamCaption}
+)}\label{t__list_8h_ab5acb500a887e1957292f3dddc5c9b79}
+{\bfseries Value\+:}
+\begin{DoxyCode}
+\textcolor{keywordtype}{void} *LIST\_CONCAT(name, \_list);     \(\backslash\)
+  list\_t name
+\end{DoxyCode}
+\hypertarget{t__list_8h_adcb86fe4485a0f8ea79541117641f730}{}\index{t\+\_\+list.\+h@{t\+\_\+list.\+h}!L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T\+\_\+\+I\+N\+I\+T@{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T\+\_\+\+I\+N\+I\+T}}
+\index{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T\+\_\+\+I\+N\+I\+T@{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T\+\_\+\+I\+N\+I\+T}!t\+\_\+list.\+h@{t\+\_\+list.\+h}}
+\subsubsection[{L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T\+\_\+\+I\+N\+I\+T}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\+I\+S\+T\+\_\+\+S\+T\+R\+U\+C\+T\+\_\+\+I\+N\+I\+T(
+\begin{DoxyParamCaption}
+\item[{}]{struct\+\_\+ptr, }
+\item[{}]{name}
+\end{DoxyParamCaption}
+)}\label{t__list_8h_adcb86fe4485a0f8ea79541117641f730}
+{\bfseries Value\+:}
+\begin{DoxyCode}
+\{               \(\backslash\)
+    (struct\_ptr)->name = &((struct\_ptr)->LIST\_CONCAT(name,\_list));  \(\backslash\)
+    (struct\_ptr)->LIST\_CONCAT(name,\_list) = NULL;           \(\backslash\)
+  \}
+\end{DoxyCode}

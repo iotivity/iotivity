@@ -1,0 +1,407 @@
+\hypertarget{resource_8h}{}\section{/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.1.1/resource.h File Reference}
+\label{resource_8h}\index{/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/resource.\+h@{/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/resource.\+h}}
+
+
+generic resource handling  
+
+
+{\ttfamily \#include \char`\"{}config.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}t\+\_\+list.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}async.\+h\char`\"{}}\\*
+{\ttfamily \#include $<$assert.\+h$>$}\\*
+{\ttfamily \#include \char`\"{}uthash.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}hashkey.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}str.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}pdu.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}net.\+h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}subscribe.\+h\char`\"{}}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structcoap__attr__t}{coap\+\_\+attr\+\_\+t}
+\item 
+struct \hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t}
+\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{resource_8h_a8d07061a1bb4a55b64c517b5a0a02914}{C\+O\+A\+P\+\_\+\+R\+E\+S\+O\+U\+R\+C\+E\+\_\+\+C\+H\+E\+C\+K\+\_\+\+T\+I\+M\+E}~2
+\item 
+\hypertarget{resource_8h_a2892686485c67ab0b946708ad59bcf51}{}\#define {\bfseries C\+O\+A\+P\+\_\+\+A\+T\+T\+R\+\_\+\+F\+L\+A\+G\+S\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+N\+A\+M\+E}~0x1\label{resource_8h_a2892686485c67ab0b946708ad59bcf51}
+
+\item 
+\hypertarget{resource_8h_a1dfff2e71cc242377e92e0b322ddd1ea}{}\#define {\bfseries C\+O\+A\+P\+\_\+\+A\+T\+T\+R\+\_\+\+F\+L\+A\+G\+S\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+V\+A\+L\+U\+E}~0x2\label{resource_8h_a1dfff2e71cc242377e92e0b322ddd1ea}
+
+\item 
+\hypertarget{resource_8h_aee71da70d15897c276b0c4166ad1eaa6}{}\#define {\bfseries C\+O\+A\+P\+\_\+\+R\+E\+S\+O\+U\+R\+C\+E\+\_\+\+F\+L\+A\+G\+S\+\_\+\+R\+E\+L\+E\+A\+S\+E\+\_\+\+U\+R\+I}~0x1\label{resource_8h_aee71da70d15897c276b0c4166ad1eaa6}
+
+\item 
+\hypertarget{resource_8h_a22f2db8593afab3bb8c153e2346fdf75}{}\#define {\bfseries C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+S\+T\+A\+T\+U\+S\+\_\+\+M\+A\+S\+K}~0x\+F0000000u\label{resource_8h_a22f2db8593afab3bb8c153e2346fdf75}
+
+\item 
+\hypertarget{resource_8h_acf2fbde3cc54e108713886d6e23040f0}{}\#define {\bfseries C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+O\+U\+T\+P\+U\+T\+\_\+\+L\+E\+N\+G\+T\+H}(v)~((v) \& $\sim$C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+S\+T\+A\+T\+U\+S\+\_\+\+M\+A\+S\+K)\label{resource_8h_acf2fbde3cc54e108713886d6e23040f0}
+
+\item 
+\hypertarget{resource_8h_abba955fb8180d86085c2f0680626cfe8}{}\#define {\bfseries C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+S\+T\+A\+T\+U\+S\+\_\+\+E\+R\+R\+O\+R}~0x80000000u\label{resource_8h_abba955fb8180d86085c2f0680626cfe8}
+
+\item 
+\hypertarget{resource_8h_a457e1894c102b193d1d59de022035ac9}{}\#define {\bfseries C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+S\+T\+A\+T\+U\+S\+\_\+\+T\+R\+U\+N\+C}~0x40000000u\label{resource_8h_a457e1894c102b193d1d59de022035ac9}
+
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef void($\ast$ \hyperlink{resource_8h_ad2b83945efbc3230d64f81d0e966df56}{coap\+\_\+method\+\_\+handler\+\_\+t}) (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$, struct \hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$, coap\+\_\+address\+\_\+t $\ast$, \hyperlink{structcoap__pdu__t}{coap\+\_\+pdu\+\_\+t} $\ast$, \hyperlink{structstr}{str} $\ast$, \hyperlink{structcoap__pdu__t}{coap\+\_\+pdu\+\_\+t} $\ast$)
+\item 
+\hypertarget{resource_8h_ac0f6fd3889980d7c4fa58aeaba8367f9}{}typedef struct \hyperlink{structcoap__attr__t}{coap\+\_\+attr\+\_\+t} {\bfseries coap\+\_\+attr\+\_\+t}\label{resource_8h_ac0f6fd3889980d7c4fa58aeaba8367f9}
+
+\item 
+\hypertarget{resource_8h_abeaeb0eb76bbf5bb401da20b27add830}{}typedef struct \hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} {\bfseries coap\+\_\+resource\+\_\+t}\label{resource_8h_abeaeb0eb76bbf5bb401da20b27add830}
+
+\item 
+typedef unsigned int \hyperlink{resource_8h_a91b02fe05f44f053f50c8d07b03f1f6e}{coap\+\_\+print\+\_\+status\+\_\+t}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$ \hyperlink{resource_8h_ab541655395f1fa9e7088af153506d97e}{coap\+\_\+resource\+\_\+init} (const unsigned char $\ast$uri, size\+\_\+t len, int flags)
+\item 
+void \hyperlink{resource_8h_a9a5f0705912b0a35a3d5764e86b94004}{coap\+\_\+add\+\_\+resource} (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$context, \hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$resource)
+\item 
+int \hyperlink{resource_8h_a2fb1d46ece1dd907128cb407adcf5257}{coap\+\_\+delete\+\_\+resource} (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$context, coap\+\_\+key\+\_\+t key)
+\item 
+\hyperlink{structcoap__attr__t}{coap\+\_\+attr\+\_\+t} $\ast$ \hyperlink{resource_8h_acfd5d20f6bb2051696fa20020e4b4868}{coap\+\_\+add\+\_\+attr} (\hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$resource, const unsigned char $\ast$name, size\+\_\+t nlen, const unsigned char $\ast$val, size\+\_\+t vlen, int flags)
+\item 
+\hyperlink{structcoap__attr__t}{coap\+\_\+attr\+\_\+t} $\ast$ \hyperlink{resource_8h_a37cf7fb7da22f9a47e11bcbbbaf0e598}{coap\+\_\+find\+\_\+attr} (\hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$resource, const unsigned char $\ast$name, size\+\_\+t nlen)
+\item 
+void \hyperlink{resource_8h_a37883d9c8bafdd59fd1bd57dcb82e908}{coap\+\_\+delete\+\_\+attr} (\hyperlink{structcoap__attr__t}{coap\+\_\+attr\+\_\+t} $\ast$attr)
+\item 
+\hyperlink{resource_8h_a91b02fe05f44f053f50c8d07b03f1f6e}{coap\+\_\+print\+\_\+status\+\_\+t} \hyperlink{resource_8h_a1ee72943df541ed5d4294c13e967ef09}{coap\+\_\+print\+\_\+link} (const \hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$resource, unsigned char $\ast$buf, size\+\_\+t $\ast$len, size\+\_\+t $\ast$offset)
+\item 
+\hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$ \hyperlink{resource_8h_a0404016926e5d93a5124adf32533bf4b}{coap\+\_\+get\+\_\+resource\+\_\+from\+\_\+key} (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$context, coap\+\_\+key\+\_\+t key)
+\item 
+void \hyperlink{resource_8h_a5cd67cb7b62f8e0e74c81fd722cc614d}{coap\+\_\+hash\+\_\+request\+\_\+uri} (const \hyperlink{structcoap__pdu__t}{coap\+\_\+pdu\+\_\+t} $\ast$request, coap\+\_\+key\+\_\+t key)
+\item 
+\hyperlink{structcoap__subscription__t}{coap\+\_\+subscription\+\_\+t} $\ast$ \hyperlink{resource_8h_a56711b69b4a575e91469899e2bf5fc38}{coap\+\_\+add\+\_\+observer} (\hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$resource, const coap\+\_\+address\+\_\+t $\ast$observer, const \hyperlink{structstr}{str} $\ast$token)
+\item 
+\hyperlink{structcoap__subscription__t}{coap\+\_\+subscription\+\_\+t} $\ast$ \hyperlink{resource_8h_aac17b56e9ac858cab28be0121e82abb9}{coap\+\_\+find\+\_\+observer} (\hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$resource, const coap\+\_\+address\+\_\+t $\ast$peer, const \hyperlink{structstr}{str} $\ast$token)
+\item 
+void \hyperlink{resource_8h_a763b438391c8d7bfdbfe6b41ab48c3e3}{coap\+\_\+touch\+\_\+observer} (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$context, const coap\+\_\+address\+\_\+t $\ast$observer, const \hyperlink{structstr}{str} $\ast$token)
+\item 
+void \hyperlink{resource_8h_a5ae341f151b1e01345c5c5d5144db5a2}{coap\+\_\+delete\+\_\+observer} (\hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} $\ast$resource, const coap\+\_\+address\+\_\+t $\ast$observer, const \hyperlink{structstr}{str} $\ast$token)
+\item 
+void \hyperlink{resource_8h_a579bcb559463d3a872831c18d8d9a1c1}{coap\+\_\+check\+\_\+notify} (\hyperlink{structcoap__context__t}{coap\+\_\+context\+\_\+t} $\ast$context)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+generic resource handling 
+
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{resource_8h_a8d07061a1bb4a55b64c517b5a0a02914}{}\index{resource.\+h@{resource.\+h}!C\+O\+A\+P\+\_\+\+R\+E\+S\+O\+U\+R\+C\+E\+\_\+\+C\+H\+E\+C\+K\+\_\+\+T\+I\+M\+E@{C\+O\+A\+P\+\_\+\+R\+E\+S\+O\+U\+R\+C\+E\+\_\+\+C\+H\+E\+C\+K\+\_\+\+T\+I\+M\+E}}
+\index{C\+O\+A\+P\+\_\+\+R\+E\+S\+O\+U\+R\+C\+E\+\_\+\+C\+H\+E\+C\+K\+\_\+\+T\+I\+M\+E@{C\+O\+A\+P\+\_\+\+R\+E\+S\+O\+U\+R\+C\+E\+\_\+\+C\+H\+E\+C\+K\+\_\+\+T\+I\+M\+E}!resource.\+h@{resource.\+h}}
+\subsubsection[{C\+O\+A\+P\+\_\+\+R\+E\+S\+O\+U\+R\+C\+E\+\_\+\+C\+H\+E\+C\+K\+\_\+\+T\+I\+M\+E}]{\setlength{\rightskip}{0pt plus 5cm}\#define C\+O\+A\+P\+\_\+\+R\+E\+S\+O\+U\+R\+C\+E\+\_\+\+C\+H\+E\+C\+K\+\_\+\+T\+I\+M\+E~2}\label{resource_8h_a8d07061a1bb4a55b64c517b5a0a02914}
+The interval in seconds to check if resources have changed. 
+
+\subsection{Typedef Documentation}
+\hypertarget{resource_8h_ad2b83945efbc3230d64f81d0e966df56}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+method\+\_\+handler\+\_\+t@{coap\+\_\+method\+\_\+handler\+\_\+t}}
+\index{coap\+\_\+method\+\_\+handler\+\_\+t@{coap\+\_\+method\+\_\+handler\+\_\+t}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+method\+\_\+handler\+\_\+t}]{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ coap\+\_\+method\+\_\+handler\+\_\+t) ({\bf coap\+\_\+context\+\_\+t} $\ast$, struct {\bf coap\+\_\+resource\+\_\+t} $\ast$, coap\+\_\+address\+\_\+t $\ast$, {\bf coap\+\_\+pdu\+\_\+t} $\ast$, {\bf str} $\ast$, {\bf coap\+\_\+pdu\+\_\+t} $\ast$)}\label{resource_8h_ad2b83945efbc3230d64f81d0e966df56}
+Definition of message handler function (\begin{DoxySeeAlso}{See also}
+\hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t}). 
+\end{DoxySeeAlso}
+\hypertarget{resource_8h_a91b02fe05f44f053f50c8d07b03f1f6e}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+print\+\_\+status\+\_\+t@{coap\+\_\+print\+\_\+status\+\_\+t}}
+\index{coap\+\_\+print\+\_\+status\+\_\+t@{coap\+\_\+print\+\_\+status\+\_\+t}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+print\+\_\+status\+\_\+t}]{\setlength{\rightskip}{0pt plus 5cm}typedef unsigned int {\bf coap\+\_\+print\+\_\+status\+\_\+t}}\label{resource_8h_a91b02fe05f44f053f50c8d07b03f1f6e}
+Status word to encode the result of conditional print or copy operations such as \hyperlink{resource_8h_a1ee72943df541ed5d4294c13e967ef09}{coap\+\_\+print\+\_\+link()}. The lower 28 bits of coap\+\_\+print\+\_\+status\+\_\+t are used to encode the number of characters that has actually been printed, bits 28 to 31 encode the status. When C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+S\+T\+A\+T\+U\+S\+\_\+\+E\+R\+R\+O\+R is set, an error occurred during output. In this case, the other bits are undefined. C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+S\+T\+A\+T\+U\+S\+\_\+\+T\+R\+U\+N\+C indicates that the output is truncated, i.\+e. the printing would have exceeded the current buffer. 
+
+\subsection{Function Documentation}
+\hypertarget{resource_8h_acfd5d20f6bb2051696fa20020e4b4868}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+add\+\_\+attr@{coap\+\_\+add\+\_\+attr}}
+\index{coap\+\_\+add\+\_\+attr@{coap\+\_\+add\+\_\+attr}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+add\+\_\+attr}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+attr\+\_\+t}$\ast$ coap\+\_\+add\+\_\+attr (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+resource\+\_\+t} $\ast$}]{resource, }
+\item[{const unsigned char $\ast$}]{name, }
+\item[{size\+\_\+t}]{nlen, }
+\item[{const unsigned char $\ast$}]{val, }
+\item[{size\+\_\+t}]{vlen, }
+\item[{int}]{flags}
+\end{DoxyParamCaption}
+)}\label{resource_8h_acfd5d20f6bb2051696fa20020e4b4868}
+Registers a new attribute with the given {\ttfamily resource}. As the attributes str fields will point to {\ttfamily name} and {\ttfamily val} the caller must ensure that these pointers are valid during the attribute's lifetime.
+
+
+\begin{DoxyParams}{Parameters}
+{\em resource} & The resource to register the attribute with. \\
+\hline
+{\em name} & The attribute's name. \\
+\hline
+{\em nlen} & Length of {\ttfamily name}. \\
+\hline
+{\em val} & The attribute's value or {\ttfamily N\+U\+L\+L} if none. \\
+\hline
+{\em vlen} & Length of {\ttfamily val} if specified. \\
+\hline
+{\em flags} & Flags for memory management (in particular release of memory)\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the new attribute or {\ttfamily N\+U\+L\+L} on error. 
+\end{DoxyReturn}
+\hypertarget{resource_8h_a56711b69b4a575e91469899e2bf5fc38}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+add\+\_\+observer@{coap\+\_\+add\+\_\+observer}}
+\index{coap\+\_\+add\+\_\+observer@{coap\+\_\+add\+\_\+observer}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+add\+\_\+observer}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+subscription\+\_\+t}$\ast$ coap\+\_\+add\+\_\+observer (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+resource\+\_\+t} $\ast$}]{resource, }
+\item[{const coap\+\_\+address\+\_\+t $\ast$}]{observer, }
+\item[{const {\bf str} $\ast$}]{token}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a56711b69b4a575e91469899e2bf5fc38}
+Adds the specified peer as observer for {\ttfamily resource}. The subscription is identified by the given {\ttfamily token}. This function returns the registered subscription information if the {\ttfamily observer} has been added, or {\ttfamily N\+U\+L\+L} on error.
+
+
+\begin{DoxyParams}{Parameters}
+{\em resource} & The observed resource. \\
+\hline
+{\em observer} & The remote peer that wants to received status updates. \\
+\hline
+{\em token} & The token that identifies this subscription. \\
+\hline
+{\em token\+\_\+length} & The actual length of {\ttfamily token}. Must be {\ttfamily 0} when {\ttfamily token} is {\ttfamily N\+U\+L\+L}. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the added/updated subscription information or {\ttfamily N\+U\+L\+L} on error. 
+\end{DoxyReturn}
+\hypertarget{resource_8h_a9a5f0705912b0a35a3d5764e86b94004}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+add\+\_\+resource@{coap\+\_\+add\+\_\+resource}}
+\index{coap\+\_\+add\+\_\+resource@{coap\+\_\+add\+\_\+resource}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+add\+\_\+resource}]{\setlength{\rightskip}{0pt plus 5cm}void coap\+\_\+add\+\_\+resource (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+context\+\_\+t} $\ast$}]{context, }
+\item[{{\bf coap\+\_\+resource\+\_\+t} $\ast$}]{resource}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a9a5f0705912b0a35a3d5764e86b94004}
+Registers the given {\ttfamily resource} for {\ttfamily context}. The resource must have been created by \hyperlink{resource_8h_ab541655395f1fa9e7088af153506d97e}{coap\+\_\+resource\+\_\+init()}, the storage allocated for the resource will be released by \hyperlink{resource_8h_a2fb1d46ece1dd907128cb407adcf5257}{coap\+\_\+delete\+\_\+resource()}.
+
+
+\begin{DoxyParams}{Parameters}
+{\em context} & The context to use. \\
+\hline
+{\em resource} & The resource to store. \\
+\hline
+\end{DoxyParams}
+\hypertarget{resource_8h_a579bcb559463d3a872831c18d8d9a1c1}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+check\+\_\+notify@{coap\+\_\+check\+\_\+notify}}
+\index{coap\+\_\+check\+\_\+notify@{coap\+\_\+check\+\_\+notify}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+check\+\_\+notify}]{\setlength{\rightskip}{0pt plus 5cm}void coap\+\_\+check\+\_\+notify (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+context\+\_\+t} $\ast$}]{context}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a579bcb559463d3a872831c18d8d9a1c1}
+Checks for all known resources, if they are dirty and notifies subscribed observers. \hypertarget{resource_8h_a37883d9c8bafdd59fd1bd57dcb82e908}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+delete\+\_\+attr@{coap\+\_\+delete\+\_\+attr}}
+\index{coap\+\_\+delete\+\_\+attr@{coap\+\_\+delete\+\_\+attr}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+delete\+\_\+attr}]{\setlength{\rightskip}{0pt plus 5cm}void coap\+\_\+delete\+\_\+attr (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+attr\+\_\+t} $\ast$}]{attr}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a37883d9c8bafdd59fd1bd57dcb82e908}
+Deletes an attribute
+
+
+\begin{DoxyParams}{Parameters}
+{\em attr} & Pointer to a previously created attribute \\
+\hline
+\end{DoxyParams}
+\hypertarget{resource_8h_a5ae341f151b1e01345c5c5d5144db5a2}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+delete\+\_\+observer@{coap\+\_\+delete\+\_\+observer}}
+\index{coap\+\_\+delete\+\_\+observer@{coap\+\_\+delete\+\_\+observer}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+delete\+\_\+observer}]{\setlength{\rightskip}{0pt plus 5cm}void coap\+\_\+delete\+\_\+observer (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+resource\+\_\+t} $\ast$}]{resource, }
+\item[{const coap\+\_\+address\+\_\+t $\ast$}]{observer, }
+\item[{const {\bf str} $\ast$}]{token}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a5ae341f151b1e01345c5c5d5144db5a2}
+Removes any subscription for {\ttfamily observer} from {\ttfamily resource} and releases the allocated storage.
+
+
+\begin{DoxyParams}{Parameters}
+{\em resource} & The observed resource. \\
+\hline
+{\em observer} & The observer's address. \\
+\hline
+{\em token} & The token that identifies this subscription or {\ttfamily N\+U\+L\+L} for any token. \\
+\hline
+\end{DoxyParams}
+\hypertarget{resource_8h_a2fb1d46ece1dd907128cb407adcf5257}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+delete\+\_\+resource@{coap\+\_\+delete\+\_\+resource}}
+\index{coap\+\_\+delete\+\_\+resource@{coap\+\_\+delete\+\_\+resource}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+delete\+\_\+resource}]{\setlength{\rightskip}{0pt plus 5cm}int coap\+\_\+delete\+\_\+resource (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+context\+\_\+t} $\ast$}]{context, }
+\item[{coap\+\_\+key\+\_\+t}]{key}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a2fb1d46ece1dd907128cb407adcf5257}
+Deletes a resource identified by {\ttfamily key}. The storage allocated for that resource is freed.
+
+
+\begin{DoxyParams}{Parameters}
+{\em context} & The context where the resources are stored. \\
+\hline
+{\em key} & The unique key for the resource to delete.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+{\ttfamily 1} if the resource was found (and destroyed), {\ttfamily 0} otherwise. 
+\end{DoxyReturn}
+\hypertarget{resource_8h_a37cf7fb7da22f9a47e11bcbbbaf0e598}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+find\+\_\+attr@{coap\+\_\+find\+\_\+attr}}
+\index{coap\+\_\+find\+\_\+attr@{coap\+\_\+find\+\_\+attr}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+find\+\_\+attr}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+attr\+\_\+t}$\ast$ coap\+\_\+find\+\_\+attr (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+resource\+\_\+t} $\ast$}]{resource, }
+\item[{const unsigned char $\ast$}]{name, }
+\item[{size\+\_\+t}]{nlen}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a37cf7fb7da22f9a47e11bcbbbaf0e598}
+Returns {\ttfamily resource's} \hyperlink{structcoap__attr__t}{coap\+\_\+attr\+\_\+t} object with given {\ttfamily name} if found, {\ttfamily N\+U\+L\+L} otherwise.
+
+
+\begin{DoxyParams}{Parameters}
+{\em resource} & The resource to search for attribute {\ttfamily name}. \\
+\hline
+{\em name} & Name of the requested attribute. \\
+\hline
+{\em nlen} & Actual length of {\ttfamily name}. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The first attribute with specified {\ttfamily name} or {\ttfamily N\+U\+L\+L} if none was found. 
+\end{DoxyReturn}
+\hypertarget{resource_8h_aac17b56e9ac858cab28be0121e82abb9}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+find\+\_\+observer@{coap\+\_\+find\+\_\+observer}}
+\index{coap\+\_\+find\+\_\+observer@{coap\+\_\+find\+\_\+observer}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+find\+\_\+observer}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+subscription\+\_\+t}$\ast$ coap\+\_\+find\+\_\+observer (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+resource\+\_\+t} $\ast$}]{resource, }
+\item[{const coap\+\_\+address\+\_\+t $\ast$}]{peer, }
+\item[{const {\bf str} $\ast$}]{token}
+\end{DoxyParamCaption}
+)}\label{resource_8h_aac17b56e9ac858cab28be0121e82abb9}
+Returns a subscription object for given {\ttfamily peer}.
+
+
+\begin{DoxyParams}{Parameters}
+{\em resource} & The observed resource. \\
+\hline
+{\em peer} & The address to search for. \\
+\hline
+{\em token} & The token that identifies this subscription or {\ttfamily N\+U\+L\+L} for any token. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A valid subscription if exists or {\ttfamily N\+U\+L\+L} otherwise. 
+\end{DoxyReturn}
+\hypertarget{resource_8h_a0404016926e5d93a5124adf32533bf4b}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+get\+\_\+resource\+\_\+from\+\_\+key@{coap\+\_\+get\+\_\+resource\+\_\+from\+\_\+key}}
+\index{coap\+\_\+get\+\_\+resource\+\_\+from\+\_\+key@{coap\+\_\+get\+\_\+resource\+\_\+from\+\_\+key}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+get\+\_\+resource\+\_\+from\+\_\+key}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+resource\+\_\+t}$\ast$ coap\+\_\+get\+\_\+resource\+\_\+from\+\_\+key (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+context\+\_\+t} $\ast$}]{context, }
+\item[{coap\+\_\+key\+\_\+t}]{key}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a0404016926e5d93a5124adf32533bf4b}
+Returns the resource identified by the unique string {\ttfamily key}. If no resource was found, this function returns {\ttfamily N\+U\+L\+L}.
+
+
+\begin{DoxyParams}{Parameters}
+{\em context} & The context to look for this resource. \\
+\hline
+{\em key} & The unique key of the resource.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the resource or {\ttfamily N\+U\+L\+L} if not found. 
+\end{DoxyReturn}
+\hypertarget{resource_8h_a5cd67cb7b62f8e0e74c81fd722cc614d}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+hash\+\_\+request\+\_\+uri@{coap\+\_\+hash\+\_\+request\+\_\+uri}}
+\index{coap\+\_\+hash\+\_\+request\+\_\+uri@{coap\+\_\+hash\+\_\+request\+\_\+uri}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+hash\+\_\+request\+\_\+uri}]{\setlength{\rightskip}{0pt plus 5cm}void coap\+\_\+hash\+\_\+request\+\_\+uri (
+\begin{DoxyParamCaption}
+\item[{const {\bf coap\+\_\+pdu\+\_\+t} $\ast$}]{request, }
+\item[{coap\+\_\+key\+\_\+t}]{key}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a5cd67cb7b62f8e0e74c81fd722cc614d}
+Calculates the hash key for the resource requested by the Uri-\/\+Options of {\ttfamily request}. This function calls coap\+\_\+hash() for every path segment.
+
+
+\begin{DoxyParams}{Parameters}
+{\em request} & The requesting pdu. \\
+\hline
+{\em key} & The resulting hash is stored in {\ttfamily key} \\
+\hline
+\end{DoxyParams}
+\hypertarget{resource_8h_a1ee72943df541ed5d4294c13e967ef09}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+print\+\_\+link@{coap\+\_\+print\+\_\+link}}
+\index{coap\+\_\+print\+\_\+link@{coap\+\_\+print\+\_\+link}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+print\+\_\+link}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+print\+\_\+status\+\_\+t} coap\+\_\+print\+\_\+link (
+\begin{DoxyParamCaption}
+\item[{const {\bf coap\+\_\+resource\+\_\+t} $\ast$}]{resource, }
+\item[{unsigned char $\ast$}]{buf, }
+\item[{size\+\_\+t $\ast$}]{len, }
+\item[{size\+\_\+t $\ast$}]{offset}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a1ee72943df541ed5d4294c13e967ef09}
+Writes a description of this resource in link-\/format to given text buffer. {\ttfamily len} must be initialized to the maximum length of {\ttfamily buf} and will be set to the number of characters actually written if successful. This function returns {\ttfamily 1} on success or {\ttfamily 0} on error.
+
+
+\begin{DoxyParams}{Parameters}
+{\em resource} & The resource to describe. \\
+\hline
+{\em buf} & The output buffer to write the description to. \\
+\hline
+{\em len} & Must be initialized to the length of {\ttfamily buf} and will be set to the length of the printed link description. \\
+\hline
+{\em offset} & The offset within the resource description where to start writing into {\ttfamily buf}. This is useful for dealing with the Block2 option. {\ttfamily offset} is updated during output as it is consumed.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+If C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+S\+T\+A\+T\+U\+S\+\_\+\+E\+R\+R\+O\+R is set, an error occured. Otherwise, the lower 28 bits will indicate the number of characters that have actually been output into {\ttfamily buffer}. The flag C\+O\+A\+P\+\_\+\+P\+R\+I\+N\+T\+\_\+\+S\+T\+A\+T\+U\+S\+\_\+\+T\+R\+U\+N\+C indicates that the output has been truncated. 
+\end{DoxyReturn}
+\hypertarget{resource_8h_ab541655395f1fa9e7088af153506d97e}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+resource\+\_\+init@{coap\+\_\+resource\+\_\+init}}
+\index{coap\+\_\+resource\+\_\+init@{coap\+\_\+resource\+\_\+init}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+resource\+\_\+init}]{\setlength{\rightskip}{0pt plus 5cm}{\bf coap\+\_\+resource\+\_\+t}$\ast$ coap\+\_\+resource\+\_\+init (
+\begin{DoxyParamCaption}
+\item[{const unsigned char $\ast$}]{uri, }
+\item[{size\+\_\+t}]{len, }
+\item[{int}]{flags}
+\end{DoxyParamCaption}
+)}\label{resource_8h_ab541655395f1fa9e7088af153506d97e}
+Creates a new resource object and initializes the link field to the string of length {\ttfamily len}. This function returns the new \hyperlink{structcoap__resource__t}{coap\+\_\+resource\+\_\+t} object.
+
+
+\begin{DoxyParams}{Parameters}
+{\em uri} & The U\+R\+I path of the new resource. \\
+\hline
+{\em len} & The length of {\ttfamily uri}. \\
+\hline
+{\em flags} & Flags for memory management (in particular release of memory)\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pointer to the new object or {\ttfamily N\+U\+L\+L} on error. 
+\end{DoxyReturn}
+\hypertarget{resource_8h_a763b438391c8d7bfdbfe6b41ab48c3e3}{}\index{resource.\+h@{resource.\+h}!coap\+\_\+touch\+\_\+observer@{coap\+\_\+touch\+\_\+observer}}
+\index{coap\+\_\+touch\+\_\+observer@{coap\+\_\+touch\+\_\+observer}!resource.\+h@{resource.\+h}}
+\subsubsection[{coap\+\_\+touch\+\_\+observer}]{\setlength{\rightskip}{0pt plus 5cm}void coap\+\_\+touch\+\_\+observer (
+\begin{DoxyParamCaption}
+\item[{{\bf coap\+\_\+context\+\_\+t} $\ast$}]{context, }
+\item[{const coap\+\_\+address\+\_\+t $\ast$}]{observer, }
+\item[{const {\bf str} $\ast$}]{token}
+\end{DoxyParamCaption}
+)}\label{resource_8h_a763b438391c8d7bfdbfe6b41ab48c3e3}
+Marks an observer as alive.
+
+
+\begin{DoxyParams}{Parameters}
+{\em context} & The Co\+A\+P context to use \\
+\hline
+{\em observer} & The transport address of the observer \\
+\hline
+{\em token} & The corresponding token that has been used for the subscription \\
+\hline
+\end{DoxyParams}

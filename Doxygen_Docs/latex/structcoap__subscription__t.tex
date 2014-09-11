@@ -1,0 +1,60 @@
+\hypertarget{structcoap__subscription__t}{}\section{coap\+\_\+subscription\+\_\+t Struct Reference}
+\label{structcoap__subscription__t}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+
+
+{\ttfamily \#include $<$subscribe.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structcoap__subscription__t}{coap\+\_\+subscription\+\_\+t} $\ast$ \hyperlink{structcoap__subscription__t_aa751cbb82d18f3d8285ef5dcaa577d47}{next}
+\item 
+coap\+\_\+address\+\_\+t \hyperlink{structcoap__subscription__t_aee4d3dad6a6721ecd018c19bb1bf6c92}{subscriber}
+\item 
+unsigned int \hyperlink{structcoap__subscription__t_a50940aab24e1d5514a1d67f0e5341c86}{non}\+:1
+\item 
+unsigned int \hyperlink{structcoap__subscription__t_a8c83fc8034daa9f5c88b943698eeb466}{non\+\_\+cnt}\+:4
+\item 
+unsigned int \hyperlink{structcoap__subscription__t_a83676881b25552592d3cb34e6d98431a}{fail\+\_\+cnt}\+:2
+\item 
+unsigned int \hyperlink{structcoap__subscription__t_aa330d1abe6d6690e0d1e7af528a02133}{dirty}\+:1
+\item 
+size\+\_\+t \hyperlink{structcoap__subscription__t_a91ab09d2d6b7ac8d2cc19fcaa64a45c1}{token\+\_\+length}
+\item 
+unsigned char \hyperlink{structcoap__subscription__t_a2945242d243578ad07362355b3e68c2d}{token} \mbox{[}8\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Subscriber information 
+
+\subsection{Member Data Documentation}
+\hypertarget{structcoap__subscription__t_aa330d1abe6d6690e0d1e7af528a02133}{}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}!dirty@{dirty}}
+\index{dirty@{dirty}!coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+\subsubsection[{dirty}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+subscription\+\_\+t\+::dirty}\label{structcoap__subscription__t_aa330d1abe6d6690e0d1e7af528a02133}
+set if the notification temporarily could not be sent (in that case, the resource's partiallydirty flag is set too) \hypertarget{structcoap__subscription__t_a83676881b25552592d3cb34e6d98431a}{}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}!fail\+\_\+cnt@{fail\+\_\+cnt}}
+\index{fail\+\_\+cnt@{fail\+\_\+cnt}!coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+\subsubsection[{fail\+\_\+cnt}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+subscription\+\_\+t\+::fail\+\_\+cnt}\label{structcoap__subscription__t_a83676881b25552592d3cb34e6d98431a}
+up to 3 confirmable notifies can fail \hypertarget{structcoap__subscription__t_aa751cbb82d18f3d8285ef5dcaa577d47}{}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}!next@{next}}
+\index{next@{next}!coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+\subsubsection[{next}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf coap\+\_\+subscription\+\_\+t}$\ast$ coap\+\_\+subscription\+\_\+t\+::next}\label{structcoap__subscription__t_aa751cbb82d18f3d8285ef5dcaa577d47}
+next element in linked list \hypertarget{structcoap__subscription__t_a50940aab24e1d5514a1d67f0e5341c86}{}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}!non@{non}}
+\index{non@{non}!coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+\subsubsection[{non}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+subscription\+\_\+t\+::non}\label{structcoap__subscription__t_a50940aab24e1d5514a1d67f0e5341c86}
+send non-\/confirmable notifies if {\ttfamily 1} \hypertarget{structcoap__subscription__t_a8c83fc8034daa9f5c88b943698eeb466}{}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}!non\+\_\+cnt@{non\+\_\+cnt}}
+\index{non\+\_\+cnt@{non\+\_\+cnt}!coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+\subsubsection[{non\+\_\+cnt}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int coap\+\_\+subscription\+\_\+t\+::non\+\_\+cnt}\label{structcoap__subscription__t_a8c83fc8034daa9f5c88b943698eeb466}
+up to 15 non-\/confirmable notifies allowed \hypertarget{structcoap__subscription__t_aee4d3dad6a6721ecd018c19bb1bf6c92}{}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}!subscriber@{subscriber}}
+\index{subscriber@{subscriber}!coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+\subsubsection[{subscriber}]{\setlength{\rightskip}{0pt plus 5cm}coap\+\_\+address\+\_\+t coap\+\_\+subscription\+\_\+t\+::subscriber}\label{structcoap__subscription__t_aee4d3dad6a6721ecd018c19bb1bf6c92}
+address and port of subscriber \hypertarget{structcoap__subscription__t_a2945242d243578ad07362355b3e68c2d}{}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}!token@{token}}
+\index{token@{token}!coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+\subsubsection[{token}]{\setlength{\rightskip}{0pt plus 5cm}unsigned char coap\+\_\+subscription\+\_\+t\+::token\mbox{[}8\mbox{]}}\label{structcoap__subscription__t_a2945242d243578ad07362355b3e68c2d}
+token used for subscription \hypertarget{structcoap__subscription__t_a91ab09d2d6b7ac8d2cc19fcaa64a45c1}{}\index{coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}!token\+\_\+length@{token\+\_\+length}}
+\index{token\+\_\+length@{token\+\_\+length}!coap\+\_\+subscription\+\_\+t@{coap\+\_\+subscription\+\_\+t}}
+\subsubsection[{token\+\_\+length}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t coap\+\_\+subscription\+\_\+t\+::token\+\_\+length}\label{structcoap__subscription__t_a91ab09d2d6b7ac8d2cc19fcaa64a45c1}
+actual length of token 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/subscribe.\+h\end{DoxyCompactItemize}

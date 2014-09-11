@@ -1,0 +1,62 @@
+\hypertarget{structcoap__parse__iterator__t}{}\section{coap\+\_\+parse\+\_\+iterator\+\_\+t Struct Reference}
+\label{structcoap__parse__iterator__t}\index{coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}}
+
+
+{\ttfamily \#include $<$uri.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+size\+\_\+t \hyperlink{structcoap__parse__iterator__t_add880e08de4e82ced1464839db82542f}{n}
+\item 
+unsigned char \hyperlink{structcoap__parse__iterator__t_a849064fa32d9021c6a634232eb89803f}{separator}
+\item 
+unsigned char $\ast$ \hyperlink{structcoap__parse__iterator__t_a99403d81b015a9546076418818e2a9e8}{delim}
+\item 
+size\+\_\+t \hyperlink{structcoap__parse__iterator__t_a77fe2df68b100c25377467c4e9800d3b}{dlen}
+\item 
+unsigned char $\ast$ \hyperlink{structcoap__parse__iterator__t_adee3cf3ea7a964650516a056ee437109}{pos}
+\item 
+size\+\_\+t \hyperlink{structcoap__parse__iterator__t_a8349e7131718619149694cd5ac337537}{segment\+\_\+length}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Iterator to for tokenizing a U\+R\+I path or query. This structure must be initialized with \hyperlink{group__uri__parse_gaa794ada6b7c7c6c4009e153924f8e2f8}{coap\+\_\+parse\+\_\+iterator\+\_\+init()}. Call \hyperlink{group__uri__parse_ga4c3bd9d741abdb8ea91792af2eb9dc14}{coap\+\_\+parse\+\_\+next()} to walk through the tokens.
+
+
+\begin{DoxyCode}
+\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} *token;
+\hyperlink{structcoap__parse__iterator__t}{coap\_parse\_iterator\_t} pi;
+\hyperlink{group__uri__parse_gaa794ada6b7c7c6c4009e153924f8e2f8}{coap\_parse\_iterator\_init}(uri.path.s, uri.path.length, \textcolor{charliteral}{'/'}, \textcolor{stringliteral}{"?#"}, 2, &pi);
+
+\textcolor{keywordflow}{while} ((token = \hyperlink{group__uri__parse_ga4c3bd9d741abdb8ea91792af2eb9dc14}{coap\_parse\_next}(&pi))) \{
+  ... \textcolor{keywordflow}{do} something with token ...
+\}
+\end{DoxyCode}
+ 
+
+\subsection{Member Data Documentation}
+\hypertarget{structcoap__parse__iterator__t_a99403d81b015a9546076418818e2a9e8}{}\index{coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}!delim@{delim}}
+\index{delim@{delim}!coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}}
+\subsubsection[{delim}]{\setlength{\rightskip}{0pt plus 5cm}unsigned char$\ast$ coap\+\_\+parse\+\_\+iterator\+\_\+t\+::delim}\label{structcoap__parse__iterator__t_a99403d81b015a9546076418818e2a9e8}
+delimiters where to split the string \hypertarget{structcoap__parse__iterator__t_a77fe2df68b100c25377467c4e9800d3b}{}\index{coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}!dlen@{dlen}}
+\index{dlen@{dlen}!coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}}
+\subsubsection[{dlen}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t coap\+\_\+parse\+\_\+iterator\+\_\+t\+::dlen}\label{structcoap__parse__iterator__t_a77fe2df68b100c25377467c4e9800d3b}
+length of separator \hypertarget{structcoap__parse__iterator__t_add880e08de4e82ced1464839db82542f}{}\index{coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}!n@{n}}
+\index{n@{n}!coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}}
+\subsubsection[{n}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t coap\+\_\+parse\+\_\+iterator\+\_\+t\+::n}\label{structcoap__parse__iterator__t_add880e08de4e82ced1464839db82542f}
+number of remaining characters in buffer \hypertarget{structcoap__parse__iterator__t_adee3cf3ea7a964650516a056ee437109}{}\index{coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}!pos@{pos}}
+\index{pos@{pos}!coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}}
+\subsubsection[{pos}]{\setlength{\rightskip}{0pt plus 5cm}unsigned char$\ast$ coap\+\_\+parse\+\_\+iterator\+\_\+t\+::pos}\label{structcoap__parse__iterator__t_adee3cf3ea7a964650516a056ee437109}
+current position in buffer \hypertarget{structcoap__parse__iterator__t_a8349e7131718619149694cd5ac337537}{}\index{coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}!segment\+\_\+length@{segment\+\_\+length}}
+\index{segment\+\_\+length@{segment\+\_\+length}!coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}}
+\subsubsection[{segment\+\_\+length}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t coap\+\_\+parse\+\_\+iterator\+\_\+t\+::segment\+\_\+length}\label{structcoap__parse__iterator__t_a8349e7131718619149694cd5ac337537}
+length of current segment \hypertarget{structcoap__parse__iterator__t_a849064fa32d9021c6a634232eb89803f}{}\index{coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}!separator@{separator}}
+\index{separator@{separator}!coap\+\_\+parse\+\_\+iterator\+\_\+t@{coap\+\_\+parse\+\_\+iterator\+\_\+t}}
+\subsubsection[{separator}]{\setlength{\rightskip}{0pt plus 5cm}unsigned char coap\+\_\+parse\+\_\+iterator\+\_\+t\+::separator}\label{structcoap__parse__iterator__t_a849064fa32d9021c6a634232eb89803f}
+segment separators 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/user/\+O\+I\+C/oic-\/resource/csdk/libcoap-\/4.\+1.\+1/uri.\+h\end{DoxyCompactItemize}
