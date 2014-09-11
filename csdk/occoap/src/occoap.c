@@ -255,8 +255,8 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     OCClientResponse * clientResponse = NULL;
     ClientCB * cbNode = NULL;
     unsigned char * bufRes = NULL;
-    uint8_t * rcvObserveOption;
-    uint8_t * rcvMaxAgeOption;
+    uint8_t * rcvObserveOption = NULL;
+    uint8_t * rcvMaxAgeOption = NULL;
     uint32_t sequenceNumber = 0;
     uint32_t maxAge = 0;
     OCStackResult result = OC_STACK_ERROR;
