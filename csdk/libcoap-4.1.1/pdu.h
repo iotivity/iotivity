@@ -30,7 +30,11 @@ extern "C" {
 #define COAP_DEFAULT_PORT           5683 /* CoAP default UDP port */
 #define COAP_DEFAULT_MAX_AGE          60 /* default maximum object lifetime in seconds */
 #ifndef COAP_MAX_PDU_SIZE
-#define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU */
+#ifdef WITH_ARDUINO
+#define COAP_MAX_PDU_SIZE           320 /* maximum size of a CoAP PDU for embedded platforms*/
+#else
+#define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU for big platforms*/
+#endif
 #endif /* COAP_MAX_PDU_SIZE */
 
 #define COAP_DEFAULT_VERSION           1 /* version of CoAP supported */
