@@ -439,7 +439,13 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     #endif
     else
     {
-        // TODO: we should send a RST here and..
+        OC_LOG(INFO, TAG, PCF("Received a response, but I do not have callback. \
+                 ------------ sending RESET"));
+        sendPdu = GenerateCoAPPdu(COAP_MESSAGE_RST, 0,
+                recvPdu->hdr->id, NULL, NULL, NULL);
+        VERIFY_NON_NULL(sendPdu);
+        result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote, sendPdu, 0);
+        VERIFY_SUCCESS(result, OC_STACK_OK);
     }
     exit:
         OCFree(rcvObserveOption);
