@@ -127,6 +127,23 @@ int ConnectToNetwork()
 }
 #endif //ARDUINOWIFI
 
+// On Arduino Atmel boards with Harvard memory architecture, the stack grows
+// downwards from the top and the heap grows upwards. This method will print
+// the distance(in terms of bytes) between those two.
+// See here for more details :
+// http://www.atmel.com/webdoc/AVRLibcReferenceManual/malloc_1malloc_intro.html
+void PrintArduinoMemoryStats()
+{
+#ifdef ARDUINO_AVR_MEGA2560
+    //This var is declared in avr-libc/stdlib/malloc.c
+    //It keeps the largest address not allocated for heap
+    extern char *__brkval;
+    //address of tmp gives us the current stack boundry
+    int tmp;
+    OC_LOG_V(INFO, TAG, "Unallocated Memory between heap and stack: %u",
+             ((unsigned int)&tmp - (unsigned int)__brkval));
+#endif
+}
 
 // This is the entity handler for the registered resource.
 // This is invoked by OCStack whenever it recevies a request for this resource.
@@ -215,6 +232,8 @@ void *ChangeLEDRepresentation (void *param)
 void setup()
 {
     // Add your initialization code here
+
+    // Note : This will initialize Serial port on Arduino at 115200 bauds
     OC_LOG_INIT();
 
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
@@ -246,6 +265,10 @@ void loop()
     // of Arduino microcontroller. Modify it as per specfic application needs.
     delay(2000);
 
+    // This call displays the amount of free SRAM available on Arduino
+    PrintArduinoMemoryStats();
+
+    // Give CPU cycles to OCStack to perform send/recv and other OCStack stuff
     if (OCProcess() != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("OCStack process error"));
