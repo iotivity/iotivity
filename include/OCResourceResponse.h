@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResourceResponse.h 
+/// @file OCResourceResponse.h
 
-/// @brief  This file contains the declaration of classes and its members related to 
+/// @brief  This file contains the declaration of classes and its members related to
 ///         ResourceResponse.
 
 #ifndef __OCRESOURCERESPONSE_H
@@ -44,12 +44,12 @@ namespace OC
         typedef std::shared_ptr<OCResourceResponse> Ptr;
 
         /**
-        *  Default destructor 
+        *  Default destructor
         */
         OCResourceResponse() {}
 
         /**
-        *  Virtual destructor 
+        *  Virtual destructor
         */
         virtual ~OCResourceResponse(void) {}
 
@@ -60,10 +60,11 @@ namespace OC
         void setErrorCode(const int eCode) { m_errorCode = eCode; }
 
         /**
-        *  API to set the entire resource attribute representation (BATCH)
+        *  API to set the entire resource attribute representation
         *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        *  @param interface specifies the interface
         */
-        void setResourceRepresentation(OCRepresentation& rep, std::string interface) { 
+        void setResourceRepresentation(OCRepresentation& rep, std::string interface) {
             if(!interface.compare(LINK_INTERFACE))
             {
                 setResourceRepresentationLL(rep);
@@ -80,10 +81,37 @@ namespace OC
         }
 
         /**
+        *  API to set the entire resource attribute representation
+        *  @param attributeMap rvalue reference containing the name value pairs representing the resource's attributes
+        *  @param interface specifies the interface
+        */
+        void setResourceRepresentation(OCRepresentation&& rep, std::string interface) {
+            setResourceRepresentation(rep, interface);
+        }
+
+        /**
+        *  API to set the entire resource attribute representation
+        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        */
+        void setResourceRepresentation(OCRepresentation& rep) {
+            // Call the default
+            setResourceRepresentationDefault(rep);
+        }
+
+        /**
+        *  API to set the entire resource attribute representation
+        *  @param attributeMap rvalue reference containing the name value pairs representing the resource's attributes
+        */
+        void setResourceRepresentation(OCRepresentation&& rep) {
+            // Call the above function
+            setResourceRepresentation(rep);
+        }
+
+        /**
         *  API to set the entire resource attribute representation (Linked List Interface))
         *  @param attributeMap reference containing the name value pairs representing the resource's attributes
         */
-        void setResourceRepresentationLL(OCRepresentation& rep) { 
+        void setResourceRepresentationLL(OCRepresentation& rep) {
 
             // Default Set
 
@@ -91,7 +119,7 @@ namespace OC
 
             // Parent
             payload << "{";
-            payload << "\"href\":"; 
+            payload << "\"href\":";
             payload << "\"" ;
             payload << rep.getUri();
             payload << "\"" ;
@@ -99,11 +127,11 @@ namespace OC
 
             // Children stuff
             std::vector<OCRepresentation> children = rep.getChildren();
-            
+
             for(auto oitr = children.begin(); oitr != children.end(); ++oitr)
             {
-                payload << ",{\"href\":"; 
-        
+                payload << ",{\"href\":";
+
                 payload << "\"" ;
                 payload << oitr->getUri();
                 payload << "\"" ;
@@ -146,7 +174,7 @@ namespace OC
         *  API to set the entire resource attribute representation (Default))
         *  @param attributeMap reference containing the name value pairs representing the resource's attributes
         */
-        void setResourceRepresentationDefault(OCRepresentation& rep) { 
+        void setResourceRepresentationDefault(OCRepresentation& rep) {
 
             // Default Set
 
@@ -154,7 +182,7 @@ namespace OC
 
             // Parent
             payload << "{";
-            payload << "\"href\":"; 
+            payload << "\"href\":";
             payload << "\"" ;
             payload << rep.getUri();
             payload << "\"" ;
@@ -169,17 +197,17 @@ namespace OC
                 {
                     payload << ',';
                 }
-                payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
+                payload << "\""<<itr->first<<"\":\""<< itr->second <<"\"";
             }
 
             payload << "}}";
 
             // Children stuff
             std::vector<OCRepresentation> children = rep.getChildren();
-            
+
             for(auto oitr = children.begin(); oitr != children.end(); ++oitr)
             {
-                payload << ",{\"href\":"; 
+                payload << ",{\"href\":";
 
                 payload << "\"" ;
                 payload << oitr->getUri();
@@ -223,27 +251,27 @@ namespace OC
         *  API to set the entire resource attribute representation (BATCH)
         *  @param attributeMap reference containing the name value pairs representing the resource's attributes
         */
-        void setResourceRepresentationBatch(OCRepresentation& rep) { 
+        void setResourceRepresentationBatch(OCRepresentation& rep) {
             ostringstream payload;
 
             // Parent
             payload << "{";
-            payload << "\"href\":"; 
+            payload << "\"href\":";
             payload << "\"" ;
             payload << rep.getUri();
             payload << "\"" ;
             payload << "}";
 
             std::vector<OCRepresentation> children = rep.getChildren();
-            
+
             for(auto oitr = children.begin(); oitr != children.end(); ++oitr)
             {
                 payload << ',';
 
                 payload << "{";
-                
-                payload << "\"href\":"; 
-        
+
+                payload << "\"href\":";
+
                 payload << "\"" ;
                 payload << oitr->getUri();
                 payload << "\"" ;
@@ -258,44 +286,11 @@ namespace OC
                     {
                         payload << ',';
                     }
-                    payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
+                    payload << "\""<<itr->first<<"\":\""<< itr->second<<"\"";
                 }
 
                 payload << "}}";
             }
-
-            m_payload = payload.str();
-        }
-
-
-        /** TODO remove this once after above function stabilize.
-        *  API to set the entire resource attribute representation
-        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
-        */
-        void setResourceRepresentation(AttributeMap& attributes) { 
-
-            // TODO To be refactored
-            ostringstream payload;
-
-            payload << "{";
-            
-            // TODO fix this (do this programmatically)
-            payload << "\"href\":\"/a/room\"";
-
-            payload << ",\"rep\":{";
-
-            for(AttributeMap::const_iterator itr = attributes.begin(); itr!= attributes.end(); ++ itr)
-            {
-                if(itr != attributes.begin())
-                {
-                    payload << ',';
-                }
-                // cout << itr->first << ":" <, itr->second.front() << endl;
-                payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
-
-            }
-
-            payload << "}}";
 
             m_payload = payload.str();
         }
@@ -307,17 +302,12 @@ namespace OC
     // TODO only stack should have visibility and apps should not
     public:
 
-        /** 
-        * Get error code 
-        */
-        int getErrorCode() const; 
-
         /**
-        * Get the resource attribute representation
+        * Get error code
         */
-        AttributeMap& getResourceRepresentation() const; 
+        int getErrorCode() const;
 
-        // TODO This should go away & just use getResourceRepresentation 
+        // TODO This should go away & just use getResourceRepresentation
         std::string getPayload()
         {
             return m_payload;

@@ -47,39 +47,33 @@ void onGet(const OCRepresentation& rep, const int eCode)
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "GET request was successful" << std::endl;
-
-        AttributeMap attributeMap = rep.getAttributeMap();
         
-        std::cout << "Resource URI: " << rep.getUri() << std::endl;
-
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "\tAttribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout <<"\t"<< *valueItr << " ";
-            }
-
-            std::cout << std::endl;
-        }
+        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
         std::vector<OCRepresentation> children = rep.getChildren();
 
         for(auto oit = children.begin(); oit != children.end(); ++oit)
         {
-            std::cout << "Child Resource URI: " << oit->getUri() << std::endl;
-
-            attributeMap = oit->getAttributeMap();
-
-            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+            std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+            if(oit->getUri().find("light") != std::string::npos)
             {
-                std::cout << "\tAttribute name: "<< it->first << " value: ";
-                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-                {
-                    std::cout <<"\t"<< *valueItr << " ";
-                }
-
-                std::cout << std::endl;
+                bool state = false;
+                int  color = 0;
+                oit->getValue("state", state);
+                oit->getValue("color", color);
+    
+                std::cout << "\t\tstate:" << state << std::endl;
+                std::cout << "\t\tcolor:" << color << std::endl;
+            }
+            else if(oit->getUri().find("fan") != std::string::npos)
+            {
+                bool state = false;
+                int  speed = 0;
+                oit->getValue("state", state);
+                oit->getValue("speed", speed);
+    
+                std::cout << "\t\tstate:" << state << std::endl;
+                std::cout << "\t\tspeed:" << speed << std::endl;
             }
         }
 
@@ -99,24 +93,14 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
     {
         OCRepresentation rep;
         std::cout << "Putting room representation..."<<std::endl;
-        // Create AttributeMap
-        AttributeMap attributeMap;
-        // Add the attribute name and values in the attribute map
-        AttributeValues stateVal;
-        stateVal.push_back("true");
 
-        AttributeValues powerVal;
-        powerVal.push_back("8");
-
-        attributeMap["state"] = stateVal;
-        attributeMap["speed"] = powerVal;
-
-        // Create QueryParameters Map and add query params (if any)
-        QueryParamsMap qp;
-        rep.setAttributeMap(attributeMap);
+        bool state = true;
+        int speed = 10;   
+        rep.setValue("state", state);
+        rep.setValue("speed", speed);
 
         // Invoke resource's pit API with attribute map, query map and the callback parameter
-        resource->put("core.room", BATCH_INTERFACE, rep, qp, &onPut);
+        resource->put("core.room", BATCH_INTERFACE, rep, QueryParamsMap(), &onPut);
     }
 }
 
@@ -127,35 +111,34 @@ void onPut(const OCRepresentation& rep, const int eCode)
     {
         std::cout << "PUT request was successful" << std::endl;
 
-        AttributeMap attributeMap = rep.getAttributeMap();
-
-        for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
-        {
-            std::cout << "\tAttribute name: "<< it->first << " value: ";
-            for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-            {
-                std::cout <<"\t"<< *valueItr << " ";
-            }
-
-            std::cout << std::endl;
-        }
+        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
         std::vector<OCRepresentation> children = rep.getChildren();
 
         for(auto oit = children.begin(); oit != children.end(); ++oit)
         {
-            attributeMap = oit->getAttributeMap();
-
-            for(auto it = attributeMap.begin(); it != attributeMap.end(); ++it)
+            std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+            if(oit->getUri().find("light") != std::string::npos)
             {
-                std::cout << "\tAttribute name: "<< it->first << " value: ";
-                for(auto valueItr = it->second.begin(); valueItr != it->second.end(); ++valueItr)
-                {
-                    std::cout <<"\t"<< *valueItr << " ";
-                }
-
-                std::cout << std::endl;
+                bool state = false;
+                int  color = 0;
+                oit->getValue("state", state);
+                oit->getValue("color", color);
+    
+                std::cout << "\t\tstate:" << state << std::endl;
+                std::cout << "\t\tcolor:" << color << std::endl;
             }
+            else if(oit->getUri().find("fan") != std::string::npos)
+            {
+                bool state = false;
+                int  speed = 0;
+                oit->getValue("state", state);
+                oit->getValue("speed", speed);
+    
+                std::cout << "\t\tstate:" << state << std::endl;
+                std::cout << "\t\tspeed:" << speed << std::endl;
+            }
+
         }
 
     }

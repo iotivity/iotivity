@@ -36,12 +36,11 @@ using namespace OC;
 class ClientWorker
 {
 private:
+    bool m_isFoo;
+    int m_barCount;
     void putResourceInfo(const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
     {
        std::cout << "In PutResourceInfo" << std::endl;
-
-       AttributeMap requestedPut = rep.getAttributeMap();
-       AttributeMap attrMap = rep2.getAttributeMap();
 
        std::cout <<"Clientside Put response to get was: "<<std::endl;
        std::cout <<"ErrorCode: "<<eCode <<std::endl;
@@ -50,29 +49,20 @@ private:
        {
             std::cout<<"Successful Put.  Attributes sent were: "<<std::endl;
 
-            for(const auto& attr : requestedPut)
-            {
-                std::cout << "\tName: "<< attr.first << " value: ";
-                for(const auto& val : attr.second)
-                {
-                    std::cout << val << "  ";
-                }
+            rep.getValue("isFoo", m_isFoo);
+            rep.getValue("barCount", m_barCount);
 
-                std::cout << std::endl;
-            }
+            std::cout << "\tisFoo: "<< m_isFoo << std::endl;
+            std::cout << "\tbarCount: "<< m_barCount << std::endl;
 
             std::cout<<"Actual New values are: "<<std::endl;
 
-            for(const auto& attr : attrMap)
-            {
-                std::cout << "\tName: "<< attr.first << " value: ";
-                for(const auto& val : attr.second)
-                {
-                    std::cout << val << "  ";
-                }
+            rep.getValue("isFoo", m_isFoo);
+            rep.getValue("barCount", m_barCount);
 
-                std::cout << std::endl;
-            }
+            std::cout << "\tisFoo: "<< m_isFoo << std::endl;
+            std::cout << "\tbarCount: "<< m_barCount << std::endl;
+
             m_cv.notify_all();
        }
     }
@@ -80,7 +70,6 @@ private:
     void getResourceInfo(const OCRepresentation rep, const int eCode)
     {
         std::cout << "In getResourceInfo" << std::endl;
-        AttributeMap attrMap = rep.getAttributeMap();
 
         std::cout<<"Clientside response to get was: "<<std::endl;
         std::cout<<"Error Code: "<<eCode<<std::endl;
@@ -89,25 +78,19 @@ private:
         {
             std::cout <<"Successful Get.  Attributes are: "<<std::endl;
 
-            for(const auto& attr : attrMap)
-            {
-                std::cout << "\tName: "<< attr.first << " value: ";
-                for(const auto& val : attr.second)
-                {
-                    std::cout << val << "  ";
-                }
+            rep.getValue("isFoo", m_isFoo);
+            rep.getValue("barCount", m_barCount);
 
-                std::cout << std::endl;
-            }
+            std::cout << "\tisFoo: "<< m_isFoo << std::endl;
+            std::cout << "\tbarCount: "<< m_barCount << std::endl;
 
             std::cout << "Doing a put on q/foo" <<std::endl;
             OCRepresentation rep2(rep);
-            AttributeMap attrMap2 = rep2.getAttributeMap(); 
+            m_isFoo = false;
+            m_barCount = 211;
 
-            attrMap2["isFoo"].push_back("false");
-            attrMap2["barCount"].push_back("211");
-
-            rep2.setAttributeMap(attrMap2);
+            rep2.setValue("isFoo", m_isFoo);
+            rep2.setValue("barCount", m_barCount);
 
             m_resource->put(rep2, QueryParamsMap(), PutCallback(std::bind(&ClientWorker::putResourceInfo, this, rep2, std::placeholders::_1, std::placeholders::_2)));
         }
@@ -147,8 +130,8 @@ private:
             } 
 
             std::cout<<"Doing a get on q/foo."<<std::endl;
-            QueryParamsMap test;
-            resource->get(test, GetCallback(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
+
+            resource->get(QueryParamsMap(), GetCallback(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
         } 
     }
 
@@ -177,8 +160,14 @@ struct FooResource
     bool m_isFoo;
     int m_barCount;
     OCResourceHandle m_resourceHandle;
+    OCRepresentation m_rep;
 
-    FooResource(): m_isFoo(true), m_barCount (0){}
+    FooResource(): m_isFoo(true), m_barCount (0)
+    {
+        m_rep.setUri("/q/foo");
+        m_rep.setValue("isFoo", m_isFoo);
+        m_rep.setValue("barCount", m_barCount);
+    }
 
     bool createResource(OCPlatform& platform)
     {
@@ -201,38 +190,18 @@ struct FooResource
         return true;
     }
 
-    void getRepresentation(OCRepresentation& rep)
+    OCRepresentation get()
     {
-        AttributeMap attributeMap;
+        m_rep.setValue("isFoo", m_isFoo);
+        m_rep.setValue("barCount", m_barCount);
 
-        AttributeValues isFooVal;
-        isFooVal.push_back(m_isFoo ? "true" : "false");
-
-        AttributeValues barCt;
-        barCt.push_back(to_string(m_barCount));
-
-        attributeMap["isFoo"] = isFooVal;
-        attributeMap["barCount"] = barCt;
-        
-        rep.setAttributeMap(attributeMap);
+        return m_rep;
     }
 
-    void setRepresentation(OCRepresentation& rep)
+    void put(OCRepresentation& rep)
     {
-        AttributeMap attributeMap(rep.getAttributeMap());
-    
-        try
-         {
-            auto fooVector = attributeMap.at("isFoo");
-            m_isFoo = fooVector[0] == "true";
-            auto barVector = attributeMap.at("barCount");
-            m_barCount = std::stoi(barVector[0]);
-            rep.setAttributeMap(attributeMap);
-         }
-        catch(std::out_of_range& e)
-         {
-            std::cerr << "setRepresentation(): unable to look up values in attributeMap: " << e.what() << '\n';
-         }
+        rep.getValue("isFoo", m_isFoo);
+        rep.getValue("barCount", m_barCount);
     }
 
     void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
@@ -251,13 +220,10 @@ struct FooResource
                 {
                     std::cout<<"\t\t\trequestType : GET"<<std::endl;
 
-                    OCRepresentation rep;
-                    getRepresentation(rep);
-
                     if(response)
                     {
                         response->setErrorCode(200);
-                        response->setResourceRepresentation(rep, "");
+                        response->setResourceRepresentation(get(), "");
                     }
                 }
                 else if (request->getRequestType() == "PUT")
@@ -265,14 +231,12 @@ struct FooResource
                     std::cout<<"\t\t\trequestType : PUT"<<std::endl;
 
                     OCRepresentation rep = request->getResourceRepresentation();
-                    setRepresentation(rep);
+                    put(rep);
 
                     if(response)
                     {
                         response->setErrorCode(200);
-                        OCRepresentation rep;
-                        getRepresentation(rep);
-                        response->setResourceRepresentation(rep, "");
+                        response->setResourceRepresentation(get(), "");
                     }
                 }
                 else

@@ -45,14 +45,23 @@ class LightResource
 {
 public:
     /// Access this property from a TB client
+    std::string m_name;
     bool m_state;
     int m_power;
     std::string m_lightUri;
     OCResourceHandle m_resourceHandle;
+    OCRepresentation m_lightRep;
 
 public:
     /// Constructor
-    LightResource(): m_state(false), m_power(0), m_lightUri("/a/light") {}
+    LightResource(): m_name("John's light"), m_state(false), m_power(0), m_lightUri("/a/light") {
+        // Initialize representation
+        m_lightRep.setUri(m_lightUri);
+
+        m_lightRep.setValue("state", m_state);
+        m_lightRep.setValue("power", m_power);
+        m_lightRep.setValue("name", m_name);
+    }
 
     /* Note that this does not need to be a member function: for classes you do not have
     access to, you can accomplish this with a free function: */
@@ -83,57 +92,46 @@ public:
         return m_resourceHandle;
     }
 
-    void setRepresentation(OCRepresentation& light)
+    // Puts representation.
+    // Gets values from the representation and
+    // updates the internal state
+    void put(OCRepresentation& rep)
     {
-        AttributeMap attributeMap = light.getAttributeMap();
+        try {
+            if (rep.getValue("state", m_state))
+            {
+                cout << "\t\t\t\t" << "state: " << m_state << endl;
+            }
+            else
+            {
+                cout << "\t\t\t\t" << "state not found in the representation" << endl;
+            }
 
-        if(attributeMap.find("state") != attributeMap.end() && attributeMap.find("power") != attributeMap.end())
-        {
-            cout << "\t\t\t" << "Received representation: " << endl;
-            cout << "\t\t\t\t" << "power: " << attributeMap["power"][0] << endl;
-            cout << "\t\t\t\t" << "state: " << attributeMap["state"][0] << endl;
-
-            m_state = attributeMap["state"][0].compare("true") == 0;
-            m_power= std::stoi(attributeMap["power"][0]);
+            if (rep.getValue("power", m_power))
+            {
+                cout << "\t\t\t\t" << "power: " << m_power << endl;
+            }
+            else
+            {
+                cout << "\t\t\t\t" << "power not found in the representation" << endl;
+            }
         }
+        catch (exception& e)
+        {
+            cout << e.what() << endl;
+        }
+
     }
 
-    OCRepresentation getRepresentation()
+    // gets the updated representation.
+    // Updates the representation with latest internal state before
+    // sending out.
+    OCRepresentation get()
     {
-        OCRepresentation light;
+        m_lightRep.setValue("state", m_state);
+        m_lightRep.setValue("power", m_power);
 
-        light.setUri(m_lightUri);
-
-        std::vector<std::string> interfaces;
-        //interfaces.push_back(m_lightInterface);
-
-        light.setResourceInterfaces(interfaces);
-
-        std::vector<std::string> types;
-        //types.push_back(m_lightType);
-
-        light.setResourceTypes(types);
-
-        AttributeMap attributeMap;
-        AttributeValues stateVal;
-        if(m_state)
-        {
-            stateVal.push_back("true");
-        }
-        else
-        {
-            stateVal.push_back("false");
-        }
-
-        AttributeValues powerVal;
-        powerVal.push_back(to_string(m_power));
-
-        attributeMap["state"] = stateVal;
-        attributeMap["power"] = powerVal;
-
-        light.setAttributeMap(attributeMap);
-
-        return light;
+        return m_lightRep;
     }
 
     void addType(const OC::OCPlatform& platform, const std::string& type) const
@@ -156,7 +154,7 @@ public:
 };
 
 // Create the instance of the resource class (in this case instance of class 'LightResource').
-LightResource myLightResource;
+LightResource myLight;
 
 // ChangeLightRepresentaion is an observation function,
 // which notifies any changes to the resource to stack
@@ -174,12 +172,12 @@ void * ChangeLightRepresentation (void *param)
             // we call notifyObservors
             //
             // For demostration we are changing the power value and notifying.
-            myLightResource.m_power += 10;
+            myLight.m_power += 10;
 
-            cout << "\nPower updated to : " << myLightResource.m_power << endl;
-            cout << "Notifying observers with resource handle: " << myLightResource.getHandle() << endl;
+            cout << "\nPower updated to : " << myLight.m_power << endl;
+            cout << "Notifying observers with resource handle: " << myLight.getHandle() << endl;
 
-            OCStackResult result = OCPlatform::notifyObservers(myLightResource.getHandle());
+            OCStackResult result = OCPlatform::notifyObservers(myLight.getHandle());
 
             if(OC_STACK_NO_OBSERVERS == result)
             {
@@ -220,75 +218,31 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
             {
                 cout << "\t\t\trequestType : GET\n";
 
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(QueryParamsMap::iterator it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                // Process query params and do required operations ..
-
-                // Get the representation of this resource at this point and send it as response
-                // AttributeMap attributeMap;
-                OCRepresentation rep;
-                rep = myLightResource.getRepresentation();
-
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
 
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
+                    response->setResourceRepresentation(myLight.get());
                 }
             }
             else if(requestType == "PUT")
             {
                 cout << "\t\t\trequestType : PUT\n";
 
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                // Get the representation from the request
                 OCRepresentation rep = request->getResourceRepresentation();
 
-                myLightResource.setRepresentation(rep);
-
                 // Do related operations related to PUT request
-                rep = myLightResource.getRepresentation();
+
+                // Update the lightResource
+                myLight.put(rep);
 
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
 
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
+                    response->setResourceRepresentation(myLight.get());
                 }
 
             }
@@ -344,10 +298,10 @@ int main()
         OCPlatform platform(cfg);
 
         // Invoke createResource function of class light.
+        myLight.createResource(platform);
 
-        myLightResource.createResource(platform);
-        myLightResource.addType(platform, std::string("core.brightlight"));
-        myLightResource.addInterface(platform, std::string("oc.mi.ll"));
+        myLight.addType(platform, std::string("core.brightlight"));
+        myLight.addInterface(platform, std::string("oc.mi.ll"));
         // Perform app tasks
         while(true)
         {
@@ -358,7 +312,6 @@ int main()
     {
         //log(e.what());
     }
-
 
     // No explicit call to stop the platform.
     // When OCPlatform destructor is invoked, internally we do platform cleanup

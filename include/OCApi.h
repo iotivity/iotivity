@@ -26,6 +26,9 @@
 #include <vector>
 #include <map>
 #include <memory>
+
+#include <boost/variant.hpp>
+
 #include "ocstack.h"
 
 namespace OC
@@ -105,10 +108,122 @@ namespace OC
         ObserveAll
     };
 
-    // TODO: To find the complete JSon data structure and modify map value type
-    // Typedef for attribute values and attribute map.
-    typedef std::vector<std::string> AttributeValues;
-    typedef std::map<std::string, AttributeValues> AttributeMap;
+    typedef std::map<std::string, std::string> AttributeMap;
+
+    struct AttributeNull {};
+
+    // Forward declaration
+    struct AttributeDataValue;
+
+    typedef std::map<std::string, AttributeDataValue> AttributeMapValue;
+    typedef std::vector<AttributeDataValue> AttributeValueVector;
+
+    typedef boost::variant<
+                AttributeNull,
+                int,
+                bool,
+                std::string,
+                AttributeMapValue,
+                AttributeValueVector> AttributeValue;
+
+    struct AttributeDataValue
+    {
+        AttributeValue data;
+    };
+
+    class ComposeVisitor : public boost::static_visitor<std::string>
+    {
+        public:
+            std::string operator() (const AttributeNull& nl) const
+            {
+                // TODO Not Implemented
+                return std::string();
+            }
+
+            // TODO different int sizes
+            std::string operator() (const int i) const
+            {
+                return std::to_string(i);
+            }
+
+            std::string operator() (const std::string& str) const
+            {
+                return str;
+            }
+
+            std::string operator() (const bool b) const
+            {
+                if(b)
+                {
+                    return "true";
+                }
+                else
+                {
+                    return "false";
+                }
+            }
+
+            std::string operator() (const AttributeMapValue& objValue) const
+            {
+                // TODO Not Implemented
+                return std::string();
+                std::ostringstream json;
+            }
+
+            std::string operator() (const AttributeValueVector& values) const
+            {
+                // TODO Not Implemented
+                return std::string();
+                std::ostringstream json;
+            }
+    };
+
+    class ParseVisitor : public boost::static_visitor<void>
+    {
+        public:
+
+            ParseVisitor(std::string str): m_str(str)
+            {
+            }
+
+            void operator() (AttributeNull& nl) const
+            {
+                // TODO Not Implemented
+            }
+
+            void operator() (int& i) const
+            {
+                i = std::stoi(m_str);
+            }
+
+            void operator() (std::string& str) const
+            {
+                str = m_str;
+            }
+
+            void operator() (bool& b) const
+            {
+                b = m_str.compare("true") == 0;
+            }
+
+            void operator() (AttributeMapValue& objValue) const
+            {
+                // TODO Not Implemented
+            }
+
+            void operator() (AttributeValueVector& values) const
+            {
+                // TODO Not Implemented
+            }
+
+        private:
+            std::string m_str;
+    };
+
+    typedef std::map<std::string, AttributeValue> AttributeMap1;
+
+    std::string getJSON(const AttributeValue& v);
+    void parseJSON(AttributeValue& v, std::string str);
 
     // Typedef for query parameter map
     typedef std::map<std::string, std::string> QueryParamsMap;
@@ -135,7 +250,6 @@ namespace OC
         AttributeMap m_attributeMap;
         std::vector<std::string> m_resourceTypes;
         std::vector<std::string> m_resourceInterfaces;
-        bool m_observable; // TODO : do we need this here???
         int errorCode;
 
         std::vector<OCRepresentation> m_children;
@@ -146,6 +260,30 @@ namespace OC
         std::string getUri(void) const
         {
             return m_uri;
+        }
+
+        template <typename T>
+        void setValue(const std::string& str, const T& val)
+        {
+            m_attributeMap[str] = getJSON(val);
+        }
+
+        template <typename T>
+        bool getValue(const std::string& str, T& val) const
+        {
+            auto x = m_attributeMap.find(str);
+
+            if(m_attributeMap.end() != x)
+            {
+                AttributeValue v = val;
+                parseJSON(v, x->second);
+                val = boost::get<T>(v);
+                return true;
+            }
+            else
+            {
+                return false;
+            } 
         }
 
         void setUri(std::string uri)
@@ -175,7 +313,7 @@ namespace OC
             return m_attributeMap;
         }
 
-        void setAttributeMap(AttributeMap map)
+        void setAttributeMap(const AttributeMap map)
         {
             m_attributeMap = map;
         }

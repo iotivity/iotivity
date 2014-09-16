@@ -5,20 +5,22 @@ namespace Intel { namespace OCDemo {
 std::atomic<bool> LightResource::shutdown_flag(false);
 std::thread LightResource::observe_thread;
 
-void LightResource::setRepresentation(AttributeMap& attributeMap)
+void LightResource::setRepresentation(const OCRepresentation& rep)
 {
  cout << "\t\t\t" << "Received representation: " << endl;
- cout << "\t\t\t\t" << "power: " << attributeMap["power"][0] << endl;
- cout << "\t\t\t\t" << "state: " << attributeMap["state"][0] << endl;
 
- m_state = attributeMap["state"][0].compare("true") == 0;
- m_power = std::stoi(attributeMap["power"][0]);
+ rep.getValue("state", m_state);
+ rep.getValue("power", m_power);
+
+ cout << "\t\t\t\t" << "power: " << m_power << endl;
+ cout << "\t\t\t\t" << "state: " << m_state << endl;
 }
 
-void LightResource::getRepresentation(AttributeMap& attributeMap) const
+OCRepresentation LightResource::getRepresentation(void)
 {
- attributeMap["state"] = { (m_state ? "true" : "false") };
- attributeMap["power"] = { to_string(m_power) };
+ m_rep.setValue("state", m_state);
+ m_rep.setValue("power", m_power);
+ return m_rep;
 }
 
 void LightResource::addType(const OC::OCPlatform& platform, const std::string& type) const
@@ -159,12 +161,8 @@ void LightResource::handle_get_request(std::shared_ptr<OCResourceRequest> reques
  // ...do any processing of the query here...
 
  // Get a representation of the resource and send it back as a response:
- AttributeMap attribute_map;
-
- getRepresentation(attribute_map);
-
  response->setErrorCode(200);
- response->setResourceRepresentation(attribute_map);
+ response->setResourceRepresentation(getRepresentation());
 }
 
 void LightResource::handle_put_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response) 
@@ -173,36 +171,25 @@ void LightResource::handle_put_request(std::shared_ptr<OCResourceRequest> reques
  const auto query_params_map = request->getQueryParameters();
  // ...do something with the query parameters (if there were any)...
 
- auto attribute_map = request->getAttributeRepresentation();
+ auto rep = request->getResourceRepresentation();
 
- setRepresentation(attribute_map);
- getRepresentation(attribute_map);  // in case we changed something
+ setRepresentation(rep);
 
  if(!response)
   return;
 
  response->setErrorCode(200);
- response->setResourceRepresentation(attribute_map); 
+ response->setResourceRepresentation(getRepresentation()); 
 }
 
 void LightResource::handle_post_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
  // ...demo-code...
- response->setErrorCode(200);
-
- auto attribute_map = request->getAttributeRepresentation();
- getRepresentation(attribute_map);
- response->setResourceRepresentation(attribute_map);
 }
 
 void LightResource::handle_delete_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response) 
 {
  // ...demo-code...
- response->setErrorCode(200);
-
- auto attribute_map = request->getAttributeRepresentation();
- getRepresentation(attribute_map);
- response->setResourceRepresentation(attribute_map);
 }
 
 // Set up observation in a separate thread:

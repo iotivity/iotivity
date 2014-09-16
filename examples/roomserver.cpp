@@ -44,45 +44,61 @@ public:
 
     // Room members
     std::string m_roomUri;
-    std::string m_roomType;
-    std::string m_roomInterface1;
-    std::string m_roomInterface2;
-    std::string m_roomInterface3;
+    std::vector<std::string> m_roomTypes;
+    std::vector<std::string> m_roomInterfaces;
     OCResourceHandle m_roomHandle;
+    OCRepresentation m_roomRep;
 
     // light members
     bool m_lightState;
     int m_lightColor;
-    std::string m_lightInterface;
     std::string m_lightUri;
-    std::string m_lightType;
+    std::vector<std::string> m_lightTypes;
+    std::vector<std::string> m_lightInterfaces;
     OCResourceHandle m_lightHandle;
+    OCRepresentation m_lightRep;
 
     // fan members
     bool m_fanState;
     int m_fanSpeed;
-    std::string m_fanInterface;
     std::string m_fanUri;
-    std::string m_fanType;
+    std::vector<std::string> m_fanTypes;
+    std::vector<std::string> m_fanInterfaces;
     OCResourceHandle m_fanHandle;
+    OCRepresentation m_fanRep;
 
 public:
     /// Constructor
     RoomResource(): m_lightState(false), m_lightColor(0), m_fanState(false), m_fanSpeed(0) 
     {
-        m_roomUri = "/a/room"; // URI of the resource
-        m_roomType = "core.room"; // resource type name. In this case, it is light
-        m_roomInterface1 = DEFAULT_INTERFACE; // resource interface.
-        m_roomInterface2 = BATCH_INTERFACE; // resource interface.
-        m_roomInterface3 = LINK_INTERFACE; // resource interface.
-
         m_lightUri = "/a/light"; // URI of the resource
-        m_lightType = "core.light"; // resource type name. In this case, it is light
-        m_lightInterface = DEFAULT_INTERFACE; // resource interface.
+        m_lightTypes.push_back("core.light"); // resource type name. In this case, it is light
+        m_lightInterfaces.push_back(DEFAULT_INTERFACE); // resource interface.
+
+        m_lightRep.setUri(m_lightUri);
+        m_lightRep.setResourceTypes(m_lightTypes);
+        m_lightRep.setResourceInterfaces(m_lightInterfaces);
+        m_lightRep.setValue("state", m_lightState);
+        m_lightRep.setValue("color", m_lightColor);
 
         m_fanUri = "/a/fan"; // URI of the resource
-        m_fanType = "core.fan"; // resource type name. In this case, it is light
-        m_fanInterface = DEFAULT_INTERFACE; // resource interface.
+        m_fanTypes.push_back("core.fan"); // resource type name. In this case, it is light
+        m_fanInterfaces.push_back(DEFAULT_INTERFACE); // resource interface.
+
+        m_fanRep.setUri(m_fanUri);
+        m_fanRep.setResourceTypes(m_fanTypes);
+        m_fanRep.setResourceInterfaces(m_fanInterfaces);
+        m_fanRep.setValue("state", m_fanState);
+        m_fanRep.setValue("speed", m_fanSpeed);
+
+        m_roomUri = "/a/room"; // URI of the resource
+        m_roomTypes.push_back("core.room"); // resource type name. In this case, it is light
+        m_roomInterfaces.push_back(DEFAULT_INTERFACE); // resource interface.
+        m_roomInterfaces.push_back(BATCH_INTERFACE); // resource interface.
+        m_roomInterfaces.push_back(LINK_INTERFACE); // resource interface.
+        m_roomRep.setUri(m_roomUri);
+        m_roomRep.setResourceTypes(m_roomTypes);
+        m_roomRep.setResourceInterfaces(m_roomInterfaces);
     }
 
     /// This function internally calls registerResource API.
@@ -90,8 +106,8 @@ public:
     {
         // This will internally create and register the resource.
         OCStackResult result = platform.registerResource(
-                                    m_roomHandle, m_roomUri, m_roomType,
-                                    m_roomInterface1, NULL, //entityHandlerRoom, 
+                                    m_roomHandle, m_roomUri, m_roomTypes[0],
+                                    m_roomInterfaces[0], NULL, //entityHandlerRoom, 
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                   );
 
@@ -100,21 +116,21 @@ public:
             cout << "Resource creation (room) was unsuccessful\n";
         }
 
-        result = platform.bindInterfaceToResource(m_roomHandle, m_roomInterface2);
+        result = platform.bindInterfaceToResource(m_roomHandle, m_roomInterfaces[1]);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
 
-        result = platform.bindInterfaceToResource(m_roomHandle, m_roomInterface3);
+        result = platform.bindInterfaceToResource(m_roomHandle, m_roomInterfaces[2]);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
 
         result = platform.registerResource(
-                                    m_lightHandle, m_lightUri, m_lightType,
-                                    m_lightInterface, entityHandlerLight, 
+                                    m_lightHandle, m_lightUri, m_lightTypes[0],
+                                    m_lightInterfaces[0], entityHandlerLight, 
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                    );
 
@@ -124,8 +140,8 @@ public:
         }
 
         result = platform.registerResource(
-                                    m_fanHandle, m_fanUri, m_fanType,
-                                    m_fanInterface, entityHandlerFan, 
+                                    m_fanHandle, m_fanUri, m_fanTypes[0],
+                                    m_fanInterfaces[0], entityHandlerFan, 
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                    );
 
@@ -148,128 +164,56 @@ public:
 
     }
 
-    void setRoomRepresentation(OCRepresentation& rep)
+    void setLightRepresentation(OCRepresentation& rep)
     {
-        setLightRepresentation(rep);
-        setFanRepresentation(rep);
-    }
+        bool tempState = false;
+        int tempColor = 0;
 
-    void setLightRepresentation(OCRepresentation& light)
-    {
-        AttributeMap attributeMap = light.getAttributeMap();
-
-        if(attributeMap.find("state") != attributeMap.end() && attributeMap.find("color") != attributeMap.end())
+        // If both entries exist
+        if(rep.getValue("state", tempState) && rep.getValue("color", tempColor))
         {
-            m_lightState = attributeMap["state"][0].compare("true") == 0;
-            m_lightColor= std::stoi(attributeMap["color"][0]);
+            m_lightState = tempState;
+            m_lightColor= tempColor;
+       
+            cout << "\t\t\t\t" << "state: " << m_lightState << endl;
+            cout << "\t\t\t\t" << "color: " << m_lightColor << endl;
         }
     }
 
-    void setFanRepresentation(OCRepresentation& fan)
+    void setFanRepresentation(OCRepresentation& rep)
     {
-        AttributeMap attributeMap = fan.getAttributeMap();
+        bool tempState = false;
+        int tempSpeed = 0;
 
-        if(attributeMap.find("state") != attributeMap.end() && attributeMap.find("speed") != attributeMap.end())
+        // If both entries exist
+        if(rep.getValue("state", tempState) && rep.getValue("speed", tempSpeed))
         {
-            m_fanState = attributeMap["state"][0].compare("true") == 0;
-            m_fanSpeed = std::stoi(attributeMap["speed"][0]);
+            m_fanState = tempState;
+            m_fanSpeed = tempSpeed;
+
+            cout << "\t\t\t\t" << "state: " << m_fanState << endl;
+            cout << "\t\t\t\t" << "speed: " << m_fanSpeed << endl;
         }
     }
 
 
-    OCRepresentation getLightRepresentation() const
+    OCRepresentation getLightRepresentation() 
     {
-        OCRepresentation light;
+        m_lightRep.setValue("state", m_lightState);
+        m_lightRep.setValue("color", m_lightColor);
 
-        light.setUri(m_lightUri);
-
-        std::vector<std::string> interfaces;
-        interfaces.push_back(m_lightInterface);
-
-        light.setResourceInterfaces(interfaces);
-
-        std::vector<std::string> types;
-        types.push_back(m_lightType);
-
-        light.setResourceTypes(types);
-
-        AttributeMap attributeMap;
-        AttributeValues stateVal;
-        if(m_lightState)
-        {
-            stateVal.push_back("true");
-        }
-        else
-        {
-            stateVal.push_back("false");
-        }
-
-        AttributeValues colorVal;
-        colorVal.push_back(to_string(m_lightColor));
-
-        attributeMap["state"] = stateVal;
-        attributeMap["color"] = colorVal;
-
-        light.setAttributeMap(attributeMap);
-
-        return light;
+        return m_lightRep;
     }
 
-    OCRepresentation getFanRepresentation() const
+    OCRepresentation getFanRepresentation()
     {
-        OCRepresentation fan;
-        fan.setUri(m_fanUri);
-
-        std::vector<std::string> interfaces;
-        interfaces.push_back(m_fanInterface);
-
-        fan.setResourceInterfaces(interfaces);
-
-        std::vector<std::string> types;
-        types.push_back(m_fanType);
-
-        fan.setResourceTypes(types);
-
-        AttributeMap attributeMap;
-        AttributeValues stateVal;
-        if(m_fanState)
-        {
-            stateVal.push_back("true");
-        }
-        else
-        {
-            stateVal.push_back("false");
-        }
-
-        AttributeValues speedVal;
-        speedVal.push_back(to_string(m_fanSpeed));
-
-        attributeMap["state"] = stateVal;
-        attributeMap["speed"] = speedVal;
-
-        fan.setAttributeMap(attributeMap);
-        
-        return fan;
+        m_fanRep.setValue("state", m_fanState);
+        m_fanRep.setValue("speed", m_fanSpeed);
+        return m_fanRep;
     }
 
-    OCRepresentation getRoomRepresentation(void) const
+    OCRepresentation getRoomRepresentation(void)
     {
-        OCRepresentation room;
-
-        room.setUri(m_roomUri);
-
-        std::vector<std::string> interfaces;
-        interfaces.push_back(m_roomInterface1);
-        interfaces.push_back(m_roomInterface2);
-        interfaces.push_back(m_roomInterface3);
-
-        room.setResourceInterfaces(interfaces);
-
-        std::vector<std::string> types;
-        types.push_back(m_roomType);
-
-        room.setResourceTypes(types);
-
         std::vector<OCRepresentation> children;
 
         OCRepresentation light = getLightRepresentation();
@@ -277,9 +221,10 @@ public:
 
         OCRepresentation fan = getFanRepresentation();
         children.push_back(fan);
-        room.setChildren(children);
+            
+        m_roomRep.setChildren(children);
 
-        return room;
+        return m_roomRep;
     }
 
 };
@@ -346,40 +291,13 @@ void entityHandlerRoom(std::shared_ptr<OCResourceRequest> request, std::shared_p
             {
                 cout << "\t\t\trequestType : PUT\n";
 
-                 // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                // Get the representation from the request
-                OCRepresentation rep = request->getResourceRepresentation();
-
-                myRoomResource.setRoomRepresentation(rep);
-
-                // Do related operations related to PUT request
-                rep = myRoomResource.getRoomRepresentation();
+                entityHandlerLight(request, response);
+                entityHandlerFan(request, response);
 
                 if(response)
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
+                    response->setResourceRepresentation(myRoomResource.getRoomRepresentation());
                 }
-
             }
             else if(requestType == "POST")
             {
@@ -426,32 +344,11 @@ void entityHandlerLight(std::shared_ptr<OCResourceRequest> request, std::shared_
             {
                 cout << "\t\t\trequestType : GET\n";
 
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                OCRepresentation rep = myRoomResource.getLightRepresentation();
-
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
-
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
+                    response->setResourceRepresentation(myRoomResource.getLightRepresentation());
                 }
 
             }
@@ -459,38 +356,16 @@ void entityHandlerLight(std::shared_ptr<OCResourceRequest> request, std::shared_
             {
                 cout << "\t\t\trequestType : PUT\n";
 
-                 // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                // Get the representation from the request
                 OCRepresentation rep = request->getResourceRepresentation();
 
-                myRoomResource.setLightRepresentation(rep);
-
                 // Do related operations related to PUT request
-                rep = myRoomResource.getLightRepresentation();
+                myRoomResource.setLightRepresentation(rep);
 
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
-
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
+                    response->setResourceRepresentation(myRoomResource.getLightRepresentation());
                 }
 
             }
@@ -539,32 +414,12 @@ void entityHandlerFan(std::shared_ptr<OCResourceRequest> request, std::shared_pt
             {
                 cout << "\t\t\trequestType : GET\n";
 
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                OCRepresentation rep = myRoomResource.getFanRepresentation();
-
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
 
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
+                    response->setResourceRepresentation(myRoomResource.getFanRepresentation());
                 }
 
             }
@@ -572,40 +427,17 @@ void entityHandlerFan(std::shared_ptr<OCResourceRequest> request, std::shared_pt
             {
                 cout << "\t\t\trequestType : PUT\n";
 
-                 // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                // Get the representation from the request
                 OCRepresentation rep = request->getResourceRepresentation();
 
-                myRoomResource.setFanRepresentation(rep);
-
                 // Do related operations related to PUT request
-                rep = myRoomResource.getFanRepresentation();
+                myRoomResource.setFanRepresentation(rep);
 
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
-
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
+                    response->setResourceRepresentation(myRoomResource.getFanRepresentation());
                 }
-
             }
             else if(requestType == "POST")
             {

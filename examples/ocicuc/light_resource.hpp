@@ -27,6 +27,7 @@ class LightResource
  public:
     bool m_state;       // off or on?
     int m_power;        // power level
+    OCRepresentation m_rep;
 
     private:
     atomic<bool> m_observation; // are we under observation?
@@ -54,9 +55,11 @@ class LightResource
     }
 
     private:
-    inline std::string make_URI(const unsigned int resource_number) const
+    inline std::string make_URI(const unsigned int resource_number)
     {
-        return std::string("/a/light") + "_" + std::to_string(resource_number); 
+        std::string uri = std::string("/a/light") + "_" + std::to_string(resource_number); 
+        m_rep.setUri(uri);
+        return uri;
     }
 
     public:
@@ -65,8 +68,8 @@ class LightResource
     void unregisterResource(OC::OCPlatform& platform);
     OCResourceHandle getHandle() const { return m_resourceHandle; }
 
-    void setRepresentation(AttributeMap& attributeMap);
-    void getRepresentation(AttributeMap& attributeMap) const;
+    void setRepresentation(const OCRepresentation& rep);
+    OCRepresentation getRepresentation(void);
 
     void addType(const OC::OCPlatform& platform, const std::string& type) const;
     void addInterface(const OC::OCPlatform& platform, const std::string& interface) const;
