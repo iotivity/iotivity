@@ -97,7 +97,6 @@ void HandleStackResponses(OCResponse * response)
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
     OC_LOG(INFO, TAG, PCF("Entering HandleStackResponses (OCStack Layer)"));
 
-    //ToDo: if ttl is zero, we should notify the client!!!!
     if (response->cbNode)
     {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
