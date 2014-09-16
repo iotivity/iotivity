@@ -1,7 +1,32 @@
-APP_NAME := ocserver
+# //******************************************************************
+# //
+# // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# //
+# // Licensed under the Apache License, Version 2.0 (the "License");
+# // you may not use this file except in compliance with the License.
+# // You may obtain a copy of the License at
+# //
+# //      http://www.apache.org/licenses/LICENSE-2.0
+# //
+# // Unless required by applicable law or agreed to in writing, software
+# // distributed under the License is distributed on an "AS IS" BASIS,
+# // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# // See the License for the specific language governing permissions and
+# // limitations under the License.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+
 BUILD := release
 PLATFORM := arduinodue
 ARDUINO_PORT := ttyACM0
+
+# override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
+ARDUINOWIFI := 0
+
+APP_NAME := ocserver
 
 OBJ_DIR := ./bin
 
@@ -23,6 +48,13 @@ INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(STACK_DIR)/inclu
 
 CFLAGS		:= -Os -Wall -c -DTB_LOG
 
+ifeq ($(ARDUINOWIFI),1)
+	CFLAGS += -DARDUINOWIFI
+	TRANSPORT_OBJS = $(WIFI_COBJ)
+else if
+	TRANSPORT_OBJS = $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ)
+endif
+
 all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).bin
 
 core.a: $(PLATFORM_OBJS)
@@ -41,7 +73,7 @@ prep_dirs:
 
 
 $(APP_NAME).elf: $(APP_NAME).o core.a
-	$(CXX) -Os -Wl,--gc-sections -mcpu=cortex-m3 -T/$(SDIR_ARD_CORE_3)/linker_scripts/gcc/flash.ld -Wl,-Map,$(APP_NAME).map -o $@ -lm -lgcc -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $(APP_NAME).o $(SYSCALLS_SAM3_OBJ) $(SPI_OBJ) $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ) $(VARIANT_OBJ) $(SDIR_ARD_CORE_3)/libsam_sam3x8e_gcc_rel.a core.a -Wl,--end-group 
+	$(CXX) -Os -Wl,--gc-sections -mcpu=cortex-m3 -T/$(SDIR_ARD_CORE_3)/linker_scripts/gcc/flash.ld -Wl,-Map,$(APP_NAME).map -o $@ -lm -lgcc -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $(APP_NAME).o $(SYSCALLS_SAM3_OBJ) $(SPI_OBJ) $(TRANSPORT_OBJS) $(VARIANT_OBJ) $(SDIR_ARD_CORE_3)/libsam_sam3x8e_gcc_rel.a core.a -Wl,--end-group
 
 $(APP_NAME).bin: $(APP_NAME).elf
 	$(ARDUINO_TOOLS_DIR)/arm-none-eabi-objcopy -O binary $< $@ 
