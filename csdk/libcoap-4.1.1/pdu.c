@@ -24,10 +24,6 @@
 #include "option.h"
 #include "encode.h"
 
-#ifdef WITH_ARDUINO
-#include "util.h"
-#endif
-
 #ifdef WITH_CONTIKI
 #include "memb.h"
 
@@ -126,22 +122,6 @@ coap_pdu_init(unsigned char type, unsigned char code,
   return pdu;
 }
 
-coap_pdu_t *
-coap_new_pdu() {
-  coap_pdu_t *pdu;
-
-#ifndef WITH_CONTIKI
-  pdu = coap_pdu_init(0, 0, ntohs(COAP_INVALID_TID), COAP_MAX_PDU_SIZE);
-#else /* WITH_CONTIKI */
-  pdu = coap_pdu_init(0, 0, uip_ntohs(COAP_INVALID_TID), COAP_MAX_PDU_SIZE);
-#endif /* WITH_CONTIKI */
-
-#ifndef NDEBUG
-  if (!pdu)
-    coap_log(LOG_CRIT, "coap_new_pdu: cannot allocate memory for new PDU\n");
-#endif
-  return pdu;
-}
 
 void
 coap_delete_pdu(coap_pdu_t *pdu) {
