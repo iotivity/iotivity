@@ -1,7 +1,6 @@
 
 #include <iostream>
 
-#include <ifaddrs.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
