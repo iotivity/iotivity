@@ -27,8 +27,6 @@
 
 #include <IServerWrapper.h>
 
-using namespace OC::OCReflect;
-
 namespace OC
 {
     class InProcServerWrapper : public IServerWrapper

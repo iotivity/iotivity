@@ -29,8 +29,6 @@
 #include <OCException.h>
 #include <OCApi.h>
 
-using namespace OC::OCReflect;
-
 namespace OC
 {
     class IServerWrapper

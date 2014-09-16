@@ -35,10 +35,6 @@ namespace OC
     class OCResourceResponse;
 } // namespace OC
 
-namespace OC { namespace OCReflect {
-    struct entity;
-}} // namespace OC::OCReflect
-
 namespace OC
 {
     enum class OCPlatformStatus

@@ -35,9 +35,6 @@
 #include <OCApi.h>
 #include <OCUtilities.h>
 
-
-using namespace OC::OCReflect;
-
 using namespace std;
 
 std::map <OCResourceHandle, OC::RegisterCallback>  entityHandlerMap;
