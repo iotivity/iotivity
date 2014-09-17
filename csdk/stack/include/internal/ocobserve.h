@@ -36,10 +36,10 @@
 
 /* This information is stored for each registerd observer */
 typedef struct ResourceObserver {
+    // Observation Identifier for request
+    OCObservationId observeId;
     // URI of observed resource
     unsigned char *resUri;
-    //Quality of service of the request
-    OCQualityOfService qos;
     // Query
     unsigned char *query;
     // CoAP token for the observe request
@@ -48,6 +48,8 @@ typedef struct ResourceObserver {
     OCResource *resource;
     // IP address & port of client registered for observe
     OCDevAddr *addr;
+    // Quality of service of the request
+    OCQualityOfService qos;
     // number of times the server failed to reach the observer
     uint8_t failedCommCount;
     // number of times the server sent NON notifications
@@ -66,14 +68,20 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
 
 void DeleteObserverList();
 
-OCStackResult AddObserver ( const char   *resUri,
-                            const char   *query,
-                            OCCoAPToken * token,
-                            OCDevAddr    *addr,
-                            OCResource   *resHandle,
-                            OCQualityOfService qos);
-OCStackResult DeleteObserver (OCCoAPToken * token);
+OCStackResult GenerateObserverId (OCObservationId *observationId);
 
-ResourceObserver* GetObserver (const OCCoAPToken * token);
+OCStackResult AddObserver (const char         *resUri,
+                           const char         *query,
+                           OCObservationId    obsId,
+                           OCCoAPToken        *token,
+                           OCDevAddr          *addr,
+                           OCResource         *resHandle,
+                           OCQualityOfService qos);
+
+OCStackResult DeleteObserverUsingToken (OCCoAPToken * token);
+
+ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token);
+
+ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
 
 #endif //OC_OBSERVE_H

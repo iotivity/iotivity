@@ -171,7 +171,7 @@ void *ChangeLEDRepresentation (void *param)
         if (gLEDUnderObservation)
         {
      OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", LED.power);
-            result = OCNotifyObservers (LED.handle);
+            result = OCNotifyAllObservers (LED.handle);
             if (OC_STACK_NO_OBSERVERS == result)
             {
                 gLEDUnderObservation = 0;
@@ -222,7 +222,7 @@ int main() {
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-        sleep(3);
+        sleep(2);
     }
 
     OC_LOG(INFO, TAG, "Exiting ocserver main loop...");

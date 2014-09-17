@@ -271,7 +271,7 @@ OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
 }
 
 // Form the OCObserveReq struct
-OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint8_t observeOption,
+OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint32_t observeOption,
             OCDevAddr * remote, OCCoAPToken * rcvdToken)
 {
     OCObserveReq * observeReq;
@@ -323,6 +323,8 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * * entityHandle
 
     entityHandlerRequest->resJSONPayload = resBuf;
     entityHandlerRequest->resJSONPayloadLen = MAX_RESPONSE_LENGTH;
+
+    entityHandlerRequest->obsInfo = NULL;
 
     *entityHandlerRequestLoc = entityHandlerRequest;
     return OC_STACK_OK;
@@ -384,7 +386,7 @@ OCStackResult FormOCClientResponse(OCClientResponse * * clientResponseLoc,
 }
 
 OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
-        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr,
+        uint32_t * addMaxAge, uint8_t observeOptionLength, uint32_t * observeOptionPtr,
         uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
         uint8_t queryLength, unsigned char * query)
 {
@@ -486,6 +488,13 @@ SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
 
     tid = coap_send(gCoAPCtx, dst, pdu, sendFlag);
     OC_LOG_V(INFO, TAG, "TID %d", tid);
+    if(tid != COAP_INVALID_TID)
+    {
+        OC_LOG(INFO, TAG, PCF("Sending a pdu with Token:"));
+        OC_LOG_BUFFER(INFO,TAG, pdu->hdr->token, pdu->hdr->token_length);
+        res = OC_STACK_OK;
+    }
+
     if ((pdu->hdr->type != COAP_MESSAGE_CON && !delayFlag) || tid == COAP_INVALID_TID)
     {
         OC_LOG(INFO, TAG, PCF("Deleting PDU"));
@@ -494,13 +503,6 @@ SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
     else
     {
         OC_LOG(INFO, TAG, PCF("Keeping PDU, we will handle the retry/delay of this pdu"));
-    }
-
-    if(tid != COAP_INVALID_TID)
-    {
-        OC_LOG(INFO, TAG, PCF("Sending a pdu with Token:"));
-        OC_LOG_BUFFER(INFO,TAG, pdu->hdr->token, pdu->hdr->token_length);
-        res = OC_STACK_OK;
     }
 
     return res;
@@ -657,7 +659,7 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     HandleStackResponses(response);
 
 observation:
-    observer = GetObserver(token);
+    observer = GetObserverUsingToken (token);
     if(!observer)
     {
         goto exit;

@@ -35,6 +35,11 @@ using namespace std;
 
 int gObservation = 0;
 
+// Specifies where to notify all observers or list of observers
+// 0 - notifies all observers
+// 1 - notifies list of observers
+int isListOfObservers = 0;
+
 // Forward declaring the entityHandler
 void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
 
@@ -51,6 +56,7 @@ public:
     std::string m_lightUri;
     OCResourceHandle m_resourceHandle;
     OCRepresentation m_lightRep;
+    ObservationIds m_interestedObservers;
 
 public:
     /// Constructor
@@ -177,7 +183,23 @@ void * ChangeLightRepresentation (void *param)
             cout << "\nPower updated to : " << myLight.m_power << endl;
             cout << "Notifying observers with resource handle: " << myLight.getHandle() << endl;
 
-            OCStackResult result = OCPlatform::notifyObservers(myLight.getHandle());
+            OCStackResult result = OC_STACK_OK;
+
+            if(isListOfObservers)
+            {
+                std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
+
+                resourceResponse->setErrorCode(200);
+                resourceResponse->setResourceRepresentation(myLight.get(), DEFAULT_INTERFACE);
+
+                result = OCPlatform::notifyListOfObservers(  myLight.getHandle(),
+                                                             myLight.m_interestedObservers,
+                                                             resourceResponse);
+            }
+            else
+            {
+                result = OCPlatform::notifyAllObservers(myLight.getHandle());
+            }
 
             if(OC_STACK_NO_OBSERVERS == result)
             {
@@ -190,7 +212,6 @@ void * ChangeLightRepresentation (void *param)
     return NULL;
 }
 
-
 // This is just a sample implementation of entity handler.
 // Entity handler can be implemented in several ways by the manufacturer
 void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
@@ -201,15 +222,15 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
     {
         // Get the request type and request flag
         std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = request->getRequestHandlerFlag();
+        int requestFlag = request->getRequestHandlerFlag();
 
-        if(requestFlag == RequestHandlerFlag::InitFlag)
+        if(requestFlag & RequestHandlerFlag::InitFlag)
         {
             cout << "\t\trequestFlag : Init\n";
 
             // entity handler to perform resource initialization operations
         }
-        else if(requestFlag == RequestHandlerFlag::RequestFlag)
+        if(requestFlag & RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";
 
@@ -255,8 +276,22 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                 // DELETE request operations
             }
         }
-        else if(requestFlag == RequestHandlerFlag::ObserverFlag)
+        if(requestFlag & RequestHandlerFlag::ObserverFlag)
         {
+            ObservationInfo observationInfo = request->getObservationInfo();
+            if(ObserveAction::ObserveRegister == observationInfo.action)
+            {
+                myLight.m_interestedObservers.push_back(observationInfo.obsId);
+            }
+            else if(ObserveAction::ObserveUnregister == observationInfo.action)
+            {
+                myLight.m_interestedObservers.erase(std::remove(
+                                                            myLight.m_interestedObservers.begin(),
+                                                            myLight.m_interestedObservers.end(),
+                                                            observationInfo.obsId),
+                                                            myLight.m_interestedObservers.end());
+            }
+
             pthread_t threadId;
 
             cout << "\t\trequestFlag : Observer\n";
@@ -271,7 +306,6 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                 pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
                 startedThread = 1;
             }
-
         }
     }
     else
@@ -280,8 +314,37 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
     }
 }
 
-int main()
+void PrintUsage()
 {
+    std::cout << std::endl;
+    std::cout << "Usage : simplserver <isListOfObservers>\n";
+    std::cout << "   ObserveType : 0 - Observe All\n";
+    std::cout << "   ObserveType : 1 - Observe List of observers\n\n";
+}
+
+
+int main(int argc, char* argv[1])
+{
+    PrintUsage();
+
+    if (argc == 1)
+    {
+        isListOfObservers = 0;
+    }
+    else if (argc == 2)
+    {
+        int value = atoi(argv[1]);
+        if (value == 1)
+            isListOfObservers = 1;
+        else
+            isListOfObservers = 0;
+    }
+    else
+    {
+        return -1;
+    }
+
+
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,

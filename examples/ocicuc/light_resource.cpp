@@ -69,7 +69,7 @@ void LightResource::observe_function()
 
     m_power += 10;
 
-    const auto result = OCPlatform::notifyObservers(getHandle());
+    const auto result = OCPlatform::notifyAllObservers(getHandle());
 
     // Stop notifications when there are no more observers:
     if(OC_STACK_NO_OBSERVERS == result)

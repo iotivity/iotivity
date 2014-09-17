@@ -48,9 +48,41 @@ namespace OC
         std::cout << "platform destructor called" << std::endl;
     }
 
-    OCStackResult OCPlatform::notifyObservers(OCResourceHandle resourceHandle)
+    OCStackResult OCPlatform::notifyAllObservers(OCResourceHandle resourceHandle)
     {
-        return OCNotifyObservers(resourceHandle);
+        return OCNotifyAllObservers(resourceHandle);
+    }
+
+    OCStackResult OCPlatform::notifyListOfObservers(
+                                          OCResourceHandle resourceHandle,
+                                          ObservationIds& observationIds,
+                                          const std::shared_ptr<OCResourceResponse> pResponse)
+    {
+        OCStackResult result = OC_STACK_ERROR;
+
+        if(pResponse)
+        {
+            try
+            {
+                std::string payload = pResponse->getPayload();
+                unsigned char *pBuffer = new unsigned char[payload.length()+1];
+                strncpy((char*)pBuffer, payload.c_str(), payload.length() + 1);
+
+                // TODO Logging
+                printf("\tGoing from stack for List of Observers: Payload: %s\n", (char*)pBuffer);
+
+                result = OCNotifyListOfObservers(resourceHandle, &observationIds[0], 
+                                                 observationIds.size(), pBuffer);
+
+                delete(pBuffer);
+            }
+            catch(std::exception e) // TODO : define our own exception
+            {
+                throw e;
+            }
+
+            return result;
+        }
     }
 
     void OCPlatform::init(const PlatformConfig& config)

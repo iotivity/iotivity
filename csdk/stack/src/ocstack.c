@@ -351,16 +351,10 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             break;
         case OC_REST_OBSERVE:
         case OC_REST_OBSERVE_ALL:
+        case OC_REST_CANCEL_OBSERVE:
             break;
         #ifdef WITH_PRESENCE
         case OC_REST_PRESENCE:
-            requestUri = (unsigned char *) OCMalloc(strlen(requiredUri) + 1);
-            if(requestUri){
-                memcpy(requestUri, requiredUri, strlen(requiredUri) + 1);
-            }else{
-                result = OC_STACK_NO_MEMORY;
-                goto exit;
-            }
             break;
         #endif
         default:
@@ -368,11 +362,27 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             goto exit;
     }
 
+    if(strlen(requiredUri) > MAX_URI_LENGTH)
+    {
+        result = OC_STACK_INVALID_PARAM;
+        goto exit;
+    }
+
+    requestUri = (unsigned char *) OCMalloc(strlen(requiredUri) + 1);
+    if(requestUri)
+    {
+        memcpy(requestUri, requiredUri, strlen(requiredUri) + 1);
+    }
+    else
+    {
+        result = OC_STACK_NO_MEMORY;
+        goto exit;
+    }
+
     *handle = GenerateInvocationHandle();
     if(!*handle)
     {
         result = OC_STACK_NO_MEMORY;
-        OCFree(*handle);
         goto exit;
     }
 
@@ -384,6 +394,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         OCFree(token);
         goto exit;
     }
+
     if((result = AddClientCB(&clientCB, cbData, token, *handle, method, requestUri)) != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
@@ -411,43 +422,59 @@ exit:
  *     OC_STACK_OK               - No errors; Success
  *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
  */
-OCStackResult OCCancel(OCDoHandle handle) {
+OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos) {
     /*
-     * This ftn can be implemented one of two ways:
+     * This ftn is implemented one of two ways in the case of observation:
      *
-     * 1. When observe is unobserved..Remove the callback associated on client side.
-     *      When the next notification comes in from server, reply with RESET message to server.
-     *
-     * 2. When OCCancel is called, and it is associated with an observe request
-     *      (i.e. ClientCB->method == OC_REST_OBSERVE || OC_REST_OBSERVE_ALL),
-     *      Send Observe request to server with observe flag = OC_RESOURCE_OBSERVE_DEREGISTER.
+     * 1. qos == OC_NON_CONFIRMABLE. When observe is unobserved..
      *      Remove the callback associated on client side.
+     *      When the next notification comes in from server,
+     *      reply with RESET message to server.
+     *      Keep in mind that the server will react to RESET only
+     *      if the last notification was sent ans CON
      *
-     *      Number 1 is implemented here.
+     * 2. qos == OC_CONFIRMABLE. When OCCancel is called,
+     *      and it is associated with an observe request
+     *      (i.e. ClientCB->method == OC_REST_OBSERVE || OC_REST_OBSERVE_ALL),
+     *      Send CON Observe request to server with
+     *      observe flag = OC_RESOURCE_OBSERVE_DEREGISTER.
+     *      Remove the callback associated on client side.
      */
+    OCStackResult ret = OC_STACK_OK;
+
     if(!handle) {
         return OC_STACK_INVALID_PARAM;
     }
 
     OC_LOG(INFO, TAG, PCF("Entering OCCancel"));
 
-    ClientCB *clientCB = GetClientCB(NULL, &handle, NULL);
+    ClientCB *clientCB = GetClientCB(NULL, handle, NULL);
 
     if(clientCB) {
         switch (clientCB->method)
         {
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
+                if(qos == OC_CONFIRMABLE)
+                {
+                    ret = OCDoCoAPResource(OC_REST_CANCEL_OBSERVE, qos,
+                            clientCB->token, (const char *) clientCB->requestUri, NULL);
+                }
+                else
+                {
+                    FindAndDeleteClientCB(clientCB);
+                }
+                break;
             #ifdef WITH_PRESENCE
             case OC_REST_PRESENCE:
-            #endif
                 FindAndDeleteClientCB(clientCB);
                 break;
+            #endif
             default:
                 return OC_STACK_INVALID_METHOD;
         }
     }
-    return OC_STACK_OK;
+    return ret;
 }
 #ifdef WITH_PRESENCE
 OCStackResult OCProcessPresence()
@@ -580,7 +607,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         OCCoAPToken * token = OCGenerateCoAPToken();
         OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
         //add the presence observer
-        AddObserver(OC_PRESENCE_URI, NULL, token, &multiCastAddr,
+        AddObserver(OC_PRESENCE_URI, NULL, 0, token, &multiCastAddr,
             (OCResource *)presenceResource.handle, OC_NON_CONFIRMABLE);
     }
 
@@ -588,7 +615,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
     // a different random 32-bit integer number is used
     ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
 
-    return OCNotifyObservers(presenceResource.handle);
+    return OCNotifyAllObservers(presenceResource.handle);
 }
 
 /**
@@ -609,7 +636,7 @@ OCStackResult OCStopPresence()
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
-    result = OCNotifyObservers(presenceResource.handle);
+    result = OCNotifyAllObservers(presenceResource.handle);
     return result;
 }
 #endif
@@ -679,6 +706,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         goto exit;
     }
     memset(pointer, 0, sizeof(OCResource));
+    pointer->sequenceNum = OC_OFFSET_SEQUENCE_NUMBER;
 
     insertResource(pointer);
 
@@ -729,7 +757,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle);
     }
     #endif
 exit:
@@ -790,7 +818,7 @@ OCStackResult OCBindResource(
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle);
     }
     #endif
 
@@ -848,7 +876,7 @@ OCStackResult OCUnBindResource(
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle);
     }
     #endif
 
@@ -915,7 +943,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle);
     }
     #endif
 
@@ -984,7 +1012,7 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle);
     }
     #endif
 
@@ -1068,7 +1096,7 @@ OCStackResult OCDeleteResource(OCResourceHandle handle) {
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle);
     }
     #endif
 
@@ -1286,7 +1314,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle);
     }
     #endif
 
@@ -1324,7 +1352,7 @@ void incrementSequenceNumber(OCResource * resPtr)
     resPtr->sequenceNum += 1;
     if (resPtr->sequenceNum == MAX_SEQUENCE_NUMBER)
     {
-        resPtr->sequenceNum = 1;
+        resPtr->sequenceNum = OC_OFFSET_SEQUENCE_NUMBER+1;
     }
     return;
 }
@@ -1332,20 +1360,20 @@ void incrementSequenceNumber(OCResource * resPtr)
 /**
  * Notify observers that an observed value has changed.
  *
- *
  * @param handle - handle of resource
  *
  * @return
  *     OC_STACK_OK    - no errors
- *     OC_STACK_ERROR - stack not initialized
+ *     OC_STACK_NO_RESOURCE - invalid resource handle
+ *     OC_STACK_NO_OBSERVERS - no more observers intrested in resource
  */
-OCStackResult OCNotifyObservers(OCResourceHandle handle) {
+OCStackResult OCNotifyAllObservers(OCResourceHandle handle) {
     OCResource *resPtr = NULL;
     OCStackResult result;
     OCMethod method = OC_REST_NOMETHOD;
     uint32_t maxAge = 0;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCNotifyObservers"));
+    OC_LOG(INFO, TAG, PCF("Entering OCNotifyAllObservers"));
 
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_ERROR);
 
@@ -1381,6 +1409,112 @@ OCStackResult OCNotifyObservers(OCResourceHandle handle) {
         #endif
         result = SendObserverNotification (method, resPtr, maxAge);
         return result;
+    }
+}
+
+OCStackResult
+OCNotifyListOfObservers (OCResourceHandle handle,
+                         OCObservationId  *obsIdList,
+                         uint8_t          numberOfIds,
+                         unsigned char    *notificationJSONPayload)
+{
+    OC_LOG(INFO, TAG, PCF("Entering OCNotifyListOfObservers"));
+
+    VERIFY_NON_NULL(handle, ERROR, OC_STACK_ERROR);
+    VERIFY_NON_NULL(obsIdList, ERROR, OC_STACK_ERROR);
+    VERIFY_NON_NULL(notificationJSONPayload, ERROR, OC_STACK_ERROR);
+
+    uint8_t numIds = numberOfIds;
+    ResourceObserver *observation;
+    OCResource *resPtr = NULL;
+    uint32_t maxAge = 0;
+    unsigned char bufNotify[MAX_RESPONSE_LENGTH] = {0};
+    unsigned char *currPtr;
+    OCQualityOfService qos = OC_NON_CONFIRMABLE;
+    uint8_t numSentNotification = 0;
+
+    // Verify the notification payload length does not exceed the maximim
+    // the stack can handle
+    if ((strlen((char *)notificationJSONPayload) +
+         OC_JSON_PREFIX_LEN + OC_JSON_SUFFIX_LEN) > MAX_RESPONSE_LENGTH)
+    {
+        OC_LOG(INFO, TAG, PCF("Observe notification message length too long"));
+        return OC_STACK_ERROR;
+    }
+
+    // Verify that the resource exists
+    resPtr = findResource ((OCResource *) handle);
+    if (NULL == resPtr || myStackMode == OC_CLIENT)
+    {
+        return OC_STACK_NO_RESOURCE;
+    }
+    else
+    {
+        incrementSequenceNumber(resPtr);
+        //TODO: we should allow the serve to define thisl
+        maxAge = 0x2FFFF;
+    }
+
+    while (numIds)
+    {
+        OC_LOG_V(INFO, TAG, "Need to notify observation id %d", *obsIdList);
+        observation = NULL;
+        observation = GetObserverUsingId (*obsIdList);
+        if (observation)
+        {
+            // Found observation - verify if it matches the resource handle
+            if (observation->resource == resPtr)
+            {
+                strcpy((char*)bufNotify, OC_JSON_PREFIX);
+                currPtr = bufNotify + OC_JSON_PREFIX_LEN;
+                memcpy (currPtr, notificationJSONPayload, strlen((char *)notificationJSONPayload));
+                currPtr += strlen((char *)notificationJSONPayload);
+                strcpy((char*)currPtr, OC_JSON_SUFFIX);
+
+                // send notifications based on the qos of the request
+                qos = observation->qos;
+                if(qos == OC_NON_CONFIRMABLE)
+                {
+                    OC_LOG_V(INFO, TAG, "Current NON count for this observer is %d",
+                            observation->NONCount);
+                    if(observation->forceCON \
+                            || observation->NONCount >= MAX_OBSERVER_NON_COUNT)
+                    {
+                        observation->NONCount = 0;
+                        // at some point we have to to send CON to check on the
+                        // availability of observer
+                        OC_LOG(INFO, TAG, PCF("This time we are sending the \
+                                notification as CON"));
+                        qos = OC_CONFIRMABLE;
+                    }
+                    else
+                    {
+                        observation->NONCount++;
+                    }
+                }
+                OCSendCoAPNotification (observation->resUri, observation->addr,
+                                        OC_STACK_OK, qos,
+                                        observation->token,
+                                        bufNotify, resPtr->sequenceNum, maxAge);
+                numSentNotification++;
+            }
+        }
+        obsIdList++;
+        numIds--;
+    }
+    if(numSentNotification == numberOfIds)
+    {
+        return OC_STACK_OK;
+    }
+    else if(numSentNotification == 0)
+    {
+        return OC_STACK_NO_OBSERVERS;
+    }
+    else
+    {
+        //TODO: we need to signal that not every one in the
+        // list got an update, should we also indicate who did not receive on?
+        return OC_STACK_OK;
     }
 }
 

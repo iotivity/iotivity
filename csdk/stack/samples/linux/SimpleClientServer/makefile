@@ -18,8 +18,8 @@
 # //
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
-# override with `make BUILD=release`
-# default to debug build
+# override with `make BUILD=debug`
+# default to release build
 BUILD	 := release
 PLATFORM := linux
 CC	 := g++

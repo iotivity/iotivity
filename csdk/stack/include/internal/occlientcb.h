@@ -114,7 +114,7 @@ void DeleteClientCB(ClientCB *cbNode);
  * @retval address of the node if found, otherwise NULL
  */
 //------------------------------------------------------------------------
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle, unsigned char * requestUri);
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * requestUri);
 
 //-- DeleteClientCBList --------------------------------------------------
 /** @ingroup ocstack

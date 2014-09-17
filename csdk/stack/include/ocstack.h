@@ -31,7 +31,8 @@ extern "C" {
 // Defines
 //-----------------------------------------------------------------------------
 
-//May want to refactor this in upcoming sprints. Don't want to expose to application layer that lower level stack is using CoAP.
+//TODO: May want to refactor this in upcoming sprints.
+//Don't want to expose to application layer that lower level stack is using CoAP.
 #define OC_WELL_KNOWN_QUERY                  "coap://224.0.1.187:5683/oc/core"
 #define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "coap://224.0.1.187:5683/oc/core?rt=core.led"
 #define OC_MULTICAST_PREFIX                  "coap://224.0.1.187:5683"
@@ -69,10 +70,15 @@ typedef enum {
     OC_REST_PUT         = (1 << 1),     // Write
     OC_REST_POST        = (1 << 2),     // Update
     OC_REST_DELETE      = (1 << 3),     // Delete
-    OC_REST_OBSERVE     = (1 << 4),     // Register observe request for most up date notifications ONLY.
-    OC_REST_OBSERVE_ALL = (1 << 5),     // Register observe request for all notifications, including stale notifications.
+    // Register observe request for most up date notifications ONLY.
+    OC_REST_OBSERVE     = (1 << 4),
+    // Register observe request for all notifications, including stale notifications.
+    OC_REST_OBSERVE_ALL = (1 << 5),
+    // Deregister observation, intended for internal use
+    OC_REST_CANCEL_OBSERVE = (1 << 6),
     #ifdef WITH_PRESENCE
-    OC_REST_PRESENCE    = (1 << 6)      // Subscribe for all presence notifications of a particular resource.
+    // Subscribe for all presence notifications of a particular resource.
+    OC_REST_PRESENCE    = (1 << 7)
     #endif
 } OCMethod;
 
@@ -145,6 +151,30 @@ typedef void * OCDoHandle;
 typedef void * OCResourceHandle;
 
 /**
+ * Unique identifier for each observation request. Used when observations are
+ * registered or deregistering. Used by entity handler to signal specific
+ * observers to be notified of resource changes.
+ * There can be maximum of 256 observations per server.
+ */
+typedef uint8_t OCObservationId;
+
+/**
+ * Action associated with observation
+ */
+typedef enum {
+    OC_OBSERVE_REGISTER = 0,
+    OC_OBSERVE_DEREGISTER = 1,
+    OC_OBSERVE_NO_OPTION = 2
+} OCObserveAction;
+
+typedef struct {
+    // Action associated with observation request
+    OCObserveAction action;
+    // Identifier for observation being registered/deregistered
+    OCObservationId obsId;
+} OCObservationInfo;
+
+/**
  * Incoming requests handled by the server. Requests are passed in as a parameter to the @ref OCEntityHandler callback API.
  * @brief The @ref OCEntityHandler callback API must be implemented in the application in order to receive these requests.
  */
@@ -161,6 +191,9 @@ typedef struct {
     unsigned char * resJSONPayload;
     // Length of maximum allowed response
     uint16_t resJSONPayloadLen;
+    // Information associated with observation - valid only when OCEntityHandler
+    // flag includes OC_OBSERVE_FLAG
+    OCObservationInfo *obsInfo;
 }OCEntityHandlerRequest;
 
 /**
@@ -293,12 +326,12 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *req
  * Cancel a request associated with a specific @ref OCDoResource invocation.
  *
  * @param handle - Used to identify a specific OCDoResource invocation.
- *
+ * @param qos    - valid only when handle is for an observe method.
  * @return
  *     OC_STACK_OK               - No errors; Success
  *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
  */
-OCStackResult OCCancel(OCDoHandle handle);
+OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos);
 
 #ifdef WITH_PRESENCE
 /**
@@ -557,17 +590,41 @@ OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHa
 OCEntityHandler OCGetResourceHandler(OCResourceHandle handle);
 
 /**
- * Notify observers that an observed value has changed.
- *
- *   **NOTE: This API has NOT been finalized!!!**
+ * Notify all registered observers that the resource representation has
+ * changed. If observation includes a query the client is notified only
+ * if the query is valid after the resource representation has changed.
  *
  * @param handle - handle of resource
  *
  * @return
  *     OC_STACK_OK    - no errors
- *     OC_STACK_ERROR - stack not initialized
+ *     OC_STACK_NO_RESOURCE - invalid resource handle
+ *     OC_STACK_NO_OBSERVERS - no more observers intrested in resource
  */
-OCStackResult OCNotifyObservers(OCResourceHandle handle);
+OCStackResult OCNotifyAllObservers(OCResourceHandle handle);
+
+/**
+ * Notify specific observers with updated value of representation.
+ * Before this API is invoked by entity handler it has finished processing
+ * queries for the associated observers.
+ *
+ * @param handle - handle of resource
+ * @param obsIdList - list of observation ids that need to be notified
+ * @param numberOfIds - number of observation ids included in obsIdList
+ * @param notificationJSONPayload - JSON encoded payload to send in notification
+ * NOTE: The memory for obsIdList and notificationJSONPayload is managed by the
+ * entity invoking the API. The maximum size of the notification is 1015 bytes
+ * for non-Arduino platforms. For Arduino the maximum size is 247 bytes.
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_NO_RESOURCE - invalid resource handle
+ */
+OCStackResult
+OCNotifyListOfObservers (OCResourceHandle handle,
+                         OCObservationId  *obsIdList,
+                         uint8_t          numberOfIds,
+                         unsigned char    *notificationJSONPayload);
 
 #ifdef __cplusplus
 }

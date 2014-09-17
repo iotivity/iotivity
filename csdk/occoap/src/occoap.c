@@ -76,7 +76,7 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
     // silence warnings
     (void) ctx;
 
-    OCStackResult result = OC_STACK_ERROR;
+    OCStackResult result = OC_STACK_OK;
     OCCoAPToken * sentToken = NULL;
     uint8_t * observeOption = NULL;
     coap_pdu_t * sentPdu = sentQueue->pdu;
@@ -91,18 +91,26 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
 
     if(msgType == COAP_MESSAGE_RST){
         // now the observer should be deleted
-        result = OCObserverStatus(sentToken, OC_OBSERVER_NOT_INTERESTED);
-        if(result == OC_STACK_OK){
-            OC_LOG_V(DEBUG, TAG, "Received RST, removing all queues associated with Token %d bytes",sentToken->tokenLength);
-            OC_LOG_BUFFER(INFO, TAG, sentToken->token, sentToken->tokenLength);
-            coap_cancel_all_messages(ctx, &sentQueue->remote, sentToken->token,
-                    sentToken->tokenLength);
+        if(myStackMode != OC_CLIENT)
+        {
+            result = OCObserverStatus(sentToken, OC_OBSERVER_NOT_INTERESTED);
+            if(result == OC_STACK_OK){
+                OC_LOG_V(DEBUG, TAG,
+                        "Received RST, removing all queues associated with Token %d bytes",
+                        sentToken->tokenLength);
+                OC_LOG_BUFFER(INFO, TAG, sentToken->token, sentToken->tokenLength);
+                coap_cancel_all_messages(ctx, &sentQueue->remote, sentToken->token,
+                        sentToken->tokenLength);
+            }
         }
     }else if(observeOption && msgType == COAP_MESSAGE_ACK){
         OC_LOG_V(DEBUG, TAG, "Received ACK, for Token %d bytes",sentToken->tokenLength);
         OC_LOG_BUFFER(INFO, TAG, sentToken->token, sentToken->tokenLength);
         // now the observer is still interested
-        OCObserverStatus(sentToken, OC_OBSERVER_STILL_INTERESTED);
+        if(myStackMode != OC_CLIENT)
+        {
+            OCObserverStatus(sentToken, OC_OBSERVER_STILL_INTERESTED);
+        }
     }
 
     exit:
@@ -139,7 +147,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = { 0 };
     uint8_t * rcvObserveOption = NULL;
     unsigned char * bufReqPayload = NULL;
-    uint8_t observeOption = OC_RESOURCE_NO_OBSERVE;
+    uint32_t observeOption = OC_RESOURCE_NO_OBSERVE;
 
     coap_pdu_t * recvPdu = rcvdRequest->pdu;
 
@@ -147,7 +155,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     result = ParseCoAPPdu(recvPdu, rcvdUri, rcvdQuery, &rcvObserveOption, NULL, &bufReqPayload);
     VERIFY_SUCCESS(result, OC_STACK_OK);
     if(rcvObserveOption){
-        observeOption = (uint8_t)(*rcvObserveOption);
+        observeOption = (uint32_t)(*rcvObserveOption);
     }
 
     // fill OCCoAPToken structure
@@ -187,9 +195,8 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     }
     #endif
 
-    TODO("we should return the same registration option; however, this will confuse the receiver \
-             whether it is a sequence number or registration option!------------");
-    OC_LOG_V(INFO, TAG, "Response from ocstack: %s", request->entityHandlerRequest->resJSONPayload);
+    OC_LOG_V(INFO, TAG, "Response from ocstack: %s",
+            request->entityHandlerRequest->resJSONPayload);
 
     if(rcvdObsReq)
     {
@@ -197,8 +204,9 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
         {
         case OC_STACK_OK:
             observeOption = rcvdObsReq->option;
-            result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
-                                    0, NULL, 0, NULL);
+            result = FormOptionList(&optList, &mediaType, &maxAge,
+                    sizeof(observeOption), &observeOption,
+                    NULL, 0, NULL, 0, NULL);
             break;
         case OC_STACK_OBSERVER_NOT_ADDED:
         case OC_STACK_OBSERVER_NOT_REMOVED:
@@ -257,7 +265,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     unsigned char * bufRes = NULL;
     uint8_t * rcvObserveOption = NULL;
     uint8_t * rcvMaxAgeOption = NULL;
-    uint32_t sequenceNumber = 0;
+    uint32_t sequenceNumber = OC_RESOURCE_NO_OBSERVE;
     uint32_t maxAge = 0;
     OCStackResult result = OC_STACK_ERROR;
     coap_pdu_t *sendPdu = NULL;
@@ -293,7 +301,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     OC_LOG_V(DEBUG, TAG, "The maxAge/TTL of this response %u", maxAge);
     OC_LOG_V(DEBUG, TAG, "The response received is %s", bufRes);
 
-    if(sequenceNumber != 0)
+    if(sequenceNumber >= OC_OFFSET_SEQUENCE_NUMBER)
     {
         isObserveNotification = 1;
         OC_LOG(INFO, TAG, PCF("Received an observe notification"));
@@ -355,8 +363,11 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                 result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote,
                         sendPdu, 0);
             }
+            //TODO: check the standard for methods to detect wrap around condition
             if(cbNode->method == OC_REST_OBSERVE &&
-                    clientResponse->sequenceNumber <= cbNode->sequenceNumber)
+                    (clientResponse->sequenceNumber <= cbNode->sequenceNumber ||
+                            (clientResponse->sequenceNumber > cbNode->sequenceNumber &&
+                                    clientResponse->sequenceNumber == MAX_SEQUENCE_NUMBER)))
             {
                 OC_LOG_V(DEBUG, TAG, "Observe notification came out of order. \
                         Ignoring Incoming:%d  Against Current:%d.",
@@ -555,7 +566,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
     coap_list_t *optList = NULL;
     uint8_t coapMsgType;
     uint8_t coapMethod;
-    uint8_t observeOption;
+    uint32_t observeOption;
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoCoAPResource"));
 
@@ -600,11 +611,12 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
             break;
         case OC_REST_OBSERVE_ALL:
         case OC_REST_OBSERVE:
+        case OC_REST_CANCEL_OBSERVE:
             coapMethod = COAP_REQUEST_GET;
-            observeOption = OC_RESOURCE_OBSERVE_REGISTER;
+            observeOption = (method == OC_REST_CANCEL_OBSERVE)?
+                    OC_RESOURCE_OBSERVE_DEREGISTER:OC_RESOURCE_OBSERVE_REGISTER;
             coap_insert(&optList, CreateNewOptionNode(COAP_OPTION_OBSERVE,
-                        sizeof(observeOption), &observeOption), OrderOptions);
-
+                        sizeof(observeOption), (uint8_t *)&observeOption), OrderOptions);
             break;
         default:
             coapMethod = OC_REST_NOMETHOD;
@@ -654,8 +666,8 @@ OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr, O
     else
     {
     #endif
-        result = FormOptionList(&optList, &mediaType, &maxAge, 4,
-                (uint8_t *)(&seqNum), NULL, strlen((char *)uri), uri, 0, NULL);
+        result = FormOptionList(&optList, &mediaType, &maxAge, sizeof(seqNum),
+                &seqNum, NULL, strlen((char *)uri), uri, 0, NULL);
     #ifdef WITH_PRESENCE
     }
     #endif

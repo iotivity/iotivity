@@ -62,15 +62,18 @@ namespace OC
         const QueryParamsMap& getQueryParameters() const {return m_queryParameters;}
 
         /**
-        *  Retrieves the request handler flag type. This can be either INIT flag or REQUEST flag or OBSERVE flag.
+        *  Retrieves the request handler flag type. This can be either INIT flag or 
+        *  REQUEST flag or OBSERVE flag.
         *  NOTE:
-        *  INIT indicates that the vendor's entity handler should go and perform initialization operations
-        *  REQUEST indicates that it is a request of certain type (GET/PUT/POST/DELETE) and entity handler needs to perform
-        *  corresponding operations
-        *  OBSERVE indicates that the request is of type Observe and entity handler needs to perform corresponding operations
-        *  @return std::string type of request flag
+        *  INIT indicates that the vendor's entity handler should go and perform 
+        *  initialization operations
+        *  REQUEST indicates that it is a request of certain type (GET/PUT/POST/DELETE) 
+        *  and entity handler needs to perform corresponding operations
+        *  OBSERVE indicates that the request is of type Observe and entity handler 
+        *  needs to perform corresponding operations
+        *  @return int type of request flag
         */
-        RequestHandlerFlag getRequestHandlerFlag() const {return m_requestHandlerFlag;}
+        int getRequestHandlerFlag() const {return m_requestHandlerFlag;}
 
         /**
         *  Provides the entire resource attribute representation
@@ -78,11 +81,18 @@ namespace OC
         */
         const OCRepresentation& getResourceRepresentation() const {return m_representation;}
 
+        /**
+        *  Provides the entire resource representation
+        *  @return OCRepresentation reference which provides entire resource information
+        */
+        const ObservationInfo& getObservationInfo() const {return m_observationInfo;}
+
     private:
         std::string m_requestType;
         QueryParamsMap m_queryParameters;
-        RequestHandlerFlag m_requestHandlerFlag;
+        int m_requestHandlerFlag;
         OCRepresentation m_representation;
+        ObservationInfo m_observationInfo;
 
     public:
         // TODO: This is not a public API for app developers.
@@ -138,10 +148,18 @@ namespace OC
 
         // TODO: This is not a public API for app developers.
         // This function will not be exposed in future
-        void setRequestHandlerFlag(RequestHandlerFlag requestHandlerFlag)
+        void setRequestHandlerFlag(int requestHandlerFlag)
         {
             m_requestHandlerFlag = requestHandlerFlag;
         }
+
+        // TODO: This is not a public API for app developers.
+        // This function will not be exposed in future
+        void setObservationInfo(const ObservationInfo& observationInfo)
+        {
+            m_observationInfo = observationInfo;
+        }
+
     };
 
 } // namespace OC

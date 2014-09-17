@@ -82,7 +82,7 @@ OCStackResult RetrieveOCCoAPToken(const coap_pdu_t * pdu,
         OCCoAPToken * * rcvdTokenLoc);
 
 // Internal function to create OCObserveReq at the server
-OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint8_t obsOption,
+OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint32_t obsOption,
             OCDevAddr * remote, OCCoAPToken * rcvdToken);
 
 // Internal function to create OCResponse struct at the client from a received coap pdu
@@ -99,7 +99,7 @@ void HandleSendQueue(coap_context_t * gCoAPCtx);
 
 // Internal function to form the standard response option list
 OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
-        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr,
+        uint32_t * addMaxAge, uint8_t observeOptionLength, uint32_t * observeOptionPtr,
         uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
         uint8_t queryLength, unsigned char * query);
 

@@ -53,6 +53,7 @@ typedef enum {
     #ifdef WITH_PRESENCE
     TEST_OBS_PRESENCE,
     #endif
+    TEST_OBS_REQ_NON_CANCEL_IMM,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -71,10 +72,10 @@ OCDoHandle gObserveDoHandle;
 OCDoHandle gPresenceHandle;
 #endif
 // After this crosses a threshold client deregisters for further notifications
-int gNumObserveNotifies = 1;
+int gNumObserveNotifies = 0;
 
 #ifdef WITH_PRESENCE
-int gNumPresenceNotifies = 1;
+int gNumPresenceNotifies = 0;
 #endif
 
 int gQuitFlag = 0;
@@ -111,6 +112,7 @@ static void PrintUsage()
     #ifdef WITH_PRESENCE
     OC_LOG(INFO, TAG, "-t 8 : Discover Resources and Initiate Nonconfirmable presence");
     #endif
+    OC_LOG(INFO, TAG, "-t 9 : Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -132,7 +134,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     {
         OC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
     }
-    else if (method == OC_REST_OBSERVE)
+    else if (method == OC_REST_OBSERVE || method == OC_REST_OBSERVE_ALL)
     {
         gObserveDoHandle = handle;
     }
@@ -188,12 +190,29 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumObserveNotifies);
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Obs Response", clientResponse->resJSONPayload);
         gNumObserveNotifies++;
-        if (gNumObserveNotifies == 3)
+        if (gNumObserveNotifies == 5)
         {
-            printf ("************************** CANCEL OBSERVE\n");
-            if (OCCancel (gObserveDoHandle) != OC_STACK_OK){
-                OC_LOG(ERROR, TAG, "Observe cancel error");
+            printf ("************************** CANCEL OBSERVE with ");
+            if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON){
+                printf ("RESET\n");
+                if (OCCancel (gObserveDoHandle, OC_NON_CONFIRMABLE) != OC_STACK_OK){
+                    OC_LOG(ERROR, TAG, "Observe cancel error");
+                }
+                return OC_STACK_DELETE_TRANSACTION;
+            }else if(TEST_CASE == TEST_OBS_REQ_NON_CANCEL_IMM){
+                printf ("Deregister\n");
+                if (OCCancel (gObserveDoHandle, OC_CONFIRMABLE) != OC_STACK_OK){
+                    OC_LOG(ERROR, TAG, "Observe cancel error");
+                }
             }
+        }
+        if(clientResponse->sequenceNumber == OC_OBSERVE_REGISTER){
+            OC_LOG(INFO, TAG, "This also serves as a registration confirmation");
+        }else if(clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER){
+            OC_LOG(INFO, TAG, "This also serves as a deregistration confirmation");
+            return OC_STACK_DELETE_TRANSACTION;
+        }else if(clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION){
+            OC_LOG(INFO, TAG, "This also tells you that registration/deregistration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
@@ -216,7 +235,7 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
         if (gNumPresenceNotifies == 15)
         {
             printf ("************************** CANCEL PRESENCE\n");
-            if (OCCancel (gPresenceHandle) != OC_STACK_OK){
+            if (OCCancel (gPresenceHandle, OC_NON_CONFIRMABLE) != OC_STACK_OK){
                 OC_LOG(ERROR, TAG, "Presence cancel error");
             }
             return OC_STACK_DELETE_TRANSACTION;
@@ -260,6 +279,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             InitPutRequest();
             break;
         case TEST_OBS_REQ_NON:
+        case TEST_OBS_REQ_NON_CANCEL_IMM:
             InitObserveRequest(OC_NON_CONFIRMABLE);
             break;
         case TEST_GET_UNAVAILABLE_RES_REQ_NON:
@@ -413,7 +433,7 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        sleep(3);
+        sleep(2);
     }
     OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 

@@ -240,7 +240,7 @@ void entityHandlerRoom(std::shared_ptr<OCResourceRequest> request, std::shared_p
     {
         // Get the request type and request flag
         std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = request->getRequestHandlerFlag();
+        int requestFlag = request->getRequestHandlerFlag();
 
         if(requestFlag == RequestHandlerFlag::InitFlag)
         {
@@ -327,7 +327,7 @@ void entityHandlerLight(std::shared_ptr<OCResourceRequest> request, std::shared_
     {
         // Get the request type and request flag
         std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = request->getRequestHandlerFlag();
+        int requestFlag = request->getRequestHandlerFlag();
 
         if(requestFlag == RequestHandlerFlag::InitFlag)
         {
@@ -397,7 +397,7 @@ void entityHandlerFan(std::shared_ptr<OCResourceRequest> request, std::shared_pt
     {
         // Get the request type and request flag
         std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = request->getRequestHandlerFlag();
+        int requestFlag = request->getRequestHandlerFlag();
 
         if(requestFlag == RequestHandlerFlag::InitFlag)
         {

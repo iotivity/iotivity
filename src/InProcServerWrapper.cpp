@@ -46,52 +46,64 @@ void defaultEntityHandler(const OC::OCResourceRequest::Ptr request, const OC::OC
 
 OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
 
-    // TODO @SASHI we need to have a better way of logging (with various levels of logging)
+    // TODO we need to have a better way of logging (with various levels of logging)
     cout << "\nIn C entity handler: " << endl;
 
-    // TODO @SASHI dow we need shared pointer?
+    // TODO do we need shared pointer?
     auto pRequest = std::make_shared<OC::OCResourceRequest>();
     auto pResponse = std::make_shared<OC::OCResourceResponse>();
 
-    // TODO @ SASHI Utility to convert from C to C++ (every).
-    switch (flag) {
-        case OC_INIT_FLAG:
-            // TODO @SASHI We can fill the common data (resource Handle, etc.. )
-            // init time.
-            pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::InitFlag);
-            break;
-        case OC_REQUEST_FLAG:
-            pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::RequestFlag);
+    // TODO Utility to convert from C to C++ (every).
+  
+    if(flag & OC_INIT_FLAG)
+    {
+        // TODO We can fill the common data (resource Handle, etc.. )
+        // init time.
+        pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::InitFlag);
+    }
+    if(flag & OC_REQUEST_FLAG)
+    {
+        pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::RequestFlag);
 
-            if(entityHandlerRequest)
+        if(entityHandlerRequest)
+        {
+            if(entityHandlerRequest->query)
             {
-                if(entityHandlerRequest->query)
-                {
-                    std::string querystr(reinterpret_cast<char*>(entityHandlerRequest->query));
+                std::string querystr(reinterpret_cast<char*>(entityHandlerRequest->query));
 
-                    OC::Utilities::QueryParamsKeyVal qp = OC::Utilities::getQueryParams(querystr);
+                OC::Utilities::QueryParamsKeyVal qp = OC::Utilities::getQueryParams(querystr);
 
-                    if(qp.size() > 0)
-                        pRequest->setQueryParams(qp);
-                }
-                if(OC_REST_GET == entityHandlerRequest->method)
+                if(qp.size() > 0)
                 {
-                    // TODO @SASHI Why strings : "GET"??
-                    pRequest->setRequestType("GET");
-                }
-
-                if(OC_REST_PUT == entityHandlerRequest->method)
-                {
-                    pRequest->setRequestType("PUT");
-                    pRequest->setPayload(std::string(reinterpret_cast<const char*>(entityHandlerRequest->reqJSONPayload)));
+                    pRequest->setQueryParams(qp);
                 }
             }
-            break;
-        case OC_OBSERVE_FLAG:
-            pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::ObserverFlag);
-            break;
-    }
+            if(OC_REST_GET == entityHandlerRequest->method)
+            {
+                // TODO Why strings : "GET"??
+                pRequest->setRequestType("GET");
+            }
 
+            if(OC_REST_PUT == entityHandlerRequest->method)
+            {
+                pRequest->setRequestType("PUT");
+                pRequest->setPayload(std::string(reinterpret_cast<const char*>
+                                            (entityHandlerRequest->reqJSONPayload)));
+            }
+        }
+    }
+    if(flag & OC_OBSERVE_FLAG)
+    {
+        pRequest->setRequestHandlerFlag(
+                   OC::RequestHandlerFlag::RequestFlag | OC::RequestHandlerFlag::ObserverFlag);
+        if(entityHandlerRequest->obsInfo)
+        {
+            OC::ObservationInfo observationInfo;
+            observationInfo.action = (OC::ObserveAction) entityHandlerRequest->obsInfo->action;
+            observationInfo.obsId = entityHandlerRequest->obsInfo->obsId;
+            pRequest->setObservationInfo(observationInfo);
+        }
+    }
 
     // Finding the corresponding CPP Application entityHandler for a given resource
     auto entityHandlerEntry = entityHandlerMap.find(entityHandlerRequest->resource);
@@ -114,10 +126,9 @@ OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
         return OC_EH_ERROR;
     }
 
-
-    if(flag == OC_REQUEST_FLAG)
+    if(flag & OC_REQUEST_FLAG)
     {
-        // TODO @SASHI we could use const reference
+        // TODO we could use const reference
         std::string payLoad = pResponse->getPayload();
 
         if(OC_REST_GET == entityHandlerRequest->method)
@@ -196,7 +207,7 @@ namespace OC
             if(result != OC_STACK_OK)
             {
                 cout << "Something wrong in OCProcess" << endl;
-                // TODO: SASHI
+                // TODO
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -252,11 +263,12 @@ namespace OC
             {
                 cout << "\tSomething wrong in creating the resource" << endl;
                 resourceHandle = (OCResourceHandle) 0;
-                // TODO: SASHI
+                // TODO
             }
             else
             {
-                cout << "\tResource creation is successful with resource handle:  " << resourceHandle << endl;
+                cout << "\tResource creation is successful with resource handle:  " 
+                     << resourceHandle << endl;
                 entityHandlerMap[resourceHandle] = eHandler;
             }
         }
