@@ -64,7 +64,7 @@ namespace OC
         virtual ~OCPlatform(void);
 
         /**
-        * API for notifying core that resource's attributes have changed.
+        * API for notifying base that resource's attributes have changed.
         *
         * @param OCResourceHandle resource handle of the resource
         *
@@ -73,7 +73,27 @@ namespace OC
         * NOTE: OCResourceHandle is defined in ocstack.h.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        static OCStackResult notifyObservers(OCResourceHandle resourceHandle);
+        static OCStackResult notifyAllObservers(OCResourceHandle resourceHandle);
+
+        /**
+        * API for notifying only specific clients that resource's attributes have changed.
+        *
+        * @param OCResourceHandle resource handle of the resource
+        * @param observationIds std vector of observationIds. These set of ids are ones which
+        * which will be notified upon resource change.
+        * @param responsePtr OCResourceResponse pointer used by app to fill the response for this
+        * resource change.
+        *
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+        *
+        * NOTE: This API is for server side only.
+        * NOTE: OCResourceHandle is defined in ocstack.h.
+        * NOTE: OCStackResult is defined in ocstack.h.
+        */
+        static OCStackResult notifyListOfObservers(
+                                OCResourceHandle resourceHandle,
+                                ObservationIds& observationIds,
+                                const std::shared_ptr<OCResourceResponse> responsePtr);
 
         /**
         * API for Service and Resource Discovery.

@@ -602,7 +602,7 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            result = OCCancel(handle);
+            result = OCCancel(handle, OC_NON_CONFIRMABLE);
         }
         else
         {
@@ -666,7 +666,7 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            result = OCCancel(handle);
+            result = OCCancel(handle, OC_NON_CONFIRMABLE);
         }
         else
         {

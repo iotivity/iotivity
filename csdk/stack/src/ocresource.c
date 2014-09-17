@@ -370,7 +370,7 @@ HandleVirtualResource (OCRequest *request, OCResource* resource)
         else
         {
             if(resource->resourceProperties & OC_ACTIVE){
-                OCNotifyObservers((OCResourceHandle) resource);
+                OCNotifyAllObservers((OCResourceHandle) resource);
             }
             result = OC_STACK_PRESENCE_DO_NOT_HANDLE;
         }
@@ -398,16 +398,24 @@ HandleResourceWithEntityHandler (OCRequest *request,
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithEntityHandler"));
 
     ehRequest->resource = (OCResourceHandle)resource;
-    // status code from entity handler is ignored unless observe call
-    resource->entityHandler(OC_REQUEST_FLAG, ehRequest);
 
-    if (request->observe != NULL)
+    // status code from entity handler is ignored unless observe call
+    if (request->observe == NULL)
     {
+        resource->entityHandler(OC_REQUEST_FLAG, ehRequest);
+    }
+    else
+    {
+        // If an observation register/deregister is included handle separately
         if (!collectionResource)
+        {
             result = ProcessObserveRequest (resource, request);
+        }
         else
-            // Observation on collection resources not supported in M1
+        {
+            // Observation on collection resources not currently supported
             result = OC_STACK_ERROR;
+        }
     }
 
     if (result == OC_STACK_OK)

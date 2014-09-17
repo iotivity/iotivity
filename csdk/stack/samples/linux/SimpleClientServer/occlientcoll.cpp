@@ -100,7 +100,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             gNumObserveNotifies++;
             if (gNumObserveNotifies == 3)
             {
-                if (OCCancel (gObserveDoHandle) != OC_STACK_OK){
+                if (OCCancel (gObserveDoHandle, OC_NON_CONFIRMABLE) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
             }
@@ -296,7 +296,7 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        sleep(3);
+        sleep(2);
     }
     OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 

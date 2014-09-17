@@ -25,8 +25,9 @@ extern "C" {
 // This value is based on the DEFAULT_LEISURE (5 seconds) defined in RFC 7252
 #define MAX_MULTICAST_DELAY_SEC (5)
 
-#define COAP_DEFAULT_RESPONSE_TIMEOUT  3 /* response timeout in seconds */
-#define COAP_DEFAULT_MAX_RETRANSMIT    3 /* max number of retransmissions */
+/* response timeout in seconds, this can not be less that the delays between calls to OCProcess*/
+#define COAP_DEFAULT_RESPONSE_TIMEOUT  2
+#define COAP_DEFAULT_MAX_RETRANSMIT    4 /* max number of retransmissions */
 #define COAP_DEFAULT_PORT           5683 /* CoAP default UDP port */
 #define COAP_DEFAULT_MAX_AGE          60 /* default maximum object lifetime in seconds */
 #ifndef COAP_MAX_PDU_SIZE

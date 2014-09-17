@@ -95,11 +95,11 @@ namespace OC
         {}
     };
 
-    enum class RequestHandlerFlag
+    enum RequestHandlerFlag
     {
-        InitFlag,
-        RequestFlag,
-        ObserverFlag
+        InitFlag = 1 << 0,
+        RequestFlag = 1 << 1,
+        ObserverFlag = 1 << 2
     };
 
     enum class ObserveType
@@ -227,6 +227,23 @@ namespace OC
 
     // Typedef for query parameter map
     typedef std::map<std::string, std::string> QueryParamsMap;
+
+    // Typedef for list of observation IDs
+    typedef std::vector<OCObservationId> ObservationIds;
+
+    enum class ObserveAction
+    {
+        ObserveRegister,
+        ObserveUnregister
+    };
+
+    typedef struct
+    {
+        // Action associated with observation request
+        ObserveAction action;
+        // Identifier for observation being registered/unregistered
+        OCObservationId obsId;
+    } ObservationInfo;
 
     // const strings for different interfaces
 

@@ -26,7 +26,7 @@
 #include <string.h>
 
 /// Module Name
-#define MOD_NAME PCF("occlientcb")
+#define TAG PCF("occlientcb")
 
 struct ClientCB *cbList = NULL;
 
@@ -58,6 +58,8 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
 void DeleteClientCB(ClientCB * cbNode) {
     if(cbNode) {
         LL_DELETE(cbList, cbNode);
+        OC_LOG(INFO, TAG, PCF("deleting tokens"));
+        OC_LOG_BUFFER(INFO, TAG, cbNode->token->token, cbNode->token->tokenLength);
         OCFree(cbNode->token);
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
@@ -77,10 +79,13 @@ void DeleteClientCB(ClientCB * cbNode) {
     }
 }
 
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle, unsigned char * requestUri) {
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * requestUri) {
     ClientCB* out = NULL;
     if(token) {
         LL_FOREACH(cbList, out) {
+            OC_LOG(INFO, TAG, PCF("comparing tokens"));
+            OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
+            OC_LOG_BUFFER(INFO, TAG, out->token->token, out->token->tokenLength);
             if((out->token->tokenLength == token->tokenLength) &&
                 (memcmp(out->token->token, token->token, token->tokenLength) == 0) ) {
                 return out;
@@ -101,7 +106,7 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle, unsigned char * 
             }
         }
     }
-    OC_LOG(INFO, MOD_NAME, PCF("Callback Not found !!"));
+    OC_LOG(INFO, TAG, PCF("Callback Not found !!"));
     return NULL;
 }
 

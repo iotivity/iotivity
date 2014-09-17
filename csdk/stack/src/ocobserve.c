@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <string.h>
 #include "ocstack.h"
 #include "ocstackconfig.h"
 #include "ocstackinternal.h"
@@ -26,7 +27,7 @@
 #include "occoap.h"
 #include "utlist.h"
 #include "debug.h"
-#include <string.h>
+#include "ocrandom.h"
 
 // Module Name
 #define MOD_NAME PCF("ocobserve")
@@ -42,27 +43,39 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
 {
     OCStackResult result = OC_STACK_ERROR;
     ResourceObserver * observer = NULL;
+    OCEntityHandlerRequest * ehRequest;
+    OCObservationInfo observationInfo;
+    unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
 
     switch(status)
     {
     case OC_OBSERVER_NOT_INTERESTED:
         OC_LOG(DEBUG, TAG, PCF("observer is not interested in our notifications anymore"));
+        observer = GetObserverUsingToken (token);
+        if(observer)
+        {
+            FormOCEntityHandlerRequest(&ehRequest, OC_REST_CANCEL_OBSERVE, bufRes, NULL, NULL);
+            ehRequest->obsInfo = &observationInfo;
+            ehRequest->obsInfo->action = OC_OBSERVE_DEREGISTER;
+            ehRequest->obsInfo->obsId = observer->observeId;
+            observer->resource->entityHandler(OC_OBSERVE_FLAG, ehRequest);
+        }
         //observer is dead, or it is not observing anymore
-        result = DeleteObserver (token);
+        result = DeleteObserverUsingToken (token);
         if(result != OC_STACK_OK)
         {
             result = OC_STACK_OBSERVER_NOT_REMOVED;
         }
         else
         {
-            OC_LOG(DEBUG, TAG, PCF("removing an observer"));
+            OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
         }
         break;
     case OC_OBSERVER_STILL_INTERESTED:
         //observer is still interested
         OC_LOG(DEBUG, TAG, PCF("observer is interested in our \
                 notifications, reset the failedCount"));
-        observer = GetObserver(token);
+        observer = GetObserverUsingToken(token);
         if(observer)
         {
             observer->forceCON = 0;
@@ -77,12 +90,18 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
     case OC_OBSERVER_FAILED_COMM:
         //observer is not reachable
         OC_LOG(DEBUG, TAG, PCF("observer is not reachable"));
-        observer = GetObserver(token);
+        observer = GetObserverUsingToken(token);
         if(observer)
         {
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
             {
-                result = DeleteObserver (token);
+                FormOCEntityHandlerRequest(&ehRequest, OC_REST_CANCEL_OBSERVE, bufRes, NULL, NULL);
+                ehRequest->obsInfo = &observationInfo;
+                ehRequest->obsInfo->action = OC_OBSERVE_DEREGISTER;
+                ehRequest->obsInfo->obsId = observer->observeId;
+                observer->resource->entityHandler(OC_OBSERVE_FLAG, ehRequest);
+
+                result = DeleteObserverUsingToken (token);
                 if(result != OC_STACK_OK)
                 {
                     result = OC_STACK_OBSERVER_NOT_REMOVED;
@@ -114,53 +133,100 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OCEntityHandlerRequest *ehReq = request->entityHandlerRequest;
     OCObserveReq *obs = request->observe;
+    OCObservationInfo observationInfo;
+    OCObservationId obsId;
+    ResourceObserver *resObs = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering ProcessObserveRequest"));
 
-    // Register new observation
     request->entityHandlerRequest->resource = (OCResourceHandle)resource;
-    ehRet = resource->entityHandler(OC_OBSERVE_FLAG, request->entityHandlerRequest);
-    if(ehRet == OC_EH_OK)
+    request->entityHandlerRequest->obsInfo = &observationInfo;
+
+    if (obs->option == OC_RESOURCE_OBSERVE_REGISTER)
     {
-        if (obs->option == OC_RESOURCE_OBSERVE_REGISTER)
+        // Request to register new observation
+        observationInfo.action = OC_OBSERVE_REGISTER;
+        // Generate observation Id for the request
+        while (1)
+        {
+            if (OC_STACK_OK != GenerateObserverId (&obsId))
+                return OC_STACK_ERROR;
+
+            // Check if observation Id already exists
+            resObs = GetObserverUsingId (obsId);
+            if (NULL == resObs)
+            {
+                OC_LOG_V(INFO, TAG, "Observation ID is %d", obsId);
+                break;
+            }
+        }
+
+        observationInfo.obsId = obsId;
+        // Register the observation request with entity handler
+        ehRet = resource->entityHandler ((OC_REQUEST_FLAG | OC_OBSERVE_FLAG),
+                                         request->entityHandlerRequest);
+        if (ehRet == OC_EH_OK)
         {
             // Add subscriber to the server observation list
-            // TODO: we need to check if the obsrever is already there using its OCDevAdd....
-            stackRet = AddObserver ((const char*)(request->resourceUrl), (const char *)(ehReq->query),
-                    obs->token, obs->subAddr, resource, request->qos);
+            stackRet = AddObserver ((const char*)(request->resourceUrl),
+                                    (const char *)(ehReq->query),
+                                    obsId, obs->token, obs->subAddr,
+                                    resource, request->qos);
             if(stackRet != OC_STACK_OK)
             {
                 obs->result = OC_STACK_OBSERVER_NOT_ADDED;
+                stackRet = OC_STACK_OBSERVER_NOT_ADDED;
+                // If the observation was not added in the stack notify the entity handler
+                observationInfo.action = OC_OBSERVE_DEREGISTER;
+                // If the entity handler is unable to deregister, stack cannot do anything,
+                // hence the return value from entity handler is not being checked
+                resource->entityHandler (OC_OBSERVE_FLAG, request->entityHandlerRequest);
             }
             else
             {
-                OC_LOG(DEBUG, TAG, PCF("adding an observer"));
-            }
-        }
-        else if (obs->option == OC_RESOURCE_OBSERVE_DEREGISTER)
-        {
-            // Deregister observation
-            stackRet = DeleteObserver (obs->token);
-            if(stackRet != OC_STACK_OK)
-            {
-                obs->result = OC_STACK_OBSERVER_NOT_REMOVED;
-            }
-            else
-            {
-                OC_LOG(DEBUG, TAG, PCF("removing an observer"));
+                OC_LOG(DEBUG, TAG, PCF("Added observer successfully"));
             }
         }
         else
         {
-            // Invalid option
-            OC_LOG(ERROR, TAG, PCF("Invalid CoAP observe option"));
-            obs->result = OC_STACK_INVALID_OBSERVE_PARAM;
+            stackRet = OC_STACK_OBSERVER_NOT_ADDED;
         }
-        stackRet = OC_STACK_OK;
+    }
+    else if (obs->option == OC_RESOURCE_OBSERVE_DEREGISTER)
+    {
+        // Request to deregister observation
+        observationInfo.action = OC_OBSERVE_DEREGISTER;
+
+        // Get observation Id using token
+        resObs = GetObserverUsingToken (obs->token);
+        if (NULL == resObs)
+        {
+            // Stack does not contain this observation request
+            // Either token is incorrect or observation list is corrupted
+            return OC_STACK_ERROR;
+        }
+        observationInfo.action = OC_OBSERVE_DEREGISTER;
+        observationInfo.obsId = resObs->observeId;
+        // Deregister the observation with entity handler. Ignoring return value
+        // from entity handler and deleting the observation from stack
+        resource->entityHandler ((OC_REQUEST_FLAG | OC_OBSERVE_FLAG),
+                                 request->entityHandlerRequest);
+        stackRet = DeleteObserverUsingToken (obs->token);
+        if(stackRet != OC_STACK_OK)
+        {
+            obs->result = OC_STACK_OBSERVER_NOT_REMOVED;
+            stackRet = OC_STACK_OBSERVER_NOT_REMOVED;
+        }
+        else
+        {
+            OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
+        }
     }
     else
     {
-        stackRet = OC_STACK_ERROR;
+        // Invalid observe option
+        OC_LOG(ERROR, TAG, PCF("Invalid CoAP observe option"));
+        obs->result = OC_STACK_INVALID_OBSERVE_PARAM;
     }
     return stackRet;
 }
@@ -264,11 +330,24 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
     return stackRet;
 }
 
-OCStackResult AddObserver (const char   *resUri,
-                           const char   *query,
-                           OCCoAPToken * token,
-                           OCDevAddr    *addr,
-                           OCResource   *resHandle,
+OCStackResult GenerateObserverId (OCObservationId *observationId)
+{
+    OC_LOG(INFO, TAG, PCF("Entering GenerateObserverId"));
+
+    VERIFY_NON_NULL (observationId);
+    *observationId = OCGetRandomByte();
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+}
+
+OCStackResult AddObserver (const char         *resUri,
+                           const char         *query,
+                           OCObservationId    obsId,
+                           OCCoAPToken        *token,
+                           OCDevAddr          *addr,
+                           OCResource         *resHandle,
                            OCQualityOfService qos)
 {
     ResourceObserver *obsNode = NULL;
@@ -277,6 +356,7 @@ OCStackResult AddObserver (const char   *resUri,
     obsNode = (ResourceObserver *) OCMalloc(sizeof(ResourceObserver));
     if (obsNode)
     {
+        obsNode->observeId = obsId;
         obsNode->resUri = (unsigned char *)OCMalloc(strlen(resUri)+1);
         VERIFY_NON_NULL (obsNode->resUri);
         memcpy (obsNode->resUri, resUri, strlen(resUri)+1);
@@ -313,7 +393,25 @@ exit:
     return OC_STACK_NO_MEMORY;
 }
 
-ResourceObserver* GetObserver (const OCCoAPToken * token)
+ResourceObserver* GetObserverUsingId (const OCObservationId observeId)
+{
+    ResourceObserver *out = NULL;
+
+    if (observeId)
+    {
+        LL_FOREACH (serverObsList, out)
+        {
+            if (out->observeId == observeId)
+            {
+                return out;
+            }
+        }
+    }
+    OC_LOG(INFO, TAG, PCF("Observer node not found!!"));
+    return NULL;
+}
+
+ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
 {
     ResourceObserver *out = NULL;
 
@@ -321,6 +419,9 @@ ResourceObserver* GetObserver (const OCCoAPToken * token)
     {
         LL_FOREACH (serverObsList, out) 
         {
+            OC_LOG(INFO, TAG,PCF("comparing tokens"));
+            OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
+            OC_LOG_BUFFER(INFO, TAG, out->token->token, out->token->tokenLength);
             if((out->token->tokenLength == token->tokenLength) &&
                (memcmp(out->token->token, token->token, token->tokenLength) == 0))
             {
@@ -332,13 +433,15 @@ ResourceObserver* GetObserver (const OCCoAPToken * token)
     return NULL;
 }
 
-OCStackResult DeleteObserver (OCCoAPToken * token)
+OCStackResult DeleteObserverUsingToken (OCCoAPToken * token)
 {
     ResourceObserver *obsNode = NULL;
 
-    obsNode = GetObserver (token);
+    obsNode = GetObserverUsingToken (token);
     if (obsNode)
     {
+        OC_LOG_V(INFO, TAG, PCF("deleting tokens"));
+        OC_LOG_BUFFER(INFO, TAG, obsNode->token->token, obsNode->token->tokenLength);
         LL_DELETE (serverObsList, obsNode);
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);
@@ -356,7 +459,7 @@ void DeleteObserverList()
     ResourceObserver *tmp = NULL;
     LL_FOREACH_SAFE (serverObsList, out, tmp) 
     {
-        DeleteObserver (out->token);
+        DeleteObserverUsingToken (out->token);
     }
     serverObsList = NULL;
 }

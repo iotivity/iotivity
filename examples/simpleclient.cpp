@@ -139,7 +139,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
     }
 }
 
-// callback handler on GET request
+// Callback handler on GET request
 void onGet(const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)

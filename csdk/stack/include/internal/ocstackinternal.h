@@ -43,7 +43,7 @@ extern "C" {
 // Defines
 //-----------------------------------------------------------------------------
 #define OC_COAP_SCHEME "coap://"
-
+#define OC_OFFSET_SEQUENCE_NUMBER (4) // the first outgoing sequence number will be 5
 
 //-----------------------------------------------------------------------------
 // Virtual Resource Presence Attributes
@@ -137,7 +137,7 @@ typedef struct rsrc_t {
 
 typedef struct {
     // Observe option field
-    uint8_t option;
+    uint32_t option;
     // IP address & port of client registered for observe
     OCDevAddr *subAddr;
     // CoAP token for the observe request
