@@ -163,7 +163,7 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
 
         observationInfo.obsId = obsId;
         // Register the observation request with entity handler
-        ehRet = resource->entityHandler ((OC_REQUEST_FLAG | OC_OBSERVE_FLAG),
+        ehRet = resource->entityHandler ((OCEntityHandlerFlag)(OC_REQUEST_FLAG | OC_OBSERVE_FLAG),
                                          request->entityHandlerRequest);
         if (ehRet == OC_EH_OK)
         {
@@ -209,7 +209,7 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
         observationInfo.obsId = resObs->observeId;
         // Deregister the observation with entity handler. Ignoring return value
         // from entity handler and deleting the observation from stack
-        resource->entityHandler ((OC_REQUEST_FLAG | OC_OBSERVE_FLAG),
+        resource->entityHandler ((OCEntityHandlerFlag)(OC_REQUEST_FLAG | OC_OBSERVE_FLAG),
                                  request->entityHandlerRequest);
         stackRet = DeleteObserverUsingToken (obs->token);
         if(stackRet != OC_STACK_OK)
@@ -415,9 +415,9 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
 {
     ResourceObserver *out = NULL;
 
-    if(token) 
+    if(token)
     {
-        LL_FOREACH (serverObsList, out) 
+        LL_FOREACH (serverObsList, out)
         {
             OC_LOG(INFO, TAG,PCF("comparing tokens"));
             OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
@@ -457,7 +457,7 @@ void DeleteObserverList()
 {
     ResourceObserver *out = NULL;
     ResourceObserver *tmp = NULL;
-    LL_FOREACH_SAFE (serverObsList, out, tmp) 
+    LL_FOREACH_SAFE (serverObsList, out, tmp)
     {
         DeleteObserverUsingToken (out->token);
     }
