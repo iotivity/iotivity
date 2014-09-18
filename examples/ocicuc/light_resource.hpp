@@ -57,7 +57,9 @@ class LightResource
     private:
     inline std::string make_URI(const unsigned int resource_number)
     {
-        std::string uri = std::string("/a/light") + "_" + std::to_string(resource_number); 
+        char rn[16];
+        snprintf(rn, 16, "%d", resource_number);
+        std::string uri = std::string("/a/light") + "_" + rn;
         m_rep.setUri(uri);
         return uri;
     }
