@@ -143,9 +143,7 @@ namespace OC
             // TODO different int sizes
             std::string operator() (const int i) const
             {
-                char i_str[16];
-                snprintf(i_str, 16, "%d", i);
-                return i_str;
+                return std::to_string(i);
             }
 
             std::string operator() (const std::string& str) const
@@ -195,7 +193,7 @@ namespace OC
 
             void operator() (int& i) const
             {
-                i = atoi(m_str.c_str());
+                i = std::stoi(m_str);
             }
 
             void operator() (std::string& str) const
