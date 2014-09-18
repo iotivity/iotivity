@@ -37,7 +37,7 @@ CXX_INC	  += -I../csdk/logger/include
 CXX_INC	  += -I../csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient ocicuc
+.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc
 
 all: .PHONY
 
@@ -49,6 +49,12 @@ simpleserver: simpleserver.cpp
 
 simpleclient: simpleclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclient.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
+
+fridgeserver: fridgeserver.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ fridgeserver.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
+
+fridgeclient: fridgeclient.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ fridgeclient.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
 presenceserver: presenceserver.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceserver.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
