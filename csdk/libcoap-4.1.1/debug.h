@@ -53,7 +53,7 @@ void coap_log_impl(coap_log_t level, const char *format, ...);
 #define coap_log(...) coap_log_impl(__VA_ARGS__)
 #endif
 
-#ifndef TB_LOG
+#if !defined(TB_LOG) && !defined(NDEBUG)
 #define NDEBUG
 #endif
 
