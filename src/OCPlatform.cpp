@@ -71,7 +71,7 @@ namespace OC
                 // TODO Logging
                 printf("\tGoing from stack for List of Observers: Payload: %s\n", (char*)pBuffer);
 
-                result = OCNotifyListOfObservers(resourceHandle, &observationIds[0], 
+                result = OCNotifyListOfObservers(resourceHandle, &observationIds[0],
                                                  observationIds.size(), pBuffer);
 
                 delete(pBuffer);
@@ -80,9 +80,8 @@ namespace OC
             {
                 throw e;
             }
-
-            return result;
         }
+        return result;
     }
 
     void OCPlatform::init(const PlatformConfig& config)
@@ -206,7 +205,7 @@ namespace OC
                 }
             }
         }
-        catch(std::exception e) // TODO : define our own exception 
+        catch(std::exception e) // TODO : define our own exception
         {
             throw e;
         }
@@ -297,8 +296,8 @@ namespace OC
 
     }
 
-    OCStackResult OCPlatform::startPresence(const unsigned int announceDurationSeconds)            
-    { 
+    OCStackResult OCPlatform::startPresence(const unsigned int announceDurationSeconds)
+    {
         if(m_server)
         {
             return m_server->startPresence(announceDurationSeconds);
@@ -321,7 +320,7 @@ namespace OC
         }
     }
 
-    OCStackResult OCPlatform::subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host, 
+    OCStackResult OCPlatform::subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
         SubscribeCallback presenceHandler)
     {
         if(m_client)
