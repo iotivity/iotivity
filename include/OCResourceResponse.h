@@ -61,7 +61,8 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        *  @param attributeMap reference containing the name value pairs representing
+        *         the resource's attributes
         *  @param interface specifies the interface
         */
         void setResourceRepresentation(OCRepresentation& rep, std::string interface) {
@@ -82,7 +83,8 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param attributeMap rvalue reference containing the name value pairs representing the resource's attributes
+        *  @param attributeMap rvalue reference containing the name value pairs representing
+        *         the resource's attributes
         *  @param interface specifies the interface
         */
         void setResourceRepresentation(OCRepresentation&& rep, std::string interface) {
@@ -187,20 +189,11 @@ namespace OC
             payload << rep.getUri();
             payload << "\"" ;
 
-            payload << ",\"rep\":{";
+            payload << ",\"rep\":";
 
-            AttributeMap attributes = rep.getAttributeMap();
+            payload << rep.getJSONRepresentation();
 
-            for(auto itr = attributes.begin(); itr!= attributes.end(); ++ itr)
-            {
-                if(itr != attributes.begin())
-                {
-                    payload << ',';
-                }
-                payload << "\""<<itr->first<<"\":\""<< itr->second <<"\"";
-            }
-
-            payload << "}}";
+            payload << "}";
 
             // Children stuff
             std::vector<OCRepresentation> children = rep.getChildren();
@@ -276,20 +269,11 @@ namespace OC
                 payload << oitr->getUri();
                 payload << "\"" ;
 
-                payload << ",\"rep\":{";
+                payload << ",\"rep\":";
 
-                AttributeMap attributes = oitr->getAttributeMap();
+                payload << oitr->getJSONRepresentation();
 
-                for(AttributeMap::const_iterator itr = attributes.begin(); itr!= attributes.end(); ++ itr)
-                {
-                    if(itr != attributes.begin())
-                    {
-                        payload << ',';
-                    }
-                    payload << "\""<<itr->first<<"\":\""<< itr->second<<"\"";
-                }
-
-                payload << "}}";
+                payload << "}";
             }
 
             m_payload = payload.str();
