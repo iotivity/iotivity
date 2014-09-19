@@ -362,7 +362,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             goto exit;
     }
 
-    if(strlen(requiredUri) > MAX_URI_LENGTH)
+    if(strlen(requiredUri) > MAX_URI_LENGTH + MAX_QUERY_LENGTH)
     {
         result = OC_STACK_INVALID_PARAM;
         goto exit;
