@@ -38,4 +38,4 @@ monoprocess: monoprocess.o driver.o utility.o light_resource.o
 	$(CXX) $(CXX_FLAGS) -o $@ $^ $(CXX_LIBS)
 
 clean:
-	rm -f server.o client.o driver.o monoprocess.o server client monoprocess
+	rm -f *.o server client monoprocess
