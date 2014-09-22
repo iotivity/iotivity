@@ -2,31 +2,303 @@
 
 @page OCHowTo How To... Guides
 
-[@ref GuideBuildStack]
+@ref Guide_Stack_Init "How to initialize the stack"
+
+@ref Guide_Register_Resource "How to register a resource"
+
+@ref Guide_Find_Resource "How to find a resource"
+
+@ref Guide_PUT  "How to set resource state [PUT]"
+
+@ref Guide_GET "How to query resource state [GET]"
+
+@ref Guide_Observe "How to observe resource state [Observe]"
 
 
----
 
-@section GuideBuildStack How to build the stack
+********************************************************************
 
-This guide will provide instructions on how to build the stack. Instructions provided in this guide are tested against Ubuntu 14.10, however, Ubuntu version 12.0.4 and above are supported.
+@page Guide_Stack_Init Stack Initialization 
 
-<b> Build Environment </b>
+@section Stack_Init_SD Sequence Diagram
 
-Boost version 1.55 and G++ are required in order to build the stack. Install boot by running the following command in terminal window:
+@image html seq_stack_init.png
 
-    sudo apt-get install libboost-all-dev
+@note API calls take only important parameters. We omitted some of the parameters for clarity.
 
-Followed by installing G++ by running the following command in the terminal window:
+The asynchronous processing block handles incoming network traffic including packet processing, scheduled tasks including communication timeouts and callbacks to the application resulting from these activities.
 
-    sudo apt-get install build-essential g++
+@section Stack_Init_CPP Stack Initilization in C++
 
-At this point, your development environment should be setup.
+@code {.cpp}
+    // Create PlatformConfig object
+    PlatformConfig cfg;
+    cfg.ipAddress = "134.134.161.33";
+    cfg.port = 5683;
+    cfg.mode = ModeType::Client;
+    cfg.serviceType = ServiceType::InProc;
 
-<b> Building </b>
+    // Create a OCPlatform instance.
+    // Note: Platform creation is synchronous call.
 
-Make sure oic-resource and oic-utilites are checked out in the same directory. Provided your build environment is properly setup, navigate into oic-resource repository using the terminal, which includes the make file needed the build the stack and samples. Run the <i>make</i> command which will build all the necessary components for the stack and the sample applications.
+    try
+    {
+        OCPlatform platform(cfg);
+    }catch(OCException& e)
+    {
+        //Handle error
+    }
+@endcode
 
-All the compiled executables and libraries will be available in the same directory as the make file on successfully completing the build.
+Stack initialization in C++ consists of:
+@li Creating a OCPlatform object with Platform configuration which allows to definition of role operation (server or client), stack operation (in-process or out-of-process), etc.
+@note
+@li This is a synchronous call. The application will receive an exception if platform object creation fails.
+@li The C++ SDK handles all of the memory allocation and collection. Therefore, the application need not worry about memory management related to the stack.
+@li Platform creation happens on the main thread while the message pump happens on a worker thread.
+
+
+@section Stack_Init_C Stack Initilization in C
+
+@code {.c}
+    uint8_t ifname[] = "eth0";
+    uint8_t addr[20];
+    uint16_t port = 5683;
+
+    /*Get IP address initialize stack */
+    OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr, sizeof(addr));
+
+    /* Initialize OCStack*/
+    if (OCInit((char *) addr, port, OC_CLIENT) != OC_STACK_OK) {
+        /* Handle stack initialization failure */
+        return 0;
+    }
+
+@endcode
+
+
+
+********************************************************************
+
+@page Guide_Register_Resource Registering A Resource 
+
+Registering a resource requires two basic items: a handler that will be called to process requests from the stack and a URI path at which the resource will be registered. 
+
+The URI path should be rooted (meaning starts with a slash). The stack will construct the fully qualified URI by adding the URI authority to the provided URI path. For example, given a service running on port 5683 in a device at IP address 192.168.1.1, if the application registers a resource with a URI path "/light/1", resulting fully qualified URI would be "oc://192.168.1.1:5683/light/1" which uniquely identifies the resource’s location (IP address port and path). Please note that only one resource can be registered at a given URI.
+
+@section Register_Resource_SD Sequence Diagram
+The following call sequence diagram outlines the operations performed in the stack when a resource is registered:
+
+@image HTML seq_register_resource.png
+
+Steps:
+
+1) Assuming the application has created a valid OCPlatform object, the application registers a new resource with the stack by calling OCPlatform::registerResource(...). In this example, the call would take the form platform.registerResource(&handle, "/light/1", "light", "oc.mi.a", handler, OC_DISCOVERABLE). The handle is a reference to the resource that is used on other APIs. The URI path ("/light/1") is where on this server that the resource can be located. The URI path is unique and this call will fail if the application attempts to register another resource using an existing URI. The resource type ("light") and interface ("oc.mi.a") are properties of the resource used in the discovery process. The handler is a function called from the stack to process requests. The flags control how the stack should handle the resource. The OC_DISCOVERABLE flag indicates that the resource should be reported if a client performs a resource discovery on this server.
+
+2) The OCPlatform::registerResource(...) method delegates the call to the appropriate instance of the stack (in-process or out-of-process via IPC).
+
+3) The internal registerResource(...) method constructs a C++ entity handler and registers it with the C SDK using OCCreateResource(...). In this example, the call would take the form OCCreateResource(&handle, "light", "oc.mi.a", "/light/1", handler, OC_ DISCOVERABLE). Many of these parameters are passed through to the C SDK directly. However, the entity handler is a proxy function for the handler passed from OCPlatform::registerResource(...).
+
+@section Register_Resource_CPP Register Resource in C++ [Server]
+
+@code{.cpp}
+    OCResourceHandle resourceHandle;
+    std::string resourceURI = "/light/1"; 
+    std::string resourceTypeName = "alpha.light
+    std::string resourceInterface = DEFAULT_INTERFACE; 
+    uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+
+    OCStackResult result = platform.registerResource(resourceHandle, 
+                                                        resourceURI,
+                                                        resourceTypeName,
+                                                        resourceInterface,
+                                                        &entityHandler,
+                                                        resourceProperty);
+
+    if (OC_STACK_OK == result)
+    {
+        //Successfull
+    }
+
+
+@endcode
+
+@section Register_Resource_C Register Resource in C [Server]
+@code{.c}
+void MyEntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * request){
+        
+}
+
+void createLightResource() {
+    OCResourceHandle handle;
+
+    OCStackResult res = OCCreateResource(&handle,
+                                    "alpha.light",
+                                    "oc.mi.a",
+                                    "/light/1",
+                                    OC_DISCOVERABLE|OC_OBSERVABLE);
+}
+
+
+@endcode
+
+
+********************************************************************
+
+@page Guide_Find_Resource Finding A Resource
+
+This operation will return all of the resources of a given type on the network service. This operation is sent via multicast to all services. However, the filter limits the responders to just those that support the resource type in the query. Again, currently, only exact matches are supported.
+
+@section Find_Resource_SD Sequence Diagram
+The following sequence diagram describes the call sequence for discovery from the client side.
+@image HTML seq_find_resource.png
+
+Notes:
+
+1) Assuming that the client has a properly initialized OCPlatform object, a C++ SDK client can discover resources by calling OCPlatform::findResources(...). In this example, the call would take the form platform.findResources("", "/oc/core?rt=light", findHandler). The first parameter is the URI authority (target host) which in the case where it is empty indicates that this is for all nodes. The second parameter "/oc/core?rt=light" is the URI path and URI query. The URI path ("/oc/core") indicates the resource and the URI query ("rt=light") is the filter.
+
+2) The SDK call findResources(...) internally delegates the call directly to the in-process or to the out-of process stack via IPC based on the stack configuration.
+
+3) Within the stack, findResource(...) calls the C API function OCDoResource(...). In this example, the call would be OCDoResource(&handle, OC_REST_GET, "/oc/core?rt=light", 0, 0, OC_NON_CONFIRMABLE,  ...)
+
+4) OCDoResource determines which transport is needed to dispatch the request and delegates the call. In the case of CoAP, the following calls are made:
+    a. Calls OCDoCoapResource(OC_REST_GET, OC_NON_CONFIRMABLE, token, "/oc/core?rt=light", 0). The token in this example is a nonce that ties a CoAP response back to the CoAP request. Internally, this method creates the CoAP PDU for dispatching.
+    b. Calls coap_send(context, host, pdu) which is a wrapper for the implementation below.
+    c. Calls coap_send_impl(context, host, packet) which dispatches the packet to the socket and does the appropriate CoAP bookkeeping.
+    d. Calls OCSend(socket, buffer, size...) which is a wrapper for the socket implementation as the functions for dispatching a UDP packet can vary in the embedded systems.
+
+5) Servers that offer the resource on the network will reply to the query. The message pump which is evoked from the OCProcess(...) function in the C SDK, receive these response packets and dispatch them to the callback associated to the original request based on the CoAP message id. These responses will come back at the timing defined by their servers. The client stack has timeouts for these responses which are listed in the appendices.
+
+6) As mentioned above the stack matches the response to the original request using the message id and send the results to the callback associated with the request. At this level, the raw payload in JSON format is presented. It is the responsibility of the callback passed to OCDoResource(...) to perform the parsing of this result.
+
+7) The C++ SDK provides a callback to OCDoResource(...) that will parse the results and construct collections of OCResource objects from the response and pass them to a C++ client using the handler passed to the platform.findResource(...) method. Please note that the handler will be called once for each resource server that responses to the query.
+
+Notes:
+@li Some of the parameters of the API calls above have been omitted for brevity.
+@li The findResource() method can be used in the following ways:
+@li Find all resources on the network that match the provided criteria
+@li Query a specific (single) server for the resources that it provides the provided criteria
+@li The findResource() method may be used multiple times whenever a resource needs be found
+@li The findResource() callback may continue to report discovered resources up to 100 seconds
+@li The findResource() callback will called from the message pump thread in multithreaded environments
+@li Blocking in the findResource() callback will block other stack processing including servicing the network I/O which cannot only cause delays but also missed packets.
+
+
+
+
+@section Find_Resource_CPP Register Resource in C++ [Client]
+
+@code{.cpp}
+    // Callback to found resources
+    void foundResource(std::shared_ptr<OCResource> resource)
+    {
+        //Handle resource found
+    }
+
+
+    try
+    {
+        OCPlatform platform(cfg);
+
+        // Find all resources
+        platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+
+    }catch(OCException& e)
+    {
+        //Handle Error
+    }
+
+@endcode
+
+
+@section Find_Resource_C Register Resource in C [Client]
+
+@code{.c}
+/* This is a function called back when a device is discovered */
+OCStackApplicationResult applicationDiscoverCB(OCClientResponse* response) {
+    OC_LOG(INFO, TAG, "Found resource… ");
+
+    /* The IP Address is in response->addr */
+    /* The JSON Payload is in response->resJSONPayload */
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+int main() {
+    /* Initialize OCStack */
+
+    /* Start a discovery query*/
+    char szQueryUri[64] = { 0 };
+    strcpy(szQueryUri, OC_EXPLICIT_DEVICE_DISCOVERY_URI); OCStackResult
+
+    OCStackResult result = OCDoResource(
+                               OC_REST_GET,
+                               szQueryUri,
+                               0,
+                               0,
+                               OC_NON_CONFIRMABLE,
+                               applicationDiscoverCB)
+
+    if (result != OC_STACK_OK) {
+        OC_LOG(ERROR, TAG, "OCStack resource error");
+        return 0;
+    }
+
+    /* Call OCProcess() until done */
+}
+
+@endcode
+
+
+********************************************************************
+
+@page Guide_PUT Setting a resource state [PUT]
+
+@section PUT_SD Sequence Diagram
+
+@image HTML seq_put.png
+
+@section PUT_Server_CPP Set Resource's State [PUT] in C++ [Server]
+@section PUT__Client_CPP Set Resource's State [PUT] in C++ [Client]
+
+@section PUT_Server_C Set Resource's State [PUT] in C [Server]
+@section PUT_Client_C Set Resource's State [PUT] in C [Client]
+
+
+
+
+
+**********************************************************************
+
+@page Guide_GET Quering resource State [GET]
+
+@section GET_SD Sequence Diagram
+@image HTML seq_get.png
+
+@section GET_Server_CPP Quering resource State [GET] in C++ [Server]
+@section GET_Client_CPP Quering resource State [GET] in C++ [Client]
+
+@section GET_Server_C Quering resource State [GET] in C [Server]
+@section GET_Client_C Quering resource State [GET] in C [Client]
+
+
+
+**********************************************************************
+
+@page Guide_Observe Observing resource state [Observe]
+
+@section Observe_SD Sequence Diagram
+@image HTML seq_observe.png
+
+@section Observe_Server_CPP Observing resource state [Observe] in C++ [Server]
+@section Observe_Client_CPP Observing resource state [Observe] in C++ [Client]
+
+@section Observe_Server_C Observing resource state [Observe] in C [Server]
+@section Observe_Client_C Observing resource state [Observe] in C [Client]
+
+
+
+**********************************************************************
+
 
 */

@@ -1,8 +1,17 @@
 /*!
 
+
 @page OCGuides Programmer's Guide
 
-@section Terminology
+
+This document captures the architecture and basic operations of the Iotivity Resource API including sample coverage of protocol, flows, APIs and some use cases. It is intended to create context for the developers using IoTvitity API and provide a high level architectural overview of the framework. 
+
+@section Stack_Blocks Stack Blocks
+
+The Resource API stack consists of several thin layers of software. In unconstrained environments like Android, iOS, Windows, the stack provides APIs in C and C++ which allow developers to talk to both constrained and unconstrained devices via IP networks with potential support for additional network protocols and wireless technologies. In the first release, the key technologies for connectivity include IP, UDP and the Constrained Application Protocol (CoAP).
+@image html stack_diagram.png
+
+@section Terminology Terminology
 
 <b>Device</b>
 A constrained device that has the Thin Block stack installed which enabled one or more services for other Thin Block or Unified Block devices to consume.
@@ -12,16 +21,36 @@ A resource is a component in a server that can be viewed and controlled by anoth
 
 Resources can be arranged in a hierarchal manner to form a tree of resources. This generic method of structure enables one to model many different topologies of resources.
 
-\li Example: A light controller could be a resource.
-\li Example: A light array could be a set of resources organized in a flat (non-hierarchical manner).
-\li Example: A garage door opener could be a resource, it could host two resource – light and lock.
+@li Example: A light controller could be a resource.
+@li Example: A light array could be a set of resources organized in a flat (non-hierarchical manner).
+@li Example: A garage door opener could be a resource, it could host two resources – light and lock.
 
 A more detailed description of resources and management of resources along with code snippets is provided later in this document.
 
 <b>Operations</b>
 Operations are actions that a Thin Block or Unified Block can perform on attributes associated with a particular resource. Resource attributes can have different operations on it based on the nature of the resource type fundamentally these are GET and PUT operations. Additionally attributes can also be declared to be observable to support remote devices to subscribe to changes to it.
 
-\li Example: One of the child resources on the garage door opener is the light control; it has a GET operation that allows a device to get the current light state (on / off).
+@li Example: One of the child resources on the garage door opener is the light control; it has a GET operation that allows a device to get the current light state (on / off).
+
+@section Functionally Functionally
+
+The initial release of IoTivity includes functionally for:
+ @li @ref Guide_Register_Resource "Resource registration"
+ @li @ref Guide_Find_Resource "Resource discovery"
+ @li Device discovery with filtering
+ @li Property attributes (@ref Guide_GET "get"/ @ref Guide_PUT "set"/ @ref Guide_Observe "observe")
+ @li Resource tree (resources having sub-resources)
+ @li Presence notification service defined as a virtual resource (not detailed in this document)
+
+@section External_References External References 
+
+The following references may provide guidance to this document.
+ @note In some places, the Iotivity design may differ from the CoRE specifications. In these cases, please consider the CoRE specifications as informative but not definitive on the Iotivity design and architecture.
+
+ @li The Constrained Application Protocol (CoAP) - https://datatracker.ietf.org/doc/rfc7252
+ @li Constrained RESTful Environments (CoRE) Link Format - https://datatracker.ietf.org/doc/rfc6690
+ @li Observing Resources in CoAP - https://datatracker.ietf.org/doc/draft-ietf-core-observe
+ @li CoRE Interfaces (expired draft) - https://datatracker.ietf.org/doc/draft-ietf-core-interfaces
 
 
 
