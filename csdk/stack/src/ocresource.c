@@ -349,19 +349,31 @@ HandleVirtualResource (OCRequest *request, OCResource* resource)
                 if((resource->resourceProperties & OC_ACTIVE)
                         && (resource->resourceProperties & OC_DISCOVERABLE))
                 {
-                    result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
-                            (char*)buffer, &remaining);
-                    if (result != OC_STACK_OK)
-                    {
-                        break;
-                    }
-                    buffer += strlen((char*)buffer);
-                    if ( resource->next && remaining >= (sizeof(OC_JSON_SEPARATOR) + 1) )
+                    // if there is data on the buffer, we have already added a response,
+                    // so we need to add a comma before we do anything
+                    if(buffer != request->entityHandlerRequest->resJSONPayload
+                        && remaining >= (sizeof(OC_JSON_SEPARATOR)+1))
                     {
                         *buffer = OC_JSON_SEPARATOR;
                         buffer++;
                         remaining--;
                     }
+
+                    result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
+                            (char*)buffer, &remaining);
+                    if (result != OC_STACK_OK)
+                    {
+                        // if this failed, we need to remove the comma added above.
+                        if(buffer != request->entityHandlerRequest->resJSONPayload)
+                        {
+                            buffer--;
+                            *buffer = '\0';
+                            remaining++;
+                        }
+
+                        break;
+                    }
+                    buffer += strlen((char*)buffer);
                 }
                 resource = resource->next;
             }
