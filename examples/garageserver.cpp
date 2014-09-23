@@ -49,10 +49,10 @@ public:
     OCRepresentation m_garageRep;
     ObservationIds m_interestedObservers;
 
-    // Light representation with in GarageResource
+    // array of lights representation with in GarageResource
     OCRepresentation m_lightRep;
-    bool m_lightState;
-    int m_lightPower;
+    std::vector<bool> m_lightStates;
+    std::vector<int> m_lightPowers;
 
 public:
     /// Constructor
@@ -63,10 +63,14 @@ public:
         m_garageRep.setValue("state", m_state);
         m_garageRep.setValue("name", m_name);
 
-        m_lightState = true;
-        m_lightPower = 10;
-        m_lightRep.setValue("state", m_lightState);
-        m_lightRep.setValue("power", m_lightPower);
+        for(int i = 0; i <= 9; i++)
+        {
+            m_lightStates.push_back(i % 2 == 0);
+            m_lightPowers.push_back(i);
+        }
+
+        m_lightRep.setValue("states", m_lightStates);
+        m_lightRep.setValue("powers", m_lightPowers);
 
         // Storing another representation within a representation
         m_garageRep.setValue("light", m_lightRep);

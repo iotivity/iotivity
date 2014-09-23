@@ -38,8 +38,8 @@ public:
 
     bool m_state;
     std::string m_name;
-    bool m_lightState;
-    int m_lightPower;
+    std::vector<bool> m_lightStates;
+    std::vector<int> m_lightPowers;
     OCRepresentation m_lightRep;
 
     Garage() : m_state(false), m_name("")
@@ -49,6 +49,51 @@ public:
 
 Garage myGarage;
 
+void printRepresentation(const OCRepresentation& rep)
+{
+        rep.getValue("state", myGarage.m_state);
+        rep.getValue("name", myGarage.m_name);
+        rep.getValue("light", myGarage.m_lightRep);
+
+        myGarage.m_lightRep.getValue("states", myGarage.m_lightStates);
+        myGarage.m_lightRep.getValue("powers", myGarage.m_lightPowers);
+
+        std::cout << "\tstate: " << myGarage.m_state << std::endl;
+        std::cout << "\tname: " << myGarage.m_name << std::endl;
+        std::cout << "\tlightRep: states: ";
+
+        int first = 1;
+        for(auto state: myGarage.m_lightStates)
+        {
+            if(first)
+            {
+                std::cout << state;
+                first = 0;
+            }
+            else
+            {
+                std::cout << "," << state;
+            }
+        }
+
+        std::cout << std::endl;
+        std::cout << "\tlightRep: powers: ";
+        first = 1;
+        for(auto power: myGarage.m_lightPowers)
+        {
+            if(first)
+            {
+                std::cout << power;
+                first = 0;
+            }
+            else
+            {
+                std::cout << "," << power;
+            }
+        }
+        std::cout << std::endl;
+
+}
 // callback handler on PUT request
 void onPut(const OCRepresentation& rep, const int eCode)
 {
@@ -56,17 +101,7 @@ void onPut(const OCRepresentation& rep, const int eCode)
     {
         std::cout << "PUT request was successful" << std::endl;
 
-        rep.getValue("state", myGarage.m_state);
-        rep.getValue("name", myGarage.m_name);
-        rep.getValue("light", myGarage.m_lightRep);
-
-        myGarage.m_lightRep.getValue("state", myGarage.m_lightState);
-        myGarage.m_lightRep.getValue("power", myGarage.m_lightPower);
-
-        std::cout << "\tstate: " << myGarage.m_state << std::endl;
-        std::cout << "\tname: " << myGarage.m_name << std::endl;
-        std::cout << "\tlightRep: state: " << myGarage.m_lightState << std::endl;
-        std::cout << "\tlightRep: power: " << myGarage.m_lightPower << std::endl;
+        printRepresentation(rep);
     }
     else
     {
@@ -104,17 +139,7 @@ void onGet(const OCRepresentation& rep, const int eCode)
         std::cout << "GET request was successful" << std::endl;
         std::cout << "Resource URI: " << rep.getUri() << std::endl;
 
-        rep.getValue("state", myGarage.m_state);
-        rep.getValue("name", myGarage.m_name);
-        rep.getValue("light", myGarage.m_lightRep);
-
-        myGarage.m_lightRep.getValue("state", myGarage.m_lightState);
-        myGarage.m_lightRep.getValue("power", myGarage.m_lightPower);
-
-        std::cout << "\tstate: " << myGarage.m_state << std::endl;
-        std::cout << "\tname: " << myGarage.m_name << std::endl;
-        std::cout << "\tlightRep: state: " << myGarage.m_lightState << std::endl;
-        std::cout << "\tlightRep: power: " << myGarage.m_lightPower << std::endl;
+        printRepresentation(rep);
 
         putLightRepresentation(curResource);
     }
