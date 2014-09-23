@@ -151,9 +151,9 @@ namespace OC
             return m_children;
         }
 
-        void setChildren(std::vector<OCRepresentation> children)
+        void setChildren(const std::vector<OCRepresentation>& children)
         {
-        m_children = children;
+            m_children = children;
         }
 
         std::weak_ptr<OCResource> getResource() const
@@ -168,7 +168,7 @@ namespace OC
             return m_attributeMap;
         }
 
-        void setAttributeMap(const AttributeMap map)
+        void setAttributeMap(const AttributeMap& map)
         {
             m_attributeMap = map;
         }
@@ -197,7 +197,7 @@ namespace OC
             return m_resourceTypes;
         }
 
-        void setResourceTypes(std::vector<std::string> resourceTypes)
+        void setResourceTypes(const std::vector<std::string>& resourceTypes)
         {
             m_resourceTypes = resourceTypes;
         }
@@ -207,7 +207,7 @@ namespace OC
             return m_resourceInterfaces;
         }
 
-        void setResourceInterfaces(std::vector<std::string> resourceInterfaces)
+        void setResourceInterfaces(const std::vector<std::string>& resourceInterfaces)
         {
             m_resourceInterfaces = resourceInterfaces;
         }
@@ -224,11 +224,6 @@ namespace OC
                 std::vector<bool>,
                 std::vector<std::string>,
                 OCRepresentation> AttributeValue;
-
-    struct AttributeDataValue
-    {
-        AttributeValue data;
-    };
 
     template <typename T>
     inline std::string getJSONFromVector(std::vector<T> v)
