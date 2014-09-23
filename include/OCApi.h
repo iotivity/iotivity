@@ -26,6 +26,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <iterator>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -212,41 +213,52 @@ namespace OC
         }
     };
 
-    struct AttributeNull {};
-
-    // Forward declaration
-    struct AttributeDataValue;
-
-    typedef std::map<std::string, AttributeDataValue> AttributeMapValue;
-    typedef std::vector<AttributeDataValue> AttributeValueVector;
-
     typedef boost::variant<
-                AttributeNull,
+                // TODO NULL value to be implmented.
                 int,
+                double,
                 bool,
                 std::string,
-                AttributeMapValue,
-                OCRepresentation,
-                AttributeValueVector> AttributeValue;
+                std::vector<int>,
+                std::vector<double>,
+                std::vector<bool>,
+                std::vector<std::string>,
+                OCRepresentation> AttributeValue;
 
     struct AttributeDataValue
     {
         AttributeValue data;
     };
 
+    template <typename T>
+    inline std::string getJSONFromVector(std::vector<T> v)
+    {
+        std::ostringstream json;
+
+        json << "\"[";
+        if(v.size() != 0)
+        {
+            std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(json, ","));
+            json << v.back();
+        }
+        json << "]\"";
+
+        return json.str();
+    }
+
     class ComposeVisitor : public boost::static_visitor<std::string>
     {
         public:
-            std::string operator() (const AttributeNull& nl) const
-            {
-                // TODO Not Implemented
-                return std::string();
-            }
 
             // TODO different int sizes
             std::string operator() (const int i) const
             {
                 return std::to_string(i);
+            }
+
+            std::string operator() (const double d) const
+            {
+                return std::to_string(d);
             }
 
             std::string operator() (const std::string& str) const
@@ -271,18 +283,42 @@ namespace OC
                 }
             }
 
-            std::string operator() (const AttributeMapValue& objValue) const
+            std::string operator() (const std::vector<int> numbers) const
             {
-                // TODO Not Implemented
-                return std::string();
-                std::ostringstream json;
+                return getJSONFromVector(numbers);
             }
 
-            std::string operator() (const AttributeValueVector& values) const
+            std::string operator() (const std::vector<double> numbers) const
             {
-                // TODO Not Implemented
-                return std::string();
+                return getJSONFromVector(numbers);
+            }
+
+            std::string operator() (const std::vector<bool> bools) const
+            {
                 std::ostringstream json;
+                int first = 1;
+
+                json << "\"[";
+                for(auto b: bools)
+                {
+                    if(first)
+                    {
+                        b ? json << "true" : json << "false";
+                        first = 0;
+                    }
+                    else
+                    {
+                        b ? json << ",true" : json << ",false";
+                    }
+                }
+                json << "]\"";
+
+                return json.str();
+            }
+
+            std::string operator() (const std::vector<std::string> strings) const
+            {
+                return getJSONFromVector(strings);
             }
 
             std::string operator() (const OCRepresentation& rep) const
@@ -300,6 +336,17 @@ namespace OC
 
     };
 
+    inline void split(std::string input, char delimiter, std::vector<std::string>& tokens)
+    {
+        std::stringstream ss(input);
+        std::string item;
+
+        while(std::getline(ss, item, delimiter))
+        {
+            tokens.push_back(item);
+        }
+    }
+
     class ParseVisitor : public boost::static_visitor<void>
     {
         public:
@@ -308,14 +355,14 @@ namespace OC
             {
             }
 
-            void operator() (AttributeNull& nl) const
-            {
-                // TODO Not Implemented
-            }
-
             void operator() (int& i) const
             {
                 i = std::stoi(m_str);
+            }
+
+            void operator() (double& d) const
+            {
+                d = std::stod(m_str);
             }
 
             void operator() (std::string& str) const
@@ -328,14 +375,97 @@ namespace OC
                 b = m_str.compare("true") == 0;
             }
 
-            void operator() (AttributeMapValue& objValue) const
+            void operator() (std::vector<int>& numbers) const
             {
-                // TODO Not Implemented
+                numbers.clear();
+
+                if(m_str.length() >= 2)
+                {
+                    std::string str = m_str.substr(1, m_str.length()-2);
+
+                    std::vector<std::string> tokens;
+                    split(str, ',', tokens);
+
+                    for(auto s: tokens)
+                    {
+                        numbers.push_back(std::stoi(s));
+                    }
+                }
+                else
+                {
+                    // TODO Logging
+                    std::cout << "Array type should have atleast []\n";
+                }
+
             }
 
-            void operator() (AttributeValueVector& values) const
+            void operator() (std::vector<double>& numbers) const
             {
-                // TODO Not Implemented
+                numbers.clear();
+
+                if(m_str.length() >= 2)
+                {
+                    std::string str = m_str.substr(1, m_str.length()-2);
+                    std::vector<std::string> tokens;
+                    split(str, ',', tokens);
+
+                    for(auto s: tokens)
+                    {
+                        numbers.push_back(std::stod(s));
+                    }
+                }
+                else
+                {
+                    // TODO Logging
+                    std::cout << "Array type should have atleast []\n";
+                }
+            }
+
+            void operator() (std::vector<bool>& bools) const
+            {
+                bools.clear();
+
+                if(m_str.length() >= 2)
+                {
+                    std::string str = m_str.substr(1, m_str.length()-2);
+
+                    std::vector<std::string> tokens;
+                    split(str, ',', tokens);
+
+                    for(auto s: tokens)
+                    {
+                        bools.push_back(s.compare("true") == 0);
+                    }
+                }
+                else
+                {
+                    // TODO Logging
+                    std::cout << "Array type should have atleast []\n";
+                }
+
+            }
+
+            void operator() (std::vector<std::string>& strings) const
+            {
+                strings.clear();
+
+                if(m_str.length() >= 2)
+                {
+                    std::string str = m_str.substr(1, m_str.length()-2);
+
+                    std::vector<std::string> tokens;
+                    split(str, ',', tokens);
+
+                    for(auto s: tokens)
+                    {
+                        strings.push_back(s);
+                    }
+                }
+                else
+                {
+                    // TODO Logging
+                    std::cout << "Array type should have atleast []\n";
+                }
             }
 
             void operator() (OCRepresentation& rep) const
