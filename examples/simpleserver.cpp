@@ -344,7 +344,6 @@ int main(int argc, char* argv[1])
         return -1;
     }
 
-
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,

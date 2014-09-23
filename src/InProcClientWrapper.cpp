@@ -465,22 +465,13 @@ namespace OC
 
     std::string InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
     {
-        AttributeMap attributes = rep.getAttributeMap();
-
         ostringstream payload;
         // TODO need to change the format to "{"oc":[]}"
-        payload << "{\"oc\":{";
+        payload << "{\"oc\":";
 
-        for(AttributeMap::const_iterator itr = attributes.begin(); itr!= attributes.end(); ++ itr)
-        {
-            if(itr != attributes.begin())
-            {
-                payload << ',';
-            }
+        payload << rep.getJSONRepresentation();
 
-            payload << "\""<<itr->first<<"\":\""<< itr->second <<"\"";
-        }
-        payload << "}}";
+        payload << "}";
         return payload.str();
     }
 

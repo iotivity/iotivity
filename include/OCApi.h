@@ -27,6 +27,8 @@
 #include <map>
 #include <memory>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <boost/variant.hpp>
 
 #include "ocstack.h"
@@ -108,7 +110,107 @@ namespace OC
         ObserveAll
     };
 
+    // Helper function to escape character in a string.
+    std::string escapeString(const std::string& value);
+
     typedef std::map<std::string, std::string> AttributeMap;
+
+    class OCRepresentation
+    {
+        private:
+        std::string m_uri;
+        AttributeMap m_attributeMap;
+        std::vector<std::string> m_resourceTypes;
+        std::vector<std::string> m_resourceInterfaces;
+        int errorCode;
+
+        std::vector<OCRepresentation> m_children;
+
+        public:
+        OCRepresentation() {}
+
+        std::string getUri(void) const
+        {
+            return m_uri;
+        }
+
+        template <typename T>
+        void setValue(const std::string& str, const T& val);
+
+        template <typename T>
+        bool getValue(const std::string& str, T& val) const;
+
+        void setUri(std::string uri)
+        {
+            m_uri = uri;
+        }
+
+        std::vector<OCRepresentation> getChildren(void) const
+        {
+            return m_children;
+        }
+
+        void setChildren(std::vector<OCRepresentation> children)
+        {
+        m_children = children;
+        }
+
+        std::weak_ptr<OCResource> getResource() const
+        {
+            // TODO Needs to be implemented
+            std::weak_ptr<OCResource> wp;
+            return wp;
+        }
+
+        AttributeMap getAttributeMap() const
+        {
+            return m_attributeMap;
+        }
+
+        void setAttributeMap(const AttributeMap map)
+        {
+            m_attributeMap = map;
+        }
+
+        std::string getJSONRepresentation(void) const
+        {
+            std::ostringstream json;
+
+            json << "{";
+
+            for(auto itr = m_attributeMap.begin(); itr!= m_attributeMap.end(); ++ itr)
+            {
+                if(itr != m_attributeMap.begin())
+                {
+                    json << ',';
+                }
+                json << "\""<<itr->first<<"\":"<< itr->second;
+            }
+            json << "}";
+
+            return json.str();
+        }
+
+        std::vector<std::string> getResourceTypes() const
+        {
+            return m_resourceTypes;
+        }
+
+        void setResourceTypes(std::vector<std::string> resourceTypes)
+        {
+            m_resourceTypes = resourceTypes;
+        }
+
+        std::vector<std::string> getResourceInterfaces(void) const
+        {
+            return m_resourceInterfaces;
+        }
+
+        void setResourceInterfaces(std::vector<std::string> resourceInterfaces)
+        {
+            m_resourceInterfaces = resourceInterfaces;
+        }
+    };
 
     struct AttributeNull {};
 
@@ -124,6 +226,7 @@ namespace OC
                 bool,
                 std::string,
                 AttributeMapValue,
+                OCRepresentation,
                 AttributeValueVector> AttributeValue;
 
     struct AttributeDataValue
@@ -148,7 +251,12 @@ namespace OC
 
             std::string operator() (const std::string& str) const
             {
-                return str;
+                std::ostringstream json;
+                json << "\"";
+                json << str;
+                json << "\"";
+
+                return json.str();
             }
 
             std::string operator() (const bool b) const
@@ -176,6 +284,20 @@ namespace OC
                 return std::string();
                 std::ostringstream json;
             }
+
+            std::string operator() (const OCRepresentation& rep) const
+            {
+                std::ostringstream json;
+
+                json << "\"";
+
+                json << escapeString(rep.getJSONRepresentation());
+
+                json << "\"";
+
+                return json.str();
+            }
+
     };
 
     class ParseVisitor : public boost::static_visitor<void>
@@ -216,14 +338,76 @@ namespace OC
                 // TODO Not Implemented
             }
 
+            void operator() (OCRepresentation& rep) const
+            {
+                // TODO this will refactored
+                AttributeMap attributeMap;
+
+                std::stringstream requestStream;
+                requestStream << m_str;
+                boost::property_tree::ptree payload;
+                try
+                {
+                    boost::property_tree::read_json(requestStream, payload);
+                }
+                catch(boost::property_tree::json_parser::json_parser_error &e)
+                {
+                    //TODO: log this
+                    std::cout << "Parse error\n";
+                    return;
+                }
+
+                for(auto& item: payload)
+                {
+                    std::string name = item.first.data();
+                    std::string value = item.second.data();
+
+                    attributeMap[name] = value;
+                }
+
+                rep.setAttributeMap(attributeMap);
+            }
+
         private:
             std::string m_str;
     };
 
-    typedef std::map<std::string, AttributeValue> AttributeMap1;
 
-    std::string getJSON(const AttributeValue& v);
-    void parseJSON(AttributeValue& v, std::string str);
+    inline std::string getJSON(const AttributeValue& v)
+    {
+        return boost::apply_visitor(ComposeVisitor(), v);
+    }
+
+    inline void parseJSON(AttributeValue& v, std::string str)
+    {
+        boost::apply_visitor(ParseVisitor(str), v);
+    }
+
+    template <typename T>
+    void OCRepresentation::setValue(const std::string& str, const T& val)
+    {
+        m_attributeMap[str] = getJSON(val);
+    }
+
+
+    template <typename T>
+    bool OCRepresentation::getValue(const std::string& str, T& val) const
+    {
+        auto x = m_attributeMap.find(str);
+
+        if(m_attributeMap.end() != x)
+        {
+            AttributeValue v = val;
+            parseJSON(v, x->second);
+            val = boost::get<T>(v);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
 
     // Typedef for query parameter map
     typedef std::map<std::string, std::string> QueryParamsMap;
@@ -255,106 +439,6 @@ namespace OC
 
     // Used in GET, PUT, POST, DELETE methods on links to other resources of a collection.
     const std::string BATCH_INTERFACE = "oc.mi.b";
-
-    // Helper function to escape character in a string.
-    std::string escapeString(const std::string& value);
-
-    class OCRepresentation
-    {
-
-        private:
-        std::string m_uri;
-        AttributeMap m_attributeMap;
-        std::vector<std::string> m_resourceTypes;
-        std::vector<std::string> m_resourceInterfaces;
-        int errorCode;
-
-        std::vector<OCRepresentation> m_children;
-
-        public:
-        OCRepresentation() {}
-
-        std::string getUri(void) const
-        {
-            return m_uri;
-        }
-
-        template <typename T>
-        void setValue(const std::string& str, const T& val)
-        {
-            m_attributeMap[str] = getJSON(val);
-        }
-
-        template <typename T>
-        bool getValue(const std::string& str, T& val) const
-        {
-            auto x = m_attributeMap.find(str);
-
-            if(m_attributeMap.end() != x)
-            {
-                AttributeValue v = val;
-                parseJSON(v, x->second);
-                val = boost::get<T>(v);
-                return true;
-            }
-            else
-            {
-                return false;
-            } 
-        }
-
-        void setUri(std::string uri)
-        {
-            m_uri = uri;
-        }
-
-        std::vector<OCRepresentation> getChildren(void) const
-        {
-            return m_children;
-        }
-
-        void setChildren(std::vector<OCRepresentation> children)
-        {
-        m_children = children;
-        }
-
-        std::weak_ptr<OCResource> getResource() const
-        {
-            // TODO Needs to be implemented
-            std::weak_ptr<OCResource> wp;
-            return wp;
-        }
-
-        AttributeMap getAttributeMap() const
-        {
-            return m_attributeMap;
-        }
-
-        void setAttributeMap(const AttributeMap map)
-        {
-            m_attributeMap = map;
-        }
-
-        std::vector<std::string> getResourceTypes() const
-        {
-            return m_resourceTypes;
-        }
-
-        void setResourceTypes(std::vector<std::string> resourceTypes)
-        {
-            m_resourceTypes = resourceTypes;
-        }
-
-        std::vector<std::string> getResourceInterfaces(void) const
-        {
-            return m_resourceInterfaces;
-        }
-
-        void setResourceInterfaces(std::vector<std::string> resourceInterfaces)
-        {
-            m_resourceInterfaces = resourceInterfaces;
-        }
-    };
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
     typedef std::function<void(const std::shared_ptr<OCResourceRequest>, const std::shared_ptr<OCResourceResponse>)> RegisterCallback;

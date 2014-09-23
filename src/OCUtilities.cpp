@@ -32,16 +32,6 @@ extern "C" {
 
 namespace OC{
 
-    std::string getJSON(const AttributeValue& v)
-    {
-        return boost::apply_visitor(ComposeVisitor(), v);
-    }
-
-    void parseJSON(AttributeValue& v, std::string str)
-    {
-        boost::apply_visitor(ParseVisitor(str), v);
-    }
-
     // Helper function to escape special character.
     std::string escapeString(const std::string& value)
     {
