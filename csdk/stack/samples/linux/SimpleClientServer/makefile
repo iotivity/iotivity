@@ -73,11 +73,14 @@ PROGRAMS	+= occlient
 PROGRAMS	+= ocservercoll
 PROGRAMS	+= occlientcoll
 
-all:	prep_dirs $(OBJECTS) $(PROGRAMS)
+all:	c_sdk prep_dirs $(OBJECTS) $(PROGRAMS)
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
 	-mkdir -p $(OBJ_DIR)
+
+c_sdk:
+	cd $(ROOT_DIR) && $(MAKE) BUILD=$(BUILD) PLATFORM=$(PLATFORM)
 
 $(OBJ_DIR)/%.o: %.cpp
 	$(CC) -c $(CPPFLAGS) $< -o $@
@@ -99,6 +102,8 @@ occlientcoll: $(OBJ_DIR)/occlientcoll.o $(OBJ_DIR)/common.o
 clean: legacy_clean
 	-rm -rf release
 	-rm -rf debug
+	cd $(ROOT_DIR) && $(MAKE) clean
+	cd $(ROOT_DIR) && $(MAKE) deepclean
 
 legacy_clean:
 	rm -f *.o $(PROGRAMS)

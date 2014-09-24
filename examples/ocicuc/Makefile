@@ -21,7 +21,7 @@
 BUILD:=release
 
 OCLIB=../..
-OCLIB_LIB=../../$(BUILD)/obj/liboc.a #$(OCLIB)/release/obj/liboc.a
+OCLIB_LIB=../../$(BUILD)/obj/liboc.a 
 
 CXX_FLAGS.debug     := -g3 -O0
 CXX_FLAGS.release   := -O3
@@ -37,14 +37,25 @@ CXX_INC=-I$(OCLIB)/include \
 	-I../../csdk/logger/include
 
 BOOST_LIBS=-lboost_program_options
+#BOOST_LIBS=/usr/local/boost/lib/libboost_program_options.a	# for boost_1_55 lib
 
 LIB_OC_LOGGER:=../../oc_logger/lib/oc_logger.a
 
 CXX_LIBS=$(OCLIB_LIB) ../../csdk/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) $(BOOST_LIBS)
 
+APPS += client 
+APPS += server 
+APPS += monoprocess 
+
 .PHONY: client server
 
-all: client server monoprocess
+all: oc_cpp_sdk apps
+	@echo Remember to \"export LD_LIBRARY_PATH=$(BOOST_LIB)\:\$$LD_LIBRARY_PATH\"
+
+apps: $(APPS)
+
+oc_cpp_sdk:
+	cd ../../ && $(MAKE) cpp_sdk "BUILD=$(BUILD)"
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CXX_FLAGS) $(CXX_INC) -c -o $@ $<
@@ -59,4 +70,9 @@ monoprocess: monoprocess.o driver.o utility.o light_resource.o
 	$(CXX) $(CXX_FLAGS) -o $@ $^ $(CXX_LIBS)
 
 clean:
-	rm -f *\.o server client monoprocess
+	rm -f *.o $(APPS)
+	cd ../../ && $(MAKE) clean_cpp_sdk	
+
+clean_apps:
+	rm -f *.o $(APPS)
+	

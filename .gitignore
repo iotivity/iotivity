@@ -4,6 +4,19 @@
 /csdk/libcoap-4.1.1/release/
 /examples/release
 
+/debug
+csdk/debug/
+csdk/libcoap-4.1.1/debug/
+/examples/debug
+csdk/stack/samples/linux/SimpleClientServer/debug/
+
+
 # Ignore any object files
 *.o
 *.obj
+
+
+# Ignore Eclipse workspace files
+*.settings/
+*.cproject
+*.project
