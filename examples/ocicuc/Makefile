@@ -1,29 +1,50 @@
+# //******************************************************************
+# //
+# // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# //
+# // Licensed under the Apache License, Version 2.0 (the "License");
+# // you may not use this file except in compliance with the License.
+# // You may obtain a copy of the License at
+# //
+# //      http://www.apache.org/licenses/LICENSE-2.0
+# //
+# // Unless required by applicable law or agreed to in writing, software
+# // distributed under the License is distributed on an "AS IS" BASIS,
+# // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# // See the License for the specific language governing permissions and
+# // limitations under the License.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+BUILD:=release
+
 OCLIB=../..
 OCLIB_LIB=../../$(BUILD)/obj/liboc.a #$(OCLIB)/release/obj/liboc.a
 
-BOOST_BASE=/usr/local/boost
-BOOST_INC=$(BOOST_BASE)/include
-BOOST_LIB=$(BOOST_BASE)/lib
-
 CXX_FLAGS.debug     := -g3 -O0
 CXX_FLAGS.release   := -O3
-CXX_FLAGS=-Wall -std=c++0x -ggdb $(CXX_FLAGS.$(BUILD))
+CXX_FLAGS:=-Wall -std=c++0x -ggdb $(CXX_FLAGS.$(BUILD)) -pthread
 
 # There's probably nicer Makefile magic for this, but hopefully it will suffice:
 CXX_INC=-I$(OCLIB)/include \
-	-I$(BOOST_INC) \
 	-I../../include/ \
+	-I../../oc_logger/include/ \
 	-I../../csdk/stack/include \
 	-I../../csdk/ocsocket/include \
 	-I../../csdk/ocrandom/include \
 	-I../../csdk/logger/include
 
-CXX_LIBS=-L$(BOOST_LIB) $(OCLIB_LIB) ../../csdk/release/liboctbstack.a -lpthread -lboost_program_options
+BOOST_LIBS=-lboost_program_options
+
+LIB_OC_LOGGER:=../../oc_logger/lib/oc_logger.a
+
+CXX_LIBS=$(OCLIB_LIB) ../../csdk/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) $(BOOST_LIBS)
 
 .PHONY: client server
 
 all: client server monoprocess
-	@echo Remember to \"export LD_LIBRARY_PATH=$(BOOST_LIB)\:\$$LD_LIBRARY_PATH\"
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CXX_FLAGS) $(CXX_INC) -c -o $@ $<
@@ -38,4 +59,4 @@ monoprocess: monoprocess.o driver.o utility.o light_resource.o
 	$(CXX) $(CXX_FLAGS) -o $@ $^ $(CXX_LIBS)
 
 clean:
-	rm -f *.o server client monoprocess
+	rm -f *\.o server client monoprocess

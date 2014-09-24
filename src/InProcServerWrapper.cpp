@@ -33,6 +33,7 @@
 #include <OCResourceResponse.h>
 #include <ocstack.h>
 #include <OCApi.h>
+#include <OCPlatform.h>
 #include <OCUtilities.h>
 
 using namespace std;
@@ -41,20 +42,17 @@ std::map <OCResourceHandle, OC::RegisterCallback>  entityHandlerMap;
 
 void defaultEntityHandler(const OC::OCResourceRequest::Ptr request, const OC::OCResourceResponse::Ptr response)
 {
-    cout << "\nSomething wrong: We are in default entity handler: " << endl;
+    // TODO: 1) why is this ever even possible? 2) throw exception?
+    std::clog << "Error: defaultEntityHandler() invoked" << std::endl;
 }
 
-OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) {
-
-    // TODO we need to have a better way of logging (with various levels of logging)
-    cout << "\nIn C entity handler: " << endl;
-
-    // TODO do we need shared pointer?
-    auto pRequest = std::make_shared<OC::OCResourceRequest>();
+OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest *entityHandlerRequest )
+{
+    auto pRequest  = std::make_shared<OC::OCResourceRequest>();
     auto pResponse = std::make_shared<OC::OCResourceResponse>();
 
     // TODO Utility to convert from C to C++ (every).
-  
+
     if(flag & OC_INIT_FLAG)
     {
         // TODO We can fill the common data (resource Handle, etc.. )
@@ -117,12 +115,11 @@ OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
         }
         else
         {
-            // TODO Logging
-            std::cout << "C stack should not call again for parent resource\n";
+            std::clog << "C stack should not call again for parent resource" << std::endl;
         }
     }
     else {
-        std::cout << "No entity handler found."  << endl;
+        std::clog << "No entity handler found."  << std::endl;
         return OC_EH_ERROR;
     }
 
@@ -131,28 +128,14 @@ OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
         // TODO we could use const reference
         std::string payLoad = pResponse->getPayload();
 
-        if(OC_REST_GET == entityHandlerRequest->method)
-        {
-            cout << "\t\t\tGoing from stack for GET: ";
-        }
-        else if (OC_REST_PUT == entityHandlerRequest->method)
-        {
-            cout << "\t\t\tGoing from stack for PUT: ";
-        }
-        else
-        {
-            cout << "\t\t\tUnknown method...!!!" << endl;
-        }
-
         if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
         {
             strncpy((char*)entityHandlerRequest->resJSONPayload, payLoad.c_str(), entityHandlerRequest->resJSONPayloadLen);
-            cout << "Payload: " << (char*)entityHandlerRequest->resJSONPayload << endl;
         }
         else
         {
             // TODO throw appropriate runtime error
-            cout << "Payload is larger than the PayloadLen" << endl;
+            // cout << "Payload is larger than the PayloadLen" << endl;
         }
     }
 
@@ -161,8 +144,9 @@ OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
 
 namespace OC
 {
-    InProcServerWrapper::InProcServerWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
-                            :m_csdkLock(csdkLock)
+    InProcServerWrapper::InProcServerWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
+     : IServerWrapper(owner),
+       m_csdkLock(csdkLock)
     {
         OCMode initType;
 
@@ -199,20 +183,17 @@ namespace OC
         while(cLock && m_threadRun)
         {
             OCStackResult result;
+
             {
                 std::lock_guard<std::mutex> lock(*cLock);
                 result = OCProcess();
             }
 
-            if(result != OC_STACK_OK)
-            {
-                cout << "Something wrong in OCProcess" << endl;
-                // TODO
-            }
+            // ...the value of variable result is simply ignored for now.
+            if(OC_STACK_ERROR == result)
+             ;
 
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            // To minimize CPU utilization we may wish to do this with sleep
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
 
@@ -226,11 +207,6 @@ namespace OC
 
     {
         OCStackResult  result;
-
-        cout << "Registering Resource: \n";
-        cout << "\tResource URI: " << resourceURI << endl;
-        cout << "\tResource TypeName: " << resourceTypeName  << endl;
-        cout << "\tResource Interface: " << resourceInterface << endl;
 
         auto cLock = m_csdkLock.lock();
 
@@ -261,14 +237,10 @@ namespace OC
 
             if(result != OC_STACK_OK)
             {
-                cout << "\tSomething wrong in creating the resource" << endl;
                 resourceHandle = (OCResourceHandle) 0;
-                // TODO
             }
             else
             {
-                cout << "\tResource creation is successful with resource handle:  " 
-                     << resourceHandle << endl;
                 entityHandlerMap[resourceHandle] = eHandler;
             }
         }
@@ -282,8 +254,6 @@ namespace OC
 
     OCStackResult InProcServerWrapper::unregisterResource(const OCResourceHandle& resourceHandle)
     {
-        cout << "Unregistering Resource: \n";
-
         auto cLock = m_csdkLock.lock();
         OCStackResult result = OC_STACK_ERROR;
         if(cLock)
@@ -296,9 +266,6 @@ namespace OC
     OCStackResult InProcServerWrapper::bindTypeToResource(const OCResourceHandle& resourceHandle,
                      const std::string& resourceTypeName)
     {
-        cout << "Binding Type to Resource: \n";
-        cout << "\tTypeName: " << resourceTypeName  << endl;
-
         auto cLock = m_csdkLock.lock();
         OCStackResult result;
         if(cLock)
@@ -321,9 +288,6 @@ namespace OC
     OCStackResult InProcServerWrapper::bindInterfaceToResource(const OCResourceHandle& resourceHandle,
                      const std::string& resourceInterfaceName)
     {
-        cout << "Binding Interface to Resource: \n";
-        cout << "\tInterfaceName: " << resourceInterfaceName  << endl;
-
         auto cLock = m_csdkLock.lock();
         OCStackResult result;
         if(cLock)

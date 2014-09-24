@@ -24,6 +24,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "oc_logger.h"
+#include "oc_console_logger.h"
 
 #ifdef __ANDROID__
     #include <android/log.h>
@@ -58,6 +60,26 @@ typedef enum {
 
 
 #if defined(__ANDROID__) || defined(__linux__)
+
+    /**
+     * Configure logger to use a context that defines a custom logger function
+     *
+     * @param ctx - pointer to oc_log_ctx_t struct that defines custom logging functions
+     */
+    void OCLogConfig(oc_log_ctx_t *ctx);
+
+    /**
+     * Initialize the logger.  Optional on Android and Linux.  Configures serial port on Arduino
+     */
+    void OCLogInit();
+
+    /**
+     * Called to Free dyamically allocated resources used with custom logging.
+     * Not necessary if default logging is used
+     *
+     */
+    void OCLogShutdown();
+
     /**
      * Output a variable argument list log string with the specified priority level.
      * Only defined for Linux and Android
@@ -128,22 +150,27 @@ typedef enum {
 
 #ifdef TB_LOG
     // These macros are defined for Linux, Android, and Arduino
+    #define OC_LOG_INIT()    OCLogInit()
     #define OC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
     #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), (tag), (buffer), (bufferSize))
 
     #ifdef ARDUINO
+        #define OC_LOG_CONFIG(ctx)
+        #define OC_LOG_SHUTDOWN()
         // Use full namespace for logInit to avoid function name collision
         #define OC_LOG_INIT()    OCLogInit()
         // Don't define variable argument log function for Arduino
         #define OC_LOG_V(level, tag, ...) OCLogv((level), (tag), __VA_ARGS__)
     #else
-        // Don't define LOG_INIT for Linux and Android
-        #define OC_LOG_INIT()
+        #define OC_LOG_CONFIG(ctx)    OCLogConfig((ctx))
+        #define OC_LOG_SHUTDOWN()     OCLogShutdown()
         // Define variable argument log function for Linux and Android
         #define OC_LOG_V(level, tag, ...)  OCLogv((level), (tag), __VA_ARGS__)
     #endif
 
 #else
+    #define OC_LOG_CONFIG(ctx)
+    #define OC_LOG_SHUTDOWN()
     #define OC_LOG(level, tag, logStr)
     #define OC_LOG_V(level, tag, ...)
     #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)

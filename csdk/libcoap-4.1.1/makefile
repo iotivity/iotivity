@@ -34,12 +34,14 @@ OBJ_DIR	  := $(OUT_DIR)/obj
 ROOT_DIR = ..
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 LOGGER_DIR = $(ROOT_DIR)/logger
+OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
 RANDOM_DIR = $(ROOT_DIR)/ocrandom
 STACK_DIR  = $(ROOT_DIR)/stack
 OCMALLOC_DIR	= $(ROOT_DIR)/ocmalloc
-INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include -I$(OCMALLOC_DIR)/include
 
-# Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
+INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include
+
+# Note for Arduino: The CC flag is set to the C++ compiler since Arduino build
 # includes Time.h header file which has C++ style definitions.
 ifeq ($(PLATFORM),android)
     CXX=arm-linux-androideabi-g++
@@ -71,8 +73,9 @@ CC_FLAGS.debug := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-excepti
 CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions
 
 SOURCES:= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
-          str.c option.c async.c subscribe.c block.c logger.c ocrandom.c ocmalloc.c
-VPATH := $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/src
+          str.c option.c async.c subscribe.c block.c logger.c ocrandom.c ocmalloc.c oc_logger.c oc_console_logger.c
+VPATH := $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/src:$(OC_LOG_DIR)/c
+
 ifeq (arduino, $(findstring arduino,$(PLATFORM)))
 	ifeq ($(ARDUINOWIFI),1)
 		SOURCES += ocsocket_arduino_wifi.c

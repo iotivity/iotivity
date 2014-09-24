@@ -40,7 +40,7 @@ namespace OC
     class InProcClientWrapper : public IClientWrapper
     {
     public:
-        InProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg);
+        InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg);
         virtual ~InProcClientWrapper();
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
@@ -77,7 +77,8 @@ namespace OC
         std::weak_ptr<std::mutex> m_csdkLock;
 
     private:
-        PlatformConfig m_cfg;
+        OC::OCPlatform& m_owner;
+        PlatformConfig  m_cfg;
     };
 }
 

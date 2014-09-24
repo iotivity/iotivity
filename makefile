@@ -30,6 +30,8 @@ CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0
 CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3
 
 CXX_INC	  := -I./include/
+CXX_INC	  += -I./oc_logger/include
+
 CXX_INC	  += -I./csdk/stack/include
 CXX_INC	  += -I./csdk/ocsocket/include
 CXX_INC	  += -I./csdk/ocrandom/include
@@ -37,7 +39,7 @@ CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs c_sdk liboc.a examples
+.PHONY: prep_dirs c_sdk oc_logger liboc.a examples
 
 all:	.PHONY
 
@@ -48,7 +50,10 @@ prep_dirs:
 c_sdk:
 	cd csdk && $(MAKE) "BUILD=$(BUILD)"
 
-examples: liboc.a
+oc_logger:
+	cd oc_logger && $(MAKE) "BUILD=$(BUILD)"
+
+examples:
 	cd examples && $(MAKE) "BUILD=$(BUILD)"
 
 liboc.a: OCPlatform.o OCResource.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
@@ -75,5 +80,6 @@ clean: clean_legacy
 	cd csdk && $(MAKE) clean
 	cd csdk && $(MAKE) deepclean
 	cd examples && $(MAKE) clean
+	cd oc_logger && $(MAKE) clean
 clean_legacy:
 	-rm -f -v $(OBJ_DIR)/liboc.a $(OBJ_DIR)/*.o

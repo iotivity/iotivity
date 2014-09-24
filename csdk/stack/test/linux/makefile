@@ -31,6 +31,7 @@ ROOT_DIR = ../../..
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 OCSTACK_DIR = $(ROOT_DIR)/stack
 LOGGER_DIR = $(ROOT_DIR)/logger
+OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
 RANDOM_DIR = $(ROOT_DIR)/ocrandom
 
 OBJ_DIR = ./
@@ -38,6 +39,7 @@ OBJ_DIR = ./
 INC_DIRS := -I$(OCSTACK_DIR)/include
 INC_DIRS += -I$(OCSOCK_DIR)/include
 INC_DIRS += -I$(LOGGER_DIR)/include
+INC_DIRS += -I$(OC_LOG_DIR)/include
 INC_DIRS += -I$(RANDOM_DIR)/include
 
 ifeq ($(PLATFORM),android)

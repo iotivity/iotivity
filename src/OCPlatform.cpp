@@ -34,18 +34,26 @@
 #include "OCApi.h"
 #include "OCException.h"
 
+#include "oc_logger.hpp"
+
 namespace OC
 {
-    // Constructor. Internally calls private init function
     OCPlatform::OCPlatform(const PlatformConfig& config)
-     : m_cfg(config)
+     : m_log_stream(std::move(oc_log_stream {oc_make_ostream_logger})),
+       m_cfg(config)
+    {
+        init(m_cfg);
+    }
+
+    OCPlatform::OCPlatform(const PlatformConfig& config, OC::oc_log_stream& log_target)
+     :  m_log_stream(log_target),
+        m_cfg(config)
     {
         init(m_cfg);
     }
 
     OCPlatform::~OCPlatform(void)
     {
-        std::cout << "platform destructor called" << std::endl;
     }
 
     OCStackResult OCPlatform::notifyAllObservers(OCResourceHandle resourceHandle)
@@ -93,18 +101,18 @@ namespace OC
         if(config.mode == ModeType::Server)
         {
             // Call server wrapper init
-            m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
+            m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
         }
         else if(config.mode == ModeType::Client)
         {
             // Call client wrapper init
-            m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
+            m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
         }
         else
         {
             // This must be both server and client
-            m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
-            m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
+            m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
+            m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
         }
     }
 
@@ -267,9 +275,9 @@ namespace OC
             }
             catch (OCException& e)
             {
-                cout << "Caught an exception..." << endl;
-                cout << "\tMessage: " << e.what()  << endl;
-                cout << "\t Reason: " << e.reason() << endl;
+                log() << "Caught an exception..." << endl;
+                log() << "\tMessage: " << e.what()  << endl;
+                log() << "\t Reason: " << e.reason() << endl;
             }
         }
         return result;
@@ -287,9 +295,9 @@ namespace OC
             }
             catch (OCException& e)
             {
-                cout << "Caught an exception..." << endl;
-                cout << "\tMessage: " << e.what()  << endl;
-                cout << "\t Reason: " << e.reason() << endl;
+                log() << "Caught an exception..." << endl;
+                log() << "\tMessage: " << e.what()  << endl;
+                log() << "\t Reason: " << e.reason() << endl;
             }
         }
         return result;

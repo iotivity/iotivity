@@ -36,6 +36,7 @@
 
 namespace OC
 {
+    class OCPlatform;
     class OCResource;
     class OCResourceRequest;
     class OCResourceResponse;

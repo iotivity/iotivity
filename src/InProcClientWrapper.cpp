@@ -23,14 +23,17 @@
 #include "InProcClientWrapper.h"
 #include "ocstack.h"
 
+#include "OCPlatform.h"
 #include "OCResource.h"
-using namespace std;
 
+using namespace std;
 
 namespace OC
 {
-    InProcClientWrapper::InProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
-            : m_threadRun(false), m_csdkLock(csdkLock),
+    InProcClientWrapper::InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
+            : IClientWrapper(owner),
+              m_threadRun(false), m_csdkLock(csdkLock),
+              m_owner(m_owner),
               m_cfg { cfg }
     {
         // if the config type is server, we ought to never get called.  If the config type
@@ -109,8 +112,9 @@ namespace OC
 
     struct ListenContext
     {
-        FindCallback callback;
-        IClientWrapper::Ptr clientWrapper;
+        FindCallback              callback;
+        IClientWrapper::Ptr       clientWrapper;
+        OC::OCPlatform const*     owner;          // observing ptr
     };
 
 
@@ -154,34 +158,34 @@ namespace OC
     OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
     {
-        if(clientResponse->result == OC_STACK_OK)
+        ListenContext* context = static_cast<ListenContext*>(ctx);
+
+        if(clientResponse->result != OC_STACK_OK)
         {
-            ListenContext* context = static_cast<ListenContext*>(ctx);
+            context->owner->log() << "listenCallback(): failed to create resource. clientResponse: " << clientResponse->result << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
 
-            std::stringstream requestStream;
-            requestStream << clientResponse->resJSONPayload;
+        std::stringstream requestStream;
+        requestStream << clientResponse->resJSONPayload;
 
-            // TODO this should got logger
-            // std::cout << "Listen: " << clientResponse->resJSONPayload << std::endl;
+        boost::property_tree::ptree root;
 
-            boost::property_tree::ptree root;
-
-            try
-            {
+        try
+        {
                 boost::property_tree::read_json(requestStream, root);
-            }
-            catch(boost::property_tree::json_parser::json_parser_error &e)
-            {
-                std::cout << "read_json failed: "<< e.what() <<std::endl;
-                // TODO: Do we want to handle this somehow? Perhaps we need to log this?
+        }
+        catch(boost::property_tree::json_parser::json_parser_error &e)
+        {
+                context->owner->log() << "listenCallback(): read_json() failed: " << e.what() << std::flush;
                 return OC_STACK_KEEP_TRANSACTION;
-            }
+        }
 
-            boost::property_tree::ptree payload =
+        boost::property_tree::ptree payload =
                 root.get_child("oc", boost::property_tree::ptree());
 
-            for(auto payloadItr : payload)
-            {
+        for(auto payloadItr : payload)
+        {
                 try
                 {
                     std::string host = convertOCAddrToString(*clientResponse->addr);
@@ -199,18 +203,11 @@ namespace OC
                 }
                 catch(ResourceInitException& e)
                 {
-                    std::cout << "Failed to create resource: "<< e.what() <<std::endl;
-                    // TODO: Do we want to handle this somehow?  Perhaps we need to log this?
+                    context->owner->log() << "listenCallback(): failed to create resource: " << e.what() << std::flush;
                 }
-            }
-            return OC_STACK_KEEP_TRANSACTION;
+        }
 
-        }
-        else
-        {
-            std::cout<<"listen Callback got failed result: " << clientResponse->result<<std::endl;
-            return OC_STACK_KEEP_TRANSACTION;
-        }
+        return OC_STACK_KEEP_TRANSACTION;
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl,
@@ -223,6 +220,7 @@ namespace OC
         ListenContext* context = new ListenContext();
         context->callback = callback;
         context->clientWrapper = shared_from_this();
+        context->owner = &m_owner;
 
         cbdata.context =  static_cast<void*>(context);
         cbdata.cb = listenCallback;
@@ -370,8 +368,6 @@ namespace OC
     {
         GetContext* context = static_cast<GetContext*>(ctx);
 
-        std::cout << "GET JSON: " << (char*) clientResponse->resJSONPayload << endl;
-
         OCRepresentation rep;
 
         if(clientResponse->result == OC_STACK_OK)
@@ -395,15 +391,13 @@ namespace OC
         cbdata.cb = &getResourceCallback;
         cbdata.cd = [](void* c){delete static_cast<GetContext*>(c);};
 
-        // TODO: in the future the cstack should be combining these two strings!
-        ostringstream os;
-        os << host << assembleSetResourceUri(uri, queryParams).c_str();
-        std::cout << "GET URI: " << os.str() << std::endl;
-        // TODO: end of above
-
         auto cLock = m_csdkLock.lock();
+
         if(cLock)
         {
+            std::ostringstream os;
+            os << host << "/oc/presence";
+
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
             result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(),
@@ -560,15 +554,14 @@ namespace OC
             method = OC_REST_OBSERVE_ALL;
         }
 
-        // TODO: in the future the cstack should be combining these two strings!
-        ostringstream os;
-        os << host << assembleSetResourceUri(uri, queryParams).c_str();
-        // std::cout << "OBSERVE URI: " << os.str() << std::endl;
-        // TODO: end of above
-
         auto cLock = m_csdkLock.lock();
+
         if(cLock)
         {
+            std::ostringstream os;
+
+            os << host << "/oc/presence";
+
             std::lock_guard<std::mutex> lock(*cLock);
             result = OCDoResource(handle, method,
                                   os.str().c_str(), nullptr,
@@ -621,7 +614,6 @@ namespace OC
     OCStackResult InProcClientWrapper::SubscribePresence(OCDoHandle* handle,
         const std::string& host, SubscribeCallback& presenceHandler)
     {
-        OCStackResult result;
         OCCallbackData cbdata = {0};
 
         SubscribePresenceContext* ctx = new SubscribePresenceContext();
@@ -635,18 +627,11 @@ namespace OC
 
         os << host << "/oc/presence";
 
-        std::cout << "Subscribe Presence: " << os.str() << std::endl;
-
-        if(cLock)
-        {
-            result = OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr,
-                        OC_NON_CONFIRMABLE, &cbdata);
-        }
-        else
-        {
+        if(!cLock)
             return OC_STACK_ERROR;
-        }
-        return result;
+            
+        return OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr,
+                            OC_NON_CONFIRMABLE, &cbdata);
     }
 
     OCStackResult InProcClientWrapper::UnsubscribePresence(OCDoHandle handle)

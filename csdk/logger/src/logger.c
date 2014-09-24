@@ -21,6 +21,12 @@
 
 #include "logger.h"
 #include "string.h"
+#include "oc_logger.h"
+#include "oc_console_logger.h"
+
+static oc_log_ctx_t *logCtx = 0;
+
+static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO, OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
 
 static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
 
@@ -46,6 +52,24 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 
 
 #if defined(__ANDROID__) || defined(__linux__)
+
+void OCLogConfig(oc_log_ctx_t *ctx) {
+    logCtx = ctx;
+}
+
+void OCLogInit() {
+
+}
+
+void OCLogShutdown() {
+#ifdef __linux__
+    if (logCtx && logCtx->destroy)
+    {
+        logCtx->destroy(logCtx);
+    }
+#endif
+}
+
 /**
  * Output a variable argument list log string with the specified priority level.
  * Only defined for Linux and Android
@@ -83,7 +107,15 @@ void OCLog(LogLevel level, const char * tag, const char * logStr) {
     #ifdef __ANDROID__
         __android_log_write(LEVEL[level], tag, logStr);
     #elif defined __linux__
-        printf("%s: %s: %s\n", LEVEL[level], tag, logStr);
+        if (logCtx && logCtx->write_level)
+        {
+            logCtx->write_level(logCtx, LEVEL_XTABLE[level], logStr);
+
+        }
+        else
+        {
+            printf("%s: %s: %s\n", LEVEL[level], tag, logStr);
+        }
     #endif
 }
 

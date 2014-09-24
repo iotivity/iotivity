@@ -32,6 +32,7 @@ OBJ_DIR := ./bin
 
 ROOT_DIR = ../../../../..
 LOGGER_DIR = $(ROOT_DIR)/logger
+OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
 TBSTACK_DIR = $(ROOT_DIR)/stack
 TBSOCKET_DIR = $(ROOT_DIR)/ocsocket
 
@@ -44,7 +45,7 @@ VPATH := $(SDIR_ARD_PLATFORM)
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 LOGGER_DIR = $(ROOT_DIR)/logger
 STACK_DIR  = $(ROOT_DIR)/stack
-INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
+INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(OC_LOG_DIR)/include -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
 
 CFLAGS		:= -Os -Wall -c -DTB_LOG
 

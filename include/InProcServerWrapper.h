@@ -32,7 +32,7 @@ namespace OC
     class InProcServerWrapper : public IServerWrapper
     {
     public:
-        InProcServerWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg);
+        InProcServerWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg);
         virtual ~InProcServerWrapper();
 
         virtual OCStackResult registerResource(

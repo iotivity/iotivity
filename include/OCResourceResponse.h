@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResourceResponse.h
+/// @file OCResourceResponse.h 
 
-/// @brief  This file contains the declaration of classes and its members related to
+/// @brief  This file contains the declaration of classes and its members related to 
 ///         ResourceResponse.
 
 #ifndef __OCRESOURCERESPONSE_H
@@ -279,6 +279,39 @@ namespace OC
             m_payload = payload.str();
         }
 
+
+        /** TODO remove this once after above function stabilize.
+        *  API to set the entire resource attribute representation
+        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        */
+        void setResourceRepresentation(AttributeMap& attributes) { 
+
+            // TODO To be refactored
+            ostringstream payload;
+
+            payload << "{";
+            
+            // TODO fix this (do this programmatically)
+            payload << "\"href\":\"/a/room\"";
+
+            payload << ",\"rep\":{";
+
+            for(AttributeMap::const_iterator itr = attributes.begin(); itr!= attributes.end(); ++ itr)
+            {
+                if(itr != attributes.begin())
+                {
+                    payload << ',';
+                }
+                // cout << itr->first << ":" <, itr->second.front() << endl;
+                payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
+
+            }
+
+            payload << "}}";
+
+            m_payload = payload.str();
+        }
+
     private:
         std::string m_payload;
         int m_errorCode;
@@ -286,10 +319,15 @@ namespace OC
     // TODO only stack should have visibility and apps should not
     public:
 
-        /**
-        * Get error code
+        /** 
+        * Get error code 
         */
-        int getErrorCode() const;
+        int getErrorCode() const; 
+
+        /**
+        * Get the resource attribute representation
+        */
+        AttributeMap& getResourceRepresentation() const; 
 
         // TODO This should go away & just use getResourceRepresentation
         std::string getPayload()

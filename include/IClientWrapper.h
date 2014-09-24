@@ -28,10 +28,19 @@
 
 namespace OC
 {
+    class OCPlatform;
+
     class IClientWrapper : public std::enable_shared_from_this<IClientWrapper>
     {
+    protected:
+        OCPlatform& m_owner;
+        
     public:
         typedef std::shared_ptr<IClientWrapper> Ptr;
+
+        IClientWrapper(OCPlatform& owner)
+         : m_owner(owner)
+        {}
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType,
             FindCallback& callback) = 0;
