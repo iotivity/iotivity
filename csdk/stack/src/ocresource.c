@@ -293,7 +293,14 @@ OCStackResult DetermineResourceHandling (OCRequest *request,
         *resource = resourcePtr;
         if (!resourcePtr)
         {
+            if(defaultDeviceHandler)
+            {
+                *handling = OC_RESOURCE_DEFAULT_DEVICE_ENTITYHANDLER;
+                return OC_STACK_OK;
+            }
+
             // Resource does not exist
+            // and default device handler does not exist
             return OC_STACK_NO_RESOURCE;
         }
 
@@ -398,6 +405,21 @@ HandleVirtualResource (OCRequest *request, OCResource* resource)
     return result;
 }
 
+static OCStackResult
+HandleDefaultDeviceEntityHandler (OCRequest *request)
+{
+    OCStackResult result = OC_STACK_OK;
+    OCEntityHandlerRequest *ehRequest = request->entityHandlerRequest;
+
+    // At this point we know for sure that defaultDeviceHandler exists
+    defaultDeviceHandler(OC_REQUEST_FLAG, ehRequest);
+
+    ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen -
+                                    strlen((char*)ehRequest->resJSONPayload);
+    ehRequest->resJSONPayload += strlen((char*)ehRequest->resJSONPayload);
+
+    return result;
+}
 
 static OCStackResult
 HandleResourceWithEntityHandler (OCRequest *request,
@@ -482,6 +504,11 @@ BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest 
                 break;
             }
 
+        case OC_RESOURCE_DEFAULT_DEVICE_ENTITYHANDLER:
+            {
+                ret = HandleDefaultDeviceEntityHandler(request);
+                break;
+            }
         case OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER:
             {
                 OC_LOG(INFO, TAG, PCF("OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER"));

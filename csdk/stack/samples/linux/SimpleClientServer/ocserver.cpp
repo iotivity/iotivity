@@ -127,6 +127,58 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
     if (clientStillObserving == false)
         gLEDUnderObservation = 0;
 }
+OCEntityHandlerResult
+OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
+                   OCEntityHandlerRequest *entityHandlerRequest)
+{
+    const char* typeOfMessage;
+
+    OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x", flag);
+    if (flag & OC_INIT_FLAG)
+    {
+        OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");
+    }
+    if (flag & OC_REQUEST_FLAG)
+    {
+        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        if (entityHandlerRequest)
+        {
+            if (OC_REST_GET == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+                ProcessGetRequest (entityHandlerRequest);
+            }
+            else if (OC_REST_PUT == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+                ProcessPutRequest (entityHandlerRequest);
+            }
+            else
+            {
+                OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+                            entityHandlerRequest->method);
+            }
+        }
+    }
+    if (flag & OC_OBSERVE_FLAG)
+    {
+        OC_LOG(INFO, TAG, "Flag includes OC_OBSERVE_FLAG");
+        if (entityHandlerRequest)
+        {
+            if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
+            {
+                OC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
+            }
+            else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
+            {
+                OC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
+            }
+        }
+    }
+
+    return OC_EH_OK;
+}
+
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
@@ -303,6 +355,9 @@ int main(int argc, char* argv[])
         return 0;
     }
     #endif
+
+    OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb);
+
     /*
      * Declare and create the example resource: LED
      */
