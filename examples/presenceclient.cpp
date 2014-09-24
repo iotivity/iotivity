@@ -76,19 +76,19 @@ void foundResource(std::shared_ptr<OCResource> resource)
             hostAddress = resource->host();
             std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
 
-            // Get the resource types 
+            // Get the resource types
             std::cout << "\tList of resource types: " << std::endl;
             for(auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
             }
-            
+
             // Get the resource interfaces
             std::cout << "\tList of resource interfaces: " << std::endl;
             for(auto &resourceInterfaces : resource->getResourceInterfaces())
             {
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
-            } 
+            }
 
             if(resourceURI == "/a/light")
             {
@@ -116,8 +116,8 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Client,
-        "192.168.1.10",
-        5683,
+        "0.0.0.0",
+        0,
         OC::QualityOfService::NonConfirmable
     };
 

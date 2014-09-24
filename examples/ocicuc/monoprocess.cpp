@@ -41,7 +41,7 @@
 namespace Intel { namespace OCDemo {
 
 auto make_description()
-    -> boost::program_options::options_description 
+    -> boost::program_options::options_description
 {
  using std::string;
 
@@ -52,9 +52,9 @@ auto make_description()
 std::cout << "JFW: TODO: separate IP/port/etc. for server and client!\n";
  desc.add_options()
     ("nres",        po::value<unsigned long>()->default_value(1),         "number of resources to use for testing")
-    ("host_ip",     po::value<string>()->default_value("134.134.161.33"), "IP of host")
-    ("host_port",   po::value<uint16_t>()->default_value(5683),           "port of host")
-    ("interface",   po::value<string>()->default_value("eth0"),           "network interface name") 
+    ("host_ip",     po::value<string>()->default_value("0.0.0.0"), "IP of host")
+    ("host_port",   po::value<uint16_t>()->default_value(0),           "port of host")
+    ("interface",   po::value<string>()->default_value("eth0"),           "network interface name")
     ("uri",         po::value<vector<string>>(),                          "resource URI")
     ;
 
@@ -149,7 +149,7 @@ struct server_t
  server_t(const boost::program_options::variables_map& vm,
           std::shared_ptr<OC::OCPlatform> platform,
           atomic<bool>& quit_flag_)
-  : m_vm(vm), 
+  : m_vm(vm),
     m_platform_ptr(platform),
     m_platform(*m_platform_ptr),
     quit_flag(quit_flag_)
@@ -200,7 +200,7 @@ int exec(const boost::program_options::variables_map& vm)
                           OC::ModeType::Both,                   // run in client/server mode
                           vm["host_ip"].as<string>(),           // host
                           vm["host_port"].as<uint16_t>(),       // port
-                          OC::QualityOfService::NonConfirmable 
+                          OC::QualityOfService::NonConfirmable
                         });
 
  std::cout << "Ok." << std::endl;

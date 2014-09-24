@@ -97,7 +97,7 @@ private:
     }
 
     void foundResource(std::shared_ptr<OCResource> resource)
-    {    
+    {
         std::cout << "In foundResource" << std::endl;
         if(resource && resource->uri() == "/q/foo")
         {
@@ -114,25 +114,25 @@ private:
             std::cout << "Found Resource: "<<std::endl;
             std::cout << "\tHost: "<< resource->host()<<std::endl;
             std::cout << "\tURI:  "<< resource->uri()<<std::endl;
-            
-            // Get the resource types 
+
+            // Get the resource types
             std::cout << "\tList of resource types: " << std::endl;
             for(auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
             }
-            
+
             // Get the resource interfaces
             std::cout << "\tList of resource interfaces: " << std::endl;
             for(auto &resourceInterfaces : resource->getResourceInterfaces())
             {
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
-            } 
+            }
 
             std::cout<<"Doing a get on q/foo."<<std::endl;
 
             resource->get(QueryParamsMap(), GetCallback(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
-        } 
+        }
     }
 
 public:
@@ -179,7 +179,7 @@ struct FooResource
 
         RegisterCallback eh(std::bind(&FooResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2));
         OCStackResult result = platform.registerResource(m_resourceHandle, resourceURI, resourceTypeName,
-                                    resourceInterface, 
+                                    resourceInterface,
                                     eh, resourceProperty);
         if(OC_STACK_OK != result)
         {
@@ -247,7 +247,7 @@ struct FooResource
             else
             {
                 std::cout <<"\t\trequestFlag : UNSUPPORTED: ";
-                
+
                 if(request->getRequestHandlerFlag()==RequestHandlerFlag::InitFlag)
                 {
                     std::cout<<"InitFlag"<<std::endl;
@@ -270,8 +270,8 @@ int main()
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,
-        "134.134.161.33",
-        56833,
+        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
+        0,         // Uses randomly available port
         OC::QualityOfService::NonConfirmable
     };
 
@@ -280,7 +280,7 @@ int main()
     try
     {
         OCPlatform platform(cfg);
-        
+
         if(!fooRes.createResource(platform))
         {
             return -1;

@@ -228,8 +228,8 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Client,
-        "192.168.1.10",
-        5683,
+        "0.0.0.0",
+        0,
         OC::QualityOfService::NonConfirmable
     };
 

@@ -75,12 +75,23 @@ namespace OC
         NonConfirmable  = OC_NON_CONFIRMABLE
     };
 
+    /**
+    *  Data structure to provide the configuration.
+    *  ServiceType: indicate InProc or OutOfProc
+    *  ModeType   : indicate whether we want to do server, client or both
+    *  ipAddress  : ip address of server.
+    *               if you speecifiy 0.0.0.0 : it listens on any interface.
+    *  port       : port of server.
+    *             : if you specifiy 0 : next available random port is used.
+    *             : if you specify 5683 : client discovery can work even if they don't specify port.
+    *  QoS        : Quality of Service : CONFIRMABLE or NON CONFIRMABLE.
+    */
     struct PlatformConfig
     {
-        ServiceType                serviceType;   // This will indicate whether it is InProc or OutOfProc
-        ModeType                   mode;          // This will indicate whether we want to do server, client or both
-        std::string                ipAddress;     // This is the ipAddress of the server to connect to
-        uint16_t                   port;          // Port of the server
+        ServiceType                serviceType;
+        ModeType                   mode;
+        std::string                ipAddress;
+        uint16_t                   port;
 
         QualityOfService           QoS;
 

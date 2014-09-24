@@ -54,7 +54,7 @@ public:
 
 public:
     /// Constructor
-    LightResource(): m_state(false), m_power(0), m_lightUri("/a/light"), 
+    LightResource(): m_state(false), m_power(0), m_lightUri("/a/light"),
                      m_lightUri2("/a/light2"),m_lightUri3("/a/light3") {}
 
     /* Note that this does not need to be a member function: for classes you do not have
@@ -64,7 +64,7 @@ public:
     void createResource(OC::OCPlatform& platform)
     {
         std::string resourceURI = m_lightUri; // URI of the resource
-        std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
+        std::string resourceTypeName = "core.light"; // resource type name.
         std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
         // OCResourceProperty is defined ocstack.h
@@ -161,8 +161,8 @@ int main()
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "134.134.161.33",
-        56832,
+        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
+        0,         // Uses randomly available port
         OC::QualityOfService::NonConfirmable
     };
 

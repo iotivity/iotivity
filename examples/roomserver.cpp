@@ -69,7 +69,7 @@ public:
 
 public:
     /// Constructor
-    RoomResource(): m_lightState(false), m_lightColor(0), m_fanState(false), m_fanSpeed(0) 
+    RoomResource(): m_lightState(false), m_lightColor(0), m_fanState(false), m_fanSpeed(0)
     {
         m_lightUri = "/a/light"; // URI of the resource
         m_lightTypes.push_back("core.light"); // resource type name. In this case, it is light
@@ -107,7 +107,7 @@ public:
         // This will internally create and register the resource.
         OCStackResult result = platform.registerResource(
                                     m_roomHandle, m_roomUri, m_roomTypes[0],
-                                    m_roomInterfaces[0], NULL, //entityHandlerRoom, 
+                                    m_roomInterfaces[0], NULL, //entityHandlerRoom,
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                   );
 
@@ -130,7 +130,7 @@ public:
 
         result = platform.registerResource(
                                     m_lightHandle, m_lightUri, m_lightTypes[0],
-                                    m_lightInterfaces[0], entityHandlerLight, 
+                                    m_lightInterfaces[0], entityHandlerLight,
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                    );
 
@@ -141,7 +141,7 @@ public:
 
         result = platform.registerResource(
                                     m_fanHandle, m_fanUri, m_fanTypes[0],
-                                    m_fanInterfaces[0], entityHandlerFan, 
+                                    m_fanInterfaces[0], entityHandlerFan,
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                    );
 
@@ -174,7 +174,7 @@ public:
         {
             m_lightState = tempState;
             m_lightColor= tempColor;
-       
+
             cout << "\t\t\t\t" << "state: " << m_lightState << endl;
             cout << "\t\t\t\t" << "color: " << m_lightColor << endl;
         }
@@ -197,7 +197,7 @@ public:
     }
 
 
-    OCRepresentation getLightRepresentation() 
+    OCRepresentation getLightRepresentation()
     {
         m_lightRep.setValue("state", m_lightState);
         m_lightRep.setValue("color", m_lightColor);
@@ -221,7 +221,7 @@ public:
 
         OCRepresentation fan = getFanRepresentation();
         children.push_back(fan);
-            
+
         m_roomRep.setChildren(children);
 
         return m_roomRep;
@@ -232,7 +232,8 @@ public:
 // Create the instance of the resource class (in this case instance of class 'RoomResource').
 RoomResource myRoomResource;
 
-void entityHandlerRoom(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+void entityHandlerRoom(std::shared_ptr<OCResourceRequest> request,
+                       std::shared_ptr<OCResourceResponse> response)
 {
     cout << "\tIn Server CPP entity handler:\n";
 
@@ -465,8 +466,8 @@ int main()
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
-        "192.168.1.10",
-        56832,
+        "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
+        0,         // Uses randomly available port
         OC::QualityOfService::NonConfirmable
     };
 

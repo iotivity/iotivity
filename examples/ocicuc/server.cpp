@@ -26,7 +26,7 @@
 namespace Intel { namespace OCDemo {
 
 auto make_description()
-    -> boost::program_options::options_description 
+    -> boost::program_options::options_description
 {
  using std::string;
 
@@ -36,9 +36,9 @@ auto make_description()
 
  desc.add_options()
     ("nres",        po::value<unsigned long>()->default_value(1),         "number of resources to use for testing")
-    ("host_ip",     po::value<string>()->default_value("134.134.161.33"), "IP of host")
-    ("host_port",   po::value<uint16_t>()->default_value(56832),          "port of host")
-    ("interface",   po::value<string>()->default_value("eth0"),           "network interface name") 
+    ("host_ip",     po::value<string>()->default_value("0.0.0.0"), "IP of host")
+    ("host_port",   po::value<uint16_t>()->default_value(0),          "port of host")
+    ("interface",   po::value<string>()->default_value("eth0"),           "network interface name")
     ("uri",     po::value<vector<string>>(),                              "resource URI")
     ("runtime", po::value<unsigned int>()->default_value(3600),             "time in seconds to keep the server alive")
     ;
@@ -52,12 +52,12 @@ int exec(const boost::program_options::variables_map& vm)
 
  std::cout << "Starting platform: " << std::flush;
 
- OC::OCPlatform platform({ 
+ OC::OCPlatform platform({
                           OC::ServiceType::InProc,              // in-process server
                           OC::ModeType::Server,                 // run in server mode
                           vm["host_ip"].as<string>(),           // host
                           vm["host_port"].as<uint16_t>(),       // port
-                          OC::QualityOfService::NonConfirmable      
+                          OC::QualityOfService::NonConfirmable
                         });
 
  std::cout << "Ok." << std::endl;
