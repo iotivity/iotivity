@@ -364,6 +364,21 @@ OCStackResult OCStartPresence(const uint32_t ttl);
 
 OCStackResult OCStopPresence();
 #endif
+
+
+/**
+ * Set default device entity handler
+ *
+ * @param entityHandler - entity handler function that is called by ocstack to handle requests for
+ *                        any undefined resources or default actions.
+ *                        if NULL is passed it removes the device default entity handler.
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
+ */
+OCStackResult OCSetDefaultDeviceEntityHandler(OCEntityHandler entityHandler);
+
 /**
  * Create a resource.
  *

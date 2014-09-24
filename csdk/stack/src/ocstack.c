@@ -56,7 +56,9 @@ static PresenceResource presenceResource;
 uint8_t PresenceTimeOutSize = 4;
 uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
+
 OCMode myStackMode;
+OCEntityHandler defaultDeviceHandler;
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -247,6 +249,9 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
         break;
     }
     myStackMode = mode;
+
+    defaultDeviceHandler = NULL;
+
     // Make call to OCCoAP layer
     result = OCInitCoAP(ipAddr, (uint16_t) port, myStackMode);
     if (result == OC_STACK_OK)
@@ -640,6 +645,14 @@ OCStackResult OCStopPresence()
     return result;
 }
 #endif
+
+
+OCStackResult OCSetDefaultDeviceEntityHandler(OCEntityHandler entityHandler)
+{
+    defaultDeviceHandler = entityHandler;
+
+    return OC_STACK_OK;
+}
 
 /**
  * Create a resource
