@@ -33,13 +33,13 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 #elif defined ARDUINO
     #include <stdarg.h>
 
-    PROGMEM char level0[] = "DEBUG";
-    PROGMEM char level1[] = "INFO";
-    PROGMEM char level2[] = "WARNING";
-    PROGMEM char level3[] = "ERROR";
-    PROGMEM char level4[] = "FATAL";
+    PROGMEM char const level0[] = "DEBUG";
+    PROGMEM char const level1[] = "INFO";
+    PROGMEM char const level2[] = "WARNING";
+    PROGMEM char const level3[] = "ERROR";
+    PROGMEM char const level4[] = "FATAL";
 
-    PROGMEM const char * LEVEL[]  = {level0, level1, level2, level3, level4};
+    PROGMEM const char * const LEVEL[]  = {level0, level1, level2, level3, level4};
 
     static void OCLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
 #endif
