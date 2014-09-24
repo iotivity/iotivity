@@ -134,7 +134,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     OCStackResult result = OC_STACK_ERROR;
     OCStackResult responseResult = OC_STACK_ERROR;
     OCRequest * request = NULL;
-    OCEntityHandlerRequest * entityHandlerRequest = NULL;
+    OCEntityHandlerRequest entityHandlerRequest;
     OCCoAPToken * rcvdToken = NULL;
     OCObserveReq * rcvdObsReq = NULL;
     coap_pdu_t * sendPdu = NULL;
@@ -175,11 +175,11 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 
     // fill OCRequest structure
     result = FormOCRequest(&request, (recvPdu->hdr->type == COAP_MESSAGE_CON) ?
-            OC_CONFIRMABLE : OC_NON_CONFIRMABLE, rcvdUri, rcvdObsReq, entityHandlerRequest);
+            OC_CONFIRMABLE : OC_NON_CONFIRMABLE, rcvdUri, rcvdObsReq, &entityHandlerRequest);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     OC_LOG_V(INFO, TAG, " Receveid uri:     %s", request->resourceUrl);
-    OC_LOG_V(INFO, TAG, " Receveid query:   %s", entityHandlerRequest->query);
+    OC_LOG_V(INFO, TAG, " Receveid query:   %s", entityHandlerRequest.query);
     OC_LOG_V(INFO, TAG, " Receveid payload: %s",
             request->entityHandlerRequest->reqJSONPayload);
     OC_LOG_V(INFO, TAG, " Token received %d bytes",
@@ -243,7 +243,6 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 exit:
     OCFree(rcvObserveOption);
     OCFree(rcvdToken);
-    OCFree(entityHandlerRequest);
     OCFree(rcvdObsReq);
     OCFree(request);
 }

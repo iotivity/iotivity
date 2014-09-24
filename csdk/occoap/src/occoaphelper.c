@@ -298,36 +298,31 @@ OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint32_t observeOp
 }
 
 // Form the OCEntityHandlerRequest struct
-OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * * entityHandlerRequestLoc,
+OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequestLoc,
         OCMethod method, unsigned char * resBuf, unsigned char * bufReqPayload,
         unsigned char * queryBuf)
 {
-    OCEntityHandlerRequest * entityHandlerRequest = NULL;
-
-    entityHandlerRequest = (OCEntityHandlerRequest *) OCMalloc(
-            sizeof(OCEntityHandlerRequest));
-    if (!entityHandlerRequest)
+    if (entityHandlerRequestLoc)
     {
-        return OC_STACK_NO_MEMORY;
+        //set it to NULL for now, it will be modified in ocstack
+        entityHandlerRequestLoc->resource = NULL;
+
+        entityHandlerRequestLoc->method = method;
+
+        // fill in query
+        entityHandlerRequestLoc->query = queryBuf;
+
+        // fill payload
+        entityHandlerRequestLoc->reqJSONPayload = bufReqPayload;
+
+        entityHandlerRequestLoc->resJSONPayload = resBuf;
+        entityHandlerRequestLoc->resJSONPayloadLen = MAX_RESPONSE_LENGTH;
+
+        entityHandlerRequestLoc->obsInfo = NULL;
+        return OC_STACK_OK;
     }
-    //set it to NULL for now, it will be modified in ocstack
-    entityHandlerRequest->resource = NULL;
 
-    entityHandlerRequest->method = method;
-
-    // fill in query
-    entityHandlerRequest->query = queryBuf;
-
-    // fill payload
-    entityHandlerRequest->reqJSONPayload = bufReqPayload;
-
-    entityHandlerRequest->resJSONPayload = resBuf;
-    entityHandlerRequest->resJSONPayloadLen = MAX_RESPONSE_LENGTH;
-
-    entityHandlerRequest->obsInfo = NULL;
-
-    *entityHandlerRequestLoc = entityHandlerRequest;
-    return OC_STACK_OK;
+    return OC_STACK_INVALID_PARAM;
 }
 
 // Retrieve the token from the PDU
