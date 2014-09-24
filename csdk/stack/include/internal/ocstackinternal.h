@@ -184,10 +184,6 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-// TODO: ultimately OCMalloc and OCFree should be defined in a different module
-void OCFree(void *ptr);
-void *OCMalloc(size_t size);
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus

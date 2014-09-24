@@ -28,6 +28,7 @@
 #include "utlist.h"
 #include "debug.h"
 #include "ocrandom.h"
+#include "ocmalloc.h"
 
 // Module Name
 #define MOD_NAME PCF("ocobserve")

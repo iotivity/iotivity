@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "ocobserve.h"
 #include "coap_time.h"
+#include "ocmalloc.h"
 
 //-----------------------------------------------------------------------------
 // Macros

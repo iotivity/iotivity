@@ -27,6 +27,7 @@
 #include "occlientcb.h"
 #include "ocobserve.h"
 #include "logger.h"
+#include "ocmalloc.h"
 #include <coap.h>
 
 #ifndef WITH_ARDUINO
