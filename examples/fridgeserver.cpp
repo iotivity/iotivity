@@ -52,7 +52,14 @@ class DeviceResource : public Resource
         std::string resourceURI = "/device";
         std::string resourceTypeName = "intel.fridge";
         std::string resourceInterface = DEFAULT_INTERFACE;
-        RegisterCallback cb = std::bind(&DeviceResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&DeviceResource::entityHandler, this,PH::_1, PH::_2);
+
+        EntityHandler defaultEH = std::bind(&DeviceResource::defaultEntityHandler, this,
+                                                                         PH::_1, PH::_2);
+
+        std::cout << "Setting device default entity handler\n";
+        platform.setDefaultDeviceEntityHandler(defaultEH);
+
         uint8_t resourceProperty = OC_DISCOVERABLE;
         OCStackResult result = platform.registerResource(m_resourceHandle,
             resourceURI,
@@ -70,7 +77,7 @@ class DeviceResource : public Resource
     private:
     OCRepresentation get()
     {
-        m_rep.setValue("device_name", "Intel Powered 2 door, 1 light refridgerator");
+        m_rep.setValue("device_name", std::string("Intel Powered 2 door, 1 light refridgerator"));
         return m_rep;
     }
 
@@ -104,6 +111,36 @@ class DeviceResource : public Resource
             }
         }
     }
+
+    virtual void defaultEntityHandler(std::shared_ptr<OCResourceRequest> request,
+            std::shared_ptr<OCResourceResponse> response)
+    {
+        if(request)
+        {
+            if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
+            {
+                if(request->getRequestType() == "GET")
+                {
+                    if(response)
+                    {
+                        std::cout<<"Default Entity Handler: Get Request"<<std::endl;
+                        response->setErrorCode(200);
+                        response->setResourceRepresentation(get(), "");
+                    }
+                }
+                else
+                {
+                    std::cout <<"Default Entity Handler: unsupported request type "
+                    << request->getRequestType() << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Default Entity Handler: unsupported request flag" <<std::endl;
+            }
+        }
+   }
+
 };
 
 class LightResource : public Resource
@@ -114,7 +151,7 @@ class LightResource : public Resource
         std::string resourceURI = "/light";
         std::string resourceTypeName = "intel.fridge.light";
         std::string resourceInterface = DEFAULT_INTERFACE;
-        RegisterCallback cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
         uint8_t resourceProperty = 0;
         OCStackResult result = platform.registerResource(m_resourceHandle,
             resourceURI,
@@ -193,7 +230,8 @@ class DoorResource : public Resource
         std::string resourceURI = "/door/"+ side;
         std::string resourceTypeName = "intel.fridge.door";
         std::string resourceInterface = DEFAULT_INTERFACE;
-        RegisterCallback cb = std::bind(&DoorResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&DoorResource::entityHandler, this,PH::_1, PH::_2);
+
         uint8_t resourceProperty = 0;
         OCStackResult result = platform.registerResource(m_resourceHandle,
             resourceURI,
@@ -265,6 +303,7 @@ class DoorResource : public Resource
             }
         }
     }
+
 };
 
 class Refridgerator

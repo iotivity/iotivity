@@ -154,8 +154,21 @@ namespace OC
                         std::string& resourceURI,
                         const std::string& resourceTypeName,
                         const std::string& resourceInterface,
-                        RegisterCallback entityHandler,
+                        EntityHandler entityHandler,
                         uint8_t resourceProperty);
+
+        /**
+        * Set default device entity handler
+        *
+        * @param entityHandler - entity handler to handle requests for
+        *                        any undefined resources or default actions.
+        *                        if NULL is passed it removes the device default entity handler.
+        *
+        * @return
+        *     OC_STACK_OK    - no errors
+        *     OC_STACK_ERROR - stack process error
+        */
+        OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler);
 
         /**
         * This API unregisters a resource with the server
@@ -176,13 +189,13 @@ namespace OC
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.<br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
-        * NOTE: bindResource must be used only after the both collection resource and 
+        * NOTE: bindResource must be used only after the both collection resource and
         * resource to add under a collections are created and respective handles obtained<br>
         * <b>Example:</b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface, entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface, entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 3: bindResource(homeResourceHandle, kitchenResourceHandle);<br>
-        * At the end of Step 3, resource "a/home" will contain a reference to "a/kitchen".<br> 
+        * At the end of Step 3, resource "a/home" will contain a reference to "a/kitchen".<br>
         */
         OCStackResult bindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle);
 
@@ -194,7 +207,7 @@ namespace OC
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
-        * NOTE: bindResources must be used only after the both collection resource and 
+        * NOTE: bindResources must be used only after the both collection resource and
         * list of resources to add under a collection are created and respective handles obtained <br>
         * <b> Example: </b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface, homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
@@ -214,7 +227,7 @@ namespace OC
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h.<br>
-        * NOTE: unbindResource must be used only after the both collection resource and 
+        * NOTE: unbindResource must be used only after the both collection resource and
         * resource to unbind from a collection are created and respective handles obtained<br>
         * <b> Example </b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface, entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
@@ -232,9 +245,9 @@ namespace OC
         * @param resourceHandleList List of resource handles to be unbound from the collection resource
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
-        * 
+        *
         * NOTE: OCStackResult is defined in ocstack.h.<br>
-        * NOTE: unbindResources must be used only after the both collection resource and 
+        * NOTE: unbindResources must be used only after the both collection resource and
         * list of resources resource to unbind from a collection are created and respective handles obtained. <br>
         * <b>Example</b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface, homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
@@ -268,7 +281,7 @@ namespace OC
                         const std::string& resourceInterfaceName) const;
 
         public:
-        /** 
+        /**
         * Start Presence announcements.
         *
         * @param ttl - time to live
@@ -300,14 +313,14 @@ namespace OC
         * stopped (potentially more to be added later).
         *
         * @param presenceHandle - a handle object that can be used to identify this subscription
-        *               request.  It can be used to unsubscribe from these events in the future. 
+        *               request.  It can be used to unsubscribe from these events in the future.
         *               It will be set upon successful return of this method.
         * @param host - The IP address/addressable name of the server to subscribe to.
         * @param presenceHandler - callback function that will receive notifications/subscription events
         *
         * @return OCStackResult - return value of the API.  Returns OCSTACK_OK if success <br>
         */
-        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host, 
+        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         SubscribeCallback presenceHandler);
 
         /**
@@ -326,15 +339,15 @@ namespace OC
         * Creates a resource proxy object so that get/put/observe functionality
         * can be used without discovering the object in advance.  Note that the
         * consumer of this method needs to provide all of the details required to
-        * correctly contact and observe the object. If the consumer lacks any of 
-        * this information, they should discover the resource object normally. 
+        * correctly contact and observe the object. If the consumer lacks any of
+        * this information, they should discover the resource object normally.
         * Additionally, you can only create this object if OCPlatform was initialized
         * to be a Client or Client/Server.  Otherwise, this will return an empty
         * shared ptr.
         *
-        * @param host - a string containing a resolvable host address of the server 
-        *           holding the resource. Currently this should be in the format 
-        *           coap://address:port, though in the future, we expect this to 
+        * @param host - a string containing a resolvable host address of the server
+        *           holding the resource. Currently this should be in the format
+        *           coap://address:port, though in the future, we expect this to
         *           change to //address:port
         *
         * @param uri - the rest of the resource's URI that will permit messages to be

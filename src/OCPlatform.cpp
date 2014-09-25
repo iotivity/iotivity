@@ -146,10 +146,10 @@ namespace OC
         std::string& resourceURI,
         const std::string& resourceTypeName,
         const std::string& resourceInterface,
-        RegisterCallback entityHandler,
+        EntityHandler entityHandler,
         uint8_t resourceProperty)
     {
-        OCStackResult result = OC_STACK_OK;
+        OCStackResult result = OC_STACK_ERROR;
 
         if(m_server)
         {
@@ -165,6 +165,22 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCPlatform::setDefaultDeviceEntityHandler(EntityHandler entityHandler)
+    {
+        OCStackResult result = OC_STACK_ERROR;
+
+        if(m_server)
+        {
+            try{
+                result = m_server->setDefaultDeviceEntityHandler(entityHandler);
+            }
+            catch(std::exception e) // TODO: define our own expception.
+            {
+                throw e;
+            }
+        }
+        return result;
+    }
 
     OCStackResult OCPlatform::unregisterResource(const OCResourceHandle& resourceHandle) const
     {
@@ -181,7 +197,7 @@ namespace OC
 
     OCStackResult OCPlatform::unbindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
     {
-        OCStackResult result = OC_STACK_OK;
+        OCStackResult result = OC_STACK_ERROR;
 
         try {
             result = OCUnBindResource(collectionHandle, resourceHandle);
@@ -196,7 +212,7 @@ namespace OC
 
     OCStackResult OCPlatform::unbindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
     {
-        OCStackResult result = OC_STACK_OK;
+        OCStackResult result = OC_STACK_ERROR;
 
         try {
 
@@ -223,7 +239,7 @@ namespace OC
 
     OCStackResult OCPlatform::bindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle)
     {
-        OCStackResult result = OC_STACK_OK;
+        OCStackResult result = OC_STACK_ERROR;
 
         try {
             result = OCBindResource(collectionHandle, resourceHandle);
@@ -238,7 +254,7 @@ namespace OC
 
     OCStackResult OCPlatform::bindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
     {
-        OCStackResult result = OC_STACK_OK;
+        OCStackResult result = OC_STACK_ERROR;
 
         try {
 

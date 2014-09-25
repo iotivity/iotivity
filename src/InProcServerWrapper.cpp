@@ -37,28 +37,20 @@
 #include <OCUtilities.h>
 
 using namespace std;
+using namespace OC;
 
-std::map <OCResourceHandle, OC::RegisterCallback>  entityHandlerMap;
+std::map <OCResourceHandle, OC::EntityHandler>  entityHandlerMap;
+EntityHandler defaultDeviceEntityHandler = 0;
 
-void defaultEntityHandler(const OC::OCResourceRequest::Ptr request, const OC::OCResourceResponse::Ptr response)
+void formResourceRequest(OCEntityHandlerFlag flag,
+                         OCEntityHandlerRequest * entityHandlerRequest,
+                         std::shared_ptr<OCResourceRequest> pRequest)
 {
-    // TODO: 1) why is this ever even possible? 2) throw exception?
-    std::clog << "Error: defaultEntityHandler() invoked" << std::endl;
-}
-
-OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest *entityHandlerRequest )
-{
-    auto pRequest  = std::make_shared<OC::OCResourceRequest>();
-    auto pResponse = std::make_shared<OC::OCResourceResponse>();
-
-    // TODO Utility to convert from C to C++ (every).
-
     if(flag & OC_INIT_FLAG)
     {
-        // TODO We can fill the common data (resource Handle, etc.. )
-        // init time.
         pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::InitFlag);
     }
+
     if(flag & OC_REQUEST_FLAG)
     {
         pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::RequestFlag);
@@ -90,6 +82,7 @@ OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
             }
         }
     }
+
     if(flag & OC_OBSERVE_FLAG)
     {
         pRequest->setRequestHandlerFlag(
@@ -102,11 +95,98 @@ OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
             pRequest->setObservationInfo(observationInfo);
         }
     }
+}
+
+void processResourceResponse(OCEntityHandlerFlag flag,
+                             OCEntityHandlerRequest * entityHandlerRequest,
+                             std::shared_ptr<OCResourceResponse> pResponse)
+{
+    if(flag & OC_REQUEST_FLAG)
+    {
+        // TODO we could use const reference
+        std::string payLoad;
+
+        if(pResponse)
+        {
+            payLoad = pResponse->getPayload();
+        }
+        else
+        {
+            // TODO throw appropriate runtime error
+            std::clog << "Response is NULL" << endl;
+        }
+
+        if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
+        {
+            strncpy((char*)entityHandlerRequest->resJSONPayload,
+                        payLoad.c_str(),
+                        entityHandlerRequest->resJSONPayloadLen);
+        }
+        else
+        {
+            // TODO throw appropriate runtime error
+            std::clog << "Payload is larger than the PayloadLen" << endl;
+        }
+    }
+
+}
+
+OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
+                                                  OCEntityHandlerRequest * entityHandlerRequest)
+{
+    // TODO we need to have a better way of logging (with various levels of logging)
+    std::clog << "\nIn Default device entity handler wrapper: " << endl;
+
+    if(NULL == entityHandlerRequest)
+    {
+        std::clog << "Entity handler request is NULL."  << endl;
+        return OC_EH_ERROR;
+    }
+
+    auto pRequest = std::make_shared<OC::OCResourceRequest>();
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+
+    formResourceRequest(flag, entityHandlerRequest, pRequest);
+
+    if(defaultDeviceEntityHandler)
+    {
+        defaultDeviceEntityHandler(pRequest, pResponse);
+    }
+    else
+    {
+        std::clog << "Default device entity handler was not set."  << endl;
+        return OC_EH_ERROR;
+    }
+
+    processResourceResponse(flag, entityHandlerRequest, pResponse);
+
+    return OC_EH_OK;
+}
+
+
+OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
+                                           OCEntityHandlerRequest * entityHandlerRequest )
+{
+    // TODO we need to have a better way of logging (with various levels of logging)
+    std::clog << "\nIn entity handler wrapper: " << endl;
+
+    if(NULL == entityHandlerRequest)
+    {
+        std::clog << "Entity handler request is NULL."  << endl;
+        return OC_EH_ERROR;
+    }
+
+    auto pRequest = std::make_shared<OC::OCResourceRequest>();
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+
+    formResourceRequest(flag, entityHandlerRequest, pRequest);
+
 
     // Finding the corresponding CPP Application entityHandler for a given resource
     auto entityHandlerEntry = entityHandlerMap.find(entityHandlerRequest->resource);
 
-    if(entityHandlerEntry != entityHandlerMap.end()) {
+    if(entityHandlerEntry != entityHandlerMap.end())
+    {
         // Call CPP Application Entity Handler
         // TODO CPP Application also should return OC_EH_OK or OC_EH_ERROR
         if(entityHandlerEntry->second)
@@ -115,29 +195,16 @@ OCEntityHandlerResult EntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
         }
         else
         {
-            std::clog << "C stack should not call again for parent resource" << std::endl;
+            std::clog << "C stack should not call again for parent resource\n";
         }
     }
-    else {
-        std::clog << "No entity handler found."  << std::endl;
+    else
+    {
+        std::clog << "No entity handler found."  << endl;
         return OC_EH_ERROR;
     }
 
-    if(flag & OC_REQUEST_FLAG)
-    {
-        // TODO we could use const reference
-        std::string payLoad = pResponse->getPayload();
-
-        if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
-        {
-            strncpy((char*)entityHandlerRequest->resJSONPayload, payLoad.c_str(), entityHandlerRequest->resJSONPayloadLen);
-        }
-        else
-        {
-            // TODO throw appropriate runtime error
-            // cout << "Payload is larger than the PayloadLen" << endl;
-        }
-    }
+    processResourceResponse(flag, entityHandlerRequest, pResponse);
 
     return OC_EH_OK;
 }
@@ -164,9 +231,6 @@ namespace OC
         }
 
         OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, initType);
-
-        // Setting default entity Handler
-        entityHandlerMap[(OCResourceHandle) 0] = defaultEntityHandler;
 
         if(OC_STACK_OK != result)
         {
@@ -202,11 +266,11 @@ namespace OC
                     std::string& resourceURI,
                     const std::string& resourceTypeName,
                     const std::string& resourceInterface,
-                    RegisterCallback& eHandler,
+                    EntityHandler& eHandler,
                     uint8_t resourceProperties)
 
     {
-        OCStackResult  result;
+        OCStackResult result = OC_STACK_ERROR;
 
         auto cLock = m_csdkLock.lock();
 
@@ -220,7 +284,7 @@ namespace OC
                             resourceTypeName.c_str(), // const char * resourceTypeName
                             resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
                             resourceURI.c_str(), // const char * uri
-                            EntityHandler, // OCEntityHandler entityHandler
+                            EntityHandlerWrapper, // OCEntityHandler entityHandler
                             resourceProperties // uint8_t resourceProperties
                             );
             }
@@ -247,6 +311,25 @@ namespace OC
         else
         {
             result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    OCStackResult InProcServerWrapper::setDefaultDeviceEntityHandler(EntityHandler entityHandler)
+    {
+        OCStackResult result = OC_STACK_ERROR;
+
+        defaultDeviceEntityHandler = entityHandler;
+
+        if(entityHandler)
+        {
+            result = OCSetDefaultDeviceEntityHandler(DefaultEntityHandlerWrapper);
+        }
+        else
+        {
+            // If Null passed we unset
+            result = OCSetDefaultDeviceEntityHandler(NULL);
         }
 
         return result;

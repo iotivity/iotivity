@@ -50,7 +50,7 @@ namespace OC
                     std::string& resourceURI,
                     const std::string& resourceTypeName,
                     const std::string& resourceInterface,
-                    RegisterCallback& entityHandler,
+                    EntityHandler& entityHandler,
                     uint8_t resourceProperty) = 0;
         virtual OCStackResult unregisterResource(
                     const OCResourceHandle& resourceHandle) = 0;
@@ -65,6 +65,8 @@ namespace OC
         virtual OCStackResult startPresence(const unsigned int seconds) = 0;
 
         virtual OCStackResult stopPresence() = 0;
+
+        virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler) = 0;
     };
 }
 

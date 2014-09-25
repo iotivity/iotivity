@@ -40,7 +40,7 @@ namespace OC
                     std::string& resourceURI,
                     const std::string& resourceTypeName,
                     const std::string& resourceInterface,
-                    RegisterCallback& entityHandler,
+                    EntityHandler& entityHandler,
                     uint8_t resourceProperty);
 
         virtual OCStackResult unregisterResource(
@@ -57,6 +57,8 @@ namespace OC
         virtual OCStackResult startPresence(const unsigned int seconds);
 
         virtual OCStackResult stopPresence();
+
+        virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler);
     private:
         void processFunc();
         std::thread m_processThread;
