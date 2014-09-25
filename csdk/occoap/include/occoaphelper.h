@@ -68,7 +68,7 @@ OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
         OCEntityHandlerRequest * entityHandlerRequest);
 
 // Internal function to create OCEntityHandlerRequest at the server from a received coap pdu
-OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * * entityHandlerRequestLoc,
+OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequestLoc,
         OCMethod method, unsigned char * resBuf, unsigned char * reqBuf,
         unsigned char * queryBuf);
 

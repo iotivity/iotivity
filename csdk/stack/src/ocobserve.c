@@ -44,7 +44,7 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
 {
     OCStackResult result = OC_STACK_ERROR;
     ResourceObserver * observer = NULL;
-    OCEntityHandlerRequest * ehRequest;
+    OCEntityHandlerRequest ehRequest;
     OCObservationInfo observationInfo;
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
 
@@ -56,10 +56,10 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
         if(observer)
         {
             FormOCEntityHandlerRequest(&ehRequest, OC_REST_CANCEL_OBSERVE, bufRes, NULL, NULL);
-            ehRequest->obsInfo = &observationInfo;
-            ehRequest->obsInfo->action = OC_OBSERVE_DEREGISTER;
-            ehRequest->obsInfo->obsId = observer->observeId;
-            observer->resource->entityHandler(OC_OBSERVE_FLAG, ehRequest);
+            ehRequest.obsInfo = &observationInfo;
+            ehRequest.obsInfo->action = OC_OBSERVE_DEREGISTER;
+            ehRequest.obsInfo->obsId = observer->observeId;
+            observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
         }
         //observer is dead, or it is not observing anymore
         result = DeleteObserverUsingToken (token);
@@ -97,10 +97,10 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
             {
                 FormOCEntityHandlerRequest(&ehRequest, OC_REST_CANCEL_OBSERVE, bufRes, NULL, NULL);
-                ehRequest->obsInfo = &observationInfo;
-                ehRequest->obsInfo->action = OC_OBSERVE_DEREGISTER;
-                ehRequest->obsInfo->obsId = observer->observeId;
-                observer->resource->entityHandler(OC_OBSERVE_FLAG, ehRequest);
+                ehRequest.obsInfo = &observationInfo;
+                ehRequest.obsInfo->action = OC_OBSERVE_DEREGISTER;
+                ehRequest.obsInfo->obsId = observer->observeId;
+                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
 
                 result = DeleteObserverUsingToken (token);
                 if(result != OC_STACK_OK)
@@ -238,7 +238,7 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
     OCStackResult stackRet = OC_STACK_ERROR;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     ResourceObserver *resourceObserver = serverObsList;
-    OCEntityHandlerRequest * entityHandlerReq = NULL;
+    OCEntityHandlerRequest entityHandlerReq;
     unsigned char* jsonPayload = NULL;
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
     // TODO: we should allow the server application to define qos for each notification
@@ -258,12 +258,12 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
                 // the query according to the new representation
                 FormOCEntityHandlerRequest(&entityHandlerReq, OC_REST_GET, bufRes,
                         NULL, resourceObserver->query);
-                entityHandlerReq->resource = (OCResourceHandle)resPtr;
+                entityHandlerReq.resource = (OCResourceHandle)resPtr;
 
                 // Even if entity handler for a resource is not successful
                 // we continue calling entity handler for other resources
-                ehRet = BuildObsJSONResponse((OCResource *) resPtr, entityHandlerReq);
-                jsonPayload = (unsigned char *)entityHandlerReq->resJSONPayload;
+                ehRet = BuildObsJSONResponse((OCResource *) resPtr, &entityHandlerReq);
+                jsonPayload = (unsigned char *)(entityHandlerReq.resJSONPayload);
             #ifdef WITH_PRESENCE
             }
             else
@@ -318,8 +318,6 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
             {
                 stackRet = OC_STACK_ERROR;
             }
-
-            OCFree(entityHandlerReq);
         }
         resourceObserver = resourceObserver->next;
     }
