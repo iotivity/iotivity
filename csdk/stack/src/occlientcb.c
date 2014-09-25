@@ -23,6 +23,7 @@
 #include "occoap.h"
 #include "utlist.h"
 #include "logger.h"
+#include "ocmalloc.h"
 #include <string.h>
 
 /// Module Name

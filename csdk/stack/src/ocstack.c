@@ -30,6 +30,7 @@
 #include "ocrandom.h"
 #include "debug.h"
 #include "occoap.h"
+#include "ocmalloc.h"
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -1851,14 +1852,4 @@ OCResourceInterface *findResourceInterfaceAtIndex(OCResourceHandle handle,
     return pointer;
 }
 
-// TODO: Remove these!  Should be in an ocmalloc module
-void *OCMalloc(size_t size) {
-    TODO ("This should be moved into an ocmalloc dir and implemented as a separate OC module");
-    return malloc(size);
-}
-
-void OCFree(void *ptr) {
-    TODO ("This should be moved into an ocmalloc dir and implemented as a separate OC module");
-    free(ptr);
-}
 

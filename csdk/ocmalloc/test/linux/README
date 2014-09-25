@@ -1,0 +1,22 @@
+# To build the ocmalloc google unit test for Linux:
+
+# First
+cd <root>/csdk
+make deepclean
+
+make BUILD=release
+# or
+make BUILD=debug
+
+# Next
+cd <root>/csdk/ocmalloc/test/linux
+
+make BUILD=release
+# or
+make BUILD=debug
+
+# Run the test test
+
+<root>/csdk/ocmalloc/test/linux/release/unittest
+# or
+<root>/csdk/ocmalloc/test/linux/debug/unittest
