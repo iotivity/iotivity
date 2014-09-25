@@ -139,8 +139,8 @@ int main()
     {
         ServiceType::InProc,
         ModeType::Client,
-        "134.134.161.33",
-        56832,
+        "0.0.0.0",
+        0,
         QualityOfService::NonConfirmable
     };
 

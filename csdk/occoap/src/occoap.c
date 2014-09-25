@@ -506,10 +506,9 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
             ret = OC_STACK_ERROR;
             goto exit;
         }
-        OC_LOG_V(INFO, TAG, "Parsed IP Address %d.%d.%d.%d",ipAddr[0],ipAddr[1],ipAddr[2],ipAddr[3]);
 
-        OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
-                    &devAddr);
+        OC_LOG_V(INFO, TAG, "Parsed IP Address %d.%d.%d.%d",
+                               ipAddr[0],ipAddr[1],ipAddr[2],ipAddr[3]);
     }
 
     OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,

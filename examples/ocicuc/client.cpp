@@ -40,7 +40,7 @@
 namespace Intel { namespace OCDemo {
 
 auto make_description()
-    -> boost::program_options::options_description 
+    -> boost::program_options::options_description
 {
  using std::string;
  using std::vector;
@@ -51,8 +51,8 @@ auto make_description()
 
  desc.add_options()
     ("nres",        po::value<unsigned long>()->default_value(1),           "number of resources to use for testing")
-    ("host_ip",     po::value<string>()->default_value("134.134.161.33"),   "IP of host")
-    ("host_port",   po::value<uint16_t>()->default_value(5683),             "port of host")
+    ("host_ip",     po::value<string>()->default_value("0.0.0.0"),   "IP of host")
+    ("host_port",   po::value<uint16_t>()->default_value(0),             "port of host")
     ("interface",   po::value<string>()->default_value("eth0"),             "network interface name")
     ("uri",         po::value<vector<string>>(),                            "remote resource URI")
     ;
@@ -64,12 +64,12 @@ int exec(const boost::program_options::variables_map& vm)
 {
  using namespace std;
 
- OC::OCPlatform platform({ 
+ OC::OCPlatform platform({
                           OC::ServiceType::InProc,              // in-process server
                           OC::ModeType::Client,                 // client mode
                           vm["host_ip"].as<string>(),           // host
                           vm["host_port"].as<uint16_t>(),       // port
-                          OC::QualityOfService::NonConfirmable 
+                          OC::QualityOfService::NonConfirmable
                         });
 
  vector<string> resource_URIs;
@@ -81,7 +81,7 @@ int exec(const boost::program_options::variables_map& vm)
     // Find all resources:
     resource_URIs.push_back("coap://224.0.1.187/oc/core");
 
-    /* Example of finding specific resources: 
+    /* Example of finding specific resources:
     const auto& nprops = vm["nres"].as<unsigned long>();
 
     for(unsigned long instance_number = 1;

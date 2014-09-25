@@ -47,7 +47,7 @@ void onGet(const OCRepresentation& rep, const int eCode)
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "GET request was successful" << std::endl;
-        
+
         std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
         std::vector<OCRepresentation> children = rep.getChildren();
@@ -61,7 +61,7 @@ void onGet(const OCRepresentation& rep, const int eCode)
                 int  color = 0;
                 oit->getValue("state", state);
                 oit->getValue("color", color);
-    
+
                 std::cout << "\t\tstate:" << state << std::endl;
                 std::cout << "\t\tcolor:" << color << std::endl;
             }
@@ -71,7 +71,7 @@ void onGet(const OCRepresentation& rep, const int eCode)
                 int  speed = 0;
                 oit->getValue("state", state);
                 oit->getValue("speed", speed);
-    
+
                 std::cout << "\t\tstate:" << state << std::endl;
                 std::cout << "\t\tspeed:" << speed << std::endl;
             }
@@ -95,7 +95,7 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
         std::cout << "Putting room representation..."<<std::endl;
 
         bool state = true;
-        int speed = 10;   
+        int speed = 10;
         rep.setValue("state", state);
         rep.setValue("speed", speed);
 
@@ -124,7 +124,6 @@ void onPut(const OCRepresentation& rep, const int eCode)
                 int  color = 0;
                 oit->getValue("state", state);
                 oit->getValue("color", color);
-    
                 std::cout << "\t\tstate:" << state << std::endl;
                 std::cout << "\t\tcolor:" << color << std::endl;
             }
@@ -134,7 +133,6 @@ void onPut(const OCRepresentation& rep, const int eCode)
                 int  speed = 0;
                 oit->getValue("state", state);
                 oit->getValue("speed", speed);
-    
                 std::cout << "\t\tstate:" << state << std::endl;
                 std::cout << "\t\tspeed:" << speed << std::endl;
             }
@@ -187,19 +185,19 @@ void foundResource(std::shared_ptr<OCResource> resource)
             hostAddress = resource->host();
             std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
 
-            // Get the resource types 
+            // Get the resource types
             std::cout << "\tList of resource types: " << std::endl;
             for(auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
             }
-            
+
             // Get the resource interfaces
             std::cout << "\tList of resource interfaces: " << std::endl;
             for(auto &resourceInterfaces : resource->getResourceInterfaces())
             {
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
-            } 
+            }
 
             if(resourceURI == "/a/room")
             {
@@ -227,8 +225,8 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Client,
-        "192.168.1.10",
-        5683,
+        "0.0.0.0",
+        0,
         OC::QualityOfService::NonConfirmable
     };
 
