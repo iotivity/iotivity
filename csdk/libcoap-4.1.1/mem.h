@@ -14,10 +14,10 @@
 extern "C" {
 #endif
 
-#include <stdlib.h>
+#include "ocmalloc.h"
 
-#define coap_malloc(size) malloc(size)
-#define coap_free(size) free(size)
+#define coap_malloc(size)  OCMalloc(size)
+#define coap_free(size)    OCFree(size)
 
 #ifdef __cplusplus
 }
