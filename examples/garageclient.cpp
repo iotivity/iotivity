@@ -51,8 +51,35 @@ Garage myGarage;
 
 void printRepresentation(const OCRepresentation& rep)
 {
-        rep.getValue("state", myGarage.m_state);
-        rep.getValue("name", myGarage.m_name);
+
+        // Check if attribute "name" exists, and then getValue
+        if(rep.hasAttribute("name"))
+        {
+            myGarage.m_name = rep.getValue<std::string>("name");
+        }
+
+        // You can directly try to get the value. this function
+        // return false if there is no attribute "state"
+        if(!rep.getValue("state", myGarage.m_state))
+        {
+            std::cout << "Attribute state doesn't exist in the representation\n";
+        }
+
+
+        OCRepresentation rep2 = rep;
+
+        std::cout << "Number of attributes in rep2: "
+                  << rep2.numberOfAttributes() << std::endl;
+
+        if(rep2.erase("name"))
+        {
+            std::cout << "attribute: name, was removed successfully from rep2.\n";
+        }
+
+        std::cout << "Number of attributes in rep2: "
+                  << rep2.numberOfAttributes() << std::endl;
+
+
         rep.getValue("light", myGarage.m_lightRep);
 
         myGarage.m_lightRep.getValue("states", myGarage.m_lightStates);
