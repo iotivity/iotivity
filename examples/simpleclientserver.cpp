@@ -177,7 +177,7 @@ struct FooResource
 
         uint8_t resourceProperty = OC_DISCOVERABLE;
 
-        RegisterCallback eh(std::bind(&FooResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2));
+        EntityHandler eh(std::bind(&FooResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2));
         OCStackResult result = platform.registerResource(m_resourceHandle, resourceURI, resourceTypeName,
                                     resourceInterface,
                                     eh, resourceProperty);

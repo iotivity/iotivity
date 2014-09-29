@@ -37,7 +37,7 @@ namespace OC
                     std::string& resourceURI,
                     const std::string& resourceTypeName,
                     const std::string& resourceInterface,
-                    RegisterCallback& entityHandler,
+                    EntityHandler& entityHandler,
                     uint8_t resourceProperty)
 
         {
@@ -47,31 +47,43 @@ namespace OC
 
         virtual OCStackResult unregisterResource(
                      const OCResourceHandle& resourceHandle)
-        {   //Not implemented yet
+        {
+            //Not implemented yet
             return OC_STACK_ERROR;
         }
 
        virtual OCStackResult bindTypeToResource(
                      const OCResourceHandle& resourceHandle,
                      const std::string& resourceTypeName)
-        {   //Not implemented yet
+        {
+            //Not implemented yet
             return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult bindInterfaceToResource(
                      const OCResourceHandle& resourceHandle,
                      const std::string& resourceInterfaceName)
-        {   //Not implemented yet
+        {
+            //Not implemented yet
             return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult startPresence(const unsigned int seconds)
-        {   //Not implemented yet
+        {
+            //Not implemented yet
             return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult stopPresence()
-        {   //Not implemented yet
+        {
+            //Not implemented yet
+            return OC_STACK_NOTIMPL;
+        }
+
+
+        virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler)
+        {
+            //Not implemented yet
             return OC_STACK_NOTIMPL;
         }
     };

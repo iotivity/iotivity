@@ -83,6 +83,8 @@ class ClientFridge
                                 "/door/left", false, doorTypes, ifaces);
         OCResource::Ptr rightdoor = m_platform.constructResourceObject(resource->host(),
                                 "/door/right", false, doorTypes, ifaces);
+        OCResource::Ptr randomdoor = m_platform.constructResourceObject(resource->host(),
+                                "/door/random", false, doorTypes, ifaces);
 
         light->get(QueryParamsMap(), GetCallback(
                 std::bind(&ClientFridge::getResponse, this, "Fridge Light", PH::_1,
@@ -95,6 +97,10 @@ class ClientFridge
         rightdoor->get(QueryParamsMap(), GetCallback(
                 std::bind(&ClientFridge::getResponse, this, "Right Door", PH::_1,
                     PH::_2, rightdoor, 3)
+                ));
+        randomdoor->get(QueryParamsMap(), GetCallback(
+                std::bind(&ClientFridge::getResponse, this, "Random Door", PH::_1,
+                    PH::_2, randomdoor, 4)
                 ));
     }
 
@@ -113,18 +119,30 @@ class ClientFridge
         switch(getId)
         {
             case 1:
-                bool isOn;
-                rep.getValue("on",isOn);
-                std::cout<<"The fridge light is "<< ((isOn)?"":"not ") <<"on"<<std::endl;
-            break;
+                {
+                    bool isOn;
+                    rep.getValue("on",isOn);
+                    std::cout<<"The fridge light is "<< ((isOn)?"":"not ") <<"on"<<std::endl;
+                }
+                break;
             case 2:
             case 3:
-                bool isOpen;
-                std::string side;
-                rep.getValue("open", isOpen);
-                rep.getValue("side", side);
-                std::cout << "Door is "<<isOpen<<" and is on the "<<side<<std::endl;
-            break;
+                {
+                    bool isOpen;
+                    std::string side;
+                    rep.getValue("open", isOpen);
+                    rep.getValue("side", side);
+                    std::cout << "Door is "<<isOpen<<" and is on the "<<side<<std::endl;
+                }
+                break;
+            case 4:
+                {
+                    // Get on random resource called.
+                    std::string name;
+                    rep.getValue("device_name", name);
+                    std::cout << "Name of fridge: "<< name << std::endl;
+                    break;
+                }
         }
     }
 

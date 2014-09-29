@@ -612,7 +612,7 @@ namespace OC
     const std::string BATCH_INTERFACE = "oc.mi.b";
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
-    typedef std::function<void(const std::shared_ptr<OCResourceRequest>, const std::shared_ptr<OCResourceResponse>)> RegisterCallback;
+    typedef std::function<void(const std::shared_ptr<OCResourceRequest>, const std::shared_ptr<OCResourceResponse>)> EntityHandler;
     typedef std::function<void(OCStackResult, const unsigned int)> SubscribeCallback;
     typedef std::function<void(const OCRepresentation&, const int)> GetCallback;
     typedef std::function<void(const OCRepresentation&, const int)> PutCallback;
