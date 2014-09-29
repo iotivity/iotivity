@@ -43,7 +43,7 @@ typedef struct ResourceObserver {
     // Query
     unsigned char *query;
     // CoAP token for the observe request
-    OCCoAPToken *token;
+    OCCoAPToken token;
     // Resource handle
     OCResource *resource;
     // IP address & port of client registered for observe

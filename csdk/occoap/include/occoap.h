@@ -84,7 +84,12 @@ OCStackResult OCStopCoAP();
  */
 OCStackResult OCProcessCoAP();
 
-OCCoAPToken * OCGenerateCoAPToken();
+/**
+ * This method is called to generate a token of MAX_TOKEN_LENGTH.
+ * This token is used to co-relate client requests with server responses.
+ *
+ */
+void OCGenerateCoAPToken(OCCoAPToken * token);
 
 /**
  * Initiate sending of CoAP messages. Example: server uses it to send observe messages

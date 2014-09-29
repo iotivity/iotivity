@@ -78,8 +78,7 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
         uint8_t * * maxAgeOptionLoc, unsigned char * * payloadLoc);
 
 // Internal function to retrieve a Token from received coap pdu
-OCStackResult RetrieveOCCoAPToken(const coap_pdu_t * pdu,
-        OCCoAPToken * * rcvdTokenLoc);
+void RetrieveOCCoAPToken(const coap_pdu_t * pdu, OCCoAPToken * rcvdToken);
 
 // Internal function to create OCObserveReq at the server
 OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint32_t obsOption,

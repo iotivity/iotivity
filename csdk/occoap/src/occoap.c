@@ -56,18 +56,13 @@ static coap_context_t *gCoAPCtx = NULL;
 //=============================================================================
 
 //generate a coap token
-OCCoAPToken * OCGenerateCoAPToken()
+void OCGenerateCoAPToken(OCCoAPToken * token)
 {
-    OCCoAPToken *token = NULL;
-    // Generate token here, it will be deleted when the transaction is deleted
-    token = (OCCoAPToken *) malloc(sizeof(OCCoAPToken));
     if (token)
     {
         token->tokenLength = MAX_TOKEN_LENGTH;
         OCFillRandomMem((uint8_t*)token->token, token->tokenLength);
     }
-
-    return token;
 }
 
 //This function is called back by libcoap when ack or rst are received
@@ -78,7 +73,7 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
     (void) ctx;
 
     OCStackResult result = OC_STACK_OK;
-    OCCoAPToken * sentToken = NULL;
+    OCCoAPToken sentToken;
     uint8_t * observeOption = NULL;
     coap_pdu_t * sentPdu = sentQueue->pdu;
 
@@ -87,35 +82,33 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // fill OCCoAPToken structure
-    result = RetrieveOCCoAPToken(sentPdu, &sentToken);
-    VERIFY_SUCCESS(result, OC_STACK_OK);
+    RetrieveOCCoAPToken(sentPdu, &sentToken);
 
     if(msgType == COAP_MESSAGE_RST){
         // now the observer should be deleted
         if(myStackMode != OC_CLIENT)
         {
-            result = OCObserverStatus(sentToken, OC_OBSERVER_NOT_INTERESTED);
+            result = OCObserverStatus(&sentToken, OC_OBSERVER_NOT_INTERESTED);
             if(result == OC_STACK_OK){
                 OC_LOG_V(DEBUG, TAG,
                         "Received RST, removing all queues associated with Token %d bytes",
-                        sentToken->tokenLength);
-                OC_LOG_BUFFER(INFO, TAG, sentToken->token, sentToken->tokenLength);
-                coap_cancel_all_messages(ctx, &sentQueue->remote, sentToken->token,
-                        sentToken->tokenLength);
+                        sentToken.tokenLength);
+                OC_LOG_BUFFER(INFO, TAG, sentToken.token, sentToken.tokenLength);
+                coap_cancel_all_messages(ctx, &sentQueue->remote, sentToken.token,
+                        sentToken.tokenLength);
             }
         }
     }else if(observeOption && msgType == COAP_MESSAGE_ACK){
-        OC_LOG_V(DEBUG, TAG, "Received ACK, for Token %d bytes",sentToken->tokenLength);
-        OC_LOG_BUFFER(INFO, TAG, sentToken->token, sentToken->tokenLength);
+        OC_LOG_V(DEBUG, TAG, "Received ACK, for Token %d bytes",sentToken.tokenLength);
+        OC_LOG_BUFFER(INFO, TAG, sentToken.token, sentToken.tokenLength);
         // now the observer is still interested
         if(myStackMode != OC_CLIENT)
         {
-            OCObserverStatus(sentToken, OC_OBSERVER_STILL_INTERESTED);
+            OCObserverStatus(&sentToken, OC_OBSERVER_STILL_INTERESTED);
         }
     }
 
     exit:
-        OCFree(sentToken);
         OCFree(observeOption);
 }
 
@@ -136,7 +129,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     OCStackResult responseResult = OC_STACK_ERROR;
     OCRequest * request = NULL;
     OCEntityHandlerRequest entityHandlerRequest;
-    OCCoAPToken * rcvdToken = NULL;
+    OCCoAPToken rcvdToken;
     OCObserveReq * rcvdObsReq = NULL;
     coap_pdu_t * sendPdu = NULL;
     coap_list_t *optList = NULL;
@@ -160,8 +153,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     }
 
     // fill OCCoAPToken structure
-    result = RetrieveOCCoAPToken(recvPdu, &rcvdToken);
-    VERIFY_SUCCESS(result, OC_STACK_OK);
+    RetrieveOCCoAPToken(recvPdu, &rcvdToken);
 
     // fill OCEntityHandlerRequest structure
     result = FormOCEntityHandlerRequest(&entityHandlerRequest,
@@ -171,7 +163,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 
    // fill OCObserveReq
    result = FormOCObserveReq(&rcvdObsReq, observeOption,
-           (OCDevAddr *)&(rcvdRequest->remote), rcvdToken);
+           (OCDevAddr *)&(rcvdRequest->remote), &rcvdToken);
    VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // fill OCRequest structure
@@ -184,8 +176,8 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     OC_LOG_V(INFO, TAG, " Receveid payload: %s",
             request->entityHandlerRequest->reqJSONPayload);
     OC_LOG_V(INFO, TAG, " Token received %d bytes",
-            rcvdToken->tokenLength);
-    OC_LOG_BUFFER(INFO, TAG, rcvdToken->token, rcvdToken->tokenLength);
+            rcvdToken.tokenLength);
+    OC_LOG_BUFFER(INFO, TAG, rcvdToken.token, rcvdToken.tokenLength);
 
     // process the request
     responseResult = HandleStackRequests(request);
@@ -231,7 +223,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
             (rcvdRequest->pdu->hdr->type == COAP_MESSAGE_CON) ?
                     COAP_MESSAGE_ACK : COAP_MESSAGE_NON,
                     OCToCoAPResponseCode(responseResult), rcvdRequest->pdu->hdr->id,
-                    rcvdToken,
+                    &rcvdToken,
                     request->entityHandlerRequest->resJSONPayload, optList);
     VERIFY_NON_NULL(sendPdu);
     coap_show_pdu(sendPdu);
@@ -243,7 +235,6 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 
 exit:
     OCFree(rcvObserveOption);
-    OCFree(rcvdToken);
     OCFree(rcvdObsReq);
     OCFree(request);
 }
@@ -259,7 +250,7 @@ uint32_t GetTime(float afterSeconds)
 static void HandleCoAPResponses(struct coap_context_t *ctx,
         const coap_queue_t * rcvdResponse) {
     OCResponse * response = NULL;
-    OCCoAPToken * rcvdToken = NULL;
+    OCCoAPToken rcvdToken;
     OCClientResponse * clientResponse = NULL;
     ClientCB * cbNode = NULL;
     unsigned char * bufRes = NULL;
@@ -322,17 +313,16 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     #endif
 
     // fill OCCoAPToken structure
-    result = RetrieveOCCoAPToken(recvPdu, &rcvdToken);
-    VERIFY_SUCCESS(result, OC_STACK_OK);
-    OC_LOG_V(INFO, TAG,"Received a pdu with Token", rcvdToken->tokenLength);
-    OC_LOG_BUFFER(INFO, TAG, rcvdToken->token, rcvdToken->tokenLength);
+    RetrieveOCCoAPToken(recvPdu, &rcvdToken);
+    OC_LOG_V(INFO, TAG,"Received a pdu with Token", rcvdToken.tokenLength);
+    OC_LOG_BUFFER(INFO, TAG, rcvdToken.token, rcvdToken.tokenLength);
 
     // fill OCClientResponse structure
     result = FormOCClientResponse(&clientResponse, CoAPToOCResponseCode(recvPdu->hdr->code),
             (OCDevAddr *) &(rcvdResponse->remote), sequenceNumber, bufRes);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    cbNode = GetClientCB(rcvdToken, NULL, NULL);
+    cbNode = GetClientCB(&rcvdToken, NULL, NULL);
     if(!cbNode)
     {
         // we should check if we are monitoring the presence of this resource
@@ -461,7 +451,6 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     exit:
         OCFree(rcvObserveOption);
         OCFree(rcvMaxAgeOption);
-        OCFree(rcvdToken);
         OCFree(clientResponse);
         OCFree(response);
 }
