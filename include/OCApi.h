@@ -142,6 +142,11 @@ namespace OC
         public:
         OCRepresentation() {}
 
+        bool erase(const std::string& str)
+        {
+            return m_attributeMap.erase(str) != 0;
+        }
+
         std::string getUri(void) const
         {
             return m_uri;
@@ -152,6 +157,19 @@ namespace OC
 
         template <typename T>
         bool getValue(const std::string& str, T& val) const;
+
+        template <typename T>
+        T getValue(const std::string& str) const;
+
+        bool hasAttribute(const std::string& str) const
+        {
+            return m_attributeMap.find(str) != m_attributeMap.end();
+        }
+
+        int numberOfAttributes() const
+        {
+            return m_attributeMap.size();
+        }
 
         void setUri(std::string uri)
         {
@@ -526,6 +544,22 @@ namespace OC
         m_attributeMap[str] = getJSON(val);
     }
 
+    template <typename T>
+    T OCRepresentation::getValue(const std::string& str) const
+    {
+        T val;
+
+        auto x = m_attributeMap.find(str);
+
+        if(m_attributeMap.end() != x)
+        {
+            AttributeValue v = val;
+            parseJSON(v, x->second);
+            val = boost::get<T>(v);
+        }
+
+        return val;
+    }
 
     template <typename T>
     bool OCRepresentation::getValue(const std::string& str, T& val) const
