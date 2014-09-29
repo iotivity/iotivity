@@ -1652,7 +1652,9 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
             // we should not retry responses.....
             cleanup:
                 coap_delete_node(sent);
+                sent = NULL;
                 coap_delete_node(rcvd);
+                rcvd = NULL;
         }
     }
 
