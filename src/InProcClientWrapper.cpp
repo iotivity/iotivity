@@ -396,7 +396,7 @@ namespace OC
         if(cLock)
         {
             std::ostringstream os;
-            os << host << "/oc/presence";
+            os << host << assembleSetResourceUri(uri, queryParams).c_str();
 
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
@@ -559,8 +559,7 @@ namespace OC
         if(cLock)
         {
             std::ostringstream os;
-
-            os << host << "/oc/presence";
+            os << host << assembleSetResourceUri(uri, queryParams).c_str();
 
             std::lock_guard<std::mutex> lock(*cLock);
             result = OCDoResource(handle, method,
@@ -629,7 +628,7 @@ namespace OC
 
         if(!cLock)
             return OC_STACK_ERROR;
-            
+
         return OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr,
                             OC_NON_CONFIRMABLE, &cbdata);
     }
