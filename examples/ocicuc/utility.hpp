@@ -34,12 +34,7 @@ namespace Intel { namespace OCDemo {
 inline std::ostream& operator<<(std::ostream& os, const OC::AttributeMap& attrs)
 {
  for(const auto& attr : attrs)
-  {
-        os << "Attribute \"" << attr.first << "\": ";
-
-        for(const auto& val : attr.second)
-         os << val << "; ";
-  }
+  os << "Attribute \"" << attr.first << "\": " << attr.second << "; ";
 
  return os;
 }
