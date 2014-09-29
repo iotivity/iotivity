@@ -336,7 +336,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
                            OCQualityOfService qos, OCCallbackData *cbData)
 {
     OCStackResult result = OC_STACK_ERROR;
-    OCCoAPToken * token = NULL;
+    OCCoAPToken token;
     ClientCB *clientCB = NULL;
     unsigned char * requestUri = NULL;
     (void) referenceUri;
@@ -392,23 +392,18 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    token = OCGenerateCoAPToken();
-    if (!token)
-    {
-        result = OC_STACK_NO_MEMORY;
-        OCFree(*handle);
-        OCFree(token);
-        goto exit;
-    }
+    // Generate token which will be used by OCStack to match responses received
+    // with the request
+    OCGenerateCoAPToken(&token);
 
-    if((result = AddClientCB(&clientCB, cbData, token, *handle, method, requestUri)) != OC_STACK_OK)
+    if((result = AddClientCB(&clientCB, cbData, &token, *handle, method, requestUri)) != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
 
     // Make call to OCCoAP layer
-    result = OCDoCoAPResource(method, qos, token, requiredUri, request);
+    result = OCDoCoAPResource(method, qos, &token, requiredUri, request);
 
 exit:
     if (result != OC_STACK_OK)
@@ -464,7 +459,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos) {
                 if(qos == OC_CONFIRMABLE)
                 {
                     ret = OCDoCoAPResource(OC_REST_CANCEL_OBSERVE, qos,
-                            clientCB->token, (const char *) clientCB->requestUri, NULL);
+                            &(clientCB->token), (const char *) clientCB->requestUri, NULL);
                 }
                 else
                 {
@@ -535,16 +530,10 @@ OCStackResult OCProcessPresence()
                 if(now >= cbNode->presence->timeOut[cbNode->presence->TTLlevel])
                 {
                     OC_LOG(DEBUG, TAG, "time to test server presence ==========");
-                    OCCoAPToken * token = NULL;
-                    token = OCGenerateCoAPToken();
-                    if (!token)
-                    {
-                        result = OC_STACK_NO_MEMORY;
-                        OCFree(token);
-                        goto exit;
-                    }
+                    OCCoAPToken token;
+                    OCGenerateCoAPToken(&token);
                     result = OCDoCoAPResource(OC_REST_GET, OC_NON_CONFIRMABLE,
-                            token, (const char *)cbNode->requestUri, NULL);
+                            &token, (const char *)cbNode->requestUri, NULL);
                     cbNode->presence->TTLlevel++;
                     OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d", cbNode->presence->TTLlevel);
                 }
@@ -607,13 +596,14 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 
     if(OC_PRESENCE_UNINITIALIZED == presenceState)
     {
-        presenceState = OC_PRESENCE_INITIALIZED;
+        OCDevAddr multiCastAddr;
+        OCCoAPToken token;
 
-        OCDevAddr multiCastAddr = {0};
-        OCCoAPToken * token = OCGenerateCoAPToken();
+        presenceState = OC_PRESENCE_INITIALIZED;
+        OCGenerateCoAPToken(&token);
         OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
         //add the presence observer
-        AddObserver(OC_PRESENCE_URI, NULL, 0, token, &multiCastAddr,
+        AddObserver(OC_PRESENCE_URI, NULL, 0, &token, &multiCastAddr,
             (OCResource *)presenceResource.handle, OC_NON_CONFIRMABLE);
     }
 
@@ -1508,7 +1498,7 @@ OCNotifyListOfObservers (OCResourceHandle handle,
                 }
                 OCSendCoAPNotification (observation->resUri, observation->addr,
                                         OC_STACK_OK, qos,
-                                        observation->token,
+                                        &(observation->token),
                                         bufNotify, resPtr->sequenceNum, maxAge);
                 numSentNotification++;
             }

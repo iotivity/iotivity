@@ -327,22 +327,14 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerR
 }
 
 // Retrieve the token from the PDU
-OCStackResult RetrieveOCCoAPToken(const coap_pdu_t * pdu,
-        OCCoAPToken * * rcvdTokenLoc)
+void RetrieveOCCoAPToken(const coap_pdu_t * pdu, OCCoAPToken * rcvdToken)
 {
-    OCCoAPToken * rcvdToken = NULL;
-
-    rcvdToken = (OCCoAPToken *) OCMalloc(sizeof(OCCoAPToken));
-    if (!rcvdToken)
+    if (pdu && rcvdToken)
     {
-        return OC_STACK_NO_MEMORY;
-    }
-    rcvdToken->tokenLength = pdu->hdr->token_length;
-    memcpy(rcvdToken->token, pdu->hdr->token,
+        rcvdToken->tokenLength = pdu->hdr->token_length;
+        memcpy(rcvdToken->token, pdu->hdr->token,
             rcvdToken->tokenLength);
-
-    *rcvdTokenLoc = rcvdToken;
-    return OC_STACK_OK;
+    }
 }
 
 OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
@@ -627,16 +619,12 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     ClientCB * cbNode = NULL;
     ResourceObserver * observer = NULL;
     OCClientResponse * clientResponse = NULL;
-    OCCoAPToken * token = NULL;
+    OCCoAPToken token;
     OCStackResult result = OC_STACK_OK;
 
-    result = RetrieveOCCoAPToken(queue->pdu, &token);
-    if(result != OC_STACK_OK)
-    {
-        goto exit;
-    }
+    RetrieveOCCoAPToken(queue->pdu, &token);
 
-    cbNode = GetClientCB(token, NULL, NULL);
+    cbNode = GetClientCB(&token, NULL, NULL);
     if(!cbNode)
     {
         goto observation;
@@ -655,20 +643,19 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     HandleStackResponses(response);
 
 observation:
-    observer = GetObserverUsingToken (token);
+    observer = GetObserverUsingToken (&token);
     if(!observer)
     {
         goto exit;
     }
 
-    result = OCObserverStatus(token, OC_OBSERVER_FAILED_COMM);
+    result = OCObserverStatus(&token, OC_OBSERVER_FAILED_COMM);
     if(result == OC_STACK_OK)
     {
-        coap_cancel_all_messages(ctx, &queue->remote, token->token, token->tokenLength);
+        coap_cancel_all_messages(ctx, &queue->remote, token.token, token.tokenLength);
     }
 
     exit:
-        OCFree(token);
         OCFree(clientResponse);
         OCFree(response);
     return result;

@@ -40,7 +40,7 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
         cbNode->callBack = cbData->cb;
         cbNode->context = cbData->context;
         cbNode->deleteCallback = cbData->cd;
-        cbNode->token = token;
+        memcpy(&(cbNode->token), token, sizeof(OCCoAPToken));
         cbNode->handle = handle;
         cbNode->method = method;
         cbNode->sequenceNumber = 0;
@@ -60,8 +60,7 @@ void DeleteClientCB(ClientCB * cbNode) {
     if(cbNode) {
         LL_DELETE(cbList, cbNode);
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
-        OC_LOG_BUFFER(INFO, TAG, cbNode->token->token, cbNode->token->tokenLength);
-        OCFree(cbNode->token);
+        OC_LOG_BUFFER(INFO, TAG, cbNode->token.token, cbNode->token.tokenLength);
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
         if(cbNode->deleteCallback)
@@ -86,9 +85,9 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * re
         LL_FOREACH(cbList, out) {
             OC_LOG(INFO, TAG, PCF("comparing tokens"));
             OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
-            OC_LOG_BUFFER(INFO, TAG, out->token->token, out->token->tokenLength);
-            if((out->token->tokenLength == token->tokenLength) &&
-                (memcmp(out->token->token, token->token, token->tokenLength) == 0) ) {
+            OC_LOG_BUFFER(INFO, TAG, out->token.token, out->token.tokenLength);
+            if((out->token.tokenLength == token->tokenLength) &&
+                (memcmp(out->token.token, token->token, token->tokenLength) == 0) ) {
                 return out;
             }
         }

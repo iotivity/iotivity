@@ -311,7 +311,7 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
                 }
                 OCSendCoAPNotification(resourceObserver->resUri, resourceObserver->addr,
                         stackRet, qos,
-                        resourceObserver->token,
+                        &(resourceObserver->token),
                         jsonPayload, resPtr->sequenceNum, maxAge);
             }
             else
@@ -350,15 +350,17 @@ OCStackResult AddObserver (const char         *resUri,
                            OCQualityOfService qos)
 {
     ResourceObserver *obsNode = NULL;
-    OCCoAPToken *tokPtr = NULL;
 
     obsNode = (ResourceObserver *) OCMalloc(sizeof(ResourceObserver));
     if (obsNode)
     {
+        memset(obsNode, 0, sizeof(ResourceObserver));
         obsNode->observeId = obsId;
+
         obsNode->resUri = (unsigned char *)OCMalloc(strlen(resUri)+1);
         VERIFY_NON_NULL (obsNode->resUri);
         memcpy (obsNode->resUri, resUri, strlen(resUri)+1);
+
         obsNode->qos = qos;
         if(query)
         {
@@ -366,29 +368,28 @@ OCStackResult AddObserver (const char         *resUri,
             VERIFY_NON_NULL (obsNode->query);
             memcpy (obsNode->query, query, strlen(query)+1);
         }
-        obsNode->token = (OCCoAPToken *)OCMalloc(sizeof(OCCoAPToken));
-        VERIFY_NON_NULL (obsNode->token);
-        tokPtr = obsNode->token;
-        tokPtr->tokenLength = token->tokenLength;
-        memcpy (tokPtr->token, token->token, tokPtr->tokenLength);
+
+        obsNode->token.tokenLength = token->tokenLength;
+        memcpy (&(obsNode->token.token), token->token, token->tokenLength);
+
         obsNode->addr = (OCDevAddr *)OCMalloc(sizeof(OCDevAddr));
         VERIFY_NON_NULL (obsNode->addr);
         memcpy (obsNode->addr, addr, sizeof(OCDevAddr));
+
         obsNode->resource = resHandle;
-        obsNode->failedCommCount = 0;
-        obsNode->NONCount = 0;
-        obsNode->forceCON = 0;
 
         LL_APPEND (serverObsList, obsNode);
         return OC_STACK_OK;
     }
 
 exit:
-    OCFree(obsNode->resUri);
-    OCFree(obsNode->query);
-    OCFree(obsNode->token);
-    OCFree(obsNode->addr);
-    OCFree(obsNode);
+    if (obsNode)
+    {
+        OCFree(obsNode->resUri);
+        OCFree(obsNode->query);
+        OCFree(obsNode->addr);
+        OCFree(obsNode);
+    }
     return OC_STACK_NO_MEMORY;
 }
 
@@ -420,9 +421,9 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
         {
             OC_LOG(INFO, TAG,PCF("comparing tokens"));
             OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
-            OC_LOG_BUFFER(INFO, TAG, out->token->token, out->token->tokenLength);
-            if((out->token->tokenLength == token->tokenLength) &&
-               (memcmp(out->token->token, token->token, token->tokenLength) == 0))
+            OC_LOG_BUFFER(INFO, TAG, out->token.token, out->token.tokenLength);
+            if((out->token.tokenLength == token->tokenLength) &&
+               (memcmp(out->token.token, token->token, token->tokenLength) == 0))
             {
                 return out;
             }
@@ -440,11 +441,10 @@ OCStackResult DeleteObserverUsingToken (OCCoAPToken * token)
     if (obsNode)
     {
         OC_LOG_V(INFO, TAG, PCF("deleting tokens"));
-        OC_LOG_BUFFER(INFO, TAG, obsNode->token->token, obsNode->token->tokenLength);
+        OC_LOG_BUFFER(INFO, TAG, obsNode->token.token, obsNode->token.tokenLength);
         LL_DELETE (serverObsList, obsNode);
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);
-        OCFree(obsNode->token);
         OCFree(obsNode->addr);
         OCFree(obsNode);
     }
@@ -458,7 +458,7 @@ void DeleteObserverList()
     ResourceObserver *tmp = NULL;
     LL_FOREACH_SAFE (serverObsList, out, tmp)
     {
-        DeleteObserverUsingToken (out->token);
+        DeleteObserverUsingToken (&(out->token));
     }
     serverObsList = NULL;
 }

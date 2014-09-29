@@ -40,7 +40,7 @@ typedef struct ClientCB {
     // callback method to delete context data
     OCClientContextDeleter deleteCallback;
     //  when a response is recvd with this token, above callback will be invoked
-    OCCoAPToken * token;
+    OCCoAPToken token;
     // Invocation handle tied to original call to OCDoResource()
     OCDoHandle handle;
     // This is used to determine if all responses should be consumed or not.

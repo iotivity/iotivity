@@ -150,26 +150,10 @@ void PrintArduinoMemoryStats()
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest )
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
-    const char* typeOfMessage;
 
-    switch (flag)
+    if(entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
-        case OC_INIT_FLAG:
-            typeOfMessage = "OC_INIT_FLAG";
-            break;
-        case OC_REQUEST_FLAG:
-            typeOfMessage = "OC_REQUEST_FLAG";
-            break;
-        case OC_OBSERVE_FLAG:
-            typeOfMessage = "OC_OBSERVE_FLAG";
-            break;
-        default:
-            typeOfMessage = "UNKNOWN";
-    }
-    OC_LOG_V(INFO, TAG, "Receiving message type: %s", typeOfMessage);
-
-    if(entityHandlerRequest && flag == OC_REQUEST_FLAG)
-    {
+        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
         if(OC_REST_GET == entityHandlerRequest->method)
         {
             if (strlen(responsePayloadGet) < entityHandlerRequest->resJSONPayloadLen)
@@ -194,9 +178,17 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             }
          }
     }
-    else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG)
+    if (entityHandlerRequest && (flag & OC_OBSERVE_FLAG))
     {
-        gLEDUnderObservation = 1;
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
+        {
+            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
+            gLEDUnderObservation = 1;
+        }
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
+        {
+            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
+        }
     }
 
     return ehRet;
