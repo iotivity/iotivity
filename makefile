@@ -53,8 +53,10 @@ c_sdk:
 oc_logger:
 	cd oc_logger && $(MAKE) "BUILD=$(BUILD)"
 
-examples:
-	cd examples && $(MAKE) "BUILD=$(BUILD)"
+cpp_sdk: prep_dirs c_sdk liboc.a
+
+examples: liboc.a
+	cd examples && $(MAKE) apps "BUILD=$(BUILD)"
 
 liboc.a: OCPlatform.o OCResource.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
 	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
@@ -79,7 +81,14 @@ clean: clean_legacy
 	-rm -rf debug
 	cd csdk && $(MAKE) clean
 	cd csdk && $(MAKE) deepclean
-	cd examples && $(MAKE) clean
+	cd examples && $(MAKE) clean_apps
 	cd oc_logger && $(MAKE) clean
+
+clean_cpp_sdk: clean_legacy
+	-rm -rf release
+	-rm -rf debug
+	cd csdk && $(MAKE) clean
+	cd csdk && $(MAKE) deepclean
+
 clean_legacy:
 	-rm -f -v $(OBJ_DIR)/liboc.a $(OBJ_DIR)/*.o

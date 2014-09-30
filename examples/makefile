@@ -42,13 +42,29 @@ LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
 CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
 
+APPS  += simpleserver
+APPS  += simpleclient
+APPS  += simpleclientserver
+APPS  += roomserver
+APPS  += roomclient
+APPS  += presenceserver
+APPS  += presenceclient
+APPS  += garageserver
+APPS  += garageclient
+APPS  += ocicuc
+
 # Force metatargets to build:
-.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc
+.PHONY:	prep_dirs oc_cpp_sdk $(APPS)
 
 all: .PHONY
 
+apps: prep_dirs $(APPS)
+
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
+	
+oc_cpp_sdk:
+	cd ../ && $(MAKE) cpp_sdk "BUILD=$(BUILD)"
 
 simpleserver: simpleserver.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleserver.cpp $(CXX_INC) $(CXX_LIBS)
@@ -83,11 +99,14 @@ garageserver: garageserver.cpp
 garageclient: garageclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ garageclient.cpp $(CXX_INC) $(CXX_LIBS)
 
-
 ocicuc:
-	cd ocicuc && $(MAKE)
-
-clean:
+	cd ocicuc && $(MAKE) apps
+	
+clean: 
 	rm -rf $(OUT_DIR)
-	cd ocicuc && $(MAKE) clean
+	cd ../ && $(MAKE) clean_cpp_sdk
+	cd ocicuc && $(MAKE) clean_apps
 
+clean_apps:
+	rm -rf $(OUT_DIR)
+	cd ocicuc && $(MAKE) clean_apps
