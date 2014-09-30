@@ -63,6 +63,16 @@ public:
         m_garageRep.setValue("state", m_state);
         m_garageRep.setValue("name", m_name);
 
+        // For demonstration purpose we are setting x to nullptr here.
+        // In reality it may happen else where.
+        int* x = nullptr;
+
+        // Check for nullptr and set null for that attribute
+        if(x == nullptr)
+        {
+            m_garageRep.setNULL("nullAttribute");
+        }
+
         for(int i = 0; i <= 9; i++)
         {
             m_lightStates.push_back(i % 2 == 0);

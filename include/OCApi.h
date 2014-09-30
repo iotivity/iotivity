@@ -33,6 +33,7 @@
 #include <boost/variant.hpp>
 
 #include "ocstack.h"
+#include <OCException.h>
 
 namespace OC
 {
@@ -166,6 +167,29 @@ namespace OC
             return m_attributeMap.find(str) != m_attributeMap.end();
         }
 
+        void setNULL(const std::string& str)
+        {
+            m_attributeMap[str] = "null";
+        }
+
+        bool isNULL(const std::string& str) const
+        {
+            auto x = m_attributeMap.find(str);
+
+            if(m_attributeMap.end() != x)
+            {
+                return x->second.compare("null") == 0;
+            }
+            else
+            {
+                std::ostringstream message;
+                message << "attribute: " << str << " doesn't exist\n";
+                throw OCException(message.str());
+            }
+
+            return false;
+        }
+
         int numberOfAttributes() const
         {
             return m_attributeMap.size();
@@ -244,7 +268,6 @@ namespace OC
     };
 
     typedef boost::variant<
-                // TODO NULL value to be implmented.
                 int,
                 double,
                 bool,
@@ -418,8 +441,7 @@ namespace OC
                 }
                 else
                 {
-                    // TODO Logging
-                    std::cout << "Array type should have atleast []\n";
+                    throw OCException("Array type should have at least []");
                 }
 
             }
@@ -441,8 +463,7 @@ namespace OC
                 }
                 else
                 {
-                    // TODO Logging
-                    std::cout << "Array type should have atleast []\n";
+                    throw OCException("Array type should have at least []");
                 }
             }
 
@@ -464,8 +485,7 @@ namespace OC
                 }
                 else
                 {
-                    // TODO Logging
-                    std::cout << "Array type should have atleast []\n";
+                    throw OCException("Array type should have at least []");
                 }
 
             }
@@ -488,8 +508,7 @@ namespace OC
                 }
                 else
                 {
-                    // TODO Logging
-                    std::cout << "Array type should have atleast []\n";
+                    throw OCException("Array type should have at least []");
                 }
             }
 
@@ -507,9 +526,7 @@ namespace OC
                 }
                 catch(boost::property_tree::json_parser::json_parser_error &e)
                 {
-                    //TODO: log this
-                    std::cout << "Parse error\n";
-                    return;
+                    throw OCException("JSON parse error");
                 }
 
                 for(auto& item: payload)

@@ -80,6 +80,15 @@ void printRepresentation(const OCRepresentation& rep)
                   << rep2.numberOfAttributes() << std::endl;
 
 
+        if(rep.isNULL("nullAttribute"))
+        {
+            std::cout << "\tnullAttribute is null." << std::endl;
+        }
+        else
+        {
+            std::cout << "\tnullAttribute is not null." << std::endl;
+        }
+
         rep.getValue("light", myGarage.m_lightRep);
 
         myGarage.m_lightRep.getValue("states", myGarage.m_lightStates);
