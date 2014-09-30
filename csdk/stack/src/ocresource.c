@@ -412,7 +412,7 @@ HandleDefaultDeviceEntityHandler (OCRequest *request)
     OCEntityHandlerRequest *ehRequest = request->entityHandlerRequest;
 
     // At this point we know for sure that defaultDeviceHandler exists
-    defaultDeviceHandler(OC_REQUEST_FLAG, ehRequest);
+    defaultDeviceHandler(OC_REQUEST_FLAG, ehRequest, (char*) request->resourceUrl);
 
     ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen -
                                     strlen((char*)ehRequest->resJSONPayload);

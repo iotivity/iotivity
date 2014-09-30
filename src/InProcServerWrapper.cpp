@@ -132,7 +132,8 @@ void processResourceResponse(OCEntityHandlerFlag flag,
 }
 
 OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
-                                                  OCEntityHandlerRequest * entityHandlerRequest)
+                                                  OCEntityHandlerRequest * entityHandlerRequest,
+                                                  char* uri)
 {
     // TODO we need to have a better way of logging (with various levels of logging)
     std::clog << "\nIn Default device entity handler wrapper: " << endl;
@@ -147,6 +148,10 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
     auto pResponse = std::make_shared<OC::OCResourceResponse>();
 
     formResourceRequest(flag, entityHandlerRequest, pRequest);
+
+    // TODO : This is currently being done only for Device entity handler
+    //        we will need to do the similar things for regular entity handler
+    pRequest->setResourceUri(std::string(uri));
 
     if(defaultDeviceEntityHandler)
     {
@@ -316,7 +321,8 @@ namespace OC
         return result;
     }
 
-    OCStackResult InProcServerWrapper::setDefaultDeviceEntityHandler(EntityHandler entityHandler)
+    OCStackResult InProcServerWrapper::setDefaultDeviceEntityHandler
+                                        (EntityHandler entityHandler)
     {
         OCStackResult result = OC_STACK_ERROR;
 
