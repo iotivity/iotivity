@@ -49,6 +49,8 @@ APPS  += roomserver
 APPS  += roomclient
 APPS  += presenceserver
 APPS  += presenceclient
+APPS  += fridgeserver
+APPS  += fridgeclient
 APPS  += garageserver
 APPS  += garageclient
 APPS  += ocicuc
@@ -62,7 +64,7 @@ apps: prep_dirs $(APPS)
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
-	
+
 oc_cpp_sdk:
 	cd ../ && $(MAKE) cpp_sdk "BUILD=$(BUILD)"
 
@@ -101,8 +103,8 @@ garageclient: garageclient.cpp
 
 ocicuc:
 	cd ocicuc && $(MAKE) apps
-	
-clean: 
+
+clean:
 	rm -rf $(OUT_DIR)
 	cd ../ && $(MAKE) clean_cpp_sdk
 	cd ocicuc && $(MAKE) clean_apps
