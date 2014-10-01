@@ -22,6 +22,7 @@
 #define OCSTACK_H_
 
 #include "ocsocket.h"
+#include "ocstackconfig.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +112,14 @@ typedef enum {
 } OCResourceProperty;
 
 /**
+ * Transport Protocol IDs
+ */
+typedef enum {
+    OC_INVALID_ID   = (1 << 0),
+    OC_COAP_ID      = (1 << 1),
+} OCTransportProtocolID;
+
+/**
  * Declares Stack Results & Errors
  */
 typedef enum {
@@ -137,6 +146,7 @@ typedef enum {
     OC_STACK_PRESENCE_STOPPED,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
     #endif
+    OC_STACK_INVALID_OPTION,
     OC_STACK_ERROR
 } OCStackResult;
 
@@ -174,6 +184,20 @@ typedef struct {
     OCObservationId obsId;
 } OCObservationInfo;
 
+// following structure will be used to define the vendor specific header options to be included
+// in communication packets
+
+typedef struct OCHeaderOption {
+    // The protocol ID this option applies to
+    OCTransportProtocolID protocolID;
+    // The header option ID which will be added to communication packets
+    uint16_t optionID;
+    // its length   191
+    uint16_t optionLength;
+    // pointer to its data
+    uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
+} OCHeaderOption;
+
 /**
  * Incoming requests handled by the server. Requests are passed in as a parameter to the @ref OCEntityHandler callback API.
  * @brief The @ref OCEntityHandler callback API must be implemented in the application in order to receive these requests.
@@ -194,6 +218,12 @@ typedef struct {
     // Information associated with observation - valid only when OCEntityHandler
     // flag includes OC_OBSERVE_FLAG
     OCObservationInfo *obsInfo;
+    // An array of the received vendor specific header options
+    uint8_t numRcvdVendorSpecificHeaderOptions;
+    OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
+    // An array of the vendor specific header options the entity handler wishes to use in response
+    uint8_t numSendVendorSpecificHeaderOptions;
+    OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 }OCEntityHandlerRequest;
 
 /**
@@ -208,6 +238,9 @@ typedef struct {
     uint32_t sequenceNumber;
     // resJSONPayload is retrieved from the payload of the received request PDU
     unsigned  const char * resJSONPayload;
+    // An array of the received vendor specific header options
+    uint8_t numRcvdVendorSpecificHeaderOptions;
+    OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 }OCClientResponse;
 
 typedef enum {
@@ -317,6 +350,9 @@ OCStackResult OCProcess();
  * @param qos                - quality of service
  * @param clientApplicationCB- asynchronous callback function that is invoked
  *                             by the stack when discovery or resource interaction is complete
+ * @param options            - The address of an array containing the vendor specific
+ *                             header options to be sent with the request
+ * @param numOptions         - Number of header options to be included
  *
  * @return
  *     OC_STACK_OK               - no errors
@@ -325,18 +361,24 @@ OCStackResult OCProcess();
  *     OC_STACK_INVALID_URI      - invalid required or reference URI
  */
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *requiredUri, const char  *referenceUri,
-                const char *request, OCQualityOfService qos, OCCallbackData *cbData);
+                const char *request, OCQualityOfService qos, OCCallbackData *cbData, OCHeaderOption * options,
+                uint8_t numOptions);
 
 /**
  * Cancel a request associated with a specific @ref OCDoResource invocation.
  *
  * @param handle - Used to identify a specific OCDoResource invocation.
- * @param qos    - valid only when handle is for an observe method.
+ * @param qos    - used to specify Quality of Service (read below for more info)
+ * @param options- used to specify vendor specific header options when sending
+ *                 explicit observe cancellation
+ * @param numOptions- Number of header options to be included
+ *
  * @return
  *     OC_STACK_OK               - No errors; Success
  *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
  */
-OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos);
+OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
+        uint8_t numOptions);
 
 #ifdef WITH_PRESENCE
 /**

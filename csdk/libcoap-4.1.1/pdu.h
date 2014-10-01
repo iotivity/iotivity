@@ -92,7 +92,15 @@ extern "C" {
 #define COAP_OPTION_BLOCK2       23 /* C, uint, 0--3 B, (none) */
 #define COAP_OPTION_BLOCK1       27 /* C, uint, 0--3 B, (none) */
 
-#define COAP_MAX_OPT             63 /**< the highest option number we know */
+#define COAP_VENDOR_OPT_START    (2048)
+/**< the highest option number we know
+ * COAP_MAX_OPT has to be larger than COAP_VENDOR_OPT_START
+ * however, we should keep in mind that COAP_MAX_OPT
+ * impacts the size of option filter as its size is about
+ * ceil(COAP_MAX_OPT>>3)
+ * Default is 3000 (just a nice round number)
+ */
+#define COAP_MAX_OPT             (3000)
 
 /* CoAP result codes (HTTP-Code / 100 * 40 + HTTP-Code % 100) */
 

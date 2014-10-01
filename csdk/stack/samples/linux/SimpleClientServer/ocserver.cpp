@@ -131,7 +131,6 @@ OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
                    OCEntityHandlerRequest *entityHandlerRequest, char* uri)
 {
-    const char* typeOfMessage;
 
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
     if (flag & OC_INIT_FLAG)
@@ -184,8 +183,6 @@ OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
                    OCEntityHandlerRequest *entityHandlerRequest)
 {
-    const char* typeOfMessage;
-
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
     if (flag & OC_INIT_FLAG)
     {
@@ -229,6 +226,35 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                 ProcessObserveDeregister (entityHandlerRequest);
             }
         }
+    }
+    if(entityHandlerRequest->rcvdVendorSpecificHeaderOptions &&
+            entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
+    {
+        OC_LOG (INFO, TAG, "Received vendor specific options");
+        uint8_t i = 0;
+        OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
+        for( i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
+        {
+            if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
+            {
+                OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                        ((OCHeaderOption)rcvdOptions[i]).optionID );
+                OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                        ((OCHeaderOption)rcvdOptions[i]).optionLength);
+            }
+        }
+        OCHeaderOption * sendOptions = entityHandlerRequest->sendVendorSpecificHeaderOptions;
+        uint8_t option2[] = {21,22,23,24,25,26,27,28,29,30};
+        uint8_t option3[] = {31,32,33,34,35,36,37,38,39,40};
+        sendOptions[0].protocolID = OC_COAP_ID;
+        sendOptions[0].optionID = 2248;
+        memcpy(sendOptions[0].optionData, option2, sizeof(option2));
+        sendOptions[0].optionLength = 10;
+        sendOptions[1].protocolID = OC_COAP_ID;
+        sendOptions[1].optionID = 2600;
+        memcpy(sendOptions[1].optionData, option3, sizeof(option3));
+        sendOptions[1].optionLength = 10;
+        entityHandlerRequest->numSendVendorSpecificHeaderOptions = 2;
     }
 
     return OC_EH_OK;

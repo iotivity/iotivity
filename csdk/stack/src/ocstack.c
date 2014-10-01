@@ -323,6 +323,9 @@ OCStackResult OCStop()
  * @param qos                - quality of service
  * @param cbData             - struct that contains asynchronous callback function that is invoked
  *                             by the stack when discovery or resource interaction is complete
+ * @param options            - The address of an array containing the vendor specific header
+ *                             header options to be sent with the request
+ * @param numOptions         - Number of vendor specific header options to be included
  *
  * @return
  *     OC_STACK_OK               - no errors
@@ -333,7 +336,8 @@ OCStackResult OCStop()
 
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
                            const char *referenceUri, const char *request,
-                           OCQualityOfService qos, OCCallbackData *cbData)
+                           OCQualityOfService qos, OCCallbackData *cbData,
+                           OCHeaderOption * options, uint8_t numOptions)
 {
     OCStackResult result = OC_STACK_ERROR;
     OCCoAPToken token;
@@ -403,7 +407,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
     // Make call to OCCoAP layer
-    result = OCDoCoAPResource(method, qos, &token, requiredUri, request);
+    result = OCDoCoAPResource(method, qos, &token, requiredUri, request, options, numOptions);
 
 exit:
     if (result != OC_STACK_OK)
@@ -418,12 +422,17 @@ exit:
  * Cancel a request associated with a specific @ref OCDoResource invocation.
  *
  * @param handle - Used to identify a specific OCDoResource invocation.
+ * @param qos    - used to specify Quality of Service (read below for more info)
+ * @param options- used to specify vendor specific header options when sending
+ *                 explicit observe cancellation
+ * @param numOptions- Number of header options to be included
  *
  * @return
  *     OC_STACK_OK               - No errors; Success
  *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
  */
-OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos) {
+OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
+        uint8_t numOptions) {
     /*
      * This ftn is implemented one of two ways in the case of observation:
      *
@@ -459,7 +468,8 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos) {
                 if(qos == OC_CONFIRMABLE)
                 {
                     ret = OCDoCoAPResource(OC_REST_CANCEL_OBSERVE, qos,
-                            &(clientCB->token), (const char *) clientCB->requestUri, NULL);
+                            &(clientCB->token), (const char *) clientCB->requestUri, NULL, options,
+                            numOptions);
                 }
                 else
                 {
@@ -487,7 +497,7 @@ OCStackResult OCProcessPresence()
     OC_LOG(INFO, TAG, PCF("Entering RequestPresence"));
     ClientCB* cbNode = NULL;
     OCDevAddr dst;
-    OCClientResponse * clientResponse = NULL;
+    OCClientResponse clientResponse;
     OCResponse * response = NULL;
 
     LL_FOREACH(cbList, cbNode) {
@@ -515,7 +525,7 @@ OCStackResult OCProcessPresence()
                         {
                             goto exit;
                         }
-                        result = FormOCResponse(&response, cbNode, 0, clientResponse);
+                        result = FormOCResponse(&response, cbNode, 0, &clientResponse);
                         if(result != OC_STACK_OK)
                         {
                             goto exit;
@@ -533,7 +543,7 @@ OCStackResult OCProcessPresence()
                     OCCoAPToken token;
                     OCGenerateCoAPToken(&token);
                     result = OCDoCoAPResource(OC_REST_GET, OC_NON_CONFIRMABLE,
-                            &token, (const char *)cbNode->requestUri, NULL);
+                            &token, (const char *)cbNode->requestUri, NULL, NULL, 0);
                     cbNode->presence->TTLlevel++;
                     OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d", cbNode->presence->TTLlevel);
                 }

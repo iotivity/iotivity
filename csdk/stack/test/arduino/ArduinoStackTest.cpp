@@ -163,7 +163,7 @@ void test4() {
 void test5() {
     OC_LOG(INFO, TAG, PCF("test5"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, OC_EXPLICIT_DEVICE_DISCOVERY_URI, 0, 0, asyncDoResourcesCallback));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, OC_EXPLICIT_DEVICE_DISCOVERY_URI, 0, 0, asyncDoResourcesCallback), NULL, 0);
     EXPECT_EQ(OC_STACK_OK, OCUpdateResources(SERVICE_URI));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -178,7 +178,7 @@ void test6() {
 void test7() {
     OC_LOG(INFO, TAG, PCF("test7"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, OC_EXPLICIT_DEVICE_DISCOVERY_URI, 0, 0, asyncDoResourcesCallback));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, OC_EXPLICIT_DEVICE_DISCOVERY_URI, 0, 0, asyncDoResourcesCallback), NULL, 0);
     EXPECT_EQ(OC_STACK_INVALID_URI, OCUpdateResources(0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }

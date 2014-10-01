@@ -37,6 +37,9 @@
 
 #define BUF_SIZE (64)
 
+// checks if optionID is within vendor specific range
+OCStackResult isVendorSpecific(uint16_t optionID);
+
 // Convert OCStack code to CoAP code
 uint8_t OCToCoAPResponseCode(OCStackResult result);
 
@@ -69,13 +72,15 @@ OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
 
 // Internal function to create OCEntityHandlerRequest at the server from a received coap pdu
 OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequestLoc,
-        OCMethod method, unsigned char * resBuf, unsigned char * reqBuf,
+        OCMethod method, unsigned char * resBuf, unsigned char * bufReqPayload,
         unsigned char * queryBuf);
 
 // Internal function to retrieve Uri and Query from received coap pdu
 OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
         unsigned char * queryBuf, uint8_t * * observeOptionLoc,
-        uint8_t * * maxAgeOptionLoc, unsigned char * * payloadLoc);
+        uint8_t * * maxAgeOptionLoc, unsigned char * * payloadLoc,
+        OCHeaderOption * rcvVendorSpecificHeaderOptions,
+        uint8_t * numRcvVendorSpecificHeaderOptions);
 
 // Internal function to retrieve a Token from received coap pdu
 void RetrieveOCCoAPToken(const coap_pdu_t * pdu, OCCoAPToken * rcvdToken);
@@ -89,7 +94,7 @@ OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
         uint8_t TTL, OCClientResponse * clientResponse);
 
 // Internal function to create OCClientResponse struct at the client from a received coap pdu
-OCStackResult FormOCClientResponse(OCClientResponse * * clientResponseLoc,
+OCStackResult FormOCClientResponse(OCClientResponse * clientResponse,
         OCStackResult result, OCDevAddr * remote, uint32_t seqNum,
         const unsigned char * resJSONPayload);
 
@@ -100,7 +105,8 @@ void HandleSendQueue(coap_context_t * gCoAPCtx);
 OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
         uint32_t * addMaxAge, uint8_t observeOptionLength, uint32_t * observeOptionPtr,
         uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
-        uint8_t queryLength, unsigned char * query);
+        uint8_t queryLength, unsigned char * query, OCHeaderOption * vendorSpecificHeaderOptions,
+        uint8_t numVendorSpecificHeaderOptions);
 
 // Internal function to retransmit a queue
 OCStackResult ReTXCoAPQueue(coap_context_t * ctx, coap_queue_t * queue);

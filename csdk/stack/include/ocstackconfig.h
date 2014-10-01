@@ -61,4 +61,14 @@
  */
 #define MAX_CONTAINED_RESOURCES  (5)
 
+/**
+ *  Maximum number of vendor specific header options an application can set or receive in pdu
+ */
+#define MAX_HEADER_OPTIONS (2)
+
+/**
+ *  Maximum Length of the vendor specific header option
+ */
+#define MAX_HEADER_OPTION_DATA_LENGTH (16)
+
 #endif //OCSTACK_CONFIG_H_

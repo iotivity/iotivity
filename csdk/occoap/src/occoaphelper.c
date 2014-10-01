@@ -38,6 +38,15 @@
 // Helper Functions
 //=============================================================================
 
+OCStackResult isVendorSpecific(uint16_t optionID)
+{
+    if(optionID >= COAP_VENDOR_OPT_START && optionID <= COAP_MAX_OPT)
+    {
+        return OC_STACK_OK;
+    }
+    return OC_STACK_INVALID_OPTION;
+}
+
 // Convert OCStack code to CoAP code
 uint8_t OCToCoAPResponseCode(OCStackResult result)
 {
@@ -107,7 +116,9 @@ OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
 // Retrieve Uri and Query from received coap pdu
 OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
         unsigned char * queryBuf, uint8_t * * observeOptionLoc,
-        uint8_t * * maxAgeOptionLoc, unsigned char * * payloadLoc)
+        uint8_t * * maxAgeOptionLoc, unsigned char * * payloadLoc,
+        OCHeaderOption * rcvVendorSpecificHeaderOptions,
+        uint8_t * numRcvVendorSpecificHeaderOptions)
 {
     coap_opt_filter_t filter;
     coap_opt_iterator_t opt_iter;
@@ -226,6 +237,32 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
         {
             OCFree(maxAgeOption);
             *maxAgeOptionLoc = NULL;
+        }
+    }
+
+    if(rcvVendorSpecificHeaderOptions)
+    {
+        coap_option_filter_clear(filter);
+        coap_option_setbVendor(filter);
+        coap_option_iterator_init(pdu, &opt_iter, filter);
+        uint8_t i = 0;
+        while((option = coap_option_next(&opt_iter)))
+        {
+            if(i >= MAX_HEADER_OPTIONS ||
+                    COAP_OPT_LENGTH(option) > MAX_HEADER_OPTION_DATA_LENGTH)
+            {
+                return OC_STACK_NO_MEMORY;
+            }
+            rcvVendorSpecificHeaderOptions[i].protocolID = OC_COAP_ID;
+            rcvVendorSpecificHeaderOptions[i].optionID = opt_iter.type;
+            rcvVendorSpecificHeaderOptions[i].optionLength = COAP_OPT_LENGTH(option);
+            memcpy(rcvVendorSpecificHeaderOptions[i].optionData, COAP_OPT_VALUE(option),
+                    rcvVendorSpecificHeaderOptions[i].optionLength);
+            OC_LOG_V(INFO, TAG, " Parsing option %d with", rcvVendorSpecificHeaderOptions[i].optionID);
+            OC_LOG_BUFFER(INFO, TAG, rcvVendorSpecificHeaderOptions[i].optionData,
+                    rcvVendorSpecificHeaderOptions[i].optionLength);
+            i++;
+            *numRcvVendorSpecificHeaderOptions = i;
         }
     }
 
@@ -353,30 +390,24 @@ OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
     return OC_STACK_OK;
 }
 
-OCStackResult FormOCClientResponse(OCClientResponse * * clientResponseLoc,
+OCStackResult FormOCClientResponse(OCClientResponse * clientResponse,
         OCStackResult result, OCDevAddr * remote, uint32_t seqNum,
         const unsigned char * resJSONPayload)
 {
-
-    OCClientResponse * clientResponse = (OCClientResponse *) OCMalloc(
-            sizeof(OCClientResponse));
-    if (!clientResponse)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
     clientResponse->sequenceNumber = seqNum;
     clientResponse->result = result;
     clientResponse->addr = remote;
     clientResponse->resJSONPayload = resJSONPayload;
 
-    *clientResponseLoc = clientResponse;
     return OC_STACK_OK;
 }
 
 OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
         uint32_t * addMaxAge, uint8_t observeOptionLength, uint32_t * observeOptionPtr,
         uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
-        uint8_t queryLength, unsigned char * query)
+        uint8_t queryLength, unsigned char * query,
+        OCHeaderOption * vendorSpecificHeaderOptions,
+        uint8_t numVendorSpecificHeaderOptions)
 {
     coap_list_t * optNode = NULL;
     int res;
@@ -412,6 +443,7 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
     {
         optNode = CreateNewOptionNode(COAP_OPTION_URI_PORT,
                 sizeof(*addPortNumber), (uint8_t *)addPortNumber);
+        VERIFY_NON_NULL(optNode);
         coap_insert(optListLoc, optNode, OrderOptions);
     }
 
@@ -440,6 +472,38 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
             VERIFY_NON_NULL(optNode);
             coap_insert(optListLoc, optNode, OrderOptions);
             buf += COAP_OPT_SIZE(buf);
+        }
+    }
+
+    // make sure that options are valid
+    if(vendorSpecificHeaderOptions && numVendorSpecificHeaderOptions)
+    {
+        uint8_t i = 0;
+        for( i = 0; i < numVendorSpecificHeaderOptions; i++)
+        {
+            if(vendorSpecificHeaderOptions[i].protocolID == OC_COAP_ID)
+            {
+                if(isVendorSpecific(vendorSpecificHeaderOptions[i].optionID)
+                        == OC_STACK_OK &&
+                        vendorSpecificHeaderOptions[i].optionLength <=
+                        MAX_HEADER_OPTION_DATA_LENGTH)
+                {
+                    OC_LOG_V(INFO, TAG, " Adding option %d with",
+                            vendorSpecificHeaderOptions[i].optionID);
+                    OC_LOG_BUFFER(INFO, TAG, vendorSpecificHeaderOptions[i].optionData,
+                            vendorSpecificHeaderOptions[i].optionLength);
+                    optNode = CreateNewOptionNode(vendorSpecificHeaderOptions[i].optionID,
+                            vendorSpecificHeaderOptions[i].optionLength,
+                            vendorSpecificHeaderOptions[i].optionData);
+                    VERIFY_NON_NULL(optNode);
+                    coap_insert(optListLoc, optNode, OrderOptions);
+                }
+                else
+                {
+                    coap_delete_list(*optListLoc);
+                    return OC_STACK_INVALID_OPTION;
+                }
+            }
         }
     }
 
@@ -618,7 +682,7 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     OCResponse * response = NULL;
     ClientCB * cbNode = NULL;
     ResourceObserver * observer = NULL;
-    OCClientResponse * clientResponse = NULL;
+    OCClientResponse clientResponse;
     OCCoAPToken token;
     OCStackResult result = OC_STACK_OK;
 
@@ -635,7 +699,7 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     {
         goto observation;
     }
-    result = FormOCResponse(&response, cbNode, 0, clientResponse);
+    result = FormOCResponse(&response, cbNode, 0, &clientResponse);
     if(result != OC_STACK_OK)
     {
         goto observation;
@@ -656,7 +720,7 @@ observation:
     }
 
     exit:
-        OCFree(clientResponse);
+
         OCFree(response);
     return result;
 }

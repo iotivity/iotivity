@@ -78,7 +78,7 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
     coap_pdu_t * sentPdu = sentQueue->pdu;
 
     // fill the buffers of Uri and Query
-    result = ParseCoAPPdu(sentPdu, NULL, NULL, &observeOption, NULL, NULL);
+    result = ParseCoAPPdu(sentPdu, NULL, NULL, &observeOption, NULL, NULL, NULL, NULL);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // fill OCCoAPToken structure
@@ -142,11 +142,14 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     uint8_t * rcvObserveOption = NULL;
     unsigned char * bufReqPayload = NULL;
     uint32_t observeOption = OC_RESOURCE_NO_OBSERVE;
+    memset(&entityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
 
     coap_pdu_t * recvPdu = rcvdRequest->pdu;
 
     // fill the buffers of Uri and Query
-    result = ParseCoAPPdu(recvPdu, rcvdUri, rcvdQuery, &rcvObserveOption, NULL, &bufReqPayload);
+    result = ParseCoAPPdu(recvPdu, rcvdUri, rcvdQuery, &rcvObserveOption, NULL, &bufReqPayload,
+            entityHandlerRequest.rcvdVendorSpecificHeaderOptions,
+            &(entityHandlerRequest.numRcvdVendorSpecificHeaderOptions));
     VERIFY_SUCCESS(result, OC_STACK_OK);
     if(rcvObserveOption){
         observeOption = (uint32_t)(*rcvObserveOption);
@@ -199,21 +202,27 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
             observeOption = rcvdObsReq->option;
             result = FormOptionList(&optList, &mediaType, &maxAge,
                     sizeof(observeOption), &observeOption,
-                    NULL, 0, NULL, 0, NULL);
+                    NULL, 0, NULL, 0, NULL,
+                    request->entityHandlerRequest->sendVendorSpecificHeaderOptions,
+                    request->entityHandlerRequest->numSendVendorSpecificHeaderOptions);
             break;
         case OC_STACK_OBSERVER_NOT_ADDED:
         case OC_STACK_OBSERVER_NOT_REMOVED:
         case OC_STACK_INVALID_OBSERVE_PARAM:
         default:
             result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
-                    0, NULL, 0, NULL);
+                    0, NULL, 0, NULL,
+                    request->entityHandlerRequest->sendVendorSpecificHeaderOptions,
+                    request->entityHandlerRequest->numSendVendorSpecificHeaderOptions);
             break;
         }
     }
     else
     {
         result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
-                0, NULL, 0, NULL);
+                0, NULL, 0, NULL,
+                request->entityHandlerRequest->sendVendorSpecificHeaderOptions,
+                request->entityHandlerRequest->numSendVendorSpecificHeaderOptions);
     }
 
     VERIFY_SUCCESS(result, OC_STACK_OK);
@@ -251,7 +260,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         const coap_queue_t * rcvdResponse) {
     OCResponse * response = NULL;
     OCCoAPToken rcvdToken;
-    OCClientResponse * clientResponse = NULL;
+    OCClientResponse clientResponse;
     ClientCB * cbNode = NULL;
     unsigned char * bufRes = NULL;
     uint8_t * rcvObserveOption = NULL;
@@ -272,12 +281,15 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     uint32_t higherBound;
     char * tok = NULL;
     #endif
+    memset(&clientResponse, 0, sizeof(OCClientResponse));
 
     VERIFY_NON_NULL(ctx);
     VERIFY_NON_NULL(rcvdResponse);
     recvPdu = rcvdResponse->pdu;
 
-    result = ParseCoAPPdu(recvPdu, rcvdUri, NULL, &rcvObserveOption, &rcvMaxAgeOption, &bufRes);
+    result = ParseCoAPPdu(recvPdu, rcvdUri, NULL, &rcvObserveOption, &rcvMaxAgeOption, &bufRes,
+            clientResponse.rcvdVendorSpecificHeaderOptions,
+            &(clientResponse.numRcvdVendorSpecificHeaderOptions));
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     if(rcvObserveOption){
@@ -337,7 +349,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     }
 
     // fill OCResponse structure
-    result = FormOCResponse(&response, cbNode, maxAge, clientResponse);
+    result = FormOCResponse(&response, cbNode, maxAge, &clientResponse);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     if(cbNode)
@@ -355,17 +367,17 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
             }
             //TODO: check the standard for methods to detect wrap around condition
             if(cbNode->method == OC_REST_OBSERVE &&
-                    (clientResponse->sequenceNumber <= cbNode->sequenceNumber ||
-                            (clientResponse->sequenceNumber > cbNode->sequenceNumber &&
-                                    clientResponse->sequenceNumber == MAX_SEQUENCE_NUMBER)))
+                    (clientResponse.sequenceNumber <= cbNode->sequenceNumber ||
+                            (clientResponse.sequenceNumber > cbNode->sequenceNumber &&
+                                    clientResponse.sequenceNumber == MAX_SEQUENCE_NUMBER)))
             {
                 OC_LOG_V(DEBUG, TAG, "Observe notification came out of order. \
                         Ignoring Incoming:%d  Against Current:%d.",
-                        clientResponse->sequenceNumber, cbNode->sequenceNumber);
+                        clientResponse.sequenceNumber, cbNode->sequenceNumber);
                 goto exit;
             }
-            if(clientResponse->sequenceNumber > cbNode->sequenceNumber){
-                cbNode->sequenceNumber = clientResponse->sequenceNumber;
+            if(clientResponse.sequenceNumber > cbNode->sequenceNumber){
+                cbNode->sequenceNumber = clientResponse.sequenceNumber;
             }
         }
         else
@@ -408,13 +420,13 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     }
                     cbNode->presence->TTLlevel = 0;
                     OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
-                    if(cbNode->sequenceNumber == clientResponse->sequenceNumber)
+                    if(cbNode->sequenceNumber == clientResponse.sequenceNumber)
                     {
                         OC_LOG(INFO, TAG, "===============No presence change");
                         goto exit;
                     }
                     OC_LOG(INFO, TAG, "===============Presence changed, calling up the stack");
-                    cbNode->sequenceNumber = clientResponse->sequenceNumber;;
+                    cbNode->sequenceNumber = clientResponse.sequenceNumber;;
                 }
             }
             #endif
@@ -451,7 +463,6 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     exit:
         OCFree(rcvObserveOption);
         OCFree(rcvMaxAgeOption);
-        OCFree(clientResponse);
         OCFree(response);
 }
 
@@ -537,12 +548,14 @@ exit:
  * @param Uri             - URI of the resource to interact with
  * @param payload         - the request payload to be added to the request before sending
  *                          by the stack when discovery or resource interaction is complete
+ * @param options         - The address of an array containing the vendor specific
+ *                          header options to be sent with the request
  * @return
  *   0   - success
  *   TBD - TBD error
  */
 OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * token,
-                     const char *Uri, const char *payload)
+                     const char *Uri, const char *payload, OCHeaderOption * options, uint8_t numOptions)
 {
 
     OCStackResult ret = OC_STACK_ERROR;
@@ -572,7 +585,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
 
         VERIFY_SUCCESS(FormOptionList(&optList, NULL, NULL, 0, NULL,
                 (uint16_t*)&uri.port, uri.path.length, uri.path.s, uri.query.length,
-                uri.query.s), OC_STACK_OK);
+                uri.query.s, options, numOptions), OC_STACK_OK);
 
         OC_LOG_V(DEBUG, TAG, "uri.host.s %s", uri.host.s);
         OC_LOG_V(DEBUG, TAG, "uri.path.s %s", uri.path.s);
@@ -649,13 +662,13 @@ OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr, O
     if(!strcmp((const char *)uri, OC_PRESENCE_URI))
     {
         result = FormOptionList(&optList, &mediaType, NULL, 0, NULL,
-                NULL, strlen((char *)uri), uri, 0, NULL);
+                NULL, strlen((char *)uri), uri, 0, NULL, NULL, 0);
     }
     else
     {
     #endif
         result = FormOptionList(&optList, &mediaType, &maxAge, sizeof(seqNum),
-                &seqNum, NULL, strlen((char *)uri), uri, 0, NULL);
+                &seqNum, NULL, strlen((char *)uri), uri, 0, NULL, NULL, 0);
     #ifdef WITH_PRESENCE
     }
     #endif

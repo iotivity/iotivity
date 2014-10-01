@@ -54,6 +54,7 @@ typedef enum {
     TEST_OBS_PRESENCE,
     #endif
     TEST_OBS_REQ_NON_CANCEL_IMM,
+    TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -94,7 +95,7 @@ int InitPresence();
 int InitGetRequestToUnavailableResource();
 int InitObserveRequest(OCQualityOfService qos);
 int InitPutRequest();
-int InitGetRequest(OCQualityOfService qos);
+int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions);
 int InitDiscovery();
 void parseClientResponse(OCClientResponse * clientResponse);
 
@@ -113,11 +114,12 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-t 8 : Discover Resources and Initiate Nonconfirmable presence");
     #endif
     OC_LOG(INFO, TAG, "-t 9 : Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
+    OC_LOG(INFO, TAG, "-t 10: Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
                                  OCMethod method, OCQualityOfService qos,
-                                 OCClientResponseHandler cb )
+                                 OCClientResponseHandler cb, OCHeaderOption * options, uint8_t numOptions)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -126,9 +128,10 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.cb = cb;
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
+
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
                        (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
-                       qos, &cbData);
+                       qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
     {
@@ -174,6 +177,23 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response", clientResponse->resJSONPayload);
     }
+    if(clientResponse->rcvdVendorSpecificHeaderOptions &&
+            clientResponse->numRcvdVendorSpecificHeaderOptions)
+    {
+        OC_LOG (INFO, TAG, "Received vendor specific options");
+        uint8_t i = 0;
+        OCHeaderOption * rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
+        for( i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
+        {
+            if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
+            {
+                OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                        ((OCHeaderOption)rcvdOptions[i]).optionID );
+                OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                        ((OCHeaderOption)rcvdOptions[i]).optionLength);
+            }
+        }
+    }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -195,13 +215,14 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             printf ("************************** CANCEL OBSERVE with ");
             if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON){
                 printf ("RESET\n");
-                if (OCCancel (gObserveDoHandle, OC_NON_CONFIRMABLE) != OC_STACK_OK){
+                if (OCCancel (gObserveDoHandle, OC_NON_CONFIRMABLE, NULL, 0) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
                 return OC_STACK_DELETE_TRANSACTION;
             }else if(TEST_CASE == TEST_OBS_REQ_NON_CANCEL_IMM){
                 printf ("Deregister\n");
-                if (OCCancel (gObserveDoHandle, OC_CONFIRMABLE) != OC_STACK_OK){
+
+                if (OCCancel (gObserveDoHandle, OC_CONFIRMABLE, NULL, 0) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
             }
@@ -235,7 +256,7 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
         if (gNumPresenceNotifies == 15)
         {
             printf ("************************** CANCEL PRESENCE\n");
-            if (OCCancel (gPresenceHandle, OC_NON_CONFIRMABLE) != OC_STACK_OK){
+            if (OCCancel (gPresenceHandle, OC_NON_CONFIRMABLE, NULL, 0) != OC_STACK_OK){
                 OC_LOG(ERROR, TAG, "Presence cancel error");
             }
             return OC_STACK_DELETE_TRANSACTION;
@@ -273,7 +294,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
         switch(TEST_CASE){
         case TEST_GET_REQ_NON:
-            InitGetRequest(OC_NON_CONFIRMABLE);
+            InitGetRequest(OC_NON_CONFIRMABLE, 0);
             break;
         case TEST_PUT_REQ_NON:
             InitPutRequest();
@@ -286,7 +307,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             InitGetRequestToUnavailableResource();
             break;
         case TEST_GET_REQ_CON:
-            InitGetRequest(OC_CONFIRMABLE);
+            InitGetRequest(OC_CONFIRMABLE, 0);
             break;
         case TEST_OBS_REQ_CON:
             InitObserveRequest(OC_CONFIRMABLE);
@@ -296,6 +317,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             InitPresence();
             break;
         #endif
+        case TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS:
+            InitGetRequest(OC_NON_CONFIRMABLE, 1);
+            break;
         default:
             PrintUsage();
             break;
@@ -311,7 +335,7 @@ int InitPresence()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI;
-    return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_NON_CONFIRMABLE, presenceCB));
+    return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_NON_CONFIRMABLE, presenceCB, NULL, 0));
 }
 #endif
 int InitGetRequestToUnavailableResource()
@@ -319,7 +343,7 @@ int InitGetRequestToUnavailableResource()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << "/SomeUnknownResource";
-    return (InvokeOCDoResource(query, OC_REST_GET, OC_NON_CONFIRMABLE, getReqCB));
+    return (InvokeOCDoResource(query, OC_REST_GET, OC_NON_CONFIRMABLE, getReqCB, NULL, 0));
 }
 
 
@@ -328,7 +352,7 @@ int InitObserveRequest(OCQualityOfService qos)
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_OBSERVE, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, obsReqCB));
+    return (InvokeOCDoResource(query, OC_REST_OBSERVE, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, obsReqCB, NULL, 0));
 }
 
 
@@ -337,16 +361,40 @@ int InitPutRequest()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT, OC_NON_CONFIRMABLE, putReqCB));
+    return (InvokeOCDoResource(query, OC_REST_PUT, OC_NON_CONFIRMABLE, putReqCB, NULL, 0));
 }
 
 
-int InitGetRequest(OCQualityOfService qos)
+int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions)
 {
+    OCHeaderOption options[MAX_HEADER_OPTIONS];
+
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, getReqCB));
+
+    if(withVendorSpecificHeaderOptions)
+    {
+        uint8_t option0[] = {1,2,3,4,5,6,7,8,9,10};
+        uint8_t option1[] = {11,12,13,14,15,16,17,18,19,20};
+        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
+        options[0].protocolID = OC_COAP_ID;
+        options[0].optionID = 2048;
+        memcpy(options[0].optionData, option0, sizeof(option0));
+        options[0].optionLength = 10;
+        options[1].protocolID = OC_COAP_ID;
+        options[1].optionID = 3000;
+        memcpy(options[1].optionData, option1, sizeof(option1));
+        options[1].optionLength = 10;
+    }
+    if(withVendorSpecificHeaderOptions)
+    {
+        return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, getReqCB, options, 2));
+    }
+    else
+    {
+        return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, getReqCB, NULL, 0));
+    }
 }
 
 int InitDiscovery()
@@ -367,7 +415,7 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData);
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");

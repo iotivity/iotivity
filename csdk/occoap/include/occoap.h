@@ -60,13 +60,15 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode);
  * @param token           - pointer to the token data structure
  * @param Uri             - URI of the resource to interact with
  * @param payload         - CoAP PDU payload
- *
+ * @param options         - The address of an array containing the vendor specific
+ *                          header options to be sent with the request
+ * @param numOptions      - The number of header options to be included
  * @return
  *   0   - success
  *   TBD - TBD error
  */
 OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * token,
-                     const char *Uri, const char *payload);
+        const char *Uri, const char *payload, OCHeaderOption * options, uint8_t numOptions);
 
 
 /**

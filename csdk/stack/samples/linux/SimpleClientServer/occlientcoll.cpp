@@ -100,7 +100,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             gNumObserveNotifies++;
             if (gNumObserveNotifies == 3)
             {
-                if (OCCancel (gObserveDoHandle, OC_NON_CONFIRMABLE) != OC_STACK_OK){
+                if (OCCancel (gObserveDoHandle, OC_NON_CONFIRMABLE, NULL, 0) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
             }
@@ -152,7 +152,9 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     cbData.cb = getReqCB;
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
+
+    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE,
+            &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -172,7 +174,9 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
-    ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
+
+    ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_NON_CONFIRMABLE,
+            &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -198,7 +202,9 @@ int InitPutRequest(OCClientResponse * clientResponse)
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
-    ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(), OC_NON_CONFIRMABLE, &cbData);
+
+    ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(),
+            OC_NON_CONFIRMABLE, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -232,7 +238,8 @@ int InitGetRequest(OCClientResponse * clientResponse)
     cbData.cb = getReqCB;
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE, &cbData);
+    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_NON_CONFIRMABLE,
+            &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -255,7 +262,8 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData);
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE,
+            &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");

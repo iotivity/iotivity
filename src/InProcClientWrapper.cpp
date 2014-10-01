@@ -235,7 +235,8 @@ namespace OC
                                   resourceType.c_str(),
                                   nullptr, nullptr,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  &cbdata);
+                                  &cbdata,
+                                  NULL, 0);
         }
         else
         {
@@ -403,7 +404,8 @@ namespace OC
             result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(),
                                   nullptr, nullptr,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  &cbdata);
+                                  &cbdata,
+                                  NULL, 0);
         }
         else
         {
@@ -497,7 +499,8 @@ namespace OC
                                   os.str().c_str(), nullptr,
                                   assembleSetResourcePayload(rep).c_str(),
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  &cbdata);
+                                  &cbdata,
+                                  NULL, 0);
         }
         else
         {
@@ -566,7 +569,8 @@ namespace OC
                                   os.str().c_str(), nullptr,
                                   nullptr,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  &cbdata);
+                                  &cbdata,
+                                  NULL, 0);
         }
         else
         {
@@ -585,7 +589,7 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            result = OCCancel(handle, OC_NON_CONFIRMABLE);
+            result = OCCancel(handle, OC_NON_CONFIRMABLE, NULL, 0);
         }
         else
         {
@@ -630,7 +634,7 @@ namespace OC
             return OC_STACK_ERROR;
 
         return OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr,
-                            OC_NON_CONFIRMABLE, &cbdata);
+                            OC_NON_CONFIRMABLE, &cbdata, NULL, 0);
     }
 
     OCStackResult InProcClientWrapper::UnsubscribePresence(OCDoHandle handle)
@@ -641,7 +645,7 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            result = OCCancel(handle, OC_NON_CONFIRMABLE);
+            result = OCCancel(handle, OC_NON_CONFIRMABLE, NULL, 0);
         }
         else
         {

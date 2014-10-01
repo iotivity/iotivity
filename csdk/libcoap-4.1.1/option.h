@@ -124,6 +124,21 @@ coap_option_setb(coap_opt_filter_t filter, unsigned short type) {
   return bits_setb((uint8_t *)filter, sizeof(coap_opt_filter_t), type);
 }
 
+/**
+* Sets the entire range of vendor specific options in the filter
+*/
+inline static int
+coap_option_setbVendor(coap_opt_filter_t filter)
+{
+    if ((COAP_VENDOR_OPT_START >> 3) > sizeof(coap_opt_filter_t))
+    {
+        return -1;
+    }
+    memset((uint8_t *)filter + (COAP_VENDOR_OPT_START >> 3), 0xFF,
+            sizeof(coap_opt_filter_t) - (COAP_VENDOR_OPT_START >> 3));
+    return 1;
+}
+
 /** 
  * Clears the corresponding bit for @p type in @p filter. This function
  * returns @c 1 if bit was cleared or @c -1 on error (i.e. when the given
