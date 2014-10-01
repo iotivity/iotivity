@@ -129,11 +129,11 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
 }
 OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
-                   OCEntityHandlerRequest *entityHandlerRequest)
+                   OCEntityHandlerRequest *entityHandlerRequest, char* uri)
 {
     const char* typeOfMessage;
 
-    OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x", flag);
+    OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
     if (flag & OC_INIT_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");

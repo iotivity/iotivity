@@ -59,7 +59,7 @@ uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
 
 OCMode myStackMode;
-OCEntityHandler defaultDeviceHandler;
+OCDeviceEntityHandler defaultDeviceHandler;
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -638,7 +638,7 @@ OCStackResult OCStopPresence()
 #endif
 
 
-OCStackResult OCSetDefaultDeviceEntityHandler(OCEntityHandler entityHandler)
+OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler)
 {
     defaultDeviceHandler = entityHandler;
 

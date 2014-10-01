@@ -62,14 +62,14 @@ namespace OC
         const QueryParamsMap& getQueryParameters() const {return m_queryParameters;}
 
         /**
-        *  Retrieves the request handler flag type. This can be either INIT flag or 
+        *  Retrieves the request handler flag type. This can be either INIT flag or
         *  REQUEST flag or OBSERVE flag.
         *  NOTE:
-        *  INIT indicates that the vendor's entity handler should go and perform 
+        *  INIT indicates that the vendor's entity handler should go and perform
         *  initialization operations
-        *  REQUEST indicates that it is a request of certain type (GET/PUT/POST/DELETE) 
+        *  REQUEST indicates that it is a request of certain type (GET/PUT/POST/DELETE)
         *  and entity handler needs to perform corresponding operations
-        *  OBSERVE indicates that the request is of type Observe and entity handler 
+        *  OBSERVE indicates that the request is of type Observe and entity handler
         *  needs to perform corresponding operations
         *  @return int type of request flag
         */
@@ -82,13 +82,32 @@ namespace OC
         const OCRepresentation& getResourceRepresentation() const {return m_representation;}
 
         /**
-        *  Provides the entire resource representation
-        *  @return OCRepresentation reference which provides entire resource information
+        *  @return ObservationInfo reference provides observation information
         */
         const ObservationInfo& getObservationInfo() const {return m_observationInfo;}
 
+        /**
+        *  sets resource uri
+        *  @param resourceUri specifies the resource uri
+        */
+        void setResourceUri(const std::string resourceUri)
+        {
+            m_resourceUri = resourceUri;
+        }
+
+        /**
+        *  gets resource uri
+        *  @return std::string resource uri
+        */
+        std::string getResourceUri(void)
+        {
+            return m_resourceUri;
+        }
+
+
     private:
         std::string m_requestType;
+        std::string m_resourceUri;
         QueryParamsMap m_queryParameters;
         int m_requestHandlerFlag;
         OCRepresentation m_representation;

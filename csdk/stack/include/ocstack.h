@@ -262,6 +262,11 @@ typedef enum {
 typedef OCEntityHandlerResult (*OCEntityHandler)
 (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest);
 
+/**
+ * Device Entity handler need to use this call back instead of OCEntityHandler
+ */
+typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
+(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri);
 
 //-----------------------------------------------------------------------------
 // Function prototypes
@@ -377,7 +382,7 @@ OCStackResult OCStopPresence();
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
-OCStackResult OCSetDefaultDeviceEntityHandler(OCEntityHandler entityHandler);
+OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler);
 
 /**
  * Create a resource.

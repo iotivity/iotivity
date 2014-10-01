@@ -43,7 +43,7 @@ extern "C" {
 //-----------------------------------------------------------------------------
 // Global variables
 //-----------------------------------------------------------------------------
-extern OCEntityHandler defaultDeviceHandler;
+extern OCDeviceEntityHandler defaultDeviceHandler;
 
 //-----------------------------------------------------------------------------
 // Defines

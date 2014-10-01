@@ -117,6 +117,9 @@ class DeviceResource : public Resource
     {
         if(request)
         {
+            std::cout << "In Default Entity Handler, uri received: "
+                        << request->getResourceUri() << std::endl;
+
             if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
             {
                 if(request->getRequestType() == "GET")
