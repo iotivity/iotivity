@@ -135,6 +135,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     coap_list_t *optList = NULL;
     uint8_t mediaType = COAP_MEDIATYPE_APPLICATION_JSON;
     uint32_t maxAge = 0x2ffff;
+    OCMethod ocMethod;
 
     unsigned char rcvdUri[MAX_URI_LENGTH] = { 0 };
     unsigned char rcvdQuery[MAX_QUERY_LENGTH] = { 0 };
@@ -158,10 +159,34 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     // fill OCCoAPToken structure
     RetrieveOCCoAPToken(recvPdu, &rcvdToken);
 
+    switch (recvPdu->hdr->code)
+    {
+        case COAP_REQUEST_GET:
+            {
+                ocMethod = OC_REST_GET;
+                break;
+            }
+        case COAP_REQUEST_POST:
+            {
+                ocMethod = OC_REST_POST;
+                break;
+            }
+        case COAP_REQUEST_PUT:
+            {
+                ocMethod = OC_REST_PUT;
+                break;
+            }
+        default:
+            {
+                OC_LOG_V(ERROR, TAG, "Received CoAP method %d not supported", 
+                         recvPdu->hdr->code);
+                goto exit;
+            }
+    }
+
     // fill OCEntityHandlerRequest structure
-    result = FormOCEntityHandlerRequest(&entityHandlerRequest,
-            (recvPdu->hdr->code == COAP_REQUEST_GET) ?
-            OC_REST_GET : OC_REST_PUT, bufRes, bufReqPayload, rcvdQuery);
+    result = FormOCEntityHandlerRequest(&entityHandlerRequest, ocMethod,
+                                        bufRes, bufReqPayload, rcvdQuery);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
    // fill OCObserveReq
@@ -609,6 +634,9 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
             break;
         case OC_REST_PUT:
             coapMethod = COAP_REQUEST_PUT;
+            break;
+        case OC_REST_POST:
+            coapMethod = COAP_REQUEST_POST;
             break;
         case OC_REST_OBSERVE_ALL:
         case OC_REST_OBSERVE:

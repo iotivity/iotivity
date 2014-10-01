@@ -50,7 +50,7 @@ namespace OC {
 
         if(cw)
         {
-            return cw->GetResourceAttributes(m_host, m_uri, queryParametersMap, attributeHandler);
+            return cw->GetResourceRepresentation(m_host, m_uri, queryParametersMap, attributeHandler);
         }
         else
         {
@@ -92,7 +92,7 @@ namespace OC {
 
         if(cw)
         {
-            return cw->SetResourceAttributes(m_host, m_uri, rep, queryParametersMap,
+            return cw->PutResourceRepresentation(m_host, m_uri, rep, queryParametersMap,
                     attributeHandler);
         }
         else
@@ -100,6 +100,7 @@ namespace OC {
             return OC_STACK_ERROR;
         }
     }
+
 
     OCStackResult OCResource::put(const std::string& resourceType,
         const std::string& resourceInterface, const OCRepresentation& rep,
@@ -128,6 +129,51 @@ namespace OC {
             return OC_STACK_ERROR;
         }
     }
+
+    OCStackResult OCResource::post(const OCRepresentation& rep,
+        const QueryParamsMap& queryParametersMap, PostCallback attributeHandler)
+    {
+        auto cw = m_clientWrapper.lock();
+
+        if(cw)
+        {
+            return cw->PostResourceRepresentation(m_host, m_uri, rep, queryParametersMap,
+                    attributeHandler);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
+    OCStackResult OCResource::post(const std::string& resourceType,
+        const std::string& resourceInterface, const OCRepresentation& rep,
+        const QueryParamsMap& queryParametersMap,
+        PostCallback attributeHandler)
+    {
+        auto cw = m_clientWrapper.lock();
+
+        if(cw)
+        {
+            QueryParamsMap mapCpy(queryParametersMap);
+
+            if(!resourceType.empty())
+            {
+                mapCpy["rt"]=resourceType;
+            }
+            if(!resourceInterface.empty())
+            {
+                mapCpy["if"]=resourceInterface;
+            }
+
+            return post(rep, mapCpy, attributeHandler);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
 
     OCStackResult OCResource::observe(ObserveType observeType,
         const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)

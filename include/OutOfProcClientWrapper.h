@@ -28,19 +28,27 @@ namespace OC
     class OutOfProcClientWrapper : public IClientWrapper
     {
     public:
-        OutOfProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
+        OutOfProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock,
+                                PlatformConfig cfg)
          : IClientWrapper(owner)
         {}
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
             const std::string& resourceType, FindCallback& callback) {return OC_STACK_NOTIMPL;}
 
-        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri,
-            const QueryParamsMap& queryParams, GetCallback& callback){return OC_STACK_NOTIMPL;}
+        virtual OCStackResult GetResourceRepresentation(const std::string& host,
+            const std::string& uri, const QueryParamsMap& queryParams, GetCallback& callback)
+            {return OC_STACK_NOTIMPL;}
 
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri,
-            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
-            PutCallback& callback){return OC_STACK_NOTIMPL;}
+        virtual OCStackResult PutResourceRepresentation(const std::string& host,
+            const std::string& uri, const OCRepresentation& attributes,
+            const QueryParamsMap& queryParams, PutCallback& callback)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult PostResourceRepresentation(const std::string& host,
+            const std::string& uri, const OCRepresentation& attributes,
+            const QueryParamsMap& queryParams, PostCallback& callback)
+            {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,

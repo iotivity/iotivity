@@ -634,6 +634,7 @@ namespace OC
     typedef std::function<void(OCStackResult, const unsigned int)> SubscribeCallback;
     typedef std::function<void(const OCRepresentation&, const int)> GetCallback;
     typedef std::function<void(const OCRepresentation&, const int)> PutCallback;
+    typedef std::function<void(const OCRepresentation&, const int)> PostCallback;
     typedef std::function<void(const OCRepresentation&, const int, const int)> ObserveCallback;
 } // namespace OC
 

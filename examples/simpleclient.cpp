@@ -86,12 +86,11 @@ void onObserve(const OCRepresentation& rep, const int& eCode, const int& sequenc
     }
 }
 
-// callback handler on PUT request
-void onPut(const OCRepresentation& rep, const int eCode)
+void onPost2(const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
-        std::cout << "PUT request was successful" << std::endl;
+        std::cout << "POST request was successful" << std::endl;
 
         rep.getValue("state", mylight.m_state);
         rep.getValue("power", mylight.m_power);
@@ -108,6 +107,83 @@ void onPut(const OCRepresentation& rep, const int eCode)
 
         curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
 
+    }
+    else
+    {
+        std::cout << "onPost Response error: " << eCode << std::endl;
+        std::exit(-1);
+    }
+}
+
+void onPost(const OCRepresentation& rep, const int eCode)
+{
+    if(eCode == SUCCESS_RESPONSE)
+    {
+        std::cout << "POST request was successful" << std::endl;
+
+        rep.getValue("state", mylight.m_state);
+        rep.getValue("power", mylight.m_power);
+        rep.getValue("name", mylight.m_name);
+
+        std::cout << "\tstate: " << mylight.m_state << std::endl;
+        std::cout << "\tpower: " << mylight.m_power << std::endl;
+        std::cout << "\tname: " << mylight.m_name << std::endl;
+
+        OCRepresentation rep2;
+
+        std::cout << "Posting light representation..."<<std::endl;
+
+        mylight.m_state = true;
+        mylight.m_power = 55;
+
+        rep2.setValue("state", mylight.m_state);
+        rep2.setValue("power", mylight.m_power);
+
+        curResource->post(rep2, QueryParamsMap(), &onPost2);
+    }
+    else
+    {
+        std::cout << "onPost Response error: " << eCode << std::endl;
+        std::exit(-1);
+    }
+}
+
+// Local function to put a different state for this resource
+void postLightRepresentation(std::shared_ptr<OCResource> resource)
+{
+    if(resource)
+    {
+        OCRepresentation rep;
+
+        std::cout << "Posting light representation..."<<std::endl;
+
+        mylight.m_state = false;
+        mylight.m_power = 105;
+
+        rep.setValue("state", mylight.m_state);
+        rep.setValue("power", mylight.m_power);
+
+        // Invoke resource's post API with rep, query map and the callback parameter
+        resource->post(rep, QueryParamsMap(), &onPost);
+    }
+}
+
+// callback handler on PUT request
+void onPut(const OCRepresentation& rep, const int eCode)
+{
+    if(eCode == SUCCESS_RESPONSE)
+    {
+        std::cout << "PUT request was successful" << std::endl;
+
+        rep.getValue("state", mylight.m_state);
+        rep.getValue("power", mylight.m_power);
+        rep.getValue("name", mylight.m_name);
+
+        std::cout << "\tstate: " << mylight.m_state << std::endl;
+        std::cout << "\tpower: " << mylight.m_power << std::endl;
+        std::cout << "\tname: " << mylight.m_name << std::endl;
+
+        postLightRepresentation(curResource);
     }
     else
     {
@@ -131,11 +207,8 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
         rep.setValue("state", mylight.m_state);
         rep.setValue("power", mylight.m_power);
 
-        // Create QueryParameters Map and add query params (if any)
-        QueryParamsMap queryParamsMap;
-
-        // Invoke resource's pit API with rep, query map and the callback parameter
-        resource->put(rep, queryParamsMap, &onPut);
+        // Invoke resource's put API with rep, query map and the callback parameter
+        resource->put(rep, QueryParamsMap(), &onPut);
     }
 }
 

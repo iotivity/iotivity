@@ -46,9 +46,11 @@ typedef enum {
     TEST_DISCOVER_REQ = 1,
     TEST_GET_REQ_NON,
     TEST_PUT_REQ_NON,
+    TEST_POST_REQ_NON,
     TEST_OBS_REQ_NON,
     TEST_GET_UNAVAILABLE_RES_REQ_NON,
     TEST_GET_REQ_CON,
+    TEST_POST_REQ_CON,
     TEST_OBS_REQ_CON,
     #ifdef WITH_PRESENCE
     TEST_OBS_PRESENCE,
@@ -96,6 +98,8 @@ int InitGetRequestToUnavailableResource();
 int InitObserveRequest(OCQualityOfService qos);
 int InitPutRequest();
 int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions);
+int InitPostRequest(OCQualityOfService qos);
+int InitGetRequest(OCQualityOfService qos);
 int InitDiscovery();
 void parseClientResponse(OCClientResponse * clientResponse);
 
@@ -106,15 +110,17 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Nonconfirmable Put Requests");
-    OC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate Nonconfirmable Observe Requests");
-    OC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Nonconfirmable Get Request for a resource which is unavailable");
-    OC_LOG(INFO, TAG, "-t 6 : Discover Resources and Initiate Confirmable Get Request");
-    OC_LOG(INFO, TAG, "-t 7 : Discover Resources and Initiate Confirmable Observe Requests");
+    OC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate Nonconfirmable Post Requests");
+    OC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Nonconfirmable Observe Requests");
+    OC_LOG(INFO, TAG, "-t 6 : Discover Resources and Initiate Nonconfirmable Get Request for a resource which is unavailable");
+    OC_LOG(INFO, TAG, "-t 7 : Discover Resources and Initiate Confirmable Get Request");
+    OC_LOG(INFO, TAG, "-t 8 : Discover Resources and Initiate Confirmable Post Request");
+    OC_LOG(INFO, TAG, "-t 9 : Discover Resources and Initiate Confirmable Observe Requests");
     #ifdef WITH_PRESENCE
-    OC_LOG(INFO, TAG, "-t 8 : Discover Resources and Initiate Nonconfirmable presence");
+    OC_LOG(INFO, TAG, "-t 10 : Discover Resources and Initiate Nonconfirmable presence");
     #endif
-    OC_LOG(INFO, TAG, "-t 9 : Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
-    OC_LOG(INFO, TAG, "-t 10: Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
+    OC_LOG(INFO, TAG, "-t 11 : Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
+    OC_LOG(INFO, TAG, "-t 12: Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -154,13 +160,28 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     if(ctx == (void*)CTX_VAL)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
+        OC_LOG_V(INFO, TAG, "Callback Context for PUT recvd successfully");
     }
 
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response", clientResponse->resJSONPayload);
+    }
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+{
+    if(ctx == (void*)CTX_VAL)
+    {
+        OC_LOG_V(INFO, TAG, "Callback Context for POST recvd successfully");
+    }
+
+    if(clientResponse)
+    {
+        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Post Response", clientResponse->resJSONPayload);
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -299,6 +320,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         case TEST_PUT_REQ_NON:
             InitPutRequest();
             break;
+        case TEST_POST_REQ_NON:
+            InitPostRequest(OC_NON_CONFIRMABLE);
+            break;
         case TEST_OBS_REQ_NON:
         case TEST_OBS_REQ_NON_CANCEL_IMM:
             InitObserveRequest(OC_NON_CONFIRMABLE);
@@ -308,6 +332,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             break;
         case TEST_GET_REQ_CON:
             InitGetRequest(OC_CONFIRMABLE, 0);
+            break;
+        case TEST_POST_REQ_CON:
+            InitPostRequest(OC_CONFIRMABLE);
             break;
         case TEST_OBS_REQ_CON:
             InitObserveRequest(OC_CONFIRMABLE);
@@ -346,7 +373,6 @@ int InitGetRequestToUnavailableResource()
     return (InvokeOCDoResource(query, OC_REST_GET, OC_NON_CONFIRMABLE, getReqCB, NULL, 0));
 }
 
-
 int InitObserveRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
@@ -354,7 +380,6 @@ int InitObserveRequest(OCQualityOfService qos)
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
     return (InvokeOCDoResource(query, OC_REST_OBSERVE, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, obsReqCB, NULL, 0));
 }
-
 
 int InitPutRequest()
 {
@@ -364,6 +389,37 @@ int InitPutRequest()
     return (InvokeOCDoResource(query, OC_REST_PUT, OC_NON_CONFIRMABLE, putReqCB, NULL, 0));
 }
 
+int InitPostRequest(OCQualityOfService qos)
+{
+    OCStackResult result;
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    std::ostringstream query;
+    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+
+    // First POST operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_POST,
+                               ((qos == OC_CONFIRMABLE) ? OC_CONFIRMABLE: OC_NON_CONFIRMABLE),
+                               postReqCB, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        // Error can happen if for example, network connectivity is down
+        OC_LOG_V(INFO, TAG, "First POST call did not succeed");
+    }
+
+    // Second POST operation (to create an LED instance)
+    result = InvokeOCDoResource(query, OC_REST_POST,
+                               ((qos == OC_CONFIRMABLE) ? OC_CONFIRMABLE: OC_NON_CONFIRMABLE),
+                               postReqCB, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        OC_LOG_V(INFO, TAG, "Second POST call did not succeed");
+    }
+
+    // This POST operation will update the original resourced /a/led
+    return (InvokeOCDoResource(query, OC_REST_POST,
+                               ((qos == OC_CONFIRMABLE) ? OC_CONFIRMABLE: OC_NON_CONFIRMABLE),
+                               postReqCB, NULL, 0));
+}
 
 int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions)
 {

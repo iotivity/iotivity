@@ -36,7 +36,7 @@ static int gObserveNotifyType = 3;
 
 int gQuitFlag = 0;
 int gLEDUnderObservation = 0;
-void createLEDResource();
+
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
     bool state;
@@ -44,12 +44,17 @@ typedef struct LEDRESOURCE{
 } LEDResource;
 
 static LEDResource LED;
+// This variable determines instance number of the LED resource
+// Used by POST method to create a new instance of LED resource
+static int gCurrLedInstance = 0;
+#define SAMPLE_MAX_NUM_POST_INSTANCE  2
+static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
+int createLEDResource (char *uri, LEDResource *ledResource);
 
 typedef struct {
     OCObservationId observationId;
     bool            valid;
 } Observers;
-
 #define SAMPLE_MAX_NUM_OBSERVATIONS     8
 Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 
@@ -57,17 +62,34 @@ Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 static int stopPresenceCount = 10;
 #endif
 
-// TODO: hard coded for now, change after Sprint4
-const char responsePayloadGet[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"power\":10}}";
+// TODO: Hardcoded JSON strings. Request/response JSON payloads have to be parsed/generated.
+const char respPLGet_led[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"power\":10}}";
+const char respPLGet_ledInst0[] = "{\"href\":\"/a/led/0\",\"rep\":{\"state\":\"on\",\"power\":20}}";
+const char respPLGet_ledInst1[] = "{\"href\":\"/a/led/1\",\"rep\":{\"state\":\"on\",\"power\":30}}";
 const char responsePayloadPut[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"off\",\"power\":0}}";
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
 void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
 {
-    if (ehRequest->resJSONPayloadLen > strlen ((char *)responsePayloadGet))
+    const char *getResp;
+
+    if (ehRequest->resource == LED.handle)
     {
-        strncpy((char *)ehRequest->resJSONPayload, responsePayloadGet,
-                strlen((char *)responsePayloadGet));
+        getResp = respPLGet_led;
+    }
+    else if (ehRequest->resource == gLedInstance[0].handle)
+    {
+        getResp = respPLGet_ledInst0;
+    }
+    else if (ehRequest->resource == gLedInstance[1].handle)
+    {
+        getResp = respPLGet_ledInst1;
+    }
+
+    if (ehRequest->resJSONPayloadLen > strlen ((char *)getResp))
+    {
+        strncpy((char *)ehRequest->resJSONPayload, getResp,
+                strlen((char *)getResp));
     }
     else
     {
@@ -82,6 +104,83 @@ void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
     {
         strncpy((char *)ehRequest->resJSONPayload, responsePayloadPut,
                 strlen((char *)responsePayloadPut));
+    }
+    else
+    {
+        OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
+                ehRequest->resJSONPayloadLen);
+    }
+}
+
+void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
+{
+    char respPLPost_newLed[100] = "{\"href\":\"/a/led\",\"rep\":{\"createduri\":\"/a/led/";
+    const char postPLSuffix[] = "\"}}";
+    char *respPLPost_led;
+
+    /*
+     * The entity handler determines how to process a POST request.
+     * Per the REST paradigm, POST can also be used to update representation of existing
+     * resource or create a new resource.
+     * In the sample below, if the POST is for /a/led then a new instance of the LED
+     * resource is created with default representation (if representation is included in
+     * POST payload it can be used as initial values) as long as the instance is
+     * lesser than max new instance count. Once max instance count is reached, POST on
+     * /a/led updated the representation of /a/led (just like PUT).
+     */
+
+    if (ehRequest->resource == LED.handle)
+    {
+        if (gCurrLedInstance < SAMPLE_MAX_NUM_POST_INSTANCE)
+        {
+            // Create new LED instance
+            char newLedUri[15] = "/a/led/";
+            sprintf (newLedUri + strlen(newLedUri), "%d", gCurrLedInstance);
+            printf ("\n New resource URI: %s\n", newLedUri);
+            if (0 == createLEDResource (newLedUri, &gLedInstance[gCurrLedInstance]))
+            {
+                OC_LOG_V (INFO, TAG, "Created new LED instance\n");
+                gLedInstance[gCurrLedInstance].state = 0;
+                gLedInstance[gCurrLedInstance].power = 0;
+                sprintf (respPLPost_newLed + strlen(respPLPost_newLed), "%d", gCurrLedInstance);
+                memcpy (respPLPost_newLed + strlen(respPLPost_newLed), postPLSuffix, 
+                        strlen(postPLSuffix) + 1);
+                gCurrLedInstance++;
+                respPLPost_led = respPLPost_newLed;
+            }
+        }
+        else
+        {
+            // Update repesentation of /a/led
+            LED.state = true;
+            LED.power = 11;
+            respPLPost_led = (char *)responsePayloadPut;
+        }
+    }
+    else
+    {
+        for (int i = 0; i < SAMPLE_MAX_NUM_POST_INSTANCE; i++)
+        {
+            if (ehRequest->resource == gLedInstance[i].handle)
+            {
+                gLedInstance[i].state = true;
+                gLedInstance[i].power = 22;
+                if (i == 0)
+                {
+                    respPLPost_led = (char *)respPLGet_ledInst0;
+                } 
+                else if (i == 1)
+                {
+                    respPLPost_led = (char *)respPLGet_ledInst1;
+                }
+            }
+        }
+    }
+
+    if (ehRequest->resJSONPayloadLen > strlen ((char *)respPLPost_led))
+    {
+        strncpy((char *)ehRequest->resJSONPayload, respPLPost_led,
+                strlen((char *)respPLPost_led));
     }
     else
     {
@@ -203,6 +302,11 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                 OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
                 ProcessPutRequest (entityHandlerRequest);
             }
+            else if (OC_REST_POST == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
+                ProcessPostRequest (entityHandlerRequest);
+            }
             else
             {
                 OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
@@ -296,7 +400,7 @@ void *ChangeLEDRepresentation (void *param)
                     }
                 }
                 result = OCNotifyListOfObservers (LED.handle, obsNotify, j,
-                        (unsigned char *)responsePayloadGet);
+                        (unsigned char *)respPLGet_led);
             }
             else if (gObserveNotifyType == 0)
             {
@@ -387,7 +491,7 @@ int main(int argc, char* argv[])
     /*
      * Declare and create the example resource: LED
      */
-    createLEDResource();
+    createLEDResource("/a/led", &LED);
 
     // Initialize observations data structure for the resource
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
@@ -420,13 +524,24 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-void createLEDResource() {
-    LED.state = false;
-    OCStackResult res = OCCreateResource(&LED.handle,
+
+int createLEDResource (char *uri, LEDResource *ledResource)
+{
+    if (!uri)
+    {
+        OC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
+        return -1;
+    }
+
+    ledResource->state = false;
+    ledResource->power= 0;
+    OCStackResult res = OCCreateResource(&(ledResource->handle),
             "core.led",
             "core.rw",
-            "/a/led",
+            uri,
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
+
+    return 0;
 }

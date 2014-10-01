@@ -34,7 +34,7 @@ namespace OC
     {
     protected:
         OCPlatform& m_owner;
-        
+
     public:
         typedef std::shared_ptr<IClientWrapper> Ptr;
 
@@ -42,31 +42,43 @@ namespace OC
          : m_owner(owner)
         {}
 
-        virtual OCStackResult ListenForResource(const std::string& serviceUrl, const std::string& resourceType,
-            FindCallback& callback) = 0;
-        
-        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            GetCallback& callback)=0;
+        virtual OCStackResult ListenForResource(const std::string& serviceUrl,
+                        const std::string& resourceType, FindCallback& callback) = 0;
 
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri, const OCRepresentation& attributes, 
-            const QueryParamsMap& queryParams, PutCallback& callback) = 0;
+        virtual OCStackResult GetResourceRepresentation(const std::string& host,
+                        const std::string& uri, const QueryParamsMap& queryParams,
+                        GetCallback& callback)=0;
 
-        virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle, 
-            const std::string& host, const std::string& uri, const QueryParamsMap& queryParams, 
-            ObserveCallback& callback)=0;
-        
-        virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host, const std::string& uri)=0;
-        
-        virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host, 
-            SubscribeCallback& presenceHandler)=0;
+        virtual OCStackResult PutResourceRepresentation(const std::string& host,
+                        const std::string& uri, const OCRepresentation& rep,
+                        const QueryParamsMap& queryParams,
+                        PutCallback& callback) = 0;
+
+        virtual OCStackResult PostResourceRepresentation(const std::string& host,
+                        const std::string& uri, const OCRepresentation& rep,
+                        const QueryParamsMap& queryParams,
+                        PutCallback& callback) = 0;
+
+        virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
+                        const std::string& host, const std::string& uri,
+                        const QueryParamsMap& queryParams,
+                        ObserveCallback& callback)=0;
+
+        virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
+                        const std::string& uri)=0;
+
+        virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
+                        SubscribeCallback& presenceHandler)=0;
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle) =0;
 
         virtual ~IClientWrapper(){}
-       
 
-        // Note: this should never be called by anyone but the handler for the listen command.  It is public becuase that needs to be a non-instance callback
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper, const std::string& host, const boost::property_tree::ptree resourceNode)=0;
+
+        // Note: this should never be called by anyone but the handler for the listen command.
+        // It is public becuase that needs to be a non-instance callback
+        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
+                        const std::string& host, const boost::property_tree::ptree resourceNode)=0;
     private:
     };
 }

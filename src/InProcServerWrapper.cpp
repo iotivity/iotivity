@@ -68,15 +68,21 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                     pRequest->setQueryParams(qp);
                 }
             }
+
             if(OC_REST_GET == entityHandlerRequest->method)
             {
                 // TODO Why strings : "GET"??
                 pRequest->setRequestType("GET");
             }
-
-            if(OC_REST_PUT == entityHandlerRequest->method)
+            else if(OC_REST_PUT == entityHandlerRequest->method)
             {
                 pRequest->setRequestType("PUT");
+                pRequest->setPayload(std::string(reinterpret_cast<const char*>
+                                            (entityHandlerRequest->reqJSONPayload)));
+            }
+            else if(OC_REST_POST == entityHandlerRequest->method)
+            {
+                pRequest->setRequestType("POST");
                 pRequest->setPayload(std::string(reinterpret_cast<const char*>
                                             (entityHandlerRequest->reqJSONPayload)));
             }

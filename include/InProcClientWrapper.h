@@ -40,18 +40,24 @@ namespace OC
     class InProcClientWrapper : public IClientWrapper
     {
     public:
-        InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg);
+        InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock,
+                            PlatformConfig cfg);
         virtual ~InProcClientWrapper();
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
             const std::string& resourceType, FindCallback& callback);
 
-        virtual OCStackResult GetResourceAttributes(const std::string& host, const std::string& uri,
-            const QueryParamsMap& queryParams, GetCallback& callback);
+        virtual OCStackResult GetResourceRepresentation(const std::string& host,
+            const std::string& uri, const QueryParamsMap& queryParams,
+            GetCallback& callback);
 
-        virtual OCStackResult SetResourceAttributes(const std::string& host, const std::string& uri,
-            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
-            PutCallback& callback);
+        virtual OCStackResult PutResourceRepresentation(const std::string& host,
+            const std::string& uri, const OCRepresentation& attributes,
+            const QueryParamsMap& queryParams, PutCallback& callback);
+
+        virtual OCStackResult PostResourceRepresentation(const std::string& host,
+            const std::string& uri, const OCRepresentation& attributes,
+            const QueryParamsMap& queryParams, PostCallback& callback);
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,

@@ -75,7 +75,7 @@ OCDeviceEntityHandler defaultDeviceHandler;
 //This function will be called back by occoap layer when a request is received
 OCStackResult HandleStackRequests(OCRequest * request)
 {
-    OC_LOG(INFO, TAG, PCF("Entering OCStackHandleReceiveRequest (OCStack Layer)"));
+    OC_LOG(INFO, TAG, PCF("Entering HandleStackRequests (OCStack Layer)"));
 
     OCStackResult result = OC_STACK_ERROR;
     ResourceHandling resHandling;
@@ -358,7 +358,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     {
         case OC_REST_GET:
         case OC_REST_PUT:
-            break;
+        case OC_REST_POST:
         case OC_REST_OBSERVE:
         case OC_REST_OBSERVE_ALL:
         case OC_REST_CANCEL_OBSERVE:

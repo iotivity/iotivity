@@ -32,8 +32,10 @@
 
 using namespace OC;
 using namespace std;
+namespace PH = std::placeholders;
 
 int gObservation = 0;
+void * ChangeLightRepresentation (void *param);
 
 // Specifies where to notify all observers or list of observers
 // 0 - notifies all observers
@@ -41,13 +43,13 @@ int gObservation = 0;
 int isListOfObservers = 0;
 
 // Forward declaring the entityHandler
-void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
 
 /// This class represents a single resource named 'lightResource'. This resource has
 /// two simple properties named 'state' and 'power'
 
 class LightResource
 {
+
 public:
     /// Access this property from a TB client
     std::string m_name;
@@ -82,10 +84,12 @@ public:
         // OCResourceProperty is defined ocstack.h
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
+
         // This will internally create and register the resource.
         OCStackResult result = platform.registerResource(
                                     m_resourceHandle, resourceURI, resourceTypeName,
-                                    resourceInterface, &entityHandler, resourceProperty);
+                                    resourceInterface, cb, resourceProperty);
 
         if (OC_STACK_OK != result)
         {
@@ -129,6 +133,17 @@ public:
 
     }
 
+    // Post representation.
+    // Post can create new resource or simply act like put.
+    // Gets values from the representation and
+    // updates the internal state
+    OCRepresentation post(OCRepresentation& rep)
+    {
+       put(rep);
+       return m_lightRep;
+    }
+
+
     // gets the updated representation.
     // Updates the representation with latest internal state before
     // sending out.
@@ -157,61 +172,8 @@ public:
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
     }
-};
 
-// Create the instance of the resource class (in this case instance of class 'LightResource').
-LightResource myLight;
-
-// ChangeLightRepresentaion is an observation function,
-// which notifies any changes to the resource to stack
-// via notifyObservers
-void * ChangeLightRepresentation (void *param)
-{
-    // This function continuously monitors for the changes
-    while (1)
-    {
-        sleep (5);
-
-        if (gObservation)
-        {
-            // If under observation if there are any changes to the light resource
-            // we call notifyObservors
-            //
-            // For demostration we are changing the power value and notifying.
-            myLight.m_power += 10;
-
-            cout << "\nPower updated to : " << myLight.m_power << endl;
-            cout << "Notifying observers with resource handle: " << myLight.getHandle() << endl;
-
-            OCStackResult result = OC_STACK_OK;
-
-            if(isListOfObservers)
-            {
-                std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
-
-                resourceResponse->setErrorCode(200);
-                resourceResponse->setResourceRepresentation(myLight.get(), DEFAULT_INTERFACE);
-
-                result = OCPlatform::notifyListOfObservers(  myLight.getHandle(),
-                                                             myLight.m_interestedObservers,
-                                                             resourceResponse);
-            }
-            else
-            {
-                result = OCPlatform::notifyAllObservers(myLight.getHandle());
-            }
-
-            if(OC_STACK_NO_OBSERVERS == result)
-            {
-                cout << "No More observers, stopping notifications" << endl;
-                gObservation = 0;
-            }
-        }
-    }
-
-    return NULL;
-}
-
+private:
 // This is just a sample implementation of entity handler.
 // Entity handler can be implemented in several ways by the manufacturer
 void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
@@ -244,7 +206,7 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                     // TODO Error Code
                     response->setErrorCode(200);
 
-                    response->setResourceRepresentation(myLight.get());
+                    response->setResourceRepresentation(get());
                 }
             }
             else if(requestType == "PUT")
@@ -256,19 +218,36 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                 // Do related operations related to PUT request
 
                 // Update the lightResource
-                myLight.put(rep);
+                put(rep);
 
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
 
-                    response->setResourceRepresentation(myLight.get());
+                    response->setResourceRepresentation(get());
                 }
 
             }
             else if(requestType == "POST")
             {
+                cout << "\t\t\trequestType : POST\n";
+
+                OCRepresentation rep = request->getResourceRepresentation();
+
+                // Do related operations related to POST request
+
+                // Update the lightResource
+                post(rep);
+
+                if(response)
+                {
+                    // TODO Error Code
+                    response->setErrorCode(200);
+
+                    response->setResourceRepresentation(get());
+                }
+
                 // POST request operations
             }
             else if(requestType == "DELETE")
@@ -276,34 +255,34 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                 // DELETE request operations
             }
         }
+
         if(requestFlag & RequestHandlerFlag::ObserverFlag)
         {
             ObservationInfo observationInfo = request->getObservationInfo();
             if(ObserveAction::ObserveRegister == observationInfo.action)
             {
-                myLight.m_interestedObservers.push_back(observationInfo.obsId);
+                m_interestedObservers.push_back(observationInfo.obsId);
             }
             else if(ObserveAction::ObserveUnregister == observationInfo.action)
             {
-                myLight.m_interestedObservers.erase(std::remove(
-                                                            myLight.m_interestedObservers.begin(),
-                                                            myLight.m_interestedObservers.end(),
+                m_interestedObservers.erase(std::remove(
+                                                            m_interestedObservers.begin(),
+                                                            m_interestedObservers.end(),
                                                             observationInfo.obsId),
-                                                            myLight.m_interestedObservers.end());
+                                                            m_interestedObservers.end());
             }
 
             pthread_t threadId;
 
             cout << "\t\trequestFlag : Observer\n";
             gObservation = 1;
-
             static int startedThread = 0;
 
             // Observation happens on a different thread in ChangeLightRepresentation function.
             // If we have not created the thread already, we will create one here.
             if(!startedThread)
             {
-                pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
+                pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)this);
                 startedThread = 1;
             }
         }
@@ -312,6 +291,60 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
     {
         std::cout << "Request invalid" << std::endl;
     }
+}
+
+};
+
+// ChangeLightRepresentaion is an observation function,
+// which notifies any changes to the resource to stack
+// via notifyObservers
+void * ChangeLightRepresentation (void *param)
+{
+    LightResource* lightPtr = (LightResource*) param;
+
+    // This function continuously monitors for the changes
+    while (1)
+    {
+        sleep (5);
+
+        if (gObservation)
+        {
+            // If under observation if there are any changes to the light resource
+            // we call notifyObservors
+            //
+            // For demostration we are changing the power value and notifying.
+            lightPtr->m_power += 10;
+
+            cout << "\nPower updated to : " << lightPtr->m_power << endl;
+            cout << "Notifying observers with resource handle: " << lightPtr->getHandle() << endl;
+
+            OCStackResult result = OC_STACK_OK;
+
+            if(isListOfObservers)
+            {
+                std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
+
+                resourceResponse->setErrorCode(200);
+                resourceResponse->setResourceRepresentation(lightPtr->get(), DEFAULT_INTERFACE);
+
+                result = OCPlatform::notifyListOfObservers(  lightPtr->getHandle(),
+                                                             lightPtr->m_interestedObservers,
+                                                             resourceResponse);
+            }
+            else
+            {
+                result = OCPlatform::notifyAllObservers(lightPtr->getHandle());
+            }
+
+            if(OC_STACK_NO_OBSERVERS == result)
+            {
+                cout << "No More observers, stopping notifications" << endl;
+                gObservation = 0;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 void PrintUsage()
@@ -358,6 +391,9 @@ int main(int argc, char* argv[1])
     try
     {
         OCPlatform platform(cfg);
+
+        // Create the instance of the resource class (in this case instance of class 'LightResource').
+        LightResource myLight;
 
         // Invoke createResource function of class light.
         myLight.createResource(platform);

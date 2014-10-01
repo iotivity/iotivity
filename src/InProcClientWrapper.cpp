@@ -380,7 +380,7 @@ namespace OC
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
     }
-    OCStackResult InProcClientWrapper::GetResourceAttributes(const std::string& host,
+    OCStackResult InProcClientWrapper::GetResourceRepresentation(const std::string& host,
         const std::string& uri, const QueryParamsMap& queryParams, GetCallback& callback)
     {
         OCStackResult result;
@@ -471,7 +471,46 @@ namespace OC
         return payload.str();
     }
 
-    OCStackResult InProcClientWrapper::SetResourceAttributes(const std::string& host,
+    OCStackResult InProcClientWrapper::PostResourceRepresentation(const std::string& host,
+        const std::string& uri, const OCRepresentation& rep,
+        const QueryParamsMap& queryParams, PostCallback& callback)
+    {
+        OCStackResult result;
+        OCCallbackData cbdata = {0};
+
+        SetContext* ctx = new SetContext();
+        ctx->callback = callback;
+        cbdata.cb = &setResourceCallback;
+        cbdata.cd = [](void* c){delete static_cast<SetContext*>(c);};
+        cbdata.context = static_cast<void*>(ctx);
+
+        // TODO: in the future the cstack should be combining these two strings!
+        ostringstream os;
+        os << host << assembleSetResourceUri(uri, queryParams).c_str();
+        // TODO: end of above
+
+        auto cLock = m_csdkLock.lock();
+
+        if(cLock)
+        {
+            std::lock_guard<std::mutex> lock(*cLock);
+            OCDoHandle handle;
+            result = OCDoResource(&handle, OC_REST_POST,
+                                  os.str().c_str(), nullptr,
+                                  assembleSetResourcePayload(rep).c_str(),
+                                  static_cast<OCQualityOfService>(m_cfg.QoS),
+                                  &cbdata, NULL, 0);
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+
+    OCStackResult InProcClientWrapper::PutResourceRepresentation(const std::string& host,
         const std::string& uri, const OCRepresentation& rep,
         const QueryParamsMap& queryParams, PutCallback& callback)
     {
