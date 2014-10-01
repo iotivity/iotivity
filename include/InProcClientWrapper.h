@@ -49,22 +49,25 @@ namespace OC
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
             const std::string& uri, const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions,
             GetCallback& callback);
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
             const std::string& uri, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, PutCallback& callback);
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            PutCallback& callback);
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
             const std::string& uri, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, PostCallback& callback);
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            PostCallback& callback);
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
-            ObserveCallback& callback);
+            const HeaderOptions& headerOptions, ObserveCallback& callback);
 
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
-            const std::string& uri);
+            const std::string& uri, const HeaderOptions& headerOptions);
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
             SubscribeCallback& presenceHandler);
@@ -78,6 +81,8 @@ namespace OC
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
         std::string assembleSetResourcePayload(const OCRepresentation& attributes);
+        void assembleHeaderOptions(OCHeaderOption options[],
+            const HeaderOptions& headerOptions);
         std::thread m_listeningThread;
         bool m_threadRun;
         std::weak_ptr<std::recursive_mutex> m_csdkLock;

@@ -35,6 +35,16 @@
 using namespace OC;
 namespace PH = std::placeholders;
 
+// Option ID for API version and client token
+const uint16_t API_VERSION = 2048;
+const uint16_t TOKEN = 3000;
+
+// Setting API version and token (shared out of band with client)
+// This assumes the fact that this server responds
+// only with a server with below version and token
+const std::string FRIDGE_CLIENT_API_VERSION = "v.1.0";
+const std::string FRIDGE_CLIENT_TOKEN = "21ae43gf";
+
 class Resource
 {
     protected:
@@ -88,26 +98,73 @@ class DeviceResource : public Resource
     {
         if(request)
         {
-            if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
+            // Get the header options from the request
+            HeaderOptions headerOptions = request->getHeaderOptions();
+            std::string clientAPIVersion;
+            std::string clientToken;
+
+            // Search the header options map and look for API version and Client token
+            for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
             {
-                if(request->getRequestType() == "GET")
+                uint16_t optionID = it->getOptionID();
+                if(optionID == API_VERSION)
                 {
-                    if(response)
+                    clientAPIVersion = it->getOptionData();
+                    std::cout << " Client API version: " << clientAPIVersion << std::endl;
+                }
+                else if(optionID == TOKEN)
+                {
+                    clientToken = it->getOptionData();
+                    std::cout << " Client token: " << clientToken << std::endl;
+                }
+                else
+                {
+                    std::cout << " Invalid header option " << std::endl;
+                }
+            }
+
+            // In this case Server entity handler verifies API version
+            // and client token. If they are valid, client requests are handled.
+            if(clientAPIVersion == FRIDGE_CLIENT_API_VERSION && clientToken == FRIDGE_CLIENT_TOKEN)
+            {
+                HeaderOptions serverHeaderOptions;
+                try
+                {
+                    // Set API version from server side
+                    HeaderOption::OCHeaderOption apiVersion(API_VERSION, FRIDGE_CLIENT_API_VERSION);
+                    serverHeaderOptions.push_back(apiVersion);
+                }
+                catch(OCException& e)
+                {
+                    std::cout << "Error creating HeaderOption in server: " << e.what() << std::endl;
+                }
+
+                if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
+                {
+                    if(request->getRequestType() == "GET")
                     {
-                        std::cout<<"DeviceResource Get Request"<<std::endl;
-                        response->setErrorCode(200);
-                        response->setResourceRepresentation(get(), "");
+                        if(response)
+                        {
+                            std::cout<<"DeviceResource Get Request"<<std::endl;
+                            response->setErrorCode(200);
+                            response->setHeaderOptions(serverHeaderOptions);
+                            response->setResourceRepresentation(get(), "");
+                        }
+                    }
+                    else
+                    {
+                        std::cout <<"DeviceResource unsupported request type "
+                        << request->getRequestType() << std::endl;
                     }
                 }
                 else
                 {
-                    std::cout <<"DeviceResource unsupported request type "
-                    << request->getRequestType() << std::endl;
+                    std::cout << "DeviceResource unsupported request flag" <<std::endl;
                 }
             }
             else
             {
-                std::cout << "DeviceResource unsupported request flag" <<std::endl;
+                std::cout << "Unsupported/invalid header options/values" << std::endl;
             }
         }
     }
@@ -215,7 +272,7 @@ class LightResource : public Resource
                 }
                 else
                 {
-                    std::cout <<"Light unsupported request type "
+                    std::cout << "Light unsupported request type"
                     << request->getRequestType() << std::endl;
                 }
             }
@@ -272,6 +329,7 @@ class DoorResource : public Resource
     virtual void entityHandler(std::shared_ptr<OCResourceRequest> request,
             std::shared_ptr<OCResourceResponse> response)
     {
+        std::cout << "EH of door invoked " << std::endl;
         if(request)
         {
             std::cout << "In entity handler for Door, URI is : "

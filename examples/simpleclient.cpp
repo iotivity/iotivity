@@ -53,7 +53,8 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const OCRepresentation& rep, const int& eCode, const int& sequenceNumber)
+void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
+                    const int& eCode, const int& sequenceNumber)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -86,7 +87,7 @@ void onObserve(const OCRepresentation& rep, const int& eCode, const int& sequenc
     }
 }
 
-void onPost2(const OCRepresentation& rep, const int eCode)
+void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -123,7 +124,7 @@ void onPost2(const OCRepresentation& rep, const int eCode)
     }
 }
 
-void onPost(const OCRepresentation& rep, const int eCode)
+void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -185,7 +186,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // callback handler on PUT request
-void onPut(const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -229,7 +230,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // Callback handler on GET request
-void onGet(const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {

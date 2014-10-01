@@ -28,8 +28,9 @@ using OC::result_guard;
 using OC::checked_guard;
 
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-                       const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes,
-                       const std::vector<std::string>& interfaces) 
+                       const std::string& uri, bool observable,
+                       const std::vector<std::string>& resourceTypes,
+                       const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri), m_host(host), m_isObservable(observable),
     m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -55,12 +56,12 @@ OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
                               GetCallback attributeHandler)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetResourceRepresentation,
-                         m_host, m_uri, queryParametersMap, attributeHandler);
+                         m_host, m_uri, queryParametersMap, m_headerOptions, attributeHandler);
 }
 
 OCStackResult OCResource::get(const std::string& resourceType,
-                              const std::string& resourceInterface, const QueryParamsMap& queryParametersMap,
-                              GetCallback attributeHandler)
+                     const std::string& resourceInterface, const QueryParamsMap& queryParametersMap,
+                     GetCallback attributeHandler)
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
@@ -78,10 +79,10 @@ OCStackResult OCResource::get(const std::string& resourceType,
 }
 
 OCStackResult OCResource::put(const OCRepresentation& rep,
-                              const QueryParamsMap& queryParametersMap, PutCallback attributeHandler)
+                     const QueryParamsMap& queryParametersMap, PutCallback attributeHandler)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutResourceRepresentation,
-                         m_host, m_uri, rep, queryParametersMap, attributeHandler);
+                         m_host, m_uri, rep, queryParametersMap, m_headerOptions, attributeHandler);
 }
 
 OCStackResult OCResource::put(const std::string& resourceType,
@@ -105,10 +106,10 @@ OCStackResult OCResource::put(const std::string& resourceType,
 }
 
 OCStackResult OCResource::post(const OCRepresentation& rep,
-                               const QueryParamsMap& queryParametersMap, PostCallback attributeHandler)
+                     const QueryParamsMap& queryParametersMap, PostCallback attributeHandler)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
-                         m_host, m_uri, rep, queryParametersMap, attributeHandler);
+                         m_host, m_uri, rep, queryParametersMap, m_headerOptions, attributeHandler);
 }
 
 OCStackResult OCResource::post(const std::string& resourceType,
@@ -132,7 +133,7 @@ OCStackResult OCResource::post(const std::string& resourceType,
 }
 
 OCStackResult OCResource::observe(ObserveType observeType,
-                                  const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)
+                           const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)
 {
     if(m_observeHandle != nullptr)
     {
@@ -141,7 +142,7 @@ OCStackResult OCResource::observe(ObserveType observeType,
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::ObserveResource,
                          observeType, &m_observeHandle, m_host,
-                         m_uri, queryParametersMap, observeHandler);
+                         m_uri, queryParametersMap, m_headerOptions, observeHandler);
 }
 
 OCStackResult OCResource::cancelObserve()
@@ -152,7 +153,7 @@ OCStackResult OCResource::cancelObserve()
     }
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::CancelObserveResource,
-                         m_observeHandle, m_host, m_uri);
+                         m_observeHandle, m_host, m_uri, m_headerOptions);
 }
 
 std::string OCResource::host() const

@@ -38,7 +38,8 @@ class ClientWorker
 private:
     bool m_isFoo;
     int m_barCount;
-    void putResourceInfo(const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
+    void putResourceInfo(const HeaderOptions& headerOptions,
+            const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
     {
        std::cout << "In PutResourceInfo" << std::endl;
 
@@ -67,7 +68,8 @@ private:
        }
     }
 
-    void getResourceInfo(const OCRepresentation rep, const int eCode)
+    void getResourceInfo(const HeaderOptions& headerOptions, const OCRepresentation rep,
+                const int eCode)
     {
         std::cout << "In getResourceInfo" << std::endl;
 
@@ -92,7 +94,9 @@ private:
             rep2.setValue("isFoo", m_isFoo);
             rep2.setValue("barCount", m_barCount);
 
-            m_resource->put(rep2, QueryParamsMap(), PutCallback(std::bind(&ClientWorker::putResourceInfo, this, rep2, std::placeholders::_1, std::placeholders::_2)));
+            m_resource->put(rep2, QueryParamsMap(),
+                PutCallback(std::bind(&ClientWorker::putResourceInfo, this, std::placeholders::_1,
+                     rep2, std::placeholders::_2, std::placeholders::_3)));
         }
     }
 
@@ -131,7 +135,9 @@ private:
 
             std::cout<<"Doing a get on q/foo."<<std::endl;
 
-            resource->get(QueryParamsMap(), GetCallback(std::bind(&ClientWorker::getResourceInfo, this, std::placeholders::_1, std::placeholders::_2)));
+            resource->get(QueryParamsMap(),
+                GetCallback(std::bind(&ClientWorker::getResourceInfo, this,
+                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)));
         }
     }
 

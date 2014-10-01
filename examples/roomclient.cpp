@@ -39,10 +39,10 @@ int observe_count()
 
 // Forward declaration
 void putRoomRepresentation(std::shared_ptr<OCResource> resource);
-void onPut(const OCRepresentation& rep, const int eCode);
+void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
 
 // callback handler on GET request
-void onGet(const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -105,7 +105,7 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // callback handler on PUT request
-void onPut(const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {

@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResourceResponse.h 
+/// @file OCResourceResponse.h
 
-/// @brief  This file contains the declaration of classes and its members related to 
+/// @brief  This file contains the declaration of classes and its members related to
 ///         ResourceResponse.
 
 #ifndef __OCRESOURCERESPONSE_H
@@ -60,6 +60,15 @@ namespace OC
         void setErrorCode(const int eCode) { m_errorCode = eCode; }
 
         /**
+        * This API allows to set headerOptions in the response
+        * @param headerOptions HeaderOptions vector consisting of OCHeaderOption objects
+        */
+        void setHeaderOptions(const HeaderOptions& headerOptions)
+        {
+            m_headerOptions = headerOptions;
+        }
+
+        /**
         *  API to set the entire resource attribute representation
         *  @param attributeMap reference containing the name value pairs representing
         *         the resource's attributes
@@ -93,7 +102,8 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        *  @param attributeMap reference containing the name value pairs representing the resource's
+        *  attributes
         */
         void setResourceRepresentation(OCRepresentation& rep) {
             // Call the default
@@ -102,7 +112,8 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param attributeMap rvalue reference containing the name value pairs representing the resource's attributes
+        *  @param attributeMap rvalue reference containing the name value pairs representing the
+        *  resource's attributes
         */
         void setResourceRepresentation(OCRepresentation&& rep) {
             // Call the above function
@@ -111,7 +122,8 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation (Linked List Interface))
-        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        *  @param attributeMap reference containing the name value pairs representing the resource's
+        *  attributes
         */
         void setResourceRepresentationLL(OCRepresentation& rep) {
 
@@ -174,7 +186,8 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation (Default))
-        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        *  @param attributeMap reference containing the name value pairs representing the resource's
+        *  attributes
         */
         void setResourceRepresentationDefault(OCRepresentation& rep) {
 
@@ -242,7 +255,8 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation (BATCH)
-        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        *  @param attributeMap reference containing the name value pairs representing the resource's
+        *  attributes
         */
         void setResourceRepresentationBatch(OCRepresentation& rep) {
             ostringstream payload;
@@ -282,15 +296,16 @@ namespace OC
 
         /** TODO remove this once after above function stabilize.
         *  API to set the entire resource attribute representation
-        *  @param attributeMap reference containing the name value pairs representing the resource's attributes
+        *  @param attributeMap reference containing the name value pairs representing the
+        *  resource's attributes
         */
-        void setResourceRepresentation(AttributeMap& attributes) { 
+        void setResourceRepresentation(AttributeMap& attributes) {
 
             // TODO To be refactored
             ostringstream payload;
 
             payload << "{";
-            
+
             // TODO fix this (do this programmatically)
             payload << "\"href\":\"/a/room\"";
 
@@ -315,19 +330,28 @@ namespace OC
     private:
         std::string m_payload;
         int m_errorCode;
+        HeaderOptions m_headerOptions;
 
     // TODO only stack should have visibility and apps should not
     public:
 
-        /** 
-        * Get error code 
+        /**
+        * Get error code
         */
-        int getErrorCode() const; 
+        int getErrorCode() const;
+
+        /**
+        * This API allows to retrieve headerOptions from a response
+        */
+        const HeaderOptions& getHeaderOptions() const
+        {
+            return m_headerOptions;
+        }
 
         /**
         * Get the resource attribute representation
         */
-        AttributeMap& getResourceRepresentation() const; 
+        AttributeMap& getResourceRepresentation() const;
 
         // TODO This should go away & just use getResourceRepresentation
         std::string getPayload()

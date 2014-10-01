@@ -69,6 +69,23 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                     pRequest->setQueryParams(qp);
                 }
             }
+            if(entityHandlerRequest->numRcvdVendorSpecificHeaderOptions != 0)
+            {
+                //Set the header options here.
+                uint16_t optionID;
+                std::string optionData;
+                HeaderOptions headerOptions;
+
+                for(int i = 0; i < MAX_HEADER_OPTIONS; i++)
+                {
+                    optionID = entityHandlerRequest->rcvdVendorSpecificHeaderOptions[i].optionID;
+                    optionData = reinterpret_cast<const char*>
+                             (entityHandlerRequest->rcvdVendorSpecificHeaderOptions[i].optionData);
+                    HeaderOption::OCHeaderOption headerOption(optionID, optionData);
+                    headerOptions.push_back(headerOption);
+                }
+                pRequest->setHeaderOptions(headerOptions);
+            }
 
             if(OC_REST_GET == entityHandlerRequest->method)
             {
@@ -112,10 +129,12 @@ void processResourceResponse(OCEntityHandlerFlag flag,
     {
         // TODO we could use const reference
         std::string payLoad;
+        HeaderOptions serverHeaderOptions;
 
         if(pResponse)
         {
             payLoad = pResponse->getPayload();
+            serverHeaderOptions = pResponse->getHeaderOptions();
         }
         else
         {
@@ -125,6 +144,22 @@ void processResourceResponse(OCEntityHandlerFlag flag,
 
         if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
         {
+            int i = 0;
+            entityHandlerRequest->numSendVendorSpecificHeaderOptions =
+                        serverHeaderOptions.size();
+            for (auto it=serverHeaderOptions.begin(); it != serverHeaderOptions.end(); ++it)
+            {
+                entityHandlerRequest->sendVendorSpecificHeaderOptions[i].protocolID = OC_COAP_ID;
+                entityHandlerRequest->sendVendorSpecificHeaderOptions[i].optionID =
+                        static_cast<uint16_t>(it->getOptionID());
+                entityHandlerRequest->sendVendorSpecificHeaderOptions[i].optionLength =
+                        (it->getOptionData()).length() + 1;
+                memcpy(entityHandlerRequest->sendVendorSpecificHeaderOptions[i].optionData,
+                        (it->getOptionData()).c_str(),
+                        (it->getOptionData()).length() + 1);
+                i++;
+            }
+
             strncpy((char*)entityHandlerRequest->resJSONPayload,
                         payLoad.c_str(),
                         entityHandlerRequest->resJSONPayloadLen);

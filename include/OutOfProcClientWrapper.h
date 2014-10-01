@@ -37,25 +37,30 @@ namespace OC
             const std::string& resourceType, FindCallback& callback) {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
-            const std::string& uri, const QueryParamsMap& queryParams, GetCallback& callback)
+            const std::string& uri, const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions, GetCallback& callback)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
             const std::string& uri, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, PutCallback& callback)
+            const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions, PutCallback& callback)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
             const std::string& uri, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, PostCallback& callback)
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            PostCallback& callback)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions,
             ObserveCallback& callback){return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
-            const std::string& uri){return OC_STACK_NOTIMPL;}
+            const std::string& uri,
+            const HeaderOptions& headerOptions){return OC_STACK_NOTIMPL;}
 
         virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
             const std::string& host, const boost::property_tree::ptree resourceNode)

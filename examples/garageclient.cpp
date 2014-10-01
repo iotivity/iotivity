@@ -131,7 +131,7 @@ void printRepresentation(const OCRepresentation& rep)
 
 }
 // callback handler on PUT request
-void onPut(const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -168,7 +168,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // Callback handler on GET request
-void onGet(const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {

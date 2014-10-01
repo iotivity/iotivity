@@ -104,6 +104,10 @@ namespace OC
             return m_resourceUri;
         }
 
+        /** This API retrieves headerOptions which was sent from a client
+        * @return std::map HeaderOptions with the header options
+        */
+        const HeaderOptions& getHeaderOptions() const {return m_headerOptions;}
 
     private:
         std::string m_requestType;
@@ -112,6 +116,7 @@ namespace OC
         int m_requestHandlerFlag;
         OCRepresentation m_representation;
         ObservationInfo m_observationInfo;
+        HeaderOptions m_headerOptions;
 
     public:
         // TODO: This is not a public API for app developers.
@@ -179,8 +184,13 @@ namespace OC
             m_observationInfo = observationInfo;
         }
 
+        // TODO: This is not a public API for app developers.
+        // This function will not be exposed in future
+        void setHeaderOptions(const HeaderOptions& headerOptions)
+        {
+            m_headerOptions = headerOptions;
+        }
     };
-
-} // namespace OC
+ }// namespace OC
 
 #endif //__OCRESOURCEREQUEST_H

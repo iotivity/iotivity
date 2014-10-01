@@ -8,7 +8,7 @@ namespace Intel { namespace OCDemo { namespace client {
 class resource_handle
 {
  friend class resource_handler;
- 
+
  private:
  const std::string                     URI;
  std::shared_ptr<OC::OCResource>       resource;
@@ -26,9 +26,12 @@ class resource_handle
  // Callbacks (note that the signature after binding will match exactly:
  private:
  void onFoundResource(std::shared_ptr<OC::OCResource> in_resource);
- void onResourceGet(OC::OCRepresentation rep, const int error_code);
- void onResourcePut(const OC::OCRepresentation rep, const int error_code);
- void onObserve(const OC::OCRepresentation rep, const int error_code, const int& sequence_number);
+ void onResourceGet(const OC::HeaderOptions& headerOptions,
+                OC::OCRepresentation rep, const int error_code);
+ void onResourcePut(const OC::HeaderOptions& headerOptions, const OC::OCRepresentation rep,
+                const int error_code);
+ void onObserve(const OC::HeaderOptions& headerOptions, const OC::OCRepresentation rep,
+                const int error_code, const int& sequence_number);
 };
 
 class resource_handler
@@ -67,9 +70,9 @@ class resource_handler
 
                 call_timer.mark("find_resources");
 
-                platform.findResource("", resource->URI, 
+                platform.findResource("", resource->URI,
                                       std::bind(&resource_handle::onFoundResource, resource, std::placeholders::_1));
-         } 
+         }
  }
 };
 
@@ -79,7 +82,7 @@ resource_handler::resource_handler(OC::OCPlatform& platform_, const std::vector<
  : platform(platform_)
 {
  for(const auto& URI : resource_URIs)
-  add(URI); 
+  add(URI);
 }
 
 resource_handler::resource_handler(OC::OCPlatform& platform_)
@@ -112,8 +115,8 @@ void resource_handle::onFoundResource(std::shared_ptr<OC::OCResource> in_resourc
 
        OC::QueryParamsMap qpm;
 
-       resource->get(qpm, std::bind(&resource_handle::onResourceGet, this, 
-                                    std::placeholders::_1, std::placeholders::_2));
+       resource->get(qpm, std::bind(&resource_handle::onResourceGet, this,
+            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
   }
  catch(OC::OCException& e)
   {
@@ -125,7 +128,8 @@ void resource_handle::onFoundResource(std::shared_ptr<OC::OCResource> in_resourc
   }
 }
 
-void resource_handle::onResourceGet(const OC::OCRepresentation rep, const int error_code)
+void resource_handle::onResourceGet(const OC::HeaderOptions& headerOptions,
+                const OC::OCRepresentation rep, const int error_code)
 {
  using std::cout;
 
@@ -147,7 +151,7 @@ void resource_handle::onResourceGet(const OC::OCRepresentation rep, const int er
 
  std::cout << "input attributes:\n" << rep.getAttributeMap() << '\n';
 
- // Now, make a change to the light representation (replacing, rather than parsing): 
+ // Now, make a change to the light representation (replacing, rather than parsing):
  OC::AttributeMap attrs {
                          { "state", { "true" } },
                          { "power", { "10" } }
@@ -158,13 +162,15 @@ void resource_handle::onResourceGet(const OC::OCRepresentation rep, const int er
  call_timer.mark("put_resource");
 
  OC::OCRepresentation out_rep;
- out_rep.setAttributeMap(attrs); 
- 
- resource->put(out_rep, OC::QueryParamsMap(), 
-               std::bind(&resource_handle::onResourcePut, this, std::placeholders::_1, std::placeholders::_2));
+ out_rep.setAttributeMap(attrs);
+
+ resource->put(out_rep, OC::QueryParamsMap(),
+               std::bind(&resource_handle::onResourcePut, this, std::placeholders::_1,
+               std::placeholders::_2, std::placeholders::_3));
 }
 
-void resource_handle::onResourcePut(const OC::OCRepresentation rep, const int error_code)
+void resource_handle::onResourcePut(const OC::HeaderOptions& headerOptions,
+            const OC::OCRepresentation rep, const int error_code)
 {
  std::cout << "onResourcePut():\n";
 
@@ -185,10 +191,13 @@ void resource_handle::onResourcePut(const OC::OCRepresentation rep, const int er
 
  // Start an observer:
  resource->observe(OC::ObserveType::Observe, OC::QueryParamsMap(),
-                    std::bind(&resource_handle::onObserve, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                std::bind(&resource_handle::onObserve, this,
+                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                std::placeholders::_4));
 }
 
-void resource_handle::onObserve(const OC::OCRepresentation rep, const int error_code, const int& sequence_number)
+void resource_handle::onObserve(const OC::HeaderOptions& headerOptions,
+            const OC::OCRepresentation rep, const int error_code, const int& sequence_number)
 {
  if(0 != error_code)
   {
@@ -215,7 +224,7 @@ void resource_handle::onObserve(const OC::OCRepresentation rep, const int error_
     const auto result = resource->cancelObserve();
 
     std::cout << "onObserve(): result of cancellation: " << result << ".\n";
-    
+
     this_thread::sleep_for(chrono::seconds(10));
   }
 }

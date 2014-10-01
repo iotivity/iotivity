@@ -140,7 +140,8 @@ OCStackResult OCPlatform::registerResource(OCResourceHandle& resourceHandle,
                                            uint8_t resourceProperty)
 {
     return checked_guard(m_server, &IServerWrapper::registerResource,
-                         ref(resourceHandle), resourceURI, resourceTypeName, resourceInterface, entityHandler, resourceProperty);
+                         ref(resourceHandle), resourceURI, resourceTypeName,
+                                resourceInterface, entityHandler, resourceProperty);
 }
 
 OCStackResult OCPlatform::unregisterResource(const OCResourceHandle& resourceHandle) const

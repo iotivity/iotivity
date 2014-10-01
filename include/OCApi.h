@@ -33,6 +33,7 @@
 #include <boost/variant.hpp>
 
 #include "ocstack.h"
+#include "OCHeaderOption.h"
 #include <OCException.h>
 
 namespace OC
@@ -596,6 +597,9 @@ namespace OC
         }
     }
 
+    // Typedef for header option vector
+    // OCHeaderOption class is in HeaderOption namespace
+    typedef std::vector<HeaderOption::OCHeaderOption> HeaderOptions;
 
     // Typedef for query parameter map
     typedef std::map<std::string, std::string> QueryParamsMap;
@@ -629,13 +633,23 @@ namespace OC
     const std::string BATCH_INTERFACE = "oc.mi.b";
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
+
     typedef std::function<void(const std::shared_ptr<OCResourceRequest>,
                                 const std::shared_ptr<OCResourceResponse>)> EntityHandler;
+
     typedef std::function<void(OCStackResult, const unsigned int)> SubscribeCallback;
-    typedef std::function<void(const OCRepresentation&, const int)> GetCallback;
-    typedef std::function<void(const OCRepresentation&, const int)> PutCallback;
-    typedef std::function<void(const OCRepresentation&, const int)> PostCallback;
-    typedef std::function<void(const OCRepresentation&, const int, const int)> ObserveCallback;
+
+    typedef std::function<void(const HeaderOptions&,
+                                const OCRepresentation&, const int)> GetCallback;
+
+    typedef std::function<void(const HeaderOptions&,
+                                const OCRepresentation&, const int)> PostCallback;
+
+    typedef std::function<void(const HeaderOptions&,
+                                const OCRepresentation&, const int)> PutCallback;
+
+    typedef std::function<void(const HeaderOptions&,
+                                const OCRepresentation&, const int, const int)> ObserveCallback;
 } // namespace OC
 
 #endif

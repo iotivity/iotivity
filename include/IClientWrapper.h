@@ -47,25 +47,26 @@ namespace OC
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
                         const std::string& uri, const QueryParamsMap& queryParams,
+                        const HeaderOptions& headerOptions,
                         GetCallback& callback)=0;
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
                         const std::string& uri, const OCRepresentation& rep,
-                        const QueryParamsMap& queryParams,
+                        const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
                         PutCallback& callback) = 0;
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
                         const std::string& uri, const OCRepresentation& rep,
-                        const QueryParamsMap& queryParams,
-                        PutCallback& callback) = 0;
+                        const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+                        PostCallback& callback) = 0;
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
                         const std::string& host, const std::string& uri,
-                        const QueryParamsMap& queryParams,
+                        const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
                         ObserveCallback& callback)=0;
 
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
-                        const std::string& uri)=0;
+            const std::string& uri, const HeaderOptions& headerOptions)=0;
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
                         SubscribeCallback& presenceHandler)=0;

@@ -81,22 +81,30 @@ namespace OC
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler handles callback
         *        The callback function will be invoked with a map of attribute name and values.
-        *        The callback function will be invoked with a list of URIs if 'get' is invoked on a resource container
-        *        (list will be empty if not a container)
-        *        The callback function will also have the result from this Get operation. This will have error codes
+        *        The callback function will be invoked with a list of URIs if 'get' is invoked on a
+        *        resource container (list will be empty if not a container)
+        *        The callback function will also have the result from this Get operation. This will
+        *        have error codes
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h.<br>
         * <b>Example:</b><br>
-        * Consider resource "a/home" (with link interface and resource type as home) contains links to "a/kitchen" and "a/room".
+        * Consider resource "a/home" (with link interface and resource type as home) contains links
+        *  to "a/kitchen" and "a/room".
         * Step 1: get("home", Link_Interface, &onGet)<br>
-        * Callback onGet will receive a) Empty attribute map because there are no attributes for a/home b) list with
-        * full URI of "a/kitchen" and "a/room" resources and their properties c) error code for GET operation<br>
-        * NOTE: A resource may contain single or multiple resource types. Also, a resource may contain single or multiple interfaces.<br>
-        * Currently, single GET request is allowed to do operate on single resource type or resource interface. In future, a single GET <br>
+        * Callback onGet will receive a) Empty attribute map because there are no attributes for
+        * a/home b) list with
+        * full URI of "a/kitchen" and "a/room" resources and their properties c) error code for GET
+        * operation<br>
+        * NOTE: A resource may contain single or multiple resource types. Also, a resource may
+        * contain single or multiple interfaces.<br>
+        * Currently, single GET request is allowed to do operate on single resource type or resource
+        * interface. In future, a single GET <br>
         * can operate on multiple resource types and interfaces. <br>
-        * NOTE: A client can traverse a tree or graph by doing successive GETs on the returned resources at a node.<br>
+        * NOTE: A client can traverse a tree or graph by doing successive GETs on the returned
+        * resources at a node.<br>
         */
-        OCStackResult get(const std::string& resourceType, const std::string& resourceInterface, const QueryParamsMap& queryParametersMap, GetCallback attributeHandler);
+        OCStackResult get(const std::string& resourceType, const std::string& resourceInterface,
+            const QueryParamsMap& queryParametersMap, GetCallback attributeHandler);
 
         /**
         * Function to set the representation of a resource (via PUT)
@@ -126,7 +134,6 @@ namespace OC
         *        This will have error codes.
         *        The Representation parameter maps which can either have all the attribute names
         *        and values
-        *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
@@ -194,6 +201,32 @@ namespace OC
         OCStackResult cancelObserve();
 
         /**
+        * Function to set header information.
+        * @param headerOptions std::vector where header information(header optionID and optionData
+        * is passed
+        *
+        * NOTE: Once the headers information is set, it will be applicable to GET, PUT and observe
+        * request. <br>
+        * setHeaderOptions can be used multiple times if headers need to be modifed by the client.
+        * Latest headers will be used to send in the request. <br>
+        * NOTE: Initial support is only for two headers. If headerMap consists of more than two
+        * header options, they will be ignored. <br>
+        * Use unsetHeaderOptions API to clear the header information.
+        */
+        void setHeaderOptions(const HeaderOptions& headerOptions)
+        {
+            m_headerOptions = headerOptions;
+        }
+
+        /**
+        * Function to unset header options.
+        */
+        void unsetHeaderOptions()
+        {
+            m_headerOptions.clear();
+        }
+
+        /**
         * Function to get the host address of this resource
         * @return std::string host address
         * NOTE: This might or might not be exposed in future due to security concerns
@@ -241,10 +274,12 @@ namespace OC
         std::vector<std::string> m_interfaces;
         std::vector<std::string> m_children;
         OCDoHandle m_observeHandle;
+        HeaderOptions m_headerOptions;
 
     private:
-        OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host, const std::string& uri,
-            bool observable, const std::vector<std::string>& resourceTypes, const std::vector<std::string>& interfaces);
+        OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
+            const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes,
+            const std::vector<std::string>& interfaces);
     };
 
 } // namespace OC
