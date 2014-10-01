@@ -202,6 +202,8 @@ static void deleteResourceElements(OCResource *resource);
 static int deleteResource(OCResource *resource);
 static void deleteAllResources();
 static void incrementSequenceNumber(OCResource * resPtr);
+static OCStackResult verifyUriQueryLength(const char * inputUri,
+        uint16_t uriLen);
 
 
 //-----------------------------------------------------------------------------
@@ -312,6 +314,38 @@ OCStackResult OCStop()
 }
 
 /**
+ * Verify the lengths of the URI and the query separately
+ *
+ * @param inputUri       - Input URI and query
+ *
+ * Note: The '?' that appears after the URI is considered as
+ * a part of the query.
+ */
+OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
+{
+    char *query;
+    uint16_t queryLen = 0;
+
+    query = strchr (inputUri, '?');
+    if (query != NULL)
+    {
+        queryLen = strlen (query);
+    }
+
+    if (queryLen > MAX_QUERY_LENGTH)
+    {
+        return OC_STACK_INVALID_URI;
+    }
+
+    if ((uriLen - queryLen) > MAX_URI_LENGTH)
+    {
+        return OC_STACK_INVALID_QUERY;
+    }
+
+    return OC_STACK_OK;
+}
+
+/**
  * Discover or Perform requests on a specified resource (specified by that Resource's respective URI).
  *
  * @param handle             - @ref OCDoHandle to refer to the request sent out on behalf of calling this API.
@@ -367,16 +401,17 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             goto exit;
     }
 
-    if(strlen(requiredUri) > MAX_URI_LENGTH + MAX_QUERY_LENGTH)
+    uint16_t uriLen = strlen(requiredUri);
+
+    if((result = verifyUriQueryLength(requiredUri, uriLen)) != OC_STACK_OK)
     {
-        result = OC_STACK_INVALID_PARAM;
         goto exit;
     }
 
-    requestUri = (unsigned char *) OCMalloc(strlen(requiredUri) + 1);
+    requestUri = (unsigned char *) OCMalloc(uriLen + 1);
     if(requestUri)
     {
-        memcpy(requestUri, requiredUri, strlen(requiredUri) + 1);
+        memcpy(requestUri, requiredUri, (uriLen + 1));
     }
     else
     {
