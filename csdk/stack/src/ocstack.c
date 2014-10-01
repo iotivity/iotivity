@@ -388,6 +388,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     TODO ("Need to form the final query by concatenating require and reference URI's");
     VERIFY_NON_NULL(requiredUri, FATAL, OC_STACK_INVALID_URI);
 
+    uint16_t uriLen = strlen(requiredUri);
+
     switch (method)
     {
         case OC_REST_GET:
@@ -405,8 +407,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             result = OC_STACK_INVALID_METHOD;
             goto exit;
     }
-
-    uint16_t uriLen = strlen(requiredUri);
 
     if((result = verifyUriQueryLength(requiredUri, uriLen)) != OC_STACK_OK)
     {

@@ -116,7 +116,7 @@ typedef enum {
  */
 typedef enum {
     OC_INVALID_ID   = (1 << 0),
-    OC_COAP_ID      = (1 << 1),
+    OC_COAP_ID      = (1 << 1)
 } OCTransportProtocolID;
 
 /**
