@@ -188,6 +188,9 @@ class LightResource : public Resource
     {
         if(request)
         {
+            std::cout << "In entity handler for Light, URI is : "
+                      << request->getResourceUri() << std::endl;
+
             if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
             {
                 if(request->getRequestType() == "GET")
@@ -271,6 +274,9 @@ class DoorResource : public Resource
     {
         if(request)
         {
+            std::cout << "In entity handler for Door, URI is : "
+                      << request->getResourceUri() << std::endl;
+
             if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
             {
                 if(request->getRequestType() == "GET")
