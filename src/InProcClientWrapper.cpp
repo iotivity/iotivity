@@ -33,7 +33,7 @@ namespace OC
     InProcClientWrapper::InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
             : IClientWrapper(owner),
               m_threadRun(false), m_csdkLock(csdkLock),
-              m_owner(m_owner),
+              m_owner(owner),
               m_cfg { cfg }
     {
         // if the config type is server, we ought to never get called.  If the config type
