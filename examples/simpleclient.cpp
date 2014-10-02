@@ -92,13 +92,21 @@ void onPost2(const OCRepresentation& rep, const int eCode)
     {
         std::cout << "POST request was successful" << std::endl;
 
-        rep.getValue("state", mylight.m_state);
-        rep.getValue("power", mylight.m_power);
-        rep.getValue("name", mylight.m_name);
+        if(rep.hasAttribute("createduri"))
+        {
+            std::cout << "\tUri of the created resource: "
+                      << rep.getValue<std::string>("createduri") << std::endl;
+        }
+        else
+        {
+            rep.getValue("state", mylight.m_state);
+            rep.getValue("power", mylight.m_power);
+            rep.getValue("name", mylight.m_name);
 
-        std::cout << "\tstate: " << mylight.m_state << std::endl;
-        std::cout << "\tpower: " << mylight.m_power << std::endl;
-        std::cout << "\tname: " << mylight.m_name << std::endl;
+            std::cout << "\tstate: " << mylight.m_state << std::endl;
+            std::cout << "\tpower: " << mylight.m_power << std::endl;
+            std::cout << "\tname: " << mylight.m_name << std::endl;
+        }
 
         if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
             std::cout << endl << "Observe is used." << endl << endl;
@@ -121,13 +129,21 @@ void onPost(const OCRepresentation& rep, const int eCode)
     {
         std::cout << "POST request was successful" << std::endl;
 
-        rep.getValue("state", mylight.m_state);
-        rep.getValue("power", mylight.m_power);
-        rep.getValue("name", mylight.m_name);
+        if(rep.hasAttribute("createduri"))
+        {
+            std::cout << "\tUri of the created resource: "
+                      << rep.getValue<std::string>("createduri") << std::endl;
+        }
+        else
+        {
+            rep.getValue("state", mylight.m_state);
+            rep.getValue("power", mylight.m_power);
+            rep.getValue("name", mylight.m_name);
 
-        std::cout << "\tstate: " << mylight.m_state << std::endl;
-        std::cout << "\tpower: " << mylight.m_power << std::endl;
-        std::cout << "\tname: " << mylight.m_name << std::endl;
+            std::cout << "\tstate: " << mylight.m_state << std::endl;
+            std::cout << "\tpower: " << mylight.m_power << std::endl;
+            std::cout << "\tname: " << mylight.m_name << std::endl;
+        }
 
         OCRepresentation rep2;
 

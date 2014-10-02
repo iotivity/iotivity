@@ -30,7 +30,8 @@ using namespace std;
 
 namespace OC
 {
-    InProcClientWrapper::InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
+    InProcClientWrapper::InProcClientWrapper(OC::OCPlatform& owner,
+        std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
             : IClientWrapper(owner),
               m_threadRun(false), m_csdkLock(csdkLock),
               m_owner(owner),
@@ -71,7 +72,7 @@ namespace OC
             auto cLock = m_csdkLock.lock();
             if(cLock)
             {
-                std::lock_guard<std::mutex> lock(*cLock);
+                std::lock_guard<std::recursive_mutex> lock(*cLock);
                 result = OCProcess();
             }
             else
@@ -229,7 +230,7 @@ namespace OC
         auto cLock = m_csdkLock.lock();
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCDoHandle handle;
             result = OCDoResource(&handle, OC_REST_GET,
                                   resourceType.c_str(),
@@ -399,7 +400,7 @@ namespace OC
             std::ostringstream os;
             os << host << assembleSetResourceUri(uri, queryParams).c_str();
 
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCDoHandle handle;
             result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(),
                                   nullptr, nullptr,
@@ -493,7 +494,7 @@ namespace OC
 
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCDoHandle handle;
             result = OCDoResource(&handle, OC_REST_POST,
                                   os.str().c_str(), nullptr,
@@ -532,7 +533,7 @@ namespace OC
 
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCDoHandle handle;
             result = OCDoResource(&handle, OC_REST_PUT,
                                   os.str().c_str(), nullptr,
@@ -603,7 +604,7 @@ namespace OC
             std::ostringstream os;
             os << host << assembleSetResourceUri(uri, queryParams).c_str();
 
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoResource(handle, method,
                                   os.str().c_str(), nullptr,
                                   nullptr,
@@ -627,7 +628,7 @@ namespace OC
 
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCCancel(handle, OC_NON_CONFIRMABLE, NULL, 0);
         }
         else
@@ -683,7 +684,7 @@ namespace OC
 
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCCancel(handle, OC_NON_CONFIRMABLE, NULL, 0);
         }
         else

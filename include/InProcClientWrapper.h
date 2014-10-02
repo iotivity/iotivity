@@ -40,7 +40,7 @@ namespace OC
     class InProcClientWrapper : public IClientWrapper
     {
     public:
-        InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock,
+        InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::recursive_mutex> csdkLock,
                             PlatformConfig cfg);
         virtual ~InProcClientWrapper();
 
@@ -80,7 +80,7 @@ namespace OC
         std::string assembleSetResourcePayload(const OCRepresentation& attributes);
         std::thread m_listeningThread;
         bool m_threadRun;
-        std::weak_ptr<std::mutex> m_csdkLock;
+        std::weak_ptr<std::recursive_mutex> m_csdkLock;
 
     private:
         OC::OCPlatform& m_owner;

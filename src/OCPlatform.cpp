@@ -66,7 +66,7 @@ OCPlatform::OCPlatform(const PlatformConfig& config)
  : m_log_stream      { std::move(oc_log_stream {oc_make_ostream_logger}) },
    m_cfg             { config },
    m_WrapperInstance { make_unique<WrapperFactory>() },
-   m_csdkLock        { make_shared<std::mutex>() }
+   m_csdkLock        { make_shared<std::recursive_mutex>() }
 {
     init(m_cfg);
 }
@@ -75,7 +75,7 @@ OCPlatform::OCPlatform(const PlatformConfig& config, OC::oc_log_stream& log_targ
  :  m_log_stream      { log_target },
     m_cfg             { config },
     m_WrapperInstance { make_unique<WrapperFactory>() },
-    m_csdkLock        { make_shared<std::mutex>() }
+    m_csdkLock        { make_shared<std::recursive_mutex>() }
 {
     init(m_cfg);
 }

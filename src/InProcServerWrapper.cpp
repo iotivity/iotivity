@@ -232,7 +232,7 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
 namespace OC
 {
     InProcServerWrapper::InProcServerWrapper(OC::OCPlatform& owner,
-        std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
+        std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
      : IServerWrapper(owner),
        m_csdkLock(csdkLock)
     {
@@ -271,7 +271,7 @@ namespace OC
             OCStackResult result;
 
             {
-                std::lock_guard<std::mutex> lock(*cLock);
+                std::lock_guard<std::recursive_mutex> lock(*cLock);
                 result = OCProcess();
             }
 
@@ -298,7 +298,7 @@ namespace OC
 
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
 
             if(NULL != eHandler)
             {
@@ -366,7 +366,7 @@ namespace OC
 
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDeleteResource(resourceHandle);
 
             if(result == OC_STACK_OK)
@@ -393,7 +393,7 @@ namespace OC
         OCStackResult result;
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCBindResourceTypeToResource(resourceHandle, resourceTypeName.c_str());
         }
         else
@@ -416,7 +416,7 @@ namespace OC
         OCStackResult result;
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCBindResourceInterfaceToResource(resourceHandle,
                         resourceInterfaceName.c_str());
         }
@@ -438,7 +438,7 @@ namespace OC
         OCStackResult result = OC_STACK_ERROR;
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCStartPresence(seconds);
         }
 
@@ -455,7 +455,7 @@ namespace OC
         OCStackResult result = OC_STACK_ERROR;
         if(cLock)
         {
-            std::lock_guard<std::mutex> lock(*cLock);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCStopPresence();
         }
 

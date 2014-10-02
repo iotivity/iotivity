@@ -52,6 +52,7 @@ class LightResource
 
 public:
     /// Access this property from a TB client
+    OCPlatform m_platform;
     std::string m_name;
     bool m_state;
     int m_power;
@@ -62,7 +63,8 @@ public:
 
 public:
     /// Constructor
-    LightResource(): m_name("John's light"), m_state(false), m_power(0), m_lightUri("/a/light") {
+    LightResource(PlatformConfig& cfg): m_platform(cfg),
+            m_name("John's light"), m_state(false), m_power(0), m_lightUri("/a/light") {
         // Initialize representation
         m_lightRep.setUri(m_lightUri);
 
@@ -75,7 +77,7 @@ public:
     access to, you can accomplish this with a free function: */
 
     /// This function internally calls registerResource API.
-    void createResource(OC::OCPlatform& platform)
+    void createResource()
     {
         std::string resourceURI = m_lightUri; // URI of the resource
         std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
@@ -87,7 +89,7 @@ public:
         EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
 
         // This will internally create and register the resource.
-        OCStackResult result = platform.registerResource(
+        OCStackResult result = m_platform.registerResource(
                                     m_resourceHandle, resourceURI, resourceTypeName,
                                     resourceInterface, cb, resourceProperty);
 
@@ -95,6 +97,32 @@ public:
         {
             cout << "Resource creation was unsuccessful\n";
         }
+    }
+
+    OCStackResult createResource1()
+    {
+        std::string resourceURI = "/a/light1"; // URI of the resource
+        std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
+        std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
+
+        // OCResourceProperty is defined ocstack.h
+        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
+
+        OCResourceHandle resHandle;
+
+        // This will internally create and register the resource.
+        OCStackResult result = m_platform.registerResource(
+                                    resHandle, resourceURI, resourceTypeName,
+                                    resourceInterface, cb, resourceProperty);
+
+        if (OC_STACK_OK != result)
+        {
+            cout << "Resource creation was unsuccessful\n";
+        }
+
+        return result;
     }
 
     OCResourceHandle getHandle()
@@ -139,8 +167,31 @@ public:
     // updates the internal state
     OCRepresentation post(OCRepresentation& rep)
     {
-       put(rep);
-       return m_lightRep;
+        static int first = 1;
+
+        std::cout << "In POST\n";
+
+        // for the first time it tries to create a resource
+        if(first)
+        {
+            std::cout << "In POST/First\n";
+
+            first = 0;
+
+            if(OC_STACK_OK == createResource1())
+            {
+                std::cout << "Created a new resource\n";
+
+                OCRepresentation rep1;
+                rep1.setValue("createduri", std::string("/a/light1"));
+
+                return rep1;
+            }
+        }
+
+        // from second time onwards it just puts
+        put(rep);
+        return get();
     }
 
 
@@ -155,18 +206,18 @@ public:
         return m_lightRep;
     }
 
-    void addType(const OC::OCPlatform& platform, const std::string& type) const
+    void addType(const std::string& type) const
     {
-        OCStackResult result = platform.bindTypeToResource(m_resourceHandle, type);
+        OCStackResult result = m_platform.bindTypeToResource(m_resourceHandle, type);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
     }
 
-    void addInterface(const OC::OCPlatform& platform, const std::string& interface) const
+    void addInterface(const std::string& interface) const
     {
-        OCStackResult result = platform.bindInterfaceToResource(m_resourceHandle, interface);
+        OCStackResult result = m_platform.bindInterfaceToResource(m_resourceHandle, interface);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
@@ -237,15 +288,14 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
 
                 // Do related operations related to POST request
 
-                // Update the lightResource
-                post(rep);
+                OCRepresentation rep_post = post(rep);
 
                 if(response)
                 {
                     // TODO Error Code
                     response->setErrorCode(200);
 
-                    response->setResourceRepresentation(get());
+                    response->setResourceRepresentation(rep_post);
                 }
 
                 // POST request operations
@@ -333,7 +383,7 @@ void * ChangeLightRepresentation (void *param)
             }
             else
             {
-                result = OCPlatform::notifyAllObservers(lightPtr->getHandle());
+                result = lightPtr->m_platform.notifyAllObservers(lightPtr->getHandle());
             }
 
             if(OC_STACK_NO_OBSERVERS == result)
@@ -386,20 +436,16 @@ int main(int argc, char* argv[1])
         OC::QualityOfService::NonConfirmable
     };
 
-    // Create a OCPlatform instance.
-    // Note: Platform creation is synchronous call.
     try
     {
-        OCPlatform platform(cfg);
-
         // Create the instance of the resource class (in this case instance of class 'LightResource').
-        LightResource myLight;
+        LightResource myLight(cfg);
 
         // Invoke createResource function of class light.
-        myLight.createResource(platform);
+        myLight.createResource();
 
-        myLight.addType(platform, std::string("core.brightlight"));
-        myLight.addInterface(platform, std::string("oc.mi.ll"));
+        myLight.addType(std::string("core.brightlight"));
+        myLight.addInterface(std::string("oc.mi.ll"));
         // Perform app tasks
         while(true)
         {
