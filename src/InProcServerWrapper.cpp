@@ -40,6 +40,7 @@ using namespace std;
 using namespace OC;
 
 std::map <OCResourceHandle, OC::EntityHandler>  entityHandlerMap;
+std::map <OCResourceHandle, std::string> resourceUriMap;
 EntityHandler defaultDeviceEntityHandler = 0;
 
 void formResourceRequest(OCEntityHandlerFlag flag,
@@ -155,8 +156,6 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
     formResourceRequest(flag, entityHandlerRequest, pRequest);
 
-    // TODO : This is currently being done only for Device entity handler
-    //        we will need to do the similar things for regular entity handler
     pRequest->setResourceUri(std::string(uri));
 
     if(defaultDeviceEntityHandler)
@@ -176,7 +175,7 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
 
 OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
-                                           OCEntityHandlerRequest * entityHandlerRequest )
+                                           OCEntityHandlerRequest * entityHandlerRequest)
 {
     // TODO we need to have a better way of logging (with various levels of logging)
     std::clog << "\nIn entity handler wrapper: " << endl;
@@ -192,6 +191,16 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
 
     formResourceRequest(flag, entityHandlerRequest, pRequest);
 
+    // Finding the corresponding URI for a resource handle and set the URI in the request
+    auto resourceUriEntry = resourceUriMap.find(entityHandlerRequest->resource);
+    if(resourceUriEntry != resourceUriMap.end())
+    {
+        pRequest->setResourceUri(resourceUriEntry->second);
+    }
+    else
+    {
+        std::clog << "Resource handle not found; Resource URI not set in request" << std::endl;
+    }
 
     // Finding the corresponding CPP Application entityHandler for a given resource
     auto entityHandlerEntry = entityHandlerMap.find(entityHandlerRequest->resource);
@@ -222,7 +231,8 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
 
 namespace OC
 {
-    InProcServerWrapper::InProcServerWrapper(OC::OCPlatform& owner, std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
+    InProcServerWrapper::InProcServerWrapper(OC::OCPlatform& owner,
+        std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
      : IServerWrapper(owner),
        m_csdkLock(csdkLock)
     {
@@ -238,7 +248,8 @@ namespace OC
         }
         else
         {
-            throw InitializeException("Cannot construct a Server when configured as a client", OC_STACK_INVALID_PARAM);
+            throw InitializeException("Cannot construct a Server when configured as a client",
+                                    OC_STACK_INVALID_PARAM);
         }
 
         OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, initType);
@@ -317,6 +328,7 @@ namespace OC
             else
             {
                 entityHandlerMap[resourceHandle] = eHandler;
+                resourceUriMap[resourceHandle] = resourceURI;
             }
         }
         else
@@ -351,13 +363,29 @@ namespace OC
     {
         auto cLock = m_csdkLock.lock();
         OCStackResult result = OC_STACK_ERROR;
+
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
             result = OCDeleteResource(resourceHandle);
+
+            if(result == OC_STACK_OK)
+            {
+                resourceUriMap.erase(resourceHandle);
+            }
+            else
+            {
+                throw OCException("Unregistering resource failed", result);
+            }
         }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
         return result;
     }
+
     OCStackResult InProcServerWrapper::bindTypeToResource(const OCResourceHandle& resourceHandle,
                      const std::string& resourceTypeName)
     {
@@ -380,7 +408,8 @@ namespace OC
         return result;
     }
 
-    OCStackResult InProcServerWrapper::bindInterfaceToResource(const OCResourceHandle& resourceHandle,
+    OCStackResult InProcServerWrapper::bindInterfaceToResource(
+                     const OCResourceHandle& resourceHandle,
                      const std::string& resourceInterfaceName)
     {
         auto cLock = m_csdkLock.lock();
@@ -388,7 +417,8 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            result = OCBindResourceInterfaceToResource(resourceHandle, resourceInterfaceName.c_str());
+            result = OCBindResourceInterfaceToResource(resourceHandle,
+                        resourceInterfaceName.c_str());
         }
         else
         {
