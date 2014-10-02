@@ -143,7 +143,7 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 sprintf (respPLPost_newLed + strlen(respPLPost_newLed), "%d", gCurrLedInstance);
-                memcpy (respPLPost_newLed + strlen(respPLPost_newLed), postPLSuffix, 
+                memcpy (respPLPost_newLed + strlen(respPLPost_newLed), postPLSuffix,
                         strlen(postPLSuffix) + 1);
                 gCurrLedInstance++;
                 respPLPost_led = respPLPost_newLed;
@@ -168,7 +168,7 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
                 if (i == 0)
                 {
                     respPLPost_led = (char *)respPLGet_ledInst0;
-                } 
+                }
                 else if (i == 1)
                 {
                     respPLPost_led = (char *)respPLGet_ledInst1;
@@ -515,6 +515,12 @@ int main(int argc, char* argv[])
 
         sleep(2);
     }
+
+    /*
+     * Cancel the LED thread and wait for it to terminate
+     */
+    pthread_cancel(threadId);
+    pthread_join(threadId, NULL);
 
     OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 

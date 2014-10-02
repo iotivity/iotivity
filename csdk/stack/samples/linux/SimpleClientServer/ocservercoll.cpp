@@ -225,6 +225,12 @@ int main() {
         sleep(2);
     }
 
+    /*
+     * Cancel the LED thread and wait for it to terminate
+     */
+    pthread_cancel(threadId);
+    pthread_join(threadId, NULL);
+
     OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
     if (OCStop() != OC_STACK_OK) {
