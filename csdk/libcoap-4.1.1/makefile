@@ -23,25 +23,29 @@
 # default to release build
 # default to build for linux
 BUILD	 := release
-#other options are android, arduino
+#other options are arduinomega, arduinodue
 PLATFORM=linux
+#other options are arduino
+PLATFORM_TYPE=linux
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
 ARDUINOWIFI := 0
 
-OUT_DIR	  := ./$(BUILD)
-OBJ_DIR	  := $(OUT_DIR)/obj
+ifeq ($(ROOT_DIR), )
+	ROOT_DIR = ..
+endif
+ifeq ($(PLATFORM), "")
+	PLATFORM := "linux"
+endif
 
-ROOT_DIR = ..
-OCSOCK_DIR = $(ROOT_DIR)/ocsocket
-LOGGER_DIR = $(ROOT_DIR)/logger
-OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
-RANDOM_DIR = $(ROOT_DIR)/ocrandom
-STACK_DIR  = $(ROOT_DIR)/stack
-OCMALLOC_DIR	= $(ROOT_DIR)/ocmalloc
+OCSOCK_DIR    = $(ROOT_DIR)/ocsocket
+OC_LOG_DIR    = $(ROOT_DIR)/../oc_logger
+LOGGER_DIR    = $(ROOT_DIR)/logger
+RANDOM_DIR    = $(ROOT_DIR)/ocrandom
+STACK_DIR     = $(ROOT_DIR)/stack
+OCMALLOC_DIR  = $(ROOT_DIR)/ocmalloc
+INC_DIRS      = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include
 
-INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include
-
-# Note for Arduino: The CC flag is set to the C++ compiler since Arduino build
+# Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
 # includes Time.h header file which has C++ style definitions.
 ifeq ($(PLATFORM),android)
     CXX=arm-linux-androideabi-g++
@@ -51,49 +55,58 @@ ifeq ($(PLATFORM),android)
     CFLAGS_PLATFORM =  -DWITH_POSIX -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
     LDFLAGS_PLATFORM = -march=armv7-a -Wl,--fix-cortex-a8 -llog
 else ifeq ($(PLATFORM),linux)
+    PLATFORM_TYPE:=linux
     CXX=g++
     CC=gcc
     AR=ar
     RANLIB=ranlib
     CFLAGS_PLATFORM = -std=gnu99 -DWITH_POSIX
 else ifeq ($(PLATFORM),arduinomega)
+    PLATFORM_TYPE:=arduino
     include $(ROOT_DIR)/local.properties
     include $(ROOT_DIR)/$(PLATFORM).properties
-	CC=$(ARDUINO_TOOLS_DIR)/avr-g++
+    CC=$(ARDUINO_TOOLS_DIR)/avr-g++
 else ifeq ($(PLATFORM),arduinodue)
+    PLATFORM_TYPE:=arduino
     include $(ROOT_DIR)/local.properties
     include $(ROOT_DIR)/$(PLATFORM).properties
-	CC=$(ARDUINO_TOOLS_DIR)/arm-none-eabi-g++
+    CC=$(ARDUINO_TOOLS_DIR)/arm-none-eabi-g++
 else
    $(error Wrong value for PLATFORM !!)
 endif
+
+ifeq ($(PLATFORM_TYPE),arduino)
+    ifeq ($(ARDUINOWIFI),1)
+        SOURCES += ocsocket_arduino_wifi.c
+        ARDUINO_SHIELD_TYPE := "/wifi_shield"
+    else
+        SOURCES += ocsocket_arduino.c
+        ARDUINO_SHIELD_TYPE := "/ethernet_shield"
+    endif
+    SOURCESCPP:= Time.cpp
+    OBJECTSCPP:= $(patsubst %.cpp, %.o, $(SOURCESCPP))
+    VPATH := $(SDIR_ARD_TIME)
+else
+    SOURCES += ocsocket.c
+endif
+
+OUT_DIR	  := ./$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)
+OBJ_DIR	  := $(OUT_DIR)/obj
 
 CC_FLAGS.debug := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions -pedantic \
 -DTB_LOG
 CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions
 
-SOURCES:= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
-          str.c option.c async.c subscribe.c block.c logger.c ocrandom.c ocmalloc.c oc_logger.c oc_console_logger.c
-VPATH := $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/src:$(OC_LOG_DIR)/c
-
-ifeq (arduino, $(findstring arduino,$(PLATFORM)))
-	ifeq ($(ARDUINOWIFI),1)
-		SOURCES += ocsocket_arduino_wifi.c
-	else
-		SOURCES += ocsocket_arduino.c
-	endif
-	SOURCESCPP:= Time.cpp
-	OBJECTSCPP:= $(patsubst %.cpp, %.o, $(SOURCESCPP))
-	VPATH += $(SDIR_ARD_TIME)
-else
-	SOURCES += ocsocket.c
-endif
+SOURCES+= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
+          str.c option.c async.c subscribe.c block.c logger.c ocrandom.c ocmalloc.c  oc_logger.c oc_console_logger.c
+VPATH += $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/src:$(OC_LOG_DIR)/c
 
 OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 
 all: prep_dirs libcoap.a
 
 prep_dirs:
+	-mkdir -p $(PLATFORM)
 	-mkdir -p $(OUT_DIR)
 	-mkdir -p $(OBJ_DIR)
 
@@ -110,9 +123,12 @@ libcoap.a: $(OBJECTS) $(OBJECTSCPP)
 .PHONY: clean
 
 clean:	legacy_clean
-	-rm -rf release
-	-rm -rf debug
+	-rm -rf linux
+	-rm -rf arduinomega
+	-rm -rf arduinodue
 
 legacy_clean:
 	rm -f *.o libcoap.a
+	rm -rf release
+	rm -rf debug
 

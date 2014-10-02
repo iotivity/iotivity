@@ -49,7 +49,8 @@ samples:
 	cd samples/linux && $(MAKE) "BUILD=$(BUILD)"
 
 clean:
-	cd examples && $(MAKE) clean
+	cd examples && $(MAKE) "clean"
+	cd samples/linux && $(MAKE) "clean"
 	rm -rf $(BIN_DIR)/targets/*.o
 	cd cpp && $(MAKE) clean
 	cd c && $(MAKE) clean

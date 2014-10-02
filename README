@@ -1,75 +1,109 @@
-This file is completely obsolete. :-)
+******************************************************************
 
-Builds with g++ 4.6, 4.8, 4.9.
+ Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
 
-Run "make" to build OCLib.a, the examples, and TBStack in RELEASE mode.
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Run "make BUILD=debug" to build OCLib.a, the examples, and TBStack in DEBUG mode.
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-OCProject/
-├── csdk
-│   ├── examples  :: TODO :: Unused remove??
-│   │   ├── occlient.c
-│   │   └── ocserver.c
-│   ├── ocstack.h
-│   └── ocstack_stub.c
-├── examples
-│   ├── client 
-│   │   ├── MyMultiResourceHandler.cpp
-│   │   ├── MyMultiResourceHandler.h
-│   │   ├── MyObserverHandler.cpp
-│   │   ├── MyObserverHandler.h
-│   │   ├── MyResourceHandler.cpp
-│   │   ├── MyResourceHandler.h
-│   │   └── OCClient.cpp
-│   ├── Makefile
-│   ├── OCWrapper :: TODO :: Unused remove??
-│   │   ├── Makefile
-│   │   ├── parsetest.cpp
-│   │   ├── testClient.cpp
-│   │   ├── testServerApp.cpp
-│   │   └── testServer.cpp
-│   ├── server
-│   │   ├── multiple_resources.cpp
-│   │   └── single_resource.cpp
-│   ├── test_OCClient.cpp
-│   ├── test_OCReflect.cpp
-│   └── test_properties.cpp
-├── include - TODO : Seperate what we expose and what we don't
-│   ├── IClientWrapper.h
-│   ├── InitializeException.h
-│   ├── InProcClientWrapper.h
-│   ├── InProcServerWrapper.h
-│   ├── IServerWrapper.h
-│   ├── OCApi.h
-│   ├── OCException.h
-│   ├── OCObject.h
-│   ├── OCObserver.h
-│   ├── OCObserverHandler.h
-│   ├── OCPlatform.h
-│   ├── OCPlatformHandler.h
-│   ├── OCProperties.h
-│   ├── OCReflect.h
-│   ├── OCResource.h
-│   ├── OCResourceHandler.h
-│   ├── OCSecurityModel.h
-│   ├── OCServer.h :: TODO :: Unused remove??
-│   ├── OutOfProcClientWrapper.h
-│   ├── OutOfProcServerWrapper.h
-│   ├── ResourceInitException.h
-│   └── WrapperFactory.h
-├── Makefile
-├── OCLib
-│   ├── InProcClientWrapper.cpp
-│   ├── InProcServerWrapper.cpp
-│   ├── OCApi.cpp
-│   ├── OCObject.cpp
-│   ├── OCObserver.cpp
-│   ├── OCPlatform.cpp
-│   ├── OCProperties.cpp
-│   ├── OCReflect.cpp
-│   ├── OCResource.cpp
-│   ├── OCSecurityModel.cpp
-│   └── OCServer.cpp :: TODO :: Unused remove??
-└── README - You are reading this.
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+===============================================================================
+==                      UB Stack & TB Stack                                  ==
+===============================================================================
+
+The OIC-RESOURCE repository contains two SDKs with underlying code
+(i.e. "stack"). The two SDKs are referred to as "UB SDK" (or "C++ SDK") and "TB
+SDK" (or "C SDK"). The associated stacks are referred to as "UB Stack" (or "C++
+Stack") and "TB Stack" (or "C Stack").  The UB Stack requires that the TB Stack
+is built under it.
+
+===============================================================================
+
+The UB Stack is intended ONLY for Linux Ubuntu 12.04 operating system.
+To build UB Stack, please follow these requirements:
+- GCC compiler version is 4.6.1
+- Pre-install the "gnu-libc" libraries package.
+- The OIC-UTILITIES repository must be a sibling directory to the OIC-RESOURCE
+  repository.
+
+The TB Stack is intended ONLY for Linux Ubuntu 12.04, Arduino ATMega 2560 with
+Arduino Framework 1.0.5, and Arduino Due with Arduino Framework 1.5.7.
+Tip: Use Cutecom in Ubuntu 12.04 to view logs from Arduino ATMega 2560 and
+Arduino Due.
+
+To build TB Stack, please follow these requirements for Linux Ubuntu 12.04:
+- GCC compiler version is 4.6.1
+- Pre-install the "gnu-libc" libraries package.
+- The OIC-UTILITIES repository must be a cousin directory to the OIC-RESOURCE
+  repository.
+To build TB Stack, please follow these requirements for Arduino ATMega 2560:
+- AVR-GCC compiler version is 4.5.3
+- Unzip the Time Library from here to your Arduino Directory Structure:
+  http://playground.arduino.cc/code/time
+- The OIC-UTILITIES repository must be a cousin directory to the OIC-RESOURCE
+  repository.
+- Apply 2 patches from OIC-UTILITIES/tb/ to your Arduino Directory Structure.
+
+At this time, build instructions have not been written for the Arduino ATMega
+2560 with WiFi Shield, Arduino Due with Ethernet Shield, and Arduino Due with
+WiFi Shield. These instructions will be included very soon (as the build
+server(s) verifies and utilizes the new build script "buildScript.mk").
+
+===============================================================================
+
+Instructions for Common Build Processes:
+
+NOTE: 'GNU Make' is required to utilize the build script at location:
+<oic-resource>/buildScript.mk.
+
+- All Modules (TB Stack, TB Unit Tests, TB Examples, UB Stack, UB Examples) for
+Linux & Arduino Mega 2560:
+
+	make -f buildScript.mk all
+
+- All UB Stack Modules in Release & Debug (TB Stack, UB Stack, UB Examples) for
+Linux:
+
+	make -f buildScript.mk linux_ub
+
+- All Modules, without OCICUC, in Release & Debug (TB Stack, TB Unit Tests,
+TB Examples, UB Stack, UB Examples) for linux:
+
+	make -f buildScript.mk linux
+
+- All Modules, Including OCICUC, in Release & Debug (TB Stack, TB Unit Tests,
+TB Examples, UB Stack, UB Examples, UB OCICUC) for linux:
+(This will be what is used on the Build Server(s) to limit regression.)
+
+	make -f buildScript.mk all_dev
+
+- All UB Stack Modules, Including OCICUC, in Release & Debug (TB Stack,
+UB Stack, UB Examples, UB OCICUC) for linux:
+
+	make -f buildScript.mk linux_ub_dev
+
+- All TB Stack Modules in Release & Debug (TB Stack, TB Unit Tests,
+TB Examples) for Linux:
+
+	make -f buildScript.mk linux_tb
+
+- All TB Stack Modules in Release & Debug (TB Stack, TB Unit Tests,
+TB Examples) for Arduino ATMega 2560:
+
+	make -f buildScript.mk arduinomega
+
+- Clean All:
+
+	make -f buildScript.mk clean
 

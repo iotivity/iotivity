@@ -28,8 +28,6 @@ ARDUINOWIFI := 0
 
 APP_NAME := ocserver
 
-OBJ_DIR := ./bin
-
 ROOT_DIR = ../../../../..
 LOGGER_DIR = $(ROOT_DIR)/logger
 OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
@@ -51,36 +49,50 @@ CFLAGS	:= -Os -Wall -c -DTB_LOG
 
 ifeq ($(ARDUINOWIFI),1)
 	CFLAGS += -DARDUINOWIFI
+	ARDUINO_SHIELD_TYPE := "/wifi_shield"
+else
+	ARDUINO_SHIELD_TYPE := "/ethernet_shield"
 endif
+
+OUT_DIR := $(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)
+
+OBJ_DIR := $(OUT_DIR)/bin
 
 all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
 
 core.a: $(PLATFORM_OBJS)
-	@cd $(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/../$(BUILD)/liboctbstack.a
-	$(AR) rcs $@ $^ $(OBJ_DIR)/*.o
-	$(RANLIB) $@
+	@cd $(OBJ_DIR) && $(AR) -x ../../../../$(ROOT_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/liboctbstack.a
+	$(AR) rcs $(OBJ_DIR)/$@ $(foreach obj, $^, $(OBJ_DIR)/$(obj)) $(OBJ_DIR)/*.o
+	@cd $(OBJ_DIR) && $(RANLIB) $@
 
 prep_dirs:
+	-mkdir $(PLATFORM)
+	-mkdir $(PLATFORM)/$(ARDUINO_SHIELD_TYPE)
+	-mkdir $(OUT_DIR)
 	-mkdir $(OBJ_DIR)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 %.o: %.cpp
-	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 $(APP_NAME).elf: $(APP_NAME).o core.a
-	$(CC) -Os -Wl,--gc-sections,--relax $(CFLAGS_PLATFORM) $^ -lm -o $@
+	$(CC) -Os -Wl,--gc-sections,--relax $(CFLAGS_PLATFORM) $(foreach obj, $^, $(OBJ_DIR)/$(obj)) -lm -o $(OBJ_DIR)/$@
 
 $(APP_NAME).hex: $(APP_NAME).elf
-	$(AVR_OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $< $(APP_NAME).eep
-	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
+	$(AVR_OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $(OBJ_DIR)/$< $(OBJ_DIR)/$(APP_NAME).eep
+	$(AVR_OBJCOPY) -O ihex -R .eeprom $(OBJ_DIR)/$< $(OUT_DIR)/$@
 
 install: all
-	$(AVR_PROGRAMMER) -C$(ARDUINO_DIR)/hardware/tools/avrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P$(ARDUINO_PORT) -b115200 -D -Uflash:w:$(APP_NAME).hex:i
+	$(AVR_PROGRAMMER) -C$(ARDUINO_DIR)/hardware/tools/avrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P$(ARDUINO_PORT) -b115200 -D -Uflash:w:$(OUT_DIR)/$(APP_NAME).hex:i
 
 .PHONY: clean
 
-clean:
+clean: legacy_clean
+	rm -rf arduinomega
+	rm -rf arduinodue
+
+legacy_clean:
+	@rm -rf bin
 	@rm -f *.o *.d *.elf *.eep *.a *.hex *.bin *.map *-
-	@rm -rf $(OBJ_DIR)

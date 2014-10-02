@@ -29,13 +29,10 @@ PLATFORM := linux
 ARDUINOWIFI := 0
 
 ifeq ($(ROOT_DIR), )
-ROOT_DIR	= $(PWD)
+ROOT_DIR	= ./
 endif
 
-ifeq ($(OBJ_DIR), )
-OBJ_DIR	= obj
-endif
-
+PLATFORM_TYPE = linux
 
 ifeq ($(PLATFORM),linux)
     CXX=g++
@@ -43,38 +40,60 @@ ifeq ($(PLATFORM),linux)
     AR=ar
     RANLIB=ranlib
     CFLAGS_PLATFORM = -DWITH_POSIX -std=c99
+    PLATFORM_TYPE=linux
 else ifeq ($(PLATFORM),arduinomega)
     include local.properties
     include $(PLATFORM).properties
-	CC=$(ARDUINO_TOOLS_DIR)/avr-g++
-	ifeq ($(wildcard $(ARDUINO_DIR)/libraries/Time/Time/),)
+    CC=$(ARDUINO_TOOLS_DIR)/avr-g++
+    ifeq ($(wildcard $(ARDUINO_DIR)/libraries/Time/Time/),)
         $(error Arduino Time library needs to be moved from <ARDUINO_DIR>/libraries/Time \
         to <ARDUINO_DIR>/libraries/Time/Time. You may need to create \
         <ARDUINO_DIR>/libraries/Time/Time directory. Please refer to the wiki or readme \
         for more information)
-	endif
+    endif
+    PLATFORM_TYPE=arduino
 else ifeq ($(PLATFORM),arduinodue)
     include local.properties
     include $(PLATFORM).properties
-	CC=$(ARDUINO_TOOLS_DIR)/arm-none-eabi-g++
+    CC=$(ARDUINO_TOOLS_DIR)/arm-none-eabi-g++
+    PLATFORM_TYPE=arduino
 else
-   $(error Wrong value for PLATFORM !!)
+    $(error Wrong value for PLATFORM !!)
 endif
 
-OCLOGGER_DIR	= $(ROOT_DIR)/logger
-OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
-OCRANDOM_DIR	= $(ROOT_DIR)/ocrandom
-OCSOCKET_DIR	= $(ROOT_DIR)/ocsocket
-LCOAP_DIR	= $(ROOT_DIR)/libcoap-4.1.1
-OCCOAP_DIR	= $(ROOT_DIR)/occoap
-OCTBSTACK_DIR	= $(ROOT_DIR)/stack
-OCMALLOC_DIR = $(ROOT_DIR)/ocmalloc
-UTILS_DIR	= $(ROOT_DIR)/../../oic-utilities/tb
+ifeq ($(PLATFORM_TYPE),arduino)
+    ifeq ($(ARDUINOWIFI),0)
+    ARDUINO_SHIELD_TYPE := "/ethernet_shield"
+    else ifeq ($(ARDUINOWIFI), 1)
+    ARDUINO_SHIELD_TYPE := "/wifi_shield"
+    endif
+    PLATFORM_SPECIFIC_BACKOUT:= ../../../../
+else
+    PLATFORM_SPECIFIC_BACKOUT := ../../../
+endif
+
+ifeq ($(OUT_DIR), )
+OUT_DIR	= $(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)
+endif
+
+ifeq ($(OBJ_DIR), )
+OBJ_DIR	= $(OUT_DIR)/obj
+endif
+
+OCLOGGER_DIR	= logger
+OC_LOG_DIR      = ../oc_logger
+OCRANDOM_DIR	= ocrandom
+OCSOCKET_DIR	= ocsocket
+LCOAP_DIR	= libcoap-4.1.1
+OCCOAP_DIR	= occoap
+OCTBSTACK_DIR	= stack
+OCMALLOC_DIR 	= ocmalloc
+UTILS_DIR	= ../../oic-utilities/tb
 CJSON_DIR	= $(UTILS_DIR)/cJSON
 
 OCCOAP_SRC	= $(OCCOAP_DIR)/src
 OCTBSTACK_SRC	= $(OCTBSTACK_DIR)/src
-OCMALLOC_SRC = $(OCMALLOC_DIR)/src
+OCMALLOC_SRC 	= $(OCMALLOC_DIR)/src
 CJSON_SRC	= $(CJSON_DIR)
 
 OCLOGGER_INC	= $(OCLOGGER_DIR)/include
@@ -119,56 +138,56 @@ SOURCES			:= $(CJSON_SOURCES)
 SOURCES			+= $(OCCOAP_SOURCES)
 SOURCES			+= $(OCTBSTACK_SOURCES)
 
-all:	make_lcoap objdirs obj_build liboctbstack.a #print_vars
+all:	make_lcoap objdirs obj_build liboctbstack.a
+
+buildScript_all: objdirs obj_build liboctbstack.a
 
 make_lcoap: 
 	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
 
-objdirs: $(ROOT_DIR)
-	mkdir -p $(BUILD)
-	mkdir -p $(BUILD)/$(OBJ_DIR)
+objdirs: 
+	mkdir -p $(PLATFORM)
+	mkdir -p $(PLATFORM)/$(ARDUINO_SHIELD_TYPE)
+	mkdir -p $(OUT_DIR)
+	mkdir -p $(OBJ_DIR)
 
 obj_build:
 	@echo "Building $@"
-	# Output all *.o files to $(OBJ_DIR)/$(BUILD)
-	$(foreach source,$(SOURCES), $(CC) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(BUILD)/$(OBJ_DIR)/%, $(notdir $(source))));)
+	# Output all *.o files to $(OUT_DIR)/$(BUILD)/$(OBJ_DIR)
+	$(foreach source,$(SOURCES), $(CC) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/%, $(notdir $(source))));)
 
 liboctbstack.a: obj_build
 	@echo "Building $@" 
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	@cd $(BUILD)/$(OBJ_DIR) && $(AR) -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
+	@cd $(OBJ_DIR) && $(AR) -x $(PLATFORM_SPECIFIC_BACKOUT)$(LCOAP_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
-	$(AR) -r $(BUILD)/$@ $(BUILD)/$(OBJ_DIR)/*.o
+	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
 
 .PHONY: clean print_vars
 
 clean: legacy_clean
-	-rm -rf release
-	-rm -rf debug
+	-rm -rf linux
+	-rm -rf arduinomega
+	-rm -rf arduinodue
 
 deepclean: legacy_deepclean
-	-rm -rf release
-	-rm -rf debug
+	-rm -rf linux
+	-rm -rf arduinomega
+	-rm -rf arduinodue
 
-legacy_clean:	$(ROOT_DIR)
+legacy_clean:
 	@echo "Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/$(BUILD)/liboctbstack.a
 	rm -rf $(OBJ_DIR)
+	rm -rf release
+	rm -rf debug
 
-legacy_deepclean: $(ROOT_DIR)
+legacy_deepclean:
 	@echo "Deep-Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a
 	rm -rf $(OBJ_DIR)
 	$(MAKE) clean -C $(LCOAP_DIR)
-
-print_vars:
-	@echo ""
-	@echo 'INCLUDES ARE: '$(value INC_DIRS)
-	@echo ""
-	@echo 'SOURCE FILES ARE: '$(value SOURCES)
-	@echo ""
-	@echo 'OBJ_DIR/BUILD is: '$(OBJ_DIR)'/'$(BUILD)
-	@echo ""
-	@echo 'ROOT_DIR is: '$(ROOT_DIR)
+	rm -rf release
+	rm -rf debug

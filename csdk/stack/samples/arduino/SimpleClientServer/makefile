@@ -21,15 +21,17 @@
 BUILD := release
 ARDUINO_PORT := /dev/ttyACM0
 APP_INSTALL := ocserver
+PLATFORM := arduinomega
+ARDUINOWIFI := 0
 
 ocserver:
-	$(MAKE) -c ./$@ "BUILD=$(BUILD)"
+	$(MAKE) -c ./$@ "BUILD=$(BUILD)" "install" "PLATFORM=$(PLATFORM)" "ARDUINO_PORT=$(ARDUINO_PORT)" "BUILD=$(BUILD)" "ARDUINOWIFI=$(ARDUINOWIFI)"
 
 occlient:
 	$(MAKE) -c ./$@ "BUILD=$(BUILD)"
 
 install:
-	$(MAKE) -C ./$(APP_INSTALL) "install" "ARDUINO_PORT=$(ARDUINO_PORT)" "BUILD=$(BUILD)"
+	$(MAKE) -C ./$(APP_INSTALL) "install" "PLATFORM=$(PLATFORM)" "ARDUINO_PORT=$(ARDUINO_PORT)" "BUILD=$(BUILD)" "ARDUINOWIFI=$(ARDUINOWIFI)"
 
 clean:
 	$(MAKE) -C ./occlient "clean"

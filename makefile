@@ -20,10 +20,18 @@
 #
 # override with `make BUILD=debug`
 # default to release build
-BUILD	  := release
-CXX	      := g++
+BUILD     := release
+CXX       := g++
 #CXX	  := clang
-OUT_DIR	  := $(PWD)/$(BUILD)
+
+ifeq ($(ROOT_DIR), )
+	ROOT_DIR := $(PWD)
+endif
+ifeq ($(PLATFORM), )
+	PLATFORM := "linux"
+endif
+
+OUT_DIR	  := $(ROOT_DIR)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0
@@ -39,18 +47,22 @@ CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs c_sdk oc_logger liboc.a examples
+all.PHONY: prep_dirs c_sdk oc_logger_target liboc.a examples
 
-all:	.PHONY
+buildScript_all.PHONY: prep_dirs oc_logger_target liboc.a
+
+all:	all.PHONY
+
+buildScript_all:  buildScript_all.PHONY
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
 	-mkdir -p $(OBJ_DIR)
 
 c_sdk:
-	cd csdk && $(MAKE) "BUILD=$(BUILD)"
+	cd csdk && $(MAKE) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)"
 
-oc_logger:
+oc_logger_target:
 	cd oc_logger && $(MAKE) "BUILD=$(BUILD)"
 
 cpp_sdk: prep_dirs c_sdk liboc.a
@@ -79,16 +91,13 @@ InProcClientWrapper.o: src/InProcClientWrapper.cpp
 clean: clean_legacy
 	-rm -rf release
 	-rm -rf debug
-	cd csdk && $(MAKE) clean
-	cd csdk && $(MAKE) deepclean
-	cd examples && $(MAKE) clean_apps
 	cd oc_logger && $(MAKE) clean
 
 clean_cpp_sdk: clean_legacy
 	-rm -rf release
 	-rm -rf debug
-	cd csdk && $(MAKE) clean
-	cd csdk && $(MAKE) deepclean
 
 clean_legacy:
 	-rm -f -v $(OBJ_DIR)/liboc.a $(OBJ_DIR)/*.o
+	cd csdk && $(MAKE) clean
+	cd csdk && $(MAKE) deepclean

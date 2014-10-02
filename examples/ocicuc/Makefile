@@ -19,6 +19,7 @@
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
 BUILD:=release
+PLATFORM:=linux
 
 OCLIB=../..
 OCLIB_LIB=../../$(BUILD)/obj/liboc.a 
@@ -41,7 +42,7 @@ BOOST_LIBS=-lboost_program_options
 
 LIB_OC_LOGGER:=../../oc_logger/lib/oc_logger.a
 
-CXX_LIBS=$(OCLIB_LIB) ../../csdk/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) $(BOOST_LIBS)
+CXX_LIBS=$(OCLIB_LIB) ../../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) $(BOOST_LIBS)
 
 APPS += client 
 APPS += server 

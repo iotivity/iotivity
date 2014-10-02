@@ -23,14 +23,14 @@
 BUILD	 := release
 PLATFORM := linux
 CC	 := g++
-OUT_DIR	  := $(PWD)/$(BUILD)
+OUT_DIR	  := $(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 ifeq ($(ROOT_DIR), )
-ROOT_DIR	= $(PWD)/../../../csdk
+ROOT_DIR	= ../../../csdk
 endif
 
-OUT_DIR	= $(PWD)
+OUT_DIR	= ./
 
 OCLOGGER_DIR	= $(ROOT_DIR)/logger
 OC_LOG_DIR		= $(ROOT_DIR)/../oc_logger
@@ -59,9 +59,9 @@ INC_DIRS		+= -I$(OCCOAP_INC)
 INC_DIRS		+= -I$(OCTBSTACK_INC)
 
 CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections \
-                        -std=c99 $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
+                        -std=c99 $(INC_DIRS) -L$(ROOT_DIR)/$(PLATFORM)/$(BUILD) -DTB_LOG
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s \
-                        -std=c99 $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD)
+                        -std=c99 $(INC_DIRS) -L$(ROOT_DIR)/$(PLATFORM)/$(BUILD)
 
 LDLIBS		+= $(OC_LOG_LIB) -loctbstack -lpthread 
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)

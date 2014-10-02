@@ -21,9 +21,10 @@
 # override with `make BUILD=release`
 # default to release build
 BUILD	  := release
+PLATFORM  := linux
 CXX	      := g++
 #CXX	  := clang
-OUT_DIR	  := $(PWD)/$(BUILD)
+OUT_DIR	  := $(BUILD)
 
 CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
 
@@ -31,7 +32,6 @@ CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
 
 CXX_INC	  := -I../include/
 CXX_INC   += -I../oc_logger/include
-
 CXX_INC	  += -I../csdk/stack/include
 CXX_INC	  += -I../csdk/ocsocket/include
 CXX_INC	  += -I../csdk/ocrandom/include
@@ -40,27 +40,20 @@ CXX_INC	  += -I../csdk/libcoap
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
-CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
-
-APPS  += simpleserver
-APPS  += simpleclient
-APPS  += simpleclientserver
-APPS  += roomserver
-APPS  += roomclient
-APPS  += presenceserver
-APPS  += presenceclient
-APPS  += fridgeserver
-APPS  += fridgeclient
-APPS  += garageserver
-APPS  += garageclient
-APPS  += ocicuc
+CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
 
 # Force metatargets to build:
-.PHONY:	prep_dirs oc_cpp_sdk $(APPS)
+all.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc_target
 
-all: .PHONY
+apps.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient
 
-apps: prep_dirs $(APPS)
+buildScript_all.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient
+
+all: all.PHONY
+
+apps: apps.PHONY
+
+buildScript_all: buildScript_all.PHONY
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
@@ -101,14 +94,16 @@ garageserver: garageserver.cpp
 garageclient: garageclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ garageclient.cpp $(CXX_INC) $(CXX_LIBS)
 
-ocicuc:
+ocicuc_target:
 	cd ocicuc && $(MAKE) apps
 
 clean:
-	rm -rf $(OUT_DIR)
+	rm -rf debug
+	rm -rf release
 	cd ../ && $(MAKE) clean_cpp_sdk
 	cd ocicuc && $(MAKE) clean_apps
 
 clean_apps:
-	rm -rf $(OUT_DIR)
+	rm -rf debug
+	rm -rf release
 	cd ocicuc && $(MAKE) clean_apps

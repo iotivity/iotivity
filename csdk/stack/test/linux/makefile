@@ -58,7 +58,7 @@ else
    $(error Wrong value for PLATFORM !!)
 endif
 
-DEP_LIBS = $(ROOT_DIR)/$(BUILD)/liboctbstack.a
+DEP_LIBS = $(ROOT_DIR)/linux/$(BUILD)/liboctbstack.a
 
 CFLAGS += -Os -Wall -Wno-write-strings -ffunction-sections -fdata-sections -fno-exceptions \
 	-Wextra -Wno-variadic-macros -pedantic -std=gnu99 -DWITH_POSIX -DTB_LOG
