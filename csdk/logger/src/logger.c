@@ -34,21 +34,29 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 #ifdef __ANDROID__
     static android_LogPriority LEVEL[] = {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
 #elif defined __linux__
-    //static const char * LEVEL[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
     static const char * LEVEL[] __attribute__ ((unused)) = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
     #include <stdarg.h>
 
-    PROGMEM char const level0[] = "DEBUG";
-    PROGMEM char const level1[] = "INFO";
-    PROGMEM char const level2[] = "WARNING";
-    PROGMEM char const level3[] = "ERROR";
-    PROGMEM char const level4[] = "FATAL";
+    PROGMEM const char level0[] = "DEBUG";
+    PROGMEM const char level1[] = "INFO";
+    PROGMEM const char level2[] = "WARNING";
+    PROGMEM const char level3[] = "ERROR";
+    PROGMEM const char level4[] = "FATAL";
 
-    PROGMEM const char * const LEVEL[]  = {level0, level1, level2, level3, level4};
+    PROGMEM const char * LEVEL[]  = {level0, level1, level2, level3, level4};
 
     static void OCLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
+#ifdef ARDUINO_ARCH_AVR
+    //Mega2560 and other 8-bit AVR microcontrollers
+    #define GET_PROGMEM_BUFFER(buffer, addr) { strcpy_P(buffer, (char*)pgm_read_word(addr));}
+#elif defined ARDUINO_ARCH_SAM
+    //Arduino Due and other 32-bit ARM micro-controllers
+    #define GET_PROGMEM_BUFFER(buffer, addr) { strcpy_P(buffer, (char*)pgm_read_dword(addr));}
+#else
+    #define GET_PROGMEM_BUFFER(buffer, addr) { buffer[0] = '\0';}
 #endif
+#endif // __ANDROID__
 
 
 #if defined(__ANDROID__) || defined(__linux__)
@@ -179,8 +187,9 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
           return;
         }
 
-        char buffer[LINE_BUFFER_SIZE] = {0};
-        strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+        char buffer[LINE_BUFFER_SIZE];
+
+        GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
         Serial.print(buffer);
 
         char c;
@@ -238,8 +247,9 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
           return;
         }
 
-        char buffer[LINE_BUFFER_SIZE] = {0};
-        strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+        char buffer[LINE_BUFFER_SIZE];
+
+        GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
         Serial.print(buffer);
 
         char c;
@@ -270,15 +280,16 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         char buffer[LINE_BUFFER_SIZE];
         va_list ap;
         va_start(ap, format);
-        strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+
+        GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
         Serial.print(buffer);
 
         char c;
         Serial.print(F(": "));
 
         while ((c = pgm_read_byte(tag))) {
-          Serial.write(c);
-          tag++;
+            Serial.write(c);
+            tag++;
         }
         Serial.print(F(": "));
 
@@ -307,7 +318,8 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         char buffer[LINE_BUFFER_SIZE];
         va_list ap;
         va_start(ap, format);
-        strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+
+        GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
         Serial.print(buffer);
 
         char c;
