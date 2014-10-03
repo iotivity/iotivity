@@ -22,11 +22,12 @@ BUILD:=release
 PLATFORM:=linux
 
 OCLIB=../..
-OCLIB_LIB=../../$(BUILD)/obj/liboc.a 
+OCLIB_LIB=../../$(BUILD)/obj/liboc.a
 
 CXX_FLAGS.debug     := -g3 -O0
 CXX_FLAGS.release   := -O3
-CXX_FLAGS:=-Wall -std=c++0x -ggdb $(CXX_FLAGS.$(BUILD)) -pthread
+
+CXX_FLAGS:=-Werror -Wall -std=c++0x -ggdb $(CXX_FLAGS.$(BUILD)) -pthread
 
 # There's probably nicer Makefile magic for this, but hopefully it will suffice:
 CXX_INC=-I$(OCLIB)/include \
@@ -44,19 +45,17 @@ LIB_OC_LOGGER:=../../oc_logger/lib/oc_logger.a
 
 CXX_LIBS=$(OCLIB_LIB) ../../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) $(BOOST_LIBS)
 
-APPS += client 
-APPS += server 
-APPS += monoprocess 
+APPS += client
+APPS += server
+APPS += monoprocess
+APPS += small_example
 
 .PHONY: client server
 
-all: oc_cpp_sdk apps
+all: apps
 	@echo Remember to \"export LD_LIBRARY_PATH=$(BOOST_LIB)\:\$$LD_LIBRARY_PATH\"
 
 apps: $(APPS)
-
-oc_cpp_sdk:
-	cd ../../ && $(MAKE) cpp_sdk "BUILD=$(BUILD)"
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CXX_FLAGS) $(CXX_INC) -c -o $@ $<
@@ -70,10 +69,13 @@ server: server.o driver.o utility.o light_resource.o
 monoprocess: monoprocess.o driver.o utility.o light_resource.o
 	$(CXX) $(CXX_FLAGS) -o $@ $^ $(CXX_LIBS)
 
+small_example: small_example.o driver.o utility.o
+	$(CXX) $(CXX_FLAGS) -o $@ $^ $(CXX_LIBS)
+
 clean:
 	rm -f *.o $(APPS)
-	cd ../../ && $(MAKE) clean_cpp_sdk	
+	cd ../../ && $(MAKE) clean_cpp_sdk
 
 clean_apps:
 	rm -f *.o $(APPS)
-	
+

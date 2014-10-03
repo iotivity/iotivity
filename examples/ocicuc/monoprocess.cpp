@@ -49,13 +49,12 @@ auto make_description()
 
  po::options_description desc("Monoprocess Client/Server options");
 
-std::cout << "JFW: TODO: separate IP/port/etc. for server and client!\n";
  desc.add_options()
-    ("nres",        po::value<unsigned long>()->default_value(1),         "number of resources to use for testing")
+    ("nres",        po::value<unsigned long>()->default_value(1),  "number of resources to use for testing")
     ("host_ip",     po::value<string>()->default_value("0.0.0.0"), "IP of host")
-    ("host_port",   po::value<uint16_t>()->default_value(0),           "port of host")
-    ("interface",   po::value<string>()->default_value("eth0"),           "network interface name")
-    ("uri",         po::value<vector<string>>(),                          "resource URI")
+    ("host_port",   po::value<uint16_t>()->default_value(0),       "port of host")
+    ("interface",   po::value<string>()->default_value("eth0"),    "network interface name")
+    ("uri",         po::value<vector<string>>(),                   "resource URI")
     ;
 
  return desc;

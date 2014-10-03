@@ -23,15 +23,14 @@
 
 #include <boost/program_options.hpp>
 
+/* Interface point for the driver code. Your program needs to implement these
+functions: */
 namespace Intel { namespace OCDemo {
 
 int exec(const boost::program_options::variables_map& vm);
 
 auto make_description()
     -> boost::program_options::options_description;
-
-auto parse_options(boost::program_options::options_description& desc, int argc, char *argv[]) 
-    -> boost::program_options::variables_map;
 
 }} // namespace Intel::OCDemo
 
