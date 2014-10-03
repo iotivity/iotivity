@@ -52,14 +52,16 @@ CFLAGS		:= -Os -Wall -c -DTB_LOG
 ifeq ($(ARDUINOWIFI),1)
 	CFLAGS += -DARDUINOWIFI
 	TRANSPORT_OBJS = $(WIFI_COBJ)
-else if
+	ARDUINO_SHIELD_TYPE := "/wifi_shield"
+else
 	TRANSPORT_OBJS = $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ)
+	ARDUINO_SHIELD_TYPE := "/ethernet_shield"
 endif
 
 all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).bin
 
 core.a: $(PLATFORM_OBJS)
-	@cd $(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/../$(BUILD)/liboctbstack.a
+	@cd $(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/../$(PLATFORM)/$(ARDUINO_SHIELD_TYPE)/$(BUILD)/liboctbstack.a
 	$(AR) rcs $@ $(CORE_COBJ) $(CORE_CPPOBJ) $(OBJ_DIR)/*.o
 	$(RANLIB) $@
 
