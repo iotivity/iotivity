@@ -28,6 +28,10 @@ SDK" (or "C SDK"). The associated stacks are referred to as "UB Stack" (or "C++
 Stack") and "TB Stack" (or "C Stack").  The UB Stack requires that the TB Stack
 is built under it.
 
+For a list of artifact locations for all possible build processes in the
+OIC-RESOURCE repository, please refer to:
+<oic-resource>/artifact_output_locations.txt.
+
 ===============================================================================
 
 The UB Stack is intended ONLY for Linux Ubuntu 12.04 operating system.
