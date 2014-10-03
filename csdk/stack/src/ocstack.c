@@ -317,32 +317,34 @@ OCStackResult OCStop()
 /**
  * Verify the lengths of the URI and the query separately
  *
- * @param inputUri       - Input URI and query
+ * @param inputUri       - Input URI and query.
+ * @param uriLen         - The length of the initial URI with query.
  *
- * Note: The '?' that appears after the URI is considered as
+ * Note: The '?' that appears after the URI is not considered as
  * a part of the query.
  */
 OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
 {
     char *query;
-    uint16_t queryLen = 0;
 
     query = strchr (inputUri, '?');
+
     if (query != NULL)
     {
-        queryLen = strlen (query);
-    }
+        if((query - inputUri) > MAX_URI_LENGTH)
+        {
+            return OC_STACK_INVALID_URI;
+        }
 
-    if (queryLen > MAX_QUERY_LENGTH)
+        if((inputUri + uriLen - 1 - query) > MAX_QUERY_LENGTH)
+        {
+            return OC_STACK_INVALID_QUERY;
+        }
+    }
+    else if(uriLen > MAX_URI_LENGTH)
     {
         return OC_STACK_INVALID_URI;
     }
-
-    if ((uriLen - queryLen) > MAX_URI_LENGTH)
-    {
-        return OC_STACK_INVALID_QUERY;
-    }
-
     return OC_STACK_OK;
 }
 
