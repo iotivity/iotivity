@@ -27,6 +27,7 @@
 #include <pthread.h>
 #include "ocstack.h"
 #include "logger.h"
+#include "cJSON.h"
 
 const char *getResult(OCStackResult result);
 
@@ -44,8 +45,8 @@ typedef struct LEDRESOURCE{
 } LEDResource;
 
 static LEDResource LED;
-// This variable determines instance number of the LED resource
-// Used by POST method to create a new instance of LED resource
+// This variable determines instance number of the LED resource.
+// Used by POST method to create a new instance of LED resource.
 static int gCurrLedInstance = 0;
 #define SAMPLE_MAX_NUM_POST_INSTANCE  2
 static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
@@ -62,29 +63,53 @@ Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 static int stopPresenceCount = 10;
 #endif
 
-// TODO: Hardcoded JSON strings. Request/response JSON payloads have to be parsed/generated.
-const char respPLGet_led[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"power\":10}}";
-const char respPLGet_ledInst0[] = "{\"href\":\"/a/led/0\",\"rep\":{\"state\":\"on\",\"power\":20}}";
-const char respPLGet_ledInst1[] = "{\"href\":\"/a/led/1\",\"rep\":{\"state\":\"on\",\"power\":30}}";
-const char responsePayloadPut[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"off\",\"power\":0}}";
+char *resourceUri= (char *)"/a/led";
+
+const char jSONResponseSkel[] = "{\"href\": \"\",\"rep\":{\"state\":\"\",\"power\":0}}";
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
-void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
+//This function takes the request as an input and returns the response
+//in JSON format.
+char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 {
-    const char *getResp;
+    cJSON *json = cJSON_Parse((char *)jSONResponseSkel);
+    cJSON *format = cJSON_GetObjectItem(json,"rep");
+    char *jsonResponse;
+    LEDResource *currLEDResource = &LED;
 
-    if (ehRequest->resource == LED.handle)
+    if (ehRequest->resource == gLedInstance[0].handle)
     {
-        getResp = respPLGet_led;
-    }
-    else if (ehRequest->resource == gLedInstance[0].handle)
-    {
-        getResp = respPLGet_ledInst0;
+        currLEDResource = &gLedInstance[0];
+        resourceUri = (char *) "a/led/0";
     }
     else if (ehRequest->resource == gLedInstance[1].handle)
     {
-        getResp = respPLGet_ledInst1;
+        currLEDResource = &gLedInstance[1];
+        resourceUri = (char *) "a/led/1";
     }
+
+    if(OC_REST_PUT == ehRequest->method)
+    {
+        cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
+        currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring , "on") ? true:false);
+        currLEDResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
+        cJSON_Delete(putJson);
+    }
+
+    cJSON_GetObjectItem(format,"state")->valuestring = (char *) (currLEDResource->state ? "on":"off");
+    cJSON_GetObjectItem(format,"power")->valuedouble = currLEDResource->power;
+    cJSON_GetObjectItem(json,"href")->valuestring = resourceUri;
+
+    jsonResponse = cJSON_Print(json);
+    json= cJSON_Parse((char *)jSONResponseSkel);
+    cJSON_Delete(json);
+
+    return jsonResponse;
+}
+
+void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
+{
+    const char *getResp = constructJsonResponse(ehRequest);
 
     if (ehRequest->resJSONPayloadLen > strlen ((char *)getResp))
     {
@@ -100,10 +125,12 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
 
 void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
 {
-    if (ehRequest->resJSONPayloadLen > strlen ((char *)responsePayloadPut))
+    const char *putResp = constructJsonResponse(ehRequest);
+
+    if (ehRequest->resJSONPayloadLen > strlen ((char *)putResp))
     {
-        strncpy((char *)ehRequest->resJSONPayload, responsePayloadPut,
-                strlen((char *)responsePayloadPut));
+        strncpy((char *)ehRequest->resJSONPayload, putResp,
+                strlen((char *)putResp));
     }
     else
     {
@@ -114,9 +141,10 @@ void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
 
 void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
 {
-    char respPLPost_newLed[100] = "{\"href\":\"/a/led\",\"rep\":{\"createduri\":\"/a/led/";
-    const char postPLSuffix[] = "\"}}";
+    const char respPLPost_newLed[] = "{\"href\":\"\",\"rep\":{\"createduri\":\"\"}}";
     char *respPLPost_led;
+    cJSON *json;
+    cJSON *format;
 
     /*
      * The entity handler determines how to process a POST request.
@@ -126,7 +154,7 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
      * resource is created with default representation (if representation is included in
      * POST payload it can be used as initial values) as long as the instance is
      * lesser than max new instance count. Once max instance count is reached, POST on
-     * /a/led updated the representation of /a/led (just like PUT).
+     * /a/led updated the representation of /a/led (just like PUT)
      */
 
     if (ehRequest->resource == LED.handle)
@@ -137,24 +165,30 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
             char newLedUri[15] = "/a/led/";
             sprintf (newLedUri + strlen(newLedUri), "%d", gCurrLedInstance);
             printf ("\n New resource URI: %s\n", newLedUri);
+
+            json = cJSON_Parse((char *)respPLPost_newLed);
+            cJSON_GetObjectItem(json,"href")->valuestring = resourceUri;
+            format = cJSON_GetObjectItem(json,"rep");
+            cJSON_GetObjectItem(format,"createduri")->valuestring = (char *) newLedUri;
+
             if (0 == createLEDResource (newLedUri, &gLedInstance[gCurrLedInstance]))
             {
                 OC_LOG_V (INFO, TAG, "Created new LED instance\n");
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
-                sprintf (respPLPost_newLed + strlen(respPLPost_newLed), "%d", gCurrLedInstance);
-                memcpy (respPLPost_newLed + strlen(respPLPost_newLed), postPLSuffix,
-                        strlen(postPLSuffix) + 1);
                 gCurrLedInstance++;
-                respPLPost_led = respPLPost_newLed;
+                respPLPost_led = cJSON_Print(json);
             }
+
+            json = cJSON_Parse((char *)respPLPost_newLed);
+            cJSON_Delete(json);
         }
         else
         {
             // Update repesentation of /a/led
             LED.state = true;
             LED.power = 11;
-            respPLPost_led = (char *)responsePayloadPut;
+            respPLPost_led = constructJsonResponse(ehRequest);
         }
     }
     else
@@ -167,11 +201,11 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
                 gLedInstance[i].power = 22;
                 if (i == 0)
                 {
-                    respPLPost_led = (char *)respPLGet_ledInst0;
+                    respPLPost_led = constructJsonResponse(ehRequest);
                 }
                 else if (i == 1)
                 {
-                    respPLPost_led = (char *)respPLGet_ledInst1;
+                    respPLPost_led = constructJsonResponse(ehRequest);
                 }
             }
         }
@@ -192,7 +226,7 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
 void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest)
 {
     OC_LOG_V (INFO, TAG, "Received observation registration request with observation Id %d",
-                ehRequest->obsInfo->obsId);
+            ehRequest->obsInfo->obsId);
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
         if (interestedObservers[i].valid == false)
@@ -210,7 +244,7 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
     bool clientStillObserving = false;
 
     OC_LOG_V (INFO, TAG, "Received observation deregistration request for observation Id %d",
-                ehRequest->obsInfo->obsId);
+            ehRequest->obsInfo->obsId);
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
         if (interestedObservers[i].observationId == ehRequest->obsInfo->obsId)
@@ -226,9 +260,9 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
     if (clientStillObserving == false)
         gLEDUnderObservation = 0;
 }
-OCEntityHandlerResult
+    OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
-                   OCEntityHandlerRequest *entityHandlerRequest, char* uri)
+        OCEntityHandlerRequest *entityHandlerRequest, char* uri)
 {
 
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
@@ -254,7 +288,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
             else
             {
                 OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
-                            entityHandlerRequest->method);
+                        entityHandlerRequest->method);
             }
         }
     }
@@ -278,9 +312,9 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
 }
 
 
-OCEntityHandlerResult
+    OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-                   OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
     if (flag & OC_INIT_FLAG)
@@ -310,7 +344,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             else
             {
                 OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
-                            entityHandlerRequest->method);
+                        entityHandlerRequest->method);
             }
         }
     }
@@ -399,8 +433,17 @@ void *ChangeLEDRepresentation (void *param)
                         j++;
                     }
                 }
+
+                cJSON *json = cJSON_Parse((char *)jSONResponseSkel);
+                cJSON *format = cJSON_GetObjectItem(json,"rep");
+                cJSON_GetObjectItem(format,"state")->valuestring= (char *) (LED.state ? "on":"off");
+                cJSON_GetObjectItem(format,"power")->valuedouble = LED.power;
+                cJSON_GetObjectItem(json,"href")->valuestring = resourceUri;
+                char * obsResp = cJSON_Print(json);
+                json = cJSON_Parse((char *)jSONResponseSkel);
+                cJSON_Delete(json);
                 result = OCNotifyListOfObservers (LED.handle, obsNotify, j,
-                        (unsigned char *)respPLGet_led);
+                        (unsigned char *)obsResp);
             }
             else if (gObserveNotifyType == 0)
             {
@@ -418,14 +461,14 @@ void *ChangeLEDRepresentation (void *param)
                 OC_LOG (ERROR, TAG, "Incorrect notification type selected");
             }
         }
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         OC_LOG_V(INFO, TAG, "================ presence count %d",stopPresenceCount);
         if(!stopPresenceCount--)
         {
             OC_LOG(INFO, TAG, "================ stopping presence");
             OCStopPresence();
         }
-        #endif
+#endif
     }
     return NULL;
 }
@@ -469,7 +512,7 @@ int main(int argc, char* argv[])
     /*Get Ip address on defined interface and initialize coap on it with random port number
      * this port number will be used as a source port in all coap communications*/
     if ( OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr,
-                               sizeof(addr)) == ERR_SUCCESS)
+                sizeof(addr)) == ERR_SUCCESS)
     {
         OC_LOG_V(INFO, TAG, "Starting ocserver on address %s:%d",addr,port);
         paddr = addr;
@@ -479,12 +522,12 @@ int main(int argc, char* argv[])
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if (OCStartPresence(0) != OC_STACK_OK) {
         OC_LOG_V(ERROR, TAG, "OCStack presence/discovery error");
         return 0;
     }
-    #endif
+#endif
 
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb);
 
@@ -496,7 +539,7 @@ int main(int argc, char* argv[])
     // Initialize observations data structure for the resource
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
-       interestedObservers[i].valid = false;
+        interestedObservers[i].valid = false;
     }
 
     /*

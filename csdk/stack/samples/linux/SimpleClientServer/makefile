@@ -16,7 +16,7 @@
 # // See the License for the specific language governing permissions and
 # // limitations under the License.
 # //
-# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
 # override with `make BUILD=debug`
 # default to release build
@@ -39,6 +39,10 @@ OCSOCKET_DIR	= $(ROOT_DIR)/ocsocket
 LCOAP_DIR	= $(ROOT_DIR)/libcoap-4.1.1
 OCCOAP_DIR	= $(ROOT_DIR)/occoap
 OCTBSTACK_DIR	= $(ROOT_DIR)/stack
+UTILS_DIR	= $(ROOT_DIR)/../../oic-utilities/tb
+CJSON_DIR	= $(UTILS_DIR)/cJSON
+
+CJSON_SRC	= $(CJSON_DIR)
 
 OCLOGGER_INC	= $(OCLOGGER_DIR)/include
 OC_LOG_INC	= $(OC_LOG_DIR)/include
@@ -47,6 +51,7 @@ OCSOCKET_INC	= $(OCSOCKET_DIR)/include
 LCOAP_INC	= $(LCOAP_DIR)
 OCCOAP_INC	= $(OCCOAP_DIR)/include
 OCTBSTACK_INC	= $(OCTBSTACK_DIR)/include
+CJSON_INC	= $(CJSON_DIR)
 
 INC_DIRS	:= -I$(OCLOGGER_INC)
 INC_DIRS	+= -I$(OC_LOG_INC)
@@ -55,6 +60,7 @@ INC_DIRS	+= -I$(OCSOCKET_INC)
 INC_DIRS	+= -I$(LCOAP_INC)
 INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
+INC_DIRS	+= -I$(CJSON_INC)
 
 CC_FLAGS.debug   := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
                         -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG
@@ -64,9 +70,12 @@ CC_FLAGS.release := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exce
 LDLIBS		+= -loctbstack -lpthread
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
-SOURCES     := occlient.cpp ocserver.cpp occlientcoll.cpp ocservercoll.cpp common.cpp
+CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
 
-OBJECTS:= $(patsubst %.c, $(OBJ_DIR)/%.o, $(SOURCES))
+SOURCES		:= $(CJSON_SOURCES)
+SOURCES     += occlient.cpp ocserver.cpp occlientcoll.cpp ocservercoll.cpp common.cpp
+
+OBJECTS:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
 
 PROGRAMS	+= ocserver
 PROGRAMS	+= occlient
