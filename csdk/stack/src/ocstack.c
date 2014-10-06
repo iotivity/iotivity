@@ -527,7 +527,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 #ifdef WITH_PRESENCE
 OCStackResult OCProcessPresence()
 {
-    OCStackResult result = OC_STACK_ERROR;
+    OCStackResult result = OC_STACK_OK;
     uint8_t ipAddr[4] = { 0 };
     uint16_t port = 0;
 
@@ -570,6 +570,7 @@ OCStackResult OCProcessPresence()
                     }
                     else
                     {
+                        result = OC_STACK_INVALID_IP;
                         goto exit;
                     }
                     HandleStackResponses(response);
@@ -581,6 +582,10 @@ OCStackResult OCProcessPresence()
                     OCGenerateCoAPToken(&token);
                     result = OCDoCoAPResource(OC_REST_GET, OC_NON_CONFIRMABLE,
                             &token, (const char *)cbNode->requestUri, NULL, NULL, 0);
+                    if(result != OC_STACK_OK)
+                    {
+                        goto exit;
+                    }
                     cbNode->presence->TTLlevel++;
                     OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d", cbNode->presence->TTLlevel);
                 }
