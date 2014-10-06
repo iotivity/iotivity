@@ -53,6 +53,7 @@ namespace OC
     {
     friend class OCPlatform;
     friend class InProcClientWrapper;
+
     public:
         typedef std::shared_ptr<OCResource> Ptr;
         /**

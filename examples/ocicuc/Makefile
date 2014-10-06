@@ -24,6 +24,10 @@ PLATFORM:=linux
 OCLIB=../..
 OCLIB_LIB=../../$(BUILD)/obj/liboc.a
 
+BOOST_BASE=/usr/local/boost
+BOOST_INC=$(BOOST_BASE)/include
+BOOST_LIB=$(BOOST_BASE)/lib
+
 CXX_FLAGS.debug     := -g3 -O0
 CXX_FLAGS.release   := -O3
 
@@ -31,6 +35,7 @@ CXX_FLAGS:=-Werror -Wall -std=c++0x -ggdb $(CXX_FLAGS.$(BUILD)) -pthread
 
 # There's probably nicer Makefile magic for this, but hopefully it will suffice:
 CXX_INC=-I$(OCLIB)/include \
+	-I$(BOOST_INC) \
 	-I../../include/ \
 	-I../../oc_logger/include/ \
 	-I../../csdk/stack/include \
@@ -39,7 +44,6 @@ CXX_INC=-I$(OCLIB)/include \
 	-I../../csdk/logger/include
 
 BOOST_LIBS=-lboost_program_options
-#BOOST_LIBS=/usr/local/boost/lib/libboost_program_options.a	# for boost_1_55 lib
 
 LIB_OC_LOGGER:=../../oc_logger/lib/oc_logger.a
 
@@ -74,8 +78,7 @@ small_example: small_example.o driver.o utility.o
 
 clean:
 	rm -f *.o $(APPS)
-	cd ../../ && $(MAKE) clean_cpp_sdk
 
 clean_apps:
-	rm -f *.o $(APPS)
+	rm -f server client monoprocess
 

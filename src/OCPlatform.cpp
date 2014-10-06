@@ -29,344 +29,202 @@
 //*********************************************************************
 
 #include <random>
+#include <utility>
+#include <functional>
+
+#include "ocstack.h"
 
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "OCException.h"
+#include "OCUtilities.h"
 
 #include "oc_logger.hpp"
 
 namespace OC
 {
-    OCPlatform::OCPlatform(const PlatformConfig& config)
-     : m_log_stream(std::move(oc_log_stream {oc_make_ostream_logger})),
-       m_cfg(config)
+void OCPlatform::init(const PlatformConfig& config)
+{
+    switch(config.mode)
+     {
+       case ModeType::Server:
+                       m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
+                       break;
+
+       case ModeType::Client:
+                      m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
+                      break;
+
+       case ModeType::Both:
+                       m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
+                       m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
+                       break;
+     }
+}
+
+OCPlatform::OCPlatform(const PlatformConfig& config)
+ : m_log_stream      { std::move(oc_log_stream {oc_make_ostream_logger}) },
+   m_cfg             { config },
+   m_WrapperInstance { make_unique<WrapperFactory>() },
+   m_csdkLock        { make_shared<std::mutex>() }
+{
+    init(m_cfg);
+}
+
+OCPlatform::OCPlatform(const PlatformConfig& config, OC::oc_log_stream& log_target)
+ :  m_log_stream      { log_target },
+    m_cfg             { config },
+    m_WrapperInstance { make_unique<WrapperFactory>() },
+    m_csdkLock        { make_shared<std::mutex>() }
+{
+    init(m_cfg);
+}
+
+OCPlatform::~OCPlatform(void)
+{
+}
+
+OCStackResult OCPlatform::setDefaultDeviceEntityHandler(EntityHandler entityHandler)
+{
+    return checked_guard(m_server, &IServerWrapper::setDefaultDeviceEntityHandler,
+                         entityHandler);
+}
+
+OCStackResult OCPlatform::notifyAllObservers(OCResourceHandle resourceHandle)
+{
+    return result_guard(OCNotifyAllObservers(resourceHandle));
+}
+
+OCStackResult OCPlatform::notifyListOfObservers(OCResourceHandle resourceHandle,
+                                            ObservationIds& observationIds,
+                                            const std::shared_ptr<OCResourceResponse> pResponse)
+{
+    if(!pResponse)
     {
-        init(m_cfg);
+     return result_guard(OC_STACK_ERROR);
     }
 
-    OCPlatform::OCPlatform(const PlatformConfig& config, OC::oc_log_stream& log_target)
-     :  m_log_stream(log_target),
-        m_cfg(config)
+    std::string payload(pResponse->getPayload());
+
+    return result_guard(
+               OCNotifyListOfObservers(resourceHandle,
+                                       &observationIds[0], observationIds.size(),
+                                       reinterpret_cast<unsigned char *>(const_cast<char *>(payload.c_str()))));
+}
+
+OCResource::Ptr OCPlatform::constructResourceObject(const std::string& host, const std::string& uri,
+                                                    bool isObservable, const std::vector<std::string>& resourceTypes,
+                                                    const std::vector<std::string>& interfaces)
+{
+    if(!m_client)
     {
-        init(m_cfg);
+        return std::shared_ptr<OCResource>();
     }
 
-    OCPlatform::~OCPlatform(void)
+    return std::shared_ptr<OCResource>(new OCResource(m_client, host, uri, isObservable, resourceTypes, interfaces));
+}
+
+OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName,
+                                       FindCallback resourceHandler)
+{
+    return checked_guard(m_client, &IClientWrapper::ListenForResource,
+                         host, resourceName, resourceHandler);
+}
+
+
+OCStackResult OCPlatform::registerResource(OCResourceHandle& resourceHandle,
+                                           std::string& resourceURI,
+                                           const std::string& resourceTypeName,
+                                           const std::string& resourceInterface,
+                                           EntityHandler entityHandler,
+                                           uint8_t resourceProperty)
+{
+    return checked_guard(m_server, &IServerWrapper::registerResource,
+                         ref(resourceHandle), resourceURI, resourceTypeName, resourceInterface, entityHandler, resourceProperty);
+}
+
+OCStackResult OCPlatform::unregisterResource(const OCResourceHandle& resourceHandle) const
+{
+    return checked_guard(m_server, &IServerWrapper::unregisterResource,
+                         resourceHandle);
+}
+
+OCStackResult OCPlatform::unbindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
+{
+    return result_guard(OCUnBindResource(ref(collectionHandle), ref(resourceHandle)));
+}
+
+OCStackResult OCPlatform::unbindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
+{
+    for(const auto& h : resourceHandles)
     {
+       OCStackResult r;
+
+       if(OC_STACK_OK != (r = result_guard(OCUnBindResource(collectionHandle, h))))
+       {
+           return r;
+       }
     }
 
-    OCStackResult OCPlatform::notifyAllObservers(OCResourceHandle resourceHandle)
+    return OC_STACK_OK;
+}
+
+OCStackResult OCPlatform::bindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle)
+{
+    return result_guard(OCBindResource(collectionHandle, resourceHandle));
+}
+
+OCStackResult OCPlatform::bindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
+{
+    for(const auto& h : resourceHandles)
     {
-        return OCNotifyAllObservers(resourceHandle);
+       OCStackResult r;
+
+       if(OC_STACK_OK != (r = result_guard(OCBindResource(collectionHandle, h))))
+       {
+           return r;
+       }
     }
 
-    OCStackResult OCPlatform::notifyListOfObservers(
-                                          OCResourceHandle resourceHandle,
-                                          ObservationIds& observationIds,
-                                          const std::shared_ptr<OCResourceResponse> pResponse)
-    {
-        OCStackResult result = OC_STACK_ERROR;
+    return OC_STACK_OK;
+}
 
-        if(pResponse)
-        {
-            try
-            {
-                std::string payload = pResponse->getPayload();
-                unsigned char *pBuffer = new unsigned char[payload.length()+1];
-                strncpy((char*)pBuffer, payload.c_str(), payload.length() + 1);
+OCStackResult OCPlatform::bindTypeToResource(const OCResourceHandle& resourceHandle,
+                                             const std::string& resourceTypeName) const
+{
+    return checked_guard(m_server, &IServerWrapper::bindTypeToResource,
+                         resourceHandle, resourceTypeName);
+}
 
-                // TODO Logging
-                printf("\tGoing from stack for List of Observers: Payload: %s\n", (char*)pBuffer);
+OCStackResult OCPlatform::bindInterfaceToResource(const OCResourceHandle& resourceHandle,
+                                                  const std::string& resourceInterfaceName) const
+{
+    return checked_guard(m_server, &IServerWrapper::bindInterfaceToResource,
+                         resourceHandle, resourceInterfaceName);
+}
 
-                result = OCNotifyListOfObservers(resourceHandle, &observationIds[0],
-                                                 observationIds.size(), pBuffer);
+OCStackResult OCPlatform::startPresence(const unsigned int announceDurationSeconds)
+{
+    return checked_guard(m_server, &IServerWrapper::startPresence,
+                         announceDurationSeconds);
+}
 
-                delete(pBuffer);
-            }
-            catch(std::exception e) // TODO : define our own exception
-            {
-                throw e;
-            }
-        }
-        return result;
-    }
+OCStackResult OCPlatform::stopPresence()
+{
+    return checked_guard(m_server, &IServerWrapper::stopPresence);
+}
 
-    void OCPlatform::init(const PlatformConfig& config)
-    {
-        m_csdkLock = make_shared<std::mutex>();
-        std::unique_ptr<WrapperFactory> wrapperInstance(new WrapperFactory());
-        m_WrapperInstance = std::move(wrapperInstance);
+OCStackResult OCPlatform::subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
+                                            SubscribeCallback presenceHandler)
+{
+    return checked_guard(m_client, &IClientWrapper::SubscribePresence,
+                         &presenceHandle, host, presenceHandler);
+}
 
-        if(config.mode == ModeType::Server)
-        {
-            // Call server wrapper init
-            m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
-        }
-        else if(config.mode == ModeType::Client)
-        {
-            // Call client wrapper init
-            m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
-        }
-        else
-        {
-            // This must be both server and client
-            m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
-            m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
-        }
-    }
-
-    OCResource::Ptr OCPlatform::constructResourceObject(const std::string& host, const std::string& uri,
-        bool isObservable, const std::vector<std::string>& resourceTypes,
-        const std::vector<std::string>& interfaces)
-    {
-        if(m_client)
-        {
-            return std::shared_ptr<OCResource>(new OCResource(m_client, host, uri, isObservable, resourceTypes, interfaces));
-        }
-
-        else
-        {
-            return std::shared_ptr<OCResource>();
-        }
-    }
-
-    OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName,
-        FindCallback resourceHandler)
-    {
-        if(m_client)
-        {
-            return m_client->ListenForResource(host, resourceName, resourceHandler);
-        }
-        return OC_STACK_ERROR;
-    }
-
-
-    OCStackResult OCPlatform::registerResource(OCResourceHandle& resourceHandle,
-        std::string& resourceURI,
-        const std::string& resourceTypeName,
-        const std::string& resourceInterface,
-        EntityHandler entityHandler,
-        uint8_t resourceProperty)
-    {
-        OCStackResult result = OC_STACK_ERROR;
-
-        if(m_server)
-        {
-            try{
-                result = m_server->registerResource(resourceHandle, resourceURI, resourceTypeName, resourceInterface, entityHandler, resourceProperty);
-            }
-            catch(std::exception e) // TODO: define our own expception.
-            {
-                throw e;
-            }
-        }
-
-        return result;
-    }
-
-    OCStackResult OCPlatform::setDefaultDeviceEntityHandler(EntityHandler entityHandler)
-    {
-        OCStackResult result = OC_STACK_ERROR;
-
-        if(m_server)
-        {
-            try{
-                result = m_server->setDefaultDeviceEntityHandler(entityHandler);
-            }
-            catch(std::exception e) // TODO: define our own expception.
-            {
-                throw e;
-            }
-        }
-        return result;
-    }
-
-    OCStackResult OCPlatform::unregisterResource(const OCResourceHandle& resourceHandle) const
-    {
-        OCStackResult result = OC_STACK_ERROR;
-
-        if(m_server)
-        {
-            result = m_server->unregisterResource(resourceHandle);
-        }
-        return result;
-    }
-
-
-
-    OCStackResult OCPlatform::unbindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
-    {
-        OCStackResult result = OC_STACK_ERROR;
-
-        try {
-            result = OCUnBindResource(collectionHandle, resourceHandle);
-        }
-        catch(std::exception e) // TODO: define our own expception.
-        {
-            throw e;
-        }
-
-        return result;
-    }
-
-    OCStackResult OCPlatform::unbindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
-    {
-        OCStackResult result = OC_STACK_ERROR;
-
-        try {
-
-            for(const OCResourceHandle& handle : resourceHandles)
-            {
-                result = OCUnBindResource(collectionHandle, handle);
-
-                if(result != OC_STACK_OK)
-                {
-                    // TODO Should we unbind the previous successful ones?
-                    // TODO should we return which are succesful
-                    // Currently just returns with any failure
-                    return result;
-                }
-            }
-        }
-        catch(std::exception e) // TODO : define our own exception
-        {
-            throw e;
-        }
-
-        return result;
-    }
-
-    OCStackResult OCPlatform::bindResource(const OCResourceHandle collectionHandle, const OCResourceHandle resourceHandle)
-    {
-        OCStackResult result = OC_STACK_ERROR;
-
-        try {
-            result = OCBindResource(collectionHandle, resourceHandle);
-        }
-        catch(std::exception e) // TODO : define our own exception
-        {
-            throw e;
-        }
-
-        return result;
-    }
-
-    OCStackResult OCPlatform::bindResources(const OCResourceHandle collectionHandle, const std::vector<OCResourceHandle>& resourceHandles)
-    {
-        OCStackResult result = OC_STACK_ERROR;
-
-        try {
-
-            for(const OCResourceHandle& handle : resourceHandles)
-            {
-                result = OCBindResource(collectionHandle, handle);
-
-                if(result != OC_STACK_OK)
-                {
-                    // TODO Should we unbind the previous successful ones?
-                    // TODO should we return which are succesful
-                    // Currently just returns with any failure
-                    return result;
-                }
-            }
-        }
-        catch(std::exception e) // TODO : define our own exception
-        {
-            throw e;
-        }
-
-        return result;
-    }
-
-    OCStackResult OCPlatform::bindTypeToResource(const OCResourceHandle& resourceHandle,
-        const std::string& resourceTypeName) const
-    {
-        OCStackResult result = OC_STACK_ERROR;
-        if(m_server)
-        {
-            try
-            {
-                result = m_server->bindTypeToResource(resourceHandle, resourceTypeName);
-            }
-            catch (OCException& e)
-            {
-                log() << "Caught an exception..." << endl;
-                log() << "\tMessage: " << e.what()  << endl;
-                log() << "\t Reason: " << e.reason() << endl;
-            }
-        }
-        return result;
-    }
-
-    OCStackResult OCPlatform::bindInterfaceToResource(const OCResourceHandle& resourceHandle,
-        const std::string& resourceInterfaceName) const
-    {
-        OCStackResult result = OC_STACK_ERROR;
-        if(m_server)
-        {
-            try
-            {
-                result = m_server->bindInterfaceToResource(resourceHandle, resourceInterfaceName);
-            }
-            catch (OCException& e)
-            {
-                log() << "Caught an exception..." << endl;
-                log() << "\tMessage: " << e.what()  << endl;
-                log() << "\t Reason: " << e.reason() << endl;
-            }
-        }
-        return result;
-
-    }
-
-    OCStackResult OCPlatform::startPresence(const unsigned int announceDurationSeconds)
-    {
-        if(m_server)
-        {
-            return m_server->startPresence(announceDurationSeconds);
-        }
-        else
-        {
-            return OC_STACK_ERROR;
-        }
-    }
-
-    OCStackResult OCPlatform::stopPresence()
-    {
-        if(m_server)
-        {
-            return m_server->stopPresence();
-        }
-        else
-        {
-            return OC_STACK_ERROR;
-        }
-    }
-
-    OCStackResult OCPlatform::subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
-        SubscribeCallback presenceHandler)
-    {
-        if(m_client)
-        {
-            return m_client->SubscribePresence(&presenceHandle, host, presenceHandler);
-        }
-        else
-        {
-            return OC_STACK_ERROR;
-        }
-    }
-
-    OCStackResult OCPlatform::unsubscribePresence(OCPresenceHandle presenceHandle)
-    {
-        if(m_client)
-        {
-            return m_client->UnsubscribePresence(presenceHandle);
-        }
-        else
-        {
-            return OC_STACK_ERROR;
-        }
-    }
+OCStackResult OCPlatform::unsubscribePresence(OCPresenceHandle presenceHandle)
+{
+    return checked_guard(m_client, &IClientWrapper::UnsubscribePresence,
+                         ref(presenceHandle));
+}
 
 } //namespace OC

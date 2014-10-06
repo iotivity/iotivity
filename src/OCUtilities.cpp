@@ -18,19 +18,22 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <OCApi.h>
+
 #include "OCUtilities.h"
-#include <algorithm>
-#include <iterator>
+
 #include <boost/algorithm/string.hpp>
+
 #include <sstream>
+#include <iterator>
+#include <algorithm>
+
 extern "C" {
 #include <uri.h>    // libcoap
 #include <option.h> // libcoap
 }
 
-#include <OCApi.h>
-
-namespace OC{
+namespace OC {
 
     // Helper function to escape special character.
     std::string escapeString(const std::string& value)
@@ -164,3 +167,51 @@ OC::Utilities::QueryParamsKeyVal OC::Utilities::getQueryParams(const std::string
     }
     return qp;
 }
+
+namespace OC {
+
+OCStackResult result_guard(const OCStackResult r)
+{
+ std::ostringstream os;
+
+ switch(r)
+ {
+    default:
+        os << "result_guard(): unhandled exception: " << OCException::reason(r);
+        throw OCException(os.str(), r);
+
+    /* Exceptional conditions: */
+    case OC_STACK_NO_MEMORY:
+    case OC_STACK_COMM_ERROR:
+    case OC_STACK_NOTIMPL:
+    case OC_STACK_INVALID_URI:
+    case OC_STACK_INVALID_QUERY:
+    case OC_STACK_INVALID_IP:
+    case OC_STACK_INVALID_PORT:
+    case OC_STACK_INVALID_CALLBACK:
+    case OC_STACK_INVALID_METHOD:
+    case OC_STACK_INVALID_PARAM:
+    case OC_STACK_INVALID_OBSERVE_PARAM:
+        throw OCException(os.str(), r);
+
+    /* Non-exceptional failures or success: */
+    case OC_STACK_OK:
+    case OC_STACK_NO_RESOURCE:
+    case OC_STACK_RESOURCE_ERROR:
+    case OC_STACK_SLOW_RESOURCE:
+    case OC_STACK_NO_OBSERVERS:
+    case OC_STACK_OBSERVER_NOT_FOUND:
+    case OC_STACK_OBSERVER_NOT_ADDED:
+    case OC_STACK_OBSERVER_NOT_REMOVED:
+#ifdef WITH_PRESENCE
+    case OC_STACK_PRESENCE_STOPPED:
+    case OC_STACK_PRESENCE_DO_NOT_HANDLE:
+#endif
+
+    break;
+ }
+
+ return r;
+}
+
+} // namespace OC

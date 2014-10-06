@@ -20,12 +20,14 @@
 
 #ifndef _INTEL_OCUTILITIES_H_
 #define _INTEL_OCUTILITIES_H_
-#endif
 
 #include <map>
 #include <vector>
 #include <memory>
+#include <utility>
 #include <exception>
+
+#include "OCException.h"
 
 namespace OC {
     namespace Utilities {
@@ -48,3 +50,52 @@ namespace OC {
 
     }
 }
+
+/* The C++11 standard unfortunately forgot to provide make_unique<>! However, if we're
+using C++14 or later, we want to take the standard library's implementation: */
+#if defined(__cplusplus) && __cplusplus < 201300
+namespace OC {
+
+    template<typename T, typename ...XS>
+    std::unique_ptr<T> make_unique(XS&& ...xs)
+    {
+        return std::unique_ptr<T>(new T(std::forward<XS>(xs)...));
+    }
+
+} // namespace OC
+#else
+    using std::make_unique;
+#endif
+
+namespace OC {
+
+    using OC::make_unique;
+
+    /* Examine an OCStackResult, and either forward its value or raise an exception: */
+    OCStackResult result_guard(const OCStackResult r);
+
+    /* Check for a nullptr, and throw an exception if we see one; otherwise, return the
+    result of the function call: */
+    template <typename PtrT, typename FnT, typename ...ParamTs>
+    auto nil_guard(PtrT&& p, FnT&& fn, ParamTs&& ...params) -> OCStackResult
+    {
+        if(nullptr == p)
+        {
+            throw OCException("nullptr at nil_guard()", OC_STACK_INVALID_PARAM);
+        }
+
+        // Note that although parameters are being forwarded, std::bind() will make a single copy:
+        return std::bind(fn, p, std::forward<ParamTs>(params)...)();
+    }
+
+    /* Check for nullptr and forward the result of an OC function call on success; raise
+    an exception on failure or exceptional result: */
+    template <typename PtrT, typename FnT, typename ...ParamTs>
+    auto checked_guard(PtrT&& p, FnT&& fn, ParamTs&& ...params) -> OCStackResult
+    {
+        return result_guard(nil_guard(p, fn, std::forward<ParamTs>(params)...));
+    }
+
+} // namespace OC
+
+#endif
