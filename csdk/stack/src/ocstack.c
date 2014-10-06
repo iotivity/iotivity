@@ -415,6 +415,12 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
+    if((request) && (strlen(request) > MAX_REQUEST_LENGTH))
+    {
+        result = OC_STACK_INVALID_PARAM;
+        goto exit;
+    }
+
     requestUri = (unsigned char *) OCMalloc(uriLen + 1);
     if(requestUri)
     {
