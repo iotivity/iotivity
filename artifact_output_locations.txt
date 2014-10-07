@@ -117,7 +117,65 @@ TB Examples:
 		debug:
 			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinomega/ethernet_shield/debug/ocserver.hex
 
+===============================================================================
+====           Arduino ATMega 2560 - Release & Debug - WiFi Shield         ====
+===============================================================================
 
+TB Stack:
+	WiFi Shield:
+		release:
+			<oic-resource>/csdk/libcoap/arduinomega/wifi_shield/release/libcoap.a
+			<oic-resource>/csdk/arduinomega/wifi_shield/release/liboctbstack.a
+		debug:
+			<oic-resource>/csdk/libcoap/arduinomega/wifi_shield/debug/libcoap.a
+			<oic-resource>/csdk/arduinomega/wifi_shield/debug/liboctbstack.a
+
+TB Examples:
+	WiFi Shield:
+		release:
+			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinomega/wifi_shield/release/ocserver.hex
+		debug:
+			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinomega/wifi_shield/debug/ocserver.hex
+
+===============================================================================
+====           Arduino Due - Release & Debug - Ethernet Shield             ====
+===============================================================================
+
+TB Stack:
+	Ethernet Shield:
+		release:
+			<oic-resource>/csdk/libcoap/arduinodue/ethernet_shield/release/libcoap.a
+			<oic-resource>/csdk/arduinodue/ethernet_shield/release/liboctbstack.a
+		debug:
+			<oic-resource>/csdk/libcoap/arduinodue/ethernet_shield/debug/libcoap.a
+			<oic-resource>/csdk/arduinodue/ethernet_shield/debug/liboctbstack.a
+
+TB Examples:
+	Ethernet Shield:
+		release:
+			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue/ethernet_shield/release/ocserver.hex
+		debug:
+			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue/ethernet_shield/debug/ocserver.hex
+
+===============================================================================
+====           Arduino Due - Release & Debug - WiFi Shield         ====
+===============================================================================
+
+TB Stack:
+	WiFi Shield:
+		release:
+			<oic-resource>/csdk/libcoap/arduinodue/wifi_shield/release/libcoap.a
+			<oic-resource>/csdk/arduinodue/wifi_shield/release/liboctbstack.a
+		debug:
+			<oic-resource>/csdk/libcoap/arduinodue/wifi_shield/debug/libcoap.a
+			<oic-resource>/csdk/arduinodue/wifi_shield/debug/liboctbstack.a
+
+TB Examples:
+	WiFi Shield:
+		release:
+			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue/wifi_shield/release/ocserver.hex
+		debug:
+			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue/wifi_shield/debug/ocserver.hex
 
 
 

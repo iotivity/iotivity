@@ -45,13 +45,18 @@ LOGGER_DIR = $(ROOT_DIR)/logger
 STACK_DIR  = $(ROOT_DIR)/stack
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(OC_LOG_DIR)/include -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
 
-CFLAGS	:= -Os -Wall -c -DTB_LOG
+CC_FLAGS.debug		:= -O1 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic
+CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic
+
+CFLAGS := $(CC_FLAGS.$(BUILD)) -DTB_LOG
 
 ifeq ($(ARDUINOWIFI),1)
 	CFLAGS += -DARDUINOWIFI
 	ARDUINO_SHIELD_TYPE := "/wifi_shield"
+	TRANSPORT_OBJS = $(WIFI_COBJ)
 else
 	ARDUINO_SHIELD_TYPE := "/ethernet_shield"
+	TRANSPORT_OBJS = $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ)
 endif
 
 OUT_DIR := $(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)
@@ -78,14 +83,33 @@ prep_dirs:
 	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 $(APP_NAME).elf: $(APP_NAME).o core.a
+ifeq ($(PLATFORM),arduinomega)
 	$(CC) -Os -Wl,--gc-sections,--relax $(CFLAGS_PLATFORM) $(foreach obj, $^, $(OBJ_DIR)/$(obj)) -lm -o $(OBJ_DIR)/$@
+else ifeq ($(PLATFORM),arduinodue)
+	$(CXX) -Os -Wl,--gc-sections -mcpu=cortex-m3 -T/$(SDIR_ARD_CORE_3)/linker_scripts/gcc/flash.ld -Wl,-Map,$(APP_NAME).map -o $(OBJ_DIR)/$@ -lm -lgcc -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $(foreach obj, $(APP_NAME).o $(SYSCALLS_SAM3_OBJ) $(SPI_OBJ) $(TRANSPORT_OBJS) $(VARIANT_OBJ) core.a, $(OBJ_DIR)/$(obj)) $(SDIR_ARD_CORE_3)/libsam_sam3x8e_gcc_rel.a -Wl,--end-group
+else
+	$(error Wrong value for PLATFORM !!)
+endif
 
 $(APP_NAME).hex: $(APP_NAME).elf
+ifeq ($(PLATFORM),arduinomega)
 	$(AVR_OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $(OBJ_DIR)/$< $(OBJ_DIR)/$(APP_NAME).eep
 	$(AVR_OBJCOPY) -O ihex -R .eeprom $(OBJ_DIR)/$< $(OUT_DIR)/$@
+else ifeq ($(PLATFORM),arduinodue)
+	$(ARDUINO_TOOLS_DIR)/arm-none-eabi-objcopy -O binary $(OBJ_DIR)/$< $(OUT_DIR)/$@
+else
+	$(error Wrong value for PLATFORM !!)
+endif
 
 install: all
+ifeq ($(PLATFORM),arduinomega)
 	$(AVR_PROGRAMMER) -C$(ARDUINO_DIR)/hardware/tools/avrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P$(ARDUINO_PORT) -b115200 -D -Uflash:w:$(OUT_DIR)/$(APP_NAME).hex:i
+else ifeq ($(PLATFORM),arduinodue)
+	stty -F /dev/$(ARDUINO_PORT) speed 1200 cs8 -cstopb -parenb
+	$(ARDUINO_DIR)/hardware/tools/bossac -i -d --port=$(ARDUINO_PORT) -U false -e -w -v -b $(OUT_DIR)/$(APP_NAME).hex -R
+else
+	$(error Wrong value for PLATFORM !!)
+endif
 
 .PHONY: clean
 
