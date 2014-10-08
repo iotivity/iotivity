@@ -268,19 +268,54 @@ namespace OC
         }
     };
 
+    OCRepresentation parseJSONToRepresentation(const std::string& str);
+
+    inline OCRepresentation parseJSONToRepresentation(const std::string& str)
+    {
+        OCRepresentation rep;
+
+        AttributeMap attributeMap;
+
+        std::stringstream requestStream;
+        requestStream << str;
+        boost::property_tree::ptree payload;
+        try
+        {
+            boost::property_tree::read_json(requestStream, payload);
+        }
+        catch(boost::property_tree::json_parser::json_parser_error &e)
+        {
+            throw OCException("JSON parse error");
+        }
+
+        for(auto& item: payload)
+        {
+            std::string name = item.first.data();
+            std::string value = item.second.data();
+
+            attributeMap[name] = value;
+        }
+
+        rep.setAttributeMap(attributeMap);
+
+        return rep;
+    }
+
     typedef boost::variant<
                 int,
                 double,
                 bool,
+                OCRepresentation,
                 std::string,
                 std::vector<int>,
                 std::vector<double>,
                 std::vector<bool>,
                 std::vector<std::string>,
-                OCRepresentation> AttributeValue;
+                std::vector<OCRepresentation>
+                > AttributeValue;
 
     template <typename T>
-    inline std::string getJSONFromVector(std::vector<T> v)
+    inline std::string getJSONFromVector(const std::vector<T>& v)
     {
         std::ostringstream json;
 
@@ -332,17 +367,17 @@ namespace OC
                 }
             }
 
-            std::string operator() (const std::vector<int> numbers) const
+            std::string operator() (const std::vector<int>& numbers) const
             {
                 return getJSONFromVector(numbers);
             }
 
-            std::string operator() (const std::vector<double> numbers) const
+            std::string operator() (const std::vector<double>& numbers) const
             {
                 return getJSONFromVector(numbers);
             }
 
-            std::string operator() (const std::vector<bool> bools) const
+            std::string operator() (const std::vector<bool>& bools) const
             {
                 std::ostringstream json;
                 int first = 1;
@@ -365,7 +400,7 @@ namespace OC
                 return json.str();
             }
 
-            std::string operator() (const std::vector<std::string> strings) const
+            std::string operator() (const std::vector<std::string>& strings) const
             {
                 return getJSONFromVector(strings);
             }
@@ -382,6 +417,31 @@ namespace OC
 
                 return json.str();
             }
+
+            std::string operator() (const std::vector<OCRepresentation>& reps) const
+            {
+                std::ostringstream json;
+                int first = 1;
+
+                json << "\"[";
+                for(auto rep: reps)
+                {
+                    if(first)
+                    {
+                        first = 0;
+                        json << escapeString(rep.getJSONRepresentation());
+                    }
+                    else
+                    {
+                        json << ",";
+                        json << escapeString(rep.getJSONRepresentation());
+                    }
+                }
+                json << "]\"";
+
+                return json.str();
+            }
+
 
     };
 
@@ -474,7 +534,7 @@ namespace OC
 
                 if(m_str.length() >= 2)
                 {
-                    std::string str = m_str.substr(1, m_str.length()-2);
+                    std::string str = m_str.substr(2, m_str.length()-3);
 
                     std::vector<std::string> tokens;
                     split(str, ',', tokens);
@@ -513,32 +573,31 @@ namespace OC
                 }
             }
 
+            void operator() (std::vector<OCRepresentation>& reps) const
+            {
+                reps.clear();
+
+                if(m_str.length() >= 2)
+                {
+                    std::string str = m_str.substr(1, m_str.length()-2);
+
+                    std::vector<std::string> tokens;
+                    split(str, ',', tokens);
+
+                    for(auto s: tokens)
+                    {
+                        reps.push_back(parseJSONToRepresentation(s));
+                    }
+                }
+                else
+                {
+                    throw OCException("Array type should have at least []");
+                }
+            }
+
             void operator() (OCRepresentation& rep) const
             {
-                // TODO this will refactored
-                AttributeMap attributeMap;
-
-                std::stringstream requestStream;
-                requestStream << m_str;
-                boost::property_tree::ptree payload;
-                try
-                {
-                    boost::property_tree::read_json(requestStream, payload);
-                }
-                catch(boost::property_tree::json_parser::json_parser_error &e)
-                {
-                    throw OCException("JSON parse error");
-                }
-
-                for(auto& item: payload)
-                {
-                    std::string name = item.first.data();
-                    std::string value = item.second.data();
-
-                    attributeMap[name] = value;
-                }
-
-                rep.setAttributeMap(attributeMap);
+                rep = parseJSONToRepresentation(m_str);
             }
 
         private:
@@ -565,7 +624,7 @@ namespace OC
     template <typename T>
     T OCRepresentation::getValue(const std::string& str) const
     {
-        T val;
+        T val = T();
 
         auto x = m_attributeMap.find(str);
 

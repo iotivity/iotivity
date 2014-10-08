@@ -51,8 +51,7 @@ public:
 
     // array of lights representation with in GarageResource
     OCRepresentation m_lightRep;
-    std::vector<bool> m_lightStates;
-    std::vector<int> m_lightPowers;
+    std::vector<OCRepresentation> m_reps;
 
 public:
     /// Constructor
@@ -73,17 +72,33 @@ public:
             m_garageRep.setNULL("nullAttribute");
         }
 
+        std::vector<bool> lightStates;
+        std::vector<int>  lightPowers;
+
         for(int i = 0; i <= 9; i++)
         {
-            m_lightStates.push_back(i % 2 == 0);
-            m_lightPowers.push_back(i);
+            lightStates.push_back(i % 2 == 0);
+            lightPowers.push_back(i);
         }
 
-        m_lightRep.setValue("states", m_lightStates);
-        m_lightRep.setValue("powers", m_lightPowers);
+        m_lightRep.setValue("states", lightStates);
+        m_lightRep.setValue("powers", lightPowers);
 
         // Storing another representation within a representation
         m_garageRep.setValue("light", m_lightRep);
+
+        OCRepresentation rep1;
+        int value1 = 5;
+        rep1.setValue("key1", value1);
+        OCRepresentation rep2;
+        int value2 = 10;
+        rep2.setValue("key2", value2);
+
+        m_reps.push_back(rep1);
+        m_reps.push_back(rep2);
+
+        // storing array of representations
+        m_garageRep.setValue("reps", m_reps);
     }
 
     /* Note that this does not need to be a member function: for classes you do not have

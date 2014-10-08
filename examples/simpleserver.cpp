@@ -169,13 +169,9 @@ public:
     {
         static int first = 1;
 
-        std::cout << "In POST\n";
-
         // for the first time it tries to create a resource
         if(first)
         {
-            std::cout << "In POST/First\n";
-
             first = 0;
 
             if(OC_STACK_OK == createResource1())

@@ -41,6 +41,7 @@ public:
     std::vector<bool> m_lightStates;
     std::vector<int> m_lightPowers;
     OCRepresentation m_lightRep;
+    std::vector<OCRepresentation> m_reps;
 
     Garage() : m_state(false), m_name("")
     {
@@ -57,6 +58,7 @@ void printRepresentation(const OCRepresentation& rep)
         {
             myGarage.m_name = rep.getValue<std::string>("name");
         }
+        std::cout << "\tname: " << myGarage.m_name << std::endl;
 
         // You can directly try to get the value. this function
         // return false if there is no attribute "state"
@@ -64,7 +66,7 @@ void printRepresentation(const OCRepresentation& rep)
         {
             std::cout << "Attribute state doesn't exist in the representation\n";
         }
-
+        std::cout << "\tstate: " << myGarage.m_state << std::endl;
 
         OCRepresentation rep2 = rep;
 
@@ -94,8 +96,6 @@ void printRepresentation(const OCRepresentation& rep)
         myGarage.m_lightRep.getValue("states", myGarage.m_lightStates);
         myGarage.m_lightRep.getValue("powers", myGarage.m_lightPowers);
 
-        std::cout << "\tstate: " << myGarage.m_state << std::endl;
-        std::cout << "\tname: " << myGarage.m_name << std::endl;
         std::cout << "\tlightRep: states: ";
 
         int first = 1;
@@ -129,6 +129,12 @@ void printRepresentation(const OCRepresentation& rep)
         }
         std::cout << std::endl;
 
+        // Get vector of representations
+        rep.getValue("reps", myGarage.m_reps);
+        // Client know that server is sending two representations
+        // and has key1 and key2 repsectively
+        std::cout << "\treps[0].key1: " << myGarage.m_reps[0].getValue<int>("key1") << std::endl;
+        std::cout << "\treps[0].key2: " << myGarage.m_reps[1].getValue<int>("key2") << std::endl;
 }
 // callback handler on PUT request
 void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
