@@ -1,4 +1,4 @@
-.PHONY : pre oic-resource lib tgm sdk sampleapp
+.PHONY : pre resource lib tgm sdk sampleapp
 
 #.PHONY : lib tgm sdk sampleapp 
 all: .PHONY
@@ -6,8 +6,8 @@ all: .PHONY
 pre:
 	-mkdir release
 
-oic-resource:
-	cd ../../../../oic-resource/build/linux && $(MAKE)
+resource:
+	cd ../../../../resource/build/linux && $(MAKE)
 
 lib:
 	cd ../../lib/jsoncpp && $(MAKE)

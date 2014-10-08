@@ -4,7 +4,7 @@ CXX = g++
 
 CXX_FLAGS = -std=c++0x -Wall -pthread
 
-LIB_DIR = ../../../../../oic-resource
+LIB_DIR = ../../../../../resource
 
 CXX_INC := -I$(LIB_DIR)/include/ 
 CXX_INC += -I$(LIB_DIR)/csdk/stack/include/ 

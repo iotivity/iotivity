@@ -1,17 +1,17 @@
-.PHONY : oic-resource SampleApp
+.PHONY : resource SampleApp
 
 all: .PHONY
 
-oic-resource: clean
-	cd ../../../../oic-resource/csdk/build/arduino && $(MAKE) PLATFORM=arduinomega ARDUINOWIFI=0 BUILD=release
+resource: clean
+	cd ../../../../resource/csdk/build/arduino && $(MAKE) PLATFORM=arduinomega ARDUINOWIFI=0 BUILD=release
 
 SampleApp:
 	cd ../../sampleapp/arduino/bookmark && $(MAKE) BUILD=release
 	cd ../../sampleapp/arduino/light && $(MAKE) BUILD=release
 
 clean:
-	cd ../../../../oic-resource/build/linux && make clean
-	cd ../../../../oic-resource/csdk/build/arduino && make deepclean 
+	cd ../../../../resource/build/linux && make clean
+	cd ../../../../resource/csdk/build/arduino && make deepclean 
 	cd ../../sampleapp/arduino/bookmark && $(MAKE) clean
 	cd ../../sampleapp/arduino/light && $(MAKE) clean
 

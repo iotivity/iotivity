@@ -1,14 +1,14 @@
 PROTOCOL_ROOT = ../../
 
-.PHONY:pre oic-resource plugin-manager plugins sample-app
+.PHONY:pre resource plugin-manager plugins sample-app
 
 all: .PHONY
 
 pre:
 	-mkdir release
 
-oic-resource:
-	cd $(PROTOCOL_ROOT)../../oic-resource/build/linux && $(MAKE)
+resource:
+	cd $(PROTOCOL_ROOT)../../resource/build/linux && $(MAKE)
 
 plugin-manager:
 	cd $(PROTOCOL_ROOT)plugin-manager/build/linux && $(MAKE)

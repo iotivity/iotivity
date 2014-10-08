@@ -1,11 +1,11 @@
-OCPATH = ../../../../../oic-resource/build/linux
+OCPATH = ../../../../../resource/build/linux
 NOTIFICATIONMGRPATH = ../../../NotificationManager/build/linux
 
-.PHONY : oic-resource NotificationManager
+.PHONY : resource NotificationManager
 
 all: .PHONY
 
-oic-resource:
+resource:
 	cd $(OCPATH) && $(MAKE)
 
 NotificationManager:

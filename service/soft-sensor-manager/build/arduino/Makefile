@@ -47,8 +47,8 @@ post_job:
 
 clean:
  	
-#	@cd ${CUR_DIR}/../../../oic-resource/ && make clean
-#	@cd ${CUR_DIR}/../../../oic-resource/csdk && make deepclean
+#	@cd ${CUR_DIR}/../../../resource/ && make clean
+#	@cd ${CUR_DIR}/../../../resource/csdk && make deepclean
 #	@cd ${CUR_DIR}/9_Arduino_THSensorApp && make clean
 #	@cd ${CUR_DIR} 
 	rm -rf ./${RST_NAME}
