@@ -1,0 +1,12 @@
+[Unit]
+Description=OIC
+After=deviced.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/simpleserver
+TimeoutStopSec=1s
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
