@@ -44,7 +44,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
     PROGMEM const char level3[] = "ERROR";
     PROGMEM const char level4[] = "FATAL";
 
-    PROGMEM const char * LEVEL[]  = {level0, level1, level2, level3, level4};
+    PROGMEM const char * const LEVEL[]  = {level0, level1, level2, level3, level4};
 
     static void OCLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
 #ifdef ARDUINO_ARCH_AVR
