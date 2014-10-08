@@ -1,0 +1,44 @@
+include ../../../../config.mk
+
+CXX = g++
+
+CXX_FLAGS = -std=c++0x -Wall -pthread
+
+LIB_DIR = ../../../../../../oic-resource
+
+SRC_DIR = ../../src
+
+CXX_INC := -I$(LIB_DIR)/include/ 
+CXX_INC += -I$(LIB_DIR)/csdk/stack/include/ 
+CXX_INC += -I$(LIB_DIR)/csdk/ocsocket/include/ 
+CXX_INC += -I$(LIB_DIR)/csdk/ocrandom/include/ 
+CXX_INC += -I$(LIB_DIR)/csdk/logger/include/
+CXX_INC += -I$(BOOST_DIR) 
+CXX_INC += -I../../lib 
+CXX_INC += -I../../../../lib/cpluff/libcpluff
+
+.PHONY: lib release_build ./release/fanserver_mqtt_plugin.so 
+
+all: .PHONY
+
+lib:
+	cd ../../lib && $(MAKE)
+
+release_build:
+	-mkdir release
+	-mkdir release/obj
+	cp plugin.xml release
+
+./release/fanserver_mqtt_plugin.so: ./release/obj/fanserver_mqtt_plugin.o ./release/obj/fanserver.o
+	$(CXX) -shared -o ./release/fanserver_mqtt_plugin.so ./release/obj/fanserver_mqtt_plugin.o ./release/obj/fanserver.o $(LIB_DIR)/build/linux/release/obj/liboc.a $(LIB_DIR)/csdk/build/linux/release/liboctbstack.a ../../../../lib/cpluff/libcpluff/.libs/libcpluff.a  -L../../lib -lmosquitto -lssl -lrt
+
+./release/obj/fanserver_mqtt_plugin.o: $(SRC_DIR)/fanserver_mqtt_plugin.cpp
+	$(CXX) $(CXX_INC) -fPIC -o ./release/obj/fanserver_mqtt_plugin.o -c $(SRC_DIR)/fanserver_mqtt_plugin.cpp 
+
+./release/obj/fanserver.o: $(SRC_DIR)/fanserver.cpp
+	$(CXX) $(CXX_FLAGS) -fPIC -o ./release/obj/fanserver.o -c $(SRC_DIR)/fanserver.cpp $(CXX_INC)
+	
+clean:
+	cd ../../lib && $(MAKE) clean
+	rm -rf ./release/obj
+	cd ./release && rm -f *.so

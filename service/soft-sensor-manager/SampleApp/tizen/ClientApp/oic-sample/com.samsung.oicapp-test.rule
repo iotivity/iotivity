@@ -1,0 +1,3 @@
+com.samsung.oicapp-test system::use_internet r
+
+system::use_internet com.samsung.oicapp-test r

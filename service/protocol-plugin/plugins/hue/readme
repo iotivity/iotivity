@@ -1,0 +1,8 @@
+1.Put the plugin library "libplugin-hue-light.so" ,xml file "plugin.xml", in a prepared folder, such as "/root/hue_plugin/"
+2.Set the hue bridge user to "newdeveloper"
+3.Using plugin manager tool 
+  ./cpluff-console /root/hue_plugin run
+
+!!!for the hub network enviroment, you should add a route list for multicast
+#route add default gw 192.168.0.1 eth0
+

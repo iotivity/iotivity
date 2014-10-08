@@ -1,0 +1,206 @@
+/*
+ * Copyright (c) 2011 Samsung Electronics Co., Ltd All Rights Reserved
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+
+#define UPPERVIEW_WIDTH 308
+#define UPPERVIEW_HEIGHT 74
+collections {
+	images {
+		image : "tw_popup_bg_holo_dark.png" COMP;
+		image : "tw_popup_bg_holo_full.png" COMP;
+	}
+	group {
+	name : "elm/layout/windicator/default";
+
+	parts {
+		part {
+			name : "bg";
+			type : RECT;
+			scale : 1;
+			description {
+				state : "default";
+				color : 0 0 0 0;
+			}
+		}
+
+		part {
+			name : "popup.bg";
+			type : IMAGE;
+			scale : 1;
+			description {
+				state : "default";
+				rel1.to : "bg";
+				rel2.to : "bg";
+				image {
+					normal : "tw_popup_bg_holo_dark.png";
+					border : 6 6 6 6;
+				}
+			}
+			description {
+				state : "show";
+				inherit : "default" 0.0;
+				image {
+					normal : "tw_popup_bg_holo_dark.png";
+					border : 6 6 6 6;
+				}
+			}
+		}
+
+		part {
+			name : "rect.indicator";
+			type : SPACER;
+			scale : 1;
+			description {
+				state : "default" 0.0;
+				rel1.to : "sw.indicator";
+				rel2.to : "sw.indicator";
+				rel2.offset : -2 -2;
+			}
+		}
+		part {
+			name : "sw.indicator";
+			type : SWALLOW;
+			scale : 1;
+			description {
+				state : "default" 0.0;
+				min : 0 74;
+				max : -1 74;
+				align : 0.5 0.0;
+				fixed : 1 1;
+				rel1 {
+					to : "bg";
+					relative : 0.0 0.0;
+					offset : 6 6;
+				}
+				rel2 {
+					to : "bg";
+					relative : 1.0 0.0;
+					offset : -6 0;
+				}
+			}
+		}
+		part {
+			name : "rect.content";
+			type : RECT;
+			//type : SPACER;
+			scale : 1;
+			description {
+				state : "default";
+				color : 0 0 0 0;
+				rel1 {
+					to : "rect.indicator";
+					relative : 0.0 1.0;
+					offset : 0 0;
+				}
+				rel2 {
+					to_x : "rect.indicator";
+					to_y : "bg";
+					relative : 1.0 1.0;
+					offset : -1 -7;
+				}
+			}
+		}
+
+		part {
+			name : "sw.inner_layout";
+			type : SWALLOW;
+			scale : 1;
+			description {
+				state : "default" 0.0;
+				fixed : 1 1;
+				align : 0.0 0.0;
+				rel1 {
+					to : "rect.content";
+					relative : 0.0 0.0;
+				}
+				rel2 {
+					to : "rect.content";
+					relative : 1.0 1.0;
+				}
+			}
+		}
+
+		part {
+			name : "horizonline.indicator";
+			type : RECT;
+			scale : 1;
+			description {
+				state : "default" 0.0;
+				rel1 {
+					to_x : "bg";
+					to_y : "sw.indicator";
+					relative : 0.0 1.0;
+				}
+				rel2 {
+					to_x : "bg";
+					to_y : "sw.indicator";
+					relative : 1.0 1.0;
+					offset : 0 1;
+				}
+				//color : 34 34 34 255;
+				color : 0 0 0 0;
+			}
+		}
+	}
+}
+
+group {
+	name : "windicator/notime_upperview";
+
+	parts {
+		part {
+			name : "bg";
+			type : RECT;
+			scale : 1;
+			description {
+				state : "default" 0.0;
+				min : UPPERVIEW_WIDTH UPPERVIEW_HEIGHT;
+				max : UPPERVIEW_WIDTH UPPERVIEW_HEIGHT;
+				fixed : 1 1;
+				//color : 0 0 0 204;
+				color : 0 0 0 0;
+			}
+		}
+		part {
+			name: "txt.battery";
+			type: TEXT;
+			scale: 1;
+			description{
+				state: "default" 0.0;
+				visible : 1;
+				color: 255 255 255 255;
+				fixed : 1 1;
+				align : 1.0 (17/UPPERVIEW_HEIGHT);
+				rel1 {
+					relative: (UPPERVIEW_WIDTH-2-43-6)/UPPERVIEW_WIDTH 0.0;
+				}
+				rel2 {
+					relative: (UPPERVIEW_WIDTH-2-43-6)/UPPERVIEW_WIDTH 1.0;
+				}
+				text {
+					font: "Tizen:style=Regular";
+					text_class: "tizen";
+					size: 36;
+					align: 1.0 0.5;
+					min : 1 0;
+					text: "Text Text Text";
+				}
+			}
+		}
+	}
+}
+}

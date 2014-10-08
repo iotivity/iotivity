@@ -1,0 +1,11 @@
+LinuxMain.o
+NotificationManager.o
+RegistrationManager.o
+ResourceManager.o
+SampleConsumer.o
+SampleProvider.o
+VirtualRepresentation.o
+NotificationManager
+SampleConsumer
+SampleProvider
+

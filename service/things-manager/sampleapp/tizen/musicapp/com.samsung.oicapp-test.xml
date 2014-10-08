@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" package="com.samsung.oicapp-test" version="0.1.0" install-location="internal-only">
+	<label>OIC tset</label>
+	<author email="email@samsung.com" href="www.samsung.com">Name</author>
+	<description>OIC test Application</description>
+	<ui-application appid="com.samsung.oicapp-test" exec="/usr/apps/com.samsung.oicapp-test/bin/oicapp-test" nodisplay="false" multiple="false" type="capp" taskmanage="true" mainapp="true">
+		<icon>com.samsung.oicapp-test.png</icon>
+		<label>OIC test</label>
+	</ui-application>
+</manifest>

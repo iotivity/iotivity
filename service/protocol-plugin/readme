@@ -1,0 +1,20 @@
+
+This version of protocol plug-in source code has following functionality.
+
+1. provides plug-in manager which can register, unregister, start and stop plug-in library.
+2. provides plug-in library which can communicate with MQTT protocol FAN.
+3. provides OIC Sample Client which can turn on/off FAN.
+
+So, to test a plug-in, follow below steps.
+
+1. Locate shared plug-in library and XML file in a specific folder.
+2. Register the plug-in with directory path input from plug-in manager sample.
+3. Start the plug-in from plug-in manager sample.
+4. Run OIC sample client.
+
+If you have any questions about protocol plug-in component, please contact with following addresses.
+
+kc7576.park@samsung.com
+heesung84.kim@samsung.com
+junho13.lee@samsung.com
+yh_.joo@samsung.com
