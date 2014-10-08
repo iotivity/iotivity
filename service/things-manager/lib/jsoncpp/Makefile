@@ -1,5 +1,5 @@
 
-#IOT_BASE=../../../oic-resource
+#IOT_BASE=../../../resource
 #BOOST_ROOT=../../../
 #BOOST_DIR = $(BOOST_ROOT)boost_1_51_0
 #BOOST=${BOOST_DIR}

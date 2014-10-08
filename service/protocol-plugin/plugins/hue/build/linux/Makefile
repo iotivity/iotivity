@@ -19,7 +19,7 @@ SRC_CPP += $(SRC_DIR)/http_curl.cpp
 SRC_CPP += $(SRC_DIR)/HueLightHandler.cpp 
 SRC_CPP += $(SRC_DIR)/HueBridge.cpp
 
-OIC_DIR = $(COMMON_DIR)/../../../../oic-resource
+OIC_DIR = $(COMMON_DIR)/../../../../resource
 OCLIB_DIR = $(OIC_DIR)/build/linux/$(BUILD)/obj
 CSDK_DIR = $(OIC_DIR)/csdk/build/linux/$(BUILD)
 

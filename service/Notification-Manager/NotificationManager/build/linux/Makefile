@@ -1,6 +1,6 @@
 VPATH = ../../src:../../../SampleApp/linux/sampleConsumer:../../../SampleApp/linux/sampleProvider
 
-OCPATH = ../../../../../oic-resource
+OCPATH = ../../../../../resource
 OCINCLUDE = $(OCPATH)/include
 STACKINCLUDE = $(OCPATH)/csdk/stack/include
 SOCKETINCLUDE = $(OCPATH)/csdk/ocsocket/include

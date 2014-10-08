@@ -6,7 +6,7 @@ CXX_FLAGS = -std=c++0x -Wall
 
 CPLUFF_DIR = ../../../lib/cpluff/libcpluff
 
-LIB_DIR = ../../../../../oic-resource
+LIB_DIR = ../../../../../resource
 
 SRC = ../../src/
 
