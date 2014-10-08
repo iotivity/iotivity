@@ -29,7 +29,7 @@
 #define OC_RSRVD_HREF                   "href"
 #define OC_RSRVD_RESOURCE_TYPE          "rt"
 #define OC_RSRVD_INTERFACE              "if"
-#define OC_RSRVD_DEFAULT                "oc.mi.def"
+#define OC_RSRVD_INTERFACE_DEFAULT      "oc.mi.def"
 #define OC_RSRVD_INTERFACE_LL           "oc.mi.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oc.mi.b"
 #define OC_RSRVD_OBSERVABLE             "obs"

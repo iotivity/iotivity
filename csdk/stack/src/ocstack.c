@@ -737,9 +737,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     }
     // Validate parameters
     // Is it presented during resource discovery?
-    if (!handle || !resourceTypeName || !resourceInterfaceName || !uri) {
+    if (!handle || !resourceTypeName || !uri) {
         OC_LOG(ERROR, TAG, PCF("Input parameter is NULL"));
         return OC_STACK_INVALID_PARAM;
+    }
+
+    if(!resourceInterfaceName || strlen(resourceInterfaceName) == 0) {
+        resourceInterfaceName = OC_RSRVD_INTERFACE_DEFAULT;
     }
 
     // Make sure resourceProperties bitmask has allowed properties specified

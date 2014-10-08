@@ -133,7 +133,7 @@ ValidateQuery (const unsigned char *query, OCResourceHandle resource,
         if(CheckIFParamSupport((OCResource *)resource, ifPtr) != OC_STACK_OK)
             return OC_STACK_INVALID_QUERY;
 
-        if (strcmp (ifPtr, OC_RSRVD_DEFAULT) == 0)
+        if (strcmp (ifPtr, OC_RSRVD_INTERFACE_DEFAULT) == 0)
             *ifParam = STACK_IF_DEFAULT;
         else if (strcmp (ifPtr, OC_RSRVD_INTERFACE_LL) == 0)
             *ifParam = STACK_IF_LL;
