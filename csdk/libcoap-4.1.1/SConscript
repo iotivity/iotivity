@@ -1,0 +1,80 @@
+##
+# libcoap (static library) build script
+##
+
+Import('env', 'BUILD_TARGET', 'TARGET_CPU_ARCH', 'RELEASE_BUILD', 'BUILD_DIR', 'ARDUINO_HOME')
+
+libcoap_env = env.Clone()
+
+# As in the source code, it includes arduino Time library (C++)
+# It requires compile the .c with g++
+if BUILD_TARGET == 'arduino':
+	libcoap_env.Replace(CC = env.get('CXX'))
+	libcoap_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+
+######################################################################
+# Build flags
+######################################################################
+libcoap_env.PrependUnique(CPPPATH = [
+		'../ocsocket/include',
+		'../ocmalloc/include',
+		'../logger/include',
+		'../ocrandom/include',
+		'../stack',
+		'../../oc_logger/include'
+		])
+
+if BUILD_TARGET not in ['arduino', 'windows', 'winrt']:
+	libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+	libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99'])
+
+if BUILD_TARGET not in ['windows', 'winrt']:
+	libcoap_env.AppendUnique(CFLAGS = ['-Wall', '-ffunction-sections',
+			'-fdata-sections', '-fno-exceptions'])
+
+if not RELEASE_BUILD:
+	libcoap_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+######################################################################
+# Source files and Target(s)
+######################################################################
+libcoap_src = [
+	'pdu.c',
+	'net.c',
+	'debug.c',
+	'encode.c',
+	'uri.c',
+	'coap_list.c',
+	'resource.c',
+	'hashkey.c',
+    'str.c',
+	'option.c',
+	'async.c',
+	'subscribe.c',
+	'block.c',
+	'../logger/src/logger.c',
+	'../ocrandom/src/ocrandom.c',
+	'../ocmalloc/src/ocmalloc.c',
+	'../../oc_logger/c/oc_logger.c',
+	'../../oc_logger/c/oc_console_logger.c'
+	]
+
+if BUILD_TARGET == 'arduino':
+	if env.get('NET') == 'Wifi':
+		libcoap_src.append(['../ocsocket/src/ocsocket_arduino_wifi.cpp'])
+	else:
+		libcoap_src.append(['../ocsocket/src/ocsocket_arduino.cpp'])
+
+	if RELEASE_BUILD:
+		prefix = TARGET_CPU_ARCH + '-'
+	else:
+		prefix = TARGET_CPU_ARCH + 'd-'
+	time_obj = libcoap_env.Object(ARDUINO_HOME + '/libraries/Time/Time.cpp', OBJPREFIX=prefix)
+	libcoap_src.append(time_obj)
+else:
+	libcoap_src.append(['../ocsocket/src/ocsocket.c'])
+
+libcoap = libcoap_env.StaticLibrary('libcoap', libcoap_src, OBJPREFIX='libcoap')
+i_lc = libcoap_env.Install(BUILD_DIR, libcoap)
+Alias('libcoap', i_lc)
+env.AppendUnique(TS = ['libcoap'])

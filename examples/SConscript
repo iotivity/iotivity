@@ -1,0 +1,52 @@
+##
+# Examples build script
+##
+Import('env', 'RELEASE_BUILD', 'BUILD_TARGET', 'BUILD_DIR', 'SRC_TOP_DIR')
+# Add third party libraries
+SConscript(SRC_TOP_DIR + '/third_party_libs.scons')
+examples_env = env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+examples_env.AppendUnique(CPPPATH = [
+		'../include/',
+		'../csdk/stack/include',
+		'../csdk/ocsocket/include',
+		'../csdk/ocrandom/include',
+		'../csdk/logger/include',
+		'../csdk/libcoap',
+		'../oc_logger/include'
+		])
+
+if BUILD_TARGET not in ['windows', 'winrt']:
+	examples_env.AppendUnique(CXXFLAGS = ['-std=c++11', '-Wall'])
+
+examples_env.AppendUnique(LIBPATH = [BUILD_DIR])
+examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
+
+if BUILD_TARGET == 'android':
+	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	examples_env.AppendUnique(LIBS = ['gnustl_static'])
+	examples_env.AppendUnique(LINKFLAGS = ['-static'])
+	examples_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+
+	if not RELEASE_BUILD:
+		examples_env.AppendUnique(LIBS = ['log'])
+######################################################################
+# Source files and Targets
+######################################################################
+simpleserver = examples_env.Program('simpleserver', 'simpleserver.cpp')
+simpleclient = examples_env.Program('simpleclient', 'simpleclient.cpp')
+presenceserver = examples_env.Program('presenceserver', 'presenceserver.cpp')
+presenceclient = examples_env.Program('presenceclient', 'presenceclient.cpp')
+simpleclientserver = examples_env.Program('simpleclientserver', 'simpleclientserver.cpp')
+roomserver = examples_env.Program('roomserver', 'roomserver.cpp')
+roomclient = examples_env.Program('roomclient', 'roomclient.cpp')
+
+Alias("examples", [simpleserver, simpleclient, presenceserver, presenceclient,
+		simpleclientserver, roomserver, roomclient])
+env.AppendUnique(TS = ['examples'])
+
+if BUILD_TARGET not in ['ios']:
+	SConscript(BUILD_DIR + 'examples/ocicuc/SConscript')

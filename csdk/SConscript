@@ -1,0 +1,69 @@
+##
+# liboctbstack (static library) build script
+##
+
+Import('env', 'BUILD_TARGET', 'TARGET_CPU_ARCH', 'RELEASE_BUILD', 'BUILD_DIR', 'SRC_TOP_DIR')
+
+liboctbstack_env = env.Clone()
+
+# Add third party libraries
+SConscript(SRC_TOP_DIR + '/third_party_libs.scons')
+Import('OIC_UTILS')
+
+# As in the source code, it includes arduino Time library (C++)
+# It requires compile the .c with g++
+if BUILD_TARGET == 'arduino':
+	liboctbstack_env.Replace(CC = env.get('CXX'))
+	liboctbstack_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+
+######################################################################
+# Build flags
+######################################################################
+liboctbstack_env.PrependUnique(CPPPATH = [
+		OIC_UTILS + '/tb/cJSON/',
+		'ocsocket/include',
+		'logger/include',
+		'ocrandom/include',
+		'ocmalloc/include',
+		'libcoap',
+		'occoap/include',
+		'stack/include',
+		'stack/include/internal',
+		'../oc_logger/include'
+		])
+
+if BUILD_TARGET not in ['arduino', 'windows', 'winrt']:
+	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
+	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
+
+if BUILD_TARGET not in ['windows', 'winrt']:
+	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
+
+if not RELEASE_BUILD:
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+OCTBSTACK_SRC = 'stack/src/'
+liboctbstack_src = [
+	'occoap/src/occoap.c',
+	'occoap/src/occoaphelper.c',
+	OCTBSTACK_SRC + 'ocstack.c',
+	OCTBSTACK_SRC + 'occlientcb.c',
+	OCTBSTACK_SRC + 'ocresource.c',
+	OCTBSTACK_SRC + 'ocobserve.c',
+	OCTBSTACK_SRC + 'occollection.c',
+	]
+
+if RELEASE_BUILD:
+	prefix = TARGET_CPU_ARCH + '-'
+else:
+	prefix = TARGET_CPU_ARCH + 'd-'
+cjson_obj = liboctbstack_env.Object(OIC_UTILS + '/tb/cJSON/cJSON.c', OBJPREFIX=prefix)
+liboctbstack_src.append(cjson_obj)
+
+liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
+i_lctbs = liboctbstack_env.Install(BUILD_DIR, liboctbstack)
+Alias('liboctbstack', i_lctbs)
+env.AppendUnique(TS = ['liboctbstack'])

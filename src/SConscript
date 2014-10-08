@@ -1,0 +1,46 @@
+##
+# OCLib (static library) build script
+##
+Import('env', 'BUILD_TARGET', 'BUILD_DIR', 'SRC_TOP_DIR')
+
+# Add third party libraries
+SConscript(SRC_TOP_DIR + '/third_party_libs.scons')
+
+oclib_env = env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+oclib_env.AppendUnique(CPPPATH = [
+		'../include/',
+		'../csdk/stack/include',
+		'../csdk/ocsocket/include',
+		'../csdk/ocrandom/include',
+		'../csdk/logger/include',
+		'../csdk/libcoap',
+		'../oc_logger/include'
+		])
+
+if BUILD_TARGET not in ['windows', 'winrt']:
+	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++11', '-Wall'])
+
+if BUILD_TARGET == 'android':
+	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	oclib_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+oclib_src = [
+		'OCPlatform.cpp',
+		'OCResource.cpp',
+		'OCUtilities.cpp',
+		'OCException.cpp',
+		'InProcServerWrapper.cpp',
+		'InProcClientWrapper.cpp'
+	]
+
+oclib = oclib_env.StaticLibrary('oc', oclib_src)
+i_ocl = oclib_env.Install(BUILD_DIR, oclib)
+Alias('liboc', i_ocl)
+env.AppendUnique(TS = ['liboc'])

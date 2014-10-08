@@ -1,0 +1,19 @@
+##
+# This script set ios specific flags (GNU GCC)
+#
+##
+Import('env', 'TARGET_CPU_ARCH', 'SYS_VERSION')
+
+# setting of IOS is almost the same as Darwin(MAC OSX)
+env.SConscript('../darwin/SConscript')
+
+if TARGET_CPU_ARCH in ['i386', 'x86_64']: #Simulator
+	flag = '-mios-simulator-version-min=' + SYS_VERSION
+	env.AppendUnique(CXXFLAGS = [flag])
+	env.AppendUnique(CCFLAGS = [flag])
+	env.AppendUnique(LINKFLAGS = [flag])
+else:
+	flag = '-miphoneos-version-min=' + SYS_VERSION
+	env.AppendUnique(CXXFLAGS = [flag])
+	env.AppendUnique(CCFLAGS = [flag])
+	env.AppendUnique(LINKFLAGS = [flag])

@@ -1,0 +1,47 @@
+##
+# This script set darwin specific flags (GNU GCC)
+#
+##
+import platform
+
+Import('env', 'RELEASE_BUILD', 'BUILD_TARGET', 'TARGET_CPU_ARCH', 'SYS_VERSION')
+
+if SYS_VERSION is None:
+	print '''
+*********************************** Error *************************************
+*   MAC OSX/IOS version isn't set, please set it in command line as :         *
+*      # scons SYS_VERSION=<version> ...                                      *
+*   To get the version, please see:                      					  *
+* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/   *
+* /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/ *
+*******************************************************************************
+'''
+	Exit(1)
+
+# Set release/debug flags
+if RELEASE_BUILD:
+	env.AppendUnique(CFLAGS = ['-Os'])
+	env.AppendUnique(CXXFLAGS = ['-Os'])
+	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+else:
+	env.AppendUnique(CFLAGS = ['-g'])
+	env.AppendUnique(CXXFLAGS = ['-g'])
+
+if BUILD_TARGET == 'darwin':
+	SYS_ROOT = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX' + SYS_VERSION + '.sdk/'
+else:
+	if TARGET_CPU_ARCH in ['i386', 'x86_64']:
+		SYS_ROOT = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator' + SYS_VERSION + '.sdk/'
+	else:
+		SYS_ROOT = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS' + SYS_VERSION + '.sdk/'
+
+# Set arch flags
+env.AppendUnique(CXXFLAGS = ['-arch', TARGET_CPU_ARCH, '-isysroot', SYS_ROOT])
+env.AppendUnique(CCFLAGS = ['-arch', TARGET_CPU_ARCH, '-isysroot', SYS_ROOT])
+env.AppendUnique(LINKFLAGS = ['-arch', TARGET_CPU_ARCH, '-isysroot', SYS_ROOT])
+
+if BUILD_TARGET == 'darwin':
+	flag = '-mmacosx-version-min=' + SYS_VERSION
+	env.AppendUnique(CXXFLAGS = [flag])
+	env.AppendUnique(CCFLAGS = [flag])
+	env.AppendUnique(LINKFLAGS = [flag])
