@@ -1,4 +1,4 @@
-/* Example program for fitting in with the ocicuc driver program: */
+/* Example program illustrating how to work with the ocicuc driver program: */
 
 #include "exec.hpp"
 
