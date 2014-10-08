@@ -284,13 +284,13 @@ namespace OC
     {
         std::ostringstream json;
 
-        json << "[";
+        json << "\"[";
         if(v.size() != 0)
         {
             std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(json, ","));
             json << v.back();
         }
-        json << "]";
+        json << "]\"";
 
         return json.str();
     }
@@ -347,7 +347,7 @@ namespace OC
                 std::ostringstream json;
                 int first = 1;
 
-                json << "[";
+                json << "\"[";
                 for(auto b: bools)
                 {
                     if(first)
@@ -360,7 +360,7 @@ namespace OC
                         b ? json << ",true" : json << ",false";
                     }
                 }
-                json << "]";
+                json << "]\"";
 
                 return json.str();
             }
