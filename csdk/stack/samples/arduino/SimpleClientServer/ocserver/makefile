@@ -105,7 +105,7 @@ install: all
 ifeq ($(PLATFORM),arduinomega)
 	$(AVR_PROGRAMMER) -C$(ARDUINO_DIR)/hardware/tools/avrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P$(ARDUINO_PORT) -b115200 -D -Uflash:w:$(OUT_DIR)/$(APP_NAME).hex:i
 else ifeq ($(PLATFORM),arduinodue)
-	stty -F /dev/$(ARDUINO_PORT) speed 1200 cs8 -cstopb -parenb
+	stty -F $(ARDUINO_PORT) speed 1200 cs8 -cstopb -parenb
 	$(ARDUINO_DIR)/hardware/tools/bossac -i -d --port=$(ARDUINO_PORT) -U false -e -w -v -b $(OUT_DIR)/$(APP_NAME).hex -R
 else
 	$(error Wrong value for PLATFORM !!)
