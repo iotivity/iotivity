@@ -29,8 +29,8 @@ class OCException : public std::runtime_error
 {
     public:
         OCException(const std::string& msg, OCStackResult reason = OC_STACK_ERROR)
-         : std::runtime_error(msg),  
-           m_reason(reason) 
+         : std::runtime_error(msg),
+           m_reason(reason)
         {}
 
         static std::string reason(const OCStackResult sr);

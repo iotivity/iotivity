@@ -70,7 +70,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
 #endif
        case OC_STACK_INVALID_OPTION:
             return "Invalid option";
-
+       case OC_STACK_MALFORMED_RESPONSE:
+            return "Malformed response";
        case OC_STACK_ERROR:
             return "General Fault";
     }

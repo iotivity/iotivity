@@ -163,7 +163,10 @@ namespace OC
 
         if(clientResponse->result != OC_STACK_OK)
         {
-            context->owner->log() << "listenCallback(): failed to create resource. clientResponse: " << clientResponse->result << std::flush;
+            oclog() << "listenCallback(): failed to create resource. clientResponse: "
+                    << clientResponse->result
+                    << std::flush;
+
             return OC_STACK_KEEP_TRANSACTION;
         }
 
@@ -178,7 +181,9 @@ namespace OC
         }
         catch(boost::property_tree::json_parser::json_parser_error &e)
         {
-                context->owner->log() << "listenCallback(): read_json() failed: " << e.what() << std::flush;
+                oclog() << "listenCallback(): read_json() failed: " << e.what()
+                        << std::flush;
+
                 return OC_STACK_KEEP_TRANSACTION;
         }
 
@@ -204,7 +209,8 @@ namespace OC
                 }
                 catch(ResourceInitException& e)
                 {
-                    context->owner->log() << "listenCallback(): failed to create resource: " << e.what() << std::flush;
+                    oclog() << "listenCallback(): failed to create resource: " << e.what()
+                            << std::flush;
                 }
         }
 
