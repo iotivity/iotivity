@@ -141,7 +141,7 @@ print_readable( const unsigned char *data, unsigned int len,
 #endif
 
 size_t
-coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, size_t len) {
+coap_print_addr(const coap_address_t *addr, unsigned char *buf, size_t len) {
 TODO(FIX: Fix this)
     (void)addr;
     (void)buf;
