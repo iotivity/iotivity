@@ -495,4 +495,5 @@ clean:
 	$(MAKE) -C csdk/stack/samples/linux/SimpleClientServer "clean"
 	$(MAKE) -C csdk/stack/samples/arduino/SimpleClientServer/ocserver "clean"
 	$(MAKE) -C . "clean"
+	$(MAKE) -C examples/ "clean"
 	$(MAKE) -C oc_logger/ "clean"

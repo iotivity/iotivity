@@ -101,9 +101,11 @@ clean:
 	rm -rf debug
 	rm -rf release
 	cd ../ && $(MAKE) clean_cpp_sdk
+	cd ocicuc && $(MAKE) clean
 	cd ocicuc && $(MAKE) clean_apps
 
 clean_apps:
 	rm -rf debug
 	rm -rf release
+	cd ocicuc && $(MAKE) clean
 	cd ocicuc && $(MAKE) clean_apps
