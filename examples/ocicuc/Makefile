@@ -80,5 +80,5 @@ clean:
 	rm -f *.o $(APPS)
 
 clean_apps:
-	rm -f server client monoprocess
+	rm -f server client monoprocess small_example
 
