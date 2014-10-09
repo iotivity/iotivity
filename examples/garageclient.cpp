@@ -135,6 +135,8 @@ void printRepresentation(const OCRepresentation& rep)
         // and has key1 and key2 repsectively
         std::cout << "\treps[0].key1: " << myGarage.m_reps[0].getValue<int>("key1") << std::endl;
         std::cout << "\treps[0].key2: " << myGarage.m_reps[1].getValue<int>("key2") << std::endl;
+
+        std::cout << "\tjson: " << rep.getValue<std::string>("json") << std::endl;
 }
 // callback handler on PUT request
 void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)

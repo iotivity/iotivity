@@ -99,6 +99,12 @@ public:
 
         // storing array of representations
         m_garageRep.setValue("reps", m_reps);
+
+
+        // setting json string
+        std::string json = "{\"num\":10,\"rno\":23.5,\"aoa\":[[1,2],[3]],\"str\":\"john\",\
+\"object\":{\"bl1\":false,\"ar\":[2,3]}, \"objects\":[{\"bl2\":true,\"nl\":null},{\"ar1\":[1,2]}]}";
+        m_garageRep.setValue("json", escapeString(json));
     }
 
     /* Note that this does not need to be a member function: for classes you do not have
