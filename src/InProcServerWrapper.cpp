@@ -138,8 +138,7 @@ void processResourceResponse(OCEntityHandlerFlag flag,
         }
         else
         {
-            // TODO throw appropriate runtime error
-            std::clog << "Response is NULL" << endl;
+            throw OCException("Response is NULL", OC_STACK_MALFORMED_RESPONSE);
         }
 
         if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
@@ -166,8 +165,7 @@ void processResourceResponse(OCEntityHandlerFlag flag,
         }
         else
         {
-            // TODO throw appropriate runtime error
-            std::clog << "Payload is larger than the PayloadLen" << endl;
+            throw OCException("Payload overflow", OC_STACK_MALFORMED_RESPONSE);
         }
     }
 
@@ -177,12 +175,11 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
                                                   OCEntityHandlerRequest * entityHandlerRequest,
                                                   char* uri)
 {
-    // TODO we need to have a better way of logging (with various levels of logging)
-    std::clog << "\nIn Default device entity handler wrapper: " << endl;
+    OC::oclog() << "In Default device entity handler wrapper";
 
     if(NULL == entityHandlerRequest)
     {
-        std::clog << "Entity handler request is NULL."  << endl;
+        oclog() << "Entity handler request is NULL.";
         return OC_EH_ERROR;
     }
 
@@ -199,7 +196,7 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
     }
     else
     {
-        std::clog << "Default device entity handler was not set."  << endl;
+        oclog() << "Default device entity handler was not set.";
         return OC_EH_ERROR;
     }
 
@@ -212,12 +209,11 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
                                            OCEntityHandlerRequest * entityHandlerRequest)
 {
-    // TODO we need to have a better way of logging (with various levels of logging)
-    std::clog << "\nIn entity handler wrapper: " << endl;
+    oclog() << "\nIn entity handler wrapper: " << endl;
 
     if(NULL == entityHandlerRequest)
     {
-        std::clog << "Entity handler request is NULL."  << endl;
+        oclog() << "Entity handler request is NULL."  << endl;
         return OC_EH_ERROR;
     }
 
@@ -234,7 +230,8 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
     }
     else
     {
-        std::clog << "Resource handle not found; Resource URI not set in request" << std::endl;
+        oclog() << "Resource handle not found; Resource URI not set in request";
+        return OC_EH_ERROR;
     }
 
     // Finding the corresponding CPP Application entityHandler for a given resource
@@ -250,12 +247,13 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
         }
         else
         {
-            std::clog << "C stack should not call again for parent resource\n";
+            oclog() << "C stack should not call again for parent resource\n";
+            return OC_EH_ERROR;
         }
     }
     else
     {
-        std::clog << "No entity handler found."  << endl;
+        oclog() << "No entity handler found."  << endl;
         return OC_EH_ERROR;
     }
 
@@ -284,7 +282,7 @@ namespace OC
         else
         {
             throw InitializeException("Cannot construct a Server when configured as a client",
-                                    OC_STACK_INVALID_PARAM);
+                                      OC_STACK_INVALID_PARAM);
         }
 
         OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, initType);

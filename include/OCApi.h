@@ -36,12 +36,39 @@
 #include "OCHeaderOption.h"
 #include <OCException.h>
 
+#include "oc_logger.hpp"
+
 namespace OC
 {
     class OCPlatform;
     class OCResource;
     class OCResourceRequest;
     class OCResourceResponse;
+} // namespace OC
+
+namespace OC
+{
+    typedef boost::iostreams::stream<OC::oc_log_stream>     log_target_t;
+
+    namespace detail
+    {
+        /* We'll want to provide some sort of explicit hook for custom logging at some
+        point; until then, this should do nicely (note that since these are lambdas,
+        later a special target could be captured, allowing much flexibility): */
+        auto oclog_target = []() -> log_target_t&
+        {
+            static OC::oc_log_stream    ols(oc_make_ostream_logger);
+            static log_target_t         os(ols);
+
+            return os;
+        };
+    } // namespace OC::detail
+
+    auto oclog = []() -> boost::iostreams::stream<OC::oc_log_stream>&
+    {
+        return detail::oclog_target();
+    };
+
 } // namespace OC
 
 namespace OC

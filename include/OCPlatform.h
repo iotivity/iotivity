@@ -48,9 +48,6 @@ namespace OC
     */
     class OCPlatform
     {
-    private:
-        mutable boost::iostreams::stream<OC::oc_log_stream> m_log_stream;
-
     public:
         // typedef for handle to cancel presence info with
         typedef OCDoHandle OCPresenceHandle;
@@ -62,7 +59,6 @@ namespace OC
         *               in-proc/out-of-proc etc.
         */
         OCPlatform(const PlatformConfig& config);
-        OCPlatform(const PlatformConfig& config, OC::oc_log_stream& log_target);
 
         /**
         * Virtual destructor
@@ -363,9 +359,6 @@ namespace OC
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
-
-    public:
-        inline boost::iostreams::stream<OC::oc_log_stream>& log() const { return m_log_stream; }
 
     private:
         PlatformConfig m_cfg;

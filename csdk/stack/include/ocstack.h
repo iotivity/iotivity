@@ -135,10 +135,10 @@ typedef enum {
     OC_STACK_NO_MEMORY,
     OC_STACK_COMM_ERROR,
     OC_STACK_NOTIMPL,
-    OC_STACK_NO_RESOURCE, /* resource not found*/
-    OC_STACK_RESOURCE_ERROR, /*ex: not supported method or interface*/
+    OC_STACK_NO_RESOURCE,               /* resource not found */
+    OC_STACK_RESOURCE_ERROR,            /* ex: not supported method or interface */
     OC_STACK_SLOW_RESOURCE,
-    OC_STACK_NO_OBSERVERS, /* resource has no registered observers */
+    OC_STACK_NO_OBSERVERS,              /* resource has no registered observers */
     OC_STACK_OBSERVER_NOT_FOUND,
     OC_STACK_OBSERVER_NOT_ADDED,
     OC_STACK_OBSERVER_NOT_REMOVED,
@@ -147,6 +147,7 @@ typedef enum {
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
     #endif
     OC_STACK_INVALID_OPTION,
+    OC_STACK_MALFORMED_RESPONSE,        /* the remote reply contained malformed data */
     OC_STACK_ERROR
 } OCStackResult;
 
