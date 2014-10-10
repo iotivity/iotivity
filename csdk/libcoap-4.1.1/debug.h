@@ -70,11 +70,9 @@ void coap_log_impl(coap_log_t level, const char *format, ...);
 #include "pdu.h"
 void coap_show_pdu(const coap_pdu_t *);
 
-#ifdef WITH_ANDROID
-/* For the Android build, the compiler does not likes these declarations */
-struct coap_address_t;
-size_t coap_print_addr(const struct coap_address_t *, unsigned char *, size_t);
-#endif
+#include "address.h"
+size_t coap_print_addr(const coap_address_t *, unsigned char *, size_t);
+
 
 #else
 
