@@ -20,8 +20,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
@@ -29,43 +27,12 @@
 #include <sstream>
 #include "ocstack.h"
 #include "logger.h"
-
-const char *getResult(OCStackResult result);
-std::string getIPAddrTBServer(OCClientResponse * clientResponse);
-std::string getPortTBServer(OCClientResponse * clientResponse);
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse);
-
-#define TAG PCF("occlient")
-#define CTX_VAL 0x99
-#ifndef MAX_LENGTH_IPv4_ADDR
-#define MAX_LENGTH_IPv4_ADDR 16
-#endif
-
-
-typedef enum {
-    TEST_DISCOVER_REQ = 1,
-    TEST_GET_REQ_NON,
-    TEST_PUT_REQ_NON,
-    TEST_POST_REQ_NON,
-    TEST_DELETE_REQ_NON,
-    TEST_OBS_REQ_NON,
-    TEST_GET_UNAVAILABLE_RES_REQ_NON,
-    TEST_GET_REQ_CON,
-    TEST_POST_REQ_CON,
-    TEST_DELETE_REQ_CON,
-    TEST_OBS_REQ_CON,
-    #ifdef WITH_PRESENCE
-    TEST_OBS_PRESENCE,
-    #endif
-    TEST_OBS_REQ_NON_CANCEL_IMM,
-    TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS,
-    MAX_TESTS
-} CLIENT_TEST;
+#include "occlient.h"
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
-static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
+static std::string putPayload = "{\"state\":\"on\",\"power\":5}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/led";
@@ -90,21 +57,6 @@ void handleSigInt(int signum) {
         gQuitFlag = 1;
     }
 }
-
-// Forward Declaration
-#ifdef WITH_PRESENCE
-int InitPresence();
-#endif
-
-int InitGetRequestToUnavailableResource();
-int InitObserveRequest(OCQualityOfService qos);
-int InitPutRequest();
-int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions);
-int InitPostRequest(OCQualityOfService qos);
-int InitDeleteRequest(OCQualityOfService qos);
-int InitGetRequest(OCQualityOfService qos);
-int InitDiscovery();
-void parseClientResponse(OCClientResponse * clientResponse);
 
 static void PrintUsage()
 {
@@ -168,7 +120,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     if(ctx == (void*)CTX_VAL)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for PUT recvd successfully");
+        OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
     }
 
     if(clientResponse)
@@ -183,7 +135,7 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
 {
     if(ctx == (void*)CTX_VAL)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for POST recvd successfully");
+        OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
     }
 
     if(clientResponse)
@@ -198,7 +150,7 @@ OCStackApplicationResult deleteReqCB(void *ctx, OCDoHandle handle, OCClientRespo
 {
     if(ctx == (void*)CTX_VAL)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for DELETE recvd successfully");
+        OC_LOG(INFO, TAG, "Callback Context for DELETE recvd successfully");
     }
 
     if(clientResponse)
@@ -212,7 +164,7 @@ OCStackApplicationResult deleteReqCB(void *ctx, OCDoHandle handle, OCClientRespo
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     if(ctx == (void*)CTX_VAL)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
+        OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
     }
 
     if(clientResponse)
@@ -244,7 +196,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     if(ctx == (void*)CTX_VAL)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for OBS query recvd successfully");
+        OC_LOG(INFO, TAG, "Callback Context for OBS query recvd successfully");
     }
 
     if(clientResponse)
@@ -256,7 +208,6 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         gNumObserveNotifies++;
         if (gNumObserveNotifies == 50)	//large number to test observing in DELETE case.
         {
-            printf ("************************** CANCEL OBSERVE with ");
             if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON){
                 printf ("RESET\n");
                 if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
@@ -264,8 +215,6 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
                 }
                 return OC_STACK_DELETE_TRANSACTION;
             }else if(TEST_CASE == TEST_OBS_REQ_NON_CANCEL_IMM){
-                printf ("Deregister\n");
-
                 if (OCCancel (gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
@@ -287,7 +236,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     if(ctx == (void*)CTX_VAL)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for Presence recvd successfully");
+        OC_LOG(INFO, TAG, "Callback Context for Presence recvd successfully");
     }
 
     if(clientResponse)
@@ -299,7 +248,6 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
         gNumPresenceNotifies++;
         if (gNumPresenceNotifies == 20)
         {
-            printf ("************************** CANCEL PRESENCE\n");
             if (OCCancel (gPresenceHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
                 OC_LOG(ERROR, TAG, "Presence cancel error");
             }
@@ -318,7 +266,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
     if (ctx == (void*) CTX_VAL)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
+        OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
     }
 
     if (clientResponse)
@@ -336,49 +284,50 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
         parseClientResponse(clientResponse);
 
-        switch(TEST_CASE){
-        case TEST_GET_REQ_NON:
-            InitGetRequest(OC_LOW_QOS, 0);
-            break;
-        case TEST_PUT_REQ_NON:
-            InitPutRequest();
-            break;
-        case TEST_POST_REQ_NON:
-            InitPostRequest(OC_LOW_QOS);
-            break;
-        case TEST_DELETE_REQ_NON:
-            InitDeleteRequest(OC_LOW_QOS);
-            break;
-        case TEST_OBS_REQ_NON:
-        case TEST_OBS_REQ_NON_CANCEL_IMM:
-            InitObserveRequest(OC_LOW_QOS);
-            break;
-        case TEST_GET_UNAVAILABLE_RES_REQ_NON:
-            InitGetRequestToUnavailableResource();
-            break;
-        case TEST_GET_REQ_CON:
-            InitGetRequest(OC_HIGH_QOS, 0);
-            break;
-        case TEST_POST_REQ_CON:
-            InitPostRequest(OC_HIGH_QOS);
-            break;
-        case TEST_DELETE_REQ_CON:
-            InitDeleteRequest(OC_HIGH_QOS);
-            break;
-        case TEST_OBS_REQ_CON:
-            InitObserveRequest(OC_HIGH_QOS);
-            break;
-        #ifdef WITH_PRESENCE
-        case TEST_OBS_PRESENCE:
-            InitPresence();
-            break;
-        #endif
-        case TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS:
-            InitGetRequest(OC_LOW_QOS, 1);
-            break;
-        default:
-            PrintUsage();
-            break;
+        switch(TEST_CASE)
+        {
+            case TEST_GET_REQ_NON:
+                InitGetRequest(OC_LOW_QOS, 0);
+                break;
+            case TEST_PUT_REQ_NON:
+                InitPutRequest();
+                break;
+            case TEST_POST_REQ_NON:
+                InitPostRequest(OC_LOW_QOS);
+                break;
+            case TEST_DELETE_REQ_NON:
+                InitDeleteRequest(OC_LOW_QOS);
+                break;
+            case TEST_OBS_REQ_NON:
+            case TEST_OBS_REQ_NON_CANCEL_IMM:
+                InitObserveRequest(OC_LOW_QOS);
+                break;
+            case TEST_GET_UNAVAILABLE_RES_REQ_NON:
+                InitGetRequestToUnavailableResource();
+                break;
+            case TEST_GET_REQ_CON:
+                InitGetRequest(OC_HIGH_QOS, 0);
+                break;
+            case TEST_POST_REQ_CON:
+                InitPostRequest(OC_HIGH_QOS);
+                break;
+            case TEST_DELETE_REQ_CON:
+                InitDeleteRequest(OC_HIGH_QOS);
+                break;
+            case TEST_OBS_REQ_CON:
+                InitObserveRequest(OC_HIGH_QOS);
+                break;
+            #ifdef WITH_PRESENCE
+            case TEST_OBS_PRESENCE:
+                InitPresence();
+                break;
+            #endif
+            case TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS:
+                InitGetRequest(OC_LOW_QOS, 1);
+                break;
+            default:
+                PrintUsage();
+                break;
         }
     }
 
@@ -432,7 +381,7 @@ int InitPostRequest(OCQualityOfService qos)
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
-        OC_LOG_V(INFO, TAG, "First POST call did not succeed");
+        OC_LOG(INFO, TAG, "First POST call did not succeed");
     }
 
     // Second POST operation (to create an LED instance)
@@ -441,7 +390,7 @@ int InitPostRequest(OCQualityOfService qos)
                                postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(INFO, TAG, "Second POST call did not succeed");
+        OC_LOG(INFO, TAG, "Second POST call did not succeed");
     }
 
     // This POST operation will update the original resourced /a/led
@@ -471,7 +420,7 @@ void* RequestDeleteDeathResourceTask(void* myqos)
 
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(INFO, TAG, "Second DELETE call did not succeed");
+        OC_LOG(INFO, TAG, "Second DELETE call did not succeed");
     }
 
     return NULL;
@@ -492,7 +441,7 @@ int InitDeleteRequest(OCQualityOfService qos)
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
-        OC_LOG_V(INFO, TAG, "First DELETE call did not succeed");
+        OC_LOG(INFO, TAG, "First DELETE call did not succeed");
     }
     else
     {
@@ -640,10 +589,8 @@ std::string getIPAddrTBServer(OCClientResponse * clientResponse) {
 
     char ipaddr[16] = {'\0'};
     snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d); // ostringstream not working correctly here, hence snprintf
-    //printf("IP address string of the TB server = %s\n", *out_ipaddr);
     return std::string (ipaddr);
 }
-
 
 std::string getPortTBServer(OCClientResponse * clientResponse){
     if(!clientResponse) return "";

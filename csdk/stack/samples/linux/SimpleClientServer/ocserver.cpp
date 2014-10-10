@@ -28,36 +28,21 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "cJSON.h"
+#include "ocserver.h"
 
-const char *getResult(OCStackResult result);
-
-#define TAG PCF("ocserver")
 
 static int gObserveNotifyType = 3;
 
 int gQuitFlag = 0;
 int gLEDUnderObservation = 0;
 
-typedef struct LEDRESOURCE{
-    OCResourceHandle handle;
-    bool state;
-    int power;
-} LEDResource;
-
 static LEDResource LED;
 // This variable determines instance number of the LED resource.
 // Used by POST method to create a new instance of LED resource.
 static int gCurrLedInstance = 0;
-#define SAMPLE_MAX_NUM_POST_INSTANCE  2
-static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
-int createLEDResource (char *uri, LEDResource *ledResource);
 
-typedef struct {
-    OCObservationId observationId;
-    bool            valid;
-    OCResourceHandle resourceHandle;
-} Observers;
-#define SAMPLE_MAX_NUM_OBSERVATIONS     8
+static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
+
 Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 
 #ifdef WITH_PRESENCE
@@ -72,29 +57,28 @@ const char responsePayloadDeleteResourceNotSupported[] =
         "{App determines payload: The request is received for a non-support resource.}";
 
 
-char *resourceUri= (char *)"/a/led";
+char *gResourceUri= (char *)"/a/led";
 
-const char jSONResponseSkel[] = "{\"href\": \"\",\"rep\":{\"state\":\"\",\"power\":0}}";
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
 //This function takes the request as an input and returns the response
 //in JSON format.
 char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 {
-    cJSON *json = cJSON_Parse((char *)jSONResponseSkel);
-    cJSON *format = cJSON_GetObjectItem(json,"rep");
+    cJSON *json = cJSON_CreateObject();
+    cJSON *format;
     char *jsonResponse;
     LEDResource *currLEDResource = &LED;
 
     if (ehRequest->resource == gLedInstance[0].handle)
     {
         currLEDResource = &gLedInstance[0];
-        resourceUri = (char *) "a/led/0";
+        gResourceUri = (char *) "a/led/0";
     }
     else if (ehRequest->resource == gLedInstance[1].handle)
     {
         currLEDResource = &gLedInstance[1];
-        resourceUri = (char *) "a/led/1";
+        gResourceUri = (char *) "a/led/1";
     }
 
     if(OC_REST_PUT == ehRequest->method)
@@ -105,12 +89,12 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
         cJSON_Delete(putJson);
     }
 
-    cJSON_GetObjectItem(format,"state")->valuestring = (char *) (currLEDResource->state ? "on":"off");
-    cJSON_GetObjectItem(format,"power")->valuedouble = currLEDResource->power;
-    cJSON_GetObjectItem(json,"href")->valuestring = resourceUri;
+    cJSON_AddStringToObject(json,"href",gResourceUri);
+    cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
+    cJSON_AddStringToObject(format, "state", (char *) (currLEDResource->state ? "on":"off"));
+    cJSON_AddNumberToObject(format, "power", currLEDResource->power);
 
     jsonResponse = cJSON_Print(json);
-    json= cJSON_Parse((char *)jSONResponseSkel);
     cJSON_Delete(json);
 
     return jsonResponse;
@@ -118,7 +102,7 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
 void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
 {
-    const char *getResp = constructJsonResponse(ehRequest);
+    char *getResp = constructJsonResponse(ehRequest);
 
     if (ehRequest->resJSONPayloadLen > strlen ((char *)getResp))
     {
@@ -130,11 +114,13 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
                 ehRequest->resJSONPayloadLen);
     }
+
+    free(getResp);
 }
 
 void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
 {
-    const char *putResp = constructJsonResponse(ehRequest);
+    char *putResp = constructJsonResponse(ehRequest);
 
     if (ehRequest->resJSONPayloadLen > strlen ((char *)putResp))
     {
@@ -146,13 +132,14 @@ void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
                 ehRequest->resJSONPayloadLen);
     }
+
+    free(putResp);
 }
 
 OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    const char respPLPost_newLed[] = "{\"href\":\"\",\"rep\":{\"createduri\":\"\"}}";
-    char *respPLPost_led;
+    char *respPLPost_led = NULL;
     cJSON *json;
     cJSON *format;
 
@@ -174,16 +161,14 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
             sprintf (newLedUri + strlen(newLedUri), "%d", gCurrLedInstance);
-            OC_LOG_V (INFO, TAG, "New resource URI: %s", newLedUri);
-
-            json = cJSON_Parse((char *)respPLPost_newLed);
-            cJSON_GetObjectItem(json,"href")->valuestring = resourceUri;
-            format = cJSON_GetObjectItem(json,"rep");
-            cJSON_GetObjectItem(format,"createduri")->valuestring = (char *) newLedUri;
+            json = cJSON_CreateObject();
+            cJSON_AddStringToObject(json,"href",gResourceUri);
+            cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
+            cJSON_AddStringToObject(format, "createduri", (char *) newLedUri);
 
             if (0 == createLEDResource (newLedUri, &gLedInstance[gCurrLedInstance]))
             {
-                OC_LOG_V (INFO, TAG, "Created new LED instance\n");
+                OC_LOG (INFO, TAG, "Created new LED instance\n");
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
@@ -192,7 +177,6 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
                 ehResult = OC_EH_RESOURCE_CREATED;
             }
 
-            json = cJSON_Parse((char *)respPLPost_newLed);
             cJSON_Delete(json);
         }
         else
@@ -214,6 +198,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
                 if (i == 0)
                 {
                     respPLPost_led = constructJsonResponse(ehRequest);
+                    break;
                 }
                 else if (i == 1)
                 {
@@ -223,7 +208,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
         }
     }
 
-    if (ehRequest->resJSONPayloadLen > strlen ((char *)respPLPost_led))
+    if (respPLPost_led != NULL && ehRequest->resJSONPayloadLen > strlen ((char *)respPLPost_led))
     {
         strncpy((char *)ehRequest->resJSONPayload, respPLPost_led,
                 strlen((char *)respPLPost_led));
@@ -233,6 +218,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
                 ehRequest->resJSONPayloadLen);
     }
+
+    free(respPLPost_led);
     return ehResult;
 }
 
@@ -277,13 +264,13 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
         }
         else if (result == OC_STACK_NO_RESOURCE)
         {
-            OC_LOG_V(INFO, TAG, "\n\nThe resource doesn't exist or it might have been deleted.");
+            OC_LOG(INFO, TAG, "\n\nThe resource doesn't exist or it might have been deleted.");
             deleteResponse = responsePayloadResourceDoesNotExist;
             ehResult = OC_EH_RESOURCE_DELETED;
         }
         else
         {
-            OC_LOG_V(INFO, TAG, "\n\nEncountered error from OCDeleteResource().");
+            OC_LOG(INFO, TAG, "\n\nEncountered error from OCDeleteResource().");
             deleteResponse = responsePayloadDeleteNotOK;
             ehResult = OC_EH_ERROR;
         }
@@ -562,16 +549,17 @@ void *ChangeLEDRepresentation (void *param)
                     }
                 }
 
-                cJSON *json = cJSON_Parse((char *)jSONResponseSkel);
-                cJSON *format = cJSON_GetObjectItem(json,"rep");
-                cJSON_GetObjectItem(format,"state")->valuestring= (char *) (LED.state ? "on":"off");
-                cJSON_GetObjectItem(format,"power")->valuedouble = LED.power;
-                cJSON_GetObjectItem(json,"href")->valuestring = resourceUri;
+                cJSON *json = cJSON_CreateObject();
+                cJSON *format;
+                cJSON_AddStringToObject(json,"href",gResourceUri);
+                cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
+                cJSON_AddStringToObject(format, "state", (char *) (LED.state ? "on":"off"));
+                cJSON_AddNumberToObject(format, "power", LED.power);
                 char * obsResp = cJSON_Print(json);
-                json = cJSON_Parse((char *)jSONResponseSkel);
                 cJSON_Delete(json);
                 result = OCNotifyListOfObservers (LED.handle, obsNotify, j,
                         (unsigned char *)obsResp, OC_NA_QOS);
+                free(obsResp);
             }
             else if (gObserveNotifyType == 0)
             {
@@ -652,7 +640,7 @@ int main(int argc, char* argv[])
     }
 #ifdef WITH_PRESENCE
     if (OCStartPresence(0) != OC_STACK_OK) {
-        OC_LOG_V(ERROR, TAG, "OCStack presence/discovery error");
+        OC_LOG(ERROR, TAG, "OCStack presence/discovery error");
         return 0;
     }
 #endif
@@ -662,7 +650,7 @@ int main(int argc, char* argv[])
     /*
      * Declare and create the example resource: LED
      */
-    createLEDResource("/a/led", &LED);
+    createLEDResource(gResourceUri, &LED);
 
     // Initialize observations data structure for the resource
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
@@ -714,7 +702,7 @@ int createLEDResource (char *uri, LEDResource *ledResource)
     ledResource->power= 0;
     OCStackResult res = OCCreateResource(&(ledResource->handle),
             "core.led",
-            "core.rw",
+            "oc.mi.def",
             uri,
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);

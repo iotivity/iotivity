@@ -73,14 +73,16 @@ CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
 
 SOURCES		:= $(CJSON_SOURCES)
-SOURCES     += occlient.cpp ocserver.cpp occlientcoll.cpp ocservercoll.cpp common.cpp
+SOURCES     += occlient.cpp ocserver.cpp occlientcoll.cpp ocservercoll.cpp common.cpp ocserverbasicops.cpp occlientbasicops.cpp
 
 OBJECTS:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
 
 PROGRAMS	+= ocserver
 PROGRAMS	+= occlient
+PROGRAMS	+= ocserverbasicops
 PROGRAMS	+= ocservercoll
 PROGRAMS	+= occlientcoll
+PROGRAMS	+= occlientbasicops
 
 all:	c_sdk prep_dirs $(OBJECTS) $(PROGRAMS)
 
@@ -97,10 +99,16 @@ $(OBJ_DIR)/%.o: %.cpp
 ocserver: $(OBJ_DIR)/ocserver.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
+ocserverbasicops: $(OBJ_DIR)/ocserverbasicops.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
+
 ocservercoll: $(OBJ_DIR)/ocservercoll.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 occlient: $(OBJ_DIR)/occlient.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
+
+occlientbasicops: $(OBJ_DIR)/occlientbasicops.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 occlientcoll: $(OBJ_DIR)/occlientcoll.o $(OBJ_DIR)/common.o
