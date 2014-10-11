@@ -78,4 +78,6 @@ OCStackResult
 BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
                         char *filterValue, char * out, uint16_t *remaining);
 
+OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
+
 #endif //OC_RESOURCE_H

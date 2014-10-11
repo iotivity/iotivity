@@ -47,10 +47,12 @@ typedef enum {
     TEST_GET_REQ_NON,
     TEST_PUT_REQ_NON,
     TEST_POST_REQ_NON,
+    TEST_DELETE_REQ_NON,
     TEST_OBS_REQ_NON,
     TEST_GET_UNAVAILABLE_RES_REQ_NON,
     TEST_GET_REQ_CON,
     TEST_POST_REQ_CON,
+    TEST_DELETE_REQ_CON,
     TEST_OBS_REQ_CON,
     #ifdef WITH_PRESENCE
     TEST_OBS_PRESENCE,
@@ -99,6 +101,7 @@ int InitObserveRequest(OCQualityOfService qos);
 int InitPutRequest();
 int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions);
 int InitPostRequest(OCQualityOfService qos);
+int InitDeleteRequest(OCQualityOfService qos);
 int InitGetRequest(OCQualityOfService qos);
 int InitDiscovery();
 void parseClientResponse(OCClientResponse * clientResponse);
@@ -107,20 +110,25 @@ static void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
-    OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
-    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Nonconfirmable Put Requests");
-    OC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate Nonconfirmable Post Requests");
-    OC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Nonconfirmable Observe Requests");
-    OC_LOG(INFO, TAG, "-t 6 : Discover Resources and Initiate Nonconfirmable Get Request for a resource which is unavailable");
-    OC_LOG(INFO, TAG, "-t 7 : Discover Resources and Initiate Confirmable Get Request");
-    OC_LOG(INFO, TAG, "-t 8 : Discover Resources and Initiate Confirmable Post Request");
-    OC_LOG(INFO, TAG, "-t 9 : Discover Resources and Initiate Confirmable Observe Requests");
+    OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
+    OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
+    OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Put Requests");
+    OC_LOG(INFO, TAG, "-t 4  :  Discover Resources and Initiate Nonconfirmable Post Requests");
+    OC_LOG(INFO, TAG, "-t 5  :  Discover Resources and Initiate Nonconfirmable Delete Requests");
+    OC_LOG(INFO, TAG, "-t 6  :  Discover Resources and Initiate Nonconfirmable Observe Requests");
+    OC_LOG(INFO, TAG, "-t 7  :  Discover Resources and Initiate Nonconfirmable Get Request for a resource which is unavailable");
+
+    OC_LOG(INFO, TAG, "-t 8  :  Discover Resources and Initiate Confirmable Get Request");
+    OC_LOG(INFO, TAG, "-t 9  :  Discover Resources and Initiate Confirmable Post Request");
+    OC_LOG(INFO, TAG, "-t 10 :  Discover Resources and Initiate Confirmable Delete Requests");
+    OC_LOG(INFO, TAG, "-t 11 :  Discover Resources and Initiate Confirmable Observe Requests");
+
     #ifdef WITH_PRESENCE
-    OC_LOG(INFO, TAG, "-t 10 : Discover Resources and Initiate Nonconfirmable presence");
+    OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Nonconfirmable presence");
     #endif
-    OC_LOG(INFO, TAG, "-t 11 : Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
-    OC_LOG(INFO, TAG, "-t 12: Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
+
+    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
+    OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -186,6 +194,21 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
     return OC_STACK_DELETE_TRANSACTION;
 }
 
+OCStackApplicationResult deleteReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+{
+    if(ctx == (void*)CTX_VAL)
+    {
+        OC_LOG_V(INFO, TAG, "Callback Context for DELETE recvd successfully");
+    }
+
+    if(clientResponse)
+    {
+        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Delete Response", clientResponse->resJSONPayload);
+    }
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     if(ctx == (void*)CTX_VAL)
     {
@@ -231,7 +254,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumObserveNotifies);
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Obs Response", clientResponse->resJSONPayload);
         gNumObserveNotifies++;
-        if (gNumObserveNotifies == 5)
+        if (gNumObserveNotifies == 50)	//large number to test observing in DELETE case.
         {
             printf ("************************** CANCEL OBSERVE with ");
             if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON){
@@ -274,7 +297,7 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
         OC_LOG_V(INFO, TAG, "Callback Context for Presence notification recvd successfully %d", gNumPresenceNotifies);
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Presence Response", clientResponse->resJSONPayload);
         gNumPresenceNotifies++;
-        if (gNumPresenceNotifies == 15)
+        if (gNumPresenceNotifies == 20)
         {
             printf ("************************** CANCEL PRESENCE\n");
             if (OCCancel (gPresenceHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
@@ -323,6 +346,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         case TEST_POST_REQ_NON:
             InitPostRequest(OC_LOW_QOS);
             break;
+        case TEST_DELETE_REQ_NON:
+            InitDeleteRequest(OC_LOW_QOS);
+            break;
         case TEST_OBS_REQ_NON:
         case TEST_OBS_REQ_NON_CANCEL_IMM:
             InitObserveRequest(OC_LOW_QOS);
@@ -335,6 +361,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             break;
         case TEST_POST_REQ_CON:
             InitPostRequest(OC_HIGH_QOS);
+            break;
+        case TEST_DELETE_REQ_CON:
+            InitDeleteRequest(OC_HIGH_QOS);
             break;
         case TEST_OBS_REQ_CON:
             InitObserveRequest(OC_HIGH_QOS);
@@ -419,6 +448,61 @@ int InitPostRequest(OCQualityOfService qos)
     return (InvokeOCDoResource(query, OC_REST_POST,
                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                                postReqCB, NULL, 0));
+}
+
+void* RequestDeleteDeathResourceTask(void* myqos)
+{
+    sleep (30);	//long enough to give the server time to finish deleting the resource.
+    std::ostringstream query;
+    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+
+    // Second DELETE operation to delete the resource that might have been removed already.
+    OCQualityOfService qos;
+    if (myqos == NULL)
+        qos = OC_LOW_QOS;
+    else
+        qos = OC_HIGH_QOS;
+
+    OCStackResult result = InvokeOCDoResource(query, OC_REST_DELETE,
+                               qos,
+                               deleteReqCB, NULL, 0);
+
+    if (OC_STACK_OK != result)
+    {
+        OC_LOG_V(INFO, TAG, "Second DELETE call did not succeed");
+    }
+
+    return NULL;
+}
+
+int InitDeleteRequest(OCQualityOfService qos)
+{
+    OCStackResult result;
+    std::ostringstream query;
+    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+
+    // First DELETE operation
+    result = InvokeOCDoResource(query, OC_REST_DELETE,
+                               qos,
+                               deleteReqCB, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        // Error can happen if for example, network connectivity is down
+        OC_LOG_V(INFO, TAG, "First DELETE call did not succeed");
+    }
+    else
+    {
+        //Create a thread to delete this resource again
+        pthread_t threadId;
+        pthread_create (&threadId, NULL, RequestDeleteDeathResourceTask, (void*)qos);
+    }
+
+    OC_LOG_V(INFO, TAG, "\n\nExit  %s", __func__);
+    return result;
 }
 
 int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions)

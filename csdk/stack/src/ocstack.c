@@ -399,6 +399,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         case OC_REST_GET:
         case OC_REST_PUT:
         case OC_REST_POST:
+        case OC_REST_DELETE:
         case OC_REST_OBSERVE:
         case OC_REST_OBSERVE_ALL:
         case OC_REST_CANCEL_OBSERVE:
@@ -1144,29 +1145,29 @@ OCResourceHandle OCGetResourceHandle(uint8_t index) {
  * @param handle - handle of resource to be deleted
  *
  * @return
- *     OC_STACK_OK    - no errors
- *     OC_STACK_ERROR - stack process error
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_ERROR           - stack process error
+ *     OC_STACK_NO_RESOURCE     - resource not found
+ *     OC_STACK_INVALID_PARAM   - invalid param
  */
 OCStackResult OCDeleteResource(OCResourceHandle handle) {
     OC_LOG(INFO, TAG, PCF("Entering OCDeleteResource"));
 
     if (!handle) {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        OC_LOG(ERROR, TAG, PCF("Invalid param"));
         return OC_STACK_INVALID_PARAM;
+    }
+    
+    OCResource *resource = findResource((OCResource *) handle);
+    if (resource == NULL) {
+        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        return OC_STACK_NO_RESOURCE;
     }
 
     if (deleteResource((OCResource *) handle) == 0) {
         OC_LOG(ERROR, TAG, PCF("Error deleting resource"));
         return OC_STACK_ERROR;
     }
-
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
-    {
-        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
-    }
-    #endif
 
     return OC_STACK_OK;
 }
@@ -1723,14 +1724,23 @@ int deleteResource(OCResource *resource) {
     temp = headResource;
     while (temp) {
         if (temp == resource) {
+            // Invalidate all Resource Properties.
+            resource->resourceProperties = (OCResourceProperty) 0;
+            OCNotifyAllObservers((OCResourceHandle)resource, OC_HIGH_QOS);
+
+            #ifdef WITH_PRESENCE
+            if(presenceResource.handle)
+            {
+                ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+                OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
+            }
+            #endif
+
             if (temp == headResource) {
                 headResource = temp->next;
             } else {
                 prev->next = temp->next;
             }
-
-            resource->resourceProperties = (OCResourceProperty) 0; // Invalidate all Resource Properties.
-            OCNotifyAllObservers((OCResourceHandle)resource, OC_HIGH_QOS);
 
             deleteResourceElements(temp);
             OCFree(temp);

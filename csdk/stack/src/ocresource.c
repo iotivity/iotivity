@@ -329,6 +329,30 @@ OCStackResult DetermineResourceHandling (OCRequest *request,
     }
 }
 
+OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
+{
+    OCStackResult result;
+
+    switch (ehResult)
+    {
+        case OC_EH_OK:
+            result = OC_STACK_OK;
+            break;
+        case OC_EH_ERROR:
+            result = OC_STACK_ERROR;
+            break;
+        case OC_EH_FORBIDDEN:
+            result = OC_STACK_RESOURCE_ERROR;
+            break;
+        case OC_EH_RESOURCE_DELETED:
+            result = OC_STACK_NO_RESOURCE;
+            break;
+        default:
+            result = OC_STACK_ERROR;
+    }
+
+    return result;
+}
 
 static OCStackResult
 HandleVirtualResource (OCRequest *request, OCResource* resource)
@@ -409,10 +433,14 @@ static OCStackResult
 HandleDefaultDeviceEntityHandler (OCRequest *request)
 {
     OCStackResult result = OC_STACK_OK;
+    OCEntityHandlerResult ehResult;
     OCEntityHandlerRequest *ehRequest = request->entityHandlerRequest;
 
     // At this point we know for sure that defaultDeviceHandler exists
-    defaultDeviceHandler(OC_REQUEST_FLAG, ehRequest, (char*) request->resourceUrl);
+    ehResult = defaultDeviceHandler(OC_REQUEST_FLAG, ehRequest,
+                                  (char*) request->resourceUrl);
+
+    result = EntityHandlerCodeToOCStackCode(ehResult);
 
     ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen -
                                     strlen((char*)ehRequest->resJSONPayload);
@@ -427,6 +455,8 @@ HandleResourceWithEntityHandler (OCRequest *request,
                                  uint8_t collectionResource)
 {
     OCStackResult result = OC_STACK_OK;
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+
     OCEntityHandlerRequest *ehRequest = request->entityHandlerRequest;
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithEntityHandler"));
@@ -436,7 +466,8 @@ HandleResourceWithEntityHandler (OCRequest *request,
     // status code from entity handler is ignored unless observe call
     if (request->observe == NULL)
     {
-        resource->entityHandler(OC_REQUEST_FLAG, ehRequest);
+        ehResult = resource->entityHandler(OC_REQUEST_FLAG, ehRequest);
+        result = EntityHandlerCodeToOCStackCode(ehResult);
     }
     else
     {
@@ -528,8 +559,7 @@ BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest 
 
         case OC_RESOURCE_COLLECTION_DEFAULT_ENTITYHANDLER:
             {
-                ret = HandleCollectionResourceDefaultEntityHandler (request,
-                        resource);
+                ret = HandleCollectionResourceDefaultEntityHandler (request, resource);
                 break;
             }
 

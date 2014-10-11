@@ -298,7 +298,9 @@ typedef struct {
  */
 typedef enum {
     OC_EH_OK = 0,
-    OC_EH_ERROR
+    OC_EH_ERROR,
+    OC_EH_RESOURCE_DELETED,
+    OC_EH_FORBIDDEN
 } OCEntityHandlerResult;
 
 /**

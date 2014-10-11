@@ -171,6 +171,11 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
                 ocMethod = OC_REST_POST;
                 break;
             }
+        case COAP_REQUEST_DELETE:
+            {
+                ocMethod = OC_REST_DELETE;
+                break;
+            }
         case COAP_REQUEST_PUT:
             {
                 ocMethod = OC_REST_PUT;
@@ -633,6 +638,9 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
             break;
         case OC_REST_POST:
             coapMethod = COAP_REQUEST_POST;
+            break;
+        case OC_REST_DELETE:
+            coapMethod = COAP_REQUEST_DELETE;
             break;
         case OC_REST_OBSERVE_ALL:
         case OC_REST_OBSERVE:

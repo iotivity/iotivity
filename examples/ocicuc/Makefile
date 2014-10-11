@@ -44,6 +44,7 @@ CXX_INC=-I$(OCLIB)/include \
 	-I../../csdk/logger/include
 
 BOOST_LIBS=-lboost_program_options
+#BOOST_LIBS=-L/usr/local/boost/lib/ -lboost_program_options	# for boost libraries at the specified path
 
 LIB_OC_LOGGER:=../../oc_logger/lib/oc_logger.a
 
@@ -80,5 +81,4 @@ clean:
 	rm -f *.o $(APPS)
 
 clean_apps:
-	rm -f server client monoprocess small_example
-
+	rm -f *.o $(APPS)

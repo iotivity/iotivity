@@ -55,6 +55,7 @@ int createLEDResource (char *uri, LEDResource *ledResource);
 typedef struct {
     OCObservationId observationId;
     bool            valid;
+    OCResourceHandle resourceHandle;
 } Observers;
 #define SAMPLE_MAX_NUM_OBSERVATIONS     8
 Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
@@ -62,6 +63,14 @@ Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 #ifdef WITH_PRESENCE
 static int stopPresenceCount = 10;
 #endif
+
+//TODO: Follow the pattern used in constructJsonResponse() when the payload is decided.
+const char responsePayloadDeleteOk[] = "{App determines payload: Delete Resource operation succeeded.}";
+const char responsePayloadDeleteNotOK[] = "{App determines payload: Delete Resource operation failed.}";
+const char responsePayloadResourceDoesNotExist[] = "{App determines payload: The resource does not exist.}";
+const char responsePayloadDeleteResourceNotSupported[] =
+        "{App determines payload: The request is received for a non-support resource.}";
+
 
 char *resourceUri= (char *)"/a/led";
 
@@ -223,6 +232,101 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
     }
 }
 
+OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
+{
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s for resource %d ", __func__, ehRequest->resource);
+
+    /*
+     * In the sample below, the application will:
+     * 1a. pass the delete request to the c stack
+     * 1b. internally, the c stack figures out what needs to be done and does it accordingly
+     *    (e.g. send observers notification, remove observers...)
+     * 1c. the c stack returns with the result whether the request is fullfilled.
+     * 2. optionally, app removes observers out of its array 'interestedObservers'
+     */
+
+    const char* deleteResponse = NULL;
+
+    if ((ehRequest != NULL) && (ehRequest->resource == LED.handle))
+    {
+        //Step 1: Ask stack to do the work.
+        OCStackResult result = OCDeleteResource(ehRequest->resource);
+
+        if (result == OC_STACK_OK)
+        {
+            OC_LOG (INFO, TAG, "\n\nDelete Resource operation succeeded.");
+            ehResult = OC_EH_OK;
+            deleteResponse = responsePayloadDeleteOk;
+
+            //Step 2: clear observers who wanted to observe this resource at the app level.
+            for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
+            {
+                if (interestedObservers[i].resourceHandle == ehRequest->resource)
+                {
+                    interestedObservers[i].valid = false;
+                    interestedObservers[i].observationId = 0;
+                    interestedObservers[i].resourceHandle = NULL;
+                }
+            }
+        }
+        else if (result == OC_STACK_NO_RESOURCE)
+        {
+            OC_LOG_V(INFO, TAG, "\n\nThe resource doesn't exist or it might have been deleted.");
+            deleteResponse = responsePayloadResourceDoesNotExist;
+            ehResult = OC_EH_RESOURCE_DELETED;
+        }
+        else
+        {
+            OC_LOG_V(INFO, TAG, "\n\nEncountered error from OCDeleteResource().");
+            deleteResponse = responsePayloadDeleteNotOK;
+            ehResult = OC_EH_ERROR;
+        }
+    }
+    else if (ehRequest->resource != LED.handle)
+    {
+        //Let's this app not supporting DELETE on some resources so
+        //consider the DELETE request is received for a non-support resource.
+        OC_LOG_V(INFO, TAG, "\n\nThe request is received for a non-support resource.");
+        deleteResponse = responsePayloadDeleteResourceNotSupported;
+        ehResult = OC_EH_FORBIDDEN;
+    }
+
+    if (ehRequest->resJSONPayloadLen > strlen ((char *)deleteResponse))
+    {
+        strncpy((char *)ehRequest->resJSONPayload, deleteResponse, strlen((char *)deleteResponse));
+    }
+    else
+    {
+        OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
+                  ehRequest->resJSONPayloadLen);
+    }
+
+    return ehResult;
+}
+
+OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *ehRequest)
+{
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s ", __func__);
+
+    const char* response = NULL;
+    response = responsePayloadResourceDoesNotExist;
+
+    if ( (ehRequest != NULL) &&
+         (ehRequest->resJSONPayloadLen > strlen ((char *)response)) )
+    {
+        strncpy((char *)ehRequest->resJSONPayload, response, strlen((char *)response));
+    }
+    else
+    {
+        OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
+                  ehRequest->resJSONPayloadLen);
+    }
+
+    return OC_EH_RESOURCE_DELETED;
+}
+
 void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest)
 {
     OC_LOG_V (INFO, TAG, "Received observation registration request with observation Id %d",
@@ -260,12 +364,15 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
     if (clientStillObserving == false)
         gLEDUnderObservation = 0;
 }
-    OCEntityHandlerResult
+
+OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, char* uri)
 {
-
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
+
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+
     if (flag & OC_INIT_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");
@@ -275,7 +382,11 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         if (entityHandlerRequest)
         {
-            if (OC_REST_GET == entityHandlerRequest->method)
+            if (entityHandlerRequest->resource == NULL) {
+                OC_LOG (INFO, TAG, "Received request from client to a non-existing resource");
+                ehResult = ProcessNonExistingResourceRequest(entityHandlerRequest);
+            }
+            else if (OC_REST_GET == entityHandlerRequest->method)
             {
                 OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
                 ProcessGetRequest (entityHandlerRequest);
@@ -284,6 +395,11 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
             {
                 OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
                 ProcessPutRequest (entityHandlerRequest);
+            }
+            else if (OC_REST_DELETE == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
+                ehResult = ProcessDeleteRequest (entityHandlerRequest);
             }
             else
             {
@@ -308,15 +424,18 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
-    return OC_EH_OK;
+    return ehResult;
 }
 
 
-    OCEntityHandlerResult
+OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
+
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+
     if (flag & OC_INIT_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");
@@ -340,6 +459,11 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             {
                 OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
                 ProcessPostRequest (entityHandlerRequest);
+            }
+            else if (OC_REST_DELETE == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
+                ehResult = ProcessDeleteRequest (entityHandlerRequest);
             }
             else
             {
@@ -395,7 +519,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         entityHandlerRequest->numSendVendorSpecificHeaderOptions = 2;
     }
 
-    return OC_EH_OK;
+    return ehResult;
 }
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
