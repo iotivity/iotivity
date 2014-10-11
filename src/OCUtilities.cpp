@@ -192,6 +192,7 @@ OCStackResult result_guard(const OCStackResult r)
     case OC_STACK_INVALID_METHOD:
     case OC_STACK_INVALID_PARAM:
     case OC_STACK_INVALID_OBSERVE_PARAM:
+        os << "result_guard(): " << r << ": " << OCException::reason(r);
         throw OCException(os.str(), r);
 
     /* Non-exceptional failures or success: */
