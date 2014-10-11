@@ -62,12 +62,6 @@ namespace OC
             const std::string& uri,
             const HeaderOptions& headerOptions){return OC_STACK_NOTIMPL;}
 
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
-            const std::string& host, const boost::property_tree::ptree resourceNode)
-        {
-            return nullptr;
-        }
-
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
             SubscribeCallback& presenceHandler){return OC_STACK_NOTIMPL;}
 

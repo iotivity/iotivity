@@ -45,7 +45,7 @@ CXX_INC	  += -I./csdk/ocsocket/include
 CXX_INC	  += -I./csdk/ocrandom/include
 CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
-
+CXX_INC   += -I./../oic-utilities/tb/cereal-1.0.0/include
 # Force metatargets to build:
 all.PHONY: prep_dirs c_sdk oc_logger_target liboc.a examples
 

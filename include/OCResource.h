@@ -30,9 +30,6 @@
 #include <random>
 #include <algorithm>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
 #include <OCApi.h>
 #include <ResourceInitException.h>
 #include <IClientWrapper.h>
@@ -52,8 +49,7 @@ namespace OC
     class OCResource
     {
     friend class OCPlatform;
-    friend class InProcClientWrapper;
-
+    friend class ListenOCContainer;
     public:
         typedef std::shared_ptr<OCResource> Ptr;
         /**

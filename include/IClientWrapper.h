@@ -75,11 +75,6 @@ namespace OC
 
         virtual ~IClientWrapper(){}
 
-
-        // Note: this should never be called by anyone but the handler for the listen command.
-        // It is public becuase that needs to be a non-instance callback
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
-                        const std::string& host, const boost::property_tree::ptree resourceNode)=0;
     private:
     };
 }
