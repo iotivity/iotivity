@@ -1,0 +1,25 @@
+
+tests.cpp contains unitests for C++ APIs.  It uses Google Test for the unit tests.
+
+Unit Test Requirements:
+
+1. Install Google Test on a Linux build machine:
+	http://code.google.com/p/googletest/downloads/list
+
+2. Create a file called "local.properties" in the
+   root/unittests.  local.properties is used
+   by the makefile and specifies the path to the
+   Google Test directory on the build machine.
+   Since local.properties is specific to each build
+   system, do not add local.properties to the code repo.
+
+   local.properties should contain GTEST_DIR.
+   For example:
+
+   GTEST_DIR := /home/johndoe/utils/gtest-1.7.0
+
+4. To run the unit test, first build the stack.
+
+5. Run the unit test by
+   root/unittests/release/tests
+
