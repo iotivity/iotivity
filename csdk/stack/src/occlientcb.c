@@ -94,7 +94,7 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * re
     }
     else if(handle) {
         LL_FOREACH(cbList, out) {
-            if(memcmp(out->handle, handle, sizeof(OCDoHandle)) == 0) {
+            if(out->handle == handle) {
                 return out;
             }
         }
