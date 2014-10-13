@@ -98,8 +98,8 @@ void OCGenerateCoAPToken(OCCoAPToken * token);
  *
  * @return 0 - success, else - TBD error
  */
-OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr, OCStackResult result,
+OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr,
         OCQualityOfService qos, OCCoAPToken * token,
-        unsigned char *payload, uint32_t seqNum, uint32_t maxAge);
+        unsigned char *payload, OCResource *resPtr, uint32_t maxAge);
 
 #endif /* OCCOAP_H_ */

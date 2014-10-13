@@ -309,10 +309,8 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
                         resourceObserver->NONCount++;
                     }
                 }
-                OCSendCoAPNotification(resourceObserver->resUri, resourceObserver->addr,
-                        stackRet, qos,
-                        &(resourceObserver->token),
-                        jsonPayload, resPtr->sequenceNum, maxAge);
+                stackRet = OCSendCoAPNotification(resourceObserver->resUri, resourceObserver->addr,
+                        qos, &(resourceObserver->token), jsonPayload, resPtr, maxAge);
             }
             else
             {
