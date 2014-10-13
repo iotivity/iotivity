@@ -140,6 +140,7 @@ void PrintArduinoMemoryStats()
     extern char *__brkval;
     //address of tmp gives us the current stack boundry
     int tmp;
+    OC_LOG_V(INFO, TAG, "Stack: %u         Heap: %u", (unsigned int)&tmp, (unsigned int)__brkval);
     OC_LOG_V(INFO, TAG, "Unallocated Memory between heap and stack: %u",
              ((unsigned int)&tmp - (unsigned int)__brkval));
 #endif

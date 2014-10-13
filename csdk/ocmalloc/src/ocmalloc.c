@@ -25,6 +25,14 @@
 #include <stdlib.h>
 #include "ocmalloc.h"
 
+// Enable extra debug logging for malloc.  Comment out to disable
+//#define ENABLE_MALLOC_DEBUG  (1)
+
+#ifdef ENABLE_MALLOC_DEBUG
+    #include "logger.h"
+    #define TAG PCF("OCMalloc")
+#endif
+
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -53,16 +61,32 @@
 
 void *OCMalloc(size_t size)
 {
+#ifdef ENABLE_MALLOC_DEBUG
+    void *ptr = 0;
+
     if (0 == size)
     {
         return NULL;
     }
 
+    ptr = malloc(size);
+    OC_LOG_V(INFO, TAG, "malloc: ptr=%p, size=%u", ptr, size);
+    return ptr;
+#else
+    if (0 == size)
+    {
+        return NULL;
+    }
     return malloc(size);
+#endif
 }
 
 void OCFree(void *ptr)
 {
+#ifdef ENABLE_MALLOC_DEBUG
+    OC_LOG_V(INFO, TAG, "free: ptr=%p", ptr);
+#endif
+
     free(ptr);
 }
 
