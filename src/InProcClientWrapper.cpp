@@ -26,11 +26,6 @@
 #include "OCPlatform.h"
 #include "OCResource.h"
 
-#include <cereal/cereal.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/archives/json.hpp>
-
 using namespace std;
 
 namespace OC
@@ -131,122 +126,35 @@ namespace OC
     const std::string PROPERTYKEY = "prop";
     const std::string REPKEY = "rep";
 
-    class ListenOCContainer
+    std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(
+        IClientWrapper::Ptr clientWrapper, const std::string& host,
+        const boost::property_tree::ptree resourceNode)
     {
-        class ListenResourceContainer
+        std::string uri = resourceNode.get<std::string>(URIKEY, "");
+        bool obs = resourceNode.get<int>(OBSERVABLEKEY,0) == 1;
+        std::vector<std::string> rTs;
+        std::vector<std::string> ifaces;
+
+        boost::property_tree::ptree properties =
+            resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
+
+        boost::property_tree::ptree rT =
+            properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
+        for(auto itr : rT)
         {
-            class ListenResourcePropertiesContainer
-            {
-                friend class cereal::access;
-                friend class ListenResourceContainer;
+            rTs.push_back(itr.second.data());
+        }
 
-                template<class Archive>
-                void serialize(Archive& ar)
-                {
-                    try
-                    {
-                        ar(cereal::make_nvp(OBSERVABLEKEY, m_observable));
-                    }
-                    catch(cereal::Exception&)
-                    {
-                        // we swallow this exception, since it means the key
-                        // doesn't exist, allowing these to be optional
-                    }
+        boost::property_tree::ptree iF =
+            properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
+        for(auto itr : iF)
+        {
+            ifaces.push_back(itr.second.data());
+        }
 
-                    try
-                    {
-                        ar(cereal::make_nvp(RESOURCETYPESKEY,m_resourceTypes));
-                    }
-                    catch(cereal::Exception&)
-                    {}
-                    try
-                    {
-                        ar(cereal::make_nvp(INTERFACESKEY, m_interfaces));
-                    }
-                    catch(cereal::Exception&)
-                    {}
-                }
-
-                bool m_observable;
-                std::vector<std::string> m_resourceTypes;
-                std::vector<std::string> m_interfaces;
-            };
-
-            friend class cereal::access;
-            friend class ListenOCContainer;
-            template <class Archive>
-            void serialize(Archive& ar)
-            {
-                ar(cereal::make_nvp(URIKEY, m_uri));
-                ar(cereal::make_nvp(PROPERTYKEY, m_props));
-                // todo
-            }
-
-
-            std::string m_uri;
-            ListenResourcePropertiesContainer m_props;
-            bool observable()
-            {
-                return m_props.m_observable;
-            }
-            std::vector<std::string> resourceTypes()
-            {
-                return m_props.m_resourceTypes;
-            }
-            std::vector<std::string> interfaces()
-            {
-                return m_props.m_interfaces;
-            }
-        };
-
-        private:
-            friend class cereal::access;
-            template <class Archive>
-            void serialize(Archive& ar)
-            {
-                std::vector<ListenResourceContainer> resources;
-                ar(resources);
-            }
-        public:
-            ListenOCContainer(std::weak_ptr<IClientWrapper> cw, const std::string& host):
-                m_clientWrapper(cw), m_host(host)
-            {
-            }
-            void LoadFromJson(std::stringstream& json)
-            {
-                m_resources.clear();
-                cereal::JSONInputArchive archive(json);
-
-                std::vector<ListenResourceContainer> resources;
-                archive(cereal::make_nvp("oc", resources));
-
-                for(auto& res : resources)
-                {
-                    try
-                    {
-                        m_resources.push_back(std::shared_ptr<OCResource>(
-                            new OCResource(m_clientWrapper, m_host,
-                            res.m_uri, res.observable(), res.resourceTypes(),
-                            res.interfaces())));
-
-                    }
-                    catch(ResourceInitException& e)
-                    {
-                        oclog() << "listenCallback(): failed to create resource: " << e.what()
-                                << std::flush;
-                    }
-                }
-            }
-            const std::vector<std::shared_ptr<OCResource>>& Resources() const
-            {
-                return m_resources;
-            }
-        private:
-            std::vector<std::shared_ptr<OC::OCResource>> m_resources;
-            std::weak_ptr<IClientWrapper> m_clientWrapper;
-            std::string m_host;
-    };
-
+        return std::shared_ptr<OCResource>(
+            new OCResource(clientWrapper, host, uri, obs, rTs, ifaces));
+    }
 
     OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
@@ -264,18 +172,48 @@ namespace OC
 
         std::stringstream requestStream;
         requestStream << clientResponse->resJSONPayload;
-std::cout<<"ERICH::::"<<clientResponse->resJSONPayload<<std::endl;
-        std::string host = convertOCAddrToString(*clientResponse->addr);
-        ListenOCContainer container(context->clientWrapper,host);
-        container.LoadFromJson(requestStream);
 
+        boost::property_tree::ptree root;
 
-        // loop to ensure valid construction of all resources
-        for(auto resource : container.Resources())
+        try
         {
-            std::thread exec(context->callback, resource);
-            exec.detach();
+                boost::property_tree::read_json(requestStream, root);
         }
+        catch(boost::property_tree::json_parser::json_parser_error &e)
+        {
+                oclog() << "listenCallback(): read_json() failed: " << e.what()
+                        << std::flush;
+
+                return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        boost::property_tree::ptree payload =
+                root.get_child("oc", boost::property_tree::ptree());
+
+        for(auto payloadItr : payload)
+        {
+                try
+                {
+                    std::string host = convertOCAddrToString(*clientResponse->addr);
+                    std::shared_ptr<OCResource> resource =
+                        context->clientWrapper->parseOCResource(context->clientWrapper, host,
+                        payloadItr.second);
+
+                    // Note: the call to detach allows the underlying thread to continue until
+                    // completion and allows us to destroy the exec object. This is apparently NOT
+                    // a memory leak, as the thread will apparently take care of itself.
+                    // Additionally, the only parameter here is a shared ptr, so OCResource will be
+                    // disposed of properly upon completion of the callback handler.
+                    std::thread exec(context->callback,resource);
+                    exec.detach();
+                }
+                catch(ResourceInitException& e)
+                {
+                    oclog() << "listenCallback(): failed to create resource: " << e.what()
+                            << std::flush;
+                }
+        }
+
         return OC_STACK_KEEP_TRANSACTION;
     }
 

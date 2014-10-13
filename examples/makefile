@@ -37,7 +37,6 @@ CXX_INC	  += -I../csdk/ocsocket/include
 CXX_INC	  += -I../csdk/ocrandom/include
 CXX_INC	  += -I../csdk/logger/include
 CXX_INC	  += -I../csdk/libcoap
-CXX_INC   += -I../../oic-utilities/tb/cereal-1.0.0/include
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
