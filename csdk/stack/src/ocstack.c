@@ -106,7 +106,8 @@ void HandleStackResponses(OCResponse * response)
         result = response->cbNode->callBack(response->cbNode->context,
                 response->cbNode->handle, response->clientResponse);
         if (result == OC_STACK_DELETE_TRANSACTION ||
-                response->clientResponse->result == OC_STACK_COMM_ERROR)
+                response->clientResponse->result == OC_STACK_COMM_ERROR ||
+                response->clientResponse->result == OC_STACK_RESOURCE_DELETED)
         {
             FindAndDeleteClientCB(response->cbNode);
         }
@@ -1559,9 +1560,8 @@ OCNotifyListOfObservers (OCResourceHandle handle,
                     }
                 }
                 OCSendCoAPNotification (observation->resUri, observation->addr,
-                                        OC_STACK_OK, qos,
-                                        &(observation->token),
-                                        bufNotify, resPtr->sequenceNum, maxAge);
+                                        qos, &(observation->token),
+                                        bufNotify, resPtr, maxAge);
                 numSentNotification++;
             }
         }
@@ -1722,6 +1722,10 @@ int deleteResource(OCResource *resource) {
             } else {
                 prev->next = temp->next;
             }
+
+            resource->resourceProperties = (OCResourceProperty) 0; // Invalidate all Resource Properties.
+            OCNotifyAllObservers((OCResourceHandle)resource);
+
             deleteResourceElements(temp);
             OCFree(temp);
             return 1;

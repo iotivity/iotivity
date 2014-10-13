@@ -669,10 +669,11 @@ exit:
     return ret;
 }
 
-OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr, OCStackResult result,
+OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr,
                        OCQualityOfService qos, OCCoAPToken * token,
-                       unsigned char *payload, uint32_t seqNum, uint32_t maxAge)
+                       unsigned char *payload, OCResource *resPtr, uint32_t maxAge)
 {
+    OCStackResult result = OC_STACK_ERROR;
     coap_list_t *optList = NULL;
     uint8_t coapMsgType = COAP_MESSAGE_NON;
     uint8_t mediaType = COAP_MEDIATYPE_APPLICATION_JSON;
@@ -695,12 +696,17 @@ OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr, O
     else
     {
     #endif
-        result = FormOptionList(&optList, &mediaType, &maxAge, sizeof(seqNum),
-                &seqNum, NULL, strlen((char *)uri), uri, 0, NULL, NULL, 0);
+        result = FormOptionList(&optList, &mediaType, &maxAge, sizeof(resPtr->sequenceNum),
+                &resPtr->sequenceNum, NULL, strlen((char *)uri), uri, 0, NULL, NULL, 0);
     #ifdef WITH_PRESENCE
     }
     #endif
     VERIFY_SUCCESS(result, OC_STACK_OK);
+
+    if(resPtr->resourceProperties == 0)
+    {
+        result = OC_STACK_RESOURCE_DELETED;
+    }
 
     sendPdu = GenerateCoAPPdu(
             coapMsgType == COAP_MESSAGE_CON ? COAP_MESSAGE_CON : COAP_MESSAGE_NON,

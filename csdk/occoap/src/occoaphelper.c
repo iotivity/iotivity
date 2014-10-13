@@ -57,6 +57,10 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
             ret = COAP_RESPONSE_200;
             break;
 
+        case OC_STACK_RESOURCE_DELETED:
+            ret = COAP_RESPONSE_202;
+            break;
+
         case OC_STACK_INVALID_QUERY :
             ret = COAP_RESPONSE_400;
             break;
@@ -85,6 +89,10 @@ OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
     {
         case COAP_RESPONSE_200 :
             ret = OC_STACK_OK;
+            break;
+
+        case COAP_RESPONSE_202 :
+            ret = OC_STACK_RESOURCE_DELETED;
             break;
 
         case COAP_RESPONSE_400 :

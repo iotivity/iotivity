@@ -103,12 +103,21 @@ typedef enum {
 
 /**
  * Resource Properties
+ *
+ * OC_ACTIVE       - When this bit is set, the resource is initialized, otherwise the resource
+ *                   is 'inactive'. 'inactive' signifies that the resource has been marked for
+ *                   deletion or is already deleted.
+ * OC_DISCOVERABLE - When this bit is set, the resource is allowed to be discovered by clients.
+ * OC_OBSERVABLE   - When this bit is set, the resource is allowed to be observed by clients.
+ * OC_SLOW         - When this bit is set, the resource has been marked as 'slow'. 'slow' signifies
+ *                   that responses from this resource can expect delays in processing its
+ *                   requests from clients.
  */
 typedef enum {
-    OC_ACTIVE       = (1 << 0),  // set == initialized; unset == deleted
-    OC_DISCOVERABLE = (1 << 1),  // Discovery of this resource allowed
-    OC_OBSERVABLE   = (1 << 2),  // Observe allowed
-    OC_SLOW         = (1 << 3)   // Expect delay in processing requests. Send ACK to request and send response later
+    OC_ACTIVE       = (1 << 0),
+    OC_DISCOVERABLE = (1 << 1),
+    OC_OBSERVABLE   = (1 << 2),
+    OC_SLOW         = (1 << 3)
 } OCResourceProperty;
 
 /**
@@ -142,6 +151,7 @@ typedef enum {
     OC_STACK_OBSERVER_NOT_FOUND,
     OC_STACK_OBSERVER_NOT_ADDED,
     OC_STACK_OBSERVER_NOT_REMOVED,
+    OC_STACK_RESOURCE_DELETED,
     #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
