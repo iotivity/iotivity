@@ -29,6 +29,7 @@
 #include <InProcClientWrapper.h>
 #include <OutOfProcServerWrapper.h>
 #include <InProcServerWrapper.h>
+#include "StringConstants.h"
 
 namespace OC
 {
@@ -75,7 +76,7 @@ namespace OC
                 return std::make_shared<InProcServerWrapper>(owner, csdkLock, cfg);
                 break;
             case ServiceType::OutOfProc:
-                throw OC::OCException("ServiceType::OutOfProc", OC_STACK_NOTIMPL);
+                throw OC::OCException(OC::Exception::SVCTYPE_OUTOFPROC, OC_STACK_NOTIMPL);
                 break;
             }
 			return nullptr;

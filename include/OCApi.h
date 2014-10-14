@@ -35,7 +35,7 @@
 #include "ocstack.h"
 #include "OCHeaderOption.h"
 #include <OCException.h>
-
+#include "StringConstants.h"
 #include "oc_logger.hpp"
 
 namespace OC
@@ -531,7 +531,7 @@ namespace OC
                 }
                 else
                 {
-                    throw OCException("Array type should have at least []");
+                    throw OCException(OC::Exception::INVALID_ARRAY);
                 }
 
             }
@@ -553,7 +553,7 @@ namespace OC
                 }
                 else
                 {
-                    throw OCException("Array type should have at least []");
+                    throw OCException(OC::Exception::INVALID_ARRAY);
                 }
             }
 
@@ -575,7 +575,7 @@ namespace OC
                 }
                 else
                 {
-                    throw OCException("Array type should have at least []");
+                    throw OCException(OC::Exception::INVALID_ARRAY);
                 }
 
             }
@@ -598,7 +598,7 @@ namespace OC
                 }
                 else
                 {
-                    throw OCException("Array type should have at least []");
+                    throw OCException(OC::Exception::INVALID_ARRAY);
                 }
             }
 
@@ -620,7 +620,7 @@ namespace OC
                 }
                 else
                 {
-                    throw OCException("Array type should have at least []");
+                    throw OCException(OC::Exception::INVALID_ARRAY);
                 }
             }
 
