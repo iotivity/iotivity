@@ -292,6 +292,9 @@ OCStackResult OCStop()
         return OC_STACK_ERROR;
     }
 
+    // Free memory dynamically allocated for resources
+    deleteAllResources();
+
     // Make call to OCCoAP layer
     if (OCStopCoAP() == OC_STACK_OK)
     {
@@ -304,9 +307,6 @@ OCStackResult OCStop()
     } else {
         result = OC_STACK_ERROR;
     }
-
-    // Free memory dynamically allocated for resources
-    deleteAllResources();
 
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Stack stop error"));
