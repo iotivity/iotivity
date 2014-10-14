@@ -43,6 +43,9 @@ OCStackResult isVendorSpecific(uint16_t optionID);
 // Convert OCStack code to CoAP code
 uint8_t OCToCoAPResponseCode(OCStackResult result);
 
+//Convert OCQualityOfService to coap NON vs CON
+uint8_t OCToCoAPQoS(OCQualityOfService qos);
+
 // Convert CoAP code to OCStack code
 OCStackResult CoAPToOCResponseCode(uint8_t coapCode);
 

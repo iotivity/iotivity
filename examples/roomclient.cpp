@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
         OC::ModeType::Client,
         "0.0.0.0",
         0,
-        OC::QualityOfService::NonConfirmable
+        OC::QualityOfService::LowQos
     };
 
     // Create a OCPlatform instance.

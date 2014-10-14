@@ -59,7 +59,21 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "OBSERVE RESULT:"<<std::endl;
-        std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
+        if(sequenceNumber == 0)
+        {
+            std::cout << "\tObserve Registration Confirmed: "<< endl;
+        }
+        else if (sequenceNumber == 1)
+        {
+            std::cout << "\tObserve Cancel Confirmed: "<< endl;
+            sleep(10);
+            std::cout << "DONE"<<std::endl;
+            std::exit(0);
+        }
+        else
+        {
+            std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
+        }
 
         rep.getValue("state", mylight.m_state);
         rep.getValue("power", mylight.m_power);
@@ -72,12 +86,9 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         if(observe_count() > 30)
         {
             std::cout<<"Cancelling Observe..."<<std::endl;
-            OCStackResult result = curResource->cancelObserve();
+            OCStackResult result = curResource->cancelObserve(OC::QualityOfService::HighQos);
 
-            std::cout << "Cancel result: "<< result <<std::endl;
-            sleep(10);
-            std::cout << "DONE"<<std::endl;
-            std::exit(0);
+            std::cout << "Cancel result: "<< result << " waiting for confirmation ..." <<std::endl;
         }
     }
     else
@@ -113,8 +124,9 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
             std::cout << endl << "Observe is used." << endl << endl;
         else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
             std::cout << endl << "ObserveAll is used." << endl << endl;
-
-        curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
+        sleep(1);
+        curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve,
+                OC::QualityOfService::HighQos);
 
     }
     else
@@ -155,8 +167,8 @@ void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, con
 
         rep2.setValue("state", mylight.m_state);
         rep2.setValue("power", mylight.m_power);
-
-        curResource->post(rep2, QueryParamsMap(), &onPost2);
+        sleep(1);
+        curResource->post(rep2, QueryParamsMap(), &onPost2, OC::QualityOfService::HighQos);
     }
     else
     {
@@ -181,7 +193,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
         rep.setValue("power", mylight.m_power);
 
         // Invoke resource's post API with rep, query map and the callback parameter
-        resource->post(rep, QueryParamsMap(), &onPost);
+        resource->post(rep, QueryParamsMap(), &onPost, OC::QualityOfService::HighQos);
     }
 }
 
@@ -199,7 +211,7 @@ void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
         std::cout << "\tstate: " << mylight.m_state << std::endl;
         std::cout << "\tpower: " << mylight.m_power << std::endl;
         std::cout << "\tname: " << mylight.m_name << std::endl;
-
+        sleep(1);
         postLightRepresentation(curResource);
     }
     else
@@ -225,7 +237,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
         rep.setValue("power", mylight.m_power);
 
         // Invoke resource's put API with rep, query map and the callback parameter
-        resource->put(rep, QueryParamsMap(), &onPut);
+        resource->put(rep, QueryParamsMap(), &onPut, OC::QualityOfService::HighQos);
     }
 }
 
@@ -244,7 +256,7 @@ void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
         std::cout << "\tstate: " << mylight.m_state << std::endl;
         std::cout << "\tpower: " << mylight.m_power << std::endl;
         std::cout << "\tname: " << mylight.m_name << std::endl;
-
+        sleep(1);
         putLightRepresentation(curResource);
     }
     else
@@ -263,7 +275,7 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
         // Invoke resource's get API with the callback parameter
 
         QueryParamsMap test;
-        resource->get(test, &onGet);
+        resource->get(test, &onGet,OC::QualityOfService::HighQos);
     }
 }
 
@@ -308,6 +320,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
             if(resourceURI == "/a/light")
             {
                 curResource = resource;
+                sleep(1);
                 // Call a local function which will internally invoke get API on the resource pointer
                 getLightRepresentation(resource);
             }
@@ -371,7 +384,8 @@ int main(int argc, char* argv[]) {
         OCPlatform platform(cfg);
         std::cout << "Created Platform..."<<std::endl;
         // Find all resources
-        platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+        platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource,
+                OC::QualityOfService::LowQos);
         std::cout<< "Finding Resource... " <<std::endl;
         while(true)
         {

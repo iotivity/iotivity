@@ -25,6 +25,7 @@ using namespace std;
 class LightResource
 {
  public:
+    OCPlatform& m_platform;
     bool m_state;       // off or on?
     int m_power;        // power level
     OCRepresentation m_rep;
@@ -40,8 +41,9 @@ class LightResource
     OCResourceHandle m_resourceHandle;
 
     public:
-    LightResource()
-     : m_state(false), 
+    LightResource(OCPlatform& platform)
+     : m_platform(platform),
+       m_state(false),
        m_power(0),
        m_observation(false)
     {}
@@ -57,7 +59,7 @@ class LightResource
     private:
     inline std::string make_URI(const unsigned int resource_number)
     {
-        std::string uri = std::string("/a/light") + "_" + std::to_string(resource_number); 
+        std::string uri = std::string("/a/light") + "_" + std::to_string(resource_number);
         m_rep.setUri(uri);
         return uri;
     }
@@ -92,4 +94,4 @@ class LightResource
 
 }} // namespace Intel::OCDemo
 
-#endif 
+#endif

@@ -97,8 +97,10 @@ extern OCMode myStackMode;
  * Quality of Service
  */
 typedef enum {
-    OC_NON_CONFIRMABLE = 0,
-    OC_CONFIRMABLE
+    OC_LOW_QOS = 0,
+    OC_MEDIUM_QOS,
+    OC_HIGH_QOS,
+    OC_NA_QOS // No Quality is defined, let the stack decide
 } OCQualityOfService;
 
 /**
@@ -674,7 +676,7 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle);
  *     OC_STACK_NO_RESOURCE - invalid resource handle
  *     OC_STACK_NO_OBSERVERS - no more observers intrested in resource
  */
-OCStackResult OCNotifyAllObservers(OCResourceHandle handle);
+OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService qos);
 
 /**
  * Notify specific observers with updated value of representation.
@@ -697,7 +699,8 @@ OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
                          OCObservationId  *obsIdList,
                          uint8_t          numberOfIds,
-                         unsigned char    *notificationJSONPayload);
+                         unsigned char    *notificationJSONPayload,
+                         OCQualityOfService qos);
 
 #ifdef __cplusplus
 }

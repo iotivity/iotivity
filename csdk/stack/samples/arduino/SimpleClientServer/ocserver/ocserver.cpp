@@ -209,7 +209,7 @@ void *ChangeLEDRepresentation (void *param)
         if (gLEDUnderObservation)
         {
             OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", LED.power);
-            result = OCNotifyAllObservers (LED.handle);
+            result = OCNotifyAllObservers (LED.handle, OC_NA_QOS);
             if (OC_STACK_NO_OBSERVERS == result)
             {
                 gLEDUnderObservation = 0;

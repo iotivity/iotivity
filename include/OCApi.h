@@ -101,8 +101,10 @@ namespace OC
 
     enum class QualityOfService : uint8_t
     {
-        Confirmable     = OC_CONFIRMABLE,
-        NonConfirmable  = OC_NON_CONFIRMABLE
+        LowQos      = OC_LOW_QOS,
+        MidQos      = OC_MEDIUM_QOS,
+        HighQos     = OC_HIGH_QOS,
+        NaQos       = OC_NA_QOS // No Quality is defined, let the stack decide
     };
 
     /**

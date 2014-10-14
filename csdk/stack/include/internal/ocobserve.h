@@ -53,9 +53,9 @@ typedef struct ResourceObserver {
     // number of times the server failed to reach the observer
     uint8_t failedCommCount;
     // number of times the server sent NON notifications
-    uint8_t NONCount;
+    uint8_t lowQosCount;
     // force the qos value to CON
-    uint8_t forceCON;
+    uint8_t forceHighQos;
     // next node in this list
     struct ResourceObserver *next;
 } ResourceObserver;
@@ -64,7 +64,8 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status);
 
 OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request);
 
-OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge);
+OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
+        OCQualityOfService qos);
 
 void DeleteObserverList();
 

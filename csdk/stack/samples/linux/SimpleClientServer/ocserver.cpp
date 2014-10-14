@@ -443,12 +443,12 @@ void *ChangeLEDRepresentation (void *param)
                 json = cJSON_Parse((char *)jSONResponseSkel);
                 cJSON_Delete(json);
                 result = OCNotifyListOfObservers (LED.handle, obsNotify, j,
-                        (unsigned char *)obsResp);
+                        (unsigned char *)obsResp, OC_NA_QOS);
             }
             else if (gObserveNotifyType == 0)
             {
                 // Notifying all observers
-                result = OCNotifyAllObservers (LED.handle);
+                result = OCNotifyAllObservers (LED.handle, OC_NA_QOS);
                 if (OC_STACK_NO_OBSERVERS == result)
                 {
                     OC_LOG (INFO, TAG,

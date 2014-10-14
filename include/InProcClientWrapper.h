@@ -45,29 +45,30 @@ namespace OC
         virtual ~InProcClientWrapper();
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
-            const std::string& resourceType, FindCallback& callback);
+            const std::string& resourceType, FindCallback& callback,
+            QualityOfService QoS);
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
             const std::string& uri, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions,
-            GetCallback& callback);
+            GetCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
             const std::string& uri, const OCRepresentation& attributes,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            PutCallback& callback);
+            PutCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
             const std::string& uri, const OCRepresentation& attributes,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            PostCallback& callback);
+            PostCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions, ObserveCallback& callback);
+            const HeaderOptions& headerOptions, ObserveCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
-            const std::string& uri, const HeaderOptions& headerOptions);
+            const std::string& uri, const HeaderOptions& headerOptions, QualityOfService QoS);
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
             SubscribeCallback& presenceHandler);
@@ -77,6 +78,8 @@ namespace OC
         // It is public becuase that needs to be a non-instance callback
         virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
             const std::string& host, const boost::property_tree::ptree resourceNode);
+
+        OCStackResult GetDefaultQos(QualityOfService& QoS);
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);

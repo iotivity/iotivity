@@ -57,7 +57,7 @@ int exec(const boost::program_options::variables_map& vm)
                           OC::ModeType::Server,                 // run in server mode
                           vm["host_ip"].as<string>(),           // host
                           vm["host_port"].as<uint16_t>(),       // port
-                          OC::QualityOfService::NonConfirmable
+                          OC::QualityOfService::LowQos
                         });
 
  std::cout << "Ok." << std::endl;
@@ -72,7 +72,7 @@ int exec(const boost::program_options::variables_map& vm)
   {
         cout << "Registering resource " << resource_number << ": " << std::flush;
 
-        auto lr = make_shared<Intel::OCDemo::LightResource>();
+        auto lr = make_shared<Intel::OCDemo::LightResource>(platform);
 
         lr->createResource(platform, resource_number);
         lr->addType(platform, std::string("core.brightlight"));

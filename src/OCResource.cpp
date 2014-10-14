@@ -28,8 +28,7 @@ using OC::result_guard;
 using OC::checked_guard;
 
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-                       const std::string& uri, bool observable,
-                       const std::vector<std::string>& resourceTypes,
+                       const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes,
                        const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri), m_host(host), m_isObservable(observable),
     m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces),
@@ -53,15 +52,32 @@ OCResource::~OCResource()
 }
 
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
-                              GetCallback attributeHandler)
+                              GetCallback attributeHandler, QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetResourceRepresentation,
-                         m_host, m_uri, queryParametersMap, m_headerOptions, attributeHandler);
+                         m_host, m_uri, queryParametersMap, m_headerOptions, attributeHandler, QoS);
+}
+
+OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
+                              GetCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return result_guard(get(queryParametersMap, attributeHandler, defaultQos));
 }
 
 OCStackResult OCResource::get(const std::string& resourceType,
                      const std::string& resourceInterface, const QueryParamsMap& queryParametersMap,
                      GetCallback attributeHandler)
+{
+    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
+
+    return result_guard(get(resourceType, resourceInterface, queryParametersMap, attributeHandler, defaultQoS));
+}
+
+OCStackResult OCResource::get(const std::string& resourceType, const std::string& resourceInterface, const QueryParamsMap& queryParametersMap, GetCallback attributeHandler,
+        QualityOfService QoS)
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
@@ -75,14 +91,23 @@ OCStackResult OCResource::get(const std::string& resourceType,
         mapCpy["if"]= resourceInterface;
     }
 
-    return result_guard(get(mapCpy, attributeHandler));
+    return result_guard(get(mapCpy, attributeHandler, QoS));
 }
 
 OCStackResult OCResource::put(const OCRepresentation& rep,
-                     const QueryParamsMap& queryParametersMap, PutCallback attributeHandler)
+                              const QueryParamsMap& queryParametersMap, PutCallback attributeHandler,
+                              QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutResourceRepresentation,
-                         m_host, m_uri, rep, queryParametersMap, m_headerOptions, attributeHandler);
+                         m_host, m_uri, rep, queryParametersMap, m_headerOptions, attributeHandler, QoS);
+}
+
+OCStackResult OCResource::put(const OCRepresentation& rep,
+                              const QueryParamsMap& queryParametersMap, PutCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return result_guard(put(rep, queryParametersMap, attributeHandler, defaultQos));
 }
 
 OCStackResult OCResource::put(const std::string& resourceType,
@@ -90,32 +115,18 @@ OCStackResult OCResource::put(const std::string& resourceType,
                               const QueryParamsMap& queryParametersMap,
                               PutCallback attributeHandler)
 {
-    QueryParamsMap mapCpy(queryParametersMap);
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
 
-    if(!resourceType.empty())
-     {
-            mapCpy["rt"]=resourceType;
-     }
-
-    if(!resourceInterface.empty())
-     {
-            mapCpy["if"]=resourceInterface;
-     }
-
-    return result_guard(put(rep, mapCpy, attributeHandler));
+    return result_guard(put(resourceType, resourceInterface, rep, queryParametersMap,
+            attributeHandler, defaultQos));
 }
 
-OCStackResult OCResource::post(const OCRepresentation& rep,
-                     const QueryParamsMap& queryParametersMap, PostCallback attributeHandler)
-{
-    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
-                         m_host, m_uri, rep, queryParametersMap, m_headerOptions, attributeHandler);
-}
-
-OCStackResult OCResource::post(const std::string& resourceType,
-                               const std::string& resourceInterface, const OCRepresentation& rep,
-                               const QueryParamsMap& queryParametersMap,
-                               PostCallback attributeHandler)
+OCStackResult OCResource::put(const std::string& resourceType,
+                              const std::string& resourceInterface, const OCRepresentation& rep,
+                              const QueryParamsMap& queryParametersMap,
+                              PutCallback attributeHandler,
+                              QualityOfService QoS)
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
@@ -129,11 +140,61 @@ OCStackResult OCResource::post(const std::string& resourceType,
         mapCpy["if"]=resourceInterface;
     }
 
-    return result_guard(post(rep, mapCpy, attributeHandler));
+    return result_guard(put(rep, mapCpy, attributeHandler, QoS));
+}
+
+OCStackResult OCResource::post(const OCRepresentation& rep,
+                               const QueryParamsMap& queryParametersMap, PostCallback attributeHandler,
+                               QualityOfService QoS)
+{
+    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
+                         m_host, m_uri, rep, queryParametersMap, m_headerOptions, attributeHandler, QoS);
+}
+
+OCStackResult OCResource::post(const OCRepresentation& rep,
+                              const QueryParamsMap& queryParametersMap, PutCallback attributeHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+    return result_guard(post(rep, queryParametersMap, attributeHandler, defaultQos));
+}
+
+OCStackResult OCResource::post(const std::string& resourceType,
+                               const std::string& resourceInterface, const OCRepresentation& rep,
+                               const QueryParamsMap& queryParametersMap,
+                               PostCallback attributeHandler)
+{
+    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
+
+    return result_guard(post(resourceType, resourceInterface, rep, queryParametersMap, attributeHandler,
+            defaultQoS));
+}
+
+OCStackResult OCResource::post(const std::string& resourceType,
+                               const std::string& resourceInterface, const OCRepresentation& rep,
+                               const QueryParamsMap& queryParametersMap,
+                               PostCallback attributeHandler,
+                               QualityOfService QoS)
+{
+    QueryParamsMap mapCpy(queryParametersMap);
+
+    if(!resourceType.empty())
+    {
+        mapCpy["rt"]=resourceType;
+    }
+
+    if(!resourceInterface.empty())
+    {
+        mapCpy["if"]=resourceInterface;
+    }
+
+    return result_guard(post(rep, mapCpy, attributeHandler, QoS));
 }
 
 OCStackResult OCResource::observe(ObserveType observeType,
-                           const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)
+        const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler,
+        QualityOfService QoS)
 {
     if(m_observeHandle != nullptr)
     {
@@ -142,10 +203,26 @@ OCStackResult OCResource::observe(ObserveType observeType,
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::ObserveResource,
                          observeType, &m_observeHandle, m_host,
-                         m_uri, queryParametersMap, m_headerOptions, observeHandler);
+                         m_uri, queryParametersMap, m_headerOptions, observeHandler, QoS);
+}
+
+OCStackResult OCResource::observe(ObserveType observeType,
+        const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler)
+{
+    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
+
+    return result_guard(observe(observeType, queryParametersMap, observeHandler, defaultQoS));
 }
 
 OCStackResult OCResource::cancelObserve()
+{
+    QualityOfService defaultQoS = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQoS);
+    return result_guard(cancelObserve(defaultQoS));
+}
+
+OCStackResult OCResource::cancelObserve(QualityOfService QoS)
 {
     if(m_observeHandle == nullptr)
     {
@@ -153,7 +230,7 @@ OCStackResult OCResource::cancelObserve()
     }
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::CancelObserveResource,
-                         m_observeHandle, m_host, m_uri, m_headerOptions);
+            m_observeHandle, m_host, m_uri, m_headerOptions, QoS);
 }
 
 std::string OCResource::host() const

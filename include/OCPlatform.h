@@ -69,13 +69,15 @@ namespace OC
         * API for notifying base that resource's attributes have changed.
         *
         * @param OCResourceHandle resource handle of the resource
+        * @param QualityOfService the quality of communication
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: This API is for server side only.
         * NOTE: OCResourceHandle is defined in ocstack.h.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        static OCStackResult notifyAllObservers(OCResourceHandle resourceHandle);
+        OCStackResult notifyAllObservers(OCResourceHandle resourceHandle);
+        OCStackResult notifyAllObservers(OCResourceHandle resourceHandle, QualityOfService QoS);
 
         /**
         * API for notifying only specific clients that resource's attributes have changed.
@@ -85,6 +87,7 @@ namespace OC
         * which will be notified upon resource change.
         * @param responsePtr OCResourceResponse pointer used by app to fill the response for this
         * resource change.
+        * @param QualityOfService the quality of communication
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         *
@@ -92,10 +95,15 @@ namespace OC
         * NOTE: OCResourceHandle is defined in ocstack.h.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        static OCStackResult notifyListOfObservers(
-                                OCResourceHandle resourceHandle,
-                                ObservationIds& observationIds,
-                                const std::shared_ptr<OCResourceResponse> responsePtr);
+        OCStackResult notifyListOfObservers(
+                    OCResourceHandle resourceHandle,
+                    ObservationIds& observationIds,
+                    const std::shared_ptr<OCResourceResponse> responsePtr);
+        OCStackResult notifyListOfObservers(
+                    OCResourceHandle resourceHandle,
+                    ObservationIds& observationIds,
+                    const std::shared_ptr<OCResourceResponse> responsePtr,
+                    QualityOfService QoS);
 
         /**
         * API for Service and Resource Discovery.
@@ -113,6 +121,7 @@ namespace OC
         *        (Not Empty, NULL/Empty) - Performs ALL resource discovery on a particular service.
         *        (Not Empty, Not Empty) - Performs query for a filtered/scoped/particular resource(s)
         *                                  from a particular service.
+        * @param QualityOfService the quality of communication
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: First parameter 'host' currently represents an IP address. This will change in future
@@ -120,7 +129,9 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
-            FindCallback resourceHandler);
+                    FindCallback resourceHandler);
+        OCStackResult findResource(const std::string& host, const std::string& resourceURI,
+                    FindCallback resourceHandler, QualityOfService QoS);
 
         /**
         * This API registers a resource with the server

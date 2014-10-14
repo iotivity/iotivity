@@ -400,7 +400,7 @@ int main ()
         ModeType::Server,
         "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
         0,         // Uses randomly available port
-        QualityOfService::NonConfirmable
+        QualityOfService::LowQos
     };
 
     Refridgerator rf(cfg);

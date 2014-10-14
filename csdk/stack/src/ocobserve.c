@@ -79,7 +79,7 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
         observer = GetObserverUsingToken(token);
         if(observer)
         {
-            observer->forceCON = 0;
+            observer->forceHighQos = 0;
             observer->failedCommCount = 0;
             result = OC_STACK_OK;
         }
@@ -117,7 +117,7 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
                 observer->failedCommCount++;
                 result = OC_STACK_OBSERVER_NOT_REMOVED;
             }
-            observer->forceCON = 1;
+            observer->forceHighQos = 1;
             OC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",observer->failedCommCount);
         }
         break;
@@ -232,7 +232,8 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
     return stackRet;
 }
 
-OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge)
+OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
+        OCQualityOfService qos)
 {
     uint8_t numObs = 0;
     OCStackResult stackRet = OC_STACK_ERROR;
@@ -241,8 +242,6 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
     OCEntityHandlerRequest entityHandlerReq;
     unsigned char* jsonPayload = NULL;
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
-    // TODO: we should allow the server application to define qos for each notification
-    OCQualityOfService qos = OC_NON_CONFIRMABLE;
 
     // Find clients that are observing this resource
     while (resourceObserver)
@@ -283,30 +282,35 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
                         jsonPayload);
 
                 // send notifications based on the qos of the request
-                qos = resourceObserver->qos;
-                if(qos == OC_NON_CONFIRMABLE)
+                // The qos passed as a parameter overrides what the client requested
+                // If we want the client preference taking high priority add:
+                // qos = resourceObserver->qos;
+                if(qos == OC_NA_QOS){
+                    qos = resourceObserver->qos;
+                }
+                if(qos != OC_HIGH_QOS)
                 {
                     OC_LOG_V(INFO, TAG, "Current NON count for this observer is %d",
-                            resourceObserver->NONCount);
+                            resourceObserver->lowQosCount);
                     #ifdef WITH_PRESENCE
-                    if((resourceObserver->forceCON \
-                            || resourceObserver->NONCount >= MAX_OBSERVER_NON_COUNT) \
+                    if((resourceObserver->forceHighQos \
+                            || resourceObserver->lowQosCount >= MAX_OBSERVER_NON_COUNT) \
                             && method != OC_REST_PRESENCE)
                     #else
                     if(resourceObserver->forceCON \
                             || resourceObserver->NONCount >= MAX_OBSERVER_NON_COUNT)
                     #endif
                     {
-                        resourceObserver->NONCount = 0;
+                        resourceObserver->lowQosCount = 0;
                         // at some point we have to to send CON to check on the
                         // availability of observer
                         OC_LOG(INFO, TAG, PCF("This time we are sending the \
-                                notification as CON"));
-                        qos = OC_CONFIRMABLE;
+                                notification as High qos"));
+                        qos = OC_HIGH_QOS;
                     }
                     else
                     {
-                        resourceObserver->NONCount++;
+                        resourceObserver->lowQosCount++;
                     }
                 }
                 stackRet = OCSendCoAPNotification(resourceObserver->resUri, resourceObserver->addr,

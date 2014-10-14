@@ -80,14 +80,27 @@ OCStackResult OCPlatform::setDefaultDeviceEntityHandler(EntityHandler entityHand
                          entityHandler);
 }
 
+OCStackResult OCPlatform::notifyAllObservers(OCResourceHandle resourceHandle, QualityOfService QoS)
+{
+    return result_guard(OCNotifyAllObservers(resourceHandle, static_cast<OCQualityOfService>(QoS)));
+}
+
 OCStackResult OCPlatform::notifyAllObservers(OCResourceHandle resourceHandle)
 {
-    return result_guard(OCNotifyAllObservers(resourceHandle));
+    return notifyAllObservers(resourceHandle, m_cfg.QoS);
 }
 
 OCStackResult OCPlatform::notifyListOfObservers(OCResourceHandle resourceHandle,
                                             ObservationIds& observationIds,
                                             const std::shared_ptr<OCResourceResponse> pResponse)
+{
+    return notifyListOfObservers(resourceHandle, observationIds, pResponse, m_cfg.QoS);
+}
+
+OCStackResult OCPlatform::notifyListOfObservers(OCResourceHandle resourceHandle,
+                                            ObservationIds& observationIds,
+                                            const std::shared_ptr<OCResourceResponse> pResponse,
+                                            QualityOfService QoS)
 {
     if(!pResponse)
     {
@@ -99,7 +112,8 @@ OCStackResult OCPlatform::notifyListOfObservers(OCResourceHandle resourceHandle,
     return result_guard(
                OCNotifyListOfObservers(resourceHandle,
                                        &observationIds[0], observationIds.size(),
-                                       reinterpret_cast<unsigned char *>(const_cast<char *>(payload.c_str()))));
+                                       reinterpret_cast<unsigned char *>(const_cast<char *>(payload.c_str())),
+                                       static_cast<OCQualityOfService>(QoS)));
 }
 
 OCResource::Ptr OCPlatform::constructResourceObject(const std::string& host, const std::string& uri,
@@ -117,8 +131,14 @@ OCResource::Ptr OCPlatform::constructResourceObject(const std::string& host, con
 OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName,
                                        FindCallback resourceHandler)
 {
+    return findResource(host, resourceName, resourceHandler, m_cfg.QoS);
+}
+
+OCStackResult OCPlatform::findResource(const std::string& host, const std::string& resourceName,
+                                       FindCallback resourceHandler, QualityOfService QoS)
+{
     return checked_guard(m_client, &IClientWrapper::ListenForResource,
-                         host, resourceName, resourceHandler);
+                         host, resourceName, resourceHandler, QoS);
 }
 
 
@@ -131,7 +151,7 @@ OCStackResult OCPlatform::registerResource(OCResourceHandle& resourceHandle,
 {
     return checked_guard(m_server, &IServerWrapper::registerResource,
                          ref(resourceHandle), resourceURI, resourceTypeName,
-                                resourceInterface, entityHandler, resourceProperty);
+                         resourceInterface, entityHandler, resourceProperty);
 }
 
 OCStackResult OCPlatform::unregisterResource(const OCResourceHandle& resourceHandle) const

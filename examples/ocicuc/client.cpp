@@ -69,7 +69,7 @@ int exec(const boost::program_options::variables_map& vm)
                           OC::ModeType::Client,                 // client mode
                           vm["host_ip"].as<string>(),           // host
                           vm["host_port"].as<uint16_t>(),       // port
-                          OC::QualityOfService::NonConfirmable
+                          OC::QualityOfService::LowQos
                         });
 
  vector<string> resource_URIs;

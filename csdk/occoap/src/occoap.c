@@ -196,7 +196,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 
     // fill OCRequest structure
     result = FormOCRequest(&request, (recvPdu->hdr->type == COAP_MESSAGE_CON) ?
-            OC_CONFIRMABLE : OC_NON_CONFIRMABLE, rcvdUri, rcvdObsReq, &entityHandlerRequest);
+            OC_HIGH_QOS : OC_LOW_QOS, rcvdUri, rcvdObsReq, &entityHandlerRequest);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     OC_LOG_V(INFO, TAG, " Receveid uri:     %s", request->resourceUrl);
@@ -618,11 +618,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
         OC_LOG_V(DEBUG, TAG, "uri.query.s %s", uri.query.s);
     }
 
-    coapMsgType = COAP_MESSAGE_NON;
-    // Decide message type
-    if (qos == OC_CONFIRMABLE) {
-        coapMsgType = COAP_MESSAGE_CON;
-    }
+    coapMsgType = OCToCoAPQoS(qos);
 
     // Decide method type
     switch (method) {
@@ -681,11 +677,7 @@ OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr,
 
     OC_LOG(INFO, TAG, PCF("Entering OCSendCoAPNotification"));
 
-    coapMsgType = COAP_MESSAGE_NON;
-    // Decide message type
-    if (qos == OC_CONFIRMABLE) {
-        coapMsgType = COAP_MESSAGE_CON;
-    }
+    coapMsgType = OCToCoAPQoS(qos);
 
     #ifdef WITH_PRESENCE
     if(!strcmp((const char *)uri, OC_PRESENCE_URI))

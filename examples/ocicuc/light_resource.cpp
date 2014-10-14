@@ -26,7 +26,7 @@ OCRepresentation LightResource::getRepresentation(void)
 void LightResource::addType(const OC::OCPlatform& platform, const std::string& type) const
 {
  OCStackResult result = platform.bindTypeToResource(m_resourceHandle, type);
- 
+
  if(OC_STACK_OK != result)
   cout << "Binding TypeName to Resource was unsuccessful, result was " << result << '\n';
 }
@@ -49,8 +49,8 @@ void LightResource::createResource(OC::OCPlatform& platform, const unsigned int 
  // This will internally create and register the resource, binding the current instance's method as a callback:
  OCStackResult result = platform.registerResource(
                                             m_resourceHandle, resourceURI, resourceTypeName,
-                                            DEFAULT_INTERFACE, 
-                                            std::bind(&LightResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2), 
+                                            DEFAULT_INTERFACE,
+                                            std::bind(&LightResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2),
                                             OC_DISCOVERABLE | OC_OBSERVABLE);
   if (OC_STACK_OK != result)
    std::cout << "Resource creation failed.\n";
@@ -69,7 +69,7 @@ void LightResource::observe_function()
 
     m_power += 10;
 
-    const auto result = OCPlatform::notifyAllObservers(getHandle());
+    const auto result = m_platform.notifyAllObservers(getHandle());
 
     // Stop notifications when there are no more observers:
     if(OC_STACK_NO_OBSERVERS == result)
@@ -113,7 +113,7 @@ void LightResource::entityHandler(std::shared_ptr<OCResourceRequest> request, st
         return;
      }
 
-    switch(request->getRequestHandlerFlag())   
+    switch(request->getRequestHandlerFlag())
     {
         default:
                 cerr << "entityHandler(): invalid request flag\n";
@@ -133,7 +133,7 @@ void LightResource::entityHandler(std::shared_ptr<OCResourceRequest> request, st
     }
 }
 
-void LightResource::dispatch_request(const std::string& request_type, std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response) 
+void LightResource::dispatch_request(const std::string& request_type, std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
  std::cout << "dispatch_request(): " << request_type << '\n';
 
@@ -152,7 +152,7 @@ void LightResource::dispatch_request(const std::string& request_type, std::share
  cerr << "entityHandler(): Invalid request type \"" << request_type << "\".\n";
 }
 
-void LightResource::handle_get_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response) 
+void LightResource::handle_get_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
  cout << "handle_get_request():\n";
 
@@ -165,7 +165,7 @@ void LightResource::handle_get_request(std::shared_ptr<OCResourceRequest> reques
  response->setResourceRepresentation(getRepresentation());
 }
 
-void LightResource::handle_put_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response) 
+void LightResource::handle_put_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
  // Here's how you would get any query parameters:
  const auto query_params_map = request->getQueryParameters();
@@ -179,7 +179,7 @@ void LightResource::handle_put_request(std::shared_ptr<OCResourceRequest> reques
   return;
 
  response->setErrorCode(200);
- response->setResourceRepresentation(getRepresentation()); 
+ response->setResourceRepresentation(getRepresentation());
 }
 
 void LightResource::handle_post_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
@@ -187,16 +187,16 @@ void LightResource::handle_post_request(std::shared_ptr<OCResourceRequest> reque
  // ...demo-code...
 }
 
-void LightResource::handle_delete_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response) 
+void LightResource::handle_delete_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
  // ...demo-code...
 }
 
 // Set up observation in a separate thread:
-void LightResource::handle_observe_event(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response) 
+void LightResource::handle_observe_event(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
  if(observe_thread.joinable())
-  return; 
+  return;
 
  observe_thread = thread(bind(&LightResource::observe_function, this));
  observe_thread.detach();

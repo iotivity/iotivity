@@ -468,7 +468,7 @@ int main()
         OC::ModeType::Server,
         "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
         0,         // Uses randomly available port
-        OC::QualityOfService::NonConfirmable
+        OC::QualityOfService::LowQos
     };
 
     // Create a OCPlatform instance.

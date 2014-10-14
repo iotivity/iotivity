@@ -79,7 +79,21 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
     return ret;
 }
 
-
+uint8_t OCToCoAPQoS(OCQualityOfService qos)
+{
+    switch (qos)
+    {
+        case OC_HIGH_QOS:
+            return COAP_MESSAGE_CON;
+            break;
+        case OC_MEDIUM_QOS:
+        case OC_LOW_QOS:
+        case OC_NA_QOS:
+        default:
+            return COAP_MESSAGE_NON;
+            break;
+    }
+}
 // Convert CoAP code to OCStack code
 OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
 {

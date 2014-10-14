@@ -43,11 +43,11 @@ LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
 
 # Force metatargets to build:
-all.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc_target
+all.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc_target
 
-apps.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient
+apps.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient
 
-buildScript_all.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient
+buildScript_all.PHONY: prep_dirs simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient
 
 all: all.PHONY
 
@@ -63,6 +63,12 @@ oc_cpp_sdk:
 
 simpleserver: simpleserver.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleserver.cpp $(CXX_INC) $(CXX_LIBS)
+
+simpleserverHQ: simpleserverHQ.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleserverHQ.cpp $(CXX_INC) $(CXX_LIBS)
+
+simpleclientHQ: simpleclientHQ.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclientHQ.cpp $(CXX_INC) $(CXX_LIBS)
 
 simpleclient: simpleclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclient.cpp $(CXX_INC) $(CXX_LIBS)

@@ -205,7 +205,7 @@ int main()
         ModeType::Client,
         "0.0.0.0",
         0,
-        QualityOfService::NonConfirmable
+        QualityOfService::LowQos
     };
 
     ClientFridge cf (cfg);

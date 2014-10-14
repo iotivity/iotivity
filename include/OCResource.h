@@ -68,10 +68,13 @@ namespace OC
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this Get operation
         *        This will have error codes
+        * @param QualityOfService the quality of communication
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult get(const QueryParamsMap& queryParametersMap, GetCallback attributeHandler);
+        OCStackResult get(const QueryParamsMap& queryParametersMap, GetCallback attributeHandler,
+                          QualityOfService QoS);
 
         /**
         * Function to get the attributes of a resource.
@@ -85,6 +88,7 @@ namespace OC
         *        resource container (list will be empty if not a container)
         *        The callback function will also have the result from this Get operation. This will
         *        have error codes
+        * @param QualityOfService the quality of communication
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h.<br>
         * <b>Example:</b><br>
@@ -104,7 +108,10 @@ namespace OC
         * resources at a node.<br>
         */
         OCStackResult get(const std::string& resourceType, const std::string& resourceInterface,
-            const QueryParamsMap& queryParametersMap, GetCallback attributeHandler);
+                        const QueryParamsMap& queryParametersMap, GetCallback attributeHandler);
+        OCStackResult get(const std::string& resourceType, const std::string& resourceInterface,
+                        const QueryParamsMap& queryParametersMap, GetCallback attributeHandler,
+                        QualityOfService QoS);
 
         /**
         * Function to set the representation of a resource (via PUT)
@@ -116,11 +123,15 @@ namespace OC
         *        This will have error codes
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler attribute handler
+        * @param QualityOfService the quality of communication
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult put(const OCRepresentation& representation,
-                const QueryParamsMap& queryParametersMap, PutCallback attributeHandler);
+                        const QueryParamsMap& queryParametersMap, PutCallback attributeHandler);
+        OCStackResult put(const OCRepresentation& representation,
+                        const QueryParamsMap& queryParametersMap, PutCallback attributeHandler,
+                        QualityOfService QoS);
 
         /**
         * Function to set the attributes of a resource (via PUT)
@@ -134,13 +145,18 @@ namespace OC
         *        This will have error codes.
         *        The Representation parameter maps which can either have all the attribute names
         *        and values
+        *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
+        * @param QualityOfService the quality of communication
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
         */
         OCStackResult put(const std::string& resourceType, const std::string& resourceInterface,
-            const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
-            PutCallback attributeHandler);
+                        const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
+                        PutCallback attributeHandler);
+        OCStackResult put(const std::string& resourceType, const std::string& resourceInterface,
+                        const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
+                        PutCallback attributeHandler, QualityOfService QoS);
 
         /**
         * Function to post on a resource
@@ -152,11 +168,15 @@ namespace OC
         *        This will have error codes
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler attribute handler
+        * @param QualityOfService the quality of communication
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult post(const OCRepresentation& representation,
-                const QueryParamsMap& queryParametersMap, PostCallback attributeHandler);
+                        const QueryParamsMap& queryParametersMap, PostCallback attributeHandler);
+        OCStackResult post(const OCRepresentation& representation,
+                        const QueryParamsMap& queryParametersMap, PostCallback attributeHandler,
+                        QualityOfService QoS);
 
         /**
         * Function to post on a resource
@@ -172,12 +192,16 @@ namespace OC
         *        and values
         *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
+        * @param QualityOfService the quality of communication
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
         */
         OCStackResult post(const std::string& resourceType, const std::string& resourceInterface,
-            const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
-            PostCallback attributeHandler);
+                        const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
+                        PostCallback attributeHandler);
+        OCStackResult post(const std::string& resourceType, const std::string& resourceInterface,
+                        const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
+                        PostCallback attributeHandler, QualityOfService QoS);
 
         /**
         * Function to set observation on the resource
@@ -187,11 +211,14 @@ namespace OC
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this observe operation
         *        This will have error codes
+        * @param QualityOfService the quality of communication
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult observe(ObserveType observeType, const QueryParamsMap& queryParametersMap,
-            ObserveCallback observeHandler);
+                        ObserveCallback observeHandler);
+        OCStackResult observe(ObserveType observeType, const QueryParamsMap& queryParametersMap,
+                        ObserveCallback observeHandler, QualityOfService qos);
 
         /**
         * Function to cancel the observation on the resource
@@ -199,6 +226,7 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult cancelObserve();
+        OCStackResult cancelObserve(QualityOfService qos);
 
         /**
         * Function to set header information.

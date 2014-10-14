@@ -393,6 +393,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     uint16_t uriLen = strlen(requiredUri);
 
+    // ToDo: We should also check if the requiredUri has a mutlicast address, then qos has to be OC_Low_QOS
     switch (method)
     {
         case OC_REST_GET:
@@ -509,7 +510,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         {
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
-                if(qos == OC_CONFIRMABLE)
+                if(qos == OC_HIGH_QOS)
                 {
                     ret = OCDoCoAPResource(OC_REST_CANCEL_OBSERVE, qos,
                             &(clientCB->token), (const char *) clientCB->requestUri, NULL, options,
@@ -556,7 +557,7 @@ OCStackResult OCProcessPresence()
                     OC_LOG_V(DEBUG, TAG, "----------------timeout ticks %d",
                             cbNode->presence->timeOut[cbNode->presence->TTLlevel]);
                 }
-                if(cbNode->presence->TTLlevel == PresenceTimeOutSize)
+                if(cbNode->presence->TTLlevel >= PresenceTimeOutSize)
                 {
                     OC_LOG(DEBUG, TAG, "----------------No more timeout ticks");
                     if (ParseIPv4Address( cbNode->requestUri, ipAddr, &port))
@@ -587,7 +588,7 @@ OCStackResult OCProcessPresence()
                     OC_LOG(DEBUG, TAG, "time to test server presence ==========");
                     OCCoAPToken token;
                     OCGenerateCoAPToken(&token);
-                    result = OCDoCoAPResource(OC_REST_GET, OC_NON_CONFIRMABLE,
+                    result = OCDoCoAPResource(OC_REST_GET, OC_LOW_QOS,
                             &token, (const char *)cbNode->requestUri, NULL, NULL, 0);
                     if(result != OC_STACK_OK)
                     {
@@ -663,14 +664,14 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
         //add the presence observer
         AddObserver(OC_PRESENCE_URI, NULL, 0, &token, &multiCastAddr,
-            (OCResource *)presenceResource.handle, OC_NON_CONFIRMABLE);
+            (OCResource *)presenceResource.handle, OC_LOW_QOS);
     }
 
     // Each time OCStartPresence is called
     // a different random 32-bit integer number is used
     ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
 
-    return OCNotifyAllObservers(presenceResource.handle);
+    return OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
 }
 
 /**
@@ -691,7 +692,7 @@ OCStackResult OCStopPresence()
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
-    result = OCNotifyAllObservers(presenceResource.handle);
+    result = OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
     return result;
 }
 #endif
@@ -824,7 +825,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyAllObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
     }
     #endif
 exit:
@@ -885,7 +886,7 @@ OCStackResult OCBindResource(
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyAllObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
     }
     #endif
 
@@ -943,7 +944,7 @@ OCStackResult OCUnBindResource(
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyAllObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
     }
     #endif
 
@@ -1010,7 +1011,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyAllObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
     }
     #endif
 
@@ -1079,7 +1080,7 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyAllObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
     }
     #endif
 
@@ -1163,7 +1164,7 @@ OCStackResult OCDeleteResource(OCResourceHandle handle) {
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyAllObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
     }
     #endif
 
@@ -1381,7 +1382,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        OCNotifyAllObservers(presenceResource.handle);
+        OCNotifyAllObservers(presenceResource.handle, OC_LOW_QOS);
     }
     #endif
 
@@ -1434,7 +1435,7 @@ void incrementSequenceNumber(OCResource * resPtr)
  *     OC_STACK_NO_RESOURCE - invalid resource handle
  *     OC_STACK_NO_OBSERVERS - no more observers intrested in resource
  */
-OCStackResult OCNotifyAllObservers(OCResourceHandle handle) {
+OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService qos) {
     OCResource *resPtr = NULL;
     OCStackResult result;
     OCMethod method = OC_REST_NOMETHOD;
@@ -1474,7 +1475,7 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle) {
 
         }
         #endif
-        result = SendObserverNotification (method, resPtr, maxAge);
+        result = SendObserverNotification (method, resPtr, maxAge, qos);
         return result;
     }
 }
@@ -1483,7 +1484,8 @@ OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
                          OCObservationId  *obsIdList,
                          uint8_t          numberOfIds,
-                         unsigned char    *notificationJSONPayload)
+                         unsigned char    *notificationJSONPayload,
+                         OCQualityOfService qos)
 {
     OC_LOG(INFO, TAG, PCF("Entering OCNotifyListOfObservers"));
 
@@ -1497,7 +1499,6 @@ OCNotifyListOfObservers (OCResourceHandle handle,
     uint32_t maxAge = 0;
     unsigned char bufNotify[MAX_RESPONSE_LENGTH] = {0};
     unsigned char *currPtr;
-    OCQualityOfService qos = OC_NON_CONFIRMABLE;
     uint8_t numSentNotification = 0;
 
     // Verify the notification payload length does not exceed the maximim
@@ -1539,24 +1540,29 @@ OCNotifyListOfObservers (OCResourceHandle handle,
                 strcpy((char*)currPtr, OC_JSON_SUFFIX);
 
                 // send notifications based on the qos of the request
-                qos = observation->qos;
-                if(qos == OC_NON_CONFIRMABLE)
+                // The qos passed as a parameter overrides what the client requested
+                // If we want the client preference taking high priority add:
+                // QoS = resourceObserver->qos;
+                if(qos == OC_NA_QOS){
+                    qos = observation->qos;
+                }
+                if(qos != OC_HIGH_QOS)
                 {
                     OC_LOG_V(INFO, TAG, "Current NON count for this observer is %d",
-                            observation->NONCount);
-                    if(observation->forceCON \
-                            || observation->NONCount >= MAX_OBSERVER_NON_COUNT)
+                            observation->lowQosCount);
+                    if(observation->forceHighQos \
+                            || observation->lowQosCount >= MAX_OBSERVER_NON_COUNT)
                     {
-                        observation->NONCount = 0;
+                        observation->lowQosCount = 0;
                         // at some point we have to to send CON to check on the
                         // availability of observer
                         OC_LOG(INFO, TAG, PCF("This time we are sending the \
-                                notification as CON"));
-                        qos = OC_CONFIRMABLE;
+                                notification as High qos"));
+                        qos = OC_HIGH_QOS;
                     }
                     else
                     {
-                        observation->NONCount++;
+                        observation->lowQosCount++;
                     }
                 }
                 OCSendCoAPNotification (observation->resUri, observation->addr,
@@ -1724,7 +1730,7 @@ int deleteResource(OCResource *resource) {
             }
 
             resource->resourceProperties = (OCResourceProperty) 0; // Invalidate all Resource Properties.
-            OCNotifyAllObservers((OCResourceHandle)resource);
+            OCNotifyAllObservers((OCResourceHandle)resource, OC_HIGH_QOS);
 
             deleteResourceElements(temp);
             OCFree(temp);

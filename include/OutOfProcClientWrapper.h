@@ -34,33 +34,36 @@ namespace OC
         {}
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
-            const std::string& resourceType, FindCallback& callback) {return OC_STACK_NOTIMPL;}
+            const std::string& resourceType, FindCallback& callback, QualityOfService QoS)
+            {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
             const std::string& uri, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions, GetCallback& callback)
+            const HeaderOptions& headerOptions, GetCallback& callback,
+            QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
             const std::string& uri, const OCRepresentation& attributes,
             const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions, PutCallback& callback)
+            const HeaderOptions& headerOptions, PutCallback& callback,
+            QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
             const std::string& uri, const OCRepresentation& attributes,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            PostCallback& callback)
+            PostCallback& callback, QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions,
-            ObserveCallback& callback){return OC_STACK_NOTIMPL;}
+            ObserveCallback& callback, QualityOfService QoS){return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
             const std::string& uri,
-            const HeaderOptions& headerOptions){return OC_STACK_NOTIMPL;}
+            const HeaderOptions& headerOptions, QualityOfService QoS){return OC_STACK_NOTIMPL;}
 
         virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
             const std::string& host, const boost::property_tree::ptree resourceNode)
@@ -72,6 +75,8 @@ namespace OC
             SubscribeCallback& presenceHandler){return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle){return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult GetDefaultQos(QualityOfService& QoS){return OC_STACK_NOTIMPL;}
     };
 }
 

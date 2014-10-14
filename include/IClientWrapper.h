@@ -43,35 +43,38 @@ namespace OC
         {}
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
-                        const std::string& resourceType, FindCallback& callback) = 0;
+                        const std::string& resourceType, FindCallback& callback,
+                        QualityOfService QoS) = 0;
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
                         const std::string& uri, const QueryParamsMap& queryParams,
                         const HeaderOptions& headerOptions,
-                        GetCallback& callback)=0;
+                        GetCallback& callback, QualityOfService QoS)=0;
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
                         const std::string& uri, const OCRepresentation& rep,
                         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-                        PutCallback& callback) = 0;
+                        PutCallback& callback, QualityOfService QoS) = 0;
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
                         const std::string& uri, const OCRepresentation& rep,
                         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-                        PostCallback& callback) = 0;
+                        PostCallback& callback, QualityOfService QoS) = 0;
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
                         const std::string& host, const std::string& uri,
                         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-                        ObserveCallback& callback)=0;
+                        ObserveCallback& callback, QualityOfService QoS)=0;
 
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
-            const std::string& uri, const HeaderOptions& headerOptions)=0;
+            const std::string& uri, const HeaderOptions& headerOptions, QualityOfService QoS)=0;
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
                         SubscribeCallback& presenceHandler)=0;
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle) =0;
+
+        virtual OCStackResult GetDefaultQos(QualityOfService& qos) = 0;
 
         virtual ~IClientWrapper(){}
 

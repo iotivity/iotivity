@@ -1,221 +1,40 @@
-******************************************************************
-
- Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
-
--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-===============================================================================
-==                      UB Stack & TB Stack                                  ==
-===============================================================================
-
-The OIC-RESOURCE repository contains two SDKs with underlying code
-(i.e. "stack"). The two SDKs are referred to as "UB SDK" (or "C++ SDK") and "TB
-SDK" (or "C SDK"). The associated stacks are referred to as "UB Stack" (or "C++
-Stack") and "TB Stack" (or "C Stack"), respectively. The UB Stack-SDK pair
-requires that the TB Stack-SDK pair is built under it.
-
-For a list of artifact locations for all possible build processes in the
-OIC-RESOURCE repository, please refer to:
-<oic-resource>/artifact_output_locations.txt.
-
-===============================================================================
-
-The UB Stack is intended ONLY for Linux Ubuntu 12.04 operating system.
-To build UB Stack, please follow these requirements:
-- GCC compiler version is 4.6
-- Pre-install the "gnu-libc" libraries package.
-- The OIC-UTILITIES repository must be a sibling directory to the OIC-RESOURCE
-  repository.
-- You have pre-built the TB Stack for Linux Ubuntu 12.04.
-
-The TB Stack is intended ONLY for Linux Ubuntu 12.04, Arduino ATMega 2560 with
-Arduino Framework 1.0.5, and Arduino Due with Arduino Framework 1.5.7.
-Tip: Use Cutecom in Ubuntu 12.04 to view logs from Arduino ATMega 2560 and
-Arduino Due.
-
-To build TB Stack, please follow these requirements for Linux Ubuntu 12.04:
-- GCC compiler version is 4.6
-- Pre-install the "gnu-libc" libraries package.
-- The OIC-UTILITIES repository must be a sibling directory to the OIC-RESOURCE
-  repository.
-
-To build TB Stack, please follow these requirements for Arduino ATMega 2560:
-- AVR-GCC compiler version is 4.5.3 (Distributed with Arduino 1.0.5, no further
-  action necessary if framework was obtained from http://www.arduino.cc. Note:
-  Frameworks obtained from apt-get have had different compiler versions.)
-- Unzip the Time Library from here to your Arduino Directory Structure:
-  http://playground.arduino.cc/code/time
-- The OIC-UTILITIES repository must be a sibling directory to the OIC-RESOURCE
-  repository.
-- Apply patches at OIC-UTILITIES/tb/ to your Arduino Directory Structure at
-  locations <Arduino 1.0.5>/libraries/Ethernet &
-  <Arduino 1.0.5>/libraries/Ethernet/utility/.
-
-To build TB Stack, please follow these requirements for Arduino Due:
-- AVR-GCC compiler version is 4.8.3 (Distributed with Arduino 1.5.7, no further
-  action necessary if framework was obtained from http://www.arduino.cc. Note:
-  Frameworks obtained from apt-get have had different compiler versions.)
-- Unzip the Time Library from here to your Arduino Directory Structure:
-  http://www.pjrc.com/teensy/td_libs_Time.html
-- The OIC-UTILITIES repository must be a sibling directory to the OIC-RESOURCE
-  repository.
-- Apply patches at OIC-UTILITIES/tb/ to your Arduino Directory Structure at
-  locations <Arduino 1.5.7>/libraries/Ethernet &
-  <Arduino 1.5.7>/libraries/Ethernet/utility/.
-
-===============================================================================
-
-Instructions for Common Build Processes:
-
-NOTE: 'GNU Make' is required to utilize the build script at location:
-<oic-resource>/buildScript.mk.
-
-=======================================
-== All Targets - Linux, ATMega & Due ==
-=======================================
-
-- All Modules, including OCICUC, in Release & Debug (TB Stack, TB Unit Tests,
-TB Examples, UB Stack, UB Examples, UB OCICUC) for linux, Arduino ATMega 2560
-with Ethernet Shield, Arduino ATMega ATMega 2560 with WiFi Shield, Arduino
-Due with Ethernet Shield and Arduino Due with WiFi Shield:
-(This will be what is used on the Build Server(s) to limit regression.)
-
-	make -f buildScript.mk all_dev
-
-=======================================
-== All Targets - Linux & ATMega 2560 ==
-=======================================
-
-- All Modules in Release (TB Stack, TB Unit Tests, TB Examples, UB Stack, UB
-Examples) for Linux & Arduino ATMega 2560 with Ethernet Shield:
-
-	make -f buildScript.mk all
-
-- All Modules in Debug (TB Stack, TB Unit Tests, TB Examples, UB Stack, UB
-Examples) for Linux & Arduino ATMega 2560 with Ethernet Shield:
-
-	make -f buildScript.mk all_debug
-
-=======================================
-==     All Targets - Linux & Due     ==
-=======================================
-
-- All Modules in Release (TB Stack, TB Unit Tests, TB Examples, UB Stack, UB
-Examples) for Linux & Arduino Due with Ethernet Shield:
-
-	make -f buildScript.mk complement
-
-- All Modules in Debug (TB Stack, TB Unit Tests, TB Examples, UB Stack, UB
-Examples) for Linux & Arduino Due with Ethernet Shield:
-
-	make -f buildScript.mk complement_debug
-
-=======================================
-==     All Targets - Linux Only      ==
-=======================================
-
-- All Modules, without OCICUC, in Release (TB Stack, TB Unit Tests,
-TB Examples, UB Stack, UB Examples) for linux:
-
-	make -f buildScript.mk linux
-
-- All Modules, without OCICUC, in Debug (TB Stack, TB Unit Tests,
-TB Examples, UB Stack, UB Examples) for linux:
-
-	make -f buildScript.mk linux_debug
-
-- All UB Stack Modules in Release, without OCICUC, (TB Stack, UB Stack, UB
-Examples) for Linux:
-
-	make -f buildScript.mk linux_ub
-
-- All UB Stack Modules in Debug, without OCICUC, (TB Stack, UB Stack, UB
-Examples) for Linux:
-
-	make -f buildScript.mk linux_ub_debug
-
-- All UB Stack Modules, including OCICUC, in Release & Debug (TB Stack,
-UB Stack, UB Examples, UB OCICUC) for linux:
-
-	make -f buildScript.mk linux_ub_dev
-
-- All TB Stack Modules in Release (TB Stack, TB Unit Tests,
-TB Examples) for Linux:
-
-	make -f buildScript.mk linux_tb
-
-- All TB Stack Modules in Debug (TB Stack, TB Unit Tests,
-TB Examples) for Linux:
-
-	make -f buildScript.mk linux_tb_debug
-
-=======================================
-==      All Targets - Mega Only      ==
-=======================================
-
-- All TB Stack Modules in Release (TB Stack, TB Unit Tests,
-TB Examples) for Arduino ATMega 2560 with Ethernet Shield:
-
-	make -f buildScript.mk arduinomega
-
-- All TB Stack Modules in Debug (TB Stack, TB Unit Tests,
-TB Examples) for Arduino ATMega 2560 with Ethernet Shield:
-
-	make -f buildScript.mk arduinomega_debug
-
-- All TB Stack Modules in Release (TB Stack, TB Unit Tests,
-TB Examples) for Arduino ATMega 2560 with WiFi Shield:
-
-	make -f buildScript.mk arduinomega_wifi
-
-- All TB Stack Modules in Debug (TB Stack, TB Unit Tests,
-TB Examples) for Arduino ATMega 2560 with WiFi Shield:
-
-	make -f buildScript.mk arduinomega_wifi_debug
-
-=======================================
-==      All Targets - Due Only      ==
-=======================================
-
-- All TB Stack Modules in Release (TB Stack, TB Unit Tests,
-TB Examples) for Arduino Due with Ethernet Shield:
-
-	make -f buildScript.mk arduinodue_all
-
-- All TB Stack Modules in Debug (TB Stack, TB Unit Tests,
-TB Examples) for Arduino Due with Ethernet Shield:
-
-	make -f buildScript.mk arduinodue_all_debug
-
-- All TB Stack Modules in Release (TB Stack, TB Unit Tests,
-TB Examples) for Arduino Due with WiFi Shield:
-
-	make -f buildScript.mk arduinodue_wifi
-
-- All TB Stack Modules in Debug (TB Stack, TB Unit Tests,
-TB Examples) for Arduino Due with WiFi Shield:
-
-	make -f buildScript.mk arduinodue_wifi_debug
-
-=======================================
-==         Clean All Targets         ==
-=======================================
-
-- Clean All:
-
-	make -f buildScript.mk clean
-
+1) Build with default option
+  To build with default option:
+  # scons
+
+  To see help information with default option(the output may be different with different options):
+  # scons -Q -h
+
+  To clean the project:
+  # scons -c
+
+2) Build with options
+  To build with options:
+  # scons OPTION1=xxx OPTION2=xxx OPTION3=....
+
+  To see help information:
+  # scons OPTION1=xxx OPTION2=xxx OPTION3=.... -Q -h
+
+  To clean the project:
+  # scons OPTION1=xxx OPTION2=xxx OPTION3=.... -c
+
+3) Examples
+  To build default
+  # scons
+  To see default help
+  # scons -Q -h
+  To clean
+  # scons -c
+
+  To build android armeabi-v7a
+  # scon BUILD_TARGET=Android CPU_ARCH=armeabi-v7a
+  To see help
+  # scon BUILD_TARGET=Android CPU_ARCH=armeabi-v7a -Q -h
+  To clean
+  # scon BUILD_TARGET=Android CPU_ARCH=armeabi-v7a -c
+
+Note:
+  1. To build android binary, android NDK should be newer than r8e(recommend r10).
+  2. You may be asked to set some options. Besides set it in command line, you
+can also set it by create a environment variable. Command line has higher priority.
+If both are set, the command line value will be used.

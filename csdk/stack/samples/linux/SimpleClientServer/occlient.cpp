@@ -236,14 +236,14 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             printf ("************************** CANCEL OBSERVE with ");
             if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON){
                 printf ("RESET\n");
-                if (OCCancel (gObserveDoHandle, OC_NON_CONFIRMABLE, NULL, 0) != OC_STACK_OK){
+                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
                 return OC_STACK_DELETE_TRANSACTION;
             }else if(TEST_CASE == TEST_OBS_REQ_NON_CANCEL_IMM){
                 printf ("Deregister\n");
 
-                if (OCCancel (gObserveDoHandle, OC_CONFIRMABLE, NULL, 0) != OC_STACK_OK){
+                if (OCCancel (gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
             }
@@ -277,7 +277,7 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
         if (gNumPresenceNotifies == 15)
         {
             printf ("************************** CANCEL PRESENCE\n");
-            if (OCCancel (gPresenceHandle, OC_NON_CONFIRMABLE, NULL, 0) != OC_STACK_OK){
+            if (OCCancel (gPresenceHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
                 OC_LOG(ERROR, TAG, "Presence cancel error");
             }
             return OC_STACK_DELETE_TRANSACTION;
@@ -315,29 +315,29 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
         switch(TEST_CASE){
         case TEST_GET_REQ_NON:
-            InitGetRequest(OC_NON_CONFIRMABLE, 0);
+            InitGetRequest(OC_LOW_QOS, 0);
             break;
         case TEST_PUT_REQ_NON:
             InitPutRequest();
             break;
         case TEST_POST_REQ_NON:
-            InitPostRequest(OC_NON_CONFIRMABLE);
+            InitPostRequest(OC_LOW_QOS);
             break;
         case TEST_OBS_REQ_NON:
         case TEST_OBS_REQ_NON_CANCEL_IMM:
-            InitObserveRequest(OC_NON_CONFIRMABLE);
+            InitObserveRequest(OC_LOW_QOS);
             break;
         case TEST_GET_UNAVAILABLE_RES_REQ_NON:
             InitGetRequestToUnavailableResource();
             break;
         case TEST_GET_REQ_CON:
-            InitGetRequest(OC_CONFIRMABLE, 0);
+            InitGetRequest(OC_HIGH_QOS, 0);
             break;
         case TEST_POST_REQ_CON:
-            InitPostRequest(OC_CONFIRMABLE);
+            InitPostRequest(OC_HIGH_QOS);
             break;
         case TEST_OBS_REQ_CON:
-            InitObserveRequest(OC_CONFIRMABLE);
+            InitObserveRequest(OC_HIGH_QOS);
             break;
         #ifdef WITH_PRESENCE
         case TEST_OBS_PRESENCE:
@@ -345,7 +345,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             break;
         #endif
         case TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS:
-            InitGetRequest(OC_NON_CONFIRMABLE, 1);
+            InitGetRequest(OC_LOW_QOS, 1);
             break;
         default:
             PrintUsage();
@@ -362,7 +362,7 @@ int InitPresence()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI;
-    return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_NON_CONFIRMABLE, presenceCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_LOW_QOS, presenceCB, NULL, 0));
 }
 #endif
 int InitGetRequestToUnavailableResource()
@@ -370,7 +370,7 @@ int InitGetRequestToUnavailableResource()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << "/SomeUnknownResource";
-    return (InvokeOCDoResource(query, OC_REST_GET, OC_NON_CONFIRMABLE, getReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_GET, OC_LOW_QOS, getReqCB, NULL, 0));
 }
 
 int InitObserveRequest(OCQualityOfService qos)
@@ -378,7 +378,7 @@ int InitObserveRequest(OCQualityOfService qos)
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_OBSERVE, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, obsReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_OBSERVE, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
 }
 
 int InitPutRequest()
@@ -386,7 +386,7 @@ int InitPutRequest()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT, OC_NON_CONFIRMABLE, putReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
 }
 
 int InitPostRequest(OCQualityOfService qos)
@@ -398,7 +398,7 @@ int InitPostRequest(OCQualityOfService qos)
 
     // First POST operation (to create an LED instance)
     result = InvokeOCDoResource(query, OC_REST_POST,
-                               ((qos == OC_CONFIRMABLE) ? OC_CONFIRMABLE: OC_NON_CONFIRMABLE),
+                               ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                                postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
@@ -408,7 +408,7 @@ int InitPostRequest(OCQualityOfService qos)
 
     // Second POST operation (to create an LED instance)
     result = InvokeOCDoResource(query, OC_REST_POST,
-                               ((qos == OC_CONFIRMABLE) ? OC_CONFIRMABLE: OC_NON_CONFIRMABLE),
+                               ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                                postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
@@ -417,7 +417,7 @@ int InitPostRequest(OCQualityOfService qos)
 
     // This POST operation will update the original resourced /a/led
     return (InvokeOCDoResource(query, OC_REST_POST,
-                               ((qos == OC_CONFIRMABLE) ? OC_CONFIRMABLE: OC_NON_CONFIRMABLE),
+                               ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                                postReqCB, NULL, 0));
 }
 
@@ -445,11 +445,11 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     }
     if(withVendorSpecificHeaderOptions)
     {
-        return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, getReqCB, options, 2));
+        return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, getReqCB, options, 2));
     }
     else
     {
-        return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_CONFIRMABLE)? OC_CONFIRMABLE:OC_NON_CONFIRMABLE, getReqCB, NULL, 0));
+        return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
     }
 }
 
@@ -471,7 +471,7 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData, NULL, 0);
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");

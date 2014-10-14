@@ -176,7 +176,7 @@ void server_t::init()
   {
     cout << "Registering resource " << resource_number << ": " << std::flush;
 
-    auto lr = make_shared<Intel::OCDemo::LightResource>();
+    auto lr = make_shared<Intel::OCDemo::LightResource>(m_platform);
 
     lr->createResource(m_platform, resource_number);
     lr->addType(m_platform, "core.brightlight");
@@ -199,7 +199,7 @@ int exec(const boost::program_options::variables_map& vm)
                           OC::ModeType::Both,                   // run in client/server mode
                           vm["host_ip"].as<string>(),           // host
                           vm["host_port"].as<uint16_t>(),       // port
-                          OC::QualityOfService::NonConfirmable
+                          OC::QualityOfService::LowQos
                         });
 
  std::cout << "Ok." << std::endl;

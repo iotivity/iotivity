@@ -218,7 +218,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl,
-        const std::string& resourceType, FindCallback& callback)
+        const std::string& resourceType, FindCallback& callback, QualityOfService QoS)
     {
         OCStackResult result;
 
@@ -241,7 +241,7 @@ namespace OC
             result = OCDoResource(&handle, OC_REST_GET,
                                   resourceType.c_str(),
                                   nullptr, nullptr,
-                                  static_cast<OCQualityOfService>(m_cfg.QoS),
+                                  static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   NULL, 0);
         }
@@ -266,7 +266,6 @@ namespace OC
     OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
     {
         std::stringstream requestStream;
-
         requestStream<<clientResponse->resJSONPayload;
         if(strlen((char*)clientResponse->resJSONPayload) == 0)
         {
@@ -418,7 +417,8 @@ namespace OC
 
     OCStackResult InProcClientWrapper::GetResourceRepresentation(const std::string& host,
         const std::string& uri, const QueryParamsMap& queryParams,
-        const HeaderOptions& headerOptions, GetCallback& callback)
+        const HeaderOptions& headerOptions, GetCallback& callback,
+        QualityOfService QoS)
     {
         OCStackResult result;
         OCCallbackData cbdata = {0};
@@ -443,7 +443,7 @@ namespace OC
             assembleHeaderOptions(options, headerOptions);
             result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(),
                                   nullptr, nullptr,
-                                  static_cast<OCQualityOfService>(m_cfg.QoS),
+                                  static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   options, headerOptions.size());
         }
@@ -516,7 +516,7 @@ namespace OC
     OCStackResult InProcClientWrapper::PostResourceRepresentation(const std::string& host,
         const std::string& uri, const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-         PostCallback& callback)
+        PostCallback& callback, QualityOfService QoS)
     {
         OCStackResult result;
         OCCallbackData cbdata = {0};
@@ -544,7 +544,7 @@ namespace OC
             result = OCDoResource(&handle, OC_REST_POST,
                                   os.str().c_str(), nullptr,
                                   assembleSetResourcePayload(rep).c_str(),
-                                  static_cast<OCQualityOfService>(m_cfg.QoS),
+                                  static_cast<OCQualityOfService>(QoS),
                                   &cbdata, options, headerOptions.size());
         }
         else
@@ -559,7 +559,7 @@ namespace OC
     OCStackResult InProcClientWrapper::PutResourceRepresentation(const std::string& host,
         const std::string& uri, const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-        PutCallback& callback)
+        PutCallback& callback, QualityOfService QoS)
     {
         OCStackResult result;
         OCCallbackData cbdata = {0};
@@ -587,7 +587,7 @@ namespace OC
             result = OCDoResource(&handle, OC_REST_PUT,
                                   os.str().c_str(), nullptr,
                                   assembleSetResourcePayload(rep).c_str(),
-                                  static_cast<OCQualityOfService>(m_cfg.QoS),
+                                  static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   options, headerOptions.size());
         }
@@ -625,7 +625,7 @@ namespace OC
 
     OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle,
         const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
-        const HeaderOptions& headerOptions, ObserveCallback& callback)
+        const HeaderOptions& headerOptions, ObserveCallback& callback, QualityOfService QoS)
     {
         OCStackResult result;
         OCCallbackData cbdata = {0};
@@ -664,7 +664,7 @@ namespace OC
             result = OCDoResource(handle, method,
                                   os.str().c_str(), nullptr,
                                   nullptr,
-                                  static_cast<OCQualityOfService>(m_cfg.QoS),
+                                  static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
                                   options, headerOptions.size());
         }
@@ -677,7 +677,8 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::CancelObserveResource(OCDoHandle handle,
-        const std::string& host, const std::string& uri, const HeaderOptions& headerOptions)
+        const std::string& host, const std::string& uri, const HeaderOptions& headerOptions,
+        QualityOfService QoS)
     {
         OCStackResult result;
         auto cLock = m_csdkLock.lock();
@@ -688,7 +689,7 @@ namespace OC
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
             assembleHeaderOptions(options, headerOptions);
-            result = OCCancel(handle, OC_NON_CONFIRMABLE, options, headerOptions.size());
+            result = OCCancel(handle, static_cast<OCQualityOfService>(QoS), options, headerOptions.size());
         }
         else
         {
@@ -733,7 +734,7 @@ namespace OC
             return OC_STACK_ERROR;
 
         return OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr,
-                            OC_NON_CONFIRMABLE, &cbdata, NULL, 0);
+                            OC_LOW_QOS, &cbdata, NULL, 0);
     }
 
     OCStackResult InProcClientWrapper::UnsubscribePresence(OCDoHandle handle)
@@ -744,7 +745,7 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCCancel(handle, OC_NON_CONFIRMABLE, NULL, 0);
+            result = OCCancel(handle, OC_LOW_QOS, NULL, 0);
         }
         else
         {
@@ -752,6 +753,12 @@ namespace OC
         }
 
         return result;
+    }
+
+    OCStackResult InProcClientWrapper::GetDefaultQos(QualityOfService& qos)
+    {
+        qos = m_cfg.QoS;
+        return OC_STACK_OK;
     }
 
     void InProcClientWrapper::assembleHeaderOptions(OCHeaderOption options[],
