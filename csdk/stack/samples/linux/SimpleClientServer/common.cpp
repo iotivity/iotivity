@@ -26,6 +26,10 @@ const char *getResult(OCStackResult result) {
     switch (result) {
     case OC_STACK_OK:
         return "OC_STACK_OK";
+    case OC_STACK_RESOURCE_CREATED:
+        return "OC_STACK_RESOURCE_CREATED";
+    case OC_STACK_RESOURCE_DELETED:
+        return "OC_STACK_RESOURCE_DELETED";
     case OC_STACK_INVALID_URI:
         return "OC_STACK_INVALID_URI";
     case OC_STACK_INVALID_QUERY:
@@ -54,8 +58,6 @@ const char *getResult(OCStackResult result) {
         return "OC_STACK_SLOW_RESOURCE";
     case OC_STACK_NO_OBSERVERS:
         return "OC_STACK_NO_OBSERVERS";
-    case OC_STACK_RESOURCE_DELETED:
-        return "OC_STACK_RESOURCE_DELETED";
     #ifdef WITH_PRESENCE
     case OC_STACK_PRESENCE_DO_NOT_HANDLE:
         return "OC_STACK_PRESENCE_DO_NOT_HANDLE";

@@ -55,7 +55,8 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
         observer = GetObserverUsingToken (token);
         if(observer)
         {
-            FormOCEntityHandlerRequest(&ehRequest, OC_REST_CANCEL_OBSERVE, bufRes, NULL, NULL);
+            FormOCEntityHandlerRequest(&ehRequest, OC_REST_CANCEL_OBSERVE, bufRes, 
+                                        NULL, NULL, NULL);
             ehRequest.obsInfo = &observationInfo;
             ehRequest.obsInfo->action = OC_OBSERVE_DEREGISTER;
             ehRequest.obsInfo->obsId = observer->observeId;
@@ -96,7 +97,8 @@ OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status)
         {
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
             {
-                FormOCEntityHandlerRequest(&ehRequest, OC_REST_CANCEL_OBSERVE, bufRes, NULL, NULL);
+                FormOCEntityHandlerRequest(&ehRequest, OC_REST_CANCEL_OBSERVE, bufRes, 
+                                            NULL, NULL, NULL);
                 ehRequest.obsInfo = &observationInfo;
                 ehRequest.obsInfo->action = OC_OBSERVE_DEREGISTER;
                 ehRequest.obsInfo->obsId = observer->observeId;
@@ -256,7 +258,7 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
                 // Invoke the entity handler for the client to process
                 // the query according to the new representation
                 FormOCEntityHandlerRequest(&entityHandlerReq, OC_REST_GET, bufRes,
-                        NULL, resourceObserver->query);
+                        NULL, resourceObserver->query, NULL);
                 entityHandlerReq.resource = (OCResourceHandle)resPtr;
 
                 // Even if entity handler for a resource is not successful

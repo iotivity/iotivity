@@ -76,7 +76,7 @@ OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
 // Internal function to create OCEntityHandlerRequest at the server from a received coap pdu
 OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequestLoc,
         OCMethod method, unsigned char * resBuf, unsigned char * bufReqPayload,
-        unsigned char * queryBuf);
+        unsigned char * queryBuf, unsigned char *newResUriBuf);
 
 // Internal function to retrieve Uri and Query from received coap pdu
 OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,

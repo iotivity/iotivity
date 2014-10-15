@@ -134,7 +134,12 @@ typedef enum {
  * Declares Stack Results & Errors
  */
 typedef enum {
+    /* Success status code - START HERE */
     OC_STACK_OK = 0,
+    OC_STACK_RESOURCE_CREATED,
+    OC_STACK_RESOURCE_DELETED,
+    /* Success status code - END HERE */
+    /* Error status code - START HERE */
     OC_STACK_INVALID_URI,
     OC_STACK_INVALID_QUERY,
     OC_STACK_INVALID_IP,
@@ -153,7 +158,6 @@ typedef enum {
     OC_STACK_OBSERVER_NOT_FOUND,
     OC_STACK_OBSERVER_NOT_ADDED,
     OC_STACK_OBSERVER_NOT_REMOVED,
-    OC_STACK_RESOURCE_DELETED,
     #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
@@ -161,6 +165,7 @@ typedef enum {
     OC_STACK_INVALID_OPTION,
     OC_STACK_MALFORMED_RESPONSE,        /* the remote reply contained malformed data */
     OC_STACK_ERROR
+    /* Error status code - END HERE */
 } OCStackResult;
 
 /**
@@ -237,6 +242,9 @@ typedef struct {
     // An array of the vendor specific header options the entity handler wishes to use in response
     uint8_t numSendVendorSpecificHeaderOptions;
     OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
+    // URI of new resource that entity handler might create
+    unsigned char *newResourceUri;
+
 }OCEntityHandlerRequest;
 
 /**
@@ -299,6 +307,7 @@ typedef struct {
 typedef enum {
     OC_EH_OK = 0,
     OC_EH_ERROR,
+    OC_EH_RESOURCE_CREATED,
     OC_EH_RESOURCE_DELETED,
     OC_EH_FORBIDDEN
 } OCEntityHandlerResult;

@@ -140,6 +140,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     unsigned char rcvdUri[MAX_URI_LENGTH] = { 0 };
     unsigned char rcvdQuery[MAX_QUERY_LENGTH] = { 0 };
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = { 0 };
+    unsigned char newResourceUri[MAX_RESPONSE_LENGTH] = { 0 };
     uint8_t * rcvObserveOption = NULL;
     unsigned char * bufReqPayload = NULL;
     uint32_t observeOption = OC_RESOURCE_NO_OBSERVE;
@@ -191,7 +192,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 
     // fill OCEntityHandlerRequest structure
     result = FormOCEntityHandlerRequest(&entityHandlerRequest, ocMethod,
-                                        bufRes, bufReqPayload, rcvdQuery);
+                                        bufRes, bufReqPayload, rcvdQuery, newResourceUri);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
    // fill OCObserveReq
@@ -249,10 +250,20 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     }
     else
     {
-        result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
-                0, NULL, 0, NULL,
-                request->entityHandlerRequest->sendVendorSpecificHeaderOptions,
-                request->entityHandlerRequest->numSendVendorSpecificHeaderOptions);
+        if (responseResult == OC_STACK_RESOURCE_CREATED)
+        {
+            result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
+                    strlen((char *)newResourceUri), newResourceUri, 0, NULL,
+                    request->entityHandlerRequest->sendVendorSpecificHeaderOptions,
+                    request->entityHandlerRequest->numSendVendorSpecificHeaderOptions);
+        }
+        else
+        {
+            result = FormOptionList(&optList, &mediaType, &maxAge, 0, NULL, NULL,
+                    0, NULL, 0, NULL,
+                    request->entityHandlerRequest->sendVendorSpecificHeaderOptions,
+                    request->entityHandlerRequest->numSendVendorSpecificHeaderOptions);
+        }
     }
 
     VERIFY_SUCCESS(result, OC_STACK_OK);
