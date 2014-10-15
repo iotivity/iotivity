@@ -148,8 +148,9 @@ void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
     }
 }
 
-void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
 {
+    OCEntityHandlerResult ehResult = OC_EH_OK;
     const char respPLPost_newLed[] = "{\"href\":\"\",\"rep\":{\"createduri\":\"\"}}";
     char *respPLPost_led;
     cJSON *json;
@@ -173,7 +174,7 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
             sprintf (newLedUri + strlen(newLedUri), "%d", gCurrLedInstance);
-            printf ("\n New resource URI: %s\n", newLedUri);
+            OC_LOG_V (INFO, TAG, "New resource URI: %s", newLedUri);
 
             json = cJSON_Parse((char *)respPLPost_newLed);
             cJSON_GetObjectItem(json,"href")->valuestring = resourceUri;
@@ -187,6 +188,8 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
                 respPLPost_led = cJSON_Print(json);
+                strncpy ((char *)ehRequest->newResourceUri, newLedUri, MAX_URI_LENGTH);
+                ehResult = OC_EH_RESOURCE_CREATED;
             }
 
             json = cJSON_Parse((char *)respPLPost_newLed);
@@ -230,6 +233,7 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
                 ehRequest->resJSONPayloadLen);
     }
+    return ehResult;
 }
 
 OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
@@ -458,7 +462,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             else if (OC_REST_POST == entityHandlerRequest->method)
             {
                 OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
-                ProcessPostRequest (entityHandlerRequest);
+                ehResult = ProcessPostRequest (entityHandlerRequest);
             }
             else if (OC_REST_DELETE == entityHandlerRequest->method)
             {

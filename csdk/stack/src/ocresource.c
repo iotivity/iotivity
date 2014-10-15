@@ -344,6 +344,9 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
         case OC_EH_FORBIDDEN:
             result = OC_STACK_RESOURCE_ERROR;
             break;
+        case OC_EH_RESOURCE_CREATED:
+            result = OC_STACK_RESOURCE_CREATED;
+            break;
         case OC_EH_RESOURCE_DELETED:
             result = OC_STACK_NO_RESOURCE;
             break;
@@ -483,7 +486,7 @@ HandleResourceWithEntityHandler (OCRequest *request,
         }
     }
 
-    if (result == OC_STACK_OK)
+    if (result == OC_STACK_OK || OC_STACK_RESOURCE_CREATED)
     {
         ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen -
             strlen((char*)ehRequest->resJSONPayload);

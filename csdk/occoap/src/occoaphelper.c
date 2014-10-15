@@ -57,6 +57,10 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
             ret = COAP_RESPONSE_200;
             break;
 
+        case OC_STACK_RESOURCE_CREATED:
+            ret = COAP_RESPONSE_201;
+            break;
+
         case OC_STACK_RESOURCE_DELETED:
             ret = COAP_RESPONSE_202;
             break;
@@ -107,6 +111,10 @@ OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
     {
         case COAP_RESPONSE_200 :
             ret = OC_STACK_OK;
+            break;
+
+        case COAP_RESPONSE_201 :
+            ret = OC_STACK_RESOURCE_CREATED;
             break;
 
         case COAP_RESPONSE_202 :
@@ -368,7 +376,7 @@ OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint32_t observeOp
 // Form the OCEntityHandlerRequest struct
 OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequestLoc,
         OCMethod method, unsigned char * resBuf, unsigned char * bufReqPayload,
-        unsigned char * queryBuf)
+        unsigned char * queryBuf, unsigned char *newResUriBuf)
 {
     if (entityHandlerRequestLoc)
     {
@@ -387,6 +395,7 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerR
         entityHandlerRequestLoc->resJSONPayloadLen = MAX_RESPONSE_LENGTH;
 
         entityHandlerRequestLoc->obsInfo = NULL;
+        entityHandlerRequestLoc->newResourceUri = newResUriBuf;
         return OC_STACK_OK;
     }
 
