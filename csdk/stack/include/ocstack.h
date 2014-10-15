@@ -347,6 +347,12 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode);
 
 /**
  * Stop the OC stack.  Use for a controlled shutdown.
+ *
+ * Note: OCStop() performs operations similar to OCStopPresence(), as well as OCDeleteResource() on
+ * all resources this server is hosting. OCDeleteResource() performs operations similar to
+ * OCNotifyAllObservers() to notify all client observers that the respective resource is being
+ * deleted.
+ *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack not initialized
@@ -560,6 +566,9 @@ OCResourceHandle OCGetResourceHandle(uint8_t index);
 /**
  * Delete resource specified by handle.  Deletes resource and all resourcetype and resourceinterface
  * linked lists.
+ *
+ * Note: OCDeleteResource() performs operations similar to OCNotifyAllObservers() to notify all
+ * client observers that "this" resource is being deleted.
  *
  * @param handle - handle of resource to be deleted
  *
