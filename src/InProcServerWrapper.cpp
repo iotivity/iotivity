@@ -104,6 +104,10 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                 pRequest->setPayload(std::string(reinterpret_cast<const char*>
                                             (entityHandlerRequest->reqJSONPayload)));
             }
+            else if(OC_REST_DELETE == entityHandlerRequest->method)
+            {
+                pRequest->setRequestType("DELETE");
+            }
         }
     }
 

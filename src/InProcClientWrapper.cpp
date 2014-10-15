@@ -599,6 +599,67 @@ namespace OC
         return result;
     }
 
+    struct DeleteContext
+    {
+        DeleteCallback callback;
+    };
+
+    OCStackApplicationResult deleteResourceCallback(void* ctx, OCDoHandle handle,
+        OCClientResponse* clientResponse)
+    {
+        DeleteContext* context = static_cast<DeleteContext*>(ctx);
+        OCRepresentation attrs;
+        HeaderOptions serverHeaderOptions;
+
+        if(clientResponse->result == OC_STACK_OK)
+        {
+            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+        }
+        std::thread exec(context->callback, serverHeaderOptions, clientResponse->result);
+        exec.detach();
+        return OC_STACK_DELETE_TRANSACTION;
+    }
+
+    OCStackResult InProcClientWrapper::DeleteResource(const std::string& host,
+        const std::string& uri, const HeaderOptions& headerOptions,
+         DeleteCallback& callback, QualityOfService QoS)
+    {
+        OCStackResult result;
+        OCCallbackData cbdata = {0};
+
+        DeleteContext* ctx = new DeleteContext();
+        ctx->callback = callback;
+        cbdata.cb = &deleteResourceCallback;
+        cbdata.cd = [](void* c){delete static_cast<DeleteContext*>(c);};
+        cbdata.context = static_cast<void*>(ctx);
+
+        ostringstream os;
+        os << host << uri;
+
+        auto cLock = m_csdkLock.lock();
+
+        if(cLock)
+        {
+            OCHeaderOption options[MAX_HEADER_OPTIONS];
+            OCDoHandle handle;
+
+            assembleHeaderOptions(options, headerOptions);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+
+            result = OCDoResource(&handle, OC_REST_DELETE,
+                                  os.str().c_str(), nullptr,
+                                  nullptr, static_cast<OCQualityOfService>(m_cfg.QoS),
+                                  &cbdata, options, headerOptions.size());
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
     struct ObserveContext
     {
         ObserveCallback callback;

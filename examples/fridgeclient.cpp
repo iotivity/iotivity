@@ -131,6 +131,10 @@ class ClientFridge
                 std::bind(&ClientFridge::getResponse, this, "Random Door", PH::_1,
                     PH::_2, PH::_3, randomdoor, 4)
                 ));
+        resource->deleteResource(DeleteCallback(
+                std::bind(&ClientFridge::deleteResponse, this, "Device", PH::_1,
+                    PH::_2, resource, 0)
+                ));
     }
 
     // Note that resourceName, resource, and getId are all bound via the std::bind mechanism.
@@ -140,19 +144,12 @@ class ClientFridge
     void getResponse(const std::string& resourceName, const HeaderOptions& headerOptions,
                 const OCRepresentation rep, const int eCode, OCResource::Ptr resource, int getId)
     {
-        std::cout << "Got a response from get from the "<<resourceName<< std::endl;
-        std::cout << "Get ID is "<<getId<<" and resource URI is "<<resource->uri()<<std::endl;
+        std::cout << "Got a response from get from the " << resourceName << std::endl;
+        std::cout << "Get ID is "<<getId<<" and resource URI is " << resource->uri() << std::endl;
+
+        printHeaderOptions(headerOptions);
 
         std::cout << "The Attribute Data is: "<<std::endl;
-
-        for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
-        {
-            if(it->getOptionID() == API_VERSION)
-            {
-                std::cout << "Server API version in GET response: " <<
-                        it->getOptionData() << std::endl;
-            }
-        }
 
         switch(getId)
         {
@@ -189,6 +186,28 @@ class ClientFridge
                     std::cout << "Name of fridge: "<< name << std::endl;
                     break;
                 }
+        }
+    }
+
+    //Callback function to handle response for deleteResource call.
+    void deleteResponse(const std::string& resourceName, const HeaderOptions& headerOptions,
+                const int eCode, OCResource::Ptr resource, int deleteId)
+    {
+        std::cout << "Got a response from delete from the "<< resourceName << std::endl;
+        std::cout << "Delete ID is "<<deleteId<<" and resource URI is "<<resource->uri()<<std::endl;
+        printHeaderOptions(headerOptions);
+    }
+
+    //Function to print the headerOptions received from the server
+    void printHeaderOptions(const HeaderOptions& headerOptions)
+    {
+        for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
+        {
+            if(it->getOptionID() == API_VERSION)
+            {
+                std::cout << "Server API version in GET response: " <<
+                        it->getOptionData() << std::endl;
+            }
         }
     }
 

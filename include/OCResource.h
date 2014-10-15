@@ -204,6 +204,17 @@ namespace OC
                         PostCallback attributeHandler, QualityOfService QoS);
 
         /**
+        * Function to perform DELETE operation
+        * @param observeHandler handles callback
+        *        The callback function will have headerOptions and result from this Delete
+        *        operation. This will have error codes
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+        * NOTE: OCStackResult is defined in ocstack.h.
+        */
+        OCStackResult deleteResource(DeleteCallback deleteHandler);
+        OCStackResult deleteResource(DeleteCallback deleteHandler, QualityOfService QoS);
+
+        /**
         * Function to set observation on the resource
         * @param observeType allows the client to specify how it wants to observe.
         * @param queryParametersMap map which can have the query parameter name and value

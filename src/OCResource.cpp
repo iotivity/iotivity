@@ -192,6 +192,20 @@ OCStackResult OCResource::post(const std::string& resourceType,
     return result_guard(post(rep, mapCpy, attributeHandler, QoS));
 }
 
+OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler, QualityOfService QoS)
+{
+    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
+                         m_host, m_uri, m_headerOptions, deleteHandler, QoS);
+}
+
+OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler)
+{
+    QualityOfService defaultQos = OC::QualityOfService::NaQos;
+    checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetDefaultQos, defaultQos);
+
+    return result_guard(deleteResource(deleteHandler, defaultQos));
+}
+
 OCStackResult OCResource::observe(ObserveType observeType,
         const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler,
         QualityOfService QoS)

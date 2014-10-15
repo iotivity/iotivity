@@ -67,7 +67,6 @@ namespace OC {
     }
 }
 // [TODO] remove this function
-// this function is just a temporary patch for Sudarshan
 // it seems that the C stack is parsing and giving out the query separately.
 // the entire URI need not be parsed
 static OC::Utilities::QueryParamsKeyVal tempPatch(const std::string& _uri)

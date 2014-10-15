@@ -736,6 +736,8 @@ namespace OC
     typedef std::function<void(const HeaderOptions&,
                                 const OCRepresentation&, const int)> PutCallback;
 
+    typedef std::function<void(const HeaderOptions&, const int)> DeleteCallback;
+
     typedef std::function<void(const HeaderOptions&,
                                 const OCRepresentation&, const int, const int)> ObserveCallback;
 } // namespace OC

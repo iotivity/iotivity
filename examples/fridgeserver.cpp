@@ -57,7 +57,9 @@ class Resource
 class DeviceResource : public Resource
 {
     public:
-    DeviceResource(OCPlatform& platform)
+    OCPlatform& m_platform;
+
+    DeviceResource(OCPlatform& platform): m_platform(platform)
     {
         std::string resourceURI = "/device";
         std::string resourceTypeName = "intel.fridge";
@@ -68,10 +70,10 @@ class DeviceResource : public Resource
                                                                          PH::_1, PH::_2);
 
         std::cout << "Setting device default entity handler\n";
-        platform.setDefaultDeviceEntityHandler(defaultEH);
+        m_platform.setDefaultDeviceEntityHandler(defaultEH);
 
         uint8_t resourceProperty = OC_DISCOVERABLE;
-        OCStackResult result = platform.registerResource(m_resourceHandle,
+        OCStackResult result = m_platform.registerResource(m_resourceHandle,
             resourceURI,
             resourceTypeName,
             resourceInterface,
@@ -89,6 +91,16 @@ class DeviceResource : public Resource
     {
         m_rep.setValue("device_name", std::string("Intel Powered 2 door, 1 light refridgerator"));
         return m_rep;
+    }
+
+    void deleteDeviceResource()
+    {
+        OCStackResult result = m_platform.unregisterResource(m_resourceHandle);
+        if(OC_STACK_OK != result)
+        {
+            throw std::runtime_error(
+               std::string("Device Resource failed to unregister/delete") + std::to_string(result));
+        }
     }
 
     std::string m_modelName;
@@ -149,6 +161,16 @@ class DeviceResource : public Resource
                             response->setErrorCode(200);
                             response->setHeaderOptions(serverHeaderOptions);
                             response->setResourceRepresentation(get(), "");
+                        }
+                    }
+                    if(request->getRequestType() == "DELETE")
+                    {
+                        if(response)
+                        {
+                            std::cout<<"DeviceResource Delete Request"<<std::endl;
+                            deleteDeviceResource();
+                            response->setErrorCode(200);
+                            response->setHeaderOptions(serverHeaderOptions);
                         }
                     }
                     else

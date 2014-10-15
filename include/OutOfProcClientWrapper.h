@@ -56,6 +56,10 @@ namespace OC
             PostCallback& callback, QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
+        virtual OCStackResult DeleteResource(const std::string& host, const std::string& uri,
+            const HeaderOptions& headerOptions, DeleteCallback& callback,
+            QualityOfService QoS) {return OC_STACK_NOTIMPL;}
+
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
             const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions,
