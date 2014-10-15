@@ -227,7 +227,7 @@ public:
 private:
 // This is just a sample implementation of entity handler.
 // Entity handler can be implemented in several ways by the manufacturer
-void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
     cout << "\tIn Server CPP entity handler:\n";
 
@@ -341,6 +341,8 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
     {
         std::cout << "Request invalid" << std::endl;
     }
+
+    return OC_EH_OK;
 }
 
 };
