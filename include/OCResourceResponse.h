@@ -60,6 +60,24 @@ namespace OC
         void setErrorCode(const int eCode) { m_errorCode = eCode; }
 
         /**
+        *  gets new resource uri
+        *  @return std::string new resource uri
+        */
+        std::string getNewResourceUri(void)
+        {
+            return m_newResourceUri;
+        }
+
+        /**
+        *  sets new resource uri
+        *  @param newResourceUri specifies the resource uri of the resource created
+        */
+        void setNewResourceUri(const std::string newResourceUri)
+        {
+            m_newResourceUri = newResourceUri;
+        }
+
+        /**
         * This API allows to set headerOptions in the response
         * @param headerOptions HeaderOptions vector consisting of OCHeaderOption objects
         */
@@ -328,6 +346,7 @@ namespace OC
         }
 
     private:
+        std::string m_newResourceUri;
         std::string m_payload;
         int m_errorCode;
         HeaderOptions m_headerOptions;

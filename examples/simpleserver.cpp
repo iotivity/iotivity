@@ -176,8 +176,6 @@ public:
 
             if(OC_STACK_OK == createResource1())
             {
-                std::cout << "Created a new resource\n";
-
                 OCRepresentation rep1;
                 rep1.setValue("createduri", std::string("/a/light1"));
 
@@ -223,8 +221,11 @@ public:
 private:
 // This is just a sample implementation of entity handler.
 // Entity handler can be implemented in several ways by the manufacturer
-void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
+                                    std::shared_ptr<OCResourceResponse> response)
 {
+    OCEntityHandlerResult result = OC_EH_OK;
+
     cout << "\tIn Server CPP entity handler:\n";
 
     if(request)
@@ -292,6 +293,14 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
                     response->setErrorCode(200);
 
                     response->setResourceRepresentation(rep_post);
+
+                    if(rep_post.hasAttribute("createduri"))
+                    {
+                        result = OC_EH_RESOURCE_CREATED;
+
+                        response->setNewResourceUri(rep_post.getValue<std::string>("createduri"));
+                    }
+
                 }
 
                 // POST request operations
@@ -337,6 +346,8 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
     {
         std::cout << "Request invalid" << std::endl;
     }
+
+    return result;
 }
 
 };

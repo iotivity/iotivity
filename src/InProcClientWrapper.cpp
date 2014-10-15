@@ -462,11 +462,14 @@ namespace OC
         OCRepresentation attrs;
         HeaderOptions serverHeaderOptions;
 
-        if(clientResponse->result == OC_STACK_OK)
+        if (OC_STACK_OK               == clientResponse->result ||
+            OC_STACK_RESOURCE_CREATED == clientResponse->result ||
+            OC_STACK_RESOURCE_DELETED == clientResponse->result)
         {
             parseServerHeaderOptions(clientResponse, serverHeaderOptions);
             attrs = parseGetSetCallback(clientResponse);
         }
+
         std::thread exec(context->callback, serverHeaderOptions, attrs, clientResponse->result);
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;

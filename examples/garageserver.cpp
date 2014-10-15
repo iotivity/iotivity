@@ -33,8 +33,8 @@ using namespace OC;
 using namespace std;
 
 // Forward declaring the entityHandler
-void entityHandler(std::shared_ptr<OCResourceRequest> request,
-                   std::shared_ptr<OCResourceResponse> response);
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
+                                    std::shared_ptr<OCResourceResponse> response);
 
 /// This class represents a single resource named 'lightResource'. This resource has
 
@@ -173,8 +173,8 @@ public:
 // Create the instance of the resource class (in this case instance of class 'GarageResource').
 GarageResource myGarage;
 
-void entityHandler(std::shared_ptr<OCResourceRequest> request,
-                   std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
+                                    std::shared_ptr<OCResourceResponse> response)
 {
     cout << "\tIn Server CPP entity handler:\n";
 
@@ -245,6 +245,8 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request,
     {
         std::cout << "Request invalid" << std::endl;
     }
+
+    return OC_EH_OK;
 }
 
 int main(int argc, char* argv[1])

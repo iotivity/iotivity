@@ -50,7 +50,7 @@ class Resource
     protected:
     OCResourceHandle m_resourceHandle;
     OCRepresentation m_rep;
-    virtual void entityHandler(std::shared_ptr<OCResourceRequest> request,
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
             std::shared_ptr<OCResourceResponse> response)=0;
 };
 
@@ -105,7 +105,7 @@ class DeviceResource : public Resource
 
     std::string m_modelName;
     protected:
-    virtual void entityHandler(std::shared_ptr<OCResourceRequest> request,
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
             std::shared_ptr<OCResourceResponse> response)
     {
         if(request)
@@ -189,9 +189,11 @@ class DeviceResource : public Resource
                 std::cout << "Unsupported/invalid header options/values" << std::endl;
             }
         }
+
+        return OC_EH_OK;
     }
 
-    virtual void defaultEntityHandler(std::shared_ptr<OCResourceRequest> request,
+    virtual OCEntityHandlerResult defaultEntityHandler(std::shared_ptr<OCResourceRequest> request,
             std::shared_ptr<OCResourceResponse> response)
     {
         if(request)
@@ -221,6 +223,8 @@ class DeviceResource : public Resource
                 std::cout << "Default Entity Handler: unsupported request flag" <<std::endl;
             }
         }
+
+        return OC_EH_OK;
    }
 
 };
@@ -262,7 +266,7 @@ class LightResource : public Resource
 
     bool m_isOn;
     protected:
-    virtual void entityHandler(std::shared_ptr<OCResourceRequest> request,
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
             std::shared_ptr<OCResourceResponse> response)
     {
         if(request)
@@ -303,6 +307,8 @@ class LightResource : public Resource
                 std::cout << "Light unsupported request flag" <<std::endl;
             }
         }
+
+        return OC_EH_OK;
     }
 };
 
@@ -348,7 +354,7 @@ class DoorResource : public Resource
     bool m_isOpen;
     std::string m_side;
     protected:
-    virtual void entityHandler(std::shared_ptr<OCResourceRequest> request,
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
             std::shared_ptr<OCResourceResponse> response)
     {
         std::cout << "EH of door invoked " << std::endl;
@@ -391,6 +397,8 @@ class DoorResource : public Resource
                 std::cout << "Door unsupported request flag" <<std::endl;
             }
         }
+
+        return OC_EH_OK;
     }
 
 };

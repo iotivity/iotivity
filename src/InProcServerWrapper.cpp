@@ -179,6 +179,8 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
                                                   OCEntityHandlerRequest * entityHandlerRequest,
                                                   char* uri)
 {
+    OCEntityHandlerResult result = OC_EH_ERROR;
+
     OC::oclog() << "In Default device entity handler wrapper";
 
     if(NULL == entityHandlerRequest)
@@ -196,7 +198,7 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
     if(defaultDeviceEntityHandler)
     {
-        defaultDeviceEntityHandler(pRequest, pResponse);
+        result = defaultDeviceEntityHandler(pRequest, pResponse);
     }
     else
     {
@@ -206,13 +208,15 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
     processResourceResponse(flag, entityHandlerRequest, pResponse);
 
-    return OC_EH_OK;
+    return result;
 }
 
 
 OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
                                            OCEntityHandlerRequest * entityHandlerRequest)
 {
+    OCEntityHandlerResult result = OC_EH_ERROR;
+
     oclog() << "\nIn entity handler wrapper: " << endl;
 
     if(NULL == entityHandlerRequest)
@@ -244,10 +248,17 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
     if(entityHandlerEntry != entityHandlerMap.end())
     {
         // Call CPP Application Entity Handler
-        // TODO CPP Application also should return OC_EH_OK or OC_EH_ERROR
         if(entityHandlerEntry->second)
         {
-            entityHandlerEntry->second(pRequest, pResponse);
+            result = entityHandlerEntry->second(pRequest, pResponse);
+
+            if(OC_EH_RESOURCE_CREATED == result)
+            {
+                std::string createdUri = pResponse->getNewResourceUri();
+                strncpy(reinterpret_cast<char*>(entityHandlerRequest->newResourceUri),
+                        createdUri.c_str(),
+                        createdUri.length() + 1);
+            }
         }
         else
         {
@@ -263,7 +274,7 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
 
     processResourceResponse(flag, entityHandlerRequest, pResponse);
 
-    return OC_EH_OK;
+    return result;
 }
 
 namespace OC

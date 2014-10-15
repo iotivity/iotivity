@@ -99,18 +99,18 @@ void LightResource::unregisterResource(OC::OCPlatform& platform)
 
 // This is just a sample implementation of entity handler.
 // Entity handler can be implemented in several ways by the manufacturer
-void LightResource::entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult LightResource::entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
 {
     if(!request)
      {
         cerr << "entityHandler(): Received invalid request object.\n";
-        return;
+        return OC_EH_ERROR;
      }
 
     if(!response)
      {
         cerr << "entityHandler(): Received invalid response object.\n";
-        return;
+        return OC_EH_ERROR;
      }
 
     switch(request->getRequestHandlerFlag())
@@ -131,6 +131,8 @@ void LightResource::entityHandler(std::shared_ptr<OCResourceRequest> request, st
                 handle_observe_event(request, response);
                 break;
     }
+
+    return OC_EH_OK;
 }
 
 void LightResource::dispatch_request(const std::string& request_type, std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)

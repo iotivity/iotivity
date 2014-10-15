@@ -25,7 +25,11 @@ std::string OC::OCException::reason(const OCStackResult sr)
     switch(sr)
     {
         case OC_STACK_OK:
-               return "No Error";
+             return "No Error";
+        case OC_STACK_RESOURCE_CREATED:
+             return "Resource Created";
+        case OC_STACK_RESOURCE_DELETED:
+             return "Resource Deleted";
         case OC_STACK_INVALID_URI:
             return "Invalid URI";
         case OC_STACK_INVALID_IP:

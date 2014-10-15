@@ -28,7 +28,6 @@
 
 using namespace OC;
 
-const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
@@ -56,7 +55,7 @@ int observe_count()
 void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
                     const int& eCode, const int& sequenceNumber)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if(eCode == OC_STACK_OK)
     {
         std::cout << "OBSERVE RESULT:"<<std::endl;
         std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
@@ -89,7 +88,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
 
 void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
     {
         std::cout << "POST request was successful" << std::endl;
 
@@ -126,7 +125,7 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
 
 void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
     {
         std::cout << "POST request was successful" << std::endl;
 
@@ -188,7 +187,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
 // callback handler on PUT request
 void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if(eCode == OC_STACK_OK)
     {
         std::cout << "PUT request was successful" << std::endl;
 
@@ -232,7 +231,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback handler on GET request
 void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if(eCode == OC_STACK_OK)
     {
         std::cout << "GET request was successful" << std::endl;
         std::cout << "Resource URI: " << rep.getUri() << std::endl;

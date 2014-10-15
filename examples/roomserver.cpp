@@ -34,9 +34,12 @@ using namespace std;
 
 
 // Forward declaring the entityHandler (room)
-void entityHandlerRoom(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
-void entityHandlerLight(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
-void entityHandlerFan(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
+OCEntityHandlerResult entityHandlerRoom(std::shared_ptr<OCResourceRequest> request,
+                                        std::shared_ptr<OCResourceResponse> response);
+OCEntityHandlerResult entityHandlerLight(std::shared_ptr<OCResourceRequest> request,
+                                         std::shared_ptr<OCResourceResponse> response);
+OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> request,
+                                       std::shared_ptr<OCResourceResponse> response);
 
 class RoomResource
 {
@@ -232,7 +235,7 @@ public:
 // Create the instance of the resource class (in this case instance of class 'RoomResource').
 RoomResource myRoomResource;
 
-void entityHandlerRoom(std::shared_ptr<OCResourceRequest> request,
+OCEntityHandlerResult entityHandlerRoom(std::shared_ptr<OCResourceRequest> request,
                        std::shared_ptr<OCResourceResponse> response)
 {
     cout << "\tIn Server CPP entity handler:\n";
@@ -318,9 +321,12 @@ void entityHandlerRoom(std::shared_ptr<OCResourceRequest> request,
     {
         std::cout << "Request invalid" << std::endl;
     }
+
+    return OC_EH_OK;
 }
 
-void entityHandlerLight(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandlerLight(std::shared_ptr<OCResourceRequest> request,
+                                         std::shared_ptr<OCResourceResponse> response)
 {
     cout << "\tIn Server CPP (Light) entity handler:\n";
 
@@ -388,9 +394,12 @@ void entityHandlerLight(std::shared_ptr<OCResourceRequest> request, std::shared_
     {
         std::cout << "Request invalid" << std::endl;
     }
+
+    return OC_EH_OK;
 }
 
-void entityHandlerFan(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> request,
+                                       std::shared_ptr<OCResourceResponse> response)
 {
     cout << "\tIn Server CPP (Fan) entity handler:\n";
 
@@ -458,6 +467,8 @@ void entityHandlerFan(std::shared_ptr<OCResourceRequest> request, std::shared_pt
     {
         std::cout << "Request invalid" << std::endl;
     }
+
+    return OC_EH_OK;
 }
 
 int main()

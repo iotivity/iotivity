@@ -210,7 +210,8 @@ struct FooResource
         rep.getValue("barCount", m_barCount);
     }
 
-    void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
+                                        std::shared_ptr<OCResourceResponse> response)
     {
         std::cout<<"\tConsumer Entity Handler:"<<std::endl;
 
@@ -268,6 +269,8 @@ struct FooResource
         {
             std::cout << "Request Invalid!"<<std::endl;
         }
+
+        return OC_EH_OK;
     }
 
 };

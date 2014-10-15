@@ -77,7 +77,8 @@ class LightResource
     void addInterface(const OC::OCPlatform& platform, const std::string& interface) const;
 
     private:
-    void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
+    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
+                                        std::shared_ptr<OCResourceResponse> response);
 
     private:
     void observe_function();
