@@ -129,7 +129,7 @@ namespace OC
         std::vector<std::string> ifaces;
 
         boost::property_tree::ptree properties =
-            resourceNode.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
+            resourceNode.get_child(OC::Key::PROPERTYKEY, boost::property_tree::ptree());
 
         boost::property_tree::ptree rT =
             properties.get_child(OC::Key::RESOURCETYPESKEY, boost::property_tree::ptree());
