@@ -90,17 +90,17 @@ void formResourceRequest(OCEntityHandlerFlag flag,
             if(OC_REST_GET == entityHandlerRequest->method)
             {
                 // TODO Why strings : "GET"??
-                pRequest->setRequestType("GET");
+                pRequest->setRequestType(OC::PlatformCommands::GET);
             }
             else if(OC_REST_PUT == entityHandlerRequest->method)
             {
-                pRequest->setRequestType("PUT");
+                pRequest->setRequestType(OC::PlatformCommands::PUT);
                 pRequest->setPayload(std::string(reinterpret_cast<const char*>
                                             (entityHandlerRequest->reqJSONPayload)));
             }
             else if(OC_REST_POST == entityHandlerRequest->method)
             {
-                pRequest->setRequestType("POST");
+                pRequest->setRequestType(OC::PlatformCommands::POST);
                 pRequest->setPayload(std::string(reinterpret_cast<const char*>
                                             (entityHandlerRequest->reqJSONPayload)));
             }
@@ -142,7 +142,7 @@ void processResourceResponse(OCEntityHandlerFlag flag,
         }
         else
         {
-            throw OCException("Response is NULL", OC_STACK_MALFORMED_RESPONSE);
+            throw OCException(OC::Exception::STR_NULL_RESPONSE, OC_STACK_MALFORMED_RESPONSE);
         }
 
         if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
@@ -169,7 +169,7 @@ void processResourceResponse(OCEntityHandlerFlag flag,
         }
         else
         {
-            throw OCException("Payload overflow", OC_STACK_MALFORMED_RESPONSE);
+            throw OCException(OC::Exception::STR_PAYLOAD_OVERFLOW, OC_STACK_MALFORMED_RESPONSE);
         }
     }
 
@@ -296,7 +296,7 @@ namespace OC
         }
         else
         {
-            throw InitializeException("Cannot construct a Server when configured as a client",
+            throw InitializeException(OC::InitException::NOT_CONFIGURED_AS_SERVER,
                                       OC_STACK_INVALID_PARAM);
         }
 
@@ -304,7 +304,7 @@ namespace OC
 
         if(OC_STACK_OK != result)
         {
-            throw InitializeException("Error Initializing Stack", result);
+            throw InitializeException(OC::InitException::STACK_INIT_ERROR, result);
         }
 
         m_threadRun = true;
@@ -451,7 +451,7 @@ namespace OC
 
         if (result != OC_STACK_OK)
         {
-            throw OCException("Bind Type to resource failed", result);
+            throw OCException(OC::Exception::BIND_TYPE_FAILED, result);
         }
         return result;
     }
@@ -475,7 +475,7 @@ namespace OC
 
         if (result != OC_STACK_OK)
         {
-            throw OCException("Bind Interface to resource failed", result);
+            throw OCException(OC::Exception::BIND_INTERFACE_FAILED, result);
         }
         return result;
     }
@@ -492,7 +492,7 @@ namespace OC
 
         if(result != OC_STACK_OK)
         {
-            throw OCException("startPresence failed", result);
+            throw OCException(OC::Exception::START_PRESENCE_FAILED, result);
         }
         return result;
     }
@@ -509,7 +509,7 @@ namespace OC
 
         if(result != OC_STACK_OK)
         {
-            throw OCException("stopPresence failed", result);
+            throw OCException(OC::Exception::END_PRESENCE_FAILED, result);
         }
         return result;
     }

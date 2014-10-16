@@ -23,6 +23,7 @@
 
 #include <stdexcept>
 #include <ocstack.h>
+#include "StringConstants.h"
 
 namespace OC
 {
@@ -48,21 +49,21 @@ namespace OC
             switch(m_reason)
             {
             case OC_STACK_OK:
-                return "No Error";
+                return OC::InitException::NO_ERROR;
             case OC_STACK_INVALID_URI:
-                return "Invalid URI";
+                return OC::InitException::INVALID_URI;
             case OC_STACK_INVALID_IP:
-                return "Invalid IP";
+                return OC::InitException::INVALID_IP;
             case OC_STACK_INVALID_PORT:
-                return "Invalid Port";
+                return OC::InitException::INVALID_PORT;
             case OC_STACK_INVALID_CALLBACK:
-                return "Invalid Callback";
+                return OC::InitException::INVALID_CB;
             case OC_STACK_INVALID_METHOD:
-                return "Invalid Method";
+                return OC::InitException::INVALID_METHOD;
             case OC_STACK_ERROR:
-                return "General Fault";
+                return OC::InitException::GENERAL_FAULT;
             default:
-                return "Unknown Error";
+                return OC::InitException::UNKNOWN_ERROR;
             }
         }
 

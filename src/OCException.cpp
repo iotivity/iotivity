@@ -19,67 +19,68 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "OCException.h"
+#include "StringConstants.h"
 
 std::string OC::OCException::reason(const OCStackResult sr)
 {
     switch(sr)
     {
         case OC_STACK_OK:
-             return "No Error";
+             return OC::Exception::NO_ERROR;
         case OC_STACK_RESOURCE_CREATED:
-             return "Resource Created";
+             return OC::Exception::RESOURCE_CREATED;
         case OC_STACK_RESOURCE_DELETED:
-             return "Resource Deleted";
+             return OC::Exception::RESOURCE_DELETED;
         case OC_STACK_INVALID_URI:
-            return "Invalid URI";
+            return OC::Exception::INVALID_URI;
         case OC_STACK_INVALID_IP:
-            return "Invalid IP";
+            return OC::Exception::INVALID_IP;
         case OC_STACK_INVALID_PORT:
-            return "Invalid Port";
+            return OC::Exception::INVALID_PORT;
         case OC_STACK_INVALID_CALLBACK:
-            return "Invalid Callback";
+            return OC::Exception::INVALID_CB;
         case OC_STACK_INVALID_METHOD:
-            return "Invalid Method";
+            return OC::Exception::INVALID_METHOD;
         case OC_STACK_INVALID_QUERY:
-            return "Invalid Query";
+            return OC::Exception::INVALID_QUERY;
         case OC_STACK_INVALID_PARAM:
-            return "Invalid Parameter";
+            return OC::Exception::INVALID_PARAM;
         case OC_STACK_INVALID_OBSERVE_PARAM:
-            return "Invalid Observe Parameter";
+            return OC::Exception::INVALID_OBESERVE;
         case OC_STACK_NO_MEMORY:
-            return "No Memory";
+            return OC::Exception::NO_MEMORY;
         case OC_STACK_COMM_ERROR:
-            return "Communication Error";
+            return OC::Exception::COMM_ERROR;
         case OC_STACK_NOTIMPL:
-            return "Not Implemented";
+            return OC::Exception::NOT_IMPL;
         case OC_STACK_NO_RESOURCE:
-            return "Resource Not Found";
+            return OC::Exception::NOT_FOUND;
         case OC_STACK_RESOURCE_ERROR:
-            return "Resource Error";
+            return OC::Exception::RESOURCE_ERROR;
         case OC_STACK_SLOW_RESOURCE:
-            return "Slow Resource";
+            return OC::Exception::SLOW_RESOURCE;
         case OC_STACK_NO_OBSERVERS:
-            return "No Observers";
-       case OC_STACK_OBSERVER_NOT_FOUND:
-            return "Stack observer not found";
-       case OC_STACK_OBSERVER_NOT_ADDED:
-            return "Stack observer not added";
-       case OC_STACK_OBSERVER_NOT_REMOVED:
-            return "Stack observer not removed";
+            return OC::Exception::NO_OBSERVERS;
+        case OC_STACK_OBSERVER_NOT_FOUND:
+            return OC::Exception::OBSV_NO_FOUND;
+        case OC_STACK_OBSERVER_NOT_ADDED:
+            return OC::Exception::OBSV_NOT_ADDED;
+        case OC_STACK_OBSERVER_NOT_REMOVED:
+            return OC::Exception::OBSV_NOT_REMOVED;
 #ifdef WITH_PRESENCE
-       case OC_STACK_PRESENCE_STOPPED:
-            return "Stack presence stopped";
-       case OC_STACK_PRESENCE_DO_NOT_HANDLE:
-            return "Stack presence should not be handled";
+        case OC_STACK_PRESENCE_STOPPED:
+            return OC::Exception::PRESENCE_STOPPED;
+        case OC_STACK_PRESENCE_DO_NOT_HANDLE:
+            return OC::Exception::PRESENCE_NOT_HANDLED;
 #endif
-       case OC_STACK_INVALID_OPTION:
-            return "Invalid option";
-       case OC_STACK_MALFORMED_RESPONSE:
-            return "Malformed response";
-       case OC_STACK_ERROR:
-            return "General Fault";
+        case OC_STACK_INVALID_OPTION:
+            return OC::Exception::INVALID_OPTION;
+        case OC_STACK_MALFORMED_RESPONSE:
+            return OC::Exception::MALFORMED_STACK_RESPONSE;
+        case OC_STACK_ERROR:
+            return OC::Exception::GENERAL_FAULT;
     }
 
-    return "Unknown Error";
+    return OC::Exception::UNKNOWN_ERROR;
 }
 

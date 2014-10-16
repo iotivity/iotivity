@@ -45,7 +45,7 @@ namespace OC
 
             if(OC_STACK_OK != result)
             {
-                throw InitializeException("Error Initializing Stack", result);
+                throw InitializeException(OC::InitException::STACK_INIT_ERROR, result);
             }
 
             m_threadRun = true;
@@ -107,7 +107,7 @@ namespace OC
         }
         else
         {
-            return "INVALID IP";
+            return OC::Error::INVALID_IP;
         }
     }
 
@@ -119,34 +119,27 @@ namespace OC
     };
 
 
-    const std::string URIKEY = "href";
-    const std::string OBSERVABLEKEY = "obs";
-    const std::string RESOURCETYPESKEY= "rt";
-    const std::string INTERFACESKEY = "if";
-    const std::string PROPERTYKEY = "prop";
-    const std::string REPKEY = "rep";
-
     std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(
         IClientWrapper::Ptr clientWrapper, const std::string& host,
         const boost::property_tree::ptree resourceNode)
     {
-        std::string uri = resourceNode.get<std::string>(URIKEY, "");
-        bool obs = resourceNode.get<int>(OBSERVABLEKEY,0) == 1;
+        std::string uri = resourceNode.get<std::string>(OC::Key::URIKEY, "");
+        bool obs = resourceNode.get<int>(OC::Key::OBSERVABLEKEY,0) == 1;
         std::vector<std::string> rTs;
         std::vector<std::string> ifaces;
 
         boost::property_tree::ptree properties =
-            resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
+            resourceNode.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
 
         boost::property_tree::ptree rT =
-            properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
+            properties.get_child(OC::Key::RESOURCETYPESKEY, boost::property_tree::ptree());
         for(auto itr : rT)
         {
             rTs.push_back(itr.second.data());
         }
 
         boost::property_tree::ptree iF =
-            properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
+            properties.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
         for(auto itr : iF)
         {
             ifaces.push_back(itr.second.data());
@@ -281,7 +274,7 @@ namespace OC
         {
             return OCRepresentation();
         }
-        boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
+        boost::property_tree::ptree payload = root.get_child(OC::Key::OCKEY, boost::property_tree::ptree());
         OCRepresentation root_resource;
         std::vector<OCRepresentation> children;
         bool isRoot = true;
@@ -291,7 +284,7 @@ namespace OC
             try
             {
                 auto resourceNode = payloadItr.second;
-                std::string uri = resourceNode.get<std::string>(URIKEY, "");
+                std::string uri = resourceNode.get<std::string>(OC::Key::URIKEY, "");
 
                 if (isRoot)
                 {
@@ -302,22 +295,22 @@ namespace OC
                     child.setUri(uri);
                 }
 
-                if( resourceNode.count(PROPERTYKEY) != 0 )
+                if( resourceNode.count(OC::Key::INTERFACESKEY) != 0 )
                 {
                     std::vector<std::string> rTs;
                     std::vector<std::string> ifaces;
                     boost::property_tree::ptree properties =
-                        resourceNode.get_child(PROPERTYKEY, boost::property_tree::ptree());
+                        resourceNode.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
 
                     boost::property_tree::ptree rT =
-                        properties.get_child(RESOURCETYPESKEY, boost::property_tree::ptree());
+                        properties.get_child(OC::Key::RESOURCETYPESKEY, boost::property_tree::ptree());
                     for(auto itr : rT)
                     {
                         rTs.push_back(itr.second.data());
                     }
 
                     boost::property_tree::ptree iF =
-                        properties.get_child(INTERFACESKEY, boost::property_tree::ptree());
+                        properties.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
                     for(auto itr : iF)
                     {
                         ifaces.push_back(itr.second.data());
@@ -334,10 +327,10 @@ namespace OC
                     }
                 }
 
-                if( resourceNode.count(REPKEY) != 0 )
+                if( resourceNode.count(OC::Key::INTERFACESKEY) != 0 )
                 {
                     boost::property_tree::ptree rep =
-                        resourceNode.get_child(REPKEY, boost::property_tree::ptree());
+                        resourceNode.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
                     AttributeMap attrs;
                     for( auto item : rep)
                     {

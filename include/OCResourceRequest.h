@@ -150,7 +150,7 @@ namespace OC
 
             // TODO this expects the representation oc:{} and not oc:[{}]
             //      this representation is fine when setting for simple resource.
-            boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
+            boost::property_tree::ptree payload = root.get_child(OC::Key::OCKEY, boost::property_tree::ptree());
 
             for(auto& item: payload)
             {

@@ -83,12 +83,12 @@ OCStackResult OCResource::get(const std::string& resourceType, const std::string
 
     if(!resourceType.empty())
     {
-        mapCpy["rt"]=resourceType;
+        mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
     if(!resourceInterface.empty())
     {
-        mapCpy["if"]= resourceInterface;
+        mapCpy[OC::Key::INTERFACESKEY]= resourceInterface;
     }
 
     return result_guard(get(mapCpy, attributeHandler, QoS));
@@ -132,12 +132,12 @@ OCStackResult OCResource::put(const std::string& resourceType,
 
     if(!resourceType.empty())
     {
-        mapCpy["rt"]=resourceType;
+        mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
     if(!resourceInterface.empty())
     {
-        mapCpy["if"]=resourceInterface;
+        mapCpy[OC::Key::INTERFACESKEY]=resourceInterface;
     }
 
     return result_guard(put(rep, mapCpy, attributeHandler, QoS));
@@ -181,12 +181,12 @@ OCStackResult OCResource::post(const std::string& resourceType,
 
     if(!resourceType.empty())
     {
-        mapCpy["rt"]=resourceType;
+        mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
     if(!resourceInterface.empty())
     {
-        mapCpy["if"]=resourceInterface;
+        mapCpy[OC::Key::INTERFACESKEY]=resourceInterface;
     }
 
     return result_guard(post(rep, mapCpy, attributeHandler, QoS));

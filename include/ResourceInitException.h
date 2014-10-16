@@ -23,6 +23,7 @@
 
 #include <stdexcept>
 #include <ocstack.h>
+#include "StringConstants.h"
 
 namespace OC
 {
@@ -60,22 +61,22 @@ namespace OC
 
             if(isUriMissing())
             {
-                ret += "Missing URI;";
+                ret += OC::InitException::MISSING_URI;
             }
 
             if(isTypeMissing())
             {
-                ret += "Missing Resource Type;";
+                ret += OC::InitException::MISSING_TYPE;
             }
 
             if(isInterfaceMissing())
             {
-                ret += "Missing Interface;";
+                ret += OC::InitException::MISSING_INTERFACE;
             }
 
             if(isClientWrapperMissing())
             {
-                ret += "Missing ClientWrapper;";
+                ret += OC::InitException::MISSING_CLIENT_WRAPPER;
             }
 
             return ret.c_str();
