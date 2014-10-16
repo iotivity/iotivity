@@ -35,9 +35,10 @@ using namespace OC;
 using namespace std;
 
 // Entity handler used for register and find test
-void entityHandler_rf(std::shared_ptr<OCResourceRequest> request,
+OCEntityHandlerResult entityHandler_rf(std::shared_ptr<OCResourceRequest> request,
                     std::shared_ptr<OCResourceResponse> response)
 {
+    return OC_EH_OK;
 }
 
 // Condition variables used for register and find
@@ -62,7 +63,7 @@ TEST(Resource, rf) {
         OC::ModeType::Both,
         "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
         0,         // Uses randomly available port
-        OC::QualityOfService::LowQoS
+        OC::QualityOfService::LowQos
     };
     OCPlatform platform(cfg);
 
