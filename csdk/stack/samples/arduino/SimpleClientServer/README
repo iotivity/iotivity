@@ -4,7 +4,7 @@
 When an Arduino SimpleClientServer application is running, it outputs logs to
 serial port. This requires the current user to be a part of the "dialout" user
 group permissions on Ubuntu. If your Arduino device is NOT installed at
-location "/dev/ttyACM0", you must define ARDUINO_PORT to the location it is
+location "ttyACM0", you must define ARDUINO_PORT to the location it is
 installed at. This location will be referred to as <DEV_PORT>.
 
 You can only install one application at a time. Your choices are "oclient" or
