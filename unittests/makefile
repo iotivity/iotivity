@@ -24,11 +24,11 @@ BUILD	 := release
 PLATFORM := linux
 CXX 	 := g++
 
-ROOT_DIR	= $(PWD)
+ROOT_DIR	= ./
 
 # You must create the file "local.properties" on your local machine which contains any local paths, etc
 # local.properties should NOT be committed to repo
-include $(ROOT_DIR)/local.properties
+include $(ROOT_DIR)/../csdk/local.properties
 # GTEST_DIR contains the path to Google Test libs and must be defined in local.properties
 #  Example:
 #  GTEST_DIR := /home/johndoe/utils/gtest-1.7.0
@@ -36,10 +36,7 @@ include $(ROOT_DIR)/local.properties
 # NOTE:  to run app, make sure that LD_LIBRARY_PATH env variable
 #        contains $(GTEST_DIR)/lib/.libs
 
-OUT_DIR	  := $(PWD)/$(BUILD)
-OBJ_DIR	  := $(OUT_DIR)/obj
-
-OUT_DIR	  := $(PWD)
+OUT_DIR	  := $(BUILD)
 
 INC_DIRS  := -I../include/
 INC_DIRS  += -I../oc_logger/include
@@ -66,16 +63,12 @@ all: prep_dirs tests
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
-	-mkdir -p $(OBJ_DIR)
 
 tests: tests.cpp
-	$(CXX) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
+	$(CXX) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
 
 .PHONY: clean
 
-clean: legacy_clean
+clean:
 	-rm -rf release
 	-rm -rf debug
-
-legacy_clean:
-	rm -f *.o $(PROGRAMS)
