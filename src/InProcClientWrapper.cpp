@@ -181,7 +181,7 @@ namespace OC
         }
 
         boost::property_tree::ptree payload =
-                root.get_child("oc", boost::property_tree::ptree());
+                root.get_child(OC::Key::OCKEY, boost::property_tree::ptree());
 
         for(auto payloadItr : payload)
         {
@@ -295,15 +295,16 @@ namespace OC
                     child.setUri(uri);
                 }
 
-                if( resourceNode.count(OC::Key::INTERFACESKEY) != 0 )
+                if( resourceNode.count(OC::Key::PROPERTYKEY) != 0 )
                 {
                     std::vector<std::string> rTs;
                     std::vector<std::string> ifaces;
                     boost::property_tree::ptree properties =
-                        resourceNode.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
+                        resourceNode.get_child(OC::Key::PROPERTYKEY, boost::property_tree::ptree());
 
                     boost::property_tree::ptree rT =
-                        properties.get_child(OC::Key::RESOURCETYPESKEY, boost::property_tree::ptree());
+                        properties.get_child(OC::Key::RESOURCETYPESKEY,
+                                                boost::property_tree::ptree());
                     for(auto itr : rT)
                     {
                         rTs.push_back(itr.second.data());
@@ -327,10 +328,10 @@ namespace OC
                     }
                 }
 
-                if( resourceNode.count(OC::Key::INTERFACESKEY) != 0 )
+                if( resourceNode.count(OC::Key::REPKEY) != 0 )
                 {
                     boost::property_tree::ptree rep =
-                        resourceNode.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
+                        resourceNode.get_child(OC::Key::REPKEY, boost::property_tree::ptree());
                     AttributeMap attrs;
                     for( auto item : rep)
                     {
