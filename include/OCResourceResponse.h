@@ -132,7 +132,7 @@ namespace OC
                         payload << ',';
                     }
 
-                    payload << *itr;
+                    payload << "\"" << *itr << "\"";
                 }
                 payload << "]";
 
@@ -169,7 +169,7 @@ namespace OC
                 {
                     payload << ',';
                 }
-                payload << "\""<<itr->first<<"\":" << itr->second.front();
+                payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
             }
 
             payload << "}}";
@@ -196,7 +196,7 @@ namespace OC
                         payload << ',';
                     }
 
-                    payload << *itr;
+                    payload << "\"" << *itr << "\"";
                 }
                 payload << "],";
 
@@ -209,7 +209,7 @@ namespace OC
                         payload << ',';
                     }
 
-                    payload << *itr;
+                    payload << "\"" << *itr << "\"";
                 }
                 payload << "]";
 
@@ -258,7 +258,7 @@ namespace OC
                     {
                         payload << ',';
                     }
-                    payload << "\""<<itr->first<<"\":" << itr->second.front();
+                    payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
                 }
 
                 payload << "}}";
@@ -291,7 +291,8 @@ namespace OC
                     payload << ',';
                 }
                 // cout << itr->first << ":" <, itr->second.front() << endl;
-                payload << "\""<<itr->first<<"\":" << itr->second.front();
+                payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
+
             }
 
             payload << "}}";

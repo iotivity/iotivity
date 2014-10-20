@@ -38,15 +38,14 @@ namespace OC
 {
     // Constructor. Internally calls private init function
     OCPlatform::OCPlatform(const PlatformConfig& config)
+     : m_cfg(config)
     {
-        init(config);
+        init(m_cfg);
     }
 
-    // Destructor
     OCPlatform::~OCPlatform(void)
     {
         std::cout << "platform destructor called" << std::endl;
-        cleanup();
     }
 
     OCStackResult OCPlatform::notifyObservers(OCResourceHandle resourceHandle)
@@ -75,19 +74,6 @@ namespace OC
             // This must be both server and client
             m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
             m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
-        }
-    }
-
-    void OCPlatform::cleanup()
-    {
-        if(m_server)
-        {
-            m_server.reset();
-        }
-
-        if(m_client)
-        {
-            m_client.reset();
         }
     }
 
@@ -139,6 +125,20 @@ namespace OC
 
         return result;
     }
+
+
+    OCStackResult OCPlatform::unregisterResource(const OCResourceHandle& resourceHandle) const
+    {
+        OCStackResult result = OC_STACK_ERROR;
+
+        if(m_server)
+        {
+            result = m_server->unregisterResource(resourceHandle);
+        }
+        return result;
+    }
+
+
 
     OCStackResult OCPlatform::unbindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
     {
@@ -263,6 +263,55 @@ namespace OC
         }
         return result;
 
+    }
+
+    OCStackResult OCPlatform::startPresence(const unsigned int announceDurationSeconds)            
+    { 
+        if(m_server)
+        {
+            return m_server->startPresence(announceDurationSeconds);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
+    OCStackResult OCPlatform::stopPresence()
+    {
+        if(m_server)
+        {
+            return m_server->stopPresence();
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
+    OCStackResult OCPlatform::subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host, 
+                    std::function<void(OCStackResult, const int&)> presenceHandler)
+    {
+        if(m_client)
+        {
+            return m_client->subscribePresence(&presenceHandle, host, presenceHandler);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
+
+    OCStackResult OCPlatform::unsubscribePresence(OCPresenceHandle presenceHandle)
+    {
+        if(m_client)
+        {
+            return m_client->unsubscribePresence(presenceHandle);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
     }
 
 } //namespace OC

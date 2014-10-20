@@ -105,7 +105,15 @@ namespace OC
             std::stringstream requestStream;
             requestStream << requestPayload;
             boost::property_tree::ptree root;
-            boost::property_tree::read_json(requestStream, root);
+            try
+            {
+                boost::property_tree::read_json(requestStream, root);
+            }
+            catch(boost::property_tree::json_parser::json_parser_error &e)
+            {
+                //TOD: log this
+                return;
+            }
 
             // TODO this expects the representation oc:{} and not oc:[{}]
             //      this representation is fine when setting for simple resource.

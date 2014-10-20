@@ -29,13 +29,14 @@ using namespace std;
 namespace OC
 {
     InProcClientWrapper::InProcClientWrapper(std::weak_ptr<std::mutex> csdkLock, PlatformConfig cfg)
-            :m_threadRun(false), m_csdkLock(csdkLock)
+            : m_threadRun(false), m_csdkLock(csdkLock),
+              m_cfg { cfg }
     {
         // if the config type is server, we ought to never get called.  If the config type
         // is both, we count on the server to run the thread and do the initialize
-        if(cfg.mode == ModeType::Client)
+        if(m_cfg.mode == ModeType::Client)
         {
-            OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, OC_CLIENT);
+            OCStackResult result = OCInit(m_cfg.ipAddress.c_str(), m_cfg.port, OC_CLIENT);
 
             if(OC_STACK_OK != result)
             {
@@ -219,7 +220,11 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            result = OCDoResource(&handle, OC_REST_GET, resourceType.c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(&handle, OC_REST_GET, 
+                                  resourceType.c_str(), 
+                                  nullptr, nullptr, 
+                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+                                  cbdata);
         }
         else
         {
@@ -244,7 +249,14 @@ namespace OC
         }
 
         boost::property_tree::ptree root;
-        boost::property_tree::read_json(requestStream, root);
+        try
+        {
+            boost::property_tree::read_json(requestStream, root);
+        }
+        catch(boost::property_tree::json_parser::json_parser_error &e)
+        {
+            return OCRepresentation();
+        }
         boost::property_tree::ptree payload = root.get_child("oc", boost::property_tree::ptree());
         OCRepresentation root_resource;
         std::vector<OCRepresentation> children;
@@ -371,8 +383,10 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            //TODO: use above and this line! result = OCDoResource(&handle, OC_REST_GET, uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
-            result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(), 
+                                  nullptr, nullptr, 
+                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+                                  cbdata);
         }
         else
         {
@@ -465,9 +479,11 @@ namespace OC
         {
             std::lock_guard<std::mutex> lock(*cLock);
             OCDoHandle handle;
-            //OCDoResource(&handle, OC_REST_PUT, assembleSetResourceUri(uri.c_str(), queryParams).c_str(), host.c_str(), assembleSetResourcePayload(uri, attributes).c_str(), OC_CONFIRMABLE, cbdata);
-            //TODO: use above and this line! result = OCDoResource(&handle, OC_REST_GET, uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
-            result = OCDoResource(&handle, OC_REST_PUT, os.str().c_str(), nullptr, assembleSetResourcePayload(attributes).c_str(), OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(&handle, OC_REST_PUT, 
+                                  os.str().c_str(), nullptr, 
+                                  assembleSetResourcePayload(attributes).c_str(), 
+                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+                                  cbdata);
         }
         else
         {
@@ -530,8 +546,11 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::mutex> lock(*cLock);
-            //result = OCDoResource(handle, OC_REST_OBSERVE,  uri.c_str(), host.c_str(), nullptr, OC_CONFIRMABLE, cbdata);
-            result = OCDoResource(handle, method, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+            result = OCDoResource(handle, method, 
+                                  os.str().c_str(), nullptr, 
+                                  nullptr, 
+                                  static_cast<OCQualityOfService>(m_cfg.QoS), 
+                                  cbdata);
         }
         else
         {
@@ -571,4 +590,65 @@ namespace OC
 
         return result;
     }
-   }
+
+    struct SubscribePresenceContext
+    {
+        std::function<void(OCStackResult, const int&)> callback;
+    };
+
+    OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle, OCClientResponse* clientResponse)
+    {
+        SubscribePresenceContext* context = static_cast<SubscribePresenceContext*>(ctx);
+        std::thread exec(context->callback, clientResponse->result, clientResponse->sequenceNumber);
+
+        exec.detach();
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OCStackResult InProcClientWrapper::subscribePresence(OCDoHandle* handle, const std::string& host,
+                std::function<void(OCStackResult, const int&)> presenceHandler)
+    {
+        OCStackResult result;
+        OCCallbackData* cbdata = new OCCallbackData();
+        SubscribePresenceContext* ctx = new SubscribePresenceContext();
+        ctx->callback = presenceHandler;
+        cbdata->cb = &subscribePresenceCallback;
+        cbdata->context = static_cast<void*>(ctx);
+
+        auto cLock = m_csdkLock.lock();
+
+        std::ostringstream os;
+
+        os << host << "/oc/presence";
+
+        std::cout << "Subscribe Presence: " << os.str() << std::endl;
+
+        if(cLock)
+        {
+            result = OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr, OC_NON_CONFIRMABLE, cbdata);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult InProcClientWrapper::unsubscribePresence(OCDoHandle handle)
+    {
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+        
+        if(cLock)
+        {
+            std::lock_guard<std::mutex> lock(*cLock);
+            result = OCCancel(handle);
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+}

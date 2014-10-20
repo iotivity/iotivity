@@ -25,6 +25,13 @@
 #include <ocstack.h>
 #include <occoaptoken.h>
 
+typedef struct OCPresence {
+    // This is the TTL associated with presence
+    uint32_t TTL;
+    uint32_t * timeOut;
+    uint32_t TTLlevel;
+}OCPresence;
+
 typedef struct ClientCB {
     // callback method defined in application address space
     OCClientResponseHandler callBack;
@@ -38,9 +45,17 @@ typedef struct ClientCB {
     OCMethod method;
     // This is the sequence identifier the server applies to the invocation tied to 'handle'.
     uint32_t sequenceNumber;
+    // This is the request uri associated with the call back
+    unsigned char * requestUri;
+    // Struct to hold TTL info for presence
+    #ifdef WITH_PRESENCE
+    OCPresence * presence;
+    #endif
     // next node in this list
     struct ClientCB    *next;
 } ClientCB;
+
+extern struct ClientCB *cbList;
 
 //-- AddClientCB -----------------------------------------------------------
 /** @ingroup ocstack
@@ -55,13 +70,17 @@ typedef struct ClientCB {
  *              identifier for OTA CoAP comms.
  * @param[in] handle
  *              Masked in the public API as an 'invocation handle' - Used for callback management.
+ * @param[in] requestUri
+ *              the resource uri of the request.
  *
  * @brief If the handle you're looking for does not exist, the stack will reply with a RST message.
  *
  * @retval OC_STACK_OK for Success, otherwise some error value
  */
 //------------------------------------------------------------------------
-OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData *cbData, OCCoAPToken * token, OCDoHandle handle, OCMethod method);
+OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
+        OCCoAPToken * token, OCDoHandle handle, OCMethod method,
+        unsigned char * requestUri);
 
 //-- DeleteClientCB -----------------------------------------------------------
 /** @ingroup ocstack
@@ -84,13 +103,15 @@ void DeleteClientCB(ClientCB *cbNode);
  *              token to search for.
  * @param[in] handle
  *              handle to search for.
+ * @param[in] requestUri
+ *              Uri to search for.
  *
  * @brief You can search by token OR by handle. Not both.
  *
  * @retval address of the node if found, otherwise NULL
  */
 //------------------------------------------------------------------------
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle);
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle * handle, unsigned char * requestUri);
 
 //-- DeleteClientCBList --------------------------------------------------
 /** @ingroup ocstack

@@ -31,8 +31,34 @@
 
 #define NUM_PARAM_IN_QUERY  2
 
+static OCStackResult CheckRTParamSupport(const OCResource* resource, const char* rtPtr)
+{
+    OCResourceType* rTPointer = resource->rsrcType;
+    while (rTPointer)
+    {
+        if( strcmp (rTPointer->resourcetypename, rtPtr) == 0)
+            return OC_STACK_OK;
+
+        rTPointer = rTPointer->next;
+    }
+    return OC_STACK_ERROR;
+}
+
+static OCStackResult CheckIFParamSupport(const OCResource* resource, const char* ifPtr)
+{
+    OCResourceInterface* iFPointer = resource->rsrcInterface;
+    while (iFPointer)
+    {
+        if( strcmp (iFPointer->name, ifPtr) == 0)
+             return OC_STACK_OK;
+
+        iFPointer = iFPointer->next;
+    }
+    return OC_STACK_ERROR;
+}
+
 static OCStackResult
-ValidateQuery (const unsigned char *query, OCResourceHandle *resource,
+ValidateQuery (const unsigned char *query, OCResourceHandle resource,
                              OCStackIfTypes *ifParam, char **rtParam)
 {
     uint8_t numFields = 0, numParam;
@@ -40,7 +66,7 @@ ValidateQuery (const unsigned char *query, OCResourceHandle *resource,
     //TODO: Query and URL validation is being done for virtual resource case
     // using ValidateUrlQuery function. We should be able to merge it with this
     // function.
-    OC_LOG_V(INFO, TAG, PCF("Entering ValidateQuery"));
+    OC_LOG(INFO, TAG, PCF("Entering ValidateQuery"));
 
     if (!query)
         return OC_STACK_ERROR;
@@ -104,6 +130,9 @@ ValidateQuery (const unsigned char *query, OCResourceHandle *resource,
     }
     else
     {
+        if(CheckIFParamSupport((OCResource *)resource, ifPtr) != OC_STACK_OK)
+            return OC_STACK_INVALID_QUERY;
+
         if (strcmp (ifPtr, OC_RSRVD_DEFAULT) == 0)
             *ifParam = STACK_IF_DEFAULT;
         else if (strcmp (ifPtr, OC_RSRVD_INTERFACE_LL) == 0)
@@ -123,12 +152,13 @@ ValidateQuery (const unsigned char *query, OCResourceHandle *resource,
     }
     else
     {
-        *rtParam = rtPtr;
+        if (CheckRTParamSupport((OCResource *)resource, rtPtr) == OC_STACK_OK)
+            *rtParam = rtPtr;
+        else
+            return OC_STACK_INVALID_QUERY;
     }
-    OC_LOG_V(INFO, TAG, "Query params: IF = %d, RT = %s\n", *ifParam, *rtParam);
+    OC_LOG_V(INFO, TAG, "Query params: IF = %d, RT = %s", *ifParam, *rtParam);
 
-    // TODO: Validate that the resource supports specified IF param
-    // TODO: Validate that the resource supports specified RT param
     return OC_STACK_OK;
 }
 static OCStackResult BuildRootResourceJSON(OCResource *resource, OCEntityHandlerRequest *ehRequest)
@@ -138,7 +168,7 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource, OCEntityHandler
     char *jsonStr;
     uint16_t jsonLen;
 
-    OC_LOG_V(INFO, TAG, PCF("Entering BuildRootResourceJSON\n"));
+    OC_LOG(INFO, TAG, PCF("Entering BuildRootResourceJSON"));
     resObj = cJSON_CreateObject();
     if (resource)
     {
@@ -185,8 +215,7 @@ BuildCollectionJSONResponse(OCResource *resource, OCEntityHandlerRequest *ehRequ
             OCResource* temp = resource->rsrcResources[i];
             if (temp)
             {
-                //TODO ("Proper Error handling");
-                ret = BuildDiscoveryResponse(temp, filterOn, filterValue, (char*)buffer, &remaining);
+                ret = BuildVirtualResourceResponse(temp, filterOn, filterValue, (char*)buffer, &remaining);
                 if (ret != OC_STACK_OK)
                 {
                     break;
@@ -230,8 +259,6 @@ BuildCollectionBatchJSONResponse(OCEntityHandlerFlag flag,
             OCResource* temp = resource->rsrcResources[i];
             if (temp)
             {
-                //TODO ("Proper Error handling");
-
                 ehRequest->resource = (OCResourceHandle) temp;
 
                 ehRet = temp->entityHandler(OC_REQUEST_FLAG, ehRequest);
@@ -276,13 +303,13 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
     OCStackIfTypes ifQueryParam;
     char *rtQueryParam;
 
-    OC_LOG(INFO, TAG, "DefaultCollectionEntityHandler\n");
+    OC_LOG(INFO, TAG, PCF("DefaultCollectionEntityHandler"));
 
     if (flag != OC_REQUEST_FLAG)
         return OC_STACK_ERROR;
 
     result = ValidateQuery ((const unsigned char *)ehRequest->query,
-                            &ehRequest->resource, &ifQueryParam, &rtQueryParam);
+                            ehRequest->resource, &ifQueryParam, &rtQueryParam);
 
     if (result != OC_STACK_OK)
         return result;
@@ -300,17 +327,17 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                 // M1 release does not support attributes for collection resource, so the GET
                 // operation is same as the GET on LL interface.
 
-                OC_LOG(INFO, TAG, "STACK_IF_DEFAULT\n");
+                OC_LOG(INFO, TAG, PCF("STACK_IF_DEFAULT"));
                 return BuildCollectionJSONResponse( (OCResource *)ehRequest->resource,
                              ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
 
             case STACK_IF_LL:
-                OC_LOG(INFO, TAG, "STACK_IF_LL\n");
+                OC_LOG(INFO, TAG, PCF("STACK_IF_LL"));
                 return BuildCollectionJSONResponse( (OCResource *)ehRequest->resource,
                              ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
 
             case STACK_IF_BATCH:
-                OC_LOG(INFO, TAG, "STACK_IF_BATCH\n");
+                OC_LOG(INFO, TAG, PCF("STACK_IF_BATCH"));
                 return BuildCollectionBatchJSONResponse(flag, (OCResource *)ehRequest->resource, ehRequest);
 
             default:

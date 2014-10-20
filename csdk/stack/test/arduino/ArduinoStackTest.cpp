@@ -27,22 +27,22 @@
 #include "ocstackinternal.h"
 #include <string.h>
 
-#define PCF(str) ((const prog_char*)(F(str)))
+#define PCF(str) ((PROGMEM const char *)(F(str)))
 
-const prog_char TAG[] PROGMEM = "Arduino";
+PROGMEM const char TAG[] = "Arduino";
 static OCUri SERVICE_URI = "coap://127.0.0.1:5683/";
 
 #if 0  // Turn off logger test stuff
-const prog_char tag[] PROGMEM = "Arduino";
-const prog_char msg[] PROGMEM = "Arduino Logger Test";
+PROGMEM const char tag[] = "Arduino";
+PROGMEM const char msg[] = "Arduino Logger Test";
 
-const prog_char debugMsg[] PROGMEM = "this is a DEBUG message";
-const prog_char infoMsg[] PROGMEM = "this is a INFO message";
-const prog_char warningMsg[] PROGMEM = "this is a WARNING message";
-const prog_char errorMsg[] PROGMEM = "this is a ERROR message";
-const prog_char fatalMsg[] PROGMEM = "this is a FATAL message";
+PROGMEM const char debugMsg[] = "this is a DEBUG message";
+PROGMEM const char infoMsg[] = "this is a INFO message";
+PROGMEM const char warningMsg[] = "this is a WARNING message";
+PROGMEM const char errorMsg[] = "this is a ERROR message";
+PROGMEM const char fatalMsg[] = "this is a FATAL message";
 
-const prog_char multiLineMsg[] PROGMEM = "this is a DEBUG message\non multiple\nlines";
+PROGMEM const char multiLineMsg[] = "this is a DEBUG message\non multiple\nlines";
 #endif
 
 void EXPECT_EQ(int a, int b)  {

@@ -313,6 +313,7 @@ coap_new_context(const coap_address_t *listen_addr) {
 #endif /* WITH_CONTIKI */
 
     if (!listen_addr) {
+        coap_free(c);
         coap_log(LOG_EMERG, "no listen address specified\n");
         return NULL;
     }
@@ -362,36 +363,6 @@ coap_new_context(const coap_address_t *listen_addr) {
     coap_register_option(c, COAP_OPTION_BLOCK1);
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
-#if 0
-    c->sockfd = socket(listen_addr->addr.sa.sa_family, SOCK_DGRAM, 0);
-    if ( c->sockfd < 0 ) {
-#ifndef NDEBUG
-        coap_log(LOG_EMERG, "coap_new_context: socket\n");
-#endif /* WITH_NDEBUG */
-        goto onerror;
-    }
-
-    if ( setsockopt( c->sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse) ) < 0 ) {
-#ifndef NDEBUG
-        coap_log(LOG_WARNING, "setsockopt SO_REUSEADDR\n");
-#endif
-    }
-
-    if (bind(c->sockfd, &listen_addr->addr.sa, listen_addr->size) < 0) {
-#ifndef NDEBUG
-        coap_log(LOG_EMERG, "coap_new_context: bind\n");
-#endif
-        goto onerror;
-    }
-
-    return c;
-
-    onerror:
-    if ( c->sockfd >= 0 )
-    close ( c->sockfd );
-    coap_free( c );
-    return NULL;
-#endif //0
     if (OCInitUDP((OCDevAddr *)listen_addr, (int32_t *)&(c->sockfd)) != ERR_SUCCESS) {
         coap_free( c);
         return NULL;

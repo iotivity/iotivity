@@ -33,8 +33,6 @@
 using namespace OC;
 using namespace std;
 
-int gObservation = 0;
-
 // Forward declaring the entityHandler
 void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
 
@@ -48,11 +46,13 @@ public:
     bool m_state;
     int m_power;
     std::string m_lightUri;
+    std::string m_lightUri2;
     OCResourceHandle m_resourceHandle;
+    OCResourceHandle m_resourceHandle2;
 
 public:
     /// Constructor
-    LightResource(): m_state(false), m_power(0), m_lightUri("/a/light") {}
+    LightResource(): m_state(false), m_power(0), m_lightUri("/a/light"), m_lightUri2("/a/light2") {}
 
     /* Note that this does not need to be a member function: for classes you do not have
     access to, you can accomplish this with a free function: */
@@ -70,6 +70,27 @@ public:
         // This will internally create and register the resource.
         OCStackResult result = platform.registerResource(
                                     m_resourceHandle, resourceURI, resourceTypeName,
+                                    resourceInterface, &entityHandler, resourceProperty);
+
+        if (OC_STACK_OK != result)
+        {
+            cout << "Resource creation was unsuccessful\n";
+        }
+    }
+
+    /// This function internally calls registerResource API.
+    void createResource2(OC::OCPlatform& platform)
+    {
+        std::string resourceURI = m_lightUri2; // URI of the resource
+        std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
+        std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
+
+        // OCResourceProperty is defined ocstack.h
+        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+
+        // This will internally create and register the resource.
+        OCStackResult result = platform.registerResource(
+                                    m_resourceHandle2, resourceURI, resourceTypeName,
                                     resourceInterface, &entityHandler, resourceProperty);
 
         if (OC_STACK_OK != result)
@@ -157,41 +178,6 @@ public:
 
 // Create the instance of the resource class (in this case instance of class 'LightResource').
 LightResource myLightResource;
-
-// ChangeLightRepresentaion is an observation function,
-// which notifies any changes to the resource to stack
-// via notifyObservers
-void * ChangeLightRepresentation (void *param)
-{
-    // This function continuously monitors for the changes
-    while (1)
-    {
-        sleep (5);
-
-        if (gObservation)
-        {
-            // If under observation if there are any changes to the light resource
-            // we call notifyObservors
-            //
-            // For demostration we are changing the power value and notifying.
-            myLightResource.m_power += 10;
-
-            cout << "\nPower updated to : " << myLightResource.m_power << endl;
-            cout << "Notifying observers with resource handle: " << myLightResource.getHandle() << endl;
-
-            OCStackResult result = OCPlatform::notifyObservers(myLightResource.getHandle());
-
-            if(OC_STACK_NO_OBSERVERS == result)
-            {
-                cout << "No More observers, stopping notifications" << endl;
-                gObservation = 0;
-            }
-        }
-    }
-
-    return NULL;
-}
-
 
 // This is just a sample implementation of entity handler.
 // Entity handler can be implemented in several ways by the manufacturer
@@ -303,21 +289,7 @@ void entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<O
         }
         else if(requestFlag == RequestHandlerFlag::ObserverFlag)
         {
-            pthread_t threadId;
-
-            cout << "\t\trequestFlag : Observer\n";
-            gObservation = 1;
-
-            static int startedThread = 0;
-
-            // Observation happens on a different thread in ChangeLightRepresentation function.
-            // If we have not created the thread already, we will create one here.
-            if(!startedThread)
-            {
-                pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
-                startedThread = 1;
-            }
-
+            // OBSERVE flag operations
         }
     }
     else
@@ -343,11 +315,17 @@ int main()
     {
         OCPlatform platform(cfg);
 
-        // Invoke createResource function of class light.
+        // Time to Live is 100
+        platform.startPresence(100);
 
+        // Invoke createResource function of class light.
         myLightResource.createResource(platform);
-        myLightResource.addType(platform, std::string("core.brightlight"));
-        myLightResource.addInterface(platform, std::string("oc.mi.ll"));
+
+        printf("Enter a key to create the second resource\n");
+        getchar();
+
+        myLightResource.createResource2(platform);
+
         // Perform app tasks
         while(true)
         {
@@ -358,7 +336,6 @@ int main()
     {
         //log(e.what());
     }
-
 
     // No explicit call to stop the platform.
     // When OCPlatform destructor is invoked, internally we do platform cleanup

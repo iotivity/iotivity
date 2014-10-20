@@ -52,7 +52,7 @@ typedef struct coap_async_state_t {
   coap_address_t peer;		/**< the peer to notify */
   size_t tokenlen;		/**< length of the token */
 #pragma GCC diagnostic ignored "-pedantic"
-  unsigned char token[];	/**< the token to use in a response */
+  __extension__ unsigned char token[];	/**< the token to use in a response */
 #pragma GCC diagnostic warning "-pedantic"
 } coap_async_state_t;
 

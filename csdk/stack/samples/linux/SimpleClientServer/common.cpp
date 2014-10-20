@@ -54,6 +54,14 @@ const char *getResult(OCStackResult result) {
         return "OC_STACK_SLOW_RESOURCE";
     case OC_STACK_NO_OBSERVERS:
         return "OC_STACK_NO_OBSERVERS";
+    #ifdef WITH_PRESENCE
+    case OC_STACK_PRESENCE_NO_UPDATE:
+        return "OC_STACK_PRESENCE_NO_UPDATE";
+    case OC_STACK_PRESENCE_DO_NOT_HANDLE:
+        return "OC_STACK_PRESENCE_DO_NOT_HANDLE";
+    case OC_STACK_PRESENCE_STOPPED:
+        return "OC_STACK_PRESENCE_STOPPED";
+    #endif
     case OC_STACK_ERROR:
         return "OC_STACK_ERROR";
     default:

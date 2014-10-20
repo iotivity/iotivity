@@ -43,8 +43,6 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
     uint8_t ret;
     switch(result)
     {
-        case OC_STACK_OBSERVER_ADDED :
-        case OC_STACK_OBSERVER_REMOVED :
         case OC_STACK_OK :
             ret = COAP_RESPONSE_200;
             break;
@@ -107,7 +105,8 @@ OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
 
 // Retrieve Uri and Query from received coap pdu
 OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
-        unsigned char * queryBuf, uint8_t * * observeOptionLoc, unsigned char * * payloadLoc)
+        unsigned char * queryBuf, uint8_t * * observeOptionLoc,
+        uint8_t * * maxAgeOptionLoc, unsigned char * * payloadLoc)
 {
     coap_opt_filter_t filter;
     coap_opt_iterator_t opt_iter;
@@ -115,7 +114,8 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
     size_t bufLen = 0;
     size_t optLen = 0;
     uint8_t * observeOption = NULL;
-    uint8_t observeOptionFound = 0;
+    uint8_t * maxAgeOption = NULL;
+    uint8_t optionFound = 0;
 
     if(uriBuf)
     {
@@ -171,6 +171,7 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
 
     if(observeOptionLoc)
     {
+        optionFound = 0;
         // parse the observe option
         coap_option_filter_clear(filter);
         coap_option_setb(filter, COAP_OPTION_OBSERVE);
@@ -183,10 +184,10 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
                 return OC_STACK_NO_MEMORY;
             }
             memcpy(observeOption, COAP_OPT_VALUE(option),COAP_OPT_LENGTH(option));
-            observeOptionFound = 1;
+            optionFound = 1;
             break;
         }
-        if(observeOptionFound)
+        if(optionFound)
         {
             *observeOptionLoc = observeOption;
         }
@@ -194,6 +195,36 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
         {
             OCFree(observeOption);
             *observeOptionLoc = NULL;
+        }
+    }
+
+
+    if(maxAgeOptionLoc)
+    {
+        optionFound = 0;
+        // parse the observe option
+        coap_option_filter_clear(filter);
+        coap_option_setb(filter, COAP_OPTION_MAXAGE);
+        coap_option_iterator_init(pdu, &opt_iter, filter);
+        while ((option = coap_option_next(&opt_iter)))
+        {
+            maxAgeOption = (uint8_t *) OCMalloc(COAP_OPT_LENGTH(option));
+            if(!maxAgeOption)
+            {
+                return OC_STACK_NO_MEMORY;
+            }
+            memcpy(maxAgeOption, COAP_OPT_VALUE(option),COAP_OPT_LENGTH(option));
+            optionFound = 1;
+            break;
+        }
+        if(optionFound)
+        {
+            *maxAgeOptionLoc = maxAgeOption;
+        }
+        else
+        {
+            OCFree(maxAgeOption);
+            *maxAgeOptionLoc = NULL;
         }
     }
 
@@ -260,6 +291,7 @@ OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint8_t observeOpt
     observeReq->option = observeOption;
     observeReq->subAddr = remote;
     observeReq->token = rcvdToken;
+    observeReq->result = OC_STACK_OK;
 
     *observeReqLoc = observeReq;
     return OC_STACK_OK;
@@ -316,7 +348,7 @@ OCStackResult RetrieveOCCoAPToken(const coap_pdu_t * pdu,
 }
 
 OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
-        OCClientResponse * clientResponse)
+        uint8_t TTL, OCClientResponse * clientResponse)
 {
     OCResponse * response = (OCResponse *) OCMalloc(sizeof(OCResponse));
     if (!response)
@@ -324,6 +356,7 @@ OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
         return OC_STACK_NO_MEMORY;
     }
     response->cbNode = cbNode;
+    response->TTL = TTL;
     response->clientResponse = clientResponse;
 
     *responseLoc = response;
@@ -350,10 +383,16 @@ OCStackResult FormOCClientResponse(OCClientResponse * * clientResponseLoc,
     return OC_STACK_OK;
 }
 
-OCStackResult FormResponseOptList(coap_list_t * * optListLoc, uint8_t * addMediaType,
-        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr)
+OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
+        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr,
+        uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
+        uint8_t queryLength, unsigned char * query)
 {
     coap_list_t * optNode = NULL;
+    int res;
+    size_t buflen;
+    unsigned char _buf[BUF_SIZE];
+    unsigned char *buf = _buf;
 
     if(addMediaType)
     {
@@ -362,6 +401,7 @@ OCStackResult FormResponseOptList(coap_list_t * * optListLoc, uint8_t * addMedia
         VERIFY_NON_NULL(optNode);
         coap_insert(optListLoc, optNode, OrderOptions);
     }
+
     if(addMaxAge)
     {
         optNode = CreateNewOptionNode(COAP_OPTION_MAXAGE,
@@ -369,12 +409,48 @@ OCStackResult FormResponseOptList(coap_list_t * * optListLoc, uint8_t * addMedia
         VERIFY_NON_NULL(optNode);
         coap_insert(optListLoc, optNode, OrderOptions);
     }
-    if(observeOptionPtr)
+
+    if(observeOptionLength && observeOptionPtr)
     {
         optNode = CreateNewOptionNode(COAP_OPTION_OBSERVE,
                 observeOptionLength, (uint8_t *)observeOptionPtr);
+
         VERIFY_NON_NULL(optNode);
         coap_insert(optListLoc, optNode, OrderOptions);
+    }
+    if(addPortNumber && *addPortNumber != COAP_DEFAULT_PORT)
+    {
+        optNode = CreateNewOptionNode(COAP_OPTION_URI_PORT,
+                sizeof(*addPortNumber), (uint8_t *)addPortNumber);
+        coap_insert(optListLoc, optNode, OrderOptions);
+    }
+
+    if(uri && uriLength)
+    {
+        buf = _buf;
+        buflen = BUF_SIZE;
+        res = coap_split_path(uri, uriLength, buf, &buflen);
+        while (res--) {
+            optNode = CreateNewOptionNode(COAP_OPTION_URI_PATH,
+                    COAP_OPT_LENGTH(buf), COAP_OPT_VALUE(buf));
+            VERIFY_NON_NULL(optNode);
+            coap_insert(optListLoc, optNode, OrderOptions);
+            buf += COAP_OPT_SIZE(buf);
+        }
+    }
+
+    if(query && queryLength)
+    {
+        buf = _buf;
+        buflen = BUF_SIZE;
+        res = coap_split_query(query, queryLength, buf, &buflen);
+        while (res--) {
+            optNode = CreateNewOptionNode(COAP_OPTION_URI_QUERY,
+                    COAP_OPT_LENGTH(buf), COAP_OPT_VALUE(buf));
+            VERIFY_NON_NULL(optNode);
+            coap_insert(optListLoc, optNode, OrderOptions);
+            buf += COAP_OPT_SIZE(buf);
+        }
     }
 
     return OC_STACK_OK;
@@ -562,7 +638,7 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
         goto exit;
     }
 
-    cbNode = GetClientCB(token, NULL);
+    cbNode = GetClientCB(token, NULL, NULL);
     if(!cbNode)
     {
         goto observation;
@@ -573,7 +649,7 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     {
         goto observation;
     }
-    result = FormOCResponse(&response, cbNode, clientResponse);
+    result = FormOCResponse(&response, cbNode, 0, clientResponse);
     if(result != OC_STACK_OK)
     {
         goto observation;
@@ -588,7 +664,7 @@ observation:
     }
 
     result = OCObserverStatus(token, OC_OBSERVER_FAILED_COMM);
-    if(result == OC_STACK_OBSERVER_REMOVED)
+    if(result == OC_STACK_OK)
     {
         coap_cancel_all_messages(ctx, &queue->remote, token->token, token->tokenLength);
     }

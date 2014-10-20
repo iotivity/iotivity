@@ -23,6 +23,7 @@
 
 using OC::OCReflect::property_type;
 
+// Prettyprinters:
 namespace OC { namespace OCReflect {
 
 std::ostream& operator<<(std::ostream& os, const property_type& pt)
@@ -165,6 +166,7 @@ OC::OCReflect::tagged_property tag_rep(const property_type pt, const SeqIterT& b
 
 }}}} // namespace OC::OCReflect::to_property::detail
 
+// Convert concrete types into tagged properties (a representation with a typetag):
 namespace OC { namespace OCReflect { namespace to_property { 
 
 OC::OCReflect::tagged_property convert(const bool& in)

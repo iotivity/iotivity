@@ -35,6 +35,8 @@
 #include "occoaptoken.h"
 #include "ocstackinternal.h"
 
+#define BUF_SIZE (64)
+
 // Convert OCStack code to CoAP code
 uint8_t OCToCoAPResponseCode(OCStackResult result);
 
@@ -72,7 +74,8 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * * entityHandle
 
 // Internal function to retrieve Uri and Query from received coap pdu
 OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
-        unsigned char * queryBuf, uint8_t * * obsOptionLoc, unsigned char * * payloadLoc);
+        unsigned char * queryBuf, uint8_t * * observeOptionLoc,
+        uint8_t * * maxAgeOptionLoc, unsigned char * * payloadLoc);
 
 // Internal function to retrieve a Token from received coap pdu
 OCStackResult RetrieveOCCoAPToken(const coap_pdu_t * pdu,
@@ -84,7 +87,7 @@ OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint8_t obsOption,
 
 // Internal function to create OCResponse struct at the client from a received coap pdu
 OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
-        OCClientResponse * clientResponse);
+        uint8_t TTL, OCClientResponse * clientResponse);
 
 // Internal function to create OCClientResponse struct at the client from a received coap pdu
 OCStackResult FormOCClientResponse(OCClientResponse * * clientResponseLoc,
@@ -95,8 +98,10 @@ OCStackResult FormOCClientResponse(OCClientResponse * * clientResponseLoc,
 void HandleSendQueue(coap_context_t * gCoAPCtx);
 
 // Internal function to form the standard response option list
-OCStackResult FormResponseOptList(coap_list_t * * optList, uint8_t * addMediaType,
-        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr);
+OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
+        uint32_t * addMaxAge, uint8_t observeOptionLength, uint8_t * observeOptionPtr,
+        uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
+        uint8_t queryLength, unsigned char * query);
 
 // Internal function to retransmit a queue
 OCStackResult ReTXCoAPQueue(coap_context_t * ctx, coap_queue_t * queue);

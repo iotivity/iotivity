@@ -27,7 +27,38 @@ extern "C" {
 #include <uri.h>    // libcoap
 #include <option.h> // libcoap
 }
-
+namespace OC{
+    // Helper function to escape special character.
+    std::string escapeString(const std::string& value) 
+    {
+        std::ostringstream stringStream;
+        for (auto iter = value.cbegin(); iter != value.cend(); iter++) 
+        {
+            switch (*iter) 
+            {
+                case '\\': stringStream << "\\\\"; 
+                    break;
+                case '"': stringStream << "\\\""; 
+                    break;
+                case '/': stringStream << "\\/"; 
+                    break;
+                case '\b': stringStream << "\\b"; 
+                    break;
+                case '\f': stringStream << "\\f"; 
+                    break;
+                case '\n': stringStream << "\\n"; 
+                    break;
+                case '\r': stringStream << "\\r"; 
+                    break;
+                case '\t': stringStream << "\\t"; 
+                    break;
+                default: stringStream << *iter; 
+                    break;
+           }
+        }
+        return stringStream.str();
+    }
+}
 // [TODO] remove this function
 // this function is just a temporary patch for Sudarshan
 // it seems that the C stack is parsing and giving out the query separately.

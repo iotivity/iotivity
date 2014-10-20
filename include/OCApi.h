@@ -22,10 +22,14 @@
  #define __INTEL_OCAPI_H_2014_07_10
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <map>
 
+#include "ocstack.h"
+
 namespace OC {
+
 
 class OCResource;
 
@@ -63,12 +67,33 @@ namespace OC {
      Both
  };
 
+ enum class QualityOfService : uint8_t
+ {
+    Confirmable     = OC_CONFIRMABLE,
+    NonConfirmable  = OC_NON_CONFIRMABLE
+ };
+
  struct PlatformConfig
  {
-     ServiceType serviceType; // This will indicate whether it is InProc or OutOfProc
-     ModeType mode; // This will indicate whether we want to do server, client or both
-     std::string ipAddress; // This is the ipAddress of the server to connect to
-     uint16_t port; // Port of the server
+    ServiceType                serviceType;   // This will indicate whether it is InProc or OutOfProc
+    ModeType                   mode;          // This will indicate whether we want to do server, client or both
+    std::string                ipAddress;     // This is the ipAddress of the server to connect to
+    uint16_t                   port;          // Port of the server
+
+    QualityOfService           QoS;
+
+    public:
+    PlatformConfig(const ServiceType serviceType_,
+                   const ModeType mode_,
+                   const std::string& ipAddress_,
+                   const uint16_t port_,
+                   const QualityOfService QoS_)
+     : serviceType(serviceType_),
+       mode(mode_),
+       ipAddress(ipAddress_),
+       port(port_),
+       QoS(QoS_)
+    {}
  };
 
  enum class RequestHandlerFlag
@@ -102,6 +127,9 @@ namespace OC {
 
  // Used in GET, PUT, POST, DELETE methods on links to other resources of a collection.
  const std::string BATCH_INTERFACE = "oc.mi.b";
+
+ // Helper function to escape character in a string.
+ std::string escapeString(const std::string& value);
 
  class OCRepresentation
     {
@@ -179,7 +207,6 @@ namespace OC {
             m_resourceInterfaces = resourceInterfaces;
         }
     };
-
 } // namespace OC
 
 #endif  

@@ -39,7 +39,7 @@ extern "C" {
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
 // Example:  OC_LOG(INFO, TAG, PCF("Entering function"));
 #ifdef ARDUINO
-    #define PCF(str)  ((const prog_char*)(F(str)))
+    #define PCF(str)  ((PROGMEM const char *)(F(str)))
 #else
     #define PCF(str) str
 #endif
@@ -104,7 +104,7 @@ typedef enum {
      * @param tag    - Module name
      * @param logStr - log string
      */
-    void OCLog(LogLevel level, const prog_char * tag, const prog_char * logStr);
+    void OCLog(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
 
     /**
      * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -114,7 +114,7 @@ typedef enum {
      * @param buffer     - pointer to buffer of bytes
      * @param bufferSize - max number of byte in buffer
      */
-    void OCLogBuffer(LogLevel level, const prog_char * tag, const uint8_t * buffer, uint16_t bufferSize);
+    void OCLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buffer, uint16_t bufferSize);
 
     /**
      * Output a variable argument list log string with the specified priority level.

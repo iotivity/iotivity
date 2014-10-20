@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <ocstack.h>
+#include <logger.h>
 
 #define TAG PCF("ocserver")
 
@@ -64,7 +65,7 @@ int main() {
     /*
      * Declare and create the example resource: LED
      */
-    if(createLEDResource() != OC_STACK_OK) 
+    if(createLEDResource() != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack cannot create resource...");
     }

@@ -4,9 +4,13 @@ BUILD	 := release
 PLATFORM := linux
 CC	 := g++
 
+ifeq ($(ROOT_DIR), )
+ROOT_DIR	= $(PWD)/../..
+endif
+
 # You must create the file "local.properties" on your local machine which contains any local paths, etc
 # local.properties should NOT be committed to repo
-include ./local.properties
+include $(ROOT_DIR)/local.properties
 # GTEST_DIR contains the path to Google Test libs and must be defined in local.properties
 #  Example:
 #  GTEST_DIR := /home/johndoe/utils/gtest-1.7.0
@@ -17,9 +21,6 @@ include ./local.properties
 OUT_DIR	  := $(PWD)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
-ifeq ($(ROOT_DIR), )
-ROOT_DIR	= $(PWD)/../..
-endif
 
 OUT_DIR	  := $(PWD)
 

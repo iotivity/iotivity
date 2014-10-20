@@ -31,12 +31,10 @@
 #include <stdint.h>
 
 //-----------------------------------------------------------------------------
-// Typedefs
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
 // Function Prototypes
 //-----------------------------------------------------------------------------
+
+uint32_t GetTime(float afterSeconds);
 
 /**
  * Initialize the CoAP client or server with the its IPv4 address and CoAP port
@@ -93,8 +91,8 @@ OCCoAPToken * OCGenerateCoAPToken();
  *
  * @return 0 - success, else - TBD error
  */
-OCStackResult OCSendCoAPNotification (OCDevAddr *dstAddr, OCStackResult result,
+OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr, OCStackResult result,
         OCQualityOfService qos, OCCoAPToken * token,
-        unsigned char *payload, uint32_t seqNum);
+        unsigned char *payload, uint32_t seqNum, uint32_t maxAge);
 
 #endif /* OCCOAP_H_ */

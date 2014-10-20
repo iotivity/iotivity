@@ -1,3 +1,23 @@
+//******************************************************************
+//
+// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 // Do not remove the include below
 #include "Arduino.h"
 
@@ -5,6 +25,13 @@
 #include "ocstack.h"
 #include <string.h>
 
+#ifdef ARDUINOWIFI
+// Arduino WiFi Shield
+#include <SPI.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#else
+// Arduino Ethernet Shield
 #include <EthernetServer.h>
 #include <Ethernet.h>
 #include <Dns.h>
@@ -12,18 +39,12 @@
 #include <util.h>
 #include <EthernetUdp.h>
 #include <Dhcp.h>
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 const char *getResult(OCStackResult result);
 
-#define PCF(str) ((const prog_char*)(F(str)))
+PROGMEM const char TAG[] = "ArduinoServer";
 
-const prog_char TAG[] PROGMEM = "ArduinoServer";
-
-int gQuitFlag = 0;
 int gLEDUnderObservation = 0;
 void createLEDResource();
 typedef struct LEDRESOURCE{
@@ -34,13 +55,82 @@ typedef struct LEDRESOURCE{
 
 static LEDResource LED;
 
-// TODO: hard coded for now, change after Sprint4
-static unsigned char responsePayloadGet[] = "{\"oc\": {\"payload\": {\"state\" : \"on\",\"power\" : \"10\"}}}";
-static unsigned char responsePayloadPut[] = "{\"oc\": {\"payload\": {\"state\" : \"off\",\"power\" : \"0\"}}}";
+static char responsePayloadGet[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"power\":10}}";
+static char responsePayloadPut[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"off\",\"power\":0}}";
+
+/// This is the port which Arduino Server will use for all unicast communication with it's peers
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
+#ifdef ARDUINOWIFI
+// Arduino WiFi Shield
+// Note : Arduino WiFi Shield currently does NOT support multicast and therefore
+// this server will NOT be listening on 224.0.1.187 multicast address.
+
+/// WiFi Shield firmware with Intel patches
+static const char INTEL_WIFI_SHIELD_FW_VER[] = "1.2.0";
+
+/// WiFi network info and credentials
+char ssid[] = "mDNSAP";
+char pass[] = "letmein9";
+
+int ConnectToNetwork()
+{
+    char *fwVersion;
+    int status = WL_IDLE_STATUS;
+    // check for the presence of the shield:
+    if (WiFi.status() == WL_NO_SHIELD)
+    {
+        OC_LOG(ERROR, TAG, PCF("WiFi shield not present"));
+        return -1;
+    }
+
+    // Verify that WiFi Shield is running the firmware with all UDP fixes
+    fwVersion = WiFi.firmwareVersion();
+    OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
+    if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) !=0 )
+    {
+        OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
+        return -1;
+    }
+
+    // attempt to connect to Wifi network:
+    while (status != WL_CONNECTED)
+    {
+        OC_LOG_V(INFO, TAG, "Attempting to connect to SSID: %s", ssid);
+        status = WiFi.begin(ssid,pass);
+
+        // wait 10 seconds for connection:
+        delay(10000);
+    }
+    OC_LOG(DEBUG, TAG, PCF("Connected to wifi"));
+
+    IPAddress ip = WiFi.localIP();
+    OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    return 0;
+}
+#else
+// Arduino Ethernet Shield
+int ConnectToNetwork()
+{
+    // Note: ****Update the MAC address here with your shield's MAC address****
+    uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0E, 0xC4, 0x05};
+    uint8_t error = Ethernet.begin(ETHERNET_MAC);
+    if (error  == 0)
+    {
+        OC_LOG_V(ERROR, TAG, "error is: %d", error);
+        return -1;
+    }
+    OC_LOG_V(INFO, TAG, "IPAddress : %s", Serial.print(Ethernet.localIP()));
+    return 0;
+}
+#endif //ARDUINOWIFI
+
+
+// This is the entity handler for the registered resource.
+// This is invoked by OCStack whenever it recevies a request for this resource.
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest )
 {
+    OCEntityHandlerResult ehRet = OC_EH_OK;
     const char* typeOfMessage;
 
     switch (flag)
@@ -58,20 +148,31 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             typeOfMessage = "UNKNOWN";
     }
     OC_LOG_V(INFO, TAG, "Receiving message type: %s", typeOfMessage);
+
     if(entityHandlerRequest && flag == OC_REQUEST_FLAG)
-    { //[CL]
+    {
         if(OC_REST_GET == entityHandlerRequest->method)
         {
-            //entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char*>(const_cast<unsigned char*> (responsePayloadGet.c_str()));
-            entityHandlerRequest->resJSONPayload = responsePayloadGet;
+            if (strlen(responsePayloadGet) < entityHandlerRequest->resJSONPayloadLen)
+            {
+                strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadGet, entityHandlerRequest->resJSONPayloadLen);
+            }
+            else
+            {
+                ehRet = OC_EH_ERROR;
+            }
         }
         if(OC_REST_PUT == entityHandlerRequest->method)
         {
-            //std::cout << std::string(reinterpret_cast<const char*>(entityHandlerRequest->reqJSONPayload)) << std::endl;
-            OC_LOG_V(INFO, TAG, "PUT JSON payload from client: %s", entityHandlerRequest->reqJSONPayload);
-            //entityHandlerRequest->resJSONPayload = reinterpret_cast<unsigned char*>(const_cast<char*> (responsePayloadPut.c_str()));
-            entityHandlerRequest->resJSONPayload = responsePayloadPut;
-            //responsePayloadGet = responsePayloadPut; // just a bad hack!
+            //Do something with the 'put' payload
+            if (strlen(responsePayloadPut) < entityHandlerRequest->resJSONPayloadLen)
+            {
+                strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadPut, entityHandlerRequest->resJSONPayloadLen);
+            }
+            else
+            {
+                ehRet = OC_EH_ERROR;
+            }
          }
     }
     else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG)
@@ -79,10 +180,11 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
         gLEDUnderObservation = 1;
     }
 
-    //OC_LOG_V(INFO, TAG, "/nReceiving message type:/n/t %s. /n/nWith request:/n/t %s", typeOfMessage, request);
-
-    return OC_EH_OK;
+    return ehRet;
 }
+
+
+// This method is used to display 'Observe' functionality of OC Stack.
 static uint8_t modCounter = 0;
 void *ChangeLEDRepresentation (void *param)
 {
@@ -105,6 +207,8 @@ void *ChangeLEDRepresentation (void *param)
     return NULL;
 }
 
+
+
 //The setup function is called once at startup of the sketch
 void setup()
 {
@@ -114,25 +218,21 @@ void setup()
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
     uint16_t port = OC_WELL_KNOWN_PORT;
 
-    //Mac address of my ethernet shield
-    uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0E, 0xC4, 0x05};
-    uint8_t error = Ethernet.begin(ETHERNET_MAC);
-    Serial.print(Ethernet.localIP());
-    if (error  == 0)
+    // Connect to Ethernet or WiFi network
+    if (ConnectToNetwork() != 0)
     {
-        OC_LOG_V(ERROR, TAG, "error is: %d", error);
+        OC_LOG(ERROR, TAG, "Unable to connect to network");
         return;
     }
 
+    // Initialize the OC Stack in Server mode
     if (OCInit(NULL, port, OC_SERVER) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("OCStack init error"));
         return;
     }
 
-    /*
-     * Declare and create the example resource: LED
-     */
+    // Declare and create the example resource: LED
     createLEDResource();
 
 }
@@ -140,7 +240,10 @@ void setup()
 // The loop function is called in an endless loop
 void loop()
 {
+    // This artificial delay is kept here to avoid endless spinning
+    // of Arduino microcontroller. Modify it as per specfic application needs.
     delay(2000);
+
     if (OCProcess() != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("OCStack process error"));
@@ -154,71 +257,48 @@ void createLEDResource()
     LED.state = false;
     OCStackResult res = OCCreateResource(&LED.handle,
             "core.led",
-            "core.rw",
+            "oc.mi.def",
             "/a/led",
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 }
-const char *getResult(OCStackResult result)
-{
-    char resString[40] = {0};
-    strcpy(resString, "Result: ");
+
+const char *getResult(OCStackResult result) {
     switch (result) {
     case OC_STACK_OK:
-        strcat(resString, "OC_STACK_OK");
-        break;
+        return "OC_STACK_OK";
     case OC_STACK_INVALID_URI:
-        strcat(resString, "OC_STACK_INVALID_URI");
-        break;
+        return "OC_STACK_INVALID_URI";
     case OC_STACK_INVALID_QUERY:
-        strcat(resString, "OC_STACK_INVALID_QUERY");
-        break;
+        return "OC_STACK_INVALID_QUERY";
     case OC_STACK_INVALID_IP:
-        strcat(resString, "OC_STACK_INVALID_IP");
-        break;
+        return "OC_STACK_INVALID_IP";
     case OC_STACK_INVALID_PORT:
-        strcat(resString, "OC_STACK_INVALID_PORT");
-        break;
+        return "OC_STACK_INVALID_PORT";
     case OC_STACK_INVALID_CALLBACK:
-        strcat(resString, "OC_STACK_INVALID_CALLBACK");
-        break;
+        return "OC_STACK_INVALID_CALLBACK";
     case OC_STACK_INVALID_METHOD:
-        strcat(resString, "OC_STACK_INVALID_METHOD");
-        break;
+        return "OC_STACK_INVALID_METHOD";
     case OC_STACK_NO_MEMORY:
-        strcat(resString, "OC_STACK_NO_MEMORY");
-        break;
+        return "OC_STACK_NO_MEMORY";
     case OC_STACK_COMM_ERROR:
-        strcat(resString, "OC_STACK_COMM_ERROR");
-        break;
+        return "OC_STACK_COMM_ERROR";
     case OC_STACK_INVALID_PARAM:
-        strcat(resString, "OC_STACK_INVALID_PARAM");
-        break;
+        return "OC_STACK_INVALID_PARAM";
     case OC_STACK_NOTIMPL:
-        strcat(resString, "OC_STACK_NOTIMPL");
-        break;
+        return "OC_STACK_NOTIMPL";
     case OC_STACK_NO_RESOURCE:
-        strcat(resString, "OC_STACK_NO_RESOURCE");
-        break;
+        return "OC_STACK_NO_RESOURCE";
     case OC_STACK_RESOURCE_ERROR:
-        strcat(resString, "OC_STACK_RESOURCE_ERROR");
-        break;
+        return "OC_STACK_RESOURCE_ERROR";
     case OC_STACK_SLOW_RESOURCE:
-        strcat(resString, "OC_STACK_SLOW_RESOURCE");
-        break;
+        return "OC_STACK_SLOW_RESOURCE";
     case OC_STACK_NO_OBSERVERS:
-        strcat(resString, "OC_STACK_NO_OBSERVERS");
-        break;
+        return "OC_STACK_NO_OBSERVERS";
     case OC_STACK_ERROR:
-        strcat(resString, "OC_STACK_ERROR");
-        break;
+        return "OC_STACK_ERROR";
     default:
-        strcat(resString, "UNKNOWN");
+        return "UNKNOWN";
     }
-    char* retString = resString;
-    return retString;
 }
-#ifdef __cplusplus
-} // extern "C"
-#endif

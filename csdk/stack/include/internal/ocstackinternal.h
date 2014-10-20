@@ -44,6 +44,17 @@ extern "C" {
 //-----------------------------------------------------------------------------
 #define OC_COAP_SCHEME "coap://"
 
+
+//-----------------------------------------------------------------------------
+// Virtual Resource Presence Attributes
+//-----------------------------------------------------------------------------
+#ifdef WITH_PRESENCE
+typedef struct PRESENCERESOURCE{
+    OCResourceHandle handle;
+    uint32_t presenceTTL;
+} PresenceResource;
+#endif
+
 //-----------------------------------------------------------------------------
 // Forward declarations
 //-----------------------------------------------------------------------------
@@ -131,6 +142,8 @@ typedef struct {
     OCDevAddr *subAddr;
     // CoAP token for the observe request
     OCCoAPToken *token;
+    // The result of the observe request
+    OCStackResult result;
 } OCObserveReq;
 
 // following structure will be created in occoap and passed up the stack on the server side
@@ -151,6 +164,8 @@ typedef struct {
 typedef struct {
     // handle is retrieved by comparing the token-handle pair in the PDU.
     ClientCB * cbNode;
+    // This is how long this response is valid for (in seconds).
+    uint32_t TTL;
     // this structure will be passed to client
     OCClientResponse * clientResponse;
 } OCResponse;
@@ -161,7 +176,13 @@ typedef struct {
 
 OCStackResult HandleStackRequests(OCRequest * request);
 void HandleStackResponses(OCResponse * response);
-int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr);
+int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
+
+#ifdef WITH_PRESENCE
+//TODO: should the following function be public?
+OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
+        OCResourceProperty resourceProperties, uint8_t enable);
+#endif
 
 // TODO: ultimately OCMalloc and OCFree should be defined in a different module
 void OCFree(void *ptr);

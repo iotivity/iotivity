@@ -18,17 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <Arduino.h>
-#include <Ethernet.h>
-#include <socket.h>
-#include <w5100.h>
-#include <ocsocket.h>
-#include <EthernetUdp.h>
-#include <IPAddress.h>
 #include <logger.h>
-
-/// Ensures the literal string to be stored in Flash memory
-#define PCF(str) ((PROGMEM const char *)(F(str)))
+#include <ocsocket.h>
+#include <Arduino.h>
+#include <IPAddress.h>
+#include <WiFi.h>
+#include <utility/server_drv.h>
+#include <utility/wifi_drv.h>
 
 /// Module Name
 #define MOD_NAME PCF("ocsocket")
@@ -39,6 +35,18 @@
 
 /// Length of the IP address decimal notation string
 #define IPNAMESIZE (16)
+
+/// This is the max buffer size between Arduino and WiFi Shield
+#define ARDUINO_WIFI_SPI_RECV_BUFFERSIZE (64)
+
+// Start offsets based on end of received data buffer
+#define WIFI_RECBUF_IPADDR_OFFSET  (6)
+#define WIFI_RECBUF_PORT_OFFSET    (2)
+
+#define WIFI_RECBUF_IPADDR_SIZE    (WIFI_RECBUF_IPADDR_OFFSET - WIFI_RECBUF_PORT_OFFSET)
+#define WIFI_RECBUF_PORT_SIZE      (WIFI_RECBUF_PORT_OFFSET - 0)
+#define WIFI_RECBUF_FOOTER_SIZE    (WIFI_RECBUF_IPADDR_SIZE + WIFI_RECBUF_PORT_SIZE)
+
 
 /// IPv4 address representation for Arduino Ethernet Shield
 typedef struct {
@@ -75,19 +83,20 @@ int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t 
 int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addrType,
              uint8_t *addr,  uint32_t addrLen)
 {
-    //TODO : Fix this for scenarios when this API is invoked when device is not connected
-    uint8_t rawIPAddr[4];
+    WiFiClass WiFi;
+
     VERIFY_NON_NULL(addr);
     if (addrLen < IPNAMESIZE) {
-        OC_LOG(FATAL, MOD_NAME, PCF("OCGetInterfaceAddress: addrLen MUST be atleast 16"));
+        OC_LOG(FATAL, MOD_NAME, PCF("OCGetInterfaceAddress: addrLen MUST be at least 16"));
         return ERR_INVALID_INPUT;
     }
 
     if (addrType != AF_INET) {
         return ERR_INVALID_INPUT;
     }
-    W5100.getIPAddress(rawIPAddr);
-    sprintf((char *)addr,"%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2], rawIPAddr[3]);
+
+    IPAddress ip = WiFi.localIP();
+    sprintf((char *)addr,"%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
     OC_LOG_BUFFER(INFO, MOD_NAME, addr, addrLen);
 
@@ -97,8 +106,8 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
 /// Retrieves a empty socket and bind it for UDP with the input port
 int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd)
 {
-    uint8_t state;
     ArduinoAddr* ardAddr = (ArduinoAddr*)ipAddr;
+    uint8_t sock;
 
     VERIFY_NON_NULL(ardAddr);
     VERIFY_NON_NULL(sockfd);
@@ -106,20 +115,17 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd)
     OC_LOG(DEBUG, MOD_NAME, PCF("OCInitUDP Begin"));
     //Is any socket available to work with ?
     *sockfd = -1;
-    for (int i = 0; i < MAX_SOCK_NUM; i++) {
-        state = W5100.readSnSR(i);
-        if (state == SnSR::CLOSED || state == SnSR::FIN_WAIT) {
-            *sockfd = i;
-            break;
-        }
+
+    sock = WiFiClass::getSocket();
+    if (sock != NO_SOCKET_AVAIL)
+    {
+        ServerDrv::startServer(ardAddr->port, sock, UDP_MODE);
+        WiFiClass::_server_port[sock] = ardAddr->port;
+        *sockfd = (int32_t)sock;
     }
 
-    if ( *sockfd == -1) {
-        return ERR_UNKNOWN;
-    }
-
-    //Create a datagram socket on which to recv/send.
-    if (!socket(*sockfd, SnMR::UDP, ardAddr->port, 0)) {
+    if (*sockfd == -1)
+    {
         return ERR_UNKNOWN;
     }
 
@@ -129,46 +135,10 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd)
 
 
 
-/// Retrieves a empty socket and bind it for UDP with the input multicast ip address/port
+/// Currently WiFi shield does NOT support multicast.
 int32_t OCInitUDPMulticast(OCDevAddr* ipMcastMacAddr, int32_t* sockfd)
 {
-    uint8_t state;
-    uint8_t mcastMacAddr[] = { 0x01, 0x00, 0x5E, 0x00, 0x00, 0x00};
-    ArduinoAddr* ardAddr = (ArduinoAddr*)ipMcastMacAddr;
-
-    VERIFY_NON_NULL(ardAddr);
-    VERIFY_NON_NULL(sockfd);
-
-    OC_LOG(DEBUG, MOD_NAME, PCF("OCInitUDPMulticast Begin"));
-    //Is any socket available to work with ?
-    *sockfd = -1;
-    for (int i = 0; i < MAX_SOCK_NUM; i++) {
-        state = W5100.readSnSR(i);
-        if (state == SnSR::CLOSED || state == SnSR::FIN_WAIT) {
-            *sockfd = i;
-            break;
-        }
-    }
-
-    if ( *sockfd == -1) {
-        return ERR_UNKNOWN;
-    }
-
-    //Calculate Multicast MAC address
-    mcastMacAddr[3] = ardAddr->b & 0x7F;
-    mcastMacAddr[4] = ardAddr->c;
-    mcastMacAddr[5] = ardAddr->d;
-    W5100.writeSnDIPR(*sockfd, (uint8_t*)&(ardAddr->a));
-    W5100.writeSnDHAR(*sockfd, mcastMacAddr);
-    W5100.writeSnDPORT(*sockfd, ardAddr->port);
-
-    //Create a datagram socket on which to recv/send.
-    if (!socket(*sockfd, SnMR::UDP, ardAddr->port, SnMR::MULTI)) {
-        return ERR_UNKNOWN;
-    }
-
-    OC_LOG(DEBUG, MOD_NAME, PCF("OCInitUDPMulticast End"));
-    return ERR_SUCCESS;
+    return OCInitUDP(ipMcastMacAddr, sockfd);
 }
 
 
@@ -176,14 +146,51 @@ int32_t OCInitUDPMulticast(OCDevAddr* ipMcastMacAddr, int32_t* sockfd)
 int32_t OCSendTo(int32_t sockfd, const uint8_t* buf, uint32_t bufLen, uint32_t flags,
             OCDevAddr * ipAddr)
 {
-    int32_t ret;
+    int32_t ret = 0;
     ArduinoAddr* ardAddr = (ArduinoAddr*)ipAddr;
+    uint32_t ip;
+    uint16_t rem, send;
 
     VERIFY_NON_NULL(buf);
     VERIFY_NON_NULL(ardAddr);
     OC_LOG(DEBUG, MOD_NAME, PCF("OCSendTo Begin"));
-    ret = sendto( sockfd, buf, bufLen, (uint8_t*)&(ardAddr->a), ardAddr->port);
-    OC_LOG_V(DEBUG, MOD_NAME, "OCSendTo RetVal %d", ret);
+
+    if (sockfd >= MAX_SOCK_NUM)
+    {
+        OC_LOG(ERROR, MOD_NAME, PCF("Invalid sockfd"));
+        return -1;
+    }
+
+    memcpy((uint8_t*)&ip, (uint8_t*)&(ardAddr->a), sizeof(ip));
+    ServerDrv::startClient(ip, ardAddr->port, (uint8_t)sockfd, UDP_MODE);
+
+    rem = bufLen;
+    do
+    {
+        send = (rem > ARDUINO_WIFI_SPI_RECV_BUFFERSIZE ) ? ARDUINO_WIFI_SPI_RECV_BUFFERSIZE : rem;
+        if (!ServerDrv::insertDataBuf((uint8_t)sockfd, buf, (uint16_t)send))
+        {
+            OC_LOG(ERROR, MOD_NAME, PCF("insertDataBuf error"));
+            ret = -1;
+            break;
+        }
+        rem = rem - send;
+        buf = buf + send;
+    }while(rem > 0);
+
+    if (ret != -1)
+    {
+        if (!ServerDrv::sendUdpData((uint8_t)sockfd))
+        {
+            OC_LOG(ERROR, MOD_NAME, PCF("sendUdpData error"));
+            ret = -1;
+        }
+        else
+        {
+            ret = bufLen;
+        }
+    }
+    OC_LOG(DEBUG, MOD_NAME, PCF("OCSendTo End"));
     return ret;
 }
 
@@ -192,36 +199,67 @@ int32_t OCSendTo(int32_t sockfd, const uint8_t* buf, uint32_t bufLen, uint32_t f
 int32_t OCRecvFrom(int32_t sockfd, uint8_t* buf, uint32_t bufLen, uint32_t flags,
             OCDevAddr * ipAddr)
 {
-    /**Bug : When there are multiple UDP packets in Wiznet buffer, W5100.getRXReceivedSize
-     * will not return correct length of the first packet.
-     * Fix : Use the patch provided for arduino/libraries/Ethernet/utility/socket.cpp
-     */
-    int32_t ret = 0;
+
     uint16_t recvLen;
+    uint16_t size = 0;
     ArduinoAddr* ardAddr = (ArduinoAddr*)ipAddr;
 
     VERIFY_NON_NULL(buf);
     VERIFY_NON_NULL(ardAddr);
 
     OC_LOG(DEBUG, MOD_NAME, PCF("OCRecvFrom Begin"));
-    recvLen = W5100.getRXReceivedSize(sockfd);
-    if (recvLen == 0) {
+    if (sockfd >= MAX_SOCK_NUM)
+    {
+        OC_LOG(ERROR, MOD_NAME, PCF("Invalid sockfd"));
+        return -1;
+    }
+
+    recvLen = (int32_t)ServerDrv::availData((uint8_t)sockfd);
+    if (recvLen == 0)
+    {
         return recvLen;
     }
 
-    // Read available data.
-    ret = recvfrom(sockfd, buf, bufLen, (uint8_t*)&(ardAddr->a), (uint16_t*)&(ardAddr->port));
-    ardAddr->size =  sizeof(ArduinoAddr) - sizeof(ardAddr->size);
+    // Make sure buf is large enough for received data
+    if ((uint32_t)recvLen > bufLen)
+    {
+        OC_LOG(ERROR, MOD_NAME, PCF("Receive buffer too small"));
+        return -1;
+    }
 
+    if (!ServerDrv::getDataBuf((uint8_t)sockfd, buf, &size))
+    {
+        OC_LOG(ERROR, MOD_NAME, PCF("getDataBuf error"));
+        return -1;
+    }
+
+    // Read IP Address and Port from end of receive buffer
+    memcpy(&(ardAddr->a), &buf[size - WIFI_RECBUF_IPADDR_OFFSET], WIFI_RECBUF_IPADDR_SIZE);
+    // Change the endianness of the port number
+    *((uint8_t*)&(ardAddr->port)) = buf[size - (WIFI_RECBUF_PORT_OFFSET-1)];
+    *((uint8_t*)&(ardAddr->port) + 1) = buf[size - (WIFI_RECBUF_PORT_OFFSET)];
+
+    size -= WIFI_RECBUF_FOOTER_SIZE;
+
+    ardAddr->size =  sizeof(ArduinoAddr) - sizeof(ardAddr->size);
     OC_LOG(DEBUG, MOD_NAME, PCF("OCRecvFrom End"));
-    return ret;
+    return (int32_t)size;
 }
 
 
 /// Close the socket and release all system resources.
 int32_t OCClose(int32_t sockfd)
 {
-    close(sockfd);
+    if (sockfd >= MAX_SOCK_NUM)
+    {
+        OC_LOG(ERROR, MOD_NAME, PCF("Invalid sockfd"));
+        return -1;
+    }
+    ServerDrv::stopClient(sockfd);
+
+    WiFiClass::_server_port[sockfd] = 0;
+    WiFiClass::_state[sockfd] = NA_STATE;
+
     return ERR_SUCCESS;
 }
 
@@ -260,4 +298,3 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
 
     return ERR_SUCCESS;
 }
-
