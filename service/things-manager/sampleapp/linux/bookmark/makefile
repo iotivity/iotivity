@@ -1,6 +1,6 @@
 
 TGMROOT=../../../
-IOT_BASE=${TGMROOT}../../oic-resource
+IOT_BASE=${TGMROOT}../../resource
 BOOST_ROOT=${TGMROOT}../../../
 BOOST_DIR = $(BOOST_ROOT)boost_1_51_0
 RST_NAME=.
@@ -28,7 +28,7 @@ SDK = ${TGMROOT}sdk
 TGM_INC = -I${TGMROOT}lib/inc -D_DEBUG -I${TGMROOT}lib/jsoncpp/inc -I${TGMROOT}sdk/inc -I${TGMROOT}tgm/inc
 
 #LD_LIB = $(IOT_BASE)/release/obj/OCLib.a  $(IOT_BASE)/csdk/release/liboctbstack.a ${TGMROOT}SDK/build/linux/libTGMSDKLibrary.a ${TGMROOT}TGM/build/linux/libTGMClient.a ${TGMROOT}lib/jsoncpp/libjsoncpp.a
-LD_LIB = $(IOT_BASE)/build/linux/release/obj/liboc.a  $(IOT_BASE)/csdk/build/linux/release/liboctbstack.a ${TGMROOT}sdk/build/linux/libTGMSDKLibrary.a ${TGMROOT}tgm/build/linux/libTGMClient.a ${TGMROOT}lib/jsoncpp/libjsoncpp.a
+LD_LIB = $(IOT_BASE)/release/obj/liboc.a  $(IOT_BASE)/csdk/release/liboctbstack.a ${TGMROOT}sdk/build/linux/libTGMSDKLibrary.a ${TGMROOT}tgm/build/linux/libTGMClient.a ${TGMROOT}lib/jsoncpp/libjsoncpp.a
 
 # Force metatargets to build:
 .PHONY: all clean
