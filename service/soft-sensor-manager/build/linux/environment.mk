@@ -5,7 +5,7 @@ ROOT_DIR=/home/iotivity/Desktop/Project/Iotivity-Candidate
 BOOST_BASE=/home/iotivity/Desktop/boost_1_56_0
 
 # ioc-resource folder path.
-IOT_BASE=${ROOT_DIR}/oic-resource
+IOT_BASE=${ROOT_DIR}/resource
 IOT_MAKE_PATH=${IOT_BASE}/build/linux
 IOT_RELEASE=${IOT_MAKE_PATH}/release/obj
 IOT_CSDK_RELEASE=${IOT_BASE}/csdk/build/linux/release
