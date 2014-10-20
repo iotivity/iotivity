@@ -41,8 +41,8 @@ OCSOCKET_DIR	= $(ROOT_DIR)/ocsocket
 LCOAP_DIR	= $(ROOT_DIR)/libcoap-4.1.1
 OCCOAP_DIR	= $(ROOT_DIR)/occoap
 OCTBSTACK_DIR	= $(ROOT_DIR)/stack
-UTILS_DIR	= $(ROOT_DIR)/../../oic-utilities/tb
-CJSON_DIR	= $(UTILS_DIR)/cJSON
+EXTLIBS_DIR	= $(ROOT_DIR)/../../extlibs
+CJSON_DIR	= $(EXTLIBS_DIR)/cjson
 
 OCCOAP_SRC	= $(OCCOAP_DIR)/src
 OCTBSTACK_SRC	= $(OCTBSTACK_DIR)/src
