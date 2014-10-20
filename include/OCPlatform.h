@@ -385,6 +385,14 @@ namespace OC
         *  Private function to initalize the platfrom
         */
         void init(const PlatformConfig& config);
+
+        /**
+         * Private constructor/operators to prevent copying
+         * of this object
+         */
+        OCPlatform(const OCPlatform& other)= delete;
+        OCPlatform& operator=(const OCPlatform&) = delete;
+        OCPlatform& operator=(const OCPlatform&&) = delete;
     };
 }
 
