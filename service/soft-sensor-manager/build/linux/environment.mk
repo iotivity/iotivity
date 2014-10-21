@@ -1,19 +1,19 @@
 # root path of each PC.
-ROOT_DIR=/home/iotivity/Desktop/Project/Iotivity-Candidate
+ROOT_DIR=${PWD}/../../../..
 
 # boost folder path.
 BOOST_BASE=/home/iotivity/Desktop/boost_1_56_0
 
 # ioc-resource folder path.
 IOT_BASE=${ROOT_DIR}/resource
-IOT_MAKE_PATH=${IOT_BASE}/build/linux
+IOT_MAKE_PATH=${IOT_BASE}
 IOT_RELEASE=${IOT_MAKE_PATH}/release/obj
-IOT_CSDK_RELEASE=${IOT_BASE}/csdk/build/linux/release
+IOT_CSDK_RELEASE=${IOT_BASE}/csdk/release
 IOT_LIB=liboc.a
 IOT_CSDK_LIB=liboctbstack.a
 
-# oic-service folder path.
-FD_SSM=${ROOT_DIR}/oic-service/soft-sensor-manager
+# service folder path.
+FD_SSM=${ROOT_DIR}/service/soft-sensor-manager
 FD_SDK=${FD_SSM}/SDK
 FD_SSMCORE=${FD_SSM}/SSMCore
 FD_SAMPLEAPP=${FD_SSM}/SampleApp
