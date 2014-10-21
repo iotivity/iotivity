@@ -1,0 +1,193 @@
+******************************************************************
+
+ Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+===============================================================================
+==                      Rich Stack & Lite Stack                              ==
+===============================================================================
+
+The directory "resource" in IOTIVITY repository (referred as "<iotivity>")
+contains two SDKs with underlying code (i.e. "stack"). The two SDKs are
+referred to as "Rich SDK" (or "C++ SDK") and "Lite SDK" (or "C SDK"). The
+associated stacks are referred to as "Rich Stack" (or "C++ Stack") and "Lite
+Stack" (or "C Stack"), respectively. The Rich Stack-SDK pair requires that the
+Lite Stack-SDK pair is built under it.
+
+===============================================================================
+
+The Rich Stack is intended ONLY for Linux Ubuntu 12.04 operating system. To
+build Rich Stack, please follow these requirements:
+- GCC compiler version is 4.6
+- Pre-install the "gnu-libc" libraries package.
+
+The Lite Stack is intended ONLY for Linux Ubuntu 12.04, Arduino ATMega 2560
+with Arduino Framework 1.0.5, and Arduino Due with Arduino Framework 1.5.7.
+Tip: Use Cutecom in Ubuntu 12.04 to view logs from Arduino ATMega 2560 and
+Arduino Due.
+
+To build Lite Stack, please follow these requirements for Linux Ubuntu 12.04:
+- GCC compiler version is 4.6
+- Pre-install the "gnu-libc" libraries package.
+
+NOTE: The Arduino patches mentioned below are required to use the Arduino
+Ethernet or WiFi shield.  They are not currently included in the IoTivity 
+repository.  Please contact the IoTivity support forum for more information.
+
+To build Lite Stack, please follow these requirements for Arduino ATMega 2560:
+- Arduino Framework 1.0.5 is installed.
+- AVR-GCC compiler version is 4.5.3 (Distributed with Arduino 1.0.5, no further
+  action necessary if framework was obtained from
+  http://arduino.cc/en/Main/OldSoftwareReleases. Note: Frameworks obtained from
+  apt-get have had different compiler versions.)
+- Unzip the Time Library from here to your Arduino Directory Structure:
+  http://playground.arduino.cc/code/time
+- Apply patch "arduino-1.0.5_linux.patch" at <iotivity>/tools/arduino/patches
+  to your Arduino Directory Structure at location <Arduino 1.0.5>.
+- Create/Append "local.properties" file at location <iotivity>/resource/csdk/
+  with the following specified:
+
+  ARDUINO_DIR := <arduino-1.0.5>
+  ARDUINO_TOOLS_DIR := $(ARDUINO_DIR)/hardware/tools/avr/bin
+
+To build Lite Stack, please follow these requirements for Arduino Due:
+- Arduino Framework 1.5.7 is installed.
+- AVR-GCC compiler version is 4.8.3 (Distributed with Arduino 1.5.7, no further
+  action necessary if framework was obtained from
+  http://arduino.cc/en/Main/OldSoftwareReleases. Note: Frameworks obtained from
+  apt-get have had different compiler versions.)
+- Unzip the Time Library from here to your Arduino Directory Structure:
+  http://www.pjrc.com/teensy/td_libs_Time.html
+- Apply patch "arduino-1.5.7_linux.patch" at <iotivity>/tools/arduino/patches
+  to your Arduino Directory Structure at location <Arduino 1.5.7>.
+- Create/Append "local.properties" file at location <iotivity>/resource/csdk/
+  with the following specified:
+
+  ARDUINO_DIR := <arduino-1.5.7>
+  ARDUINO_TOOLS_DIR := $(ARDUINO_DIR)/hardware/tools/avr/bin
+
+Note: If you are building for Arduino Mega and building for Arduino Due you may
+find it useful to set the "local.properties" file to look like this:
+
+ifeq ($(PLATFORM), arduinomega)
+	#Location of arduino sdk for Arduino Mega
+	ARDUINO_DIR := <arduino-1.0.5>
+	ARDUINO_TOOLS_DIR := $(ARDUINO_DIR)/hardware/tools/avr/bin
+else
+	#Location of arduino sdk for Arduino Due
+	ARDUINO_DIR := <arduino-1.5.7>
+	ARDUINO_TOOLS_DIR := $(ARDUINO_DIR)/hardware/tools/gcc-arm-none-eabi-4.8.3-2014q1/bin
+endif
+
+===============================================================================
+
+Instructions for Common Build Processes:
+
+Please use the following GNU make targets to build for the specific platform(s)
+you wish to build. Please review "makefile" at the same directory level as this
+README document to find the build output locations.
+
+NOTE: 'GNU Make' is required to utilize the makefile at location:
+<iotivity>/makefile.
+
+NOTE: In release "M1" the build process only allows for single platforms to be
+built at a time. For instance, you may only build successfully when building
+either Lite modules for Arduino ATMega 2560, building Lite modules for Arduino Due,
+or building Lite modules and/or Rich modules for Linux. Also, you may only build
+either a RELEASE or a DEBUG revision at this time. Later releases will support
+building for any and all platforms' modules with a single 'makefile' command.
+
+=======================================
+==     All Targets - Linux Only      ==
+=======================================
+
+- All Modules, without OCICUC, in Release (Lite Stack, Lite Examples, Rich
+  Stack, Rich Examples) for linux:
+
+	make linux
+
+- All Modules, without OCICUC, in Debug (Lite Stack, Lite Examples, Rich Stack,
+  Rich Examples) for linux:
+
+	make linux_debug
+
+- All Rich Stack Modules in Release, without OCICUC, (Lite Stack, Rich Stack,
+  Rich Examples) for Linux:
+
+	make linux_ub
+
+- All Rich Stack Modules in Debug, without OCICUC, (Lite Stack, Rich Stack,
+  Rich Examples) for Linux:
+
+	make linux_ub_debug
+
+- All Rich Stack Modules, including OCICUC, in Release & Debug (Lite Stack,
+  Rich Stack, Rich Examples, Rich OCICUC) for linux:
+
+	make linux_ub_dev
+
+- All Lite Stack Modules in Release (Lite Stack, Lite Examples) for Linux:
+
+	make linux_tb
+
+- All Lite Stack Modules in Debug (Lite Stack, Lite Examples) for Linux:
+
+	make linux_tb_debug
+
+=======================================
+==      All Targets - Mega Only      ==
+=======================================
+
+- All Lite Stack Modules in Release (Lite Stack, Lite Examples) for Arduino
+  ATMega 2560 with Ethernet Shield:
+
+	make arduinomega
+
+- All Lite Stack Modules in Debug (Lite Stack, Lite Examples) for Arduino ATMega
+  2560 with Ethernet Shield:
+
+	make arduinomega_debug
+
+Note: To install to Arduino ATMega 2560, see README at the following location:
+<iotivity>/resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/
+
+=======================================
+==      All Targets - Due Only      ==
+=======================================
+
+- All Lite Stack Modules in Release (Lite Stack, Lite Examples) for Arduino Due
+  with Ethernet Shield:
+
+	make arduinodue_all
+
+- All Lite Stack Modules in Debug (Lite Stack, Lite Examples) for Arduino Due
+  with Ethernet Shield:
+
+	make arduinodue_all_debug
+
+Note: To install to Arduino Due, see README at the following location:
+<iotivity>/resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/
+
+=======================================
+==         Clean All Targets         ==
+=======================================
+
+- Clean All:
+
+	make clean
+

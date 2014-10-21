@@ -3,7 +3,7 @@
 BUILD	  := release
 CXX	      := g++
 #CXX	  := clang
-OUT_DIR	  := $(PWD)/$(BUILD)
+OUT_DIR	  := ./$(BUILD)
 
 CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread 
 
@@ -17,9 +17,13 @@ CXX_INC	  += -I../csdk/logger/include
 CXX_INC	  += -I../csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient ocicuc 
+all.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient ocicuc_target
 
-all: .PHONY
+apps.PHONY: prep_dirs simpleserver simpleclient simpleclientserver roomserver roomclient presenceserver presenceclient
+
+all: all.PHONY
+
+apps: apps.PHONY
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
@@ -45,10 +49,11 @@ roomserver: roomserver.cpp
 roomclient: roomclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomclient.cpp $(CXX_INC) ../$(BUILD)/obj/liboc.a ../csdk/$(BUILD)/liboctbstack.a
 
-ocicuc:
+ocicuc_target:
 	cd ocicuc && $(MAKE)
 
 clean: 
-	rm -rf $(OUT_DIR)/*
+	rm -rf debug
+	rm -rf release
 	cd ocicuc && $(MAKE) clean
 

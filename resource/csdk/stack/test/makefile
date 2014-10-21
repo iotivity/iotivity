@@ -5,7 +5,7 @@ PLATFORM := linux
 CC	 := g++
 
 ifeq ($(ROOT_DIR), )
-ROOT_DIR	= $(PWD)/../..
+ROOT_DIR	= ./../..
 endif
 
 # You must create the file "local.properties" on your local machine which contains any local paths, etc
@@ -18,11 +18,11 @@ include $(ROOT_DIR)/local.properties
 # NOTE:  to run app, make sure that LD_LIBRARY_PATH env variable
 #        contains $(GTEST_DIR)/lib/.libs
 
-OUT_DIR	  := $(PWD)/$(BUILD)
+OUT_DIR	  := ./$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 
-OUT_DIR	  := $(PWD)
+OUT_DIR	  := .
 
 OCLOGGER_DIR	= $(ROOT_DIR)/logger
 OCRANDOM_DIR	= $(ROOT_DIR)/ocrandom

@@ -8,18 +8,18 @@ location "/dev/ttyACM0", you must define ARDUINO_PORT to the location it is
 installed at. This location will be referred to as <DEV_PORT>.
 
 This makefile relies on "local.properties" at the directory level of the
-makefile that generates octbstack.a. Please refer to the README at that level
+root of the repository. Please refer to the README at that level
 to determine what definitions are needed for your environment.
 
 To make ocserver in release mode:
 
 	make (arduinomega)
-    make -f makefiledue (arduinodue)
+	make -f makefiledue (arduinodue)
 
 To make & install ocserver in release mode, with <DEV_PORT> NOT specified:
 
 	make install (arduinomega)
-    make -f makefiledue install (arduinodue)
+	make -f makefiledue install (arduinodue)
 
 To make & install ocserver in release mode, with <DEV_PORT> specified:
 
@@ -32,6 +32,7 @@ To make & install ocserver in debug mode, with <DEV_PORT> specified:
 To make ocserver_wifi with Arduino WiFi Shield support:
 
 	make ARDUINOWIFI=1 (arduinomega)
+
 -------------------------------------------------------------------------------
 **Clean-Up**
 -------------------------------------------------------------------------------

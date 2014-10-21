@@ -3,14 +3,14 @@
 BUILD	 := release
 PLATFORM := linux
 CC	 := g++
-OUT_DIR	  := $(PWD)/$(BUILD)
+OUT_DIR	  := ./$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 ifeq ($(ROOT_DIR), )
-ROOT_DIR	= $(PWD)/../../../..
+ROOT_DIR	= ./../../../..
 endif
 
-OUT_DIR	= $(PWD)
+OUT_DIR	= .
 
 OCLOGGER_DIR	= $(ROOT_DIR)/logger
 OCRANDOM_DIR	= $(ROOT_DIR)/ocrandom

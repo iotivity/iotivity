@@ -77,7 +77,7 @@ prep_dirs:
 	$(CC) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 %.o: %.cpp
-	$(CCPLUS) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
+	$(CXX) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 libcoap.a: $(OBJECTS) $(OBJECTSCPP)
 	$(AR) rcs $(OUT_DIR)/$@ $(addprefix $(OBJ_DIR)/,$^)

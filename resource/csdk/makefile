@@ -9,7 +9,7 @@ PLATFORM := linux
 ARDUINOWIFI := 0
 
 ifeq ($(ROOT_DIR), )
-ROOT_DIR	= $(PWD)
+ROOT_DIR	= .
 endif
 
 ifeq ($(OBJ_DIR), )
@@ -86,7 +86,9 @@ SOURCES			:= $(CJSON_SOURCES)
 SOURCES			+= $(OCCOAP_SOURCES)
 SOURCES			+= $(OCTBSTACK_SOURCES)
 
-all:	make_lcoap objdirs obj_build liboctbstack.a #print_vars
+all:	make_lcoap objdirs obj_build liboctbstack.a
+
+buildScript_all: objdirs obj_build liboctbstack.a
 
 make_lcoap: 
 	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
@@ -103,7 +105,7 @@ obj_build:
 liboctbstack.a:
 	@echo "Building $@" 
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	@cd $(BUILD)/$(OBJ_DIR) && $(AR) -x $(LCOAP_DIR)/$(BUILD)/libcoap.a
+	@cd $(BUILD)/$(OBJ_DIR) && $(AR) -x ../../$(LCOAP_DIR)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
 	$(AR) -r $(BUILD)/$@ $(BUILD)/$(OBJ_DIR)/*.o
 

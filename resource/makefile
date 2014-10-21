@@ -17,9 +17,13 @@ CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
 
 # Force metatargets to build:
-.PHONY: prep_dirs c_sdk liboc.a examples 
+all.PHONY: prep_dirs c_sdk liboc.a examples
 
-all:	.PHONY
+buildScript_all.PHONY: prep_dirs liboc.a
+
+all:	all.PHONY
+
+buildScript_all:  buildScript_all.PHONY
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
@@ -31,11 +35,8 @@ c_sdk:
 examples: 
 	cd examples && $(MAKE) "BUILD=$(BUILD)"
 
-liboc.a: OCPlatform.o OCResource.o OCReflect.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
-	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCReflect.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
-
-OCReflect.o: src/OCReflect.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCReflect.cpp $(CXX_INC)
+liboc.a: OCPlatform.o OCResource.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
+	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
 
 OCPlatform.o: src/OCPlatform.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform.cpp $(CXX_INC)
