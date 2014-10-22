@@ -221,16 +221,10 @@ public:
 
     OCRepresentation getRoomRepresentation(void)
     {
-        std::vector<OCRepresentation> children;
+        m_roomRep.clearChildren();
 
-        OCRepresentation light = getLightRepresentation();
-        children.push_back(light);
-
-        OCRepresentation fan = getFanRepresentation();
-        children.push_back(fan);
-
-        m_roomRep.setChildren(children);
-
+        m_roomRep.addChild(getLightRepresentation());
+        m_roomRep.addChild(getFanRepresentation());
         return m_roomRep;
     }
 

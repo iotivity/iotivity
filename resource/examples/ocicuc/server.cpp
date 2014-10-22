@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "exec.hpp"
 #include "utility.hpp"
 
+#include "exec.hpp"
 #include "light_resource.hpp"
 
 namespace Intel { namespace OCDemo {

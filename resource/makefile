@@ -31,6 +31,9 @@ ifeq ($(PLATFORM), )
 	PLATFORM := "linux"
 endif
 
+DEPEND_DIR:= $(ROOT_DIR)/dependencies
+CEREAL_DIR:= $(DEPEND_DIR)/cereal
+
 OUT_DIR	  := $(ROOT_DIR)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
@@ -45,19 +48,33 @@ CXX_INC	  += -I./csdk/ocsocket/include
 CXX_INC	  += -I./csdk/ocrandom/include
 CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
-
+CXX_INC   += -I$(CEREAL_DIR)/include
 # Force metatargets to build:
-all.PHONY: prep_dirs c_sdk oc_logger_target liboc.a examples
+all.PHONY: applyDepPatches prep_dirs c_sdk oc_logger_target liboc.a examples
 
-buildScript_all.PHONY: prep_dirs oc_logger_target liboc.a
+buildScript_all.PHONY: applyDepPatches prep_dirs oc_logger_target liboc.a
 
 all:	all.PHONY
 
 buildScript_all:  buildScript_all.PHONY
 
-prep_dirs:
+prep_dirs: deps
 	-mkdir -p $(OUT_DIR)
 	-mkdir -p $(OBJ_DIR)
+
+# used to fetch all dependencies
+deps:
+	-mkdir -p $(DEPEND_DIR)
+#cereal fetch
+	if [ ! -d "$(CEREAL_DIR)" ]; then\
+		cd $(DEPEND_DIR) && git clone https://github.com/USCiLab/cereal.git;\
+		cd $(CEREAL_DIR) && git checkout 7121e91e6ab8c3e6a6516d9d9c3e6804e6f65245;\
+	fi
+
+applyDepPatches: deps
+#reset git to the 'base version', so we can apply our patch without issues
+	cd $(CEREAL_DIR) && git reset --hard 7121e91e6ab8c3e6a6516d9d9c3e6804e6f65245;
+	cd $(CEREAL_DIR) && git apply $(ROOT_DIR)/patches/cereal_gcc46.patch
 
 c_sdk:
 	cd csdk && $(MAKE) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)"
@@ -70,14 +87,17 @@ cpp_sdk: prep_dirs c_sdk liboc.a
 examples: liboc.a
 	cd examples && $(MAKE) apps "BUILD=$(BUILD)"
 
-liboc.a: OCPlatform_impl.o OCPlatform.o OCResource.o OCException.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
-	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform_impl.o $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
+liboc.a: OCPlatform_impl.o OCPlatform.o OCResource.o OCException.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o OCRepresentation.o
+	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform_impl.o $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o $(OBJ_DIR)/OCRepresentation.o
 
 OCPlatform_impl.o: src/OCPlatform_impl.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform_impl.cpp $(CXX_INC)
 
 OCPlatform.o: src/OCPlatform.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform.cpp $(CXX_INC)
+
+OCRepresentation.o: src/OCRepresentation.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCRepresentation.cpp $(CXX_INC)
 
 OCResource.o: src/OCResource.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCResource.cpp $(CXX_INC)

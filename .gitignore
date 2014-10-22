@@ -20,3 +20,6 @@ csdk/stack/samples/linux/SimpleClientServer/debug/
 *.settings/
 *.cproject
 *.project
+
+# Ignore dependencies folder, which should be generated
+/dependencies

@@ -26,6 +26,9 @@ CXX	      := g++
 #CXX	  := clang
 OUT_DIR	  := $(BUILD)
 
+DEPEND_DIR:= ../dependencies
+CEREAL_DIR:= $(DEPEND_DIR)/cereal
+
 CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
 
 CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
@@ -37,6 +40,7 @@ CXX_INC	  += -I../csdk/ocsocket/include
 CXX_INC	  += -I../csdk/ocrandom/include
 CXX_INC	  += -I../csdk/logger/include
 CXX_INC	  += -I../csdk/libcoap
+CXX_INC   += -I$(CEREAL_DIR)/include
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 

@@ -41,7 +41,8 @@ CXX_INC=-I$(OCLIB)/include \
 	-I../../csdk/stack/include \
 	-I../../csdk/ocsocket/include \
 	-I../../csdk/ocrandom/include \
-	-I../../csdk/logger/include
+	-I../../csdk/logger/include \
+	-I../../dependencies/cereal/include
 
 BOOST_LIBS=-lboost_program_options
 #BOOST_LIBS=-L/usr/local/boost/lib/ -lboost_program_options	# for boost libraries at the specified path

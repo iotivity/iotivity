@@ -39,9 +39,9 @@ namespace OC
     public:
         typedef std::shared_ptr<IWrapperFactory> Ptr;
 
-        virtual IClientWrapper::Ptr CreateClientWrapper(OC::OCPlatform_impl& owner,
+        virtual IClientWrapper::Ptr CreateClientWrapper(
             std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg) =0;
-        virtual IServerWrapper::Ptr CreateServerWrapper(OC::OCPlatform_impl& owner,
+        virtual IServerWrapper::Ptr CreateServerWrapper(
             std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg) =0;
         virtual ~IWrapperFactory(){}
     };
@@ -52,28 +52,28 @@ namespace OC
     public:
         WrapperFactory(){}
 
-        virtual IClientWrapper::Ptr CreateClientWrapper(OC::OCPlatform_impl& owner,
+        virtual IClientWrapper::Ptr CreateClientWrapper(
             std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
         {
             switch(cfg.serviceType)
             {
             case ServiceType::InProc:
-                return std::make_shared<InProcClientWrapper>(owner, csdkLock, cfg);
+                return std::make_shared<InProcClientWrapper>(csdkLock, cfg);
                 break;
             case ServiceType::OutOfProc:
-                return std::make_shared<OutOfProcClientWrapper>(owner, csdkLock, cfg);
+                return std::make_shared<OutOfProcClientWrapper>(csdkLock, cfg);
                 break;
             }
 			return nullptr;
         }
 
-        virtual IServerWrapper::Ptr CreateServerWrapper(OC::OCPlatform_impl& owner,
+        virtual IServerWrapper::Ptr CreateServerWrapper(
             std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
         {
             switch(cfg.serviceType)
             {
             case ServiceType::InProc:
-                return std::make_shared<InProcServerWrapper>(owner, csdkLock, cfg);
+                return std::make_shared<InProcServerWrapper>(csdkLock, cfg);
                 break;
             case ServiceType::OutOfProc:
                 throw OC::OCException(OC::Exception::SVCTYPE_OUTOFPROC, OC_STACK_NOTIMPL);

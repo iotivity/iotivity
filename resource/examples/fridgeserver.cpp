@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// The purpose of this server is to simulate a refridgerator that contains a device resource for
+/// The purpose of this server is to simulate a refrigerator that contains a device resource for
 /// its description, a light resource for the internal light, and 2 door resources for the purpose
 /// of representing the doors attached to this fridge.  This is used by the fridgeclient to
 /// demonstrate using std::bind to attach to instances of a class as well as using
@@ -88,7 +88,7 @@ class DeviceResource : public Resource
     private:
     OCRepresentation get()
     {
-        m_rep.setValue("device_name", std::string("Intel Powered 2 door, 1 light refridgerator"));
+        m_rep.setValue("device_name", std::string("Intel Powered 2 door, 1 light refrigerator"));
         return m_rep;
     }
 

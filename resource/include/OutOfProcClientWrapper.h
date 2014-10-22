@@ -28,9 +28,8 @@ namespace OC
     class OutOfProcClientWrapper : public IClientWrapper
     {
     public:
-        OutOfProcClientWrapper(OC::OCPlatform_impl& owner, std::weak_ptr<std::recursive_mutex> csdkLock,
+        OutOfProcClientWrapper(std::weak_ptr<std::recursive_mutex> csdkLock,
                                 PlatformConfig cfg)
-         : IClientWrapper(owner)
         {}
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
@@ -68,12 +67,6 @@ namespace OC
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
             const std::string& uri,
             const HeaderOptions& headerOptions, QualityOfService QoS){return OC_STACK_NOTIMPL;}
-
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
-            OCDevAddr& addr, const boost::property_tree::ptree resourceNode)
-        {
-            return nullptr;
-        }
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
             const std::string& resourceType, SubscribeCallback& presenceHandler)

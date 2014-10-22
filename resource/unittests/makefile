@@ -38,6 +38,13 @@ include $(ROOT_DIR)/../csdk/local.properties
 
 OUT_DIR	  := $(BUILD)
 
+ifeq ($(ROOT_DIR),)
+	ROOT_DIR:=$(PWD)
+endif
+
+DEPEND_DIR:=$(ROOT_DIR)/../dependencies
+CEREAL_DIR:=$(DEPEND_DIR)/cereal
+
 INC_DIRS  := -I../include/
 INC_DIRS  += -I../oc_logger/include
 INC_DIRS  += -I../csdk/stack/include
@@ -46,6 +53,7 @@ INC_DIRS  += -I../csdk/ocrandom/include
 INC_DIRS  += -I../csdk/logger/include
 INC_DIRS  += -I../csdk/libcoap
 INC_DIRS  += -I$(GTEST_DIR)/include
+INC_DIRS  += -I$(CEREAL_DIR)/include
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 

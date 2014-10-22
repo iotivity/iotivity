@@ -365,6 +365,8 @@ int main(int argc, char* argv[]) {
     OCPlatform::Configure(cfg);
     try
     {
+        // makes it so that all boolean values are printed as 'true/false' in this stream
+        std::cout.setf(std::ios::boolalpha);
         // Find all resources
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;

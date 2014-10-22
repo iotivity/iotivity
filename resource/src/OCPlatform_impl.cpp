@@ -68,16 +68,16 @@ namespace OC
         switch(config.mode)
         {
             case ModeType::Server:
-                m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
+                m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
                 break;
 
             case ModeType::Client:
-                m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
+                m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
                 break;
 
             case ModeType::Both:
-                m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
-                m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
+                m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
+                m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
                 break;
          }
     }
@@ -129,7 +129,7 @@ namespace OC
          return result_guard(OC_STACK_ERROR);
         }
 
-        std::string payload(pResponse->getPayload());
+        std::string payload(pResponse->getResourceRepresentation().getJSONRepresentation());
 
         return result_guard(
                    OCNotifyListOfObservers(resourceHandle,

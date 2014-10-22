@@ -34,13 +34,11 @@ namespace OC
     class IServerWrapper
     {
     protected:
-        OCPlatform_impl& m_owner;
 
     public:
         typedef std::shared_ptr<IServerWrapper> Ptr;
 
-        IServerWrapper(OCPlatform_impl& owner)
-         : m_owner(owner)
+        IServerWrapper()
         {}
 
         virtual ~IServerWrapper(){};
