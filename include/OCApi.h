@@ -314,7 +314,7 @@ namespace OC
         }
         catch(boost::property_tree::json_parser::json_parser_error &e)
         {
-            throw OCException(GENERAL_JSON_PARSE_FAILED);
+            throw OCException(OC::Exception::GENERAL_JSON_PARSE_FAILED);
         }
 
         for(auto& item: payload)

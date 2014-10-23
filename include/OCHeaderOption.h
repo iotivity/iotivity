@@ -27,7 +27,7 @@
 #define __OCHEADEROPTION_H
 
 #include <OCException.h>
-
+#include <StringConstants.h>
 namespace OC
 {
     namespace HeaderOption
