@@ -89,7 +89,6 @@ void formResourceRequest(OCEntityHandlerFlag flag,
 
             if(OC_REST_GET == entityHandlerRequest->method)
             {
-                // TODO Why strings : "GET"??
                 pRequest->setRequestType(OC::PlatformCommands::GET);
             }
             else if(OC_REST_PUT == entityHandlerRequest->method)
@@ -106,7 +105,7 @@ void formResourceRequest(OCEntityHandlerFlag flag,
             }
             else if(OC_REST_DELETE == entityHandlerRequest->method)
             {
-                pRequest->setRequestType("DELETE");
+                pRequest->setRequestType(OC::PlatformCommands::DELETE);
             }
         }
     }
@@ -423,7 +422,7 @@ namespace OC
             }
             else
             {
-                throw OCException("Unregistering resource failed", result);
+                throw OCException(OC::Exception::RESOURCE_UNREG_FAILED, result);
             }
         }
         else

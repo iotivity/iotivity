@@ -58,7 +58,11 @@ namespace OC
         static const std::string INVALID_ARRAY              = "Array type should have at least []";
         static const std::string STR_NULL_RESPONSE          = "Response is NULL";
         static const std::string STR_PAYLOAD_OVERFLOW       = "Payload overflow";
-
+        static const std::string NIL_GUARD_NULL             = "nullptr at nil_guard()";
+        static const std::string GENERAL_JSON_PARSE_FAILED  = "JSON Parser Error";
+        static const std::string RESOURCE_UNREG_FAILED      = "Unregistering resource failed";
+        static const std::string OPTION_ID_RANGE_INVALID    =
+                            "Error: OptionID valid only from 2048 to 3000 inclusive.";
 
         static const std::string NO_ERROR                   = "No Error";
         static const std::string RESOURCE_CREATED           = "Resource Created";
@@ -88,6 +92,7 @@ namespace OC
         static const std::string GENERAL_FAULT              = "General Fault";
         static const std::string MALFORMED_STACK_RESPONSE   = "Response from OC_STACK is malformed";
         static const std::string UNKNOWN_ERROR              = "Unknown Error";
+
     }
 
     namespace Error

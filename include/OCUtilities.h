@@ -81,7 +81,7 @@ namespace OC {
     {
         if(nullptr == p)
         {
-            throw OCException("nullptr at nil_guard()", OC_STACK_INVALID_PARAM);
+            throw OCException(OC::Exception::NIL_GUARD_NULL, OC_STACK_INVALID_PARAM);
         }
 
         // Note that although parameters are being forwarded, std::bind() will make a single copy:

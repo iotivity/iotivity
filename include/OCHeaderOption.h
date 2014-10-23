@@ -60,7 +60,7 @@ namespace OC
             {
                 if(!(optionID >= MIN_HEADER_OPTIONID && optionID <= MAX_HEADER_OPTIONID))
                 {
-                    throw OCException("Error:OptionID valid only from 2048 to 3000 inclusive");
+                    throw OCException(OC::Exception::OPTION_ID_RANGE_INVALID);
                 }
             }
 
