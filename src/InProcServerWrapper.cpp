@@ -76,7 +76,9 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                 std::string optionData;
                 HeaderOptions headerOptions;
 
-                for(int i = 0; i < MAX_HEADER_OPTIONS; i++)
+                for(int i = 0;
+                    i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions;
+                    i++)
                 {
                     optionID = entityHandlerRequest->rcvdVendorSpecificHeaderOptions[i].optionID;
                     optionData = reinterpret_cast<const char*>
