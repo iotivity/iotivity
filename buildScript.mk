@@ -30,6 +30,10 @@
 # Arduino ATMega 2560:
 #    Framework Version: Arduino 1.0.5
 #    AVR-GCC Version: 4.5.3
+#
+# Arduino Due:
+#    Framework Version: Arduino 1.5.7
+#    AVR-GCC Version: 4.8.3
 
 # Header Description:
 # ====NAME/TITLE - BUILD TYPE - OUT DIRECTORY====
@@ -112,9 +116,9 @@ linux_ub: linux_ub_release
 
 linux_ub_all: linux_ub_release linux_ub_debug
 
-linux_ub_release: linux_tb_stack_release linux_ub_stack_release linux_ub_examples_release
+linux_ub_release: linux_tb_stack_release linux_ub_unittests_release linux_ub_stack_release linux_ub_examples_release
 
-linux_ub_debug: linux_tb_stack_debug linux_ub_stack_debug linux_ub_examples_debug
+linux_ub_debug: linux_tb_stack_debug linux_ub_unittests_debug linux_ub_stack_debug linux_ub_examples_debug
 
 ###############################################################################
 ####      TB Stack - Linux Only                                            ####
@@ -185,7 +189,23 @@ linux_ub_stack_debug: linux_tb_stack_debug
 	$(MAKE) -C ./ "buildScript_all" "BUILD=debug"
 
 ###############################################################################
-####      UB Examples - Linux Only                                         ####
+####      UB Unit Tests (& TB Stack as prequisite) - Linux Only            ####
+###############################################################################
+
+linux_ub_unittests: linux_ub_unittests_release
+
+linux_ub_unittests_all: linux_ub_unittests_release linux_ub_unittests_debug
+
+linux_ub_unittests_release: linux_ub_stack_release
+	@echo "=====BUILD UB UNIT TESTS FOR LINUX - RELEASE - <oic-resource>/unittests/release====="
+	$(MAKE) -C unittests/ "BUILD=release"
+
+linux_ub_unittests_debug: linux_ub_stack_debug
+	@echo "=====BUILD UB UNIT TESTS FOR LINUX - DEBUG - <oic-resource>/unittests/debug====="
+	$(MAKE) -C unittests/ "BUILD=debug"
+
+###############################################################################
+####      UB Examples (& UB Stack as prerequisite) - Linux Only            ####
 ###############################################################################
 
 linux_ub_examples: linux_ub_examples_release
@@ -202,10 +222,10 @@ linux_ub_examples_debug: linux_ub_stack_debug
 
 ###############################################################################
 ####      TB Stack, TB Unit Tests, TB Examples, UB Stack, UB Examples,     ####
-####      & OCICUC - Linux Only                                            ####
+####      UB Unit Tests, & OCICUC - Linux Only                             ####
 ###############################################################################
 
-linux_ub_dev: linux_ub_stack_all linux_tb_examples_all
+linux_ub_dev: linux_ub_stack_all linux_ub_unittests_all linux_ub_examples_all linux_tb_examples_all
 	@echo "=====BUILD UB OCICUC - <oic-resource>/examples/ocicuc/====="
 	$(MAKE) -C examples/ocicuc/
 
@@ -495,5 +515,13 @@ clean:
 	$(MAKE) -C csdk/stack/samples/linux/SimpleClientServer "clean"
 	$(MAKE) -C csdk/stack/samples/arduino/SimpleClientServer/ocserver "clean"
 	$(MAKE) -C . "clean"
+	$(MAKE) -C unittests/ "clean"
 	$(MAKE) -C examples/ "clean"
 	$(MAKE) -C oc_logger/ "clean"
+
+###############################################################################
+### You must specify arduinomega or arduinodue when using an arduino target.###
+###############################################################################
+arduino:
+	$(error "You must specify "arduinomega" or "arduinodue" when trying to\
+	build arduino targets.")

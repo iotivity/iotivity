@@ -1,25 +1,27 @@
-
-tests.cpp contains unitests for C++ APIs.  It uses Google Test for the unit tests.
+tests.cpp contains unittests for C++ APIs. It uses Google Test for the unit
+tests.  Note that the unit tests are only to test the functionality of OCApi.h.
+It is not a system or end-to-end test.
 
 Unit Test Requirements:
 
-1. Install Google Test on a Linux build machine:
+1. Install Google Test 1.7.0 on a Linux build machine to <gtest-1.7.0> from the
+   following address:
+
 	http://code.google.com/p/googletest/downloads/list
 
-2. Create a file called "local.properties" in the
-   root/unittests.  local.properties is used
-   by the makefile and specifies the path to the
-   Google Test directory on the build machine.
-   Since local.properties is specific to each build
-   system, do not add local.properties to the code repo.
+2. Create/Append a file named "local.properties" at <oic-resource>/csdk.
+   "local.properties" is used by the build process to specify the path to the
+   Google Test directory.
 
-   local.properties should contain GTEST_DIR.
-   For example:
+   local.properties should contain GTEST_DIR, as follows:
 
-   GTEST_DIR := /home/johndoe/utils/gtest-1.7.0
+   GTEST_DIR := <gtest-1.7.0>
 
-4. To run the unit test, first build the stack.
+3. To run the unit test, first build the unit tests with the following command
+   from <oic-resource>:
 
-5. Run the unit test by
-   root/unittests/release/tests
+   make -f buildScript.mk linux_ub_unittests
 
+4. Run the unit test by issuing the following command from <oic-resource>:
+
+   ./unittests/tests
