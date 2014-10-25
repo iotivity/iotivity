@@ -40,7 +40,7 @@ namespace OC
     class InProcClientWrapper : public IClientWrapper
     {
     public:
-        InProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::recursive_mutex> csdkLock,
+        InProcClientWrapper(OC::OCPlatform_impl& owner, std::weak_ptr<std::recursive_mutex> csdkLock,
                             PlatformConfig cfg);
         virtual ~InProcClientWrapper();
 
@@ -94,7 +94,7 @@ namespace OC
         std::weak_ptr<std::recursive_mutex> m_csdkLock;
 
     private:
-        OC::OCPlatform& m_owner;
+        OC::OCPlatform_impl& m_owner;
         PlatformConfig  m_cfg;
     };
 }

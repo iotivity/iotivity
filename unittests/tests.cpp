@@ -65,7 +65,7 @@ TEST(Resource, rf) {
         0,         // Uses randomly available port
         OC::QualityOfService::LowQos
     };
-    OCPlatform platform(cfg);
+    OCPlatform::Configure(cfg);
 
     std::string resourceURI = "/a/res";
     std::string resourceTypeName = "core.res";
@@ -76,11 +76,11 @@ TEST(Resource, rf) {
     OCResourceHandle resourceHandle;
 
     // This will internally create and register the resource.
-    if(OC_STACK_OK == platform.registerResource(
+    if(OC_STACK_OK == OCPlatform::registerResource(
                                     resourceHandle, resourceURI, resourceTypeName,
                                     resourceInterface, entityHandler_rf, resourceProperty))
     {
-        platform.findResource("","coap://224.0.1.187/oc/core?rt=core.res", foundResource_rf);
+        OCPlatform::findResource("","coap://224.0.1.187/oc/core?rt=core.res", foundResource_rf);
 
         {
             std::unique_lock<std::mutex> lk(mutex_rf);

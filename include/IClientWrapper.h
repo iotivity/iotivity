@@ -28,17 +28,17 @@
 
 namespace OC
 {
-    class OCPlatform;
+    class OCPlatform_impl;
 
     class IClientWrapper : public std::enable_shared_from_this<IClientWrapper>
     {
     protected:
-        OCPlatform& m_owner;
+        OCPlatform_impl& m_owner;
 
     public:
         typedef std::shared_ptr<IClientWrapper> Ptr;
 
-        IClientWrapper(OCPlatform& owner)
+        IClientWrapper(OCPlatform_impl& owner)
          : m_owner(owner)
         {}
 

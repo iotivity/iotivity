@@ -30,7 +30,7 @@ using namespace std;
 
 namespace OC
 {
-    InProcClientWrapper::InProcClientWrapper(OC::OCPlatform& owner,
+    InProcClientWrapper::InProcClientWrapper(OC::OCPlatform_impl& owner,
         std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
             : IClientWrapper(owner),
               m_threadRun(false), m_csdkLock(csdkLock),
@@ -115,7 +115,6 @@ namespace OC
     {
         FindCallback              callback;
         IClientWrapper::Ptr       clientWrapper;
-        OC::OCPlatform const*     owner;          // observing ptr
     };
 
 
@@ -220,7 +219,6 @@ namespace OC
         ListenContext* context = new ListenContext();
         context->callback = callback;
         context->clientWrapper = shared_from_this();
-        context->owner = &m_owner;
 
         cbdata.context =  static_cast<void*>(context);
         cbdata.cb = listenCallback;

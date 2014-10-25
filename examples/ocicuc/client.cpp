@@ -64,7 +64,7 @@ int exec(const boost::program_options::variables_map& vm)
 {
  using namespace std;
 
- OC::OCPlatform platform({
+ OC::OCPlatform::Configure({
                           OC::ServiceType::InProc,              // in-process server
                           OC::ModeType::Client,                 // client mode
                           vm["host_ip"].as<string>(),           // host
@@ -107,7 +107,7 @@ int exec(const boost::program_options::variables_map& vm)
  for(const auto& resource_URI : resource_URIs)
   cout << resource_URI << '\n';
 
- Intel::OCDemo::client::resource_handler resources(platform, resource_URIs);
+ Intel::OCDemo::client::resource_handler resources(resource_URIs);
 
  // Register callbacks and wait for resources:
  resources.find_resources();

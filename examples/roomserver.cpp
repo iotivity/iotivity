@@ -108,10 +108,11 @@ public:
     }
 
     /// This function internally calls registerResource API.
-    void createResources(OC::OCPlatform& platform)
+    void createResources()
     {
+        using namespace OC::OCPlatform;
         // This will internally create and register the resource.
-        OCStackResult result = platform.registerResource(
+        OCStackResult result = registerResource(
                                     m_roomHandle, m_roomUri, m_roomTypes[0],
                                     m_roomInterfaces[0], entityHandlerRoom,
                                     OC_DISCOVERABLE | OC_OBSERVABLE
@@ -122,19 +123,19 @@ public:
             cout << "Resource creation (room) was unsuccessful\n";
         }
 
-        result = platform.bindInterfaceToResource(m_roomHandle, m_roomInterfaces[1]);
+        result = bindInterfaceToResource(m_roomHandle, m_roomInterfaces[1]);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
 
-        result = platform.bindInterfaceToResource(m_roomHandle, m_roomInterfaces[2]);
+        result = bindInterfaceToResource(m_roomHandle, m_roomInterfaces[2]);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
 
-        result = platform.registerResource(
+        result = registerResource(
                                     m_lightHandle, m_lightUri, m_lightTypes[0],
                                     m_lightInterfaces[0], entityHandlerLight,
                                     OC_DISCOVERABLE | OC_OBSERVABLE
@@ -145,7 +146,7 @@ public:
             cout << "Resource creation (light) was unsuccessful\n";
         }
 
-        result = platform.registerResource(
+        result = registerResource(
                                     m_fanHandle, m_fanUri, m_fanTypes[0],
                                     m_fanInterfaces[0], entityHandlerFan,
                                     OC_DISCOVERABLE | OC_OBSERVABLE
@@ -156,13 +157,13 @@ public:
             cout << "Resource creation (fan) was unsuccessful\n";
         }
 
-        result = platform.bindResource(m_roomHandle, m_lightHandle);
+        result = bindResource(m_roomHandle, m_lightHandle);
         if (OC_STACK_OK != result)
         {
             cout << "Binding fan resource to room was unsuccessful\n";
         }
 
-        result = platform.bindResource(m_roomHandle, m_fanHandle);
+        result = bindResource(m_roomHandle, m_fanHandle);
         if (OC_STACK_OK != result)
         {
             cout << "Binding light resource to room was unsuccessful\n";
@@ -501,13 +502,11 @@ int main()
         OC::QualityOfService::LowQos
     };
 
-    // Create a OCPlatform instance.
-    // Note: Platform creation is synchronous call.
+    OCPlatform::Configure(cfg);
     try
     {
-        OCPlatform platform(cfg);
 
-        myRoomResource.createResources(platform);
+        myRoomResource.createResources();
 
         // Perform app tasks
         while(true)

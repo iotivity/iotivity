@@ -51,7 +51,7 @@ namespace OC
     */
     class OCResource
     {
-    friend class OCPlatform;
+    friend class OCPlatform_impl;
     friend class InProcClientWrapper;
 
     public:

@@ -52,7 +52,6 @@ class LightResource
 
 public:
     /// Access this property from a TB client
-    OCPlatform m_platform;
     std::string m_name;
     bool m_state;
     int m_power;
@@ -63,8 +62,8 @@ public:
 
 public:
     /// Constructor
-    LightResource(PlatformConfig& cfg): m_platform(cfg),
-            m_name("John's light"), m_state(false), m_power(0), m_lightUri("/a/light") {
+    LightResource(PlatformConfig& cfg)
+        :m_name("John's light"), m_state(false), m_power(0), m_lightUri("/a/light") {
         // Initialize representation
         m_lightRep.setUri(m_lightUri);
 
@@ -89,7 +88,7 @@ public:
         EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
 
         // This will internally create and register the resource.
-        OCStackResult result = m_platform.registerResource(
+        OCStackResult result = OCPlatform::registerResource(
                                     m_resourceHandle, resourceURI, resourceTypeName,
                                     resourceInterface, cb, resourceProperty);
 
@@ -113,7 +112,7 @@ public:
         OCResourceHandle resHandle;
 
         // This will internally create and register the resource.
-        OCStackResult result = m_platform.registerResource(
+        OCStackResult result = OCPlatform::registerResource(
                                     resHandle, resourceURI, resourceTypeName,
                                     resourceInterface, cb, resourceProperty);
 
@@ -208,7 +207,7 @@ public:
 
     void addType(const std::string& type) const
     {
-        OCStackResult result = m_platform.bindTypeToResource(m_resourceHandle, type);
+        OCStackResult result = OCPlatform::bindTypeToResource(m_resourceHandle, type);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
@@ -217,7 +216,7 @@ public:
 
     void addInterface(const std::string& interface) const
     {
-        OCStackResult result = m_platform.bindInterfaceToResource(m_resourceHandle, interface);
+        OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
@@ -379,13 +378,16 @@ void * ChangeLightRepresentation (void *param)
                 resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(lightPtr->get(), DEFAULT_INTERFACE);
 
-                result = lightPtr->m_platform.notifyListOfObservers(  lightPtr->getHandle(),
-                                                             lightPtr->m_interestedObservers,
-                                                             resourceResponse, OC::QualityOfService::HighQos);
+                result = OCPlatform::notifyListOfObservers(
+                                                            lightPtr->getHandle(),
+                                                            lightPtr->m_interestedObservers,
+                                                            resourceResponse,
+                                                            OC::QualityOfService::HighQos);
             }
             else
             {
-                result = lightPtr->m_platform.notifyAllObservers(lightPtr->getHandle(), OC::QualityOfService::HighQos);
+                result = OCPlatform::notifyAllObservers(lightPtr->getHandle(),
+                                                            OC::QualityOfService::HighQos);
             }
 
             if(OC_STACK_NO_OBSERVERS == result)
@@ -437,6 +439,8 @@ int main(int argc, char* argv[1])
         0,         // Uses randomly available port
         OC::QualityOfService::LowQos
     };
+
+    OCPlatform::Configure(cfg);
 
     try
     {

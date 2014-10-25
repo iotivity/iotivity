@@ -62,7 +62,7 @@ public:
     access to, you can accomplish this with a free function: */
 
     /// This function internally calls registerResource API.
-    void createResource(OC::OCPlatform& platform)
+    void createResource()
     {
         std::string resourceURI = m_lightUri; // URI of the resource
         std::string resourceTypeName = "core.light"; // resource type name.
@@ -72,7 +72,7 @@ public:
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
         // This will internally create and register the resource.
-        OCStackResult result = platform.registerResource(
+        OCStackResult result = OCPlatform::registerResource(
                                     m_resourceHandle, resourceURI, resourceTypeName,
                                     resourceInterface, &entityHandler, resourceProperty);
 
@@ -83,7 +83,7 @@ public:
     }
 
     /// This function internally calls registerResource API.
-    void createResource2(OC::OCPlatform& platform)
+    void createResource2()
     {
         std::string resourceURI = m_lightUri2; // URI of the resource
         std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
@@ -93,7 +93,7 @@ public:
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
         // This will internally create and register the resource.
-        OCStackResult result = platform.registerResource(
+        OCStackResult result = OCPlatform::registerResource(
                                     m_resourceHandle2, resourceURI, resourceTypeName,
                                     resourceInterface, &entityHandler, resourceProperty);
 
@@ -103,7 +103,7 @@ public:
         }
     }
 
-    void createResource3(OC::OCPlatform& platform)
+    void createResource3()
     {
         std::string resourceURI = m_lightUri3; // URI of the resource
         std::string resourceTypeName = "core.light";
@@ -113,7 +113,7 @@ public:
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
         // This will internally create and register the resource.
-        OCStackResult result = platform.registerResource(
+        OCStackResult result = OCPlatform::registerResource(
                                     m_resourceHandle3, resourceURI, resourceTypeName,
                                     resourceInterface, &entityHandler, resourceProperty);
 
@@ -128,18 +128,18 @@ public:
         return m_resourceHandle;
     }
 
-    void addType(const OC::OCPlatform& platform, const std::string& type) const
+    void addType(const std::string& type) const
     {
-        OCStackResult result = platform.bindTypeToResource(m_resourceHandle, type);
+        OCStackResult result = OC::OCPlatform::bindTypeToResource(m_resourceHandle, type);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
     }
 
-    void addInterface(const OC::OCPlatform& platform, const std::string& interface) const
+    void addInterface(const std::string& interface) const
     {
-        OCStackResult result = platform.bindInterfaceToResource(m_resourceHandle, interface);
+        OCStackResult result = OC::OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
@@ -168,36 +168,34 @@ int main()
         OC::QualityOfService::LowQos
     };
 
-    // Create a OCPlatform instance.
-    // Note: Platform creation is synchronous call.
+    OCPlatform::Configure(cfg);
     try
     {
-        OCPlatform platform(cfg);
-
+        using namespace OC::OCPlatform;
         // Time to Live is 30 seconds
-        platform.startPresence(30);
+        startPresence(30);
 
         // Invoke createResource function of class light.
-        myLightResource.createResource(platform);
+        myLightResource.createResource();
 
         printf("\nEnter a key to create the second resource\n");
         getchar();
 
-        myLightResource.createResource2(platform);
+        myLightResource.createResource2();
 
         printf("\nEnter a key to stop the presence\n");
         getchar();
-        platform.stopPresence();
+        stopPresence();
 
         printf("\nEnter a key to restart the presence\n");
         getchar();
 
-        platform.startPresence(30);
+        startPresence(30);
 
         printf("\nEnter a key to create the third resource\n");
         getchar();
 
-        myLightResource.createResource3(platform);
+        myLightResource.createResource3();
 
         // Perform app tasks
         while(true)

@@ -28,7 +28,7 @@ namespace OC
     class OutOfProcServerWrapper : public IServerWrapper
     {
     public:
-        OutOfProcServerWrapper(OC::OCPlatform& owner, PlatformConfig cfg)
+        OutOfProcServerWrapper(OC::OCPlatform_impl& owner, PlatformConfig cfg)
          : IServerWrapper(owner)
         {};
 

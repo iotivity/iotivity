@@ -225,15 +225,12 @@ int main(int argc, char* argv[]) {
         OC::QualityOfService::LowQos
     };
 
-    // Create a OCPlatform instance.
-    // Note: Platform creation is synchronous call.
+    OCPlatform::Configure(cfg);
 
     try
     {
-        OCPlatform platform(cfg);
-        std::cout << "Created Platform..."<<std::endl;
         // Find all resources
-        platform.findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
         while(true)
         {

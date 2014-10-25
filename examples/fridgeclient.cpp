@@ -40,12 +40,12 @@ const uint16_t TOKEN = 3000;
 class ClientFridge
 {
     public:
-    ClientFridge(PlatformConfig &cfg) : m_platform(cfg)
+    ClientFridge()
     {
         std::cout << "Fridge Client has started " <<std::endl;
         FindCallback f (std::bind(&ClientFridge::foundDevice, this, PH::_1));
 
-        OCStackResult result = m_platform.findResource(
+        OCStackResult result = OCPlatform::findResource(
                 "", "coap://224.0.1.187/oc/core?rt=intel.fridge", f);
 
         if(OC_STACK_OK != result)
@@ -66,6 +66,7 @@ class ClientFridge
     private:
     void foundDevice(std::shared_ptr<OCResource> resource)
     {
+        using namespace OC::OCPlatform;
         if(resource && resource->uri() == "/device")
         {
             std::cout << "Discovered a device object"<<std::endl;
@@ -78,16 +79,16 @@ class ClientFridge
         // server, and query them.
         std::vector<std::string> lightTypes = {"intel.fridge.light"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
-        OCResource::Ptr light = m_platform.constructResourceObject(resource->host(),
+        OCResource::Ptr light = constructResourceObject(resource->host(),
                                 "/light", false, lightTypes, ifaces);
 
         std::vector<std::string> doorTypes = {"intel.fridge.door"};
 
-        OCResource::Ptr leftdoor = m_platform.constructResourceObject(resource->host(),
+        OCResource::Ptr leftdoor = constructResourceObject(resource->host(),
                                 "/door/left", false, doorTypes, ifaces);
-        OCResource::Ptr rightdoor = m_platform.constructResourceObject(resource->host(),
+        OCResource::Ptr rightdoor = constructResourceObject(resource->host(),
                                 "/door/right", false, doorTypes, ifaces);
-        OCResource::Ptr randomdoor = m_platform.constructResourceObject(resource->host(),
+        OCResource::Ptr randomdoor = constructResourceObject(resource->host(),
                                 "/door/random", false, doorTypes, ifaces);
 
         // Set header options with API version and token
@@ -211,7 +212,6 @@ class ClientFridge
         }
     }
 
-    OCPlatform m_platform;
     std::mutex m_mutex;
     std::condition_variable m_cv;
 };
@@ -227,6 +227,7 @@ int main()
         QualityOfService::LowQos
     };
 
-    ClientFridge cf (cfg);
+    OCPlatform::Configure(cfg);
+    ClientFridge cf ();
     return 0;
 }

@@ -18,34 +18,61 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCPlatform.h
+/// @file OCPlatform_impl.h
 
-/// @brief  This file contains the declaration of classes and its members related to
-///         OCPlatform.
+/// @brief Implementation of the OCPlatform functionality.  It contains
+/// a singleton interface that is used only by the OCPlatform namespace and is the
+/// central entrance to the stack.
 
-#ifndef __OCPLATFORM_H
-#define __OCPLATFORM_H
-#include <OCApi.h>
-#include <OCPlatform_impl.h>
+#ifndef __OCPLATFORM_IMPL_H
+#define __OCPLATFORM_IMPL_H
+
+#include <map>
+
+#include "OCApi.h"
+#include "OCResource.h"
+#include "WrapperFactory.h"
+#include "OCResourceRequest.h"
+#include "OCResourceResponse.h"
+#include "OCRepresentation.h"
+
+#include "oc_logger.hpp"
+
 namespace OC
 {
     /**
-    * @brief: This namespace contains the main entrance/functionality of the product.
-    * It may be used with OC::OCPlatform::functionName.  To set a custom configuration,
-    * the implementer must make a call to OCPlatform::Configure before the first usage
-    * of a function in this namespace.
+    *   @brief Both server and client must initialize the core platform by instantiating OCPlatform.
+    *          On successful initialization, an instance of the OCPlatform is returned.
+    *          APIs in OCPlatform provide mechanism to register a resource and host the resource
+    *          on the server, find resources on the network etc.
     */
-    namespace OCPlatform
+    class OCPlatform_impl
     {
+    private:
+        static PlatformConfig& globalConfig();
+    public:
         /**
          * API for overwriting the default configuration of the OCPlatform object.
          * Note: Any calls made to this AFTER the first call to OCPlatform::Instance
          * will have no affect
          */
-        void Configure(const PlatformConfig& config);
+        static void Configure(const PlatformConfig& config);
 
+        /**
+         * API for retrieving the current OCPlatform object.  This will use the
+         * default platform config, unless the default is over-written using the
+         * Configure method before the first call to instance.
+         */
+        static OCPlatform_impl& Instance();
+
+    public:
         // typedef for handle to cancel presence info with
         typedef OCDoHandle OCPresenceHandle;
+
+        /**
+        * Virtual destructor
+        */
+        virtual ~OCPlatform_impl(void);
 
         /**
         * API for notifying base that resource's attributes have changed.
@@ -94,18 +121,17 @@ namespace OC
         * @param host - Host IP Address of a service to direct resource discovery query. If null or
         *        empty, performs multicast resource discovery query
         * @param resourceURI - name of the resource. If null or empty, performs search for all
-        *       resource names
+        *        resource names
         * @param handler - Handles callbacks, success states and failure states.
         *
         *        Four modes of discovery defined as follows:
         *        (NULL/Empty, NULL/Empty) - Performs ALL service discovery AND ALL resource
-        *           discovery.
+        *                                   discovery.
         *        (NULL/Empty, Not Empty) - Performs query for a filtered/scoped/particular
         *                                   resource(s) from ALL services.
         *        (Not Empty, NULL/Empty) - Performs ALL resource discovery on a particular service.
         *        (Not Empty, Not Empty) - Performs query for a filtered/scoped/particular
-        *                                   resource(s)
-        *                                  from a particular service.
+        *                                   resource(s) from a particular service.
         * @param QualityOfService the quality of communication
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
@@ -131,8 +157,8 @@ namespace OC
         * @param resourceProperty - indicates the property of the resource. Defined in ocstack.h.
         * setting resourceProperty as OC_DISCOVERABLE will allow Discovery of this resource
         * setting resourceProperty as OC_OBSERVABLE will allow observation
-        * settings resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery and
-        * observation
+        * settings resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery
+        * and observation
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: "a/light" is a relative URI.
@@ -171,12 +197,12 @@ namespace OC
         * NOTE: This API applies to server side only.
         *
         * @param resourceHandle - This is the resource handle which we which to unregister from the
-        * server
+        *                           server
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
-        OCStackResult unregisterResource(const OCResourceHandle& resourceHandle);
+        OCStackResult unregisterResource(const OCResourceHandle& resourceHandle) const;
 
         /**
         * Add a resource to a collection resource.
@@ -190,42 +216,42 @@ namespace OC
         * resource to add under a collections are created and respective handles obtained<br>
         * <b>Example:</b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
-        *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *               entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface,
-        *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *               entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 3: bindResource(homeResourceHandle, kitchenResourceHandle);<br>
         * At the end of Step 3, resource "a/home" will contain a reference to "a/kitchen".<br>
         */
         OCStackResult bindResource(const OCResourceHandle collectionHandle,
-                const OCResourceHandle resourceHandle);
+                    const OCResourceHandle resourceHandle);
 
         /**
         * Add multiple resources to a collection resource.
         *
         * @param collectionHandle - handle to the collection resource
-        * @param addedResourceHandleList reference to list of resource handles to be added to the
-        *   collection resource
+        * @param addedResourceHandleList reference to list of resource handles to be added to
+        *       the collection resource
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
         * NOTE: bindResources must be used only after the both collection resource and
         * list of resources to add under a collection are created and respective handles
-        * obtained <br>
+        * obtained<br>
         * <b> Example: </b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
-        *   homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *           homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface,
-        *   kitchenEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *           kitchenEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 3: registerResource(roomResourceHandle, "a/room", "room", Link_Interface,
-        *   roomEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *           roomEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 4: std::vector<OCResourceHandle> rList; rList.push_back(kitchenResourceHandle);
-        *   rList.push_back(roomResourceHandle);<br>
+        *           rList.push_back(roomResourceHandle);<br>
         * Step 5: bindResource(homeResourceHandle, rList);<br>
-        * At the end of Step 5, resource "a/home" will contain a references to "a/kitchen" and
-        *   "a/room" <br>
+        * At the end of Step 5, resource "a/home" will contain a references to "a/kitchen"
+        *           and "a/room" <br>
         */
         OCStackResult bindResources(const OCResourceHandle collectionHandle,
-                const std::vector<OCResourceHandle>& addedResourceHandleList);
+                    const std::vector<OCResourceHandle>& addedResourceHandleList);
 
         /**
         * Unbind a resource from a collection resource.
@@ -239,9 +265,9 @@ namespace OC
         * resource to unbind from a collection are created and respective handles obtained<br>
         * <b> Example </b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
-        *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *       entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface,
-        *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *       entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 3: bindResource(homeResourceHandle, kitchenResourceHandle);<br>
         * Step 4: unbindResource(homeResourceHandle, kitchenResourceHandle);<br>
         * At the end of Step 4, resource "a/home" will no longer reference "a/kitchen". <br>
@@ -261,20 +287,20 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.<br>
         * NOTE: unbindResources must be used only after the both collection resource and
         * list of resources resource to unbind from a collection are created and respective handles
-        *   obtained. <br>
+        * obtained. <br>
         * <b>Example</b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
-        *   homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *       homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface,
-        *   kitchenEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *       kitchenEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 3: registerResource(roomResourceHandle, "a/room", "room", Link_Interface,
-        *   roomEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        *       roomEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 4: std::vector<OCResourceHandle> rList; rList.push_back(kitchenResourceHandle);
-        *   rList.push_back(roomResourceHandle);<br>
+        *       rList.push_back(roomResourceHandle);<br>
         * Step 5: bindResource(homeResourceHandle, rList);<br>
         * Step 6: unbindResources(homeResourceHandle, rList);<br>
-        * At the end of Step 6, resource "a/home" will no longer reference to "a/kitchen" and
-        *   "a/room"<br>
+        * At the end of Step 6, resource "a/home" will no longer reference to "a/kitchen"
+        *       and "a/room"<br>
         */
         OCStackResult unbindResources(const OCResourceHandle collectionHandle,
                         const std::vector<OCResourceHandle>& resourceHandleList);
@@ -287,7 +313,7 @@ namespace OC
         * @return OCStackResult - return value of the API. Returns OCSTACK_OK if success <br>
         */
         OCStackResult bindTypeToResource(const OCResourceHandle& resourceHandle,
-                        const std::string& resourceTypeName);
+                        const std::string& resourceTypeName) const;
 
         /**
         * Binds an interface to a particular resource
@@ -297,8 +323,7 @@ namespace OC
         * @return OCStackResult - return value of the API. Returns OCSTACK_OK if success <br>
         */
         OCStackResult bindInterfaceToResource(const OCResourceHandle& resourceHandle,
-                        const std::string& resourceInterfaceName);
-
+                        const std::string& resourceInterfaceName) const;
 
         /**
         * Start Presence announcements.
@@ -311,7 +336,6 @@ namespace OC
         * or when it re enters network.
         *
         */
-
         OCStackResult startPresence(const unsigned int ttl);
 
         /**
@@ -323,7 +347,6 @@ namespace OC
         * going offline, or when going away from network.
         *
         */
-
         OCStackResult stopPresence();
 
         /**
@@ -336,7 +359,7 @@ namespace OC
         *               It will be set upon successful return of this method.
         * @param host - The IP address/addressable name of the server to subscribe to.
         * @param presenceHandler - callback function that will receive notifications/subscription
-        *               events
+        *                           events
         *
         * @return OCStackResult - return value of the API.  Returns OCSTACK_OK if success <br>
         */
@@ -383,9 +406,40 @@ namespace OC
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
-    }
+
+    private:
+        PlatformConfig m_cfg;
+
+    private:
+        std::unique_ptr<WrapperFactory> m_WrapperInstance;
+        IServerWrapper::Ptr m_server;
+        IClientWrapper::Ptr m_client;
+        std::shared_ptr<std::recursive_mutex> m_csdkLock;
+
+    private:
+        /**
+        * Constructor for OCPlatform. Constructs a new OCPlatform from a given PlatformConfig with
+        * appropriate fields
+        * @param config PlatformConfig struct which has details such as modeType
+        * (server/client/both), in-proc/out-of-proc etc.
+        */
+        OCPlatform_impl(const PlatformConfig& config);
+
+        /**
+        *  Private function to initalize the platfrom
+        */
+        void init(const PlatformConfig& config);
+
+        /**
+         * Private constructor/operators to prevent copying
+         * of this object
+         */
+        OCPlatform_impl(const OCPlatform_impl& other)= delete;
+        OCPlatform_impl& operator=(const OCPlatform_impl&) = delete;
+        OCPlatform_impl& operator=(const OCPlatform_impl&&) = delete;
+    };
 }
 
-#endif //__OCPLATFORM_H
+#endif //__OCPLATFORM_IMPL_H
 
 

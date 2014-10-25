@@ -39,9 +39,9 @@ namespace OC
     public:
         typedef std::shared_ptr<IWrapperFactory> Ptr;
 
-        virtual IClientWrapper::Ptr CreateClientWrapper(OC::OCPlatform& owner,
+        virtual IClientWrapper::Ptr CreateClientWrapper(OC::OCPlatform_impl& owner,
             std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg) =0;
-        virtual IServerWrapper::Ptr CreateServerWrapper(OC::OCPlatform& owner,
+        virtual IServerWrapper::Ptr CreateServerWrapper(OC::OCPlatform_impl& owner,
             std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg) =0;
         virtual ~IWrapperFactory(){}
     };
@@ -52,7 +52,7 @@ namespace OC
     public:
         WrapperFactory(){}
 
-        virtual IClientWrapper::Ptr CreateClientWrapper(OC::OCPlatform& owner,
+        virtual IClientWrapper::Ptr CreateClientWrapper(OC::OCPlatform_impl& owner,
             std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
         {
             switch(cfg.serviceType)
@@ -67,7 +67,7 @@ namespace OC
 			return nullptr;
         }
 
-        virtual IServerWrapper::Ptr CreateServerWrapper(OC::OCPlatform& owner,
+        virtual IServerWrapper::Ptr CreateServerWrapper(OC::OCPlatform_impl& owner,
             std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
         {
             switch(cfg.serviceType)

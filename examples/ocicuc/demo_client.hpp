@@ -36,13 +36,12 @@ class resource_handle
 
 class resource_handler
 {
- OC::OCPlatform& platform;
 
  static std::vector<std::shared_ptr<resource_handle>> resources;    // URI -> Maybe resource
 
  public:
- resource_handler(OC::OCPlatform& platform_, const std::vector<std::string>& resource_URIs_);
- resource_handler(OC::OCPlatform& platform_);
+ resource_handler(const std::vector<std::string>& resource_URIs_);
+ resource_handler();
 
  public:
  bool has(const std::string& URI)
@@ -70,7 +69,7 @@ class resource_handler
 
                 call_timer.mark("find_resources");
 
-                platform.findResource("", resource->URI,
+                OC::OCPlatform::findResource("", resource->URI,
                                       std::bind(&resource_handle::onFoundResource, resource, std::placeholders::_1));
          }
  }
@@ -78,16 +77,11 @@ class resource_handler
 
 std::vector<std::shared_ptr<resource_handle>> resource_handler::resources;
 
-resource_handler::resource_handler(OC::OCPlatform& platform_, const std::vector<std::string>& resource_URIs)
- : platform(platform_)
+resource_handler::resource_handler(const std::vector<std::string>& resource_URIs)
 {
  for(const auto& URI : resource_URIs)
   add(URI);
 }
-
-resource_handler::resource_handler(OC::OCPlatform& platform_)
-  : platform(platform_)
-{}
 
 void resource_handle::onFoundResource(std::shared_ptr<OC::OCResource> in_resource)
 {

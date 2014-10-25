@@ -23,23 +23,23 @@ OCRepresentation LightResource::getRepresentation(void)
  return m_rep;
 }
 
-void LightResource::addType(const OC::OCPlatform& platform, const std::string& type) const
+void LightResource::addType(const std::string& type) const
 {
- OCStackResult result = platform.bindTypeToResource(m_resourceHandle, type);
+ OCStackResult result = OC::OCPlatform::bindTypeToResource(m_resourceHandle, type);
 
  if(OC_STACK_OK != result)
   cout << "Binding TypeName to Resource was unsuccessful, result was " << result << '\n';
 }
 
-void LightResource::addInterface(const OC::OCPlatform& platform, const std::string& interface) const
+void LightResource::addInterface(const std::string& interface) const
 {
- OCStackResult result = platform.bindInterfaceToResource(m_resourceHandle, interface);
+ OCStackResult result = OC::OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
 
  if(OC_STACK_OK != result)
   cout << "Binding TypeName to Resource was unsuccessful, result was " << result << '\n';
 }
 
-void LightResource::createResource(OC::OCPlatform& platform, const unsigned int resource_number)
+void LightResource::createResource(const unsigned int resource_number)
 {
  string resourceURI      { make_URI(resource_number) };
  string resourceTypeName { "core.light" };
@@ -47,7 +47,7 @@ void LightResource::createResource(OC::OCPlatform& platform, const unsigned int 
  cout << "registering resource: " << resourceURI << '\n';
  cout << "registering type name \"" << resourceTypeName << "\".\n";
  // This will internally create and register the resource, binding the current instance's method as a callback:
- OCStackResult result = platform.registerResource(
+ OCStackResult result = OC::OCPlatform::registerResource(
                                             m_resourceHandle, resourceURI, resourceTypeName,
                                             DEFAULT_INTERFACE,
                                             std::bind(&LightResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2),
@@ -69,7 +69,7 @@ void LightResource::observe_function()
 
     m_power += 10;
 
-    const auto result = m_platform.notifyAllObservers(getHandle());
+    const auto result = OC::OCPlatform::notifyAllObservers(getHandle());
 
     // Stop notifications when there are no more observers:
     if(OC_STACK_NO_OBSERVERS == result)
@@ -81,11 +81,11 @@ void LightResource::observe_function()
  cerr << "Observation thread is shutting down.\n";
 }
 
-void LightResource::unregisterResource(OC::OCPlatform& platform)
+void LightResource::unregisterResource()
 {
     std::cout << "Unregistering light resource"<<std::endl;
 
-    OCStackResult result = platform.unregisterResource(m_resourceHandle);
+    OCStackResult result = OC::OCPlatform::unregisterResource(m_resourceHandle);
 
     if(result == OC_STACK_OK)
     {

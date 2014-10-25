@@ -40,7 +40,6 @@
 
 namespace OC
 {
-    class OCPlatform;
     class OCResource;
     class OCResourceRequest;
     class OCResourceResponse;
@@ -128,6 +127,13 @@ namespace OC
         QualityOfService           QoS;
 
         public:
+            PlatformConfig()
+                : serviceType(ServiceType::InProc),
+                mode(ModeType::Both),
+                ipAddress("0.0.0.0"),
+                port(0),
+                QoS(QualityOfService::NaQos)
+        {}
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             const std::string& ipAddress_,

@@ -52,7 +52,7 @@ int exec(const boost::program_options::variables_map& vm)
 
  std::cout << "Starting platform: " << std::flush;
 
- OC::OCPlatform platform({
+ OC::OCPlatform::Configure({
                           OC::ServiceType::InProc,              // in-process server
                           OC::ModeType::Server,                 // run in server mode
                           vm["host_ip"].as<string>(),           // host
@@ -72,11 +72,11 @@ int exec(const boost::program_options::variables_map& vm)
   {
         cout << "Registering resource " << resource_number << ": " << std::flush;
 
-        auto lr = make_shared<Intel::OCDemo::LightResource>(platform);
+        auto lr = make_shared<Intel::OCDemo::LightResource>();
 
-        lr->createResource(platform, resource_number);
-        lr->addType(platform, std::string("core.brightlight"));
-        lr->addInterface(platform, std::string("oc.mi.ll"));
+        lr->createResource(resource_number);
+        lr->addType(std::string("core.brightlight"));
+        lr->addInterface(std::string("oc.mi.ll"));
 
         lights.push_back(lr);
 
@@ -89,7 +89,7 @@ int exec(const boost::program_options::variables_map& vm)
 
  for(auto light: lights)
  {
-    light->unregisterResource(platform);
+    light->unregisterResource();
  }
 
  return 1;

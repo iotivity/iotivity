@@ -28,7 +28,7 @@ namespace OC
     class OutOfProcClientWrapper : public IClientWrapper
     {
     public:
-        OutOfProcClientWrapper(OC::OCPlatform& owner, std::weak_ptr<std::recursive_mutex> csdkLock,
+        OutOfProcClientWrapper(OC::OCPlatform_impl& owner, std::weak_ptr<std::recursive_mutex> csdkLock,
                                 PlatformConfig cfg)
          : IClientWrapper(owner)
         {}

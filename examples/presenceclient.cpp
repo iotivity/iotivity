@@ -30,8 +30,6 @@ using namespace OC;
 
 std::shared_ptr<OCResource> curResource;
 
-OCPlatform* platformPtr;
-
 // Callback to presence
 void presenceHandler(OCStackResult result, const unsigned int nonce)
 {
@@ -94,7 +92,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 curResource = resource;
                 OCPlatform::OCPresenceHandle presenceHandle;
-                platformPtr->subscribePresence(presenceHandle, hostAddress, &presenceHandler);
+                OCPlatform::subscribePresence(presenceHandle, hostAddress, &presenceHandler);
             }
         }
         else
@@ -121,17 +119,13 @@ int main(int argc, char* argv[]) {
         OC::QualityOfService::LowQos
     };
 
-    // Create a OCPlatform instance.
-    // Note: Platform creation is synchronous call.
+    OCPlatform::Configure(cfg);
 
     try
     {
-        OCPlatform platform(cfg);
-        // PlatformPtr is used in another function
-        platformPtr = &platform;
         std::cout << "Created Platform..."<<std::endl;
         // Find all resources
-        platform.findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
         while(true)
         {

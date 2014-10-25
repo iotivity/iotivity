@@ -111,7 +111,7 @@ public:
     access to, you can accomplish this with a free function: */
 
     /// This function internally calls registerResource API.
-    void createResource(OC::OCPlatform& platform)
+    void createResource()
     {
         std::string resourceURI = m_garageUri; // URI of the resource
         std::string resourceTypeName = "core.garage"; // resource type name.
@@ -121,7 +121,7 @@ public:
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
         // This will internally create and register the resource.
-        OCStackResult result = platform.registerResource(
+        OCStackResult result = OCPlatform::registerResource(
                                     m_resourceHandle, resourceURI, resourceTypeName,
                                     resourceInterface, &entityHandler, resourceProperty);
 
@@ -260,14 +260,11 @@ int main(int argc, char* argv[1])
         OC::QualityOfService::LowQos
     };
 
-    // Create a OCPlatform instance.
-    // Note: Platform creation is synchronous call.
+    OCPlatform::Configure(cfg);
     try
     {
-        OCPlatform platform(cfg);
-
         // Invoke createResource function of class light.
-        myGarage.createResource(platform);
+        myGarage.createResource();
 
         // Perform app tasks
         while(true)
@@ -280,6 +277,6 @@ int main(int argc, char* argv[1])
         //log(e.what());
     }
 
-    // No explicit call to stop the platform.
-    // When OCPlatform destructor is invoked, internally we do platform cleanup
+    // No explicit call to stop the OCPlatform
+    // When OCPlatform destructor is invoked, internally we do Platform cleanup
 }

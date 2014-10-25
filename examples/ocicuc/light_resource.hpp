@@ -25,7 +25,6 @@ using namespace std;
 class LightResource
 {
  public:
-    OCPlatform& m_platform;
     bool m_state;       // off or on?
     int m_power;        // power level
     OCRepresentation m_rep;
@@ -41,9 +40,8 @@ class LightResource
     OCResourceHandle m_resourceHandle;
 
     public:
-    LightResource(OCPlatform& platform)
-     : m_platform(platform),
-       m_state(false),
+    LightResource()
+     : m_state(false),
        m_power(0),
        m_observation(false)
     {}
@@ -66,15 +64,15 @@ class LightResource
 
     public:
     // This function internally calls registerResource API.
-    void createResource(OC::OCPlatform& platform, const unsigned int resource_number);
-    void unregisterResource(OC::OCPlatform& platform);
+    void createResource(const unsigned int resource_number);
+    void unregisterResource();
     OCResourceHandle getHandle() const { return m_resourceHandle; }
 
     void setRepresentation(const OCRepresentation& rep);
     OCRepresentation getRepresentation(void);
 
-    void addType(const OC::OCPlatform& platform, const std::string& type) const;
-    void addInterface(const OC::OCPlatform& platform, const std::string& interface) const;
+    void addType(const std::string& type) const;
+    void addInterface(const std::string& interface) const;
 
     private:
     OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,

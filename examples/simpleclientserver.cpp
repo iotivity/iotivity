@@ -142,11 +142,13 @@ private:
     }
 
 public:
-    void start(OCPlatform& platform)
+    void start()
     {
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
-        std::cout<<"result:" << platform.findResource("", "coap://224.0.1.187/oc/core?rt=core.foo", f)<< std::endl;
+        std::cout<<"result:" <<
+            OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo", f)
+            << std::endl;
         std::cout<<"Finding Resource..."<<std::endl;
 
         {
@@ -175,7 +177,7 @@ struct FooResource
         m_rep.setValue("barCount", m_barCount);
     }
 
-    bool createResource(OCPlatform& platform)
+    bool createResource()
     {
         std::string resourceURI = "/q/foo";
         std::string resourceTypeName = "core.foo";
@@ -183,8 +185,10 @@ struct FooResource
 
         uint8_t resourceProperty = OC_DISCOVERABLE;
 
-        EntityHandler eh(std::bind(&FooResource::entityHandler, this, std::placeholders::_1, std::placeholders::_2));
-        OCStackResult result = platform.registerResource(m_resourceHandle, resourceURI, resourceTypeName,
+        EntityHandler eh(std::bind(&FooResource::entityHandler,
+                    this, std::placeholders::_1, std::placeholders::_2));
+        OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
+                resourceURI, resourceTypeName,
                                     resourceInterface,
                                     eh, resourceProperty);
         if(OC_STACK_OK != result)
@@ -284,19 +288,19 @@ int main()
         OC::QualityOfService::LowQos
     };
 
+    OCPlatform::Configure(cfg);
     FooResource fooRes;
 
     try
     {
-        OCPlatform platform(cfg);
 
-        if(!fooRes.createResource(platform))
+        if(!fooRes.createResource())
         {
             return -1;
         }
 
         ClientWorker cw;
-        cw.start(platform);
+        cw.start();
     }
     catch(OCException& e)
     {

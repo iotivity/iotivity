@@ -81,8 +81,6 @@ struct simple_join_guard
 struct client_t
 {
  const boost::program_options::variables_map        m_vm;
- std::shared_ptr<OC::OCPlatform>                    m_platform_ptr;
- OC::OCPlatform&                                    m_platform;     // reference to *m_platform_ptr
 
  atomic<bool>&                                      quit_flag;
 
@@ -90,11 +88,8 @@ struct client_t
 
  public:
  client_t(const boost::program_options::variables_map vm,
-          std::shared_ptr<OC::OCPlatform> platform_ptr,
           atomic<bool>& quit_flag_)
   : m_vm(vm),
-    m_platform_ptr(platform_ptr),
-    m_platform(*m_platform_ptr),
     quit_flag(quit_flag_)
  {}
 
@@ -117,7 +112,7 @@ struct client_t
     for(const auto& resource_URI : resource_URIs)
      cout << resource_URI << '\n';
 
-    Intel::OCDemo::client::resource_handler resources(m_platform, resource_URIs);
+    Intel::OCDemo::client::resource_handler resources(resource_URIs);
 
     // Register callbacks and wait for resources:
     resources.find_resources();
@@ -133,8 +128,6 @@ struct client_t
 struct server_t
 {
  const boost::program_options::variables_map        m_vm;
- std::shared_ptr<OC::OCPlatform>                    m_platform_ptr;
- OC::OCPlatform&                                    m_platform;
 
  atomic<bool>&                                      quit_flag;
 
@@ -146,11 +139,8 @@ struct server_t
 
  public:
  server_t(const boost::program_options::variables_map& vm,
-          std::shared_ptr<OC::OCPlatform> platform,
           atomic<bool>& quit_flag_)
   : m_vm(vm),
-    m_platform_ptr(platform),
-    m_platform(*m_platform_ptr),
     quit_flag(quit_flag_)
  {
     m_nresources = vm["nres"].as<unsigned long>();
@@ -176,11 +166,11 @@ void server_t::init()
   {
     cout << "Registering resource " << resource_number << ": " << std::flush;
 
-    auto lr = make_shared<Intel::OCDemo::LightResource>(m_platform);
+    auto lr = make_shared<Intel::OCDemo::LightResource>();
 
-    lr->createResource(m_platform, resource_number);
-    lr->addType(m_platform, "core.brightlight");
-    lr->addInterface(m_platform, "oc.mi.ll");
+    lr->createResource(resource_number);
+    lr->addType("core.brightlight");
+    lr->addInterface("oc.mi.ll");
 
     lights.push_back(lr);
 
@@ -194,20 +184,19 @@ int exec(const boost::program_options::variables_map& vm)
 
  std::cout << "Starting platform: " << std::flush;
 
- auto platform = make_shared<OC::OCPlatform>(OC::PlatformConfig {
-                          OC::ServiceType::InProc,              // in-process server
+ OC::OCPlatform::Configure(OC::PlatformConfig {
+                          OC::ServiceType::InProc,
                           OC::ModeType::Both,                   // run in client/server mode
                           vm["host_ip"].as<string>(),           // host
                           vm["host_port"].as<uint16_t>(),       // port
                           OC::QualityOfService::LowQos
                         });
-
  std::cout << "Ok." << std::endl;
 
  std::atomic<bool> quit_flag;
 
- server_t server(vm, platform, quit_flag);
- client_t client(vm, platform, quit_flag);
+ server_t server(vm, quit_flag);
+ client_t client(vm, quit_flag);
 
 std::cout << "JFW: TODO: don't need to separate these any more\n";
  server.init();

@@ -57,9 +57,8 @@ class Resource
 class DeviceResource : public Resource
 {
     public:
-    OCPlatform& m_platform;
 
-    DeviceResource(OCPlatform& platform): m_platform(platform)
+    DeviceResource()
     {
         std::string resourceURI = "/device";
         std::string resourceTypeName = "intel.fridge";
@@ -70,10 +69,10 @@ class DeviceResource : public Resource
                                                                          PH::_1, PH::_2);
 
         std::cout << "Setting device default entity handler\n";
-        m_platform.setDefaultDeviceEntityHandler(defaultEH);
+        OCPlatform::setDefaultDeviceEntityHandler(defaultEH);
 
         uint8_t resourceProperty = OC_DISCOVERABLE;
-        OCStackResult result = m_platform.registerResource(m_resourceHandle,
+        OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
             resourceURI,
             resourceTypeName,
             resourceInterface,
@@ -95,7 +94,7 @@ class DeviceResource : public Resource
 
     void deleteDeviceResource()
     {
-        OCStackResult result = m_platform.unregisterResource(m_resourceHandle);
+        OCStackResult result = OCPlatform::unregisterResource(m_resourceHandle);
         if(OC_STACK_OK != result)
         {
             throw std::runtime_error(
@@ -232,14 +231,14 @@ class DeviceResource : public Resource
 class LightResource : public Resource
 {
     public:
-    LightResource(OCPlatform& platform)
+    LightResource()
     {
         std::string resourceURI = "/light";
         std::string resourceTypeName = "intel.fridge.light";
         std::string resourceInterface = DEFAULT_INTERFACE;
         EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
         uint8_t resourceProperty = 0;
-        OCStackResult result = platform.registerResource(m_resourceHandle,
+        OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
             resourceURI,
             resourceTypeName,
             resourceInterface,
@@ -315,7 +314,7 @@ class LightResource : public Resource
 class DoorResource : public Resource
 {
     public:
-    DoorResource(OCPlatform& platform, const std::string& side):m_side(side)
+    DoorResource(const std::string& side):m_side(side)
     {
 
         std::string resourceURI = "/door/"+ side;
@@ -324,7 +323,7 @@ class DoorResource : public Resource
         EntityHandler cb = std::bind(&DoorResource::entityHandler, this,PH::_1, PH::_2);
 
         uint8_t resourceProperty = 0;
-        OCStackResult result = platform.registerResource(m_resourceHandle,
+        OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
             resourceURI,
             resourceTypeName,
             resourceInterface,
@@ -403,19 +402,18 @@ class DoorResource : public Resource
 
 };
 
-class Refridgerator
+class Refrigerator
 {
     public:
-    Refridgerator(PlatformConfig &cfg)
-        : m_platform(cfg),
-        m_light(m_platform),
-        m_device(m_platform),
-        m_leftdoor(m_platform, "left"),
-        m_rightdoor(m_platform, "right")
+    Refrigerator()
+        :
+        m_light(),
+        m_device(),
+        m_leftdoor("left"),
+        m_rightdoor("right")
     {
     }
     private:
-    OCPlatform m_platform;
     LightResource m_light;
     DeviceResource m_device;
     DoorResource m_leftdoor;
@@ -433,7 +431,8 @@ int main ()
         QualityOfService::LowQos
     };
 
-    Refridgerator rf(cfg);
+    OCPlatform::Configure(cfg);
+    Refrigerator rf();
 
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));

@@ -70,8 +70,11 @@ cpp_sdk: prep_dirs c_sdk liboc.a
 examples: liboc.a
 	cd examples && $(MAKE) apps "BUILD=$(BUILD)"
 
-liboc.a: OCPlatform.o OCResource.o OCException.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
-	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
+liboc.a: OCPlatform_impl.o OCPlatform.o OCResource.o OCException.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o
+	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform_impl.o $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o
+
+OCPlatform_impl.o: src/OCPlatform_impl.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform_impl.cpp $(CXX_INC)
 
 OCPlatform.o: src/OCPlatform.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform.cpp $(CXX_INC)
