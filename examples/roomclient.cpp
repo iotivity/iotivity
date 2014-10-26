@@ -41,6 +41,39 @@ int observe_count()
 void putRoomRepresentation(std::shared_ptr<OCResource> resource);
 void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
 
+void printRoomRepresentation(const OCRepresentation& rep)
+{
+    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+
+    if(rep.hasAttribute("name"))
+    {
+        std::cout << "\tRoom name: " << rep.getValue<std::string>("name") << std::endl;
+    }
+
+    std::vector<OCRepresentation> children = rep.getChildren();
+
+    for(auto oit = children.begin(); oit != children.end(); ++oit)
+    {
+        std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+        if(oit->getUri().find("light") != std::string::npos)
+        {
+            if(oit->hasAttribute("state") && oit->hasAttribute("color"))
+            {
+                std::cout << "\t\tstate:" << oit->getValue<bool>("state")  << std::endl;
+                std::cout << "\t\tcolor:" << oit->getValue<int>("color")  << std::endl;
+            }
+        }
+        else if(oit->getUri().find("fan") != std::string::npos)
+        {
+            if(oit->hasAttribute("state") && oit->hasAttribute("speed"))
+            {
+                std::cout << "\t\tstate:" << oit->getValue<bool>("state") << std::endl;
+                std::cout << "\t\tspeed:" << oit->getValue<int>("speed") << std::endl;
+            }
+        }
+    }
+}
+
 // callback handler on GET request
 void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
@@ -48,34 +81,7 @@ void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
     {
         std::cout << "GET request was successful" << std::endl;
 
-        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
-
-        std::vector<OCRepresentation> children = rep.getChildren();
-
-        for(auto oit = children.begin(); oit != children.end(); ++oit)
-        {
-            std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
-            if(oit->getUri().find("light") != std::string::npos)
-            {
-                bool state = false;
-                int  color = 0;
-                oit->getValue("state", state);
-                oit->getValue("color", color);
-
-                std::cout << "\t\tstate:" << state << std::endl;
-                std::cout << "\t\tcolor:" << color << std::endl;
-            }
-            else if(oit->getUri().find("fan") != std::string::npos)
-            {
-                bool state = false;
-                int  speed = 0;
-                oit->getValue("state", state);
-                oit->getValue("speed", speed);
-
-                std::cout << "\t\tstate:" << state << std::endl;
-                std::cout << "\t\tspeed:" << speed << std::endl;
-            }
-        }
+        printRoomRepresentation(rep);
 
         putRoomRepresentation(curResource);
     }
@@ -86,13 +92,40 @@ void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
     }
 }
 
+void onGet1(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+{
+    if(eCode == SUCCESS_RESPONSE)
+    {
+        std::cout << "GET request was successful" << std::endl;
+
+        printRoomRepresentation(rep);
+    }
+    else
+    {
+        std::cout << "onGET Response error: " << eCode << std::endl;
+        std::exit(-1);
+    }
+}
+
+// Local function to get representation of room resource
+void getRoomRepresentation(std::shared_ptr<OCResource> resource,
+                            std::string interface, GetCallback getCallback)
+{
+    if(resource)
+    {
+        std::cout << "Getting room representation on: "<< interface << std::endl;
+
+        resource->get("core.room", interface, QueryParamsMap(), getCallback);
+    }
+}
+
 // Local function to put a different state for this resource
 void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 {
     if(resource)
     {
         OCRepresentation rep;
-        std::cout << "Putting room representation..."<<std::endl;
+        std::cout << "Putting room representation on: " << BATCH_INTERFACE << std::endl;
 
         bool state = true;
         int speed = 10;
@@ -111,53 +144,14 @@ void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
     {
         std::cout << "PUT request was successful" << std::endl;
 
-        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+        printRoomRepresentation(rep);
 
-        std::vector<OCRepresentation> children = rep.getChildren();
-
-        for(auto oit = children.begin(); oit != children.end(); ++oit)
-        {
-            std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
-            if(oit->getUri().find("light") != std::string::npos)
-            {
-                bool state = false;
-                int  color = 0;
-                oit->getValue("state", state);
-                oit->getValue("color", color);
-                std::cout << "\t\tstate:" << state << std::endl;
-                std::cout << "\t\tcolor:" << color << std::endl;
-            }
-            else if(oit->getUri().find("fan") != std::string::npos)
-            {
-                bool state = false;
-                int  speed = 0;
-                oit->getValue("state", state);
-                oit->getValue("speed", speed);
-                std::cout << "\t\tstate:" << state << std::endl;
-                std::cout << "\t\tspeed:" << speed << std::endl;
-            }
-
-        }
-
+        getRoomRepresentation(curResource, DEFAULT_INTERFACE, onGet1);
     }
     else
     {
         std::cout << "onPut Response error: " << eCode << std::endl;
         std::exit(-1);
-    }
-}
-
-
-// Local function to get representation of light resource
-void getRoomRepresentation(std::shared_ptr<OCResource> resource)
-{
-    if(resource)
-    {
-        std::cout << "Getting Room Representation..."<<std::endl;
-        // Invoke resource's get API with the callback parameter
-
-        QueryParamsMap qp;
-        resource->get("core.room", BATCH_INTERFACE, qp, &onGet);
     }
 }
 
@@ -167,6 +161,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
+        return;
     }
 
     std::string resourceURI;
@@ -203,7 +198,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 curResource = resource;
                 // Call a local function which will internally invoke get API on the resource pointer
-                getRoomRepresentation(resource);
+                getRoomRepresentation(resource, BATCH_INTERFACE, onGet);
             }
         }
         else

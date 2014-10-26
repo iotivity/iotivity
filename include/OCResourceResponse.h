@@ -311,40 +311,6 @@ namespace OC
             m_payload = payload.str();
         }
 
-
-        /** TODO remove this once after above function stabilize.
-        *  API to set the entire resource attribute representation
-        *  @param attributeMap reference containing the name value pairs representing the
-        *  resource's attributes
-        */
-        void setResourceRepresentation(AttributeMap& attributes) {
-
-            // TODO To be refactored
-            ostringstream payload;
-
-            payload << "{";
-
-            // TODO fix this (do this programmatically)
-            payload << "\"href\":\"/a/room\"";
-
-            payload << ",\"rep\":{";
-
-            for(AttributeMap::const_iterator itr = attributes.begin(); itr!= attributes.end(); ++ itr)
-            {
-                if(itr != attributes.begin())
-                {
-                    payload << ',';
-                }
-                // cout << itr->first << ":" <, itr->second.front() << endl;
-                payload << "\""<<itr->first<<"\":\""<< itr->second.front()<<"\"";
-
-            }
-
-            payload << "}}";
-
-            m_payload = payload.str();
-        }
-
     private:
         std::string m_newResourceUri;
         std::string m_payload;

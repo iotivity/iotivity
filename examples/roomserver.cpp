@@ -47,6 +47,7 @@ public:
 
     // Room members
     std::string m_roomUri;
+    std::string m_roomName;
     std::vector<std::string> m_roomTypes;
     std::vector<std::string> m_roomInterfaces;
     OCResourceHandle m_roomHandle;
@@ -72,7 +73,8 @@ public:
 
 public:
     /// Constructor
-    RoomResource(): m_lightState(false), m_lightColor(0), m_fanState(false), m_fanSpeed(0)
+    RoomResource(): m_roomName("John's Room"), m_lightState(false),
+                    m_lightColor(0), m_fanState(false), m_fanSpeed(0)
     {
         m_lightUri = "/a/light"; // URI of the resource
         m_lightTypes.push_back("core.light"); // resource type name. In this case, it is light
@@ -99,6 +101,7 @@ public:
         m_roomInterfaces.push_back(DEFAULT_INTERFACE); // resource interface.
         m_roomInterfaces.push_back(BATCH_INTERFACE); // resource interface.
         m_roomInterfaces.push_back(LINK_INTERFACE); // resource interface.
+        m_roomRep.setValue("name", m_roomName);
         m_roomRep.setUri(m_roomUri);
         m_roomRep.setResourceTypes(m_roomTypes);
         m_roomRep.setResourceInterfaces(m_roomInterfaces);
@@ -110,7 +113,7 @@ public:
         // This will internally create and register the resource.
         OCStackResult result = platform.registerResource(
                                     m_roomHandle, m_roomUri, m_roomTypes[0],
-                                    m_roomInterfaces[0], NULL, //entityHandlerRoom,
+                                    m_roomInterfaces[0], entityHandlerRoom,
                                     OC_DISCOVERABLE | OC_OBSERVABLE
                                   );
 
@@ -295,12 +298,28 @@ OCEntityHandlerResult entityHandlerRoom(std::shared_ptr<OCResourceRequest> reque
             {
                 cout << "\t\t\trequestType : PUT\n";
 
+                QueryParamsMap queryParamsMap = request->getQueryParameters();
+
                 entityHandlerLight(request, response);
                 entityHandlerFan(request, response);
 
+                OCRepresentation rep;
+                rep = myRoomResource.getRoomRepresentation();
+
                 if(response)
                 {
-                    response->setResourceRepresentation(myRoomResource.getRoomRepresentation());
+                    response->setErrorCode(200);
+
+                    auto findRes = queryParamsMap.find("if");
+
+                    if(findRes != queryParamsMap.end())
+                    {
+                        response->setResourceRepresentation(rep, findRes->second);
+                    }
+                    else
+                    {
+                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                    }
                 }
             }
             else if(requestType == "POST")
@@ -487,8 +506,6 @@ int main()
     try
     {
         OCPlatform platform(cfg);
-
-        // Invoke createResource function of class light.
 
         myRoomResource.createResources(platform);
 
