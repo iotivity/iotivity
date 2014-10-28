@@ -8,7 +8,7 @@ PLATFORM=linux
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
 ARDUINOWIFI := 0
 
-OUT_DIR	  := ./$(BUILD)
+OUT_DIR	  := ./build/$(PLATFORM)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 ROOT_DIR = ..
@@ -70,8 +70,8 @@ OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 all: prep_dirs libcoap.a
 
 prep_dirs:
-	-mkdir $(OUT_DIR)
-	-mkdir $(OBJ_DIR)
+	-mkdir -p $(OUT_DIR)
+	-mkdir -p $(OBJ_DIR)
 
 %.o: %.c
 	$(CC) -c $(CC_FLAGS.$(BUILD)) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@

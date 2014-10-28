@@ -3,7 +3,12 @@
 BUILD	  := release
 CXX	      := g++
 #CXX	  := clang
-OUT_DIR	  := $(PWD)/$(BUILD)
+
+ifeq ($(PLATFORM), )
+        PLATFORM := linux
+endif
+
+OUT_DIR	  := $(PWD)/build/$(PLATFORM)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0 

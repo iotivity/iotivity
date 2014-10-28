@@ -3,6 +3,7 @@ BUILD := release
 PLATFORM := arduinodue
 ARDUINO_PORT := ttyACM0
 
+OUT_DIR := ./build/$(PLATFORM)/$(BUILD)
 OBJ_DIR := ./bin
 
 ROOT_DIR = ../../../../..
@@ -26,12 +27,12 @@ CFLAGS		:= -Os -Wall -c -DTB_LOG
 all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).bin
 
 core.a: $(PLATFORM_OBJS)
-	@cd $(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/../$(BUILD)/liboctbstack.a
+	@cd $(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/../$(OUT_DIR)/liboctbstack.a
 	$(AR) rcs $(OBJ_DIR)/$@ $(foreach obj, $^, $(OBJ_DIR)/$(obj)) $(OBJ_DIR)/*.o
 	@cd $(OBJ_DIR) && $(RANLIB) $@
 
 prep_dirs:
-	-mkdir $(OBJ_DIR)
+	-mkdir -p $(OBJ_DIR)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@

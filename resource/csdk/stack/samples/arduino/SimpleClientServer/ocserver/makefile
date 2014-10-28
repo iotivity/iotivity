@@ -1,6 +1,7 @@
 
 BUILD := release
 PLATFORM := arduinomega
+OUT_DIR := ./build/$(PLATFORM)/$(BUILD)
 ARDUINO_PORT := /dev/ttyACM0
 
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
@@ -35,12 +36,12 @@ endif
 all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
 
 core.a: $(PLATFORM_OBJS)
-	@cd $(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/../$(BUILD)/liboctbstack.a
+	@cd $(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/../$(OUT_DIR)/liboctbstack.a
 	$(AR) rcs $@ $^ $(OBJ_DIR)/*.o
 	$(RANLIB) $@
 
 prep_dirs:
-	-mkdir $(OBJ_DIR)
+	-mkdir -p $(OBJ_DIR)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@

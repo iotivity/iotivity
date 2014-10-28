@@ -12,8 +12,12 @@ ifeq ($(ROOT_DIR), )
 ROOT_DIR	= .
 endif
 
+ifeq ($(OUT_DIR), )
+OUT_DIR	  := ./build/$(PLATFORM)/$(BUILD)
+endif
+
 ifeq ($(OBJ_DIR), )
-OBJ_DIR	= obj
+OBJ_DIR   := $(OUT_DIR)/obj
 endif
 
 
@@ -94,20 +98,20 @@ make_lcoap:
 	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
 
 objdirs: $(ROOT_DIR)
-	mkdir -p $(BUILD)
-	mkdir -p $(BUILD)/$(OBJ_DIR)
+	mkdir -p $(OUT_DIR)
+	mkdir -p $(OBJ_DIR)
 
 obj_build:
 	@echo "Building $@"
-	# Output all *.o files to $(OBJ_DIR)/$(BUILD)
-	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(BUILD)/$(OBJ_DIR)/%, $(notdir $(source))));)
+	# Output all *.o files to $(OBJ_DIR)
+	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/%, $(notdir $(source))));)
 
 liboctbstack.a:
 	@echo "Building $@" 
-	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	@cd $(BUILD)/$(OBJ_DIR) && $(AR) -x ../../$(LCOAP_DIR)/$(BUILD)/libcoap.a
+	# Unpackage libcoap.a to $(OBJ_DIR). The output objects from OCStack and OCCoap are already at this location
+	@cd $(OBJ_DIR) && $(AR) -x $(PWD)/$(LCOAP_DIR)/$(OUT_DIR)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
-	$(AR) -r $(BUILD)/$@ $(BUILD)/$(OBJ_DIR)/*.o
+	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
 
 .PHONY: clean print_vars
 
@@ -121,13 +125,11 @@ deepclean: legacy_deepclean
 
 legacy_clean:	$(ROOT_DIR)
 	@echo "Cleaning all."
-	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/$(BUILD)/liboctbstack.a
 	rm -rf $(OBJ_DIR)
 
 legacy_deepclean: $(ROOT_DIR)
 	@echo "Deep-Cleaning all."
-	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a
 	rm -rf $(OBJ_DIR)
 	$(MAKE) clean -C $(LCOAP_DIR)
@@ -138,6 +140,6 @@ print_vars:
 	@echo ""
 	@echo 'SOURCE FILES ARE: '$(value SOURCES)
 	@echo ""
-	@echo 'OBJ_DIR/BUILD is: '$(OBJ_DIR)'/'$(BUILD)
+	@echo 'OBJ_DIR is: '$(OBJ_DIR)
 	@echo ""
 	@echo 'ROOT_DIR is: '$(ROOT_DIR)

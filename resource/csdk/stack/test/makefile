@@ -18,7 +18,7 @@ include $(ROOT_DIR)/local.properties
 # NOTE:  to run app, make sure that LD_LIBRARY_PATH env variable
 #        contains $(GTEST_DIR)/lib/.libs
 
-OUT_DIR	  := ./$(BUILD)
+OUT_DIR	  := ./build/$(PLATFORM)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 
