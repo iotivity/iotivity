@@ -293,7 +293,9 @@ clean:
 	@cd ./resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/ && $(MAKE) "clean"
 	@cd ./resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/ && $(MAKE) "f=arduinodue" "clean"
 	@cd ./resource/ && $(MAKE) "clean"
-	@cd ./resource/examples $(MAKE) "clean"
+	@cd ./resource/examples/ && $(MAKE) "clean"
+	@cd ./service/things-manager/build/linux/ && $(MAKE) "clean"
+	@cd ./service/soft-sensor-manager/build/linux/ && $(MAKE) "clean"
 
 ###############################################################################
 # Building the 'all' target is not appropriate for M1 release. The only
@@ -314,3 +316,17 @@ arduino:
 	$(error "Building the 'arduino' target is not appropriate for M1\
 	release. Please choose either "arduinomega" or "arduinodue" as\
 	your target.")
+
+###############################################################################
+###   Things Manager                                                        ###
+###############################################################################
+things_manager: linux
+	@echo "=====BUILD THINGS MANAGER====="
+	@cd service/things-manager/build/linux/ && $(MAKE)
+
+###############################################################################
+###   Soft Sensor Manager                                                   ###
+###############################################################################
+soft_sensor_manager: linux
+	@echo "=====BUILD SOFT SENSOR MANAGER====="
+	@cd service/soft-sensor-manager/build/linux/ && $(MAKE)
