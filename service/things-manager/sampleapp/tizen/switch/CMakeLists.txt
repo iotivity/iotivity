@@ -1,20 +1,46 @@
-SET(TESTAPP "oicapp-test")
+/******************************************************************
+ *
+ * Copyright 2014 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+SET(TESTAPP "oicapp-switch")
+
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/oic-resource/include)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/oic-resource/csdk/stack/include)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/oic-resource/csdk/ocsocket/include)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/oic-resource/csdk/ocrandom/include)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/oic-resource/csdk/logger/include)
+INCLUDE_DIRECTORIES(${INCLUDE_INSTALL_DIR}/boost)
 
 # added - T.G.M
 SET(TGM_SRC
-						../../../TGM/src/Action.cpp
-						../../../TGM/src/ActionManager.cpp
-						../../../TGM/src/ActionRule.cpp
-						../../../TGM/src/ActionSet.cpp
-						../../../TGM/src/Capability.cpp
-						../../../TGM/src/Group.cpp
-						../../../TGM/src/GroupManager.cpp
-						../../../TGM/src/PresenceManager.cpp
-						../../../TGM/src/Rule.cpp
-						../../../SDK/src/TGMClient.cpp)
+						../../../tgm/src/Action.cpp
+						../../../tgm/src/ActionManager.cpp
+						../../../tgm/src/ActionRule.cpp
+						../../../tgm/src/ActionSet.cpp
+						../../../tgm/src/Capability.cpp
+						../../../tgm/src/Group.cpp
+						../../../tgm/src/GroupManager.cpp
+						../../../tgm/src/PresenceManager.cpp
+						../../../tgm/src/Rule.cpp
+						../../../sdk/src/TGMClient.cpp)
 
 # added - T.G.M
-SET(JSON_SRC ../../../lib/jsoncpp/jsoncpp.cpp)
+SET(JSON_SRC ../../../lib/jsoncpp/src/jsoncpp.cpp)
  
 
 # fixed - T.G.M
@@ -23,7 +49,7 @@ FILE(GLOB SRCS src/*.c src/*.cpp ${JSON_SRC} ${TGM_SRC})
 SET(VENDOR "samsung")
 SET(PACKAGE ${TESTAPP})
 SET(PKGNAME "com.${VENDOR}.${PACKAGE}")
-SET(PREFIX "/usr/apps/com.samsung.oicapp-test")
+SET(PREFIX "/usr/apps/com.samsung.oicapp-switch")
 SET(BINDIR "${PREFIX}/bin")
 SET(RESDIR "${PREFIX}/res")
 SET(DATADIR "${PREFIX}/data")
@@ -46,8 +72,8 @@ INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED dlog appcore-efl ecore-x elementary efl-assist capi-network-wifi appsvc capi-media-player)
 
 INCLUDE_DIRECTORIES(inc)
-INCLUDE_DIRECTORIES(../../../TGM/inc)
-INCLUDE_DIRECTORIES(../../../SDK/inc)
+INCLUDE_DIRECTORIES(../../../tgm/inc)
+INCLUDE_DIRECTORIES(../../../sdk/inc)
 INCLUDE_DIRECTORIES(../../../lib/inc)
 INCLUDE_DIRECTORIES(../../../lib/jsoncpp/inc)
 
@@ -70,7 +96,7 @@ ADD_DEFINITIONS("-DEDJDIR=\"${EDJDIR}\"")
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed")
 
 ADD_EXECUTABLE(${TESTAPP} ${SRCS})
-TARGET_LINK_LIBRARIES(${TESTAPP} ${pkgs_LDFLAGS} ${PROJECT_NAME} ${OCTBSTACK} pthread)
+TARGET_LINK_LIBRARIES(${TESTAPP} ${pkgs_LDFLAGS} ${OCLIB} ${OCTBSTACK} pthread)
 
 INSTALL(TARGETS ${TESTAPP} DESTINATION ${BINDIR})
 

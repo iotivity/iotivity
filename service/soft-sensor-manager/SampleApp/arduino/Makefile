@@ -1,5 +1,5 @@
-
--include ../../build/linux/environment.mk
+-include ../../build/linux/root_path.inc
+-include ../../build/arduino/environment.mk
 
 MAKE=make
 

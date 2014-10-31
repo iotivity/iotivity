@@ -1,4 +1,7 @@
+IOTIVITY_DIR=${shell cd ../../../../ && pwd}
+${shell echo "ROOT_DIR=${IOTIVITY_DIR}" > ./root_path.inc}
 
+-include ./root_path.inc
 -include ./environment.mk
 
 MAKE=make

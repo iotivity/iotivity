@@ -74,13 +74,13 @@ linux_tb_stack_debug: clean
 	@echo "=====BUILD LIBCOAP FOR LINUX - DEBUG - <oic-resource>/resource/csdk/libcoap/linux/debug/====="
 	@cd ./resource/csdk/libcoap && $(MAKE) "BUILD=debug" "PLATFORM=linux"
 	@echo "=====BUILD TB STACK FOR LINUX - DEBUG - <oic-resource>/resource/csdk/linux/debug/====="
-	@cd ./resource/csdk && $(MAKE) "all" "BUILD=debug" "PLATFORM=linux"
+	@cd ./resource/csdk/build/linux && $(MAKE) "all" "BUILD=debug" "PLATFORM=linux"
 
 linux_tb_stack_release: clean
 	@echo "=====BUILD LIBCOAP FOR LINUX - RELEASE - <oic-resource>/resource/csdk/libcoap/linux/release/====="
 	@cd ./resource/csdk/libcoap && $(MAKE) "BUILD=release" "PLATFORM=linux"
 	@echo "=====BUILD TB STACK FOR LINUX - RELEASE - <oic-resource>/resource/csdk/linux/release/====="
-	@cd resource/csdk && $(MAKE) "all" "BUILD=release" "PLATFORM=linux"
+	@cd resource/csdk/build/linux && $(MAKE) "all" "BUILD=release" "PLATFORM=linux"
 
 ###############################################################################
 ####      TB Examples - Linux Only                                         ####
@@ -104,11 +104,11 @@ linux_ub_stack: linux_ub_stack_release
 
 linux_ub_stack_release: linux_tb_stack_release
 	@echo "=====BUILD UB STACK FOR LINUX - RELEASE - <oic-resource>/resource/release/====="
-	@cd ./resource/ && $(MAKE) "all" "BUILD=release"
+	@cd ./resource/build/linux && $(MAKE) "all" "BUILD=release"
 
 linux_ub_stack_debug: linux_tb_stack_debug
 	@echo "=====BUILD UB STACK FOR LINUX - DEBUG - <oic-resource>/resource/debug/====="
-	@cd ./resource/ && $(MAKE) "all" "BUILD=debug"
+	@cd ./resource/build/linux && $(MAKE) "all" "BUILD=debug"
 
 ###############################################################################
 ####      UB Examples (& UB Stack as prerequisite) - Linux Only            ####
@@ -184,14 +184,14 @@ arduinomega_stack_ethernet_release: clean
 	@echo "=====BUILD LIBCOAP - RELEASE - <oic-resource>/resource/csdk/libcoap/arduinomega/ethernet_shield/release/====="
 	@cd ./resource/csdk/libcoap/ && $(MAKE) "BUILD=release" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
 	@echo "=====BUILD TB STACK - RELEASE - <oic-resource>/resource/csdk/arduinomega/ethernet_shield/release/====="
-	@cd ./resource/csdk && $(MAKE) "all" "BUILD=release" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
+	@cd ./resource/csdk/build/arduinomega && $(MAKE) "all" "BUILD=release" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
 
 arduinomega_stack_ethernet_debug: clean
 	@echo "=====BUILD C STACK FOR ARDUINO ATMEGA 2560 - DEBUG - ETHERNET SHIELD======"
 	@echo "=====BUILD LIBCOAP - DEBUG - <oic-resource>/resource/csdk/libcoap/arduinomega/ethernet_shield/debug/====="
 	@cd ./resource/csdk/libcoap/ && $(MAKE) "BUILD=debug" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
 	@echo "=====BUILD TB STACK - DEBUG - <oic-resource>/resource/csdk/arduinomega/ethernet_shield/debug/====="
-	@cd ./resource/csdk && $(MAKE) "all" "BUILD=debug" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
+	@cd ./resource/csdk/build/arduinomega && $(MAKE) "all" "BUILD=debug" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
 
 ###############################################################################
 ####          TB Examples - Arduino Mega Only - Ethernet Only              ####
@@ -255,14 +255,14 @@ arduinodue_stack_ethernet_release: clean
 	@echo "=====BUILD LIBCOAP - RELEASE - <oic-resource>/resource/csdk/libcoap/arduinodue/ethernet_shield/release/====="
 	@cd ./resource/csdk/libcoap/ && $(MAKE) "BUILD=release" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
 	@echo "=====BUILD TB STACK - RELEASE - <oic-resource>/resource/csdk/arduinodue/ethernet_shield/release/====="
-	@cd ./resource/csdk/ && $(MAKE) "all" "BUILD=release" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
+	@cd ./resource/csdk/build/arduinodue && $(MAKE) "all" "BUILD=release" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
 
 arduinodue_stack_ethernet_debug: clean
 	@echo "=====BUILD C STACK FOR ARDUINO DUE - DEBUG - ETHERNET SHIELD======"
 	@echo "=====BUILD LIBCOAP - DEBUG - <oic-resource>/resource/csdk/libcoap/arduinodue/ethernet_shield/debug/====="
 	@cd ./resource/csdk/libcoap/ && $(MAKE) "BUILD=debug" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
 	@echo "=====BUILD TB STACK - DEBUG - <oic-resource>/resource/csdk/arduinodue/ethernet_shield/debug/====="
-	@cd ./resource/csdk/ && $(MAKE) "all" "BUILD=debug" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
+	@cd ./resource/csdk/build/arduinodue && $(MAKE) "all" "BUILD=debug" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
 
 ###############################################################################
 ####          TB Examples - Arduino Due Only - Ethernet Only               ####
@@ -286,16 +286,38 @@ arduinodue_samples_ethernet_debug: arduinodue_stack_ethernet_debug
 ###############################################################################
 ####  Clean All - Linux, Arduino Mega & Arduino Due - Ethernet             ####
 ###############################################################################
+CLEAN_DIRS= \
+	./resource/csdk/build/linux \
+	./resource/csdk/build/arduinodue \
+	./resource/csdk/build/arduinomega \
+	./resource/build/linux \
+	./resource/build/arduinodue \
+	./resource/build/arduinomega \
+	./resource/csdk/stack/samples/linux/SimpleClientServer \
+	./resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver \
+	./resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver \
+	./resource/examples \
+	./service/things-manager/build/linux \
+	./service/soft-sensor-manager/build/linux
+
+DEEPCLEAN_DIRS = \
+	./resource/csdk/build/linux \
+	./resource/csdk/build/arduinodue \
+	./resource/csdk/build/arduinomega
+
 clean:
-	@cd ./resource/csdk/ && $(MAKE) "clean"
-	@cd ./resource/csdk/ && $(MAKE) "deepclean"
-	@cd ./resource/csdk/stack/samples/linux/SimpleClientServer/ && $(MAKE) "clean"
-	@cd ./resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/ && $(MAKE) "clean"
-	@cd ./resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/ && $(MAKE) "f=arduinodue" "clean"
-	@cd ./resource/ && $(MAKE) "clean"
-	@cd ./resource/examples/ && $(MAKE) "clean"
-	@cd ./service/things-manager/build/linux/ && $(MAKE) "clean"
-	@cd ./service/soft-sensor-manager/build/linux/ && $(MAKE) "clean"
+	@for dir in $(CLEAN_DIRS); do \
+	    if test -d $$dir ; then \
+	        cd $$dir && $(MAKE) clean ; \
+		cd - ; \
+	    fi ; \
+	done
+	@for dir in $(DEEPCLEAN_DIRS); do \
+	    if test -d $$dir ; then \
+	        cd $$dir && $(MAKE) deepclean ; \
+		cd - ; \
+	    fi ; \
+	done
 
 ###############################################################################
 # Building the 'all' target is not appropriate for M1 release. The only

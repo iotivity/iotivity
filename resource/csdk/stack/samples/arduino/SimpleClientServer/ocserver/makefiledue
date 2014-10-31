@@ -3,16 +3,16 @@ BUILD := release
 PLATFORM := arduinodue
 ARDUINO_PORT := ttyACM0
 
-OUT_DIR := ./build/$(PLATFORM)/$(BUILD)
 OBJ_DIR := ./bin
 
 ROOT_DIR = ../../../../..
+OUT_DIR = build/$(PLATFORM)/$(BUILD)
 LOGGER_DIR = $(ROOT_DIR)/logger
 TBSTACK_DIR = $(ROOT_DIR)/stack
 TBSOCKET_DIR = $(ROOT_DIR)/ocsocket
 
 include $(ROOT_DIR)/local.properties
-include $(ROOT_DIR)/$(PLATFORM).properties
+include $(ROOT_DIR)/build/$(PLATFORM)/$(PLATFORM).properties
 
 VPATH := $(SDIR_ARD_PLATFORM)
 

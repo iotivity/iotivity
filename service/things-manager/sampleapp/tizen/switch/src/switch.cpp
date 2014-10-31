@@ -379,16 +379,16 @@ static void on_clickStep2(void *data, Evas_Object *obj, void *event_info)
 
 	if( bulbs.size() > 0 )
 	{
-		g_sessionID = g_tgmClient->createGroup("LIGHTING SERVICE",
-					bulbs, g_pListener->m_optionalDeviceList);
+		g_sessionID = g_tgmClient->createGroup("LIGHT SERVICE");// ,
+					//bulbs, g_pListener->m_optionalDeviceList);
 	}
 
 	sleep(1);
 
 	if(g_pListener->m_mandatoryDeviceList.size() != 0)
 	{
-		g_sessionID = g_tgmClient->createGroup("THE CONTROL SERVICE",
-				g_pListener->m_mandatoryDeviceList, g_pListener->m_optionalDeviceList);
+		g_sessionID = g_tgmClient->createGroup("THE CONTROL SERVICE");// ,
+				//g_pListener->m_mandatoryDeviceList, g_pListener->m_optionalDeviceList);
 	}
 	else
 	{

@@ -1,8 +1,7 @@
-# root path of each PC.
-ROOT_DIR=/home/choi/tmp/test/upload/Iotivity-Candidate
+
 
 # service folder path.
-FD_SSM=${ROOT_DIR}/service/SoftSensorManager
+FD_SSM=${ROOT_DIR}/service/soft-sensor-manager
 FD_SAMPLEAPP=${FD_SSM}/SampleApp
 FD_BUILD=${FD_SSM}/build
 

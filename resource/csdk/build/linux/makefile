@@ -1,3 +1,23 @@
+# //******************************************************************
+# //
+# // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# //
+# // Licensed under the Apache License, Version 2.0 (the "License");
+# // you may not use this file except in compliance with the License.
+# // You may obtain a copy of the License at
+# //
+# //      http://www.apache.org/licenses/LICENSE-2.0
+# //
+# // Unless required by applicable law or agreed to in writing, software
+# // distributed under the License is distributed on an "AS IS" BASIS,
+# // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# // See the License for the specific language governing permissions and
+# // limitations under the License.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
 # override with `make BUILD=debug`
 # override with `make PLATFORM=arduinomega` or `make PLATFORM=arduinodue`
 # default to release build
@@ -9,15 +29,12 @@ PLATFORM := linux
 ARDUINOWIFI := 0
 
 ifeq ($(ROOT_DIR), )
-ROOT_DIR	= .
-endif
 
-ifeq ($(OUT_DIR), )
-OUT_DIR	  := ./build/$(PLATFORM)/$(BUILD)
+ROOT_DIR	= ../..
 endif
 
 ifeq ($(OBJ_DIR), )
-OBJ_DIR   := $(OUT_DIR)/obj
+OBJ_DIR	= obj
 endif
 
 
@@ -90,7 +107,7 @@ SOURCES			:= $(CJSON_SOURCES)
 SOURCES			+= $(OCCOAP_SOURCES)
 SOURCES			+= $(OCTBSTACK_SOURCES)
 
-all:	make_lcoap objdirs obj_build liboctbstack.a
+all:	make_lcoap objdirs obj_build liboctbstack.a #print_vars
 
 buildScript_all: objdirs obj_build liboctbstack.a
 
@@ -98,20 +115,20 @@ make_lcoap:
 	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
 
 objdirs: $(ROOT_DIR)
-	mkdir -p $(OUT_DIR)
-	mkdir -p $(OBJ_DIR)
+	mkdir -p $(BUILD)
+	mkdir -p $(BUILD)/$(OBJ_DIR)
 
 obj_build:
 	@echo "Building $@"
-	# Output all *.o files to $(OBJ_DIR)
-	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/%, $(notdir $(source))));)
+	# Output all *.o files to $(OBJ_DIR)/$(BUILD)
+	$(foreach source,$(SOURCES), $(CC) $(LDLIBS) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(BUILD)/$(OBJ_DIR)/%, $(notdir $(source))));)
 
 liboctbstack.a:
 	@echo "Building $@" 
-	# Unpackage libcoap.a to $(OBJ_DIR). The output objects from OCStack and OCCoap are already at this location
-	@cd $(OBJ_DIR) && $(AR) -x $(PWD)/$(LCOAP_DIR)/$(OUT_DIR)/libcoap.a
+	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
+	@cd $(BUILD)/$(OBJ_DIR) && $(AR) -x $(ROOT_DIR)/$(LCOAP_DIR)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
-	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
+	$(AR) -r $(BUILD)/$@ $(BUILD)/$(OBJ_DIR)/*.o
 
 .PHONY: clean print_vars
 
@@ -125,11 +142,13 @@ deepclean: legacy_deepclean
 
 legacy_clean:	$(ROOT_DIR)
 	@echo "Cleaning all."
+	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/$(BUILD)/liboctbstack.a
 	rm -rf $(OBJ_DIR)
 
 legacy_deepclean: $(ROOT_DIR)
 	@echo "Deep-Cleaning all."
+	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a
 	rm -rf $(OBJ_DIR)
 	$(MAKE) clean -C $(LCOAP_DIR)
@@ -140,6 +159,6 @@ print_vars:
 	@echo ""
 	@echo 'SOURCE FILES ARE: '$(value SOURCES)
 	@echo ""
-	@echo 'OBJ_DIR is: '$(OBJ_DIR)
+	@echo 'OBJ_DIR/BUILD is: '$(OBJ_DIR)'/'$(BUILD)
 	@echo ""
 	@echo 'ROOT_DIR is: '$(ROOT_DIR)

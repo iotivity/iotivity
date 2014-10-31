@@ -1,15 +1,9 @@
 # override with `make BUILD=release`
 # default to release build
-
-ifeq ($(PLATFORM), )
-        PLATFORM := linux
-endif
-
 BUILD	  := release
 CXX	      := g++
 #CXX	  := clang
-OUT_DIR	  := ./build/$(PLATFORM)/$(BUILD)
-OBJ_DIR	  := $(OUT_DIR)/obj
+OUT_DIR	  := $(PWD)/$(BUILD)
 
 CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread 
 
@@ -35,31 +29,30 @@ prep_dirs:
 	-mkdir -p $(OUT_DIR)
 
 simpleserver: simpleserver.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleserver.cpp $(CXX_INC) ../$(OBJ_DIR)/liboc.a ../csdk/$(OUT_DIR)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleserver.cpp $(CXX_INC) ../build/linux/$(BUILD)/obj/liboc.a ../csdk/build/linux/$(BUILD)/liboctbstack.a
 
 simpleclient: simpleclient.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclient.cpp $(CXX_INC) ../$(OBJ_DIR)/liboc.a ../csdk/$(OUT_DIR)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclient.cpp $(CXX_INC) ../build/linux/$(BUILD)/obj/liboc.a ../csdk/build/linux/$(BUILD)/liboctbstack.a
 
 presenceserver: presenceserver.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceserver.cpp $(CXX_INC) ../$(OBJ_DIR)/liboc.a ../csdk/$(OUT_DIR)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceserver.cpp $(CXX_INC) ../build/linux/$(BUILD)/obj/liboc.a ../csdk/build/linux/$(BUILD)/liboctbstack.a
 
 presenceclient: presenceclient.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceclient.cpp $(CXX_INC) ../$(OBJ_DIR)/liboc.a ../csdk/$(OUT_DIR)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ presenceclient.cpp $(CXX_INC) ../build/linux/$(BUILD)/obj/liboc.a ../csdk/build/linux/$(BUILD)/liboctbstack.a
 
 simpleclientserver: simpleclientserver.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclientserver.cpp $(CXX_INC) ../$(OBJ_DIR)/liboc.a ../csdk/$(OUT_DIR)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ simpleclientserver.cpp $(CXX_INC) ../build/linux/$(BUILD)/obj/liboc.a ../csdk/build/linux/$(BUILD)/liboctbstack.a
 
 roomserver: roomserver.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomserver.cpp $(CXX_INC) ../$(OBJ_DIR)/liboc.a ../csdk/$(OUT_DIR)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomserver.cpp $(CXX_INC) ../build/linux/$(BUILD)/obj/liboc.a ../csdk/build/linux/$(BUILD)/liboctbstack.a
 
 roomclient: roomclient.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomclient.cpp $(CXX_INC) ../$(OBJ_DIR)/liboc.a ../csdk/$(OUT_DIR)/liboctbstack.a
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ roomclient.cpp $(CXX_INC) ../build/linux/$(BUILD)/obj/liboc.a ../csdk/build/linux/$(BUILD)/liboctbstack.a
 
 ocicuc_target:
 	cd ocicuc && $(MAKE)
 
 clean: 
-	rm -rf debug
-	rm -rf release
+	rm -rf $(OUT_DIR)/*
 	cd ocicuc && $(MAKE) clean
 

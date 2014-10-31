@@ -1,13 +1,10 @@
-# root path of each PC.
-ROOT_DIR=${PWD}/../../../..
-
 # boost folder path.
-BOOST_BASE=/home/iotivity/Desktop/boost_1_56_0
+BOOST_BASE=/usr/local/boost/
 
 # ioc-resource folder path.
 IOT_BASE=${ROOT_DIR}/resource
-IOT_MAKE_PATH=${IOT_BASE}
-IOT_RELEASE=${IOT_MAKE_PATH}/build/linux/release/obj
+IOT_MAKE_PATH=${IOT_BASE}/build/linux
+IOT_RELEASE=${IOT_MAKE_PATH}/release/obj
 IOT_CSDK_RELEASE=${IOT_BASE}/csdk/build/linux/release
 IOT_LIB=liboc.a
 IOT_CSDK_LIB=liboctbstack.a

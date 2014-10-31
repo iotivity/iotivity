@@ -3,12 +3,14 @@
 BUILD	 := release
 PLATFORM := linux
 CC	 := g++
-OUT_DIR	  := ./build/$(PLATFORM)/$(BUILD)
+OUT_DIR	  := $(PWD)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 ifeq ($(ROOT_DIR), )
-ROOT_DIR	= ./../../../..
+ROOT_DIR	= $(PWD)/../../../..
 endif
+
+OUT_DIR	= $(PWD)
 
 OCLOGGER_DIR	= $(ROOT_DIR)/logger
 OCRANDOM_DIR	= $(ROOT_DIR)/ocrandom
@@ -32,9 +34,9 @@ INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 
 CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
-                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(OUT_DIR) -DTB_LOG
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/build/$(PLATFORM)/$(BUILD) -DTB_LOG
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/$(OUT_DIR) -DTB_LOG
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/build/$(PLATFORM)/$(BUILD) -DTB_LOG
 
 LDLIBS		+= -loctbstack -lpthread
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
@@ -58,16 +60,16 @@ $(OBJ_DIR)/%.o: %.cpp
 	$(CC) -c $(CPPFLAGS) $< -o $@
 
 ocserver: $(OBJ_DIR)/ocserver.o $(OBJ_DIR)/common.o
-	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 ocservercoll: $(OBJ_DIR)/ocservercoll.o $(OBJ_DIR)/common.o
-	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 occlient: $(OBJ_DIR)/occlient.o $(OBJ_DIR)/common.o
-	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 occlientcoll: $(OBJ_DIR)/occlientcoll.o $(OBJ_DIR)/common.o
-	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 .PHONY: clean
 

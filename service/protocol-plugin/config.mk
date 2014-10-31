@@ -1,1 +1,1 @@
-BOOST_DIR = /home/yh_.joo/Downloads/boost_1_51_0
+BOOST_DIR = /usr/local/boost

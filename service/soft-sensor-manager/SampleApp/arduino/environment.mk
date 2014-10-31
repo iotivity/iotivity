@@ -1,3 +1,2 @@
-
-BOOST_DIR=/home/choi/devel/boost_1_56_0
+BOOST_DIR=/usr/local/boost/
 

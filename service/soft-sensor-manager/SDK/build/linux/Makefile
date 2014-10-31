@@ -1,4 +1,4 @@
-
+-include ../../../build/linux/root_path.inc
 -include ../../../build/linux/environment.mk
 
 BOOST=${BOOST_BASE}

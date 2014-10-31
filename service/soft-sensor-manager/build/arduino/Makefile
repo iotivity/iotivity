@@ -1,4 +1,4 @@
-
+-include ../linux/root_path.inc
 -include ./environment.mk
 
 MAKE=make

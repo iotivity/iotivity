@@ -7,7 +7,7 @@ pre:
 	-mkdir release
 
 resource:
-	cd ../../../../resource && $(MAKE)
+	cd ../../../../resource/build/linux && $(MAKE)
 
 lib:
 	cd ../../lib/jsoncpp && $(MAKE)

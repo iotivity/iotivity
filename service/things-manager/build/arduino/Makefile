@@ -10,7 +10,7 @@ SampleApp:
 	cd ../../sampleapp/arduino/light && $(MAKE) BUILD=release
 
 clean:
-	cd ../../../../resource && make clean
+	cd ../../../../resource/build/linux && make clean
 	cd ../../../../resource/csdk/build/arduino && make deepclean 
 	cd ../../sampleapp/arduino/bookmark && $(MAKE) clean
 	cd ../../sampleapp/arduino/light && $(MAKE) clean

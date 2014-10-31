@@ -8,7 +8,7 @@ PLATFORM=linux
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
 ARDUINOWIFI := 0
 
-OUT_DIR	  := ./build/$(PLATFORM)/$(BUILD)
+OUT_DIR	  := ./$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 ROOT_DIR = ..
@@ -35,12 +35,14 @@ else ifeq ($(PLATFORM),linux)
     CFLAGS_PLATFORM = -std=gnu99 -DWITH_POSIX
 else ifeq ($(PLATFORM),arduinomega)
     include $(ROOT_DIR)/local.properties
-    include $(ROOT_DIR)/$(PLATFORM).properties
+    include $(ROOT_DIR)/build/$(PLATFORM)/$(PLATFORM).properties
 	CC=$(ARDUINO_TOOLS_DIR)/avr-g++
+	CXX=$(ARDUINO_TOOLS_DIR)/avr-g++
 else ifeq ($(PLATFORM),arduinodue)
     include $(ROOT_DIR)/local.properties
-    include $(ROOT_DIR)/$(PLATFORM).properties
+    include $(ROOT_DIR)/build/$(PLATFORM)/$(PLATFORM).properties
 	CC=$(ARDUINO_TOOLS_DIR)/arm-none-eabi-g++
+	CXX=$(ARDUINO_TOOLS_DIR)/arm-none-eabi-g++
 else
    $(error Wrong value for PLATFORM !!)
 endif
@@ -54,11 +56,11 @@ SOURCES:= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
 VPATH := $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src
 ifeq (arduino, $(findstring arduino,$(PLATFORM)))
 	ifeq ($(ARDUINOWIFI),1)
-		SOURCES += ocsocket_arduino_wifi.c
+		SOURCESCPP += ocsocket_arduino_wifi.cpp
 	else
-		SOURCES += ocsocket_arduino.c
+		SOURCESCPP += ocsocket_arduino.cpp
 	endif
-	SOURCESCPP:= Time.cpp
+	SOURCESCPP += Time.cpp
 	OBJECTSCPP:= $(patsubst %.cpp, %.o, $(SOURCESCPP))
 	VPATH += $(SDIR_ARD_TIME)
 else

@@ -1,3 +1,4 @@
+-include ../../../../build/linux/root_path.inc
 -include ../../../../build/arduino/environment.mk
 
 ARDUINO_DIR = /usr/share/arduino

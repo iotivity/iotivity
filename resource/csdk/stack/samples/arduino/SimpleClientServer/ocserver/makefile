@@ -1,7 +1,6 @@
 
 BUILD := release
 PLATFORM := arduinomega
-OUT_DIR := ./build/$(PLATFORM)/$(BUILD)
 ARDUINO_PORT := /dev/ttyACM0
 
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
@@ -12,12 +11,13 @@ APP_NAME := ocserver
 OBJ_DIR := ./bin
 
 ROOT_DIR = ../../../../..
+OUT_DIR = build/$(PLATFORM)/$(BUILD)
 LOGGER_DIR = $(ROOT_DIR)/logger
 TBSTACK_DIR = $(ROOT_DIR)/stack
 TBSOCKET_DIR = $(ROOT_DIR)/ocsocket
 
 include $(ROOT_DIR)/local.properties
-include $(ROOT_DIR)/$(PLATFORM).properties
+include $(ROOT_DIR)/build/$(PLATFORM)/$(PLATFORM).properties
 
 VPATH := $(SDIR_ARD_PLATFORM)
 
@@ -41,7 +41,7 @@ core.a: $(PLATFORM_OBJS)
 	$(RANLIB) $@
 
 prep_dirs:
-	-mkdir -p $(OBJ_DIR)
+	-mkdir $(OBJ_DIR)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
