@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
@@ -33,27 +34,39 @@ const char *getResult(OCStackResult result);
 #define TAG PCF("ocservercontainer")
 
 int gQuitFlag = 0;
-int gLEDUnderObservation = 0;
+int gLightUnderObservation = 0;
 void createResources();
-typedef struct LEDRESOURCE{
+typedef struct LIGHTRESOURCE{
     OCResourceHandle handle;
     bool state;
     int power;
-} LEDResource;
+} LightResource;
 
-static LEDResource LED;
+static LightResource light;
+
+// TODO : hard coded for now, change after Sprint10
+const char rspGetRoomDefault[] = "{\"href\":\"/a/room\",\"rep\":{\"name\":\"John's Room\"}}";
+const char rspGetRoomCollection[] = "{\"href\":\"/a/room\"}";
+// TODO : Needs to be changed to retrieve current status of room and return that in response
+const char rspPutRoomDefault[] = "{\"href\":\"/a/room\",\"rep\":{\"name\":\"John's Room\"}}";
+const char rspPutRoomCollection[] = "{\"href\":\"/a/room\"}";
+const char rspFailureRoom[] = "{\"href\":\"/a/room\",\"rep\":{\"error\":\"ROOM_OP_FAIL\"}}";
 
 // TODO : hard coded for now, change after Sprint4
-const char rspGetLed[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"color\":\"yellow\"}}";
-// TODO : Needs to be changed to retrieve current status of led and return that in response
-const char rspPutLed[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"off\",\"color\":\"off\"}}";
-const char rspFailureLed[] = "{\"href\":\"/a/led\",\"rep\":{\"error\":\"LED_OP_FAIL\"}}";
+const char rspGetLightDefault[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"false\",\"color\":\"0\"}}";
+const char rspGetLightCollection[] = "{\"href\":\"/a/light\"}";
+// TODO : Needs to be changed to retrieve current status of light and return that in response
+const char rspPutLightDefault[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"true\",\"color\":\"0\"}}";
+const char rspPutLightCollection[] = "{\"href\":\"/a/light\"}";
+const char rspFailureLight[] = "{\"href\":\"/a/light\",\"rep\":{\"error\":\"LIGHT_OP_FAIL\"}}";
 
 
 // TODO : hard coded for now, change after Sprint4
-const char rspGetFan[] = "{\"href\":\"/a/fan\",\"rep\":{\"state\":\"on\",\"speed\":10}}";
+const char rspGetFanDefault[] = "{\"href\":\"/a/fan\",\"rep\":{\"state\":\"true\",\"speed\":10}}";
+const char rspGetFanCollection[] = "{\"href\":\"/a/fan\"}";
 // TODO : Needs to be changed to retrieve current status of fan and return that in response
-const char rspPutFan[] = "{\"href\":\"/a/fan\",\"rep\":{\"state\":\"off\",\"speed\":0}}";
+const char rspPutFanDefault[] = "{\"href\":\"/a/fan\",\"rep\":{\"state\":\"false\",\"speed\":0}}";
+const char rspPutFanCollection[] = "{\"href\":\"/a/fan\"}";
 const char rspFailureFan[] = "{\"href\":\"/a/fan\",\"rep\":{\"error\":\"FAN_OP_FAIL\"}}";
 
 static OCEntityHandlerResult
@@ -63,11 +76,11 @@ HandleCallback(OCEntityHandlerRequest * ehRequest, const char* opStr, const char
 
     if (strlen(opStr) < ehRequest->resJSONPayloadLen)
     {
-        strncpy((char*)ehRequest->resJSONPayload, opStr, ehRequest->resJSONPayloadLen);
+        strncat((char*)ehRequest->resJSONPayload, opStr, ehRequest->resJSONPayloadLen);
     }
     else if (strlen(errStr) < ehRequest->resJSONPayloadLen)
     {
-        strncpy((char*)ehRequest->resJSONPayload, errStr, ehRequest->resJSONPayloadLen);
+        strncat((char*)ehRequest->resJSONPayload, errStr, ehRequest->resJSONPayloadLen);
         ret = OC_EH_ERROR;
     }
     else
@@ -102,26 +115,135 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
              (ehRequest->method == OC_REST_GET) ? "OC_REST_GET" : "OC_REST_PUT" );
 }
 
-OCEntityHandlerResult OCEntityHandlerLedCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehRequest ) {
+OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,\
+        OCEntityHandlerRequest * ehRequest )
+{
     OCEntityHandlerResult ret = OC_EH_OK;
 
-    OC_LOG_V(INFO, TAG, "Callback for Led");
+    OC_LOG_V(INFO, TAG, "Callback for Room");
+    PrintReceivedMsgInfo(flag, ehRequest );
+
+    if(ehRequest && flag == OC_REQUEST_FLAG )
+    {
+        std::string query = (const char*)ehRequest->query;
+
+        if(OC_REST_GET == ehRequest->method)
+        {
+            if(query.find("oc.mi.def") != std::string::npos)
+            {
+                ret = HandleCallback(ehRequest, rspGetRoomDefault, rspFailureRoom);
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspGetLightCollection, rspFailureLight);
+                }
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspGetFanCollection, rspFailureFan);
+                }
+            }
+            else if(query.find("oc.mi.ll") != std::string::npos)
+            {
+                ret = HandleCallback(ehRequest, rspGetRoomCollection, rspFailureRoom);
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspGetLightCollection, rspFailureLight);
+                }
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspGetFanCollection, rspFailureFan);
+                }
+            }
+            else if(query.find("oc.mi.b") != std::string::npos)
+            {
+                ret = HandleCallback(ehRequest, rspGetRoomCollection, rspFailureRoom);
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspGetLightDefault, rspFailureLight);
+                }
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspGetFanDefault, rspFailureFan);
+                }
+            }
+        }
+        if(OC_REST_PUT == ehRequest->method)
+        {
+            if(query.find("oc.mi.def") != std::string::npos)
+            {
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, rspPutRoomDefault, rspFailureRoom);
+                }
+            }
+            if(query.find("oc.mi.ll") != std::string::npos)
+            {
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, rspPutRoomCollection, rspFailureRoom);
+                }
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspPutLightCollection, rspFailureLight);
+                }
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspPutFanCollection, rspFailureFan);
+                }
+            }
+            if(query.find("oc.mi.b") != std::string::npos)
+            {
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, rspPutRoomCollection, rspFailureRoom);
+                }
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspPutLightDefault, rspFailureLight);
+                }
+                if(ret != OC_EH_ERROR)
+                {
+                    ret = HandleCallback(ehRequest, ",", ",");
+                    ret = HandleCallback(ehRequest, rspPutFanDefault, rspFailureFan);
+                }
+            }
+        }
+    }
+    else if (ehRequest && flag == OC_OBSERVE_FLAG)
+    {
+        gLightUnderObservation = 1;
+    }
+    return ret;
+}
+
+OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehRequest ) {
+    OCEntityHandlerResult ret = OC_EH_OK;
+
+    OC_LOG_V(INFO, TAG, "Callback for Light");
     PrintReceivedMsgInfo(flag, ehRequest );
 
     if(ehRequest && flag == OC_REQUEST_FLAG)
     {
         if(OC_REST_GET == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspGetLed, rspFailureLed);
+            ret = HandleCallback(ehRequest, rspGetLightDefault, rspFailureLight);
         }
         if(OC_REST_PUT == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspPutLed, rspFailureLed);
+            ret = HandleCallback(ehRequest, rspPutLightDefault, rspFailureLight);
         }
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
     {
-        gLEDUnderObservation = 1;
+        gLightUnderObservation = 1;
     }
 
     return ret;
@@ -137,16 +259,16 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag, OCEntityHan
     {
         if(OC_REST_GET == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspGetFan, rspFailureFan);
+            ret = HandleCallback(ehRequest, rspGetFanDefault, rspFailureFan);
         }
         if(OC_REST_PUT == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspPutFan, rspFailureFan);
+            ret = HandleCallback(ehRequest, rspPutFanDefault, rspFailureFan);
         }
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
     {
-        gLEDUnderObservation = 1;
+        gLightUnderObservation = 1;
     }
 
     return ret;
@@ -159,7 +281,7 @@ void handleSigInt(int signum) {
     }
 }
 
-void *ChangeLEDRepresentation (void *param)
+void *ChangeLightRepresentation (void *param)
 {
     (void)param;
     OCStackResult result = OC_STACK_ERROR;
@@ -167,14 +289,14 @@ void *ChangeLEDRepresentation (void *param)
     while (1)
     {
         sleep(10);
-        LED.power += 5;
-        if (gLEDUnderObservation)
+        light.power += 5;
+        if (gLightUnderObservation)
         {
-     OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", LED.power);
-            result = OCNotifyAllObservers (LED.handle, OC_NA_QOS);
+     OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", light.power);
+            result = OCNotifyAllObservers (light.handle, OC_NA_QOS);
             if (OC_STACK_NO_OBSERVERS == result)
             {
-                gLEDUnderObservation = 0;
+                gLightUnderObservation = 0;
             }
         }
     }
@@ -186,7 +308,7 @@ int main() {
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
     uint8_t addr[20] = {0};
     uint8_t* paddr = NULL;
-    uint16_t port = 5683;
+    uint16_t port = 0;
     uint8_t ifname[] = "eth0";
     pthread_t threadId;
 
@@ -205,14 +327,14 @@ int main() {
     }
 
     /*
-     * Declare and create the example resource: LED
+     * Declare and create the example resource: light
      */
     createResources();
 
     /*
-     * Create a thread for changing the representation of the LED
+     * Create a thread for changing the representation of the light
      */
-    pthread_create (&threadId, NULL, ChangeLEDRepresentation, (void *)NULL);
+    pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
 
     // Break from loop with Ctrl-C
     OC_LOG(INFO, TAG, "Entering ocserver main loop...");
@@ -226,7 +348,7 @@ int main() {
     }
 
     /*
-     * Cancel the LED thread and wait for it to terminate
+     * Cancel the light thread and wait for it to terminate
      */
     pthread_cancel(threadId);
     pthread_join(threadId, NULL);
@@ -240,33 +362,36 @@ int main() {
     return 0;
 }
 void createResources() {
-    LED.state = false;
-    OCResourceHandle room;
-    OCStackResult res = OCCreateResource(&room,
-            "core.sroom",
-            "oc.mi.ll",
-            "/a/sroom",
-            NULL,
-            OC_DISCOVERABLE);
-    OC_LOG_V(INFO, TAG, "Created room resource with result: %s", getResult(res));
-
-    OCResourceHandle light;
-    res = OCCreateResource(&light,
-            "core.light",
-            "oc.mi.def",
-            "/a/led",
-            OCEntityHandlerLedCb,
-            OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created light resource with result: %s", getResult(res));
+    light.state = false;
 
     OCResourceHandle fan;
-    res = OCCreateResource(&fan,
+    OCStackResult res = OCCreateResource(&fan,
             "core.fan",
             "oc.mi.def",
             "/a/fan",
             OCEntityHandlerFanCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created fan resource with result: %s", getResult(res));
+
+    OCResourceHandle light;
+    res = OCCreateResource(&light,
+            "core.light",
+            "oc.mi.def",
+            "/a/light",
+            OCEntityHandlerLightCb,
+            OC_DISCOVERABLE|OC_OBSERVABLE);
+    OC_LOG_V(INFO, TAG, "Created light resource with result: %s", getResult(res));
+
+    OCResourceHandle room;
+    res = OCCreateResource(&room,
+            "core.room",
+            "oc.mi.b",
+            "/a/room",
+            OCEntityHandlerRoomCb,
+            OC_DISCOVERABLE);
+    OC_LOG_V(INFO, TAG, "Created room resource with result: %s", getResult(res));
+    OCBindResourceInterfaceToResource(room, "oc.mi.ll");
+    OCBindResourceInterfaceToResource(room, "oc.mi.def");
 
     res = OCBindResource(room, light);
     OC_LOG_V(INFO, TAG, "OC Bind Contained Resource to resource: %s", getResult(res));

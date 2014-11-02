@@ -38,10 +38,41 @@ std::string getQueryStrForGetPut(unsigned  const char * responsePayload);
 #define MAX_LENGTH_IPv4_ADDR 16
 #endif
 
-#define MAX_TEST_CASES 5
+typedef enum {
+    TEST_INVALID = 0,
+    TEST_GET_DEFAULT,
+    TEST_GET_BATCH,
+    TEST_GET_LINK_LIST,
+    TEST_PUT_DEFAULT,
+    TEST_PUT_BATCH,
+    TEST_PUT_LINK_LIST,
+    TEST_UNKNOWN_RESOURCE_GET_DEFAULT,
+    TEST_UNKNOWN_RESOURCE_GET_BATCH,
+    TEST_UNKNOWN_RESOURCE_GET_LINK_LIST,
+    MAX_TESTS
+} CLIENT_TEST;
 
-static int UNICAST_DISCOVERY = 0;
-static int TEST_CASE = 0;
+unsigned static int TEST = TEST_INVALID;
+
+typedef struct
+{
+    unsigned char text[30];
+    CLIENT_TEST test;
+} testToTextMap;
+
+testToTextMap queryInterface[] = {
+        {"invalid", TEST_INVALID},
+        {"?if=oc.mi.def", TEST_GET_DEFAULT},
+        {"?if=oc.mi.b", TEST_GET_BATCH},
+        {"?if=oc.mi.ll", TEST_GET_LINK_LIST},
+        {"?if=oc.mi.def", TEST_UNKNOWN_RESOURCE_GET_DEFAULT},
+        {"?if=oc.mi.b", TEST_UNKNOWN_RESOURCE_GET_BATCH},
+        {"?if=oc.mi.ll", TEST_UNKNOWN_RESOURCE_GET_LINK_LIST},
+        {"?if=oc.mi.def", TEST_PUT_DEFAULT},
+        {"?if=oc.mi.b", TEST_PUT_BATCH},
+        {"?if=oc.mi.ll", TEST_PUT_LINK_LIST},
+};
+
 static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
 
 // The handle for the observe registration
@@ -67,12 +98,25 @@ int InitDiscovery();
 
 void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient <Unicast Discovery> <Test Case>");
-    OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources");
-    OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources and Initiate Get Request");
-    OC_LOG(INFO, TAG, "Test Case 3 : Discover Resources and Initiate Get/Put Requests");
-    OC_LOG(INFO, TAG, "Test Case 4 : Discover Resources and Initiate Observe Requests");
-    OC_LOG(INFO, TAG, "Test Case 5 : Discover Resources and Initiate Get Request for a resource which is unavailable");
+    OC_LOG(INFO, TAG, "Usage : occlient -t <Test Case>");
+    OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an"\
+            "available resource using default interface.");
+    OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an"\
+                 "available resource using batch interface.");
+    OC_LOG(INFO, TAG, "Test Case 3 : Discover Resources && Initiate GET Request on an"\
+                 "available resource using link list interface.");
+    OC_LOG(INFO, TAG, "Test Case 4 : Discover Resources && Initiate GET & PUT Request on an"\
+                 "available resource using default interface.");
+    OC_LOG(INFO, TAG, "Test Case 5 : Discover Resources && Initiate GET & PUT Request on an"\
+                 "available resource using batch interface.");
+    OC_LOG(INFO, TAG, "Test Case 6 : Discover Resources && Initiate GET & PUT Request on an"\
+                 "available resource using link list interface.");
+    OC_LOG(INFO, TAG, "Test Case 7 : Discover Resources && Initiate GET Request on an"\
+                 "unavailable resource using default interface.");
+    OC_LOG(INFO, TAG, "Test Case 8 : Discover Resources && Initiate GET Request on an"\
+                 "unavailable resource using batch interface.");
+    OC_LOG(INFO, TAG, "Test Case 9 : Discover Resources && Initiate GET Request on an"\
+                 "unavailable resource using link list interface.");
 }
 
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
@@ -106,7 +150,10 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             }
         }
     }
-    InitPutRequest(clientResponse);
+    if(TEST == TEST_PUT_DEFAULT || TEST == TEST_PUT_BATCH || TEST == TEST_PUT_LINK_LIST)
+    {
+        InitPutRequest(clientResponse);
+    }
     return OC_STACK_KEEP_TRANSACTION;
 }
 
@@ -136,8 +183,15 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
 #endif
 
-    InitGetRequest(clientResponse);
-
+    if(TEST == TEST_UNKNOWN_RESOURCE_GET_DEFAULT || TEST == TEST_UNKNOWN_RESOURCE_GET_BATCH ||\
+            TEST == TEST_UNKNOWN_RESOURCE_GET_LINK_LIST)
+    {
+        InitGetRequestToUnavailableResource(clientResponse);
+    }
+    else
+    {
+        InitGetRequest(clientResponse);
+    }
     return OC_STACK_KEEP_TRANSACTION;
 }
 
@@ -173,7 +227,7 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     cbData.cb = getReqCB;
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
-    OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
+    OC_LOG_V(INFO, TAG, "OBSERVE payload from client = %s ", putPayload.c_str());
 
     ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_LOW_QOS,
             &cbData, NULL, 0);
@@ -197,7 +251,7 @@ int InitPutRequest(OCClientResponse * clientResponse)
     //* Make a PUT query*/
     std::ostringstream getQuery;
     getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) <<
-    "/a/sroom?if=oc.mi.b";
+    "/a/room" << queryInterface[TEST].text;
     cbData.cb = putReqCB;
     cbData.context = (void*)CTX_VAL;
     cbData.cd = NULL;
@@ -229,9 +283,7 @@ int InitGetRequest(OCClientResponse * clientResponse)
     //* Make a GET query*/
     std::ostringstream getQuery;
     getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) <<
-    //"/a/sroom?if=oc.mi.def";
-    //"/a/sroom?if=oc.mi.ll";
-    "/a/sroom?if=oc.mi.b";
+    "/a/room" << queryInterface[TEST].text;
 
     std::cout << "Get Query: " << getQuery.str() << std::endl;
 
@@ -247,7 +299,6 @@ int InitGetRequest(OCClientResponse * clientResponse)
     return ret;
 }
 
-#define TEST_APP_UNICAST_DISCOVERY_QUERY                  PCF("coap://0.0.0.0:5683/oc/core")
 int InitDiscovery()
 {
     OCStackResult ret;
@@ -256,8 +307,7 @@ int InitDiscovery()
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
 
-    //strcpy(szQueryUri, "coap://224.0.1.187:5683/oc/core");//?rt=core.sroom");
-    strcpy(szQueryUri, "coap://0.0.0.0:5683/oc/core");
+    strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)CTX_VAL;
@@ -272,6 +322,20 @@ int InitDiscovery()
 }
 
 int main(int argc, char* argv[]) {
+    if(argc >= 2 && strcmp(argv[1], "-t") == 0)
+    {
+        TEST = atoi(argv[2]);
+        if(TEST >= MAX_TESTS || TEST < 1)
+        {
+            PrintUsage();
+            return 0;
+        }
+    }
+    else
+    {
+        PrintUsage();
+        return 0;
+    }
     uint8_t addr[20] = {0};
     uint8_t* paddr = NULL;
     uint16_t port = USE_RANDOM_PORT;
@@ -342,5 +406,5 @@ std::string getQueryStrForGetPut(unsigned  const char * responsePayload){
 
     std::string jsonPayload(reinterpret_cast<char*>(const_cast<unsigned char*>(responsePayload)));
 
-    return "/a/sroom";
+    return "/a/room";
 }
