@@ -396,6 +396,9 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerR
 
         entityHandlerRequestLoc->obsInfo = NULL;
         entityHandlerRequestLoc->newResourceUri = newResUriBuf;
+
+        entityHandlerRequestLoc->numRcvdVendorSpecificHeaderOptions = 0;
+        entityHandlerRequestLoc->numSendVendorSpecificHeaderOptions = 0;
         return OC_STACK_OK;
     }
 
