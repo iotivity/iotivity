@@ -189,24 +189,24 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t *sockfd)
         goto exit;
     }
 
-    if ((ret = setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (char*) &set_option_on,
-                sizeof(set_option_on))) < 0) {
-        OC_LOG(FATAL, MOD_NAME, "setsockopt API failed");
+    if (ret = setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (char*) &set_option_on,
+                sizeof(set_option_on)) < 0) {
+        OC_LOG_V(FATAL, MOD_NAME, "setsockopt API failed with errno %s",
+                strerror(errno));
         goto exit;
     }
 
-    if (bind(sfd, (struct sockaddr*)ipAddr->addr, ipAddr->size) < 0) {
+    if (ret = bind(sfd, (struct sockaddr*)ipAddr->addr, ipAddr->size) < 0) {
         OC_LOG_V(FATAL, MOD_NAME, "bind API failed with errno %s", strerror(errno));
         goto exit;
     }
 
+    *sockfd = sfd;
     ret = ERR_SUCCESS;
 
 exit:
     if ((ret != ERR_SUCCESS) && (sfd >= 0)) {
         close(sfd);
-    } else {
-        *sockfd = sfd;
     }
 
     OC_LOG_V(DEBUG, MOD_NAME, "%s End", __func__ );
