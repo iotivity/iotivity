@@ -228,6 +228,6 @@ int main()
     };
 
     OCPlatform::Configure(cfg);
-    ClientFridge cf ();
+    ClientFridge cf;
     return 0;
 }

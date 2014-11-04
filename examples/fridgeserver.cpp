@@ -432,7 +432,7 @@ int main ()
     };
 
     OCPlatform::Configure(cfg);
-    Refrigerator rf();
+    Refrigerator rf;
 
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));
