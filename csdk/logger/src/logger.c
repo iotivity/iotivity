@@ -59,7 +59,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 #endif // __ANDROID__
 
 
-#if defined(__ANDROID__) || defined(__linux__)
+#ifndef ARDUINO
 
 void OCLogConfig(oc_log_ctx_t *ctx) {
     logCtx = ctx;
@@ -160,11 +160,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
     }
 }
 
-#endif
-
-
-
-#ifdef ARDUINO
+#else
     /**
      * Initialize the serial logger for Arduino
      * Only defined for Arduino
