@@ -41,7 +41,6 @@
 #include "mem.h"
 #include "str.h"
 #include "async.h"
-#include "resource.h"
 #include "option.h"
 #include "encode.h"
 #include "block.h"
@@ -140,12 +139,6 @@ static void received_package(void *arg, struct udp_pcb *upcb, struct pbuf *p, ip
 }
 
 #endif /* WITH_LWIP */
-
-int print_wellknown(coap_context_t *, unsigned char *, size_t *, size_t,
-        coap_opt_t *);
-
-void coap_handle_failed_notify(coap_context_t *, const coap_address_t *,
-        const str *);
 
 unsigned int coap_adjust_basetime(coap_context_t *ctx, coap_tick_t now) {
     unsigned int result = 0;
@@ -403,12 +396,6 @@ coap_new_context(const coap_address_t *listen_addr) {
 }
 
 void coap_free_context(coap_context_t *context) {
-#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO)
-    coap_resource_t *res;
-#ifndef COAP_RESOURCES_NOHASH
-    coap_resource_t *rtmp;
-#endif
-#endif /* WITH_POSIX || WITH_LWIP || WITH_ARDUINO */
     if (!context)
         return;
 
@@ -419,16 +406,6 @@ void coap_free_context(coap_context_t *context) {
     context->sendqueue = NULL;
     coap_retransmittimer_restart(context);
 #endif
-
-#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO)
-#ifdef COAP_RESOURCES_NOHASH
-    LL_FOREACH(context->resources, res) {
-#else
-        HASH_ITER(hh, context->resources, res, rtmp) {
-#endif
-            coap_delete_resource(context, res->key);
-        }
-#endif /* WITH_POSIX || WITH_LWIP || WITH_ARDUINO */
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     /* coap_delete_list(context->subscriptions); */
@@ -807,19 +784,6 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
     debug("** removed transaction %d\n", ntohs(node->id));
 #endif
 
-#ifndef WITHOUT_OBSERVE
-    /* Check if subscriptions exist that should be canceled after
-     COAP_MAX_NOTIFY_FAILURES */
-    if (node->pdu->hdr->code >= 64) {
-        str token = { 0, NULL };
-
-        token.length = node->pdu->hdr->token_length;
-        token.s = node->pdu->hdr->token;
-
-        coap_handle_failed_notify(context, &node->remote, &token);
-    }
-#endif /* WITHOUT_OBSERVE */
-
     // deletion of node will happen in ocoap since we still need the info node has
     return COAP_INVALID_TID;
 }
@@ -1159,144 +1123,8 @@ coap_new_error_response(coap_pdu_t *request, unsigned char code,
     return response;
 }
 
-/**
- * Quick hack to determine the size of the resource description for
- * .well-known/core.
- */
-static inline size_t get_wkc_len(coap_context_t *context,
-        coap_opt_t *query_filter) {
-    unsigned char buf[1];
-    size_t len = 0;
-
-    if (print_wellknown(context, buf, &len, UINT_MAX,
-            query_filter) & COAP_PRINT_STATUS_ERROR) {
-        warn("cannot determine length of /.well-known/core\n");
-        return 0;
-    }
-
-    debug("get_wkc_len: print_wellknown() returned %zu\n", len);
-
-    return len;
-}
 
 #define SZX_TO_BYTES(SZX) ((size_t)(1 << ((SZX) + 4)))
-
-coap_pdu_t *
-wellknown_response(coap_context_t *context, coap_pdu_t *request) {
-    coap_pdu_t *resp;
-    coap_opt_iterator_t opt_iter;
-    size_t len, wkc_len;
-    unsigned char buf[2];
-    int result = 0;
-    int need_block2 = 0; /* set to 1 if Block2 option is required */
-    coap_block_t block;
-    coap_opt_t *query_filter;
-    size_t offset = 0;
-
-    resp = coap_pdu_init(
-            request->hdr->type == COAP_MESSAGE_CON ?
-                    COAP_MESSAGE_ACK : COAP_MESSAGE_NON,
-            COAP_RESPONSE_CODE(205), request->hdr->id, COAP_MAX_PDU_SIZE);
-    if (!resp) {
-        debug("wellknown_response: cannot create PDU\n");
-        return NULL;
-    }
-
-    if (!coap_add_token(resp, request->hdr->token_length,
-            request->hdr->token)) {
-        debug("wellknown_response: cannot add token\n");
-        goto error;
-    }
-
-    query_filter = coap_check_option(request, COAP_OPTION_URI_QUERY, &opt_iter);
-    wkc_len = get_wkc_len(context, query_filter);
-
-    /* check whether the request contains the Block2 option */
-    if (coap_get_block(request, COAP_OPTION_BLOCK2, &block)) {
-        offset = block.num << (block.szx + 4);
-        if (block.szx > 6) { /* invalid, MUST lead to 4.00 Bad Request */
-            resp->hdr->code = COAP_RESPONSE_CODE(400);
-            return resp;
-        } else if (block.szx > COAP_MAX_BLOCK_SZX) {
-            block.szx = COAP_MAX_BLOCK_SZX;
-            block.num = offset >> (block.szx + 4);
-        }
-
-        need_block2 = 1;
-    }
-
-    /* Check if there is sufficient space to add Content-Format option
-     * and data. We do this before adding the Content-Format option to
-     * avoid sending error responses with that option but no actual
-     * content. */
-    if (resp->max_size <= (size_t) resp->length + 3) {
-        debug("wellknown_response: insufficient storage space\n");
-        goto error;
-    }
-
-    /* Add Content-Format. As we have checked for available storage,
-     * nothing should go wrong here. */
-    assert(
-            coap_encode_var_bytes(buf, COAP_MEDIATYPE_APPLICATION_LINK_FORMAT)
-                    == 1);
-    coap_add_option(resp, COAP_OPTION_CONTENT_FORMAT,
-            coap_encode_var_bytes(buf, COAP_MEDIATYPE_APPLICATION_LINK_FORMAT),
-            buf);
-
-    /* check if Block2 option is required even if not requested */
-    if (!need_block2 && (resp->max_size - (size_t) resp->length < wkc_len)) {
-        assert(resp->length <= resp->max_size);
-        const size_t payloadlen = resp->max_size - resp->length;
-        /* yes, need block-wise transfer */
-        block.num = 0;
-        block.m = 0; /* the M bit is set by coap_write_block_opt() */
-        block.szx = COAP_MAX_BLOCK_SZX;
-        while (payloadlen < SZX_TO_BYTES(block.szx)) {
-            if (block.szx == 0) {
-                debug(
-                        "wellknown_response: message to small even for szx == 0\n");
-                goto error;
-            } else {
-                block.szx--;
-            }
-        }
-
-        need_block2 = 1;
-    }
-
-    /* write Block2 option if necessary */
-    if (need_block2) {
-        if (coap_write_block_opt(&block, COAP_OPTION_BLOCK2, resp, wkc_len)
-                < 0) {
-            debug("wellknown_response: cannot add Block2 option\n");
-            goto error;
-        }
-    }
-
-    /* Manually set payload of response to let print_wellknown() write,
-     * into our buffer without copying data. */
-
-    resp->data = (unsigned char *) resp->hdr + resp->length;
-    *resp->data = COAP_PAYLOAD_START;
-    resp->data++;
-    resp->length++;
-    len = need_block2 ? SZX_TO_BYTES(block.szx) : resp->max_size - resp->length;
-
-    result = print_wellknown(context, resp->data, &len, offset, query_filter);
-    if ((result & COAP_PRINT_STATUS_ERROR) != 0) {
-        debug("print_wellknown failed\n");
-        goto error;
-    }
-
-    resp->length += COAP_PRINT_OUTPUT_LENGTH(result);
-    return resp;
-
-    error:
-    /* set error code 5.03 and remove all options and data from response */
-    resp->hdr->code = COAP_RESPONSE_CODE(503);
-    resp->length = sizeof(coap_hdr_t) + resp->hdr->token_length;
-    return resp;
-}
 
 #define WANT_WKC(Pdu,Key)                   \
   (((Pdu)->hdr->code == COAP_REQUEST_GET) && is_wkc(Key))
@@ -1446,49 +1274,6 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
 #endif /* GCC */
         /* this function can be used to check if node->pdu is really for us */
         return 1;
-    }
-
-    /**
-     * This function handles RST messages received for the message passed
-     * in @p sent.
-     */
-    static void coap_handle_rst(coap_context_t *context,
-            const coap_queue_t *sent) {
-#ifndef WITHOUT_OBSERVE
-        coap_resource_t *r;
-#ifndef COAP_RESOURCES_NOHASH
-        coap_resource_t *tmp;
-#endif
-        str token = { 0, NULL };
-
-        /* remove observer for this resource, if any
-         * get token from sent and try to find a matching resource. Uh!
-         */
-
-        COAP_SET_STR(&token, sent->pdu->hdr->token_length,
-                sent->pdu->hdr->token);
-
-#ifndef WITH_CONTIKI
-#ifdef COAP_RESOURCES_NOHASH
-        LL_FOREACH(context->resources, r) {
-#else
-        HASH_ITER(hh, context->resources, r, tmp)
-        {
-#endif
-            coap_delete_observer(r, &sent->remote, &token);
-            coap_cancel_all_messages(context, &sent->remote, token.s,
-                    token.length);
-        }
-#else /* WITH_CONTIKI */
-        r = (coap_resource_t *)resource_storage.mem;
-        for (i = 0; i < resource_storage.num; ++i, ++r) {
-            if (resource_storage.count[i]) {
-                coap_delete_observer(r, &sent->remote, &token);
-                coap_cancel_all_messages(context, &sent->remote, token.s, token.length);
-            }
-        }
-#endif /* WITH_CONTIKI */
-#endif /* WITOUT_OBSERVE */
     }
 
     void coap_dispatch(coap_context_t *context) {

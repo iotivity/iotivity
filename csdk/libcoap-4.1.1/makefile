@@ -97,7 +97,7 @@ CC_FLAGS.debug := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-excepti
 -DTB_LOG
 CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions
 
-SOURCES+= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
+SOURCES+= pdu.c net.c debug.c encode.c uri.c coap_list.c hashkey.c \
           str.c option.c async.c subscribe.c block.c logger.c ocrandom.c ocmalloc.c  oc_logger.c oc_console_logger.c
 VPATH += $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/src:$(OC_LOG_DIR)/c
 
