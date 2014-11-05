@@ -144,6 +144,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     uint8_t * rcvObserveOption = NULL;
     unsigned char * bufReqPayload = NULL;
     uint32_t observeOption = OC_RESOURCE_NO_OBSERVE;
+    coap_send_flags_t sendFlag;
     memset(&entityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
 
     coap_pdu_t * recvPdu = rcvdRequest->pdu;
@@ -184,7 +185,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
             }
         default:
             {
-                OC_LOG_V(ERROR, TAG, "Received CoAP method %d not supported", 
+                OC_LOG_V(ERROR, TAG, "Received CoAP method %d not supported",
                          recvPdu->hdr->code);
                 goto exit;
             }
@@ -278,7 +279,11 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     VERIFY_NON_NULL(sendPdu);
     coap_show_pdu(sendPdu);
 
-    if(SendCoAPPdu(gCoAPCtx, (coap_address_t*) &(rcvdRequest->remote), sendPdu, rcvdRequest->delayedResponse)
+    sendFlag = (coap_send_flags_t)(rcvdRequest->delayedResponse ? SEND_DELAYED : 0);
+    sendFlag = (coap_send_flags_t)( sendFlag | (rcvdRequest->secure ? SEND_SECURE_PORT : 0));
+
+    if(SendCoAPPdu(gCoAPCtx, (coap_address_t*) &(rcvdRequest->remote), sendPdu,
+         sendFlag)
             != OC_STACK_OK){
         OC_LOG(DEBUG, TAG, PCF("A problem occurred in sending a pdu"));
     }
@@ -404,7 +409,8 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                         recvPdu->hdr->id, NULL, NULL, NULL);
                 VERIFY_NON_NULL(sendPdu);
                 result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote,
-                        sendPdu, 0);
+                        sendPdu,
+                        (coap_send_flags_t)(rcvdResponse->secure ? SEND_SECURE_PORT : 0));
             }
             //TODO: check the standard for methods to detect wrap around condition
             if(cbNode->method == OC_REST_OBSERVE &&
@@ -481,7 +487,8 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         sendPdu = GenerateCoAPPdu(COAP_MESSAGE_RST, 0,
                 recvPdu->hdr->id, NULL, NULL, NULL);
         VERIFY_NON_NULL(sendPdu);
-        result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote, sendPdu, 0);
+        result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote, sendPdu,
+                     (coap_send_flags_t)(rcvdResponse->secure ? SEND_SECURE_PORT : 0));
         VERIFY_SUCCESS(result, OC_STACK_OK);
     }
     #ifdef WITH_PRESENCE
@@ -498,7 +505,8 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         sendPdu = GenerateCoAPPdu(COAP_MESSAGE_RST, 0,
                 recvPdu->hdr->id, NULL, NULL, NULL);
         VERIFY_NON_NULL(sendPdu);
-        result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote, sendPdu, 0);
+        result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote, sendPdu,
+                    (coap_send_flags_t)(rcvdResponse->secure ? SEND_SECURE_PORT : 0));
         VERIFY_SUCCESS(result, OC_STACK_OK);
     }
     exit:
@@ -609,6 +617,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
     uint8_t coapMsgType;
     uint8_t coapMethod;
     uint32_t observeOption;
+    coap_send_flags_t flag = (coap_send_flags_t)0;
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoCoAPResource"));
 
@@ -628,6 +637,8 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
                 (uint16_t*)&uri.port, uri.path.length, uri.path.s, uri.query.length,
                 uri.query.s, options, numOptions), OC_STACK_OK);
 
+        //TODO : Investigate the scenario where there will be no uri for OCDoCoAPResource
+        //flag = (coap_send_flags_t) (uri.secure ? SEND_SECURE_PORT : 0);
         OC_LOG_V(DEBUG, TAG, "uri.host.s %s", uri.host.s);
         OC_LOG_V(DEBUG, TAG, "uri.path.s %s", uri.path.s);
         OC_LOG_V(DEBUG, TAG, "uri.port %d", uri.port);
@@ -674,7 +685,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
             (unsigned char*) payload, optList);
     VERIFY_NON_NULL(pdu);
 
-    ret = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &dst, pdu, 0);
+    ret = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &dst, pdu, flag);
 
 exit:
     if (ret!= OC_STACK_OK)
@@ -726,8 +737,10 @@ OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr,
     VERIFY_NON_NULL(sendPdu);
     coap_show_pdu(sendPdu);
 
-    if(SendCoAPPdu(gCoAPCtx, (coap_address_t*) dstAddr, sendPdu, 0)
-            != OC_STACK_OK){
+    // TODO : resourceProperties will determine if the packet will be send using secure port
+    if(SendCoAPPdu(gCoAPCtx, (coap_address_t*) dstAddr, sendPdu , (coap_send_flags_t)0 )
+            != OC_STACK_OK)
+    {
         OC_LOG(DEBUG, TAG, PCF("A problem occurred in sending a pdu"));
     }
     return OC_STACK_OK;

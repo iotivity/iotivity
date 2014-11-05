@@ -50,10 +50,13 @@ extern "C" {
 #include "pdu.h"
 #include "coap_time.h"
 
-#define SEND_NOW        (1) /*Flag used when sending non-confirmable, ACK and RESET coap pdus*/
-#define SEND_NOW_CON    (2) /*Flag used when sending confirmable coap pdu*/
-#define SEND_DELAYED    (3) /*Flag used to delay the transmission of coap pdu*/
-#define SEND_RETX       (4) /*Flag used to retransmit a confirmable pdu*/
+typedef enum {
+    SEND_NOW            = (1 << 0), /*Flag used when sending non-confirmable, ACK and RESET coap pdus*/
+    SEND_NOW_CON        = (1 << 1), /*Flag used when sending confirmable coap pdu*/
+    SEND_DELAYED        = (1 << 2), /*Flag used to delay the transmission of coap pdu*/
+    SEND_RETX           = (1 << 3), /*Flag used to retransmit a confirmable pdu*/
+    SEND_SECURE_PORT    = (1 << 4) /*Flag used to indicate that PDU needs to be transmitted on secure port */
+} coap_send_flags_t;
 
 struct coap_queue_t;
 
@@ -71,6 +74,7 @@ typedef struct coap_queue_t {
   coap_pdu_t *pdu;      /**< the CoAP PDU to send */
 
   unsigned char delayedResponse;  /**< delayed response flag */
+  unsigned char secure;      /**< rx/tx will use secure channel (DTLS) */
 } coap_queue_t;
 
 /** Adds node to given queue, ordered by node->t. */
@@ -298,11 +302,13 @@ coap_pdu_t *coap_new_error_response(coap_pdu_t *request,
  * @param context The CoAP context to use.
  * @param dst     The address to send to.
  * @param pdu     The CoAP PDU to send.
- * @param flag    The flag indicating if the message will be sent with delay
+ * @param flag    The flag indicating how the message will be send
  * @return The message id of the sent message or @c COAP_INVALID_TID on error.
  */
 
-coap_tid_t coap_send(coap_context_t *context, const coap_address_t *dst, coap_pdu_t *pdu, const uint8_t flag);
+coap_tid_t coap_send(coap_context_t *context, const coap_address_t *dst,
+                 coap_pdu_t *pdu,
+                 coap_send_flags_t flag);
 
 /**
  * Sends an error response with code @p code for request @p request to
@@ -325,7 +331,8 @@ coap_tid_t coap_send_error(coap_context_t *context,
                coap_pdu_t *request,
                const coap_address_t *dst,
                unsigned char code,
-               coap_opt_filter_t opts);
+               coap_opt_filter_t opts,
+               coap_send_flags_t flag);
 
 /**
  * Helper funktion to create and send a message with @p type (usually
@@ -336,12 +343,14 @@ coap_tid_t coap_send_error(coap_context_t *context,
  * @param dst Where to send the context.
  * @param request The request that should be responded to.
  * @param type Which type to set
+ * @param flag options for sending the message
  * @return transaction id on success or @c COAP_INVALID_TID otherwise.
  */
 coap_tid_t
 coap_send_message_type(coap_context_t *context,
                const coap_address_t *dst,
                coap_pdu_t *request,
+               coap_send_flags_t flag,
                unsigned char type);
 /**
  * Sends an ACK message with code @c 0 for the specified @p request to
@@ -351,13 +360,15 @@ coap_send_message_type(coap_context_t *context,
  * @param context The context to use.
  * @param dst     The destination address.
  * @param request The request to be acknowledged.
+ * @param flag    Options for sending the acknowledgement.
  *
  * @return The transaction id if ACK was sent or @c COAP_INVALID_TID
  * on error.
  */
 coap_tid_t coap_send_ack(coap_context_t *context,
              const coap_address_t *dst,
-             coap_pdu_t *request);
+             coap_pdu_t *request,
+             coap_send_flags_t flag);
 
 /**
  * Sends an RST message with code @c 0 for the specified @p request to
@@ -367,6 +378,7 @@ coap_tid_t coap_send_ack(coap_context_t *context,
  * @param context The context to use.
  * @param dst     The destination address.
  * @param request The request to be reset.
+ * @param flag    Options for sending the reset message.
  *
  * @return The transaction id if RST was sent or @c COAP_INVALID_TID
  * on error.
@@ -374,8 +386,9 @@ coap_tid_t coap_send_ack(coap_context_t *context,
 static inline coap_tid_t
 coap_send_rst(coap_context_t *context,
           const coap_address_t *dst,
-          coap_pdu_t *request) {
-  return coap_send_message_type(context, dst, request, COAP_MESSAGE_RST);
+          coap_pdu_t *request,
+          coap_send_flags_t flag) {
+  return coap_send_message_type(context, dst, request, flag, COAP_MESSAGE_RST);
 }
 
 /** Handles retransmissions of confirmable messages */

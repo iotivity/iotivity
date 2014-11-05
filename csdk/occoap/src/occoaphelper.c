@@ -555,29 +555,18 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
 //Send a coap pdu
 OCStackResult
 SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
-        uint8_t delayFlag)
+        coap_send_flags_t flag)
 {
     coap_tid_t tid = COAP_INVALID_TID;
     OCStackResult res = OC_STACK_COMM_ERROR;
-    uint8_t sendFlag = SEND_NOW;
 
-    if(delayFlag)
+    if (!(flag & SEND_DELAYED))
     {
-        sendFlag = SEND_DELAYED;
-    }
-    else
-    {
-        if(pdu->hdr->type != COAP_MESSAGE_CON)
-        {
-            sendFlag = SEND_NOW;
-        }
-        else
-        {
-            sendFlag = SEND_NOW_CON;
-        }
+        flag = (coap_send_flags_t)( flag |
+            (pdu->hdr->type == COAP_MESSAGE_CON) ? SEND_NOW_CON : SEND_NOW);
     }
 
-    tid = coap_send(gCoAPCtx, dst, pdu, sendFlag);
+    tid = coap_send(gCoAPCtx, dst, pdu, flag);
     OC_LOG_V(INFO, TAG, "TID %d", tid);
     if(tid != COAP_INVALID_TID)
     {
@@ -586,7 +575,7 @@ SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
         res = OC_STACK_OK;
     }
 
-    if ((pdu->hdr->type != COAP_MESSAGE_CON && !delayFlag) || tid == COAP_INVALID_TID)
+    if ((pdu->hdr->type != COAP_MESSAGE_CON && (!(flag & SEND_DELAYED))) || tid == COAP_INVALID_TID)
     {
         OC_LOG(INFO, TAG, PCF("Deleting PDU"));
         coap_delete_pdu(pdu);
@@ -779,7 +768,8 @@ void HandleSendQueue(coap_context_t * ctx)
         {
             OC_LOG_V(DEBUG, TAG, "Sending Delayed response TID %d",
                     nextQueue->id);
-            if(SendCoAPPdu(ctx, &nextQueue->remote, nextQueue->pdu, 0)
+            if(SendCoAPPdu(ctx, &nextQueue->remote, nextQueue->pdu,
+                 (coap_send_flags_t)(nextQueue->secure ? SEND_SECURE_PORT : 0))
                     == OC_STACK_COMM_ERROR)
             {
                 OC_LOG(DEBUG, TAG, PCF("A problem occurred in sending a pdu"));
