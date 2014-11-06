@@ -64,7 +64,7 @@ pre_job:
 #	$(CXX) $(CXX_FLAGS) -o tgmserver $(IOT_BASE)/release/obj/OCLib.a  $(IOT_BASE)/csdk/release/liboctbstack.a  $(JSONLIB)/libjsoncpp.a $(CXX_SRCPATH) $(CXX_INC) -I$(JSON) -I$(JSONCPP) 
 
 tgmserver: ../../src/tgmserver.cpp
-	$(CXX) $(CXX_FLAGS) -o tgmserver ../../src/tgmserver.cpp  $(IOT_BASE)/build/linux/release/obj/liboc.a  $(IOT_BASE)/csdk/build/linux/release/liboctbstack.a  $(JSONLIB)/libjsoncpp.a  $(TGM_SRC) $(TGM_INC) $(CXX_INC) $(SQLITEINC) $(SQLITELIB)
+	$(CXX) $(CXX_FLAGS) -o tgmserver ../../src/tgmserver.cpp  $(IOT_BASE)/release/obj/liboc.a  $(IOT_BASE)/csdk/release/liboctbstack.a  $(JSONLIB)/libjsoncpp.a  $(TGM_SRC) $(TGM_INC) $(CXX_INC) $(SQLITEINC) $(SQLITELIB)
 	
 ${TARGET}: ${CXX_OBJLIST}
 	#$(CXX) $(LD_FLAGS) -o ./${RST_NAME}/$@ $^ ${LD_LIB}		// shared object.

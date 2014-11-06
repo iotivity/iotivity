@@ -10,7 +10,7 @@ APP_NAME := Bookmark
 
 OBJ_DIR := ./bin
 
-ROOT_DIR = ../../../../../oic-resource/csdk
+ROOT_DIR = ../../../../../resource/csdk
 LOGGER_DIR = $(ROOT_DIR)/logger
 TBSTACK_DIR = $(ROOT_DIR)/stack
 TBSOCKET_DIR = $(ROOT_DIR)/ocsocket
