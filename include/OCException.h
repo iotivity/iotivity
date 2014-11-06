@@ -22,7 +22,9 @@
  #define __INTEL_OCEXCEPTION_H_2014_07_10
 
 #include <stdexcept>
+#include <string>
 #include <ocstack.h>
+
 namespace OC {
 
 class OCException : public std::runtime_error

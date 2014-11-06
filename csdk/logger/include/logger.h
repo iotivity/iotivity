@@ -59,7 +59,7 @@ typedef enum {
 } LogLevel;
 
 
-#if defined(__ANDROID__) || defined(__linux__)
+#ifndef ARDUINO
 
     /**
      * Configure logger to use a context that defines a custom logger function
@@ -109,9 +109,7 @@ typedef enum {
      * @param bufferSize - max number of byte in buffer
      */
     void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize);
-#endif
-
-#ifdef ARDUINO
+#else
     /**
      * Initialize the serial logger for Arduino
      * Only defined for Arduino
