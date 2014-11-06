@@ -58,7 +58,7 @@ GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
 // Internal function to send a coap pdu, it also handles NON and CON
 OCStackResult
 SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
-        uint8_t delayFlag);
+        coap_send_flags_t flag);
 
 // Call back function used by libcoap to order option in coap pdu
 int OrderOptions(void *a, void *b);

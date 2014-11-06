@@ -511,7 +511,7 @@ void coap_transaction_id(const coap_address_t *peer, const coap_pdu_t *pdu,
 }
 
 coap_tid_t coap_send_ack(coap_context_t *context, const coap_address_t *dst,
-        coap_pdu_t *request) {
+        coap_pdu_t *request, coap_send_flags_t flag) {
     coap_pdu_t *response;
     coap_tid_t result = COAP_INVALID_TID;
 
@@ -519,7 +519,7 @@ coap_tid_t coap_send_ack(coap_context_t *context, const coap_address_t *dst,
         response = coap_pdu_init(COAP_MESSAGE_ACK, 0, request->hdr->id,
                 sizeof(coap_pdu_t));
         if (response) {
-            result = coap_send(context, dst, response, SEND_NOW);
+            result = coap_send(context, dst, response, flag);
             coap_delete_pdu(response);
         }
     }
@@ -623,7 +623,8 @@ coap_send_impl(coap_context_t *context,
 #endif /* WITH_LWIP */
 
 coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request,
-        const coap_address_t *dst, unsigned char code, coap_opt_filter_t opts) {
+        const coap_address_t *dst, unsigned char code, coap_opt_filter_t opts,
+        coap_send_flags_t flag) {
     coap_pdu_t *response;
     coap_tid_t result = COAP_INVALID_TID;
 
@@ -632,7 +633,7 @@ coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request,
 
     response = coap_new_error_response(request, code, opts);
     if (response) {
-        result = coap_send(context, dst, response, SEND_NOW);
+        result = coap_send(context, dst, response, flag);
         coap_delete_pdu(response);
     }
 
@@ -640,14 +641,15 @@ coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request,
 }
 
 coap_tid_t coap_send_message_type(coap_context_t *context,
-        const coap_address_t *dst, coap_pdu_t *request, unsigned char type) {
+        const coap_address_t *dst, coap_pdu_t *request,
+        coap_send_flags_t flag, unsigned char type) {
     coap_pdu_t *response;
     coap_tid_t result = COAP_INVALID_TID;
 
     if (request) {
         response = coap_pdu_init(type, 0, request->hdr->id, sizeof(coap_pdu_t));
         if (response) {
-            result = coap_send(context, dst, response, SEND_NOW);
+            result = coap_send(context, dst, response, flag);
             coap_delete_pdu(response);
         }
     }
@@ -655,7 +657,7 @@ coap_tid_t coap_send_message_type(coap_context_t *context,
 }
 
 coap_tid_t coap_send(coap_context_t *context,
-        const coap_address_t *dst, coap_pdu_t *pdu, const uint8_t flag)
+        const coap_address_t *dst, coap_pdu_t *pdu, coap_send_flags_t flag)
 {
     coap_queue_t *node = NULL;
     coap_tick_t now;
@@ -665,10 +667,10 @@ coap_tid_t coap_send(coap_context_t *context,
 
     if (!context)
         return COAP_INVALID_TID;
-    if(flag != SEND_RETX){
+    if(!(flag & SEND_RETX)){
         coap_transaction_id(dst, pdu, &tid);
     }
-    if(flag == SEND_NOW || flag == SEND_RETX)
+    if((flag & SEND_NOW) || (flag & SEND_RETX))
     {
         goto sending;
     }
@@ -681,8 +683,7 @@ coap_tid_t coap_send(coap_context_t *context,
 
     prng((unsigned char * )&r, sizeof(r));
     /* add randomized RESPONSE_TIMEOUT to determine retransmission timeout */
-    if(flag == SEND_NOW_CON)
-    {
+    if(flag & SEND_NOW_CON) {
         node->timeout = COAP_DEFAULT_RESPONSE_TIMEOUT * COAP_TICKS_PER_SECOND
                 + (COAP_DEFAULT_RESPONSE_TIMEOUT >> 1)
                 * ((COAP_TICKS_PER_SECOND * (r & 0xFF)) >> 8);
@@ -691,6 +692,10 @@ coap_tid_t coap_send(coap_context_t *context,
     {
         node->timeout = MAX_MULTICAST_DELAY_SEC * ((COAP_TICKS_PER_SECOND * (r & 0xFF)) >> 8);
         node->delayedResponse = 1;
+    }
+
+    if (flag & SEND_SECURE_PORT) {
+        node->secure = 1;
     }
 
     memcpy(&node->remote, dst, sizeof(coap_address_t));
@@ -739,7 +744,7 @@ coap_tid_t coap_send(coap_context_t *context,
     }
     #endif /* WITH_CONTIKI */
 
-    if(flag == SEND_NOW_CON)
+    if(flag & SEND_NOW_CON)
     {
         goto sending;
     }
@@ -758,6 +763,7 @@ coap_tid_t coap_send(coap_context_t *context,
 
 coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
     coap_tid_t tid = COAP_INVALID_TID;
+    coap_send_flags_t flag;
 
     if (!context || !node)
         return COAP_INVALID_TID;
@@ -773,8 +779,9 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
 #endif
 
         debug("** retransmission #%d of transaction %d\n", node->retransmit_cnt,
-                ntohs(node->pdu->hdr->id));
-        tid = coap_send(context, (coap_address_t *)&(node->remote),node->pdu, SEND_RETX);
+            ntohs(node->pdu->hdr->id));
+        flag = (coap_send_flags_t)(SEND_RETX | (node->secure ? SEND_SECURE_PORT : 0));
+        tid = coap_send(context, (coap_address_t *)&(node->remote),node->pdu, flag);
         return (tid == COAP_INVALID_TID)? COAP_INVALID_TID : node->id;
     }
 
@@ -1241,8 +1248,10 @@ static void handle_request(coap_context_t *context, coap_queue_t *rcvd) {
     if (context->request_handler) {
         context->request_handler(context, rcvd);
     } else {
+        coap_send_flags_t flag = SEND_NOW;
+        flag = (coap_send_flags_t)(flag | (rcvd->secure ? SEND_SECURE_PORT : 0));
         /* send ACK if rcvd is confirmable (i.e. a separate response) */
-        coap_send_ack(context, &rcvd->remote, rcvd->pdu);
+        coap_send_ack(context, &rcvd->remote, rcvd->pdu, flag);
     }
 }
 
@@ -1252,8 +1261,10 @@ static void handle_response(coap_context_t *context, coap_queue_t *rcvd) {
     if (context->response_handler) {
         context->response_handler(context, rcvd);
     } else {
+        coap_send_flags_t flag = SEND_NOW;
+        flag = (coap_send_flags_t)(flag | (rcvd->secure ? SEND_SECURE_PORT : 0));
         /* send ACK if rcvd is confirmable (i.e. a separate response) */
-        coap_send_ack(context, &rcvd->remote, rcvd->pdu);
+        coap_send_ack(context, &rcvd->remote, rcvd->pdu, flag);
     }
 }
 
@@ -1327,8 +1338,10 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                     if (!response)
                         warn("coap_dispatch: cannot create error reponse\n");
                     else {
-                        if (coap_send(context, &rcvd->remote,
-                                response, SEND_NOW) == COAP_INVALID_TID) {
+                        coap_send_flags_t flag = SEND_NOW;
+                        flag = (coap_send_flags_t)(flag | rcvd->secure ? SEND_SECURE_PORT : 0);
+                        if (coap_send(context, &rcvd->remote, response, flag)
+                                == COAP_INVALID_TID) {
                             warn("coap_dispatch: error sending reponse\n");
                         }
                         coap_delete_pdu(response);
@@ -1428,9 +1441,12 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                     handle_response(context, rcvd);
                 }
                 else {
+                    coap_send_flags_t flag;
+                    flag = (coap_send_flags_t)(SEND_NOW |
+                            (rcvd->secure ? SEND_SECURE_PORT : 0));
                     debug("dropped message with invalid code\n");
                     coap_send_message_type(context, &rcvd->remote, rcvd->pdu,
-                            COAP_MESSAGE_RST);
+                            flag, COAP_MESSAGE_RST);
                 }
             }
 
