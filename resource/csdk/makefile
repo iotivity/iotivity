@@ -88,8 +88,8 @@ LCOAP_DIR	= libcoap-4.1.1
 OCCOAP_DIR	= occoap
 OCTBSTACK_DIR	= stack
 OCMALLOC_DIR 	= ocmalloc
-UTILS_DIR	= ../../oic-utilities/tb
-CJSON_DIR	= $(UTILS_DIR)/cJSON
+EXTLIBS_DIR	= ../../extlibs
+CJSON_DIR	= $(EXTLIBS_DIR)/cjson
 
 OCCOAP_SRC	= $(OCCOAP_DIR)/src
 OCTBSTACK_SRC	= $(OCTBSTACK_DIR)/src
