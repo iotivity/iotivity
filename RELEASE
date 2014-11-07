@@ -1,0 +1,134 @@
+OIC Resource M1 Release Notes
+
+Introduction 
+This package is the M1 release for the IoTivity Framework.  
+IoTivity is a common communication framework to provide
+communication between the Internet Of Things devices.
+  
+This is a preview quality release so known issues are listed below.
+
+
+Getting Started
+
+Requirements
+The IoTivity framework is built using Ubuntu LTS 12.04 for both the
+Linux and Arduino platforms.
+
+To develop for the Arduino platforms the following hardware is supported:
+* Arduino ATMega 2560
+* Arduino Due
+
+Environment
+The directions for setting up the Linux development environment are
+available at:
+https://www.iotivity.org/documentation/linux/getting-started
+
+The directions for setting up the Arduino development environment are
+available at:
+https://www.iotivity.org/documentation/arduino/getting-started-0
+
+The directions for setting up the Tizen development environment are
+available at:
+https://www.iotivity.org/documentation/tizen/getting-started
+
+Documentation
+
+The IoTivity Programmer's Guide covers the architecture and basic
+operations of the IoTivity Resource API.  It is intended to provide
+context for developers using the IoTivity APIs and to provide a high
+level architectural overview.  The programmer's guide is available at:
+https://www.iotivity.org/documentation/linux/programmers-guide
+
+
+Downloads
+
+Source
+The source code is available as a git repository.  The directions are
+included in the getting started guide above.
+
+
+Features
+
+Discovery & Connectivity
+* Direct Device-to-Device, Local Network
+* Messaging Connectivity
+* Supports Information exchange and control which is based on
+  messaging / COAP Model
+* Manages radio connections among devices (Wi-Fi*, LAN) and across any
+  available transport, whether it's device-to-device or across the
+  same network.
+* SDK takes all the OS APIs for radio connections and abstracts them
+  into simpler APIs.
+* Discovery mechanisms for devices and resources in proximity
+* Allows Presence subscription, un-subscription, announcement from the
+  device & based on newly created resource.
+
+Resource Management
+* Provides platform initialization, discovery of resources &
+  registration /creation of resources
+* Resource model based operations: GET, PUT, OBSERVE, Cancel
+  observation, and notifications sent by the resource.
+* Entity handler support to receive requests from a client for processing.
+* Client, server and client-server mode support with In-Proc model,
+  JSON encoding and decoding, JSON serialization and deserialization.
+* Allows a root resource to point to other resources.
+* Default, link list and batch operations on the collection resource
+
+Virtual Resource  (Soft Sensor) Manager 
+* Takes input from one or more resources, adds processing,
+  translation, aggregation capabilities to present as virtual
+  resource.
+* Physical Sensor Data Listening
+* Developing template for Sensor Fusion as a library and
+  Deploying/Executing the library
+* Query-based Sensor Data Request
+
+Protocol Plug-in Manager
+* Provides mechanism to represent non OIC Protocols within the OIC Framework
+* Detecting Plugin Installation
+* Plugin Loading/Unloading Manage with Command Line
+* Controlling Philips Hue Light with IoTivity Application -- On/Off,
+  Color/Brightness Change
+* Controlling MQTT Fan with IoTivity Application -- On/Off
+
+Group Manager
+* Group creation and finding appropriate resources in network 
+* Member presence management (Check status regarding
+  connectivity/resource change)
+* Taking single action on a group to affect all resources
+
+Resource Offloading (Notification Manager)
+* Responsible for hosting the resources of a Lite device or less
+  power/memory capable IOT device by another smart device.
+* Event driven mechanism to detect the presence of devices whose
+  resources needs to be hosted
+* Targeted discovery of hosting resource
+* Registering a resource as virtual in smart device base to
+  differentiate and give priority to the hosting resource.
+ 
+Known Issues
+* Attribute name and value takes only JSON value of string (int, double, 
+  null, arrays are not supported).
+* During resource discovery the IoTivity base is not checking to see if 
+  the resource is marked discoverable
+  prior to including it in the response.
+* Resource Collection:
+  - A resource collection will not have any attributes except links to 
+    child resources
+  - A resource collection will only point to simple resources. Therefore, 
+    following hold true:
+    - A resource collection cannot have another resource collection
+    - A resource collection will only have single level of hierarchy.
+    - A resource collection will have links to other resources of default 
+      interface.
+  - Remote resources not supported.
+* Multiple interfaces or multiple resource types cannot be specified in query.
+* Multicast not available in Arduino.
+* Memory issues:
+  - Server sends observe notification. Server sends CON after 3 NON
+    notification leads to memory leak. The memory leak gives fatal error in CoAP library.
+* Presence/Active discovery:
+  - More than one presence announcement is sent out when a new resource is
+    created instead of one notification.
+* At times: FindResource (discovery API from client) callback invoked multiple 
+  times even if single resource is discovered.
