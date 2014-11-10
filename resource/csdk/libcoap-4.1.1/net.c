@@ -293,7 +293,11 @@ is_wkc(coap_key_t k) {
 #endif
 
 coap_context_t *
-coap_new_context(const coap_address_t *listen_addr) {
+coap_new_context(uint8_t ipAddr[], uint16_t port) {
+
+    OCDevAddr devAddr;
+    coap_address_t* listen_addr;
+
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     coap_context_t *c = (coap_context_t*)coap_malloc( sizeof( coap_context_t ) );
     //int reuse = 1;
@@ -307,6 +311,11 @@ coap_new_context(const coap_address_t *listen_addr) {
     if (initialized)
     return NULL;
 #endif /* WITH_CONTIKI */
+
+    OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
+            &devAddr);
+
+    listen_addr = (coap_address_t*) &devAddr;
 
     if (!listen_addr) {
         coap_free(c);
@@ -359,13 +368,14 @@ coap_new_context(const coap_address_t *listen_addr) {
     coap_register_option(c, COAP_OPTION_BLOCK1);
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
-    if (OCInitUDP((OCDevAddr *)listen_addr, (int32_t *)&(c->sockfd)) != ERR_SUCCESS) {
+    if (OCInitUDP((OCDevAddr *)listen_addr,
+                    (int32_t *)&(c->sockfd), OC_SOCKET_REUSEADDR) != ERR_SUCCESS) {
         coap_free( c);
         return NULL;
     }
 
 #if defined(WITH_DTLS)
-    if (coap_dtls_init(c) != 0) {
+    if (coap_dtls_init(c, ipAddr) != 0) {
         coap_free( c);
         return NULL;
     }

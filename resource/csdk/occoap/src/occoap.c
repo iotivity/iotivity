@@ -602,7 +602,6 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
 
     TODO ("Below should go away and be replaced by OC_LOG");
     coap_log_t log_level = (coap_log_t)(LOG_DEBUG + 1);
-    OCDevAddr devAddr;
     OCDevAddr mcastAddr;
     uint8_t ipAddr[4] = { 0 };
     uint16_t parsedPort = 0;
@@ -623,10 +622,7 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
                                ipAddr[0],ipAddr[1],ipAddr[2],ipAddr[3]);
     }
 
-    OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
-            &devAddr);
-
-    gCoAPCtx = coap_new_context((coap_address_t*) &devAddr);
+    gCoAPCtx = coap_new_context(ipAddr, port);
     VERIFY_NON_NULL(gCoAPCtx);
 
     // To allow presence notification work we need to init socket gCoAPCtx->sockfd_wellknown

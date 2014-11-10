@@ -104,7 +104,7 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
 }
 
 /// Retrieves a empty socket and bind it for UDP with the input port
-int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd)
+int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd, OC_SOCKET_OPTION sockoption)
 {
     ArduinoAddr* ardAddr = (ArduinoAddr*)ipAddr;
     uint8_t sock;
@@ -138,7 +138,7 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd)
 /// Currently WiFi shield does NOT support multicast.
 int32_t OCInitUDPMulticast(OCDevAddr* ipMcastMacAddr, int32_t* sockfd)
 {
-    return OCInitUDP(ipMcastMacAddr, sockfd);
+    return OCInitUDP(ipMcastMacAddr, sockfd, OC_SOCKET_REUSEADDR);
 }
 
 

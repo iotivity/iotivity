@@ -27,6 +27,7 @@
 #include "dtls.h"
 
 #define COAP_DTLS_DEFAULT_PORT  5684
+#define COAP_DTLS_RANDOM_PORT   0
 
 /**
  * Data structure for holding the tinyDTLS interface
@@ -65,10 +66,12 @@ typedef enum
  *
  * @param ctx - handle to global coap_context_t.
  *
+ * @param ipAddr - ip address.
+ *
  * @return A value less than zero on error, greater or
  *           equal otherwise.
  */
-int coap_dtls_init(coap_context_t *ctx);
+int coap_dtls_init(coap_context_t *ctx, uint8_t ipAddr[]);
 
 /**
  * Closes secure port and de-inits tinyDTLS library.

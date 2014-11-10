@@ -364,10 +364,12 @@ static int get_psk_credentials(dtls_context_t *ctx,
  *
  * @param ctx - handle to global coap_context_t.
  *
+ * @param ipAddr - ip address.
+ *
  * @return A value less than zero on error, greater or
  *           equal otherwise.
  */
-int coap_dtls_init(coap_context_t *ctx) {
+int coap_dtls_init(coap_context_t *ctx, uint8_t ipAddr[]) {
 
     int ret = -1;
     coap_dtls_context_t *coap_dtls_ctx = NULL;
@@ -384,11 +386,12 @@ int coap_dtls_init(coap_context_t *ctx) {
     memset(coap_dtls_ctx, 0, sizeof(coap_dtls_ctx));
     ctx->sockfd_dtls = -1;
 
-    //TODO : Initialize secure socket descriptor
-    OCBuildIPv4Address(0, 0, 0, 0, COAP_DTLS_DEFAULT_PORT, &dev_addr);
-    if (OCInitUDP((OCDevAddr *)&dev_addr, (int32_t *)&(ctx->sockfd_dtls)) != ERR_SUCCESS) {
-        OCBuildIPv4Address(0, 0, 0, 0, 5685, &dev_addr);
-        if (OCInitUDP((OCDevAddr *)&dev_addr, (int32_t *)&(ctx->sockfd_dtls)) != ERR_SUCCESS) {
+    OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3],
+                                        COAP_DTLS_DEFAULT_PORT, &dev_addr);
+    if (OCInitUDP((OCDevAddr *)&dev_addr, (int32_t *)&(ctx->sockfd_dtls), 0) != ERR_SUCCESS) {
+        OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3],
+                                        COAP_DTLS_RANDOM_PORT, &dev_addr);
+        if (OCInitUDP((OCDevAddr *)&dev_addr, (int32_t *)&(ctx->sockfd_dtls), 0) != ERR_SUCCESS) {
             goto exit;
         }
     }

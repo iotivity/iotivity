@@ -238,7 +238,7 @@ coap_queue_t *coap_peek_next( coap_context_t *context );
 coap_queue_t *coap_pop_next( coap_context_t *context );
 
 /** Creates a new coap_context_t object that will hold the CoAP stack status.  */
-coap_context_t *coap_new_context(const coap_address_t *listen_addr);
+coap_context_t *coap_new_context(uint8_t ipAddr[], uint16_t port);
 
 /** Joins the CoAP stack to well-known multicast address.  */
 int coap_join_wellknown_group(coap_context_t *context,

@@ -87,6 +87,11 @@ typedef struct OCDevAddr {
 //------------------------------------------------------------------------
 int32_t OCInitNetworkStack();
 
+typedef enum
+{
+    OC_SOCKET_NOOPTION = 0,
+    OC_SOCKET_REUSEADDR
+} OC_SOCKET_OPTION;
 
 //-- OCInitUDP -----------------------------------------------------------
 /** @ingroup ocsocket
@@ -98,11 +103,13 @@ int32_t OCInitNetworkStack();
  *              device address with which the new socket will be bind.
  * @param[out] sockfd
  *              reference to the new socket.
+ * @param[in] sockoption
+ *              specifies which socket option to be used.
  *
  * @retval 0 for Success, otherwise some error value
  */
 //------------------------------------------------------------------------
-int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd);
+int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd, OC_SOCKET_OPTION sockoption);
 
 
 

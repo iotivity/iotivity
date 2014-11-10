@@ -172,7 +172,7 @@ exit:
 #endif //__ANDROID__
 
 /// Creates a BSD socket and binds it specified port for UDP
-int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t *sockfd)
+int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t *sockfd, OC_SOCKET_OPTION sockoption)
 {
     int32_t ret = ERR_UNKNOWN;
     int32_t sfd = 0xFFFFFFFF;
@@ -189,11 +189,14 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t *sockfd)
         goto exit;
     }
 
-    if ((ret = setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (char*) &set_option_on,
-                sizeof(set_option_on))) < 0) {
-        OC_LOG_V(FATAL, MOD_NAME, "setsockopt API failed with errno %s",
-                strerror(errno));
-        goto exit;
+    if(OC_SOCKET_REUSEADDR == sockoption)
+    {
+        if ((ret = setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (char*) &set_option_on,
+                    sizeof(set_option_on))) < 0) {
+            OC_LOG_V(FATAL, MOD_NAME, "setsockopt API failed with errno %s",
+                    strerror(errno));
+            goto exit;
+        }
     }
 
     if ((ret = bind(sfd, (struct sockaddr*)ipAddr->addr, ipAddr->size)) < 0) {
