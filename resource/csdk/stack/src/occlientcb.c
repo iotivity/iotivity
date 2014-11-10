@@ -30,6 +30,7 @@
 #define TAG PCF("occlientcb")
 
 struct ClientCB *cbList = NULL;
+OCMulticastNode * mcPresenceNodes = NULL;
 
 OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
         OCCoAPToken * token, OCDoHandle handle, OCMethod method,
@@ -135,3 +136,33 @@ void FindAndDeleteClientCB(ClientCB * cbNode) {
     }
 }
 
+OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, unsigned char* uri, uint32_t nonce)
+{
+    OCMulticastNode *node;
+
+    node = (OCMulticastNode*) OCMalloc(sizeof(OCMulticastNode));
+
+    if (node) {
+        node->nonce = nonce;
+        node->uri = uri;
+        LL_APPEND(mcPresenceNodes, node);
+        *outnode = node;
+        return OC_STACK_OK;
+    }
+    *outnode = NULL;
+    return OC_STACK_NO_MEMORY;
+}
+
+OCMulticastNode* GetMCPresenceNode(unsigned char * uri) {
+    OCMulticastNode* out = NULL;
+
+    if(uri) {
+        LL_FOREACH(mcPresenceNodes, out) {
+            if(out->uri && strcmp((char *)out->uri, (char *)uri) == 0) {
+                return out;
+            }
+        }
+    }
+    OC_LOG(INFO, TAG, PCF("MulticastNode Not found !!"));
+    return NULL;
+}

@@ -323,6 +323,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     uint8_t isObserveNotification = 0;
     #ifdef WITH_PRESENCE
     uint8_t isPresenceNotification = 0;
+    uint8_t isMulticastPresence = 0;
     uint32_t lowerBound;
     uint32_t higherBound;
     char * tok = NULL;
@@ -381,10 +382,12 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     cbNode = GetClientCB(&rcvdToken, NULL, NULL);
+
+    #ifdef WITH_PRESENCE
+    // Check if the application subcribed for presence
     if(!cbNode)
     {
-        // we should check if we are monitoring the presence of this resource
-        //get the address of the remote
+        // get the address of the remote
         OCDevAddrToIPv4Addr((OCDevAddr *) &(rcvdResponse->remote), remoteIpAddr,
                 remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
         OCDevAddrToPort((OCDevAddr *) &(rcvdResponse->remote), &remotePortNu);
@@ -393,6 +396,15 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                 remotePortNu,rcvdUri);
         cbNode = GetClientCB(NULL, NULL, fullUri);
     }
+
+    // Check if application subscribed for multicast presence
+    if(!cbNode)
+    {
+        sprintf((char *)fullUri, "%s%s", OC_MULTICAST_IP, rcvdUri);
+        cbNode = GetClientCB(NULL, NULL, fullUri);
+        isMulticastPresence = 1;
+    }
+    #endif
 
     // fill OCResponse structure
     result = FormOCResponse(&response, cbNode, maxAge, &clientResponse);
@@ -476,6 +488,49 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     cbNode->sequenceNumber = clientResponse.sequenceNumber;;
                 }
             }
+            else if(isMulticastPresence)
+            {
+                // Check if the same nonce for a given host
+                OCMulticastNode* mcNode = NULL;
+                unsigned char senderUri[MAX_URI_LENGTH] = { 0 };
+                sprintf((char *)senderUri, "%d.%d.%d.%d:%d",
+                    remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
+                    remotePortNu);
+                mcNode = GetMCPresenceNode(senderUri);
+
+                if(mcNode != NULL)
+                {
+                    if(mcNode->nonce == clientResponse.sequenceNumber)
+                    {
+                        OC_LOG(INFO, TAG, PCF("===============No presence change (Multicast)"));
+                        goto exit;
+                    }
+                    mcNode->nonce = clientResponse.sequenceNumber;
+                }
+                else
+                {
+                    uint32_t uriLen = strlen((char*)senderUri);
+                    unsigned char* uri = (unsigned char *) OCMalloc(uriLen + 1);
+                    if(uri)
+                    {
+                        memcpy(uri, senderUri, (uriLen + 1));
+                    }
+                    else
+                    {
+                        OC_LOG(INFO, TAG,
+                            PCF("===============No Memory for URI to store in the presence node"));
+                        goto exit;
+                    }
+                    result = AddMCPresenceNode(&mcNode, (unsigned char*) uri,
+                                                clientResponse.sequenceNumber);
+                    if(result == OC_STACK_NO_MEMORY)
+                    {
+                        OC_LOG(INFO, TAG,
+                            PCF("===============No Memory for Multicast Presence Node"));
+                        goto exit;
+                    }
+                }
+            }
             #endif
         }
         HandleStackResponses(response);
@@ -495,7 +550,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     else if(!cbNode && isPresenceNotification)
     {
         OC_LOG(INFO, TAG, PCF("Received a presence notification, but I do not have callback \
-                         ------------ ignoring"));
+                     ------------ ignoring"));
     }
     #endif
     else

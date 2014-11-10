@@ -37,6 +37,7 @@ extern "C" {
 #define OC_WELL_KNOWN_QUERY                  "coap://224.0.1.187:5683/oc/core"
 #define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "coap://224.0.1.187:5683/oc/core?rt=core.led"
 #define OC_MULTICAST_PREFIX                  "coap://224.0.1.187:5683"
+#define OC_MULTICAST_IP                      "coap://224.0.1.187"
 
 #define USE_RANDOM_PORT (0)
 #ifdef WITH_PRESENCE

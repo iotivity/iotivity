@@ -93,6 +93,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
                 curResource = resource;
                 OCPlatform::OCPresenceHandle presenceHandle;
                 OCPlatform::subscribePresence(presenceHandle, hostAddress, &presenceHandler);
+                std::cout<< "subscribing for unicast presence... " <<std::endl;
             }
         }
         else
@@ -108,7 +109,38 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-int main(int argc, char* argv[]) {
+void PrintUsage()
+{
+    std::cout << std::endl;
+    std::cout << "Usage : presenceclient <isMulticastAddress>\n";
+    std::cout << "   0 - unicast subcribe presence\n";
+    std::cout << "   1 - multicast subscribe presence\n\n";
+}
+
+// 0 - unicast subcribe presence
+// 1 - multicast subscribe presence
+int isMulticastAddress = 0;
+
+int main(int argc, char* argv[1])
+{
+    PrintUsage();
+
+    if (argc == 1)
+    {
+        isMulticastAddress = 0;
+    }
+    else if (argc == 2)
+    {
+        int value = atoi(argv[1]);
+        if (value == 1)
+            isMulticastAddress = 1;
+        else
+            isMulticastAddress = 0;
+    }
+    else
+    {
+        return -1;
+    }
 
     // Create PlatformConfig object
     PlatformConfig cfg {
@@ -119,14 +151,23 @@ int main(int argc, char* argv[]) {
         OC::QualityOfService::LowQos
     };
 
-    OCPlatform::Configure(cfg);
-
     try
     {
-        std::cout << "Created Platform..."<<std::endl;
-        // Find all resources
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
-        std::cout<< "Finding Resource... " <<std::endl;
+        OCPlatform::Configure(cfg);
+
+        if(isMulticastAddress)
+        {
+            OCPlatform::OCPresenceHandle presenceHandle;
+            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, presenceHandler);
+            std::cout<< "subscribing for multicast presence... " <<std::endl;
+        }
+        else
+        {
+            // Find all resources
+            OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+            std::cout<< "Finding Resource... " <<std::endl;
+        }
+
         while(true)
         {
             // some operations
