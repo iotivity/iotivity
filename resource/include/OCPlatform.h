@@ -154,6 +154,19 @@ namespace OC
                         uint8_t resourceProperty);
 
         /**
+        * This API registers a resource with the server
+        * NOTE: This API applies to server & client side.
+
+		* @param resourceHandle - Upon successful registration, resourceHandle will be filled
+		* @param resource - The resource that all data filled.
+		*
+		* @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+        */
+
+		OCStackResult registerResource(OCResourceHandle& resourceHandle,
+									const std::shared_ptr<OCResource> resource);
+
+        /**
         * Set default device entity handler
         *
         * @param entityHandler - entity handler to handle requests for
@@ -383,6 +396,9 @@ namespace OC
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
+
+
+
     }
 }
 

@@ -388,6 +388,64 @@ namespace OC
         return result;
     }
 
+	OCStackResult InProcServerWrapper::registerResourceWithHost(
+						OCResourceHandle& resourceHandle,
+						std::string& resourceHOST,
+						std::string& resourceURI,
+						const std::string& resourceTypeName,
+						const std::string& resourceInterface,
+						EntityHandler& eHandler,
+						uint8_t resourceProperties)
+
+		{
+			OCStackResult result = OC_STACK_ERROR;
+
+			auto cLock = m_csdkLock.lock();
+
+			if(cLock)
+			{
+				std::lock_guard<std::recursive_mutex> lock(*cLock);
+
+				if(NULL != eHandler)
+				{
+					result = OCCreateResourceWithHost(&resourceHandle, // OCResourceHandle *handle
+								resourceTypeName.c_str(), // const char * resourceTypeName
+								resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
+								resourceHOST.c_str(), // const char * host
+								resourceURI.c_str(), // const char * uri
+								EntityHandlerWrapper, // OCEntityHandler entityHandler
+								resourceProperties // uint8_t resourceProperties
+								);
+				}
+				else
+				{
+					result = OCCreateResourceWithHost(&resourceHandle, // OCResourceHandle *handle
+								resourceTypeName.c_str(), // const char * resourceTypeName
+								resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
+								resourceHOST.c_str(), // const char * host
+								resourceURI.c_str(), // const char * uri
+								NULL, // OCEntityHandler entityHandler
+								resourceProperties // uint8_t resourceProperties
+								);
+				}
+
+				if(result != OC_STACK_OK)
+				{
+					resourceHandle = (OCResourceHandle) 0;
+				}
+				else
+				{
+					entityHandlerMap[resourceHandle] = eHandler;
+					resourceUriMap[resourceHandle] = resourceURI;
+				}
+			}
+			else
+			{
+				result = OC_STACK_ERROR;
+			}
+
+			return result;
+		}
     OCStackResult InProcServerWrapper::setDefaultDeviceEntityHandler
                                         (EntityHandler entityHandler)
     {

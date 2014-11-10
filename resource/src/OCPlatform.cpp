@@ -108,6 +108,12 @@ namespace OC
                                                 entityHandler, resourceProperty);
         }
 
+		OCStackResult registerResource(OCResourceHandle& resourceHandle,
+									const std::shared_ptr<OCResource> resource)
+        {
+            return OCPlatform_impl::Instance().registerResource(resourceHandle, resource);
+        }
+
         OCStackResult unregisterResource(const OCResourceHandle& resourceHandle)
         {
             return OCPlatform_impl::Instance().unregisterResource(resourceHandle);

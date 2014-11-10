@@ -185,6 +185,18 @@ namespace OC
                              resourceInterface, entityHandler, resourceProperty);
     }
 
+
+	OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
+														const std::shared_ptr<OCResource> resource)
+	{
+		uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+
+		return checked_guard(m_server, &IServerWrapper::registerResourceWithHost,
+						   ref(resourceHandle), resource->host(), resource->uri(), "core.remote",
+						   "oc.mi.def", (EntityHandler) NULL, resourceProperty);
+
+
+	}
     OCStackResult OCPlatform_impl::unregisterResource(const OCResourceHandle& resourceHandle) const
     {
         return checked_guard(m_server, &IServerWrapper::unregisterResource,
