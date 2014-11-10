@@ -1,20 +1,231 @@
+/******************************************************************
+ *
+ * Copyright 2014 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+This guide will help you setup your developing environment for Protocol plug-in 
+Manager and Protocol plug-ins in Ubuntu. 
+Before starting, following tools should be installed. 
 
-This version of protocol plug-in source code has following functionality.
+Git
+Git is a source code management software tool. IoTvitiy is set as a git 
+project. 
+Git is mandatory in order to get access to the IoTvitiy source code. Use the 
+following command to download and install git.
 
-1. provides plug-in manager which can register, unregister, start and stop plug-in library.
-2. provides plug-in library which can communicate with MQTT protocol FAN.
-3. provides OIC Sample Client which can turn on/off FAN.
+	$ sudo apt-get install git-core
 
-So, to test a plug-in, follow below steps.
+ssh
+Secure Shell is required to connect to GIT repository in order to checkout 
+the IoTivity source code. SSH is typically part of the base operating system 
+and should be include. If, for any reason, it is not available, it can be 
+installed 
+by running the following command in your terminal window. 
 
-1. Locate shared plug-in library and XML file in a specific folder.
-2. Register the plug-in with directory path input from plug-in manager sample.
-3. Start the plug-in from plug-in manager sample.
-4. Run OIC sample client.
+	$ sudo apt-get install ssh
 
-If you have any questions about protocol plug-in component, please contact with following addresses.
+G++ 
+G++ is required in order to build the IoTvity stack. Download and install 
+G++ by running following command in your terminal window
 
-kc7576.park@samsung.com
-heesung84.kim@samsung.com
-junho13.lee@samsung.com
-yh_.joo@samsung.com
+	$ sudo apt-get install build-essential g++
+
+Boost Version 1.51
+Boost c++ library is required in order to build the IoTvity stack.
+Download and install Boost libraries from the Boost web site.
+
+Automake
+Automake is a tool for automatically generating Makefile.in files 
+compiliant with the GNU Coding Standards. This tool is used for 
+compiling C-Pluff open source which used in Plug-in Manager.
+$ sudo apt-get install automake
+
+Libtool
+GNU libtool is a generic library support script. This tool is used for 
+compiling C-Pluff open source which used in Plug-in Manager.
+	$ sudo apt-get install libtool
+
+gettext
+GNU `gettext' utilities are a set of tools that provides a framework 
+to help other GNU packages produce multi-lingual messages. 
+This tool is used for compiling C-Pluff open source which used in 
+Plug-in Manager.
+	$ sudo apt-get install gettext
+
+Expat
+Expat is a stream-oriented XML parser library. This library is 
+used for compiling C-Pluff open source which used in Plug-in Manager.
+	$ sudo apt-get install expat
+
+Libcurl
+Libcurl is a free client-side URL transfer library. This library 
+is used for compiling Hue-Plugin.
+	$ sudo apt-get install libcurl4-openssl-dev
+
+
+Building and Using Protocol Plug-in Manager
+
+Once the source code is downloaded into a specific folder, oic in
+this context, you may follow the steps to build and execute 
+Protocol Plug-in Manager.
+The path for Protocol Plugin is as following;
+
+~/oic/oic-service/protocol-plugin $_
+
+ 
+The Protocol Plug-in directory includes following sub directories;
+
+/plugin-manager	Directory for Plug-in Manager
+/plugins	Directory for Reference Plugins  
+/lib		Directory for Common Library
+/sample-app	Directory for Iotivity Sample Application
+/doc		Directory for Developers Document
+/build		Directory for Building and Binary Release
+
+
+2. Compiling C-Pluff library 
+Before building Protocol-Plugin Manager, C-Pluff library should be 
+compiled as follows.
+
+~/oic/oic-service/protocol-plugin/lib/cpluff$ aclocal
+~/oic/oic-service/protocol-plugin/lib/cpluff$ autoconf
+~/oic/oic-service/protocol-plugin/lib/cpluff$ autoheader
+~/oic/oic-service/protocol-plugin/lib/cpluff$ automake
+~/oic/oic-service/protocol-plugin/lib/cpluff$ ./configure
+~/oic/oic-service/protocol-plugin/lib/cpluff$ make
+
+ 
+3. Modify Build Configuration
+Installing Boost is one of the prerequisites compiling as described above. 
+To compile protocol plugin manager and plugins, you should set the 
+path of Boost in oic-service/protocol-plugin/config.mk file as following.
+ 
+
+BOOST_DIR = /home/Downloads/boost_1_51_0
+
+
+4. Run make
+By running make in the protocol-plugin path, protocol-plugin manager, 
+all plugins and sample applications will be created. 
+ 
+NOTE: To build plugins in 64-bit Ubuntu Linux, OCLib.a and libcoap.a 
+library should be re-compiled with -fPIC option.
+5. Execute Protocol Plugin Manager and Starting a Plugin
+To start Protocol Plugin Manager, please enter as follows, then 
+available menu will be showed up. 
+ 
+~/oic/oic-service/protocol-plugin/build/linux$make
+
+
+5. Execute Protocol Plugin Manager and Starting a Plugin
+To start Protocol Plugin Manager, please enter as follows, then 
+available menu will be showed up.
+
+~/oic/oic-service/protocol-plugin/build/linux$./ppm
+
+====== Menu ======
+1. Set Plugins Directory
+2. Add a Plugin
+3. Delete a Plugin
+4. Start
+5. Stop
+6. List
+0. Exit
+
+Enter the number of Menu = _
+
+
+Before starting a plugin, the plugin should be added by setting 
+plugins directory or adding a plugin directly as follows.
+ 
+
+====== Menu ======
+1. Set Plugins Directory 
+2. Add a Plugin
+3. Delete a Plugin
+4. Start
+5. Stop
+6. List
+0. Exit
+
+Enter the number of menu = 1
+Enter Path of the plugin = ../../../plugins
+
+====== Menu ======
+1. Set Plugins Directory 
+2. Add a Plugin
+3. Delete a Plugin
+4. Start
+5. Stop
+6. List
+0. Exit
+
+Enter the number of menu = 6
+
+====== Plugins List ======
+ID                            NAME            STATE                TYPE
+oic.plugin.mqtt-fan           mqtt-fan        installed            oic.fan
+oic.plugin.hue                hue             installed            oic.light             
+====== Menu ======
+1. Set Plugins Directory 
+2. Add a Plugin
+3. Delete a Plugin
+4. Start
+5. Stop
+6. List
+0. Exit
+
+Enter the number of menu = 4
+Enter the id of the plugin = oic.plugin.hue
+
+
+6. Starting and Testing with Hue Plugin Sample
+First of all, to control Hub Bulb, you should get access to Hue hub 
+from your Ubuntu device.  
+
+1. Connect to bridge with web browser by entering following address in 
+Ubuntu device.
+(http://<bridge ip address>/debug/clip.html)
+
+2. Send proper body and message as guided in following site.
+http://www.developers.meethue.com/documentation/getting-started
+
+3. Then, press button on the Hue hub.
+
+ 
+We implemented function for detecting the hue bridge automatically. 
+But depending on the network environment, some case may not work well.  
+So, if you want to check hue plug-in, firstly use function for auto detection. 
+If it doesn't work, you should set the IP address manually, according to 
+following instruction.
+ 
+ ....../oic-service/protocol-plugin/plugins/hue/src/OICHuePlugin.cpp (about 196 line)
+ hue_bridge_rul_append("http://").append(*it).append("/api/newdeveloper/lights");                                                  
+ -- this instruction is commented in the present code
+ -->hue_bridge_rul_append("http://").append(/*Fill your bridge's ip address **/).
+ append("/api/newdeveloper/lights");    
+
+
+After login Hue plugin, you can control Hue using OIC sample application as following.
+ 
+- Turn on the bulb (or change color, brigtness)
+  $oic-light-client [color:0~65535] [brigtness:0~255]
+  ex) $oic-light-client 43210 255
+- Bulb status
+  $oic-light-client
+- Turn off the bulb
+  $oic-light-client off

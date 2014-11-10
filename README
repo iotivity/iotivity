@@ -1,6 +1,7 @@
 ******************************************************************
 
  Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+ Copyright 2014 Samsung Electronics All Rights Reserved.
 
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -19,16 +20,24 @@
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ===============================================================================
-==                      Rich Stack & Lite Stack                              ==
+==   	  IoTivity Base (RICH & LITE) Stack & IoTivity Services       ==
 ===============================================================================
+IOTIVITY repository (referred as "<iotivity>") is the top level directory which 
+contains following features.
 
+IoTivity Base:
 The directory "resource" in IOTIVITY repository (referred as "<iotivity>")
 contains two SDKs with underlying code (i.e. "stack"). The two SDKs are
-referred to as "Rich SDK" (or "C++ SDK") and "Lite SDK" (or "C SDK"). The
+referred to as "Rich Base SDK" (or "C++ SDK") and "Lite Base SDK" (or "C SDK"). The
 associated stacks are referred to as "Rich Stack" (or "C++ Stack") and "Lite
 Stack" (or "C Stack"), respectively. The Rich Stack-SDK pair requires that the
 Lite Stack-SDK pair is built under it.
 
+IoTivity Services:
+The directory "service" in IOTIVITY repository (referred as "<iotivity>")
+contains four services with underlying code. The services are referred as
+Notification Manager, Protocol Plugin Manager, Soft Sensor Manager and
+Things Manager.
 ===============================================================================
 
 The Rich Stack is intended ONLY for Linux Ubuntu 12.04 operating system. To
@@ -40,6 +49,12 @@ The Lite Stack is intended ONLY for Linux Ubuntu 12.04, Arduino ATMega 2560
 with Arduino Framework 1.0.5, and Arduino Due with Arduino Framework 1.5.7.
 Tip: Use Cutecom in Ubuntu 12.04 to view logs from Arduino ATMega 2560 and
 Arduino Due.
+
+The Iotivity services are intended ONLY for Linux Ubuntu 12.04 operating system.
+- GCC compiler version is 4.6
+- Pre-install the "gnu-libc" libraries package.
+- For Protocol Plugin Manager, tools such as Automake, Libtool, gettext, Expat,
+	Libcurl are required.
 
 To build Lite Stack, please follow these requirements for Linux Ubuntu 12.04:
 - GCC compiler version is 4.6
@@ -149,6 +164,45 @@ building for any and all platforms' modules with a single 'makefile' command.
 
 	make linux_tb_debug
 
+- All Modules, with Things Manager, in Release (Lite Stack, Lite Examples, 
+  Rich Stack, Rich Examples,Things Manager) for linux:
+
+	make things_manager
+
+- All Modules, with Things Manager, in Debug (Lite Stack, Lite Examples, 
+  Rich Stack, Rich Examples,Things Manager) for linux:
+
+	make things_manager_debug
+
+- All Modules, with Soft Sensor Manager, in Release (Lite Stack, 
+  Lite Examples, Rich Stack, Rich Examples, Soft Sensor Manager) for linux:
+
+	make soft_sensor_manager
+	
+- All Modules, with Soft Sensor Manager, in Debug (Lite Stack, 
+  Lite Examples, Rich Stack, Rich Examples, Soft Sensor Manager) for linux:
+
+	make soft_sensor_manager_debug
+	
+- All Modules, with Notification Manager, in Release (Lite Stack, 
+  Lite Examples, Rich Stack, Rich Examples, Notification Manager) for linux:
+
+	make notification_manager
+
+- All Modules, with Notification Manager, in Debug (Lite Stack,
+  Lite Examples, Rich Stack, Rich Examples, Notification Manager) for linux:
+
+	make notification_manager_debug
+
+- All Modules, with Protocol Plugin Manager, in Release (Lite Stack,
+  Lite Examples, Rich Stack, Rich Examples, Protocol Plugin Manager) for linux:
+
+	make protocol_plugin_manager
+	
+- All Modules, with Protocol Plugin Manager, in Debug (Lite Stack,
+  Lite Examples, Rich Stack, Rich Examples, Protocol Plugin Manager) for linux:
+
+	make protocol_plugin_manager_debug
 =======================================
 ==      All Targets - Mega Only      ==
 =======================================
@@ -162,6 +216,17 @@ building for any and all platforms' modules with a single 'makefile' command.
   2560 with Ethernet Shield:
 
 	make arduinomega_debug
+	
+- All Lite Stack Modules in Release (Lite Stack, Lite Examples for Things Manager) 
+  for Arduino  ATMega 2560 with Ethernet Shield:
+
+	make arduinomega_release_sample_things_manger
+	
+- All Lite Stack Modules in Debug (Lite Stack, Lite Examples for Things Manager) 
+  for Arduino  ATMega 2560 with Ethernet Shield:
+
+	make arduinomega_release_sample_things_manger_debug
+
 
 Note: To install to Arduino ATMega 2560, see README at the following location:
 <iotivity>/resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/
@@ -191,3 +256,18 @@ Note: To install to Arduino Due, see README at the following location:
 
 	make clean
 
+=======================================
+==     Tizen Only      ==
+=======================================
+1) Please set-up the GBS system to compile source code for the tizen build system
+
+2) Download the IoTivity base from repository.
+
+3) Create manifest, service and spec file including required source codes
+	Ex: For Building sample with soft sensor service.
+	service\soft-sensor-manager\SampleApp\tizen\ClientApp\packaging
+	
+4) Use Cmakefiles.txt found in each build directory
+	Ex:1)service\protocol-plugin\build\tizen
+	   2)service\soft-sensor-manager\build\tizen
+	   	

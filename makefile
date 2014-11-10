@@ -1,6 +1,7 @@
 # //******************************************************************
 # //
 # // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# // Copyright 2014 Samsung Electronics All Rights Reserved.
 # //
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # //
@@ -298,7 +299,8 @@ CLEAN_DIRS= \
 	./resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver \
 	./resource/examples \
 	./service/things-manager/build/linux \
-	./service/soft-sensor-manager/build/linux
+	./service/soft-sensor-manager/build/linux \
+	./service/Notification-Manager/build/linux/makefile 
 
 DEEPCLEAN_DIRS = \
 	./resource/csdk/build/linux \
@@ -345,6 +347,18 @@ arduino:
 things_manager: linux
 	@echo "=====BUILD THINGS MANAGER====="
 	@cd service/things-manager/build/linux/ && $(MAKE)
+	
+things_manager_debug: linux
+	@echo "=====BUILD THINGS MANAGER====="
+	@cd service/things-manager/build/linux/ && $(MAKE)
+
+arduinomega_release_sample_things_manger: 
+	@echo "=====BUILD THINGS MANAGER ARDUINO SAMPLE====="
+	@cd service/things-manager/build/arduino/ && $(MAKE)
+	
+arduinomega_release_sample_things_manger_debug: 
+	@echo "=====BUILD THINGS MANAGER ARDUINO SAMPLE====="
+	@cd service/things-manager/build/arduino/ && $(MAKE)
 
 ###############################################################################
 ###   Soft Sensor Manager                                                   ###
@@ -352,3 +366,27 @@ things_manager: linux
 soft_sensor_manager: linux
 	@echo "=====BUILD SOFT SENSOR MANAGER====="
 	@cd service/soft-sensor-manager/build/linux/ && $(MAKE)
+
+soft_sensor_manager_debug: linux
+	@echo "=====BUILD SOFT SENSOR MANAGER====="
+	@cd service/soft-sensor-manager/build/linux/ && $(MAKE)
+	
+##############################################################################
+###   Notification Manager                                                 ###
+##############################################################################
+notification_manager: linux
+	@echo "=====BUILD NOTIFICATION MANAGER====="
+	@cd service/Notification-Manager/build/linux/makefile/ && $(MAKE)
+
+notification_manager_debug: linux
+	@echo "=====BUILD NOTIFICATION MANAGER====="
+	@cd service/Notification-Manager/build/linux/makefile/ && $(MAKE)
+	
+##############################################################################
+###   Protocol Plugin Manager                                              ###
+##############################################################################
+protocol_plugin_manager: linux
+	@echo "=====PPM Requires some tools. Please check the separate read file @service/protocol-plugin ====="
+	
+protocol_plugin_manager_debug: linux
+	@echo "=====PPM Requires some tools. Please check the separate read file @service/protocol-plugin ====="
