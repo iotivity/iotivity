@@ -34,12 +34,12 @@
 // Typedefs
 //-----------------------------------------------------------------------------
 
-/* Structure to represent a LED resource */
-typedef struct LEDRESOURCE{
+/* Structure to represent a Light resource */
+typedef struct LIGHTRESOURCE{
     OCResourceHandle handle;
     bool state;
     int power;
-} LEDResource;
+} LightResource;
 
 /* Structure to represent the observers */
 typedef struct {
@@ -55,18 +55,18 @@ typedef struct {
 /* call getResult in common.cpp to get the result in string format. */
 const char *getResult(OCStackResult result);
 
-/* Function that creates a new LED resource by calling the
+/* Function that creates a new Light resource by calling the
  * OCCreateResource() method.
  */
-int createLEDResource (char *uri, LEDResource *ledResource);
+int createLightResource (char *uri, LightResource *lightResource);
 
 /* This method converts the payload to JSON format */
 char* constructJsonResponse (OCEntityHandlerRequest *ehRequest);
 
-/* This method changes the LED power using an independent thread
+/* This method changes the Light power using an independent thread
  * and notifies the observers of new state of the resource.
  */
-void *ChangeLEDRepresentation (void *param);
+void *ChangeLightRepresentation (void *param);
 
 /* Following methods process the PUT, GET, POST, Delete,
  * & Observe requests */

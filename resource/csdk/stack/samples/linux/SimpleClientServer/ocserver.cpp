@@ -34,14 +34,14 @@
 static int gObserveNotifyType = 3;
 
 int gQuitFlag = 0;
-int gLEDUnderObservation = 0;
+int gLightUnderObservation = 0;
 
-static LEDResource LED;
-// This variable determines instance number of the LED resource.
-// Used by POST method to create a new instance of LED resource.
-static int gCurrLedInstance = 0;
+static LightResource Light;
+// This variable determines instance number of the Light resource.
+// Used by POST method to create a new instance of Light resource.
+static int gCurrLightInstance = 0;
 
-static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
+static LightResource gLightInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 
@@ -57,7 +57,7 @@ const char responsePayloadDeleteResourceNotSupported[] =
         "{App determines payload: The request is received for a non-support resource.}";
 
 
-char *gResourceUri= (char *)"/a/led";
+char *gResourceUri= (char *)"/a/light";
 
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
@@ -68,31 +68,32 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     cJSON *json = cJSON_CreateObject();
     cJSON *format;
     char *jsonResponse;
-    LEDResource *currLEDResource = &LED;
+    LightResource *currLightResource = &Light;
 
-    if (ehRequest->resource == gLedInstance[0].handle)
+    if (ehRequest->resource == gLightInstance[0].handle)
     {
-        currLEDResource = &gLedInstance[0];
-        gResourceUri = (char *) "a/led/0";
+        currLightResource = &gLightInstance[0];
+        gResourceUri = (char *) "a/light/0";
     }
-    else if (ehRequest->resource == gLedInstance[1].handle)
+    else if (ehRequest->resource == gLightInstance[1].handle)
     {
-        currLEDResource = &gLedInstance[1];
-        gResourceUri = (char *) "a/led/1";
+        currLightResource = &gLightInstance[1];
+        gResourceUri = (char *) "a/light/1";
     }
 
     if(OC_REST_PUT == ehRequest->method)
     {
         cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
-        currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring , "on") ? true:false);
-        currLEDResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
+        currLightResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring,
+                "on") ? true:false);
+        currLightResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
         cJSON_Delete(putJson);
     }
 
     cJSON_AddStringToObject(json,"href",gResourceUri);
     cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
-    cJSON_AddStringToObject(format, "state", (char *) (currLEDResource->state ? "on":"off"));
-    cJSON_AddNumberToObject(format, "power", currLEDResource->power);
+    cJSON_AddStringToObject(format, "state", (char *) (currLightResource->state ? "on":"off"));
+    cJSON_AddNumberToObject(format, "power", currLightResource->power);
 
     jsonResponse = cJSON_Print(json);
     cJSON_Delete(json);
@@ -139,7 +140,7 @@ void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
 OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    char *respPLPost_led = NULL;
+    char *respPLPost_light = NULL;
     cJSON *json;
     cJSON *format;
 
@@ -147,33 +148,33 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
      * The entity handler determines how to process a POST request.
      * Per the REST paradigm, POST can also be used to update representation of existing
      * resource or create a new resource.
-     * In the sample below, if the POST is for /a/led then a new instance of the LED
+     * In the sample below, if the POST is for /a/light then a new instance of the Light
      * resource is created with default representation (if representation is included in
      * POST payload it can be used as initial values) as long as the instance is
      * lesser than max new instance count. Once max instance count is reached, POST on
-     * /a/led updated the representation of /a/led (just like PUT)
+     * /a/light updated the representation of /a/light (just like PUT)
      */
 
-    if (ehRequest->resource == LED.handle)
+    if (ehRequest->resource == Light.handle)
     {
-        if (gCurrLedInstance < SAMPLE_MAX_NUM_POST_INSTANCE)
+        if (gCurrLightInstance < SAMPLE_MAX_NUM_POST_INSTANCE)
         {
-            // Create new LED instance
-            char newLedUri[15] = "/a/led/";
-            sprintf (newLedUri + strlen(newLedUri), "%d", gCurrLedInstance);
+            // Create new Light instance
+            char newLightUri[15] = "/a/light/";
+            sprintf (newLightUri + strlen(newLightUri), "%d", gCurrLightInstance);
             json = cJSON_CreateObject();
             cJSON_AddStringToObject(json,"href",gResourceUri);
             cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
-            cJSON_AddStringToObject(format, "createduri", (char *) newLedUri);
+            cJSON_AddStringToObject(format, "createduri", (char *) newLightUri);
 
-            if (0 == createLEDResource (newLedUri, &gLedInstance[gCurrLedInstance]))
+            if (0 == createLightResource (newLightUri, &gLightInstance[gCurrLightInstance]))
             {
-                OC_LOG (INFO, TAG, "Created new LED instance\n");
-                gLedInstance[gCurrLedInstance].state = 0;
-                gLedInstance[gCurrLedInstance].power = 0;
-                gCurrLedInstance++;
-                respPLPost_led = cJSON_Print(json);
-                strncpy ((char *)ehRequest->newResourceUri, newLedUri, MAX_URI_LENGTH);
+                OC_LOG (INFO, TAG, "Created new Light instance\n");
+                gLightInstance[gCurrLightInstance].state = 0;
+                gLightInstance[gCurrLightInstance].power = 0;
+                gCurrLightInstance++;
+                respPLPost_light = cJSON_Print(json);
+                strncpy ((char *)ehRequest->newResourceUri, newLightUri, MAX_URI_LENGTH);
                 ehResult = OC_EH_RESOURCE_CREATED;
             }
 
@@ -181,37 +182,38 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
         }
         else
         {
-            // Update repesentation of /a/led
-            LED.state = true;
-            LED.power = 11;
-            respPLPost_led = constructJsonResponse(ehRequest);
+            // Update repesentation of /a/light
+            Light.state = true;
+            Light.power = 11;
+            respPLPost_light = constructJsonResponse(ehRequest);
         }
     }
     else
     {
         for (int i = 0; i < SAMPLE_MAX_NUM_POST_INSTANCE; i++)
         {
-            if (ehRequest->resource == gLedInstance[i].handle)
+            if (ehRequest->resource == gLightInstance[i].handle)
             {
-                gLedInstance[i].state = true;
-                gLedInstance[i].power = 22;
+                gLightInstance[i].state = true;
+                gLightInstance[i].power = 22;
                 if (i == 0)
                 {
-                    respPLPost_led = constructJsonResponse(ehRequest);
+                    respPLPost_light = constructJsonResponse(ehRequest);
                     break;
                 }
                 else if (i == 1)
                 {
-                    respPLPost_led = constructJsonResponse(ehRequest);
+                    respPLPost_light = constructJsonResponse(ehRequest);
                 }
             }
         }
     }
 
-    if (respPLPost_led != NULL && ehRequest->resJSONPayloadLen > strlen ((char *)respPLPost_led))
+    if (respPLPost_light != NULL && ehRequest->resJSONPayloadLen > \
+            strlen((char *)respPLPost_light))
     {
-        strncpy((char *)ehRequest->resJSONPayload, respPLPost_led,
-                strlen((char *)respPLPost_led));
+        strncpy((char *)ehRequest->resJSONPayload, respPLPost_light,
+                strlen((char *)respPLPost_light));
     }
     else
     {
@@ -219,7 +221,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
                 ehRequest->resJSONPayloadLen);
     }
 
-    free(respPLPost_led);
+    free(respPLPost_light);
     return ehResult;
 }
 
@@ -234,13 +236,13 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
      * 1a. pass the delete request to the c stack
      * 1b. internally, the c stack figures out what needs to be done and does it accordingly
      *    (e.g. send observers notification, remove observers...)
-     * 1c. the c stack returns with the result whether the request is fullfilled.
+     * 1c. the c stack returns with the result whether the request is fullfilLight.
      * 2. optionally, app removes observers out of its array 'interestedObservers'
      */
 
     const char* deleteResponse = NULL;
 
-    if ((ehRequest != NULL) && (ehRequest->resource == LED.handle))
+    if ((ehRequest != NULL) && (ehRequest->resource == Light.handle))
     {
         //Step 1: Ask stack to do the work.
         OCStackResult result = OCDeleteResource(ehRequest->resource);
@@ -275,7 +277,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
             ehResult = OC_EH_ERROR;
         }
     }
-    else if (ehRequest->resource != LED.handle)
+    else if (ehRequest->resource != Light.handle)
     {
         //Let's this app not supporting DELETE on some resources so
         //consider the DELETE request is received for a non-support resource.
@@ -328,7 +330,7 @@ void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest)
         {
             interestedObservers[i].observationId = ehRequest->obsInfo->obsId;
             interestedObservers[i].valid = true;
-            gLEDUnderObservation = 1;
+            gLightUnderObservation = 1;
             break;
         }
     }
@@ -353,7 +355,7 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
         }
     }
     if (clientStillObserving == false)
-        gLEDUnderObservation = 0;
+        gLightUnderObservation = 0;
 }
 
 OCEntityHandlerResult
@@ -520,7 +522,7 @@ void handleSigInt(int signum) {
     }
 }
 
-void *ChangeLEDRepresentation (void *param)
+void *ChangeLightRepresentation (void *param)
 {
     (void)param;
     OCStackResult result = OC_STACK_ERROR;
@@ -532,10 +534,10 @@ void *ChangeLEDRepresentation (void *param)
     while (1)
     {
         sleep(10);
-        LED.power += 5;
-        if (gLEDUnderObservation)
+        Light.power += 5;
+        if (gLightUnderObservation)
         {
-            OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", LED.power);
+            OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", Light.power);
             if (gObserveNotifyType == 1)
             {
                 // Notify list of observers. Alternate observers on the list will be notified.
@@ -553,23 +555,23 @@ void *ChangeLEDRepresentation (void *param)
                 cJSON *format;
                 cJSON_AddStringToObject(json,"href",gResourceUri);
                 cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
-                cJSON_AddStringToObject(format, "state", (char *) (LED.state ? "on":"off"));
-                cJSON_AddNumberToObject(format, "power", LED.power);
+                cJSON_AddStringToObject(format, "state", (char *) (Light.state ? "on":"off"));
+                cJSON_AddNumberToObject(format, "power", Light.power);
                 char * obsResp = cJSON_Print(json);
                 cJSON_Delete(json);
-                result = OCNotifyListOfObservers (LED.handle, obsNotify, j,
+                result = OCNotifyListOfObservers (Light.handle, obsNotify, j,
                         (unsigned char *)obsResp, OC_NA_QOS);
                 free(obsResp);
             }
             else if (gObserveNotifyType == 0)
             {
                 // Notifying all observers
-                result = OCNotifyAllObservers (LED.handle, OC_NA_QOS);
+                result = OCNotifyAllObservers (Light.handle, OC_NA_QOS);
                 if (OC_STACK_NO_OBSERVERS == result)
                 {
                     OC_LOG (INFO, TAG,
                             "=======> No more observers exist, stop sending observations");
-                    gLEDUnderObservation = 0;
+                    gLightUnderObservation = 0;
                 }
             }
             else
@@ -651,9 +653,9 @@ int main(int argc, char* argv[])
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb);
 
     /*
-     * Declare and create the example resource: LED
+     * Declare and create the example resource: Light
      */
-    createLEDResource(gResourceUri, &LED);
+    createLightResource(gResourceUri, &Light);
 
     // Initialize observations data structure for the resource
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
@@ -662,9 +664,9 @@ int main(int argc, char* argv[])
     }
 
     /*
-     * Create a thread for changing the representation of the LED
+     * Create a thread for changing the representation of the Light
      */
-    pthread_create (&threadId, NULL, ChangeLEDRepresentation, (void *)NULL);
+    pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
 
     // Break from loop with Ctrl-C
     OC_LOG(INFO, TAG, "Entering ocserver main loop...");
@@ -679,7 +681,7 @@ int main(int argc, char* argv[])
     }
 
     /*
-     * Cancel the LED thread and wait for it to terminate
+     * Cancel the Light thread and wait for it to terminate
      */
     pthread_cancel(threadId);
     pthread_join(threadId, NULL);
@@ -693,7 +695,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource)
+int createLightResource (char *uri, LightResource *lightResource)
 {
     if (!uri)
     {
@@ -701,15 +703,15 @@ int createLEDResource (char *uri, LEDResource *ledResource)
         return -1;
     }
 
-    ledResource->state = false;
-    ledResource->power= 0;
-    OCStackResult res = OCCreateResource(&(ledResource->handle),
-            "core.led",
+    lightResource->state = false;
+    lightResource->power= 0;
+    OCStackResult res = OCCreateResource(&(lightResource->handle),
+            "core.light",
             "oc.mi.def",
             uri,
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
+    OC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
 
     return 0;
 }

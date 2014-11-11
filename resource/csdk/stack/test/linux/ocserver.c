@@ -31,14 +31,14 @@
 #define TAG PCF("ocserver")
 
 int gQuitFlag = 0;
-OCStackResult createLEDResource();
+OCStackResult createLightResource();
 
-typedef struct LEDRESOURCE{
+typedef struct LIGHTRESOURCE{
     OCResourceHandle handle;
     bool power;
-} LEDResource;
+} LightResource;
 
-static LEDResource LED;
+static LightResource Light;
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
 void handleSigInt(int signum) {
@@ -63,9 +63,9 @@ int main() {
     }
 
     /*
-     * Declare and create the example resource: LED
+     * Declare and create the example resource: Light
      */
-    if(createLEDResource() != OC_STACK_OK)
+    if(createLightResource() != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack cannot create resource...");
     }
@@ -92,12 +92,12 @@ int main() {
     return 0;
 }
 
-OCStackResult createLEDResource() {
-    LED.power = false;
-    OCStackResult res = OCCreateResource(&LED.handle,
-                    "core.led",
+OCStackResult createLightResource() {
+    Light.power = false;
+    OCStackResult res = OCCreateResource(&Light.handle,
+                    "core.light",
                     "core.rw",
-                    "/a/led",
+                    "/a/light",
                     0,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
     return res;
