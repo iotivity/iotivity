@@ -1,3 +1,22 @@
+#//******************************************************************
+#//
+#// Copyright 2014 Samsung Electronics All Rights Reserved.
+#//
+#//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#//
+#// Licensed under the Apache License, Version 2.0 (the "License");
+#// you may not use this file except in compliance with the License.
+#// You may obtain a copy of the License at
+#//
+#//      http://www.apache.org/licenses/LICENSE-2.0
+#//
+#// Unless required by applicable law or agreed to in writing, software
+#// distributed under the License is distributed on an "AS IS" BASIS,
+#// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#// See the License for the specific language governing permissions and
+#// limitations under the License.
+#//
+#//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 BUILD := release
 PLATFORM := arduinomega
@@ -11,12 +30,13 @@ APP_NAME := Light
 OBJ_DIR := ./bin
 
 ROOT_DIR = ../../../../../resource/csdk
+OUT_DIR = build/$(PLATFORM)/$(BUILD)
 LOGGER_DIR = $(ROOT_DIR)/logger
 TBSTACK_DIR = $(ROOT_DIR)/stack
 TBSOCKET_DIR = $(ROOT_DIR)/ocsocket
 
 include $(ROOT_DIR)/local.properties
-include $(ROOT_DIR)/build/arduino/$(PLATFORM).properties
+include $(ROOT_DIR)/build/$(PLATFORM)/$(PLATFORM).properties
 
 VPATH := $(SDIR_ARD_PLATFORM)
 
@@ -35,7 +55,7 @@ endif
 all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
 
 core.a: $(PLATFORM_OBJS)
-	@cd $(OBJ_DIR) && $(AR) -x ../$(ROOT_DIR)/build/arduino/$(BUILD)/liboctbstack.a
+	@cd $(OBJ_DIR) && $(AR) -x ../$(ROOT_DIR)/$(OUT_DIR)/liboctbstack.a
 	$(AR) rcs $@ $^ $(OBJ_DIR)/*.o
 	$(RANLIB) $@
 
@@ -46,7 +66,7 @@ prep_dirs:
 	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
 
 %.o: %.cpp
-	$(CCPLUS) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
 
 $(APP_NAME).elf: $(APP_NAME).o core.a
 	$(CC) -Os -Wl,--gc-sections,--relax $(CFLAGS_PLATFORM) $^ -lm -o $@
