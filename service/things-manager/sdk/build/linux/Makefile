@@ -2,8 +2,6 @@
 
 #OIC_ROOT=../../../resource/
 IOT_BASE=../../../../../resource
-BOOST_ROOT=../../../../../../
-BOOST_DIR = $(BOOST_ROOT)boost_1_51_0
 #BOOST=${BOOST_DIR}
 RST_NAME=.
 
@@ -16,11 +14,15 @@ EXCLUDE_LIST=
 CXX=g++
 CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -ldl
 
-JSON = ../../../lib/inc
-JSONCPP = ../../../lib/jsoncpp/inc
-JSONLIB = ../../../lib/jsoncpp
 
-CXX_INC=-I../../ -I../../inc/ -I${IOT_BASE}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST_DIR} -I${JSON} -I${JSONCPP} -I${TGM_INC}
+CXX_INC	:= -I../../ -I../../inc/ 
+CXX_INC	+= -I${IOT_BASE}/include/ 
+CXX_INC += -I${IOT_BASE}/oc_logger/include
+CXX_INC	+= -I${IOT_BASE}/csdk/stack/include 
+CXX_INC	+= -I${IOT_BASE}/csdk/ocsocket/include 
+CXX_INC	+= -I${IOT_BASE}/csdk/ocrandom/include 
+CXX_INC	+= -I${IOT_BASE}/csdk/logger/include 
+
 CXX_LIB=-L""
 
 CXX_SRCPATH=${wildcard ../../src/*.cpp}
@@ -30,9 +32,6 @@ CXX_OBJLIST=${CXX_USESRCS:.cpp=.o}
 
 
 
-
-#TGM = ../../
-TGM_INC = ../../../tgm/inc
 
 
 
