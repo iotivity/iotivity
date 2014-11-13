@@ -43,11 +43,11 @@ LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
 
 # Force metatargets to build:
-all.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc_target
+all.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc_target threadingsample
 
-apps.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient
+apps.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient threadingsample
 
-buildScript_all.PHONY: prep_dirs simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient
+buildScript_all.PHONY: prep_dirs simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient threadingsample
 
 all: all.PHONY
 
@@ -99,6 +99,9 @@ garageserver: garageserver.cpp
 
 garageclient: garageclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ garageclient.cpp $(CXX_INC) $(CXX_LIBS)
+
+threadingsample: threadingsample.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ threadingsample.cpp $(CXX_INC) $(CXX_LIBS)
 
 ocicuc_target:
 	cd ocicuc && $(MAKE) apps
