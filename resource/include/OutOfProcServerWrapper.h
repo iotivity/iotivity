@@ -44,7 +44,7 @@ namespace OC
             // Not implemented
             return OC_STACK_NOTIMPL;
         }
-		virtual OCStackResult registerResourceWithHost(
+        virtual OCStackResult registerResourceWithHost(
                     OCResourceHandle& resourceHandle,
                     std::string& resourceHOST,
                     std::string& resourceURI,
@@ -52,9 +52,10 @@ namespace OC
                     const std::string& resourceInterface,
                     EntityHandler& entityHandler,
                     uint8_t resourceProperty)
-		{
-			return OC_STACK_NOTIMPL;
-		}
+        {
+            // Not implemented
+            return OC_STACK_NOTIMPL;
+        }
 
         virtual OCStackResult unregisterResource(
                      const OCResourceHandle& resourceHandle)

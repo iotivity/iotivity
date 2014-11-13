@@ -479,16 +479,18 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                uint8_t resourceProperties);
 
 /**
- * Create a resource. with host ip address for rsrc_t
+ * Create a resource. with host ip address for remote resource
  *
- * @param handle - pointer to handle to newly created resource.  Set by ocstack.  Used to refer to resource
+ * @param handle - pointer to handle to newly created resource.  Set by ocstack.
+ *                 Used to refer to resource
  * @param resourceTypeName - name of resource type.  Example: "core.led"
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
- * @param host - HOST address of the resource.  Example:  "coap://xxx.xxx.xxx.xxx:xxxxx"
+ * @param host - HOST address of the remote resource.  Example:  "coap://xxx.xxx.xxx.xxx:xxxxx"
  * @param uri - URI of the resource.  Example:  "/a/led"
  * @param entityHandler - entity handler function that is called by ocstack to handle requests, etc
  *                        NULL for default entity handler
- * @param resourceProperties - properties supported by resource.  Example: OC_DISCOVERABLE|OC_OBSERVABLE
+ * @param resourceProperties - properties supported by resource.
+ *                             Example: OC_DISCOVERABLE|OC_OBSERVABLE
  *
  * @return
  *     OC_STACK_OK    - no errors
