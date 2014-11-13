@@ -53,8 +53,7 @@ namespace OC
                     EntityHandler& entityHandler,
                     uint8_t resourceProperty) = 0;
 
-
-		virtual OCStackResult registerResourceWithHost(
+        virtual OCStackResult registerResourceWithHost(
                     OCResourceHandle& resourceHandle,
                     std::string& resourceHOST,
                     std::string& resourceURI,
