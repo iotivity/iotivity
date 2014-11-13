@@ -32,6 +32,14 @@ typedef struct OCPresence {
     uint32_t TTLlevel;
 }OCPresence;
 
+typedef struct OCMulticastNode {
+    unsigned char * uri;
+    uint32_t nonce;
+    struct OCMulticastNode * next;
+} OCMulticastNode;
+
+extern OCMulticastNode * mcPresenceNodes;
+
 typedef struct ClientCB {
     // callback method defined in application address space
     OCClientResponseHandler callBack;
@@ -136,5 +144,34 @@ void DeleteClientCBList();
  */
 //------------------------------------------------------------------------
 void FindAndDeleteClientCB(ClientCB * cbNode);
+
+/** @ingroup ocstack
+ *
+ * This method is used to search a multicast presence node from list.
+ *
+ * @param[in]  uri
+ *              the uri of the request.
+ *
+ * @return OCMulticastNode
+ *              The resulting node from making this call. Null if doesn't exist.
+ */
+//------------------------------------------------------------------------
+OCMulticastNode* GetMCPresenceNode(unsigned char * uri);
+
+/** @ingroup ocstack
+ *
+ * This method is used to add a multicast presence node to the list.
+ *
+ * @param[out] outnode
+ *              The resulting node from making this call. Null if out of memory.
+ * @param[in] uri
+ *              the uri of the server.
+ * @param[in] nonce
+ *              current nonce for the server
+ *
+ * @return OC_STACK_OK for Success, otherwise some error value
+ */
+//------------------------------------------------------------------------
+OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, unsigned char* uri, uint32_t nonce);
 
 #endif //OC_CLIENT_CB
