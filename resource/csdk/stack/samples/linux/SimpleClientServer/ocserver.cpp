@@ -578,7 +578,10 @@ void *ChangeLEDRepresentation (void *param)
             }
         }
 #ifdef WITH_PRESENCE
-        OC_LOG_V(INFO, TAG, "================ presence count %d",stopPresenceCount);
+        if(stopPresenceCount > 0)
+        {
+            OC_LOG_V(INFO, TAG, "================ presence count %d", stopPresenceCount);
+        }
         if(!stopPresenceCount--)
         {
             OC_LOG(INFO, TAG, "================ stopping presence");

@@ -35,7 +35,7 @@ static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/c
 static std::string putPayload = "{\"state\":\"on\",\"power\":5}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
-static std::string coapServerResource = "/a/led";
+static std::string coapServerResource = "/a/light";
 
 // The handle for the observe registration
 OCDoHandle gObserveDoHandle;
@@ -77,10 +77,11 @@ static void PrintUsage()
 
     #ifdef WITH_PRESENCE
     OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Nonconfirmable presence");
+    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence with filter");
     #endif
 
-    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
-    OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
+    OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
+    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -242,7 +243,7 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "NONCE NUMBER: %d", clientResponse->sequenceNumber);
+        OC_LOG_V(INFO, TAG, "NONCE NUMBER: %u", clientResponse->sequenceNumber);
         OC_LOG_V(INFO, TAG, "Callback Context for Presence notification recvd successfully %d", gNumPresenceNotifies);
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Presence Response", clientResponse->resJSONPayload);
         gNumPresenceNotifies++;
@@ -319,6 +320,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 break;
             #ifdef WITH_PRESENCE
             case TEST_OBS_PRESENCE:
+            case TEST_OBS_PRESENCE_WITH_FILTER:
                 InitPresence();
                 break;
             #endif
@@ -339,8 +341,11 @@ int InitPresence()
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI
-            << "?rt=core.led";
+    query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI;
+    if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTER)
+    {
+        query << "?rt=core.light";
+    }
     return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_LOW_QOS, presenceCB, NULL, 0));
 }
 #endif
@@ -375,7 +380,7 @@ int InitPostRequest(OCQualityOfService qos)
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
 
-    // First POST operation (to create an LED instance)
+    // First POST operation (to create an Light instance)
     result = InvokeOCDoResource(query, OC_REST_POST,
                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                                postReqCB, NULL, 0);
@@ -385,7 +390,7 @@ int InitPostRequest(OCQualityOfService qos)
         OC_LOG(INFO, TAG, "First POST call did not succeed");
     }
 
-    // Second POST operation (to create an LED instance)
+    // Second POST operation (to create an Light instance)
     result = InvokeOCDoResource(query, OC_REST_POST,
                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                                postReqCB, NULL, 0);
@@ -394,7 +399,7 @@ int InitPostRequest(OCQualityOfService qos)
         OC_LOG(INFO, TAG, "Second POST call did not succeed");
     }
 
-    // This POST operation will update the original resourced /a/led
+    // This POST operation will update the original resourced /a/light
     return (InvokeOCDoResource(query, OC_REST_POST,
                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                                postReqCB, NULL, 0));
@@ -605,7 +610,7 @@ std::string getPortTBServer(OCClientResponse * clientResponse){
 
 std::string getQueryStrForGetPut(OCClientResponse * clientResponse){
 
-    return "/a/led";
+    return "/a/light";
 }
 
 void parseClientResponse(OCClientResponse * clientResponse){
