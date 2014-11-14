@@ -251,7 +251,6 @@ int main(int argc, char* argv[])
     uint8_t* paddr = NULL;
     uint16_t port = OC_WELL_KNOWN_PORT;
     uint8_t ifname[] = "eth0";
-    int opt;
     struct timespec timeout;
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");

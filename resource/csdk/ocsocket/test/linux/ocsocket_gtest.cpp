@@ -286,3 +286,33 @@ TEST(SendToRecvfromMulticast, Positive) {
     OCClose(ssfd);
 }
 
+TEST(GetSocketInfo, Positive) {
+    OCDevAddr ipaddr;
+    int32_t  sockfd;
+    uint8_t addr[20];
+    uint8_t ifname[] = "eth0";
+    uint16_t port;
+    uint8_t a,b,c,d;
+
+    OCBuildIPv4Address(0,0,0,0, 0, &ipaddr);
+    EXPECT_EQ(ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
+    EXPECT_EQ(ERR_SUCCESS, OCGetSocketInfo(sockfd, &port));
+    OC_LOG_V(DEBUG, MOD_NAME, "Port %d", port);
+    OCClose(sockfd);
+
+    OCBuildIPv4Address(0,0,0,0, 5678, &ipaddr);
+    EXPECT_EQ(ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
+    EXPECT_EQ(ERR_SUCCESS, OCGetSocketInfo(sockfd, &port));
+    OC_LOG_V(DEBUG, MOD_NAME, "Port %d", port);
+    EXPECT_TRUE(port == 5678);
+    OCClose(sockfd);
+
+    OCGetInterfaceAddress( ifname, sizeof(ifname),  AF_INET, addr, sizeof(addr));
+    sscanf((const char*)addr, "%d.%d.%d.%d", (int*)&a, (int*)&b, (int*)&c, (int*)&d);
+    OCBuildIPv4Address(a,b,c,d, TEST_PORT_NUM, &ipaddr);
+    EXPECT_EQ(ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
+    EXPECT_EQ(ERR_SUCCESS, OCGetSocketInfo(sockfd, &port));
+    OC_LOG_V(DEBUG, MOD_NAME, "Port %d", port);
+    EXPECT_TRUE(port == TEST_PORT_NUM);
+    OCClose(sockfd);
+}

@@ -28,15 +28,17 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"
+#include "cJSON.h"
 
 #define TAG "occlientbasicops"
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
-static std::string coapServerIP = "255.255.255.255";
-static std::string coapServerPort = "5683";
-static std::string coapServerResource = "/a/led";
+static std::string coapServerIP;
+static std::string coapServerPort;
+static std::string coapServerResource;
+static int coapSecureResource;
 
 int gQuitFlag = 0;
 
@@ -119,23 +121,6 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response",
                 clientResponse->resJSONPayload);
     }
-    if(clientResponse->rcvdVendorSpecificHeaderOptions &&
-            clientResponse->numRcvdVendorSpecificHeaderOptions)
-    {
-        OC_LOG (INFO, TAG, "Received vendor specific options");
-        uint8_t i = 0;
-        OCHeaderOption * rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
-        for( i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
-        {
-            if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
-            {
-                OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
-                        ((OCHeaderOption)rcvdOptions[i]).optionID );
-                OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
-                        ((OCHeaderOption)rcvdOptions[i]).optionLength);
-            }
-        }
-    }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -161,20 +146,21 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
                 remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
 
-        parseClientResponse(clientResponse);
-
-        switch(TEST_CASE)
+        if (parseClientResponse(clientResponse) != -1)
         {
-            case TEST_NON_CON_OP:
-                InitGetRequest(OC_LOW_QOS);
-                InitPutRequest();
-                //InitPostRequest(OC_LOW_QOS);
-                break;
-            case TEST_CON_OP:
-                InitGetRequest(OC_HIGH_QOS);
-                InitPutRequest();
-                //InitPostRequest(OC_HIGH_QOS);
-                break;
+            switch(TEST_CASE)
+            {
+                case TEST_NON_CON_OP:
+                    InitGetRequest(OC_LOW_QOS);
+                    InitPutRequest();
+                    //InitPostRequest(OC_LOW_QOS);
+                    break;
+                case TEST_CON_OP:
+                    InitGetRequest(OC_HIGH_QOS);
+                    InitPutRequest();
+                    //InitPostRequest(OC_HIGH_QOS);
+                    break;
+            }
         }
     }
 
@@ -186,7 +172,8 @@ int InitPutRequest()
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coaps://" << coapServerIP << ":" << "5684" << coapServerResource;
+    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
+        << ":" << coapServerPort << coapServerResource;
     return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
 }
 
@@ -195,7 +182,8 @@ int InitPostRequest(OCQualityOfService qos)
     OCStackResult result;
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coaps://" << coapServerIP << ":" << "5684" << coapServerResource;
+    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
+        << ":" << coapServerPort << coapServerResource;
 
     // First POST operation (to create an LED instance)
     result = InvokeOCDoResource(query, OC_REST_POST,
@@ -226,7 +214,8 @@ int InitGetRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coaps://" << coapServerIP << ":" << "5684" << coapServerResource;
+    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
+        << ":" << coapServerPort << coapServerResource;
 
     return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)?
             OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
@@ -324,7 +313,6 @@ int main(int argc, char* argv[])
         }
 
         nanosleep(&timeout, NULL);
-        //sleep(2);
     }
     OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
@@ -361,14 +349,77 @@ std::string getPortTBServer(OCClientResponse * clientResponse)
     return ss.str();
 }
 
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
+int parseClientResponse(OCClientResponse * clientResponse)
 {
-    return "/a/led";
-}
+    int port = -1;
+    cJSON * root = NULL;
+    cJSON * oc = NULL;
 
-void parseClientResponse(OCClientResponse * clientResponse)
-{
+    // Initialize all global variables
+    coapServerResource.clear();
+    coapServerPort.clear();
+    coapServerIP.clear();
+    coapSecureResource = 0;
+
+    root = cJSON_Parse((char *)(clientResponse->resJSONPayload));
+    if (!root)
+    {
+        return -1;
+    }
+
+    oc = cJSON_GetObjectItem(root,"oc");
+    if (!oc)
+    {
+        return -1;
+    }
+
+    if (oc->type == cJSON_Array)
+    {
+        if (cJSON_GetArraySize(oc) > 0)
+        {
+            cJSON * resource = cJSON_GetArrayItem(oc, 0);
+            if (cJSON_GetObjectItem(resource, "href"))
+            {
+                coapServerResource.assign(cJSON_GetObjectItem(resource, "href")->valuestring);
+            }
+            else
+            {
+                coapServerResource = "";
+            }
+            OC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
+
+            cJSON * prop = cJSON_GetObjectItem(resource,"prop");
+            if (prop)
+            {
+                // If this is a secure resource, the info about the port at which the
+                // resource is hosted on server is embedded inside discovery JSON response
+                if (cJSON_GetObjectItem(prop, "sec"))
+                {
+                    if ((cJSON_GetObjectItem(prop, "sec")->valueint) == 1)
+                    {
+                        coapSecureResource = 1;
+                    }
+                }
+                OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
+                if (cJSON_GetObjectItem(prop, "port"))
+                {
+                    port = cJSON_GetObjectItem(prop, "port")->valueint;
+                    OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
+
+                    std::ostringstream ss;
+                    ss << port;
+                    coapServerPort = ss.str();
+                }
+            }
+        }
+    }
+    cJSON_Delete(root);
+
     coapServerIP = getIPAddrTBServer(clientResponse);
-    coapServerPort = getPortTBServer(clientResponse);
-    coapServerResource = getQueryStrForGetPut(clientResponse);
+    if (port == -1)
+    {
+        coapServerPort = getPortTBServer(clientResponse);
+        OC_LOG_V(INFO, TAG, "Hosting Server Port -- %s", coapServerPort.c_str());
+    }
+    return 0;
 }

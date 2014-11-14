@@ -271,6 +271,23 @@ int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
 //------------------------------------------------------------------------
 int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port);
 
+
+//-- OCGetSocketInfo -----------------------------------------------------
+/** @ingroup ocsocket
+ *
+ * This method is used to retrieve the port number to which the @p sockfd
+ * is bound.
+ *
+ * @param[in]  sockfd
+ *              socket whose port needs to be retrieved
+ * @param[out] port
+ *              port number
+ *
+ * @retval 0 for Success, otherwise some error value
+ */
+//------------------------------------------------------------------------
+int32_t OCGetSocketInfo(int32_t sockfd, uint16_t *port);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

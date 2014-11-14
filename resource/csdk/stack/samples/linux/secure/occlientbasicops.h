@@ -64,7 +64,7 @@ int InitDiscovery();
 /* Function to retrieve ip address, port no. of the server
  *  and query for the operations to be performed.
  */
-void parseClientResponse(OCClientResponse * clientResponse);
+int parseClientResponse(OCClientResponse * clientResponse);
 
 /* This method calls OCDoResource() which in turn makes calls
  * to the lower layers
@@ -91,3 +91,4 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse);
 
 #endif
+

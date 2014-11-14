@@ -33,6 +33,8 @@
 #define OC_RSRVD_INTERFACE_LL           "oc.mi.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oc.mi.b"
 #define OC_RSRVD_OBSERVABLE             "obs"
+#define OC_RSRVD_SECURE                 "sec"
+#define OC_RSRVD_HOSTING_PORT           "port"
 
 #define OC_JSON_PREFIX                     "{\"oc\":["
 #define OC_JSON_PREFIX_LEN                 (sizeof(OC_JSON_PREFIX) - 1)
@@ -41,6 +43,7 @@
 #define OC_JSON_SEPARATOR                  ','
 
 #define OC_RESOURCE_OBSERVABLE   1
+#define OC_RESOURCE_SECURE       1
 
 typedef enum {
     STACK_RES_DISCOVERY_NOFILTER = 0,

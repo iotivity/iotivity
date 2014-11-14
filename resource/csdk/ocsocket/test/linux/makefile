@@ -24,10 +24,11 @@ ROOT_DIR = ../../..
 include $(ROOT_DIR)/local.properties
 
 OCSOCK_DIR = $(ROOT_DIR)/ocsocket
+OC_LOG_DIR    = $(ROOT_DIR)/../oc_logger
 LOGGER_DIR = $(ROOT_DIR)/logger
 BIN_DIR = $(OCSOCK_DIR)/bin/linux/
 OBJ_DIR = $(OCSOCK_DIR)/obj/linux/
-INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include
+INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(OC_LOG_DIR)/include
 
 CXX = g++
 CC = gcc

@@ -298,3 +298,9 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
 
     return ERR_SUCCESS;
 }
+
+/// Retrieve the port to which socket is bound
+int32_t OCGetSocketInfo(int32_t sockfd, uint16_t *port)
+{
+    return ERR_NOT_IMPLEMENTED;
+}

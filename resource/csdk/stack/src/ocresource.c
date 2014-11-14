@@ -25,6 +25,7 @@
 #include "ocresource.h"
 #include "ocobserve.h"
 #include "occollection.h"
+#include "occoap.h"
 #include "logger.h"
 #include "debug.h"
 #include "cJSON.h"
@@ -168,6 +169,16 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
                 cJSON_AddItemToObject (propObj, OC_RSRVD_OBSERVABLE,
                                        cJSON_CreateNumber(OC_RESOURCE_OBSERVABLE));
             }
+            // Set secure flag for secure resources
+            if (resourcePtr->resourceProperties & OC_SECURE) {
+                uint16_t port;
+                cJSON_AddNumberToObject (propObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
+                //Set the IP port also as secure resources are hosted on a different port
+                if (OCGetResourceEndPointInfo (resourcePtr, &port) == OC_STACK_OK) {
+                    cJSON_AddNumberToObject (propObj, OC_RSRVD_HOSTING_PORT, port);
+                }
+            }
+
         }
     }
     jsonStr = cJSON_PrintUnformatted (resObj);

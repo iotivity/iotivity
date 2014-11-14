@@ -389,3 +389,20 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
 
     return ERR_SUCCESS;
 }
+
+/// Retrieve the port to which socket is bound
+int32_t OCGetSocketInfo(int32_t sockfd, uint16_t *port)
+{
+    int32_t ret = ERR_SUCCESS;
+
+    struct sockaddr_in sa;
+    socklen_t salen = sizeof(sa);
+    if (getsockname(sockfd, (struct sockaddr*)&sa, &salen) == 0) {
+        *port = ntohs(sa.sin_port);
+    } else {
+        OC_LOG_V(FATAL, MOD_NAME, "getsockname API failed with errno \
+            %s", strerror(errno));
+        ret = ERR_UNKNOWN;
+    }
+    return ret;
+}

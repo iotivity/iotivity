@@ -102,4 +102,16 @@ OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr,
         OCQualityOfService qos, OCCoAPToken * token,
         unsigned char *payload, OCResource *resPtr, uint32_t maxAge);
 
+/**
+ * Retrieve the end-point info where resource is being hosted.
+ * Currently, this method only provides the IP port with which the socket
+ * is bound. This internal method may be extended in future to retrieve
+ * more info (such as IP address, transport technology) about the hosting end-point.
+ *
+ * @param resPtr    - pointer to the resource
+ * @param info      - pointer to 16-bit integer to hold port number
+ * @return 0 - success, else - TBD error
+ */
+OCStackResult OCGetResourceEndPointInfo (OCResource *resPtr, void *info);
+
 #endif /* OCCOAP_H_ */

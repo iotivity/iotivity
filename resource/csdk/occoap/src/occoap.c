@@ -224,6 +224,13 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     }
     #endif
 
+    // do not process further if received an error
+    // ex : when receive a non-secure request to a secure resource
+    if(responseResult == OC_STACK_ERROR)
+    {
+        goto exit;
+    }
+
     OC_LOG_V(INFO, TAG, "Response from ocstack: %s",
             request->entityHandlerRequest->resJSONPayload);
 
@@ -852,4 +859,30 @@ OCStackResult OCProcessCoAP() {
 
     return OC_STACK_OK;
 }
+
+
+/**
+ * Retrieve the info about the end-point where resource is being hosted.
+ * Currently, this method only provides the IP port with which the socket
+ * is bound.
+ *
+ * @return 0 - success, else - TBD error
+ */
+OCStackResult OCGetResourceEndPointInfo (OCResource *resPtr, void *info) {
+
+    OCStackResult result = OC_STACK_ERROR;
+    int sfd;
+    OC_LOG(INFO, TAG, PCF("Entering OCGetResourceEndPointInfo"));
+    VERIFY_NON_NULL(resPtr);
+    VERIFY_NON_NULL(info);
+
+    sfd = (resPtr->resourceProperties & OC_SECURE) ? gCoAPCtx->sockfd_dtls :
+            gCoAPCtx->sockfd;
+
+    if (OCGetSocketInfo(sfd, (uint16_t*)info) == ERR_SUCCESS)
+        result = OC_STACK_OK;
+exit:
+    return result;
+}
+
 
