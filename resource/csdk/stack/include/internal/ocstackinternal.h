@@ -165,6 +165,8 @@ typedef struct {
     uint32_t sequenceNum;
     // this structure will be passed to entity handler
     OCEntityHandlerRequest * entityHandlerRequest;
+    // Indicate whether the request arrives on a secure port
+    uint8_t secure;
 } OCRequest;
 
 // following structure will be created in occoap and passed up the stack on the client side

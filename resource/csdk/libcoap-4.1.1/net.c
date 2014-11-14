@@ -50,6 +50,9 @@
 
 #include <ocsocket.h>
 #include <logger.h>
+#if defined(WITH_DTLS)
+#include "netdtls.h"
+#endif /* WITH_DTLS */
 
 #define MOD_NAME ("net.c")
 
@@ -360,9 +363,17 @@ coap_new_context(const coap_address_t *listen_addr) {
         coap_free( c);
         return NULL;
     }
-    else {
-        return c;
+
+#if defined(WITH_DTLS)
+    if (coap_dtls_init(c) != 0) {
+        coap_free( c);
+        return NULL;
     }
+#else
+    /* set dtls socket file descriptor to uninitialize value  */
+    c->sockfd_dtls = -1;
+#endif /* WITH_DTLS */
+    return c;
 
 #endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
@@ -413,6 +424,9 @@ void coap_free_context(coap_context_t *context) {
     if (context->sockfd_wellknown != -1) {
         OCClose( context->sockfd_wellknown );
     }
+#if defined(WITH_DTLS)
+    coap_dtls_deinit( context );
+#endif /* WITH_DTLS */
     coap_free( context );
 #endif
 #ifdef WITH_LWIP
@@ -519,7 +533,7 @@ coap_tid_t coap_send_ack(coap_context_t *context, const coap_address_t *dst,
         response = coap_pdu_init(COAP_MESSAGE_ACK, 0, request->hdr->id,
                 sizeof(coap_pdu_t));
         if (response) {
-            result = coap_send(context, dst, response, flag);
+            result = coap_send(context, dst, response, flag, NULL);
             coap_delete_pdu(response);
         }
     }
@@ -633,7 +647,7 @@ coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request,
 
     response = coap_new_error_response(request, code, opts);
     if (response) {
-        result = coap_send(context, dst, response, flag);
+        result = coap_send(context, dst, response, flag, NULL);
         coap_delete_pdu(response);
     }
 
@@ -649,7 +663,7 @@ coap_tid_t coap_send_message_type(coap_context_t *context,
     if (request) {
         response = coap_pdu_init(type, 0, request->hdr->id, sizeof(coap_pdu_t));
         if (response) {
-            result = coap_send(context, dst, response, flag);
+            result = coap_send(context, dst, response, flag, NULL);
             coap_delete_pdu(response);
         }
     }
@@ -657,7 +671,8 @@ coap_tid_t coap_send_message_type(coap_context_t *context,
 }
 
 coap_tid_t coap_send(coap_context_t *context,
-        const coap_address_t *dst, coap_pdu_t *pdu, coap_send_flags_t flag)
+        const coap_address_t *dst, coap_pdu_t *pdu, coap_send_flags_t flag,
+        uint8_t *cache_flag)
 {
     coap_queue_t *node = NULL;
     coap_tick_t now;
@@ -751,9 +766,20 @@ coap_tid_t coap_send(coap_context_t *context,
     return tid;
 
     sending:
+        OC_LOG_V(DEBUG, MOD_NAME, PCF("sending 0x%x"), flag);
+#if defined(WITH_DTLS)
+        // A secure packet is first encrypted by DTLS library and then send
+        // over the network.
+        if (flag & SEND_SECURE_PORT) {
+            bytesWritten = coap_dtls_encrypt(context, (OCDevAddr*)dst,
+                            pdu, &node, tid, cache_flag);
+        } else {
+            bytesWritten = coap_send_impl(context, dst, pdu);
+        }
+#else
         bytesWritten = coap_send_impl(context, dst, pdu);
-        if(bytesWritten > 0)
-        {
+#endif /* WITH_DTLS */
+        if(bytesWritten > 0) {
             return tid;
         }
         debug("coap_send_impl: error sending pdu\n");
@@ -781,7 +807,7 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
         debug("** retransmission #%d of transaction %d\n", node->retransmit_cnt,
             ntohs(node->pdu->hdr->id));
         flag = (coap_send_flags_t)(SEND_RETX | (node->secure ? SEND_SECURE_PORT : 0));
-        tid = coap_send(context, (coap_address_t *)&(node->remote),node->pdu, flag);
+        tid = coap_send(context, (coap_address_t *)&(node->remote),node->pdu, flag, NULL);
         return (tid == COAP_INVALID_TID)? COAP_INVALID_TID : node->id;
     }
 
@@ -815,6 +841,7 @@ int coap_read(coap_context_t *ctx, int sockfd) {
 #if defined(WITH_LWIP) || defined(WITH_CONTIKI)
     char *buf;
 #endif
+  char *pbuf = buf;
   coap_hdr_t *pdu;
   int bytes_read = -1;
 
@@ -823,28 +850,35 @@ int coap_read(coap_context_t *ctx, int sockfd) {
   unsigned char delayRes = 0;
 
 #ifdef WITH_CONTIKI
-    buf = uip_appdata;
+    pbuf = uip_appdata;
 #endif /* WITH_CONTIKI */
 #ifdef WITH_LWIP
     LWIP_ASSERT("No package pending", ctx->pending_package != NULL);
     LWIP_ASSERT("Can only deal with contiguous PBUFs to read the initial details", ctx->pending_package->tot_len == ctx->pending_package->len);
-    buf = ctx->pending_package->payload;
+    pbuf = ctx->pending_package->payload;
 #endif /* WITH_LWIP */
-
-    pdu = (coap_hdr_t *) buf;
 
     coap_address_init(&src);
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
-
-  bytes_read = OCRecvFrom( sockfd, (uint8_t*)buf, sizeof(buf), 0,
+  bytes_read = OCRecvFrom( sockfd, (uint8_t*)pbuf, sizeof(buf), 0,
               (OCDevAddr*)&src);
 
   // Set the delayed response flag for responding to multicast requests
   if (sockfd == ctx->sockfd_wellknown && bytes_read > 0) {
       delayRes = 1;
   }
+#if defined(WITH_DTLS)
+  // Perform the DTLS decryption if packet is coming on secure port
+  if (sockfd == ctx->sockfd_dtls && bytes_read > 0) {
+      if (coap_dtls_decrypt(ctx, (OCDevAddr*)&src, (uint8_t*)pbuf, bytes_read,
+            (uint8_t**)&pbuf, &bytes_read) < 0) {
+            bytes_read = -1;
+      }
+  }
+#endif /* WITH_DTLS */
 
+  pdu = (coap_hdr_t *) pbuf;
 #endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
     if(uip_newdata()) {
@@ -868,7 +902,7 @@ int coap_read(coap_context_t *ctx, int sockfd) {
 #endif /* WITH_LWIP */
 
     if (bytes_read < 0) {
-        warn("coap_read: recvfrom");
+        warn("coap_read: recvfrom\n");
         goto error_early;
     }
 
@@ -899,13 +933,20 @@ int coap_read(coap_context_t *ctx, int sockfd) {
     memcpy(&node->local, &dst, sizeof(coap_address_t));
     memcpy(&node->remote, &src, sizeof(coap_address_t));
 
-    if (!coap_pdu_parse((unsigned char *) buf, bytes_read, node->pdu)) {
+    if (!coap_pdu_parse((unsigned char *) pbuf, bytes_read, node->pdu)) {
         warn("discard malformed PDU");
         goto error;
     }
 
     //set the delayed response flag
     node->delayedResponse = delayRes;
+
+    //set the secure flag on the received packet
+#if defined(WITH_DTLS)
+    node->secure = (sockfd == ctx->sockfd_dtls) ? 1 : 0;
+#else
+    node->secure = 0;
+#endif /* WITH_DTLS */
 
     /* and add new node to receive queue */
     coap_transaction_id(&node->remote, node->pdu, &node->id);
@@ -1340,7 +1381,7 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                     else {
                         coap_send_flags_t flag = SEND_NOW;
                         flag = (coap_send_flags_t)(flag | rcvd->secure ? SEND_SECURE_PORT : 0);
-                        if (coap_send(context, &rcvd->remote, response, flag)
+                        if (coap_send(context, &rcvd->remote, response, flag, NULL)
                                 == COAP_INVALID_TID) {
                             warn("coap_dispatch: error sending reponse\n");
                         }

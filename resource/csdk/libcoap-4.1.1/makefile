@@ -43,7 +43,8 @@ LOGGER_DIR    = $(ROOT_DIR)/logger
 RANDOM_DIR    = $(ROOT_DIR)/ocrandom
 STACK_DIR     = $(ROOT_DIR)/stack
 OCMALLOC_DIR  = $(ROOT_DIR)/ocmalloc
-INC_DIRS      = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include
+INC_DIRS      = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include \
+                -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include 
 
 # Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
 # includes Time.h header file which has C++ style definitions.
@@ -98,8 +99,23 @@ CC_FLAGS.debug := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-excepti
 CC_FLAGS.release := -Os -Wall -ffunction-sections -fdata-sections -fno-exceptions
 
 SOURCES+= pdu.c net.c debug.c encode.c uri.c coap_list.c hashkey.c \
-          str.c option.c async.c subscribe.c block.c logger.c ocrandom.c ocmalloc.c  oc_logger.c oc_console_logger.c
-VPATH += $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/src:$(OC_LOG_DIR)/c
+          str.c option.c async.c subscribe.c block.c logger.c ocrandom.c ocmalloc.c \
+		  oc_logger.c oc_console_logger.c
+VPATH += $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/src\
+         :$(OC_LOG_DIR)/c
+
+ifeq ($(PLATFORM),linux)
+ifneq ($(wildcard $(ROOT_DIR)/tinydtls/libtinydtls.a),)
+    $(info "Building libcoap with DTLS support")
+	SOURCES += netdtls.c
+	VPATH += sec
+	TINYDTLS_DIR  = $(ROOT_DIR)/tinydtls
+	NETDTLS_DIR   = sec
+	INC_DIRS += -I$(TINYDTLS_DIR) -I$(NETDTLS_DIR) -I.
+	CC_FLAGS.debug += -DWITH_DTLS
+	CC_FLAGS.release += -DWITH_DTLS
+endif
+endif
 
 OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 
