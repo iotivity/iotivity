@@ -183,7 +183,7 @@ struct FooResource
         std::string resourceTypeName = "core.foo";
         std::string resourceInterface = DEFAULT_INTERFACE;
 
-        uint8_t resourceProperty = OC_DISCOVERABLE;
+        uint8_t resourceProperty = OC_DISCOVERABLE | OC_SECURE ;
 
         EntityHandler eh(std::bind(&FooResource::entityHandler,
                     this, std::placeholders::_1, std::placeholders::_2));

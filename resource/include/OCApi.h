@@ -72,6 +72,7 @@ namespace OC
 
 namespace OC
 {
+
     enum class OCPlatformStatus
     {
         PlatformUp,

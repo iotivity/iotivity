@@ -39,7 +39,14 @@ namespace OC
 {
     class InProcClientWrapper : public IClientWrapper
     {
+
     public:
+        enum OCSecureType
+        {
+            IPV4Secure,
+            IPV4
+        };
+
         InProcClientWrapper(OC::OCPlatform_impl& owner, std::weak_ptr<std::recursive_mutex> csdkLock,
                             PlatformConfig cfg);
         virtual ~InProcClientWrapper();
@@ -80,10 +87,12 @@ namespace OC
         // Note: this should never be called by anyone but the handler for the listen command.
         // It is public becuase that needs to be a non-instance callback
         virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
-            const std::string& host, const boost::property_tree::ptree resourceNode);
+            OCDevAddr& addr, const boost::property_tree::ptree resourceNode);
 
         OCStackResult GetDefaultQos(QualityOfService& QoS);
     private:
+        std::string convertOCAddrToString(OCDevAddr& addr,
+        OCSecureType type, const std::string &portStr = std::string());
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
         std::string assembleSetResourcePayload(const OCRepresentation& attributes);

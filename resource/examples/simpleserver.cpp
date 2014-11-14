@@ -83,7 +83,7 @@ public:
         std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
         // OCResourceProperty is defined ocstack.h
-        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
 
         EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
 
@@ -105,7 +105,7 @@ public:
         std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
         // OCResourceProperty is defined ocstack.h
-        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
 
         EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
 

@@ -117,7 +117,9 @@ namespace OC
         static const std::string INTERFACESKEY              = "if";
         static const std::string PROPERTYKEY                = "prop";
         static const std::string REPKEY                     = "rep";
-    }
+        static const std::string SECUREKEY                  = "sec";
+        static const std::string PORTKEY                    = "port";
+  }
 
 }
 

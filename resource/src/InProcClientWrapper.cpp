@@ -39,6 +39,7 @@ namespace OC
     {
         // if the config type is server, we ought to never get called.  If the config type
         // is both, we count on the server to run the thread and do the initialize
+
         if(m_cfg.mode == ModeType::Client)
         {
             OCStackResult result = OCInit(m_cfg.ipAddress.c_str(), m_cfg.port, OC_CLIENT);
@@ -90,9 +91,8 @@ namespace OC
         }
     }
 
-
-
-    std::string convertOCAddrToString(OCDevAddr& addr)
+    std::string InProcClientWrapper::convertOCAddrToString(OCDevAddr& addr,
+        OCSecureType type, const std::string &portStr)
     {
         // TODO: we currently assume this is a IPV4 address, need to figure out the actual value
 
@@ -102,7 +102,18 @@ namespace OC
         if(OCDevAddrToIPv4Addr(&addr, &a, &b, &c, &d) ==0 && OCDevAddrToPort(&addr, &port)==0)
         {
             ostringstream os;
-            os << "coap://"<<(int)a<<'.'<<(int)b<<'.'<<(int)c<<'.'<<(int)d<<':'<<(int)port;
+            if(type == OCSecureType::IPV4)
+            {
+                os << "coap://" << static_cast<int>(a) << '.' <<
+                    static_cast<int>(b) << '.' << static_cast<int>(c) <<
+                    '.' << static_cast<int>(d) << ':' <<static_cast<int>(port);
+            }
+            else if(type == OCSecureType::IPV4Secure)
+            {
+                 os << "coaps://" << static_cast<int>(a) <<'.' <<
+                    static_cast<int>(b) <<'.' << static_cast<int>(c) <<
+                    '.' << static_cast<int>(d) << ':' << portStr;
+            }
             return os.str();
         }
         else
@@ -119,7 +130,7 @@ namespace OC
 
 
     std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(
-        IClientWrapper::Ptr clientWrapper, const std::string& host,
+        IClientWrapper::Ptr clientWrapper, OCDevAddr& addr,
         const boost::property_tree::ptree resourceNode)
     {
         std::string uri = resourceNode.get<std::string>(OC::Key::URIKEY, "");
@@ -136,12 +147,24 @@ namespace OC
         {
             rTs.push_back(itr.second.data());
         }
+        bool secure = properties.get<int>(OC::Key::SECUREKEY,0) == 1;
 
         boost::property_tree::ptree iF =
             properties.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
         for(auto itr : iF)
         {
             ifaces.push_back(itr.second.data());
+        }
+
+        std::string host;
+        if(secure)
+        {
+            string port = properties.get<string>(OC::Key::PORTKEY,"");
+            host= convertOCAddrToString(addr, OCSecureType::IPV4Secure, port);
+        }
+        else
+        {
+            host= convertOCAddrToString(addr, OCSecureType::IPV4);
         }
 
         return std::shared_ptr<OCResource>(
@@ -186,9 +209,9 @@ namespace OC
         {
                 try
                 {
-                    std::string host = convertOCAddrToString(*clientResponse->addr);
                     std::shared_ptr<OCResource> resource =
-                        context->clientWrapper->parseOCResource(context->clientWrapper, host,
+                        context->clientWrapper->parseOCResource(context->clientWrapper,
+                        *clientResponse->addr,
                         payloadItr.second);
 
                     // Note: the call to detach allows the underlying thread to continue until
