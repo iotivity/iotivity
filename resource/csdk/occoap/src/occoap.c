@@ -203,7 +203,8 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 
     // fill OCRequest structure
     result = FormOCRequest(&request, (recvPdu->hdr->type == COAP_MESSAGE_CON) ?
-            OC_HIGH_QOS : OC_LOW_QOS, rcvdUri, rcvdObsReq, &entityHandlerRequest);
+            OC_HIGH_QOS : OC_LOW_QOS, rcvdUri, rcvdObsReq, &entityHandlerRequest,
+            rcvdRequest->secure);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     OC_LOG_V(INFO, TAG, " Receveid uri:     %s", request->resourceUrl);
@@ -638,11 +639,12 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
                 uri.query.s, options, numOptions), OC_STACK_OK);
 
         //TODO : Investigate the scenario where there will be no uri for OCDoCoAPResource
-        //flag = (coap_send_flags_t) (uri.secure ? SEND_SECURE_PORT : 0);
+        flag = (coap_send_flags_t) (uri.secure ? SEND_SECURE_PORT : 0);
         OC_LOG_V(DEBUG, TAG, "uri.host.s %s", uri.host.s);
         OC_LOG_V(DEBUG, TAG, "uri.path.s %s", uri.path.s);
         OC_LOG_V(DEBUG, TAG, "uri.port %d", uri.port);
         OC_LOG_V(DEBUG, TAG, "uri.query.s %s", uri.query.s);
+        OC_LOG_V(DEBUG, TAG, "secure uri %d", uri.secure);
     }
 
     coapMsgType = OCToCoAPQoS(qos);
@@ -738,7 +740,8 @@ OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr,
     coap_show_pdu(sendPdu);
 
     // TODO : resourceProperties will determine if the packet will be send using secure port
-    if(SendCoAPPdu(gCoAPCtx, (coap_address_t*) dstAddr, sendPdu , (coap_send_flags_t)0 )
+    if(SendCoAPPdu(gCoAPCtx, (coap_address_t*) dstAddr, sendPdu ,
+            (coap_send_flags_t)((resPtr->resourceProperties & OC_SECURE) ? SEND_SECURE_PORT : 0) )
             != OC_STACK_OK)
     {
         OC_LOG(DEBUG, TAG, PCF("A problem occurred in sending a pdu"));
@@ -771,8 +774,7 @@ OCStackResult OCProcessCoAP() {
     OC_LOG(INFO, TAG, PCF("Entering OCProcessCoAP"));
     int read = 0;
     read = coap_read(gCoAPCtx, gCoAPCtx->sockfd);
-    if(read > 0)
-    {
+    if(read > 0) {
         OC_LOG(INFO, TAG, PCF("This is a Unicast<============"));
     }
     if (-1 != gCoAPCtx->sockfd_wellknown) {
@@ -780,6 +782,13 @@ OCStackResult OCProcessCoAP() {
         if(read > 0)
         {
             OC_LOG(INFO, TAG, PCF("This is a Multicast<==========="));
+        }
+    }
+    if (-1 != gCoAPCtx->sockfd_dtls) {
+        read = coap_read(gCoAPCtx, gCoAPCtx->sockfd_dtls);
+        if(read > 0)
+        {
+            OC_LOG(INFO, TAG, PCF("This is a Secure packet<==========="));
         }
     }
     coap_dispatch(gCoAPCtx);

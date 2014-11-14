@@ -74,6 +74,7 @@ coap_split_uri(unsigned char *str_var, size_t len, coap_uri_t *uri) {
   /* There might be an additional 's', indicating the secure version: */
   if (len && (secure = tolower(*p) == 's')) {
     ++p; --len;
+    uri->secure = 1;
   }
 
   q = (unsigned char *)"://";
@@ -88,7 +89,7 @@ coap_split_uri(unsigned char *str_var, size_t len, coap_uri_t *uri) {
 
   /* p points to beginning of Uri-Host */
   q = p;
-  if (len && *p == '[') {	/* IPv6 address reference */
+  if (len && *p == '[') {   /* IPv6 address reference */
     ++p;
 
     while (len && *q != ']') {
@@ -102,7 +103,7 @@ coap_split_uri(unsigned char *str_var, size_t len, coap_uri_t *uri) {
 
     COAP_SET_STR(&uri->host, q - p, p);
     ++q; --len;
-  } else {			/* IPv4 address or FQDN */
+  } else {          /* IPv4 address or FQDN */
     while (len && *q != ':' && *q != '/' && *q != '?') {
       *q = tolower(*q);
       ++q;
@@ -127,17 +128,17 @@ coap_split_uri(unsigned char *str_var, size_t len, coap_uri_t *uri) {
       --len;
     }
 
-    if (p < q) {		/* explicit port number given */
+    if (p < q) {        /* explicit port number given */
       int uri_port = 0;
 
       while (p < q)
-	uri_port = uri_port * 10 + (*p++ - '0');
+    uri_port = uri_port * 10 + (*p++ - '0');
 
       uri->port = uri_port;
     }
   }
 
- path:		 /* at this point, p must point to an absolute path */
+ path:       /* at this point, p must point to an absolute path */
 
   if (!len)
     goto end;
@@ -223,7 +224,7 @@ check_segment(const unsigned char *s, size_t length) {
   while (length) {
     if (*s == '%') {
       if (length < 2 || !(isxdigit(s[1]) && isxdigit(s[2])))
-	return -1;
+    return -1;
 
       s += 2;
       length -= 2;
@@ -256,7 +257,7 @@ check_segment(const unsigned char *s, size_t length) {
  */
 int
 make_decoded_option(const unsigned char *s, size_t length,
-		    unsigned char *buf, size_t buflen) {
+            unsigned char *buf, size_t buflen) {
   int res;
   size_t written;
 
@@ -274,10 +275,10 @@ make_decoded_option(const unsigned char *s, size_t length,
 
   assert(written <= buflen);
 
-  if (!written)			/* encoding error */
+  if (!written)         /* encoding error */
     return -1;
 
-  buf += written;		/* advance past option type/length */
+  buf += written;       /* advance past option type/length */
   buflen -= written;
 
   if (buflen < (size_t)res) {
@@ -309,7 +310,7 @@ typedef void (*segment_handler_t)(unsigned char *, size_t, void *);
  */
 size_t
 coap_split_path_impl(coap_parse_iterator_t *parse_iter,
-		     segment_handler_t h, void *data) {
+             segment_handler_t h, void *data) {
   unsigned char *seg;
   size_t length;
 
@@ -352,12 +353,12 @@ write_option(unsigned char *s, size_t len, void *data) {
 
 int
 coap_split_path(const unsigned char *s, size_t length,
-		unsigned char *buf, size_t *buflen) {
+        unsigned char *buf, size_t *buflen) {
   struct cnt_str tmp = { { *buflen, buf }, 0 };
   coap_parse_iterator_t pi;
 
   coap_parse_iterator_init((unsigned char *)s, length,
-			   '/', (unsigned char *)"?#", 2, &pi);
+               '/', (unsigned char *)"?#", 2, &pi);
   coap_split_path_impl(&pi, write_option, &tmp);
 
   *buflen = *buflen - tmp.buf.length;
@@ -366,12 +367,12 @@ coap_split_path(const unsigned char *s, size_t length,
 
 int
 coap_split_query(const unsigned char *s, size_t length,
-		unsigned char *buf, size_t *buflen) {
+        unsigned char *buf, size_t *buflen) {
   struct cnt_str tmp = { { *buflen, buf }, 0 };
   coap_parse_iterator_t pi;
 
   coap_parse_iterator_init((unsigned char *)s, length,
-			   '&', (unsigned char *)"#", 1, &pi);
+               '&', (unsigned char *)"#", 1, &pi);
 
   coap_split_path_impl(&pi, write_option, &tmp);
 
@@ -408,7 +409,7 @@ coap_clone_uri(const coap_uri_t *uri) {
     return  NULL;
 
   result = (coap_uri_t *)coap_malloc( uri->query.length + uri->host.length +
-				      uri->path.length + sizeof(coap_uri_t) + 1);
+                      uri->path.length + sizeof(coap_uri_t) + 1);
 
   if ( !result )
     return NULL;
@@ -460,7 +461,7 @@ coap_hash_path(const unsigned char *path, size_t len, coap_key_t key) {
   memset(key, 0, sizeof(coap_key_t));
 
   coap_parse_iterator_init((unsigned char *)path, len,
-			   '/', (unsigned char *)"?#", 2, &pi);
+               '/', (unsigned char *)"?#", 2, &pi);
   coap_split_path_impl(&pi, hash_segment, key);
 
   return 1;
@@ -470,9 +471,9 @@ coap_hash_path(const unsigned char *path, size_t len, coap_key_t key) {
 
 coap_parse_iterator_t *
 coap_parse_iterator_init(unsigned char *s, size_t n,
-			 unsigned char separator,
-			 unsigned char *delim, size_t dlen,
-			 coap_parse_iterator_t *pi) {
+             unsigned char separator,
+             unsigned char *delim, size_t dlen,
+             coap_parse_iterator_t *pi) {
   assert(pi);
   assert(separator);
 
@@ -513,7 +514,7 @@ coap_parse_next(coap_parse_iterator_t *pi) {
   p = pi->pos;
 
   while (pi->segment_length < pi->n && *p != pi->separator &&
-	 !strnchr(pi->delim, pi->dlen, *p)) {
+     !strnchr(pi->delim, pi->dlen, *p)) {
     ++p;
     ++pi->segment_length;
   }

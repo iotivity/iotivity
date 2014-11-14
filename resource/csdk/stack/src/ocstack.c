@@ -751,7 +751,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     // Make sure resourceProperties bitmask has allowed properties specified
     if (resourceProperties
-            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW)) {
+            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW | OC_SECURE)) {
         OC_LOG(ERROR, TAG, PCF("Invalid property"));
         return OC_STACK_INVALID_PARAM;
     }

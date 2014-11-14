@@ -316,7 +316,8 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
 // Form the OCRequest struct
 OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
         unsigned char * uriBuf, OCObserveReq * observeReq,
-        OCEntityHandlerRequest * entityHandlerRequest)
+        OCEntityHandlerRequest * entityHandlerRequest,
+        uint8_t secure)
 {
     OCRequest * request = NULL;
 
@@ -332,6 +333,8 @@ OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
 
     // fill in uri
     request->resourceUrl = uriBuf;
+
+    request->secure = secure;
 
     // fill in observe
     request->observe = observeReq;
@@ -562,14 +565,15 @@ SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
 {
     coap_tid_t tid = COAP_INVALID_TID;
     OCStackResult res = OC_STACK_COMM_ERROR;
+    uint8_t cache = 0;
 
     if (!(flag & SEND_DELAYED))
     {
         flag = (coap_send_flags_t)( flag |
-            (pdu->hdr->type == COAP_MESSAGE_CON) ? SEND_NOW_CON : SEND_NOW);
+            ((pdu->hdr->type == COAP_MESSAGE_CON) ? SEND_NOW_CON : SEND_NOW));
     }
 
-    tid = coap_send(gCoAPCtx, dst, pdu, flag);
+    tid = coap_send(gCoAPCtx, dst, pdu, flag, &cache);
     OC_LOG_V(INFO, TAG, "TID %d", tid);
     if(tid != COAP_INVALID_TID)
     {
@@ -578,7 +582,8 @@ SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
         res = OC_STACK_OK;
     }
 
-    if ((pdu->hdr->type != COAP_MESSAGE_CON && (!(flag & SEND_DELAYED))) || tid == COAP_INVALID_TID)
+    if (( (pdu->hdr->type != COAP_MESSAGE_CON) && (!(flag & SEND_DELAYED)) && (!cache))
+        || (tid == COAP_INVALID_TID))
     {
         OC_LOG(INFO, TAG, PCF("Deleting PDU"));
         coap_delete_pdu(pdu);

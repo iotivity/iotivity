@@ -71,7 +71,8 @@ CreateNewOptionNode(unsigned short key, unsigned int length,
 // Internal function to create OCRequest struct at the server from a received coap pdu
 OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
         unsigned char * uriBuf, OCObserveReq * observeReq,
-        OCEntityHandlerRequest * entityHandlerRequest);
+        OCEntityHandlerRequest * entityHandlerRequest,
+        uint8_t secure);
 
 // Internal function to create OCEntityHandlerRequest at the server from a received coap pdu
 OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequestLoc,

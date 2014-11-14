@@ -114,12 +114,14 @@ typedef enum {
  * OC_SLOW         - When this bit is set, the resource has been marked as 'slow'. 'slow' signifies
  *                   that responses from this resource can expect delays in processing its
  *                   requests from clients.
+ * OC_SECURE       - When this bit is set, the resource is a secure resource.
  */
 typedef enum {
     OC_ACTIVE       = (1 << 0),
     OC_DISCOVERABLE = (1 << 1),
     OC_OBSERVABLE   = (1 << 2),
-    OC_SLOW         = (1 << 3)
+    OC_SLOW         = (1 << 3),
+    OC_SECURE       = (1 << 4)
 } OCResourceProperty;
 
 /**

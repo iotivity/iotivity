@@ -55,7 +55,8 @@ typedef enum {
     SEND_NOW_CON        = (1 << 1), /*Flag used when sending confirmable coap pdu*/
     SEND_DELAYED        = (1 << 2), /*Flag used to delay the transmission of coap pdu*/
     SEND_RETX           = (1 << 3), /*Flag used to retransmit a confirmable pdu*/
-    SEND_SECURE_PORT    = (1 << 4) /*Flag used to indicate that PDU needs to be transmitted on secure port */
+    SEND_SECURE_PORT    = (1 << 4)  /*Flag used to indicate that PDU needs to
+                                      be transmitted on secure port */
 } coap_send_flags_t;
 
 struct coap_queue_t;
@@ -95,6 +96,8 @@ struct coap_context_t;
 struct coap_async_state_t;
 #endif
 
+struct coap_dtls_context_t;
+
 /** Message handler for requests that is used as call-back in coap_context_t */
 typedef void (*coap_request_handler_t)(struct coap_context_t  *,
         const coap_queue_t * rcvd);
@@ -131,6 +134,9 @@ typedef struct coap_context_t {
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
   int sockfd;           /**< send/receive socket */
   int sockfd_wellknown; /**< well-known discovery socket */
+  int sockfd_dtls;      /**< secure communication happens on this socket */
+  /** dtls interface */
+  struct coap_dtls_context_t *coap_dtls_ctx;
 #endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
   struct uip_udp_conn *conn;    /**< uIP connection object */
@@ -299,16 +305,21 @@ coap_pdu_t *coap_new_error_response(coap_pdu_t *request,
  * Sends a CoAP message to given destination. The memory
  * that is allocated by pdu will be released by coap_send().
  *
- * @param context The CoAP context to use.
- * @param dst     The address to send to.
- * @param pdu     The CoAP PDU to send.
- * @param flag    The flag indicating how the message will be send
+ * @param context       The CoAP context to use.
+ * @param dst           The address to send to.
+ * @param pdu           The CoAP PDU to send.
+ * @param flag          The flag indicating how the message will be send
+ * @param cache_flag    When DTLS library determines that a secure session does
+ *                      not exist with the peer yet, it caches the 'pdu pointer'
+ *                      so that it can be sent later and 'coap_send' sets this
+ *                      variable to TRUE to instruct the caller of this method
+ *                      to not delete the 'pdu'.
  * @return The message id of the sent message or @c COAP_INVALID_TID on error.
  */
-
 coap_tid_t coap_send(coap_context_t *context, const coap_address_t *dst,
                  coap_pdu_t *pdu,
-                 coap_send_flags_t flag);
+                 coap_send_flags_t flags,
+                 uint8_t *cache_flag);
 
 /**
  * Sends an error response with code @p code for request @p request to

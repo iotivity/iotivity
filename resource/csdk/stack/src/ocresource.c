@@ -88,7 +88,7 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
     #ifdef WITH_PRESENCE
     else if (strcmp((char *)url, GetVirtualResourceUri(OC_PRESENCE)) == 0) {
         //Nothing needs to be done, except for pass a OC_PRESENCE query through as OC_STACK_OK.
-        OC_LOG(INFO, TAG, "OC_PRESENCE Request!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        OC_LOG(INFO, TAG, PCF("OC_PRESENCE Request"));
         *filterOn = STACK_RES_DISCOVERY_NOFILTER;
     }
     #endif
@@ -302,6 +302,13 @@ OCStackResult DetermineResourceHandling (OCRequest *request,
             // Resource does not exist
             // and default device handler does not exist
             return OC_STACK_NO_RESOURCE;
+        }
+
+        // secure resource will entertain only authorized requests
+        if ((resourcePtr->resourceProperties & OC_SECURE) && (request->secure == 0))
+        {
+            OC_LOG(INFO, TAG, PCF("Un-authorized request. Ignore it!"));
+            return OC_STACK_RESOURCE_ERROR;
         }
 
         if (IsCollectionResource (resourcePtr))

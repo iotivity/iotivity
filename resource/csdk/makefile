@@ -90,6 +90,7 @@ OCTBSTACK_DIR	= stack
 OCMALLOC_DIR 	= ocmalloc
 EXTLIBS_DIR	= ../../extlibs
 CJSON_DIR	= $(EXTLIBS_DIR)/cjson
+TINYDTLS_DIR	= tinydtls
 
 OCCOAP_SRC	= $(OCCOAP_DIR)/src
 OCTBSTACK_SRC	= $(OCTBSTACK_DIR)/src
@@ -162,6 +163,15 @@ liboctbstack.a: obj_build
 	@cd $(OBJ_DIR) && $(AR) -x $(PLATFORM_SPECIFIC_BACKOUT)$(LCOAP_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
 	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
+    
+    ifeq ($(PLATFORM),linux)
+     ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
+			$(info "Building liboctbstack with DTLS support")
+			mkdir -p $(OBJ_DIR)/$(TINYDTLS_DIR)
+			@cd $(OBJ_DIR)/$(TINYDTLS_DIR) && $(AR) -x ../$(PLATFORM_SPECIFIC_BACKOUT)$(TINYDTLS_DIR)/libtinydtls.a
+			$(AR) -q $(OUT_DIR)/$@ $(OBJ_DIR)/$(TINYDTLS_DIR)/*.o
+     endif
+    endif
 
 .PHONY: clean print_vars
 
