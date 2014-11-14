@@ -1,0 +1,14 @@
+
+#1. build "connectivity" project
+	- execute make command in "connectivity/build/" folder.
+
+#2. build "example" for linux
+	- execute make command in "connectivity/samples/linux/" folder.
+
+#3. execute sample program
+	- you should link the "connectivity_abstraction" library.
+	ex. LD_LIBRARY_PATH=../../../build/out ./sample_main
+	
+#4 	execute sample.sh in "connectivity/samples/linux/" folder
+ ex.    $./sample.sh (This will make a clean build and execute application)
+
