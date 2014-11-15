@@ -34,7 +34,7 @@ OCMulticastNode * mcPresenceNodes = NULL;
 
 OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
         OCCoAPToken * token, OCDoHandle handle, OCMethod method,
-        unsigned char * requestUri) {
+        unsigned char * requestUri, unsigned char * resourceType) {
     ClientCB *cbNode;
     cbNode = (ClientCB*) OCMalloc(sizeof(ClientCB));
     if (cbNode) {
@@ -47,6 +47,7 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
         cbNode->sequenceNumber = 0;
         #ifdef WITH_PRESENCE
         cbNode->presence = NULL;
+        cbNode->filterResourceType = resourceType;
         #endif
         cbNode->requestUri = requestUri;
         LL_APPEND(cbList, cbNode);
@@ -73,6 +74,7 @@ void DeleteClientCB(ClientCB * cbNode) {
         if(cbNode->presence) {
             OCFree(cbNode->presence->timeOut);
             OCFree(cbNode->presence);
+            OCFree(cbNode->filterResourceType);
         }
         #endif
         OCFree(cbNode);

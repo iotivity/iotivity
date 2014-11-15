@@ -61,6 +61,7 @@ typedef struct ClientCB {
     // Struct to hold TTL info for presence
     #ifdef WITH_PRESENCE
     OCPresence * presence;
+    unsigned char * filterResourceType;
     #endif
     // next node in this list
     struct ClientCB    *next;
@@ -83,6 +84,8 @@ extern struct ClientCB *cbList;
  *              Masked in the public API as an 'invocation handle' - Used for callback management.
  * @param[in] requestUri
  *              the resource uri of the request.
+ * @param[in] resourceType
+ *              the resourceType associated with this request.
  *
  * @brief If the handle you're looking for does not exist, the stack will reply with a RST message.
  *
@@ -91,7 +94,7 @@ extern struct ClientCB *cbList;
 //------------------------------------------------------------------------
 OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
         OCCoAPToken * token, OCDoHandle handle, OCMethod method,
-        unsigned char * requestUri);
+        unsigned char * requestUri, unsigned char * resourceType);
 
 //-- DeleteClientCB -----------------------------------------------------------
 /** @ingroup ocstack

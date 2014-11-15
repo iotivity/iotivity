@@ -392,6 +392,8 @@ OCStackResult OCProcess();
  *     OC_STACK_INVALID_CALLBACK - invalid callback function pointer
  *     OC_STACK_INVALID_METHOD   - invalid resource method
  *     OC_STACK_INVALID_URI      - invalid required or reference URI
+ *     OC_STACK_INVALID_QUERY    - number of resource types specified for filtering presence
+ *                                 notifications exceeds @ref MAX_PRESENCE_FILTERS.
  */
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *requiredUri, const char  *referenceUri,
                 const char *request, OCQualityOfService qos, OCCallbackData *cbData, OCHeaderOption * options,

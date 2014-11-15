@@ -235,7 +235,7 @@ OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request)
 }
 
 OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
-        OCQualityOfService qos)
+                OCResourceType *resourceType, OCQualityOfService qos)
 {
     uint8_t numObs = 0;
     OCStackResult stackRet = OC_STACK_ERROR;
@@ -271,11 +271,22 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
             {
                 //we know it is the default entity handler
                 OC_LOG(DEBUG, TAG, "This notification is for Presence");
+
                 // we create the payload here
-                sprintf((char *)bufRes, "%u:%u", resPtr->sequenceNum, maxAge);
+                if(resourceType)
+                {
+                    sprintf((char *)bufRes, "%u:%u:%s",
+                            resPtr->sequenceNum, maxAge, resourceType->resourcetypename);
+                }
+                else
+                {
+                    sprintf((char *)bufRes, "%u:%u", resPtr->sequenceNum, maxAge);
+                }
+
                 jsonPayload = bufRes;
                 ehRet = OC_EH_OK;
             }
+
             #endif
             if (OC_EH_OK == ehRet)
             {
