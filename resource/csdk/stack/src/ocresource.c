@@ -434,7 +434,7 @@ HandleVirtualResource (OCRequest *request, OCResource* resource)
         else
         {
             if(resource->resourceProperties & OC_ACTIVE){
-                OCNotifyAllObservers((OCResourceHandle) resource, OC_LOW_QOS);
+                SendPresenceNotification(resource->rsrcType, OC_LOW_QOS);
             }
             result = OC_STACK_PRESENCE_DO_NOT_HANDLE;
         }

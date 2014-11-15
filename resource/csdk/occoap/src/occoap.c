@@ -312,6 +312,7 @@ uint32_t GetTime(float afterSeconds)
 //This function is called back by libcoap when a response is received
 static void HandleCoAPResponses(struct coap_context_t *ctx,
         const coap_queue_t * rcvdResponse) {
+    uint8_t haltResponse = 0;
     OCResponse * response = NULL;
     OCCoAPToken rcvdToken;
     OCClientResponse clientResponse;
@@ -321,6 +322,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     uint8_t * rcvMaxAgeOption = NULL;
     uint32_t sequenceNumber = OC_RESOURCE_NO_OBSERVE;
     uint32_t maxAge = 0;
+    char * resourceTypeName = NULL;
     OCStackResult result = OC_STACK_ERROR;
     coap_pdu_t *sendPdu = NULL;
     coap_pdu_t * recvPdu = NULL;
@@ -375,7 +377,19 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         tok = strtok(NULL, ":");
         maxAge = (uint32_t )atoi(tok);
         OC_LOG_V(DEBUG, TAG, "The received TTL is %u", maxAge);
+        tok = strtok(NULL, ":");
         bufRes[strlen((char *)bufRes)] = ':';
+        if(tok) {
+            resourceTypeName = (char *)OCMalloc(strlen(tok));
+            if(!resourceTypeName)
+            {
+                goto exit;
+            }
+            strcpy(resourceTypeName, tok);
+            bufRes[strlen((char *)bufRes)] = ':';
+            OC_LOG_V(DEBUG, TAG, "----------------resourceTypeName %s",
+                    resourceTypeName);
+        }
     }
     #endif
 
@@ -495,6 +509,16 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     OC_LOG(INFO, TAG, "===============Presence changed, calling up the stack");
                     cbNode->sequenceNumber = clientResponse.sequenceNumber;;
                 }
+
+                if(resourceTypeName && response->cbNode->filterResourceType)
+                {
+                    if(strcmp(resourceTypeName,
+                            (const char *)response->cbNode->filterResourceType)!=0)
+                    {
+                        //Ignore presence callback if resource type does not match filter.
+                        haltResponse = 1;
+                    }
+                }
             }
             else if(isMulticastPresence)
             {
@@ -541,7 +565,10 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
             }
             #endif
         }
-        HandleStackResponses(response);
+        if(!haltResponse)
+        {
+            HandleStackResponses(response);
+        }
     }
     else if(!cbNode && isObserveNotification)
     {

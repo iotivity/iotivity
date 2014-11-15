@@ -184,6 +184,7 @@ typedef struct {
 //-----------------------------------------------------------------------------
 
 OCStackResult HandleStackRequests(OCRequest * request);
+OCStackResult SendPresenceNotification(OCResourceType *resourceType, OCQualityOfService qos);
 void HandleStackResponses(OCResponse * response);
 int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
 

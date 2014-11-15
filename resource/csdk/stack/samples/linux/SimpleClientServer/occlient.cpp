@@ -339,7 +339,8 @@ int InitPresence()
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI;
+    query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI
+            << "?rt=core.led";
     return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_LOW_QOS, presenceCB, NULL, 0));
 }
 #endif
