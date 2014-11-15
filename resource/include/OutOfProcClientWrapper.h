@@ -76,7 +76,8 @@ namespace OC
         }
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
-            SubscribeCallback& presenceHandler){return OC_STACK_NOTIMPL;}
+            const std::string& resourceType, SubscribeCallback& presenceHandler)
+        {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle){return OC_STACK_NOTIMPL;}
 

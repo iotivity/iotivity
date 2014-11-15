@@ -176,6 +176,15 @@ namespace OC
                                                 presenceHandler);
         }
 
+        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle,
+                                                const std::string& host,
+                                                const std::string& resourceType,
+                                                SubscribeCallback presenceHandler)
+        {
+            return OCPlatform_impl::Instance().subscribePresence(presenceHandle, host,
+                                                resourceType, presenceHandler);
+        }
+
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle)
         {
             return OCPlatform_impl::Instance().unsubscribePresence(presenceHandle);

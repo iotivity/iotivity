@@ -30,6 +30,30 @@ using namespace OC;
 
 std::shared_ptr<OCResource> curResource;
 
+static int TEST_CASE = 0;
+
+/**
+ * List of methods that can be inititated from the client
+ */
+typedef enum {
+    TEST_UNICAST_PRESENCE_NORMAL = 1,
+    TEST_UNICAST_PRESENCE_WITH_FILTER,
+    TEST_MULTICAST_PRESENCE_NORMAL,
+    TEST_MULTICAST_PRESENCE_WITH_FILTER,
+    MAX_TESTS
+} CLIENT_TEST;
+
+void printUsage()
+{
+    std::cout << "Usage : presenceclient -t <1|2>" << std::endl;
+    std::cout << "-t 1 : Discover Resources and Initiate Unicast Presence" << std::endl;
+    std::cout << "-t 2 : Discover Resources and Initiate Unicast Presence with Filter"
+              << std::endl;
+    std::cout << "-t 3 : Discover Resources and Initiate Multicast Presence" << std::endl;
+    std::cout << "-t 4 : Discover Resources and Initiate Multicast Presence with Filter"
+              << std::endl;
+}
+
 // Callback to presence
 void presenceHandler(OCStackResult result, const unsigned int nonce)
 {
@@ -92,8 +116,27 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 curResource = resource;
                 OCPlatform::OCPresenceHandle presenceHandle;
-                OCPlatform::subscribePresence(presenceHandle, hostAddress, &presenceHandler);
-                std::cout<< "subscribing for unicast presence... " <<std::endl;
+                switch(TEST_CASE)
+                {
+                    case TEST_UNICAST_PRESENCE_NORMAL:
+                        OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                                &presenceHandler);
+                        break;
+                    case TEST_UNICAST_PRESENCE_WITH_FILTER:
+                        OCPlatform::subscribePresence(presenceHandle, hostAddress, "core.light",
+                                &presenceHandler);
+                        break;
+                    case TEST_MULTICAST_PRESENCE_NORMAL:
+                        OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, presenceHandler);
+                        break;
+                    case TEST_MULTICAST_PRESENCE_WITH_FILTER:
+                        OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
+                                &presenceHandler);
+                        break;
+                    default:
+                        printUsage();
+                        break;
+                }
             }
         }
         else
@@ -109,36 +152,24 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-void PrintUsage()
-{
-    std::cout << std::endl;
-    std::cout << "Usage : presenceclient <isMulticastAddress>\n";
-    std::cout << "   0 - unicast subcribe presence\n";
-    std::cout << "   1 - multicast subscribe presence\n\n";
-}
+int main(int argc, char* argv[]) {
+    int opt;
 
-// 0 - unicast subcribe presence
-// 1 - multicast subscribe presence
-int isMulticastAddress = 0;
-
-int main(int argc, char* argv[1])
-{
-    PrintUsage();
-
-    if (argc == 1)
+    while ((opt = getopt(argc, argv, "t:")) != -1)
     {
-        isMulticastAddress = 0;
+        switch(opt)
+        {
+            case 't':
+                TEST_CASE = atoi(optarg);
+                break;
+            default:
+                printUsage();
+                return -1;
+        }
     }
-    else if (argc == 2)
+    if(TEST_CASE >= MAX_TESTS || TEST_CASE <= 0)
     {
-        int value = atoi(argv[1]);
-        if (value == 1)
-            isMulticastAddress = 1;
-        else
-            isMulticastAddress = 0;
-    }
-    else
-    {
+        printUsage();
         return -1;
     }
 
@@ -151,23 +182,14 @@ int main(int argc, char* argv[1])
         OC::QualityOfService::LowQos
     };
 
+    OCPlatform::Configure(cfg);
+
     try
     {
-        OCPlatform::Configure(cfg);
-
-        if(isMulticastAddress)
-        {
-            OCPlatform::OCPresenceHandle presenceHandle;
-            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, presenceHandler);
-            std::cout<< "subscribing for multicast presence... " <<std::endl;
-        }
-        else
-        {
-            // Find all resources
-            OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
-            std::cout<< "Finding Resource... " <<std::endl;
-        }
-
+        std::cout << "Created Platform..."<<std::endl;
+        // Find all resources
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+        std::cout<< "Finding Resource... " <<std::endl;
         while(true)
         {
             // some operations

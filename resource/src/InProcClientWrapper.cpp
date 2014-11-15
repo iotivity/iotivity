@@ -794,7 +794,8 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::SubscribePresence(OCDoHandle* handle,
-        const std::string& host, SubscribeCallback& presenceHandler)
+        const std::string& host, const std::string& resourceType,
+        SubscribeCallback& presenceHandler)
     {
         OCCallbackData cbdata = {0};
 
@@ -806,8 +807,12 @@ namespace OC
         auto cLock = m_csdkLock.lock();
 
         std::ostringstream os;
-
         os << host << "/oc/presence";
+
+        if(!resourceType.empty())
+        {
+            os << "?rt=" << resourceType;
+        }
 
         if(!cLock)
             return OC_STACK_ERROR;

@@ -81,7 +81,7 @@ namespace OC
             const std::string& uri, const HeaderOptions& headerOptions, QualityOfService QoS);
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
-            SubscribeCallback& presenceHandler);
+            const std::string& resourceType, SubscribeCallback& presenceHandler);
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle);
         // Note: this should never be called by anyone but the handler for the listen command.

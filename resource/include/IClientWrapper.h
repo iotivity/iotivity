@@ -74,7 +74,7 @@ namespace OC
             const std::string& uri, const HeaderOptions& headerOptions, QualityOfService QoS)=0;
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
-                        SubscribeCallback& presenceHandler)=0;
+                        const std::string& resourceType, SubscribeCallback& presenceHandler)=0;
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle) =0;
 

@@ -348,6 +348,7 @@ namespace OC
         *               request.  It can be used to unsubscribe from these events in the future.
         *               It will be set upon successful return of this method.
         * @param host - The IP address/addressable name of the server to subscribe to.
+        * @param resourceType - a resource type specified as a filter for subscription callbacks.
         * @param presenceHandler - callback function that will receive notifications/subscription
         *               events
         *
@@ -355,6 +356,8 @@ namespace OC
         */
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         SubscribeCallback presenceHandler);
+        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
+                        const std::string& resourceType, SubscribeCallback presenceHandler);
 
         /**
         * unsubscribes from a previously subscribed server's presence events. Note that
