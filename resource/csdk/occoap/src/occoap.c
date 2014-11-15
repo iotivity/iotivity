@@ -312,7 +312,6 @@ uint32_t GetTime(float afterSeconds)
 //This function is called back by libcoap when a response is received
 static void HandleCoAPResponses(struct coap_context_t *ctx,
         const coap_queue_t * rcvdResponse) {
-    uint8_t haltResponse = 0;
     OCResponse * response = NULL;
     OCCoAPToken rcvdToken;
     OCClientResponse clientResponse;
@@ -516,7 +515,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                             (const char *)response->cbNode->filterResourceType)!=0)
                     {
                         //Ignore presence callback if resource type does not match filter.
-                        haltResponse = 1;
+                        goto exit;
                     }
                 }
             }
@@ -562,13 +561,22 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                         goto exit;
                     }
                 }
+
+                if(resourceTypeName && response->cbNode->filterResourceType)
+                {
+                    if(strcmp(resourceTypeName,
+                            (const char *)response->cbNode->filterResourceType)!=0)
+                    {
+                        //Ignore presence callback if resource type does not match filter.
+                        goto exit;
+                    }
+                }
+
             }
             #endif
         }
-        if(!haltResponse)
-        {
-            HandleStackResponses(response);
-        }
+
+        HandleStackResponses(response);
     }
     else if(!cbNode && isObserveNotification)
     {
