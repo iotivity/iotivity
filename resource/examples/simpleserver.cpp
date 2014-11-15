@@ -38,9 +38,14 @@ int gObservation = 0;
 void * ChangeLightRepresentation (void *param);
 
 // Specifies where to notify all observers or list of observers
-// 0 - notifies all observers
-// 1 - notifies list of observers
-int isListOfObservers = 0;
+// false: notifies all observers
+// true: notifies list of observers
+bool isListOfObservers = false;
+
+// Specifies secure or non-secure
+// false: non-secure resource
+// true: secure resource
+bool isSecure = false;
 
 // Forward declaring the entityHandler
 
@@ -83,8 +88,15 @@ public:
         std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
         // OCResourceProperty is defined ocstack.h
-        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
-
+        uint8_t resourceProperty;
+        if(isSecure)
+        {
+            resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
+        }
+        else
+        {
+            resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+        }
         EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
 
         // This will internally create and register the resource.
@@ -105,8 +117,15 @@ public:
         std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
         // OCResourceProperty is defined ocstack.h
-        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
-
+        uint8_t resourceProperty;
+        if(isSecure)
+        {
+            resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
+        }
+        else
+        {
+            resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+        }
         EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
 
         OCResourceHandle resHandle;
@@ -406,9 +425,11 @@ void * ChangeLightRepresentation (void *param)
 void PrintUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : simplserver <isListOfObservers>\n";
-    std::cout << "   ObserveType : 0 - Observe All\n";
-    std::cout << "   ObserveType : 1 - Observe List of observers\n\n";
+    std::cout << "Usage : simpleserver < secure resource and observer >\n";
+    std::cout << "    Default - Non-secure resource and notify all observers\n";
+    std::cout << "    1 - Non-secure resource and notify list of observers\n\n";
+    std::cout << "    2 - Secure resource and notify all observers\n";
+    std::cout << "    3 - Secure resource and notify list of observers\n\n";
 }
 
 
@@ -418,16 +439,30 @@ int main(int argc, char* argv[1])
 
     if (argc == 1)
     {
-        isListOfObservers = 0;
+        isListOfObservers = false;
+        isSecure = false;
     }
     else if (argc == 2)
     {
         int value = atoi(argv[1]);
-        if (value == 1)
-            isListOfObservers = 1;
-        else
-            isListOfObservers = 0;
-    }
+        switch (value)
+        {
+            case 1:
+                isListOfObservers = true;
+                isSecure = false;
+                break;
+            case 2:
+                isListOfObservers = false;
+                isSecure = true;
+                break;
+            case 3:
+                isListOfObservers = true;
+                isSecure = true;
+                break;
+            default:
+                break;
+       }
+     }
     else
     {
         return -1;
