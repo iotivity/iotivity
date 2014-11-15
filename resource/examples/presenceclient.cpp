@@ -116,26 +116,19 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 curResource = resource;
                 OCPlatform::OCPresenceHandle presenceHandle;
-                switch(TEST_CASE)
+
+                if(TEST_CASE == TEST_UNICAST_PRESENCE_NORMAL)
                 {
-                    case TEST_UNICAST_PRESENCE_NORMAL:
-                        OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                                &presenceHandler);
-                        break;
-                    case TEST_UNICAST_PRESENCE_WITH_FILTER:
-                        OCPlatform::subscribePresence(presenceHandle, hostAddress, "core.light",
-                                &presenceHandler);
-                        break;
-                    case TEST_MULTICAST_PRESENCE_NORMAL:
-                        OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, presenceHandler);
-                        break;
-                    case TEST_MULTICAST_PRESENCE_WITH_FILTER:
-                        OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
-                                &presenceHandler);
-                        break;
-                    default:
-                        printUsage();
-                        break;
+                    OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                            &presenceHandler);
+                    std::cout<< "Subscribed to unicast address:" << hostAddress <<std::endl;
+                }
+                else if(TEST_CASE == TEST_UNICAST_PRESENCE_WITH_FILTER)
+                {
+                    OCPlatform::subscribePresence(presenceHandle, hostAddress, "core.light",
+                            &presenceHandler);
+                    std::cout<< "Subscribed (with resource type) to unicast address:"
+                                << hostAddress << std::endl;
                 }
             }
         }
@@ -187,9 +180,26 @@ int main(int argc, char* argv[]) {
     try
     {
         std::cout << "Created Platform..."<<std::endl;
-        // Find all resources
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
-        std::cout<< "Finding Resource... " <<std::endl;
+
+        OCPlatform::OCPresenceHandle presenceHandle;
+
+        if(TEST_CASE == TEST_MULTICAST_PRESENCE_NORMAL)
+        {
+            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, presenceHandler);
+            std::cout<< "Subscribed to multicast" <<std::endl;
+        }
+        else if(TEST_CASE == TEST_MULTICAST_PRESENCE_WITH_FILTER)
+        {
+            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
+                    &presenceHandler);
+            std::cout<< "Subscribed to multicast with resource type" <<std::endl;
+        }
+        else
+        {
+            // Find all resources
+            OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+            std::cout<< "Finding Resource... " <<std::endl;
+        }
         while(true)
         {
             // some operations
