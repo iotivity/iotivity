@@ -270,7 +270,7 @@ OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uin
             else
             {
                 //we know it is the default entity handler
-                OC_LOG(DEBUG, TAG, "This notification is for Presence");
+                OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
 
                 // we create the payload here
                 if(resourceType)
