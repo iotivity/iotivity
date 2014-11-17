@@ -47,6 +47,8 @@ private:
    std::string					m_name;
    std::string					m_type;
    std::vector<IResourceEvent*>	m_resourceEvents;
+   std::string					m_pathSoftSensors;
+   std::string					m_pathSoftSensorsDescription;
 
 public:
 	SSMRESULT finalConstruct();
@@ -75,19 +77,21 @@ public:
 	*
 	* @param        [in] std::string name - Device name
 	* @param        [in] std::string type - Device Type
+	* @param        [in] std::string pathSoftSensors - SoftSensors Repository path
+	* @param        [in] std::string pathDescription - SoftSensors Description path
 	* @return       void
 	*
 	* @warning      
 	* @exception    
 	* @see          
 	*/
-	void setCurrentDeviceInfo(IN std::string name, IN std::string type);
+	void setCurrentDeviceInfo(IN std::string name, IN std::string type, IN std::string pathSoftSensors, IN std::string pathDescription);
 	
 	/**
 	* @fn           getSoftSensorList
-	* @brief        Get high level context resource list
+	* @brief        Get soft sensor list
 	*
-	* @param		[out] std::vector<ISSMResource*> *pSoftSensorList - High level context list
+	* @param		[out] std::vector<ISSMResource*> *pSoftSensorList - List of soft sensors
 	* @return       SSMRESULT
 	*					SSM_S_OK
 	*					, SSM_S_FALSE
@@ -105,9 +109,9 @@ public:
 
 	/**
 	* @fn           getPrimitiveSensorList
-	* @brief        Get low level context resource list
+	* @brief        Get primitive sensor list
 	*
-	* @param		[out] std::vector<ISSMResource*> *pPrimitiveSensorList - Low level context list
+	* @param		[out] std::vector<ISSMResource*> *pPrimitiveSensorList - List of primitive sensors
 	* @return       SSMRESULT
 	*					SSM_S_OK
 	*					, SSM_S_FALSE
@@ -131,9 +135,13 @@ public:
 	SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent);
 	SSMRESULT stopObserveResource(IN ISSMResource *pSensor);
 
+	SSMRESULT loadSoftSensor(IN std::string softSensorName, IN ICtxDelegate *pDelegate, OUT void **hSoftSensor);
+	SSMRESULT unloadSoftSensor(IN void *hSoftSensor);
+
 private:
-	SSMRESULT makeSSMResourceListForDictionaryData(IN const std::string typeString, IN std::vector<DictionaryData> dataList, OUT std::vector<ISSMResource*> *pList) ;
-	std::vector<DictionaryData> loadXMLFromString(IN char *xmlData);
-	std::vector<DictionaryData> loadXMLFromFile(IN const char *strFile );
+	SSMRESULT makeSSMResourceListForDictionaryData(IN std::vector<DictionaryData> dataList, OUT std::vector<ISSMResource*> *pList) ;
+	SSMRESULT loadXMLFromFile(IN std::string descriptionFilePath, IN std::vector<DictionaryData> *dataList);
+	SSMRESULT loadXMLFromString(IN char *xmlData, IN std::vector<DictionaryData> *dataList);
+	SSMRESULT GetCurrentPath(OUT std::string *path);
 };
 #endif

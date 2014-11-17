@@ -42,21 +42,21 @@ class CContextExecutor :
 	, public IThreadClient
 {
 private:
-	CObjectPtr<IThreadPool>			m_pTaskWorker;
+	CObjectPtr<ITasker>				m_pTasker;
 
 	CObjectPtr<IContextRepository>	m_pContextRepository;
 
 	CObjectPtr<IContextDataReader>	m_pContextDataReader;
 
 	/**
-	* @brief Context model data from lower layer
+	* @brief Sensor data from primitive sensors
 	*/
-	std::map<std::string, std::vector<ContextData> >		m_storedLowerContextData;
+	std::map<std::string, std::vector<ContextData> >		m_storedPrimitiveSensorData;
 	
 	/**
-	* @brief key = lower resource / values = high resources that has key(lower resource) in the input list
+	* @brief key = primitive, soft sensor / values = soft sensors that has key in the input list
 	*/
-	std::map<std::string, std::vector<std::string> >		m_relatedContextModel;
+	std::map<std::string, std::vector<std::string> >		m_relatedSoftSensor;
 
 	/**
 	* @brief requested high layer's callback data.(IEvent instance, deviceId, call type)
@@ -151,7 +151,7 @@ public:
 	* @exception    
 	* @see          
 	*/
-	void getDataFromDatabase(std::string modelName, int startIndex, int count, std::vector<ContextData> *data, int *pLastIndex);
+	void getDataFromDatabase(IN std::string modelName, IN int startIndex, IN int count, OUT std::vector<ContextData> *data, OUT int *pLastIndex);
 	
 	/**
 	* @fn           onEvent
@@ -168,7 +168,7 @@ public:
 	* @exception    
 	* @see          
 	*/
-	int onEvent(IN std::string deviceID,IN TypeofEvent callType,IN std::vector<ContextData> ctxData);
+	int onEvent(IN std::string deviceID, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
 	
 	/**
 	* @fn           registerContext
@@ -184,7 +184,7 @@ public:
 	* @exception    
 	* @see          
 	*/
-	void registerContext(IN TypeofEvent callType,IN ISSMResource *pSSMResouce,IN IEvent *pEvent);
+	void registerContext(IN TypeofEvent callType, IN ISSMResource *pSSMResouce, IN IEvent *pEvent);
 
 	/**
 	* @fn           unregisterContext
@@ -200,19 +200,18 @@ public:
 	* @exception    
 	* @see          
 	*/
-	void  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource,IN IEvent *pEvent);
+	void  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
 
 	void onExecute(void* pArg);
 	void onTerminate(void* pArg);
-	int onResourceEvent(RESOURCE_EVENT_TYPE eventType, ISSMResource *pSSMResource, std::string info);
+	int onResourceEvent(IN RESOURCE_EVENT_TYPE eventType, IN ISSMResource *pSSMResource, IN std::string info);
 
 private:
 	SSMRESULT findString(IN std::vector<ISSMResource*> *sList, IN const std::string str, OUT ISSMResource **ppResource);
-	std::map<std::string,std::vector<ContextData> >  getPreparedContextList(IN std::string lowContextName);
-	void runLogic(IN std::vector<ContextData> inputData,IN  std::string highContextName);
+	std::map<std::string, std::vector<ContextData> >  getPreparedContextList(IN std::string primitiveSensor);
+	void runLogic(IN std::vector<ContextData> inputData, IN std::string softSensor);
 	ContextData makeErrorContextData(IN std::string rootName, IN std::string errMsg);
-	SSMRESULT loadModelLibrary(IN std::string modelName);
-	std::string checkError(std::vector<ContextData> data);
+	std::string checkError(IN std::vector<ContextData> data);
 
 };
 

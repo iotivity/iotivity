@@ -23,7 +23,7 @@ SSMRESULT CResourceFinder::finalConstruct()
 {
 	SSMRESULT res = SSM_E_FAIL;
 
-	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IThreadPool, (IBase**)&m_pTaskWorker));
+	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ITasker, (IBase**)&m_pTasker));
 	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IResourceConnectivity, (IBase**)&m_pResourceConnectivity));
 
 	m_pResourceFinderEvent = NULL;
@@ -51,7 +51,7 @@ void CResourceFinder::onResourceFound(std::shared_ptr<OC::OCResource> resource)
 		pMessage[0] = RESOURCE_DISCOVER_REQUESTPROFILE;
 		pMessage[1] = (int)new std::shared_ptr<OC::OCResource>(resource);
 
-		m_pTaskWorker->addTask(this, pMessage);
+		m_pTasker->addTask(this, pMessage);
 	}
 }
 

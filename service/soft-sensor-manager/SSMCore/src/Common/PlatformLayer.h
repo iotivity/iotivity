@@ -20,6 +20,9 @@
 
 #if defined(WIN32)
 #include <Windows.h>
+#include <Shlwapi.h>
+
+#pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "../Outputs/sqlite3.lib")
 
 #elif defined(LINUX)
@@ -28,6 +31,7 @@
 #include <sys/time.h>
 #include <deque>
 #include <dlfcn.h>
+#include <semaphore.h>
 
 #elif defined(ANDROID)
 #include <android/log.h>
@@ -37,57 +41,14 @@
 
 #endif
 
-#if defined(WIN32)
-
-#define MODEL_DIRECTORY "../Outputs/"
-
-#define HIGH_LOCATION "../Outputs/HighContextDictionary.xml"
-#define USER_DATA_LOCATION "../Outputs/UserDataDictionary.xml"
+#define DEFAULT_PATH_SOFT_SENSORS "SoftSensorDescription.xml"
 
 //#define LOCATION_SSM_DB_DUMP "myBackup.db"
 #define LOCATION_SSM_DB_DUMP ""
 
-#elif defined(TIZEN)
-
-#define MODEL_DIRECTORY "/home/developer/ssm/"
-
-#define HIGH_LOCATION "/home/developer/ssm/HighContextDictionary.xml"
-#define LOW_LOCATION "/home/developer/ssm/LowContextDictionary.xml"
-#define SENSOR_LOCATION "/home/developer/ssm/SensorDictionary.xml"
-#define USER_DATA_LOCATION "/home/developer/ssm/UserDataDictionary.xml"
-
-#define LOCATION_SSM_DB_DUMP ""
-
-#elif defined(ANDROID)
-
-#define MODEL_DIRECTORY "/data/data/com.sec.android.ssmcore/files/"
-
-#define HIGH_LOCATION "/data/data/com.sec.android.ssmcore/files/HighContextDictionary.xml"
-#define LOW_LOCATION "/data/data/com.sec.android.ssmcore/files/LowContextDictionary.xml"
-#define SENSOR_LOCATION "/data/data/com.sec.android.ssmcore/files/SensorDictionary.xml"
-#define USER_DATA_LOCATION "/data/data/com.sec.android.ssmcore/files/UserDataDictionary.xml"
-
-#define LOCATION_SSM_DB_DUMP ""
-
-#elif defined(LINUX)
-
-//#define MODEL_DIRECTORY "/home/iotivity/Desktop/Project/Iotivity-Candidate/oic-service/Data_Management/SoftSensorManager/Outputs/"
-
-//#define HIGH_LOCATION "/home/iotivity/Desktop/Project/Iotivity-Candidate/oic-service/Data_Management/SoftSensorManager/Outputs/HighContextDictionary.xml"
-#define LOW_LOCATION "/home/iotivity/Desktop/LowContextDictionary.xml"
-#define SENSOR_LOCATION "/home/iotivity/Desktop/SensorDictionary.xml"
-#define USER_DATA_LOCATION "/home/iotivity/Desktop/UserDataDictionary.xml"
-
-#define LOCATION_SSM_DB_DUMP ""
-
-#endif
-
 #if defined(WIN32) || defined(LINUX)
 
 #define REPORT_MESSAGE(tag, msg) {printf("[%s] %s\n", tag, msg);}
-#define LOGV(...)  printf(__VA_ARGS__)
-#define LOGW(...)  printf(__VA_ARGS__)
-#define LOGE(...)  printf(__VA_ARGS__)
 
 #define SSM_VOID_ASSERT(Exp, STRErrorMsg) \
 	{ \
@@ -143,10 +104,6 @@
 
 void ReportMessage(const char *tag, const char *msg);
 #define REPORT_MESSAGE(tag, msg) {ReportMessage(tag, msg);}
-#define LOG_TAG2 "JACK"
-#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG2, __VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG2, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG2, __VA_ARGS__)
 
 #define SSM_VOID_ASSERT(Exp, STRErrorMsg) \
 	{ \
@@ -199,10 +156,6 @@ void ReportMessage(const char *tag, const char *msg);
 	}
 
 #elif defined(TIZEN)
-
-#define LOGV(...)  AppLog(__VA_ARGS__)
-#define LOGW(...)  AppLog(__VA_ARGS__)
-#define LOGE(...)  AppLog(__VA_ARGS__)
 #define REPORT_MESSAGE(tag, msg)
 
 #define SSM_VOID_ASSERT(Exp, STRErrorMsg) \

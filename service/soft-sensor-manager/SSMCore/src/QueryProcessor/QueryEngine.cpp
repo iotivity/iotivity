@@ -28,9 +28,9 @@ SSMRESULT CQueryEngine::finalConstruct()
 
 	m_pQueryEngineEvent = NULL;
 
-	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IPropagationEngine, (IBase**)&m_pPropagationEngine));
+	SSM_CLEANUP_ASSERT(CreateInstance(OID_ITasker, (IBase**)&m_pTasker));
 
-	SSM_CLEANUP_ASSERT(m_taskWorker.initialize());
+	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IPropagationEngine, (IBase**)&m_pPropagationEngine));
 
 CLEANUP:
 	return res;
@@ -39,8 +39,6 @@ CLEANUP:
 void CQueryEngine::finalRelease()
 {
 	m_pQueryEngineEvent = NULL;
-
-	m_taskWorker.terminate();
 
 	m_mtxQueries.lock();
 	
@@ -163,7 +161,7 @@ SSMRESULT CQueryEngine::processQueryResult(IN int userTriggerId, IN std::vector<
 	pData[1] = userTriggerId;
 	pData[2] = (int)pDataReader;
 
-	m_taskWorker.addTask(this, (void*)pData);
+	m_pTasker->addTask(this, (void*)pData);
 
 	res = SSM_S_OK;
 
@@ -330,7 +328,7 @@ SSMRESULT CQueryEngine::executeContextQuery(IN std::string contextQuery, OUT int
 			pData[1] = m_cqid;
 			pData[2] = (int)pResult;
 
-			m_taskWorker.addTask(this, (void*)pData);
+			m_pTasker->addTask(this, (void*)pData);
 		}
 		else
 		{

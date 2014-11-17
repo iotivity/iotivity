@@ -31,8 +31,7 @@ SSMRESULT CEvaluationEngine::finalConstruct()
 	m_iTriggerId = 0;
 	m_mtxTriggerId.unlock();
 
-	SSM_CLEANUP_ASSERT(m_taskWorker.initialize());
-
+	SSM_CLEANUP_ASSERT(CreateInstance(OID_ITasker, (IBase**)&m_pTasker));
 	SSM_CLEANUP_ASSERT(initializeEngine());
 
 CLEANUP:
@@ -42,8 +41,6 @@ CLEANUP:
 void CEvaluationEngine::finalRelease()
 {
 	terminateEngine();
-
-	m_taskWorker.terminate();
 }
 
 SSMRESULT CEvaluationEngine::executeSQL_NoReturn(IN std::string strSQL)
@@ -108,7 +105,7 @@ SSMRESULT CEvaluationEngine::onWatcherTriggered(IN int triggerId, IN int dataId)
 	int		*pData = new int[2];
 	pData[0] = triggerId;
 	pData[1] = dataId;
-	m_taskWorker.addTask(this, (void*)pData);
+	m_pTasker->addTask(this, (void*)pData);
 	return SSM_S_OK;
 }
 
@@ -211,6 +208,8 @@ void CEvaluationEngine::terminateEngine()
 	}	
 
 	CHK_SQLITE(sqlite3_close(m_pSQLite3), SQLITE_OK);
+
+	m_pSQLite3 = NULL;
 
 	res = SSM_S_OK;
 CLEANUP:

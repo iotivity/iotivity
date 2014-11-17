@@ -56,6 +56,8 @@ SSMRESULT CSoftSensorManager::initializeCore(IN std::string xmlDescription)
 
 	std::string					name;
 	std::string					type;
+	std::string					pathSoftSensors;
+	std::string					pathDescription;
 
 	xmlDoc.parse<0>((char *)xmlDescription.c_str());
 
@@ -92,20 +94,35 @@ SSMRESULT CSoftSensorManager::initializeCore(IN std::string xmlDescription)
 				}
 			}
 		}
+		else if (strKey == "Config")
+		{
+			for (itemDevice = itemSSMCore->first_node(); itemDevice; itemDevice = itemDevice->next_sibling())
+			{
+				strKey = itemDevice->name();
+
+				if (strKey == "SoftSensorRepository")
+				{
+					pathSoftSensors = itemDevice->value();
+				}
+				else if (strKey == "SoftSensorDescription")
+				{
+					pathDescription = itemDevice->value();
+				}
+				else
+				{
+					;/*NULL*/
+				}
+			}
+		}
 		else
 		{
 			;/*NULL*/
 		}
 	}
 
-	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IThreadPool, (IBase**)&m_pThreadPool));
 	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IContextRepository, (IBase**)&m_pContextRepository));
 	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IResponseReactor, (IBase**)&m_pResponseReactor));
-	m_pContextRepository->setCurrentDeviceInfo(name, type);
-	
-	//SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ISharingLayer, (IBase**)&m_pSharingLayer));
-	//m_pSharingLayer->InitLayer(m_pLowLevelResponseReactor);
-	//m_pSharingLayer->SetLocalId(udn);
+	m_pContextRepository->setCurrentDeviceInfo(name, type, pathSoftSensors, pathDescription);
 
 	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IPropagationEngine, (IBase**)&m_pPropagationEngine));
 
@@ -163,6 +180,7 @@ SSMRESULT CSoftSensorManager::getInstalledModelList(OUT std::vector<ISSMResource
 
 CSimpleMutex				*g_mtxGlobalInstance = NULL;
 std::map<OID, IBase*>		*g_globalInstance = NULL;
+IThreadPool					*g_pThreadPool = NULL;
 
 SSMRESULT CreateGlobalInstance(IN const OID& objectID, OUT IBase** ppvObject)
 {
@@ -177,7 +195,15 @@ SSMRESULT CreateGlobalInstance(IN const OID& objectID, OUT IBase** ppvObject)
 
 	g_mtxGlobalInstance->lock();
 	res = SSM_S_FALSE;
-	if(IsEqualOID(OID_IThreadPool, objectID))
+
+	if (IsEqualOID(OID_ITasker, objectID))
+	{
+		if (g_globalInstance->find(OID_ITasker) == g_globalInstance->end())
+		{
+			SSM_CLEANUP_ASSERT(CreateInstance(OID_ITasker, ppvObject));
+		}
+	}
+	else if(IsEqualOID(OID_IThreadPool, objectID))
 	{
 		if (g_globalInstance->find(OID_IThreadPool) == g_globalInstance->end())
 		{
@@ -263,7 +289,15 @@ SSMRESULT CreateInstance(IN const OID& objectID, OUT IBase** ppObject)
 
 	*ppObject = NULL;
 
-	if(IsEqualOID(OID_IThreadPool, objectID))
+	if (IsEqualOID(OID_ITasker, objectID))
+	{
+		SSM_CLEANUP_ASSERT(CreateNewObject<CTasker>(objectID, ppObject));
+	}
+	else if (IsEqualOID(OID_IWorkerThread, objectID))
+	{
+		SSM_CLEANUP_ASSERT(CreateNewObject<CWorkerThread>(objectID, ppObject));
+	}
+	else if(IsEqualOID(OID_IThreadPool, objectID))
 	{
 		SSM_CLEANUP_ASSERT(CreateNewObject<CThreadPool>(objectID, ppObject));
 	}
@@ -342,8 +376,8 @@ SSMRESULT CreateGlobalInstanceRepo()
 	SSM_CLEANUP_NULL_ASSERT(g_mtxGlobalInstance);
 	g_globalInstance = new std::map<OID, IBase*>();
 	SSM_CLEANUP_NULL_ASSERT(g_globalInstance);
-
-	res = SSM_S_OK;
+	
+	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IThreadPool, (IBase**)&g_pThreadPool));
 
 CLEANUP:
 	return res;
@@ -351,7 +385,14 @@ CLEANUP:
 
 SSMRESULT DestroyGlobalInstanceRepo()
 {
+	SSMRESULT res = SSM_E_FAIL;
+
+	SSM_CLEANUP_ASSERT(g_pThreadPool->destroyThreadPool());
+
+	SAFE_RELEASE(g_pThreadPool);
 	SAFE_DELETE(g_mtxGlobalInstance);
 	SAFE_DELETE(g_globalInstance);
-	return SSM_S_OK;
+	
+CLEANUP:
+	return res;
 }

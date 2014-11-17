@@ -43,7 +43,7 @@ private:
 	CSimpleMutex		m_mtxTriggerId;
 	std::map<int, IEvaluationEngineEvent*>	m_mapTriggers;
 	CSimpleMutex		m_mtxDataRelation;
-	CTaskWorker			m_taskWorker;
+	CObjectPtr<ITasker>	m_pTasker;
 
 	SSMRESULT executeSQL_NoReturn(IN std::string strSQL);
 

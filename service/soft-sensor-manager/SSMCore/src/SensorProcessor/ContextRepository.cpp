@@ -65,7 +65,7 @@ void CContextRepository::finalRelease()
 {
 }
 
-void CContextRepository::setCurrentDeviceInfo(IN std::string name, IN std::string type)
+void CContextRepository::setCurrentDeviceInfo(IN std::string name, IN std::string type, IN std::string pathSoftSensors, IN std::string pathDescription)
 {
 	//TODO: Someone need to provides a way to generate permanent uuid function
 	/*
@@ -79,11 +79,14 @@ void CContextRepository::setCurrentDeviceInfo(IN std::string name, IN std::strin
 	*/
 	m_name = name;
 	m_type = type;
+	m_pathSoftSensors = pathSoftSensors;
+	m_pathSoftSensorsDescription = pathDescription;
 }
 
-std::vector<DictionaryData> CContextRepository::loadXMLFromString(char *xmlData)
+SSMRESULT CContextRepository::loadXMLFromString(char *xmlData, std::vector<DictionaryData> *dataList)
 {
 	// use  rapidxml-----------------------
+	SSMRESULT res = SSM_E_FAIL;
 	rapidxml::xml_document< char > xmlDoc;
 	//xmlDoc.parse< 0 >( &xmlData.front() );
 	xmlDoc.parse< 0 >(xmlData);
@@ -96,14 +99,12 @@ std::vector<DictionaryData> CContextRepository::loadXMLFromString(char *xmlData)
 	rapidxml::xml_node< char > *subItem2;
 	rapidxml::xml_node< char > *subItem3;
 
-	std::vector<DictionaryData> dictionaryDataList;
 	// get value
 	rapidxml::xml_node< char > *root = xmlDoc.first_node();
 
-	//SSM_RESULT_ASSERT(root,"XML file is empty",dictionaryDataList);
 	if(!root)
 	{
-		return dictionaryDataList;
+		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
 	}
 
 	for( item = root->first_node(); item; item = item->next_sibling() )
@@ -190,50 +191,78 @@ std::vector<DictionaryData> CContextRepository::loadXMLFromString(char *xmlData)
 		dictionaryData.output_property_count = std::to_string((long long)dictionaryData.output_property.size());
 		*/
 
-		dictionaryDataList.push_back(dictionaryData);
+		dataList->push_back(dictionaryData);
 	}
 
-	return dictionaryDataList;
+	res = SSM_S_OK;
+
+CLEANUP:
+	return res;
 }
 
-std::vector<DictionaryData> CContextRepository::loadXMLFromFile(const char *strFile )
+SSMRESULT CContextRepository::loadXMLFromFile(std::string descriptionFilePath, std::vector<DictionaryData> *dataList)
 {
-	std::basic_ifstream< char > xmlFile( strFile );
-	std::vector<DictionaryData> returnData;
+	SSMRESULT res = SSM_E_FAIL;
+	std::basic_ifstream< char > xmlFile(descriptionFilePath.c_str());
 
-	//SSM_RESULT_ASSERT(!xmlFile.fail(),"File open failed.",returnData);
-	
-	if(!xmlFile.fail())
+	if (descriptionFilePath.length() > 0 && xmlFile.fail())
+	{
+		//error while opening given path, return error
+		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+	}
+
+	if (descriptionFilePath.length() == 0)
+	{
+		//No given path, try to open local Path
+		std::string path;
+		SSM_CLEANUP_ASSERT(GetCurrentPath(&path));
+		path.append("/");
+		path.append(DEFAULT_PATH_SOFT_SENSORS);
+		xmlFile.open(path);
+	}
+
+	//path loaded
+	if (!xmlFile.fail())
 	{
 		xmlFile.seekg(0, std::ios::end);
 		unsigned int size = (unsigned int)xmlFile.tellg();
 		xmlFile.seekg(0);
 
-		std::vector< char > xmlData(size+1);
+		std::vector< char > xmlData(size + 1);
 		xmlData[size] = 0;
 
-		xmlFile.read( &xmlData.front(), (std::streamsize)size );
+		xmlFile.read(&xmlData.front(), (std::streamsize)size);
 		xmlFile.close();
-		returnData = loadXMLFromString(&xmlData.front());
+		SSM_CLEANUP_ASSERT(loadXMLFromString(&xmlData.front(), dataList));
+	}
+	else
+	{
+		//let work with no soft sensor manager
+		res = SSM_S_OK;
 	}
 
-	return returnData;
-}
-
-SSMRESULT CContextRepository::getSoftSensorList(OUT std::vector<ISSMResource*> *pHighLevelList)
-{
-	SSMRESULT res = SSM_E_FAIL;
-	std::vector<DictionaryData> dict = loadXMLFromFile(HIGH_LOCATION);
-	res = makeSSMResourceListForDictionaryData("HIGH", dict, pHighLevelList);
-
+CLEANUP:
 	return res;
 }
 
-SSMRESULT CContextRepository::getPrimitiveSensorList(OUT std::vector<ISSMResource*> *pLowLevelList)
+SSMRESULT CContextRepository::getSoftSensorList(OUT std::vector<ISSMResource*> *pSoftSensorList)
+{
+	SSMRESULT res = SSM_E_FAIL;
+	std::vector<DictionaryData> dict;
+	
+	SSM_CLEANUP_ASSERT(loadXMLFromFile(m_pathSoftSensorsDescription.c_str(), &dict));
+
+	SSM_CLEANUP_ASSERT(makeSSMResourceListForDictionaryData(dict, pSoftSensorList));
+
+CLEANUP:
+	return res;
+}
+
+SSMRESULT CContextRepository::getPrimitiveSensorList(OUT std::vector<ISSMResource*> *pPrimitiveSensorList)
 {
 	for (size_t i = 0; i < m_lstSensor.size(); i++)
 	{
-		pLowLevelList->push_back(m_lstSensor.at(i));
+		pPrimitiveSensorList->push_back(m_lstSensor.at(i));
 	}
 
 	return SSM_S_OK;
@@ -276,7 +305,7 @@ SSMRESULT CContextRepository::stopObserveResource(IN ISSMResource *pSensor)
 }
 
 //TODO: Need to fix
-SSMRESULT CContextRepository::makeSSMResourceListForDictionaryData(const std::string typeString, std::vector<DictionaryData> dataList, std::vector<ISSMResource*> *pList)
+SSMRESULT CContextRepository::makeSSMResourceListForDictionaryData(std::vector<DictionaryData> dataList, std::vector<ISSMResource*> *pList)
 {
 	SSMRESULT res = SSM_E_FAIL;
 
@@ -284,24 +313,153 @@ SSMRESULT CContextRepository::makeSSMResourceListForDictionaryData(const std::st
 	{
 		ISSMResource *pResource = new ISSMResource();
 		pResource->location = SENSOR_LOCATION_LOCAL;
-		pResource->type = dataList.at(i).rootName;
-		pResource->name = std::string("coap://127.0.0.1/") + dataList.at(i).rootName;
+		pResource->type = dataList[i].rootName;
+		pResource->name = std::string("coap://127.0.0.1/") + dataList[i].rootName;
 		pResource->ip = "coap://127.0.0.1/";
 
-		pResource->inputList = dataList.at(i).inputs;
+		pResource->inputList = dataList[i].inputs;
 		
-		for(unsigned int j = 0 ; j <  dataList.at(i).outputProperty.size() ;++j )
+		for (unsigned int j = 0; j < dataList[i].outputProperty.size(); ++j)
 		{
-			pResource->outputProperty.push_back(dataList.at(i).outputProperty.at(j));
+			pResource->outputProperty.push_back(dataList[i].outputProperty[j]);
 		}
-		for(unsigned int j = 0 ; j <  dataList.at(i).attributeProperty.size() ;++j )
+		for (unsigned int j = 0; j < dataList[i].attributeProperty.size(); ++j)
 		{
-			pResource->outputProperty.push_back(dataList.at(i).attributeProperty.at(j));
+			pResource->outputProperty.push_back(dataList[i].attributeProperty[j]);
 		}
 		pList->push_back(pResource);
 	}
 
 	res = SSM_S_OK;
 
+	return res;
+}
+
+SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDelegate *pDelegate, void **hSoftSensor)
+{
+	std::stringstream	sstream;
+	SSMRESULT			res = SSM_E_FAIL;
+
+	typedef void(*InitContext)(IN ICtxDelegate *);
+	InitContext InitializeContextFunction = NULL;
+
+	if (m_pathSoftSensors.length() == 0)
+	{
+		SSM_CLEANUP_ASSERT(GetCurrentPath(&m_pathSoftSensors));
+	}
+
+	m_pathSoftSensors.append("/");
+
+	// load dll(so)
+	res = SSM_E_FAIL;
+	for (unsigned int i = 1; i <= SSM_MODEL_RETRY; ++i)
+	{
+		sstream.str("");
+
+#ifdef WIN32
+		sstream << m_pathSoftSensors << softSensorName.c_str() << ".dll" << std::ends;
+
+		HINSTANCE hModule = NULL;
+		hModule = LoadLibraryA(sstream.str().c_str());
+
+		if (hModule != NULL)
+		{
+			InitializeContextFunction = (InitContext)GetProcAddress(hModule, "InitializeContext");
+		}
+#else
+		//sstream << "/data/data/com.example.javaproject/lib/lib" << modelName <<".so" << std::ends;
+		sstream << m_pathSoftSensors << "lib" << softSensorName.c_str() << ".so" << std::ends;
+
+		void* hModule = NULL;
+		hModule = dlopen(sstream.str().c_str(), RTLD_LOCAL | RTLD_LAZY);
+
+		if (hModule != NULL)
+		{
+			InitializeContextFunction = (InitContext)dlsym(hModule, "InitializeContext");
+		}
+#endif
+		if (hModule == NULL)
+		{
+			InitializeContextFunction = NULL;
+			continue;
+		}
+
+		if (InitializeContextFunction != NULL)
+		{
+			InitializeContextFunction(pDelegate);
+			*hSoftSensor = hModule;
+			res = SSM_S_OK;
+		}
+		else
+		{
+			//Unload module and return error
+			SSM_CLEANUP_ASSERT(unloadSoftSensor(hModule));
+			SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+		}
+
+		break;
+	}
+
+CLEANUP:
+	return res;
+}
+
+SSMRESULT CContextRepository::unloadSoftSensor(void *hSoftSensor)
+{
+	SSMRESULT			res = SSM_E_FAIL;
+
+#ifdef WIN32
+	SSM_CLEANUP_COND_ASSERT(FreeLibrary((HINSTANCE)hSoftSensor), TRUE, "FreeLibrary failed");
+#else
+	SSM_CLEANUP_COND_ASSERT(dlclose(hSoftSensor), 0, "dlclose failed");
+#endif
+
+	res = SSM_S_OK;
+
+CLEANUP:
+	return res;
+}
+
+SSMRESULT CContextRepository::GetCurrentPath(std::string *path)
+{
+	char		buffer[2048];
+	SSMRESULT	res = SSM_E_FAIL;
+#if defined(WIN32)
+	DWORD length = GetModuleFileNameA(NULL, buffer, 2047);
+
+	if (length == 0)
+	{
+		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+	}
+
+	buffer[length] = '\0';
+	if (PathRemoveFileSpecA(buffer) == 0)
+	{
+		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+	}
+
+#elif defined(LINUX)
+	char	*strPath = NULL;
+	int length = ::readlink("/proc/self/exe", buffer, 2047);
+
+	if (length == -1)
+	{
+		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+	}
+
+	strPath = strrchr(buffer, '/');
+
+	if (strPath == NULL)
+	{
+		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+	}
+
+	*strPath = '\0';
+#endif
+
+	path->append(buffer);
+	res = SSM_S_OK;
+
+CLEANUP:
 	return res;
 }

@@ -24,7 +24,7 @@ SSMRESULT CPropagationEngine::finalConstruct()
 {
 	SSMRESULT				res = SSM_E_FAIL;
 
-	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IThreadPool, (IBase**)&m_pTaskWorker));
+	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ITasker, (IBase**)&m_pTasker));
 
 	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IContextDataReader, (IBase**)&m_pContextDataReader));
 
@@ -163,8 +163,7 @@ SSMRESULT CPropagationEngine::installContextModelFromISSMResource(IN ISSMResourc
 	ModelProperty				modelProperty;
 	ModelPropertyVec			modelProperties;
 	CObject<CContextModel>		*pContextModel;
-	std::map<std::string, int>::iterator	itorSearchedDeviceId;
-	int							deviceDataId = 0;
+	int							deviceId = 0;
 	std::string					lifeTime;
 
 	switch((res = findContextModel(pSSMResource->type.c_str(), (IContextModel**)&pContextModel)))
@@ -226,21 +225,42 @@ SSMRESULT CPropagationEngine::installContextModelFromISSMResource(IN ISSMResourc
 	}		
 	
 	//Update Device data to DB
-	modelProperty.propertyName = "fname"; 
+	SSM_CLEANUP_ASSERT(updateDeviceInfo(pSSMResource, &deviceId));
+
+	//TODO: Must be modified for restructuring
+	pContextModel->addSSMResourceAndDeviceDataId(pSSMResource->type, deviceId, pSSMResource);
+
+	res = SSM_S_OK;
+
+CLEANUP:
+	SAFE_RELEASE(pContextModel);
+	return res;
+}
+
+SSMRESULT CPropagationEngine::updateDeviceInfo(IN ISSMResource *pSSMResource, OUT int *deviceId)
+{
+	SSMRESULT res = SSM_E_FAIL;
+
+	ModelProperty				modelProperty;
+	ModelPropertyVec			modelProperties;
+	std::map<std::string, int>::iterator	itorSearchedDeviceId;
+	int							deviceDataId;
+
+	modelProperty.propertyName = "fname";
 	modelProperty.propertyType = ModelProperty::TYPE_TEXT;
 	modelProperty.propertyValue = pSSMResource->friendlyName;
 	modelProperties.push_back(modelProperty);
 
-	modelProperty.propertyName = "ip"; 
+	modelProperty.propertyName = "ip";
 	modelProperty.propertyType = ModelProperty::TYPE_TEXT;
 	modelProperty.propertyValue = pSSMResource->ip;
 	modelProperties.push_back(modelProperty);
 
-	modelProperty.propertyName = "version"; 
+	modelProperty.propertyName = "version";
 	modelProperty.propertyType = ModelProperty::TYPE_TEXT;
 	modelProperty.propertyValue = "1.0";
 	modelProperties.push_back(modelProperty);
-	
+
 	itorSearchedDeviceId = m_searchedSensorDataId.find(pSSMResource->ip);
 
 	if (itorSearchedDeviceId == m_searchedSensorDataId.end())
@@ -253,13 +273,12 @@ SSMRESULT CPropagationEngine::installContextModelFromISSMResource(IN ISSMResourc
 		deviceDataId = m_searchedSensorDataId[pSSMResource->ip];
 	}
 
-	//TODO: Must be modified for restructuring
-	pContextModel->addSSMResourceAndDeviceDataId(pSSMResource->type, deviceDataId, pSSMResource);
+	if (deviceId != NULL)
+		*deviceId = deviceDataId;
 
 	res = SSM_S_OK;
 
 CLEANUP:
-	SAFE_RELEASE(pContextModel);
 	return res;
 }
 
@@ -275,6 +294,8 @@ SSMRESULT CPropagationEngine::installResponseReactor(IN IResponseReactor *pRespo
 	{
 		SSM_CLEANUP_ASSERT(installContextModelFromISSMResource(*itor));
 	}
+
+	res = SSM_S_OK;
 
 CLEANUP:
 	return res;
@@ -303,39 +324,6 @@ SSMRESULT CPropagationEngine::installContextModel(IN IContextModel *pParentModel
 
 CLEANUP:
 	SAFE_RELEASE(pNewModel);
-	return res;
-}
-
-SSMRESULT CPropagationEngine::recoverEngineFromDatabase()
-{
-	SSMRESULT				res = SSM_E_FAIL;
-	ModelConditionVec		deviceCondition(1);
-	IConditionedModel		*pDeviceInformation = NULL;
-	IntVec					sensorDataIds;
-	
-	deviceCondition[0].modelProperty.propertyName = "dataId";
-	deviceCondition[0].modelProperty.propertyValue = "1";
-	deviceCondition[0].modelProperty.propertyType = ModelProperty::TYPE_NUMERIC;
-	deviceCondition[0].predicate = ModelCondition::PREDICATE_EQ;
-	SSM_CLEANUP_ASSERT(m_pDeviceModel->createConditionedModel(&deviceCondition, &pDeviceInformation));
-	SSM_CLEANUP_ASSERT(pDeviceInformation->getAffectedData(&sensorDataIds));
-
-	if (sensorDataIds.size() > 0)
-	{
-		ModelPropertyVec		deviceModelValues;
-		SSM_CLEANUP_ASSERT(m_pDeviceModel->getModelData(sensorDataIds[0], &deviceModelValues));
-
-		for(unsigned int i=0; i < deviceModelValues.size(); i++)
-		{
-			if(deviceModelValues[i].propertyName == "name")
-			{
-				m_searchedSensorDataId[deviceModelValues[i].propertyValue] = sensorDataIds[0];
-			}
-		}
-	}
-
-CLEANUP:
-	SAFE_RELEASE(pDeviceInformation);
 	return res;
 }
 
@@ -409,7 +397,7 @@ int CPropagationEngine::onResourceEvent(IN RESOURCE_EVENT_TYPE eventType, IN ISS
 
 	pMessage[0] = eventType;
 	pMessage[1] = (int)pSSMResource;
-	return (int)m_pTaskWorker->addTask(this, (void*)pMessage);
+	return (int)m_pTasker->addTask(this, (void*)pMessage);
 }
 
 SSMRESULT CPropagationEngine::initializeEngine()
@@ -419,6 +407,8 @@ SSMRESULT CPropagationEngine::initializeEngine()
 	ModelPropertyVec		rootModelProperties(1);
 
 	ModelPropertyVec		deviceModelProperties(3);
+
+	ISSMResource			ssmResource;
 
 	SSM_CLEANUP_ASSERT(m_pEvaluationEngine->initializeEngine());
 
@@ -443,7 +433,10 @@ SSMRESULT CPropagationEngine::initializeEngine()
 	SSM_CLEANUP_ASSERT(installContextModel(m_pRootModel, IContextModel::CONSTRUCTION_TYPE_INTERNAL, "Device",
 		&deviceModelProperties, &m_pDeviceModel));
 
-	SSM_CLEANUP_ASSERT(recoverEngineFromDatabase());
+	ssmResource.ip = "coap://127.0.0.1/";
+	ssmResource.friendlyName = "MyDevice";
+
+	SSM_CLEANUP_ASSERT(updateDeviceInfo(&ssmResource, NULL));
 
 	SSM_CLEANUP_ASSERT(installResponseReactor(m_pResponseReactor));
 

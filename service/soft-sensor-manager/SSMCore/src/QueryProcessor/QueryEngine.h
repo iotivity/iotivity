@@ -49,7 +49,7 @@ private:
 	int									m_cqid;
 	IQueryEngineEvent					*m_pQueryEngineEvent;
 	std::map<int, CContextQuery*>		m_contextQueries;
-	CTaskWorker							m_taskWorker;
+	CObjectPtr<ITasker>					m_pTasker;
 
 private:
 	SSMRESULT processQueryResult(IN int userTriggerId, IN std::vector<result_model> *result);

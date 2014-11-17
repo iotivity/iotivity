@@ -116,15 +116,16 @@ public:
 	* @brief        set device information
 	*
 	* @param        [in] std::string name - Device name
-	* @param        [in] std::string udn - Device UUID
 	* @param        [in] std::string type - Device Type
+	* @param        [in] std::string pathSoftSensors - SoftSensors Repository path
+	* @param        [in] std::string pathDescription - SoftSensors Description path
 	* @return       void
 	*
-	* @warning      
-	* @exception    
-	* @see          
+	* @warning
+	* @exception
+	* @see
 	*/
-	virtual void setCurrentDeviceInfo(IN std::string name, IN IN std::string type) = 0;
+	virtual void setCurrentDeviceInfo(IN std::string name, IN std::string type, IN std::string pathSoftSensors, IN std::string pathDescription) = 0;
 
 	virtual SSMRESULT registerResourceFinderEvent(IN IResourceEvent *pResourceEvent) = 0;
 	virtual SSMRESULT startResourceFinder() = 0;
@@ -133,6 +134,9 @@ public:
 
 	virtual SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent) = 0;
 	virtual SSMRESULT stopObserveResource(IN ISSMResource *pSensor) = 0;
+
+	virtual SSMRESULT loadSoftSensor(IN std::string softSensorName, IN ICtxDelegate *pDelegate, OUT void **hSoftSensor) = 0;
+	virtual SSMRESULT unloadSoftSensor(IN void *hSoftSensor) = 0;
 };
 
 struct ModelProperty
