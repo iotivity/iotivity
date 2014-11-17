@@ -59,9 +59,9 @@ void CResponseReactor::unregisterContext(TypeofEvent callType, ISSMResource *pSS
 	m_mtxUnregisterContext.lock();
 
 	// if already exists
-	if (m_requestedCallbackData.find(pSSMResource->name) != m_requestedCallbackData.end())
+	if (m_requestedCallbackData.find(pSSMResource->type) != m_requestedCallbackData.end())
 	{
-		m_requestedCallbackData.erase(m_requestedCallbackData.find(pSSMResource->name));
+		m_requestedCallbackData.erase(m_requestedCallbackData.find(pSSMResource->type));
 
 		//and Call NextLayer
 		m_pContextExecutor->unregisterContext(callType, pSSMResource, this);
