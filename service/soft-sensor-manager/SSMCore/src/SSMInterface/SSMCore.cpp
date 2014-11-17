@@ -20,15 +20,12 @@
 #include "SSMInterface/SSMCore.h"
 #include "SSMInterface/SoftSensorManager.h"
 #include "Common/InternalInterface.h"
-#include "Common/CAGlobalMutex.h"
 
 static ISoftSensorManager		*g_pSoftSensorManager = NULL;
 
 SSMRESULT CreateQueryEngine(OUT IQueryEngine **ppQueryEngine)
 {
 	SSMRESULT res = SSM_E_FAIL;
-
-	CA_GLOBALMUTEX_LOCK;
 
 	SSM_CLEANUP_NULL_ASSERT(g_pSoftSensorManager);
 	SSM_CLEANUP_ASSERT(g_pSoftSensorManager->createQueryEngine(ppQueryEngine));
@@ -44,8 +41,6 @@ unsigned long ReleaseQueryEngine(IN IQueryEngine *pQueryEngine)
 		return -1;
 	}
 
-	CA_GLOBALMUTEX_LOCK;
-
 	if (g_pSoftSensorManager == NULL)
 	{
 		return -1;
@@ -57,8 +52,6 @@ unsigned long ReleaseQueryEngine(IN IQueryEngine *pQueryEngine)
 SSMRESULT InitializeSSMCore(IN std::string xmlDescription)
 {
 	SSMRESULT res = SSM_E_FAIL;
-
-	CA_GLOBALMUTEX_LOCK;
 
 	SSM_CLEANUP_ASSERT(CreateGlobalInstanceRepo());
 	SSM_CLEANUP_ASSERT(CreateInstance(OID_ISoftSensorManager, (IBase**)&g_pSoftSensorManager));
@@ -76,8 +69,6 @@ SSMRESULT StartSSMCore()
 {
 	SSMRESULT res = SSM_E_FAIL;
 
-	CA_GLOBALMUTEX_LOCK;
-
 	SSM_CLEANUP_NULL_ASSERT(g_pSoftSensorManager);
 	SSM_CLEANUP_ASSERT(g_pSoftSensorManager->startCore());
 
@@ -89,8 +80,6 @@ SSMRESULT StopSSMCore()
 {
 	SSMRESULT res = SSM_E_FAIL;
 
-	CA_GLOBALMUTEX_LOCK;
-
 	SSM_CLEANUP_NULL_ASSERT(g_pSoftSensorManager);
 	SSM_CLEANUP_ASSERT(g_pSoftSensorManager->stopCore());
 
@@ -101,8 +90,6 @@ CLEANUP:
 SSMRESULT TerminateSSMCore(bool factoryResetFlag)
 {
 	SSMRESULT res = SSM_E_FAIL;
-
-	CA_GLOBALMUTEX_LOCK;
 
 	SSM_CLEANUP_NULL_ASSERT(g_pSoftSensorManager);
 	SSM_CLEANUP_ASSERT(g_pSoftSensorManager->terminateCore(factoryResetFlag));
@@ -154,8 +141,6 @@ const char *GetSSMError(SSMRESULT res)
 SSMRESULT GetInstalledModelList(OUT std::vector<ISSMResource*> *pList)
 {
 	SSMRESULT res = SSM_E_FAIL;
-
-	CA_GLOBALMUTEX_LOCK;
 
 	SSM_CLEANUP_NULL_ASSERT(g_pSoftSensorManager);
 	g_pSoftSensorManager->getInstalledModelList(pList);
