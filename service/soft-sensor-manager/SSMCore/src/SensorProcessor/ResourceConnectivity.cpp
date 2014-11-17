@@ -28,6 +28,7 @@ SSMRESULT CResourceConnectivity::finalConstruct()
 	m_pPlatform = new OC::OCPlatform(cfg);
 	
 	SSM_CLEANUP_NULL_ASSERT(m_pPlatform);
+
 	res = SSM_S_OK;
 
 CLEANUP:
@@ -36,6 +37,7 @@ CLEANUP:
 
 void CResourceConnectivity::finalRelease()
 {
+	SAFE_DELETE(m_pPlatform);
 }
 
 void* CResourceConnectivity::getPlatform()
