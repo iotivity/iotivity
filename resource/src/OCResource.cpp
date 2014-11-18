@@ -243,8 +243,16 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
         return result_guard(OC_STACK_INVALID_PARAM);
     }
 
-    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::CancelObserveResource,
+    OCStackResult result =  checked_guard(m_clientWrapper.lock(),
+            &IClientWrapper::CancelObserveResource,
             m_observeHandle, m_host, m_uri, m_headerOptions, QoS);
+
+    if(result == OC_STACK_OK)
+    {
+        m_observeHandle = nullptr;
+    }
+
+    return result;
 }
 
 std::string OCResource::host() const
