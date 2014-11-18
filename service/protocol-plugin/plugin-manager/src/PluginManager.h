@@ -30,28 +30,12 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/inotify.h>
-#include <unistd.h>
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
-#include <internal.h>
-
+#include <dlfcn.h>
+#include "PluginManagerImpl.h"
 #include "Plugin.h"
-#include "OCPlatform.h"
-#include "OCApi.h"
-
-#define EVENT_SIZE  ( sizeof (struct inotify_event) )
-#define BUF_LEN     (int)( 1024 * ( EVENT_SIZE + 16 ) )
 
 namespace OIC
 {
-
-
-    struct PluginManagerConfig
-    {
-        std::string rootPluinPath;
-    };
 
     /**
     * @brief    After installing a plug-in in a directory, each plug-ins can be managed by this class.
@@ -61,84 +45,36 @@ namespace OIC
     class PluginManager
     {
         public:
-            /**
-            * A function to register pluins in the path.
-            * This function will load plugins in plugin manager table.
-            *
-            * @param path plugin file path to be registered.
-            * @return int, 1 is success, 0 is fail.
-            *
-            * NOTE:
-            *
-            */
-            int registerPlugin(const std::string path);
-
+            PluginManager();
 
             /**
-            * A function to register pluins in the path.
-            * This function will load plugins in plugin manager table.
+            * Virtual destructor
+            */
+            ~PluginManager(void);
+            /**
+            * Start  plugins by resource type
             *
-            * @param path plugin file path to be registered.
-            * recursive load plugins sub folders recursively.
-            * @return int, 1 is success, 0 is fail.
-            *
-            * NOTE:
+            * @param type resouce type string to be started.
             *
             */
-            int registerAllPlugin(const std::string path);
-
+            int startPlugins(const std::string key, const std::string value);
 
             /**
-            * Unregister plugin.
+            * Stop  plugins by resource type
             *
-            * @param plugin plugin object to be unregistered.
-            * @return int, 1 is success, 0 is fail.
-            */
-            int unregisterPlugin(Plugin *const plugin);
-
-
-            /**
-            * Unregister All plugin.
-            *
-            * @return int, 1 is success, 0 is fail.
-            */
-            int unregisterAllPlugin(void);
-
-
-            /**
-            * get all plugins which currently registered.
-            *
-            * @return vector of currently registered plugins
+            * @param type resouce type string to be started.
             *
             */
-            std::vector<Plugin> &getAllPlugins(void);
-
-
-            /**
-            * find plugins which have the key and value
-            *
-            * @return vector of currently registered plugins
-            */
-            std::vector<Plugin> *findPlugins(const std::string key, const std::string value);
-
-
-            /**
-            * Get plugin which has the id
-            *
-            * @param pluginID plugin id to find
-            * @return Plugin instance
-            */
-            Plugin *getPlugin(const std::string pluginID);
+            int stopPlugins(const std::string key, const std::string value);
 
             /**
             * Start plugin
             * This function will load dynamic plugin library on memory and call start function of plugin to be initialized.
             *
             * @param Plugin
-            * @param Platform pointer.
             * @return int, 1 is success, 0 is fail.
             */
-            int start(Plugin *const plugin, void *const arg);
+            int startPlugins(Plugin *const plugin);
 
 
             /**
@@ -148,140 +84,20 @@ namespace OIC
             * @param Plugin
             * @return int, 1 is success, 0 is fail.
             */
-            int stop(Plugin *const plugin);
-
-
-            /**
-            * Check whether the plugin started or not
-            *
-            * @param Plugin to identify the Starting.
-            * @return true if started, false is stop.
-            *
-            */
-            bool isStarted(Plugin *plugin);
+            int stopPlugins(Plugin *const plugin);
 
             /**
-            * Get Plugin state.
+            * Get Plugin list.
             *
-            * @param Plugin ID
-            * @return Plugin state.
+            *
+            *
+            * @return
             */
-            const std::string getState(const std::string plugID);
-
-
-            /**
-            *
-            * new Singleton pattern instance.
-            *
-            * @return PluginManager pointer Address.
-            */
-            static PluginManager *Getinstance()
-            {
-                if (NULL == s_pinstance)
-                {
-                    s_pinstance = new PluginManager();
-                }
-
-                return s_pinstance;
-            }
-
-
+            std::vector<Plugin> getPlugins(void);
 
         private:
-
-            typedef std::map<std::string, bool> File_list;
-            std::vector<Plugin> m_plugins;
-            cp_context_t *m_context;
-            cp_status_t m_status;
-            cp_plugin_info_t **m_cp_plugins;
-            cp_plugin_info_t *m_plugin;
-            boost::thread m_file_detect_thread;
-            boost::thread_group m_thread_g;
-            std::string m_path;
-            static PluginManager *s_pinstance;
-
-            /**
-            * Constructor for PluginManager.
-            * During construction time, all plugins under the root plugin path will be loaded.
-            *
-            */
-            PluginManager();
-
-            /**
-            * Virtual destructor
-            */
-            virtual ~PluginManager(void);
-
-            /**
-            * delete Singleton pattern instance.
-            */
-            static void deleteinstance()
-            {
-                if (NULL != s_pinstance)
-                {
-                    delete s_pinstance;
-                    s_pinstance = NULL;
-                }
-            }
-
-            /**
-            * detect plugins(add, delete, move)
-            *
-            * @param plugin file path.
-            * @return void
-            */
-            void observePluginPath(void *);
-
-
-            /**
-            * change Number to String.
-            *
-            * @param int.
-            * @return State String.
-            */
-            const char *state_to_string(int state);
-
-            /**
-            * Get whole "SO" file list.
-            *
-            * @param OUT, SO file list.
-            * @param Root path.
-            * @return true or false.
-            */
-            bool getFileList(File_list &list, const std::string strDir);
-
-            /**
-            * print whole plugin info.
-            *
-            * @param cpluff plugins
-            */
-            void printPluginList(cp_plugin_info_t **plugins);
-
-            /**
-            * install plugin using c-pluff.
-            *
-            * @param Root path.
-            * @return int, 1 is success, 0 is fail.
-            */
-            int installPlugin(const std::string path);
-
-
-            /**
-            * find Plugin and install plugin.(Recursive)
-            *
-            * @param Root path.
-            * @return int, 1 is success, 0 is fail.
-            */
-            int findPluginRecursive(const std::string path);
-
-            /**
-            * load Plugin information to PluginManager table.
-            *
-            * @param path to observe
-            * @return int, 1 is success, 0 is fail.
-            */
-            int loadPluginInfoToManager(const std::string path);
+            PluginManagerImpl *pluginManagerImpl;
+            void (*destroy)(PluginManagerImpl *);
     };
 }
-
 #endif //__PLUGINMANAGER_H

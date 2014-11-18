@@ -23,8 +23,8 @@
 /// @brief
 
 
-#ifndef __OCPLUGIN_H__
-#define __OCPLUGIN_H__
+#ifndef __Plugin_H__
+#define __Plugin_H__
 
 #define TRUE 1
 #define FALSE 0
@@ -165,4 +165,4 @@ namespace OIC
 }
 
 
-#endif //__OCPLUGIN_H__
+#endif //__Plugin_H__
