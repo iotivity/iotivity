@@ -300,8 +300,9 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
             OC_LOG_BUFFER(INFO, TAG, rcvVendorSpecificHeaderOptions[i].optionData,
                     rcvVendorSpecificHeaderOptions[i].optionLength);
             i++;
-            *numRcvVendorSpecificHeaderOptions = i;
         }
+
+        *numRcvVendorSpecificHeaderOptions = i;
     }
 
     // get the payload
@@ -400,7 +401,6 @@ OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerR
         entityHandlerRequestLoc->obsInfo = NULL;
         entityHandlerRequestLoc->newResourceUri = newResUriBuf;
 
-        entityHandlerRequestLoc->numRcvdVendorSpecificHeaderOptions = 0;
         entityHandlerRequestLoc->numSendVendorSpecificHeaderOptions = 0;
         return OC_STACK_OK;
     }
