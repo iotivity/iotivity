@@ -23,13 +23,13 @@
 int g_Observation = 0;
 
 void entityHandler(std::shared_ptr< OCResourceRequest > request,
-        std::shared_ptr< OCResourceResponse > response);
+                   std::shared_ptr< OCResourceResponse > response);
 
 /*
  * TempResourceFunctions
  */
 
-void TemphumidResource::registerResource(OC::OCPlatform& platform)
+void TemphumidResource::registerResource(OC::OCPlatform &platform)
 {
     string resourceURI = m_resourceUri; // URI of the resource
     string resourceTypeName = COAP_TYPE_NAME; // resource type name.
@@ -39,7 +39,7 @@ void TemphumidResource::registerResource(OC::OCPlatform& platform)
 
     // This will internally create and register the resource.
     OCStackResult result = platform.registerResource(m_resourceHandle, resourceURI,
-            resourceTypeName, resourceInterface, &entityHandler, resourceProperty);
+                           resourceTypeName, resourceInterface, &entityHandler, resourceProperty);
 
     if (OC_STACK_OK != result)
     {
@@ -52,7 +52,7 @@ OCResourceHandle TemphumidResource::getHandle()
     return m_resourceHandle;
 }
 
-void TemphumidResource::setRepresentation(AttributeMap& attributeMap)
+void TemphumidResource::setRepresentation(AttributeMap &attributeMap)
 {
     cout << "\t\t\t" << "Received representation: " << endl;
     cout << "\t\t\t\t" << "temp: " << attributeMap["temp"][0] << endl;
@@ -62,7 +62,7 @@ void TemphumidResource::setRepresentation(AttributeMap& attributeMap)
     m_humid = std::stoi(attributeMap["humid"][0]);
 }
 
-void TemphumidResource::getRepresentation(AttributeMap& attributeMap)
+void TemphumidResource::getRepresentation(AttributeMap &attributeMap)
 {
     attributeMap["0"].push_back("temperature");
     attributeMap["1"].push_back("int");
@@ -77,7 +77,7 @@ void TemphumidResource::getRepresentation(AttributeMap& attributeMap)
 
 TemphumidResource g_myResource;
 
-void * TestSensorVal(void *param)
+void *TestSensorVal(void *param)
 {
     g_myResource.m_temp = 27;
     g_myResource.m_humid = 48;
@@ -95,7 +95,7 @@ void * TestSensorVal(void *param)
             cout << "\ntemp updated to : " << g_myResource.m_temp << endl;
             cout << "\nhumid updated to : " << g_myResource.m_humid << endl;
             cout << "Notifying observers with resource handle: " << g_myResource.getHandle()
-                    << endl;
+                 << endl;
 
             OCStackResult result = OCPlatform::notifyObservers(g_myResource.getHandle());
 
@@ -110,7 +110,7 @@ void * TestSensorVal(void *param)
 }
 
 void entityHandler(std::shared_ptr< OCResourceRequest > request,
-        std::shared_ptr< OCResourceResponse > response)
+                   std::shared_ptr< OCResourceResponse > response)
 {
     cout << "\tIn Server CPP entity handler:\n";
 
@@ -193,7 +193,7 @@ int main()
 {
     // Create PlatformConfig object
 
-	PlatformConfig cfg(COAP_SRVTYPE, COAP_MODE, COAP_IP, COAP_PORT, QualityOfService::NonConfirmable);
+    PlatformConfig cfg(COAP_SRVTYPE, COAP_MODE, COAP_IP, COAP_PORT, QualityOfService::NonConfirmable);
 
     try
     {

@@ -48,19 +48,19 @@ typedef enum
 
 class SSMTestApp: public ISSMClientListener
 {
-private:
-    SSMClient m_SSMClient;
+    private:
+        SSMClient m_SSMClient;
 
-public:
+    public:
 
-    SSMTestApp();
+        SSMTestApp();
 
-    void displayMenu();
-	void registerQuery(std::string queryString);
-    void unregisterQuery();
+        void displayMenu();
+        void registerQuery(std::string queryString);
+        void unregisterQuery();
 
-    /* operations from listener interface */
-    void onRegisterQuery(const AttributeMap& attributeMap, SSMReturn& eCode);
+        /* operations from listener interface */
+        void onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eCode);
 
 };
 

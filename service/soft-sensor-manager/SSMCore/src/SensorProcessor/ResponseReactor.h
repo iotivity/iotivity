@@ -29,116 +29,116 @@
 
 /**
  * @class    CResponseReactor
- * @brief    Class for implement of reactor pattern 
+ * @brief    Class for implement of reactor pattern
  *           Delegate requested context to context executor layer.
- *			 
  *
- * @see      
+ *
+ * @see
  */
 class CResponseReactor :
-	public CObjectRoot<CObjectMultiThreadModel>
-	, public IResponseReactor
+    public CObjectRoot<CObjectMultiThreadModel>
+    , public IResponseReactor
 {
-private:
-	CObjectPtr<IContextRepository>	m_pContextRepository;
-	CObjectPtr<IContextExecutor>	m_pContextExecutor;
+    private:
+        CObjectPtr<IContextRepository>  m_pContextRepository;
+        CObjectPtr<IContextExecutor>    m_pContextExecutor;
 
-	/**
-	* @brief requested high layer's callback data.(IEvent instance, deviceId, call type)
-	*/
-	std::map<std::string, CallbackData > m_requestedCallbackData;
+        /**
+        * @brief requested high layer's callback data.(IEvent instance, deviceId, call type)
+        */
+        std::map<std::string, CallbackData > m_requestedCallbackData;
 
-	/**
-	* @brief Context model data from lower layer(OnEvent Callback)
-	*/
-	std::map<std::string, std::vector<ContextData> > m_storedLowerContextData;
-	
-	CSimpleMutex						m_mtxRequestedContextData;
-	CSimpleMutex						m_mtxUnregisterContext;
+        /**
+        * @brief Context model data from lower layer(OnEvent Callback)
+        */
+        std::map<std::string, std::vector<ContextData> > m_storedLowerContextData;
 
-public:
+        CSimpleMutex                        m_mtxRequestedContextData;
+        CSimpleMutex                        m_mtxUnregisterContext;
 
-	SSMRESULT finalConstruct();
-	void finalRelease();
+    public:
 
-	SSMRESULT queryInterface(const OID& objectID, IBase** ppObject)
-	{
-		if(ppObject == NULL)
-			return SSM_E_POINTER;
+        SSMRESULT finalConstruct();
+        void finalRelease();
 
-		if(IsEqualOID(objectID, OID_IResponseReactor))
-		{
-			IBase *pBase = this;
-			pBase->addRef();
-			*ppObject = pBase;
-			return SSM_S_OK;
-		}
+        SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
+        {
+            if (ppObject == NULL)
+                return SSM_E_POINTER;
 
-		return SSM_E_NOINTERFACE;
-	}
+            if (IsEqualOID(objectID, OID_IResponseReactor))
+            {
+                IBase *pBase = this;
+                pBase->addRef();
+                *ppObject = pBase;
+                return SSM_S_OK;
+            }
 
-	/**
-	* @fn           registerContext
-	* @brief        Register context model request.
-	*
-	* @param		[in]  TypeofEvent callType -  Type of event. SSM_ONCE or SSM_REPEAT
-	* @param		[in]  ISSMResource *pSSMResource -  Requested context model resource.
-	* @param		[in]  IEvent *pEvent -  IEvent class for callback.
-	*
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	void registerContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
-	
-	/**
-	* @fn           unregisterContext
-	* @brief        Unregister context model request.
-	*
-	* @param		[in]  TypeofEvent callType -  Type of event. SSM_ONCE or SSM_REPEAT
-	* @param		[in]  ISSMResource *pSSMResource -  Requested context model resource.
-	* @param		[in]  IEvent *pEvent -  IEvent class for callback.
-	*
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	void  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
-	
-	/**
-	* @fn           getList
-	* @brief        Get context model list
-	*
-	* @param		[out]  std::vector<ISSMResource> *pList - ISSMResource vector of low level context models or high level context models.
-	*
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	virtual void getList(OUT std::vector<ISSMResource*> *pList);
+            return SSM_E_NOINTERFACE;
+        }
 
-	/**
-	* @fn           onEvent
-	* @brief        IEvent Interface. 
-	*				Call from executor when context model data generated.
-	*
-	* @param		[in]  std::string name - caller Resource name.
-	* @param		[in]  TypeofEvent callType -  context event type.
-	* @param		[in]  std::vector<ContextData> ctxData -  context data
-	*
-	* @return       int - function result status
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	int onEvent(IN std::string name, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
+        /**
+        * @fn           registerContext
+        * @brief        Register context model request.
+        *
+        * @param        [in]  TypeofEvent callType -  Type of event. SSM_ONCE or SSM_REPEAT
+        * @param        [in]  ISSMResource *pSSMResource -  Requested context model resource.
+        * @param        [in]  IEvent *pEvent -  IEvent class for callback.
+        *
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        void registerContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
+
+        /**
+        * @fn           unregisterContext
+        * @brief        Unregister context model request.
+        *
+        * @param        [in]  TypeofEvent callType -  Type of event. SSM_ONCE or SSM_REPEAT
+        * @param        [in]  ISSMResource *pSSMResource -  Requested context model resource.
+        * @param        [in]  IEvent *pEvent -  IEvent class for callback.
+        *
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        void  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
+
+        /**
+        * @fn           getList
+        * @brief        Get context model list
+        *
+        * @param        [out]  std::vector<ISSMResource> *pList - ISSMResource vector of low level context models or high level context models.
+        *
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        virtual void getList(OUT std::vector<ISSMResource *> *pList);
+
+        /**
+        * @fn           onEvent
+        * @brief        IEvent Interface.
+        *               Call from executor when context model data generated.
+        *
+        * @param        [in]  std::string name - caller Resource name.
+        * @param        [in]  TypeofEvent callType -  context event type.
+        * @param        [in]  std::vector<ContextData> ctxData -  context data
+        *
+        * @return       int - function result status
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        int onEvent(IN std::string name, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
 };
 
 

@@ -29,70 +29,73 @@ typedef enum {SSM_EVENT_NORMAL, SSM_EVENT_ADDED, SSM_REMOVED, SSM_UPDATED} RESOU
 typedef enum {SENSOR_LOCATION_REMOTE, SENSOR_LOCATION_LOCAL} SENSOR_LOCATION;
 class ISSMResource
 {
-public:
-	ISSMResource()
-	{
-		location = SENSOR_LOCATION_LOCAL;
-	}
-	ISSMResource(const std::string& n, const std::string& t) :
-	name(n), type(t)
-	{
-	}
-	SENSOR_LOCATION location;
-	std::string name;
-	std::string type;
-	std::string friendlyName;
-	std::string ip;
-	std::vector<std::string> inputList;
-	std::vector<std::map<std::string,std::string> > outputProperty;
+    public:
+        ISSMResource()
+        {
+            location = SENSOR_LOCATION_LOCAL;
+        }
+        ISSMResource(const std::string &n, const std::string &t) :
+            name(n), type(t)
+        {
+        }
+        SENSOR_LOCATION location;
+        std::string name;
+        std::string type;
+        std::string friendlyName;
+        std::string ip;
+        std::vector<std::string> inputList;
+        std::vector<std::map<std::string, std::string> > outputProperty;
 };
 
 class ContextData
 {
-public:
-	std::string rootName;
-	int outputPropertyCount;
-	std::vector< std::map<std::string,std::string> > outputProperty;
+    public:
+        std::string rootName;
+        int outputPropertyCount;
+        std::vector< std::map<std::string, std::string> > outputProperty;
 };
 
 struct ResourceResult
 {
-	std::string deviceID;
-	TypeofEvent callType;
-	ContextData ctxData;
+    std::string deviceID;
+    TypeofEvent callType;
+    ContextData ctxData;
 };
 
-enum CTX_EVENT_TYPE{SPF_START, SPF_UPDATE, SPF_END};
+enum CTX_EVENT_TYPE {SPF_START, SPF_UPDATE, SPF_END};
 
 class ICtxEvent
 {
-public:
-	virtual void onCtxEvent(enum CTX_EVENT_TYPE, std::vector<ContextData>) = 0 ;
-	virtual ~ICtxEvent(){};
+    public:
+        virtual void onCtxEvent(enum CTX_EVENT_TYPE, std::vector<ContextData>) = 0 ;
+        virtual ~ICtxEvent() {};
 };
 
 class IEvent
 {
-public:
-	virtual int onEvent(std::string deviceID, TypeofEvent callType, std::vector<ContextData> ctxData) = 0;
-	std::string appId;
-	virtual ~IEvent(){};
+    public:
+        virtual int onEvent(std::string deviceID, TypeofEvent callType,
+                            std::vector<ContextData> ctxData) = 0;
+        std::string appId;
+        virtual ~IEvent() {};
 };
 
 class IResourceEvent
 {
-public:
-	virtual int onResourceEvent(RESOURCE_EVENT_TYPE eventType, ISSMResource *pSSMResource, std::string info) = 0;
-	virtual ~IResourceEvent(){};
+    public:
+        virtual int onResourceEvent(RESOURCE_EVENT_TYPE eventType, ISSMResource *pSSMResource,
+                                    std::string info) = 0;
+        virtual ~IResourceEvent() {};
 };
 
 class ICtxDelegate
 {
-public:
-	virtual void registerCallback(ICtxEvent *pEvent) = 0;
-	virtual void addOutput(std::vector<ContextData>) = 0;
-	virtual void getDataFromDatabase(std::string modelName, int startIndex, int count, std::vector<ContextData> *data, int *pLastIndex) = 0;
-	virtual ~ICtxDelegate(){};
+    public:
+        virtual void registerCallback(ICtxEvent *pEvent) = 0;
+        virtual void addOutput(std::vector<ContextData>) = 0;
+        virtual void getDataFromDatabase(std::string modelName, int startIndex, int count,
+                                         std::vector<ContextData> *data, int *pLastIndex) = 0;
+        virtual ~ICtxDelegate() {};
 };
 
 #endif

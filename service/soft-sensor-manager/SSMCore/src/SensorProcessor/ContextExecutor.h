@@ -31,187 +31,191 @@
  * @class    CContextExecutor
  * @brief    Class for execute context model.
  *           Delegate requested context to lower layer.
- *			 Execute context model.
+ *           Execute context model.
  *
  * @see
  */
 class CContextExecutor :
-	public CObjectRoot<CObjectMultiThreadModel>
-	, public IContextExecutor
-	, public IResourceEvent
-	, public IThreadClient
+    public CObjectRoot<CObjectMultiThreadModel>
+    , public IContextExecutor
+    , public IResourceEvent
+    , public IThreadClient
 {
-private:
-	CObjectPtr<ITasker>				m_pTasker;
+    private:
+        CObjectPtr<ITasker>             m_pTasker;
 
-	CObjectPtr<IContextRepository>	m_pContextRepository;
+        CObjectPtr<IContextRepository>  m_pContextRepository;
 
-	CObjectPtr<IContextDataReader>	m_pContextDataReader;
+        CObjectPtr<IContextDataReader>  m_pContextDataReader;
 
-	/**
-	* @brief Sensor data from primitive sensors
-	*/
-	std::map<std::string, std::vector<ContextData> >		m_storedPrimitiveSensorData;
-	
-	/**
-	* @brief key = primitive, soft sensor / values = soft sensors that has key in the input list
-	*/
-	std::map<std::string, std::vector<std::string> >		m_relatedSoftSensor;
+        /**
+        * @brief Sensor data from primitive sensors
+        */
+        std::map<std::string, std::vector<ContextData> >        m_storedPrimitiveSensorData;
 
-	/**
-	* @brief requested high layer's callback data.(IEvent instance, deviceId, call type)
-	*/
-	std::map<std::string, CallbackData>					m_requestedContextCallback;
+        /**
+        * @brief key = primitive, soft sensor / values = soft sensors that has key in the input list
+        */
+        std::map<std::string, std::vector<std::string> >        m_relatedSoftSensor;
 
-	/**
-	* @brief registered high layer's context resource data.
-	*/
-	std::map<std::string, ISSMResource *>				m_registeredResources;
-	
-	/**
-	* @brief context model event of context model library
-	*/
-	std::map<std::string, ICtxEvent*>					m_ctxEventList;
-	
-	/**
-	* @brief context model library list
-	*/
-	std::map<std::string, void*>						m_libraryList;
-	
-	ICtxEvent											*ctxEvent;
-	//CSimpleMutex										m_mtxRequestedContextCallback;
+        /**
+        * @brief requested high layer's callback data.(IEvent instance, deviceId, call type)
+        */
+        std::map<std::string, CallbackData>                 m_requestedContextCallback;
 
-	CSimpleMutex										m_mtxLibraryIO,m_mtxUserDataIO;
+        /**
+        * @brief registered high layer's context resource data.
+        */
+        std::map<std::string, ISSMResource *>               m_registeredResources;
 
-	std::map<std::string, std::vector<CallbackData> >	m_mapResourceLookup;
+        /**
+        * @brief context model event of context model library
+        */
+        std::map<std::string, ICtxEvent *>                   m_ctxEventList;
 
-public:
+        /**
+        * @brief context model library list
+        */
+        std::map<std::string, void *>                        m_libraryList;
 
-	SSMRESULT finalConstruct();
-	void finalRelease();
+        ICtxEvent                                           *ctxEvent;
+        //CSimpleMutex                                      m_mtxRequestedContextCallback;
 
-	SSMRESULT queryInterface(const OID& objectID, IBase** ppObject)
-	{
-		if(ppObject == NULL)
-			return SSM_E_POINTER;
+        CSimpleMutex                                        m_mtxLibraryIO, m_mtxUserDataIO;
 
-		if(IsEqualOID(objectID, OID_IContextExecutor))
-		{
-			IBase *pBase = (IContextExecutor*)this;
-			pBase->addRef();
-			*ppObject = pBase;
-			return SSM_S_OK;
-		}
+        std::map<std::string, std::vector<CallbackData> >   m_mapResourceLookup;
 
-		return SSM_E_NOINTERFACE;
-	}
+    public:
 
-	/**
-	* @fn           registerCallback
-	* @brief        ICtxDelegate Interface. 
-	*				If context model call this function, then get model's instance
-	*
-	* @param		[in]  ICtxEvent *pEvent -  context model's ICtxEvent instance.
-	*
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	void registerCallback(IN ICtxEvent *pEvent);
+        SSMRESULT finalConstruct();
+        void finalRelease();
 
-	/**
-	* @fn           addOutput
-	* @brief        ICtxDelegate Interface. 
-	*				Get context model's result and delegate to upper layer.
-	*
-	* @param		[in]  std::vector<ContextData> contextData -  context model's result
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	void addOutput(IN std::vector<ContextData> contextData);
+        SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
+        {
+            if (ppObject == NULL)
+                return SSM_E_POINTER;
 
-	/**
-	* @fn           getDataFromDatabase
-	* @brief        ICtxDelegate Interface. 
-	*				Get context model's historical data
-	*
-	* @param		[in] std::string modelName - Model name that looking for
-	* @param		[in] int startIndex - Starting index of model data
-	* @param		[in] int count - Number of data to retrieve
-	* @param		[out] std::vector<ContextData> *data   -  data from database
-	* @param		[out] int *pLastIndex - Index of last data
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	void getDataFromDatabase(IN std::string modelName, IN int startIndex, IN int count, OUT std::vector<ContextData> *data, OUT int *pLastIndex);
-	
-	/**
-	* @fn           onEvent
-	* @brief        IEvent Interface. 
-	*				Call from lower layer when lower context data generated.
-	*
-	* @param		[in]  std::string deviceID -  caller device UUID.
-	* @param		[in]  TypeofEvent callType -  context event type.
-	* @param		[in]  std::vector<ContextData> ctxData -  context data
-	*
-	* @return       int - function result status
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	int onEvent(IN std::string deviceID, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
-	
-	/**
-	* @fn           registerContext
-	* @brief        Register context model request.
-	*
-	* @param		[in]  TypeofEvent callType -  Type of event. SSM_ONCE or SSM_REPEAT
-	* @param		[in]  ISSMResource *pSSMResource -  Requested context model resource.
-	* @param		[in]  IEvent *pEvent -  IEvent class for callback.
-	*
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	void registerContext(IN TypeofEvent callType, IN ISSMResource *pSSMResouce, IN IEvent *pEvent);
+            if (IsEqualOID(objectID, OID_IContextExecutor))
+            {
+                IBase *pBase = (IContextExecutor *)this;
+                pBase->addRef();
+                *ppObject = pBase;
+                return SSM_S_OK;
+            }
 
-	/**
-	* @fn           unregisterContext
-	* @brief        Unregister context model request.
-	*
-	* @param		[in]  TypeofEvent callType -  Type of event. SSM_ONCE or SSM_REPEAT
-	* @param		[in]  ISSMResource *pSSMResource -  Requested context model resource.
-	* @param		[in]  IEvent *pEvent -  IEvent class for callback.
-	*
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	void  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
+            return SSM_E_NOINTERFACE;
+        }
 
-	void onExecute(void* pArg);
-	void onTerminate(void* pArg);
-	int onResourceEvent(IN RESOURCE_EVENT_TYPE eventType, IN ISSMResource *pSSMResource, IN std::string info);
+        /**
+        * @fn           registerCallback
+        * @brief        ICtxDelegate Interface.
+        *               If context model call this function, then get model's instance
+        *
+        * @param        [in]  ICtxEvent *pEvent -  context model's ICtxEvent instance.
+        *
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        void registerCallback(IN ICtxEvent *pEvent);
 
-private:
-	SSMRESULT findString(IN std::vector<ISSMResource*> *sList, IN const std::string str, OUT ISSMResource **ppResource);
-	std::map<std::string, std::vector<ContextData> >  getPreparedContextList(IN std::string primitiveSensor);
-	void runLogic(IN std::vector<ContextData> inputData, IN std::string softSensor);
-	ContextData makeErrorContextData(IN std::string rootName, IN std::string errMsg);
-	std::string checkError(IN std::vector<ContextData> data);
+        /**
+        * @fn           addOutput
+        * @brief        ICtxDelegate Interface.
+        *               Get context model's result and delegate to upper layer.
+        *
+        * @param        [in]  std::vector<ContextData> contextData -  context model's result
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        void addOutput(IN std::vector<ContextData> contextData);
+
+        /**
+        * @fn           getDataFromDatabase
+        * @brief        ICtxDelegate Interface.
+        *               Get context model's historical data
+        *
+        * @param        [in] std::string modelName - Model name that looking for
+        * @param        [in] int startIndex - Starting index of model data
+        * @param        [in] int count - Number of data to retrieve
+        * @param        [out] std::vector<ContextData> *data   -  data from database
+        * @param        [out] int *pLastIndex - Index of last data
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        void getDataFromDatabase(IN std::string modelName, IN int startIndex, IN int count,
+                                 OUT std::vector<ContextData> *data, OUT int *pLastIndex);
+
+        /**
+        * @fn           onEvent
+        * @brief        IEvent Interface.
+        *               Call from lower layer when lower context data generated.
+        *
+        * @param        [in]  std::string deviceID -  caller device UUID.
+        * @param        [in]  TypeofEvent callType -  context event type.
+        * @param        [in]  std::vector<ContextData> ctxData -  context data
+        *
+        * @return       int - function result status
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        int onEvent(IN std::string deviceID, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
+
+        /**
+        * @fn           registerContext
+        * @brief        Register context model request.
+        *
+        * @param        [in]  TypeofEvent callType -  Type of event. SSM_ONCE or SSM_REPEAT
+        * @param        [in]  ISSMResource *pSSMResource -  Requested context model resource.
+        * @param        [in]  IEvent *pEvent -  IEvent class for callback.
+        *
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        void registerContext(IN TypeofEvent callType, IN ISSMResource *pSSMResouce, IN IEvent *pEvent);
+
+        /**
+        * @fn           unregisterContext
+        * @brief        Unregister context model request.
+        *
+        * @param        [in]  TypeofEvent callType -  Type of event. SSM_ONCE or SSM_REPEAT
+        * @param        [in]  ISSMResource *pSSMResource -  Requested context model resource.
+        * @param        [in]  IEvent *pEvent -  IEvent class for callback.
+        *
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        void  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
+
+        void onExecute(void *pArg);
+        void onTerminate(void *pArg);
+        int onResourceEvent(IN RESOURCE_EVENT_TYPE eventType, IN ISSMResource *pSSMResource,
+                            IN std::string info);
+
+    private:
+        SSMRESULT findString(IN std::vector<ISSMResource *> *sList, IN const std::string str,
+                             OUT ISSMResource **ppResource);
+        std::map<std::string, std::vector<ContextData> >  getPreparedContextList(
+            IN std::string primitiveSensor);
+        void runLogic(IN std::vector<ContextData> inputData, IN std::string softSensor);
+        ContextData makeErrorContextData(IN std::string rootName, IN std::string errMsg);
+        std::string checkError(IN std::vector<ContextData> data);
 
 };
 

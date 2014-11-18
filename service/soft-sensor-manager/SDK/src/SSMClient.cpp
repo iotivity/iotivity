@@ -25,16 +25,16 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
-const char* SSM_RESOURCE_URI = "/service/SoftSensorManager";
+const char *SSM_RESOURCE_URI = "/service/SoftSensorManager";
 
-#define SSM_RESOURCE_TYPE		= "core.SoftSensorManager"
+#define SSM_RESOURCE_TYPE       = "core.SoftSensorManager"
 
-#define COAP_IP					"134.134.161.33"
-#define COAP_PORT				5683
-#define COAP_MODE				ModeType::Client
-#define COAP_SRVTYPE			ServiceType::InProc
+#define COAP_IP                 "134.134.161.33"
+#define COAP_PORT               5683
+#define COAP_MODE               ModeType::Client
+#define COAP_SRVTYPE            ServiceType::InProc
 
-#define COAP_SERVER_ADDR		"coap://224.0.1.187/oc/core?rt=core.SoftSensorManager"
+#define COAP_SERVER_ADDR        "coap://224.0.1.187/oc/core?rt=core.SoftSensorManager"
 
 SSMClient::SSMClient()
 {
@@ -59,7 +59,7 @@ SSMClient::~SSMClient()
 void SSMClient::_findResource()
 {
     // Create PlatformConfig object
-	PlatformConfig cfg(COAP_SRVTYPE, COAP_MODE, COAP_IP, COAP_PORT, QualityOfService::NonConfirmable);
+    PlatformConfig cfg(COAP_SRVTYPE, COAP_MODE, COAP_IP, COAP_PORT, QualityOfService::NonConfirmable);
 
     // Create a OCPlatform instance.
     // Note: Platform creation is synchronous call.
@@ -70,8 +70,8 @@ void SSMClient::_findResource()
         // Find all resources
         OCStackResult result;
         if ((result = m_pPlatform->findResource("", COAP_SERVER_ADDR,
-                std::bind(&SSMClient::onFoundResource, this, std::placeholders::_1)))
-                != OC_STACK_OK)
+                                                std::bind(&SSMClient::onFoundResource, this, std::placeholders::_1)))
+            != OC_STACK_OK)
         {
             delete m_pPlatform;
             m_pPlatform = NULL;
@@ -103,8 +103,8 @@ void SSMClient::_createQueryEngine(void)
     rep.setAttributeMap(requestAttributeMap);
 
     if (m_SSMResource->put(rep, queryParamsMap,
-            std::bind(&SSMClient::onCreateQueryEngine, this, std::placeholders::_1,
-                    std::placeholders::_2)) != OC_STACK_OK)
+                           std::bind(&SSMClient::onCreateQueryEngine, this, std::placeholders::_1,
+                                     std::placeholders::_2)) != OC_STACK_OK)
     {
         return;
     }
@@ -133,14 +133,14 @@ void SSMClient::_releaseQueryEngine(std::string queryEngineId)
     rep.setAttributeMap(requestAttributeMap);
 
     m_SSMResource->put(rep, queryParamsMap,
-            std::bind(&SSMClient::onReleaseQueryEngine, this, std::placeholders::_1,
-                    std::placeholders::_2));
+                       std::bind(&SSMClient::onReleaseQueryEngine, this, std::placeholders::_1,
+                                 std::placeholders::_2));
 
     m_sem.wait();
 }
 
-SSMReturn SSMClient::registerQuery(std::string queryString, ISSMClientListener* listener,
-        std::string &cqid)
+SSMReturn SSMClient::registerQuery(std::string queryString, ISSMClientListener *listener,
+                                   std::string &cqid)
 {
     OCRepresentation rep;
 
@@ -168,8 +168,8 @@ SSMReturn SSMClient::registerQuery(std::string queryString, ISSMClientListener* 
     rep.setAttributeMap(requestAttributeMap);
 
     if (m_SSMResource->put(rep, queryParamsMap,
-            std::bind(&SSMClient::onRegisterQuery, this, std::placeholders::_1,
-                    std::placeholders::_2)) != OC_STACK_OK)
+                           std::bind(&SSMClient::onRegisterQuery, this, std::placeholders::_1,
+                                     std::placeholders::_2)) != OC_STACK_OK)
         return SSM_ERROR_NETWORK;
 
     m_sem.wait();
@@ -208,8 +208,8 @@ SSMReturn SSMClient::unregisterQuery(std::string cqid)
     rep.setAttributeMap(requestAttributeMap);
 
     if (m_SSMResource->put(rep, queryParamsMap,
-            std::bind(&SSMClient::onUnregisterQuery, this, std::placeholders::_1,
-                    std::placeholders::_2)) != OC_STACK_OK)
+                           std::bind(&SSMClient::onUnregisterQuery, this, std::placeholders::_1,
+                                     std::placeholders::_2)) != OC_STACK_OK)
         return SSM_ERROR_NETWORK;
 
     m_sem.wait();
@@ -238,7 +238,7 @@ void SSMClient::onFoundResource(std::shared_ptr< OCResource > resource)
             }
         }
     }
-    catch (std::exception& e)
+    catch (std::exception &e)
     {
         //log(e.what());
     }
@@ -246,7 +246,7 @@ void SSMClient::onFoundResource(std::shared_ptr< OCResource > resource)
     m_sem.release();
 }
 
-void SSMClient::onCreateQueryEngine(const OCRepresentation& rep, const int eCode)
+void SSMClient::onCreateQueryEngine(const OCRepresentation &rep, const int eCode)
 {
     if (eCode != 0)
     {
@@ -259,10 +259,10 @@ void SSMClient::onCreateQueryEngine(const OCRepresentation& rep, const int eCode
     m_responseAttributeMap["queryEngineId"].pop_back();
     m_retResponse = SSM_SUCCESS;
 
-    CLEANUP: m_sem.release();
+CLEANUP: m_sem.release();
 }
 
-void SSMClient::onRegisterQuery(const OCRepresentation& rep, const int eCode)
+void SSMClient::onRegisterQuery(const OCRepresentation &rep, const int eCode)
 {
     QueryParamsMap queryParamsMap;
 
@@ -281,14 +281,14 @@ void SSMClient::onRegisterQuery(const OCRepresentation& rep, const int eCode)
     }
 
     m_SSMResource->observe(ObserveType::Observe, queryParamsMap,
-            std::bind(&SSMClient::onObserve, this, std::placeholders::_1, std::placeholders::_2));
+                           std::bind(&SSMClient::onObserve, this, std::placeholders::_1, std::placeholders::_2));
 
     m_retResponse = SSM_SUCCESS;
 
-    CLEANUP: m_sem.release();
+CLEANUP: m_sem.release();
 }
 
-void SSMClient::onUnregisterQuery(const OCRepresentation& rep, const int eCode)
+void SSMClient::onUnregisterQuery(const OCRepresentation &rep, const int eCode)
 {
     if (eCode != 0)
     {
@@ -306,10 +306,10 @@ void SSMClient::onUnregisterQuery(const OCRepresentation& rep, const int eCode)
 
     m_retResponse = SSM_SUCCESS;
 
-    CLEANUP: m_sem.release();
+CLEANUP: m_sem.release();
 }
 
-void SSMClient::onReleaseQueryEngine(const OCRepresentation& rep, const int eCode)
+void SSMClient::onReleaseQueryEngine(const OCRepresentation &rep, const int eCode)
 {
     if (eCode != 0)
     {
@@ -321,10 +321,10 @@ void SSMClient::onReleaseQueryEngine(const OCRepresentation& rep, const int eCod
 
     m_retResponse = SSM_SUCCESS;
 
-    CLEANUP: m_sem.release();
+CLEANUP: m_sem.release();
 }
 
-void SSMClient::onObserve(const OCRepresentation& rep, const int& eCode)
+void SSMClient::onObserve(const OCRepresentation &rep, const int &eCode)
 {
     SSMReturn ret = SSM_SUCCESS;
 

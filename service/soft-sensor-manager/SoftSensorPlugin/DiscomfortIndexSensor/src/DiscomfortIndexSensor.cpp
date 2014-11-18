@@ -34,13 +34,13 @@ using namespace DiscomfortIndexSensorName;
 
 #define SENSOR_NAME "DiscomfortIndexSensor"
 
-char* inputName[2] =
-{ (char*)"temperature", (char*)"humidity" };
+char *inputName[2] =
+{ (char *)"temperature", (char *)"humidity" };
 
 physicalInput DiscomfortIndexSensor::s_PHYSICAL_SOFTSENSORs[PHYSICAL_EA] =
 {
-	{ (char*)"Thing_TempHumSensor", 2, (void*)&inputName },
-	{ (char*)"Thing_TempHumSensor1", 2, (void*)&inputName } 
+    { (char *)"Thing_TempHumSensor", 2, (void *) &inputName },
+    { (char *)"Thing_TempHumSensor1", 2, (void *) &inputName }
 };
 
 ICtxDelegate *g_pDelegate;
@@ -49,7 +49,7 @@ void InitializeContext(ICtxDelegate *pDelegate)
 {
     std::vector < ContextData > contextData;
 
-    DiscomfortIndexSensor* eventCls = new DiscomfortIndexSensor();
+    DiscomfortIndexSensor *eventCls = new DiscomfortIndexSensor();
     pDelegate->registerCallback(eventCls);
     g_pDelegate = pDelegate;
 
@@ -67,7 +67,7 @@ DiscomfortIndexSensor::DiscomfortIndexSensor()
 }
 
 void DiscomfortIndexSensor::onCtxEvent(enum CTX_EVENT_TYPE eventType,
-        std::vector< ContextData > contextDataList)
+                                       std::vector< ContextData > contextDataList)
 {
     switch (eventType)
     {
@@ -83,7 +83,7 @@ void DiscomfortIndexSensor::onCtxEvent(enum CTX_EVENT_TYPE eventType,
 int DiscomfortIndexSensor::runLogic(std::vector< ContextData > &contextDataList)
 {
     std::cout << "[DiscomfortIndexSensor] DiscomfortIndexSensor::" << __func__ << " is called."
-            << std::endl;
+              << std::endl;
 
     DIResult result;
 
@@ -110,7 +110,7 @@ int DiscomfortIndexSensor::runLogic(std::vector< ContextData > &contextDataList)
 /**
  * Get Input data (temperature, humidity) using resource Client of Iotivity base.
  */
-DIResult DiscomfortIndexSensor::getInput(std::vector< ContextData > &contextDataList, InValue* data)
+DIResult DiscomfortIndexSensor::getInput(std::vector< ContextData > &contextDataList, InValue *data)
 {
     int result_flag = 0;
     int contextSize = 0;
@@ -128,9 +128,9 @@ DIResult DiscomfortIndexSensor::getInput(std::vector< ContextData > &contextData
             if (contextDataList[i].rootName == s_PHYSICAL_SOFTSENSORs[k].m_thingName)
             {
                 std::vector < std::map< std::string, std::string > > lVector =
-                        contextDataList[i].outputProperty;
+                    contextDataList[i].outputProperty;
                 int requiredInputNum = s_PHYSICAL_SOFTSENSORs[k].m_inputNum;
-                char** pchar = (char**) (s_PHYSICAL_SOFTSENSORs[k].m_pInputStruct);
+                char **pchar = (char **) (s_PHYSICAL_SOFTSENSORs[k].m_pInputStruct);
                 if (requiredInputNum == 0)
                 {
                     std::cout << "No input List." << std::endl;
@@ -175,7 +175,7 @@ DIResult DiscomfortIndexSensor::getInput(std::vector< ContextData > &contextData
 /**
  * Calculation of DiscomfortIndex with TEMP&HUMI of InValue.
  */
-DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue* data)
+DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue *data)
 {
     int discomfortIndex = (int) ERROR;
     double sumDI = 0.0;
@@ -198,7 +198,7 @@ DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue* data)
         dI = F - (F - 58.0) * (double) ((100 - h) * 55) / 10000.0;
 
         std::cout << "Discomfort level : " << dI << ", Temperature :" << t << ", Humidity :" << h
-                << std::endl;
+                  << std::endl;
 
         (data + i)->m_discomfortIndex = std::to_string(0);
         m_result.m_temperature += std::to_string(t) + ", ";
@@ -212,25 +212,25 @@ DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue* data)
     {
         discomfortIndex = (int) ALL_DISCOMPORT;
         std::cout << "DI : " << discomfortIndex << " : All person discomfort. : " << sumDI
-                << std::endl;
+                  << std::endl;
     }
     else if (sumDI >= 75.0)
     {
         discomfortIndex = (int) HALF_DISCOMPORT;
         std::cout << "DI : " << discomfortIndex << " : Half of person discomfort. : " << sumDI
-                << std::endl;
+                  << std::endl;
     }
     else if (sumDI >= 68.0)
     {
         discomfortIndex = (int) LITTLE_DISCOMPORT;
         std::cout << "DI : " << discomfortIndex << " : A little person discomfort. : " << sumDI
-                << std::endl;
+                  << std::endl;
     }
     else
     {
         discomfortIndex = (int) ALL_COMPORT;
         std::cout << "DI : " << discomfortIndex << " : All person comfort. : " << sumDI
-                << std::endl;
+                  << std::endl;
     }
 
     m_result.m_discomfortIndex = std::to_string(discomfortIndex);
@@ -239,7 +239,7 @@ DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue* data)
     return SUCCESS;
 }
 
-ContextData DiscomfortIndexSensor::setOutput(int property_count, InValue* data)
+ContextData DiscomfortIndexSensor::setOutput(int property_count, InValue *data)
 {
     ContextData out;
 

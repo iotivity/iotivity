@@ -36,7 +36,7 @@ void SSMTestApp::displayMenu()
     printf("===============================================\n");
     printf("   1. Register Query \n");
     printf("   2. Unregister Query \n");
-	printf("   3. Register DiscomfortIndexSensor sample query \n");
+    printf("   3. Register DiscomfortIndexSensor sample query \n");
     printf("   9. exit \n");
     printf("===============================================\n");
     printf("   Please Enter the NO: ");
@@ -48,12 +48,12 @@ void SSMTestApp::registerQuery(std::string queryString)
     std::string qid;
     SSMReturn rtn = SSM_ERROR;
 
-	if (queryString.size() == 0)
-	{
-		printf("   Please Enter query string: ");
-		cin.ignore();
-		getline(cin, queryString);
-	}
+    if (queryString.size() == 0)
+    {
+        printf("   Please Enter query string: ");
+        cin.ignore();
+        getline(cin, queryString);
+    }
 
     rtn = m_SSMClient.registerQuery(queryString, this, qid);
 
@@ -85,7 +85,7 @@ void SSMTestApp::unregisterQuery(void)
 }
 
 /* APP. Level Callback Function for Observer of client. */
-void SSMTestApp::onRegisterQuery(const AttributeMap& attributeMap, SSMReturn& eCode)
+void SSMTestApp::onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eCode)
 {
     if (eCode == SSM_SUCCESS)
     {
@@ -104,7 +104,7 @@ void SSMTestApp::onRegisterQuery(const AttributeMap& attributeMap, SSMReturn& eC
         printf("\n");
 
         for (AttributeMap::const_iterator itor = attributeMap.begin(); itor != attributeMap.end();
-                ++itor)
+             ++itor)
         {
             if (strcmp(itor->first.c_str(), "temperature") == 0)
             {
@@ -151,7 +151,7 @@ int main()
 {
     printf("program start.\n");
     printf("searching SSMResource\n");
-    SSMTestApp* SSMApp = new SSMTestApp();
+    SSMTestApp *SSMApp = new SSMTestApp();
     APPMenu::APPMenu menu = APPMenu::NONE;
 
     while (menu != APPMenu::EXIT)
@@ -174,10 +174,10 @@ int main()
                 SSMApp->unregisterQuery();
                 break;
 
-			case APPMenu::DISCOMFORT_SAMPLE:
-				SSMApp->registerQuery("subscribe Device.DiscomfortIndexSensor "\
-					"if Device.DiscomfortIndexSensor.discomfortIndex > 0");
-				break;
+            case APPMenu::DISCOMFORT_SAMPLE:
+                SSMApp->registerQuery("subscribe Device.DiscomfortIndexSensor "\
+                                      "if Device.DiscomfortIndexSensor.discomfortIndex > 0");
+                break;
 
             case APPMenu::EXIT:
                 std::cout << "program exit." << std::endl;

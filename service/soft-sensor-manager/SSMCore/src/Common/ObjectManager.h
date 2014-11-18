@@ -33,346 +33,347 @@
 #endif
 #endif
 
-typedef struct _OID {
-	unsigned long  data1;
-	unsigned short data2;
-	unsigned short data3;
-	unsigned char  data4[8];
+typedef struct _OID
+{
+    unsigned long  data1;
+    unsigned short data2;
+    unsigned short data3;
+    unsigned char  data4[8];
 } OID;
 
 const OID OID_IBase = {0x3b465976, 0x6486, 0x4c1f, {0x84, 0xb9, 0xeb, 0x80, 0x79, 0x78, 0x2b, 0x8}};
 
 /**
-* @fn	 IsEqualOID
+* @fn    IsEqualOID
 * @brief Compare both OID
 *
 * @param [in] SSMRESULT res - return code
 *
 * @return Return positive value if both equal
-* @warning      
-* @exception    
+* @warning
+* @exception
 * @see
 */
-inline int IsEqualOID(const OID& oid1, const OID& oid2)
+inline int IsEqualOID(const OID &oid1, const OID &oid2)
 {
-	return (
-		((unsigned long *) &oid1)[0] == ((unsigned long *) &oid2)[0] &&
-		((unsigned long *) &oid1)[1] == ((unsigned long *) &oid2)[1] &&
-		((unsigned long *) &oid1)[2] == ((unsigned long *) &oid2)[2] &&
-		((unsigned long *) &oid1)[3] == ((unsigned long *) &oid2)[3]);
+    return (
+               ((unsigned long *) &oid1)[0] == ((unsigned long *) &oid2)[0] &&
+               ((unsigned long *) &oid1)[1] == ((unsigned long *) &oid2)[1] &&
+               ((unsigned long *) &oid1)[2] == ((unsigned long *) &oid2)[2] &&
+               ((unsigned long *) &oid1)[3] == ((unsigned long *) &oid2)[3]);
 }
 
 /**
 * @class    IBase
 * @brief    IBase Interface
-*			 This class represents top interface of managed Object's interface\n
-*			 If any class wants to work as managed Object, must inherit this interface.
+*            This class represents top interface of managed Object's interface\n
+*            If any class wants to work as managed Object, must inherit this interface.
 *
 * @see
 */
 class IBase
 {
-public:
-	/**
-	* @fn	  queryInterface
-	* @brief Query if requested interface support calling instance
-	*
-	* @param [in] const OID& interfaceID - Interface Id looking for
-	* @param [out] IBase** ppObject - Interface pointer holds the object
-	* 
-	* @return SSMRESULT
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	virtual SSMRESULT queryInterface(IN const OID& interfaceID, OUT IBase** ppObject) = 0;
+    public:
+        /**
+        * @fn     queryInterface
+        * @brief Query if requested interface support calling instance
+        *
+        * @param [in] const OID& interfaceID - Interface Id looking for
+        * @param [out] IBase** ppObject - Interface pointer holds the object
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        virtual SSMRESULT queryInterface(IN const OID &interfaceID, OUT IBase **ppObject) = 0;
 
-	/**
-	* @fn	  addRef
-	* @brief Add reference counter, returns current counter value
-	*
-	* @param NONE
-	* 
-	* @return unsigned long
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	virtual unsigned long addRef() = 0;
+        /**
+        * @fn     addRef
+        * @brief Add reference counter, returns current counter value
+        *
+        * @param NONE
+        *
+        * @return unsigned long
+        * @warning
+        * @exception
+        * @see
+        */
+        virtual unsigned long addRef() = 0;
 
-	/**
-	* @fn	  release
-	* @brief Release reference counter, returns current counter value and self destroyed if zero
-	*
-	* @param NONE
-	* 
-	* @return unsigned long
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	virtual unsigned long release() = 0;
-	virtual ~IBase(){};
+        /**
+        * @fn     release
+        * @brief Release reference counter, returns current counter value and self destroyed if zero
+        *
+        * @param NONE
+        *
+        * @return unsigned long
+        * @warning
+        * @exception
+        * @see
+        */
+        virtual unsigned long release() = 0;
+        virtual ~IBase() {};
 };
 
 class CObjectMultiThreadModel;
 /**
 * @class    CObjectRoot
 * @brief    CObjectRoot Interface
-*			 This class represents top class of managed Object\n
-*			 If any class wants to work as managed Object, must inherit this class.
+*            This class represents top class of managed Object\n
+*            If any class wants to work as managed Object, must inherit this class.
 *
 * @see
 */
 template <class ThreadModel = CObjectMultiThreadModel>
 class CObjectRoot
 {
-private:	
-	volatile unsigned long m_dwRef;
+    private:
+        volatile unsigned long m_dwRef;
 
-public:
-	CObjectRoot()
-	{
-		m_dwRef = 0;
-	}
+    public:
+        CObjectRoot()
+        {
+            m_dwRef = 0;
+        }
 
-	~CObjectRoot()
-	{
-	}
+        ~CObjectRoot()
+        {
+        }
 
-	/**
-	* @fn	  internalAddRef
-	* @brief Add reference counter, returns current counter value
-	*
-	* @param NONE
-	* 
-	* @return unsigned long
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	unsigned long internalAddRef()
-	{
-		return ThreadModel::increment(&m_dwRef);
-	}
+        /**
+        * @fn     internalAddRef
+        * @brief Add reference counter, returns current counter value
+        *
+        * @param NONE
+        *
+        * @return unsigned long
+        * @warning
+        * @exception
+        * @see
+        */
+        unsigned long internalAddRef()
+        {
+            return ThreadModel::increment(&m_dwRef);
+        }
 
-	/**
-	* @fn	  internalRelease
-	* @brief Release reference counter, returns current counter value
-	*
-	* @param NONE
-	* 
-	* @return unsigned long
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	unsigned long internalRelease()
-	{
-		return ThreadModel::decrement(&m_dwRef);
-	}
+        /**
+        * @fn     internalRelease
+        * @brief Release reference counter, returns current counter value
+        *
+        * @param NONE
+        *
+        * @return unsigned long
+        * @warning
+        * @exception
+        * @see
+        */
+        unsigned long internalRelease()
+        {
+            return ThreadModel::decrement(&m_dwRef);
+        }
 };
 
 /**
 * @class    CObject
 * @brief    CObject Interface
-*			 This class provides a way to declare instance of managed Object\n
-*			 If user wants to declare instance of managed Object, must use this class.
+*            This class provides a way to declare instance of managed Object\n
+*            If user wants to declare instance of managed Object, must use this class.
 *
 * @see
 */
 template <class Base>
 class CObject :
-	public Base
+    public Base
 {
-public:
-	CObject()
-	{
-	}
+    public:
+        CObject()
+        {
+        }
 
-	virtual ~CObject()
-	{
-	}
+        virtual ~CObject()
+        {
+        }
 
-	/**
-	* @fn	  addRef
-	* @brief Add reference counter, returns current counter value
-	*
-	* @param NONE
-	* 
-	* @return unsigned long
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	unsigned long addRef()
-	{
-		return this->internalAddRef();
-	}
+        /**
+        * @fn     addRef
+        * @brief Add reference counter, returns current counter value
+        *
+        * @param NONE
+        *
+        * @return unsigned long
+        * @warning
+        * @exception
+        * @see
+        */
+        unsigned long addRef()
+        {
+            return this->internalAddRef();
+        }
 
-	/**
-	* @fn	  release
-	* @brief Release reference counter, returns current counter value and self destroyed if zero
-	*
-	* @param NONE
-	* 
-	* @return unsigned long
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	unsigned long release()
-	{
-		unsigned long ref = this->internalRelease();
-		if(ref == 0)
-		{
-			this->finalRelease();
-			delete this;
-		}
-		return ref;
-	}
+        /**
+        * @fn     release
+        * @brief Release reference counter, returns current counter value and self destroyed if zero
+        *
+        * @param NONE
+        *
+        * @return unsigned long
+        * @warning
+        * @exception
+        * @see
+        */
+        unsigned long release()
+        {
+            unsigned long ref = this->internalRelease();
+            if (ref == 0)
+            {
+                this->finalRelease();
+                delete this;
+            }
+            return ref;
+        }
 
-	/**
-	* @fn createInstance
-	* @brief Create instance of current template class 
-	*
-	* @param [out] CObject<Base>** pp - reference pointer to get instance pointer
-	*
-	* @return SSMRESULT
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	static SSMRESULT createInstance(CObject<Base>** pp)
-	{
-		SSMRESULT res = SSM_E_FAIL;
+        /**
+        * @fn createInstance
+        * @brief Create instance of current template class
+        *
+        * @param [out] CObject<Base>** pp - reference pointer to get instance pointer
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        static SSMRESULT createInstance(CObject<Base> **pp)
+        {
+            SSMRESULT res = SSM_E_FAIL;
 
-		if(pp == NULL)
-		{
-			return SSM_E_POINTER;
-		}
+            if (pp == NULL)
+            {
+                return SSM_E_POINTER;
+            }
 
-		*pp = NULL;
+            *pp = NULL;
 
-		CObject<Base> *p = new CObject<Base>();
+            CObject<Base> *p = new CObject<Base>();
 
-		if(p == NULL)
-		{
-			return SSM_E_OUTOFMEMORY;
-		}
+            if (p == NULL)
+            {
+                return SSM_E_OUTOFMEMORY;
+            }
 
-		res = p->finalConstruct();
+            res = p->finalConstruct();
 
-		if(res != SSM_S_OK)
-		{
-			delete p;
-			p = NULL;
-			return res;
-		}
+            if (res != SSM_S_OK)
+            {
+                delete p;
+                p = NULL;
+                return res;
+            }
 
-		*pp = p;
+            *pp = p;
 
-		return SSM_S_OK;
-	}
+            return SSM_S_OK;
+        }
 };
 
 
 /**
 * @class    _noAddRefReleaseOnCObjectPtr
 * @brief    _noAddRefReleaseOnCObjectPtr Interface
-*			 This class used for CObject's Smart pointer mechanism. Internal use only
+*            This class used for CObject's Smart pointer mechanism. Internal use only
 *
 * @see
 */
 template <class T>
 class _noAddRefReleaseOnCObjectPtr :
-	public T
+    public T
 {
-private:
-	virtual unsigned long addRef() = 0;
-	virtual unsigned long release() = 0;
+    private:
+        virtual unsigned long addRef() = 0;
+        virtual unsigned long release() = 0;
 };
 
 /**
 * @class    CObjectPtr
 * @brief    CObjectPtr Interface
-*			 This class used for declaring CObject's interface to work as Smart Pointer
+*            This class used for declaring CObject's interface to work as Smart Pointer
 *
 * @see
 */
 template <class T>
 class CObjectPtr
 {
-private:
-	T* p;
-public:
-	CObjectPtr()
-	{
-		p = NULL;
-	}
+    private:
+        T *p;
+    public:
+        CObjectPtr()
+        {
+            p = NULL;
+        }
 
-	~CObjectPtr()
-	{
-		SAFE_RELEASE(p);
-	}
+        ~CObjectPtr()
+        {
+            SAFE_RELEASE(p);
+        }
 
-	_noAddRefReleaseOnCObjectPtr<T>* operator->() const
-	{
-		return (_noAddRefReleaseOnCObjectPtr<T>*)p;
-	}
-	
-	operator T*() const
-	{
-		return p;
-	}
+        _noAddRefReleaseOnCObjectPtr<T> *operator->() const
+        {
+            return (_noAddRefReleaseOnCObjectPtr<T> *)p;
+        }
 
-	T** operator&()
-	{
-		return &p;
-	}
-	/*
-	CObjectPtr(T* lp)
-	{
-		p = lp;
-		if(p != NULL)
-		p->AddRef();
-	}
+        operator T *() const
+        {
+            return p;
+        }
 
-	CObjectPtr(const CObjectPtr<T>& lp)
-	:CObjectPtr(lp.p)
-	{
-	}
+        T **operator&()
+        {
+            return &p;
+        }
+        /*
+        CObjectPtr(T* lp)
+        {
+            p = lp;
+            if(p != NULL)
+            p->AddRef();
+        }
 
-	T& operator*() const
-	{
-		return *p;
-	}
+        CObjectPtr(const CObjectPtr<T>& lp)
+        :CObjectPtr(lp.p)
+        {
+        }
 
-	T* operator=(T* lp)
-	{
-		return *this;
-	}
+        T& operator*() const
+        {
+            return *p;
+        }
 
-	T* operator=(CObjectPtr<T>& lp)
-	{
-		return *this;
-	}
+        T* operator=(T* lp)
+        {
+            return *this;
+        }
 
-	bool operator!() const
-	{
-		return (p == NULL);
-	}
+        T* operator=(CObjectPtr<T>& lp)
+        {
+            return *this;
+        }
 
-	bool operator<(T* pT) const
-	{
-		return !operator==(pT);
-	}
+        bool operator!() const
+        {
+            return (p == NULL);
+        }
 
-	bool operator==(T* pT) const
-	{
-		return p == pT;
-	}
-	*/
+        bool operator<(T* pT) const
+        {
+            return !operator==(pT);
+        }
+
+        bool operator==(T* pT) const
+        {
+            return p == pT;
+        }
+        */
 };
 
 /**
@@ -382,35 +383,35 @@ public:
 * @param [in] const OID& interfaceID - Interface Id looking for
 * @param [out] IBase** ppObject - reference pointer to get instance pointer
 * @return SSMRESULT
-* @warning      
-* @exception    
-* @see 
+* @warning
+* @exception
+* @see
 */
 template <class T>
-SSMRESULT CreateNewObject(IN const OID& objectID, OUT IBase** ppObject)
+SSMRESULT CreateNewObject(IN const OID &objectID, OUT IBase **ppObject)
 {
-	SSMRESULT res = SSM_E_OUTOFMEMORY;
+    SSMRESULT res = SSM_E_OUTOFMEMORY;
 
-	CObject<T> *p = new CObject<T>();
+    CObject<T> *p = new CObject<T>();
 
-	if(p == NULL)
-	{
-		goto END;
-	}
+    if (p == NULL)
+    {
+        goto END;
+    }
 
-	res = p->finalConstruct();
+    res = p->finalConstruct();
 
-	if(res != SSM_S_OK)
-	{
-		delete p;
-		p = NULL;
-		goto END;
-	}
+    if (res != SSM_S_OK)
+    {
+        delete p;
+        p = NULL;
+        goto END;
+    }
 
-	res = p->queryInterface(objectID, ppObject);
+    res = p->queryInterface(objectID, ppObject);
 
 END:
-	return res;
+    return res;
 }
 
 #endif

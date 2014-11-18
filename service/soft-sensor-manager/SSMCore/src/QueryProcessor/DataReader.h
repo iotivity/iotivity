@@ -27,80 +27,80 @@
 /**
 * @class    CDataReader
 * @brief    CDataReader Interface
-*			 This class represents context model data package's reader
+*            This class represents context model data package's reader
 *
 * @see
 */
 class CDataReader : public IDataReader
 {
-private:
-	std::map<std::string, std::vector<CModelData*> >	m_modelDataList;
+    private:
+        std::map<std::string, std::vector<CModelData *> >    m_modelDataList;
 
-public:
-	CDataReader();
+    public:
+        CDataReader();
 
-	~CDataReader();
+        ~CDataReader();
 
-	/**
-	* @fn	  addModelData
-	* @brief Add affected model data. This method is only for constructing data.
-	*
-	* @param [in] std::string modelName - affected model name to add
-	* @param [in] std::vector<CModelData*> *pModelData - affected model data list to add
-	* 
-	* @return SSMRESULT
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	SSMRESULT addModelData(IN std::string modelName, IN std::vector<CModelData*> *pModelData);
+        /**
+        * @fn     addModelData
+        * @brief Add affected model data. This method is only for constructing data.
+        *
+        * @param [in] std::string modelName - affected model name to add
+        * @param [in] std::vector<CModelData*> *pModelData - affected model data list to add
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT addModelData(IN std::string modelName, IN std::vector<CModelData *> *pModelData);
 
-	/**
-	* @fn	  getAffectedModels
-	* @brief Get affected ContextModels. The CQL can specify multiple ContextModels for retrieving data.
-	*
-	* @param [out] std::vector<std::string> *pAffectedModels - affected ContextModel list
-	* 
-	* @return SSMRESULT
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	SSMRESULT getAffectedModels(OUT std::vector<std::string> *pAffectedModels);
+        /**
+        * @fn     getAffectedModels
+        * @brief Get affected ContextModels. The CQL can specify multiple ContextModels for retrieving data.
+        *
+        * @param [out] std::vector<std::string> *pAffectedModels - affected ContextModel list
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getAffectedModels(OUT std::vector<std::string> *pAffectedModels);
 
-	/**
-	* @fn	  getModelDataCount
-	* @brief Get affected data count. There are multiple data can exist from given condition.
-	*
-	* @param [in] std::string modelName - affected ContextModel name
-	*
-	* @param [out] int *pDataCount - affected dataId count
-	* 
-	* @return SSMRESULT
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	SSMRESULT getModelDataCount(IN std::string modelName, OUT int *pDataCount);
+        /**
+        * @fn     getModelDataCount
+        * @brief Get affected data count. There are multiple data can exist from given condition.
+        *
+        * @param [in] std::string modelName - affected ContextModel name
+        *
+        * @param [out] int *pDataCount - affected dataId count
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getModelDataCount(IN std::string modelName, OUT int *pDataCount);
 
-	/**
-	* @fn	  getModelData
-	* @brief Get actual Context Model data
-	*
-	* @param [in] std::string modelName - affected ContextModel name
-	*				
-	*
-	* @param [in] int dataIndex - affected dataId index
-	*				
-	* 
-	* @param [out] IModelData **ppModelData - affected ContextModel data reader
-	*
-	* @return SSMRESULT
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	SSMRESULT getModelData(IN std::string modelName, IN int dataIndex, OUT IModelData **ppModelData);
+        /**
+        * @fn     getModelData
+        * @brief Get actual Context Model data
+        *
+        * @param [in] std::string modelName - affected ContextModel name
+        *
+        *
+        * @param [in] int dataIndex - affected dataId index
+        *
+        *
+        * @param [out] IModelData **ppModelData - affected ContextModel data reader
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getModelData(IN std::string modelName, IN int dataIndex, OUT IModelData **ppModelData);
 };
 
 #endif

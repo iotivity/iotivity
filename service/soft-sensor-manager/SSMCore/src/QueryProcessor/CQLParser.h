@@ -30,33 +30,33 @@
 #define INDEX_ALL 9999
 #define INDEX_THIS -2
 
-enum SORT {Command, Context, Property, And_or,Condi, Value};
+enum SORT {Command, Context, Property, And_or, Condi, Value};
 
 class Token
 {
-public:
-	Token();
+    public:
+        Token();
 
-	enum SORT type;
-	enum ModelCondition::Predicate condition;
-	std::string name;
-	int number;
-	std::vector<Token> child_token;
-	ModelProperty model_property;
+        enum SORT type;
+        enum ModelCondition::Predicate condition;
+        std::string name;
+        int number;
+        std::vector<Token> child_token;
+        ModelProperty model_property;
 };
 
 /**
 * @class    CCQLParser
 * @brief    CQLParser Interface
-*			 This class parses ContextQuery Language.
+*            This class parses ContextQuery Language.
 *
-* @see      
-*			string contextQuery;
-*			CQLParser tokenizer;
-*			tokenizer.Parser(contextQuery, &token);
+* @see
+*           string contextQuery;
+*           CQLParser tokenizer;
+*           tokenizer.Parser(contextQuery, &token);
 *
 * Copyright 2013 by Samsung Electronics, Inc.,
-* 
+*
 * This software is the confidential and proprietary information
 * of Samsung Electronics, Inc. ("Confidential Information").  You
 * shall not disclose such Confidential Information and shall use
@@ -66,122 +66,124 @@ public:
 class CCQLParser
 {
 
-public:
-	/**
-	* @fn parse
-	* @brief parse ContextQuery
-	*
-	* @param [in] std::string input - Entered ContetxQuery
-	* @param [out] Token* root - parsed result
-	* @return none
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	void parse(IN std::string input, OUT Token* root);
+    public:
+        /**
+        * @fn parse
+        * @brief parse ContextQuery
+        *
+        * @param [in] std::string input - Entered ContetxQuery
+        * @param [out] Token* root - parsed result
+        * @return none
+        * @warning
+        * @exception
+        * @see
+        */
+        void parse(IN std::string input, OUT Token *root);
 
-	/**
-	* @fn tolower
-	* @brief convert lowercase
-	* 
-	* @param [in] std::string str - Entered string
-	* @return std::string
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	static std::string tolower(IN std::string str);
+        /**
+        * @fn tolower
+        * @brief convert lowercase
+        *
+        * @param [in] std::string str - Entered string
+        * @return std::string
+        * @warning
+        * @exception
+        * @see
+        */
+        static std::string tolower(IN std::string str);
 
-	/**
-	* @fn check_Query_grammer
-	* @brief check grammer
-	* 
-	* @param [in] Token* token - parsed token
-	* @return boolean
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	bool check_grammer(IN Token* token);
+        /**
+        * @fn check_Query_grammer
+        * @brief check grammer
+        *
+        * @param [in] Token* token - parsed token
+        * @return boolean
+        * @warning
+        * @exception
+        * @see
+        */
+        bool check_grammer(IN Token *token);
 
-private:
-	/**
-	* @fn tokenize
-	* @brief split sentence
-	*
-	* @param [in] const std::string& input - Entered ContetxQuery
-	* @return std::vector<std::string>
-	* @warning
-	* @exception
-	* @see
-	*/
-	std::vector<std::string> tokenize(IN const std::string& input);
+    private:
+        /**
+        * @fn tokenize
+        * @brief split sentence
+        *
+        * @param [in] const std::string& input - Entered ContetxQuery
+        * @return std::vector<std::string>
+        * @warning
+        * @exception
+        * @see
+        */
+        std::vector<std::string> tokenize(IN const std::string &input);
 
-	/**
-	* @fn getTokens
-	* @brief this function divides string into tokens based on a delimiter
-	* 
-	* @param [in] const std::string& str - entered string
-	* @param [in] const std::string& delimiters = " " - token delimiter , default = " "
-	* @return std::vector<std::string>
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	static std::vector<std::string> getTokens(IN const std::string& str,IN const std::string& delimiters = " ");
+        /**
+        * @fn getTokens
+        * @brief this function divides string into tokens based on a delimiter
+        *
+        * @param [in] const std::string& str - entered string
+        * @param [in] const std::string& delimiters = " " - token delimiter , default = " "
+        * @return std::vector<std::string>
+        * @warning
+        * @exception
+        * @see
+        */
+        static std::vector<std::string> getTokens(IN const std::string &str,
+                IN const std::string &delimiters = " ");
 
-	/**
-	* @fn check_index
-	* @brief this function checks the index.
-	* 
-	* @param [in] const std::string input - entered string
-	* @param [out] Token* token - if index exists, The index has been entered into the token.
-	* @return none
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	void check_index(IN std::string input, OUT Token* token);
+        /**
+        * @fn check_index
+        * @brief this function checks the index.
+        *
+        * @param [in] const std::string input - entered string
+        * @param [out] Token* token - if index exists, The index has been entered into the token.
+        * @return none
+        * @warning
+        * @exception
+        * @see
+        */
+        void check_index(IN std::string input, OUT Token *token);
 
-	/**
-	* @fn split
-	* @brief this function splits the token to the smaller elements.
-	* 
-	* @param [in] std::string input - entered string
-	* @param [in] Token* root - root token
-	* @param [in] bool flag - flag to distinguish token
-	* @param [in] std::string arg1 - next token, default = ""
-	* @param [in] std::string arg2 - next two token, default = ""
-	* @return none
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	void split(IN std::string input, IN Token* root, IN bool flag,IN std::string arg1="",IN std::string arg2="");
+        /**
+        * @fn split
+        * @brief this function splits the token to the smaller elements.
+        *
+        * @param [in] std::string input - entered string
+        * @param [in] Token* root - root token
+        * @param [in] bool flag - flag to distinguish token
+        * @param [in] std::string arg1 - next token, default = ""
+        * @param [in] std::string arg2 - next two token, default = ""
+        * @return none
+        * @warning
+        * @exception
+        * @see
+        */
+        void split(IN std::string input, IN Token *root, IN bool flag, IN std::string arg1 = "",
+                   IN std::string arg2 = "");
 
-	/**
-	* @fn check_number
-	* @brief this function distinguishes string type
-	* 
-	* @param [in] std::string & str - entered string
-	* @return int
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	int check_number(IN std::string & str);
+        /**
+        * @fn check_number
+        * @brief this function distinguishes string type
+        *
+        * @param [in] std::string & str - entered string
+        * @return int
+        * @warning
+        * @exception
+        * @see
+        */
+        int check_number(IN std::string &str);
 
-	/**
-	* @fn check_Predicate
-	* @brief this function checks predicate
-	* 
-	* @param [in] std::string input - entered string
-	* @return std::string
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	std::string check_Predicate(IN std::string input);
+        /**
+        * @fn check_Predicate
+        * @brief this function checks predicate
+        *
+        * @param [in] std::string input - entered string
+        * @return std::string
+        * @warning
+        * @exception
+        * @see
+        */
+        std::string check_Predicate(IN std::string input);
 };
 
 #endif /*_CQLParser_H_*/

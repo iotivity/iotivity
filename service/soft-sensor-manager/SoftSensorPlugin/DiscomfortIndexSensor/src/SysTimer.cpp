@@ -29,28 +29,28 @@
 #include <stdint.h>
 std::string SysTimer::MilliSecondAsString()
 {
-	std::stringstream ss;
-	struct timeval tv;
+    std::stringstream ss;
+    struct timeval tv;
 
-	gettimeofday(&tv, NULL);
-	long long val = tv.tv_sec * (long long) 1000 + tv.tv_usec / 1000;
+    gettimeofday(&tv, NULL);
+    long long val = tv.tv_sec * (long long) 1000 + tv.tv_usec / 1000;
 
-	ss << val;
-	std::string strTime = ss.str();
+    ss << val;
+    std::string strTime = ss.str();
 
-	return strTime;
+    return strTime;
 }
 
 std::string SysTimer::UTCSecondAsString()
 {
-	std::stringstream ss;
-	struct timeval tv;
+    std::stringstream ss;
+    struct timeval tv;
 
-	gettimeofday(&tv, NULL);
-	unsigned long val = tv.tv_sec;
+    gettimeofday(&tv, NULL);
+    unsigned long val = tv.tv_sec;
 
-	ss << val;
-	std::string strTime = ss.str();
+    ss << val;
+    std::string strTime = ss.str();
 
-	return strTime;
+    return strTime;
 }

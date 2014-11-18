@@ -21,41 +21,43 @@
 
 SSMRESULT CConditionedQueryResult::finalConstruct()
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	res = SSM_S_OK;
-	//CLEANUP:
-	return res;
+    res = SSM_S_OK;
+    //CLEANUP:
+    return res;
 }
 
 void CConditionedQueryResult::finalRelease()
 {
-	for(std::vector<IConditionedModel*>::iterator itor = m_conditionedModels.begin();
-		itor != m_conditionedModels.end(); ++itor)
-	{
-		SAFE_RELEASE((*itor));
-	}
+    for (std::vector<IConditionedModel *>::iterator itor = m_conditionedModels.begin();
+         itor != m_conditionedModels.end(); ++itor)
+    {
+        SAFE_RELEASE((*itor));
+    }
 }
 
 SSMRESULT CConditionedQueryResult::addConditionedModel(IN IConditionedModel *pConditionedModel)
 {
-	pConditionedModel->addRef();
-	m_conditionedModels.push_back(pConditionedModel);
+    pConditionedModel->addRef();
+    m_conditionedModels.push_back(pConditionedModel);
 
-	return SSM_S_OK;
+    return SSM_S_OK;
 }
 
 unsigned int CConditionedQueryResult::getConditionedModelCount()
 {
-	return m_conditionedModels.size();
+    return m_conditionedModels.size();
 }
 
-SSMRESULT CConditionedQueryResult::getConditionedContextModel(IN unsigned int conditionedModelIndex, OUT IConditionedModel **ppConditionedModel)
+SSMRESULT CConditionedQueryResult::getConditionedContextModel(IN unsigned int conditionedModelIndex,
+        OUT IConditionedModel **ppConditionedModel)
 {
-	if(conditionedModelIndex > m_conditionedModels.size() - 1)
-	{
-		return SSM_E_FAIL;
-	}
+    if (conditionedModelIndex > m_conditionedModels.size() - 1)
+    {
+        return SSM_E_FAIL;
+    }
 
-	return m_conditionedModels[conditionedModelIndex]->queryInterface(OID_IConditionedModel, (IBase**)ppConditionedModel);
+    return m_conditionedModels[conditionedModelIndex]->queryInterface(OID_IConditionedModel,
+            (IBase **)ppConditionedModel);
 }

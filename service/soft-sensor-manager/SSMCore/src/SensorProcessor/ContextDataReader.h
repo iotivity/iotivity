@@ -27,66 +27,67 @@
 /**
 * @class    CContextDataReader
 * @brief    CContextDataReader Interface
-*			 This class represents ContextData reader
+*            This class represents ContextData reader
 *
 * @see
 */
-class CContextDataReader : 
-	public CObjectRoot<CObjectMultiThreadModel>
-	, public IContextDataReader
+class CContextDataReader :
+    public CObjectRoot<CObjectMultiThreadModel>
+    , public IContextDataReader
 {
-private:
-	IContextModelAccessor		*m_pContextModelAccessor;
+    private:
+        IContextModelAccessor       *m_pContextModelAccessor;
 
-public:
-	SSMRESULT finalConstruct();
+    public:
+        SSMRESULT finalConstruct();
 
-	void finalRelease();
+        void finalRelease();
 
-	SSMRESULT queryInterface(const OID& objectID, IBase** ppObject)
-	{
-		if(ppObject == NULL)
-			return SSM_E_POINTER;
-		
-		if(IsEqualOID(objectID, OID_IContextDataReader))
-		{
-			IBase *pBase = this;
-			pBase->addRef();
-			*ppObject = pBase;
-			return SSM_S_OK;
-		}
+        SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
+        {
+            if (ppObject == NULL)
+                return SSM_E_POINTER;
 
-		return SSM_E_NOINTERFACE;
-	}
+            if (IsEqualOID(objectID, OID_IContextDataReader))
+            {
+                IBase *pBase = this;
+                pBase->addRef();
+                *ppObject = pBase;
+                return SSM_S_OK;
+            }
 
-	/**
-	* @fn	  registerContextModelAccessor
-	* @brief Called when ContextModelAccessor wants to query installed ContextModel
-	*
-	* @param [in] IContextModelAccessor *pContextModelAccessor - Instance of implemented IContextModelAccessor interface
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT registerContextModelAccessor(IN IContextModelAccessor *pContextModelAccessor);
+            return SSM_E_NOINTERFACE;
+        }
 
-	/**
-	* @fn	  getContextData
-	* @brief Retrieve ContextData using given ContextModel name and dataId
-	*
-	* @param [in] std::string modelName - ContextModel name
-	* @param [in] int startIndex - Starting index of model data
-	* @param [in] int count - Number of data to retrieve
-	* @param [out] std::vector<ContextData> *data - ContextData set
-	* @param [out] int *pLastIndex - Index of last data
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT getContextData(IN std::string modelName, IN int startIndex, IN int count, OUT std::vector<ContextData> *data, OUT int *pLastIndex);
+        /**
+        * @fn     registerContextModelAccessor
+        * @brief Called when ContextModelAccessor wants to query installed ContextModel
+        *
+        * @param [in] IContextModelAccessor *pContextModelAccessor - Instance of implemented IContextModelAccessor interface
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT registerContextModelAccessor(IN IContextModelAccessor *pContextModelAccessor);
+
+        /**
+        * @fn     getContextData
+        * @brief Retrieve ContextData using given ContextModel name and dataId
+        *
+        * @param [in] std::string modelName - ContextModel name
+        * @param [in] int startIndex - Starting index of model data
+        * @param [in] int count - Number of data to retrieve
+        * @param [out] std::vector<ContextData> *data - ContextData set
+        * @param [out] int *pLastIndex - Index of last data
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getContextData(IN std::string modelName, IN int startIndex, IN int count,
+                                 OUT std::vector<ContextData> *data, OUT int *pLastIndex);
 };
 #endif

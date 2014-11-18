@@ -32,116 +32,120 @@
  * @brief    Class for context manifest
  *           parse, get, set context manifest. provide device information
  *
- * @see      
+ * @see
  */
 
 class CContextRepository :
-	public CObjectRoot<CObjectMultiThreadModel>
-	, public IContextRepository
-	, public IResourceFinderEvent
+    public CObjectRoot<CObjectMultiThreadModel>
+    , public IContextRepository
+    , public IResourceFinderEvent
 {
-private:
-   CSimpleMutex					m_mtxFileIO;
-   std::vector<ISSMResource*>	m_lstSensor;
-   CObjectPtr<IResourceFinder>	m_resourceFinder;
-   std::string					m_name;
-   std::string					m_type;
-   std::vector<IResourceEvent*>	m_resourceEvents;
-   std::string					m_pathSoftSensors;
-   std::string					m_pathSoftSensorsDescription;
+    private:
+        CSimpleMutex                 m_mtxFileIO;
+        std::vector<ISSMResource *>   m_lstSensor;
+        CObjectPtr<IResourceFinder>  m_resourceFinder;
+        std::string                  m_name;
+        std::string                  m_type;
+        std::vector<IResourceEvent *> m_resourceEvents;
+        std::string                  m_pathSoftSensors;
+        std::string                  m_pathSoftSensorsDescription;
 
-public:
-	SSMRESULT finalConstruct();
-	void finalRelease();
+    public:
+        SSMRESULT finalConstruct();
+        void finalRelease();
 
-	SSMRESULT queryInterface(const OID& objectID, IBase** ppObject)
-	{
-		if(ppObject == NULL)
-			return SSM_E_POINTER;
+        SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
+        {
+            if (ppObject == NULL)
+                return SSM_E_POINTER;
 
-		if(IsEqualOID(objectID, OID_IContextRepository))
-		{
-			IBase *pBase = this;
-			pBase->addRef();
-			*ppObject = pBase;
-			return SSM_S_OK;
-		}
+            if (IsEqualOID(objectID, OID_IContextRepository))
+            {
+                IBase *pBase = this;
+                pBase->addRef();
+                *ppObject = pBase;
+                return SSM_S_OK;
+            }
 
-		return SSM_E_NOINTERFACE;
-	}
+            return SSM_E_NOINTERFACE;
+        }
 
 
-	/**
-	* @fn           setCurrentDeviceInfo
-	* @brief        set device information
-	*
-	* @param        [in] std::string name - Device name
-	* @param        [in] std::string type - Device Type
-	* @param        [in] std::string pathSoftSensors - SoftSensors Repository path
-	* @param        [in] std::string pathDescription - SoftSensors Description path
-	* @return       void
-	*
-	* @warning      
-	* @exception    
-	* @see          
-	*/
-	void setCurrentDeviceInfo(IN std::string name, IN std::string type, IN std::string pathSoftSensors, IN std::string pathDescription);
-	
-	/**
-	* @fn           getSoftSensorList
-	* @brief        Get soft sensor list
-	*
-	* @param		[out] std::vector<ISSMResource*> *pSoftSensorList - List of soft sensors
-	* @return       SSMRESULT
-	*					SSM_S_OK
-	*					, SSM_S_FALSE
-	*					, SSM_E_POINTER
-	*					, SSM_E_OUTOFMEMORY
-	*					, SSM_E_FAIL
-	*					, SSM_E_NOINTERFACE
-	*					, SSM_E_NOTIMPL
-	*
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT getSoftSensorList(OUT std::vector<ISSMResource*> *pSoftSensorList);
+        /**
+        * @fn           setCurrentDeviceInfo
+        * @brief        set device information
+        *
+        * @param        [in] std::string name - Device name
+        * @param        [in] std::string type - Device Type
+        * @param        [in] std::string pathSoftSensors - SoftSensors Repository path
+        * @param        [in] std::string pathDescription - SoftSensors Description path
+        * @return       void
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        void setCurrentDeviceInfo(IN std::string name, IN std::string type, IN std::string pathSoftSensors,
+                                  IN std::string pathDescription);
 
-	/**
-	* @fn           getPrimitiveSensorList
-	* @brief        Get primitive sensor list
-	*
-	* @param		[out] std::vector<ISSMResource*> *pPrimitiveSensorList - List of primitive sensors
-	* @return       SSMRESULT
-	*					SSM_S_OK
-	*					, SSM_S_FALSE
-	*					, SSM_E_POINTER
-	*					, SSM_E_OUTOFMEMORY
-	*					, SSM_E_FAIL
-	*					, SSM_E_NOINTERFACE
-	*					, SSM_E_NOTIMPL
-	*
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT getPrimitiveSensorList(OUT std::vector<ISSMResource*> *pPrimitiveSensorList);
-	
-	SSMRESULT registerResourceFinderEvent(IN IResourceEvent *pResourceEvent);
-	SSMRESULT startResourceFinder();
-	SSMRESULT onResourceFound(IN ISSMResource *pSensor);
-	SSMRESULT onResourceLost(IN ISSMResource *pSensor);
+        /**
+        * @fn           getSoftSensorList
+        * @brief        Get soft sensor list
+        *
+        * @param        [out] std::vector<ISSMResource*> *pSoftSensorList - List of soft sensors
+        * @return       SSMRESULT
+        *                   SSM_S_OK
+        *                   , SSM_S_FALSE
+        *                   , SSM_E_POINTER
+        *                   , SSM_E_OUTOFMEMORY
+        *                   , SSM_E_FAIL
+        *                   , SSM_E_NOINTERFACE
+        *                   , SSM_E_NOTIMPL
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getSoftSensorList(OUT std::vector<ISSMResource *> *pSoftSensorList);
 
-	SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent);
-	SSMRESULT stopObserveResource(IN ISSMResource *pSensor);
+        /**
+        * @fn           getPrimitiveSensorList
+        * @brief        Get primitive sensor list
+        *
+        * @param        [out] std::vector<ISSMResource*> *pPrimitiveSensorList - List of primitive sensors
+        * @return       SSMRESULT
+        *                   SSM_S_OK
+        *                   , SSM_S_FALSE
+        *                   , SSM_E_POINTER
+        *                   , SSM_E_OUTOFMEMORY
+        *                   , SSM_E_FAIL
+        *                   , SSM_E_NOINTERFACE
+        *                   , SSM_E_NOTIMPL
+        *
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getPrimitiveSensorList(OUT std::vector<ISSMResource *> *pPrimitiveSensorList);
 
-	SSMRESULT loadSoftSensor(IN std::string softSensorName, IN ICtxDelegate *pDelegate, OUT void **hSoftSensor);
-	SSMRESULT unloadSoftSensor(IN void *hSoftSensor);
+        SSMRESULT registerResourceFinderEvent(IN IResourceEvent *pResourceEvent);
+        SSMRESULT startResourceFinder();
+        SSMRESULT onResourceFound(IN ISSMResource *pSensor);
+        SSMRESULT onResourceLost(IN ISSMResource *pSensor);
 
-private:
-	SSMRESULT makeSSMResourceListForDictionaryData(IN std::vector<DictionaryData> dataList, OUT std::vector<ISSMResource*> *pList) ;
-	SSMRESULT loadXMLFromFile(IN std::string descriptionFilePath, IN std::vector<DictionaryData> *dataList);
-	SSMRESULT loadXMLFromString(IN char *xmlData, IN std::vector<DictionaryData> *dataList);
-	SSMRESULT GetCurrentPath(OUT std::string *path);
+        SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent);
+        SSMRESULT stopObserveResource(IN ISSMResource *pSensor);
+
+        SSMRESULT loadSoftSensor(IN std::string softSensorName, IN ICtxDelegate *pDelegate,
+                                 OUT void **hSoftSensor);
+        SSMRESULT unloadSoftSensor(IN void *hSoftSensor);
+
+    private:
+        SSMRESULT makeSSMResourceListForDictionaryData(IN std::vector<DictionaryData> dataList,
+                OUT std::vector<ISSMResource *> *pList) ;
+        SSMRESULT loadXMLFromFile(IN std::string descriptionFilePath,
+                                  IN std::vector<DictionaryData> *dataList);
+        SSMRESULT loadXMLFromString(IN char *xmlData, IN std::vector<DictionaryData> *dataList);
+        SSMRESULT GetCurrentPath(OUT std::string *path);
 };
 #endif

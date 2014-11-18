@@ -21,7 +21,7 @@
 // Do not remove the include below
 #include "Arduino.h"
 
-#define dht11_pin 12 
+#define dht11_pin 12
 
 #include "logger.h"
 #include "ocstack.h"
@@ -49,7 +49,8 @@ PROGMEM const char TAG[] = "ArduinoServer";
 
 int g_THUnderObservation = 0;
 void createTHResource();
-typedef struct THRESOURCE {
+typedef struct THRESOURCE
+{
     OCResourceHandle m_handle;
     int m_temp;
     int m_humid;
@@ -57,25 +58,27 @@ typedef struct THRESOURCE {
 
 static THResource TH;
 
-String g_responsePayloadPut = "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
-String g_responsePayloadGet = "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
+String g_responsePayloadPut =
+    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
+String g_responsePayloadGet =
+    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
 
 /// This is the port which Arduino Server will use for all unicast communication with it's peers
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
 byte read_dht11_dat()
 {
-  byte i = 0;
-  byte result=0;
-  for(i=0; i< 8; i++)
-  {
-    while (!digitalRead(dht11_pin));
-    delayMicroseconds(30);
-    if (digitalRead(dht11_pin) != 0 )
-      bitSet(result, 7-i);
-    while (digitalRead(dht11_pin));
-  }
-  return result;
+    byte i = 0;
+    byte result = 0;
+    for (i = 0; i < 8; i++)
+    {
+        while (!digitalRead(dht11_pin));
+        delayMicroseconds(30);
+        if (digitalRead(dht11_pin) != 0 )
+            bitSet(result, 7 - i);
+        while (digitalRead(dht11_pin));
+    }
+    return result;
 }
 
 #ifdef ARDUINOWIFI
@@ -104,7 +107,7 @@ int ConnectToNetwork()
     // Verify that WiFi Shield is running the firmware with all UDP fixes
     fwVersion = WiFi.firmwareVersion();
     OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
-    if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) !=0 )
+    if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) != 0 )
     {
         OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
         return -1;
@@ -114,7 +117,7 @@ int ConnectToNetwork()
     while (status != WL_CONNECTED)
     {
         OC_LOG_V(INFO, TAG, "Attempting to connect to SSID: %s", ssid);
-        status = WiFi.begin(ssid,pass);
+        status = WiFi.begin(ssid, pass);
 
         // wait 10 seconds for connection:
         delay(10000);
@@ -131,7 +134,7 @@ int ConnectToNetwork()
 {
     // Note: ****Update the MAC address here with your shield's MAC address****
     uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0E, 0xB8, 0xAC};
-   
+
     uint8_t error = Ethernet.begin(ETHERNET_MAC);
     if (error  == 0)
     {
@@ -163,57 +166,64 @@ void PrintArduinoMemoryStats()
 
 // This is the entity handler for the registered resource.
 // This is invoked by OCStack whenever it recevies a request for this resource.
-OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest ) 
+OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
+                                        OCEntityHandlerRequest *entityHandlerRequest )
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
-    const char* typeOfMessage;
+    const char *typeOfMessage;
 
-    switch (flag) {
-    case OC_INIT_FLAG:
-        typeOfMessage = "OC_INIT_FLAG";
-        break;
-    case OC_REQUEST_FLAG:
-        typeOfMessage = "OC_REQUEST_FLAG";
-        break;
-    case OC_OBSERVE_FLAG:
-        typeOfMessage = "OC_OBSERVE_FLAG";
-        break;
-    default:
-        typeOfMessage = "UNKNOWN";
+    switch (flag)
+    {
+        case OC_INIT_FLAG:
+            typeOfMessage = "OC_INIT_FLAG";
+            break;
+        case OC_REQUEST_FLAG:
+            typeOfMessage = "OC_REQUEST_FLAG";
+            break;
+        case OC_OBSERVE_FLAG:
+            typeOfMessage = "OC_OBSERVE_FLAG";
+            break;
+        default:
+            typeOfMessage = "UNKNOWN";
     }
     OC_LOG_V(INFO, TAG, "Receiving message type: %s", typeOfMessage);
 
-    if(entityHandlerRequest && flag == OC_REQUEST_FLAG) 
-    { 
-        if(OC_REST_GET == entityHandlerRequest->method) 
+    if (entityHandlerRequest && flag == OC_REQUEST_FLAG)
+    {
+        if (OC_REST_GET == entityHandlerRequest->method)
         {
             int str_len = g_responsePayloadGet.length() + 1;
-            char charBuf[str_len+1];
+            char charBuf[str_len + 1];
 
             g_responsePayloadGet.toCharArray(charBuf, str_len);
 
-            if(strlen(charBuf) < entityHandlerRequest->resJSONPayloadLen)
+            if (strlen(charBuf) < entityHandlerRequest->resJSONPayloadLen)
             {
-            strncpy((char *)entityHandlerRequest->resJSONPayload, charBuf, entityHandlerRequest->resJSONPayloadLen);
+                strncpy((char *)entityHandlerRequest->resJSONPayload, charBuf,
+                        entityHandlerRequest->resJSONPayloadLen);
             }
             else
                 ehRet = OC_EH_ERROR;
         }
-        if(OC_REST_PUT == entityHandlerRequest->method) {
+        if (OC_REST_PUT == entityHandlerRequest->method)
+        {
 
             int str_len1 = g_responsePayloadPut.length() + 1;
             char charBuf1[str_len1];
 
             g_responsePayloadPut.toCharArray(charBuf1, str_len1);
 
-             if(strlen(charBuf1) < entityHandlerRequest->resJSONPayloadLen)
+            if (strlen(charBuf1) < entityHandlerRequest->resJSONPayloadLen)
             {
-            strncpy((char *)entityHandlerRequest->resJSONPayload, charBuf1, entityHandlerRequest->resJSONPayloadLen);
+                strncpy((char *)entityHandlerRequest->resJSONPayload, charBuf1,
+                        entityHandlerRequest->resJSONPayloadLen);
             }
-             else
-               ehRet = OC_EH_ERROR;
+            else
+                ehRet = OC_EH_ERROR;
         }
-    } else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG) {
+    }
+    else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG)
+    {
         g_THUnderObservation = 1;
     }
 
@@ -221,15 +231,16 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
 }
 
 /* Json Generator */
-String JsonGenerator(THResource TH){
-   String a = "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"";
-   String b = "\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"";
-   String c = "\"}}";
+String JsonGenerator(THResource TH)
+{
+    String a = "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"";
+    String b = "\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"";
+    String c = "\"}}";
 
-   String ss;
+    String ss;
 
     ss = a + TH.m_temp + b + TH.m_humid + c;
-	return ss;
+    return ss;
 }
 
 // This method is used to display 'Observe' functionality of OC Stack.
@@ -239,57 +250,58 @@ void *ChangeTHRepresentation (void *param)
     (void)param;
     OCStackResult result = OC_STACK_ERROR;
     modCounter += 1;
-    if(modCounter % 10 == 0)  // Matching the timing that the Linux Sample Server App uses for the same functionality.
+    if (modCounter % 10 ==
+        0) // Matching the timing that the Linux Sample Server App uses for the same functionality.
     {
 
-    byte dht11_dat[5];   
-    byte i;// start condition
-       
-    digitalWrite(dht11_pin, LOW);
-    delay(18);
-    digitalWrite(dht11_pin, HIGH);
-    delayMicroseconds(1);
-    pinMode(dht11_pin, INPUT);
-    delayMicroseconds(40);     
+        byte dht11_dat[5];
+        byte i;// start condition
 
-    if (digitalRead(dht11_pin))
-    {
-        Serial.println("dht11 start condition 1 not met"); // wait for DHT response signal: LOW
-        delay(1000);
-        return NULL;
-    }
-    delayMicroseconds(80);
-    if (!digitalRead(dht11_pin))
-    {
-        Serial.println("dht11 start condition 2 not met");  //wair for second response signal:HIGH
-        return NULL;
-    }
+        digitalWrite(dht11_pin, LOW);
+        delay(18);
+        digitalWrite(dht11_pin, HIGH);
+        delayMicroseconds(1);
+        pinMode(dht11_pin, INPUT);
+        delayMicroseconds(40);
 
-    delayMicroseconds(80);// now ready for data reception
-    for (i=0; i<5; i++)
-    {
-        dht11_dat[i] = read_dht11_dat();
-    }  //recieved 40 bits data. Details are described in datasheet
+        if (digitalRead(dht11_pin))
+        {
+            Serial.println("dht11 start condition 1 not met"); // wait for DHT response signal: LOW
+            delay(1000);
+            return NULL;
+        }
+        delayMicroseconds(80);
+        if (!digitalRead(dht11_pin))
+        {
+            Serial.println("dht11 start condition 2 not met");  //wair for second response signal:HIGH
+            return NULL;
+        }
 
-    pinMode(dht11_pin, OUTPUT);
-    digitalWrite(dht11_pin, HIGH);
-    byte dht11_check_sum = dht11_dat[0]+dht11_dat[2];// check check_sum
-    if(dht11_dat[4]!= dht11_check_sum)
-    {
-        Serial.println("DHT11 checksum error");
-    }
-    Serial.print("Current humdity = ");
-    Serial.print(dht11_dat[0], DEC);
-    Serial.print("%  ");
-    Serial.print("temperature = ");
-    Serial.print(dht11_dat[2], DEC);
-    Serial.println("C  ");
+        delayMicroseconds(80);// now ready for data reception
+        for (i = 0; i < 5; i++)
+        {
+            dht11_dat[i] = read_dht11_dat();
+        }  //recieved 40 bits data. Details are described in datasheet
 
- // delay(2000); //fresh time
-    TH.m_humid = dht11_dat[0];
-    TH.m_temp = dht11_dat[2];
+        pinMode(dht11_pin, OUTPUT);
+        digitalWrite(dht11_pin, HIGH);
+        byte dht11_check_sum = dht11_dat[0] + dht11_dat[2]; // check check_sum
+        if (dht11_dat[4] != dht11_check_sum)
+        {
+            Serial.println("DHT11 checksum error");
+        }
+        Serial.print("Current humdity = ");
+        Serial.print(dht11_dat[0], DEC);
+        Serial.print("%  ");
+        Serial.print("temperature = ");
+        Serial.print(dht11_dat[2], DEC);
+        Serial.println("C  ");
 
-    g_responsePayloadGet = JsonGenerator(TH);
+// delay(2000); //fresh time
+        TH.m_humid = dht11_dat[0];
+        TH.m_temp = dht11_dat[2];
+
+        g_responsePayloadGet = JsonGenerator(TH);
 
         if (g_THUnderObservation)
         {
@@ -312,7 +324,7 @@ void *ChangeTHRepresentation (void *param)
 //The setup function is called once at startup of the sketch
 void setup()
 {
-    pinMode(dht11_pin, OUTPUT);   
+    pinMode(dht11_pin, OUTPUT);
     digitalWrite(dht11_pin, HIGH);
 
     // Add your initialization code here
@@ -320,7 +332,7 @@ void setup()
 
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
     uint16_t port = OC_WELL_KNOWN_PORT;
- 
+
     // Connect to Ethernet or WiFi network
     if (ConnectToNetwork() != 0)
     {
@@ -336,7 +348,7 @@ void setup()
     }
 
     // Declare and create the example resource: TH
-   createTHResource();
+    createTHResource();
 
 }
 
@@ -355,10 +367,11 @@ void loop()
         OC_LOG(ERROR, TAG, PCF("OCStack process error"));
         return;
     }
-     ChangeTHRepresentation(NULL);
+    ChangeTHRepresentation(NULL);
 }
 
-void createTHResource() {
+void createTHResource()
+{
     TH.m_humid = 0;
     TH.m_temp = 0;
 
@@ -367,45 +380,47 @@ void createTHResource() {
                                          "oc.mi.def",
                                          "/Thing_TempHumSensor1",
                                          OCEntityHandlerCb,
-                                         OC_DISCOVERABLE|OC_OBSERVABLE);
+                                         OC_DISCOVERABLE | OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created TH resource with result: %s", getResult(res));
 }
 
-const char *getResult(OCStackResult result) {
-    switch (result) {
-    case OC_STACK_OK:
-        return "OC_STACK_OK";
-    case OC_STACK_INVALID_URI:
-        return "OC_STACK_INVALID_URI";
-    case OC_STACK_INVALID_QUERY:
-        return "OC_STACK_INVALID_QUERY";
-    case OC_STACK_INVALID_IP:
-        return "OC_STACK_INVALID_IP";
-    case OC_STACK_INVALID_PORT:
-        return "OC_STACK_INVALID_PORT";
-    case OC_STACK_INVALID_CALLBACK:
-        return "OC_STACK_INVALID_CALLBACK";
-    case OC_STACK_INVALID_METHOD:
-        return "OC_STACK_INVALID_METHOD";
-    case OC_STACK_NO_MEMORY:
-        return "OC_STACK_NO_MEMORY";
-    case OC_STACK_COMM_ERROR:
-        return "OC_STACK_COMM_ERROR";
-    case OC_STACK_INVALID_PARAM:
-        return "OC_STACK_INVALID_PARAM";
-    case OC_STACK_NOTIMPL:
-        return "OC_STACK_NOTIMPL";
-    case OC_STACK_NO_RESOURCE:
-        return "OC_STACK_NO_RESOURCE";
-    case OC_STACK_RESOURCE_ERROR:
-        return "OC_STACK_RESOURCE_ERROR";
-    case OC_STACK_SLOW_RESOURCE:
-        return "OC_STACK_SLOW_RESOURCE";
-    case OC_STACK_NO_OBSERVERS:
-        return "OC_STACK_NO_OBSERVERS";
-    case OC_STACK_ERROR:
-        return "OC_STACK_ERROR";
-    default:
-        return "UNKNOWN";
+const char *getResult(OCStackResult result)
+{
+    switch (result)
+    {
+        case OC_STACK_OK:
+            return "OC_STACK_OK";
+        case OC_STACK_INVALID_URI:
+            return "OC_STACK_INVALID_URI";
+        case OC_STACK_INVALID_QUERY:
+            return "OC_STACK_INVALID_QUERY";
+        case OC_STACK_INVALID_IP:
+            return "OC_STACK_INVALID_IP";
+        case OC_STACK_INVALID_PORT:
+            return "OC_STACK_INVALID_PORT";
+        case OC_STACK_INVALID_CALLBACK:
+            return "OC_STACK_INVALID_CALLBACK";
+        case OC_STACK_INVALID_METHOD:
+            return "OC_STACK_INVALID_METHOD";
+        case OC_STACK_NO_MEMORY:
+            return "OC_STACK_NO_MEMORY";
+        case OC_STACK_COMM_ERROR:
+            return "OC_STACK_COMM_ERROR";
+        case OC_STACK_INVALID_PARAM:
+            return "OC_STACK_INVALID_PARAM";
+        case OC_STACK_NOTIMPL:
+            return "OC_STACK_NOTIMPL";
+        case OC_STACK_NO_RESOURCE:
+            return "OC_STACK_NO_RESOURCE";
+        case OC_STACK_RESOURCE_ERROR:
+            return "OC_STACK_RESOURCE_ERROR";
+        case OC_STACK_SLOW_RESOURCE:
+            return "OC_STACK_SLOW_RESOURCE";
+        case OC_STACK_NO_OBSERVERS:
+            return "OC_STACK_NO_OBSERVERS";
+        case OC_STACK_ERROR:
+            return "OC_STACK_ERROR";
+        default:
+            return "UNKNOWN";
     }
 }

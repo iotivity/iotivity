@@ -29,9 +29,9 @@
 #include <string>
 class SysTimer
 {
-public:
-	static std::string MilliSecondAsString();
-	static std::string UTCSecondAsString();
+    public:
+        static std::string MilliSecondAsString();
+        static std::string UTCSecondAsString();
 };
 
 #endif /* SYSTIMER_H_ */

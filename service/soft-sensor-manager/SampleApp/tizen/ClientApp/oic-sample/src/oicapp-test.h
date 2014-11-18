@@ -35,47 +35,49 @@ extern "C"
 
 #define GRP_MAIN "main"
 
-	typedef enum {
-		OICAPP_MODE_NONE = 0,
-		OICAPP_MODE_CLIENT,
-		OICAPP_MODE_SERVER,
-		OICAPP_MODE_MAX
-	}oicapp_mode;
+typedef enum
+{
+    OICAPP_MODE_NONE = 0,
+    OICAPP_MODE_CLIENT,
+    OICAPP_MODE_SERVER,
+    OICAPP_MODE_MAX
+} oicapp_mode;
 
-	enum {
-		OICAPP_GENLIST_GRP_NONE = 0,
-		OICAPP_GENLIST_GRP_TOP,
-		OICAPP_GENLIST_GRP_CENTER,
-		OICAPP_GENLIST_GRP_BOTTOM
-	};
+enum
+{
+    OICAPP_GENLIST_GRP_NONE = 0,
+    OICAPP_GENLIST_GRP_TOP,
+    OICAPP_GENLIST_GRP_CENTER,
+    OICAPP_GENLIST_GRP_BOTTOM
+};
 
 
-	typedef struct
-	{
-		Evas_Object *win;
-		Evas_Object *base;
-		Evas_Object *bg;
-		Evas_Object *navi;
-		Evas_Object *genlist;
-		Evas_Object *popup;
-		Evas_Object *conform;
+typedef struct
+{
+    Evas_Object *win;
+    Evas_Object *base;
+    Evas_Object *bg;
+    Evas_Object *navi;
+    Evas_Object *genlist;
+    Evas_Object *popup;
+    Evas_Object *conform;
 
-		Elm_Object_Item *item_multiline;
-		Elm_Object_Item *item_client_pwr;
-		Elm_Object_Item *item_client_lev;
-		Elm_Object_Item *item_server;
-		Elm_Object_Item *item_server_pwr;
-		Elm_Object_Item *item_server_lev;
+    Elm_Object_Item *item_multiline;
+    Elm_Object_Item *item_client_pwr;
+    Elm_Object_Item *item_client_lev;
+    Elm_Object_Item *item_server;
+    Elm_Object_Item *item_server_pwr;
+    Elm_Object_Item *item_server_lev;
 
-		Elm_Genlist_Item_Class itc_seperator;
-		Elm_Genlist_Item_Class itc_edit;
-		Elm_Genlist_Item_Class itc_btn;
-		Elm_Genlist_Item_Class itc_multiline;
+    Elm_Genlist_Item_Class itc_seperator;
+    Elm_Genlist_Item_Class itc_edit;
+    Elm_Genlist_Item_Class itc_btn;
+    Elm_Genlist_Item_Class itc_multiline;
 
-		char *ip_addr;
-		char *input_msg;
-		char *output_msg;
-	}oicapp_data;
+    char *ip_addr;
+    char *input_msg;
+    char *output_msg;
+} oicapp_data;
 #ifdef __cplusplus
 }
 #endif

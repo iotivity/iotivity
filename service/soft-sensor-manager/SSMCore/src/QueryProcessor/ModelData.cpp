@@ -21,7 +21,7 @@
 
 CModelData::CModelData()
 {
-	m_dataId = 0;
+    m_dataId = 0;
 }
 
 CModelData::~CModelData()
@@ -31,45 +31,45 @@ CModelData::~CModelData()
 
 void CModelData::setDataId(IN int dataId)
 {
-	m_dataId = dataId;
+    m_dataId = dataId;
 }
 
 void CModelData::addModelData(IN std::string propertyName, IN std::string propertyValue)
 {
-	m_properties[propertyName] = propertyValue;
+    m_properties[propertyName] = propertyValue;
 }
 
 int CModelData::getDataId()
 {
-	return m_dataId;
+    return m_dataId;
 }
 
 int CModelData::getPropertyCount()
 {
-	return m_properties.size();
+    return m_properties.size();
 }
 
 std::string CModelData::getPropertyName(IN int propertyIndex)
 {
-	std::map<std::string, std::string>::iterator idxProperty = m_properties.begin();
-	for(int i=0; i < propertyIndex; i++)
-	{
-		idxProperty++;
-	}
-	return idxProperty->first;
+    std::map<std::string, std::string>::iterator idxProperty = m_properties.begin();
+    for (int i = 0; i < propertyIndex; i++)
+    {
+        idxProperty++;
+    }
+    return idxProperty->first;
 }
 
 std::string CModelData::getPropertyValue(IN int propertyIndex)
 {
-	std::map<std::string, std::string>::iterator idxProperty = m_properties.begin();
-	for(int i=0; i < propertyIndex; i++)
-	{
-		idxProperty++;
-	}
-	return idxProperty->second;
+    std::map<std::string, std::string>::iterator idxProperty = m_properties.begin();
+    for (int i = 0; i < propertyIndex; i++)
+    {
+        idxProperty++;
+    }
+    return idxProperty->second;
 }
 
 std::string CModelData::getPropertyValueByName(IN std::string propertyName)
 {
-	return m_properties[propertyName];
+    return m_properties[propertyName];
 }

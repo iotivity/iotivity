@@ -21,81 +21,84 @@
 
 SSMRESULT CResponseReactor::finalConstruct()
 {
-	SSMRESULT res = SSM_S_OK;
+    SSMRESULT res = SSM_S_OK;
 
-	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IContextRepository, (IBase**)&m_pContextRepository));
+    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IContextRepository, (IBase **)&m_pContextRepository));
 
-	SSM_CLEANUP_ASSERT(CreateInstance(OID_IContextExecutor, (IBase**)&m_pContextExecutor));//TEMP
+    SSM_CLEANUP_ASSERT(CreateInstance(OID_IContextExecutor, (IBase **)&m_pContextExecutor)); //TEMP
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 void CResponseReactor::finalRelease()
 {
 }
 
-void CResponseReactor::registerContext(TypeofEvent callType, ISSMResource *pSSMResource, IEvent *pEvent)
+void CResponseReactor::registerContext(TypeofEvent callType, ISSMResource *pSSMResource,
+                                       IEvent *pEvent)
 {
-	m_mtxRequestedContextData.lock();
-	// if already exists
-	if (m_requestedCallbackData.find(pSSMResource->type) != m_requestedCallbackData.end())
-	{
-		//m_requestedCallbackData.erase(m_requestedCallbackData.find(nameString));
-		unregisterContext(callType,pSSMResource,pEvent);
-	}
-	else
-	{
-		m_requestedCallbackData[pSSMResource->type] = CallbackData(callType, pSSMResource->type, pEvent);
-	}
-	
-	m_pContextExecutor->registerContext(callType, pSSMResource, this);
+    m_mtxRequestedContextData.lock();
+    // if already exists
+    if (m_requestedCallbackData.find(pSSMResource->type) != m_requestedCallbackData.end())
+    {
+        //m_requestedCallbackData.erase(m_requestedCallbackData.find(nameString));
+        unregisterContext(callType, pSSMResource, pEvent);
+    }
+    else
+    {
+        m_requestedCallbackData[pSSMResource->type] = CallbackData(callType, pSSMResource->type, pEvent);
+    }
 
-	m_mtxRequestedContextData.unlock();
+    m_pContextExecutor->registerContext(callType, pSSMResource, this);
+
+    m_mtxRequestedContextData.unlock();
 }
 
-void CResponseReactor::unregisterContext(TypeofEvent callType, ISSMResource *pSSMResource, IEvent *pEvent)
+void CResponseReactor::unregisterContext(TypeofEvent callType, ISSMResource *pSSMResource,
+        IEvent *pEvent)
 {
-	m_mtxUnregisterContext.lock();
+    m_mtxUnregisterContext.lock();
 
-	// if already exists
-	if (m_requestedCallbackData.find(pSSMResource->type) != m_requestedCallbackData.end())
-	{
-		m_requestedCallbackData.erase(m_requestedCallbackData.find(pSSMResource->type));
+    // if already exists
+    if (m_requestedCallbackData.find(pSSMResource->type) != m_requestedCallbackData.end())
+    {
+        m_requestedCallbackData.erase(m_requestedCallbackData.find(pSSMResource->type));
 
-		//and Call NextLayer
-		m_pContextExecutor->unregisterContext(callType, pSSMResource, this);
-	}
+        //and Call NextLayer
+        m_pContextExecutor->unregisterContext(callType, pSSMResource, this);
+    }
 
-	m_mtxUnregisterContext.unlock();
+    m_mtxUnregisterContext.unlock();
 }
 
-void CResponseReactor::getList(std::vector<ISSMResource*> *pList)
-{	
-	pList->clear();
+void CResponseReactor::getList(std::vector<ISSMResource *> *pList)
+{
+    pList->clear();
 
-	m_pContextRepository->getSoftSensorList(pList);
+    m_pContextRepository->getSoftSensorList(pList);
 
-	m_pContextRepository->getPrimitiveSensorList(pList);
+    m_pContextRepository->getPrimitiveSensorList(pList);
 }
 
 //Dispatch to upper layer
-int CResponseReactor::onEvent(std::string type, TypeofEvent callType, std::vector<ContextData> ctxData)
+int CResponseReactor::onEvent(std::string type, TypeofEvent callType,
+                              std::vector<ContextData> ctxData)
 {
-	std::map<std::string, CallbackData >::iterator	itor;
+    std::map<std::string, CallbackData >::iterator  itor;
 
-	//m_mtxRequestedContextData.Lock();
+    //m_mtxRequestedContextData.Lock();
 
-	itor = m_requestedCallbackData.find(type);
-	if (itor != m_requestedCallbackData.end())
-	{
-		itor->second.m_pCallbackEvent->onEvent(type, callType, ctxData);
-		if (callType == SSM_ONCE)
-		{
-			m_requestedCallbackData.erase(itor);
-		}
-	}
-	//m_mtxRequestedContextData.Unlock();
+    itor = m_requestedCallbackData.find(type);
+    if (itor != m_requestedCallbackData.end())
+    {
+        itor->second.m_pCallbackEvent->onEvent(type, callType, ctxData);
+        if (callType == SSM_ONCE)
+        {
+            m_requestedCallbackData.erase(itor);
+        }
+    }
+    //m_mtxRequestedContextData.Unlock();
 
-	return 0;
+    return 0;
 }

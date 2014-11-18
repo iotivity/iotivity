@@ -27,77 +27,78 @@
 /**
 * @class    CConditionedQueryResult
 * @brief    CConditionedQueryResult Interface
-*			 This class represents executed CQL's result data 
+*            This class represents executed CQL's result data
 *
 * @see
 */
 class CConditionedQueryResult :
-	public CObjectRoot<CObjectMultiThreadModel>
-	, public IConditionedQueryResult
+    public CObjectRoot<CObjectMultiThreadModel>
+    , public IConditionedQueryResult
 {
-private:
-	std::vector<IConditionedModel*>			m_conditionedModels;
+    private:
+        std::vector<IConditionedModel *>         m_conditionedModels;
 
-public:
-	SSMRESULT finalConstruct();
+    public:
+        SSMRESULT finalConstruct();
 
-	void finalRelease();
+        void finalRelease();
 
-	/**
-	* @fn	  addConditionedModel
-	* @brief Add conditioned model interface for tracking trigger
-	*
-	* @param [in] IConditionedModel *pConditionedModel - Conditioned Model interface that contains results
-	* 
-	* @return SSMRESULT
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	SSMRESULT addConditionedModel(IN IConditionedModel *pConditionedModel);
+        /**
+        * @fn     addConditionedModel
+        * @brief Add conditioned model interface for tracking trigger
+        *
+        * @param [in] IConditionedModel *pConditionedModel - Conditioned Model interface that contains results
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT addConditionedModel(IN IConditionedModel *pConditionedModel);
 
-	SSMRESULT queryInterface(const OID& objectID, IBase** ppObject)
-	{
-		if(ppObject == NULL)
-			return SSM_E_POINTER;
+        SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
+        {
+            if (ppObject == NULL)
+                return SSM_E_POINTER;
 
-		if(IsEqualOID(objectID, OID_IConditionedQueryResult))
-		{
-			IBase *pBase = this;
-			pBase->addRef();
-			*ppObject = pBase;
-			return SSM_S_OK;
-		}
+            if (IsEqualOID(objectID, OID_IConditionedQueryResult))
+            {
+                IBase *pBase = this;
+                pBase->addRef();
+                *ppObject = pBase;
+                return SSM_S_OK;
+            }
 
-		return SSM_E_NOINTERFACE;
-	}
+            return SSM_E_NOINTERFACE;
+        }
 
-	/**
-	* @fn	  getConditionedModelCount
-	* @brief Get conditioned model count
-	*
-	* @param NONE
-	* 
-	* @return unsigned int
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	unsigned int getConditionedModelCount();
+        /**
+        * @fn     getConditionedModelCount
+        * @brief Get conditioned model count
+        *
+        * @param NONE
+        *
+        * @return unsigned int
+        * @warning
+        * @exception
+        * @see
+        */
+        unsigned int getConditionedModelCount();
 
-	/**
-	* @fn	  getConditionedContextModel
-	* @brief Get conditioned model by index
-	*
-	* @param [in] unsigned int conditionedModelIndex - Index of Conditioned Model interface for retrieving
-	* @param [out] IConditionedModel *pConditionedModel - Conditioned Model interface that contains results
-	* 
-	* @return SSMRESULT
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	SSMRESULT getConditionedContextModel(IN unsigned int conditionedModelIndex, OUT IConditionedModel **ppConditionedModel);
+        /**
+        * @fn     getConditionedContextModel
+        * @brief Get conditioned model by index
+        *
+        * @param [in] unsigned int conditionedModelIndex - Index of Conditioned Model interface for retrieving
+        * @param [out] IConditionedModel *pConditionedModel - Conditioned Model interface that contains results
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getConditionedContextModel(IN unsigned int conditionedModelIndex,
+                                             OUT IConditionedModel **ppConditionedModel);
 };
 
 #endif

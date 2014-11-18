@@ -21,26 +21,26 @@
 
 SSMRESULT CResourceConnectivity::finalConstruct()
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
     OC::PlatformConfig cfg(OC::ServiceType::InProc, OC::ModeType::Both,
-            "134.134.161.33", 56831, OC::QualityOfService::NonConfirmable);
-	
-	m_pPlatform = new OC::OCPlatform(cfg);
-	
-	SSM_CLEANUP_NULL_ASSERT(m_pPlatform);
+                           "134.134.161.33", 56831, OC::QualityOfService::NonConfirmable);
 
-	res = SSM_S_OK;
+    m_pPlatform = new OC::OCPlatform(cfg);
+
+    SSM_CLEANUP_NULL_ASSERT(m_pPlatform);
+
+    res = SSM_S_OK;
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 void CResourceConnectivity::finalRelease()
 {
-	SAFE_DELETE(m_pPlatform);
+    SAFE_DELETE(m_pPlatform);
 }
 
-void* CResourceConnectivity::getPlatform()
+void *CResourceConnectivity::getPlatform()
 {
-	return m_pPlatform;
+    return m_pPlatform;
 }

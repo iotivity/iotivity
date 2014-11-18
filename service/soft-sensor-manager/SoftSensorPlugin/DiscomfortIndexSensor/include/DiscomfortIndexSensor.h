@@ -36,7 +36,7 @@
 extern "C"
 {
 #endif
-    void _EXPORT_ InitializeContext(ICtxDelegate *pDelegate);
+void _EXPORT_ InitializeContext(ICtxDelegate *pDelegate);
 #ifdef __cplusplus
 
 }
@@ -45,13 +45,13 @@ extern "C"
 
 namespace DiscomfortIndexSensorName
 {
-#define PHYSICAL_EA	2
+#define PHYSICAL_EA 2
 
     typedef struct _physicalInput_
     {
-        char* m_thingName;
+        char *m_thingName;
         int m_inputNum;
-        void* m_pInputStruct;
+        void *m_pInputStruct;
     } physicalInput;
 
     typedef enum
@@ -61,34 +61,34 @@ namespace DiscomfortIndexSensorName
 
     class DiscomfortIndexSensor: public ICtxEvent
     {
-    private:
+        private:
 
-        static physicalInput s_PHYSICAL_SOFTSENSORs[PHYSICAL_EA];
+            static physicalInput s_PHYSICAL_SOFTSENSORs[PHYSICAL_EA];
 
-        class InValue
-        {
+            class InValue
+            {
+                public:
+                    std::string m_timestamp; // .
+                    std::string m_discomfortIndex; // Discomfort Index. ( 2 ~ 5 )
+                    std::string m_humidity; // relative humidity.
+                    std::string m_temperature; // celsius temperature.
+            };
+
+            InValue m_DI[PHYSICAL_EA];
+            InValue m_result;
+
+            int runLogic(std::vector< ContextData > &contextDataList);
+
         public:
-            std::string m_timestamp; // .
-            std::string m_discomfortIndex; // Discomfort Index. ( 2 ~ 5 )
-            std::string m_humidity; // relative humidity.
-            std::string m_temperature; // celsius temperature.
-        };
+            DiscomfortIndexSensor();
 
-        InValue m_DI[PHYSICAL_EA];
-        InValue m_result;
+            void onCtxEvent(enum CTX_EVENT_TYPE eventType, std::vector< ContextData > contextDataList);
 
-        int runLogic(std::vector< ContextData > &contextDataList);
+            DIResult getInput(std::vector< ContextData > &contextDataList, InValue *data);
+            DIResult makeDiscomfortIndex(InValue *data);
+            ContextData setOutput(int property_count, InValue *data);
 
-    public:
-        DiscomfortIndexSensor();
-
-        void onCtxEvent(enum CTX_EVENT_TYPE eventType, std::vector< ContextData > contextDataList);
-
-        DIResult getInput(std::vector< ContextData > &contextDataList, InValue* data);
-        DIResult makeDiscomfortIndex(InValue* data);
-        ContextData setOutput(int property_count, InValue* data);
-
-        friend void _EXPORT_ initializeContext(ICtxDelegate *pDelegate);
+            friend void _EXPORT_ initializeContext(ICtxDelegate *pDelegate);
     };
 }
 ;

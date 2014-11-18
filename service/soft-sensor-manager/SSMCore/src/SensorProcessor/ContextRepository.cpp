@@ -19,447 +19,453 @@
 ******************************************************************/
 #include "ContextRepository.h"
 
-static inline std::string trim_both(const std::string& str)
+static inline std::string trim_both(const std::string &str)
 {
 
-	int npos = str.find_first_not_of(" \t\v\n");
-	if (npos == -1)
-	{
-		return "";
-	}
-	unsigned int n = (unsigned int)npos;
-	std::string tempString = n == std::string::npos ? str : str.substr(n, str.length());
+    int npos = str.find_first_not_of(" \t\v\n");
+    if (npos == -1)
+    {
+        return "";
+    }
+    unsigned int n = (unsigned int)npos;
+    std::string tempString = n == std::string::npos ? str : str.substr(n, str.length());
 
-	n = tempString.find_last_not_of(" \t\v\n");
-	return n == std::string::npos ? tempString : tempString.substr(0, n + 1);
+    n = tempString.find_last_not_of(" \t\v\n");
+    return n == std::string::npos ? tempString : tempString.substr(0, n + 1);
 }
 
 SSMRESULT CContextRepository::finalConstruct()
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	SSM_CLEANUP_ASSERT(CreateInstance(OID_IResourceFinder, (IBase**)&m_resourceFinder));
-	SSM_CLEANUP_ASSERT(m_resourceFinder->registerResourceFinderEvent(this));
+    SSM_CLEANUP_ASSERT(CreateInstance(OID_IResourceFinder, (IBase **)&m_resourceFinder));
+    SSM_CLEANUP_ASSERT(m_resourceFinder->registerResourceFinderEvent(this));
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 SSMRESULT CContextRepository::startResourceFinder()
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	SSM_CLEANUP_ASSERT(m_resourceFinder->startResourceFinder());
+    SSM_CLEANUP_ASSERT(m_resourceFinder->startResourceFinder());
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 SSMRESULT CContextRepository::registerResourceFinderEvent(IN IResourceEvent *pResourceEvent)
 {
-	m_resourceEvents.push_back(pResourceEvent);
-	return SSM_S_OK;
+    m_resourceEvents.push_back(pResourceEvent);
+    return SSM_S_OK;
 }
 
 void CContextRepository::finalRelease()
 {
 }
 
-void CContextRepository::setCurrentDeviceInfo(IN std::string name, IN std::string type, IN std::string pathSoftSensors, IN std::string pathDescription)
+void CContextRepository::setCurrentDeviceInfo(IN std::string name, IN std::string type,
+        IN std::string pathSoftSensors, IN std::string pathDescription)
 {
-	//TODO: Someone need to provides a way to generate permanent uuid function
-	/*
-	m_currentDeviceInfo.friendlyName = name;
-	//m_currentDeviceInfo.ID="2fac1234-31f8-11b4-a222-08002b34c003";
-	m_currentDeviceInfo.ID = udn;
-	m_currentDeviceInfo.IPAddress = "127.0.0.1";
-	m_currentDeviceInfo.tp = tp;
-	//m_currentDeviceInfo.type = SSM_DEVICE_MOBILE;
-	m_currentDeviceInfo.type = td;
-	*/
-	m_name = name;
-	m_type = type;
-	m_pathSoftSensors = pathSoftSensors;
-	m_pathSoftSensorsDescription = pathDescription;
+    //TODO: Someone need to provides a way to generate permanent uuid function
+    /*
+    m_currentDeviceInfo.friendlyName = name;
+    //m_currentDeviceInfo.ID="2fac1234-31f8-11b4-a222-08002b34c003";
+    m_currentDeviceInfo.ID = udn;
+    m_currentDeviceInfo.IPAddress = "127.0.0.1";
+    m_currentDeviceInfo.tp = tp;
+    //m_currentDeviceInfo.type = SSM_DEVICE_MOBILE;
+    m_currentDeviceInfo.type = td;
+    */
+    m_name = name;
+    m_type = type;
+    m_pathSoftSensors = pathSoftSensors;
+    m_pathSoftSensorsDescription = pathDescription;
 }
 
-SSMRESULT CContextRepository::loadXMLFromString(char *xmlData, std::vector<DictionaryData> *dataList)
+SSMRESULT CContextRepository::loadXMLFromString(char *xmlData,
+        std::vector<DictionaryData> *dataList)
 {
-	// use  rapidxml-----------------------
-	SSMRESULT res = SSM_E_FAIL;
-	rapidxml::xml_document< char > xmlDoc;
-	//xmlDoc.parse< 0 >( &xmlData.front() );
-	xmlDoc.parse< 0 >(xmlData);
+    // use  rapidxml-----------------------
+    SSMRESULT res = SSM_E_FAIL;
+    rapidxml::xml_document< char > xmlDoc;
+    //xmlDoc.parse< 0 >( &xmlData.front() );
+    xmlDoc.parse< 0 >(xmlData);
 
-	std::string keyStr;
-	std::string valueStr;
+    std::string keyStr;
+    std::string valueStr;
 
-	rapidxml::xml_node< char > *item;
-	rapidxml::xml_node< char > *subItem;
-	rapidxml::xml_node< char > *subItem2;
-	rapidxml::xml_node< char > *subItem3;
+    rapidxml::xml_node< char > *item;
+    rapidxml::xml_node< char > *subItem;
+    rapidxml::xml_node< char > *subItem2;
+    rapidxml::xml_node< char > *subItem3;
 
-	// get value
-	rapidxml::xml_node< char > *root = xmlDoc.first_node();
+    // get value
+    rapidxml::xml_node< char > *root = xmlDoc.first_node();
 
-	if(!root)
-	{
-		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-	}
+    if (!root)
+    {
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+    }
 
-	for( item = root->first_node(); item; item = item->next_sibling() )
-	{
-		DictionaryData dictionaryData;
-		for( subItem = item->first_node(); subItem ; subItem = subItem->next_sibling() )
-		{
-			//root name
-			keyStr = subItem->name();  // key
-			valueStr = subItem->value();   // value
+    for ( item = root->first_node(); item; item = item->next_sibling() )
+    {
+        DictionaryData dictionaryData;
+        for ( subItem = item->first_node(); subItem ; subItem = subItem->next_sibling() )
+        {
+            //root name
+            keyStr = subItem->name();  // key
+            valueStr = subItem->value();   // value
 
-			if(!keyStr.compare("root_name"))
-			{
-				dictionaryData.rootName = trim_both(valueStr);
-			}
-			////std::cout<<keyStr << " : " << subItem->value() <<std::endl<<std::endl; //root_name
-			for(subItem2 = subItem->first_node(); subItem2 ; subItem2 = subItem2->next_sibling())
-			{
-				std::map<std::string,std::string> propertyMap;
-				std::vector<std::string> enterconditionVector;
+            if (!keyStr.compare("root_name"))
+            {
+                dictionaryData.rootName = trim_both(valueStr);
+            }
+            ////std::cout<<keyStr << " : " << subItem->value() <<std::endl<<std::endl; //root_name
+            for (subItem2 = subItem->first_node(); subItem2 ; subItem2 = subItem2->next_sibling())
+            {
+                std::map<std::string, std::string> propertyMap;
+                std::vector<std::string> enterconditionVector;
 
-				keyStr = subItem2->name();  // key
-				valueStr = subItem2->value();   // value
+                keyStr = subItem2->name();  // key
+                valueStr = subItem2->value();   // value
 
-				if(!keyStr.compare("attribute_property_count"))
-				{
-					dictionaryData.attributePropertyCount = trim_both(valueStr);
-				}
-				else if(!keyStr.compare("output_property_count"))
-				{
-					dictionaryData.outputPropertyCount  = trim_both(valueStr);
-				}
-				if(!keyStr.compare("inputs_count"))
-				{
-					dictionaryData.inputCount = trim_both(valueStr);
-				}
-				else if(!keyStr.compare("app_inputs_count"))
-				{
-					dictionaryData.appInputCount  = trim_both(valueStr);
-				}
-				else if(!keyStr.compare("app_input"))
-				{
-					dictionaryData.appInputs.push_back(trim_both(valueStr));
-				}
-				else if(!keyStr.compare("input"))
-				{
-					dictionaryData.inputs.push_back(trim_both(valueStr));
-				}
-				////std::cout<<name << " :: " << subItem2->value() <<std::endl<<std::endl;
-				for(subItem3 = subItem2->first_node(); subItem3 ; subItem3 = subItem3->next_sibling())
-				{ 
+                if (!keyStr.compare("attribute_property_count"))
+                {
+                    dictionaryData.attributePropertyCount = trim_both(valueStr);
+                }
+                else if (!keyStr.compare("output_property_count"))
+                {
+                    dictionaryData.outputPropertyCount  = trim_both(valueStr);
+                }
+                if (!keyStr.compare("inputs_count"))
+                {
+                    dictionaryData.inputCount = trim_both(valueStr);
+                }
+                else if (!keyStr.compare("app_inputs_count"))
+                {
+                    dictionaryData.appInputCount  = trim_both(valueStr);
+                }
+                else if (!keyStr.compare("app_input"))
+                {
+                    dictionaryData.appInputs.push_back(trim_both(valueStr));
+                }
+                else if (!keyStr.compare("input"))
+                {
+                    dictionaryData.inputs.push_back(trim_both(valueStr));
+                }
+                ////std::cout<<name << " :: " << subItem2->value() <<std::endl<<std::endl;
+                for (subItem3 = subItem2->first_node(); subItem3 ; subItem3 = subItem3->next_sibling())
+                {
 
-					std::string newKeyStr = subItem3->name();  // key
-					valueStr = subItem3->value();   // value
+                    std::string newKeyStr = subItem3->name();  // key
+                    valueStr = subItem3->value();   // value
 
-					if(!keyStr.compare("attribute_property") || !keyStr.compare("output_property") )
-					{
-						propertyMap.insert(std::make_pair(trim_both(newKeyStr),trim_both(valueStr)))	;
-					}
-					else if(!keyStr.compare("enter_condition"))
-					{
-						enterconditionVector.push_back(trim_both(valueStr));
-					}
-				}
-				if(!keyStr.compare("attribute_property"))
-				{
-					dictionaryData.attributeProperty.push_back(propertyMap);
-				}
-				else if(!keyStr.compare("output_property"))
-				{
-					dictionaryData.outputProperty.push_back(propertyMap);
-				}
-				else if(!keyStr.compare("enter_condition"))
-				{
-					dictionaryData.enterConditions.push_back(enterconditionVector);
-				}
-			}
-		}
-		//for accurate data.
-		/*
-		dictionaryData.app_input_count = std::to_string((long long)dictionaryData.app_inputs.size());
-		dictionaryData.input_count = std::to_string((long long)dictionaryData.inputs.size());
-		dictionaryData.attribute_property_count = std::to_string((long long)dictionaryData.attribute_property.size());
-		dictionaryData.output_property_count = std::to_string((long long)dictionaryData.output_property.size());
-		*/
+                    if (!keyStr.compare("attribute_property") || !keyStr.compare("output_property") )
+                    {
+                        propertyMap.insert(std::make_pair(trim_both(newKeyStr), trim_both(valueStr)))    ;
+                    }
+                    else if (!keyStr.compare("enter_condition"))
+                    {
+                        enterconditionVector.push_back(trim_both(valueStr));
+                    }
+                }
+                if (!keyStr.compare("attribute_property"))
+                {
+                    dictionaryData.attributeProperty.push_back(propertyMap);
+                }
+                else if (!keyStr.compare("output_property"))
+                {
+                    dictionaryData.outputProperty.push_back(propertyMap);
+                }
+                else if (!keyStr.compare("enter_condition"))
+                {
+                    dictionaryData.enterConditions.push_back(enterconditionVector);
+                }
+            }
+        }
+        //for accurate data.
+        /*
+        dictionaryData.app_input_count = std::to_string((long long)dictionaryData.app_inputs.size());
+        dictionaryData.input_count = std::to_string((long long)dictionaryData.inputs.size());
+        dictionaryData.attribute_property_count = std::to_string((long long)dictionaryData.attribute_property.size());
+        dictionaryData.output_property_count = std::to_string((long long)dictionaryData.output_property.size());
+        */
 
-		dataList->push_back(dictionaryData);
-	}
+        dataList->push_back(dictionaryData);
+    }
 
-	res = SSM_S_OK;
+    res = SSM_S_OK;
 
 CLEANUP:
-	return res;
+    return res;
 }
 
-SSMRESULT CContextRepository::loadXMLFromFile(std::string descriptionFilePath, std::vector<DictionaryData> *dataList)
+SSMRESULT CContextRepository::loadXMLFromFile(std::string descriptionFilePath,
+        std::vector<DictionaryData> *dataList)
 {
-	SSMRESULT res = SSM_E_FAIL;
-	std::basic_ifstream< char > xmlFile(descriptionFilePath.c_str());
+    SSMRESULT res = SSM_E_FAIL;
+    std::basic_ifstream< char > xmlFile(descriptionFilePath.c_str());
 
-	if (descriptionFilePath.length() > 0 && xmlFile.fail())
-	{
-		//error while opening given path, return error
-		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-	}
+    if (descriptionFilePath.length() > 0 && xmlFile.fail())
+    {
+        //error while opening given path, return error
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+    }
 
-	if (descriptionFilePath.length() == 0)
-	{
-		//No given path, try to open local Path
-		std::string path;
-		SSM_CLEANUP_ASSERT(GetCurrentPath(&path));
-		path.append("/");
-		path.append(DEFAULT_PATH_SOFT_SENSORS);
-		xmlFile.open(path);
-	}
+    if (descriptionFilePath.length() == 0)
+    {
+        //No given path, try to open local Path
+        std::string path;
+        SSM_CLEANUP_ASSERT(GetCurrentPath(&path));
+        path.append("/");
+        path.append(DEFAULT_PATH_SOFT_SENSORS);
+        xmlFile.open(path);
+    }
 
-	//path loaded
-	if (!xmlFile.fail())
-	{
-		xmlFile.seekg(0, std::ios::end);
-		unsigned int size = (unsigned int)xmlFile.tellg();
-		xmlFile.seekg(0);
+    //path loaded
+    if (!xmlFile.fail())
+    {
+        xmlFile.seekg(0, std::ios::end);
+        unsigned int size = (unsigned int)xmlFile.tellg();
+        xmlFile.seekg(0);
 
-		std::vector< char > xmlData(size + 1);
-		xmlData[size] = 0;
+        std::vector< char > xmlData(size + 1);
+        xmlData[size] = 0;
 
-		xmlFile.read(&xmlData.front(), (std::streamsize)size);
-		xmlFile.close();
-		SSM_CLEANUP_ASSERT(loadXMLFromString(&xmlData.front(), dataList));
-	}
-	else
-	{
-		//let work with no soft sensor manager
-		res = SSM_S_OK;
-	}
+        xmlFile.read(&xmlData.front(), (std::streamsize)size);
+        xmlFile.close();
+        SSM_CLEANUP_ASSERT(loadXMLFromString(&xmlData.front(), dataList));
+    }
+    else
+    {
+        //let work with no soft sensor manager
+        res = SSM_S_OK;
+    }
 
 CLEANUP:
-	return res;
+    return res;
 }
 
-SSMRESULT CContextRepository::getSoftSensorList(OUT std::vector<ISSMResource*> *pSoftSensorList)
+SSMRESULT CContextRepository::getSoftSensorList(OUT std::vector<ISSMResource *> *pSoftSensorList)
 {
-	SSMRESULT res = SSM_E_FAIL;
-	std::vector<DictionaryData> dict;
-	
-	SSM_CLEANUP_ASSERT(loadXMLFromFile(m_pathSoftSensorsDescription.c_str(), &dict));
+    SSMRESULT res = SSM_E_FAIL;
+    std::vector<DictionaryData> dict;
 
-	SSM_CLEANUP_ASSERT(makeSSMResourceListForDictionaryData(dict, pSoftSensorList));
+    SSM_CLEANUP_ASSERT(loadXMLFromFile(m_pathSoftSensorsDescription.c_str(), &dict));
+
+    SSM_CLEANUP_ASSERT(makeSSMResourceListForDictionaryData(dict, pSoftSensorList));
 
 CLEANUP:
-	return res;
+    return res;
 }
 
-SSMRESULT CContextRepository::getPrimitiveSensorList(OUT std::vector<ISSMResource*> *pPrimitiveSensorList)
+SSMRESULT CContextRepository::getPrimitiveSensorList(OUT std::vector<ISSMResource *>
+        *pPrimitiveSensorList)
 {
-	for (size_t i = 0; i < m_lstSensor.size(); i++)
-	{
-		pPrimitiveSensorList->push_back(m_lstSensor.at(i));
-	}
+    for (size_t i = 0; i < m_lstSensor.size(); i++)
+    {
+        pPrimitiveSensorList->push_back(m_lstSensor.at(i));
+    }
 
-	return SSM_S_OK;
+    return SSM_S_OK;
 }
 
 SSMRESULT CContextRepository::onResourceFound(IN ISSMResource *pSensor)
 {
-	m_lstSensor.push_back(pSensor);
+    m_lstSensor.push_back(pSensor);
 
-	for (size_t i = 0; i < m_resourceEvents.size(); i++)
-	{
-		m_resourceEvents.at(i)->onResourceEvent(SSM_EVENT_ADDED, pSensor, "");
-	}
+    for (size_t i = 0; i < m_resourceEvents.size(); i++)
+    {
+        m_resourceEvents.at(i)->onResourceEvent(SSM_EVENT_ADDED, pSensor, "");
+    }
 
-	return SSM_S_OK;
+    return SSM_S_OK;
 }
 
 SSMRESULT CContextRepository::onResourceLost(IN ISSMResource *pSensor)
 {
-	std::vector<ISSMResource*>::iterator	itor;
-	itor = std::find(m_lstSensor.begin(), m_lstSensor.end(), pSensor);
+    std::vector<ISSMResource *>::iterator    itor;
+    itor = std::find(m_lstSensor.begin(), m_lstSensor.end(), pSensor);
 
-	if (itor != m_lstSensor.end())
-	{
-		m_lstSensor.erase(itor);
-		return SSM_S_OK;
-	}
-	
-	return SSM_E_FAIL;
+    if (itor != m_lstSensor.end())
+    {
+        m_lstSensor.erase(itor);
+        return SSM_S_OK;
+    }
+
+    return SSM_E_FAIL;
 }
 
 SSMRESULT CContextRepository::startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent)
 {
-	return m_resourceFinder->startObserveResource(pSensor, pEvent);
+    return m_resourceFinder->startObserveResource(pSensor, pEvent);
 }
 
 SSMRESULT CContextRepository::stopObserveResource(IN ISSMResource *pSensor)
 {
-	return m_resourceFinder->stopObserveResource(pSensor);
+    return m_resourceFinder->stopObserveResource(pSensor);
 }
 
 //TODO: Need to fix
-SSMRESULT CContextRepository::makeSSMResourceListForDictionaryData(std::vector<DictionaryData> dataList, std::vector<ISSMResource*> *pList)
+SSMRESULT CContextRepository::makeSSMResourceListForDictionaryData(std::vector<DictionaryData>
+        dataList, std::vector<ISSMResource *> *pList)
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	for(unsigned int i = 0 ; i < dataList.size() ; ++i)
-	{
-		ISSMResource *pResource = new ISSMResource();
-		pResource->location = SENSOR_LOCATION_LOCAL;
-		pResource->type = dataList[i].rootName;
-		pResource->name = std::string("coap://127.0.0.1/") + dataList[i].rootName;
-		pResource->ip = "coap://127.0.0.1/";
+    for (unsigned int i = 0 ; i < dataList.size() ; ++i)
+    {
+        ISSMResource *pResource = new ISSMResource();
+        pResource->location = SENSOR_LOCATION_LOCAL;
+        pResource->type = dataList[i].rootName;
+        pResource->name = std::string("coap://127.0.0.1/") + dataList[i].rootName;
+        pResource->ip = "coap://127.0.0.1/";
 
-		pResource->inputList = dataList[i].inputs;
-		
-		for (unsigned int j = 0; j < dataList[i].outputProperty.size(); ++j)
-		{
-			pResource->outputProperty.push_back(dataList[i].outputProperty[j]);
-		}
-		for (unsigned int j = 0; j < dataList[i].attributeProperty.size(); ++j)
-		{
-			pResource->outputProperty.push_back(dataList[i].attributeProperty[j]);
-		}
-		pList->push_back(pResource);
-	}
+        pResource->inputList = dataList[i].inputs;
 
-	res = SSM_S_OK;
+        for (unsigned int j = 0; j < dataList[i].outputProperty.size(); ++j)
+        {
+            pResource->outputProperty.push_back(dataList[i].outputProperty[j]);
+        }
+        for (unsigned int j = 0; j < dataList[i].attributeProperty.size(); ++j)
+        {
+            pResource->outputProperty.push_back(dataList[i].attributeProperty[j]);
+        }
+        pList->push_back(pResource);
+    }
 
-	return res;
+    res = SSM_S_OK;
+
+    return res;
 }
 
-SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDelegate *pDelegate, void **hSoftSensor)
+SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDelegate *pDelegate,
+        void **hSoftSensor)
 {
-	std::stringstream	sstream;
-	SSMRESULT			res = SSM_E_FAIL;
+    std::stringstream   sstream;
+    SSMRESULT           res = SSM_E_FAIL;
 
-	typedef void(*InitContext)(IN ICtxDelegate *);
-	InitContext InitializeContextFunction = NULL;
+    typedef void(*InitContext)(IN ICtxDelegate *);
+    InitContext InitializeContextFunction = NULL;
 
-	if (m_pathSoftSensors.length() == 0)
-	{
-		SSM_CLEANUP_ASSERT(GetCurrentPath(&m_pathSoftSensors));
-	}
+    if (m_pathSoftSensors.length() == 0)
+    {
+        SSM_CLEANUP_ASSERT(GetCurrentPath(&m_pathSoftSensors));
+    }
 
-	m_pathSoftSensors.append("/");
+    m_pathSoftSensors.append("/");
 
-	// load dll(so)
-	res = SSM_E_FAIL;
-	for (unsigned int i = 1; i <= SSM_MODEL_RETRY; ++i)
-	{
-		sstream.str("");
+    // load dll(so)
+    res = SSM_E_FAIL;
+    for (unsigned int i = 1; i <= SSM_MODEL_RETRY; ++i)
+    {
+        sstream.str("");
 
 #ifdef WIN32
-		sstream << m_pathSoftSensors << softSensorName.c_str() << ".dll" << std::ends;
+        sstream << m_pathSoftSensors << softSensorName.c_str() << ".dll" << std::ends;
 
-		HINSTANCE hModule = NULL;
-		hModule = LoadLibraryA(sstream.str().c_str());
+        HINSTANCE hModule = NULL;
+        hModule = LoadLibraryA(sstream.str().c_str());
 
-		if (hModule != NULL)
-		{
-			InitializeContextFunction = (InitContext)GetProcAddress(hModule, "InitializeContext");
-		}
+        if (hModule != NULL)
+        {
+            InitializeContextFunction = (InitContext)GetProcAddress(hModule, "InitializeContext");
+        }
 #else
-		//sstream << "/data/data/com.example.javaproject/lib/lib" << modelName <<".so" << std::ends;
-		sstream << m_pathSoftSensors << "lib" << softSensorName.c_str() << ".so" << std::ends;
+        //sstream << "/data/data/com.example.javaproject/lib/lib" << modelName <<".so" << std::ends;
+        sstream << m_pathSoftSensors << "lib" << softSensorName.c_str() << ".so" << std::ends;
 
-		void* hModule = NULL;
-		hModule = dlopen(sstream.str().c_str(), RTLD_LOCAL | RTLD_LAZY);
+        void *hModule = NULL;
+        hModule = dlopen(sstream.str().c_str(), RTLD_LOCAL | RTLD_LAZY);
 
-		if (hModule != NULL)
-		{
-			InitializeContextFunction = (InitContext)dlsym(hModule, "InitializeContext");
-		}
+        if (hModule != NULL)
+        {
+            InitializeContextFunction = (InitContext)dlsym(hModule, "InitializeContext");
+        }
 #endif
-		if (hModule == NULL)
-		{
-			InitializeContextFunction = NULL;
-			continue;
-		}
+        if (hModule == NULL)
+        {
+            InitializeContextFunction = NULL;
+            continue;
+        }
 
-		if (InitializeContextFunction != NULL)
-		{
-			InitializeContextFunction(pDelegate);
-			*hSoftSensor = hModule;
-			res = SSM_S_OK;
-		}
-		else
-		{
-			//Unload module and return error
-			SSM_CLEANUP_ASSERT(unloadSoftSensor(hModule));
-			SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-		}
+        if (InitializeContextFunction != NULL)
+        {
+            InitializeContextFunction(pDelegate);
+            *hSoftSensor = hModule;
+            res = SSM_S_OK;
+        }
+        else
+        {
+            //Unload module and return error
+            SSM_CLEANUP_ASSERT(unloadSoftSensor(hModule));
+            SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+        }
 
-		break;
-	}
+        break;
+    }
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 SSMRESULT CContextRepository::unloadSoftSensor(void *hSoftSensor)
 {
-	SSMRESULT			res = SSM_E_FAIL;
+    SSMRESULT           res = SSM_E_FAIL;
 
 #ifdef WIN32
-	SSM_CLEANUP_COND_ASSERT(FreeLibrary((HINSTANCE)hSoftSensor), TRUE, "FreeLibrary failed");
+    SSM_CLEANUP_COND_ASSERT(FreeLibrary((HINSTANCE)hSoftSensor), TRUE, "FreeLibrary failed");
 #else
-	SSM_CLEANUP_COND_ASSERT(dlclose(hSoftSensor), 0, "dlclose failed");
+    SSM_CLEANUP_COND_ASSERT(dlclose(hSoftSensor), 0, "dlclose failed");
 #endif
 
-	res = SSM_S_OK;
+    res = SSM_S_OK;
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 SSMRESULT CContextRepository::GetCurrentPath(std::string *path)
 {
-	char		buffer[2048];
-	SSMRESULT	res = SSM_E_FAIL;
+    char        buffer[2048];
+    SSMRESULT   res = SSM_E_FAIL;
 #if defined(WIN32)
-	DWORD length = GetModuleFileNameA(NULL, buffer, 2047);
+    DWORD length = GetModuleFileNameA(NULL, buffer, 2047);
 
-	if (length == 0)
-	{
-		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-	}
+    if (length == 0)
+    {
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+    }
 
-	buffer[length] = '\0';
-	if (PathRemoveFileSpecA(buffer) == 0)
-	{
-		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-	}
+    buffer[length] = '\0';
+    if (PathRemoveFileSpecA(buffer) == 0)
+    {
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+    }
 
 #elif defined(LINUX)
-	char	*strPath = NULL;
-	int length = ::readlink("/proc/self/exe", buffer, 2047);
+    char    *strPath = NULL;
+    int length = ::readlink("/proc/self/exe", buffer, 2047);
 
-	if (length == -1)
-	{
-		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-	}
+    if (length == -1)
+    {
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+    }
 
-	strPath = strrchr(buffer, '/');
+    strPath = strrchr(buffer, '/');
 
-	if (strPath == NULL)
-	{
-		SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-	}
+    if (strPath == NULL)
+    {
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+    }
 
-	*strPath = '\0';
+    *strPath = '\0';
 #endif
 
-	path->append(buffer);
-	res = SSM_S_OK;
+    path->append(buffer);
+    res = SSM_S_OK;
 
 CLEANUP:
-	return res;
+    return res;
 }

@@ -27,327 +27,332 @@
 /**
 * @class    CContextModel
 * @brief    CContextModel Interface
-*			 This class represents Context Model
+*            This class represents Context Model
 *
 * @see
 */
-class CContextModel : 
-	public CObjectRoot<CObjectMultiThreadModel>
-	, public IContextModel
-	, public IThreadClient
-	, public IEvent
+class CContextModel :
+    public CObjectRoot<CObjectMultiThreadModel>
+    , public IContextModel
+    , public IThreadClient
+    , public IEvent
 {
-private:
-	CObjectPtr<ITasker>						m_pTasker;
-	CObjectPtr<IEvaluationEngine>			m_pEvaluationEngine;
-	CObjectPtr<IContextModel>				m_pParentModel;
-	ModelPropertyVec						m_modelProperties;
-	//std::vector<IConditionedModel*>			m_ConditionedModels;
-	int										m_modelId;
-	std::string								m_modelName;
-	IContextModelEvent						*m_pContextModelEvent;
-	CSimpleMutex							m_mtxActivationCount;
-	int										m_activationCount;
+    private:
+        CObjectPtr<ITasker>                     m_pTasker;
+        CObjectPtr<IEvaluationEngine>           m_pEvaluationEngine;
+        CObjectPtr<IContextModel>               m_pParentModel;
+        ModelPropertyVec                        m_modelProperties;
+        //std::vector<IConditionedModel*>           m_ConditionedModels;
+        int                                     m_modelId;
+        std::string                             m_modelName;
+        IContextModelEvent                      *m_pContextModelEvent;
+        CSimpleMutex                            m_mtxActivationCount;
+        int                                     m_activationCount;
 
-	std::map<std::string, std::pair<int, ISSMResource> >	m_mapSSM;
-	std::map<int,IntVec>					m_mapDeviceDataIds;
+        std::map<std::string, std::pair<int, ISSMResource> >    m_mapSSM;
+        std::map<int, IntVec>                    m_mapDeviceDataIds;
 
-	//DeviceDataId, RefCount
-	std::map<int, int>						m_mapSubscribedDevice;
-	std::map<int, int>						m_mapGetDevice;
+        //DeviceDataId, RefCount
+        std::map<int, int>                      m_mapSubscribedDevice;
+        std::map<int, int>                      m_mapGetDevice;
 
-	ConstructionType						m_constructionType;
+        ConstructionType                        m_constructionType;
 
-	std::string								m_secLifeTime;
+        std::string                             m_secLifeTime;
 
-	void registerSSMResource(IN ActivationType activationType, IN int targetDeviceDataId, IN ISSMResource* pSSMResource);
-	
-	void unregisterSSMResource(IN ActivationType activationType, IN int targetDeviceDataId, IN ISSMResource* pSSMResource);
+        void registerSSMResource(IN ActivationType activationType, IN int targetDeviceDataId,
+                                 IN ISSMResource *pSSMResource);
 
-public:
-	SSMRESULT finalConstruct();
+        void unregisterSSMResource(IN ActivationType activationType, IN int targetDeviceDataId,
+                                   IN ISSMResource *pSSMResource);
 
-	void finalRelease();
+    public:
+        SSMRESULT finalConstruct();
 
-	/**
-	* @fn	  create
-	* @brief Create new Context Model 
-	*
-	* @param [in] ConstructionType constructionType - Construction Type that current model is created from external modules or internally created.
-	* @param [in] IContextModel *pParentModel - Parent Context Model that related to Model hierarchy.
-	* @param [in] std::string modelName - Represent model's name
-	* @param [in] ModelPropertyVec *pModelProperties - Represent model's properties that exposed to CQL
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT create(IN ConstructionType constructionType, IN IContextModel *pParentModel, 
-		IN std::string modelName, IN ModelPropertyVec *pModelProperties);
+        void finalRelease();
 
-	/**
-	* @fn	  registerContextModelEvent
-	* @brief Register ContextModel's events like Activate or Deactivate
-	*
-	* @param [in] IContextModelEvent *pContextModelEvent - Event interface.
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT registerContextModelEvent(IN IContextModelEvent *pContextModelEvent);
+        /**
+        * @fn     create
+        * @brief Create new Context Model
+        *
+        * @param [in] ConstructionType constructionType - Construction Type that current model is created from external modules or internally created.
+        * @param [in] IContextModel *pParentModel - Parent Context Model that related to Model hierarchy.
+        * @param [in] std::string modelName - Represent model's name
+        * @param [in] ModelPropertyVec *pModelProperties - Represent model's properties that exposed to CQL
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT create(IN ConstructionType constructionType, IN IContextModel *pParentModel,
+                         IN std::string modelName, IN ModelPropertyVec *pModelProperties);
 
-	void onExecute(IN void* pArg);
+        /**
+        * @fn     registerContextModelEvent
+        * @brief Register ContextModel's events like Activate or Deactivate
+        *
+        * @param [in] IContextModelEvent *pContextModelEvent - Event interface.
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT registerContextModelEvent(IN IContextModelEvent *pContextModelEvent);
 
-	void onTerminate(IN void* pArg);
+        void onExecute(IN void *pArg);
 
-	/**
-	* @fn	  onEvent
-	* @brief Called when new context model data arrived
-	*
-	* @param [in] std::string deviceID - DeviceID that represents where the data comes.
-	* @param [in] TypeofEvent callType - Represent received data's type, streamed or single
-	* @param [in] std::vector<ContextData> ctxData - Context data
-	* 
-	* @return int
-	* @warning
-	* @exception
-	* @see
-	*/
-	int onEvent(IN std::string deviceID, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
+        void onTerminate(IN void *pArg);
 
-	SSMRESULT queryInterface(const OID& objectID, IBase** ppObject)
-	{
-		if(ppObject == NULL)
-			return SSM_E_POINTER;
+        /**
+        * @fn     onEvent
+        * @brief Called when new context model data arrived
+        *
+        * @param [in] std::string deviceID - DeviceID that represents where the data comes.
+        * @param [in] TypeofEvent callType - Represent received data's type, streamed or single
+        * @param [in] std::vector<ContextData> ctxData - Context data
+        *
+        * @return int
+        * @warning
+        * @exception
+        * @see
+        */
+        int onEvent(IN std::string deviceID, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
 
-		if(IsEqualOID(objectID, OID_IContextModel))
-		{
-			IBase *pBase = (IContextModel*)this;
-			pBase->addRef();
-			*ppObject = pBase;
-			return SSM_S_OK;
-		}
+        SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
+        {
+            if (ppObject == NULL)
+                return SSM_E_POINTER;
 
-		return SSM_E_NOINTERFACE;
-	}
+            if (IsEqualOID(objectID, OID_IContextModel))
+            {
+                IBase *pBase = (IContextModel *)this;
+                pBase->addRef();
+                *ppObject = pBase;
+                return SSM_S_OK;
+            }
 
-	/**
-	* @fn	  getModelId
-	* @brief Get current model's id used for Evaluation Engine
-	*
-	* @param NONE
-	* 
-	* @return int
-	* @warning
-	* @exception
-	* @see
-	*/
-	int getModelId();
+            return SSM_E_NOINTERFACE;
+        }
 
-	/**
-	* @fn	  getModelName
-	* @brief Get current model's name
-	*
-	* @param NONE
-	* 
-	* @return std::string
-	* @warning
-	* @exception
-	* @see
-	*/
-	std::string getModelName();
+        /**
+        * @fn     getModelId
+        * @brief Get current model's id used for Evaluation Engine
+        *
+        * @param NONE
+        *
+        * @return int
+        * @warning
+        * @exception
+        * @see
+        */
+        int getModelId();
 
-	/**
-	* @fn	  getConstructionType
-	* @brief Get current model's constructionType defined when created
-	*
-	* @param NONE
-	* 
-	* @return IContextModel::ConstructionType
-	* @warning
-	* @exception
-	* @see
-	*/
-	ConstructionType getConstructionType();
+        /**
+        * @fn     getModelName
+        * @brief Get current model's name
+        *
+        * @param NONE
+        *
+        * @return std::string
+        * @warning
+        * @exception
+        * @see
+        */
+        std::string getModelName();
 
-	/**
-	* @fn	  getParentDataId
-	* @brief Get parent dataId related to model hierarchy
-	*
-	* @param [in] int dataId - DataId that current model's
-	* @param [in] IContextModel *pParentModel - Designated parent Context Model
-	* @param [out] int *pParentDataId - Designated parent Context Model's data's Id
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT getParentDataId(IN int dataId, IN IContextModel *pParentModel, OUT int *pParentDataId);
+        /**
+        * @fn     getConstructionType
+        * @brief Get current model's constructionType defined when created
+        *
+        * @param NONE
+        *
+        * @return IContextModel::ConstructionType
+        * @warning
+        * @exception
+        * @see
+        */
+        ConstructionType getConstructionType();
 
-	/**
-	* @fn	  getChildDataId
-	* @brief Get child dataId related to model hierarchy
-	*
-	* @param [in] int dataId - DataId that current model's
-	* @param [in] IContextModel *pChildModel - Designated child Context Model
-	* @param [out] int *pParentDataId - Designated child Context Model's data's Id
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT getChildDataId(IN int dataId, IN IContextModel *pChildModel, OUT IntVec *pChildDataIds);
+        /**
+        * @fn     getParentDataId
+        * @brief Get parent dataId related to model hierarchy
+        *
+        * @param [in] int dataId - DataId that current model's
+        * @param [in] IContextModel *pParentModel - Designated parent Context Model
+        * @param [out] int *pParentDataId - Designated parent Context Model's data's Id
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getParentDataId(IN int dataId, IN IContextModel *pParentModel, OUT int *pParentDataId);
 
-	/**
-	* @fn	  activate
-	* @brief Activate current model's working. Each call to activate will increase internal reference counter
-	*
-	* @param [in] ActivationType activationType - Specify current model's working type
-	* @param [in] int targetDeviceDataId - Specify target device's dataId
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT activate(IN ActivationType activationType, IN int targetDeviceDataId);
+        /**
+        * @fn     getChildDataId
+        * @brief Get child dataId related to model hierarchy
+        *
+        * @param [in] int dataId - DataId that current model's
+        * @param [in] IContextModel *pChildModel - Designated child Context Model
+        * @param [out] int *pParentDataId - Designated child Context Model's data's Id
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getChildDataId(IN int dataId, IN IContextModel *pChildModel, OUT IntVec *pChildDataIds);
 
-	/**
-	* @fn	  deactivate
-	* @brief Deactivate current model's working. Each call to deactivate will decrease internal reference counter\n
-	*        and finally deactivated when counter is 0
-	*
-	* @param [in] ActivationType activationType - Specify current model's working type
-	* @param [in] int targetDeviceDataId - Specify target device's dataId
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT deactivate(IN ActivationType activationType, IN int targetDeviceDataId);
+        /**
+        * @fn     activate
+        * @brief Activate current model's working. Each call to activate will increase internal reference counter
+        *
+        * @param [in] ActivationType activationType - Specify current model's working type
+        * @param [in] int targetDeviceDataId - Specify target device's dataId
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT activate(IN ActivationType activationType, IN int targetDeviceDataId);
 
-	//SSMRESULT GetModelSchema(OUT ModelPropertyVec *pModelProperties);
+        /**
+        * @fn     deactivate
+        * @brief Deactivate current model's working. Each call to deactivate will decrease internal reference counter\n
+        *        and finally deactivated when counter is 0
+        *
+        * @param [in] ActivationType activationType - Specify current model's working type
+        * @param [in] int targetDeviceDataId - Specify target device's dataId
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT deactivate(IN ActivationType activationType, IN int targetDeviceDataId);
 
-	/**
-	* @fn	  addModelData
-	* @brief Add model data to Context Model
-	*
-	* @param [in] int parentDataId - Specify current model's parent Context Model's dataId
-	* @param [in] ModelPropertyVec *pData - Packed data for adding
-	* @param [out] int *pDataId - Returned dataId that newly added
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT addModelData(IN int parentDataId, IN ModelPropertyVec *pData, OUT int *pDataId);
+        //SSMRESULT GetModelSchema(OUT ModelPropertyVec *pModelProperties);
 
-	/**
-	* @fn	  updateModelData
-	* @brief Update model data to Context Model 
-	*
-	* @param [in] int dataId - DataId that provided AddModelData's execution
-	* @param [in] ModelPropertyVec *pData - Packed data for updating
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT updateModelData(IN int dataId, IN ModelPropertyVec *pData);
+        /**
+        * @fn     addModelData
+        * @brief Add model data to Context Model
+        *
+        * @param [in] int parentDataId - Specify current model's parent Context Model's dataId
+        * @param [in] ModelPropertyVec *pData - Packed data for adding
+        * @param [out] int *pDataId - Returned dataId that newly added
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT addModelData(IN int parentDataId, IN ModelPropertyVec *pData, OUT int *pDataId);
 
-	/**
-	* @fn	  deleteModelData
-	* @brief Delete model data using given index
-	*
-	* @param [in] int dataId - DataId that provided AddModelData's execution
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT deleteModelData(IN int dataId);
+        /**
+        * @fn     updateModelData
+        * @brief Update model data to Context Model
+        *
+        * @param [in] int dataId - DataId that provided AddModelData's execution
+        * @param [in] ModelPropertyVec *pData - Packed data for updating
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT updateModelData(IN int dataId, IN ModelPropertyVec *pData);
 
-	/**
-	* @fn	  getModelData
-	* @brief Get model data
-	*
-	* @param [in] int dataId - DataId that provided AddModelData's execution
-	* @param [out] ModelPropertyVec *pData - Packed data
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT getModelData(IN int dataId, OUT ModelPropertyVec *pData);
+        /**
+        * @fn     deleteModelData
+        * @brief Delete model data using given index
+        *
+        * @param [in] int dataId - DataId that provided AddModelData's execution
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT deleteModelData(IN int dataId);
 
-	/**
-	* @fn	  getModelDataSet
-	* @brief Get model data set
-	*
-	* @param [in] int startIndex - Starting index of model data
-	* @param [in] int count - Number of data to retrieve
-	* @param [out] vector<ModelPropertyVec> *pData - Packed data
-	* @param [out] int *pLastIndex - Index of last data
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT getModelDataSet(IN int startIndex, IN int count, OUT std::vector<ModelPropertyVec> *pDataSet, OUT int *pLastIndex);
+        /**
+        * @fn     getModelData
+        * @brief Get model data
+        *
+        * @param [in] int dataId - DataId that provided AddModelData's execution
+        * @param [out] ModelPropertyVec *pData - Packed data
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getModelData(IN int dataId, OUT ModelPropertyVec *pData);
 
-	/**
-	* @fn	  createConditionedModel
-	* @brief Create Conditioned Model for data searching or triggering
-	*
-	* @param [in] ModelConditionVec *pModelConditionVec - Conditions that searching or triggering
-	* @param [out] IConditionedModel **ppConditionedModel - Created Conditioned Model interface
-	* 
-	* @return SSMRESULT
-	* @warning
-	* @exception
-	* @see
-	*/
-	SSMRESULT createConditionedModel(IN ModelConditionVec *pModelConditionVec, OUT IConditionedModel **ppConditionedModel);
+        /**
+        * @fn     getModelDataSet
+        * @brief Get model data set
+        *
+        * @param [in] int startIndex - Starting index of model data
+        * @param [in] int count - Number of data to retrieve
+        * @param [out] vector<ModelPropertyVec> *pData - Packed data
+        * @param [out] int *pLastIndex - Index of last data
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT getModelDataSet(IN int startIndex, IN int count,
+                                  OUT std::vector<ModelPropertyVec> *pDataSet, OUT int *pLastIndex);
 
-	//SSMRESULT CleanUpModelData();
+        /**
+        * @fn     createConditionedModel
+        * @brief Create Conditioned Model for data searching or triggering
+        *
+        * @param [in] ModelConditionVec *pModelConditionVec - Conditions that searching or triggering
+        * @param [out] IConditionedModel **ppConditionedModel - Created Conditioned Model interface
+        *
+        * @return SSMRESULT
+        * @warning
+        * @exception
+        * @see
+        */
+        SSMRESULT createConditionedModel(IN ModelConditionVec *pModelConditionVec,
+                                         OUT IConditionedModel **ppConditionedModel);
 
-	/**
-	* @fn	  addSSMResourceAndDeviceDataId
-	* @brief Add SSM resources with other informations - Internal use only
-	*
-	* @param [in] std::string deviceId - deviceId that used D2D communication
-	* @param [in] int deviceDataId - Device's dataId that where SSMResource come from
-	* @param [in] ISSMResource *pSSMResource - SSMResource for adding
-	* 
-	* @return NONE
-	* @warning
-	* @exception
-	* @see
-	*/
-	void addSSMResourceAndDeviceDataId(IN std::string deviceId, IN int deviceDataId, IN ISSMResource *pSSMResource);
+        //SSMRESULT CleanUpModelData();
 
-	/**
-	* @fn	  SetLifeTime
-	* @brief Sets current model data's lifeTime
-	*
-	* @param [in] int seconds - model data's lifeTime
-	* 
-	* @return NONE
-	* @warning
-	* @exception
-	* @see
-	*/
-	void setLifeTime(std::string seconds);
+        /**
+        * @fn     addSSMResourceAndDeviceDataId
+        * @brief Add SSM resources with other informations - Internal use only
+        *
+        * @param [in] std::string deviceId - deviceId that used D2D communication
+        * @param [in] int deviceDataId - Device's dataId that where SSMResource come from
+        * @param [in] ISSMResource *pSSMResource - SSMResource for adding
+        *
+        * @return NONE
+        * @warning
+        * @exception
+        * @see
+        */
+        void addSSMResourceAndDeviceDataId(IN std::string deviceId, IN int deviceDataId,
+                                           IN ISSMResource *pSSMResource);
+
+        /**
+        * @fn     SetLifeTime
+        * @brief Sets current model data's lifeTime
+        *
+        * @param [in] int seconds - model data's lifeTime
+        *
+        * @return NONE
+        * @warning
+        * @exception
+        * @see
+        */
+        void setLifeTime(std::string seconds);
 };
 #endif

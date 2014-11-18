@@ -26,33 +26,33 @@
 #include "OCPlatform.h"
 
 class CResourceConnectivity :
-	public CObjectRoot<CObjectMultiThreadModel>
-	, public IResourceConnectivity
+    public CObjectRoot<CObjectMultiThreadModel>
+    , public IResourceConnectivity
 {
-public:
-	SSMRESULT queryInterface(const OID& objectID, IBase** ppObject)
-	{
-		if (ppObject == NULL)
-			return SSM_E_POINTER;
+    public:
+        SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
+        {
+            if (ppObject == NULL)
+                return SSM_E_POINTER;
 
-		if (IsEqualOID(objectID, OID_IResourceConnectivity))
-		{
-			IBase *pBase = (IResourceConnectivity*)this;
-			pBase->addRef();
-			*ppObject = pBase;
-			return SSM_S_OK;
-		}
+            if (IsEqualOID(objectID, OID_IResourceConnectivity))
+            {
+                IBase *pBase = (IResourceConnectivity *)this;
+                pBase->addRef();
+                *ppObject = pBase;
+                return SSM_S_OK;
+            }
 
-		return SSM_E_NOINTERFACE;
-	}
+            return SSM_E_NOINTERFACE;
+        }
 
-	SSMRESULT finalConstruct();
-	void finalRelease();
+        SSMRESULT finalConstruct();
+        void finalRelease();
 
-	void* getPlatform();
+        void *getPlatform();
 
-private:
-	OC::OCPlatform		*m_pPlatform;
+    private:
+        OC::OCPlatform      *m_pPlatform;
 };
 
 #endif

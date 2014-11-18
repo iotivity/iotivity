@@ -21,73 +21,75 @@
 
 SSMRESULT CContextDataReader::finalConstruct()
 {
-	m_pContextModelAccessor = NULL;
-	return SSM_S_OK;
+    m_pContextModelAccessor = NULL;
+    return SSM_S_OK;
 }
 
 void CContextDataReader::finalRelease()
 {
-	m_pContextModelAccessor = NULL;
+    m_pContextModelAccessor = NULL;
 }
 
-SSMRESULT CContextDataReader::registerContextModelAccessor(IN IContextModelAccessor *pContextModelAccessor)
+SSMRESULT CContextDataReader::registerContextModelAccessor(IN IContextModelAccessor
+        *pContextModelAccessor)
 {
-	m_pContextModelAccessor = pContextModelAccessor;
-	
-	return SSM_S_OK;
+    m_pContextModelAccessor = pContextModelAccessor;
+
+    return SSM_S_OK;
 }
 
-SSMRESULT CContextDataReader::getContextData(IN std::string modelName, IN int startIndex, IN int count, OUT std::vector<ContextData> *data, OUT int *pLastIndex)
+SSMRESULT CContextDataReader::getContextData(IN std::string modelName, IN int startIndex,
+        IN int count, OUT std::vector<ContextData> *data, OUT int *pLastIndex)
 {
-	SSMRESULT res = SSM_E_FAIL;
-	std::vector<ModelPropertyVec>	modelDataSet;
-	CObjectPtr<IContextModel>	pContextModel;
+    SSMRESULT res = SSM_E_FAIL;
+    std::vector<ModelPropertyVec>   modelDataSet;
+    CObjectPtr<IContextModel>   pContextModel;
 
-	SSM_CLEANUP_ASSERT(m_pContextModelAccessor->onQueryContextModel(modelName, &pContextModel));
+    SSM_CLEANUP_ASSERT(m_pContextModelAccessor->onQueryContextModel(modelName, &pContextModel));
 
-	SSM_CLEANUP_ASSERT(pContextModel->getModelDataSet(startIndex, count, &modelDataSet, pLastIndex));
+    SSM_CLEANUP_ASSERT(pContextModel->getModelDataSet(startIndex, count, &modelDataSet, pLastIndex));
 
-	for(std::vector<ModelPropertyVec>::iterator itorModelPropertyVec = modelDataSet.begin();
-		itorModelPropertyVec != modelDataSet.end(); ++itorModelPropertyVec)
-	{
-		ContextData contextData;
+    for (std::vector<ModelPropertyVec>::iterator itorModelPropertyVec = modelDataSet.begin();
+         itorModelPropertyVec != modelDataSet.end(); ++itorModelPropertyVec)
+    {
+        ContextData contextData;
 
-		contextData.rootName = pContextModel->getModelName();
-		contextData.outputPropertyCount = (int)itorModelPropertyVec->size();
+        contextData.rootName = pContextModel->getModelName();
+        contextData.outputPropertyCount = (int)itorModelPropertyVec->size();
 
-		for(ModelPropertyVec::iterator itor = itorModelPropertyVec->begin(); 
-			itor != itorModelPropertyVec->end(); ++itor)
-		{
-			std::map<std::string, std::string> propertySet;
+        for (ModelPropertyVec::iterator itor = itorModelPropertyVec->begin();
+             itor != itorModelPropertyVec->end(); ++itor)
+        {
+            std::map<std::string, std::string> propertySet;
 
-			switch(itor->propertyType)
-			{
-			case ModelProperty::TYPE_INTEGER:
-			case ModelProperty::TYPE_NUMERIC:
-				propertySet["type"] = "int";
-				break;
+            switch (itor->propertyType)
+            {
+                case ModelProperty::TYPE_INTEGER:
+                case ModelProperty::TYPE_NUMERIC:
+                    propertySet["type"] = "int";
+                    break;
 
-			case ModelProperty::TYPE_REAL:
-				propertySet["type"] = "double";
-				break;
+                case ModelProperty::TYPE_REAL:
+                    propertySet["type"] = "double";
+                    break;
 
-			case ModelProperty::TYPE_TEXT:
-				propertySet["type"] = "string";
-				break;
+                case ModelProperty::TYPE_TEXT:
+                    propertySet["type"] = "string";
+                    break;
 
-			default:
-				propertySet["type"] = "string";
-			}
+                default:
+                    propertySet["type"] = "string";
+            }
 
-			propertySet["name"] = itor->propertyName;
-			propertySet["value"] = itor->propertyValue;
+            propertySet["name"] = itor->propertyName;
+            propertySet["value"] = itor->propertyValue;
 
-			contextData.outputProperty.push_back(propertySet);
-		}
+            contextData.outputProperty.push_back(propertySet);
+        }
 
-		data->push_back(contextData);
-	}
+        data->push_back(contextData);
+    }
 
 CLEANUP:
-	return res;
+    return res;
 }

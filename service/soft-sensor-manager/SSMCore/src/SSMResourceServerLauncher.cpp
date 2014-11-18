@@ -24,16 +24,16 @@
 #include "SSMResourceServer.h"
 
 string xmlDescription = "<SSMCore>"
-        "<Device>"
-        "<UDN>abcde123-31f8-11b4-a222-08002b34c003</UDN>"
-        "<Name>MyPC</Name>"
-        "<Type>PC</Type>"
-        "</Device>"
-        "</SSMCore>";
+                        "<Device>"
+                        "<UDN>abcde123-31f8-11b4-a222-08002b34c003</UDN>"
+                        "<Name>MyPC</Name>"
+                        "<Type>PC</Type>"
+                        "</Device>"
+                        "</SSMCore>";
 
 using namespace std;
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int inputKey = 0;
 

@@ -26,168 +26,169 @@
 #include "OCPlatform.h"
 
 class CResourceFinder :
-	public CObjectRoot<CObjectMultiThreadModel>
-	, public IResourceFinder
-	, public IThreadClient
+    public CObjectRoot<CObjectMultiThreadModel>
+    , public IResourceFinder
+    , public IThreadClient
 {
-public:
-	SSMRESULT queryInterface(const OID& objectID, IBase** ppObject)
-	{
-		if (ppObject == NULL)
-			return SSM_E_POINTER;
+    public:
+        SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
+        {
+            if (ppObject == NULL)
+                return SSM_E_POINTER;
 
-		if (IsEqualOID(objectID, OID_IResourceFinder))
-		{
-			IBase *pBase = (IResourceFinder*)this;
-			pBase->addRef();
-			*ppObject = pBase;
-			return SSM_S_OK;
-		}
+            if (IsEqualOID(objectID, OID_IResourceFinder))
+            {
+                IBase *pBase = (IResourceFinder *)this;
+                pBase->addRef();
+                *ppObject = pBase;
+                return SSM_S_OK;
+            }
 
-		return SSM_E_NOINTERFACE;
-	}
+            return SSM_E_NOINTERFACE;
+        }
 
-	SSMRESULT finalConstruct();
-	void finalRelease();
+        SSMRESULT finalConstruct();
+        void finalRelease();
 
-	SSMRESULT registerResourceFinderEvent(IN IResourceFinderEvent *pEvent);
-	void onResourceFound(std::shared_ptr<OC::OCResource> resource);
-	SSMRESULT startResourceFinder();
+        SSMRESULT registerResourceFinderEvent(IN IResourceFinderEvent *pEvent);
+        void onResourceFound(std::shared_ptr<OC::OCResource> resource);
+        SSMRESULT startResourceFinder();
 
-	SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent);
-	SSMRESULT stopObserveResource(IN ISSMResource *pSensor);
+        SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent);
+        SSMRESULT stopObserveResource(IN ISSMResource *pSensor);
 
-	void onExecute(IN void* pArg);
-	void onTerminate(IN void* pArg);
+        void onExecute(IN void *pArg);
+        void onTerminate(IN void *pArg);
 
-private:
-	class OICResourceHandler
-	{
-	public:
-		OICResourceHandler()
-		{
-			m_pEvent = NULL;
-			m_pResourceFinderClient = NULL;
-		}
+    private:
+        class OICResourceHandler
+        {
+            public:
+                OICResourceHandler()
+                {
+                    m_pEvent = NULL;
+                    m_pResourceFinderClient = NULL;
+                }
 
-		SSMRESULT initHandler(std::shared_ptr<OC::OCResource> resource, IN IThreadClient	*pThreadClient)
-		{
-			SSMRESULT	res = SSM_E_FAIL;
+                SSMRESULT initHandler(std::shared_ptr<OC::OCResource> resource, IN IThreadClient    *pThreadClient)
+                {
+                    SSMRESULT   res = SSM_E_FAIL;
 
-			SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ITasker, (IBase**)&m_pTasker));
-			m_pResource = resource;
-			m_pResourceFinderClient = pThreadClient;
+                    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ITasker, (IBase **)&m_pTasker));
+                    m_pResource = resource;
+                    m_pResourceFinderClient = pThreadClient;
 
-		CLEANUP:
-			return res;
-		}
+CLEANUP:
+                    return res;
+                }
 
-		SSMRESULT startObserve(IEvent *pEvent)
-		{
-			OC::QueryParamsMap queryParams;
+                SSMRESULT startObserve(IEvent *pEvent)
+                {
+                    OC::QueryParamsMap queryParams;
 
-			m_pEvent = pEvent;
+                    m_pEvent = pEvent;
 
-			m_pResource.get()->observe(OC::ObserveType::Observe, queryParams, std::bind(&OICResourceHandler::onResourceDataReceived,
-				this, std::placeholders::_1, std::placeholders::_2));
+                    m_pResource.get()->observe(OC::ObserveType::Observe, queryParams,
+                                               std::bind(&OICResourceHandler::onResourceDataReceived,
+                                                         this, std::placeholders::_1, std::placeholders::_2));
 
-			return SSM_S_OK;
-		}
+                    return SSM_S_OK;
+                }
 
-		SSMRESULT stopObserve()
-		{
-			m_pResource.get()->cancelObserve();
+                SSMRESULT stopObserve()
+                {
+                    m_pResource.get()->cancelObserve();
 
-			return SSM_S_OK;
-		}
+                    return SSM_S_OK;
+                }
 
-		void onResourceDataReceived(const OC::OCRepresentation& representation, const int& eCode)
-		{
-			if (eCode == 0)
-			{
-				std::vector<ContextData>		lstCtxData;
-				ContextData				ctxData;
-				std::map<std::string, std::string>	outputProperty;
-				OC::AttributeMap			attributeMap = representation.getAttributeMap();
+                void onResourceDataReceived(const OC::OCRepresentation &representation, const int &eCode)
+                {
+                    if (eCode == 0)
+                    {
+                        std::vector<ContextData>        lstCtxData;
+                        ContextData             ctxData;
+                        std::map<std::string, std::string>  outputProperty;
+                        OC::AttributeMap            attributeMap = representation.getAttributeMap();
 
-				//Bind data
-				ctxData.rootName = m_pResource->uri().substr(1);
+                        //Bind data
+                        ctxData.rootName = m_pResource->uri().substr(1);
 
-				//TODO: Temporally used for json parsing limitation
-				ctxData.outputPropertyCount = attributeMap.size() / 3;
+                        //TODO: Temporally used for json parsing limitation
+                        ctxData.outputPropertyCount = attributeMap.size() / 3;
 
-				if(ctxData.outputPropertyCount > 0)
-				{
-					for (size_t i = 0; i < attributeMap.size() / 3; i++)
-					{
-						outputProperty["name"] = attributeMap.find(std::to_string(i * 3))->second.front();
-						outputProperty["type"] = attributeMap.find(std::to_string(i * 3 + 1))->second.front();
-						outputProperty["value"] = attributeMap.find(std::to_string(i * 3 + 2))->second.front();
-						ctxData.outputProperty.push_back(outputProperty);
-					}
+                        if (ctxData.outputPropertyCount > 0)
+                        {
+                            for (size_t i = 0; i < attributeMap.size() / 3; i++)
+                            {
+                                outputProperty["name"] = attributeMap.find(std::to_string(i * 3))->second.front();
+                                outputProperty["type"] = attributeMap.find(std::to_string(i * 3 + 1))->second.front();
+                                outputProperty["value"] = attributeMap.find(std::to_string(i * 3 + 2))->second.front();
+                                ctxData.outputProperty.push_back(outputProperty);
+                            }
 
-					/////////////////////////////////////////////////////
-					lstCtxData.push_back(ctxData);
-					m_pEvent->onEvent(m_pResource->uri().substr(1), SSM_REPEAT, lstCtxData);
-				}
-				else
-				{
-					;//Payload is empty!!
-				}
-			}
-		}
+                            /////////////////////////////////////////////////////
+                            lstCtxData.push_back(ctxData);
+                            m_pEvent->onEvent(m_pResource->uri().substr(1), SSM_REPEAT, lstCtxData);
+                        }
+                        else
+                        {
+                            ;//Payload is empty!!
+                        }
+                    }
+                }
 
-		void onGetResourceProfile(const OC::OCRepresentation& representation, const int& eCode)
-		{
-			//unpack attributeMap
+                void onGetResourceProfile(const OC::OCRepresentation &representation, const int &eCode)
+                {
+                    //unpack attributeMap
 
-			//Create SSMResource using OCResource attributeMap
-			std::map<std::string, std::string>		outputProperty;
-			OC::AttributeMap					attributeMap = representation.getAttributeMap();
-			ISSMResource		*pSSMResource = new ISSMResource();
-			pSSMResource->location = SENSOR_LOCATION_REMOTE;
-			pSSMResource->name = m_pResource->host() + m_pResource->uri();
-			pSSMResource->type = m_pResource->uri().substr(1);
-			pSSMResource->ip = m_pResource->host();
+                    //Create SSMResource using OCResource attributeMap
+                    std::map<std::string, std::string>      outputProperty;
+                    OC::AttributeMap                    attributeMap = representation.getAttributeMap();
+                    ISSMResource        *pSSMResource = new ISSMResource();
+                    pSSMResource->location = SENSOR_LOCATION_REMOTE;
+                    pSSMResource->name = m_pResource->host() + m_pResource->uri();
+                    pSSMResource->type = m_pResource->uri().substr(1);
+                    pSSMResource->ip = m_pResource->host();
 
-			//bind default properties
-			outputProperty["name"] = "lifetime";
-			outputProperty["type"] = "int";
-			outputProperty["value"] = "0";
-			pSSMResource->outputProperty.push_back(outputProperty);
+                    //bind default properties
+                    outputProperty["name"] = "lifetime";
+                    outputProperty["type"] = "int";
+                    outputProperty["value"] = "0";
+                    pSSMResource->outputProperty.push_back(outputProperty);
 
-			//bind default primitive sensor property, value to resource class for schema creating
-			
-			//TODO: Temporally used for json parsing limitation
-			for (size_t i = 0; i < attributeMap.size() / 3; i++)
-			{
-				outputProperty["name"] = attributeMap.find(std::to_string(i * 3))->second.front();
-				outputProperty["type"] = attributeMap.find(std::to_string(i * 3 + 1))->second.front();
-				outputProperty["value"] = attributeMap.find(std::to_string(i * 3 + 2))->second.front();
-				pSSMResource->outputProperty.push_back(outputProperty);
-			}
-			/////////////////////////////////////////////////////
-			//
-			int		*pMessage = new int[2];
-			pMessage[0] = RESOURCE_DISCOVER_SETUP_RESOURCE;
-			pMessage[1] = (int)pSSMResource;
+                    //bind default primitive sensor property, value to resource class for schema creating
 
-			m_pTasker->addTask(m_pResourceFinderClient, (void*)pMessage);
-		}
+                    //TODO: Temporally used for json parsing limitation
+                    for (size_t i = 0; i < attributeMap.size() / 3; i++)
+                    {
+                        outputProperty["name"] = attributeMap.find(std::to_string(i * 3))->second.front();
+                        outputProperty["type"] = attributeMap.find(std::to_string(i * 3 + 1))->second.front();
+                        outputProperty["value"] = attributeMap.find(std::to_string(i * 3 + 2))->second.front();
+                        pSSMResource->outputProperty.push_back(outputProperty);
+                    }
+                    /////////////////////////////////////////////////////
+                    //
+                    int     *pMessage = new int[2];
+                    pMessage[0] = RESOURCE_DISCOVER_SETUP_RESOURCE;
+                    pMessage[1] = (int)pSSMResource;
 
-	private:
-		CObjectPtr<ITasker>					m_pTasker;
-		std::shared_ptr<OC::OCResource>		m_pResource;
-		IThreadClient						*m_pResourceFinderClient;
-		IEvent								*m_pEvent;
-	};
+                    m_pTasker->addTask(m_pResourceFinderClient, (void *)pMessage);
+                }
 
-	enum RESOURCE_DISCOVER_STATE{RESOURCE_DISCOVER_REQUESTPROFILE, RESOURCE_DISCOVER_SETUP_RESOURCE};
-	OC::OCPlatform						*m_pPlatform;
-	CObjectPtr<IResourceConnectivity>	m_pResourceConnectivity;
-	IResourceFinderEvent				*m_pResourceFinderEvent;
-	CObjectPtr<ITasker>				m_pTasker;
-	std::map<std::string , OICResourceHandler*>	m_mapResourceHandler;
+            private:
+                CObjectPtr<ITasker>                 m_pTasker;
+                std::shared_ptr<OC::OCResource>     m_pResource;
+                IThreadClient                       *m_pResourceFinderClient;
+                IEvent                              *m_pEvent;
+        };
+
+        enum RESOURCE_DISCOVER_STATE {RESOURCE_DISCOVER_REQUESTPROFILE, RESOURCE_DISCOVER_SETUP_RESOURCE};
+        OC::OCPlatform                      *m_pPlatform;
+        CObjectPtr<IResourceConnectivity>   m_pResourceConnectivity;
+        IResourceFinderEvent                *m_pResourceFinderEvent;
+        CObjectPtr<ITasker>             m_pTasker;
+        std::map<std::string , OICResourceHandler *> m_mapResourceHandler;
 };
 
 #endif

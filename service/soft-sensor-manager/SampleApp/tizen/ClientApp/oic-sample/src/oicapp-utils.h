@@ -20,7 +20,7 @@ extern "C"
 
 void oicapp_fail_popup(oicapp_data *ad, char *title, char *text, int timeout);
 void oicapp_util_put_msg(oicapp_data *ad, const char *msg);
-char* oicapp_util_wifi();
+char *oicapp_util_wifi();
 
 /*
 int oicapp_client_start(oicapp_data *ad);

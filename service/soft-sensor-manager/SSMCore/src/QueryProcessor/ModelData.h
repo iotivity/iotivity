@@ -26,114 +26,114 @@
 /**
 * @class    CModelData
 * @brief    CModelData Interface
-*			 This class represents context model data package
+*            This class represents context model data package
 *
 * @see
 */
 class CModelData : public IModelData
 {
-private:
-	int m_dataId;
-	std::map<std::string, std::string> m_properties;
+    private:
+        int m_dataId;
+        std::map<std::string, std::string> m_properties;
 
-public:
-	CModelData();
+    public:
+        CModelData();
 
-	~CModelData();
+        ~CModelData();
 
-	/**
-	* @fn	  setDataId
-	* @brief Set affected DataId. This method is only for constructing data.
-	*
-	* @param [in] int dataId - Represent data Id
-	* 
-	* @return NONE
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	void setDataId(IN int dataId);
+        /**
+        * @fn     setDataId
+        * @brief Set affected DataId. This method is only for constructing data.
+        *
+        * @param [in] int dataId - Represent data Id
+        *
+        * @return NONE
+        * @warning
+        * @exception
+        * @see
+        */
+        void setDataId(IN int dataId);
 
-	/**
-	* @fn	  addModelData
-	* @brief Add affected model data. This method is only for constructing data.
-	*
-	* @param [in] std::string propertyName - Represent property name
-	* @param [in] std::string propertyValue - Represent property value
-	* 
-	* @return NONE
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	void addModelData(IN std::string propertyName, IN std::string propertyValue);
+        /**
+        * @fn     addModelData
+        * @brief Add affected model data. This method is only for constructing data.
+        *
+        * @param [in] std::string propertyName - Represent property name
+        * @param [in] std::string propertyValue - Represent property value
+        *
+        * @return NONE
+        * @warning
+        * @exception
+        * @see
+        */
+        void addModelData(IN std::string propertyName, IN std::string propertyValue);
 
-	/**
-	* @fn	  getDataId
-	* @brief Get affected DataId. ContextModel has plenty of data so \n
-	*		  returned data is matched from given condition
-	*
-	* @param None
-	* 
-	* @return int
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	int getDataId();
+        /**
+        * @fn     getDataId
+        * @brief Get affected DataId. ContextModel has plenty of data so \n
+        *         returned data is matched from given condition
+        *
+        * @param None
+        *
+        * @return int
+        * @warning
+        * @exception
+        * @see
+        */
+        int getDataId();
 
-	/**
-	* @fn	  getPropertyCount
-	* @brief ContextModel has at least one property that contains data \n
-	*		  property is described from its specification.
-	*
-	* @param None
-	* 
-	* @return int
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	int getPropertyCount();
+        /**
+        * @fn     getPropertyCount
+        * @brief ContextModel has at least one property that contains data \n
+        *         property is described from its specification.
+        *
+        * @param None
+        *
+        * @return int
+        * @warning
+        * @exception
+        * @see
+        */
+        int getPropertyCount();
 
-	/**
-	* @fn	  getPropertyName
-	* @brief Retrieve propertyName
-	*
-	* @param [in] int propertyIndex - index of property to read
-	* 
-	* @return std::string
-	* @warning      
-	* @exception    
-	* @see 
-	*/
-	std::string getPropertyName(IN int propertyIndex);
+        /**
+        * @fn     getPropertyName
+        * @brief Retrieve propertyName
+        *
+        * @param [in] int propertyIndex - index of property to read
+        *
+        * @return std::string
+        * @warning
+        * @exception
+        * @see
+        */
+        std::string getPropertyName(IN int propertyIndex);
 
-	/**
-	* @fn	  getPropertyValue
-	* @brief Retrieve propertyValue
-	*
-	* @param [in] int propertyIndex - index of property to read
-	* 
-	* @return std::string
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	std::string getPropertyValue(IN int propertyIndex);
+        /**
+        * @fn     getPropertyValue
+        * @brief Retrieve propertyValue
+        *
+        * @param [in] int propertyIndex - index of property to read
+        *
+        * @return std::string
+        * @warning
+        * @exception
+        * @see
+        */
+        std::string getPropertyValue(IN int propertyIndex);
 
-	/**
-	* @fn	  getPropertyValueByName
-	* @brief Retrieve propertyValue using given name
-	*
-	* @param [in] std::string propertyName - property name looking for
-	* 
-	* @return std::string
-	* @warning      
-	* @exception    
-	* @see
-	*/
-	std::string getPropertyValueByName(IN std::string propertyName);
+        /**
+        * @fn     getPropertyValueByName
+        * @brief Retrieve propertyValue using given name
+        *
+        * @param [in] std::string propertyName - property name looking for
+        *
+        * @return std::string
+        * @warning
+        * @exception
+        * @see
+        */
+        std::string getPropertyValueByName(IN std::string propertyName);
 };
 
 #endif

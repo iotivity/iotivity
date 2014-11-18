@@ -21,153 +21,155 @@
 
 SSMRESULT CConditionedModel::finalConstruct()
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	m_triggerId = -1;
+    m_triggerId = -1;
 
-	m_pConditionedModelEvent = NULL;
+    m_pConditionedModelEvent = NULL;
 
-	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IEvaluationEngine, (IBase**)&m_pEvaluationEngine));
+    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IEvaluationEngine, (IBase **)&m_pEvaluationEngine));
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 void CConditionedModel::finalRelease()
 {
-	m_pConditionedModelEvent = NULL;
+    m_pConditionedModelEvent = NULL;
 
-	if(m_triggerId > -1)
-	{
-		deactivateTrigger();
-	}
+    if (m_triggerId > -1)
+    {
+        deactivateTrigger();
+    }
 
-	m_triggerId = -1;
+    m_triggerId = -1;
 }
 
-SSMRESULT CConditionedModel::create(IN IContextModel *pBaseModel, IN ModelConditionVec *pModelConditions)
+SSMRESULT CConditionedModel::create(IN IContextModel *pBaseModel,
+                                    IN ModelConditionVec *pModelConditions)
 {
-	m_watchCondition = *pModelConditions;
-	return pBaseModel->queryInterface(OID_IContextModel, (IBase**)&m_pBaseModel);
+    m_watchCondition = *pModelConditions;
+    return pBaseModel->queryInterface(OID_IContextModel, (IBase **)&m_pBaseModel);
 }
 
 SSMRESULT CConditionedModel::getBaseContextModel(OUT IContextModel **ppBaseContextModel)
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	SSM_CLEANUP_ASSERT(m_pBaseModel->queryInterface(OID_IContextModel, (IBase**)ppBaseContextModel));
+    SSM_CLEANUP_ASSERT(m_pBaseModel->queryInterface(OID_IContextModel, (IBase **)ppBaseContextModel));
 
 CLEANUP:
-	return res;
+    return res;
 }
 
-SSMRESULT CConditionedModel::registerConditionedModelEvent(IN IConditionedModelEvent *pConditionedModelEvent)
+SSMRESULT CConditionedModel::registerConditionedModelEvent(IN IConditionedModelEvent
+        *pConditionedModelEvent)
 {
-	m_pConditionedModelEvent = pConditionedModelEvent;
-	return SSM_S_OK;
+    m_pConditionedModelEvent = pConditionedModelEvent;
+    return SSM_S_OK;
 }
 
 SSMRESULT CConditionedModel::onWatchModelData(IN int triggerId, IN int dataId)
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	m_mtxConditionedData.lock();
-	m_triggeredDataIds.push_back(dataId);
-	m_mtxConditionedData.unlock();
+    m_mtxConditionedData.lock();
+    m_triggeredDataIds.push_back(dataId);
+    m_mtxConditionedData.unlock();
 
-	if(m_pConditionedModelEvent)
-	{
-		res = m_pConditionedModelEvent->onConditionedModelTriggered(triggerId);
-	}
+    if (m_pConditionedModelEvent)
+    {
+        res = m_pConditionedModelEvent->onConditionedModelTriggered(triggerId);
+    }
 
-	return res;
+    return res;
 }
 
 SSMRESULT CConditionedModel::activateTrigger(OUT int *pTriggerId)
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	SSM_CLEANUP_ASSERT(m_pEvaluationEngine->watchModelData(m_pBaseModel->getModelId(),
-		&m_watchCondition, this, &m_triggerId));
+    SSM_CLEANUP_ASSERT(m_pEvaluationEngine->watchModelData(m_pBaseModel->getModelId(),
+                       &m_watchCondition, this, &m_triggerId));
 
-	*pTriggerId = m_triggerId;
+    *pTriggerId = m_triggerId;
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 SSMRESULT CConditionedModel::deactivateTrigger()
 {
-	SSMRESULT res = SSM_S_OK;
+    SSMRESULT res = SSM_S_OK;
 
-	if(m_triggerId > -1)
-	{
-		SSM_CLEANUP_ASSERT(m_pEvaluationEngine->dropWatchModelData(m_triggerId));
-	}
+    if (m_triggerId > -1)
+    {
+        SSM_CLEANUP_ASSERT(m_pEvaluationEngine->dropWatchModelData(m_triggerId));
+    }
 
-	m_triggerId = -1;
+    m_triggerId = -1;
 
 CLEANUP:
-	return res;
+    return res;
 }
 
 bool CConditionedModel::hasAffectedData()
 {
-	bool ret = false;
+    bool ret = false;
 
-	m_mtxConditionedData.lock();
+    m_mtxConditionedData.lock();
 
-	if(m_triggeredDataIds.size() > 0 || m_affectedDataIds.size() > 0)
-	{
-		ret = true;
-		goto CLEANUP;
-	}
+    if (m_triggeredDataIds.size() > 0 || m_affectedDataIds.size() > 0)
+    {
+        ret = true;
+        goto CLEANUP;
+    }
 
-	if(m_pEvaluationEngine->getConditionedModelData(m_pBaseModel->getModelId(),
-		&m_watchCondition, &m_affectedDataIds) != SSM_S_OK)
-	{
-		ret = false;
-		goto CLEANUP;
-	}
+    if (m_pEvaluationEngine->getConditionedModelData(m_pBaseModel->getModelId(),
+            &m_watchCondition, &m_affectedDataIds) != SSM_S_OK)
+    {
+        ret = false;
+        goto CLEANUP;
+    }
 
-	if(m_affectedDataIds.size() > 0)
-	{
-		ret = true;
-		goto CLEANUP;
-	}
-	
+    if (m_affectedDataIds.size() > 0)
+    {
+        ret = true;
+        goto CLEANUP;
+    }
+
 CLEANUP:
-	m_mtxConditionedData.unlock();
-	return ret;
+    m_mtxConditionedData.unlock();
+    return ret;
 }
 
-SSMRESULT CConditionedModel::getAffectedData(OUT IntVec	*pDataIds)
+SSMRESULT CConditionedModel::getAffectedData(OUT IntVec *pDataIds)
 {
-	SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_FAIL;
 
-	m_mtxConditionedData.lock();
+    m_mtxConditionedData.lock();
 
-	if(m_triggeredDataIds.size() > 0)
-	{
-		pDataIds->push_back(m_triggeredDataIds.front());
-		m_triggeredDataIds.pop_front();
-		SSM_CLEANUP_ASSERT(SSM_S_OK);
-	}
-	else
-	{
-		m_affectedDataIds.clear();
-		SSM_CLEANUP_ASSERT(m_pEvaluationEngine->getConditionedModelData(m_pBaseModel->getModelId(),
-			&m_watchCondition, &m_affectedDataIds));
-		*pDataIds = m_affectedDataIds;
-	}
+    if (m_triggeredDataIds.size() > 0)
+    {
+        pDataIds->push_back(m_triggeredDataIds.front());
+        m_triggeredDataIds.pop_front();
+        SSM_CLEANUP_ASSERT(SSM_S_OK);
+    }
+    else
+    {
+        m_affectedDataIds.clear();
+        SSM_CLEANUP_ASSERT(m_pEvaluationEngine->getConditionedModelData(m_pBaseModel->getModelId(),
+                           &m_watchCondition, &m_affectedDataIds));
+        *pDataIds = m_affectedDataIds;
+    }
 
 CLEANUP:
-	m_mtxConditionedData.unlock();
-	return res;
+    m_mtxConditionedData.unlock();
+    return res;
 }
 
 SSMRESULT CConditionedModel::getWatchCondition(OUT ModelConditionVec *pModelConditions)
 {
-	*pModelConditions = m_watchCondition;
-	return SSM_S_OK;
+    *pModelConditions = m_watchCondition;
+    return SSM_S_OK;
 }

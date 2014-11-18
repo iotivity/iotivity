@@ -25,68 +25,72 @@ CDataReader::CDataReader()
 
 CDataReader::~CDataReader()
 {
-	for(std::map<std::string, std::vector<CModelData*> >::iterator itorModel = m_modelDataList.begin();
-		itorModel != m_modelDataList.end(); ++itorModel)
-	{
-		for(std::vector<CModelData*>::iterator itorData = itorModel->second.begin();
-			itorData != itorModel->second.end(); ++itorData)
-		{
-			SAFE_DELETE(*itorData);
-		}
-	}
+    for (std::map<std::string, std::vector<CModelData *> >::iterator itorModel =
+             m_modelDataList.begin();
+         itorModel != m_modelDataList.end(); ++itorModel)
+    {
+        for (std::vector<CModelData *>::iterator itorData = itorModel->second.begin();
+             itorData != itorModel->second.end(); ++itorData)
+        {
+            SAFE_DELETE(*itorData);
+        }
+    }
 }
 
-SSMRESULT CDataReader::addModelData(IN std::string modelName, IN std::vector<CModelData*> *pModelData)
+SSMRESULT CDataReader::addModelData(IN std::string modelName,
+                                    IN std::vector<CModelData *> *pModelData)
 {
-	m_modelDataList[modelName] = *pModelData;
+    m_modelDataList[modelName] = *pModelData;
 
-	return SSM_S_OK;
+    return SSM_S_OK;
 }
 
 SSMRESULT CDataReader::getAffectedModels(OUT std::vector<std::string> *pAffectedModels)
 {
-	for(std::map<std::string, std::vector<CModelData*> >::iterator itorModel = m_modelDataList.begin();
-		itorModel != m_modelDataList.end(); ++itorModel)
-	{
-		pAffectedModels->push_back(itorModel->first);
-	}
+    for (std::map<std::string, std::vector<CModelData *> >::iterator itorModel =
+             m_modelDataList.begin();
+         itorModel != m_modelDataList.end(); ++itorModel)
+    {
+        pAffectedModels->push_back(itorModel->first);
+    }
 
-	return SSM_S_OK;
+    return SSM_S_OK;
 }
 
 SSMRESULT CDataReader::getModelDataCount(IN std::string modelName, OUT int *pDataCount)
 {
-	std::map<std::string, std::vector<CModelData*> >::iterator itor;
+    std::map<std::string, std::vector<CModelData *> >::iterator itor;
 
-	itor = m_modelDataList.find(modelName);
+    itor = m_modelDataList.find(modelName);
 
-	if(itor == m_modelDataList.end())
-	{
-		return SSM_E_FAIL;
-	}
+    if (itor == m_modelDataList.end())
+    {
+        return SSM_E_FAIL;
+    }
 
-	*pDataCount = itor->second.size();
+    *pDataCount = itor->second.size();
 
-	return SSM_S_OK;
+    return SSM_S_OK;
 }
 
-SSMRESULT CDataReader::getModelData(IN std::string modelName, IN int dataIndex, OUT IModelData **ppModelData)
+SSMRESULT CDataReader::getModelData(IN std::string modelName, IN int dataIndex,
+                                    OUT IModelData **ppModelData)
 {
-	std::map<std::string, std::vector<CModelData*> >::iterator itor;
+    std::map<std::string, std::vector<CModelData *> >::iterator itor;
 
-	itor = m_modelDataList.find(modelName);
+    itor = m_modelDataList.find(modelName);
 
-	if(itor == m_modelDataList.end())
-	{
-		return SSM_E_FAIL;
-	}
+    if (itor == m_modelDataList.end())
+    {
+        return SSM_E_FAIL;
+    }
 
-	if(dataIndex > (int)itor->second.size() - 1)
-	{
-		return SSM_E_FAIL;
-	}
+    if (dataIndex > (int)itor->second.size() - 1)
+    {
+        return SSM_E_FAIL;
+    }
 
-	*ppModelData = itor->second[dataIndex];
+    *ppModelData = itor->second[dataIndex];
 
-	return SSM_S_OK;
+    return SSM_S_OK;
 }

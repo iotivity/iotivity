@@ -35,42 +35,42 @@ using namespace std;
 #include <string>
 #include <cstdlib>
 
-#define COAP_IP					"134.134.161.33"
-#define COAP_PORT				56830
-#define COAP_MODE				ModeType::Server
-#define COAP_SRVTYPE		ServiceType::InProc
+#define COAP_IP                 "134.134.161.33"
+#define COAP_PORT               56830
+#define COAP_MODE               ModeType::Server
+#define COAP_SRVTYPE        ServiceType::InProc
 
-#define COAP_TYPE_NAME			"SoftSensorManager.Sensor"
+#define COAP_TYPE_NAME          "SoftSensorManager.Sensor"
 
 // Forward declaring the entityHandler
 
 class TemphumidResource
 {
-public:
-    /// Access this property from a TB client
-    int m_humid;
-    int m_temp;
-    string m_resourceUri;
-    OCResourceHandle m_resourceHandle;
+    public:
+        /// Access this property from a TB client
+        int m_humid;
+        int m_temp;
+        string m_resourceUri;
+        OCResourceHandle m_resourceHandle;
 
-public:
-    /// Constructor
-    TemphumidResource() :
+    public:
+        /// Constructor
+        TemphumidResource() :
             m_humid(0), m_temp(0), m_resourceUri("/Thing_TempHumSensor"), m_resourceHandle(NULL)
-    {
-    }
+        {
+        }
 
-    ~TemphumidResource()
-    {
-    }
+        ~TemphumidResource()
+        {
+        }
 
-    void registerResource(OC::OCPlatform& platform);
+        void registerResource(OC::OCPlatform &platform);
 
-    OCResourceHandle getHandle();
+        OCResourceHandle getHandle();
 
-    void setRepresentation(AttributeMap& attributeMap);
+        void setRepresentation(AttributeMap &attributeMap);
 
-    void getRepresentation(AttributeMap& attributeMap);
+        void getRepresentation(AttributeMap &attributeMap);
 };
 
 #endif /* THINGRESOURCESERVER_H_ */

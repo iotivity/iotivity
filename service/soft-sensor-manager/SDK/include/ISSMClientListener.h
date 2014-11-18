@@ -19,7 +19,7 @@
  ******************************************************************/
 
 /**
- * @file    ISSMClientListener.h 
+ * @file    ISSMClientListener.h
  * @brief   This file contains client listener interfaces.
  */
 
@@ -38,24 +38,24 @@ typedef enum
 
 using namespace OC;
 /**
- *	@brief	ISSMClientListener is a listener interface from which application is derived to get callback from SoftSensorManager service
+ *  @brief  ISSMClientListener is a listener interface from which application is derived to get callback from SoftSensorManager service
  */
 class ISSMClientListener
 {
-public:
-    /**
-     * @brief	onRegisterQuery is a pure virtual operation which should be implemented in applications to get callback messages.
-     * @param [in] attributeMap - A data map in which SoftSensorManager service sends sensor data with cqid.
-     * @param [in] eCode - The address of listener class.  When an application which inherits the ISSMClientListener calls this operation, it sends its address for the listener so that
-     *                          SSMClient can callback message to the appication.
-     * @param [out] cqid - A query id generated from SoftSensorManager service for the queryString request.
-     * @return  SSMReturn
-     
-     */
-    virtual void onRegisterQuery(const AttributeMap& attributeMap, SSMReturn& eCode) = 0;
-    virtual ~ISSMClientListener()
-    {
-    }
+    public:
+        /**
+         * @brief   onRegisterQuery is a pure virtual operation which should be implemented in applications to get callback messages.
+         * @param [in] attributeMap - A data map in which SoftSensorManager service sends sensor data with cqid.
+         * @param [in] eCode - The address of listener class.  When an application which inherits the ISSMClientListener calls this operation, it sends its address for the listener so that
+         *                          SSMClient can callback message to the appication.
+         * @param [out] cqid - A query id generated from SoftSensorManager service for the queryString request.
+         * @return  SSMReturn
+
+         */
+        virtual void onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eCode) = 0;
+        virtual ~ISSMClientListener()
+        {
+        }
 };
 
 #endif /* ISSMCLIENTLISTENER_H_ */

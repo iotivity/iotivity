@@ -27,59 +27,59 @@
 extern "C" {
 #endif
 
-	JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_InitializeSSMCore
-		(JNIEnv *env, jclass clz, jstring jstrXmlDescription);
+JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_InitializeSSMCore
+(JNIEnv *env, jclass clz, jstring jstrXmlDescription);
 
-	JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_StartSSMCore
-		(JNIEnv *env, jclass clz);
+JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_StartSSMCore
+(JNIEnv *env, jclass clz);
 
-	JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_StopSSMCore
-		(JNIEnv *env, jclass clz);
+JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_StopSSMCore
+(JNIEnv *env, jclass clz);
 
-	JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_TerminateSSMCore
-		(JNIEnv *env, jclass clz);
+JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_TerminateSSMCore
+(JNIEnv *env, jclass clz);
 
-	JNIEXPORT jobject JNICALL Java_com_sec_android_ssmcore_CoreController_CreateQueryEngine
-		(JNIEnv *env, jclass clz);
+JNIEXPORT jobject JNICALL Java_com_sec_android_ssmcore_CoreController_CreateQueryEngine
+(JNIEnv *env, jclass clz);
 
-	JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_ReleaseQueryEngine
-		(JNIEnv *env, jclass clz, jobject queryEngine);
+JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_ReleaseQueryEngine
+(JNIEnv *env, jclass clz, jobject queryEngine);
 
-	JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_ExecuteContextQuery
-		(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jstring jstrContextQuery);
+JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_ExecuteContextQuery
+(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jstring jstrContextQuery);
 
-	JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_RegisterQueryEvent
-		(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jobject queryEngineEvent);
+JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_RegisterQueryEvent
+(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jobject queryEngineEvent);
 
-	JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_KillContextQuery
-		(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jint cqid);
+JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_KillContextQuery
+(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jint cqid);
 
-	JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_Release
-		(JNIEnv *env, jclass clz, jint pQueryEngineInstance);
+JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_Release
+(JNIEnv *env, jclass clz, jint pQueryEngineInstance);
 
-	JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_GetDataId
-		(JNIEnv *env, jclass clz, jint pDataReaderInstance);
+JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_GetDataId
+(JNIEnv *env, jclass clz, jint pDataReaderInstance);
 
-	JNIEXPORT jobject JNICALL Java_com_sec_android_ssmcore_CoreController_GetAffectedModels
-		(JNIEnv *env, jclass clz, jint pDataReaderInstance);
+JNIEXPORT jobject JNICALL Java_com_sec_android_ssmcore_CoreController_GetAffectedModels
+(JNIEnv *env, jclass clz, jint pDataReaderInstance);
 
-	JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_GetModelDataCount
-		(JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName);
+JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_GetModelDataCount
+(JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName);
 
-	JNIEXPORT jobject JNICALL Java_com_sec_android_ssmcore_CoreController_GetModelData
-		(JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName, jint jintDataIndex );
+JNIEXPORT jobject JNICALL Java_com_sec_android_ssmcore_CoreController_GetModelData
+(JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName, jint jintDataIndex );
 
-	JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_GetPropertyCount
-		(JNIEnv *env, jclass clz, jint pIModelDataInstance );
+JNIEXPORT jint JNICALL Java_com_sec_android_ssmcore_CoreController_GetPropertyCount
+(JNIEnv *env, jclass clz, jint pIModelDataInstance );
 
-	JNIEXPORT jstring JNICALL Java_com_sec_android_ssmcore_CoreController_GetPropertyName
-		(JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex );
+JNIEXPORT jstring JNICALL Java_com_sec_android_ssmcore_CoreController_GetPropertyName
+(JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex );
 
-	JNIEXPORT jstring JNICALL Java_com_sec_android_ssmcore_CoreController_GetPropertyValue
-		(JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex );
+JNIEXPORT jstring JNICALL Java_com_sec_android_ssmcore_CoreController_GetPropertyValue
+(JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex );
 
-	JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_RegisterReportReceiver
-		(JNIEnv *env, jclass clz, jobject reportReceiver );
+JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_RegisterReportReceiver
+(JNIEnv *env, jclass clz, jobject reportReceiver );
 
 #ifdef __cplusplus
 }
