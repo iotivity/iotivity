@@ -38,7 +38,7 @@ class CConditionedQuery :
 	, public IConditionedModelEvent
 {
 private:
-	CObjectPtr<IThreadPool>					m_pTaskWorker;
+	CObjectPtr<ITasker>						m_pTasker;
 	//CObjectPtr<IPropagationEngine>			m_PropagationEngine;
 	CObject<CConditionedQueryResult>		*m_pConditionedQueryResult;
 	std::vector<IConditionedModel*>			m_conditionedModels;

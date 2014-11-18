@@ -38,7 +38,7 @@ class CContextModel :
 	, public IEvent
 {
 private:
-	CObjectPtr<IThreadPool>					m_pTaskWorker;
+	CObjectPtr<ITasker>						m_pTasker;
 	CObjectPtr<IEvaluationEngine>			m_pEvaluationEngine;
 	CObjectPtr<IContextModel>				m_pParentModel;
 	ModelPropertyVec						m_modelProperties;

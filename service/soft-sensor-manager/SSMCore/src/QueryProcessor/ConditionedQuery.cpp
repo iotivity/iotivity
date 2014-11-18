@@ -23,7 +23,7 @@ SSMRESULT CConditionedQuery::finalConstruct()
 {
 	SSMRESULT res = SSM_E_FAIL;
 
-	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IThreadPool, (IBase**)&m_pTaskWorker));
+	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ITasker, (IBase**)&m_pTasker));
 	SSM_CLEANUP_ASSERT(CreateInstance(OID_IConditionedQueryResult, (IBase**)&m_pConditionedQueryResult));
 
 	m_conditionedQueryEvent = NULL;
@@ -83,7 +83,7 @@ SSMRESULT CConditionedQuery::onConditionedModelTriggered(IN int triggerId)
 	if(evaluatedConditions == 0)
 	{
 		m_pConditionedQueryResult->addRef();
-		SSM_CLEANUP_ASSERT(m_pTaskWorker->addTask(this, (IConditionedQueryResult*)m_pConditionedQueryResult));
+		SSM_CLEANUP_ASSERT(m_pTasker->addTask(this, (IConditionedQueryResult*)m_pConditionedQueryResult));
 	}
 
 	res = SSM_S_OK;

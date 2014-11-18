@@ -25,7 +25,7 @@ SSMRESULT CContextModel::finalConstruct()
 	SSMRESULT res = SSM_E_FAIL;
 	ModelProperty		defaultModelProperty;
 
-	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IThreadPool, (IBase**)&m_pTaskWorker));
+	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ITasker, (IBase**)&m_pTasker));
 
 	SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IEvaluationEngine, (IBase**)&m_pEvaluationEngine));
 
@@ -102,7 +102,7 @@ void CContextModel::registerSSMResource(IN ActivationType activationType, IN int
 			pData = new int[2];
 			pData[0] = STATUS_ACTIVATE;
 			pData[1] = (int)pSSMResource;
-			m_pTaskWorker->addTask(this, (void*)pData);
+			m_pTasker->addTask(this, (void*)pData);
 			m_mapSubscribedDevice[targetDeviceDataId] = 1;
 		}
 		else
@@ -119,7 +119,7 @@ void CContextModel::registerSSMResource(IN ActivationType activationType, IN int
 				pData = new int[2];
 				pData[0] = STATUS_START_READ_VALUE;
 				pData[1] = (int)pSSMResource;
-				m_pTaskWorker->addTask(this, (void*)pData);
+				m_pTasker->addTask(this, (void*)pData);
 				m_mapGetDevice[targetDeviceDataId] = 1;
 			}
 			else
@@ -150,7 +150,7 @@ void CContextModel::unregisterSSMResource(IN ActivationType activationType, IN i
 				pData = new int[2];
 				pData[0] = STATUS_DEACTIVATE;
 				pData[1] = (int)pSSMResource;
-				m_pTaskWorker->addTask(this, (void*)pData);
+				m_pTasker->addTask(this, (void*)pData);
 				m_mapSubscribedDevice.erase(targetDeviceDataId);
 			}
 		}
@@ -164,7 +164,7 @@ void CContextModel::unregisterSSMResource(IN ActivationType activationType, IN i
 				pData = new int[2];
 				pData[0] = STATUS_STOP_READ_VALUE;
 				pData[1] = (int)pSSMResource;
-				m_pTaskWorker->addTask(this, (void*)pData);
+				m_pTasker->addTask(this, (void*)pData);
 			}
 		}
 		break;

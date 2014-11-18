@@ -74,7 +74,7 @@ private:
 		{
 			SSMRESULT	res = SSM_E_FAIL;
 
-			SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IThreadPool, (IBase**)&m_pTaskWorker));
+			SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ITasker, (IBase**)&m_pTasker));
 			m_pResource = resource;
 			m_pResourceFinderClient = pThreadClient;
 
@@ -172,11 +172,11 @@ private:
 			pMessage[0] = RESOURCE_DISCOVER_SETUP_RESOURCE;
 			pMessage[1] = (int)pSSMResource;
 
-			m_pTaskWorker->addTask(m_pResourceFinderClient, (void*)pMessage);
+			m_pTasker->addTask(m_pResourceFinderClient, (void*)pMessage);
 		}
 
 	private:
-		CObjectPtr<IThreadPool>				m_pTaskWorker;
+		CObjectPtr<ITasker>					m_pTasker;
 		std::shared_ptr<OC::OCResource>		m_pResource;
 		IThreadClient						*m_pResourceFinderClient;
 		IEvent								*m_pEvent;
@@ -186,7 +186,7 @@ private:
 	OC::OCPlatform						*m_pPlatform;
 	CObjectPtr<IResourceConnectivity>	m_pResourceConnectivity;
 	IResourceFinderEvent				*m_pResourceFinderEvent;
-	CObjectPtr<IThreadPool>				m_pTaskWorker;
+	CObjectPtr<ITasker>				m_pTasker;
 	std::map<std::string , OICResourceHandler*>	m_mapResourceHandler;
 };
 

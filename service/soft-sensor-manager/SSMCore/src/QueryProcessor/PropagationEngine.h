@@ -43,7 +43,7 @@ class CPropagationEngine :
 	, public IResourceEvent
 {
 private:
-	CObjectPtr<IThreadPool>						m_pTaskWorker;
+	CObjectPtr<ITasker>							m_pTasker;
 	CObjectPtr<IEvaluationEngine>				m_pEvaluationEngine;
 	CObjectPtr<IContextModel>					m_pRootModel;
 
@@ -86,6 +86,8 @@ private:
 	SSMRESULT initializeEngine();
 
 	void terminateEngine();
+
+	SSMRESULT updateDeviceInfo(IN ISSMResource *pSSMResource, OUT int *deviceId);
 
 public:
 	SSMRESULT finalConstruct();

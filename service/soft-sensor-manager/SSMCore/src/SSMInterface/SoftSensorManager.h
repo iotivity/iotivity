@@ -44,7 +44,6 @@ class CSoftSensorManager :
 private:
 	CObjectPtr<IContextRepository>		m_pContextRepository;
 	CObjectPtr<IPropagationEngine>		m_pPropagationEngine;
-	CObjectPtr<IThreadPool>				m_pThreadPool;
 	CObjectPtr<IResponseReactor>		m_pResponseReactor;
 
 public:
