@@ -457,6 +457,7 @@ OCStackResult OCStop()
 
     // Free memory dynamically allocated for resources
     deleteAllResources();
+    DeleteDeviceInfo();
 
     // Make call to OCCoAP layer
     if (OCStopCoAP() == OC_STACK_OK)
@@ -911,6 +912,18 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
     defaultDeviceHandler = entityHandler;
 
     return OC_STACK_OK;
+}
+
+OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
+{
+    OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
+
+    if(myStackMode == OC_CLIENT)
+    {
+        return OC_STACK_ERROR;
+    }
+
+    return SaveDeviceInfo(deviceInfo);
 }
 
 /**

@@ -271,6 +271,18 @@ namespace OC
         }
     }
 
+    OCStackResult InProcServerWrapper::registerDeviceInfo(const OCDeviceInfo deviceInfo)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if(cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCSetDeviceInfo(deviceInfo);
+        }
+        return result;
+    }
+
     OCStackResult InProcServerWrapper::registerResource(
                     OCResourceHandle& resourceHandle,
                     std::string& resourceURI,

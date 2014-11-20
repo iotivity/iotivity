@@ -228,7 +228,8 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     if(requestResult == OC_STACK_VIRTUAL_DO_NOT_HANDLE ||
             requestResult == OC_STACK_OK ||
             requestResult == OC_STACK_RESOURCE_CREATED ||
-            requestResult == OC_STACK_RESOURCE_DELETED)
+            requestResult == OC_STACK_RESOURCE_DELETED ||
+            requestResult == OC_STACK_INVALID_DEVICE_INFO)
     {
         goto exit;
     }

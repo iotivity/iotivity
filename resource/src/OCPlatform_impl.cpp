@@ -172,6 +172,21 @@ namespace OC
                              host, resourceName, resourceHandler, QoS);
     }
 
+    OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
+                                            const std::string& deviceURI,
+                                            FindDeviceCallback deviceInfoHandler)
+    {
+        return result_guard(getDeviceInfo(host, deviceURI, deviceInfoHandler, m_cfg.QoS));
+    }
+
+    OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
+                                            const std::string& deviceURI,
+                                            FindDeviceCallback deviceInfoHandler,
+                                            QualityOfService QoS)
+    {
+        return checked_guard(m_client, &IClientWrapper::ListenForDevice,
+                             host, deviceURI, deviceInfoHandler, QoS);
+    }
 
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
                                             std::string& resourceURI,
@@ -185,8 +200,12 @@ namespace OC
                              resourceInterface, entityHandler, resourceProperty);
     }
 
+    OCStackResult OCPlatform_impl::registerDeviceInfo(const OCDeviceInfo deviceInfo)
+    {
+        return checked_guard(m_server, &IServerWrapper::registerDeviceInfo, deviceInfo);
+    }
 
-	OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
+    OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
                                             const std::shared_ptr< OCResource > resource)
     {
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
@@ -195,8 +214,8 @@ namespace OC
         return checked_guard(m_server, &IServerWrapper::registerResourceWithHost,
                 ref(resourceHandle), resource->host(), resource->uri(), resourceTypes[0]/*"core.remote"*/, "oc.mi.def",
                 (EntityHandler) nullptr, resourceProperty);
-
     }
+
     OCStackResult OCPlatform_impl::unregisterResource(const OCResourceHandle& resourceHandle) const
     {
         return checked_guard(m_server, &IServerWrapper::unregisterResource,

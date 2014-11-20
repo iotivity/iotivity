@@ -95,6 +95,22 @@ namespace OC
                                                 resourceHandler, QoS);
         }
 
+        OCStackResult getDeviceInfo(const std::string& host,
+                                                const std::string& deviceURI,
+                                                FindDeviceCallback deviceInfoHandler)
+        {
+            return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, deviceInfoHandler);
+        }
+
+        OCStackResult getDeviceInfo(const std::string& host,
+                                                const std::string& deviceURI,
+                                                FindDeviceCallback deviceInfoHandler,
+                                                QualityOfService QoS)
+        {
+            return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI,
+                    deviceInfoHandler, QoS);
+        }
+
 
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
                                                 std::string& resourceURI,
@@ -112,6 +128,11 @@ namespace OC
                                                 const std::shared_ptr< OCResource > resource)
         {
             return OCPlatform_impl::Instance().registerResource(resourceHandle, resource);
+        }
+
+        OCStackResult registerDeviceInfo(const OCDeviceInfo deviceInfo)
+        {
+            return OCPlatform_impl::Instance().registerDeviceInfo(deviceInfo);
         }
 
         OCStackResult unregisterResource(const OCResourceHandle& resourceHandle)

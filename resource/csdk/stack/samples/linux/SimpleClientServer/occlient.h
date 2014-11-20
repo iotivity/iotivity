@@ -58,6 +58,7 @@ typedef enum {
 #endif
     TEST_OBS_REQ_NON_CANCEL_IMM,
     TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS,
+    TEST_DISCOVER_DEV_REQ,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -91,6 +92,7 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
 int InitPostRequest(OCQualityOfService qos);
 int InitDeleteRequest(OCQualityOfService qos);
 int InitGetRequest(OCQualityOfService qos);
+int InitDeviceDiscovery();
 int InitDiscovery();
 
 /* Function to retrieve ip address, port no. of the server

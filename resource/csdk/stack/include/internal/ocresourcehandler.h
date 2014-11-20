@@ -31,6 +31,8 @@
 #define OC_RSRVD_RESOURCE_TYPE          "rt"
 #define OC_RSRVD_RESOURCE_TYPE_PRESENCE "core.presence"
 #define OC_RSRVD_INTERFACE              "if"
+#define OC_RSRVD_DEVICE_ID              "di"
+#define OC_RSRVD_DEVICE_NAME            "dn"
 #define OC_RSRVD_INTERFACE_DEFAULT      "oc.mi.def"
 #define OC_RSRVD_INTERFACE_LL           "oc.mi.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oc.mi.b"
@@ -53,7 +55,9 @@
 typedef enum {
     STACK_RES_DISCOVERY_NOFILTER = 0,
     STACK_RES_DISCOVERY_IF_FILTER,
-    STACK_RES_DISCOVERY_RT_FILTER
+    STACK_RES_DISCOVERY_RT_FILTER,
+    STACK_DEVICE_DISCOVERY_DI_FILTER,
+    STACK_DEVICE_DISCOVERY_DN_FILTER
 } StackQueryTypes;
 
 typedef enum {
@@ -79,6 +83,10 @@ OCStackResult DetermineResourceHandling (OCServerRequest *request,
 
 OCStackResult
 ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerRequest *request);
+
+OCStackResult SaveDeviceInfo(OCDeviceInfo deviceInfo);
+
+void DeleteDeviceInfo();
 
 OCStackResult
 BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,

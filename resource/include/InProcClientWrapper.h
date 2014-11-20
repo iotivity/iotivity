@@ -52,6 +52,12 @@ namespace OC
             std::weak_ptr<IClientWrapper> clientWrapper;
         };
 
+        struct DeviceListenContext
+        {
+            FindDeviceCallback callback;
+            IClientWrapper::Ptr clientWrapper;
+        };
+
         struct SubscribePresenceContext
         {
             SubscribeCallback callback;
@@ -79,6 +85,10 @@ namespace OC
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
             const std::string& resourceType, FindCallback& callback,
+            QualityOfService QoS);
+
+        virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
+            const std::string& deviceURI, FindDeviceCallback& callback,
             QualityOfService QoS);
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,

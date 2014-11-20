@@ -40,6 +40,7 @@
              TAG, PCF(#arg " is NULL")); return (retVal); } }
 
 extern OCResource *headResource;
+static cJSON *savedDeviceInfo = NULL;
 
 static const char * VIRTUAL_RSRCS[] = {
        "/oc/core",
@@ -71,7 +72,8 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
     if (!url)
         return OC_STACK_INVALID_URI;
 
-    if (strcmp ((char *)url, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0) {
+    if (strcmp ((char *)url, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0 ||
+                strcmp ((char *)url, GetVirtualResourceUri(OC_DEVICE_URI)) == 0) {
         *filterOn = STACK_RES_DISCOVERY_NOFILTER;
         if (query && *query) {
             char* strTokPtr;
@@ -85,6 +87,12 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
             } else if (strcmp (filterParam, OC_RSRVD_RESOURCE_TYPE) == 0) {
                 // Resource discovery with resource type filter
                 *filterOn = STACK_RES_DISCOVERY_RT_FILTER;
+            } else if (strcmp (filterParam, OC_RSRVD_DEVICE_ID) == 0) {
+                //Device ID filter
+                *filterOn = STACK_DEVICE_DISCOVERY_DI_FILTER;
+            } else if (strcmp (filterParam, OC_RSRVD_DEVICE_NAME) == 0) {
+                //Device Name filter
+                *filterOn = STACK_DEVICE_DISCOVERY_DN_FILTER;
             } else {
                 // Other filter types not supported
                 return OC_STACK_INVALID_QUERY;
@@ -202,6 +210,85 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
     free (jsonStr);
 
     OC_LOG(INFO, TAG, PCF("Exiting BuildVirtualResourceResponse"));
+    return ret;
+}
+
+OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filterValue,
+                                                    char *out, uint16_t *remaining)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    if (savedDeviceInfo != NULL)
+    {
+        char *jsonStr = NULL;
+        uint16_t jsonLen = 0;
+        cJSON *repObj = cJSON_GetObjectItem(savedDeviceInfo, "rep");
+
+        OC_LOG(INFO, TAG, PCF("Entering BuildVirtualResourceResponseForDevice"));
+
+        if (filterOn == STACK_DEVICE_DISCOVERY_DI_FILTER)
+        {
+            if((cJSON_GetObjectItem(repObj,"di") != NULL) &&
+                    strcmp(cJSON_GetObjectItem(repObj,"di")->valuestring, filterValue) == 0)
+            {
+                ret = OC_STACK_OK;
+            }
+        }
+        else if (filterOn == STACK_DEVICE_DISCOVERY_DN_FILTER)
+        {
+            if((cJSON_GetObjectItem(repObj,"dn") != NULL) &&
+                    strcmp(cJSON_GetObjectItem(repObj,"dn")->valuestring, filterValue) == 0)
+            {
+                ret = OC_STACK_OK;
+            }
+        }
+        else if (filterOn == STACK_RES_DISCOVERY_NOFILTER)
+        {
+            ret = OC_STACK_OK;
+        }
+        else
+        {
+            ret = OC_STACK_INVALID_QUERY;
+        }
+
+        if (ret == OC_STACK_OK)
+        {
+            jsonStr = cJSON_PrintUnformatted (savedDeviceInfo);
+
+            if(jsonStr)
+            {
+                jsonLen = strlen(jsonStr);
+
+                if (jsonLen < *remaining)
+                {
+                    strncpy(out, jsonStr, (jsonLen + 1));
+                    *remaining = *remaining - jsonLen;
+                    ret = OC_STACK_OK;
+                }
+                else
+                {
+                    ret = OC_STACK_ERROR;
+                }
+
+                free(jsonStr);
+            }
+            else
+            {
+                ret = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            ret = OC_STACK_INVALID_DEVICE_INFO;
+        }
+    }
+    else
+    {
+        //error so that stack won't respond with empty payload
+        ret = OC_STACK_INVALID_DEVICE_INFO;
+    }
+
+    OC_LOG(INFO, TAG, PCF("Exiting BuildVirtualResourceResponseForDevice"));
     return ret;
 }
 
@@ -416,6 +503,33 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
             }
 
             if(strlen((const char *)discoveryResBuf) > 0)
+            {
+                OCEntityHandlerResponse response = {0};
+
+                response.ehResult = OC_EH_OK;
+                response.payload = discoveryResBuf;
+                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
+                response.persistentBufferFlag = 0;
+                response.requestHandle = (OCRequestHandle) request;
+                response.resourceHandle = (OCResourceHandle) resource;
+
+                result = OCDoResponse(&response);
+            }
+        }
+        else if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_DEVICE_URI)) == 0)
+        {
+            remaining = MAX_RESPONSE_LENGTH;
+            ptr = discoveryResBuf;
+
+            result = BuildVirtualResourceResponseForDevice(filterOn, filterValue,
+                    (char*)ptr, &remaining);
+
+            if(result == OC_STACK_OK)
+            {
+                ptr += strlen((char*)ptr);
+            }
+
+            if(remaining < MAX_RESPONSE_LENGTH)
             {
                 OCEntityHandlerResponse response = {0};
 
@@ -644,4 +758,109 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
     return ret;
 }
 
+void DeleteDeviceInfo()
+{
+    if(savedDeviceInfo)
+    {
+        cJSON_Delete(savedDeviceInfo);
+    }
+}
+
+OCStackResult SaveDeviceInfo(OCDeviceInfo deviceInfo)
+{
+    DeleteDeviceInfo();
+
+    savedDeviceInfo = cJSON_CreateObject();
+    cJSON *repObj = NULL;
+
+    cJSON_AddItemToObject (savedDeviceInfo, OC_RSRVD_HREF,
+            cJSON_CreateString(GetVirtualResourceUri(OC_DEVICE_URI)));
+
+    cJSON_AddItemToObject (savedDeviceInfo, "rep", repObj = cJSON_CreateObject());
+
+    if (deviceInfo.contentType)
+    {
+        cJSON_AddItemToObject (repObj, "ct",
+                cJSON_CreateString(deviceInfo.contentType));
+    }
+
+    if (deviceInfo.dateOfManufacture)
+    {
+        cJSON_AddItemToObject (repObj, "mndt",
+                cJSON_CreateString(deviceInfo.dateOfManufacture));
+    }
+
+    if (deviceInfo.deviceName)
+    {
+        cJSON_AddItemToObject (repObj, "dn",
+                cJSON_CreateString(deviceInfo.deviceName));
+    }
+
+    if (deviceInfo.deviceUUID)
+    {
+        cJSON_AddItemToObject (repObj, "di",
+                cJSON_CreateString(deviceInfo.deviceUUID));
+    }
+
+    if (deviceInfo.firmwareVersion)
+    {
+        cJSON_AddItemToObject (repObj, "mnfv",
+                cJSON_CreateString(deviceInfo.firmwareVersion));
+    }
+
+    if (deviceInfo.hostName)
+    {
+        cJSON_AddItemToObject (repObj, "hn", cJSON_CreateString(deviceInfo.hostName));
+    }
+
+    if (deviceInfo.manufacturerName)
+    {
+        if(strlen(deviceInfo.manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH)
+        {
+            DeleteDeviceInfo();
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        cJSON_AddItemToObject (repObj, "mnmn",
+                cJSON_CreateString(deviceInfo.manufacturerName));
+    }
+
+    if (deviceInfo.manufacturerUrl)
+    {
+        if(strlen(deviceInfo.manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH)
+        {
+            DeleteDeviceInfo();
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        cJSON_AddItemToObject (repObj, "mnml",
+                cJSON_CreateString(deviceInfo.manufacturerUrl));
+    }
+
+    if (deviceInfo.modelNumber)
+    {
+        cJSON_AddItemToObject (repObj, "mnmo",
+                cJSON_CreateString(deviceInfo.modelNumber));
+    }
+
+    if (deviceInfo.platformVersion)
+    {
+        cJSON_AddItemToObject (repObj, "mnpv",
+                cJSON_CreateString(deviceInfo.platformVersion));
+    }
+
+    if (deviceInfo.supportUrl)
+    {
+        cJSON_AddItemToObject (repObj, "mnsl",
+                cJSON_CreateString(deviceInfo.supportUrl));
+    }
+
+    if (deviceInfo.version)
+    {
+        cJSON_AddItemToObject (repObj, "icv",
+                cJSON_CreateString(deviceInfo.version));
+    }
+
+    return OC_STACK_OK;
+}
 
