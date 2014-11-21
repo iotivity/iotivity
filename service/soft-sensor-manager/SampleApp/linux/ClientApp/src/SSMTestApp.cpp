@@ -23,7 +23,6 @@
 #include <iostream>
 
 #include "SSMTestApp.h"
-#include "SSMClient.h"
 
 SSMTestApp::SSMTestApp()
 {
@@ -45,8 +44,8 @@ void SSMTestApp::displayMenu()
 /* Register Query.*/
 void SSMTestApp::registerQuery(std::string queryString)
 {
-    std::string qid;
-    SSMReturn rtn = SSM_ERROR;
+    int qid;
+    SSMRESULT rtn = SSM_E_FAIL;
 
     if (queryString.size() == 0)
     {
@@ -57,10 +56,10 @@ void SSMTestApp::registerQuery(std::string queryString)
 
     rtn = m_SSMClient.registerQuery(queryString, this, qid);
 
-    if (rtn == SSM_SUCCESS)
+    if (rtn == SSM_S_OK)
     {
         printf("The query has been registered!\n");
-        printf("QID : %s\n", qid.c_str());
+        printf("QID : %d\n", qid);
     }
     else
         printf("Error occured(%d)", rtn);
@@ -70,15 +69,15 @@ void SSMTestApp::registerQuery(std::string queryString)
 void SSMTestApp::unregisterQuery(void)
 {
     std::string qid;
-    SSMReturn rtn = SSM_ERROR;
+    SSMRESULT rtn = SSM_E_FAIL;
 
     printf("   Please Enter query string: ");
     cin.ignore();
     getline(cin, qid);
 
-    rtn = m_SSMClient.unregisterQuery(qid);
+    rtn = m_SSMClient.unregisterQuery(atoi(qid.c_str()));
 
-    if (rtn == SSM_SUCCESS)
+    if (rtn == SSM_S_OK)
         printf("The query has been unregistered!\n");
     else
         printf("Error occured(%d)\n", (int) rtn);
@@ -142,6 +141,36 @@ void SSMTestApp::onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eC
     {
         std::cout << "Response error: " << eCode << std::endl;
     }
+}
+
+SSMRESULT SSMTestApp::onQueryEngineEvent(int cqid, IDataReader *pResult)
+{
+    int     dataCount = 0;
+    IModelData      *pModelData = NULL;
+    std::vector<std::string>        affectedModels;
+
+    cout << "Event received! cqid = " << cqid << endl;
+
+    pResult->getAffectedModels(&affectedModels);
+
+    for (std::vector<std::string>::iterator itor = affectedModels.begin();
+         itor != affectedModels.end(); ++itor)
+    {
+        cout << "Printing " << *itor << " model" << endl;
+        pResult->getModelDataCount(*itor, &dataCount);
+        for (int i = 0; i < dataCount; i++)
+        {
+            pResult->getModelData(*itor, i, &pModelData);
+            cout << "dataId: " << pModelData->getDataId() << endl;
+            for (int j = 0; j < pModelData->getPropertyCount(); j++)
+            {
+                cout << "Type: " << pModelData->getPropertyName(j) << " Value: " << pModelData->getPropertyValue(
+                         j) << endl;
+            }
+        }
+    }
+
+    return SSM_S_OK;
 }
 
 /**

@@ -29,6 +29,7 @@
 
 #include "OCResource.h"
 #include "OCPlatform.h"
+#include "SSMInterface.h"
 #include "SSMClient.h"
 #include "ISSMClientListener.h"
 
@@ -47,9 +48,11 @@ typedef enum
 } DIResult;
 
 class SSMTestApp: public ISSMClientListener
+    , public IQueryEngineEvent
 {
     private:
-        SSMClient m_SSMClient;
+        //SSMClient m_SSMClient;
+        SSMInterface m_SSMClient;
 
     public:
 
@@ -61,7 +64,7 @@ class SSMTestApp: public ISSMClientListener
 
         /* operations from listener interface */
         void onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eCode);
-
+        SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult);
 };
 
 #endif /* SSMTESTAPP_H_ */
