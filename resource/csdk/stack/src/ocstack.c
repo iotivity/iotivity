@@ -2079,4 +2079,33 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
         return OC_STACK_NO_MEMORY;
 }
 
+const ServerID OCGetServerInstanceID(void)
+{
+    static bool generated = false;
+    static ServerID sid;
 
+    if(generated)
+    {
+        return sid;
+    }
+
+    sid = OCGetRandom();
+    generated = true;
+    return sid;
+}
+
+const char* OCGetServerInstanceIDString(void)
+{
+    // max printed length of a base 10
+    // uint32 is 10 characters, so 11 includes null.
+    // This will change as the representation gets switched
+    // to another value
+    static char buffer[11];
+
+    if(sprintf(buffer, "%u", OCGetServerInstanceID() <0))
+    {
+        buffer[0]='\0';
+    }
+
+    return buffer;
+}

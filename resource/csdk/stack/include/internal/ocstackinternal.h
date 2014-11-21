@@ -28,6 +28,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <stdbool.h>
 #include "ocstack.h"
 #include "ocstackconfig.h"
 #include "occoaptoken.h"
@@ -179,6 +180,9 @@ typedef struct {
     OCClientResponse * clientResponse;
 } OCResponse;
 
+// following typedef is to represent our Server Instance identification.
+typedef uint32_t ServerID;
+
 //-----------------------------------------------------------------------------
 // Internal function prototypes
 //-----------------------------------------------------------------------------
@@ -187,7 +191,18 @@ OCStackResult HandleStackRequests(OCRequest * request);
 OCStackResult SendPresenceNotification(OCResourceType *resourceType, OCQualityOfService qos);
 void HandleStackResponses(OCResponse * response);
 int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
-
+// returns the internal representation of the server instance ID.
+// Note: This will NOT seed the RNG, so it must be called after the RNG is seeded.
+// This is done automatically during the OCInit process (via the call to OCInitCoAP),
+// so ensure that this call is done after that.
+const ServerID OCGetServerInstanceID(void);
+// returns a string representation  the server instance ID.
+// The memory is managed internal to this function, so freeing externally will result
+// in a compiler error
+// Note: This will NOT seed the RNG, so it must be called after the RNG is seeded.
+// This is done automatically during the OCInit process (via the call to OCInitCoAP),
+// so ensure that this call is done after that.
+const char* OCGetServerInstanceIDString(void);
 #ifdef WITH_PRESENCE
 //TODO: should the following function be public?
 OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
