@@ -33,7 +33,7 @@ endif
 OUT_DIR	= .
 
 OCLOGGER_DIR	= $(ROOT_DIR)/logger
-OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
+OC_LOG_DIR 	= $(ROOT_DIR)/../oc_logger
 OCRANDOM_DIR	= $(ROOT_DIR)/ocrandom
 OCSOCKET_DIR	= $(ROOT_DIR)/ocsocket
 LCOAP_DIR	= $(ROOT_DIR)/libcoap-4.1.1
@@ -41,7 +41,7 @@ OCCOAP_DIR	= $(ROOT_DIR)/occoap
 OCTBSTACK_DIR	= $(ROOT_DIR)/stack
 EXTLIBS_DIR	= $(ROOT_DIR)/../../extlibs
 CJSON_DIR	= $(EXTLIBS_DIR)/cjson
-
+CONNECTIVITY_DIR= $(ROOT_DIR)/connectivity
 CJSON_SRC	= $(CJSON_DIR)
 
 OCLOGGER_INC	= $(OCLOGGER_DIR)/include
@@ -63,11 +63,13 @@ INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(CJSON_INC)
 
 CC_FLAGS.debug   := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
-                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG \
+                        -L$(CONNECTIVITY_DIR)/build/out -lconnectivity_abstraction
 CC_FLAGS.release := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG \
+                        -L$(CONNECTIVITY_DIR)/build/out -lconnectivity_abstraction
 
-LDLIBS		+= -loctbstack -lpthread
+LDLIBS		+= -loctbstack -lpthread 
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c

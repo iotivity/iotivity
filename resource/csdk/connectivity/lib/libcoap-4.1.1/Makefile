@@ -3,7 +3,7 @@
 # Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>
 #
 # This file is part of the CoAP library libcoap. Please see
-# README for terms of use. 
+# README for terms of use.
 
 # the library's version
 VERSION:=4.1.1
@@ -26,7 +26,7 @@ OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 HEADERS:=coap.h config.h debug.h pdu.h net.h encode.h uri.h coap_list.h mem.h \
 	str.h option.h bits.h uthash.h utlist.h resource.h hashkey.h async.h \
 	subscribe.h block.h address.h prng.h coap_time.h t_list.h
-CFLAGS:=-Wall -Wextra -std=c99 -pedantic -g -O2
+CFLAGS:=-Wall -Wextra -std=c99 -pedantic -g -O2 -fPIC
 CPPFLAGS:= -DWITH_POSIX
 DISTDIR=$(top_builddir)/$(package)
 SUBDIRS:=#examples #doc tests
@@ -66,7 +66,7 @@ endif
 
 all:	$(LIB) $(LIBSO) dirs
 
-check:	
+check:
 	echo DISTDIR: $(DISTDIR)
 	echo top_builddir: $(top_builddir)
 	$(MAKE) -C examples check
@@ -77,7 +77,7 @@ dirs:	$(SUBDIRS)
 	done
 
 $(LIB):	$(OBJECTS)
-	$(AR) $(ARFLAGS) $@ $^ 
+	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
 
 $(LIBSO):	$(OBJECTS)
@@ -89,7 +89,7 @@ clean:
 		$(MAKE) -C $$dir clean ; \
 	done
 
-doc:	
+doc:
 	$(MAKE) -C doc
 
 distclean:	clean
@@ -104,9 +104,9 @@ dist:	$(FILES) $(SUBDIRS)
 	done
 	tar czf $(package).tar.gz $(DISTDIR)
 
-TAGS:	
-	$(ETAGS) -o $@.new $(SOURCES) 
-	$(ETAGS) -a -o $@.new $(HEADERS) 
+TAGS:
+	$(ETAGS) -o $@.new $(SOURCES)
+	$(ETAGS) -a -o $@.new $(HEADERS)
 	mv $@.new $@
 
 .gitignore:

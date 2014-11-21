@@ -80,32 +80,35 @@ ifeq ($(OBJ_DIR), )
 OBJ_DIR	= $(OUT_DIR)/obj
 endif
 
-OCLOGGER_DIR	= logger
-OC_LOG_DIR      = ../oc_logger
-OCRANDOM_DIR	= ocrandom
-OCSOCKET_DIR	= ocsocket
-LCOAP_DIR	= libcoap-4.1.1
-OCCOAP_DIR	= occoap
-OCTBSTACK_DIR	= stack
-OCMALLOC_DIR 	= ocmalloc
-EXTLIBS_DIR	= ../../extlibs
-CJSON_DIR	= $(EXTLIBS_DIR)/cjson
-TINYDTLS_DIR	= tinydtls
+OCLOGGER_DIR		= logger
+OC_LOG_DIR      	= ../oc_logger
+OCRANDOM_DIR		= ocrandom
+OCSOCKET_DIR		= ocsocket
+LCOAP_DIR		= libcoap-4.1.1
+OCCOAP_DIR		= occoap
+OCTBSTACK_DIR		= stack
+OCMALLOC_DIR 		= ocmalloc
+EXTLIBS_DIR		= ../../extlibs
+CJSON_DIR		= $(EXTLIBS_DIR)/cjson
+TINYDTLS_DIR		= tinydtls
+CONNECTIVITY_DIR	= connectivity
 
-OCCOAP_SRC	= $(OCCOAP_DIR)/src
-OCTBSTACK_SRC	= $(OCTBSTACK_DIR)/src
-OCMALLOC_SRC 	= $(OCMALLOC_DIR)/src
-CJSON_SRC	= $(CJSON_DIR)
+OCCOAP_SRC		= $(OCCOAP_DIR)/src
+OCTBSTACK_SRC		= $(OCTBSTACK_DIR)/src
+OCMALLOC_SRC 		= $(OCMALLOC_DIR)/src
+CJSON_SRC		= $(CJSON_DIR)
+CONNECTIVITY_SRC	= $(CONNECTIVITY_DIR)
 
-OCLOGGER_INC	= $(OCLOGGER_DIR)/include
-OC_LOG_INC	= $(OC_LOG_DIR)/include
-OCRANDOM_INC	= $(OCRANDOM_DIR)/include
-OCSOCKET_INC	= $(OCSOCKET_DIR)/include
-LCOAP_INC	= $(LCOAP_DIR)
-OCCOAP_INC	= $(OCCOAP_DIR)/include
-OCTBSTACK_INC	= $(OCTBSTACK_DIR)/include
-OCMALLOC_INC	= $(OCMALLOC_DIR)/include
-CJSON_INC	= $(CJSON_DIR)
+OCLOGGER_INC		= $(OCLOGGER_DIR)/include
+OC_LOG_INC		= $(OC_LOG_DIR)/include
+OCRANDOM_INC		= $(OCRANDOM_DIR)/include
+OCSOCKET_INC		= $(OCSOCKET_DIR)/include
+LCOAP_INC		= $(LCOAP_DIR)
+OCCOAP_INC		= $(OCCOAP_DIR)/include
+OCTBSTACK_INC		= $(OCTBSTACK_DIR)/include
+OCMALLOC_INC		= $(OCMALLOC_DIR)/include
+CJSON_INC		= $(CJSON_DIR)
+CONNECTIVITY_INC	= $(CONNECTIVITY_DIR)/inc
 
 INC_DIRS	:= -I$(OCLOGGER_INC)
 INC_DIRS	+= -I$(OC_LOG_INC)
@@ -117,6 +120,7 @@ INC_DIRS	+= -I$(OCMALLOC_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
+INC_DIRS	+= -I$(CONNECTIVITY_INC)
 
 CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
 CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic
@@ -139,14 +143,15 @@ SOURCES			:= $(CJSON_SOURCES)
 SOURCES			+= $(OCCOAP_SOURCES)
 SOURCES			+= $(OCTBSTACK_SOURCES)
 
-all:	make_lcoap objdirs obj_build liboctbstack.a
+all:	make_lcoap objdirs obj_build ca liboctbstack.a
 
-buildScript_all: objdirs obj_build liboctbstack.a
+buildScript_all: objdirs obj_build ca liboctbstack.a
 
-make_lcoap: 
+make_lcoap:
+	@echo "Building $@"
 	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
 
-objdirs: 
+objdirs:
 	mkdir -p $(PLATFORM)
 	mkdir -p $(PLATFORM)/$(ARDUINO_SHIELD_TYPE)
 	mkdir -p $(OUT_DIR)
@@ -157,13 +162,19 @@ obj_build:
 	# Output all *.o files to $(OUT_DIR)/$(BUILD)/$(OBJ_DIR)
 	$(foreach source,$(SOURCES), $(CC) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/%, $(notdir $(source))));)
 
-liboctbstack.a: obj_build
-	@echo "Building $@" 
+ca:
+	@echo "Building $@"
+	@cd $(CONNECTIVITY_SRC)/lib/libcoap-4.1.1 && $(MAKE)
+	@cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE)
+	@cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE)
+
+liboctbstack.a:
+	@echo "Building $@"
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
 	@cd $(OBJ_DIR) && $(AR) -x $(PLATFORM_SPECIFIC_BACKOUT)$(LCOAP_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
 	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
-    
+
     ifeq ($(PLATFORM),linux)
      ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
 			$(info "Building liboctbstack with DTLS support")
@@ -189,6 +200,9 @@ legacy_clean:
 	@echo "Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/$(BUILD)/liboctbstack.a
+	cd $(CONNECTIVITY_SRC)/lib/libcoap-4.1.1 && $(MAKE) clean
+	cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE) clean
+	cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE) clean
 	rm -rf $(OBJ_DIR)
 	rm -rf release
 	rm -rf debug
@@ -197,6 +211,9 @@ legacy_deepclean:
 	@echo "Deep-Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a
+	cd $(CONNECTIVITY_SRC)/lib/libcoap-4.1.1 && $(MAKE) clean
+	cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE) clean
+	cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE) clean
 	rm -rf $(OBJ_DIR)
 	$(MAKE) clean -C $(LCOAP_DIR)
 	rm -rf release
