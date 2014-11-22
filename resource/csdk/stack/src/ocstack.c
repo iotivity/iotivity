@@ -2102,7 +2102,8 @@ const char* OCGetServerInstanceIDString(void)
     // to another value
     static char buffer[11];
 
-    if(sprintf(buffer, "%u", OCGetServerInstanceID() <0))
+    int n = sprintf(buffer, "%u", OCGetServerInstanceID());
+    if (n < 0)
     {
         buffer[0]='\0';
     }

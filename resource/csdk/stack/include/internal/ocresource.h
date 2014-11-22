@@ -27,6 +27,7 @@
 #define OC_RSRVD_OC                     "oc"
 #define OC_RSRVD_PAYLOAD                "payload"
 #define OC_RSRVD_HREF                   "href"
+#define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
 #define OC_RSRVD_RESOURCE_TYPE          "rt"
 #define OC_RSRVD_INTERFACE              "if"
 #define OC_RSRVD_INTERFACE_DEFAULT      "oc.mi.def"

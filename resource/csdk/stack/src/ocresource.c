@@ -147,6 +147,13 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
             // Add URIs
             cJSON_AddItemToObject (resObj, OC_RSRVD_HREF, cJSON_CreateString(resourcePtr->uri));
 
+            // Add server instance id
+            const char* serverInstanceId = OCGetServerInstanceIDString();
+            cJSON_AddItemToObject (resObj,
+                                   OC_RSRVD_SERVER_INSTANCE_ID,
+                                   cJSON_CreateString(serverInstanceId));
+            serverInstanceId = NULL;
+
             cJSON_AddItemToObject (resObj, "prop", propObj = cJSON_CreateObject());
             // Add resource types
             cJSON_AddItemToObject (propObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
