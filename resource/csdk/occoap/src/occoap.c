@@ -480,7 +480,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                 }
                 if(maxAge == 0)
                 {
-                    OC_LOG(INFO, TAG, "===============Stopping presence");
+                    OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
                     response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
                 }
                 else
@@ -502,10 +502,10 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
                     if(cbNode->sequenceNumber == clientResponse.sequenceNumber)
                     {
-                        OC_LOG(INFO, TAG, "===============No presence change");
+                        OC_LOG(INFO, TAG, PCF("===============No presence change"));
                         goto exit;
                     }
-                    OC_LOG(INFO, TAG, "===============Presence changed, calling up the stack");
+                    OC_LOG(INFO, TAG, PCF("===============Presence changed, calling up the stack"));
                     cbNode->sequenceNumber = clientResponse.sequenceNumber;;
                 }
 

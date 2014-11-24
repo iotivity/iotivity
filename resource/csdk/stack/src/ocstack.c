@@ -579,7 +579,7 @@ OCStackResult OCProcessPresence()
                 }
                 if(cbNode->presence->TTLlevel >= PresenceTimeOutSize)
                 {
-                    OC_LOG(DEBUG, TAG, "----------------No more timeout ticks");
+                    OC_LOG(DEBUG, TAG, PCF("----------------No more timeout ticks"));
                     if (ParseIPv4Address( cbNode->requestUri, ipAddr, &port))
                     {
                         OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
@@ -605,7 +605,7 @@ OCStackResult OCProcessPresence()
                 }
                 if(now >= cbNode->presence->timeOut[cbNode->presence->TTLlevel])
                 {
-                    OC_LOG(DEBUG, TAG, "time to test server presence ==========");
+                    OC_LOG(DEBUG, TAG, PCF("time to test server presence =========="));
                     OCCoAPToken token;
                     OCGenerateCoAPToken(&token);
                     result = OCDoCoAPResource(OC_REST_GET, OC_LOW_QOS,
