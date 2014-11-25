@@ -575,13 +575,30 @@ namespace OC
     }
 
     OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle,
-        OCClientResponse* clientResponse)
+            OCClientResponse* clientResponse)
     {
-        ClientCallbackContext::SubscribePresenceContext* context =
-            static_cast<ClientCallbackContext::SubscribePresenceContext*>(ctx);
-        std::thread exec(context->callback, clientResponse->result, clientResponse->sequenceNumber);
+        char stringAddress[DEV_ADDR_SIZE_MAX];
+        ostringstream os;
+        uint16_t port;
 
-        exec.detach();
+        if(OCDevAddrToString(clientResponse->addr, stringAddress) == 0 &&
+                OCDevAddrToPort(clientResponse->addr, &port) == 0)
+        {
+            os<<stringAddress<<":"<<port;
+
+            ClientCallbackContext::SubscribePresenceContext* context =
+                static_cast<ClientCallbackContext::SubscribePresenceContext*>(ctx);
+
+            std::thread exec(context->callback, clientResponse->result,
+                    clientResponse->sequenceNumber, os.str());
+
+            exec.detach();
+        }
+        else
+        {
+            oclog() << "subscribePresenceCallback(): OCDevAddrToString() or OCDevAddrToPort() "
+                    <<"failed"<< std::flush;
+        }
         return OC_STACK_KEEP_TRANSACTION;
     }
 

@@ -354,6 +354,30 @@ int32_t OCClose(int32_t sockfd)
     return (close(sockfd));
 }
 
+//convert OCDevAddr to String
+int32_t OCDevAddrToString(OCDevAddr* addr, char* stringAddress)
+{
+    uint8_t a;
+    uint8_t b;
+    uint8_t c;
+    uint8_t d;
+
+    if(OCDevAddrToIPv4Addr(addr, &a, &b, &c, &d) == 0)
+    {
+        if (!stringAddress)
+        {
+            return ERR_INVALID_INPUT;
+        }
+
+        sprintf(stringAddress, "%u.%u.%u.%u",
+                a, b, c, d);
+        return ERR_SUCCESS;
+    }
+    else
+    {
+        return ERR_INVALID_INPUT;
+    }
+}
 
 /// Retrieve the IPv4 address embedded inside OCDev address data structure
 int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,

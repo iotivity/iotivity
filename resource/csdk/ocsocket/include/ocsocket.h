@@ -242,6 +242,25 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
              uint8_t *addrv4,  uint32_t addrLen);
 
 
+//-- OCDevAddrToString ----------------------------------------------------
+/** @ingroup ocsocket
+ *
+ * This method is used to convert the OCDevAddr to string format
+ *
+ * @param[in]   addr
+ *               OCDevAddr address.
+ * @param[out]  stringAddress the target string where the address
+ *               is to be stored. Memory for this parameter is
+ *               allocated by the caller.
+ *
+ * Note: The length of stringAddress may not exceed DEV_ADDR_SIZE_MAX
+ *
+ * @retval 0 for Success, otherwise some error value
+ */
+//------------------------------------------------------------------------
+int32_t OCDevAddrToString(OCDevAddr *addr, char *stringAddress);
+
+
 //-- OCDevAddrToIPv4Addr -------------------------------------------------
 /** @ingroup ocsocket
  *

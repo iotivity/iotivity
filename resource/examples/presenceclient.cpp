@@ -55,8 +55,9 @@ void printUsage()
 }
 
 // Callback to presence
-void presenceHandler(OCStackResult result, const unsigned int nonce)
+void presenceHandler(OCStackResult result, const unsigned int nonce, const std::string& hostAddress)
 {
+    std::cout << "Received presence notification from : " << hostAddress << std::endl;
     std::cout << "In presenceHandler: ";
 
     switch(result)
