@@ -22,10 +22,9 @@ cd ../../lib/libcoap-4.1.1
 make clean
 make
 
-cd ../../build/linux 
+cd ../../build/linux
 make clean
 make
-
 
 cd ../../samples/linux
 make clean

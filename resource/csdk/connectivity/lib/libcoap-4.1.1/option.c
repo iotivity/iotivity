@@ -4,7 +4,7 @@
  * Copyright (C) 2010-2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -42,12 +42,12 @@ size_t coap_opt_parse(const coap_opt_t *opt, size_t length, coap_option_t *resul
     assert(opt);
     assert(result);
 
-#define ADVANCE_OPT(o,e,step) if ((e) < step) {			\
-    debug("cannot advance opt past end\n");			\
-    return 0;							\
-  } else {							\
-    (e) -= step;						\
-    (o) = ((unsigned char *)(o)) + step;			\
+#define ADVANCE_OPT(o,e,step) if ((e) < step) {         \
+    debug("cannot advance opt past end\n");         \
+    return 0;                           \
+  } else {                          \
+    (e) -= step;                        \
+    (o) = ((unsigned char *)(o)) + step;            \
   }
 
     if (length < 1)
@@ -201,7 +201,7 @@ coap_option_next(coap_opt_iterator_t *oi)
         /* Exit the while loop when:
          *   - no filtering is done at all
          *   - the filter matches for the current option
-         *   - the filter is too small for the current option number 
+         *   - the filter is too small for the current option number
          */
         if (!oi->filtered || (b = coap_option_getb(oi->filter, oi->type)) > 0)
             break;

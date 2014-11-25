@@ -28,13 +28,16 @@
 #define TAG PCF("CA")
 
 static CANetworkPacketReceivedCallback gLEReceivedCallback = NULL;
+static u_thread_pool_t gThreadPoolHandle = NULL;
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback)
+        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+        u_thread_pool_t handle)
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitializeLE");
 
     gLEReceivedCallback = reqRespCallback;
+    gThreadPoolHandle = handle;
 
     // register handlers
     CAConnectivityHandler_t handler;
@@ -106,7 +109,7 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, void* data, ui
     return 0;
 }
 
-CAResult_t CAGetLEInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size)
+CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGetLEInterfaceInformation");
 

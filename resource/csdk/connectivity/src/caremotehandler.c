@@ -84,7 +84,6 @@ static int32_t getCAAddress(const char* pAddress, CAAddress_t* outAddress)
 
     int32_t isIp = 0;
     int32_t ipLen = 0;
-    int32_t port = 0;
 
     int i = 0;
     for (i = 0; i < len; i++)
@@ -109,7 +108,7 @@ static int32_t getCAAddress(const char* pAddress, CAAddress_t* outAddress)
         if (ipLen > 0)
             outAddress->IP.port = atoi(pAddress + ipLen + 1);
 
-        OIC_LOG_V(DEBUG, TAG, "ip: %s,port: %d", outAddress->IP.ipAddress, outAddress->IP.port);
+        OIC_LOG_V(DEBUG, TAG, "ip: %s, port: %d", outAddress->IP.ipAddress, outAddress->IP.port);
     }
     else
     {

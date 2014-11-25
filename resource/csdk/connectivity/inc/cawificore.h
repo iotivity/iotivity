@@ -28,6 +28,7 @@
 #include "cacommon.h"
 #include "config.h"
 #include "coap.h"
+#include "uthreadpool.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -36,7 +37,7 @@ extern "C"
 
 typedef void (*CAPacketReceiveCallback)(const char* address, const char* data);
 
-void CAWiFiInitialize();
+void CAWiFiInitialize(u_thread_pool_t handle);
 
 void CAWiFiTerminate();
 
@@ -44,37 +45,21 @@ int32_t CAWiFiSendUnicastMessage(const char* address, const char* data, int32_t 
 
 int32_t CAWiFiSendMulticastMessage(const char* m_address, const char* data);
 
-int32_t CAWiFiStartUnicastServer(const char* address, int32_t port);
+int32_t CAWiFiStartUnicastServer();
 
-int32_t CAWiFiStartMulticastServer(const char* m_address, int32_t port);
+int32_t CAWiFiStartMulticastServer();
 
-int32_t CAWiFiStopUnicastServer(int32_t server_id);
+int32_t CAWiFiStopUnicastServer();
 
-int32_t CAWiFiStopMulticastServer(int32_t server_id);
+int32_t CAWiFiStopMulticastServer();
 
 void CAWiFiSetCallback(CAPacketReceiveCallback callback);
 
-void* CAUnicastReceiveThread(void* data);
+void CAGetLocalAddress(char* addressBuffer);
 
-void* CAUnicastSendThread(void* data);
-
-void CASendUnicastMessage(char* address, void* data);
-
-int32_t CASendUnicastMessageImpl(const char* address, const char* data, int32_t lengh);
-
-void CAStopUnicastSendThread();
-
-void* CAMulticastReceiveThread(void* data);
-
-void* CAMulticastSendThread(void* data);
-
-void CASendMulticastMessage(void* data);
+int32_t CASendUnicastMessageImpl(const char* address, const char* data);
 
 int32_t CASendMulticastMessageImpl(const char* msg);
-
-void CAStopMulticastSendThread();
-
-void CAGetLocalAddress(char* addressBuffer);
 
 #ifdef __cplusplus
 } /* extern "C" */

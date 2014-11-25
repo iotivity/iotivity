@@ -23,20 +23,19 @@
 #include <string.h>
 
 #include "cawifiadapter.h"
-
 #include "config.h"
 #include "coap.h"
-
 #include "cawificore.h"
-
 #include "logger.h"
+#include "oic_malloc.h"
 
 #define TAG PCF("CA")
 
 // received packet callback
 static CANetworkPacketReceivedCallback gWifiReceivedCallback = NULL;
+static u_thread_pool_t gThreadPoolHandle = NULL;
 
-static void CAWiFiPacketReceiveCallback(const char* address, const char* data)
+static void CAWiFiPacketReceiveCallback(char* address, const char* data)
 {
     OIC_LOG_V(DEBUG, TAG,
             "CAWiFiPacketReceiveCallback, from: %s, data: %s", address, data);
@@ -49,22 +48,26 @@ static void CAWiFiPacketReceiveCallback(const char* address, const char* data)
 
         // set address
         memset((void*) endpoint->addressInfo.IP.ipAddress, 0, CA_IPADDR_SIZE);
-        if (CA_IPADDR_SIZE > strlen(address))
+        if (CA_IPADDR_SIZE > strlen(address)) {
             strcpy((char*) endpoint->addressInfo.IP.ipAddress, address);
+        }
+        OICFree(address);
 
         // set connectivity type
         endpoint->connectivityType = CA_WIFI;
 
-        gWifiReceivedCallback(endpoint, data, strlen(data));
+        gWifiReceivedCallback(endpoint, (void *) data, strlen(data));
     }
 }
 
 CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback)
+        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+        u_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IntializeWifi");
 
     gWifiReceivedCallback = reqRespCallback;
+    gThreadPoolHandle = handle;
 
     // register handlers
     CAConnectivityHandler_t handler;
@@ -86,7 +89,7 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
 
     CAWiFiSetCallback(CAWiFiPacketReceiveCallback);
 
-    return 0;
+    return CA_STATUS_OK;
 }
 
 void CATerminateWIfI()
@@ -99,12 +102,16 @@ void CATerminateWIfI()
 CAResult_t CAStartWIFI()
 {
     OIC_LOG(DEBUG, TAG, "CAStartWIFI");
-    CAWiFiInitialize();
+    //CAWiFiInitialize();
+    CAWiFiInitialize(gThreadPoolHandle);
 
     OIC_LOG(DEBUG, TAG, "CAWiFiStartUnicastServer");
-    CAWiFiStartUnicastServer("0.0.0.0", atoi("5283"));
+    int32_t res = CAWiFiStartUnicastServer("0.0.0.0", atoi("5283"));
 
-    return 0;
+    if (res < 0)
+        return CA_STATUS_FAILED;
+
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAStopWIFI()
@@ -113,25 +120,31 @@ CAResult_t CAStopWIFI()
 
     // ToDo:
 
-    return 0;
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAStartWIFIListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "StartWIFIListeningServer");
 
-    CAWiFiStartMulticastServer("0.0.0.0", atoi("5283"));
+    int32_t res = CAWiFiStartMulticastServer("0.0.0.0", atoi("5283"));
 
-    return 0;
+    if (res < 0)
+        return CA_STATUS_FAILED;
+
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAStartWIFIDiscoveryServer()
 {
     OIC_LOG(DEBUG, TAG, "StartWIFIDiscoveryServer");
 
-    CAWiFiStartMulticastServer("0.0.0.0", atoi("5283"));
+    int32_t res = CAWiFiStartMulticastServer("0.0.0.0", atoi("5283"));
 
-    return 0;
+    if (res < 0)
+        return CA_STATUS_FAILED;
+
+    return CA_STATUS_OK;
 }
 
 uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
@@ -158,7 +171,7 @@ CAResult_t CAStartWIFINotifyRecvServers()
 
     // ToDo:
 
-    return 0;
+    return CA_STATUS_OK;
 }
 
 uint32_t CASendWIFINotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
@@ -170,13 +183,13 @@ uint32_t CASendWIFINotification(const CARemoteEndpoint_t* endpoint, void* data, 
     return 0;
 }
 
-CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size)
+CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
 {
     OIC_LOG(DEBUG, TAG, "GetWIFIInterfaceInformation");
 
     // ToDo:
 
-    return 0;
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAReadWIFIData()
@@ -185,6 +198,6 @@ CAResult_t CAReadWIFIData()
 
     // ToDo:
 
-    return 0;
+    return CA_STATUS_OK;
 }
 

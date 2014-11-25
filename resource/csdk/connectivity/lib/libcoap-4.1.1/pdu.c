@@ -3,7 +3,7 @@
  * Copyright (C) 2010,2011 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -299,7 +299,7 @@ typedef struct
     char *phrase;
 } error_desc_t;
 
-/* if you change anything here, make sure, that the longest string does not 
+/* if you change anything here, make sure, that the longest string does not
  * exceed COAP_ERROR_PHRASE_LENGTH. */
 error_desc_t coap_error[] =
 {
@@ -340,7 +340,7 @@ coap_response_phrase(unsigned char code)
 #endif
 
 /**
- * Advances *optp to next option if still in PDU. This function 
+ * Advances *optp to next option if still in PDU. This function
  * returns the number of bytes opt has been advanced or @c 0
  * on error.
  */
@@ -367,9 +367,6 @@ static size_t next_option_safe(coap_opt_t **optp, size_t *length, coap_option_t*
 int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu)
 {
     coap_opt_t *opt;
-
-    char optionResult[256] =
-    { 0, };
 
     assert(data);
     assert(pdu);

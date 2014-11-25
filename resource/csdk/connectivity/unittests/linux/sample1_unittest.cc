@@ -5,17 +5,17 @@
 
 using namespace std;
 
-void request_handler(CARemoteEndpoint* object, CARequestInfo* requestInfo);
-void response_handler(CARemoteEndpoint* object, CAResponseInfo* responseInfo);
+void request_handler(CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo);
+void response_handler(CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo);
 
-void request_handler(CARemoteEndpoint* object, CARequestInfo* requestInfo)
+void request_handler(CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo)
 {
     cout << "request_handler, uri : " << (object != NULL) ? object->resourceUri : "";
     cout << ", data : " << (requestInfo != NULL) ? requestInfo->info.payload : "";
     cout << endl;
 }
 
-void response_handler(CARemoteEndpoint* object, CAResponseInfo* responseInfo)
+void response_handler(CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo)
 {
     cout << "response_handler, uri : " << (object != NULL) ? object->resourceUri : "";
     cout << ", data : " << (responseInfo != NULL) ? responseInfo->info.payload : "";
@@ -23,11 +23,11 @@ void response_handler(CARemoteEndpoint* object, CAResponseInfo* responseInfo)
 }
 
 char* uri;
-CARemoteEndpoint* tempRep = NULL;
-CARequestInfo requestInfo;
-CAInfo responseData;
-CAResponseInfo responseInfo;
-CAToken tempToken;
+CARemoteEndpoint_t* tempRep = NULL;
+CARequestInfo_t requestInfo;
+CAInfo_t responseData;
+CAResponseInfo_t responseInfo;
+CAToken_t tempToken;
 
 int main(int argc, char **argv)
 {
@@ -78,7 +78,7 @@ TEST(RegisterHandlerTest, TC_05_Positive_01)
 // check return value
 TEST(CreateRemoteEndpointTest, TC_06_Positive_01)
 {
-    uri = (char *) "referenceUri";
+    uri = (char *) "123.123.123.123:1234/b/light";
 
     EXPECT_EQ(CA_STATUS_OK, CACreateRemoteEndpoint(uri, &tempRep));
 
@@ -88,7 +88,7 @@ TEST(CreateRemoteEndpointTest, TC_06_Positive_01)
 // check remoteEndpoint and values of remoteEndpoint
 TEST(CreateRemoteEndpointTest, TC_07_Positive_02)
 {
-    uri = (char *) "referenceUri";
+    uri = (char *) "123.123.123.123:1234/b/light";
     CACreateRemoteEndpoint(uri, &tempRep);
 
     EXPECT_TRUE(tempRep != NULL);
@@ -129,7 +129,7 @@ TEST(CreateRemoteEndpointTest, TC_09_Nagative_02)
 // check destroyed remoteEndpoint
 TEST(DestroyRemoteEndpointTest, TC_10_Positive_01)
 {
-    uri = (char *) "referenceUri";
+    uri = (char *) "123.123.123.123:1234/b/light";
     CACreateRemoteEndpoint(uri, &tempRep);
 
     CADestroyRemoteEndpoint(tempRep);
@@ -163,7 +163,7 @@ TEST(DestroyTokenTest, TC_12_Positive_01)
 TEST(FindResourceTest, TC_13_Positive_01)
 {
     CARegisterHandler(request_handler, response_handler);
-    uri = (char *) "referenceUri";
+    uri = (char *) "123.123.123.123:1234/b/light";
     EXPECT_EQ(CA_STATUS_OK, CAFindResource(uri));
 }
 
@@ -172,15 +172,15 @@ TEST(FindResourceTest, TC_14_Nagative_01)
 {
     CARegisterHandler(request_handler, response_handler);
     uri = NULL;
-    EXPECT_EQ(CA_SEND_FAILED, CAFindResource(uri));
+    EXPECT_EQ(CA_STATUS_FAILED, CAFindResource(uri));
 }
 
 // CASendRequest TC
 // check return value
 TEST(SendRequestTest, TC_15_Positive_01)
 {
-    uri = (char *) "referenceUri";
-    memset(&requestInfo, 0, sizeof(CARequestInfo));
+    uri = (char *) "123.123.123.123:1234/b/light";
+    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
     CACreateRemoteEndpoint(uri, &tempRep);
     CAGenerateToken(&tempToken);
     requestInfo.method = CA_GET;
@@ -197,14 +197,14 @@ TEST(SendRequestTest, TC_15_Positive_01)
 TEST(SendRequestTest, TC_16_Nagative_01)
 {
     uri = NULL;
-    memset(&requestInfo, 0, sizeof(CARequestInfo));
+    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
     CACreateRemoteEndpoint(uri, &tempRep);
     CAGenerateToken(&tempToken);
     requestInfo.method = CA_GET;
     requestInfo.info.token = tempToken;
     requestInfo.info.payload = (char *) "request payload";
 
-    EXPECT_EQ(CA_SEND_FAILED, CASendRequest(tempRep, &requestInfo));
+    EXPECT_EQ(CA_STATUS_FAILED, CASendRequest(tempRep, &requestInfo));
 
     CADestroyToken(tempToken);
     CADestroyRemoteEndpoint(tempRep);
@@ -214,16 +214,16 @@ TEST(SendRequestTest, TC_16_Nagative_01)
 // check return value
 TEST(SendResponseTest, TC_17_Positive_01)
 {
-    uri = (char *) "referenceUri";
+    uri = (char *) "123.123.123.123:1234/b/light";
     CACreateRemoteEndpoint(uri, &tempRep);
 
-    memset(&responseData, 0, sizeof(CAInfo));
+    memset(&responseData, 0, sizeof(CAInfo_t));
     CAGenerateToken(&tempToken);
     responseData.token = tempToken;
     responseData.payload = (char *) "response payload";
 
-    memset(&responseInfo, 0, sizeof(CAResponseInfo));
-    responseInfo.result = CA_SUCCESS;
+    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
+    responseInfo.result = CA_VALID;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
@@ -238,16 +238,16 @@ TEST(SendResponseTest, TC_18_Nagative_01)
     uri = NULL;
     CACreateRemoteEndpoint(uri, &tempRep);
 
-    memset(&responseData, 0, sizeof(CAInfo));
+    memset(&responseData, 0, sizeof(CAInfo_t));
     CAGenerateToken(&tempToken);
     responseData.token = tempToken;
     responseData.payload = (char *) "response payload";
 
-    memset(&responseInfo, 0, sizeof(CAResponseInfo));
-    responseInfo.result = CA_SUCCESS;
+    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
+    responseInfo.result = CA_VALID;
     responseInfo.info = responseData;
 
-    EXPECT_EQ(CA_SEND_FAILED, CASendResponse(tempRep, &responseInfo));
+    EXPECT_EQ(CA_STATUS_FAILED, CASendResponse(tempRep, &responseInfo));
 
     CADestroyToken(tempToken);
     CADestroyRemoteEndpoint(tempRep);
@@ -257,21 +257,19 @@ TEST(SendResponseTest, TC_18_Nagative_01)
 // check return value
 TEST(SendNotificationTest, TC_19_Positive_01)
 {
-    uri = (char *) "referenceUri";
+    uri = (char *) "123.123.123.123:1234/b/light";
     CACreateRemoteEndpoint(uri, &tempRep);
 
-    memset(&responseData, 0, sizeof(CAInfo));
-    CAGenerateToken(&tempToken);
-    responseData.token = tempToken;
-    responseData.payload = (char *) "response payload";
+    memset(&responseData, 0, sizeof(CAInfo_t));
+    responseData.token = (char *) "client token";
+    responseData.payload = (char *) "Temp Notification Data";
 
-    memset(&responseInfo, 0, sizeof(CAResponseInfo));
-    responseInfo.result = CA_SUCCESS;
+    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASendNotification(tempRep, &responseInfo));
+    EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
 
-    CADestroyToken(tempToken);
     CADestroyRemoteEndpoint(tempRep);
 }
 
@@ -281,18 +279,16 @@ TEST(SendNotificationTest, TC_20_Nagative_01)
     uri = NULL;
     CACreateRemoteEndpoint(uri, &tempRep);
 
-    memset(&responseData, 0, sizeof(CAInfo));
-    CAGenerateToken(&tempToken);
-    responseData.token = tempToken;
-    responseData.payload = (char *) "response payload";
+    memset(&responseData, 0, sizeof(CAInfo_t));
+    responseData.token = (char *) "client token";
+    responseData.payload = (char *) "Temp Notification Data";
 
-    memset(&responseInfo, 0, sizeof(CAResponseInfo));
-    responseInfo.result = CA_SUCCESS;
+    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASendNotification(tempRep, &responseInfo));
+    EXPECT_EQ(CA_STATUS_FAILED, CASendNotification(tempRep, &responseInfo));
 
-    CADestroyToken(tempToken);
     CADestroyRemoteEndpoint(tempRep);
 }
 
@@ -300,21 +296,45 @@ TEST(SendNotificationTest, TC_20_Nagative_01)
 // check return value
 TEST(AdvertiseResourceTest, TC_21_Positive_01)
 {
-    CAURI uri = (char *) "resourceUri";
-    CAHeaderOption* options = NULL;
-    uint8_t numOptions = 0;
+    uri = (char *) "123.123.123.123:1234/b/light";
+    int optionNum = 1;
+    char* optionData;
+    CAHeaderOption_t* headerOpt;
+    headerOpt = (CAHeaderOption_t*) malloc(sizeof(CAHeaderOption_t) * optionNum);
+    memset(headerOpt, 0, sizeof(CAHeaderOption_t) * optionNum);
 
-    EXPECT_EQ(CA_NOT_SUPPORTED, CAAdvertiseResource(uri, options, numOptions));
+    int i;
+    for(i = 0 ; i < optionNum ; i++)
+    {
+        int optionID = 2;
+        headerOpt[i].optionID = optionID;
+        optionData = (char *) "aaa";
+        memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
+        headerOpt[i].optionLength = (uint16_t)strlen(optionData);
+    }
+    EXPECT_EQ(CA_STATUS_OK, CAAdvertiseResource(uri, headerOpt, (uint8_t)optionNum));
 }
 
-// check return value if token is NULL
+// check return value if uri is NULL
 TEST(AdvertiseResourceTest, TC_22_Nagative_01)
 {
-    CAURI uri = NULL;
-    CAHeaderOption* options = NULL;
-    uint8_t numOptions = 0;
+    uri = NULL;
+    int optionNum = 1;
+    char* optionData;
+    CAHeaderOption_t* headerOpt;
+    headerOpt = (CAHeaderOption_t*) malloc(sizeof(CAHeaderOption_t) * optionNum);
+    memset(headerOpt, 0, sizeof(CAHeaderOption_t) * optionNum);
 
-    EXPECT_EQ(CA_NOT_SUPPORTED, CAAdvertiseResource(uri, options, numOptions));
+    int i;
+    for(i = 0 ; i < optionNum ; i++)
+    {
+        int optionID = 2;
+        headerOpt[i].optionID = optionID;
+        optionData = (char *) "aaa";
+        memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
+        headerOpt[i].optionLength = (uint16_t)strlen(optionData);
+    }
+    EXPECT_EQ(CA_STATUS_FAILED, CAAdvertiseResource(uri, headerOpt, (uint8_t)optionNum));
 }
 
 // CASelectNewwork TC
@@ -347,20 +367,12 @@ TEST(UnSelectNetworkTest, TC_26_Nagative_01)
     EXPECT_EQ(CA_NOT_SUPPORTED, CAUnSelectNetwork(20));
 }
 
-// CAGetNetworkInfomation TC
-// check return value
-TEST (GetNetworkInfomation, TC_27_Positive_01)
-{
-    CALocalConnectivity* info = NULL;
-    uint32_t* size = NULL;
-
-    EXPECT_EQ(CA_NOT_SUPPORTED, CAGetNetworkInformation(&info, size));
-}
-
 // CAHandlerRequestResponse TC
 // check return value
-TEST (HandlerRequestResponseTest, TC_28_Positive_01)
+TEST (HandlerRequestResponseTest, TC_27_Positive_01)
 {
     EXPECT_EQ(CA_STATUS_OK, CAHandleRequestResponse());
 }
+
+
 

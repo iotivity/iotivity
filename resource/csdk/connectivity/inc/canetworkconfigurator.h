@@ -20,6 +20,7 @@
 #ifndef _NETWORK_CONFIGURATOR_H_
 #define _NETWORK_CONFIGURATOR_H_
 
+#include "cacommon.h"
 #include "uarraylist.h"
 
 #ifdef __cplusplus
@@ -37,6 +38,8 @@ CAResult_t CAAddNetworkType(uint32_t CAConnectivityType);
 CAResult_t CARemoveNetworkType(uint32_t CAConnectivityType);
 
 u_arraylist_t* CAGetSelectedNetworkList();
+
+CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t* size);
 
 #ifdef __cplusplus
 } /* extern "C" */

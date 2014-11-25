@@ -29,41 +29,50 @@ extern "C"
 {
 #endif
 
-uint32_t flags = 0;
-
-uint8_t msgtype = COAP_MESSAGE_CON; /* usually, requests are sent confirmable */
-
-coap_block_t block =
-{   .num = 0, .m = 0, .szx = 6};
-
 typedef uint32_t code_t;
 
 /**
- * function for generate
+ * function for generating
  */
 coap_pdu_t* CAGeneratePdu(const char* uri, const uint32_t code, const CAInfo_t info);
-/**
- * function for parsing
- */
-uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t* outReqInfo);
 
-uint32_t CAGetResponseInfoFromPdu(const coap_pdu_t *pdu, CAResponseInfo_t* outResInfo);
+/**
+ * function for generating
+ */
+uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t* outReqInfo, char* outUri);
+
+uint32_t CAGetResponseInfoFromPdu(const coap_pdu_t *pdu, CAResponseInfo_t* outResInfo,
+        char* outUri);
 
 coap_pdu_t* CACreatePDUforRequest(const code_t code, coap_list_t *options);
 
 coap_pdu_t* CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *optlist,
         const char* payload);
 
+/**
+ * funtion for parsing
+ */
 void CAParseURI(const char* uriInfo, coap_list_t **options);
 
+/**
+ * funtion for parsing
+ */
 void CAParseHeadOption(const uint32_t code, const CAInfo_t info, coap_list_t **optlist);
 
 coap_list_t* CACreateNewOptionNode(const uint16_t key, const uint32_t length, const uint8_t *data);
 
 int32_t CAOrderOpts(void *a, void *b);
 
-void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t* outCode, CAInfo_t* outInfo);
+uint32_t getOptionCount(coap_opt_iterator_t opt_iter);
 
+/**
+ * funtion for get PDU information
+ */
+void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t* outCode, CAInfo_t* outInfo, char* outUri);
+
+/**
+ * funtion for parsing
+ */
 coap_pdu_t* CAParsePDU(const char* data, uint32_t* outCode);
 
 /**
@@ -72,6 +81,11 @@ coap_pdu_t* CAParsePDU(const char* data, uint32_t* outCode);
 CAResult_t CAGenerateTokenInternal(CAToken_t* token);
 
 void CADestroyTokenInternal(CAToken_t token);
+
+/**
+ * Deinitialize
+ */
+void CADeinitialize(CAInfo_t* info);
 
 #ifdef __cplusplus
 } /* extern "C" */

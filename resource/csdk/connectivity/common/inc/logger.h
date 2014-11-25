@@ -29,6 +29,8 @@
 
 #ifdef __ANDROID__
 #include <android/log.h>
+#elif defined(__TIZEN__)
+#include <dlog.h>
 #elif defined ARDUINO
 #include "Arduino.h"
 #include <avr/pgmspace.h>
@@ -51,13 +53,24 @@ extern "C"
 #define MAX_LOG_V_BUFFER_SIZE (256)
 
 // Log levels
+#ifndef __TIZEN__
 typedef enum
 {
     DEBUG = 0, INFO, WARNING, ERROR, FATAL
 } LogLevel;
+#else
+#define DEBUG DLOG_DEBUG
+#define INFO DLOG_INFO
+#define WARNING DLOG_WARNING
+#define ERROR DLOG_ERROR
+#define FATAL DLOG_ERROR
+#endif
 
 #ifndef ARDUINO
-
+#ifdef __TIZEN__
+#define OICLog(level,tag,mes) LOG(level,tag,mes)
+#define OICLogv(level,tag,fmt,args...) LOG(level,tag,fmt,##args)
+#else
 /**
  * Configure logger to use a context that defines a custom logger function
  *
@@ -106,6 +119,7 @@ void OICLogv(LogLevel level, const char * tag, const char * format, ...);
  * @param bufferSize - max number of byte in buffer
  */
 void OICLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize);
+#endif //__TIZEN__
 #else
 /**
  * Initialize the serial logger for Arduino
@@ -144,11 +158,14 @@ void OICLogv(LogLevel level, const char * tag, const char * format, ...);
 #endif
 
 #ifdef TB_LOG
-// These macros are defined for Linux, Android, and Arduino
+
+#ifdef __TIZEN__
+#define OIC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, level, tag, mes)
+#define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
+#else // These macros are defined for Linux, Android, and Arduino
 #define OIC_LOG_INIT()    OICLogInit()
 #define OIC_LOG(level, tag, logStr)  OICLog((level), (tag), (logStr))
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)  OICLogBuffer((level), (tag), (buffer), (bufferSize))
-
 #ifdef ARDUINO
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
@@ -161,9 +178,11 @@ void OICLogv(LogLevel level, const char * tag, const char * format, ...);
 #define OIC_LOG_SHUTDOWN()     OICLogShutdown()
 // Define variable argument log function for Linux and Android
 #define OIC_LOG_V(level, tag, ...)  OICLogv((level), (tag), __VA_ARGS__)
-#endif
+#endif //ARDUINO
+#endif //__TIZEN__
 
-#else
+#else //TB_LOG
+
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
 #define OIC_LOG(level, tag, logStr)

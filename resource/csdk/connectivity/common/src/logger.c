@@ -60,8 +60,9 @@ static void OICLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const
 #define GET_PROGMEM_BUFFER(buffer, addr) { buffer[0] = '\0';}
 #endif
 #endif // __ANDROID__
-#ifndef ARDUINO
 
+#ifndef ARDUINO
+#ifndef __TIZEN__
 void OICLogConfig(oic_log_ctx_t *ctx)
 {
     logCtx = ctx;
@@ -172,7 +173,7 @@ void OICLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint
         OICLog(level, tag, lineBuffer);
     }
 }
-
+#endif //__TIZEN__
 #else
 /**
  * Initialize the serial logger for Arduino
@@ -373,5 +374,5 @@ void OICLogv(LogLevel level, PROGMEM const char * tag, const __FlashStringHelper
     va_end(ap);
 }
 
-#endif
+#endif //ARDUINO
 
