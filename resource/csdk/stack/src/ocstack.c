@@ -54,7 +54,7 @@ OCResource *headResource = NULL;
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
 static PresenceResource presenceResource;
-uint8_t PresenceTimeOutSize = 4;
+uint8_t PresenceTimeOutSize = 0;
 uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
 
@@ -256,6 +256,10 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     myStackMode = mode;
 
     defaultDeviceHandler = NULL;
+
+#ifdef WITH_PRESENCE
+    PresenceTimeOutSize = sizeof(PresenceTimeOut)/sizeof(PresenceTimeOut[0]) - 1;
+#endif // WITH_PRESENCE
 
     // Make call to OCCoAP layer
     result = OCInitCoAP(ipAddr, (uint16_t) port, myStackMode);
@@ -573,10 +577,18 @@ OCStackResult OCProcessPresence()
                 uint32_t now = GetTime(0);
                 OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
                 OC_LOG_V(DEBUG, TAG, "----------------current ticks %d", now);
-                if(cbNode->presence->TTLlevel != PresenceTimeOutSize){
+
+
+                if(cbNode->presence->TTLlevel >= (PresenceTimeOutSize + 1))
+                {
+                    goto exit;
+                }
+
+                if(cbNode->presence->TTLlevel < PresenceTimeOutSize){
                     OC_LOG_V(DEBUG, TAG, "----------------timeout ticks %d",
                             cbNode->presence->timeOut[cbNode->presence->TTLlevel]);
                 }
+
                 if(cbNode->presence->TTLlevel >= PresenceTimeOutSize)
                 {
                     OC_LOG(DEBUG, TAG, PCF("----------------No more timeout ticks"));
@@ -584,7 +596,7 @@ OCStackResult OCProcessPresence()
                     {
                         OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
                                 &dst);
-                        result = FormOCClientResponse(&clientResponse, OC_STACK_PRESENCE_STOPPED,
+                        result = FormOCClientResponse(&clientResponse, OC_STACK_PRESENCE_TIMEOUT,
                                 (OCDevAddr *) &dst, 0, NULL);
                         if(result != OC_STACK_OK)
                         {
@@ -595,6 +607,12 @@ OCStackResult OCProcessPresence()
                         {
                             goto exit;
                         }
+
+                        // Increment the TTLLevel (going to a next state), so we don't keep
+                        // sending presence notification to client.
+                        cbNode->presence->TTLlevel++;
+                        OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d",
+                                                cbNode->presence->TTLlevel);
                     }
                     else
                     {

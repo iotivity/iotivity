@@ -63,6 +63,8 @@ const char *getResult(OCStackResult result) {
         return "OC_STACK_PRESENCE_DO_NOT_HANDLE";
     case OC_STACK_PRESENCE_STOPPED:
         return "OC_STACK_PRESENCE_STOPPED";
+    case OC_STACK_PRESENCE_TIMEOUT:
+        return "OC_STACK_PRESENCE_TIMEOUT";
     #endif
     case OC_STACK_ERROR:
         return "OC_STACK_ERROR";
