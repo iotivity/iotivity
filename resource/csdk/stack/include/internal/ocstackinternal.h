@@ -188,6 +188,12 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType, OCQualityOf
 void HandleStackResponses(OCResponse * response);
 int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
 
+OCStackResult BindResourceInterfaceToResource(OCResource* resource,
+                                            const char *resourceInterfaceName);
+
+OCStackResult BindResourceTypeToResource(OCResource* resource,
+                                            const char *resourceTypeName);
+
 #ifdef WITH_PRESENCE
 //TODO: should the following function be public?
 OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,

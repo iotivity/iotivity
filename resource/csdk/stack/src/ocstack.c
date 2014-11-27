@@ -831,16 +831,14 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
             | OC_ACTIVE);
 
     // Add the resourcetype to the resource
-    result = OCBindResourceTypeToResource((OCResourceHandle) pointer,
-            resourceTypeName);
+    result = BindResourceTypeToResource(pointer, resourceTypeName);
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Error adding resourcetype"));
         goto exit;
     }
 
     // Add the resourceinterface to the resource
-    result = OCBindResourceInterfaceToResource((OCResourceHandle) pointer,
-            resourceInterfaceName);
+    result = BindResourceInterfaceToResource(pointer, resourceInterfaceName);
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
         goto exit;
@@ -1043,39 +1041,20 @@ OCStackResult OCUnBindResource(
     return OC_STACK_ERROR;
 }
 
-
-/**
- * Bind a resourcetype to a resource.
- *
- * @param handle - handle to the resource
- * @param resourceTypeName - name of resource type.  Example: "core.led"
- *
- * @return
- *     OC_STACK_OK    - no errors
- *     OC_STACK_ERROR - stack process error
- */
-OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
-        const char *resourceTypeName) {
-
+OCStackResult BindResourceTypeToResource(OCResource* resource,
+                                            const char *resourceTypeName)
+{
     OCResourceType *pointer = NULL;
     char *str = NULL;
     size_t size;
-    OCResource *resource;
     OCStackResult result = OC_STACK_ERROR;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCBindResourceTypeToResource"));
+    OC_LOG(INFO, TAG, PCF("Entering BindResourceTypeToResource"));
 
     // Validate parameters
     VERIFY_NON_NULL(resourceTypeName, ERROR, OC_STACK_INVALID_PARAM);
     // TODO:  Does resource attribute resentation really have to be maintained in stack?
     // Is it presented during resource discovery?
-
-    // Make sure resource exists
-    resource = findResource((OCResource *) handle);
-    if (!resource) {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
-        return OC_STACK_ERROR;
-    }
 
     TODO ("Make sure that the resourcetypename doesn't already exist in the resource");
 
@@ -1098,51 +1077,26 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     insertResourceType(resource, pointer);
     result = OC_STACK_OK;
 
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
-    {
-        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resource->rsrcType, OC_LOW_QOS);
-    }
-    #endif
-
     exit: if (result != OC_STACK_OK) {
         OCFree(pointer);
         OCFree(str);
     }
+
     return result;
 }
 
-/**
- * Bind a resourceinterface to a resource.
- *
- * @param handle - handle to the resource
- * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
- *
- * @return
- *     OC_STACK_OK    - no errors
- *     OC_STACK_ERROR - stack process error
- */
-OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
-        const char *resourceInterfaceName) {
-
+OCStackResult BindResourceInterfaceToResource(OCResource* resource,
+        const char *resourceInterfaceName)
+{
     OCResourceInterface *pointer = NULL;
     char *str = NULL;
     size_t size;
-    OCResource *resource;
     OCStackResult result = OC_STACK_ERROR;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCBindResourceInterfaceToResource"));
+    OC_LOG(INFO, TAG, PCF("Entering BindResourceInterfaceToResource"));
 
     // Validate parameters
     VERIFY_NON_NULL(resourceInterfaceName, ERROR, OC_STACK_INVALID_PARAM);
-
-    // Make sure resource exists
-    resource = findResource((OCResource *) handle);
-    if (!resource) {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
-        return OC_STACK_INVALID_PARAM;
-    }
 
     TODO ("Make sure that the resourceinterface name doesn't already exist in the resource");
 
@@ -1167,6 +1121,40 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
 
     result = OC_STACK_OK;
 
+    exit: if (result != OC_STACK_OK) {
+        OCFree(pointer);
+        OCFree(str);
+    }
+
+    return result;
+}
+
+/**
+ * Bind a resourcetype to a resource.
+ *
+ * @param handle - handle to the resource
+ * @param resourceTypeName - name of resource type.  Example: "core.led"
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
+ */
+OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
+        const char *resourceTypeName) {
+
+    OCStackResult result = OC_STACK_ERROR;
+    OCResource *resource;
+
+    // Make sure resource exists
+    resource = findResource((OCResource *) handle);
+    if (!resource) {
+        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        return OC_STACK_ERROR;
+    }
+
+    // call internal function
+    result = BindResourceTypeToResource(resource, resourceTypeName);
+
     #ifdef WITH_PRESENCE
     if(presenceResource.handle)
     {
@@ -1175,10 +1163,44 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
     }
     #endif
 
-    exit: if (result != OC_STACK_OK) {
-        OCFree(pointer);
-        OCFree(str);
+    return result;
+}
+
+/**
+ * Bind a resourceinterface to a resource.
+ *
+ * @param handle - handle to the resource
+ * @param resourceInterfaceName - name of resource interface.  Example: "oc.mi.b"
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
+ */
+
+OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
+        const char *resourceInterfaceName) {
+
+    OCStackResult result = OC_STACK_ERROR;
+    OCResource *resource;
+
+    // Make sure resource exists
+    resource = findResource((OCResource *) handle);
+    if (!resource) {
+        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        return OC_STACK_ERROR;
     }
+
+    // call internal function
+    result = BindResourceInterfaceToResource(resource, resourceInterfaceName);
+
+    #ifdef WITH_PRESENCE
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        SendPresenceNotification(resource->rsrcType, OC_LOW_QOS);
+    }
+    #endif
+
     return result;
 }
 
