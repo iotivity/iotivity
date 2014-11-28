@@ -22,22 +22,18 @@
 
 #include "SSMInterface/SSMCore.h"
 #include "Common/PlatformLayer.h"
-
-//temp include
-#include "ContextRepository.h"
-#include "ContextExecutor.h"
+#include "Common/InternalInterface.h"
 
 /**
- * @class    CResponseReactor
- * @brief    Class for implement of reactor pattern
- *           Delegate requested context to context executor layer.
+ * @class    CSensingEngine
+ * @brief    Class for implementing main abstration of SensorProcessor
  *
  *
  * @see
  */
-class CResponseReactor :
+class CSensingEngine :
     public CObjectRoot<CObjectMultiThreadModel>
-    , public IResponseReactor
+    , public ISensingEngine
 {
     private:
         CObjectPtr<IContextRepository>  m_pContextRepository;
@@ -57,7 +53,6 @@ class CResponseReactor :
         CSimpleMutex                        m_mtxUnregisterContext;
 
     public:
-
         SSMRESULT finalConstruct();
         void finalRelease();
 
@@ -66,7 +61,7 @@ class CResponseReactor :
             if (ppObject == NULL)
                 return SSM_E_POINTER;
 
-            if (IsEqualOID(objectID, OID_IResponseReactor))
+            if (IsEqualOID(objectID, OID_ISensingEngine))
             {
                 IBase *pBase = this;
                 pBase->addRef();
@@ -85,13 +80,14 @@ class CResponseReactor :
         * @param        [in]  ISSMResource *pSSMResource -  Requested context model resource.
         * @param        [in]  IEvent *pEvent -  IEvent class for callback.
         *
-        * @return       void
+        * @return       SSMRESULT
         *
         * @warning
         * @exception
         * @see
         */
-        void registerContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
+        SSMRESULT registerContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource,
+                                  IN IEvent *pEvent);
 
         /**
         * @fn           unregisterContext
@@ -101,13 +97,14 @@ class CResponseReactor :
         * @param        [in]  ISSMResource *pSSMResource -  Requested context model resource.
         * @param        [in]  IEvent *pEvent -  IEvent class for callback.
         *
-        * @return       void
+        * @return       SSMRESULT
         *
         * @warning
         * @exception
         * @see
         */
-        void  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
+        SSMRESULT  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource,
+                                     IN IEvent *pEvent);
 
         /**
         * @fn           getList
@@ -115,13 +112,13 @@ class CResponseReactor :
         *
         * @param        [out]  std::vector<ISSMResource> *pList - ISSMResource vector of low level context models or high level context models.
         *
-        * @return       void
+        * @return       SSMRESULT
         *
         * @warning
         * @exception
         * @see
         */
-        virtual void getList(OUT std::vector<ISSMResource *> *pList);
+        SSMRESULT getList(OUT std::vector<ISSMResource *> *pList);
 
         /**
         * @fn           onEvent
@@ -140,6 +137,4 @@ class CResponseReactor :
         */
         int onEvent(IN std::string name, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
 };
-
-
 #endif

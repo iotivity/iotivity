@@ -36,7 +36,7 @@ SSMRESULT CPropagationEngine::finalConstruct()
 
     SSM_CLEANUP_ASSERT(m_pContextRepository->registerResourceFinderEvent(this));
 
-    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IResponseReactor, (IBase **)&m_pResponseReactor));
+    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ISensingEngine, (IBase **)&m_pSensingEngine));
 
     SSM_CLEANUP_ASSERT(initializeEngine());
 
@@ -148,7 +148,7 @@ SSMRESULT CPropagationEngine::addResourceFromGetList()
     std::vector<ISSMResource *>      contextModelList;
     std::stringstream               sstream;
 
-    m_pResponseReactor->getList(&contextModelList);
+    m_pSensingEngine->getList(&contextModelList);
     for (std::vector<ISSMResource *>::iterator itor = contextModelList.begin();
          itor != contextModelList.end(); ++itor)
     {
@@ -288,12 +288,12 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CPropagationEngine::installResponseReactor(IN IResponseReactor *pResponseReactor)
+SSMRESULT CPropagationEngine::installCurrentSensors()
 {
     SSMRESULT res = SSM_E_FAIL;
     std::vector<ISSMResource *>      contextModelList;
 
-    pResponseReactor->getList(&contextModelList);
+    m_pSensingEngine->getList(&contextModelList);
 
     for (std::vector<ISSMResource *>::iterator itor = contextModelList.begin();
          itor != contextModelList.end(); ++itor)
@@ -449,7 +449,7 @@ SSMRESULT CPropagationEngine::initializeEngine()
 
     SSM_CLEANUP_ASSERT(updateDeviceInfo(&ssmResource, NULL));
 
-    SSM_CLEANUP_ASSERT(installResponseReactor(m_pResponseReactor));
+    SSM_CLEANUP_ASSERT(installCurrentSensors());
 
 CLEANUP:
     SAFE_RELEASE(pRootModel);
@@ -525,11 +525,11 @@ SSMRESULT CPropagationEngine::onModelStatusChange(IN IContextModel::Status newSt
     {
         case IContextModel::STATUS_ACTIVATE:
             pModel->addRef();
-            m_pResponseReactor->registerContext(SSM_REPEAT, pSSMResource, (CContextModel *)pModel);
+            m_pSensingEngine->registerContext(SSM_REPEAT, pSSMResource, (CContextModel *)pModel);
             break;
 
         case IContextModel::STATUS_DEACTIVATE:
-            m_pResponseReactor->unregisterContext(SSM_REPEAT, pSSMResource, (CContextModel *)pModel);
+            m_pSensingEngine->unregisterContext(SSM_REPEAT, pSSMResource, (CContextModel *)pModel);
             //pModel->CleanUpModelData();
             pModel->release();
             break;
@@ -537,7 +537,7 @@ SSMRESULT CPropagationEngine::onModelStatusChange(IN IContextModel::Status newSt
         case IContextModel::STATUS_START_READ_VALUE:
             //Model must be released from OnEvent callType
             pModel->addRef();
-            m_pResponseReactor->registerContext(SSM_ONCE, pSSMResource, (CContextModel *)pModel);
+            m_pSensingEngine->registerContext(SSM_ONCE, pSSMResource, (CContextModel *)pModel);
             break;
 
         case IContextModel::STATUS_STOP_READ_VALUE:

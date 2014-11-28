@@ -1,0 +1,41 @@
+<softsensors>
+	
+  <softsensor>
+    <name>DiscomfortIndexSensor</name>
+    <attributes>
+      <attribute>
+        <name>version</name>
+        <type>string</type>
+        <value>1.0</value>
+      </attribute>
+      <attribute>
+        <name>lifetime</name>
+        <type>int</type>
+        <value>60</value>
+      </attribute>
+    </attributes>
+    <outputs>
+      <output>
+        <name>timestamp</name>
+        <type>string</type>
+      </output>
+      <output>
+        <name>temperature</name>
+        <type>string</type>
+      </output>
+      <output>
+        <name>humidity</name>
+        <type>string</type>
+      </output>
+      <output>
+        <name>discomfortIndex</name>
+        <type>int</type>
+      </output>
+    </outputs>
+    <inputs>
+      <input>Thing_TempHumSensor</input>
+      <input>Thing_TempHumSensor1</input>
+    </inputs>
+  </softsensor>
+  
+</softsensors>

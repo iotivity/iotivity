@@ -17,9 +17,9 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "ResponseReactor.h"
+#include "SensingEngine.h"
 
-SSMRESULT CResponseReactor::finalConstruct()
+SSMRESULT CSensingEngine::finalConstruct()
 {
     SSMRESULT res = SSM_S_OK;
 
@@ -31,12 +31,12 @@ CLEANUP:
     return res;
 }
 
-void CResponseReactor::finalRelease()
+void CSensingEngine::finalRelease()
 {
 }
 
-void CResponseReactor::registerContext(TypeofEvent callType, ISSMResource *pSSMResource,
-                                       IEvent *pEvent)
+SSMRESULT CSensingEngine::registerContext(TypeofEvent callType, ISSMResource *pSSMResource,
+        IEvent *pEvent)
 {
     m_mtxRequestedContextData.lock();
     // if already exists
@@ -53,9 +53,11 @@ void CResponseReactor::registerContext(TypeofEvent callType, ISSMResource *pSSMR
     m_pContextExecutor->registerContext(callType, pSSMResource, this);
 
     m_mtxRequestedContextData.unlock();
+
+    return SSM_S_OK;
 }
 
-void CResponseReactor::unregisterContext(TypeofEvent callType, ISSMResource *pSSMResource,
+SSMRESULT CSensingEngine::unregisterContext(TypeofEvent callType, ISSMResource *pSSMResource,
         IEvent *pEvent)
 {
     m_mtxUnregisterContext.lock();
@@ -70,20 +72,24 @@ void CResponseReactor::unregisterContext(TypeofEvent callType, ISSMResource *pSS
     }
 
     m_mtxUnregisterContext.unlock();
+
+    return SSM_S_OK;
 }
 
-void CResponseReactor::getList(std::vector<ISSMResource *> *pList)
+SSMRESULT CSensingEngine::getList(std::vector<ISSMResource *> *pList)
 {
     pList->clear();
 
     m_pContextRepository->getSoftSensorList(pList);
 
     m_pContextRepository->getPrimitiveSensorList(pList);
+
+    return SSM_S_OK;
 }
 
 //Dispatch to upper layer
-int CResponseReactor::onEvent(std::string type, TypeofEvent callType,
-                              std::vector<ContextData> ctxData)
+int CSensingEngine::onEvent(std::string type, TypeofEvent callType,
+                            std::vector<ContextData> ctxData)
 {
     std::map<std::string, CallbackData >::iterator  itor;
 

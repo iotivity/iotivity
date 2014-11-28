@@ -75,22 +75,6 @@ void CContextExecutor::getDataFromDatabase(std::string modelName, int startIndex
     m_pContextDataReader->getContextData(modelName, startIndex, count, data, pLastIndex);
 }
 
-std::string CContextExecutor::checkError(std::vector<ContextData> data)
-{
-    std::string errorMsg = "OK";
-
-    for (unsigned int i = 0 ; i < data.size() ; ++i)
-    {
-        if (data[i].outputProperty[0].find("error") != data[i].outputProperty[0].end())
-        {
-            errorMsg = data[i].outputProperty[0].find("error")->second ;
-            break;
-        }
-    }
-
-    return errorMsg;
-}
-
 void CContextExecutor::registerContext(TypeofEvent callType, ISSMResource *pSSMResource,
                                        IEvent *pEvent)
 {
@@ -242,9 +226,11 @@ std::map<std::string, std::vector<ContextData> >  CContextExecutor::getPreparedC
     std::string primitiveSensor)
 {
     //check m_relatedSoftSensor / apply timestamp
-    std::map<std::string, std::vector<ContextData> > returnData;
 
     SSMRESULT ret = SSM_E_FAIL;
+
+    std::map<std::string, std::vector<ContextData> >    returnData;
+    std::vector<ContextData>                            contextDataList;
 
     for (unsigned int i = 0; i < m_relatedSoftSensor[primitiveSensor].size(); ++i)
     {
@@ -253,24 +239,26 @@ std::map<std::string, std::vector<ContextData> >  CContextExecutor::getPreparedC
         {
             ret = SSM_S_OK;
             std::vector<std::string> inputList = m_registeredResources[softSensorName]->inputList;
-            std::vector<ContextData> contextDataList;
             for (unsigned int j = 0; j < inputList.size(); j++) //check all "inputlist" arrived or not
             {
                 if (m_storedPrimitiveSensorData.find(inputList[j]) == m_storedPrimitiveSensorData.end())
                 {
+                    //Still we have partial data
                     ret = SSM_E_FAIL;
                     break;
                 }
                 else
                 {
-                    std::vector<ContextData> primitiveSensorData = m_storedPrimitiveSensorData[inputList[j]];
-                    for (unsigned k = 0; k < primitiveSensorData.size(); k++)
+                    //Copy all properties of current primitiveSensor data to outputs
+                    for (std::vector<ContextData>::iterator itor = m_storedPrimitiveSensorData[inputList[j]].begin();
+                         itor != m_storedPrimitiveSensorData[inputList[j]].end(); ++itor)
                     {
-                        contextDataList.push_back(primitiveSensorData[k]);
+                        contextDataList.push_back(*itor);
                     }
                 }
             }
 
+            //We have all inputs
             if (ret == SSM_S_OK)
             {
                 returnData.insert(std::make_pair(softSensorName, contextDataList));
@@ -296,27 +284,14 @@ int CContextExecutor::onEvent(std::string type, TypeofEvent callType,
         //find soft sensor
         std::map<std::string, std::vector<ContextData> > readyContextList = getPreparedContextList(type);
 
-        if (readyContextList.size() > 0)
+        //Run SoftSensor!  readyContextList has all data for run
+        std::map<std::string, std::vector<ContextData> >::iterator iter;
+        for (iter = readyContextList.begin(); iter != readyContextList.end(); ++iter)
         {
-            //Run SoftSensor!  readyContextList has all data for run
-            std::map<std::string, std::vector<ContextData> >::iterator iter = readyContextList.begin();
-            for (; iter != readyContextList.end(); ++iter)
-            {
-                std::string softSensorName = iter->first;
-                std::vector<ContextData> inputData = iter->second;
-                std::string errorMsg = checkError(inputData);
+            std::string softSensorName = iter->first;
+            std::vector<ContextData> inputData = iter->second;
 
-                if (!errorMsg.compare("OK"))
-                {
-                    runLogic(inputData, softSensorName);
-                }
-                else
-                {
-                    inputData.clear();
-                    inputData.push_back(makeErrorContextData(softSensorName, errorMsg));
-                    addOutput(inputData);
-                }
-            }
+            runLogic(inputData, softSensorName);
         }
     }
     else //This data is primitive
@@ -421,18 +396,4 @@ void CContextExecutor::runLogic(std::vector<ContextData> inputData, std::string 
         m_ctxEventList[softSensor]->onCtxEvent(SPF_START, inputData);
     }
     m_mtxLibraryIO.unlock();
-}
-
-ContextData CContextExecutor::makeErrorContextData(std::string rootName, std::string errMsg)
-{
-    std::map<std::string, std::string> errorMap;
-    ContextData errorContextData;
-
-    errorMap.insert(std::make_pair("error", errMsg));
-    errorMap.insert(std::make_pair("available", "false"));
-    errorContextData.rootName = rootName;
-    errorContextData.outputPropertyCount = 2;
-    errorContextData.outputProperty.push_back(errorMap);
-
-    return errorContextData;
 }

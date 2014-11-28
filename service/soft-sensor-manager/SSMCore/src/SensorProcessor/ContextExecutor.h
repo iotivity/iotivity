@@ -214,9 +214,6 @@ class CContextExecutor :
         std::map<std::string, std::vector<ContextData> >  getPreparedContextList(
             IN std::string primitiveSensor);
         void runLogic(IN std::vector<ContextData> inputData, IN std::string softSensor);
-        ContextData makeErrorContextData(IN std::string rootName, IN std::string errMsg);
-        std::string checkError(IN std::vector<ContextData> data);
-
 };
 
 #endif

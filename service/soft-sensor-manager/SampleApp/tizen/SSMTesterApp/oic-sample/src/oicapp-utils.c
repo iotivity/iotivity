@@ -63,6 +63,7 @@ void oicapp_util_put_msg(oicapp_data *ad, const char *msg)
 	DBG("Output msg : %s", ad->output_msg);
 
 	elm_genlist_item_update(ad->item_multiline);
+	elm_genlist_item_item_class_update(ad->item_multiline, &(ad->itc_multiline));
 }
 
 char* oicapp_util_wifi()

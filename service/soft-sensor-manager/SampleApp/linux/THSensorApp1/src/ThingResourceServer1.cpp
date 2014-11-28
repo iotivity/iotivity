@@ -22,24 +22,20 @@
 
 int g_Observation = 0;
 
-void entityHandler(std::shared_ptr< OCResourceRequest > request,
-                   std::shared_ptr< OCResourceResponse > response);
+OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request,
+                                    std::shared_ptr< OCResourceResponse > response);
 
 /*
- * TempResourceFunctions
- */
+* TempResourceFunctions
+*/
 
-void TemphumidResource::registerResource(OC::OCPlatform &platform)
+void TemphumidResource::registerResource()
 {
-    string resourceURI = m_resourceUri; // URI of the resource
-    string resourceTypeName = COAP_TYPE_NAME; // resource type name.
-    string resourceInterface = DEFAULT_INTERFACE; // resource interface.
-
     uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
     // This will internally create and register the resource.
-    OCStackResult result = platform.registerResource(m_resourceHandle, resourceURI,
-                           resourceTypeName, resourceInterface, &entityHandler, resourceProperty);
+    OCStackResult result = OC::OCPlatform::registerResource(m_resourceHandle, m_resourceUri,
+                           m_resourceTypes[0], m_resourceInterfaces[0], &entityHandler, resourceProperty);
 
     if (OC_STACK_OK != result)
     {
@@ -52,29 +48,37 @@ OCResourceHandle TemphumidResource::getHandle()
     return m_resourceHandle;
 }
 
-void TemphumidResource::setRepresentation(AttributeMap &attributeMap)
+void TemphumidResource::setResourceRepresentation(OCRepresentation &rep)
 {
+    int tempHumid;
+    int tempTemp;
+
+    rep.getValue("2", tempTemp);
+    rep.getValue("5", tempHumid);
+
+    m_humid = tempHumid;
+    m_temp = tempTemp;
+
     cout << "\t\t\t" << "Received representation: " << endl;
-    cout << "\t\t\t\t" << "temp: " << attributeMap["temp"][0] << endl;
-    cout << "\t\t\t\t" << "humid: " << attributeMap["humid"][0] << endl;
-
-    m_temp = std::stoi(attributeMap["temp"][0]);
-    m_humid = std::stoi(attributeMap["humid"][0]);
+    cout << "\t\t\t\t" << "temp: " << m_humid << endl;
+    cout << "\t\t\t\t" << "humid: " << m_temp << endl;
 }
 
-void TemphumidResource::getRepresentation(AttributeMap &attributeMap)
+OCRepresentation TemphumidResource::getResourceRepresentation()
 {
-    attributeMap["0"].push_back("temperature");
-    attributeMap["1"].push_back("int");
 
-    attributeMap["2"].push_back(to_string(m_temp));
+    // This representation is temporaily for soft-sensor-management - name, type, vale
+    m_resourceRep.setValue("0", std::string("temperature"));
+    m_resourceRep.setValue("1", std::string("int"));
+    m_resourceRep.setValue("2", std::to_string(m_temp));
+    m_resourceRep.setValue("3", std::string("humidity"));
+    m_resourceRep.setValue("4", std::string("int"));
+    m_resourceRep.setValue("5", std::to_string(m_humid));
 
-    attributeMap["3"].push_back("humidity");
-    attributeMap["4"].push_back("int");
-
-    attributeMap["5"].push_back(to_string(m_humid));
+    return m_resourceRep;
 }
 
+// Create the instance of the TemphumidResource class
 TemphumidResource g_myResource;
 
 void *TestSensorVal(void *param)
@@ -97,7 +101,7 @@ void *TestSensorVal(void *param)
             cout << "Notifying observers with resource handle: " << g_myResource.getHandle()
                  << endl;
 
-            OCStackResult result = OCPlatform::notifyObservers(g_myResource.getHandle());
+            OCStackResult result = OCPlatform::notifyAllObservers(g_myResource.getHandle());
 
             if (OC_STACK_NO_OBSERVERS == result)
             {
@@ -109,8 +113,8 @@ void *TestSensorVal(void *param)
     return NULL;
 }
 
-void entityHandler(std::shared_ptr< OCResourceRequest > request,
-                   std::shared_ptr< OCResourceResponse > response)
+OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request,
+                                    std::shared_ptr< OCResourceResponse > response)
 {
     cout << "\tIn Server CPP entity handler:\n";
 
@@ -118,15 +122,16 @@ void entityHandler(std::shared_ptr< OCResourceRequest > request,
     {
         // Get the request type and request flag
         std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = request->getRequestHandlerFlag();
+        int requestFlag = request->getRequestHandlerFlag();
 
-        if (requestFlag == RequestHandlerFlag::InitFlag)
+        if (requestFlag & RequestHandlerFlag::InitFlag)
         {
             cout << "\t\trequestFlag : Init\n";
 
             // entity handler to perform resource initialization operations
         }
-        else if (requestFlag == RequestHandlerFlag::RequestFlag)
+
+        if (requestFlag & RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";
 
@@ -136,20 +141,14 @@ void entityHandler(std::shared_ptr< OCResourceRequest > request,
                 cout << "\t\t\trequestType : GET\n";
 
                 // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
                 // Process query params and do required operations ..
 
                 // Get the representation of this resource at this point and send it as response
-                OCRepresentation rep = request->getResourceRepresentation();
-                AttributeMap attributeMap;
-
-                g_myResource.getRepresentation(attributeMap);
+                OCRepresentation rep = g_myResource.getResourceRepresentation();
 
                 if (response)
                 {
                     // TODO Error Code
-                    rep.setAttributeMap(attributeMap);
                     response->setErrorCode(200);
                     response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
                 }
@@ -167,7 +166,8 @@ void entityHandler(std::shared_ptr< OCResourceRequest > request,
                 // DELETE request operations
             }
         }
-        else if (requestFlag == RequestHandlerFlag::ObserverFlag)
+
+        if (requestFlag & RequestHandlerFlag::ObserverFlag)
         {
             pthread_t threadId;
 
@@ -178,7 +178,7 @@ void entityHandler(std::shared_ptr< OCResourceRequest > request,
 
             if (!startedThread)
             {
-                pthread_create(&threadId, NULL, TestSensorVal, (void *) NULL);
+                pthread_create(&threadId, NULL, TestSensorVal, (void *)NULL);
                 startedThread = 1;
             }
         }
@@ -187,19 +187,20 @@ void entityHandler(std::shared_ptr< OCResourceRequest > request,
     {
         std::cout << "Request invalid" << std::endl;
     }
+
+    return OC_EH_OK;
 }
 
 int main()
 {
     // Create PlatformConfig object
-
-    PlatformConfig cfg(COAP_SRVTYPE, COAP_MODE, COAP_IP, COAP_PORT, QualityOfService::NonConfirmable);
+    PlatformConfig cfg(COAP_SRVTYPE, COAP_MODE, COAP_IP, COAP_PORT, OC::QualityOfService::LowQos);
 
     try
     {
-        OCPlatform platform(cfg);
+        OC::OCPlatform::Configure(cfg);
 
-        g_myResource.registerResource(platform);
+        g_myResource.registerResource();
 
         int input = 0;
         cout << "Type any key to terminate" << endl;

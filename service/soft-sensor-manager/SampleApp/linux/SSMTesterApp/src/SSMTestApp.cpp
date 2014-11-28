@@ -107,15 +107,15 @@ void SSMTestApp::onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eC
         {
             if (strcmp(itor->first.c_str(), "temperature") == 0)
             {
-                std::cout << "* Temperature : " << itor->second.front().c_str() << "℃" << std::endl;
+                std::cout << "* Temperature : " << itor->second.c_str() << "℃" << std::endl;
             }
             else if (strcmp(itor->first.c_str(), "humidity") == 0)
             {
-                std::cout << "* Humidity : " << itor->second.front().c_str() << "%" << std::endl;
+                std::cout << "* Humidity : " << itor->second.c_str() << "%" << std::endl;
             }
             else if (strcmp(itor->first.c_str(), "discomfortIndex") == 0)
             {
-                int DI = std::stoi(itor->second.front().c_str());
+                int DI = std::stoi(itor->second.c_str());
 
                 std::cout << "* DiscomfortIndex : " << DI << "%" << std::endl;
 
