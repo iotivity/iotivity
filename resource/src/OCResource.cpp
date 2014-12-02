@@ -43,7 +43,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::s
         m_clientWrapper.expired())
     {
         throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
-                interfaces.empty(), m_clientWrapper.expired());
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 }
 

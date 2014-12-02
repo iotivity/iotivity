@@ -33,13 +33,11 @@ namespace OC
     class IClientWrapper : public std::enable_shared_from_this<IClientWrapper>
     {
     protected:
-        OCPlatform_impl& m_owner;
 
     public:
         typedef std::shared_ptr<IClientWrapper> Ptr;
 
-        IClientWrapper(OCPlatform_impl& owner)
-         : m_owner(owner)
+        IClientWrapper()
         {}
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
@@ -81,13 +79,6 @@ namespace OC
         virtual OCStackResult GetDefaultQos(QualityOfService& qos) = 0;
 
         virtual ~IClientWrapper(){}
-
-
-        // Note: this should never be called by anyone but the handler for the listen command.
-        // It is public becuase that needs to be a non-instance callback
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
-                        OCDevAddr& addr, const boost::property_tree::ptree resourceNode)=0;
-    private:
     };
 }
 

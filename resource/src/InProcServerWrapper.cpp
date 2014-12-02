@@ -280,10 +280,9 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
 
 namespace OC
 {
-    InProcServerWrapper::InProcServerWrapper(OC::OCPlatform_impl& owner,
+    InProcServerWrapper::InProcServerWrapper(
         std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
-     : IServerWrapper(owner),
-       m_csdkLock(csdkLock)
+     : m_csdkLock(csdkLock)
     {
         OCMode initType;
 

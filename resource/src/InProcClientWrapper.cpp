@@ -18,23 +18,19 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <new>
-
 #include "InProcClientWrapper.h"
 #include "ocstack.h"
 
 #include "OCPlatform.h"
 #include "OCResource.h"
-
+#include <OCSerialization.h>
 using namespace std;
 
 namespace OC
 {
-    InProcClientWrapper::InProcClientWrapper(OC::OCPlatform_impl& owner,
+    InProcClientWrapper::InProcClientWrapper(
         std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
-            : IClientWrapper(owner),
-              m_threadRun(false), m_csdkLock(csdkLock),
-              m_owner(owner),
+            : m_threadRun(false), m_csdkLock(csdkLock),
               m_cfg { cfg }
     {
         // if the config type is server, we ought to never get called.  If the config type
@@ -91,90 +87,11 @@ namespace OC
         }
     }
 
-    std::string InProcClientWrapper::convertOCAddrToString(OCDevAddr& addr,
-        OCSecureType type, const std::string &portStr)
-    {
-        // TODO: we currently assume this is a IPV4 address, need to figure out the actual value
-
-        uint8_t a, b, c, d;
-        uint16_t port;
-
-        if(OCDevAddrToIPv4Addr(&addr, &a, &b, &c, &d) ==0 && OCDevAddrToPort(&addr, &port)==0)
-        {
-            ostringstream os;
-            if(type == OCSecureType::IPV4)
-            {
-                os << "coap://" << static_cast<int>(a) << '.' <<
-                    static_cast<int>(b) << '.' << static_cast<int>(c) <<
-                    '.' << static_cast<int>(d) << ':' <<static_cast<int>(port);
-            }
-            else if(type == OCSecureType::IPV4Secure)
-            {
-                 os << "coaps://" << static_cast<int>(a) <<'.' <<
-                    static_cast<int>(b) <<'.' << static_cast<int>(c) <<
-                    '.' << static_cast<int>(d) << ':' << portStr;
-            }
-            return os.str();
-        }
-        else
-        {
-            return OC::Error::INVALID_IP;
-        }
-    }
-
-    struct ListenContext
-    {
-        FindCallback              callback;
-        IClientWrapper::Ptr       clientWrapper;
-    };
-
-
-    std::shared_ptr<OCResource> InProcClientWrapper::parseOCResource(
-        IClientWrapper::Ptr clientWrapper, OCDevAddr& addr,
-        const boost::property_tree::ptree resourceNode)
-    {
-        std::string uri = resourceNode.get<std::string>(OC::Key::URIKEY, "");
-        bool obs = resourceNode.get<int>(OC::Key::OBSERVABLEKEY,0) == 1;
-        std::vector<std::string> rTs;
-        std::vector<std::string> ifaces;
-
-        boost::property_tree::ptree properties =
-            resourceNode.get_child(OC::Key::PROPERTYKEY, boost::property_tree::ptree());
-
-        boost::property_tree::ptree rT =
-            properties.get_child(OC::Key::RESOURCETYPESKEY, boost::property_tree::ptree());
-        for(auto itr : rT)
-        {
-            rTs.push_back(itr.second.data());
-        }
-        bool secure = properties.get<int>(OC::Key::SECUREKEY,0) == 1;
-
-        boost::property_tree::ptree iF =
-            properties.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
-        for(auto itr : iF)
-        {
-            ifaces.push_back(itr.second.data());
-        }
-
-        std::string host;
-        if(secure)
-        {
-            string port = properties.get<string>(OC::Key::PORTKEY,"");
-            host= convertOCAddrToString(addr, OCSecureType::IPV4Secure, port);
-        }
-        else
-        {
-            host= convertOCAddrToString(addr, OCSecureType::IPV4);
-        }
-
-        return std::shared_ptr<OCResource>(
-            new OCResource(clientWrapper, host, uri, obs, rTs, ifaces));
-    }
-
     OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
     {
-        ListenContext* context = static_cast<ListenContext*>(ctx);
+        ClientCallbackContext::ListenContext* context =
+            static_cast<ClientCallbackContext::ListenContext*>(ctx);
 
         if(clientResponse->result != OC_STACK_OK)
         {
@@ -188,48 +105,31 @@ namespace OC
         std::stringstream requestStream;
         requestStream << clientResponse->resJSONPayload;
 
-        boost::property_tree::ptree root;
-
         try
         {
-                boost::property_tree::read_json(requestStream, root);
+            ListenOCContainer container(context->clientWrapper, *clientResponse->addr,
+                    requestStream);
+
+            // loop to ensure valid construction of all resources
+            for(auto resource : container.Resources())
+            {
+                std::thread exec(context->callback, resource);
+                exec.detach();
+            }
+
         }
-        catch(boost::property_tree::json_parser::json_parser_error &e)
+        catch(const std::exception& e)
         {
-                oclog() << "listenCallback(): read_json() failed: " << e.what()
-                        << std::flush;
-
-                return OC_STACK_KEEP_TRANSACTION;
-        }
-
-        boost::property_tree::ptree payload =
-                root.get_child(OC::Key::OCKEY, boost::property_tree::ptree());
-
-        for(auto payloadItr : payload)
-        {
-                try
-                {
-                    std::shared_ptr<OCResource> resource =
-                        context->clientWrapper->parseOCResource(context->clientWrapper,
-                        *clientResponse->addr,
-                        payloadItr.second);
-
-                    // Note: the call to detach allows the underlying thread to continue until
-                    // completion and allows us to destroy the exec object. This is apparently NOT
-                    // a memory leak, as the thread will apparently take care of itself.
-                    // Additionally, the only parameter here is a shared ptr, so OCResource will be
-                    // disposed of properly upon completion of the callback handler.
-                    std::thread exec(context->callback,resource);
-                    exec.detach();
-                }
-                catch(ResourceInitException& e)
-                {
-                    oclog() << "listenCallback(): failed to create resource: " << e.what()
-                            << std::flush;
-                }
+            oclog() << "listenCallback failed to parse a malformed message: "
+                    << e.what()
+                    << std::endl <<std::endl
+                    << clientResponse->result
+                    << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
         }
 
         return OC_STACK_KEEP_TRANSACTION;
+
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl,
@@ -239,13 +139,13 @@ namespace OC
 
         OCCallbackData cbdata = {0};
 
-        ListenContext* context = new ListenContext();
+        ClientCallbackContext::ListenContext* context = new ClientCallbackContext::ListenContext();
         context->callback = callback;
         context->clientWrapper = shared_from_this();
 
         cbdata.context =  static_cast<void*>(context);
         cbdata.cb = listenCallback;
-        cbdata.cd = [](void* c){delete static_cast<ListenContext*>(c);};
+        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::ListenContext*>(c);};
 
         auto cLock = m_csdkLock.lock();
         if(cLock)
@@ -266,124 +166,31 @@ namespace OC
         return result;
     }
 
-    struct GetContext
-    {
-        GetCallback callback;
-    };
-
-    struct SetContext
-    {
-        PutCallback callback;
-    };
-
-
     OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
     {
-        std::stringstream requestStream;
-        requestStream<<clientResponse->resJSONPayload;
-        if(strlen((char*)clientResponse->resJSONPayload) == 0)
+        if(clientResponse->resJSONPayload == nullptr || clientResponse->resJSONPayload[0] == '\0')
         {
             return OCRepresentation();
         }
 
-        boost::property_tree::ptree root;
-        try
-        {
-            boost::property_tree::read_json(requestStream, root);
-        }
-        catch(boost::property_tree::json_parser::json_parser_error &e)
+        MessageContainer oc;
+        oc.setJSONRepresentation(clientResponse->resJSONPayload);
+
+        std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
+        if(it == oc.representations().end())
         {
             return OCRepresentation();
         }
-        boost::property_tree::ptree payload = root.get_child(OC::Key::OCKEY, boost::property_tree::ptree());
-        OCRepresentation root_resource;
-        std::vector<OCRepresentation> children;
-        bool isRoot = true;
-        for ( auto payloadItr : payload)
-        {
-            OCRepresentation child;
-            try
-            {
-                auto resourceNode = payloadItr.second;
-                std::string uri = resourceNode.get<std::string>(OC::Key::URIKEY, "");
 
-                if (isRoot)
-                {
-                    root_resource.setUri(uri);
-                }
-                else
-                {
-                    child.setUri(uri);
-                }
+        // first one is considered the root, everything else is considered a child of this one.
+        OCRepresentation root = *it;
+        ++it;
 
-                if( resourceNode.count(OC::Key::PROPERTYKEY) != 0 )
-                {
-                    std::vector<std::string> rTs;
-                    std::vector<std::string> ifaces;
-                    boost::property_tree::ptree properties =
-                        resourceNode.get_child(OC::Key::PROPERTYKEY, boost::property_tree::ptree());
+        std::for_each(it, oc.representations().end(),
+                [&root](const OCRepresentation& repItr)
+                {root.addChild(repItr);});
+        return root;
 
-                    boost::property_tree::ptree rT =
-                        properties.get_child(OC::Key::RESOURCETYPESKEY,
-                                                boost::property_tree::ptree());
-                    for(auto itr : rT)
-                    {
-                        rTs.push_back(itr.second.data());
-                    }
-
-                    boost::property_tree::ptree iF =
-                        properties.get_child(OC::Key::INTERFACESKEY, boost::property_tree::ptree());
-                    for(auto itr : iF)
-                    {
-                        ifaces.push_back(itr.second.data());
-                    }
-                    if (isRoot)
-                    {
-                        root_resource.setResourceInterfaces(ifaces);
-                        root_resource.setResourceTypes(rTs);
-                    }
-                    else
-                    {
-                        child.setResourceInterfaces(ifaces);
-                        child.setResourceTypes(rTs);
-                    }
-                }
-
-                if( resourceNode.count(OC::Key::REPKEY) != 0 )
-                {
-                    boost::property_tree::ptree rep =
-                        resourceNode.get_child(OC::Key::REPKEY, boost::property_tree::ptree());
-                    AttributeMap attrs;
-                    for( auto item : rep)
-                    {
-                        std::string name = item.first.data();
-                        std::string value = item.second.data();
-                        attrs[name] = value;
-                    }
-                    if (isRoot)
-                    {
-                        root_resource.setAttributeMap(attrs);
-                    }
-                    else
-                    {
-                        child.setAttributeMap(attrs);
-                    }
-                }
-
-                if (!isRoot)
-                    children.push_back(child);
-            }
-            catch (...)
-            {
-                // TODO
-            }
-
-            isRoot = false;
-         }
-
-         root_resource.setChildren(children);
-
-        return root_resource;
     }
 
     void parseServerHeaderOptions(OCClientResponse* clientResponse,
@@ -415,7 +222,8 @@ namespace OC
     OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
     {
-        GetContext* context = static_cast<GetContext*>(ctx);
+        ClientCallbackContext::GetContext* context =
+            static_cast<ClientCallbackContext::GetContext*>(ctx);
 
         OCRepresentation rep;
         HeaderOptions serverHeaderOptions;
@@ -438,11 +246,11 @@ namespace OC
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
-        GetContext* ctx = new GetContext();
+        ClientCallbackContext::GetContext* ctx = new ClientCallbackContext::GetContext();
         ctx->callback = callback;
         cbdata.context = static_cast<void*>(ctx);
         cbdata.cb = &getResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<GetContext*>(c);};
+        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::GetContext*>(c);};
 
         auto cLock = m_csdkLock.lock();
 
@@ -473,7 +281,8 @@ namespace OC
     OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
     {
-        SetContext* context = static_cast<SetContext*>(ctx);
+        ClientCallbackContext::SetContext* context =
+            static_cast<ClientCallbackContext::SetContext*>(ctx);
         OCRepresentation attrs;
         HeaderOptions serverHeaderOptions;
 
@@ -521,14 +330,9 @@ namespace OC
 
     std::string InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
     {
-        ostringstream payload;
-        // TODO need to change the format to "{"oc":[]}"
-        payload << "{\"oc\":";
-
-        payload << rep.getJSONRepresentation();
-
-        payload << "}";
-        return payload.str();
+        MessageContainer ocInfo;
+        ocInfo.addRepresentation(rep);
+        return ocInfo.getJSONRepresentation(OCInfoFormat::IncludeOC);
     }
 
     OCStackResult InProcClientWrapper::PostResourceRepresentation(const std::string& host,
@@ -539,10 +343,10 @@ namespace OC
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
-        SetContext* ctx = new SetContext();
+        ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext();
         ctx->callback = callback;
         cbdata.cb = &setResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<SetContext*>(c);};
+        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::SetContext*>(c);};
         cbdata.context = static_cast<void*>(ctx);
 
         // TODO: in the future the cstack should be combining these two strings!
@@ -582,10 +386,10 @@ namespace OC
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
-        SetContext* ctx = new SetContext();
+        ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext();
         ctx->callback = callback;
         cbdata.cb = &setResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<SetContext*>(c);};
+        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::SetContext*>(c);};
         cbdata.context = static_cast<void*>(ctx);
 
         // TODO: in the future the cstack should be combining these two strings!
@@ -617,16 +421,11 @@ namespace OC
         return result;
     }
 
-    struct DeleteContext
-    {
-        DeleteCallback callback;
-    };
-
     OCStackApplicationResult deleteResourceCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
     {
-        DeleteContext* context = static_cast<DeleteContext*>(ctx);
-        OCRepresentation attrs;
+        ClientCallbackContext::DeleteContext* context =
+            static_cast<ClientCallbackContext::DeleteContext*>(ctx);
         HeaderOptions serverHeaderOptions;
 
         if(clientResponse->result == OC_STACK_OK)
@@ -645,10 +444,10 @@ namespace OC
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
-        DeleteContext* ctx = new DeleteContext();
+        ClientCallbackContext::DeleteContext* ctx = new ClientCallbackContext::DeleteContext();
         ctx->callback = callback;
         cbdata.cb = &deleteResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<DeleteContext*>(c);};
+        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::DeleteContext*>(c);};
         cbdata.context = static_cast<void*>(ctx);
 
         ostringstream os;
@@ -678,15 +477,11 @@ namespace OC
         return result;
     }
 
-    struct ObserveContext
-    {
-        ObserveCallback callback;
-    };
-
     OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
     {
-        ObserveContext* context = static_cast<ObserveContext*>(ctx);
+        ClientCallbackContext::ObserveContext* context =
+            static_cast<ClientCallbackContext::ObserveContext*>(ctx);
         OCRepresentation attrs;
         HeaderOptions serverHeaderOptions;
         uint32_t sequenceNumber = clientResponse->sequenceNumber;
@@ -709,11 +504,11 @@ namespace OC
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
-        ObserveContext* ctx = new ObserveContext();
+        ClientCallbackContext::ObserveContext* ctx = new ClientCallbackContext::ObserveContext();
         ctx->callback = callback;
         cbdata.context = static_cast<void*>(ctx);
         cbdata.cb = &observeResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<ObserveContext*>(c);};
+        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::ObserveContext*>(c);};
 
         OCMethod method;
         if (observeType == ObserveType::Observe)
@@ -768,7 +563,8 @@ namespace OC
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
             assembleHeaderOptions(options, headerOptions);
-            result = OCCancel(handle, static_cast<OCQualityOfService>(QoS), options, headerOptions.size());
+            result = OCCancel(handle, static_cast<OCQualityOfService>(QoS), options,
+                    headerOptions.size());
         }
         else
         {
@@ -778,15 +574,11 @@ namespace OC
         return result;
     }
 
-    struct SubscribePresenceContext
-    {
-        SubscribeCallback callback;
-    };
-
     OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
     {
-        SubscribePresenceContext* context = static_cast<SubscribePresenceContext*>(ctx);
+        ClientCallbackContext::SubscribePresenceContext* context =
+            static_cast<ClientCallbackContext::SubscribePresenceContext*>(ctx);
         std::thread exec(context->callback, clientResponse->result, clientResponse->sequenceNumber);
 
         exec.detach();
@@ -799,11 +591,13 @@ namespace OC
     {
         OCCallbackData cbdata = {0};
 
-        SubscribePresenceContext* ctx = new SubscribePresenceContext();
+        ClientCallbackContext::SubscribePresenceContext* ctx =
+            new ClientCallbackContext::SubscribePresenceContext();
         ctx->callback = presenceHandler;
         cbdata.cb = &subscribePresenceCallback;
         cbdata.context = static_cast<void*>(ctx);
-        cbdata.cd = [](void* c){delete static_cast<SubscribePresenceContext*>(c);};
+        cbdata.cd = [](void* c)
+            {delete static_cast<ClientCallbackContext::SubscribePresenceContext*>(c);};
         auto cLock = m_csdkLock.lock();
 
         std::ostringstream os;
