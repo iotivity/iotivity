@@ -90,7 +90,7 @@ OCTBSTACK_DIR	= stack
 OCMALLOC_DIR 	= ocmalloc
 EXTLIBS_DIR	= ../../extlibs
 CJSON_DIR	= $(EXTLIBS_DIR)/cjson
-TINYDTLS_DIR	= tinydtls
+TINYDTLS_DIR	= $(EXTLIBS_DIR)/tinydtls
 
 OCCOAP_SRC	= $(OCCOAP_DIR)/src
 OCTBSTACK_SRC	= $(OCTBSTACK_DIR)/src
@@ -167,9 +167,9 @@ liboctbstack.a: obj_build
     ifeq ($(PLATFORM),linux)
      ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
 			$(info "Building liboctbstack with DTLS support")
-			mkdir -p $(OBJ_DIR)/$(TINYDTLS_DIR)
-			@cd $(OBJ_DIR)/$(TINYDTLS_DIR) && $(AR) -x ../$(PLATFORM_SPECIFIC_BACKOUT)$(TINYDTLS_DIR)/libtinydtls.a
-			$(AR) -q $(OUT_DIR)/$@ $(OBJ_DIR)/$(TINYDTLS_DIR)/*.o
+			mkdir -p $(OBJ_DIR)/tinydtls
+			@cd $(OBJ_DIR)/tinydtls && $(AR) -x ../$(PLATFORM_SPECIFIC_BACKOUT)$(TINYDTLS_DIR)/libtinydtls.a
+			$(AR) -q $(OUT_DIR)/$@ $(OBJ_DIR)/tinydtls/*.o
      endif
     endif
 
