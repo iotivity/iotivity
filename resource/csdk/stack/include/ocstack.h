@@ -141,6 +141,7 @@ typedef enum {
     OC_STACK_OK = 0,
     OC_STACK_RESOURCE_CREATED,
     OC_STACK_RESOURCE_DELETED,
+    OC_STACK_CONTINUE,
     /* Success status code - END HERE */
     /* Error status code - START HERE */
     OC_STACK_INVALID_URI,
@@ -159,15 +160,16 @@ typedef enum {
     OC_STACK_SLOW_RESOURCE,
     OC_STACK_NO_OBSERVERS,              /* resource has no registered observers */
     OC_STACK_OBSERVER_NOT_FOUND,
-    OC_STACK_OBSERVER_NOT_ADDED,
-    OC_STACK_OBSERVER_NOT_REMOVED,
     #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED,
     OC_STACK_PRESENCE_TIMEOUT,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
     #endif
+    OC_STACK_VIRTUAL_DO_NOT_HANDLE,
     OC_STACK_INVALID_OPTION,
     OC_STACK_MALFORMED_RESPONSE,        /* the remote reply contained malformed data */
+    OC_STACK_PERSISTENT_BUFFER_REQUIRED,
+    OC_STACK_INVALID_REQUEST_HANDLE,
     OC_STACK_ERROR
     /* Error status code - END HERE */
 } OCStackResult;
@@ -181,6 +183,9 @@ typedef void * OCDoHandle;
  * Handle to an OCResource object owned by the OCStack.
  */
 typedef void * OCResourceHandle;
+
+typedef void * OCRequestHandle;
+typedef void * OCResponseHandle;
 
 /**
  * Unique identifier for each observation request. Used when observations are
@@ -206,6 +211,18 @@ typedef struct {
     OCObservationId obsId;
 } OCObservationInfo;
 
+/**
+ * Possible returned values from entity handler
+ */
+typedef enum {
+    OC_EH_OK = 0,
+    OC_EH_ERROR,
+    OC_EH_RESOURCE_CREATED,
+    OC_EH_RESOURCE_DELETED,
+    OC_EH_SLOW,
+    OC_EH_FORBIDDEN
+} OCEntityHandlerResult;
+
 // following structure will be used to define the vendor specific header options to be included
 // in communication packets
 
@@ -227,28 +244,19 @@ typedef struct OCHeaderOption {
 typedef struct {
     // Associated resource
     OCResourceHandle resource;
-    // resource query send by client
-    unsigned char * query;
+    OCRequestHandle requestHandle;
     // the REST method retrieved from received request PDU
     OCMethod method;
-    // reqJSON is retrieved from the payload of the received request PDU
-    unsigned const char * reqJSONPayload;
-    // resJSON is allocated in the stack and will be used by entity handler to fill in its response
-    unsigned char * resJSONPayload;
-    // Length of maximum allowed response
-    uint16_t resJSONPayloadLen;
+    // resource query send by client
+    unsigned char * query;
     // Information associated with observation - valid only when OCEntityHandler
     // flag includes OC_OBSERVE_FLAG
-    OCObservationInfo *obsInfo;
+    OCObservationInfo obsInfo;
     // An array of the received vendor specific header options
     uint8_t numRcvdVendorSpecificHeaderOptions;
-    OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
-    // An array of the vendor specific header options the entity handler wishes to use in response
-    uint8_t numSendVendorSpecificHeaderOptions;
-    OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
-    // URI of new resource that entity handler might create
-    unsigned char *newResourceUri;
-
+    OCHeaderOption * rcvdVendorSpecificHeaderOptions;
+    // reqJSON is retrieved from the payload of the received request PDU
+    unsigned char * reqJSONPayload;
 }OCEntityHandlerRequest;
 
 /**
@@ -267,6 +275,30 @@ typedef struct {
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 }OCClientResponse;
+
+typedef struct
+{
+    // Request handle is passed to server via the entity handler for each incoming request.
+    // Stack assigns when request is received, server sets to indicate what request response is for
+    OCRequestHandle requestHandle;
+    // New handle for tracking block (or slow) response.  Stack assigns, server uses for subsequent calls
+    OCResponseHandle  *responseHandle;
+    // Resource handle
+    OCResourceHandle resourceHandle;
+    // Allow the entity handler to pass a result with the response
+    OCEntityHandlerResult  ehResult;
+    // this is the pointer to server payload data to be transferred
+    unsigned char *payload;
+    // size of server payload data.  I don't think we should rely on null terminated data for size
+    uint16_t payloadSize;
+    // An array of the vendor specific header options the entity handler wishes to use in response
+    uint8_t numSendVendorSpecificHeaderOptions;
+    OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
+    // URI of new resource that entity handler might create
+    unsigned char resourceUri[MAX_URI_LENGTH];
+    // Server sets to true for persistent response buffer, false for non-persistent response buffer
+    uint8_t persistentBufferFlag;
+} OCEntityHandlerResponse;
 
 typedef enum {
     OC_INIT_FLAG    = (1 << 0),
@@ -304,17 +336,6 @@ typedef struct {
     OCClientResponseHandler cb;
     OCClientContextDeleter cd;
 } OCCallbackData;
-
-/**
- * Possible returned values from entity handler
- */
-typedef enum {
-    OC_EH_OK = 0,
-    OC_EH_ERROR,
-    OC_EH_RESOURCE_CREATED,
-    OC_EH_RESOURCE_DELETED,
-    OC_EH_FORBIDDEN
-} OCEntityHandlerResult;
 
 /**
  * Application server implementations must implement this callback to consume requests OTA.
@@ -739,6 +760,7 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  * @param obsIdList - list of observation ids that need to be notified
  * @param numberOfIds - number of observation ids included in obsIdList
  * @param notificationJSONPayload - JSON encoded payload to send in notification
+ * @param qos - desired quality of service of the observation notifications
  * NOTE: The memory for obsIdList and notificationJSONPayload is managed by the
  * entity invoking the API. The maximum size of the notification is 1015 bytes
  * for non-Arduino platforms. For Arduino the maximum size is 247 bytes.
@@ -749,10 +771,36 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  */
 OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
-                         OCObservationId  *obsIdList,
-                         uint8_t          numberOfIds,
-                         unsigned char    *notificationJSONPayload,
-                         OCQualityOfService qos);
+                            OCObservationId  *obsIdList,
+                            uint8_t          numberOfIds,
+                            unsigned char    *notificationJSONPayload,
+                            OCQualityOfService qos);
+
+
+/**
+ * Send a response to a request.
+ * The response can be a normal, slow, or block (i.e. a response that
+ * is too large to be sent in a single PDU and must span multiple transmissions)
+ *
+ * @param response - pointer to structure that contains response parameters
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ */
+OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
+
+/**
+ * Cancel a response.  Applies to a block response
+ *
+ * @param responseHandle - response handle set by stack in OCServerResponse after
+ *                         OCDoResponse is called
+ *
+ * @return
+ *     OC_STACK_OK               - No errors; Success
+ *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
+ */
+OCStackResult OCCancelResponse(OCResponseHandle responseHandle);
+
 
 #ifdef __cplusplus
 }

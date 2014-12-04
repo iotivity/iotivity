@@ -189,5 +189,10 @@ namespace OC
         {
             return OCPlatform_impl::Instance().unsubscribePresence(presenceHandle);
         }
+
+        OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
+        {
+            return OCPlatform_impl::Instance().sendResponse(pResponse);
+        }
     } // namespace OCPlatform
 } //namespace OC

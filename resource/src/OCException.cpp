@@ -63,20 +63,22 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::NO_OBSERVERS;
         case OC_STACK_OBSERVER_NOT_FOUND:
             return OC::Exception::OBSV_NO_FOUND;
-        case OC_STACK_OBSERVER_NOT_ADDED:
-            return OC::Exception::OBSV_NOT_ADDED;
-        case OC_STACK_OBSERVER_NOT_REMOVED:
-            return OC::Exception::OBSV_NOT_REMOVED;
 #ifdef WITH_PRESENCE
         case OC_STACK_PRESENCE_STOPPED:
             return OC::Exception::PRESENCE_STOPPED;
-        case OC_STACK_PRESENCE_DO_NOT_HANDLE:
-            return OC::Exception::PRESENCE_NOT_HANDLED;
 #endif
+        case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
+            return OC::Exception::VIRTUAL_DO_NOT_HANDLE;
         case OC_STACK_INVALID_OPTION:
             return OC::Exception::INVALID_OPTION;
         case OC_STACK_MALFORMED_RESPONSE:
             return OC::Exception::MALFORMED_STACK_RESPONSE;
+        case OC_STACK_PERSISTENT_BUFFER_REQUIRED:
+            return OC::Exception::PERSISTENT_BUFFER_REQUIRED;
+        case OC_STACK_CONTINUE:
+            return OC::Exception::STACK_CONTINUE;
+        case OC_STACK_INVALID_REQUEST_HANDLE:
+            return OC::Exception::INVALID_REQUEST_HANDLE;
         case OC_STACK_ERROR:
             return OC::Exception::GENERAL_FAULT;
     }

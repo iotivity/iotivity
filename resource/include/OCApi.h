@@ -196,8 +196,8 @@ namespace OC
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
 
-    typedef std::function<OCEntityHandlerResult (const std::shared_ptr<OCResourceRequest>,
-                                const std::shared_ptr<OCResourceResponse>)> EntityHandler;
+    typedef std::function<OCEntityHandlerResult(
+                            const std::shared_ptr<OCResourceRequest>)> EntityHandler;
 
     typedef std::function<void(OCStackResult, const unsigned int)> SubscribeCallback;
 

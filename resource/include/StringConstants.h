@@ -91,6 +91,10 @@ namespace OC
         static const std::string INVALID_OPTION             = "Invalid option";
         static const std::string GENERAL_FAULT              = "General Fault";
         static const std::string MALFORMED_STACK_RESPONSE   = "Response from OC_STACK is malformed";
+        static const std::string VIRTUAL_DO_NOT_HANDLE      = "Virtual Do Not Handle";
+        static const std::string PERSISTENT_BUFFER_REQUIRED = "Persistent response buffer required";
+        static const std::string STACK_CONTINUE             = "Stack continue";
+        static const std::string INVALID_REQUEST_HANDLE     = "Invalid request handle";
         static const std::string UNKNOWN_ERROR              = "Unknown Error";
         static const std::string INVALID_REPRESENTATION     = "Invalid Payload JSON";
         static const std::string INVALID_JSON_TYPE          = "Unrecognized JSON Type ";

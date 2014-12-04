@@ -50,8 +50,7 @@ class Resource
     protected:
     OCResourceHandle m_resourceHandle;
     OCRepresentation m_rep;
-    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-            std::shared_ptr<OCResourceResponse> response)=0;
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)=0;
 };
 
 class DeviceResource : public Resource
@@ -63,10 +62,10 @@ class DeviceResource : public Resource
         std::string resourceURI = "/device";
         std::string resourceTypeName = "intel.fridge";
         std::string resourceInterface = DEFAULT_INTERFACE;
-        EntityHandler cb = std::bind(&DeviceResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&DeviceResource::entityHandler, this,PH::_1);
 
-        EntityHandler defaultEH = std::bind(&DeviceResource::defaultEntityHandler, this,
-                                                                         PH::_1, PH::_2);
+        EntityHandler defaultEH = std::bind(&DeviceResource::defaultEntityHandler
+                                            ,this, PH::_1);
 
         std::cout << "Setting device default entity handler\n";
         OCPlatform::setDefaultDeviceEntityHandler(defaultEH);
@@ -92,7 +91,7 @@ class DeviceResource : public Resource
         return m_rep;
     }
 
-    void deleteDeviceResource()
+    OCStackResult deleteDeviceResource()
     {
         OCStackResult result = OCPlatform::unregisterResource(m_resourceHandle);
         if(OC_STACK_OK != result)
@@ -100,13 +99,14 @@ class DeviceResource : public Resource
             throw std::runtime_error(
                std::string("Device Resource failed to unregister/delete") + std::to_string(result));
         }
+        return result;
     }
 
     std::string m_modelName;
     protected:
-    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-            std::shared_ptr<OCResourceResponse> response)
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     {
+        OCEntityHandlerResult ehResult = OC_EH_ERROR;
         if(request)
         {
             // Get the header options from the request
@@ -152,30 +152,45 @@ class DeviceResource : public Resource
 
                 if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
                 {
+                    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+                    pResponse->setRequestHandle(request->getRequestHandle());
+                    pResponse->setResourceHandle(request->getResourceHandle());
+                    pResponse->setHeaderOptions(serverHeaderOptions);
+
                     if(request->getRequestType() == "GET")
                     {
-                        if(response)
+                        std::cout<<"DeviceResource Get Request"<<std::endl;
+                        pResponse->setErrorCode(200);
+                        pResponse->setResponseResult(OC_EH_OK);
+                        pResponse->setResourceRepresentation(get(), "");
+                        if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                         {
-                            std::cout<<"DeviceResource Get Request"<<std::endl;
-                            response->setErrorCode(200);
-                            response->setHeaderOptions(serverHeaderOptions);
-                            response->setResourceRepresentation(get(), "");
+                            ehResult = OC_EH_OK;
                         }
                     }
-                    if(request->getRequestType() == "DELETE")
+                    else if(request->getRequestType() == "DELETE")
                     {
-                        if(response)
+                        std::cout<<"DeviceResource Delete Request"<<std::endl;
+                        if(deleteDeviceResource() == OC_STACK_OK)
                         {
-                            std::cout<<"DeviceResource Delete Request"<<std::endl;
-                            deleteDeviceResource();
-                            response->setErrorCode(200);
-                            response->setHeaderOptions(serverHeaderOptions);
+                            pResponse->setErrorCode(200);
+                            pResponse->setResponseResult(OC_EH_RESOURCE_DELETED);
+                            ehResult = OC_EH_OK;
                         }
+                        else
+                        {
+                            pResponse->setResponseResult(OC_EH_ERROR);
+                            ehResult = OC_EH_ERROR;
+                        }
+                        OCPlatform::sendResponse(pResponse);
                     }
                     else
                     {
                         std::cout <<"DeviceResource unsupported request type "
                         << request->getRequestType() << std::endl;
+                        pResponse->setResponseResult(OC_EH_ERROR);
+                        OCPlatform::sendResponse(pResponse);
+                        ehResult = OC_EH_ERROR;
                     }
                 }
                 else
@@ -189,12 +204,12 @@ class DeviceResource : public Resource
             }
         }
 
-        return OC_EH_OK;
+        return ehResult;
     }
 
-    virtual OCEntityHandlerResult defaultEntityHandler(std::shared_ptr<OCResourceRequest> request,
-            std::shared_ptr<OCResourceResponse> response)
+    virtual OCEntityHandlerResult defaultEntityHandler(std::shared_ptr<OCResourceRequest> request)
     {
+        OCEntityHandlerResult ehResult = OC_EH_ERROR;
         if(request)
         {
             std::cout << "In Default Entity Handler, uri received: "
@@ -202,19 +217,27 @@ class DeviceResource : public Resource
 
             if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
             {
+                auto pResponse = std::make_shared<OC::OCResourceResponse>();
+                pResponse->setRequestHandle(request->getRequestHandle());
+                pResponse->setResourceHandle(request->getResourceHandle());
+
                 if(request->getRequestType() == "GET")
                 {
-                    if(response)
+                    std::cout<<"Default Entity Handler: Get Request"<<std::endl;
+                    pResponse->setErrorCode(200);
+                    pResponse->setResourceRepresentation(get(), "");
+                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
-                        std::cout<<"Default Entity Handler: Get Request"<<std::endl;
-                        response->setErrorCode(200);
-                        response->setResourceRepresentation(get(), "");
+                        ehResult = OC_EH_OK;
                     }
                 }
                 else
                 {
                     std::cout <<"Default Entity Handler: unsupported request type "
                     << request->getRequestType() << std::endl;
+                    pResponse->setResponseResult(OC_EH_ERROR);
+                    OCPlatform::sendResponse(pResponse);
+                    ehResult = OC_EH_ERROR;
                 }
             }
             else
@@ -223,7 +246,7 @@ class DeviceResource : public Resource
             }
         }
 
-        return OC_EH_OK;
+        return ehResult;
    }
 
 };
@@ -236,7 +259,7 @@ class LightResource : public Resource
         std::string resourceURI = "/light";
         std::string resourceTypeName = "intel.fridge.light";
         std::string resourceInterface = DEFAULT_INTERFACE;
-        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1);
         uint8_t resourceProperty = 0;
         OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
             resourceURI,
@@ -265,9 +288,9 @@ class LightResource : public Resource
 
     bool m_isOn;
     protected:
-    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-            std::shared_ptr<OCResourceResponse> response)
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     {
+        OCEntityHandlerResult ehResult = OC_EH_ERROR;
         if(request)
         {
             std::cout << "In entity handler for Light, URI is : "
@@ -275,30 +298,38 @@ class LightResource : public Resource
 
             if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
             {
+                auto pResponse = std::make_shared<OC::OCResourceResponse>();
+                pResponse->setRequestHandle(request->getRequestHandle());
+                pResponse->setResourceHandle(request->getResourceHandle());
+
                 if(request->getRequestType() == "GET")
                 {
-                    if(response)
+                    std::cout<<"Light Get Request"<<std::endl;
+                    pResponse->setErrorCode(200);
+                    pResponse->setResourceRepresentation(get(), "");
+                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
-                        std::cout<<"Light Get Request"<<std::endl;
-                        response->setErrorCode(200);
-                        response->setResourceRepresentation(get(), "");
+                        ehResult = OC_EH_OK;
                     }
                 }
                 else if(request->getRequestType() == "PUT")
                 {
-                    if(response)
+                    std::cout <<"Light Put Request"<<std::endl;
+                    put(request->getResourceRepresentation());
+                    pResponse->setErrorCode(200);
+                    pResponse->setResourceRepresentation(get(), "");
+                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
-                        std::cout <<"Light Put Request"<<std::endl;
-                        put(request->getResourceRepresentation());
-
-                        response->setErrorCode(200);
-                        response->setResourceRepresentation(get(),"");
+                        ehResult = OC_EH_OK;
                     }
                 }
                 else
                 {
                     std::cout << "Light unsupported request type"
                     << request->getRequestType() << std::endl;
+                    pResponse->setResponseResult(OC_EH_ERROR);
+                    OCPlatform::sendResponse(pResponse);
+                    ehResult = OC_EH_ERROR;
                 }
             }
             else
@@ -307,7 +338,7 @@ class LightResource : public Resource
             }
         }
 
-        return OC_EH_OK;
+        return ehResult;
     }
 };
 
@@ -320,7 +351,7 @@ class DoorResource : public Resource
         std::string resourceURI = "/door/"+ side;
         std::string resourceTypeName = "intel.fridge.door";
         std::string resourceInterface = DEFAULT_INTERFACE;
-        EntityHandler cb = std::bind(&DoorResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&DoorResource::entityHandler, this,PH::_1);
 
         uint8_t resourceProperty = 0;
         OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
@@ -353,10 +384,11 @@ class DoorResource : public Resource
     bool m_isOpen;
     std::string m_side;
     protected:
-    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-            std::shared_ptr<OCResourceResponse> response)
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     {
         std::cout << "EH of door invoked " << std::endl;
+        OCEntityHandlerResult ehResult = OC_EH_ERROR;
+
         if(request)
         {
             std::cout << "In entity handler for Door, URI is : "
@@ -364,31 +396,40 @@ class DoorResource : public Resource
 
             if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
             {
+                auto pResponse = std::make_shared<OC::OCResourceResponse>();
+                pResponse->setRequestHandle(request->getRequestHandle());
+                pResponse->setResourceHandle(request->getResourceHandle());
+
                 if(request->getRequestType() == "GET")
                 {
-                    if(response)
+                    // note that we know the side because std::bind gives us the
+                    // appropriate object
+                    std::cout<< m_side << " Door Get Request"<<std::endl;
+                    pResponse->setErrorCode(200);
+                    pResponse->setResourceRepresentation(get(), "");
+                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
-                        // note that we know the side because std::bind gives us the
-                        // appropriate object
-                        std::cout<<m_side << " Door Get Request"<<std::endl;
-                        response->setErrorCode(200);
-                        response->setResourceRepresentation(get(), "");
+                        ehResult = OC_EH_OK;
                     }
                 }
                 else if(request->getRequestType() == "PUT")
                 {
-                    if(response)
+                    std::cout << m_side <<" Door Put Request"<<std::endl;
+                    put(request->getResourceRepresentation());
+                    pResponse->setErrorCode(200);
+                    pResponse->setResourceRepresentation(get(),"");
+                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
-                        std::cout <<m_side <<" Door Put Request"<<std::endl;
-                        put(request->getResourceRepresentation());
-                        response->setErrorCode(200);
-                        response->setResourceRepresentation(get(),"");
+                        ehResult = OC_EH_OK;
                     }
                 }
                 else
                 {
                     std::cout <<m_side<<" Door unsupported request type "
                     << request->getRequestType() << std::endl;
+                    pResponse->setResponseResult(OC_EH_ERROR);
+                    OCPlatform::sendResponse(pResponse);
+                    ehResult = OC_EH_ERROR;
                 }
             }
             else
@@ -397,7 +438,7 @@ class DoorResource : public Resource
             }
         }
 
-        return OC_EH_OK;
+        return ehResult;
     }
 
 };

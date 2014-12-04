@@ -70,11 +70,24 @@ void *ChangeLightRepresentation (void *param);
 
 /* Following methods process the PUT, GET, POST, Delete,
  * & Observe requests */
-void ProcessGetRequest (OCEntityHandlerRequest *ehRequest);
-void ProcessPutRequest (OCEntityHandlerRequest *ehRequest);
-OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest);
-OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest);
-OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *ehRequest);
+OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
+                                         char *payload,
+                                         uint16_t maxPayloadSize);
+OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
+                                         char *payload,
+                                         uint16_t maxPayloadSize);
+OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
+                                          OCEntityHandlerResponse *response,
+                                          char *payload,
+                                          uint16_t maxPayloadSize);
+OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest,
+                                            char *payload,
+                                            uint16_t maxPayloadSize);
+
+OCEntityHandlerResult ProcessNonExistingResourceRequest (OCEntityHandlerRequest *ehRequest,
+                                                         char *payload,
+                                                         uint16_t maxPayloadSize);
+
 void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest);
 void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest);
 

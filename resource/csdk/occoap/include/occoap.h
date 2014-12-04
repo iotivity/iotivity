@@ -70,6 +70,16 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode);
 OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * token,
         const char *Uri, const char *payload, OCHeaderOption * options, uint8_t numOptions);
 
+/**
+ * Send a response to a request.
+ *
+ * @param response - pointer to OCServerProtocolResponse that contains all request and
+ *                   response info necessary to send the response to the client
+ * @return
+ *     OC_STACK_OK               - No errors; Success
+ *     OC_STACK_ERROR            - Error sending response
+ */
+OCStackResult OCDoCoAPResponse(OCServerProtocolResponse *response);
 
 /**
  * Stop the CoAP client or server processing
@@ -92,15 +102,6 @@ OCStackResult OCProcessCoAP();
  *
  */
 void OCGenerateCoAPToken(OCCoAPToken * token);
-
-/**
- * Initiate sending of CoAP messages. Example: server uses it to send observe messages
- *
- * @return 0 - success, else - TBD error
- */
-OCStackResult OCSendCoAPNotification (unsigned char * uri, OCDevAddr *dstAddr,
-        OCQualityOfService qos, OCCoAPToken * token,
-        unsigned char *payload, OCResource *resPtr, uint32_t maxAge);
 
 /**
  * Retrieve the end-point info where resource is being hosted.

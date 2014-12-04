@@ -33,8 +33,7 @@ using namespace OC;
 using namespace std;
 
 // Forward declaring the entityHandler
-OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-                                    std::shared_ptr<OCResourceResponse> response);
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request);
 
 /// This class represents a single resource named 'lightResource'. This resource has
 
@@ -173,10 +172,22 @@ public:
 // Create the instance of the resource class (in this case instance of class 'GarageResource').
 GarageResource myGarage;
 
-OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-                                    std::shared_ptr<OCResourceResponse> response)
+OCStackResult sendResponse(std::shared_ptr<OCResourceRequest> pRequest)
+{
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+    pResponse->setRequestHandle(pRequest->getRequestHandle());
+    pResponse->setResourceHandle(pRequest->getResourceHandle());
+    pResponse->setResourceRepresentation(myGarage.get());
+    pResponse->setErrorCode(200);
+    pResponse->setResponseResult(OC_EH_OK);
+
+    return OCPlatform::sendResponse(pResponse);
+}
+
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
 {
     cout << "\tIn Server CPP entity handler:\n";
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
 
     if(request)
     {
@@ -198,34 +209,21 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
             if(requestType == "GET")
             {
                 cout << "\t\t\trequestType : GET\n";
-
-                if(response)
+                if(OC_STACK_OK == sendResponse(request))
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(myGarage.get());
+                    ehResult = OC_EH_OK;
                 }
             }
             else if(requestType == "PUT")
             {
                 cout << "\t\t\trequestType : PUT\n";
-
                 OCRepresentation rep = request->getResourceRepresentation();
-
                 // Do related operations related to PUT request
-
-                // Update the lightResource
                 myGarage.put(rep);
-
-                if(response)
+                if(OC_STACK_OK == sendResponse(request))
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(myGarage.get());
+                    ehResult = OC_EH_OK;
                 }
-
             }
             else if(requestType == "POST")
             {
@@ -246,7 +244,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
         std::cout << "Request invalid" << std::endl;
     }
 
-    return OC_EH_OK;
+    return ehResult;
 }
 
 int main(int argc, char* argv[1])

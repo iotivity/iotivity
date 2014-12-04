@@ -24,6 +24,8 @@
 #include "ocstack.h"
 #include "ocresource.h"
 
+uint8_t GetNumOfResourcesInCollection (OCResource *resource);
+
 OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *entityHandlerRequest);
 

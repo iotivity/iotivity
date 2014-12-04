@@ -32,7 +32,8 @@ namespace OC
     class InProcServerWrapper : public IServerWrapper
     {
     public:
-        InProcServerWrapper(std::weak_ptr<std::recursive_mutex> csdkLock,
+        InProcServerWrapper(
+            std::weak_ptr<std::recursive_mutex> csdkLock,
             PlatformConfig cfg);
         virtual ~InProcServerWrapper();
 
@@ -69,6 +70,8 @@ namespace OC
         virtual OCStackResult stopPresence();
 
         virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler);
+
+        virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
     private:
         void processFunc();
         std::thread m_processThread;

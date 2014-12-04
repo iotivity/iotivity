@@ -53,6 +53,7 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'occlientcb.c',
 	OCTBSTACK_SRC + 'ocresource.c',
 	OCTBSTACK_SRC + 'ocobserve.c',
+	OCTBSTACK_SRC + 'ocserverrequest.c',
 	OCTBSTACK_SRC + 'occollection.c',
 	]
 

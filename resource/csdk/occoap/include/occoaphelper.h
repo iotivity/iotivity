@@ -68,30 +68,18 @@ coap_list_t *
 CreateNewOptionNode(unsigned short key, unsigned int length,
         unsigned char *data);
 
-// Internal function to create OCRequest struct at the server from a received coap pdu
-OCStackResult FormOCRequest(OCRequest * * requestLoc, OCQualityOfService qos,
-        unsigned char * uriBuf, OCObserveReq * observeReq,
-        OCEntityHandlerRequest * entityHandlerRequest,
-        uint8_t secure);
-
-// Internal function to create OCEntityHandlerRequest at the server from a received coap pdu
-OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequestLoc,
-        OCMethod method, unsigned char * resBuf, unsigned char * bufReqPayload,
-        unsigned char * queryBuf, unsigned char *newResUriBuf);
-
 // Internal function to retrieve Uri and Query from received coap pdu
 OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
-        unsigned char * queryBuf, uint8_t * * observeOptionLoc,
-        uint8_t * * maxAgeOptionLoc, unsigned char * * payloadLoc,
-        OCHeaderOption * rcvVendorSpecificHeaderOptions,
-        uint8_t * numRcvVendorSpecificHeaderOptions);
+        unsigned char * queryBuf, uint32_t * observeOption,
+        uint32_t * maxAgeOption,
+        uint8_t * numVendorSpecificHeaderOptions,
+        OCHeaderOption * vendorSpecificHeaderOptions,
+        coap_block_t * block1, coap_block_t * block2,
+        uint16_t * size1, uint16_t * size2,
+        unsigned char * payload);
 
 // Internal function to retrieve a Token from received coap pdu
 void RetrieveOCCoAPToken(const coap_pdu_t * pdu, OCCoAPToken * rcvdToken);
-
-// Internal function to create OCObserveReq at the server
-OCStackResult FormOCObserveReq(OCObserveReq ** observeReqLoc, uint32_t obsOption,
-            OCDevAddr * remote, OCCoAPToken * rcvdToken);
 
 // Internal function to create OCResponse struct at the client from a received coap pdu
 OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
@@ -107,7 +95,7 @@ void HandleSendQueue(coap_context_t * gCoAPCtx);
 
 // Internal function to form the standard response option list
 OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
-        uint32_t * addMaxAge, uint8_t observeOptionLength, uint32_t * observeOptionPtr,
+        uint32_t * addMaxAge, uint32_t * observeOptionPtr,
         uint16_t * addPortNumber, uint8_t uriLength, unsigned char * uri,
         uint8_t queryLength, unsigned char * query, OCHeaderOption * vendorSpecificHeaderOptions,
         uint8_t numVendorSpecificHeaderOptions);

@@ -400,8 +400,14 @@ namespace OC
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
 
-
-
+        /**
+        * Allows application entity handler to send response to an incoming request.
+        *
+        * @param pResponse - OCResourceResponse pointer that will permit to set values related
+        * to resource response. <br>
+        * @return OCStackResult - return value of the API. Returns OCSTACK_OK if success <br>
+        */
+        OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
     }
 }
 

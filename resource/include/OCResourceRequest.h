@@ -79,7 +79,8 @@ namespace OC
 
         /**
         *  Provides the entire resource attribute representation
-        *  @return OCRepresentation reference containing the name value pairs representing the resource's attributes
+        *  @return OCRepresentation reference containing the name value pairs
+        *   representing the resource's attributes
         */
         const OCRepresentation& getResourceRepresentation() const {return m_representation;}
 
@@ -106,10 +107,35 @@ namespace OC
             return m_resourceUri;
         }
 
-        /** This API retrieves headerOptions which was sent from a client
+        /**
+        * This API retrieves headerOptions which was sent from a client
+        *
         * @return std::map HeaderOptions with the header options
         */
-        const HeaderOptions& getHeaderOptions() const {return m_headerOptions;}
+        const HeaderOptions& getHeaderOptions() const
+        {
+            return m_headerOptions;
+        }
+
+        /**
+        * This API retrieves the request handle
+        *
+        * @return OCRequestHandle
+        */
+        const OCRequestHandle& getRequestHandle() const
+        {
+            return m_requestHandle;
+        }
+
+        /**
+        * This API retrieves the resource handle
+        *
+        * return OCResourceHandle
+        */
+        const OCResourceHandle& getResourceHandle() const
+        {
+            return m_resourceHandle;
+        }
 
     private:
         std::string m_requestType;
@@ -119,6 +145,9 @@ namespace OC
         OCRepresentation m_representation;
         ObservationInfo m_observationInfo;
         HeaderOptions m_headerOptions;
+        OCRequestHandle m_requestHandle;
+        OCResourceHandle m_resourceHandle;
+
 
     private:
         friend void (::formResourceRequest)(OCEntityHandlerFlag, OCEntityHandlerRequest*,
@@ -171,6 +200,27 @@ namespace OC
         {
             m_headerOptions = headerOptions;
         }
+
+        /**
+        * This API allows to set request handle
+        * @param requestHandle - OCRequestHandle type used to set the
+        * request handle
+        */
+        void setRequestHandle(const OCRequestHandle& requestHandle)
+        {
+            m_requestHandle = requestHandle;
+        }
+
+        /**
+        * This API allows to set the resource handle
+        * @param resourceHandle - OCResourceHandle type used to set the
+        * resource handle
+        */
+        void setResourceHandle(const OCResourceHandle& resourceHandle)
+        {
+            m_resourceHandle = resourceHandle;
+        }
+
     };
  }// namespace OC
 

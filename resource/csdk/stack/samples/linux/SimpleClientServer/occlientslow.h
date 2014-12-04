@@ -26,7 +26,7 @@
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
-#define TAG "occlientbasicops"
+#define TAG "occlientslow"
 #define DEFAULT_CONTEXT_VALUE 0x99
 #ifndef MAX_LENGTH_IPv4_ADDR
 #define MAX_LENGTH_IPv4_ADDR 16
@@ -65,9 +65,7 @@ std::string getQueryStrForGetPut(OCClientResponse * clientResponse);
 /* Following are initialization functions for GET, PUT
  * POST & Discovery operations
  */
-int InitPutRequest();
 int InitGetRequest(OCQualityOfService qos);
-int InitPostRequest(OCQualityOfService qos);
 int InitDiscovery();
 
 /* Function to retrieve ip address, port no. of the server
@@ -75,7 +73,7 @@ int InitDiscovery();
  */
 void parseClientResponse(OCClientResponse * clientResponse);
 
-/* This method calls OCDoResource() which in turn makes calls
+/* This function calls OCDoResource() which in turn makes calls
  * to the lower layers
  */
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -86,13 +84,8 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 // Callback functions
 //-----------------------------------------------------------------------------
 
-/* Following are callback functions for the  GET, PUT
- * POST & Discovery operations
+/* Following are callback functions for the  GET and Discovery operations
  */
-
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse);
-
-OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse);
 
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse);
 

@@ -18,15 +18,15 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef OCSERVER_BASICOPS_H_
-#define OCSERVER_BASICOPS_H_
+#ifndef OCSERVER_SLOW_H_
+#define OCSERVER_SLOW_H_
 
 #include "ocstack.h"
 
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
-#define TAG "ocserverbasicops"
+#define TAG "ocserverslow"
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -40,7 +40,7 @@ typedef struct LEDRESOURCE{
 } LEDResource;
 
 //-----------------------------------------------------------------------------
-// Function prototype
+// Function prototypes
 //-----------------------------------------------------------------------------
 
 /* Function that creates a new LED resource by calling the
@@ -51,18 +51,9 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
 /* This method converts the payload to JSON format */
 char* constructJsonResponse (OCEntityHandlerRequest *ehRequest);
 
-/* Following methods process the PUT, GET, POST
- * requests
+/* Following method process the GET request
  */
-OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
-                                         char *payload,
-                                         size_t maxPayloadSize);
-OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
-                                         char *payload,
-                                         size_t maxPayloadSize);
-OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
-                                          char *payload,
-                                          size_t maxPayloadSize);
+void ProcessGetRequest (OCEntityHandlerRequest *ehRequest);
 
 /* call getResult in common.cpp to get the result in string format. */
 const char *getResult(OCStackResult result);

@@ -51,6 +51,10 @@ extern OCDeviceEntityHandler defaultDeviceHandler;
 #define OC_COAP_SCHEME "coap://"
 #define OC_OFFSET_SEQUENCE_NUMBER (4) // the first outgoing sequence number will be 5
 
+#define OC_OBSERVER_NOT_INTERESTED       (0)
+#define OC_OBSERVER_STILL_INTERESTED     (1)
+#define OC_OBSERVER_FAILED_COMM          (2)
+
 //-----------------------------------------------------------------------------
 // Virtual Resource Presence Attributes
 //-----------------------------------------------------------------------------
@@ -74,7 +78,8 @@ struct rsrc_t;
 typedef enum {
     STACK_IF_DEFAULT = 0,
     STACK_IF_LL,
-    STACK_IF_BATCH
+    STACK_IF_BATCH,
+    STACK_IF_INVALID
 } OCStackIfTypes;
 
 typedef struct resourcetype_t {
@@ -155,19 +160,69 @@ typedef struct {
 
 // following structure will be created in occoap and passed up the stack on the server side
 typedef struct {
+    // the REST method retrieved from received request PDU
+    OCMethod method;
     // resourceUrl will be filled in occoap using the path options in received request PDU
-    unsigned char * resourceUrl;
+    unsigned char resourceUrl[MAX_URI_LENGTH];
+    // resource query send by client
+    unsigned char query[MAX_QUERY_LENGTH];
+    // reqJSON is retrieved from the payload of the received request PDU
+    unsigned char reqJSONPayload[MAX_REQUEST_LENGTH];
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
-    // this structure points to the information for processing observe option
-    OCObserveReq *observe;
-    // If a subscription update, this is count of observe notifications from server perspective.
-    uint32_t sequenceNum;
-    // this structure will be passed to entity handler
-    OCEntityHandlerRequest * entityHandlerRequest;
-    // Indicate whether the request arrives on a secure port
-    uint8_t secure;
-} OCRequest;
+    // Observe option field
+    uint32_t observationOption;
+    // An array of the received vendor specific header options
+    uint8_t numRcvdVendorSpecificHeaderOptions;
+    OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
+    //////////////////////////////////////////////////////////
+    // TODO: Consider moving these member to CoAP
+    // IP address & port of client registered for observe
+    OCDevAddr requesterAddr;
+    // CoAP token for the observe request
+    OCCoAPToken requestToken;
+    // The ID of CoAP pdu
+    uint16_t coapID;
+    uint8_t delayedResNeeded;
+    uint8_t secured;
+    //////////////////////////////////////////////////////////
+    uint8_t reqMorePacket;
+    uint32_t reqPacketNum;
+    uint16_t reqPacketSize;
+    uint32_t resPacketNum;
+    uint16_t resPacketSize;
+    uint32_t reqTotalSize;
+} OCServerProtocolRequest;
+
+typedef struct
+{
+    // qos is indicating if the request is CON or NON
+    OCQualityOfService qos;
+    // Observe option field
+    uint32_t observationOption;
+    // Allow the entity handler to pass a result with the response
+    OCStackResult result;
+    // IP address & port of client registered for observe
+    OCDevAddr *requesterAddr;
+    // CoAP token for the observe request
+    OCCoAPToken *requestToken;
+    // The ID of CoAP pdu
+    uint16_t coapID;
+    // Flag indicating that response is to be delayed before sending
+    uint8_t delayedResNeeded;
+    uint8_t secured;
+    uint8_t slowFlag;
+    uint8_t notificationFlag;
+    // this is the pointer to server payload data to be transferred
+    unsigned char *payload;
+    // size of server payload data.  Don't rely on null terminated data for size
+    uint16_t payloadSize;
+    // An array of the vendor specific header options the entity handler wishes to use in response
+    uint8_t numSendVendorSpecificHeaderOptions;
+    OCHeaderOption *sendVendorSpecificHeaderOptions;
+    // URI of new resource that entity handler might create
+    unsigned char * resourceUri;
+} OCServerProtocolResponse;
 
 // following structure will be created in occoap and passed up the stack on the client side
 typedef struct {
@@ -182,11 +237,13 @@ typedef struct {
 //-----------------------------------------------------------------------------
 // Internal function prototypes
 //-----------------------------------------------------------------------------
-
-OCStackResult HandleStackRequests(OCRequest * request);
-OCStackResult SendPresenceNotification(OCResourceType *resourceType, OCQualityOfService qos);
+OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status);
+OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 void HandleStackResponses(OCResponse * response);
 int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
+#ifdef WITH_PRESENCE
+OCStackResult SendPresenceNotification(OCResourceType *resourceType);
+#endif
 
 OCStackResult BindResourceInterfaceToResource(OCResource* resource,
                                             const char *resourceInterfaceName);

@@ -93,7 +93,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     OCDoHandle handle;
 
     cbData.cb = cb;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
@@ -119,7 +119,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 }
 
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
     }
@@ -134,7 +134,7 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 
 OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
 {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
     }
@@ -149,7 +149,7 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
 
 OCStackApplicationResult deleteReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
 {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for DELETE recvd successfully");
     }
@@ -163,7 +163,7 @@ OCStackApplicationResult deleteReqCB(void *ctx, OCDoHandle handle, OCClientRespo
 }
 
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
     }
@@ -195,7 +195,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 }
 
 OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for OBS query recvd successfully");
     }
@@ -207,10 +207,9 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumObserveNotifies);
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Obs Response", clientResponse->resJSONPayload);
         gNumObserveNotifies++;
-        if (gNumObserveNotifies == 50)	//large number to test observing in DELETE case.
+        if (gNumObserveNotifies == 3)	//large number to test observing in DELETE case.
         {
             if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON){
-                printf ("RESET\n");
                 if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
@@ -235,7 +234,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 }
 #ifdef WITH_PRESENCE
 OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for Presence recvd successfully");
     }
@@ -265,7 +264,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
 
-    if (ctx == (void*) CTX_VAL)
+    if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
     }
@@ -508,7 +507,7 @@ int InitDiscovery()
         strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
     }
     cbData.cb = discoveryReqCB;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)

@@ -75,6 +75,8 @@ namespace OC
         virtual OCStackResult stopPresence() = 0;
 
         virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler) = 0;
+
+        virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse) = 0;
     };
 }
 

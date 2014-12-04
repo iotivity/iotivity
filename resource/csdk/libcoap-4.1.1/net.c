@@ -716,7 +716,7 @@ coap_tid_t coap_send(coap_context_t *context,
     else
     {
         node->timeout = MAX_MULTICAST_DELAY_SEC * ((COAP_TICKS_PER_SECOND * (r & 0xFF)) >> 8);
-        node->delayedResponse = 1;
+        node->delayedResNeeded = 1;
     }
 
     if (flag & SEND_SECURE_PORT) {
@@ -857,7 +857,7 @@ int coap_read(coap_context_t *ctx, int sockfd) {
 
   coap_address_t src, dst;
   coap_queue_t *node;
-  unsigned char delayRes = 0;
+  unsigned char delayedResNeeded = 0;
 
 #ifdef WITH_CONTIKI
     pbuf = uip_appdata;
@@ -876,7 +876,7 @@ int coap_read(coap_context_t *ctx, int sockfd) {
 
   // Set the delayed response flag for responding to multicast requests
   if (sockfd == ctx->sockfd_wellknown && bytes_read > 0) {
-      delayRes = 1;
+      delayedResNeeded = 1;
   }
 #if defined(WITH_DTLS)
   // Perform the DTLS decryption if packet is coming on secure port
@@ -949,7 +949,7 @@ int coap_read(coap_context_t *ctx, int sockfd) {
     }
 
     //set the delayed response flag
-    node->delayedResponse = delayRes;
+    node->delayedResNeeded = delayedResNeeded;
 
     //set the secure flag on the received packet
 #if defined(WITH_DTLS)
@@ -1612,7 +1612,6 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
 
         if (ctx->timer_configured)
         {
-            printf("clearing\n");
             sys_untimeout(coap_retransmittimer_execute, (void*)ctx);
             ctx->timer_configured = 0;
         }
@@ -1636,8 +1635,6 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                  * */
                 delay = 0;
             }
-
-            printf("scheduling for %d ticks\n", delay);
             sys_timeout(delay, coap_retransmittimer_execute, (void*)ctx);
             ctx->timer_configured = 1;
         }

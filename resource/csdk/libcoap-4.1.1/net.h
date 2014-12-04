@@ -51,12 +51,16 @@ extern "C" {
 #include "coap_time.h"
 
 typedef enum {
-    SEND_NOW            = (1 << 0), /*Flag used when sending non-confirmable, ACK and RESET coap pdus*/
-    SEND_NOW_CON        = (1 << 1), /*Flag used when sending confirmable coap pdu*/
-    SEND_DELAYED        = (1 << 2), /*Flag used to delay the transmission of coap pdu*/
-    SEND_RETX           = (1 << 3), /*Flag used to retransmit a confirmable pdu*/
-    SEND_SECURE_PORT    = (1 << 4)  /*Flag used to indicate that PDU needs to
-                                      be transmitted on secure port */
+    SEND_NOW            = (1 << 0), // Flag used when sending non-confirmable,
+                                    // ACK and RESET coap pdus, Automatically set in SendCoAPPdu
+                                    // Do not use in upper stack APIs
+    SEND_NOW_CON        = (1 << 1), // Flag used when sending confirmable coap pdu,
+                                    // Automatically set in SendCoAPPdu,
+                                    // Do not use in upper stack APIs
+    SEND_DELAYED        = (1 << 2), // Flag used to delay the transmission of coap pdu
+    SEND_RETX           = (1 << 3), // Flag used to retransmit a confirmable pdu
+    SEND_SECURE_PORT    = (1 << 4)  // Flag used to indicate that PDU needs to
+                                    // be transmitted on secure port
 } coap_send_flags_t;
 
 struct coap_queue_t;
@@ -74,7 +78,7 @@ typedef struct coap_queue_t {
 
   coap_pdu_t *pdu;      /**< the CoAP PDU to send */
 
-  unsigned char delayedResponse;  /**< delayed response flag */
+  unsigned char delayedResNeeded;  /**< delayed response flag */
   unsigned char secure;      /**< rx/tx will use secure channel (DTLS) */
 } coap_queue_t;
 

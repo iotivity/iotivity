@@ -118,7 +118,7 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
     }
     else
     {
-        std::cout << "onPost Response error: " << eCode << std::endl;
+        std::cout << "onPost2 Response error: " << eCode << std::endl;
         std::exit(-1);
     }
 }

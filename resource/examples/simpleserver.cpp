@@ -36,6 +36,7 @@ namespace PH = std::placeholders;
 
 int gObservation = 0;
 void * ChangeLightRepresentation (void *param);
+void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest);
 
 // Specifies where to notify all observers or list of observers
 // false: notifies all observers
@@ -46,6 +47,9 @@ bool isListOfObservers = false;
 // false: non-secure resource
 // true: secure resource
 bool isSecure = false;
+
+/// Specifies whether Entity handler is going to do slow response or not
+bool isSlowResponse = false;
 
 // Forward declaring the entityHandler
 
@@ -83,8 +87,8 @@ public:
     /// This function internally calls registerResource API.
     void createResource()
     {
-        std::string resourceURI = m_lightUri; // URI of the resource
-        std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
+        std::string resourceURI = m_lightUri; //URI of the resource
+        std::string resourceTypeName = "core.light"; //resource type name. In this case, it is light
         std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
         // OCResourceProperty is defined ocstack.h
@@ -97,7 +101,7 @@ public:
         {
             resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
         }
-        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1);
 
         // This will internally create and register the resource.
         OCStackResult result = OCPlatform::registerResource(
@@ -126,7 +130,7 @@ public:
         {
             resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
         }
-        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1);
 
         OCResourceHandle resHandle;
 
@@ -239,13 +243,10 @@ public:
 private:
 // This is just a sample implementation of entity handler.
 // Entity handler can be implemented in several ways by the manufacturer
-OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-                                    std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
 {
-    OCEntityHandlerResult result = OC_EH_OK;
-
     cout << "\tIn Server CPP entity handler:\n";
-
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if(request)
     {
         // Get the request type and request flag
@@ -261,39 +262,51 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
         if(requestFlag & RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";
+            auto pResponse = std::make_shared<OC::OCResourceResponse>();
+            pResponse->setRequestHandle(request->getRequestHandle());
+            pResponse->setResourceHandle(request->getResourceHandle());
 
             // If the request type is GET
             if(requestType == "GET")
             {
                 cout << "\t\t\trequestType : GET\n";
-
-                if(response)
+                if(isSlowResponse) // Slow response case
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(get());
+                    static int startedThread = 0;
+                    if(!startedThread)
+                    {
+                        std::thread t(handleSlowResponse, (void *)this, request);
+                        startedThread = 1;
+                        t.detach();
+                    }
+                    ehResult = OC_EH_SLOW;
+                }
+                else // normal response case.
+                {
+                    pResponse->setErrorCode(200);
+                    pResponse->setResponseResult(OC_EH_OK);
+                    pResponse->setResourceRepresentation(get());
+                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                    {
+                        ehResult = OC_EH_OK;
+                    }
                 }
             }
             else if(requestType == "PUT")
             {
                 cout << "\t\t\trequestType : PUT\n";
-
                 OCRepresentation rep = request->getResourceRepresentation();
 
                 // Do related operations related to PUT request
-
                 // Update the lightResource
                 put(rep);
-
-                if(response)
+                pResponse->setErrorCode(200);
+                pResponse->setResponseResult(OC_EH_OK);
+                pResponse->setResourceRepresentation(get());
+                if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(get());
+                    ehResult = OC_EH_OK;
                 }
-
             }
             else if(requestType == "POST")
             {
@@ -302,26 +315,19 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
                 OCRepresentation rep = request->getResourceRepresentation();
 
                 // Do related operations related to POST request
-
                 OCRepresentation rep_post = post(rep);
-
-                if(response)
+                pResponse->setResourceRepresentation(rep_post);
+                pResponse->setErrorCode(200);
+                if(rep_post.hasAttribute("createduri"))
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(rep_post);
-
-                    if(rep_post.hasAttribute("createduri"))
-                    {
-                        result = OC_EH_RESOURCE_CREATED;
-
-                        response->setNewResourceUri(rep_post.getValue<std::string>("createduri"));
-                    }
-
+                    pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
+                    pResponse->setNewResourceUri(rep_post.getValue<std::string>("createduri"));
                 }
 
-                // POST request operations
+                if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                {
+                    ehResult = OC_EH_OK;
+                }
             }
             else if(requestType == "DELETE")
             {
@@ -358,6 +364,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
                 pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)this);
                 startedThread = 1;
             }
+            ehResult = OC_EH_OK;
         }
     }
     else
@@ -365,7 +372,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
         std::cout << "Request invalid" << std::endl;
     }
 
-    return result;
+    return ehResult;
 }
 
 };
@@ -422,14 +429,36 @@ void * ChangeLightRepresentation (void *param)
     return NULL;
 }
 
+void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest)
+{
+    // This function handles slow response case
+    LightResource* lightPtr = (LightResource*) param;
+    // Induce a case for slow response by using sleep
+    std::cout << "SLOW response" << std::endl;
+    sleep (10);
+
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+    pResponse->setRequestHandle(pRequest->getRequestHandle());
+    pResponse->setResourceHandle(pRequest->getResourceHandle());
+    pResponse->setResourceRepresentation(lightPtr->get());
+    pResponse->setErrorCode(200);
+    pResponse->setResponseResult(OC_EH_OK);
+
+    // Set the slow response flag back to false
+    isSlowResponse = false;
+    OCPlatform::sendResponse(pResponse);
+    return NULL;
+}
+
 void PrintUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : simpleserver < secure resource and observer >\n";
+    std::cout << "Usage : simpleserver <value>\n";
     std::cout << "    Default - Non-secure resource and notify all observers\n";
     std::cout << "    1 - Non-secure resource and notify list of observers\n\n";
     std::cout << "    2 - Secure resource and notify all observers\n";
     std::cout << "    3 - Secure resource and notify list of observers\n\n";
+    std::cout << "    4 - Non-secure resource, GET slow response, notify all observers\n";
 }
 
 
@@ -459,6 +488,8 @@ int main(int argc, char* argv[1])
                 isListOfObservers = true;
                 isSecure = true;
                 break;
+            case 4:
+                isSlowResponse = true;
             default:
                 break;
        }
@@ -480,7 +511,8 @@ int main(int argc, char* argv[1])
     OCPlatform::Configure(cfg);
     try
     {
-        // Create the instance of the resource class (in this case instance of class 'LightResource').
+        // Create the instance of the resource class
+        // (in this case instance of class 'LightResource').
         LightResource myLight;
 
         // Invoke createResource function of class light.

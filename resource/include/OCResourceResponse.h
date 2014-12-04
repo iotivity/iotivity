@@ -33,14 +33,10 @@
 
 using namespace std;
 
-
-void (processResourceResponse)(OCEntityHandlerFlag,
-                                 OCEntityHandlerRequest*,
-                                 std::shared_ptr<OC::OCResourceResponse> pResponse);
-
-
 namespace OC
 {
+    class InProcServerWrapper;
+
     /**
     *   @brief  OCResourceResponse provides APIs to set the response details
     */
@@ -85,6 +81,36 @@ namespace OC
         void setHeaderOptions(const HeaderOptions& headerOptions)
         {
             m_headerOptions = headerOptions;
+        }
+
+        /**
+        * This API allows to set request handle
+        *
+        * @param requestHandle - OCRequestHandle type used to set the request handle
+        */
+        void setRequestHandle(const OCRequestHandle& requestHandle)
+        {
+            m_requestHandle = requestHandle;
+        }
+
+        /**
+        * This API allows to set the resource handle
+        *
+        * @param resourceHandle - OCResourceHandle type used to set the resource handle
+        */
+        void setResourceHandle(const OCResourceHandle& resourceHandle)
+        {
+            m_resourceHandle = resourceHandle;
+        }
+
+        /**
+        * This API allows to set the EntityHandler response result
+        *
+        * @param responseResult - OCEntityHandlerResult type to set the result value
+        */
+        void setResponseResult(const OCEntityHandlerResult& responseResult)
+        {
+            m_responseResult = responseResult;
         }
 
         /**
@@ -134,10 +160,13 @@ namespace OC
         HeaderOptions m_headerOptions;
         std::string m_interface;
         OCRepresentation m_representation;
+        OCRequestHandle m_requestHandle;
+        OCResourceHandle m_resourceHandle;
+        OCEntityHandlerResult m_responseResult;
+
     private:
-        friend void (::processResourceResponse)(OCEntityHandlerFlag,
-                            OCEntityHandlerRequest*,
-                            std::shared_ptr<OC::OCResourceResponse> pResponse);
+        friend class InProcServerWrapper;
+
         std::string getPayload() const
         {
             MessageContainer inf;
@@ -201,6 +230,36 @@ namespace OC
         const HeaderOptions& getHeaderOptions() const
         {
             return m_headerOptions;
+        }
+
+        /**
+        * This API retrieves the request handle
+        *
+        * @return OCRequestHandle value
+        */
+        const OCRequestHandle& getRequestHandle() const
+        {
+            return m_requestHandle;
+        }
+
+        /**
+        * This API retrieves the resource handle
+        *
+        * @return OCResourceHandle value
+        */
+        const OCResourceHandle& getResourceHandle() const
+        {
+            return m_resourceHandle;
+        }
+
+        /**
+        * This API retrieves the entity handle response result
+        *
+        * @return OCEntityHandler result value
+        */
+        const OCEntityHandlerResult getResponseResult() const
+        {
+            return m_responseResult;
         }
     };
 

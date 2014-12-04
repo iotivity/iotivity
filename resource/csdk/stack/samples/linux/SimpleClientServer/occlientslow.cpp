@@ -27,7 +27,7 @@
 #include <sstream>
 #include "ocstack.h"
 #include "logger.h"
-#include "occlientbasicops.h"
+#include "occlientslow.h"
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
@@ -53,9 +53,8 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
-    OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
-            " Initiate Nonconfirmable Get/Put/Post Requests");
-    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
+    OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
+    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get Request");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -71,7 +70,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.cd = NULL;
 
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
-            (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
+            NULL,
             qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
@@ -80,37 +79,6 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     }
 
     return ret;
-}
-
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
-{
-    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
-    {
-        OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
-    }
-
-    if(clientResponse)
-    {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response", clientResponse->resJSONPayload);
-    }
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
-OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
-{
-    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
-    {
-        OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
-    }
-
-    if(clientResponse)
-    {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Post Response",
-                clientResponse->resJSONPayload);
-    }
-    return OC_STACK_DELETE_TRANSACTION;
 }
 
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
@@ -178,13 +146,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         {
             case TEST_NON_CON_OP:
                 InitGetRequest(OC_LOW_QOS);
-                InitPutRequest();
-                InitPostRequest(OC_LOW_QOS);
                 break;
             case TEST_CON_OP:
                 InitGetRequest(OC_HIGH_QOS);
-                InitPutRequest();
-                InitPostRequest(OC_HIGH_QOS);
                 break;
             default:
                 PrintUsage();
@@ -194,46 +158,6 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
-}
-
-int InitPutRequest()
-{
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
-    std::ostringstream query;
-    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
-}
-
-int InitPostRequest(OCQualityOfService qos)
-{
-    OCStackResult result;
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
-    std::ostringstream query;
-    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-
-    // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST,
-            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-            postReqCB, NULL, 0);
-    if (OC_STACK_OK != result)
-    {
-        // Error can happen if for example, network connectivity is down
-        OC_LOG(INFO, TAG, "First POST call did not succeed");
-    }
-
-    // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST,
-            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-            postReqCB, NULL, 0);
-    if (OC_STACK_OK != result)
-    {
-        OC_LOG(INFO, TAG, "Second POST call did not succeed");
-    }
-
-    // This POST operation will update the original resourced /a/led
-    return (InvokeOCDoResource(query, OC_REST_POST,
-                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-                postReqCB, NULL, 0));
 }
 
 int InitGetRequest(OCQualityOfService qos)

@@ -151,42 +151,69 @@ void PrintArduinoMemoryStats()
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest )
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
+    OCEntityHandlerResponse response = {0};
+    char payload[MAX_RESPONSE_LENGTH] = {0};
 
     if(entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+
         if(OC_REST_GET == entityHandlerRequest->method)
         {
-            if (strlen(responsePayloadGet) < entityHandlerRequest->resJSONPayloadLen)
+            size_t responsePayloadGetLength = strlen(responsePayloadGet);
+            if (responsePayloadGetLength < (sizeof(payload) - 1))
             {
-                strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadGet, entityHandlerRequest->resJSONPayloadLen);
+                strncpy(payload, responsePayloadGet, responsePayloadGetLength);
             }
             else
             {
                 ehRet = OC_EH_ERROR;
             }
         }
-        if(OC_REST_PUT == entityHandlerRequest->method)
+        else if(OC_REST_PUT == entityHandlerRequest->method)
         {
             //Do something with the 'put' payload
-            if (strlen(responsePayloadPut) < entityHandlerRequest->resJSONPayloadLen)
+            size_t responsePayloadPutLength = strlen(responsePayloadPut);
+            if (responsePayloadPutLength < (sizeof(payload) - 1))
             {
-                strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadPut, entityHandlerRequest->resJSONPayloadLen);
+                strncpy((char *)payload, responsePayloadPut, responsePayloadPutLength);
             }
             else
             {
                 ehRet = OC_EH_ERROR;
             }
          }
+
+        if (ehRet == OC_EH_OK)
+        {
+            // Format the response.  Note this requires some info about the request
+            response.requestHandle = entityHandlerRequest->requestHandle;
+            response.resourceHandle = entityHandlerRequest->resource;
+            response.ehResult = ehRet;
+            response.payload = (unsigned char *)payload;
+            response.payloadSize = strlen(payload);
+            response.numSendVendorSpecificHeaderOptions = 0;
+            memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+            memset(response.resourceUri, 0, sizeof response.resourceUri);
+            // Indicate that response is NOT in a persistent buffer
+            response.persistentBufferFlag = 0;
+
+            // Send the response
+            if (OCDoResponse(&response) != OC_STACK_OK)
+            {
+                OC_LOG(ERROR, TAG, "Error sending response");
+                ehRet = OC_EH_ERROR;
+            }
+        }
     }
     if (entityHandlerRequest && (flag & OC_OBSERVE_FLAG))
     {
-        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
             gLEDUnderObservation = 1;
         }
-        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
         }

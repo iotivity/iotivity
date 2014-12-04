@@ -123,7 +123,7 @@ static int coap_cache_pdu(coap_context_t *ctx,
 
     if (existing_node) {
         node->timeout = existing_node->timeout;
-        node->delayedResponse = existing_node->delayedResponse;
+        node->delayedResNeeded = existing_node->delayedResNeeded;
     }
 
     // Add the node in cachedqueue list
@@ -163,7 +163,7 @@ static void save_cached_con_pdu(coap_context_t *ctx,
         node->t = (now - ctx->sendqueue_basetime) + node->timeout;
     }
 
-    node->delayedResponse = 0;
+    node->delayedResNeeded = 0;
     node->next = NULL;
     coap_insert_node(&ctx->sendqueue, node);
 }

@@ -113,16 +113,16 @@ namespace OC
     }
 
     OCStackResult OCPlatform_impl::notifyListOfObservers(OCResourceHandle resourceHandle,
-                                                ObservationIds& observationIds,
-                                                const std::shared_ptr<OCResourceResponse> pResponse)
+                                       ObservationIds& observationIds,
+                                       const std::shared_ptr<OCResourceResponse> pResponse)
     {
         return notifyListOfObservers(resourceHandle, observationIds, pResponse, m_cfg.QoS);
     }
 
     OCStackResult OCPlatform_impl::notifyListOfObservers(OCResourceHandle resourceHandle,
-                                                ObservationIds& observationIds,
-                                                const std::shared_ptr<OCResourceResponse> pResponse,
-                                                QualityOfService QoS)
+                                       ObservationIds& observationIds,
+                                       const std::shared_ptr<OCResourceResponse> pResponse,
+                                       QualityOfService QoS)
     {
         if(!pResponse)
         {
@@ -293,4 +293,9 @@ namespace OC
                              ref(presenceHandle));
     }
 
+    OCStackResult OCPlatform_impl::sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
+    {
+        return checked_guard(m_server, &IServerWrapper::sendResponse,
+                             pResponse);
+    }
 } //namespace OC

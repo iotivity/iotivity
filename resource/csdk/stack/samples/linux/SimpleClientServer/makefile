@@ -38,6 +38,7 @@ OCRANDOM_DIR	= $(ROOT_DIR)/ocrandom
 OCSOCKET_DIR	= $(ROOT_DIR)/ocsocket
 LCOAP_DIR	= $(ROOT_DIR)/libcoap-4.1.1
 OCCOAP_DIR	= $(ROOT_DIR)/occoap
+OCMALLOC_DIR	= $(ROOT_DIR)/ocmalloc
 OCTBSTACK_DIR	= $(ROOT_DIR)/stack
 EXTLIBS_DIR	= $(ROOT_DIR)/../../extlibs
 CJSON_DIR	= $(EXTLIBS_DIR)/cjson
@@ -50,6 +51,7 @@ OCRANDOM_INC	= $(OCRANDOM_DIR)/include
 OCSOCKET_INC	= $(OCSOCKET_DIR)/include
 LCOAP_INC	= $(LCOAP_DIR)
 OCCOAP_INC	= $(OCCOAP_DIR)/include
+OCMALLOC_INC	= $(OCMALLOC_DIR)/include
 OCTBSTACK_INC	= $(OCTBSTACK_DIR)/include
 CJSON_INC	= $(CJSON_DIR)
 
@@ -59,6 +61,7 @@ INC_DIRS	+= -I$(OCRANDOM_INC)
 INC_DIRS	+= -I$(OCSOCKET_INC)
 INC_DIRS	+= -I$(LCOAP_INC)
 INC_DIRS	+= -I$(OCCOAP_INC)
+INC_DIRS	+= -I$(OCMALLOC_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(CJSON_INC)
 
@@ -72,17 +75,19 @@ CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
 
-SOURCES		:= $(CJSON_SOURCES)
-SOURCES     += occlient.cpp ocserver.cpp occlientcoll.cpp ocservercoll.cpp common.cpp ocserverbasicops.cpp occlientbasicops.cpp
+SOURCES	:= $(CJSON_SOURCES)
+SOURCES	+= occlient.cpp ocserver.cpp occlientcoll.cpp ocservercoll.cpp common.cpp ocserverbasicops.cpp occlientbasicops.cpp ocserverslow.cpp occlientslow.cpp
 
 OBJECTS:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
 
 PROGRAMS	+= ocserver
 PROGRAMS	+= occlient
 PROGRAMS	+= ocserverbasicops
+PROGRAMS	+= ocserverslow
 PROGRAMS	+= ocservercoll
 PROGRAMS	+= occlientcoll
 PROGRAMS	+= occlientbasicops
+PROGRAMS	+= occlientslow
 
 all:	c_sdk prep_dirs $(OBJECTS) $(PROGRAMS)
 
@@ -99,6 +104,9 @@ $(OBJ_DIR)/%.o: %.cpp
 ocserver: $(OBJ_DIR)/ocserver.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
+ocserverslow: $(OBJ_DIR)/ocserverslow.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
+
 ocserverbasicops: $(OBJ_DIR)/ocserverbasicops.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
@@ -109,6 +117,9 @@ occlient: $(OBJ_DIR)/occlient.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 occlientbasicops: $(OBJ_DIR)/occlientbasicops.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
+
+occlientslow: $(OBJ_DIR)/occlientslow.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 occlientcoll: $(OBJ_DIR)/occlientcoll.o $(OBJ_DIR)/common.o

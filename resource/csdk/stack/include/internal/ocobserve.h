@@ -23,16 +23,9 @@
 
 /* In CoAP sequence number is a 24 bit field */
 #define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
-#define OC_RESOURCE_OBSERVE_REGISTER     (0)
-#define OC_RESOURCE_OBSERVE_DEREGISTER   (1)
-#define OC_RESOURCE_NO_OBSERVE           (2)
 
 #define MAX_OBSERVER_FAILED_COMM         (2)
 #define MAX_OBSERVER_NON_COUNT           (3)
-
-#define OC_OBSERVER_NOT_INTERESTED       (0)
-#define OC_OBSERVER_STILL_INTERESTED     (1)
-#define OC_OBSERVER_FAILED_COMM          (2)
 
 /* This information is stored for each registerd observer */
 typedef struct ResourceObserver {
@@ -60,12 +53,17 @@ typedef struct ResourceObserver {
     struct ResourceObserver *next;
 } ResourceObserver;
 
-OCStackResult OCObserverStatus(OCCoAPToken * token, uint8_t status);
-
-OCStackResult ProcessObserveRequest (OCResource *resource, OCRequest *request);
-
-OCStackResult SendObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
-                                        OCResourceType *resourceType, OCQualityOfService qos);
+#ifdef WITH_PRESENCE
+OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
+        OCResourceType *resourceType, OCQualityOfService qos);
+#else
+OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
+        OCQualityOfService qos);
+#endif
+OCStackResult SendListObserverNotification (OCResource * resource,
+        OCObservationId  *obsIdList, uint8_t numberOfIds,
+        unsigned char *notificationJSONPayload, uint32_t maxAge,
+        OCQualityOfService qos);
 
 void DeleteObserverList();
 

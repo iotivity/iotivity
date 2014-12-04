@@ -23,6 +23,7 @@
 
 #include "ocstack.h"
 #include "ocstackinternal.h"
+#include "ocserverrequest.h"
 
 #define OC_RSRVD_OC                     "oc"
 #define OC_RSRVD_PAYLOAD                "payload"
@@ -67,15 +68,12 @@ const char * GetVirtualResourceUri( OCVirtualResources resource);
 OCResource *FindResourceByUri(const char* resourceUri);
 uint8_t IsVirtualResource(const char* resourceUri);
 
-OCStackResult DetermineResourceHandling (OCRequest *request,
+OCStackResult DetermineResourceHandling (OCServerRequest *request,
                                          ResourceHandling *handling,
                                          OCResource **resource);
 
 OCStackResult
-BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest *request);
-
-OCEntityHandlerResult
-BuildObsJSONResponse(OCResource *resource, OCEntityHandlerRequest *ehRequest);
+ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerRequest *request);
 
 OCStackResult
 BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,

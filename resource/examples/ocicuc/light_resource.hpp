@@ -75,20 +75,19 @@ class LightResource
     void addInterface(const std::string& interface) const;
 
     private:
-    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-                                        std::shared_ptr<OCResourceResponse> response);
+    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request);
 
     private:
     void observe_function();
 
     // Request handlers:
     private:
-    void dispatch_request(const std::string& request_type, std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
-     void handle_get_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
-     void handle_put_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
-     void handle_post_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
-     void handle_delete_request(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
-     void handle_observe_event(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response);
+    void dispatch_request(const std::string& request_type, std::shared_ptr<OCResourceRequest> request);
+    void handle_get_request(std::shared_ptr<OCResourceRequest> request);
+    void handle_put_request(std::shared_ptr<OCResourceRequest> request);
+    void handle_post_request(std::shared_ptr<OCResourceRequest> request);
+    void handle_delete_request(std::shared_ptr<OCResourceRequest> request);
+    void handle_observe_event(std::shared_ptr<OCResourceRequest> request);
 };
 
 }} // namespace Intel::OCDemo
