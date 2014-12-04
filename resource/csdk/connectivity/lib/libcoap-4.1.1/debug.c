@@ -3,7 +3,7 @@
  * Copyright (C) 2010--2012 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -81,12 +81,12 @@ print_timestamp(char *s, size_t len, coap_tick_t t)
 #ifndef NDEBUG
 
 #ifndef HAVE_STRNLEN
-/** 
- * A length-safe strlen() fake. 
- * 
+/**
+ * A length-safe strlen() fake.
+ *
  * @param s      The string to count characters != 0.
  * @param maxlen The maximum length of @p s.
- * 
+ *
  * @return The length of @p s.
  */
 static inline size_t

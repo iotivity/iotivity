@@ -43,7 +43,8 @@ extern "C"
  *                              address based on the connectivity type.
  * @param   requestInfo [OUT]   Identifier which needs to be sent with request.
  */
-typedef void (*CARequestCallback)(CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo);
+typedef void (*CARequestCallback)(const CARemoteEndpoint_t* object,
+        const CARequestInfo_t* requestInfo);
 
 /**
  * @brief   Callback function type for response delivery.
@@ -51,7 +52,8 @@ typedef void (*CARequestCallback)(CARemoteEndpoint_t* object, CARequestInfo_t* r
  * @param   object          [OUT]   Endpoint object from which the response is received.
  * @param   responseInfo    [OUT]   Identifier which needs to be mapped with response.
  */
-typedef void (*CAResponseCallback)(CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo);
+typedef void (*CAResponseCallback)(const CARemoteEndpoint_t* object,
+        const CAResponseInfo_t* responseInfo);
 
 /**
  * @brief   Initialize the connectivity abstraction module.
@@ -192,7 +194,7 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork);
  * @param   size    [OUT]   No Of Array objects
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetNetworkInformation(CALocalConnectivityt_t **info, uint32_t* size);
+CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t* size);
 
 /**
  * @brief   for usage of singled threaded application.

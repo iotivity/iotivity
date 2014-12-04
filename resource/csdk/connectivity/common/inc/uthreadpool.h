@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <glib.h>
-#include <glib/gthreadpool.h>
 
 #include "cacommon.h"
 

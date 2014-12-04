@@ -22,6 +22,7 @@
  * @file cacommon.h
  * @brief This file contains the common data structures between Resource , CA and adapters
  */
+
 #ifndef __CA_COMMON_H_
 #define __CA_COMMON_H_
 
@@ -34,57 +35,84 @@ extern "C"
 #endif
 
 /**
- @brief IP Address Length
+ @brief IP address Length
  */
 #define CA_IPADDR_SIZE 16
 
 /**
- @brief Mac Address Length for BT
+ @brief Mac address length for BT port
  */
 #define CA_MACADDR_SIZE 18
 
 /**
- @brief Max Header Options data length
+ @brief Max header options data length
  */
 #define CA_MAX_HEADER_OPTION_DATA_LENGTH 16
 
 /**
- @brief CAPayload_t
+ @brief Max URI length
+ */
+#define CA_MAX_URI_LENGTH 128
+
+/**
+@brief option types - the highest option number 63
+*/
+#define CA_OPTION_IF_MATCH 1
+#define CA_OPTION_ETAG 4
+#define CA_OPTION_IF_NONE_MATCH 5
+#define CA_OPTION_LOCATION_PATH 8
+#define CA_OPTION_URI_PATH 11
+#define CA_OPTION_CONTENT_FORMAT 12
+#define CA_OPTION_CONTENT_TYPE COAP_OPTION_CONTENT_FORMAT
+#define CA_OPTION_MAXAGE 14
+#define CA_OPTION_URI_QUERY 15
+#define CA_OPTION_ACCEPT 17
+#define CA_OPTION_LOCATION_QUERY 20
+#define CA_OPTION_OBSERVE 6
+
+/**
+ @brief Payload information from resource model
  */
 typedef char* CAPayload_t;
 
 /**
- @brief CAURI_t
+ @brief URI for the OIC base.CA considers relative URI as the URI.
  */
 typedef char* CAURI_t;
 
 /**
- @brief CAToken_t
+ @brief Token information for mapping the request and responses by resource model
  */
 typedef char* CAToken_t;
 
 /**
- @brief CABool_t
+ @brief Boolean value used for specifying the success or failure
  */
+
 typedef enum
 {
-    CA_FALSE = 0, CA_TRUE
+    CA_FALSE = 0,
+    CA_TRUE
 } CABool_t;
 
 /**
- @brief CAConnectivityType_t
+ @brief Different connectivities that are handled in Connectivity Abstraction
  */
 typedef enum
 {
-    CA_ETHERNET = (1 << 0), CA_WIFI = (1 << 1), CA_EDR = (1 << 2), CA_LE = (1 << 3)
+    CA_ETHERNET = (1 << 0),
+    CA_WIFI = (1 << 1),
+    CA_EDR = (1 << 2),
+    CA_LE = (1 << 3)
 } CAConnectivityType_t;
 
 /**
- @brief CANetworkStatus_t
+ @brief Information about the network status.CA_INTERFACE_UP means connectivity is available
  */
 typedef enum
 {
-    CA_INTERFACE_UP, CA_INTERFACE_DOWN
+    CA_INTERFACE_UP,
+    CA_INTERFACE_DOWN
 } CANetworkStatus_t;
 
 /**
@@ -93,15 +121,25 @@ typedef enum
 typedef union
 {
     /**
-     @brief BT Information
+     @brief BT Mac Information
      */
     struct
     {
-        /** @brief Bluettoth Mac Address **/
+        /** @brief BT mac address **/
         char btMacAddress[CA_MACADDR_SIZE];
     } BT;
+
     /**
-     @brief IP Information
+     @brief LE MAC Information
+     */
+    struct
+    {
+        /** @brief BLE mac address **/
+        char leMacAddress[CA_MACADDR_SIZE];
+    } LE;
+
+    /**
+     @brief IP Information for wifi and ethernet ports
      */
     struct
     {
@@ -113,23 +151,29 @@ typedef union
 } CAAddress_t;
 
 /**
- @brief CAQualityOfService
+ @brief Quality of service for Base source code
  */
 typedef enum
 {
-    CA_LOW_QOS = 0, CA_MEDIUM_QOS, CA_HIGH_QOS, CA_NA_QOS // No Quality is defined, let the stack decide
+    CA_LOW_QOS = 0,
+    CA_MEDIUM_QOS,
+    CA_HIGH_QOS,
+    CA_NA_QOS // No Quality is defined, let the stack decide
 } CAQualityOfService_t;
 
 /**
- @brief CAMethod_t
+ @brief Allowed method to be used by resource model
  */
 typedef enum
 {
-    CA_GET = 1, CA_POST, CA_PUT, CA_DELETE
+    CA_GET = 1,
+    CA_POST,
+    CA_PUT,
+    CA_DELETE
 } CAMethod_t;
 
 /**
- @brief RemoteEndpoint information for connectivities
+ @brief Remote endpoint information for connectivities
  */
 typedef struct
 {
@@ -150,7 +194,7 @@ typedef struct
     CAAddress_t addressInfo;
     /** Connectivity type that localconnectivity avaialble **/
     CAConnectivityType_t type;
-} CALocalConnectivityt_t;
+} CALocalConnectivity_t;
 
 /**
  @brief Enums for CA return values
@@ -160,7 +204,11 @@ typedef enum
     /* Success status code - START HERE */
     CA_STATUS_OK = 0,
     CA_STATUS_INVALID_PARAM,
+    CA_ADAPTER_NOT_ENABLED,
+    CA_SERVER_STARTED_ALREADY,
+    CA_SERVER_NOT_STARTED,
     CA_DESTINATION_NOT_REACHABLE,
+    CA_SOCKET_OPERATION_FAILED,
     CA_SEND_FAILED,
     CA_RECEVIE_FAILED,
     CA_MEMORY_ALLOC_FAILED,
@@ -168,7 +216,7 @@ typedef enum
     CA_DESTINATION_DISCONNECTED,
     CA_STATUS_FAILED,
     CA_NOT_SUPPORTED
-/* Error status code - END HERE */
+/* Result code - END HERE */
 } CAResult_t;
 
 /**
@@ -184,15 +232,16 @@ typedef enum
     CA_BAD_REQ = 400,
     CA_BAD_OPT = 402,
     CA_NOT_FOUND = 404
-/* Error status code - END HERE */
+/* Response status code - END HERE */
 } CAResponseResult_t;
 
 /**
- @brief Transport Protocol IDs
+ @brief Transport Protocol IDs for additional options
  */
 typedef enum
 {
-    CA_INVALID_ID = (1 << 0), CA_COAP_ID = (1 << 1)
+    CA_INVALID_ID = (1 << 0),
+    CA_COAP_ID = (1 << 1)
 } CATransportProtocolID_t;
 
 /**
@@ -206,17 +255,11 @@ typedef struct
     CATransportProtocolID_t protocolID;
     /** The header option ID which will be added to communication packets**/
     uint16_t optionID;
-    /** its length   191**/
+    /** its length   **/
     uint16_t optionLength;
     /** optional data values**/
     uint8_t optionData[CA_MAX_HEADER_OPTION_DATA_LENGTH];
 } CAHeaderOption_t;
-
-/**
- * @brief Request Information to be sent
- *
- * This structure is used to hold request information
- */
 
 /**
  * @brief Base Information received
@@ -237,24 +280,29 @@ typedef struct
     CAPayload_t payload;
 } CAInfo_t;
 
+/**
+ * @brief Request Information to be sent
+ *
+ * This structure is used to hold request information
+ */
 typedef struct
 {
     /** Name of the Method Allowed **/
     CAMethod_t method;
-    /** Base Information **/
+    /** Information of the request. **/
     CAInfo_t info;
 } CARequestInfo_t;
 
 /**
- * @brief Response Information received
+ * @brief Response information received
  *
  * This structure is used to hold response information
  */
 typedef struct
 {
-    /**Response Result by Resource Model**/
+    /**Result for response by resource model**/
     CAResponseResult_t result;
-    /**Base Information **/
+    /**Information of the response.**/
     CAInfo_t info;
 } CAResponseInfo_t;
 

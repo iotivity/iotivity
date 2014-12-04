@@ -3,7 +3,7 @@
  * Copyright (C) 2012 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include <stdio.h>
@@ -756,10 +756,10 @@ CU_pSuite t_init_option_tests(void)
         return NULL;
     }
 
-#define OPTION_TEST(n,s)						      \
-  if (!CU_add_test(suite[0], s, t_parse_option##n)) {	      \
-    fprintf(stderr, "W: cannot add option parser test (%s)\n",	      \
-	    CU_get_error_msg());				      \
+#define OPTION_TEST(n,s)                              \
+  if (!CU_add_test(suite[0], s, t_parse_option##n)) {         \
+    fprintf(stderr, "W: cannot add option parser test (%s)\n",        \
+        CU_get_error_msg());                      \
   }
 
     OPTION_TEST(1, "parse option #1");
@@ -779,10 +779,10 @@ CU_pSuite t_init_option_tests(void)
 
     if ((suite[1] = CU_add_suite("option encoder", NULL, NULL)))
     {
-#define OPTION_ENCODER_TEST(n,s)			      \
-    if (!CU_add_test(suite[1], s, t_encode_option##n)) {		      \
+#define OPTION_ENCODER_TEST(n,s)                  \
+    if (!CU_add_test(suite[1], s, t_encode_option##n)) {              \
       fprintf(stderr, "W: cannot add option encoder test (%s)\n",     \
-	      CU_get_error_msg());				      \
+          CU_get_error_msg());                    \
     }
 
         OPTION_ENCODER_TEST(1, "encode option #1");
@@ -802,10 +802,10 @@ CU_pSuite t_init_option_tests(void)
 
     if ((suite[2] = CU_add_suite("option accessors", NULL, NULL)))
     {
-#define OPTION_ACCESSOR_TEST(n,s)			      \
-    if (!CU_add_test(suite[2], s, t_access_option##n)) {		      \
+#define OPTION_ACCESSOR_TEST(n,s)                 \
+    if (!CU_add_test(suite[2], s, t_access_option##n)) {              \
       fprintf(stderr, "W: cannot add option accessor function test (%s)\n",     \
-	      CU_get_error_msg());				      \
+          CU_get_error_msg());                    \
     }
 
         OPTION_ACCESSOR_TEST(1, "access option #1");
@@ -825,10 +825,10 @@ CU_pSuite t_init_option_tests(void)
 
     if ((suite[3] = CU_add_suite("option iterator", NULL, NULL)))
     {
-#define OPTION_ITERATOR_TEST(n,s)			      \
-    if (!CU_add_test(suite[3], s, t_iterate_option##n)) {		      \
+#define OPTION_ITERATOR_TEST(n,s)                 \
+    if (!CU_add_test(suite[3], s, t_iterate_option##n)) {             \
       fprintf(stderr, "W: cannot add option iterator test (%s)\n",     \
-	      CU_get_error_msg());				      \
+          CU_get_error_msg());                    \
     }
 
         OPTION_ITERATOR_TEST(1, "option iterator #1");

@@ -28,13 +28,16 @@
 #define TAG PCF("CA")
 
 static CANetworkPacketReceivedCallback gEDRReceivedCallback = NULL;
+static u_thread_pool_t gThreadPoolHandle = NULL;
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback)
+        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+        u_thread_pool_t handle)
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitializeEDR");
 
     gEDRReceivedCallback = reqRespCallback;
+    gThreadPoolHandle = handle;
 
     // register handlers
     CAConnectivityHandler_t handler;
@@ -106,7 +109,7 @@ uint32_t CASendEDRNotification(const CARemoteEndpoint_t* endpoint, void* data, u
     return 0;
 }
 
-CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size)
+CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGetEDRInterfaceInformation");
 

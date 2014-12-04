@@ -25,21 +25,16 @@
 #include "cainterface.h"
 #include "caremotehandler.h"
 #include "camessagehandler.h"
+#include "caprotocolmessage.h"
 #include "canetworkconfigurator.h"
 #include "cainterfacecontroller.h"
 #include "logger.h"
 
 #define TAG PCF("CA")
 
-static void CAMessageHandler(int32_t id, CADetachErrorCode code)
-{
-}
-
 CAResult_t CAInitialize()
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitialize");
-
-    CASetMessageHandlerCallback(CAMessageHandler);
 
     CAResult_t res = CAInitializeMessageHandler();
 
@@ -116,73 +111,51 @@ void CADestroyToken(CAToken_t token)
     CADestroyTokenInternal(token);
 }
 
-CAResult_t CAGetNetworkInformation(CALocalConnectivityt_t **info, uint32_t* size)
+CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t* size)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGetNetworkInformation");
 
-    return CA_NOT_SUPPORTED;
+    return CAGetNetworkInformationInternal(info, size);
 }
 
 CAResult_t CAFindResource(const CAURI_t resourceUri)
 {
     OIC_LOG_V(DEBUG, TAG, "CAFindResource");
 
-    int32_t actionId = -1;
+    return CADetachMessageResourceUri(resourceUri, NULL, 0);
 
-    actionId = CADetachMessageResourceUri(resourceUri);
-
-    if (actionId == -1)
-        return CA_SEND_FAILED;
-
-    OIC_LOG_V(DEBUG, TAG, "action id : %d", actionId);
-
-    return CA_STATUS_OK;
 }
 
 CAResult_t CASendRequest(const CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendGetRequest");
 
-    int32_t actionId = -1;
-
-    actionId = CADetachRequestMessage(object, requestInfo);
-
-    if (actionId == -1)
-        return CA_SEND_FAILED;
-
-    OIC_LOG_V(DEBUG, TAG, "action id : %d", actionId);
-
-    return CA_STATUS_OK;
+    return CADetachRequestMessage(object, requestInfo);
 }
 
 CAResult_t CASendNotification(const CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendNotification");
 
-    return CA_NOT_SUPPORTED;
+    return CADetachResponseMessage(object, responseInfo);
+
 }
 
 CAResult_t CASendResponse(const CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendResponse");
 
-    int32_t actionId = -1;
+    return CADetachResponseMessage(object, responseInfo);
 
-    actionId = CADetachResponseMessage(object, responseInfo);
-
-    if (actionId == -1)
-        return CA_SEND_FAILED;
-
-    OIC_LOG_V(DEBUG, TAG, "action id : %d", actionId);
-
-    return CA_STATUS_OK;
 }
 
-CAResult_t CAAdvertiseResource(const CAURI_t uri, CAHeaderOption_t* options, uint8_t numOptions)
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAHeaderOption_t* options,
+        uint8_t numOptions)
 {
     OIC_LOG_V(DEBUG, TAG, "CAAdvertiseResource");
 
-    return CA_NOT_SUPPORTED;
+    return CADetachMessageResourceUri(resourceUri, options, numOptions);
+
 }
 
 CAResult_t CASelectNetwork(const uint32_t interestedNetwork)

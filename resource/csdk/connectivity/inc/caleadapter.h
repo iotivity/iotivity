@@ -27,6 +27,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#include "uthreadpool.h" /* for thread pool */
 
 /**
  * BLE Interface APIs.
@@ -39,14 +40,19 @@ extern "C"
 /**
  * @brief Initialize LE connectivity interface.
  * @param registerCallback [IN] To register LE interfaces to Connectivity Abstraction Layer
- * @param reqRespCallback [IN] sending responses and discovery messages from unicast , multicast servers
+ * @param reqRespCallback [IN] sending responses and discovery messages from unicast , \
+ *                                             multicast servers
  * @param netCallback [IN] Intimate the network additions to Connectivity Abstraction Layer.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
+
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback);
+                          CANetworkPacketReceivedCallback reqRespCallback,
+                          CANetworkChangeCallback netCallback,
+                          u_thread_pool_t handle);
 /**
- * @brief Starting LE connectivity adapters .As its peer to peer it doesnot require to start any servers
+ * @brief Starting LE connectivity adapters . \
+ *           As its peer to peer it doesnot require to start any servers
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAStartLE();
@@ -70,13 +76,13 @@ CAResult_t CAStartLEDiscoveryServer();
 /**
  * @brief Sends data to the endpoint using the adapter connectivity.
  * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri and connectivity type) to
- *                              which the unicast data has to be sent.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
+ * @param   endpoint  [IN]  Remote Endpoint information (like ipaddress , port, reference uri \
+ *                                            and connectivity type) to which the unicast data has to be sent.
+ * @param   data        [IN]  Data which required to be sent.
+ * @param   dataLen   [IN]  Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendLEUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen);
+uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the LE connectivity.
@@ -85,7 +91,7 @@ uint32_t CASendLEUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uin
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendLEMulticastData(void* data, uint32_t dataLen);
+uint32_t CASendLEMulticastData(void *data, uint32_t dataLen);
 
 /**
  * @brief Starts notification server on EDR adapters.
@@ -96,13 +102,13 @@ CAResult_t CAStartLENotifyServer();
 /**
  * @brief Send notification information.
  * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri and connectivity type) to
- *                              which the unicast data has to be sent.
+ * @param   endpoint  [IN]    Remote Endpoint information (like ipaddress , port, reference uri \
+ *                                          and connectivity type) to which the unicast data has to be sent.
  * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
+ * @param   dataLen   [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen);
+uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen);
 
 /**
  * @brief Get LE Connectivity network information
@@ -110,7 +116,7 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, void* data, ui
  * @param   size        [OUT]   Number of local connectivity structures.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetLEInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size);
+CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.

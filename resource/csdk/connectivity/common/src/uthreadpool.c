@@ -46,7 +46,7 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
     gThreadpool = g_thread_pool_new(run, NULL, num_of_threads, FALSE, &error);
     if (NULL == gThreadpool)
     {
-        OIC_LOG_V(ERROR, TAG, "Error: g_thread_pool_new failed!");
+        OIC_LOG_V(ERROR, TAG, "g_thread_pool_new failed!");
         if (NULL != error)
         {
             OIC_LOG_V(ERROR, TAG, "Error is: %s", error->message);
@@ -67,17 +67,23 @@ CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(v
     gboolean result = FALSE;
     if (NULL == routine)
     {
-        OIC_LOG_V(ERROR, TAG, "Error: routine is NULL!");
+        OIC_LOG_V(ERROR, TAG, "routine is NULL!");
         return CA_STATUS_FAILED;
     }
 
     u_thread_msg_t *message = (u_thread_msg_t *) OICMalloc(sizeof(u_thread_msg_t));
+    if (NULL == message)
+    {
+        OIC_LOG_V(ERROR, TAG, "Memory allocation failed!");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
     message->data = data;
     message->func = routine;
     result = g_thread_pool_push((GThreadPool *) thread_pool, (void *) message, NULL);
     if (FALSE == result)
     {
-        OIC_LOG_V(ERROR, TAG, "Error: Failed to push the task to threadpool!");
+        OIC_LOG_V(ERROR, TAG, "Failed to push the task to threadpool!");
         return CA_STATUS_FAILED;
     }
 
@@ -106,7 +112,7 @@ void run(void *thread_data, void *user_data)
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "Error: Invalid task data");
+        OIC_LOG_V(ERROR, TAG, "Invalid task data");
         return;
     }
 

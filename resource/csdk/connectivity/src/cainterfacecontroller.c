@@ -24,19 +24,29 @@
 #include <stdint.h>
 
 #include "cainterfacecontroller.h"
+#include "cawifiadapter.h"
+#include "caethernetadapter.h"
 #include "caedradapter.h"
 #include "caleadapter.h"
-#include "cawifiethernetadapter.h"
+#include "cawifiadapter.h"
+#include "caethernetadapter.h"
 #include "canetworkconfigurator.h"
+#include "caremotehandler.h"
+#include "oic_malloc.h"
 #include "logger.h"
+#include "uthreadpool.h"
 
 #define TAG PCF("CA")
+
+#define CA_MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "memory error"); goto memory_error_exit;} }
 
 #define CA_CONNECTIVITY_TYPE_NUM   4
 
 static CAConnectivityHandler_t gAdapterHandler[CA_CONNECTIVITY_TYPE_NUM];
 
 static CANetworkPacketReceivedCallback gNetworkPacketReceivedCallback = NULL;
+
+static CANetworkChangeCallback gNetworkChangeCallback = NULL;
 
 static int8_t CAGetAdapterIndex(CAConnectivityType_t cType)
 {
@@ -56,6 +66,7 @@ static int8_t CAGetAdapterIndex(CAConnectivityType_t cType)
 
 static void CARegisterCallback(CAConnectivityHandler_t handler, CAConnectivityType_t cType)
 {
+    OIC_LOG(DEBUG, TAG, "CARegisterCallback - Entry");
     int8_t index = -1;
 
     index = CAGetAdapterIndex(cType);
@@ -82,12 +93,18 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t* endpoint, void* data, u
     }
 }
 
-static void CANetworkChangedCallback(CALocalConnectivityt_t* info, CANetworkStatus_t status)
+static void CANetworkChangedCallback(CALocalConnectivity_t* info, CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, TAG, "Network Changed callback");
+
+    // Call the callback.
+    if (gNetworkChangeCallback != NULL)
+    {
+        gNetworkChangeCallback(info, status);
+    }
 }
 
-void CAInitializeAdapters()
+void CAInitializeAdapters(u_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "initialize adapters..");
 
@@ -95,19 +112,19 @@ void CAInitializeAdapters()
 
     // Initialize adapters and register callback.
 #ifdef ETHERNET_ADAPTER
-    CAInitializeEthernet(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeEthernet(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
 #endif /* ETHERNET_ADAPTER */
 
 #ifdef WIFI_ADAPTER
-    CAInitializeWifi(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeWifi(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
 #endif /* WIFI_ADAPTER */
 
 #ifdef EDR_ADAPTER
-    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
 #endif /* EDR_ADAPTER */
 
 #ifdef LE_ADAPTER
-    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
 #endif /* LE_ADAPTER */
 
 }
@@ -117,6 +134,13 @@ void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "Set packet received callback");
 
     gNetworkPacketReceivedCallback = callback;
+}
+
+void CASetNetworkChangeCallback(CANetworkChangeCallback callback)
+{
+    OIC_LOG(DEBUG, TAG, "Set network change callback");
+
+    gNetworkChangeCallback = callback;
 }
 
 void CAStartAdapter(CAConnectivityType_t cType)
@@ -157,6 +181,90 @@ void CAStopAdapter(CAConnectivityType_t cType)
     {
         gAdapterHandler[index].stopAdapter();
     }
+}
+
+CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t* size)
+{
+    CAResult_t res = CA_STATUS_FAILED;
+    int8_t index = 0;
+    int8_t i = 0;
+
+    CALocalConnectivity_t* resInfo = NULL;
+    uint32_t resSize = 0;
+
+    CALocalConnectivity_t* tempInfo[CA_CONNECTIVITY_TYPE_NUM];
+    uint32_t tempSize[CA_CONNECTIVITY_TYPE_NUM];
+
+    memset(tempInfo, 0, sizeof(CALocalConnectivity_t*) * CA_CONNECTIVITY_TYPE_NUM);
+    memset(tempSize, 0, sizeof(int8_t) * CA_CONNECTIVITY_TYPE_NUM);
+
+    // #1. get information each adapter
+    for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
+    {
+        if (gAdapterHandler[index].GetnetInfo != NULL)
+        {
+            res = gAdapterHandler[index].GetnetInfo(&tempInfo[index], &tempSize[index]);
+
+            OIC_LOG_V(DEBUG, TAG, "%d adapter network info size is %d res:%d", index,
+                    tempSize[index], res);
+        }
+    }
+
+    resSize = 0;
+    for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
+    {
+        // check information
+        if (tempInfo[index] == NULL || tempSize[index] <= 0)
+        {
+            continue;
+        }
+
+        // #2. total size
+        resSize += tempSize[index];
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "network info total size is %d!", resSize);
+
+    if (resSize <= 0)
+    {
+        return res;
+    }
+
+    // #3. add data into result
+    // memory allocation
+    resInfo = (CALocalConnectivity_t*) OICMalloc(sizeof(CALocalConnectivity_t) * resSize);
+    CA_MEMORY_ALLOC_CHECK(resInfo);
+    memset(resInfo, 0, sizeof(CALocalConnectivity_t) * resSize);
+
+    i = 0;
+    for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
+    {
+        // check information
+        if (tempInfo[index] == NULL || tempSize[index] <= 0)
+        {
+            continue;
+        }
+
+        memcpy(resInfo + i, tempInfo[index], sizeof(CALocalConnectivity_t) * tempSize[index]);
+
+        i += tempSize[index];
+
+        // free adapter data
+        OICFree(tempInfo[index]);
+    }
+
+    // #5. save data
+    *info = resInfo;
+    *size = resSize;
+
+    OIC_LOG_V(DEBUG, TAG, "each network info save success!");
+
+    return res;
+
+    // memory error label.
+    memory_error_exit:
+
+    return CA_MEMORY_ALLOC_FAILED;
 }
 
 CAResult_t CASendUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t length)

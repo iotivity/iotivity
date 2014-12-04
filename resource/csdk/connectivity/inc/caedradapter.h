@@ -29,15 +29,13 @@
  **/
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#ifndef BLUETOOTH_ADAPTER_TAG
-#define BLUETOOTH_ADAPTER_TAG "CA_EDR"
-#endif //BLUETOOTH_ADAPTER_TAG
 /**
  * @brief Initialize EDR connectivity interface.
  * @param registerCallback [IN] To register EDR interfaces to Connectivity Abstraction Layer
@@ -46,7 +44,8 @@ extern "C"
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback);
+                           CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+                           u_thread_pool_t handle);
 
 /**
  * @brief Starting EDR connectivity adapters .As its peer to peer it doesnot require to start any servers
@@ -79,7 +78,7 @@ CAResult_t CAStartEDRDiscoveryServer();
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen);
+uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the EDR connectivity.
@@ -88,7 +87,7 @@ uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t* endpoint, void* data, ui
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendEDRMulticastData(void* data, uint32_t dataLen);
+uint32_t CASendEDRMulticastData(void *data, uint32_t dataLen);
 
 /**
  * @brief Starts notification server on EDR adapters.
@@ -105,7 +104,7 @@ CAResult_t CAStartEDRNotifyServer();
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendEDRNotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen);
+uint32_t CASendEDRNotification(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen);
 
 /**
  * @brief Get EDR Connectivity network information
@@ -113,7 +112,7 @@ uint32_t CASendEDRNotification(const CARemoteEndpoint_t* endpoint, void* data, u
  * @param   size        [OUT]   Number of local connectivity structures.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size);
+CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.

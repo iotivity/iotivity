@@ -3,10 +3,10 @@
  * Copyright (C) 2010,2011 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
-/** 
+/**
  * @file address.h
  * @brief representation of network addresses
  */
@@ -117,29 +117,26 @@ _coap_is_mcast_impl(const coap_address_t *a)
 {
     if (!a)
     {
-        printf("[COAP] address - coap_address_t is false\n");
         return 0;
     }
     switch (a->addr.sa.sa_family)
     {
         case AF_INET:
-        printf("[COAP] address - local address : %s\n", a->addr.sin.sin_addr.s_addr);
         return IN_MULTICAST(a->addr.sin.sin_addr.s_addr);
         case AF_INET6:
         return IN6_IS_ADDR_MULTICAST(&a->addr.sin6.sin6_addr);
         default: /* fall through and signal error */
-        printf("[COAP] address - sa_family is default value\n");
         ;
     }
     return 0;
 }
 #endif /* WITH_POSIX */
 
-/** 
+/**
  * Resets the given coap_address_t object @p addr to its default
  * values.  In particular, the member size must be initialized to the
  * available size for storing addresses.
- * 
+ *
  * @param addr The coap_address_t object to initialize.
  */
 static inline void coap_address_init(coap_address_t *addr)

@@ -28,20 +28,13 @@ extern "C"
 {
 #endif
 
-typedef enum
-{
-    SUCCESS = 0, NETWORK_ERROR, FAIL
-} CADetachErrorCode;
+CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t* object, const CARequestInfo_t* request);
 
-typedef void (*CAMessageHandlerCallback)(int32_t id, CADetachErrorCode code);
+CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t* object,
+        const CAResponseInfo_t* response);
 
-int32_t CADetachRequestMessage(const CARemoteEndpoint_t* object, const CARequestInfo_t* request);
-
-int32_t CADetachResponseMessage(const CARemoteEndpoint_t* object, const CAResponseInfo_t* response);
-
-int32_t CADetachMessageResourceUri(const CAURI_t resourceUri);
-
-void CASetMessageHandlerCallback(CAMessageHandlerCallback callback);
+CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAHeaderOption_t* options,
+        uint8_t numOptions);
 
 void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
 

@@ -27,6 +27,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -34,14 +35,16 @@ extern "C"
 #endif
 
 /**
- * @brief Initialize Ethernet connectivity interface.
+ * @brief API to initialize Ethernet Interface.
  * @param registerCallback [IN] To register Ethernet interfaces to Connectivity Abstraction Layer
- * @param reqRespCallback [IN] sending responses and discovery messages from unicast , multicast servers
+ * @param reqRespCallback [IN] sending responses and discovery messages from unicast,
+ * multicast servers
  * @param netCallback [IN] Intimate the network additions to Connectivity Abstraction Layer.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback);
+                                CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+                                u_thread_pool_t handle);
 
 /**
  * @brief Start Ethernet Interface adapter.
@@ -52,7 +55,8 @@ CAResult_t CAStartEthernet();
 /**
  * @brief Starting listening server for receiving multicast search requests
  * Transport Specific Behavior:
- *   Ethernet Starts Multicast Server on  all available IPs and prefixed port number and as per OIC Specification.
+ * Ethernet Starts Multicast Server on  all available IPs and prefixed port number and
+ * as per OIC Specification.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAStartEthernetListeningServer();
@@ -60,7 +64,8 @@ CAResult_t CAStartEthernetListeningServer();
 /**
  * @brief for starting discovery servers for receiving multicast advertisements
  * Transport Specific Behavior:
- *  Ethernet Starts Start multicast server on all available IPs and prefixed port number as per OIC Specification
+ * Ethernet Starts Start multicast server on all available IPs and prefixed port number as per
+ * OIC Specification
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAStartEthernetDiscoveryServer();
@@ -68,48 +73,48 @@ CAResult_t CAStartEthernetDiscoveryServer();
 /**
  * @brief Sends data to the endpoint using the adapter connectivity.
  * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri and connectivity type) to
- *                              which the unicast data has to be sent.
+ * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference
+ * uri and connectivity type) to which the unicast data has to be sent.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendEthernetUnicastData(const CARemoteEndpoint_t* endpoint, void* data,
-        uint32_t dataLen);
+uint32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *endpoint, void *data,
+                                   uint32_t dataLen);
 
 /**
- * @brief Sends Multicast data to the endpoint using the WIFI connectivity.
+ * @brief Sends Multicast data to the endpoint using the Ethernet connectivity.
  * Note: length must be > 0.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendEthernetMulticastData(void* data, uint32_t dataLen);
+uint32_t CASendEthernetMulticastData(void *data, uint32_t dataLen);
 
 /**
  * @brief Starts notification server on Ethernet adapters.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStartEthernetNotifyServer();
+CAResult_t CAStartEthernetNotifyRecvServers();
 
 /**
  * @brief Send notification information.
  * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri and connectivity type) to
- *                              which the unicast data has to be sent.
+ * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port,
+ * reference uri and connectivity type) to which the unicast data has to be sent.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendEthernetNotification(const CARemoteEndpoint_t* endpoint, void* data,
-        uint32_t dataLen);
+uint32_t CASendEthernetNotification(const CARemoteEndpoint_t *endpoint, void *data,
+                                    uint32_t dataLen);
 /**
  * @brief Get Ethernet Connectivity network information
  * @param   info        [OUT]   Local connectivity information structures
  * @param   size        [OUT]   Number of local connectivity structures.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size);
+CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.
@@ -134,4 +139,4 @@ void CATerminateEthernet();
 } /* extern "C" */
 #endif
 
-#endif
+#endif//#ifndef __CA_ETHERNET_ADAPTER_H__

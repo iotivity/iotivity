@@ -23,18 +23,51 @@
 #include <string.h>
 
 #include "caethernetadapter.h"
+//#include "config.h"
+//#include "coap.h"
+#include "caethernetcore.h"
 #include "logger.h"
+#include "oic_malloc.h"
 
 #define TAG PCF("CA")
 
+// received packet callback
 static CANetworkPacketReceivedCallback gEthernetReceivedCallback = NULL;
+static u_thread_pool_t gThreadPoolHandle = NULL;
+
+static void CAEthernetPacketReceiveCallback(const char* address, const char* data)
+{
+    OIC_LOG_V(DEBUG, TAG, "CAethernetPacketReceiveCallback, from: %s, data: %s", address, data);
+
+    // call the callback
+    if (gEthernetReceivedCallback != NULL)
+    {
+        CARemoteEndpoint_t* endpoint = NULL;
+        endpoint = (CARemoteEndpoint_t*) OICMalloc(sizeof(CARemoteEndpoint_t));
+
+        // set address
+        memset((void*) endpoint->addressInfo.IP.ipAddress, 0, CA_IPADDR_SIZE);
+        if (CA_IPADDR_SIZE > strlen(address))
+        {
+            strcpy((char*) endpoint->addressInfo.IP.ipAddress, address);
+        }
+        free(address);
+
+        // set connectivity type
+        endpoint->connectivityType = CA_ETHERNET;
+
+        gEthernetReceivedCallback(endpoint, (void *) data, strlen(data));
+    }
+}
 
 CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback)
+        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+        u_thread_pool_t handle)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAInitializeEthernet");
+    OIC_LOG(DEBUG, TAG, "IntializeEthernet");
 
     gEthernetReceivedCallback = reqRespCallback;
+    gThreadPoolHandle = handle;
 
     // register handlers
     CAConnectivityHandler_t handler;
@@ -45,7 +78,7 @@ CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
     handler.startDiscoverServer = CAStartEthernetDiscoveryServer;
     handler.sendData = CASendEthernetUnicastData;
     handler.sendDataToAll = CASendEthernetMulticastData;
-    handler.startNotifyServer = CAStartEthernetNotifyServer;
+    handler.startNotifyServer = CAStartEthernetNotifyRecvServers;
     handler.sendNotification = CASendEthernetNotification;
     handler.GetnetInfo = CAGetEthernetInterfaceInformation;
     handler.readData = CAReadEthernetData;
@@ -54,47 +87,89 @@ CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
 
     registerCallback(handler, CA_ETHERNET);
 
+    CAEthernetSetCallback(CAEthernetPacketReceiveCallback);
+
     return CA_STATUS_OK;
+}
+
+void CATerminateEthernet()
+{
+    OIC_LOG(DEBUG, TAG, "TerminateEthernet");
+
+    CAEthernetTerminate();
 }
 
 CAResult_t CAStartEthernet()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartEthernet");
+    OIC_LOG(DEBUG, TAG, "CAStartEthernet");
+    //CAEthernetInitialize();
+    CAEthernetInitialize(gThreadPoolHandle);
+
+    OIC_LOG(DEBUG, TAG, "CAEthernetStartUnicastServer");
+    int32_t res = CAEthernetStartUnicastServer();
+
+    if (res < 0)
+        return CA_STATUS_FAILED;
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopEthernet()
+{
+    OIC_LOG(DEBUG, TAG, "CAStopEthernet");
+
+    // ToDo:
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartEthernetListeningServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartEthernetListeningServer");
+    OIC_LOG(DEBUG, TAG, "StartEthernetListeningServer");
+
+    int32_t res = CAEthernetStartMulticastServer();
+
+    if (res < 0)
+        return CA_STATUS_FAILED;
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartEthernetDiscoveryServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartEthernetDiscoveryServer");
+    OIC_LOG(DEBUG, TAG, "StartEthernetDiscoveryServer");
+
+    int32_t res = CAEthernetStartMulticastServer();
+
+    if (res < 0)
+        return CA_STATUS_FAILED;
 
     return CA_STATUS_OK;
 }
 
 uint32_t CASendEthernetUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendEthernetUnicastData");
+    OIC_LOG(DEBUG, TAG, "SendEthernetUnicastData");
+
+    CAEthernetSendUnicastMessage(endpoint->addressInfo.IP.ipAddress, data, dataLen);
 
     return 0;
 }
 
 uint32_t CASendEthernetMulticastData(void* data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendEthernetMulticastData");
+    OIC_LOG(DEBUG, TAG, "CASendEthernetMulticastData");
+
+    CAEthernetSendMulticastMessage("0.0.0.0", (char*) data);
 
     return 0;
 }
 
-CAResult_t CAStartEthernetNotifyServer()
+CAResult_t CAStartEthernetNotifyRecvServers()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartEthernetNotifyServer");
+    OIC_LOG(DEBUG, TAG, "StartEthernetNotifyRecvServers");
+
+    // ToDo:
 
     return CA_STATUS_OK;
 }
@@ -102,33 +177,28 @@ CAResult_t CAStartEthernetNotifyServer()
 uint32_t CASendEthernetNotification(const CARemoteEndpoint_t* endpoint, void* data,
         uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendEthernetNotification");
+    OIC_LOG(DEBUG, TAG, "SendEthernetNotification");
+
+    // ToDo:
 
     return 0;
 }
 
-CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size)
+CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAGetEthernetInterfaceInformation");
+    OIC_LOG(DEBUG, TAG, "GetEthernetInterfaceInformation");
+
+    // ToDo:
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAReadEthernetData()
 {
-    OIC_LOG_V(DEBUG, TAG, "Read Ethernet Data");
+    OIC_LOG(DEBUG, TAG, "Read Ethernet Data");
+
+    // ToDo:
 
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStopEthernet()
-{
-    OIC_LOG_V(DEBUG, TAG, "CAStopEthernet");
-
-    return CA_STATUS_OK;
-}
-
-void CATerminateEthernet()
-{
-    OIC_LOG_V(DEBUG, TAG, "CATerminateEthernet");
-}

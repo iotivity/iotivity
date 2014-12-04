@@ -34,3 +34,4 @@ extern "C"
 #endif
 
 #endif /* _COAP_H_ */
+

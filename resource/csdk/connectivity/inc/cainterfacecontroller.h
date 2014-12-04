@@ -21,19 +21,24 @@
 #define __CA_INTERFACE_CONTROLLER_H_
 
 #include "caadapterinterface.h"
+#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-void CAInitializeAdapters();
+void CAInitializeAdapters(u_thread_pool_t handle);
 
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback);
+
+void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
 
 void CAStartAdapter(CAConnectivityType_t connectivity);
 
 void CAStopAdapter(CAConnectivityType_t connectivity);
+
+CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t* size);
 
 CAResult_t CASendUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t length);
 

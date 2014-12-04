@@ -77,7 +77,7 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
 
         case CA_LE:
 
-#ifdef LE_ADAPTER
+#ifndef LE_ADAPTER
             OIC_LOG_V(DEBUG, TAG, "Add network type(LE) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* LE_ADAPTER */
@@ -162,12 +162,20 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
 u_arraylist_t* CAGetSelectedNetworkList()
 {
+    OIC_LOG(DEBUG, TAG, "IN");
     if (gSelectedNetworkList == NULL)
     {
         OIC_LOG_V(DEBUG, TAG, "Selected network not found");
 
         return NULL;
     }
-
+    OIC_LOG(DEBUG, TAG, "OUT");
     return gSelectedNetworkList;
+}
+
+CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t* size)
+{
+    OIC_LOG_V(DEBUG, TAG, "get network information.");
+
+    return CAGetNetworkInfo(info, size);
 }

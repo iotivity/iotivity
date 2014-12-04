@@ -3,10 +3,10 @@
  * Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
-/** 
+/**
  * @file coap_time.h
  * @brief Clock Handling
  */
@@ -113,7 +113,7 @@ extern "C"
         clock_offset = time(NULL);
 #else
 #  ifdef __GNUC__
-        /* Issue a warning when using gcc. Other prepropressors do 
+        /* Issue a warning when using gcc. Other prepropressors do
          *  not seem to have a similar feature. */
 #   warning "cannot initialize clock"
 #  endif

@@ -21,7 +21,7 @@
 # override with `make BUILD=debug`
 # default to release build
 # default to build for linux
-BUILD = release
+BUILD = debug
 PLATFORM = linux
 TRANSPORT = ALL
 OBJ_DIR = ./$(BUILD)
@@ -38,7 +38,7 @@ include $(COMMON_MAKE)
 EDR = NO_EDR_ADAPTER
 WIFI = WIFI_ADAPTER
 LE = NO_LE_ADAPTER
-ETHERNET = NO_ETHERNET_ADAPTER
+ETHERNET = ETHERNET_ADAPTER
 
 #Add Pre processor definitions
 DEFINE_FLAG = -D$(EDR) -D$(LE) -D$(WIFI) -D$(ETHERNET)
@@ -84,7 +84,8 @@ logger.c oic_malloc.c oic_logger.c oic_console_logger.c \
 caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c camessagehandler.c	\
 canetworkconfigurator.c caedradapter.c caleadapter.c	\
 caethernetadapter.c cawifiadapter.c \
-caprotocolmessage.c cawificore.c	\
+caprotocolmessage.c cawificore.c caethernetcore.c\
+caqueueingthread.c \
 uqueue.c uarraylist.c umutex.c uthreadpool.c \
 
 COMPONENT_OBJS			= $(COMPONENT_SRCS:%.c=$(OBJ_DIR)/%.o)
@@ -105,7 +106,7 @@ IFLAGS				= 	-I$(PROJECT_COMMON_INC_PATH)	\
 						-I$(BLE_ADAPTER_PATH)   \
                         -I$(libcoap_build_dir)
 
-DFLAGS				= -DLINUX		\
+DFLAGS				= -D__LINUX__		\
                       -DWITH_POSIX		\
                       $(BUILD_FLAG)\
 ##
@@ -129,12 +130,14 @@ all : $(TARGET)
 	@echo	"======================"
 
 $(TARGET) : $(COMPONENT_OBJS)
+	cd $(libcoap_build_dir); $(MAKE)
 	@$(MAKE_PROJECT_OUT_PATH)
 	@$(CC) -shared -Wl,-soname,$(TARGET) -o $@ $(COMPONENT_OBJS) $(LFLAGS) $(LDFLAGS) $(LDLIBS) 
 	@$(MV) $(TARGET) $(PROJECT_OUT_PATH)/.
 	@$(CD) $(PROJECT_OUT_PATH); $(MAKE_TARGET_ALIAS)
-
+ 
 clean :	
+	cd $(libcoap_build_dir) && make clean
 	@$(RM) $(DEBUG_DIR) $(RELEASE_DIR)\
 			$(PROJECT_OUT_PATH)
 
