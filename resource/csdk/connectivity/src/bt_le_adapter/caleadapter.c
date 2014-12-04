@@ -57,7 +57,7 @@ static u_mutex gBleLocalAddressMutex = NULL;
 int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
 
 #ifdef __TIZEN__
-int32_t CALEDeviceStateChangedCb(int32_t result, bt_adapter_state_e adapter_state,
+void CALEDeviceStateChangedCb(int32_t result, bt_adapter_state_e adapter_state,
                                  void *user_data);
 CAResult_t CAInitBleAdapterMutex();
 CAResult_t CATermiateBleAdapterMutex();
@@ -103,8 +103,6 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     connHandler.startDiscoverServer = CAStartLEDiscoveryServer;
     connHandler.sendData = CASendLEUnicastData;
     connHandler.sendDataToAll = CASendLEMulticastData;
-    connHandler.startNotifyServer = CAStartLENotifyServer;
-    connHandler.sendNotification = CASendLENotification;
     connHandler.GetnetInfo = CAGetLEInterfaceInformation;
     connHandler.readData = CAReadLEData;
     connHandler.terminate = CATerminateLE;
@@ -355,15 +353,9 @@ int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
 
 #ifdef __TIZEN__
 
-int32_t CALEDeviceStateChangedCb(int32_t result, bt_adapter_state_e adapter_state, void *user_data)
+void CALEDeviceStateChangedCb(int32_t result, bt_adapter_state_e adapter_state, void *user_data)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
-    bt_adapter_state_e btAdaptorState = BT_ADAPTER_DISABLED;
-    if (BT_ADAPTER_ENABLED == adapter_state)
-    {
-        btAdaptorState = BT_ADAPTER_ENABLED;
-    }
 
     CALocalConnectivity_t localEndpoint;
 
@@ -382,7 +374,6 @@ int32_t CALEDeviceStateChangedCb(int32_t result, bt_adapter_state_e adapter_stat
     }
     u_mutex_unlock(gBleNetworkCbMutex);
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
 }
 
 CAResult_t CAInitBleAdapterMutex()

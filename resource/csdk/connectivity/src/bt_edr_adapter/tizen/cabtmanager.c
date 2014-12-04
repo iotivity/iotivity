@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file    cabtmanager.c
- * @brief   This    file provides the APIs to control Bluetooth transport
+ * @file  cabtmanager.c
+ * @brief  This file provides the APIs to control Bluetooth transport
  */
 
 #include "cabtmanager.h"
@@ -32,17 +32,24 @@
 #include "caadapterutils.h"
 #include "camessagequeue.h"
 
-
+/**
+ * @struct CABTNetworkEvent
+ * @brief Structure to maintain the adapter information and its status.
+ */
 typedef struct
 {
     CALocalConnectivity_t *info;
     CANetworkStatus_t status;
 } CABTNetworkEvent;
 
+/**
+ * @struct CABTMessage
+ * @brief Structure to maintain the information of data in message queue.
+ */
 typedef struct
 {
     void *data;
-    int32_t dataLen;
+    int32_t dataLength;
     CARemoteEndpoint_t *remoteEndpoint;
 } CABTMessage;
 
@@ -105,7 +112,7 @@ static u_cond gSendDataCond = NULL;
  * @var gDataSendHandlerState
  * @brief Stop condition of sendhandler.
  */
-static CABool_t gDataSendHandlerState = CA_FALSE;
+static bool gDataSendHandlerState = false;
 
 /**
  * @fn CABTAdapterStateChangeCallback
@@ -135,7 +142,8 @@ static void CABTDataRecvCallback(bt_socket_received_data_s *data, void *userData
  */
 static void CABTDeviceDiscoveryCallback(int result,
                                         bt_adapter_device_discovery_state_e discoveryState,
-                                        bt_adapter_device_discovery_info_s *discoveryInfo, void *userData);
+                                        bt_adapter_device_discovery_info_s *discoveryInfo,
+                                        void *userData);
 
 /**
  * @fn CABTServiceSearchedCallback
@@ -147,13 +155,13 @@ static void CABTServiceSearchedCallback(int result, bt_device_sdp_info_s *sdpInf
 
 /**
  * @fn CABTManagerInitializeQueues
- * @brief This function creates send and receive message queues.
+ * @brief This function creates and initialize send message queue.
  */
 static CAResult_t CABTManagerInitializeQueues(void);
 
 /**
  * @fn CABTManagerTerminateQueues
- * @brief This function releases send and receive message queues.
+ * @brief This function terminates the send message queue.
  */
 static void CABTManagerTerminateQueues(void);
 
@@ -171,30 +179,53 @@ static void CABTManagerTerminateMutex(void);
 
 /**
  * @fn CABTManagerDataSendHandler
- * @brief This function handles message from send queue.
+ * @brief This function handles data from send message queue.
  */
 static void CABTManagerDataSendHandler(void *context);
 
 /**
  * @fn CABTManagerSendUnicastData
- * @brief This function send data to specified remote bluetooth device.
+ * @brief This function sends data to specified remote bluetooth device.
  */
 static CAResult_t CABTManagerSendUnicastData(const char *remoteAddress, const char *serviceUUID,
         void *data, uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @fn CABTManagerSendMulticastData
- * @brief This function send data to all bluetooth devices running OIC service.
+ * @brief This function sends data to all bluetooth devices running OIC service.
  */
 static CAResult_t CABTManagerSendMulticastData(const char *serviceUUID, void *data,
-        uint32_t dataLength,
-        uint32_t *sentLength);
+        uint32_t dataLength, uint32_t *sentLength);
+
+/**
+ * @fn CABTGetAdapterEnableState
+ * @brief This function gets bluetooth adatper enable state.
+ */
+static CAResult_t CABTGetAdapterEnableState(bool *state);
+
+/**
+ * @fn CABTStartDeviceDiscovery
+ * @brief This function starts device discovery.
+ */
+static CAResult_t CABTStartDeviceDiscovery(void);
+
+/**
+ * @fn CABTStopDeviceDiscovery
+ * @brief This function stops device discovery.
+ */
+static CAResult_t CABTStopDeviceDiscovery(void);
 
 /**
  * @fn CABTStartServiceSearch
- * @brief This function search for OIC service for remote Bluetooth device.
+ * @brief This function searches for OIC service for remote Bluetooth device.
  */
 static CAResult_t CABTStartServiceSearch(const char *remoteAddress);
+
+/**
+ * @fn CABTStopServiceSearch
+ * @brief This function stops any ongoing service sevice search.
+ */
+static CAResult_t CABTStopServiceSearch(void);
 
 /**
  * @fn CABTNotifyNetworkStauts
@@ -217,12 +248,17 @@ static CABTNetworkEvent *CABTCreateNetworkEvent(CALocalConnectivity_t *connectiv
 
 /**
  * @fn CABTFreeNetworkEvent
- * @brief destroy instance of CABTNetworkEvent.
+ * @brief Free the memory associated with @event.
  */
 static void CABTFreeNetworkEvent(CABTNetworkEvent *event);
 
+/**
+ * @fn CABTManagerDisconnectAll
+ * @brief Closes all the client connection to peer bluetooth devices.
+ */
+static void CABTManagerDisconnectAll(void);
 
-CAResult_t CABTManagerIntialize(u_thread_pool_t threadPool)
+CAResult_t CABTManagerInitialize(u_thread_pool_t threadPool)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
@@ -236,38 +272,9 @@ CAResult_t CABTManagerIntialize(u_thread_pool_t threadPool)
         return CA_STATUS_FAILED;
     }
 
-    //Set bluetooth adapter sate change callback
-    if (BT_ERROR_NONE != (err = bt_adapter_set_state_changed_cb(CABTAdapterStateChangeCallback, NULL)))
-    {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG,
-                  "Setting bluetooth state change callback failed!, error num [%x]", err);
-
-        //Deinitialize the Bluetooth stack
-        bt_deinitialize();
-        return CA_STATUS_FAILED;
-    }
-
-    //Get Bluetooth adapter state
-    bt_adapter_state_e adapterState;
-    if (BT_ERROR_NONE != (err = bt_adapter_get_state(&adapterState)))
-    {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Bluetooth get state failed!, error num [%x]",
-                  err);
-
-        //Reset the adapter state change callback
-        bt_adapter_unset_state_changed_cb();
-
-        //Deinitialize the Bluetooth stack
-        bt_deinitialize();
-        return CA_STATUS_FAILED;
-    }
-
     //Initialize Send/Receive data message queues
     if (CA_STATUS_OK != CABTManagerInitializeQueues())
     {
-        //Reset the adapter state change callback
-        bt_adapter_unset_state_changed_cb();
-
         //Deinitialize the Bluetooth stack
         bt_deinitialize();
         return CA_STATUS_FAILED;
@@ -281,9 +288,22 @@ CAResult_t CABTManagerIntialize(u_thread_pool_t threadPool)
         gBTThreadPool = threadPool;
     }
 
-    if (BT_ADAPTER_DISABLED == adapterState)
+    //Get Bluetooth adapter state
+    bool adapterState = false;
+    if (CA_STATUS_OK != CABTGetAdapterEnableState(&adapterState))
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to get adatper enable state");
+
+        //Deinitialize the Bluetooth stack
+        bt_deinitialize();
+        return CA_STATUS_FAILED;
+    }
+
+    if (false == adapterState)
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Bluetooth adapter is disabled!");
+
+        bt_adapter_set_state_changed_cb(CABTAdapterStateChangeCallback, NULL);
         return CA_ADAPTER_NOT_ENABLED;
     }
 
@@ -321,8 +341,7 @@ void CABTManagerTerminate(void)
     if (gBTDeviceListMutex)
     {
         u_mutex_lock(gBTDeviceListMutex);
-        CAFreeBTDeviceList(gBTDeviceList);
-        gBTDeviceList = NULL;
+        CADestroyBTDeviceList(&gBTDeviceList);
         u_mutex_unlock(gBTDeviceListMutex);
     }
 
@@ -339,19 +358,15 @@ CAResult_t CABTManagerStart(void)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    int err = BT_ERROR_NONE;
-    bool isDiscoveryStarted = false;
-
     //Get Bluetooth adapter state
-    bt_adapter_state_e adapterState;
-    if (BT_ERROR_NONE != (err = bt_adapter_get_state(&adapterState)))
+    bool adapterState = false;
+    if (CA_STATUS_OK != CABTGetAdapterEnableState(&adapterState))
     {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Bluetooth get state failed!, error num [%x]",
-                  err);
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to get adatper enable state");
         return CA_STATUS_FAILED;
     }
 
-    if (BT_ADAPTER_DISABLED == adapterState)
+    if (false == adapterState)
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Bluetooth adapter is disabled!");
         return CA_ADAPTER_NOT_ENABLED;
@@ -363,30 +378,20 @@ CAResult_t CABTManagerStart(void)
     bt_socket_set_connection_state_changed_cb(CABTSocketConnectionStateCallback, NULL);
     bt_socket_set_data_received_cb(CABTDataRecvCallback, NULL);
 
-    if (BT_ERROR_NONE != (err = bt_adapter_is_discovering(&isDiscoveryStarted)))
-    {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to get discovery state!, error num [%x]",
-                  err);
-        return CA_STATUS_FAILED;
-    }
-
-    //Start device discovery if its not started
-    if (false == isDiscoveryStarted )
-    {
-        if (BT_ERROR_NONE != (err = bt_adapter_start_device_discovery()))
-        {
-            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Device discovery failed!, error num [%x]",
-                      err);
-            return CA_STATUS_FAILED;
-        }
-    }
+    //Start device discovery
+    CABTStartDeviceDiscovery();
 
     //Start data send and receive handlers
-    gDataSendHandlerState = CA_TRUE;
-    if (CA_STATUS_OK != u_thread_pool_add_task(gBTThreadPool, CABTManagerDataSendHandler, NULL))
+    if (!gDataSendHandlerState)
     {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to start data send handler!");
-        return CA_STATUS_FAILED;
+        gDataSendHandlerState = true;
+        if (CA_STATUS_OK != u_thread_pool_add_task(gBTThreadPool, CABTManagerDataSendHandler, NULL))
+        {
+            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to start data send handler!");
+
+            gDataSendHandlerState = false;
+            return CA_STATUS_FAILED;
+        }
     }
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
@@ -397,43 +402,30 @@ void CABTManagerStop(void)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    int err = BT_ERROR_NONE;
-    bool isDiscoveryStarted = false;
-
     //Stop data send and receive handlers
     if (gSendDataMutex && gSendDataCond && gDataSendHandlerState)
     {
         u_mutex_lock(gSendDataMutex);
-        gDataSendHandlerState = CA_FALSE;
+        gDataSendHandlerState = false;
         u_cond_signal(gSendDataCond);
         u_mutex_unlock(gSendDataMutex);
     }
 
-    //Check discovery status
-    if (BT_ERROR_NONE != (err = bt_adapter_is_discovering(&isDiscoveryStarted)))
-    {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to get discovery state!, error num [%x]",
-                  err);
-        return;
-    }
-
-    //stop the device discovery process
-    if (true == isDiscoveryStarted)
-    {
-        OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Stopping the device search process");
-        if (BT_ERROR_NONE != (err = bt_adapter_stop_device_discovery()))
-        {
-            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to stop device discovery!, error num [%x]",
-                      err);
-        }
-    }
-
+    //Stop service search
+    CABTStopServiceSearch();
+    
+    //Stop the device discovery process
+    CABTStopDeviceDiscovery();
+    
     //reset bluetooth adapter callbacks
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Resetting the callbacks");
     bt_adapter_unset_device_discovery_state_changed_cb();
     bt_device_unset_service_searched_cb();
     bt_socket_unset_connection_state_changed_cb();
     bt_socket_unset_data_received_cb();
+
+    //Disconnect all the client connections
+    CABTManagerDisconnectAll();
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
 }
@@ -453,17 +445,16 @@ CAResult_t CABTManagerSendData(const char *remoteAddress, const char *serviceUUI
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
+    if (!gDataSendHandlerState)
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Send handler is not running!");
+        return CA_STATUS_FAILED;
+    }
+
     //Input validation
     VERIFY_NON_NULL(serviceUUID, BLUETOOTH_ADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, BLUETOOTH_ADAPTER_TAG, "Data is null");
     VERIFY_NON_NULL(sentLength, BLUETOOTH_ADAPTER_TAG, "Sent data length holder is null");
-
-    VERIFY_NON_NULL_RET(gSendDataQueue, BLUETOOTH_ADAPTER_TAG, "Send data queue is NULL",
-                        CA_STATUS_FAILED);
-    VERIFY_NON_NULL_RET(gSendDataMutex, BLUETOOTH_ADAPTER_TAG, "Send data queue mutex is NULL",
-                        CA_STATUS_FAILED);
-    VERIFY_NON_NULL_RET(gSendDataCond, BLUETOOTH_ADAPTER_TAG, "Send data queue condition is NULL",
-                        CA_STATUS_FAILED);
 
     //Add message to data queue
     CARemoteEndpoint_t *remoteEndpoint = CAAdapterCreateRemoteEndpoint(CA_EDR, remoteAddress,
@@ -477,6 +468,8 @@ CAResult_t CABTManagerSendData(const char *remoteAddress, const char *serviceUUI
     if (CA_STATUS_OK != CAAdapterEnqueueMessage(gSendDataQueue, remoteEndpoint, data, dataLength))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to add message to queue !");
+
+        CAAdapterFreeRemoteEndpoint(remoteEndpoint);
         return CA_STATUS_FAILED;
     }
 
@@ -545,13 +538,14 @@ CAResult_t CABTManagerGetInterface(CALocalConnectivity_t **info)
 CAResult_t CABTManagerReadData(void)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
-
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
     return CA_NOT_SUPPORTED;
 }
 
 CAResult_t CABTManagerInitializeQueues(void)
 {
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
     if (NULL == gSendDataQueue)
     {
         if (CA_STATUS_OK != CAAdapterInitializeMessageQueue(&gSendDataQueue))
@@ -559,38 +553,52 @@ CAResult_t CABTManagerInitializeQueues(void)
             return CA_STATUS_FAILED;
         }
     }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
 }
 
 void CABTManagerTerminateQueues(void)
 {
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
     if (gSendDataQueue)
     {
         CAAdapterTerminateMessageQueue(gSendDataQueue);
         gSendDataQueue = NULL;
     }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");    
 }
 
 void CABTManagerInitializeMutex(void)
 {
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
     u_mutex_init();
-    if (NULL == gBTDeviceListMutex)
+
+    if (!gBTDeviceListMutex)
     {
         gBTDeviceListMutex = u_mutex_new();
     }
 
-    if (NULL == gSendDataMutex)
+    if (!gSendDataMutex)
     {
         gSendDataMutex = u_mutex_new();
     }
 
-    if (NULL == gSendDataCond)
+    if (!gSendDataCond)
     {
         gSendDataCond = u_cond_new();
     }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");    
 }
 
 void CABTManagerTerminateMutex(void)
 {
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
     if (gBTDeviceListMutex)
     {
         u_mutex_free(gBTDeviceListMutex);
@@ -608,6 +616,8 @@ void CABTManagerTerminateMutex(void)
         u_cond_free(gSendDataCond);
         gSendDataCond = NULL;
     }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
 }
 
 void CABTManagerDataSendHandler(void *context)
@@ -653,7 +663,7 @@ void CABTManagerDataSendHandler(void *context)
         u_cond_wait(gSendDataCond, gSendDataMutex);
         OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Got the signal that data is pending");
 
-        if (CA_FALSE == gDataSendHandlerState)
+        if (false == gDataSendHandlerState)
         {
             break;
         }
@@ -713,7 +723,7 @@ CAResult_t CABTManagerSendUnicastData(const char *remoteAddress, const char *ser
     if (-1 == device->socketFD)
     {
         //Adding to pending list
-        if (CA_STATUS_OK != CAAddDataToDevicePendingList(&device->pendingDataList, data,
+        if (CA_STATUS_OK != CAAddBTDataToList(&device->pendingDataList, data,
                 dataLength))
         {
             OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to add data to pending list!");
@@ -753,8 +763,6 @@ CAResult_t CABTManagerSendMulticastData(const char *serviceUUID, void *data, uin
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    BTDeviceList *cur = NULL;
-
     //Input validation
     VERIFY_NON_NULL(serviceUUID, BLUETOOTH_ADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, BLUETOOTH_ADAPTER_TAG, "Data is null");
@@ -770,12 +778,18 @@ CAResult_t CABTManagerSendMulticastData(const char *serviceUUID, void *data, uin
 
     //Send the packet to all OIC devices
     u_mutex_lock(gBTDeviceListMutex);
-    cur = gBTDeviceList;
-    while (cur != NULL)
+    BTDeviceList *curList = gBTDeviceList;
+    while (curList != NULL)
     {
-        BTDevice *device = cur->device;
-        cur = cur->next;
+        BTDevice *device = curList->device;
+        curList = curList->next;
 
+        if (!device)
+        {
+            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "There is no device!");
+            break;
+        }
+        
         if (-1 == device->socketFD)
         {
             //Check if the device service search is finished
@@ -786,7 +800,7 @@ CAResult_t CABTManagerSendMulticastData(const char *serviceUUID, void *data, uin
             }
 
             //Adding to pendding list
-            if (CA_STATUS_OK != CAAddDataToDevicePendingList(&device->pendingDataList, data,
+            if (CA_STATUS_OK != CAAddBTDataToList(&device->pendingDataList, data,
                     dataLength))
             {
                 OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to add data to pending list !");
@@ -799,7 +813,7 @@ CAResult_t CABTManagerSendMulticastData(const char *serviceUUID, void *data, uin
                 OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to make RFCOMM connection !");
 
                 //Remove the data which added to pending list
-                CARemoveDataFromDevicePendingList(&device->pendingDataList);
+                CARemoveBTDataFromList(&device->pendingDataList);
                 continue;
             }
         }
@@ -818,6 +832,95 @@ CAResult_t CABTManagerSendMulticastData(const char *serviceUUID, void *data, uin
     return CA_STATUS_OK;
 }
 
+CAResult_t CABTGetAdapterEnableState(bool *state)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    //Input validation
+    VERIFY_NON_NULL(state, BLUETOOTH_ADAPTER_TAG, "state holder is NULL!");
+
+    int err = BT_ERROR_NONE;
+    bt_adapter_state_e adapterState;    
+
+    //Get Bluetooth adapter state
+    if (BT_ERROR_NONE != (err = bt_adapter_get_state(&adapterState)))
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Bluetooth get state failed!, error num [%x]",
+                  err);
+
+        return CA_STATUS_FAILED;
+    }
+
+    *state = false;
+    if (BT_ADAPTER_ENABLED == adapterState)
+    {
+        *state = true;
+    }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CABTStartDeviceDiscovery(void)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    int err = BT_ERROR_NONE;
+    bool isDiscoveryStarted = false;
+
+    //Check the device discovery state
+    if (BT_ERROR_NONE != (err = bt_adapter_is_discovering(&isDiscoveryStarted)))
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to get discovery state!, error num [%x]",
+                  err);
+        return CA_STATUS_FAILED;
+    }
+
+    //Start device discovery if its not started
+    if (false == isDiscoveryStarted)
+    {
+        if (BT_ERROR_NONE != (err = bt_adapter_start_device_discovery()))
+        {
+            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Device discovery failed!, error num [%x]",
+                      err);
+            return CA_STATUS_FAILED;
+        }
+    }
+    
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CABTStopDeviceDiscovery(void)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    int err = BT_ERROR_NONE;
+    bool isDiscoveryStarted = false;
+
+    //Check the device discovery state
+    if (BT_ERROR_NONE != (err = bt_adapter_is_discovering(&isDiscoveryStarted)))
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to get discovery state!, error num [%x]",
+                  err);
+        return CA_STATUS_FAILED;
+    }
+
+    //stop the device discovery process
+    if (true == isDiscoveryStarted)
+    {
+        OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Stopping the device search process");
+        if (BT_ERROR_NONE != (err = bt_adapter_stop_device_discovery()))
+        {
+            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to stop device discovery!, error num [%x]",
+                      err);
+        }
+    }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;    
+}
+
 CAResult_t CABTStartServiceSearch(const char *remoteAddress)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
@@ -834,6 +937,24 @@ CAResult_t CABTStartServiceSearch(const char *remoteAddress)
 
     //Start searching for OIC service
     if (BT_ERROR_NONE != (err = bt_device_start_service_search(remoteAddress)))
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Get bonded device failed!, error num [%x]",
+                  err);
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CABTStopServiceSearch(void)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    int err = BT_ERROR_NONE;
+
+    //Stop ongoing service search
+    if (BT_ERROR_NONE != (err = bt_device_cancel_service_search()))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Get bonded device failed!, error num [%x]",
                   err);
@@ -910,12 +1031,12 @@ void CABTSocketConnectionStateCallback(int result, bt_socket_connection_state_e 
                                   device->remoteAddress);
 
                         //Remove all the data from pending list
-                        CARemoveAllDataFromDevicePendingList(&device->pendingDataList);
+                        CADestroyBTDataList(&device->pendingDataList);
                         break;
                     }
 
                     //Remove the data which send from pending list
-                    CARemoveDataFromDevicePendingList(&device->pendingDataList);
+                    CARemoveBTDataFromList(&device->pendingDataList);
                 }
                 u_mutex_unlock(gBTDeviceListMutex);
             }
@@ -1018,7 +1139,7 @@ void CABTDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_e
             {
                 OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Device discovered [%s]!",
                           discoveryInfo->remote_name);
-                if (CA_TRUE == CABTIsServiceSupported((const char **)discoveryInfo->service_uuid,
+                if (true == CABTIsServiceSupported((const char **)discoveryInfo->service_uuid,
                                                       discoveryInfo->service_count,
                                                       OIC_BT_SERVICE_ID))
                 {
@@ -1078,7 +1199,7 @@ void CABTServiceSearchedCallback(int result, bt_device_sdp_info_s *sdpInfo, void
             return;
         }
 
-        if (CA_TRUE == CABTIsServiceSupported((const char **)sdpInfo->service_uuid,
+        if (true == CABTIsServiceSupported((const char **)sdpInfo->service_uuid,
                                               sdpInfo->service_count, OIC_BT_SERVICE_ID))
         {
             device->serviceSearched = 1;
@@ -1181,13 +1302,36 @@ void CABTFreeNetworkEvent(CABTNetworkEvent *event)
 {
     if (event)
     {
-        if (event->info)
-        {
-            CAAdapterFreeLocalEndpoint(event->info);
-        }
-
+        CAAdapterFreeLocalEndpoint(event->info);
         OICFree(event);
     }
 }
 
+void CABTManagerDisconnectAll(void)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+    
+    u_mutex_lock(gBTDeviceListMutex);
+    
+    BTDeviceList *cur = gBTDeviceList;
+    while (cur != NULL)
+    {
+        BTDevice *device = cur->device;
+        cur = cur->next;
+
+        if (device && 0 <= device->socketFD)
+        {
+            if (CA_STATUS_OK != CABTClientDisconnect(device->socketFD))
+            {
+                OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to disconnect the client connection address:%s",device->remoteAddress);
+            }
+
+            device->socketFD = -1;
+        }
+    }
+    
+    u_mutex_unlock(gBTDeviceListMutex);
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+}
 

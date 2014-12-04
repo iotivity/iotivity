@@ -28,13 +28,13 @@ extern "C"
 {
 #endif
 
-CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t* object, const CARequestInfo_t* request);
+CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object, const CARequestInfo_t *request);
 
-CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t* object,
-        const CAResponseInfo_t* response);
+CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
+                                   const CAResponseInfo_t *response);
 
-CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAHeaderOption_t* options,
-        uint8_t numOptions);
+CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token, const CAHeaderOption_t* options,
+                                      uint8_t numOptions);
 
 void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
 

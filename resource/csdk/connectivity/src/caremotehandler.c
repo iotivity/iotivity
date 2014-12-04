@@ -22,21 +22,21 @@
 #include "caremotehandler.h"
 #include "logger.h"
 
-#define TAG PCF("CA")
+#define TAG "CA"
 
-CARemoteEndpoint_t* CACloneRemoteEndpoint(const CARemoteEndpoint_t* rep)
+CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
 {
-    char* temp = NULL;
+    char *temp = NULL;
     int len = 0;
 
     if (rep == NULL)
         return NULL;
 
     // allocate the remote end point structure.
-    CARemoteEndpoint_t* clone = (CARemoteEndpoint_t*) OICMalloc(sizeof(CARemoteEndpoint_t));
+    CARemoteEndpoint_t *clone = (CARemoteEndpoint_t *) OICMalloc(sizeof(CARemoteEndpoint_t));
     if (clone == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+        OIC_LOG_V(DEBUG, TAG, "CACloneRemoteEndpoint Out of memory");
         return NULL;
     }
     memset(clone, 0, sizeof(CARemoteEndpoint_t));
@@ -47,10 +47,10 @@ CARemoteEndpoint_t* CACloneRemoteEndpoint(const CARemoteEndpoint_t* rep)
         // allocate reference uri field
         len = strlen(rep->resourceUri);
 
-        temp = (char*) OICMalloc(sizeof(char) * (len + 1));
+        temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+            OIC_LOG_V(DEBUG, TAG, "CACloneRemoteEndpoint Out of memory");
 
             CADestroyRemoteEndpointInternal(clone);
 
@@ -71,7 +71,7 @@ CARemoteEndpoint_t* CACloneRemoteEndpoint(const CARemoteEndpoint_t* rep)
 
 // return 1 : ip
 // return 0 : mac
-static int32_t getCAAddress(const char* pAddress, CAAddress_t* outAddress)
+static int32_t getCAAddress(const char *pAddress, CAAddress_t *outAddress)
 {
     if (pAddress == NULL || outAddress == NULL)
         return -1;
@@ -120,7 +120,7 @@ static int32_t getCAAddress(const char* pAddress, CAAddress_t* outAddress)
     return isIp;
 }
 
-CARemoteEndpoint_t* CACreateRemoteEndpointUriInternal(const CAURI_t uri)
+CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri)
 {
     // support URI type
     // coap://10.11.12.13:4545/resource_uri
@@ -140,7 +140,7 @@ CARemoteEndpoint_t* CACreateRemoteEndpointUriInternal(const CAURI_t uri)
     }
 
     // #2. copy uri for parse
-    char* cloneUri = NULL;
+    char *cloneUri = NULL;
     int32_t len = strlen(uri) - startIndex;
 
     if (len <= 0)
@@ -149,10 +149,10 @@ CARemoteEndpoint_t* CACreateRemoteEndpointUriInternal(const CAURI_t uri)
         return NULL;
     }
 
-    cloneUri = (char*) OICMalloc(sizeof(char) * (len + 1));
+    cloneUri = (char *) OICMalloc(sizeof(char) * (len + 1));
     if (cloneUri == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "memory error!!");
+        OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpointUriInternal Out of memory");
         return NULL;
     }
     memset(cloneUri, 0, sizeof(char) * (len + 1));
@@ -160,8 +160,8 @@ CARemoteEndpoint_t* CACreateRemoteEndpointUriInternal(const CAURI_t uri)
 
     // #3. parse address
     // #4. parse resource uri
-    char* pAddress = cloneUri;
-    char* pResourceUri = NULL;
+    char *pAddress = cloneUri;
+    char *pResourceUri = NULL;
 
     int32_t i = 0;
     for (i = 0; i < len; i++)
@@ -210,17 +210,17 @@ CARemoteEndpoint_t* CACreateRemoteEndpointUriInternal(const CAURI_t uri)
         type = CA_EDR;
     }
 
-    CARemoteEndpoint_t* remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address, type);
+    CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address, type);
 
     OICFree(cloneUri);
 
     return remoteEndpoint;
 }
 
-CARemoteEndpoint_t* CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
+CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
         const CAAddress_t addr, const CAConnectivityType_t type)
 {
-    char* temp = NULL;
+    char *temp = NULL;
     int len = 0;
 
     if (resourceUri == NULL)
@@ -230,11 +230,11 @@ CARemoteEndpoint_t* CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
     }
 
     // allocate the remote end point structure.
-    CARemoteEndpoint_t* rep = (CARemoteEndpoint_t*) OICMalloc(sizeof(CARemoteEndpoint_t));
+    CARemoteEndpoint_t *rep = (CARemoteEndpoint_t *) OICMalloc(sizeof(CARemoteEndpoint_t));
 
     if (rep == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "memory alloc error");
+        OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpointInternal of memory");
         return NULL;
     }
     memset(rep, 0, sizeof(CARemoteEndpoint_t));
@@ -242,10 +242,10 @@ CARemoteEndpoint_t* CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
     // allocate reference uri field
     len = strlen(resourceUri);
 
-    temp = (char*) OICMalloc(sizeof(char) * (len + 1));
+    temp = (char *) OICMalloc(sizeof(char) * (len + 1));
     if (temp == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "memory alloc error");
+        OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpointInternal Out of memory");
 
         CADestroyRemoteEndpointInternal(rep);
 
@@ -266,19 +266,19 @@ CARemoteEndpoint_t* CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
     return rep;
 }
 
-CARequestInfo_t* CACloneRequestInfo(const CARequestInfo_t* rep)
+CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
 {
-    char* temp = NULL;
+    char *temp = NULL;
     int len = 0;
 
     if (rep == NULL)
         return NULL;
 
     // allocate the request info structure.
-    CARequestInfo_t* clone = (CARequestInfo_t*) OICMalloc(sizeof(CARequestInfo_t));
+    CARequestInfo_t *clone = (CARequestInfo_t *) OICMalloc(sizeof(CARequestInfo_t));
     if (clone == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+        OIC_LOG_V(DEBUG, TAG, "CACloneRequestInfo Out of memory");
         return NULL;
     }
     memset(clone, 0, sizeof(CARequestInfo_t));
@@ -289,10 +289,10 @@ CARequestInfo_t* CACloneRequestInfo(const CARequestInfo_t* rep)
         // allocate token field
         len = strlen(rep->info.token);
 
-        temp = (char*) OICMalloc(sizeof(char) * (len + 1));
+        temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+            OIC_LOG_V(DEBUG, TAG, "CACloneRequestInfo Out of memory");
 
             CADestroyRequestInfoInternal(clone);
 
@@ -308,7 +308,7 @@ CARequestInfo_t* CACloneRequestInfo(const CARequestInfo_t* rep)
     if (rep->info.options != NULL)
     {
         // save the options
-        clone->info.options = (CAHeaderOption_t*) OICMalloc(sizeof(CAHeaderOption_t));
+        clone->info.options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t));
         memset(clone->info.options, 0, sizeof(CAHeaderOption_t));
         memcpy(clone->info.options, rep->info.options, sizeof(CAHeaderOption_t));
     }
@@ -318,10 +318,10 @@ CARequestInfo_t* CACloneRequestInfo(const CARequestInfo_t* rep)
         // allocate payload field
         len = strlen(rep->info.payload);
 
-        temp = (char*) OICMalloc(sizeof(char) * (len + 1));
+        temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+            OIC_LOG_V(DEBUG, TAG, "CACloneRequestInfo Out of memory");
 
             CADestroyRequestInfoInternal(clone);
 
@@ -337,19 +337,19 @@ CARequestInfo_t* CACloneRequestInfo(const CARequestInfo_t* rep)
     return clone;
 }
 
-CAResponseInfo_t* CACloneResponseInfo(const CAResponseInfo_t* rep)
+CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
 {
-    char* temp = NULL;
+    char *temp = NULL;
     int len = 0;
 
     if (rep == NULL)
         return NULL;
 
     // allocate the response info structure.
-    CAResponseInfo_t* clone = (CAResponseInfo_t*) OICMalloc(sizeof(CAResponseInfo_t));
+    CAResponseInfo_t *clone = (CAResponseInfo_t *) OICMalloc(sizeof(CAResponseInfo_t));
     if (clone == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+        OIC_LOG_V(DEBUG, TAG, "CACloneResponseInfo Out of memory");
         return NULL;
     }
     memset(clone, 0, sizeof(CAResponseInfo_t));
@@ -360,10 +360,10 @@ CAResponseInfo_t* CACloneResponseInfo(const CAResponseInfo_t* rep)
         // allocate token field
         len = strlen(rep->info.token);
 
-        temp = (char*) OICMalloc(sizeof(char) * (len + 1));
+        temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+            OIC_LOG_V(DEBUG, TAG, "CACloneResponseInfo Out of memory");
 
             CADestroyResponseInfoInternal(clone);
 
@@ -379,7 +379,7 @@ CAResponseInfo_t* CACloneResponseInfo(const CAResponseInfo_t* rep)
     if (rep->info.options != NULL)
     {
         // save the options
-        clone->info.options = (CAHeaderOption_t*) OICMalloc(sizeof(CAHeaderOption_t));
+        clone->info.options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t));
         memset(clone->info.options, 0, sizeof(CAHeaderOption_t));
         memcpy(clone->info.options, rep->info.options, sizeof(CAHeaderOption_t));
     }
@@ -389,10 +389,10 @@ CAResponseInfo_t* CACloneResponseInfo(const CAResponseInfo_t* rep)
         // allocate payload field
         len = strlen(rep->info.payload);
 
-        temp = (char*) OICMalloc(sizeof(char) * (len + 1));
+        temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+            OIC_LOG_V(DEBUG, TAG, "CACloneResponseInfo Out of memory");
 
             CADestroyResponseInfoInternal(clone);
 
@@ -408,7 +408,7 @@ CAResponseInfo_t* CACloneResponseInfo(const CAResponseInfo_t* rep)
     return clone;
 }
 
-void CADestroyRemoteEndpointInternal(CARemoteEndpoint_t* rep)
+void CADestroyRemoteEndpointInternal(CARemoteEndpoint_t *rep)
 {
     if (rep == NULL)
         return;
@@ -416,14 +416,14 @@ void CADestroyRemoteEndpointInternal(CARemoteEndpoint_t* rep)
     // free uri field
     if (rep->resourceUri != NULL)
     {
-        OICFree((char*) rep->resourceUri);
+        OICFree((char *) rep->resourceUri);
     }
 
     // free remote end point structure.
     OICFree(rep);
 }
 
-void CADestroyRequestInfoInternal(CARequestInfo_t* rep)
+void CADestroyRequestInfoInternal(CARequestInfo_t *rep)
 {
     if (rep == NULL)
         return;
@@ -431,25 +431,25 @@ void CADestroyRequestInfoInternal(CARequestInfo_t* rep)
     // free token field
     if (rep->info.token != NULL)
     {
-        OICFree((char*) rep->info.token);
+        OICFree((char *) rep->info.token);
     }
 
     // free options field
     if (rep->info.options != NULL)
     {
-        OICFree((CAHeaderOption_t*) rep->info.options);
+        OICFree((CAHeaderOption_t *) rep->info.options);
     }
 
     // free payload field
     if (rep->info.payload != NULL)
     {
-        OICFree((char*) rep->info.payload);
+        OICFree((char *) rep->info.payload);
     }
 
     OICFree(rep);
 }
 
-void CADestroyResponseInfoInternal(CAResponseInfo_t* rep)
+void CADestroyResponseInfoInternal(CAResponseInfo_t *rep)
 {
     if (rep == NULL)
         return;
@@ -457,19 +457,19 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t* rep)
     // free token field
     if (rep->info.token != NULL)
     {
-        OICFree((char*) rep->info.token);
+        OICFree((char *) rep->info.token);
     }
 
     // free options field
     if (rep->info.options != NULL)
     {
-        OICFree((CAHeaderOption_t*) rep->info.options);
+        OICFree((CAHeaderOption_t *) rep->info.options);
     }
 
     // free payload field
     if (rep->info.payload != NULL)
     {
-        OICFree((char*) rep->info.payload);
+        OICFree((char *) rep->info.payload);
     }
 
     OICFree(rep);

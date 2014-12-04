@@ -35,46 +35,121 @@
 
 ///TODO:: Currently keeping as single service. Later service path will be added in list for supporting multiple services.
 
+/**
+ * @var gGattSvcPath
+ * @brief attribute handler for OIC server attribute.
+ */
 static char *gGattSvcPath = NULL;
 
+/**
+ * @var gGattReadCharPath
+ * @brief attribute handler for readCharacteristic of OIC server
+ */
 static char *gGattReadCharPath = NULL;
 
+/**
+ * @var gGattWriteCharPath
+ * @brief attribute handler for writeCharacteristic of OIC server
+ */
 static char *gGattWriteCharPath = NULL;
 
+/**
+ * @var hAdvertiser
+ * @brief handler for OIC advertiser.
+ */
 static bt_advertiser_h hAdvertiser = NULL;
 
-static CANetworkPacketReceivedCallback gReqRespCallback = NULL;
+/**
+ * @var    gNetworkPacketReceivedServerCallback
+ * @brief  Maintains the callback to be notified on receival of network packets from other
+ *           BLE devices
+ */
+static CANetworkPacketReceivedCallback gNetworkPacketReceivedServerCallback = NULL;
 
+/**
+ * @var gCABleServerSenderQueue
+ * @brief Queue to process the outgoing packets from GATTServer.
+ */
 static CAAdapterMessageQueue_t *gCABleServerSenderQueue = NULL;
 
+/**
+ * @var gCABleServerReceiverQueue
+ * @brief Queue to process the incoming packets to GATTServer
+ */
 static CAAdapterMessageQueue_t *gCABleServerReceiverQueue = NULL;
 
+/**
+ * @var gIsBleGattServerStarted
+ * @brief Boolean variable to keep the state of the GATTServer
+ */
 static CABool_t gIsBleGattServerStarted = CA_FALSE;
 
 /**
- * @var gServiceStateMutex
- * @brief Mutex to synchronize the process of starting Gatt Server.
+ * @var gBleServerStateMutex
+ * @brief Mutex to synchronize the calls to be done to the platform from GATTServer
+ *           interfaces from different threads.
  */
 static u_mutex gBleServerStateMutex = NULL;
 
+/**
+ * @var gBleCharacteristicMutex
+ * @brief Mutex to synchronize writing operations on the characteristics.
+ */
 static  u_mutex gBleCharacteristicMutex = NULL;
 
+/**
+ * @var gBleServiceMutex
+ * @brief  Mutex to synchronize to create the OIC service..
+ */
 static  u_mutex gBleServiceMutex = NULL;
 
+/**
+ * @var gBleReqRespCbMutex
+ * @brief Mutex to synchronize access to the requestResponse callback to be called
+ *           when the data needs to be sent from GATTClient.
+ */
 static  u_mutex gBleReqRespCbMutex = NULL;
 
+/**
+ * @var gBleServerSendDataMutex
+ * @brief Mutex to synchronize the queing of the data from SenderQueue.
+ */
 static u_mutex gBleServerSendDataMutex = NULL;
 
+/**
+ * @var gBleServerThreadPoolMutex
+ * @brief Mutex to synchronize the task to be pushed to thread pool.
+ */
 static u_mutex gBleServerThreadPoolMutex = NULL;
 
+/**
+ * @var gBleServerSendCondWait
+ * @brief Condition used for notifying handler the presence of data in send queue.
+ */
 static u_cond gBleServerSendCondWait = NULL;
 
+/**
+ * @var gBleServerReceiveDataMutex
+ * @brief Mutex to synchronize the queing of the data from ReceiverQueue.
+ */
 static u_mutex gBleServerReceiveDataMutex = NULL;
 
+/**
+ * @var g_event_loop
+ * @brief gmainLoop to manage the threads to receive the callback from the platfrom.
+ */
 static GMainLoop *g_event_loop = NULL;
 
+/**
+ * @var gBleServerThreadPool
+ * @brief reference to threadpool
+ */
 static u_thread_pool_t gBleServerThreadPool = NULL;
 
+/**
+ * @var gServerUp
+ * @brief Boolean variable to maintain the GATT Server state.
+ */
 static CABool_t gServerUp = CA_FALSE;
 
 
@@ -564,31 +639,9 @@ void CASetBleServerThreadPoolHandle(u_thread_pool_t handle)
 
 CAResult_t CALEReadDataFromLEServer()
 {
-#if 0
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN ");
-
-    CAAdapterMessage_t *receiverData = NULL;
-
-    CAResult_t result = CAAdapterDequeueMessage(gCABleServerReceiverQueue, &receiverData);
-
-    if (CA_STATUS_OK != result)
-    {
-        u_mutex_lock(gBleReqRespCbMutex);
-        if (NULL == gReqRespCallback)
-        {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gReqRespCallback is NULL!");
-            u_mutex_unlock(gBleReqRespCbMutex);
-            return;
-        }
-
-        gReqRespCallback(receiverData->remoteEndpoint, receiverData->data, receiverData->dataLen);
-
-        u_mutex_unlock(gBleReqRespCbMutex);
-
-        CAAdapterFreeMessage(receiverData);
-    }
-#endif
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT ");
+
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAAddNewBleServiceInGattServer(const char *serviceUUID)
@@ -714,21 +767,22 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
     strncpy(data, charValue, charValueLen);
 
     u_mutex_lock(gBleReqRespCbMutex);
-    if (NULL == gReqRespCallback)
+    if (NULL == gNetworkPacketReceivedServerCallback)
     {
-        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gReqRespCallback is NULL!");
+        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gNetworkPacketReceivedServerCallback is NULL!");
         OICFree(charValue);
         OICFree(remoteEndPoint);
+        OICFree(data);
         u_mutex_unlock(gBleReqRespCbMutex);
         return;
     }
 
-    gReqRespCallback(remoteEndPoint, data, charValueLen);
+    gNetworkPacketReceivedServerCallback(remoteEndPoint, data, charValueLen);
     u_mutex_unlock(gBleReqRespCbMutex);
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }
 
-CAResult_t CABleServerSenderQueueEnqueueMessage(CARemoteEndpoint_t *remoteEndpoint,
+CAResult_t CABleServerSenderQueueEnqueueMessage(const CARemoteEndpoint_t *remoteEndpoint,
         void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN ");
@@ -890,7 +944,7 @@ void CASetBLEReqRespServerCallback(CANetworkPacketReceivedCallback callback)
 
     u_mutex_lock(gBleReqRespCbMutex);
 
-    gReqRespCallback = callback;
+    gNetworkPacketReceivedServerCallback = callback;
 
     u_mutex_unlock(gBleReqRespCbMutex);
 

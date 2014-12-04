@@ -66,11 +66,10 @@ typedef enum
 #define FATAL DLOG_ERROR
 #endif
 
-#ifndef ARDUINO
 #ifdef __TIZEN__
 #define OICLog(level,tag,mes) LOG(level,tag,mes)
 #define OICLogv(level,tag,fmt,args...) LOG(level,tag,fmt,##args)
-#else
+#elif defined(ANDROID) || defined(__linux__)
 /**
  * Configure logger to use a context that defines a custom logger function
  *
@@ -98,7 +97,7 @@ void OICLogShutdown();
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLog(LogLevel level, const char * tag, const char * logStr);
+void OICLog(LogLevel level, const char *tag, const char *logStr);
 
 /**
  * Output a variable argument list log string with the specified priority level.
@@ -108,7 +107,7 @@ void OICLog(LogLevel level, const char * tag, const char * logStr);
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, const char * tag, const char * format, ...);
+void OICLogv(LogLevel level, const char *tag, const char *format, ...);
 
 /**
  * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -118,9 +117,8 @@ void OICLogv(LogLevel level, const char * tag, const char * format, ...);
  * @param buffer     - pointer to buffer of bytes
  * @param bufferSize - max number of byte in buffer
  */
-void OICLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize);
-#endif //__TIZEN__
-#else
+void OICLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, uint16_t bufferSize);
+#else  // For arduino platforms
 /**
  * Initialize the serial logger for Arduino
  * Only defined for Arduino
@@ -135,7 +133,7 @@ void OICLogInit();
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLog(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
+void OICLog(LogLevel level, const char *tag, const int16_t lineNum, const char *logStr);
 
 /**
  * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -145,7 +143,7 @@ void OICLog(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logSt
  * @param buffer     - pointer to buffer of bytes
  * @param bufferSize - max number of byte in buffer
  */
-void OICLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buffer, uint16_t bufferSize);
+void OICLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, uint16_t bufferSize);
 
 /**
  * Output a variable argument list log string with the specified priority level.
@@ -154,7 +152,7 @@ void OICLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buff
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, const char * tag, const char * format, ...);
+void OICLogv(LogLevel level, const char *tag, const int16_t lineNum, const char *format, ...);
 #endif
 
 #ifdef TB_LOG
@@ -164,23 +162,20 @@ void OICLogv(LogLevel level, const char * tag, const char * format, ...);
 #define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
 #else // These macros are defined for Linux, Android, and Arduino
 #define OIC_LOG_INIT()    OICLogInit()
-#define OIC_LOG(level, tag, logStr)  OICLog((level), (tag), (logStr))
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)  OICLogBuffer((level), (tag), (buffer), (bufferSize))
+
 #ifdef ARDUINO
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
-// Use full namespace for logInit to avoid function name collision
-#define OIC_LOG_INIT()    OICLogInit()
-// Don't define variable argument log function for Arduino
-#define OIC_LOG_V(level, tag, ...) OICLogv((level), (tag), __VA_ARGS__)
+#define OIC_LOG(level, tag, logStr)  OICLog((level), (tag), __LINE__, (logStr))
+#define OIC_LOG_V(level, tag, ...) OICLogv((level), (tag), __LINE__, __VA_ARGS__)
 #else
 #define OIC_LOG_CONFIG(ctx)    OICLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OICLogShutdown()
-// Define variable argument log function for Linux and Android
-#define OIC_LOG_V(level, tag, ...)  OICLogv((level), (tag), __VA_ARGS__)
+#define OIC_LOG(level, tag, logStr)  OICLog((level), (tag), (logStr))
+#define OIC_LOG_V(level, tag, ...) OICLogv((level), (tag), __VA_ARGS__)
 #endif //ARDUINO
 #endif //__TIZEN__
-
 #else //TB_LOG
 
 #define OIC_LOG_CONFIG(ctx)

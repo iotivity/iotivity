@@ -18,7 +18,9 @@
 #elif HAVE_SYS_UNISTD_H
 #include <sys/unistd.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -45,7 +47,7 @@
 #include "block.h"
 #include "net.h"
 
-#if defined(WITH_POSIX)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
 
 time_t clock_offset;
 
@@ -60,7 +62,7 @@ coap_free_node(coap_queue_t *node)
 {
     coap_free(node);
 }
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_LWIP
 
 #include <lwip/memp.h>
@@ -314,10 +316,12 @@ is_wkc(coap_key_t k)
 }
 #endif
 
+
+#ifndef WITH_ARDUINO
 coap_context_t *
 coap_new_context(const coap_address_t *listen_addr)
 {
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX)
     coap_context_t *c = coap_malloc( sizeof( coap_context_t ) );
     int reuse = 1;
 #endif /* WITH_POSIX */
@@ -379,7 +383,7 @@ coap_new_context(const coap_address_t *listen_addr)
     coap_register_option(c, COAP_OPTION_BLOCK2);
     coap_register_option(c, COAP_OPTION_BLOCK1);
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     c->sockfd = socket(listen_addr->addr.sa.sa_family, SOCK_DGRAM, 0);
     if ( c->sockfd < 0 )
     {
@@ -412,7 +416,7 @@ coap_new_context(const coap_address_t *listen_addr)
     coap_free( c );
     return NULL;
 
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
     c->conn = udp_new(NULL, 0, NULL);
     udp_bind(c->conn, listen_addr->port);
@@ -461,7 +465,7 @@ void coap_free_context(coap_context_t *context)
     coap_retransmittimer_restart(context);
 #endif
 
-#if defined(WITH_POSIX) || defined(WITH_LWIP)
+#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO)
 #ifdef COAP_RESOURCES_NOHASH
     LL_FOREACH(context->resources, res)
     {
@@ -487,7 +491,7 @@ void coap_free_context(coap_context_t *context)
     initialized = 0;
 #endif /* WITH_CONTIKI */
 }
-
+#endif //ifndef WITH_ARDUINO
 int coap_option_check_critical(coap_context_t *ctx, coap_pdu_t *pdu, coap_opt_filter_t unknown)
 {
 
@@ -547,6 +551,11 @@ void coap_transaction_id(const coap_address_t *peer, const coap_pdu_t *pdu, coap
         return;
     }
 #endif
+
+#ifdef WITH_ARDUINO
+    coap_hash((const unsigned char *)peer->addr, peer->size, h);
+#endif /* WITH_ARDUINO */
+
 #if defined(WITH_LWIP) || defined(WITH_CONTIKI)
     /* FIXME: with lwip, we can do better */
     coap_hash((const unsigned char *)&peer->port, sizeof(peer->port), h);
@@ -575,7 +584,17 @@ coap_tid_t coap_send_ack(coap_context_t *context, const coap_address_t *dst, coa
     return result;
 }
 
-#ifdef WITH_POSIX
+#if defined(WITH_ARDUINO)
+coap_tid_t
+coap_send_impl(coap_context_t *context,
+               const coap_address_t *dst,
+               coap_pdu_t *pdu)
+{
+    return 0;
+}
+#endif
+
+#if defined(WITH_POSIX)
 /* releases space allocated by PDU if free_pdu is set */
 coap_tid_t
 coap_send_impl(coap_context_t *context,
@@ -602,7 +621,7 @@ coap_send_impl(coap_context_t *context,
 
     return id;
 }
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
 /* releases space allocated by PDU if free_pdu is set */
 coap_tid_t
@@ -684,7 +703,9 @@ coap_send_impl(coap_context_t *context,
 
 coap_tid_t coap_send(coap_context_t *context, const coap_address_t *dst, coap_pdu_t *pdu)
 {
+#ifndef WITH_ARDUINO
     return coap_send_impl(context, dst, pdu);
+#endif
 }
 
 coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request, const coap_address_t *dst,
@@ -822,7 +843,7 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node)
 
     /* no more retransmissions, remove node from system */
 
-#ifndef WITH_CONTIKI
+#if !defined(WITH_CONTIKI) && !defined(WITH_ARDUINO)
     debug("** removed transaction %d\n", ntohs(node->id));
 #endif
 
@@ -861,9 +882,10 @@ static inline int check_opt_size(coap_opt_t *opt, unsigned char *maxpos)
     return 0;
 }
 
+#ifndef WITH_ARDUINO
 int coap_read(coap_context_t *ctx)
 {
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX)
     static char buf[COAP_MAX_PDU_SIZE];
 #endif
 #if defined(WITH_LWIP) || defined(WITH_CONTIKI)
@@ -887,10 +909,10 @@ int coap_read(coap_context_t *ctx)
 
     coap_address_init(&src);
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX)
     bytes_read = recvfrom(ctx->sockfd, buf, sizeof(buf), 0, &src.addr.sa, &src.size);
 
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
     if(uip_newdata())
     {
@@ -987,6 +1009,7 @@ int coap_read(coap_context_t *ctx)
 #endif
     return -1;
 }
+#endif //#ifndef WITH_ARDUINO
 
 int coap_remove_from_queue(coap_queue_t **queue, coap_tid_t id, coap_queue_t **node)
 {

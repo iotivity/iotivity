@@ -19,14 +19,122 @@
  ******************************************************************/
 
 /**
- * @file    cabtdevicelist.c
- * @brief    This file provides APIs to access the discovered bluetooth device list
+ * @file  cabtdevicelist.c
+ * @brief  This file provides APIs to access the discovered bluetooth device list
  */
 
 #include "cabtdevicelist.h"
 #include "caadapterutils.h"
 #include "cabtutils.h"
 #include "logger.h"
+
+
+/**
+ * @fn  CACreateBTDevice
+ * @brief  Creates #BTDevice for specified remote address and uuid.
+ *
+ */
+static CAResult_t CACreateBTDevice(const char *deviceAddress, const char *uuid, BTDevice **device);
+
+
+/**
+ * @fn  CADestroyBTDevice
+ * @brief  Free all the memory associated with specified device.
+ *
+ */
+static void CADestroyBTDevice(BTDevice *device);
+
+
+/**
+ * @fn  CADestroyBTData
+ * @brief  Free all the memory associated with specified data.
+ *
+ */
+static void CADestroyBTData(BTData *data);
+
+
+CAResult_t CACreateAndAddToDeviceList(BTDeviceList **deviceList, const char *deviceAddress,
+        const char *uuid, BTDevice **device)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    VERIFY_NON_NULL(deviceList, BLUETOOTH_ADAPTER_TAG, "Device list is null");
+    VERIFY_NON_NULL(deviceAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
+    VERIFY_NON_NULL(device, BLUETOOTH_ADAPTER_TAG, "Device is null");
+
+    if (CA_STATUS_OK != CACreateBTDevice(deviceAddress, uuid, device) || NULL == *device)
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid or Not bonded device!");
+        return CA_STATUS_FAILED;
+    }
+
+    if (CA_STATUS_OK != CAAddBTDeviceToList(deviceList, *device))
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to add in list!");
+
+        //Remove created BTDevice
+        CADestroyBTDevice(*device);
+        *device = NULL;
+
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CACreateBTDevice(const char *deviceAddress, const char *uuid, BTDevice **device)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    VERIFY_NON_NULL(deviceAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
+    VERIFY_NON_NULL(uuid, BLUETOOTH_ADAPTER_TAG, "uuid is null");
+    VERIFY_NON_NULL(device, BLUETOOTH_ADAPTER_TAG, "Device is null");
+
+    *device = (BTDevice *) OICMalloc(sizeof(BTDevice));
+    if (NULL == *device)
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Out of memory (device)!");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    //Copy bluetooth address
+    if (strlen(deviceAddress))
+    {
+        (*device)->remoteAddress = strndup(deviceAddress, strlen(deviceAddress));
+        if (NULL == (*device)->remoteAddress)
+        {
+            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Out of memory (remote address)!");
+
+            OICFree(*device);
+            *device = NULL;
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+    }
+
+    //Copy OIC service uuid
+    if (strlen(uuid))
+    {
+        (*device)->serviceUUID = strndup(uuid, strlen(uuid));
+        if (NULL == (*device)->serviceUUID)
+        {
+            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG,
+                    "[createBTDevice] Out of memory (service uuid)!");
+
+            OICFree((*device)->remoteAddress);
+            OICFree(*device);
+            *device = NULL;
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+    }
+
+    (*device)->socketFD = -1;
+    (*device)->pendingDataList = NULL;
+    (*device)->serviceSearched = 0;
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
 
 CAResult_t CAAddBTDeviceToList(BTDeviceList **deviceList, BTDevice *device)
 {
@@ -59,42 +167,90 @@ CAResult_t CAAddBTDeviceToList(BTDeviceList **deviceList, BTDevice *device)
     return CA_STATUS_OK;
 }
 
-CAResult_t CARemoveBTDeviceFromList(BTDeviceList **deviceList, const char *remoteAddress)
+CAResult_t CAGetBTDevice(BTDeviceList *deviceList, const char *deviceAddress, BTDevice **device)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(deviceList, BLUETOOTH_ADAPTER_TAG, "Device list is null");
-    VERIFY_NON_NULL(remoteAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
+    VERIFY_NON_NULL(deviceAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
+    VERIFY_NON_NULL(device, BLUETOOTH_ADAPTER_TAG, "Device is null");
 
-    BTDeviceList *cur = NULL;
-    BTDeviceList *prev = NULL;
-
-    cur = *deviceList;
-    while (cur != NULL)
+    BTDeviceList *curNode = deviceList;
+    *device = NULL;
+    while (curNode != NULL)
     {
-        if (!strcasecmp(cur->device->remoteAddress, remoteAddress))
+        if (!strcasecmp(curNode->device->remoteAddress, deviceAddress))
         {
-            if (cur == *deviceList)
-            {
-                *deviceList = cur->next;
+            *device = curNode->device;
+            return CA_STATUS_OK;
+        }
 
-                cur->next = NULL;
-                CAFreeBTDeviceList(cur);
+        curNode = curNode->next;
+    }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT [Device not found!]");
+    return CA_STATUS_FAILED;
+}
+
+CAResult_t CAGetBTDeviceBySocketId(BTDeviceList *deviceList, int32_t socketID, BTDevice **device)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    VERIFY_NON_NULL(deviceList, BLUETOOTH_ADAPTER_TAG, "Device list is null");
+    VERIFY_NON_NULL(device, BLUETOOTH_ADAPTER_TAG, "Device is null");
+    BTDeviceList *curNode = deviceList;
+    *device = NULL;
+    while (curNode != NULL)
+    {
+        if (curNode->device->socketFD == socketID)
+        {
+            *device = curNode->device;
+            return CA_STATUS_OK;
+        }
+
+        curNode = curNode->next;
+    }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_FAILED;
+}
+
+CAResult_t CARemoveBTDeviceFromList(BTDeviceList **deviceList, const char *deviceAddress)
+{
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    VERIFY_NON_NULL(deviceList, BLUETOOTH_ADAPTER_TAG, "Device list is null");
+    VERIFY_NON_NULL(deviceAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
+
+    BTDeviceList *curNode = NULL;
+    BTDeviceList *prevNode = NULL;
+
+    curNode = *deviceList;
+    while (curNode != NULL)
+    {
+        if (!strcasecmp(curNode->device->remoteAddress, deviceAddress))
+        {
+            if (curNode == *deviceList)
+            {
+                *deviceList = curNode->next;
+
+                curNode->next = NULL;
+                CADestroyBTDeviceList(&curNode);
                 return CA_STATUS_OK;
             }
             else
             {
-                prev->next = cur->next;
+                prevNode->next = curNode->next;
 
-                cur->next = NULL;
-                CAFreeBTDeviceList(cur);
+                curNode->next = NULL;
+                CADestroyBTDeviceList(&curNode);
                 return CA_STATUS_OK;
             }
         }
         else
         {
-            prev = cur;
-            cur = cur->next;
+            prevNode = curNode;
+            curNode = curNode->next;
         }
     }
 
@@ -102,181 +258,37 @@ CAResult_t CARemoveBTDeviceFromList(BTDeviceList **deviceList, const char *remot
     return CA_STATUS_FAILED;
 }
 
-CAResult_t CAGetBTDevice(BTDeviceList *deviceList, const char *remoteAddress, BTDevice **device)
+void CADestroyBTDeviceList(BTDeviceList **deviceList)
 {
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
-
-    VERIFY_NON_NULL(deviceList, BLUETOOTH_ADAPTER_TAG, "Device list is null");
-    VERIFY_NON_NULL(remoteAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
-    VERIFY_NON_NULL(device, BLUETOOTH_ADAPTER_TAG, "Device is null");
-
-    BTDeviceList *cur = deviceList;
-    *device = NULL;
-    while (cur != NULL)
+    while (*deviceList)
     {
-        if (!strcasecmp(cur->device->remoteAddress, remoteAddress))
-        {
-            *device = cur->device;
-            return CA_STATUS_OK;
-        }
+        BTDeviceList *curNode = *deviceList;
+        *deviceList = (*deviceList)->next;
 
-        cur = cur->next;
-    }
-
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT [Device not found!]");
-    return CA_STATUS_FAILED;
-}
-
-CAResult_t CAGetBTDeviceBySocketId(BTDeviceList *deviceList, int32_t socketFd, BTDevice **device)
-{
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
-
-    VERIFY_NON_NULL(deviceList, BLUETOOTH_ADAPTER_TAG, "Device list is null");
-    VERIFY_NON_NULL(device, BLUETOOTH_ADAPTER_TAG, "Device is null");
-
-    BTDeviceList *cur = deviceList;
-    *device = NULL;
-    while (cur != NULL)
-    {
-        if (cur->device->socketFD == socketFd)
-        {
-            *device = cur->device;
-            return CA_STATUS_OK;
-        }
-
-        cur = cur->next;
-    }
-
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
-    return CA_STATUS_FAILED;
-}
-
-CAResult_t CACreateBTDevice(const char *remoteAddress, const char *uuid, BTDevice **device)
-{
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
-
-    VERIFY_NON_NULL(remoteAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
-    VERIFY_NON_NULL(uuid, BLUETOOTH_ADAPTER_TAG, "uuid is null");
-    VERIFY_NON_NULL(device, BLUETOOTH_ADAPTER_TAG, "Device is null");
-
-    *device = (BTDevice *) OICMalloc(sizeof(BTDevice));
-    if (NULL == *device)
-    {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Out of memory (device)!");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-
-    //Copy bluetooth address
-    if (remoteAddress && strlen(remoteAddress))
-    {
-        (*device)->remoteAddress = strndup(remoteAddress, strlen(remoteAddress));
-        if (NULL == (*device)->remoteAddress)
-        {
-            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Out of memory (remote address)!");
-
-            OICFree(*device);
-            *device = NULL;
-            return CA_MEMORY_ALLOC_FAILED;
-        }
-    }
-
-    //Copy OIC service uuid
-    if (uuid && strlen(uuid))
-    {
-        (*device)->serviceUUID = strndup(uuid, strlen(uuid));
-        if (NULL == (*device)->serviceUUID)
-        {
-            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG,
-                      "[createBTDevice] Out of memory (service uuid)!");
-
-            OICFree((*device)->remoteAddress);
-            OICFree(*device);
-            *device = NULL;
-            return CA_MEMORY_ALLOC_FAILED;
-        }
-    }
-
-    (*device)->socketFD = -1;
-    (*device)->pendingDataList = NULL;
-    (*device)->serviceSearched = 0;
-
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-CAResult_t CACreateAndAddToDeviceList(BTDeviceList **devicList, const char *remoteAddress,
-                                      const char *serviceUUID, BTDevice **device)
-{
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
-
-    VERIFY_NON_NULL(devicList, BLUETOOTH_ADAPTER_TAG, "Device list is null");
-    VERIFY_NON_NULL(remoteAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
-    VERIFY_NON_NULL(device, BLUETOOTH_ADAPTER_TAG, "Device is null");
-
-    if (CA_STATUS_OK != CACreateBTDevice(remoteAddress, serviceUUID, device) || NULL == *device)
-    {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid or Not bonded device!");
-        return CA_STATUS_FAILED;
-    }
-
-    if (CA_STATUS_OK != CAAddBTDeviceToList(devicList, *device))
-    {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to add in list!");
-
-        //Remove created BTDevice
-        CAFreeBTDevice(*device);
-        *device = NULL;
-
-        return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-void CAFreeBTDeviceList(BTDeviceList *deviceList)
-{
-    while (deviceList)
-    {
-        BTDeviceList *curList = deviceList;
-        deviceList = deviceList->next;
-
-        CAFreeBTDevice(curList->device);
-        OICFree(curList);
+        CADestroyBTDevice(curNode->device);
+        OICFree(curNode);
     }
 }
 
-void CAFreeBTDevice(BTDevice *device)
+void CADestroyBTDevice(BTDevice *device)
 {
     if (device)
     {
-        if (device->remoteAddress)
-        {
-            OICFree(device->remoteAddress);
-        }
-
-        if (device->serviceUUID)
-        {
-            OICFree(device->serviceUUID);
-        }
-
-        if (device->pendingDataList)
-        {
-            CARemoveAllDataFromDevicePendingList(&device->pendingDataList);
-        }
-
+        OICFree(device->remoteAddress);
+        OICFree(device->serviceUUID);
+        CADestroyBTDataList(&device->pendingDataList);
         OICFree(device);
     }
 }
 
-CAResult_t CAAddDataToDevicePendingList(BTDataList **dataList, void *data, uint32_t dataLen)
+CAResult_t CAAddBTDataToList(BTDataList **dataList, void *data, uint32_t dataLength)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(dataList, BLUETOOTH_ADAPTER_TAG, "Data list is null");
     VERIFY_NON_NULL(data, BLUETOOTH_ADAPTER_TAG, "Data is null");
 
-    if (0 == dataLen)
+    if (0 == dataLength)
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: data length is zero!");
         return CA_STATUS_INVALID_PARAM;
@@ -299,7 +311,7 @@ CAResult_t CAAddDataToDevicePendingList(BTDataList **dataList, void *data, uint3
     }
     pending_data->next = NULL;
 
-    pending_data->data->data = (void *) OICMalloc(dataLen); //data
+    pending_data->data->data = (void *) OICMalloc(dataLength); //data
     if (NULL == pending_data->data->data)
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "OICMalloc failed (data)!");
@@ -309,8 +321,8 @@ CAResult_t CAAddDataToDevicePendingList(BTDataList **dataList, void *data, uint3
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    memcpy(pending_data->data->data, data, dataLen);
-    pending_data->data->dataLength = dataLen;
+    memcpy(pending_data->data->data, data, dataLength);
+    pending_data->data->dataLength = dataLength;
 
     if (NULL == *dataList) //Empty list
     {
@@ -318,83 +330,63 @@ CAResult_t CAAddDataToDevicePendingList(BTDataList **dataList, void *data, uint3
     }
     else //Add at rear end
     {
-        BTDataList *curList = *dataList;
-        while (curList->next != NULL)
+        BTDataList *curNode = *dataList;
+        while (curNode->next != NULL)
         {
-            curList = curList->next;
+            curNode = curNode->next;
         }
 
-        curList->next = pending_data;
+        curNode->next = pending_data;
     }
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CARemoveDataFromDevicePendingList(BTDataList **dataList)
+CAResult_t CARemoveBTDataFromList(BTDataList **dataList)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(dataList, BLUETOOTH_ADAPTER_TAG, "Data list is null");
 
-    BTDataList *cur = NULL;
-    BTDataList *prev = NULL;
+    if (*dataList)
+    {
+        BTDataList *curNode = *dataList;
+        *dataList = (*dataList)->next;
 
-    cur = *dataList;
-    if (NULL != cur->next) //next node present in list
-    {
-        prev = cur;
-        cur = cur->next;
-        CAFreeDataFromBTDataList(prev);
-        *dataList = cur;
-    }
-    else //last node
-    {
-        CAFreeDataFromBTDataList(cur);
-        *dataList = NULL;
+        //Delete the first node
+        CADestroyBTData(curNode->data);
+        OICFree(curNode);
     }
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CARemoveAllDataFromDevicePendingList(BTDataList **dataList)
+void CADestroyBTDataList(BTDataList **dataList)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    VERIFY_NON_NULL(dataList, BLUETOOTH_ADAPTER_TAG, "Data list is null");
-
-    BTDataList *cur = NULL;
-    BTDataList *prev = NULL;
-
-    cur = *dataList;
-    while (cur)
+    while (*dataList)
     {
-        prev = cur;
-        cur = cur->next;
-        CAFreeDataFromBTDataList(prev);
+        BTDataList *curNode = *dataList;
+        *dataList = (*dataList)->next;
+        
+        CADestroyBTData(curNode->data);
+        OICFree(curNode);
     }
 
     *dataList = NULL;
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
 }
 
-void CAFreeDataFromBTDataList(BTDataList *dataList)
+void CADestroyBTData(BTData *data)
 {
-    if (dataList)
+    if (data)
     {
-        if (dataList->data)
-        {
-            if (dataList->data->data)
-            {
-                OICFree(dataList->data->data);
-            }
-            OICFree(dataList->data);
-        }
-        OICFree(dataList);
-        dataList = NULL;
+        OICFree(data->data);
+        OICFree(data);
     }
 }
 

@@ -10,6 +10,9 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 #include "cawificore.h"
 #include "logger.h"
@@ -20,7 +23,10 @@
 
 #define TAG PCF("CA")
 
-#define CA_MAX_BUFFER_SIZE 512  // Max length of buffer#define CA_UNICAST_PORT 5383 // The port on which to listen for incoming data#define CA_MULTICAST_ADDR "224.0.1.187"
+#define REQ_CNT 20
+#define CA_MAX_BUFFER_SIZE 512  // Max length of buffer
+#define CA_UNICAST_PORT 5000 // The port on which to listen for incoming data
+#define CA_MULTICAST_ADDR "224.0.1.187"
 #define CA_MULTICAST_PORT 5683
 
 typedef enum
@@ -44,9 +50,12 @@ typedef struct
     int32_t status; // 0: stopped, 1: running
 } CATask_t;
 
-int32_t unicast_receive_socket;
+static int gUnicastPort = 0;
+
+int32_t unicast_receive_socket; // unicast server, unicast client, multicast client
 struct sockaddr_in multicast_send_interface_addr;
-int32_t multicast_receive_socket;
+
+int32_t multicast_receive_socket; // multicast server
 struct sockaddr_in multicast_receive_interface_addr;
 
 static CAPacketReceiveCallback gPacketReceiveCallback = NULL;
@@ -57,8 +66,8 @@ static u_thread_pool_t gThreadPoolHandle = NULL;
 static CAQueueingThread_t gSendThread;
 static CAQueueingThread_t gReceiveThread;
 
-CATask_t unicastListenTask;
-CATask_t multicastListenTask;
+static CATask_t unicastListenTask;
+static CATask_t multicastListenTask;
 
 static void CASendProcess(void* threadData)
 {
@@ -74,7 +83,7 @@ static void CASendProcess(void* threadData)
     if (data->transmissionType == CA_UNICAST)
     {
         // unicast
-        CASendUnicastMessageImpl(data->address, (char*) (data->data));
+        CASendUnicastMessageImpl(data->address, data->port, (char*) (data->data));
     }
     else if (data->transmissionType == CA_MULTICAST)
     {
@@ -96,8 +105,28 @@ static void CAReceiveProcess(void* threadData)
 
     if (gPacketReceiveCallback != NULL)
     {
-        gPacketReceiveCallback(data->address, (char*) (data->data));
+        gPacketReceiveCallback(data->address, data->port, (char*) (data->data));
     }
+}
+
+void CAWiFiSetCallback(CAPacketReceiveCallback callback)
+{
+    gPacketReceiveCallback = callback;
+}
+
+void CAWiFiInitMutex()
+{
+    OIC_LOG(DEBUG, TAG, "CAWiFiInitMutex");
+
+    unicastListenTask.threadMutex = u_mutex_new();
+    unicastListenTask.threadCond = u_cond_new();
+    unicastListenTask.isStop = FALSE;
+    unicastListenTask.status = 0; // stopped
+
+    multicastListenTask.threadMutex = u_mutex_new();
+    multicastListenTask.threadCond = u_cond_new();
+    multicastListenTask.isStop = FALSE;
+    multicastListenTask.status = 0; // stopped
 }
 
 static void CAUnicastListenThread(void* threadData)
@@ -105,24 +134,60 @@ static void CAUnicastListenThread(void* threadData)
     OIC_LOG(DEBUG, TAG, "CAUnicastListenThread");
 
     char buf[CA_MAX_BUFFER_SIZE];
-    int32_t recv_len;
+    uint32_t recv_len;
+
+    int32_t ret = 0;
 
     struct sockaddr_in si_other;
-    int32_t slen = sizeof(si_other);
+    socklen_t slen = sizeof(si_other);
 
-    while (!unicastListenTask.isStop)
+    fd_set reads;
+    struct timeval timeout;
+
+    while (1)
     {
-        OIC_LOG(DEBUG, TAG, "CAUnicastListenThread, Waiting for data...");
-        fflush(stdout);
+        u_mutex_lock(unicastListenTask.threadMutex);
+        int32_t isStop = unicastListenTask.isStop;
+        u_mutex_unlock(unicastListenTask.threadMutex);
+        if (isStop)
+            break;
+
+        // OIC_LOG(DEBUG, TAG, "CAUnicastListenThread, Waiting for data...");
 
         memset(buf, 0, sizeof(char) * CA_MAX_BUFFER_SIZE);
 
-        // try to receive some data, this is a blocking call
-        if ((recv_len = recvfrom(unicast_receive_socket, buf, CA_MAX_BUFFER_SIZE, 0,
-                (struct sockaddr *) &si_other, (socklen_t *) &slen)) == -1)
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        FD_ZERO(&reads);
+
+        // Use select for polling the socket fd
+        FD_SET(unicast_receive_socket, &reads);
+
+        ret = select(unicast_receive_socket + 1, &reads, NULL, NULL, &timeout);
+        if (ret < 0)
         {
-            OIC_LOG(DEBUG, TAG, "CAUnicastListenThread, recv_len() error");
+            // OIC_LOG(DEBUG, TAG, "CAUnicastListenThread, select API failed");
+
             continue;
+        }
+        if (!FD_ISSET(unicast_receive_socket, &reads))
+        {
+            // OIC_LOG(DEBUG, TAG, "CAUnicastListenThread, No data to read");
+            continue;
+        }
+
+        // try to receive some data
+        if ((recv_len = recvfrom(unicast_receive_socket, buf, CA_MAX_BUFFER_SIZE, 0,
+                (struct sockaddr *) &si_other, &slen)) == -1)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s\n", strerror(errno));
+            continue;
+        }
+        else if (0 == recv_len)
+        {
+            OIC_LOG(DEBUG, TAG, "Unicast socket is shutdown, returning from thread\n");
+            return;
         }
 
         // print details of the client/peer and the data received
@@ -141,6 +206,7 @@ static void CAUnicastListenThread(void* threadData)
         td->address = (char*) OICMalloc(sizeof(char) * (len + 1));
         memset(td->address, 0, len + 1);
         memcpy(td->address, _address, len);
+
         td->port = ntohs(si_other.sin_port);
 
         td->data = (void*) OICMalloc(sizeof(void) * CA_MAX_BUFFER_SIZE);
@@ -150,6 +216,7 @@ static void CAUnicastListenThread(void* threadData)
         CAQueueingThreadAddData(&gReceiveThread, td, sizeof(CAThreadData_t));
     }
 
+    u_cond_signal(unicastListenTask.threadCond);
     OIC_LOG(DEBUG, TAG, "end of CAUnicastListenThread");
 }
 
@@ -162,58 +229,86 @@ static void CAMulticastListenThread(void* threadData)
     struct sockaddr_in client;
     int32_t addrlen = sizeof(client);
 
-    OIC_LOG(DEBUG, TAG, "CAMulticastListenThread, waiting for input...");
+    fd_set reads;
+    struct timeval timeout;
 
-    while (!multicastListenTask.isStop)
+    while (1)
     {
-        int32_t recv_bytes = recvfrom(multicast_receive_socket, msgbuf, CA_MAX_BUFFER_SIZE, 0,
-                (struct sockaddr *) &client, (socklen_t *) &addrlen);
-        if (recv_bytes < 0)
+        u_mutex_lock(multicastListenTask.threadMutex);
+        int32_t isStop = multicastListenTask.isStop;
+        u_mutex_unlock(multicastListenTask.threadMutex);
+        if (isStop)
+            break;
+
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        FD_ZERO(&reads);
+
+        // Use select for polling the socket fd
+        FD_SET(multicast_receive_socket, &reads);
+
+        int32_t ret = select(multicast_receive_socket + 1, &reads, NULL, NULL, &timeout);
+        if (ret < 0)
         {
-            if (errno != EAGAIN)
-            {
-                OIC_LOG(DEBUG, TAG, "CAMulticastListenThread, error recvfrom");
-
-                return;
-            }
-
+            // OIC_LOG_V(FATAL, TAG, "CAMulticastListenThread, select API failed");
+            continue;
+        }
+        if (!FD_ISSET(multicast_receive_socket, &reads))
+        {
+            // OIC_LOG_V(DEBUG, TAG, "CAMulticastListenThread, No data to read");
             continue;
         }
 
-        msgbuf[recv_bytes] = 0;
+        // try to receive some data
+        int32_t recv_bytes = 0;
+        if ((recv_bytes = recvfrom(multicast_receive_socket, msgbuf, CA_MAX_BUFFER_SIZE, 0,
+                (struct sockaddr *) &client, (socklen_t *) &addrlen)) == -1)
+        {
+            OIC_LOG_V(DEBUG, TAG, "%s\n", strerror(errno));
+            continue;
+        }
+        else if (0 == recv_bytes)
+        {
+            OIC_LOG_V(ERROR, TAG, "Multicast socket is shutdown, returning from thread\n");
+            OIC_LOG(DEBUG, TAG, "return here ");
+            return;
+        }
 
         OIC_LOG_V(DEBUG, TAG, "Received msg: %s, size: %d", msgbuf, recv_bytes);
 
-        char* sender = inet_ntoa(client.sin_addr);
-        char local[INET_ADDRSTRLEN];
-        CAGetLocalAddress(local);
-        if (strcmp(sender, local) == 0)
-        {
-            OIC_LOG_V(DEBUG, TAG, "skip the local request (via multicast)");
-        }
-        else
-        {
-            // store the data at queue.
-            CAThreadData_t* td = NULL;
-            td = (CAThreadData_t*) OICMalloc(sizeof(CAThreadData_t));
-            memset(td, 0, sizeof(CAThreadData_t));
-            td->transmissionType = 2; // multicast
+        // store the data at queue.
+        CAThreadData_t* td = NULL;
+        td = (CAThreadData_t*) OICMalloc(sizeof(CAThreadData_t));
+        memset(td, 0, sizeof(CAThreadData_t));
+        td->transmissionType = 2; // multicast
 
-            char* _address = inet_ntoa(client.sin_addr);
-            int len = strlen(_address);
-            td->address = (char*) OICMalloc(sizeof(char) * (len + 1));
-            memset(td->address, 0, len + 1);
-            memcpy(td->address, _address, len);
-            td->port = ntohs(client.sin_port);
+        char* _address = inet_ntoa(client.sin_addr);
+        int len = strlen(_address);
+        td->address = (char*) OICMalloc(sizeof(char) * (len + 1));
+        memset(td->address, 0, len + 1);
+        memcpy(td->address, _address, len);
+        td->port = ntohs(client.sin_port);
 
-            td->data = (void*) OICMalloc(sizeof(void) * CA_MAX_BUFFER_SIZE);
-            memset(td->data, 0, CA_MAX_BUFFER_SIZE);
-            memcpy(td->data, msgbuf, sizeof(msgbuf));
+        td->data = (void*) OICMalloc(sizeof(void) * CA_MAX_BUFFER_SIZE);
+        memset(td->data, 0, CA_MAX_BUFFER_SIZE);
+        memcpy(td->data, msgbuf, sizeof(msgbuf));
 
-            CAQueueingThreadAddData(&gReceiveThread, td, sizeof(CAThreadData_t));
-        }
+        CAQueueingThreadAddData(&gReceiveThread, td, sizeof(CAThreadData_t));
 
     }
+
+    // leave the group after you are done
+    int16_t result = setsockopt(multicast_receive_socket, IPPROTO_IP, IP_DROP_MEMBERSHIP,
+            (struct sockaddr *) &multicast_receive_interface_addr,
+            sizeof(multicast_receive_interface_addr));
+    if (result < 0)
+    {
+        OIC_LOG_V(DEBUG, TAG,
+                "CAWiFiStopMulticastServer, cannot leave multicast group, Error code: %s\n",
+                strerror(errno));
+    }
+    u_cond_signal(multicastListenTask.threadCond);
 
     OIC_LOG(DEBUG, TAG, "end of CAMulticastListenThread");
 }
@@ -247,109 +342,36 @@ void CAWiFiInitialize(u_thread_pool_t handle)
         // return res;
         return;
     }
+}
 
-    unicastListenTask.threadMutex = u_mutex_new();
-    unicastListenTask.threadCond = u_cond_new();
-    unicastListenTask.isStop = FALSE;
-    unicastListenTask.status = 0; // stopped
-
-    multicastListenTask.threadMutex = u_mutex_new();
-    multicastListenTask.threadCond = u_cond_new();
-    multicastListenTask.isStop = FALSE;
-    multicastListenTask.status = 0; // stopped
-
-    // [UDP Server]
-    struct sockaddr_in si_me;
-
-    // create a UDP socket
-    if ((unicast_receive_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+int32_t CABindUnicastSocket()
+{
+    int32_t i;
+    for (i = 0; i < 100; i++)
     {
-        OIC_LOG_V(DEBUG, TAG, "CAWiFiInit, creating socket failed");
+        int32_t port = CA_UNICAST_PORT + i;
 
-        return;
+        struct sockaddr_in si_me;
+        memset((char *) &si_me, 0, sizeof(si_me));
+        si_me.sin_family = AF_INET;
+        si_me.sin_port = htons(port);
+        si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+
+        // bind socket to port
+        if (bind(unicast_receive_socket, (struct sockaddr*) &si_me, sizeof(si_me)) == 0)
+        {
+            OIC_LOG_V(DEBUG, TAG, "CABindUnicastSocket, socket binded, port: %d", port);
+
+            gUnicastPort = port;
+
+            return 0;
+        }
+
     }
 
-    OIC_LOG_V(DEBUG, TAG, "CAWiFiInit, socket created");
+    OIC_LOG(DEBUG, TAG, "CABindUnicastSocket, binding socket failed");
 
-    // [multicast sender]
-    uint32_t multiTTL = 1;
-
-    // zero out the structure
-    memset((char *) &si_me, 0, sizeof(si_me));
-
-    si_me.sin_family = AF_INET;
-    si_me.sin_port = htons(CA_UNICAST_PORT);
-    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    int32_t ret_val = setsockopt(unicast_receive_socket, SOL_SOCKET, SO_REUSEADDR, &multiTTL,
-            sizeof(multiTTL));
-    if (ret_val < 0)
-    {
-        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Failed to set REUSEADDR");
-    }
-
-    // bind socket to port
-    if (bind(unicast_receive_socket, (struct sockaddr*) &si_me, sizeof(si_me)) == -1)
-    {
-        OIC_LOG(DEBUG, TAG, "CAWiFiInit, binding socket failed");
-
-        return;
-    }
-
-    OIC_LOG(DEBUG, TAG, "CAWiFiInit, socket binded");
-
-    memset(&multicast_send_interface_addr, 0, sizeof(multicast_send_interface_addr));
-    multicast_send_interface_addr.sin_family = AF_INET;
-    multicast_send_interface_addr.sin_addr.s_addr = inet_addr(CA_MULTICAST_ADDR);
-    multicast_send_interface_addr.sin_port = htons(CA_MULTICAST_PORT);
-
-    // [multicast receiver]
-    // 1. Create a typical UDP socket and set Non-blocking for reading
-    multicast_receive_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (multicast_receive_socket < 0)
-    {
-        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Socket error");
-
-        return;
-    }
-
-    // 2. Allow multiple sockets to use the same port number
-    ret_val = setsockopt(multicast_receive_socket, SOL_SOCKET, SO_REUSEADDR, &multiTTL,
-            sizeof(multiTTL));
-    if (ret_val < 0)
-    {
-        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Failed to set REUSEADDR");
-    }
-
-    // 3. Set up the interface
-    memset(&multicast_receive_interface_addr, 0, sizeof(multicast_receive_interface_addr));
-    multicast_receive_interface_addr.sin_family = AF_INET;
-    multicast_receive_interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    multicast_receive_interface_addr.sin_port = htons(CA_MULTICAST_PORT);
-
-    // 4. Bind to the interface
-    ret_val = bind(multicast_receive_socket, (struct sockaddr *) &multicast_receive_interface_addr,
-            sizeof(multicast_receive_interface_addr));
-    if (ret_val < 0)
-    {
-        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Failed to bind socket");
-
-        return;
-    }
-
-    // 5. Join the multicast group
-    struct ip_mreq mreq;
-    memset(&mreq, 0, sizeof(mreq));
-    mreq.imr_multiaddr.s_addr = inet_addr(CA_MULTICAST_ADDR);
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-    ret_val = setsockopt(multicast_receive_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq,
-            sizeof(mreq));
-    if (ret_val < 0)
-    {
-        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Failed to join multicast group");
-
-        return;
-    }
+    return -1;
 }
 
 void CAWiFiTerminate()
@@ -358,13 +380,6 @@ void CAWiFiTerminate()
 
     close(unicast_receive_socket);
     close(multicast_receive_socket);
-
-    shutdown(unicast_receive_socket, 2);
-    shutdown(multicast_receive_socket, 2);
-
-    CAWiFiStopUnicastServer(0);
-
-    CAWiFiStopMulticastServer(0);
 
     // stop thread
     CAQueueingThreadStop(&gSendThread);
@@ -377,20 +392,20 @@ void CAWiFiTerminate()
     CAQueueingThreadDestroy(&gReceiveThread);
 
     u_mutex_free(unicastListenTask.threadMutex);
-    u_cond_free(unicastListenTask.threadCond);
 
     u_mutex_free(multicastListenTask.threadMutex);
-    u_cond_free(multicastListenTask.threadCond);
 
+    OIC_LOG(DEBUG, TAG, "end of CAWiFiTerminate");
 }
 
-int32_t CAWiFiSendUnicastMessage(const char* address, const char* data, int lengh)
+int32_t CAWiFiSendUnicastMessage(const char* address, const int port, char* data, int lengh)
 {
     // store the data at queue.
     CAThreadData_t* td = NULL;
     td = (CAThreadData_t*) OICMalloc(sizeof(CAThreadData_t));
     if (td == NULL)
     {
+        OICFree(data);
         return 0;
     }
     memset(td, 0, sizeof(CAThreadData_t));
@@ -406,9 +421,11 @@ int32_t CAWiFiSendUnicastMessage(const char* address, const char* data, int leng
     {
         OIC_LOG_V(DEBUG, TAG, "Memory Full");
         OICFree(td);
+        OICFree(data);
         return 0;
     }
 
+    td->port = port;
     td->data = data;
 
     CAQueueingThreadAddData(&gSendThread, td, sizeof(CAThreadData_t));
@@ -416,7 +433,7 @@ int32_t CAWiFiSendUnicastMessage(const char* address, const char* data, int leng
     return 0;
 }
 
-int32_t CAWiFiSendMulticastMessage(const char* m_address, const char* data)
+int32_t CAWiFiSendMulticastMessage(const char* m_address, char* data)
 {
     // store the data at queue.
     CAThreadData_t* td = NULL;
@@ -429,6 +446,7 @@ int32_t CAWiFiSendMulticastMessage(const char* m_address, const char* data)
     memset(td, 0, sizeof(CAThreadData_t));
     td->transmissionType = CA_MULTICAST; // multicast type
     td->address = NULL;
+    td->port = 0;
     td->data = data;
 
     CAQueueingThreadAddData(&gSendThread, td, sizeof(CAThreadData_t));
@@ -438,7 +456,7 @@ int32_t CAWiFiSendMulticastMessage(const char* m_address, const char* data)
 
 int32_t CAWiFiStartUnicastServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAWiFiStartUnicastServer(%s, %d)", "0.0.0.0", CA_UNICAST_PORT);
+    OIC_LOG_V(DEBUG, TAG, "CAWiFiStartUnicastServer");
 
     // check the server status
     if (unicastListenTask.status == 1)
@@ -446,6 +464,51 @@ int32_t CAWiFiStartUnicastServer()
         OIC_LOG(DEBUG, TAG, "CAWiFiStartUnicastServer, already running");
 
         return 0;
+    }
+
+    // 1. create a UDP socket
+    if ((unicast_receive_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CAWiFiInitialize, creating socket failed");
+
+        return -1;
+    }
+
+    OIC_LOG(DEBUG, TAG, "CAWiFiInitialize, socket created");
+
+    // 2. Make the socket non-blocking
+    int16_t status = 0;
+    if ((status = fcntl(unicast_receive_socket, F_SETFL, O_NONBLOCK)) < 0)
+    {
+        OIC_LOG_V(ERROR, TAG,
+                "CAWiFiInitialize, fcntl to make the socket non-blocking failed, Error code: %s",
+                strerror(errno));
+
+        close(unicast_receive_socket);
+
+        return -1;
+    }
+
+    OIC_LOG(DEBUG, TAG, "CAWiFiInitialize, socket creation success");
+
+    // 3. set socket option // This is will allow server , client bining on same socket
+    /* uint32_t multiTTL = 1;
+     int32_t ret_val = setsockopt(unicast_receive_socket, SOL_SOCKET, SO_REUSEADDR, &multiTTL,
+     sizeof(multiTTL));
+     if (ret_val < 0)
+     {
+     OIC_LOG(DEBUG, TAG, "CAWiFiInit, Failed to set REUSEADDR");
+     close(unicast_receive_socket);
+
+     return -1;
+     }*/
+
+    // 4. bind socket
+    if (CABindUnicastSocket() == -1)
+    {
+        close(unicast_receive_socket);
+
+        return -1;
     }
 
     // unicast listen thread
@@ -457,6 +520,7 @@ int32_t CAWiFiStartUnicastServer()
     }
 
     unicastListenTask.status = 1; // running
+    OIC_LOG_V(DEBUG, TAG, "CAWiFiStartUnicastServer(%s, %d)", "Local Address", gUnicastPort);
 
     return 0;
 }
@@ -471,6 +535,75 @@ int32_t CAWiFiStartMulticastServer()
         OIC_LOG(DEBUG, TAG, "CAWiFiStartMulticastServer, already running");
 
         return 0;
+    }
+
+    memset(&multicast_send_interface_addr, 0, sizeof(multicast_send_interface_addr));
+    multicast_send_interface_addr.sin_family = AF_INET;
+    multicast_send_interface_addr.sin_addr.s_addr = inet_addr(CA_MULTICAST_ADDR);
+    multicast_send_interface_addr.sin_port = htons(CA_MULTICAST_PORT);
+
+    // 1. Create a typical UDP socket and set Non-blocking for reading
+    multicast_receive_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (multicast_receive_socket == -1)
+    {
+        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Socket error");
+
+        return -1;
+    }
+
+    // 2. Make the socket non-blocking
+    int16_t status = 0;
+    if ((status = fcntl(multicast_receive_socket, F_SETFL, O_NONBLOCK)) < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "fcntl to make the socket non-blocking failed, Error code: %s",
+                strerror(errno));
+        close(multicast_receive_socket);
+
+        return -1;
+    }
+
+    // 2. Allow multiple sockets to use the same port number
+    uint32_t multiTTL = 1;
+    int32_t ret_val = setsockopt(multicast_receive_socket, SOL_SOCKET, SO_REUSEADDR, &multiTTL,
+            sizeof(multiTTL));
+    if (ret_val < 0)
+    {
+        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Failed to set REUSEADDR");
+        close(multicast_receive_socket);
+
+        return -1;
+    }
+
+    // 3. Set up the interface
+    memset(&multicast_receive_interface_addr, 0, sizeof(multicast_receive_interface_addr));
+    multicast_receive_interface_addr.sin_family = AF_INET;
+    multicast_receive_interface_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    multicast_receive_interface_addr.sin_port = htons(CA_MULTICAST_PORT);
+
+    // 4. Bind to the interface
+    ret_val = bind(multicast_receive_socket, (struct sockaddr *) &multicast_receive_interface_addr,
+            sizeof(multicast_receive_interface_addr));
+    if (ret_val < 0)
+    {
+        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Failed to bind socket");
+        close(multicast_receive_socket);
+
+        return -1;
+    }
+
+    // 5. Join the multicast group
+    struct ip_mreq mreq;
+    memset(&mreq, 0, sizeof(mreq));
+    mreq.imr_multiaddr.s_addr = inet_addr(CA_MULTICAST_ADDR);
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    ret_val = setsockopt(multicast_receive_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq,
+            sizeof(mreq));
+    if (ret_val < 0)
+    {
+        OIC_LOG(DEBUG, TAG, "CAWiFiInit, Failed to join multicast group");
+        close(multicast_receive_socket);
+
+        return -1;
     }
 
     // multicast listen thread
@@ -490,19 +623,31 @@ int32_t CAWiFiStopUnicastServer()
 {
     OIC_LOG(DEBUG, TAG, "CAWiFiStopUnicastServer");
 
+    // check the server status
+    if (unicastListenTask.status == 0)
+    {
+        OIC_LOG(DEBUG, TAG, "CAWiFiStopUnicastServer, already stopped");
+
+        return 0;
+    }
+
     // mutex lock
     u_mutex_lock(unicastListenTask.threadMutex);
 
     // set stop flag
     unicastListenTask.isStop = TRUE;
 
+    u_cond_wait(unicastListenTask.threadCond, unicastListenTask.threadMutex);
+
     // notity the thread
-    u_cond_signal(unicastListenTask.threadCond);
+    // u_cond_signal(unicastListenTask.threadCond);
 
     // mutex unlock
     u_mutex_unlock(unicastListenTask.threadMutex);
 
     unicastListenTask.status = 0; // stopped
+
+    // close(unicast_receive_socket);
 
     return 0;
 }
@@ -511,14 +656,21 @@ int32_t CAWiFiStopMulticastServer()
 {
     OIC_LOG(DEBUG, TAG, "CAWiFiStopMulticastServer");
 
+    // check the server status
+    if (multicastListenTask.status == 0)
+    {
+        OIC_LOG(DEBUG, TAG, "CAWiFiStopMulticastServer, already stopped");
+
+        return 0;
+    }
+
     // mutex lock
     u_mutex_lock(multicastListenTask.threadMutex);
 
     // set stop flag
     multicastListenTask.isStop = TRUE;
 
-    // notity the thread
-    u_cond_signal(multicastListenTask.threadCond);
+    u_cond_wait(multicastListenTask.threadCond, multicastListenTask.threadMutex);
 
     // mutex unlock
     u_mutex_unlock(multicastListenTask.threadMutex);
@@ -526,11 +678,6 @@ int32_t CAWiFiStopMulticastServer()
     multicastListenTask.status = 0; // stopped
 
     return 0;
-}
-
-void CAWiFiSetCallback(CAPacketReceiveCallback callback)
-{
-    gPacketReceiveCallback = callback;
 }
 
 void CAGetLocalAddress(char* addressBuffer)
@@ -568,9 +715,10 @@ void CAGetLocalAddress(char* addressBuffer)
         freeifaddrs(ifAddrStruct);
 }
 
-int32_t CASendUnicastMessageImpl(const char* address, const char* data)
+int32_t CASendUnicastMessageImpl(const char* address, const int port, const char* data)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendUnicastMessageImpl, address: %s, data: %s", address, data);
+    OIC_LOG_V(DEBUG, TAG, "CASendUnicastMessageImpl, address: %s:%d, data: %s", address, port,
+            data);
 
     // [UDP Client]
 
@@ -580,7 +728,7 @@ int32_t CASendUnicastMessageImpl(const char* address, const char* data)
     memset((char *) &si_other, 0, sizeof(si_other));
 
     si_other.sin_family = AF_INET;
-    si_other.sin_port = htons(CA_UNICAST_PORT);
+    si_other.sin_port = htons(port);
     if (inet_aton(address, &si_other.sin_addr) == 0)
     {
         OIC_LOG(DEBUG, TAG, "CASendUnicastMessageImpl, inet_aton, error...");
@@ -614,4 +762,86 @@ int32_t CASendMulticastMessageImpl(const char* msg)
     }
 
     return 0;
+}
+
+CAResult_t CAGetWIFIInterfaceInfo(CALocalConnectivity_t **info, uint32_t* size)
+{
+    uint32_t cnt, req_cnt = REQ_CNT;
+    int32_t fd;
+    uint32_t cmd = SIOCGIFCONF;
+    uint32_t resSize = 0;
+    char* localIPAddress;
+    struct sockaddr_in *sock;
+    struct ifconf ifc;
+    struct ifreq *ifr;
+
+    memset((void *) &ifc, 0, sizeof(struct ifconf));
+    ifc.ifc_len = sizeof(struct ifconf) * req_cnt;
+    ifc.ifc_buf = NULL;
+    ifc.ifc_buf = malloc(ifc.ifc_len);
+
+    if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        OIC_LOG(DEBUG, TAG, "create socket error!");
+        return CA_STATUS_FAILED;
+    }
+
+    if (ioctl(fd, cmd, &ifc) < 0)
+    {
+        OIC_LOG(DEBUG, TAG, "SIOCGIFCONF fail");
+        close(fd);
+        return CA_STATUS_FAILED;
+    }
+    close(fd);
+
+    if (ifc.ifc_len > (sizeof(struct ifreq) * req_cnt))
+    {
+        req_cnt = ifc.ifc_len;
+        ifc.ifc_buf = realloc(ifc.ifc_buf, req_cnt);
+    }
+
+    ifr = ifc.ifc_req;
+    for (cnt = 0; cnt < ifc.ifc_len; cnt += sizeof(struct ifreq), ifr++)
+    {
+        sock = (struct sockaddr_in *) &ifr->ifr_addr;
+
+        // except loopback address
+        if (ntohl(sock->sin_addr.s_addr) == INADDR_LOOPBACK)
+            continue;
+
+        // get local address
+        localIPAddress = inet_ntoa(sock->sin_addr);
+
+        CALocalConnectivity_t* localInfo;
+
+        // memory allocation
+        localInfo = (CALocalConnectivity_t*) OICMalloc(sizeof(CALocalConnectivity_t));
+        if (localInfo == NULL)
+        {
+            OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+            free(localInfo);
+            return CA_STATUS_FAILED;
+        }
+        memset(localInfo, 0, sizeof(CALocalConnectivity_t));
+
+        if (strlen(localIPAddress) > CA_IPADDR_SIZE)
+        {
+            OIC_LOG_V(DEBUG, TAG, "address size is wrong!!");
+            free(localInfo);
+            return CA_STATUS_FAILED;
+        }
+        // set local ip address
+        strncpy(localInfo->addressInfo.IP.ipAddress, localIPAddress, strlen(localIPAddress));
+
+        // set network type
+        localInfo->type = CA_WIFI;
+
+        *info = localInfo;
+
+        resSize++;
+    }
+
+    *size = resSize;
+
+    return CA_STATUS_OK;
 }

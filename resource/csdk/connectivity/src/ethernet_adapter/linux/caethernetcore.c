@@ -10,6 +10,8 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 #include "caethernetcore.h"
 #include "logger.h"
@@ -20,6 +22,7 @@
 
 #define TAG PCF("CA")
 
+#define REQ_CNT 20
 #define CA_MAX_BUFFER_SIZE 512  // Max length of buffer
 #define CA_UNICAST_PORT 5383 // The port on which to listen for incoming data
 #define CA_MULTICAST_ADDR "224.0.1.187"
@@ -128,8 +131,7 @@ static void CAUnicastListenThread(void* threadData)
 
         // print details of the client/peer and the data received
         OIC_LOG_V(DEBUG, TAG, "CAUnicastListenThread, Received packet from %s:%d",
-                inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-        OIC_LOG_V(DEBUG, TAG, "CAUnicastListenThread, Data: %s", buf);
+                inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));OIC_LOG_V(DEBUG, TAG, "CAUnicastListenThread, Data: %s", buf);
 
         // store the data at queue.
         CAThreadData_t* td = NULL;
@@ -219,7 +221,6 @@ static void CAMulticastListenThread(void* threadData)
 
     OIC_LOG(DEBUG, TAG, "end of CAMulticastListenThread");
 }
-
 void CAEthernetInitialize(u_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CAEthernetInitialize");
@@ -246,7 +247,7 @@ void CAEthernetInitialize(u_thread_pool_t handle)
     if (res != CA_STATUS_OK)
     {
         OIC_LOG(DEBUG, TAG, "thread start is error (receive thread)");
-        // return res;
+
         return;
     }
 
@@ -267,7 +268,6 @@ void CAEthernetInitialize(u_thread_pool_t handle)
     if ((unicast_receive_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
         OIC_LOG_V(DEBUG, TAG, "CAEthernetInit, creating socket failed");
-
         return;
     }
 
@@ -386,7 +386,7 @@ void CAEthernetTerminate()
 
 }
 
-int32_t CAEthernetSendUnicastMessage(const char* address, const char* data, int lengh)
+int32_t CAEthernetSendUnicastMessage(const char* address, char* data, int lengh)
 {
     // store the data at queue.
     CAThreadData_t* td = NULL;
@@ -419,7 +419,7 @@ int32_t CAEthernetSendUnicastMessage(const char* address, const char* data, int 
     return 0;
 }
 
-int32_t CAEthernetSendMulticastMessage(const char* m_address, const char* data)
+int32_t CAEthernetSendMulticastMessage(const char* m_address, char* data)
 {
     // store the data at queue.
     CAThreadData_t* td = NULL;
@@ -619,4 +619,87 @@ int32_t CAEthernetSendMulticastMessageImpl(const char* msg)
     }
 
     return 0;
+}
+
+CAResult_t CAGetEthernetInterfaceInfo(CALocalConnectivity_t **info, uint32_t* size)
+{
+    uint32_t cnt, req_cnt = REQ_CNT;
+    int32_t fd;
+    uint32_t cmd = SIOCGIFCONF;
+    uint32_t resSize = 0;
+    char* localIPAddress;
+    struct sockaddr_in *sock;
+    struct ifconf ifc;
+    struct ifreq *ifr;
+
+    memset((void *) &ifc, 0, sizeof(struct ifconf));
+    ifc.ifc_len = sizeof(struct ifconf) * req_cnt;
+    ifc.ifc_buf = NULL;
+    ifc.ifc_buf = malloc(ifc.ifc_len);
+
+    if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        OIC_LOG(DEBUG, TAG, "create socket error!");
+        return CA_STATUS_FAILED;
+    }
+
+    if (ioctl(fd, cmd, &ifc) < 0)
+    {
+        OIC_LOG(DEBUG, TAG, "SIOCGIFCONF fail");
+        close(fd);
+        return CA_STATUS_FAILED;
+    }
+
+    close(fd);
+
+    if (ifc.ifc_len > (sizeof(struct ifreq) * req_cnt))
+    {
+        req_cnt = ifc.ifc_len;
+        ifc.ifc_buf = realloc(ifc.ifc_buf, req_cnt);
+    }
+
+    ifr = ifc.ifc_req;
+    for (cnt = 0; cnt < ifc.ifc_len; cnt += sizeof(struct ifreq), ifr++)
+    {
+        sock = (struct sockaddr_in *) &ifr->ifr_addr;
+
+        // except loopback address
+        if (ntohl(sock->sin_addr.s_addr) == INADDR_LOOPBACK)
+            continue;
+
+        // get local address
+        localIPAddress = inet_ntoa(sock->sin_addr);
+
+        CALocalConnectivity_t* localInfo;
+
+        // memory allocation
+        localInfo = (CALocalConnectivity_t*) OICMalloc(sizeof(CALocalConnectivity_t));
+        if (localInfo == NULL)
+        {
+            OIC_LOG_V(DEBUG, TAG, "memory alloc error!!");
+            free(localInfo);
+            return CA_STATUS_FAILED;
+        }
+        memset(localInfo, 0, sizeof(CALocalConnectivity_t));
+
+        if (strlen(localIPAddress) > CA_IPADDR_SIZE)
+        {
+            OIC_LOG_V(DEBUG, TAG, "address size is wrong!!");
+            free(localInfo);
+            return CA_STATUS_FAILED;
+        }
+        // set local ip address
+        strncpy(localInfo->addressInfo.IP.ipAddress, localIPAddress, strlen(localIPAddress));
+
+        // set network type
+        localInfo->type = CA_ETHERNET;
+
+        *info = localInfo;
+
+        resSize++;
+    }
+
+    *size = resSize;
+
+    return CA_STATUS_OK;
 }

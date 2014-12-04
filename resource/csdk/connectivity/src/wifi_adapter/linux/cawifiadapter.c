@@ -35,10 +35,10 @@
 static CANetworkPacketReceivedCallback gWifiReceivedCallback = NULL;
 static u_thread_pool_t gThreadPoolHandle = NULL;
 
-static void CAWiFiPacketReceiveCallback(char* address, const char* data)
+static void CAWiFiPacketReceiveCallback(char* address, const int port, const char* data)
 {
     OIC_LOG_V(DEBUG, TAG,
-            "CAWiFiPacketReceiveCallback, from: %s, data: %s", address, data);
+            "CAWiFiPacketReceiveCallback, from: %s:%d, data: %s", address, port, data);
 
     // call the callback
     if (gWifiReceivedCallback != NULL)
@@ -48,10 +48,14 @@ static void CAWiFiPacketReceiveCallback(char* address, const char* data)
 
         // set address
         memset((void*) endpoint->addressInfo.IP.ipAddress, 0, CA_IPADDR_SIZE);
-        if (CA_IPADDR_SIZE > strlen(address)) {
+        if (CA_IPADDR_SIZE > strlen(address))
+        {
             strcpy((char*) endpoint->addressInfo.IP.ipAddress, address);
         }
         OICFree(address);
+
+        // set port
+        endpoint->addressInfo.IP.port = port;
 
         // set connectivity type
         endpoint->connectivityType = CA_WIFI;
@@ -78,8 +82,6 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
     handler.startDiscoverServer = CAStartWIFIDiscoveryServer;
     handler.sendData = CASendWIFIUnicastData;
     handler.sendDataToAll = CASendWIFIMulticastData;
-    handler.startNotifyServer = CAStartWIFINotifyRecvServers;
-    handler.sendNotification = CASendWIFINotification;
     handler.GetnetInfo = CAGetWIFIInterfaceInformation;
     handler.readData = CAReadWIFIData;
     handler.stopAdapter = CAStopWIFI;
@@ -89,6 +91,10 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
 
     CAWiFiSetCallback(CAWiFiPacketReceiveCallback);
 
+    CAWiFiInitMutex();
+
+    CAWiFiInitialize(gThreadPoolHandle);
+
     return CA_STATUS_OK;
 }
 
@@ -96,14 +102,15 @@ void CATerminateWIfI()
 {
     OIC_LOG(DEBUG, TAG, "TerminateWifi");
 
+    OIC_LOG(DEBUG, TAG, "[ToDo] call CAStopWIFI in TerminateWifi");
+    CAStopWIFI();
+
     CAWiFiTerminate();
 }
 
 CAResult_t CAStartWIFI()
 {
     OIC_LOG(DEBUG, TAG, "CAStartWIFI");
-    //CAWiFiInitialize();
-    CAWiFiInitialize(gThreadPoolHandle);
 
     OIC_LOG(DEBUG, TAG, "CAWiFiStartUnicastServer");
     int32_t res = CAWiFiStartUnicastServer("0.0.0.0", atoi("5283"));
@@ -118,7 +125,9 @@ CAResult_t CAStopWIFI()
 {
     OIC_LOG(DEBUG, TAG, "CAStopWIFI");
 
-    // ToDo:
+    CAWiFiStopUnicastServer(0);
+
+    CAWiFiStopMulticastServer(0);
 
     return CA_STATUS_OK;
 }
@@ -151,7 +160,8 @@ uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t* endpoint, void* data, u
 {
     OIC_LOG(DEBUG, TAG, "SendWIFIUnicastData");
 
-    CAWiFiSendUnicastMessage(endpoint->addressInfo.IP.ipAddress, data, dataLen);
+    CAWiFiSendUnicastMessage(endpoint->addressInfo.IP.ipAddress, endpoint->addressInfo.IP.port,
+            data, dataLen);
 
     return 0;
 }
@@ -165,29 +175,11 @@ uint32_t CASendWIFIMulticastData(void* data, uint32_t dataLen)
     return 0;
 }
 
-CAResult_t CAStartWIFINotifyRecvServers()
-{
-    OIC_LOG(DEBUG, TAG, "StartWIFINotifyRecvServers");
-
-    // ToDo:
-
-    return CA_STATUS_OK;
-}
-
-uint32_t CASendWIFINotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
-{
-    OIC_LOG(DEBUG, TAG, "SendWIFINotification");
-
-    // ToDo:
-
-    return 0;
-}
-
 CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
 {
     OIC_LOG(DEBUG, TAG, "GetWIFIInterfaceInformation");
 
-    // ToDo:
+    CAGetWIFIInterfaceInfo(info, size);
 
     return CA_STATUS_OK;
 }

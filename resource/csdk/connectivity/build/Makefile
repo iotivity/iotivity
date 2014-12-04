@@ -26,6 +26,7 @@
 BUILD	 := debug
 PLATFORM := linux
 TRANSPORT := ALL
+APPNAME := casample
 OBJ_DIR := ./bin
 VERSION_MAJOR := 0
 VERSION_MINOR := 1
@@ -39,14 +40,14 @@ all:
 else ifeq ($(PLATFORM),arduinomega)
 $(info *********ArduinoMega Build!!**********)
 all:
-	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT)
-	sudo sh arduino/build.sh make $(PLATFORM) $(TRANSPORT)
+	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(APPNAME)
+	sudo sh arduino/build.sh make $(PLATFORM) $(TRANSPORT) $(APPNAME)
 
 clean:	
-	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT)
+	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(APPNAME)
 
 install:
-	sudo sh arduino/build.sh install $(PLATFORM) $(TRANSPORT)
+	sudo sh arduino/build.sh install $(PLATFORM) $(TRANSPORT) $(APPNAME)
 	
 else
    $(info *********error**********)

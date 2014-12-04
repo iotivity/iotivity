@@ -24,7 +24,11 @@
 #define COAP_DEFAULT_PORT           5683 /* CoAP default UDP port */
 #define COAP_DEFAULT_MAX_AGE          60 /* default maximum object lifetime in seconds */
 #ifndef COAP_MAX_PDU_SIZE
-#define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU */
+#ifdef WITH_ARDUINO
+#define COAP_MAX_PDU_SIZE           320 /* maximum size of a CoAP PDU for embedded platforms*/
+#else
+#define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU for big platforms*/
+#endif
 #endif /* COAP_MAX_PDU_SIZE */
 
 #define COAP_DEFAULT_VERSION           1 /* version of CoAP supported */
@@ -216,7 +220,8 @@ typedef struct
     unsigned char *data; /**< payload */
 
 #ifdef WITH_LWIP
-    struct pbuf *pbuf; /**< lwIP PBUF. The allocated coap_pdu_t will always reside inside the pbuf's payload, but the pointer has to be kept because no exact offset can be given. This field must not be accessed from outside, because the pbuf's reference count is checked to be 1 when the pbuf is assigned to the pdu, and the pbuf stays exclusive to this pdu. */
+    struct pbuf
+            *pbuf; /**< lwIP PBUF. The allocated coap_pdu_t will always reside inside the pbuf's payload, but the pointer has to be kept because no exact offset can be given. This field must not be accessed from outside, because the pbuf's reference count is checked to be 1 when the pbuf is assigned to the pdu, and the pbuf stays exclusive to this pdu. */
 #endif
 
 } coap_pdu_t;

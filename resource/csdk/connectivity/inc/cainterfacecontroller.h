@@ -38,11 +38,11 @@ void CAStartAdapter(CAConnectivityType_t connectivity);
 
 void CAStopAdapter(CAConnectivityType_t connectivity);
 
-CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t* size);
+CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size);
 
-CAResult_t CASendUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t length);
+CAResult_t CASendUnicastData(CARemoteEndpoint_t* endpoint, void* data, uint32_t length);
 
-CAResult_t CASendMulticastData(void* data, uint32_t length);
+CAResult_t CASendMulticastData(void *data, uint32_t length);
 
 CAResult_t CAStartListeningServerAdapters();
 

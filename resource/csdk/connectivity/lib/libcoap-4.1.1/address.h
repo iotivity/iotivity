@@ -36,6 +36,10 @@
 #include <sys/socket.h>
 #endif
 
+#ifdef WITH_ARDUINO
+#define DEV_ADDR_SIZE_MAX (16)
+#endif
+
 #ifdef WITH_LWIP
 #include <lwip/ip_addr.h>
 
@@ -131,6 +135,45 @@ _coap_is_mcast_impl(const coap_address_t *a)
     return 0;
 }
 #endif /* WITH_POSIX */
+
+#ifdef WITH_ARDUINO
+typedef struct coap_address_t
+{
+    uint32_t     size;                    /**< length of the address stored in addr field. */
+    uint8_t      addr[DEV_ADDR_SIZE_MAX]; /**< device address. */
+} coap_address_t;
+
+static inline int
+_coap_address_equals_impl(const coap_address_t *a,
+                          const coap_address_t *b)
+{
+    uint32_t i;
+
+    if ((a == NULL) || (b == NULL))
+        return 0;
+
+    if (a->size != b->size)
+        return 0;
+
+    for (i = 0; i < a->size; i++)
+    {
+        if (a->addr[i] != b->addr[i])
+            return 0;
+    }
+    return 1;
+}
+
+static inline int
+_coap_is_mcast_impl(const coap_address_t *a)
+{
+    if (!a)
+        return 0;
+
+    /* TODO */
+    return 0;
+}
+
+#endif /* WITH_ARDUINO */
 
 /**
  * Resets the given coap_address_t object @p addr to its default

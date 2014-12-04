@@ -35,15 +35,21 @@ extern "C"
 {
 #endif
 
-typedef void (*CAPacketReceiveCallback)(const char* address, const char* data);
+typedef void (*CAPacketReceiveCallback)(char* address, const int port, const char* data);
+
+void CAWiFiSetCallback(CAPacketReceiveCallback callback);
+
+void CAWiFiInitMutex();
 
 void CAWiFiInitialize(u_thread_pool_t handle);
 
+int32_t CABindUnicastSocket();
+
 void CAWiFiTerminate();
 
-int32_t CAWiFiSendUnicastMessage(const char* address, const char* data, int32_t length);
+int32_t CAWiFiSendUnicastMessage(const char* address, const int port, char* data, int32_t length);
 
-int32_t CAWiFiSendMulticastMessage(const char* m_address, const char* data);
+int32_t CAWiFiSendMulticastMessage(const char* m_address, char* data);
 
 int32_t CAWiFiStartUnicastServer();
 
@@ -53,13 +59,13 @@ int32_t CAWiFiStopUnicastServer();
 
 int32_t CAWiFiStopMulticastServer();
 
-void CAWiFiSetCallback(CAPacketReceiveCallback callback);
+void CAGetLocalAddress(char *addressBuffer);
 
-void CAGetLocalAddress(char* addressBuffer);
+int32_t CASendUnicastMessageImpl(const char *address, const int port, const char *data);
 
-int32_t CASendUnicastMessageImpl(const char* address, const char* data);
+int32_t CASendMulticastMessageImpl(const char *msg);
 
-int32_t CASendMulticastMessageImpl(const char* msg);
+CAResult_t CAGetWIFIInterfaceInfo(CALocalConnectivity_t **info, uint32_t* size);
 
 #ifdef __cplusplus
 } /* extern "C" */

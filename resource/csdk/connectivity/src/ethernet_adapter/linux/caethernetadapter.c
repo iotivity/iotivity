@@ -35,9 +35,10 @@
 static CANetworkPacketReceivedCallback gEthernetReceivedCallback = NULL;
 static u_thread_pool_t gThreadPoolHandle = NULL;
 
-static void CAEthernetPacketReceiveCallback(const char* address, const char* data)
+static void CAEthernetPacketReceiveCallback(char* address, const char* data)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAethernetPacketReceiveCallback, from: %s, data: %s", address, data);
+    OIC_LOG_V(DEBUG, TAG,
+            "CAethernetPacketReceiveCallback, from: %s, data: %s", address, data);
 
     // call the callback
     if (gEthernetReceivedCallback != NULL)
@@ -47,11 +48,10 @@ static void CAEthernetPacketReceiveCallback(const char* address, const char* dat
 
         // set address
         memset((void*) endpoint->addressInfo.IP.ipAddress, 0, CA_IPADDR_SIZE);
-        if (CA_IPADDR_SIZE > strlen(address))
-        {
+        if (CA_IPADDR_SIZE > strlen(address)) {
             strcpy((char*) endpoint->addressInfo.IP.ipAddress, address);
         }
-        free(address);
+        OICFree(address);
 
         // set connectivity type
         endpoint->connectivityType = CA_ETHERNET;
@@ -78,8 +78,6 @@ CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
     handler.startDiscoverServer = CAStartEthernetDiscoveryServer;
     handler.sendData = CASendEthernetUnicastData;
     handler.sendDataToAll = CASendEthernetMulticastData;
-    handler.startNotifyServer = CAStartEthernetNotifyRecvServers;
-    handler.sendNotification = CASendEthernetNotification;
     handler.GetnetInfo = CAGetEthernetInterfaceInformation;
     handler.readData = CAReadEthernetData;
     handler.stopAdapter = CAStopEthernet;
@@ -165,30 +163,11 @@ uint32_t CASendEthernetMulticastData(void* data, uint32_t dataLen)
     return 0;
 }
 
-CAResult_t CAStartEthernetNotifyRecvServers()
-{
-    OIC_LOG(DEBUG, TAG, "StartEthernetNotifyRecvServers");
-
-    // ToDo:
-
-    return CA_STATUS_OK;
-}
-
-uint32_t CASendEthernetNotification(const CARemoteEndpoint_t* endpoint, void* data,
-        uint32_t dataLen)
-{
-    OIC_LOG(DEBUG, TAG, "SendEthernetNotification");
-
-    // ToDo:
-
-    return 0;
-}
-
 CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
 {
     OIC_LOG(DEBUG, TAG, "GetEthernetInterfaceInformation");
 
-    // ToDo:
+    CAGetEthernetInterfaceInfo(info, size);
 
     return CA_STATUS_OK;
 }

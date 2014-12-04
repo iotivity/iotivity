@@ -12,7 +12,9 @@
 #if (BSD >= 199103) || defined(WITH_CONTIKI)
 # include <string.h>
 #else
+#ifndef WITH_ARDUINO
 # include <strings.h>
+#endif
 #endif
 
 #define Nn 8  /* duplicate definition of N if built on sky motes */

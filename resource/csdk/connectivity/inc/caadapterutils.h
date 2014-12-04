@@ -29,6 +29,7 @@
 #include "cacommon.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 /**
  * @def VERIFY_NON_NULL
@@ -36,7 +37,7 @@
  */
 #define VERIFY_NON_NULL(arg, log_tag, log_message) \
     if (NULL == arg ){ \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input: %s!", log_message); \
+        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
         return CA_STATUS_INVALID_PARAM; \
     } \
 
@@ -46,7 +47,7 @@
  */
 #define VERIFY_NON_NULL_RET(arg, log_tag, log_message,ret) \
     if (NULL == arg ){ \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input: %s!", log_message); \
+        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
         return ret; \
     } \
 
@@ -56,7 +57,7 @@
  */
 #define VERIFY_NON_NULL_VOID(arg, log_tag, log_message) \
     if (NULL == arg ){ \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input: %s!", log_message); \
+        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
         return; \
     } \
 
@@ -90,7 +91,7 @@ CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type, con
  * @fn CAAdapterCopyRemoteEndpoint
  * @brief Create CARemoteEndpoint_t duplicate instance.
  */
-CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(CARemoteEndpoint_t *remoteEndpoint);
+CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remoteEndpoint);
 
 /**
  * @fn CAAdapterFreeRemoteEndpoint

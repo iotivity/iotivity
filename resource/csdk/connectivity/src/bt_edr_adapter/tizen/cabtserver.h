@@ -40,8 +40,8 @@ extern "C"
  * @fn  CABTServerStart
  * @brief  Start RFCOMM server for given service UUID
  *
- * @param  serviceUUID  The UUID of service with which RFCOMM server needs to be started
- * @param  serverFD  The RFCOMM server socket file descriptor
+ * @param[in]  serviceUUID  The UUID of service with which RFCOMM server needs to be started.
+ * @param[out]  serverFD  The RFCOMM server socket file descriptor.
  *
  * @return  CA_STATUS_OK on success otherwise proper error code.
  * @retval  CA_STATUS_OK  Successful
@@ -55,7 +55,7 @@ CAResult_t CABTServerStart(const char *serviceUUID, int32_t *serverFD);
  * @fn  CABTServerStop
  * @brief  Stop RFCOMM server
  *
- * @param  serverFD  The RFCOMM server socket file descriptor which needs to be stopped
+ * @param[in]  serverFD  The RFCOMM server socket file descriptor which needs to be stopped.
  *
  * @return  CA_STATUS_OK on success otherwise proper error code.
  * @retval  CA_STATUS_OK  Successful

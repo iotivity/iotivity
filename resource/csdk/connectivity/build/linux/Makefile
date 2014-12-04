@@ -42,9 +42,10 @@ ETHERNET = ETHERNET_ADAPTER
 
 #Add Pre processor definitions
 DEFINE_FLAG = -D$(EDR) -D$(LE) -D$(WIFI) -D$(ETHERNET)
-
+#Add For memory checking
+#DEBUG_FLAG = -DENABLE_MALLOC_DEBUG
 #Add Debug flags here
-DEBUG_FLAG = -DTB_LOG
+DEBUG_FLAG += -DTB_LOG
 
 ##
 ##	definitions
@@ -120,8 +121,8 @@ vpath %.c $(BLE_ADAPTER_PATH)
 vpath %.c $(PROJECT_SRC_PATH)
 
 $(OBJ_DIR)/%.o: %.c
-	@$(MAKE_OBJ_PATH)
-	@$(CC) -o $@ $(CFLAGS) $(DFLAGS) $(IFLAGS) $<
+	$(MAKE_OBJ_PATH)
+	$(CC) -o $@ $(CFLAGS) $(DFLAGS) $(IFLAGS) $<
 
 all : $(TARGET)
 	@echo	" "

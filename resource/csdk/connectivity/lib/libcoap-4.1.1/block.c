@@ -12,6 +12,11 @@
 # include <assert.h>
 #endif
 
+#ifdef WITH_ARDUINO
+/* On Arduino the abort function, needed for assert, is defined in std lib */
+#include <stdlib.h>
+#endif
+
 #include "debug.h"
 #include "block.h"
 

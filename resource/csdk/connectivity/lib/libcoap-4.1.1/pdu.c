@@ -24,6 +24,10 @@
 #include "option.h"
 #include "encode.h"
 
+#ifdef WITH_ARDUINO
+#include "util.h"
+#endif
+
 #ifdef WITH_CONTIKI
 #include "memb.h"
 
@@ -93,7 +97,7 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id, size_t 
         return NULL;
 
     /* size must be large enough for hdr */
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     pdu = coap_malloc(sizeof(coap_pdu_t) + size);
 #endif
 #ifdef WITH_CONTIKI
@@ -147,12 +151,12 @@ coap_new_pdu()
 
 void coap_delete_pdu(coap_pdu_t *pdu)
 {
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     coap_free( pdu );
 #endif
 #ifdef WITH_LWIP
     if (pdu != NULL) /* accepting double free as the other implementation accept that too */
-    pbuf_free(pdu->pbuf);
+        pbuf_free(pdu->pbuf);
 #endif
 #ifdef WITH_CONTIKI
     memb_free(&pdu_storage, pdu);

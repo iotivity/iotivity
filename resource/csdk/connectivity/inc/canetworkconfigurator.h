@@ -28,18 +28,14 @@ extern "C"
 {
 #endif
 
-static uint32_t NETWORK_ETHERNET = CA_ETHERNET;
-static uint32_t NETWORK_WIFI = CA_WIFI;
-static uint32_t NETWORK_EDR = CA_EDR;
-static uint32_t NETWORK_LE = CA_LE;
 
 CAResult_t CAAddNetworkType(uint32_t CAConnectivityType);
 
 CAResult_t CARemoveNetworkType(uint32_t CAConnectivityType);
 
-u_arraylist_t* CAGetSelectedNetworkList();
+u_arraylist_t *CAGetSelectedNetworkList();
 
-CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t* size);
+CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t *size);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -87,24 +87,6 @@ typedef uint32_t (*CAAdapterSendUnitcastData)(const CARemoteEndpoint_t *endpoint
 typedef uint32_t (*CAAdapterSendMulticastData)(void *data, uint32_t dataLen);
 
 /**
- * @brief Starts notification server on adapters.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
- */
-typedef CAResult_t (*CAAdapterStartNotificationRecvServer)();
-
-/**
- * @brief Send notification information to the given endpoint.
- * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri
- * and connectivity type) to which the unicast data has to be sent.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
- */
-typedef uint32_t (*CAAdapterSendNotification)(const CARemoteEndpoint_t *endpoint, void *data,
-        uint32_t dataLen);
-
-/**
  * @brief Get Network Information
  * @param   info        [OUT]   Local connectivity information structures
  * @param   size        [OUT]   Number of local connectivity structures.
@@ -149,10 +131,6 @@ typedef struct
     CAAdapterSendUnitcastData sendData;
     /** Multicast data function address**/
     CAAdapterSendMulticastData sendDataToAll;
-    /** Notify server function address**/
-    CAAdapterStartNotificationRecvServer startNotifyServer;
-    /** Send Notification function address**/
-    CAAdapterSendNotification sendNotification;
     /** Get Networking information  **/
     CAAdapterGetNetworkInfo GetnetInfo;
     /** Read Data function address**/

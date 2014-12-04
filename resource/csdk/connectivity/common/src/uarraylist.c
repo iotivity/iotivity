@@ -24,13 +24,13 @@
 #include "logger.h"
 #include "oic_malloc.h"
 
-#define TAG PCF("UARRAYLIST")
+#define TAG "UARRAYLIST"
 
 u_arraylist_t *u_arraylist_create()
 {
     u_arraylist_t *list = NULL;
 
-    if (!(list = (u_arraylist_t*) OICMalloc(sizeof(u_arraylist_t))))
+    if (!(list = (u_arraylist_t *) OICMalloc(sizeof(u_arraylist_t))))
     {
         return NULL;
     }
@@ -40,10 +40,10 @@ u_arraylist_t *u_arraylist_create()
 
     if (!(list->data = (void*) OICMalloc(list->size * sizeof(void*))))
     {
+        OIC_LOG_V(DEBUG, TAG, "Out of memory");
         OICFree(list);
         return NULL;
     }
-
     return list;
 }
 

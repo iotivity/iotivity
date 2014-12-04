@@ -33,8 +33,18 @@
 
 #define WIFI_MONITOR_TAG "WIFI_MONITOR"
 
+/**
+ * @var gIsStartServerCalled
+ * @brief Flag for start server started or not.
+ */
 static int gIsStartServerCalled = 0;
+
+/**
+ * @var gMutexIsStartServerCalled
+ * @brief Mutex for global variable gIsStartServerCalled.
+ */
 static u_mutex gMutexIsStartServerCalled = NULL;
+
 CANetworkChangeCallback gNetworkChangeCb = NULL;
 
 CAResult_t CAGetInterfaceAddress(char *address, int32_t addrLen)
@@ -76,7 +86,7 @@ CAResult_t CAGetInterfaceAddress(char *address, int32_t addrLen)
                                    sizeof(struct sockaddr_in6),
                                    address, CA_IPADDR_SIZE,
                                    NULL, 0, NI_NUMERICHOST);
-                if (name != 0)
+                if (0 != name)
                 {
                     OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get IPAddress, Error code: %s",
                               strerror(errno));
@@ -95,19 +105,39 @@ CAResult_t CAGetInterfaceAddress(char *address, int32_t addrLen)
 CAResult_t CAInitializeWIFIAdapter()
 {
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
-    wifi_initialize();
     gMutexIsStartServerCalled = u_mutex_new();
     wifi_error_e ret = WIFI_ERROR_INVALID_PARAMETER;
-    wifi_set_device_state_changed_cb(CAWIFIDeviceStateChangedCb, NULL);
+    ret = wifi_initialize();
+    if (WIFI_ERROR_NONE != ret)
+    {
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "wifi_initialize failed");
+        return CA_STATUS_FAILED;
+    }
+    else
+    {
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_initialize success");
+    }
+
+    ret = wifi_set_device_state_changed_cb(CAWIFIDeviceStateChangedCb, NULL);
+    if (WIFI_ERROR_NONE != ret)
+    {
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "wifi_set_device_state_changed_cb failed");
+        return CA_STATUS_FAILED;
+    }
+    else
+    {
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_set_device_state_changed_cb success");
+    }
+
     ret = wifi_set_connection_state_changed_cb(CAWIFIConnectionStateChangedCb, NULL);
-    if (ret != WIFI_ERROR_NONE)
+    if (WIFI_ERROR_NONE != ret)
     {
         OIC_LOG(ERROR, WIFI_MONITOR_TAG, "wifi_set_connection_state_changed_cb failed");
         return CA_STATUS_FAILED;
     }
     else
     {
-        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_set_connection_state_changed_cb sucess");
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_set_connection_state_changed_cb success");
     }
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -117,9 +147,9 @@ CAResult_t CADeinitializeWIFIAdapter()
 {
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
     wifi_error_e ret = WIFI_ERROR_INVALID_PARAMETER;
-    wifi_unset_device_state_changed_cb();
-    ret = wifi_unset_connection_state_changed_cb();
-    if (ret != WIFI_ERROR_NONE)
+
+    ret = wifi_unset_device_state_changed_cb();
+    if (WIFI_ERROR_NONE != ret)
     {
         OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_unset_device_state_changed_cb failed");
     }
@@ -127,7 +157,26 @@ CAResult_t CADeinitializeWIFIAdapter()
     {
         OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_unset_device_state_changed_cb success");
     }
-    wifi_deinitialize();
+
+    ret = wifi_unset_connection_state_changed_cb();
+    if (WIFI_ERROR_NONE != ret)
+    {
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_unset_connection_state_changed_cb failed");
+    }
+    else
+    {
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_unset_connection_state_changed_cb success");
+    }
+
+    ret = wifi_deinitialize();
+    if (WIFI_ERROR_NONE != ret)
+    {
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_deinitialize failed");
+    }
+    else
+    {
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_deinitialize success");
+    }
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -137,12 +186,12 @@ CABool_t CAIsWIFIConnected()
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
     wifi_connection_state_e connection_state;
     int retVal = wifi_get_connection_state(&connection_state);
-    if (retVal != WIFI_ERROR_NONE)
+    if (WIFI_ERROR_NONE != retVal)
     {
         OIC_LOG(ERROR, WIFI_MONITOR_TAG, "Failed to get the Connection State");
         return CA_FALSE;
     }
-    if (connection_state == WIFI_CONNECTION_STATE_DISCONNECTED)
+    if (WIFI_CONNECTION_STATE_DISCONNECTED == connection_state)
     {
         OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "WIFI is not Connected");
         return CA_FALSE;
@@ -155,7 +204,7 @@ CABool_t CAIsWIFIConnected()
 void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap, void *userData)
 {
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
-    if (state == WIFI_CONNECTION_STATE_ASSOCIATION
+    if (WIFI_CONNECTION_STATE_ASSOCIATION == state
         || WIFI_CONNECTION_STATE_CONFIGURATION == state)
     {
         OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "Connection is in Association State");
@@ -179,8 +228,10 @@ void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
         localEndpoint = CAAdapterCreateLocalEndpoint(CA_WIFI, "", NULL);
         CAStopUnicastServer();
     }
-
-    gNetworkChangeCb(localEndpoint, nwConnectivityStatus);
+    if (NULL != gNetworkChangeCb)
+    {
+        gNetworkChangeCb(localEndpoint, nwConnectivityStatus);
+    }
 
     CAAdapterFreeLocalEndpoint(localEndpoint);
 

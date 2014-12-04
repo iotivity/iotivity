@@ -92,7 +92,7 @@ CAResult_t CABTServerStop(const int32_t serverFD)
     int err = BT_ERROR_NONE;
     if (BT_ERROR_NONE != (err = bt_socket_destroy_rfcomm(serverFD)))
     {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed close rfcomm server socket!, error num [%x]",
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed close server socket!, error num [%x]",
                   err);
         return CA_STATUS_FAILED;
     }

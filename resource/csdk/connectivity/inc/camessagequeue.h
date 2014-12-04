@@ -23,6 +23,7 @@
 
 #include "umutex.h"
 #include "cacommon.h"
+#include "uqueue.h"
 
 /**
  @brief Adapter message information
@@ -32,7 +33,6 @@ typedef struct CAAdapterMessage_t
     CARemoteEndpoint_t *remoteEndpoint;
     void *data;
     uint32_t dataLen;
-    struct CAAdapterMessage_t *next;
 } CAAdapterMessage_t;
 
 /**
@@ -41,8 +41,7 @@ typedef struct CAAdapterMessage_t
 typedef struct
 {
     u_mutex queueMutex;
-    CAAdapterMessage_t *begin;
-    CAAdapterMessage_t *end;
+    u_queue_t *queue;
 } CAAdapterMessageQueue_t;
 
 /**
@@ -72,7 +71,7 @@ void CAAdapterTerminateMessageQueue(CAAdapterMessageQueue_t *queueHandle);
  * @return Error Code
  */
 CAResult_t CAAdapterEnqueueMessage(CAAdapterMessageQueue_t *queueHandle,
-                                   CARemoteEndpoint_t *remoteEndpoint,
+                                   const CARemoteEndpoint_t *remoteEndpoint,
                                    void *data, uint32_t dataLen);
 
 /**
@@ -91,4 +90,5 @@ CAResult_t CAAdapterDequeueMessage(CAAdapterMessageQueue_t *queueHandle,
 void CAAdapterFreeMessage(CAAdapterMessage_t *message);
 
 #endif //#ifndef _CA_MESSAGE_QUEUE_H_
+
 

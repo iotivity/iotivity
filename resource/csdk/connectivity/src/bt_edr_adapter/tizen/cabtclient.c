@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file    cabtclient.c
- * @brief   This    file provides the APIs to establish RFCOMM connection with remote bluetooth device
+ * @file  cabtclient.c
+ * @brief  This file provides the APIs to establish RFCOMM connection with remote bluetooth device
  */
 
 #include "cabtclient.h"
@@ -33,17 +33,19 @@ CAResult_t CABTClientConnect(const char *remoteAddress, const char *serviceUUID)
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
     int err = BT_ERROR_NONE;
+    int addressLen = 0;
 
     VERIFY_NON_NULL(remoteAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
     VERIFY_NON_NULL(serviceUUID, BLUETOOTH_ADAPTER_TAG, "Service UUID is null");
 
-    if (0 >= strlen(remoteAddress))
+    addressLen = strlen(remoteAddress);
+    if (0 == addressLen || CA_MACADDR_SIZE - 1 != addressLen)
     {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: Empty remote address");
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: Invalid remote address");
         return  CA_STATUS_INVALID_PARAM;
     }
 
-    if (0 >= strlen(serviceUUID))
+    if (0 == strlen(serviceUUID))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: Empty service uuid");
         return  CA_STATUS_INVALID_PARAM;
@@ -52,12 +54,34 @@ CAResult_t CABTClientConnect(const char *remoteAddress, const char *serviceUUID)
     if (BT_ERROR_NONE != (err = bt_socket_connect_rfcomm(remoteAddress, serviceUUID)))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG,
-                  "Failed to connect!, address [%s] uuid [%s] error num [%x]",
-                  remoteAddress, serviceUUID, err);
+                  "Failed to connect!, address [%s] error num [%x]",
+                  remoteAddress, err);
         return CA_STATUS_FAILED;
     }
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
+}
+
+CAResult_t CABTClientDisconnect(const int32_t clientID)
+{
+	OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+
+    //Input validation
+    if (0 > clientID)
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: negative client id");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    int err = BT_ERROR_NONE;
+    if (BT_ERROR_NONE != (err = bt_socket_disconnect_rfcomm(clientID)))
+    {
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed close rfcomm client socket!, error num [%x]",
+                  err);
+        return CA_STATUS_FAILED;    
+    }
+
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
 }
 

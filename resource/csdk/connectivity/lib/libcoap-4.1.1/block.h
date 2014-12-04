@@ -36,9 +36,13 @@
  */
 typedef struct
 {
-    unsigned int num :20; /**< block number */
-    unsigned int m :1; /**< 1 if more blocks follow, 0 otherwise */
-    unsigned int szx :3; /**< block size */
+#ifdef WITH_ARDUINO
+    unsigned long int num : 20;
+#else
+    unsigned int num : 20;
+#endif
+    unsigned int m : 1; /**< 1 if more blocks follow, 0 otherwise */
+    unsigned int szx : 3; /**< block size */
 } coap_block_t;
 
 /**

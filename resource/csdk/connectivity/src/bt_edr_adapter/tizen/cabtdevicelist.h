@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file    cabtdevicelist.h
- * @brief    This file provides APIs to access the discovered bluetooth device list
+ * @file  cabtdevicelist.h
+ * @brief  This file provides APIs to manage discovered bluetooth device list.
  */
 
 #ifndef __CA_BT_DEVICE_LIST_H_
@@ -39,7 +39,7 @@ extern "C"
  */
 typedef struct
 {
-    void *data;        /**< Data to be send to peer Bluetooth device. */
+    void *data;             /**< Data to be send to peer Bluetooth device. */
     uint32_t dataLength;    /**< Length of the data. */
 } BTData;
 
@@ -61,9 +61,9 @@ typedef struct
 {
     char *remoteAddress;        /**< Address of peer Bluetooth device. */
     char *serviceUUID;          /**< OIC service UUID running in peer Bluetooth device. */
-    int32_t socketFD;               /**< RfComm connection socket FD. */
+    int32_t socketFD;           /**< RfComm connection socket FD. */
     BTDataList *pendingDataList;/**< List of data needs to send to peer Bluetooth device. */
-    uint32_t serviceSearched;        /**< Flag to indicate the status of service search. */
+    uint32_t serviceSearched;   /**< Flag to indicate the status of service search. */
 } BTDevice;
 
 /**
@@ -76,20 +76,136 @@ typedef struct _BTDeviceList
     struct _BTDeviceList *next;  /**< Reference to next device information. */
 } BTDeviceList;
 
-CAResult_t CAAddBTDeviceToList(BTDeviceList **deviceList, BTDevice *device);
-CAResult_t CARemoveBTDeviceFromList(BTDeviceList **deviceList, const char *remoteAddress);
-CAResult_t CAGetBTDevice(BTDeviceList *deviceList, const char *remoteAddress, BTDevice **device);
-CAResult_t CAGetBTDeviceBySocketId(BTDeviceList *deviceList, int32_t socket_id, BTDevice **device);
-CAResult_t CACreateBTDevice(const char *remoteAddress, const char *uuid, BTDevice **device);
-CAResult_t CACreateAndAddToDeviceList(BTDeviceList **deviceList, const char *remoteAddress,
-                                      const char *serviceUUID, BTDevice **device);
-void CAFreeBTDeviceList(BTDeviceList *deviceList);
-void CAFreeBTDevice(BTDevice *device);
+/**
+ * @fn  CACreateAndAddToDeviceList
+ * @brief  Creates #BTDevice for specified remote address and uuid and to device list.
+ *
+ * @param[in][out]  deviceList Device list which created device add to.
+ * @param[in]  deviceAddress  Bluetooth device address.
+ * @param[in]  uuid  service uuid.
+ * @param[in]  device  created #BTDevice.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input parameters
+ * @retval  #CA_STATUS_FAILED Failed to create device and add to list
+ *
+ */
+CAResult_t CACreateAndAddToDeviceList(BTDeviceList **deviceList, const char *deviceAddress,
+        const char *uuid, BTDevice **device);
 
-CAResult_t CAAddDataToDevicePendingList(BTDataList **dataList, void *data, uint32_t data_len);
-CAResult_t CARemoveDataFromDevicePendingList(BTDataList **dataList);
-CAResult_t CARemoveAllDataFromDevicePendingList(BTDataList **dataList);
-void CAFreeDataFromBTDataList(BTDataList *dataList);
+/**
+ * @fn  CAAddBTDeviceToList
+ * @brief  Insert device to specified list.
+ *
+ * @param[in][out]  deviceList  Device list to which specifed @device to be added.
+ * @param[in]  device  Device to be added to list.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input parameters
+ * @retval  #CA_MEMORY_ALLOC_FAILED Memory allocation failed
+ *
+ */
+CAResult_t CAAddBTDeviceToList(BTDeviceList **deviceList, BTDevice *device);
+
+/**
+ * @fn  CAGetBTDevice
+ * @brief  Get the device from list which matches specified device address.
+ *
+ * @param[in]  deviceList  Device list to search for the device.
+ * @param[in]  deviceAddress  Device address used for matching.
+ * @param[out]  device  #BTDevice which has matching device address.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input parameters
+ * @retval  #CA_STATUS_FAILED Device is not found in the list
+ *
+ */
+CAResult_t CAGetBTDevice(BTDeviceList *deviceList, const char *deviceAddress, BTDevice **device);
+
+/**
+ * @fn  CAGetBTDeviceBySocketId
+ * @brief  Get the device from list which matches specified RFCOMM socket id.
+ *
+ * @param[in]  deviceList  Device list to search for the device.
+ * @param[in]  socketID  RFCOMM socket id.
+ * @param[out]  device  #BTDevice which has matching RFCOMM socket id .
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input parameters
+ * @retval  #CA_STATUS_FAILED Device is not found in the list
+ *
+ */
+CAResult_t CAGetBTDeviceBySocketId(BTDeviceList *deviceList, int32_t socketID, BTDevice **device);
+
+/**
+ * @fn  CARemoveBTDeviceFromList
+ * @brief  Remove and delete the device matching specified device address from list.
+ *
+ * @param[in][out]  deviceList  Device list to search for the device.
+ * @param[in]  deviceAddress  Bluetooth device address.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input parameters
+ * @retval  #CA_STATUS_FAILED Device is not found in the list
+ *
+ */
+CAResult_t CARemoveBTDeviceFromList(BTDeviceList **deviceList, const char *deviceAddress);
+
+/**
+ * @fn  CADestroyBTDeviceList
+ * @brief  Destroy the specified device list. Removes and delete all the devices in the list.
+ *
+ * @param[in][out]  deviceList  Device list to be destroyed.
+ *
+ */
+void CADestroyBTDeviceList(BTDeviceList **deviceList);
+
+/**
+ * @fn  CAAddBTDataToList
+ * @brief  Insert data to specified list.
+ *
+ * @param[in][out]  dataList  Data list to which data will be add.
+ * @param[in]  data  Data to be stored.
+ * @param[in]  data_len  Length of the data.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input parameters
+ * @retval  #CA_MEMORY_ALLOC_FAILED Memory allocation failed
+ *
+ */
+CAResult_t CAAddBTDataToList(BTDataList **dataList, void *data, uint32_t dataLength);
+
+/**
+ * @fn  CARemoveBTDataFromList
+ * @brief  Remove and delete data from front end of list.
+ *
+ * @param[in][out]  dataList  Data list from which data will be removed.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input parameters
+ *
+ */
+CAResult_t CARemoveBTDataFromList(BTDataList **dataList);
+
+/**
+ * @fn  CADestroyBTDataList
+ * @brief  Destroy the specified data list. Removes and deletes all the data in the list.
+ *
+ * @param[in]  dataList  Data list to be destroyed.
+ *
+ */
+void CADestroyBTDataList(BTDataList **dataList);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

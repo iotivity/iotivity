@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file    cabtclient.h
- * @brief   This    file provides the APIs to establish RFCOMM connection with remote bluetooth device
+ * @file  cabtclient.h
+ * @brief  This file provides the APIs to establish RFCOMM connection with remote bluetooth device.
  */
 
 #ifndef __CA_BT_CLIENT_H_
@@ -40,16 +40,31 @@ extern "C"
  * @fn  CABTClientConnect
  * @brief  Establishes RFCOMM connection with remote bluetooth device
  *
- * @param  remoteAddress  The address of remote bluetooth device to which connection needs to be established
- * @param  serviceUUID  The UUID of service to which RFCOMM connection needs to established
+ * @param[in]  remoteAddress  The address of remote bluetooth device to which connection needs to be
+ *                                        established.
+ * @param[in]  serviceUUID  The UUID of service to which RFCOMM connection needs to established.
  *
- * @return  CA_STATUS_OK on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval  #CA_STATUS_FAILED Operation failed
  *
  */
 CAResult_t CABTClientConnect(const char *remoteAddress, const char *serviceUUID);
+
+/**
+ * @fn  CABTClientDisconnect
+ * @brief  Disconnect RFCOMM client socket connection
+ *
+ * @param[in]  clientID  The RFCOMM client socket file descriptor
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval  #CA_STATUS_FAILED Operation failed
+ *
+ */
+CAResult_t CABTClientDisconnect(const int32_t clientID);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -28,7 +28,7 @@
 
 #include <bluetooth.h>
 
-CABool_t CABTIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
+bool CABTIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
                                 const char *matchService)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
@@ -36,21 +36,20 @@ CABool_t CABTIsServiceSupported(const char **serviceUUID, const int32_t serviceC
     if (NULL == serviceUUID || 0 == serviceCount || NULL == matchService)
     {
         OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Invalid input");
-        return CA_FALSE;
+        return false;
     }
 
-    int i;
-    for (i = 0; i < serviceCount; i++)
+    for (int i = 0; i < serviceCount; i++)
     {
         if (!strcasecmp(serviceUUID[i], matchService))
         {
             OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Service found !");
-            return CA_TRUE;
+            return true;
         }
     }
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
-    return CA_FALSE;
+    return false;
 }
 
 

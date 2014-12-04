@@ -84,7 +84,7 @@ void CASetSendQueueHandle(CAAdapterMessageQueue_t *gSendQueueHandle, CABool_t fl
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "IN");
     gClientSendQueueHandle = gSendQueueHandle;
     gSendDataFlag = flag;
-    if (cond == NULL)
+    if (NULL == cond)
     {
         u_cond_signal(gClientSendDataCond);
     }
@@ -110,8 +110,8 @@ CAResult_t CAStartSendDataThread(u_thread_pool_t threadHandle)
         OIC_LOG(ERROR, WIFI_CLIENT_TAG, "Failed to add task in thread pool");
         return CA_STATUS_FAILED;
     }
-    return CA_STATUS_OK;
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "OUT");
+    return CA_STATUS_OK;
 }
 
 uint32_t CAWIFISendData(const char *remoteIpAddress, const uint32_t port, const char *data,

@@ -22,20 +22,31 @@
 #include "string.h"
 #include "oic_logger.h"
 #include "oic_console_logger.h"
+#ifdef ARDUINO
+#include "Arduino.h"
+#include <avr/pgmspace.h>
+#endif
 
 static oic_log_ctx_t *logCtx = 0;
 
 static oic_log_level LEVEL_XTABLE[] =
 { OIC_LOG_DEBUG, OIC_LOG_INFO, OIC_LOG_WARNING, OIC_LOG_ERROR, OIC_LOG_FATAL };
 
-static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1; // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 +
+        1; // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
 
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__
+#ifdef ADB_SHELL
+static const char * LEVEL[] =
+{   "DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+
+#else
 static android_LogPriority LEVEL[] =
 {   ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
+#endif
 #elif defined __linux__
-static const char * LEVEL[] __attribute__ ((unused)) =
+static const char *LEVEL[] __attribute__ ((unused)) =
 {   "DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
 #include <stdarg.h>
@@ -46,10 +57,10 @@ PROGMEM const char level2[] = "WARNING";
 PROGMEM const char level3[] = "ERROR";
 PROGMEM const char level4[] = "FATAL";
 
-PROGMEM const char * const LEVEL[] =
+PROGMEM const char *const LEVEL[] =
 {   level0, level1, level2, level3, level4};
 
-static void OICLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
+static void OICLogString(LogLevel level, PROGMEM const char *tag, PROGMEM const char *logStr);
 #ifdef ARDUINO_ARCH_AVR
 //Mega2560 and other 8-bit AVR microcontrollers
 #define GET_PROGMEM_BUFFER(buffer, addr) { strcpy_P(buffer, (char*)pgm_read_word(addr));}
@@ -91,7 +102,7 @@ void OICLogShutdown()
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLog(LogLevel level, const char * tag, const char * logStr)
+void OICLog(LogLevel level, const char *tag, const char *logStr)
 {
     if (!logStr || !tag)
     {
@@ -99,7 +110,13 @@ void OICLog(LogLevel level, const char * tag, const char * logStr)
     }
 
 #ifdef __ANDROID__
+
+#ifdef ADB_SHELL
+    printf("%s: %s: %s\n", LEVEL[level], tag, logStr);
+#else
     __android_log_write(LEVEL[level], tag, logStr);
+#endif
+
 #elif defined __linux__
     if (logCtx && logCtx->write_level)
     {
@@ -121,7 +138,7 @@ void OICLog(LogLevel level, const char * tag, const char * logStr)
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, const char * tag, const char * format, ...)
+void OICLogv(LogLevel level, const char *tag, const char *format, ...)
 {
     if (!format || !tag)
     {
@@ -144,7 +161,7 @@ void OICLogv(LogLevel level, const char * tag, const char * format, ...)
  * @param buffer     - pointer to buffer of bytes
  * @param bufferSize - max number of byte in buffer
  */
-void OICLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint16_t bufferSize)
+void OICLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, uint16_t bufferSize)
 {
     if (!buffer || !tag || (bufferSize == 0))
     {
@@ -193,7 +210,7 @@ void OICLogInit()
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLogString(LogLevel level, PROGMEM const char * tag, const char * logStr)
+void OICLogString(LogLevel level, PROGMEM const char *tag, const char *logStr)
 {
     if (!logStr || !tag)
     {
@@ -225,7 +242,8 @@ void OICLogString(LogLevel level, PROGMEM const char * tag, const char * logStr)
  * @param buffer     - pointer to buffer of bytes
  * @param bufferSize - max number of byte in buffer
  */
-void OICLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buffer, uint16_t bufferSize)
+void OICLogBuffer(LogLevel level, PROGMEM const char *tag, const uint8_t *buffer,
+                  uint16_t bufferSize)
 {
     if (!buffer || !tag || (bufferSize == 0))
     {
@@ -240,7 +258,7 @@ void OICLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buff
         // Format the buffer data into a line
         sprintf(&lineBuffer[lineIndex++ * 3], "%02X ", buffer[i]);
         // Output 16 values per line
-        if (((i+1)%16) == 0)
+        if (((i + 1) % 16) == 0)
         {
             OICLogString(level, tag, lineBuffer);
             memset(lineBuffer, 0, sizeof lineBuffer);
@@ -262,7 +280,7 @@ void OICLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buff
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLog(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr)
+void OICLog(LogLevel level, PROGMEM const char *tag, PROGMEM const char *logStr)
 {
     if (!logStr || !tag)
     {
@@ -299,7 +317,7 @@ void OICLog(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logSt
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, PROGMEM const char * tag, const char * format, ...)
+void OICLogv(LogLevel level, PROGMEM const char *tag, const char *format, ...)
 {
     char buffer[LINE_BUFFER_SIZE];
     va_list ap;
@@ -319,9 +337,9 @@ void OICLogv(LogLevel level, PROGMEM const char * tag, const char * format, ...)
     Serial.print(F(": "));
 
     vsnprintf(buffer, sizeof(buffer), format, ap);
-    for(char *p = &buffer[0]; *p; p++) // emulate cooked mode for newlines
+    for (char *p = &buffer[0]; *p; p++) // emulate cooked mode for newlines
     {
-        if(*p == '\n')
+        if (*p == '\n')
         {
             Serial.write('\r');
         }
@@ -338,7 +356,7 @@ void OICLogv(LogLevel level, PROGMEM const char * tag, const char * format, ...)
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, PROGMEM const char * tag, const __FlashStringHelper *format, ...)
+void OICLogv(LogLevel level, PROGMEM const char *tag, const __FlashStringHelper *format, ...)
 {
     char buffer[LINE_BUFFER_SIZE];
     va_list ap;
@@ -362,9 +380,9 @@ void OICLogv(LogLevel level, PROGMEM const char * tag, const __FlashStringHelper
 #else
     vsnprintf(buffer, sizeof(buffer), (const char *)format, ap); // for the rest of the world
 #endif
-    for(char *p = &buffer[0]; *p; p++) // emulate cooked mode for newlines
+    for (char *p = &buffer[0]; *p; p++) // emulate cooked mode for newlines
     {
-        if(*p == '\n')
+        if (*p == '\n')
         {
             Serial.write('\r');
         }

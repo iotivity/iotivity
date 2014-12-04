@@ -265,7 +265,7 @@ CAResult_t CALEReadDataFromLEClient();
 * @retval  CA_STATUS_FAILED Operation failed
 *
 */
-CAResult_t CABleClientSenderQueueEnqueueMessage(CARemoteEndpoint_t *remoteEndpoint,
+CAResult_t CABleClientSenderQueueEnqueueMessage(const CARemoteEndpoint_t *remoteEndpoint,
         void *data, uint32_t dataLen);
 
 /**
@@ -277,7 +277,7 @@ CAResult_t CABleClientSenderQueueEnqueueMessage(CARemoteEndpoint_t *remoteEndpoi
 * @return  void
 *
 */
-void CABleGattCharacteristicWriteCb(bt_gatt_attribute_h handle);
+void CABleGattCharacteristicWriteCb(int result, void *user_data);
 
 /**
 * @fn  CABleClientSenderQueueProcessor

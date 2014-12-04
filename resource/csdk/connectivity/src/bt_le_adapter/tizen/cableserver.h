@@ -291,7 +291,7 @@ CAResult_t CALEReadDataFromLEServer();
 * @retval  CA_STATUS_FAILED Operation failed
 *
 */
-CAResult_t CABleServerSenderQueueEnqueueMessage(CARemoteEndpoint_t *remoteEndpoint,
+CAResult_t CABleServerSenderQueueEnqueueMessage(const CARemoteEndpoint_t *remoteEndpoint,
         void *data, uint32_t dataLen);
 
 /**

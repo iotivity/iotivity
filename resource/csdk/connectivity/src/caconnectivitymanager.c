@@ -118,11 +118,11 @@ CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t* size)
     return CAGetNetworkInformationInternal(info, size);
 }
 
-CAResult_t CAFindResource(const CAURI_t resourceUri)
+CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token)
 {
     OIC_LOG_V(DEBUG, TAG, "CAFindResource");
 
-    return CADetachMessageResourceUri(resourceUri, NULL, 0);
+    return CADetachMessageResourceUri(resourceUri, token, NULL, 0);
 
 }
 
@@ -149,12 +149,12 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t* object, CAResponseInfo_t* re
 
 }
 
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAHeaderOption_t* options,
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token, CAHeaderOption_t* options,
         uint8_t numOptions)
 {
     OIC_LOG_V(DEBUG, TAG, "CAAdvertiseResource");
 
-    return CADetachMessageResourceUri(resourceUri, options, numOptions);
+    return CADetachMessageResourceUri(resourceUri, token, options, numOptions);
 
 }
 

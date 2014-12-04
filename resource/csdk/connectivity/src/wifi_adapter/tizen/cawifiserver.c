@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include "caadapterutils.h"
 #include "umutex.h"
+#include "cawificlient.h"
 
 /**
  * @def WIFI_SERVER_TAG
@@ -242,7 +243,7 @@ CAResult_t CAStartUnicastServer(const char *localAddress, int16_t *port)
 
     OIC_LOG(INFO, WIFI_SERVER_TAG, "socket bind success");
 
-    socklen_t len; // = sizeof(sin);
+    socklen_t len = sizeof(sockAddr);
 
     if (getsockname(gUnicastServerSocketDescriptor, (struct sockaddr *)&sockAddr, &len) == -1)
     {
@@ -446,7 +447,7 @@ CAResult_t CAStopUnicastServer()
     // close the socket
     int16_t ret = close(gUnicastServerSocketDescriptor);
 
-    if (ret == -1)
+    if (-1 == ret)
     {
         OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Unicast Server socket close failed, Error code: %s\n",
                   strerror(errno));
@@ -495,7 +496,7 @@ CAResult_t CAStopMulticastServer()
 
     // close the socket
     result = close(gMulticastServerSocketDescriptor);
-    if (result == -1)
+    if (-1 == result)
     {
         OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Multicast Server socket close failed, Error code: %s\n",
                   strerror(errno));
@@ -524,12 +525,6 @@ void *CAReceiveThreadForUnicast(void *data)
         return NULL;
     }
 
-    char *buf = (char *) OICMalloc (CA_BUFFER_LEN);
-    if (NULL == buf)
-    {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Memory Allocation failed");
-        return NULL;
-    }
     uint32_t recvLen;
     int32_t ret = 0;
     struct sockaddr_in siOther;
@@ -551,8 +546,6 @@ void *CAReceiveThreadForUnicast(void *data)
     {
         OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Waiting for data..");
 
-        memset(buf, 0, sizeof(char) * CA_BUFFER_LEN);
-
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
 
@@ -572,17 +565,40 @@ void *CAReceiveThreadForUnicast(void *data)
             continue;
         }
 
+        // Allocate Memory for COAP Buffer
+        char *buf = (char *) OICMalloc (CA_BUFFER_LEN);
+        if (NULL == buf)
+        {
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Memory Allocation failed");
+            return (void *) NULL;
+        }
+
+        memset(buf, 0, sizeof(char) * CA_BUFFER_LEN);
+
+        CARemoteEndpoint_t *endPointUnicast = (CARemoteEndpoint_t *) OICMalloc (sizeof(CARemoteEndpoint_t));
+        if (NULL == endPointUnicast)
+        {
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Memory Allocation failed");
+            OICFree(buf);
+            return NULL;
+        }
+        memset (endPointUnicast, 0, sizeof(CARemoteEndpoint_t));
+
 
         // try to receive some data
         if ((recvLen = recvfrom(gUnicastServerSocketDescriptor, buf, CA_BUFFER_LEN, 0,
                                 (struct sockaddr *) &siOther, &sLen)) == -1)
         {
             OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "%s\n", strerror(errno));
+            OICFree(buf);
+            OICFree(endPointUnicast);
             continue;
         }
         else if (0 == recvLen)
         {
             OIC_LOG(ERROR, WIFI_SERVER_TAG, "Unicast socket is shutdown, returning from thread\n");
+            OICFree(buf);
+            OICFree(endPointUnicast);
             return (void *) NULL;
         }
 
@@ -605,6 +621,12 @@ void *CAReceiveThreadForUnicast(void *data)
         {
             gNetworkPacketCallback(endPointUnicast, buf, recvLen);
         }
+        else
+        {
+            OICFree(buf);
+            OICFree(endPointUnicast);
+        }
+        // Currently, endPointUnicast and buf is freed in gNetworkPacketCallback
 #endif //#if 0
     }
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "stopUnicastServer is called, Breaking from while loop\n");
@@ -622,34 +644,18 @@ void *CAReceiveThreadForMulticast(void *data)
         return NULL;
     }
 
-    char *buf = (char *) OICMalloc (CA_BUFFER_LEN);
-    if (NULL == buf)
-    {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Memory Allocation failed");
-        return NULL;
-    }
     int recvLen;
     struct sockaddr_in siOther;
     int32_t ret = 0;
     socklen_t sLen = sizeof(siOther);
     fd_set reads;
     struct timeval timeout;
-    CARemoteEndpoint_t *endPointMulticast = (CARemoteEndpoint_t *) OICMalloc (sizeof(
-            CARemoteEndpoint_t));
-    if (NULL == endPointMulticast)
-    {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Memory Allocation failed");
-        return NULL;
-    }
-    memset (endPointMulticast, 0, sizeof(CARemoteEndpoint_t));
-
 
     // keep listening for data
     while (!gStopMulticast)
     {
         OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Waiting for data...\n");
 
-        memset(buf, 0, sizeof(char) * CA_BUFFER_LEN);
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
         FD_ZERO(&reads);
@@ -668,16 +674,40 @@ void *CAReceiveThreadForMulticast(void *data)
             continue;
         }
 
+        // Allocate Memory for COAP Buffer
+        char *buf = (char *) OICMalloc (CA_BUFFER_LEN);
+        if (NULL == buf)
+        {
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Memory Allocation failed");
+            return (void *) NULL;
+        }
+
+        memset(buf, 0, sizeof(char) * CA_BUFFER_LEN);
+
+        CARemoteEndpoint_t *endPointMulticast = (CARemoteEndpoint_t *) OICMalloc (sizeof(
+                CARemoteEndpoint_t));
+        if (NULL == endPointMulticast)
+        {
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Memory Allocation failed");
+            OICFree(buf);
+            return NULL;
+        }
+        memset (endPointMulticast, 0, sizeof(CARemoteEndpoint_t));
+
         // try to receive some data
         if ((recvLen = recvfrom(gMulticastServerSocketDescriptor, buf, CA_BUFFER_LEN, 0,
                                 (struct sockaddr *) &siOther, &sLen)) == -1)
         {
             OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "%s\n", strerror(errno));
+            OICFree(buf);
+            OICFree(endPointMulticast);
             continue;
         }
         else if (0 == recvLen)
         {
             OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Multicast socket is shutdown, returning from thread\n");
+            OICFree(buf);
+            OICFree(endPointMulticast);
             return (void *) NULL;
         }
 
@@ -688,19 +718,19 @@ void *CAReceiveThreadForMulticast(void *data)
 
         endPointMulticast->resourceUri = NULL; // will be filled by upper layer
         strncpy((char *)endPointMulticast->addressInfo.IP.ipAddress, inet_ntoa(siOther.sin_addr),
-                strlen(inet_ntoa(siOther.sin_addr)));
+                (CA_IPADDR_SIZE-1));
         endPointMulticast->addressInfo.IP.port = ntohs(siOther.sin_port);
         endPointMulticast->connectivityType = CA_WIFI;
-
-#if 0 /* Skip Queue */
-        // Enqueue the Received Message in the Queue
-        CAAdapterEnqueueMessage(gServerRecvQueueHandle, &endPointMulticast, buf, recvLen);
-#else
         if (gNetworkPacketCallback)
         {
             gNetworkPacketCallback(endPointMulticast, buf, recvLen);
         }
-#endif //#if 0
+        else
+        {
+            OICFree(buf);
+            OICFree(endPointMulticast);
+        }
+        // Currently, endpointMulticast and buf is freed in gNetworkPacketCallback
     }
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "stopMulticastServer is called, Breaking from while loop\n");
 

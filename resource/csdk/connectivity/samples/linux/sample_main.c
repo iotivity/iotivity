@@ -21,11 +21,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "cacommon.h"
 #include "cainterface.h"
 
 #define MAX_BUF_LEN 1024
 #define MAX_OPT_LEN 16
+#define TRUE 1
+#define FALSE 0
 
 char get_menu();
 void process();
@@ -40,10 +43,15 @@ void send_notification();
 void select_network();
 void unselect_network();
 void handle_request_response();
+void find_fixed_resource();
+void get_network_info();
 
 void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* requestInfo);
 void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo);
 void send_request_tmp(CARemoteEndpoint_t* endpoint, CAToken_t token);
+int received = FALSE;
+
+static CAToken_t gLastRequestToken = NULL;
 
 int main()
 {
@@ -53,15 +61,30 @@ int main()
     printf("\t\tsample main\n");
     printf("=============================================\n");
 
-    CAInitialize();
+    CAResult_t res = CAInitialize();
+    if (res != CA_STATUS_OK)
+    {
+        printf("CAInitialize fail\n");
+        return 0;
+    }
 
     // network enable
     // default
     printf("select default network(WIFI)\n");
-    CASelectNetwork(CA_WIFI);
+    res = CASelectNetwork(CA_WIFI);
+    if (res != CA_STATUS_OK)
+    {
+        printf("CASelectNetwork fail\n");
+        return 0;
+    }
 
     // set handler.
-    CARegisterHandler(request_handler, response_handler);
+    res = CARegisterHandler(request_handler, response_handler);
+    if (res != CA_STATUS_OK)
+    {
+        printf("CARegisterHandler fail\n");
+        return 0;
+    }
 
     process();
 
@@ -131,6 +154,34 @@ void process()
             case 'H':
                 handle_request_response();
                 break;
+            case 'y':
+            case 'Y':
+                while (1)
+                {
+                    received = FALSE;
+                    find_fixed_resource();
+                    while (received == FALSE)
+                    {
+                        sleep(1);
+                        handle_request_response();
+
+                    }
+                }
+                break;
+            case 'z':
+            case 'Z':
+                start_listening_server();
+                while (1)
+                {
+                    sleep(1);
+                    handle_request_response();
+                }
+                break;
+
+            case 'g': // get network information
+            case 'G':
+                get_network_info();
+                break;
 
             default:
                 printf("not supported menu!!\n");
@@ -144,14 +195,70 @@ void start_listening_server()
 {
     printf("start listening server!!\n");
 
-    CAStartListeningServer();
+    CAResult_t res = CAStartListeningServer();
+    if (res != CA_STATUS_OK)
+    {
+        printf("start listening server fail\n");
+    }
+    else
+    {
+        printf("start listening server success\n");
+    }
 }
 
 void start_discovery_server()
 {
     printf("start discovery client!!\n");
 
-    CAStartDiscoveryServer();
+    CAResult_t res = CAStartDiscoveryServer();
+    if (res != CA_STATUS_OK)
+    {
+        printf("start discovery client fail\n");
+    }
+    else
+    {
+        printf("start discovery client success\n");
+    }
+}
+
+void find_fixed_resource()
+{
+    char buf[MAX_BUF_LEN] =
+    { 0, };
+    strcpy(buf, "a/light");
+
+
+
+    // create token
+    CAToken_t token = NULL;
+    CAResult_t res = CAGenerateToken(&token);
+    if (res != CA_STATUS_OK)
+    {
+        printf("token generate error!!");
+        token = NULL;
+    }
+
+    printf("generated token %s\n", (token != NULL) ? token : "");
+
+    res = CAFindResource(buf, token);
+    if (res != CA_STATUS_OK)
+    {
+        printf("find resource error!!\n");
+    }
+    else
+    {
+        printf("find resource to %s URI\n", buf);
+    }
+
+    // delete token
+    /*
+    if (token != NULL)
+    {
+        CADestroyToken(token);
+    }
+    */
+
+    printf("=============================================\n");
 }
 
 void find_resource()
@@ -166,8 +273,18 @@ void find_resource()
 
     gets(buf);
 
-    CAResult_t res = CAFindResource(buf);
+    // create token
+    CAToken_t token = NULL;
+    CAResult_t res = CAGenerateToken(&token);
+    if (res != CA_STATUS_OK)
+    {
+        printf("token generate error!!\n");
+        token = NULL;
+    }
 
+    printf("generated token %s\n", (token != NULL) ? token : "");
+
+    res = CAFindResource(buf, token);
     if (res != CA_STATUS_OK)
     {
         printf("find resource error!!\n");
@@ -175,7 +292,17 @@ void find_resource()
     else
     {
         printf("find resource to %s URI\n", buf);
+
+        gLastRequestToken = token;
     }
+
+    // delete token
+    /*
+    if (token != NULL)
+    {
+        CADestroyToken(token);
+    }
+    */
 
     printf("=============================================\n");
 }
@@ -199,7 +326,7 @@ void send_request()
 
     if (res != CA_STATUS_OK)
     {
-        printf("create remote endpoint error!!");
+        printf("create remote endpoint error!!\n");
         CADestroyRemoteEndpoint(endpoint);
         return;
     }
@@ -210,7 +337,7 @@ void send_request()
 
     if (res != CA_STATUS_OK)
     {
-        printf("token generate error!!");
+        printf("token generate error!!\n");
         token = NULL;
     }
 
@@ -269,7 +396,7 @@ void advertise_resource()
     memset(headerOpt, 0, sizeof(CAHeaderOption_t) * optionNum);
 
     int i;
-    for(i = 0 ; i < optionNum ; i++)
+    for (i = 0; i < optionNum; i++)
     {
         int optionID = 0;
         printf("[%d] Option ID : ", i + 1);
@@ -280,13 +407,32 @@ void advertise_resource()
         printf("[%d] Option Data : ", i + 1);
         scanf("%s", optionData);
         memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
-        printf("[%d] inputed option : ID : %d, data : %s\n", i + 1, optionID, optionData );
+        printf("[%d] inputed option : ID : %d, data : %s\n", i + 1, optionID, optionData);
 
-        headerOpt[i].optionLength = (uint16_t)strlen(optionData);
+        headerOpt[i].optionLength = (uint16_t) strlen(optionData);
     }
     printf("\n=============================================\n");
 
-    CAAdvertiseResource(buf, headerOpt, (uint8_t)optionNum);
+    // create token
+    CAToken_t token = NULL;
+    CAResult_t res = CAGenerateToken(&token);
+    if (res != CA_STATUS_OK)
+    {
+        printf("token generate error!!\n");
+        token = NULL;
+    }
+
+    printf("generated token %s\n", (token != NULL) ? token : "");
+
+    CAAdvertiseResource(buf, token, headerOpt, (uint8_t) optionNum);
+
+    // delete token
+    /*
+    if (token != NULL)
+    {
+        CADestroyToken(token);
+    }
+    */
 
     free(headerOpt);
 
@@ -311,7 +457,7 @@ void send_notification()
 
     if (res != CA_STATUS_OK)
     {
-        printf("create remote endpoint error!!");
+        printf("create remote endpoint error!!\n");
         CADestroyRemoteEndpoint(endpoint);
         return;
     }
@@ -327,13 +473,22 @@ void send_notification()
     responseInfo.info = respondeData;
 
     // send request
-    CASendNotification(endpoint, &responseInfo);
+    res = CASendNotification(endpoint, &responseInfo);
+    if (res != CA_STATUS_OK)
+    {
+        printf("send notification error\n");
+    }
+    else
+    {
+        printf("send notification success\n");
+    }
 
     // destroy remote endpoint
     if (endpoint != NULL)
     {
         CADestroyRemoteEndpoint(endpoint);
     }
+
     printf("\n=============================================\n");
 }
 
@@ -356,7 +511,15 @@ void select_network()
 
     number = (number < 0 || number > 3) ? 1 : number;
 
-    CASelectNetwork(1 << number);
+    CAResult_t res = CASelectNetwork(1 << number);
+    if (res != CA_STATUS_OK)
+    {
+        printf("select network error\n");
+    }
+    else
+    {
+        printf("select network success\n");
+    }
 
     printf("=============================================\n");
 }
@@ -380,7 +543,15 @@ void unselect_network()
 
     number = (number < 0 || number > 3) ? 1 : number;
 
-    CAUnSelectNetwork(1 << number);
+    CAResult_t res = CAUnSelectNetwork(1 << number);
+    if (res != CA_STATUS_OK)
+    {
+        printf("unselect network error\n");
+    }
+    else
+    {
+        printf("unselect network success\n");
+    }
 
     printf("=============================================\n");
 }
@@ -399,7 +570,10 @@ char get_menu()
     printf("\tb : send notification\n");
     printf("\tn : select network\n");
     printf("\tx : unselect network\n");
+    printf("\tg : get network information\n");
     printf("\th : handle request response\n");
+    printf("\ty : run static client\n");
+    printf("\tz : run static server\n");
     printf("\tq : quit\n");
     printf("=============================================\n");
     printf("select : ");
@@ -414,53 +588,122 @@ char get_menu()
 void handle_request_response()
 {
     printf("handle_request_response\n");
-    CAHandleRequestResponse();
+
+    CAResult_t res = CAHandleRequestResponse();
+    if (res != CA_STATUS_OK)
+    {
+        printf("handle request error\n");
+    }
+    else
+    {
+        printf("handle request success\n");
+    }
+}
+
+void get_network_info()
+{
+    int index;
+
+    CALocalConnectivity_t* tempInfo;
+    uint32_t tempSize = 0;
+
+    tempInfo = (CALocalConnectivity_t*) malloc(sizeof(CALocalConnectivity_t));
+
+    CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
+    if (res != CA_STATUS_OK)
+    {
+        printf("get network information error\n");
+        return;
+    }
+
+    printf("network info total size is %d\n", tempSize);
+    for (index = 0; index < tempSize; index++)
+    {
+        if (tempInfo == NULL)
+        {
+            break;
+        }
+
+        printf("type : %d, address : %s\n",
+                tempInfo->type,
+                tempInfo->addressInfo.IP.ipAddress);
+        tempInfo++;
+    }
+
 }
 
 void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* requestInfo)
 {
-
-    printf("[CALLBACK] request_handler, uri : %s, data : %s\n", (object != NULL) ? object->resourceUri : "",
+    /*
+    printf("[CALLBACK] request_handler, uri : %s, data : %s\n",
+            (object != NULL) ? object->resourceUri : "",
             (requestInfo != NULL) ? requestInfo->info.payload : "");
+    */
+    printf("[CALLBACK] request_handler, uri: %s, data: %s, token: %s \n",
+            (object != NULL) ? object->resourceUri : "",
+            (requestInfo != NULL) ? requestInfo->info.payload : "",
+            (requestInfo->info.token != NULL) ? requestInfo->info.token : "");
 
-    printf("[CALLBACK] request_handler, address : %s\n", (object != NULL) ? object->addressInfo.IP.ipAddress : "");
-
-    if(requestInfo->info.options)
+    if (gLastRequestToken != NULL && requestInfo->info.token != NULL 
+        && (strcmp((char*)gLastRequestToken, requestInfo->info.token) == 0))
     {
-        uint32_t len =  requestInfo->info.numOptions;
+        printf("token is same. received request of it's own. skip.. \n");
+
+        return;
+    }
+
+    printf("[CALLBACK] request_handler, address : %s port:%d \n",
+            (object != NULL) ? object->addressInfo.IP.ipAddress : "",
+               (object != NULL) ? object->addressInfo.IP.port : 0);
+
+    if (requestInfo->info.options)
+    {
+        uint32_t len = requestInfo->info.numOptions;
         uint32_t i;
-        for(i = 0 ; i < len ; i++)
+        for (i = 0; i < len; i++)
         {
-            printf("[CALLBACK] request_handler, option ID : %d\n", requestInfo->info.options[i].optionID);
-            printf("[CALLBACK] request_handler, options data length : %d\n", requestInfo->info.options[i].optionLength);
-            printf("[CALLBACK] request_handler, options data : %s\n", requestInfo->info.options[i].optionData );
+            printf("[CALLBACK] request_handler, option ID : %d\n",
+                    requestInfo->info.options[i].optionID);
+            printf("[CALLBACK] request_handler, options data length : %d\n",
+                    requestInfo->info.options[i].optionLength);
+            printf("[CALLBACK] request_handler, options data : %s\n",
+                    requestInfo->info.options[i].optionData);
         }
     }
 
     printf("send response with URI\n");
     send_response(object, (requestInfo != NULL) ? requestInfo->info.token : "");
 
+    received = TRUE;
+
 }
 
 void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo)
 {
 
-    printf("[CALLBACK] response_handler, uri : %s, data : %s\n", (object != NULL) ? object->resourceUri : "",
+    printf("[CALLBACK] response_handler, uri : %s, data : %s\n",
+            (object != NULL) ? object->resourceUri : "",
             (responseInfo != NULL) ? responseInfo->info.payload : "");
 
-    printf("[CALLBACK] response_handler, address : %s\n", (object != NULL) ? object->addressInfo.IP.ipAddress : "");
+    printf("[CALLBACK] response_handler, address : %s port :%d\n",
+            (object != NULL) ? object->addressInfo.IP.ipAddress : "",
+            (object != NULL) ? object->addressInfo.IP.port : 0);
 
-    if(responseInfo->info.options)
+    if (responseInfo->info.options)
     {
-        uint32_t len =  responseInfo->info.numOptions;
+        uint32_t len = responseInfo->info.numOptions;
         uint32_t i;
-        for(i = 0 ; i < len ; i++)
+        for (i = 0; i < len; i++)
         {
-            printf("[CALLBACK] response_handler, option ID : %d\n", responseInfo->info.options[i].optionID);
-            printf("[CALLBACK] response_handler, options data length : %d\n", responseInfo->info.options[i].optionLength);
-            printf("[CALLBACK] response_handler, options data : %s\n", responseInfo->info.options[i].optionData );
+            printf("[CALLBACK] response_handler, option ID : %d\n",
+                    responseInfo->info.options[i].optionID);
+            printf("[CALLBACK] response_handler, options data length : %d\n",
+                    responseInfo->info.options[i].optionLength);
+            printf("[CALLBACK] response_handler, options data : %s\n",
+                    responseInfo->info.options[i].optionData);
         }
     }
+    received = TRUE;
 
     //printf("send request with URI\n");
     //send_request_tmp(object, (responseInfo != NULL) ? responseInfo->info.token : "");
@@ -484,7 +727,15 @@ void send_response(CARemoteEndpoint_t* endpoint, CAToken_t request_token)
     responseInfo.info = responseData;
 
     // send request (connectivityType from remoteEndpoint of request Info)
-    CASendResponse(endpoint, &responseInfo);
+    CAResult_t res = CASendResponse(endpoint, &responseInfo);
+    if (res != CA_STATUS_OK)
+    {
+        printf("send response error\n");
+    }
+    else
+    {
+        printf("send response success\n");
+    }
 
     printf("=============================================\n");
 
@@ -507,7 +758,16 @@ void send_request_tmp(CARemoteEndpoint_t* endpoint, CAToken_t token)
 
     // send request
     endpoint->connectivityType = CA_WIFI;
-    CASendRequest(endpoint, &requestInfo);
+
+    CAResult_t res = CASendRequest(endpoint, &requestInfo);
+    if (res != CA_STATUS_OK)
+    {
+        printf("send request error\n");
+    }
+    else
+    {
+        printf("send request success\n");
+    }
 
     printf("=============================================\n");
 

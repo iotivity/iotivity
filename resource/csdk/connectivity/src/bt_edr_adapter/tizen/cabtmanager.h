@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file    cabtmanager.h
- * @brief   This    file provides the APIs to control Bluetooth transport
+ * @file  cabtmanager.h
+ * @brief  This file provides the APIs to control Bluetooth transport
  */
 
 #ifndef __CA_BT_MANAGER_H_
@@ -39,96 +39,101 @@ extern "C"
 
 /**
  * @fn  CABTManagerInitialize
- * @brief  Initializes Bluetooth adapter
+ * @brief  Initializes bluetooth adapter.
  *
- * @param  threadPool  Thread pool for handling asynchronous tasks
+ * @param[in]  threadPool  Thread pool for handling asynchronous tasks.
  *
- * @return  CA_STATUS_OK or CA_ADAPTER_NOT_ENABLED on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_ADAPTER_NOT_ENABLED Initialization is successful, but bluetooth adapter is
- *                                                    not enabled.
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return  #CA_STATUS_OK or #CA_ADAPTER_NOT_ENABLED on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_ADAPTER_NOT_ENABLED Initialization is successful, but bluetooth adapter is
+ *                                                      not enabled.
+ * @retval  #CA_STATUS_FAILED Operation failed
  *
+ * @see  CABTManagerTerminate()
  */
 CAResult_t CABTManagerInitialize(u_thread_pool_t threadPool);
 
 /**
  * @fn  CABTManagerTerminate
- * @brief  Deinitialize with bluetooth adapter
+ * @brief  Deinitialize with bluetooth adapter.
  *
- * @see CABTManagerIntialize
+ * @pre  CABTManagerIntialize() should be invoked before using this API.
+ *
+ * @see  CABTManagerIntialize()
  *
  */
 void CABTManagerTerminate(void);
 
 /**
  * @fn  CABTManagerStart
- * @brief  Start bluetooth adapter which includes start searching for nearby OIC devices
+ * @brief  Starts discovery for nearby OIC bluetooth devices.
  *
- * @return  CA_STATUS_OK on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_FAILED Operation failed
  *
- * @pre CABTManagerIntialize should be invoked before using this API
+ * @pre  CABTManagerIntialize() should be invoked before using this API.
  *
- * @see CABTManagerIntialize
+ * @see  CABTManagerIntialize()
  *
  */
 CAResult_t CABTManagerStart(void);
 
 /**
  * @fn  CABTManagerStop
- * @brief  Stop bluetooth adapter which includes stoping searching for nearby OIC devices
+ * @brief  Resetting callbacks with bluetooth framework and stop OIC device discovery.
  *
- * @pre CABTManagerIntialize should be invoked before using this API
+ * @pre  CABTManagerStart() should be invoked before using this API.
  *
- * @see CABTManagerIntialize
- * @see CABTManagerStart
+ * @see  CABTManagerIntialize()
+ * @see  CABTManagerStart()
  *
  */
 void CABTManagerStop(void);
 
 /**
  * @fn  CABTManagerSetPacketReceivedCallback
- * @brief  Register callback for receiving packets from remote Bluetooth device.
+ * @brief  Register callback for receiving packets from remote bluetooth device.
  *
- * @param  packetReceivedCallback  Callback function to register for receiving network packets
+ * @param[in]  packetReceivedCallback  Callback function to register for receiving network packets.
  *
- * @return  none.
+ * @post  CANetworkPacketReceivedCallback() will be called if any data received from peer
+ *           connected bluetooth device.
  *
- * @see CBNetworkPacketReceived
+ * @see  CANetworkPacketReceivedCallback()
  *
  */
 void CABTManagerSetPacketReceivedCallback(CANetworkPacketReceivedCallback packetReceivedCallback);
 
 /**
  * @fn  CABTManagerSetNetworkChangeCallback
- * @brief  Register callback for receiving network chang state of local Bluetooth adapter.
+ * @brief  Register callback for receiving local bluetooth adapter state.
  *
- * @param  networkChangeCallback  Callback function to register for receiving network adapter status
+ * @param[in]  networkStateChangeCallback  Callback function to register for receiving local bluetooth
+ *                                                           adapter status.
  *
- * @return  none
+ * @post  CANetworkChangeCallback() will be called if bluetooth adatper state changes.
  *
- * @see CBNetworkChange
+ * @see  CANetworkChangeCallback()
  *
  */
-void CABTManagerSetNetworkChangeCallback(CANetworkChangeCallback networkChangeCallback);
+void CABTManagerSetNetworkChangeCallback(CANetworkChangeCallback networkStateChangeCallback);
 
 /**
  * @fn  CABTManagerSendData
- * @brief  Send unicast/multicast data to remote bluetooth device
+ * @brief  Send unicast/multicast data to remote bluetooth device.
  *
- * @param  remoteAddress  The address of remote bluetooth device to which data needs to be sent.
- *                                   This will be NULL in case of sending multicast data.
- * @param  serviceUUID  The UUID of service to which RFCOMM connection needs to established
- * @param  data  The data needs to be send to remote bluetooth device
- * @param  dataLength  Length of data
- * @param  sentLength  Length of data actually sent or added to pending list for sending
+ * @param[in]  remoteAddress  Address of remote bluetooth device to which data needs to be sent.
+ *                                        This will be NULL in case of sending multicast data.
+ * @param[in]  serviceUUID  The UUID of service to which RFCOMM connection needs to established.
+ * @param[in]  data  The data needs to be send to remote bluetooth device.
+ * @param[in]  dataLength  Length of data.
+ * @param[out]  sentLength  Length of data actually sent or added to pending list for sending.
  *
- * @return  CA_STATUS_OK on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval  #CA_STATUS_FAILED Operation failed
  *
  */
 CAResult_t CABTManagerSendData(const char *remoteAddress, const char *serviceUUID,
@@ -136,16 +141,16 @@ CAResult_t CABTManagerSendData(const char *remoteAddress, const char *serviceUUI
 
 /**
  * @fn  CABTManagerStartServer
- * @brief  Start RFCOMM server for given service UUID
+ * @brief  Start RFCOMM server for given service UUID.
  *
- * @param  serviceUUID  The UUID of service with which RFCOMM server needs to be started
- * @param  serverID  The ID for the server which started
+ * @param[in]  serviceUUID  The UUID of service with which RFCOMM server needs to be started
+ * @param[out]  serverID  The ID for the server which started
  *
- * @return  CA_STATUS_OK on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_SERVER_STARTED_ALREADY Service on the specified UUID is already running.
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_SERVER_STARTED_ALREADY Service on the specified UUID is already running.
+ * @retval  #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval  #CA_STATUS_FAILED Operation failed
  *
  */
 CAResult_t CABTManagerStartServer(const char *serviceUUID, int32_t *serverID);
@@ -154,12 +159,15 @@ CAResult_t CABTManagerStartServer(const char *serviceUUID, int32_t *serverID);
  * @fn  CABTManagerStopServer
  * @brief  Stop RFCOMM server
  *
- * @param  serverID  The ID of server which needs to be stopped
+ * @param[in]  serverID  The ID of server which needs to be stopped
  *
- * @return  CA_STATUS_OK on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_FAILED Operation failed
  *
+ * @pre  Server must be started with CABTManagerStartServer().
+ *
+ * @see  CABTManagerStartServer()
  */
 CAResult_t CABTManagerStopServer(const int32_t serverID);
 
@@ -167,28 +175,30 @@ CAResult_t CABTManagerStopServer(const int32_t serverID);
  * @fn  CABTManagerGetInterface
  * @brief  Get the local bluetooth adapter information.
  *
- * @param  info  Local bluetooth adapter information
+ * @param[in]  info  Local bluetooth adapter information
  *
- * @return  CA_STATUS_OK on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval  #CA_STATUS_FAILED Operation failed
  *
- * @see CALocalConnectivity_t
+ * @see #CALocalConnectivity_t
  *
  */
 CAResult_t CABTManagerGetInterface(CALocalConnectivity_t **info);
 
+#if 0
 /**
  * @fn  CABTManagerReadData
  * @brief  All received data will be notified to upper layer.
  *
- * @return  CA_STATUS_OK on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_FAILED Operation failed
  *
  */
 CAResult_t CABTManagerReadData(void);
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

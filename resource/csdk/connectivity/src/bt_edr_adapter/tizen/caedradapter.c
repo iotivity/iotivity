@@ -36,8 +36,8 @@ static int32_t gNotificationServerID = -1;
 static CAResult_t CAStartServer(const char *serviceUUID, int32_t *serverID);
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-                           CANetworkPacketReceivedCallback networkPacketCallback,
-                           CANetworkChangeCallback netChangeCallback,
+                           CANetworkPacketReceivedCallback packetReceivedCallback,
+                           CANetworkChangeCallback networkStateChangeCallback,
                            u_thread_pool_t handle)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
@@ -45,17 +45,20 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     CAResult_t err = CA_STATUS_OK;
 
     //Input validation
-    VERIFY_NON_NULL(registerCallback, BLUETOOTH_ADAPTER_TAG, "register callback is NULL");
-    VERIFY_NON_NULL(networkPacketCallback, BLUETOOTH_ADAPTER_TAG, "data receive callback is NULL");
-    VERIFY_NON_NULL(netChangeCallback, BLUETOOTH_ADAPTER_TAG, "network changge callback is NULL");
+    VERIFY_NON_NULL(registerCallback, BLUETOOTH_ADAPTER_TAG,
+               "register callback is NULL");
+    VERIFY_NON_NULL(packetReceivedCallback, BLUETOOTH_ADAPTER_TAG,
+               "data receive callback is NULL");
+    VERIFY_NON_NULL(networkStateChangeCallback, BLUETOOTH_ADAPTER_TAG,
+               "network state change callback is NULL");
     VERIFY_NON_NULL(handle, BLUETOOTH_ADAPTER_TAG, "Thread pool hanlde is NULL");
 
     //Register the callbacks with BT Manager
-    CABTManagerSetPacketReceivedCallback(networkPacketCallback);
-    CABTManagerSetNetworkChangeCallback(netChangeCallback);
+    CABTManagerSetPacketReceivedCallback(packetReceivedCallback);
+    CABTManagerSetNetworkChangeCallback(networkStateChangeCallback);
 
     //Initialize BT Manager
-    err = CABTManagerIntialize(handle);
+    err = CABTManagerInitialize(handle);
     if (CA_STATUS_OK != err && CA_ADAPTER_NOT_ENABLED != err)
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "BT Manger initialize failed!, error number [%d]",
@@ -69,8 +72,6 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     handler.startDiscoverServer = CAStartEDRDiscoveryServer;
     handler.sendData = CASendEDRUnicastData;
     handler.sendDataToAll = CASendEDRMulticastData;
-    handler.startNotifyServer = CAStartEDRNotifyServer;
-    handler.sendNotification = CASendEDRNotification;
     handler.GetnetInfo = CAGetEDRInterfaceInformation;
     handler.readData = CAReadEDRData;
     handler.stopAdapter = CAStopEDR;
@@ -111,63 +112,64 @@ CAResult_t CAStartEDRDiscoveryServer(void)
     return CAStartServer(OIC_BT_SERVICE_ID, &gDiscoveryServerID);
 }
 
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
+uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+                               uint32_t dataLength)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
     CAResult_t err = CA_STATUS_OK;
-    uint32_t sentLen = 0;
-    const char *serviceUUID = OIC_BT_SERVICE_ID;
 
     //Input validation
-    VERIFY_NON_NULL_RET(endpoint, BLUETOOTH_ADAPTER_TAG, "Remote endpoint is null", 0);
+    VERIFY_NON_NULL_RET(remoteEndpoint, BLUETOOTH_ADAPTER_TAG, "Remote endpoint is null", 0);
     VERIFY_NON_NULL_RET(data, BLUETOOTH_ADAPTER_TAG, "Data is null", 0);
 
-    if (0 == strlen(endpoint->addressInfo.BT.btMacAddress))
+    if (0 == strlen(remoteEndpoint->addressInfo.BT.btMacAddress))
     {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: Address is empty!");
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: BT Address is empty!");
         return 0;
     }
 
-    if (0 == dataLen)
+    if (0 == dataLength)
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: data length is zero!");
         return 0;
     }
 
-    if (CA_STATUS_OK != (err = CABTManagerSendData(endpoint->addressInfo.BT.btMacAddress,
-                               serviceUUID, data,
-                               dataLen, &sentLen)))
+    uint32_t sentLength = 0;
+    const char *serviceUUID = OIC_BT_SERVICE_ID;
+    const char *address = remoteEndpoint->addressInfo.BT.btMacAddress;
+    if (CA_STATUS_OK != (err = CABTManagerSendData(address, serviceUUID, data,
+                 dataLength, &sentLength)))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Send unicast data failed!, error num [%d]", err);
         return 0;
     }
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
-    return sentLen;
+    return sentLength;
 }
 
-uint32_t CASendEDRMulticastData(void *data, uint32_t dataLen)
+uint32_t CASendEDRMulticastData(void *data, uint32_t dataLength)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
     CAResult_t err = CA_STATUS_OK;
-    uint32_t sentLen = 0;
-    const char *serviceUUID = OIC_BT_SERVICE_ID;
 
     //Input validation
     VERIFY_NON_NULL_RET(data, BLUETOOTH_ADAPTER_TAG, "Data is null", 0);
 
-    if (0 == dataLen)
+    if (0 == dataLength)
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: data length is zero!");
         return 0;
     }
 
-    if (CA_STATUS_OK != (err = CABTManagerSendData(NULL, serviceUUID, data, dataLen,
+    uint32_t sentLen = 0;
+    const char *serviceUUID = OIC_BT_SERVICE_ID;
+    if (CA_STATUS_OK != (err = CABTManagerSendData(NULL, serviceUUID, data, dataLength,
                                &sentLen)))
     {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, " Send multicast data failed!, error num [%d]",
+        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Send multicast data failed!, error num [%d]",
                   err);
         return 0;
     }
@@ -176,19 +178,6 @@ uint32_t CASendEDRMulticastData(void *data, uint32_t dataLen)
     return sentLen;
 }
 
-CAResult_t CAStartEDRNotifyServer(void)
-{
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
-
-    return CAStartServer(OIC_BT_SERVICE_ID, &gNotificationServerID);
-}
-
-uint32_t CASendEDRNotification(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
-{
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
-
-    return CASendEDRUnicastData(endpoint, data, dataLen);
-}
 
 CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
 {

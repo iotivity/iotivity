@@ -21,16 +21,16 @@
 #include "caadapterutils.h"
 
 #include <string.h>
-#ifndef __ARDUINO__
+
 #include "oic_malloc.h"
-#endif //#ifndef __ARDUINO__
+
 #define CA_ADAPTER_UTILS_TAG "CA_ADAPTER_UTILS"
 
 CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CAConnectivityType_t type, const char *address,
         const char *interfaceName)
 {
-    CALocalConnectivity_t *info = (CALocalConnectivity_t *) OICMalloc(
-            sizeof(CALocalConnectivity_t));
+    CALocalConnectivity_t *info = (CALocalConnectivity_t *)
+                                  OICMalloc(sizeof(CALocalConnectivity_t));
     if (NULL == info)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
@@ -65,8 +65,8 @@ CALocalConnectivity_t *CAAdapterCopyLocalEndpoint(CALocalConnectivity_t *connect
 {
     VERIFY_NON_NULL_RET(connectivity, CA_ADAPTER_UTILS_TAG, "connectivity is NULL", NULL);
 
-    CALocalConnectivity_t *info = (CALocalConnectivity_t *) OICMalloc(
-            sizeof(CALocalConnectivity_t));
+    CALocalConnectivity_t *info = (CALocalConnectivity_t *)
+                                  OICMalloc(sizeof(CALocalConnectivity_t));
     if (NULL == info)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
@@ -88,7 +88,7 @@ CALocalConnectivity_t *CAAdapterCopyLocalEndpoint(CALocalConnectivity_t *connect
         info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
     }
     else if ((CA_WIFI == info->type || CA_ETHERNET == info->type)
-            && strlen(connectivity->addressInfo.IP.ipAddress))
+             && strlen(connectivity->addressInfo.IP.ipAddress))
     {
         strncpy(info->addressInfo.IP.ipAddress, connectivity->addressInfo.IP.ipAddress,
                 CA_IPADDR_SIZE - 1);
@@ -109,7 +109,8 @@ void CAAdapterFreeLocalEndpoint(CALocalConnectivity_t *localEndpoint)
 CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type, const char *address,
         const char *resourceUri)
 {
-    CARemoteEndpoint_t *info = (CARemoteEndpoint_t *) OICMalloc(sizeof(CARemoteEndpoint_t));
+    CARemoteEndpoint_t *info = (CARemoteEndpoint_t *)
+                               OICMalloc(sizeof(CARemoteEndpoint_t));
     if (NULL == info)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
@@ -149,7 +150,8 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remote
 {
     VERIFY_NON_NULL_RET(remoteEndpoint, CA_ADAPTER_UTILS_TAG, "Remote endpoint is NULL", NULL);
 
-    CARemoteEndpoint_t *info = (CARemoteEndpoint_t *) OICMalloc(sizeof(CARemoteEndpoint_t));
+    CARemoteEndpoint_t *info = (CARemoteEndpoint_t *)
+                               OICMalloc(sizeof(CARemoteEndpoint_t));
     if (NULL == info)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
@@ -171,7 +173,7 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remote
         info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
     }
     else if ((CA_WIFI == info->connectivityType || CA_ETHERNET == info->connectivityType)
-            && strlen(remoteEndpoint->addressInfo.IP.ipAddress))
+             && strlen(remoteEndpoint->addressInfo.IP.ipAddress))
     {
         strncpy(info->addressInfo.IP.ipAddress, remoteEndpoint->addressInfo.IP.ipAddress,
                 CA_IPADDR_SIZE - 1);

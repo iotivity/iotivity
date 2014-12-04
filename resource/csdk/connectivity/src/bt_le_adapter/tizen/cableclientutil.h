@@ -71,6 +71,20 @@ typedef enum
 } CHAR_TYPE;
 
 /**
+ * @ENUM CHAR_INDEX
+ * @brief indexes for the characteristics defined..
+ *
+ *  This ENUM provides index values for the characteristics
+ *  which will be added to OIC service.
+ */
+typedef enum
+{
+    READ_CHAR_INDEX = 1,                                    /**< read_char index  */
+    WRITE_CHAR_INDEX = 2,                                  /**< write_char index  */
+    NOTIFY_CHAR_INDEX = 3                                  /**< reserved char index for the time being. */
+} CHAR_INDEX;
+
+/**
  * @ENUM TRANSFER_TYPE
  * @brief Provide info about different mode of data transfer
  *
@@ -263,4 +277,14 @@ void CAFreeBLEServiceInfo(BLEServiceInfo *bleServiceInfo);
 */
 CAResult_t CAVerifyOICService(bt_gatt_attribute_h serviceHandle);
 
+/**
+* @fn  CABTGetErrorMsg
+* @brief  Used to get the Error message.
+*
+* @param[in] err - Error code(bt_error_e)
+*
+* @return  Error string corresponding to the BT error code.
+*
+*/
+const char *CABTGetErrorMsg(bt_error_e err);
 #endif //#ifndef _BLE_CLIENT_UTIL

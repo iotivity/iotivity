@@ -48,8 +48,6 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     handler.startDiscoverServer = CAStartLEDiscoveryServer;
     handler.sendData = CASendLEUnicastData;
     handler.sendDataToAll = CASendLEMulticastData;
-    handler.startNotifyServer = CAStartLENotifyServer;
-    handler.sendNotification = CASendLENotification;
     handler.GetnetInfo = CAGetLEInterfaceInformation;
     handler.readData = CAReadLEData;
     handler.stopAdapter = CAStopLE;
@@ -91,20 +89,6 @@ uint32_t CASendLEUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uin
 uint32_t CASendLEMulticastData(void* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendLEMulticastData");
-
-    return 0;
-}
-
-CAResult_t CAStartLENotifyServer()
-{
-    OIC_LOG_V(DEBUG, TAG, "CAStartLENotifyServer");
-
-    return CA_STATUS_OK;
-}
-
-uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
-{
-    OIC_LOG_V(DEBUG, TAG, "CASendLENotification");
 
     return 0;
 }

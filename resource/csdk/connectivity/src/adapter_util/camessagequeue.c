@@ -36,8 +36,8 @@ CAResult_t CAAdapterInitializeMessageQueue(CAAdapterMessageQueue_t **queueHandle
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(queueHandle, TAG, "Invalid queue handle container");
 
-    CAAdapterMessageQueue_t *queuePtr = (CAAdapterMessageQueue_t *) OICMalloc(
-            sizeof(CAAdapterMessageQueue_t));
+    CAAdapterMessageQueue_t *queuePtr = (CAAdapterMessageQueue_t *)
+                                        OICMalloc(sizeof(CAAdapterMessageQueue_t));
     if (!queuePtr)
     {
         OIC_LOG_V(ERROR, TAG, "Out of memory!");
@@ -53,8 +53,14 @@ CAResult_t CAAdapterInitializeMessageQueue(CAAdapterMessageQueue_t **queueHandle
         OICFree(queuePtr);
         return CA_MEMORY_ALLOC_FAILED;
     }
-    queuePtr->begin = NULL;
-    queuePtr->end = NULL;
+
+    queuePtr->queue = u_queue_create();
+    if (NULL == queuePtr->queue)
+    {
+        u_mutex_free(queuePtr->queueMutex);
+        OICFree(queuePtr);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
     *queueHandle = queuePtr;
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -83,21 +89,17 @@ void CAAdapterTerminateMessageQueue(CAAdapterMessageQueue_t *queueHandle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(queueHandle, TAG, "Invalid queue handle");
+    VERIFY_NON_NULL_VOID(queueHandle->queue, TAG, "Invalid queue");
     VERIFY_NON_NULL_VOID(queueHandle->queueMutex, TAG, "Invalid queue mutex");
-    CAAdapterMessage_t *messagePtr = NULL;
-    CAAdapterMessage_t *toRemove = NULL;
 
     u_mutex_lock(queueHandle->queueMutex);
-    messagePtr = queueHandle->begin;
-    while (messagePtr)
+    u_queue_message_t *messagePtr = NULL;
+    while ((messagePtr = u_queue_get_element(queueHandle->queue)))
     {
-        toRemove = messagePtr;
-        messagePtr = messagePtr->next;
-        CAAdapterFreeMessage(toRemove);
+        CAAdapterFreeMessage((CAAdapterMessage_t *)messagePtr->msg);
+        OICFree(messagePtr);
     }
 
-    queueHandle->begin = NULL;
-    queueHandle->end = NULL;
     u_mutex_unlock(queueHandle->queueMutex);
     u_mutex_free(queueHandle->queueMutex);
     queueHandle->queueMutex = NULL;
@@ -107,15 +109,17 @@ void CAAdapterTerminateMessageQueue(CAAdapterMessageQueue_t *queueHandle)
 }
 
 CAResult_t CAAdapterEnqueueMessage(CAAdapterMessageQueue_t *queueHandle,
-        const CARemoteEndpoint_t *remoteEndpoint, void *data, uint32_t dataLen)
+                                   const CARemoteEndpoint_t *remoteEndpoint,
+                                   void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(queueHandle, TAG, "Invalid queue handle");
+    VERIFY_NON_NULL(queueHandle->queue, TAG, "Invalid queue");
     VERIFY_NON_NULL(queueHandle->queueMutex, TAG, "Invalid queue mutex");
     VERIFY_NON_NULL(data, TAG, "Invalid data");
 
-    CAAdapterMessage_t *adapterMessage = (CAAdapterMessage_t *) OICMalloc(
-            sizeof(CAAdapterMessage_t));
+    CAAdapterMessage_t *adapterMessage = (CAAdapterMessage_t *)
+                                         OICMalloc(sizeof(CAAdapterMessage_t));
     if (!adapterMessage)
     {
         OIC_LOG_V(ERROR, TAG, "Out of memory!");
@@ -124,7 +128,7 @@ CAResult_t CAAdapterEnqueueMessage(CAAdapterMessageQueue_t *queueHandle,
     memset((void *) adapterMessage, 0, sizeof(CAAdapterMessage_t));
 
     // Copy data
-    adapterMessage->data = (void *) OICMalloc(dataLen);
+    adapterMessage->data = (void *)OICMalloc(dataLen);
     if (adapterMessage->data == NULL)
     {
         OIC_LOG_V(ERROR, TAG, "Out of memory!!!");
@@ -142,54 +146,55 @@ CAResult_t CAAdapterEnqueueMessage(CAAdapterMessageQueue_t *queueHandle,
         if (NULL == adapterMessage->remoteEndpoint)
         {
             OIC_LOG_V(ERROR, TAG, "Out of memory.!!");
-            OICFree(adapterMessage->data);
             CAAdapterFreeMessage(adapterMessage);
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
+
     //Insert at end of queue
-    u_mutex_lock(queueHandle->queueMutex);
-    if (queueHandle->end)
+    u_queue_message_t *queueMessage = (u_queue_message_t *)OICMalloc(sizeof(u_queue_message_t));
+    if (!queueMessage)
     {
-        queueHandle->end->next = adapterMessage;
-        queueHandle->end = adapterMessage;
+        OIC_LOG_V(ERROR, TAG, "Out of memory.!!");
+        CAAdapterFreeMessage(adapterMessage);
+        return CA_MEMORY_ALLOC_FAILED;
     }
-    else
+    queueMessage->msg = (void *)adapterMessage;
+    queueMessage->size = sizeof(CAAdapterMessage_t);
+
+    u_mutex_lock(queueHandle->queueMutex);
+    CAResult_t ret = u_queue_add_element(queueHandle->queue, queueMessage);
+    if (ret != CA_STATUS_OK)
     {
-        queueHandle->begin = adapterMessage;
-        queueHandle->end = adapterMessage;
+        CAAdapterFreeMessage(adapterMessage);
+        OICFree(queueMessage);
     }
     u_mutex_unlock(queueHandle->queueMutex);
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return ret;
 }
 
 CAResult_t CAAdapterDequeueMessage(CAAdapterMessageQueue_t *queueHandle,
-        CAAdapterMessage_t **message)
+                                   CAAdapterMessage_t **message)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(queueHandle, TAG, "Invalid queue handle");
+    VERIFY_NON_NULL(queueHandle->queue, TAG, "Invalid queue");
     VERIFY_NON_NULL(queueHandle->queueMutex, TAG, "Invalid queue mutex");
     VERIFY_NON_NULL(message, TAG, "Invalid message handle");
+
+    CAResult_t ret = CA_STATUS_FAILED;
     u_mutex_lock(queueHandle->queueMutex);
-    if (queueHandle->begin)
+    u_queue_message_t *messagePtr = u_queue_get_element(queueHandle->queue);
+    if (messagePtr)
     {
-        *message = queueHandle->begin;
-        queueHandle->begin = queueHandle->begin->next;
-        if (queueHandle->begin == NULL)
-        {
-            queueHandle->end = NULL;
-        }
-        // keep next as NULL for upper layer
-        (*message)->next = NULL;
-    }
-    else
-    {
-        u_mutex_unlock(queueHandle->queueMutex);
-        return CA_STATUS_FAILED;
+        ret = CA_STATUS_OK;
+        *message = (CAAdapterMessage_t *)messagePtr->msg;
+        OICFree(messagePtr);
     }
     u_mutex_unlock(queueHandle->queueMutex);
+
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return ret;
 }
 

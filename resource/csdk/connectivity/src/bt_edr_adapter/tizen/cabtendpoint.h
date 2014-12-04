@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file    cabtendpoint.h
- * @brief   This    file provides the APIs to send data on established RFCOMM connections.
+ * @file  cabtendpoint.h
+ * @brief  This file provides the APIs to send data on established RFCOMM connections.
  */
 
 #ifndef __CA_BT_ENDPOINT_H_
@@ -37,12 +37,12 @@ extern "C"
 
 /**
  * @fn  CABTSendData
- * @brief  Send data over RFCOMM connection
+ * @brief  Send data over RFCOMM connection.
  *
- * @param  serverFD  The RFCOMM connection socket file descriptor
- * @param  data  The data needs to be sent
- * @param  dataLength  The length of data
- * @param  sentDataLen  The length of data which actually sent successful
+ * @param[in]  serverFD  The RFCOMM connection socket file descriptor.
+ * @param[in]  data  The data needs to be sent.
+ * @param[in]  dataLength  The length of data.
+ * @param[in]  sentDataLength  The length of data which actually sent successful.
  *
  * @return  CA_STATUS_OK on success otherwise proper error code.
  * @retval  CA_STATUS_OK  Successful
@@ -51,7 +51,7 @@ extern "C"
  *
  */
 CAResult_t CABTSendData(const int32_t serverFD, const void *data, const uint32_t dataLength,
-                        uint32_t *sentDataLen);
+                        uint32_t *sentDataLength);
 
 #ifdef __cplusplus
 } /* extern "C" */

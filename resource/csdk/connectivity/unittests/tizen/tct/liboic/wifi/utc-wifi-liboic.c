@@ -99,6 +99,8 @@ void interfaceRegisterCallback(CAConnectivityHandler handler,
                                CAConnectivityType connType)
 {
     printf("interfaceRegisterCallback Entry in Sample\n");
+// connectivity Handlerlist is not used
+#if 0
     ConnectivityHandlerList* newConnectivityHandler = (ConnectivityHandlerList*) malloc(sizeof(ConnectivityHandlerList));
     if (NULL == newConnectivityHandler)
     {
@@ -109,6 +111,7 @@ void interfaceRegisterCallback(CAConnectivityHandler handler,
     newConnectivityHandler->type = connType;
     newConnectivityHandler->handler = handler;
     storeInterfaceCallbacks(newConnectivityHandler);
+#endif //#if 0
     printf("interfaceRegisterCallback Exit in Sample\n");
 }
 

@@ -96,29 +96,11 @@ void CAInitializeMutex()
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
     u_mutex_init();
-    if (NULL == gMutexIsMulticastServerStarted)
+    if(NULL == gMutexIsMulticastServerStarted)
     {
         gMutexIsMulticastServerStarted = u_mutex_new();
     }
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
-}
-
-int CAWIFIRegisterNetworkNotifications(CANetworkChangeCallback netCallback)
-{
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
-
-    if (netCallback != NULL)
-    {
-        CAInitializeWIFIAdapter();
-        CASetWIFINetworkChangeCallback(netCallback);
-    }
-    else
-    {
-        CADeinitializeWIFIAdapter();
-    }
-
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
 }
 
 CAResult_t CAInitializeQueueHandles()
@@ -138,8 +120,8 @@ CAResult_t CAInitializeQueueHandles()
         return CA_STATUS_FAILED;
     }
     CASetRecvQueueHandle(gRecvQueueHandle);
-    return CA_STATUS_OK;
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
 }
 
 void CADeinitializeSendQueueHandle()
@@ -158,6 +140,24 @@ void CADeinitializeRecvQueueHandle()
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
 }
 
+int CAWIFIRegisterNetworkNotifications(CANetworkChangeCallback netCallback)
+{
+    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
+
+    if (NULL != netCallback)
+    {
+        CAInitializeWIFIAdapter();
+        CASetWIFINetworkChangeCallback(netCallback);
+    }
+    else
+    {
+        CADeinitializeWIFIAdapter();
+    }
+
+    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
 #if 0 /* Skip Queue */
 void CASetWIFINetworkPacketCallback(CANetworkPacketReceivedCallback callback)
 {
@@ -166,16 +166,20 @@ void CASetWIFINetworkPacketCallback(CANetworkPacketReceivedCallback callback)
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
 }
 #endif //#if 0
+
 CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback networkPacketCallback, CANetworkChangeCallback netCallback,
-        u_thread_pool_t handle)
+                            CANetworkPacketReceivedCallback networkPacketCallback,
+                            CANetworkChangeCallback netCallback, u_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
     VERIFY_NON_NULL(registerCallback, WIFI_ADAPTER_TAG,
             "Invalid argument : registerCallback is NULL");
     VERIFY_NON_NULL(networkPacketCallback, WIFI_ADAPTER_TAG,
-            "Invalid argument : networkPacketCallback is NULL");
+                    "Invalid argument : networkPacketCallback is NULL");
     VERIFY_NON_NULL(netCallback, WIFI_ADAPTER_TAG, "Invalid argument : netCallback is NULL");
+
+    CASetWIFINetworkPacketCallback(networkPacketCallback);
+    CAWIFIRegisterNetworkNotifications(netCallback);
 
     CAConnectivityHandler_t wifiHandler;
     wifiHandler.startAdapter = CAStartWIFI;
@@ -183,16 +187,12 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
     wifiHandler.startDiscoverServer = CAStartWIFIDiscoveryServer;
     wifiHandler.sendData = CASendWIFIUnicastData;
     wifiHandler.sendDataToAll = CASendWIFIMulticastData;
-    wifiHandler.startNotifyServer = CAStartWIFINotifyRecvServers;
-    wifiHandler.sendNotification = CASendWIFINotification;
     wifiHandler.GetnetInfo = CAGetWIFIInterfaceInformation;
     wifiHandler.readData = CAReadWIFIData;
     wifiHandler.stopAdapter = CAStopWIFI;
     wifiHandler.terminate = CATerminateWIfI;
     registerCallback(wifiHandler, CA_WIFI);
 
-    CASetWIFINetworkPacketCallback(networkPacketCallback);
-    CAWIFIRegisterNetworkNotifications(netCallback);
     CAInitializeMutex();
     CAInitializeServerMutex();
     CASetThreadHandle(handle);
@@ -223,7 +223,7 @@ CAResult_t CAStartWIFI()
 
     CASetIsStartServerInvoked();
     CABool_t retVal = CAIsWIFIConnected();
-    if (retVal == CA_FALSE)
+    if (CA_FALSE == retVal)
     {
         OIC_LOG(INFO, WIFI_ADAPTER_TAG, "WIFI is not Connected");
         return ret;
@@ -252,7 +252,7 @@ CAResult_t CAStartWIFIListeningServer()
     }
 
     CABool_t retVal = CAIsWIFIConnected();
-    if (retVal == CA_FALSE)
+    if (CA_FALSE == retVal)
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG,
                 "Failed to Start Listening Server, WIFI is not Connected! Return code[%d]",
@@ -261,7 +261,7 @@ CAResult_t CAStartWIFIListeningServer()
     }
 
     ret = CAStartMulticastServer(CA_MULTICAST_IP, "0.0.0.0", &multicastPort);
-    if (ret == CA_STATUS_OK)
+    if (CA_STATUS_OK == ret)
     {
         OIC_LOG(INFO, WIFI_ADAPTER_TAG, "Multicast Server is Started Successfully");
         u_mutex_lock(gMutexIsMulticastServerStarted);
@@ -289,7 +289,7 @@ CAResult_t CAStartWIFIDiscoveryServer()
     }
 
     CABool_t retVal = CAIsWIFIConnected();
-    if (retVal == CA_FALSE)
+    if (CA_FALSE == retVal)
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG,
                 "Failed to Start Discovery Server, WIFI is not Connected! Return code[%d]",
@@ -298,7 +298,7 @@ CAResult_t CAStartWIFIDiscoveryServer()
     }
 
     ret = CAStartMulticastServer(CA_MULTICAST_IP, "0.0.0.0", &multicastPort);
-    if (ret == CA_STATUS_OK)
+    if (CA_STATUS_OK == ret)
     {
         OIC_LOG(INFO, WIFI_ADAPTER_TAG, "Multicast Server is Started Successfully");
         u_mutex_lock(gMutexIsMulticastServerStarted);
@@ -311,14 +311,14 @@ CAResult_t CAStartWIFIDiscoveryServer()
 }
 
 uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
-        uint32_t dataLen)
+                               uint32_t dataLen)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
     uint32_t dataSize = 0;
 
-    VERIFY_NON_NULL_RET(remoteEndpoint, WIFI_ADAPTER_TAG,
-            "Invalid argument : remoteEndpoint is NULL", dataSize);
+    VERIFY_NON_NULL_RET(remoteEndpoint, WIFI_ADAPTER_TAG, "Invalid argument : remoteEndpoint is NULL",
+                        dataSize);
     VERIFY_NON_NULL_RET(data, WIFI_ADAPTER_TAG, "Invalid argument : data is NULL", dataSize);
 
     if (dataLen <= 0)
@@ -367,28 +367,12 @@ uint32_t CASendWIFIMulticastData(void *data, uint32_t dataLength)
     return dataLength;
 }
 
-CAResult_t CAStartWIFINotifyRecvServers()
-{
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
-
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-uint32_t CASendWIFINotification(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
-{
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
-
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
 CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
     CABool_t retVal = CAIsWIFIConnected();
-    if (retVal == CA_FALSE)
+    if (CA_FALSE == retVal)
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG,
                 "Failed to get interface address, WIFI is not Connected! Return code[%d]",
@@ -402,12 +386,13 @@ CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t 
 
     CAGetInterfaceAddress(localIpAddress, localIpAddressLen);
 
+
     // Create local endpoint using util function
     (*info) = CAAdapterCreateLocalEndpoint(CA_WIFI, localIpAddress, "WiFi");
     if (NULL == (*info))
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to create Local Endpoint! Return code[%d]",
-                CA_MEMORY_ALLOC_FAILED);
+                  CA_MEMORY_ALLOC_FAILED);
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -437,7 +422,7 @@ CAResult_t CAReadWIFIData()
     if (gNetworkPacketCallback && (NULL != messageReceived))
     {
         gNetworkPacketCallback(messageReceived->remoteEndpoint, messageReceived->data,
-                messageReceived->dataLen);
+                               messageReceived->dataLen);
     }
 
     CAAdapterFreeMessage(messageReceived);
@@ -450,18 +435,16 @@ CAResult_t CAStopWIFI()
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
     CAResult_t result = CA_STATUS_FAILED;
     result = CAStopUnicastServer();
-    if (result != CA_STATUS_OK)
+    if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to Stop Unicast Server! Return code[%d]",
-                result);
+        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to Stop Unicast Server! Return code[%d]", result);
         return result;
     }
     CAUnsetIsStartServerInvoked();
     result = CAStopMulticastServer();
-    if (result != CA_STATUS_OK)
+    if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to Stop Multicast Server! Return code[%d]",
-                result);
+        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to Stop Multicast Server! Return code[%d]", result);
         return result;
     }
     else
@@ -483,9 +466,10 @@ void CATerminateWIfI()
 
     CASetWIFINetworkPacketCallback(NULL);
     result = CAWIFIRegisterNetworkNotifications(NULL);
-    if (result != CA_STATUS_OK)
+    if (CA_STATUS_OK != result)
     {
-        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Failed to Unregister Network Notifications");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG,
+                "Failed to Unregister Network Notifications");
     }
     OIC_LOG(INFO, WIFI_ADAPTER_TAG, "TerminateWifi Success");
 

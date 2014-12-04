@@ -33,7 +33,10 @@
 
 #define MOD_NAME "TizenSample"
 
-//Comment any below for blocking testing of specific adapters
+/**
+ * Enable/disable one or more of the following macros to enable/disable 
+ * functionality of that particular adapter type in the interfacesample.
+ */
 //#define WIFI_ADAPTER_TEST
 #define BT_ADAPTER_TEST
 //#define BLE_ADAPTER_TEST
@@ -79,34 +82,34 @@ static ConnectivityHandlerList *gConnectivityHandlers = NULL;
 void initializeThreadPool(CAConnectivityType_t type)
 {
 #ifdef BT_ADAPTER_TEST
-	if (CA_EDR == type && NULL == gBTThreadPool)
-	{
+    if (CA_EDR == type && NULL == gBTThreadPool)
+    {
         if (CA_STATUS_OK != u_thread_pool_init(3, &gBTThreadPool))
         {
             printf("Failed to create thread pool for BT adapter!\n");
             return;
         }
-	}
+    }
 #endif
 #ifdef WIFI_ADAPTER_TEST
-	if (CA_WIFI == type && NULL == gWiFiThreadPool)
-	{
+    if (CA_WIFI == type && NULL == gWiFiThreadPool)
+    {
         if (CA_STATUS_OK != u_thread_pool_init(3, &gWiFiThreadPool))
         {
             printf("Failed to create thread pool for BT adapter!\n");
             return;
         }
-	}
+    }
 #endif
 #ifdef BLE_ADAPTER_TEST
-	if (CA_LE == type && NULL == gLEThreadPool)
-	{
+    if (CA_LE == type && NULL == gLEThreadPool)
+    {
         if (CA_STATUS_OK != u_thread_pool_init(3, &gLEThreadPool))
         {
             printf("Failed to create thread pool for BT adapter!\n");
             return;
         }
-	}
+    }
 #endif
 }
 
@@ -167,14 +170,14 @@ void networkPacketHandler(CARemoteEndpoint_t *object, void *data, uint32_t dataL
     }
     else if (CA_LE == object->connectivityType)
     {
-		printf(object->addressInfo.LE.leMacAddress);
+        printf(object->addressInfo.LE.leMacAddress);
     }
     else if (CA_WIFI == object->connectivityType || CA_ETHERNET == object->connectivityType)
     {
         printf(object->addressInfo.IP.ipAddress);
     }
 
-    printf("\nReceived Data [Length: %d]: %s\n",dataLength,(char *)data);
+    printf("\nReceived Data [Length: %d]: %s\n", dataLength, (char *)data);
     printf("networkPacketHandler Exit in Sample\n");
 }
 
@@ -302,9 +305,6 @@ int16_t interfaceMulticastStartServer(CAConnectivityType_t connType, int serverT
         case 2: //Listening server
             startServer = tempConnectivityHandlers->handler.startListenServer;
             break;
-        case 3: //Notification server
-            startServer = tempConnectivityHandlers->handler.startNotifyServer;
-            break;
     }
 
     if (startServer)
@@ -382,7 +382,7 @@ int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
         endpoint.resourceUri = NULL;
 
         printf("Sent Unicast data to device: %s\n", endpoint.addressInfo.BT.btMacAddress);
-        tempConnectivityHandlers->handler.sendData(&endpoint, coapData, strlen(coapData)+1);
+        tempConnectivityHandlers->handler.sendData(&endpoint, coapData, strlen(coapData) + 1);
     }
     else if (CA_LE == connType)
     {
@@ -422,106 +422,6 @@ int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
     }
 
     return 1;
-}
-
-void interfaceSendNotification(CAConnectivityType_t connType)
-{
-    ConnectivityHandlerList *tempConnectivityHandlers = gConnectivityHandlers;
-    if (NULL == tempConnectivityHandlers)
-    {
-        printf(" None of the interface is initialized \n");
-        return;
-    }
-
-    while (tempConnectivityHandlers && tempConnectivityHandlers->type != connType)
-    {
-        tempConnectivityHandlers = tempConnectivityHandlers->nextHandler;
-    }
-
-    if (NULL == tempConnectivityHandlers)
-    {
-        printf( "No interface handler for type %d\n", connType);
-        return;
-    }
-
-    if (CA_WIFI == connType)
-    {
-        CARemoteEndpoint_t remoteEndpoint;
-        tempConnectivityHandlers->handler.sendNotification(&remoteEndpoint, coapData, strlen(coapData));
-    }
-    else if (CA_EDR == connType)
-    {
-        //create endpoint
-        CARemoteEndpoint_t endpoint;
-
-        //Get the device address from user
-        char deviceaddress[100] = {0};
-        printf("Enter the device address: \n");
-        scanf("%s", deviceaddress);
-
-        if (strlen(deviceaddress) == 0)
-        {
-            printf("Invlaid device address\n");
-            return;
-        }
-
-        //Get the service uuid from user
-        char uuid[100] = {0};
-        printf("Enter the service uuid: \n");
-        scanf("%s", uuid);
-
-        if (strlen(uuid) == 0)
-        {
-            printf("Invlaid service uuid\n");
-            return;
-        }
-
-        endpoint.connectivityType = CA_EDR;
-        strncpy(endpoint.addressInfo.BT.btMacAddress, deviceaddress, CA_MACADDR_SIZE - 1);
-        endpoint.addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-        endpoint.resourceUri = strdup(uuid);
-
-        tempConnectivityHandlers->handler.sendNotification(&endpoint, coapData, strlen(coapData));
-        printf("Sent Unicast data \n");
-        free(endpoint.resourceUri);
-    }
-    else if (CA_LE == connType)
-    {
-        //create endpoint
-        CARemoteEndpoint_t endpoint;
-
-        //Get the device address from user
-        char deviceaddress[100] = {0};
-        printf("Enter the device address: \n");
-        scanf("%s", deviceaddress);
-
-        if (strlen(deviceaddress) == 0)
-        {
-            printf("Invlaid device address\n");
-            return;
-        }
-
-        //Get the service uuid from user
-        char uuid[100] = {0};
-        printf("Enter the service uuid: \n");
-        scanf("%s", uuid);
-
-        if (strlen(uuid) == 0)
-        {
-            printf("Invlaid service uuid\n");
-            return;
-        }
-
-        endpoint.connectivityType = CA_LE;
-        strncpy(endpoint.addressInfo.BT.btMacAddress, deviceaddress, CA_MACADDR_SIZE - 1);
-        endpoint.addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-        endpoint.resourceUri = strdup(uuid);
-
-        tempConnectivityHandlers->handler.sendNotification(&endpoint, coapData, strlen(coapData));
-        printf("Sent Unicast data \n");
-        free(endpoint.resourceUri);
-        printf("Feature is not implemented !!\n");
-    }
 }
 
 int16_t interfaceSendMulticastData(CAConnectivityType_t connType)
@@ -881,43 +781,6 @@ void testSendUnicastData()
     }
 }
 
-void testSendNotification()
-{
-    int16_t type = selectConnectivityType();
-    if (0 >= type || 3 < type)
-    {
-        printf("Invalid selection...\n");
-        return;
-    }
-
-    switch (type)
-    {
-#ifdef WIFI_ADAPTER_TEST
-        case 1: //WIFI
-            {
-                interfaceSendNotification(CA_WIFI);
-            }
-            break;
-#endif
-#ifdef BT_ADAPTER_TEST
-        case 2:   //BT
-            {
-                interfaceSendNotification(CA_EDR);
-            }
-            break;
-#endif
-#ifdef BLE_ADAPTER_TEST
-        case 3: //BLE
-            {
-                interfaceSendNotification(CA_LE);
-            }
-            break;
-#endif
-        default:
-            printf("Feature is not enabled or not implemented\n");
-    }
-}
-
 void testSendMulticastData()
 {
     int16_t type = selectConnectivityType();
@@ -957,39 +820,39 @@ void testSendMulticastData()
 
 void testReadData(void)
 {
-	int16_t type = selectConnectivityType();
-	if (0 >= type || 3 < type)
-	{
-		printf("Invalid selection...\n");
-		return;
-	}
+    int16_t type = selectConnectivityType();
+    if (0 >= type || 3 < type)
+    {
+        printf("Invalid selection...\n");
+        return;
+    }
 
-	switch (type)
-	{
+    switch (type)
+    {
 #ifdef WIFI_ADAPTER_TEST
-		case 1: //WIFI
-			{
-				interfaceReadData(CA_WIFI);
-			}
-			break;
+        case 1: //WIFI
+            {
+                interfaceReadData(CA_WIFI);
+            }
+            break;
 #endif
 #ifdef BT_ADAPTER_TEST
-		case 2:   //BT
-			{
-				interfaceReadData(CA_EDR);
-			}
-			break;
+        case 2:   //BT
+            {
+                interfaceReadData(CA_EDR);
+            }
+            break;
 #endif
 #ifdef BLE_ADAPTER_TEST
-		case 3: //BLE
-			{
-				interfaceReadData(CA_LE);
-			}
-			break;
+        case 3: //BLE
+            {
+                interfaceReadData(CA_LE);
+            }
+            break;
 #endif
-		default:
-			printf("Feature is not enabled or not implemented\n");
-	}
+        default:
+            printf("Feature is not enabled or not implemented\n");
+    }
 }
 
 void testGetNetworkInfo(void)
@@ -1071,12 +934,12 @@ void testInitializeBTInterface(void)
 {
     printf("Initiazing EDR\n");
 
-	printf("Initializing BT Adapter threadpool\n");
-	initializeThreadPool(CA_EDR);
+    printf("Initializing BT Adapter threadpool\n");
+    initializeThreadPool(CA_EDR);
 
     //Start bluetooth communication adapter
     CAResult_t err = CAInitializeEDR(interfaceRegisterCallback, networkPacketHandler,
-                             networkInterfaceCallback, gBTThreadPool);
+                                     networkInterfaceCallback, gBTThreadPool);
     if (CA_STATUS_OK != err && CA_ADAPTER_NOT_ENABLED != err)
     {
         printf("Failed to initialize bluetooth communication adapter!\n");
@@ -1100,8 +963,8 @@ void testInitializeWIFIInterface(void)
 {
     printf("testInitializeWIFIInterface IN\n");
 
-	printf("Initializing WIFI adapter threadpool\n");
-	initializeThreadPool(CA_WIFI);
+    printf("Initializing WIFI adapter threadpool\n");
+    initializeThreadPool(CA_WIFI);
 
     //Start Wifi communication adapter
     if (0 != CAInitializeWifi(interfaceRegisterCallback, networkPacketHandler,
@@ -1138,8 +1001,8 @@ void testInitializeBLEInterface(void)
 {
     printf("testInitializeBLEInterface IN\n");
 
-	printf("Initializing BLE adapter threadpool\n");
-	initializeThreadPool(CA_LE);
+    printf("Initializing BLE adapter threadpool\n");
+    initializeThreadPool(CA_LE);
 
     //Start bluetooth communication adapter
     if (0 != CAInitializeLE(interfaceRegisterCallback, networkPacketHandler,
@@ -1179,14 +1042,12 @@ static void testPrintHelp(void)
     printf("|  b - Stop adapter                                                   |\n");
     printf("|  sd- Start Discovery Server                                         |\n");
     printf("|  sl- Start Listening Server                                         |\n");
-    printf("|  sn- Start Notification Server                                      |\n");
     printf("|  u - Send Unicast Data                                              |\n");
     printf("|  m - Send Multicast Data                                            |\n");
-    printf("|  n - Send Notification Data                                         |\n");
     printf("|  g - Get Network Info                                               |\n");
     printf("|  r - Read data synchronously                                        |\n");
     printf("|  x - quit the test.                                                 |\n");
-    printf("|  h - Help menu. 		                                              |\n");
+    printf("|  h - Help menu.                                                     |\n");
     printf(" =====================================================================\n");
 }
 
@@ -1244,10 +1105,6 @@ static gboolean testThread(GIOChannel *source, GIOCondition condition , gpointer
                 {
                     testStartServer(2);
                 }
-                if (buf[1] == 'n')
-                {
-                    testStartServer(3);
-                }
             }
             break;
         case 'u':
@@ -1255,9 +1112,6 @@ static gboolean testThread(GIOChannel *source, GIOCondition condition , gpointer
             break;
         case 'm':
             testSendMulticastData();
-            break;
-        case 'n':
-            testSendNotification();
             break;
         case 'r':
             testReadData();

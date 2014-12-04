@@ -32,8 +32,8 @@
 #define ETHERNET_ADAPTER_TAG "ETHERNET_ADAPTER"
 
 CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
-                                CANetworkPacketReceivedCallback networkPacketCallback, CANetworkChangeCallback netCallback,
-                                u_thread_pool_t handle)
+                                CANetworkPacketReceivedCallback networkPacketCallback,
+                                CANetworkChangeCallback netCallback, u_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");

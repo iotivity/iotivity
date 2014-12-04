@@ -131,7 +131,7 @@ void u_cond_wait(u_cond cond, u_mutex mutex);
  * @fn  u_cond_free
  * @brief  Free the condition
  *
- * @param  mutex  The condition to be freed
+ * @param  cond  The condition to be freed
  *
  */
 void u_cond_free(u_cond cond);

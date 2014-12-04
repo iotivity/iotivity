@@ -33,11 +33,18 @@
 #include "uthreadpool.h"
 
 /**
+ * @brief API to Set the Unicast Socket descriptor
+ * @param  unicastSocketDesc         [IN] Unicast Socket Descriptor
+ * @return - None
+ */
+void CASetUnicastSocketDescriptor(int unicastSocketDesc);
+/**
  * @brief API to Set the send queue handle
  * @param  gSendQueueHandle         [IN] Queue Handle to Send Data
  * @return - None
  */
-void CASetSendQueueHandle(CAAdapterMessageQueue_t *gSendQueueHandle, CABool_t flag, u_cond cond);
+void CASetSendQueueHandle(CAAdapterMessageQueue_t *gSendQueueHandle,
+                          CABool_t flag, u_cond cond);
 
 /**
  * @brief API to Set the Multicast IP and Port Address

@@ -43,7 +43,8 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
     OIC_LOG_V(DEBUG, TAG, "IN");
 
     GError *error = NULL;
-    gThreadpool = g_thread_pool_new(run, NULL, num_of_threads, FALSE, &error);
+
+    gThreadpool = g_thread_pool_new(run, NULL, num_of_threads, TRUE, &error);
     if (NULL == gThreadpool)
     {
         OIC_LOG_V(ERROR, TAG, "g_thread_pool_new failed!");
@@ -64,7 +65,6 @@ CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(v
 {
     OIC_LOG_V(DEBUG, TAG, "IN");
 
-    gboolean result = FALSE;
     if (NULL == routine)
     {
         OIC_LOG_V(ERROR, TAG, "routine is NULL!");
@@ -80,12 +80,8 @@ CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(v
 
     message->data = data;
     message->func = routine;
-    result = g_thread_pool_push((GThreadPool *) thread_pool, (void *) message, NULL);
-    if (FALSE == result)
-    {
-        OIC_LOG_V(ERROR, TAG, "Failed to push the task to threadpool!");
-        return CA_STATUS_FAILED;
-    }
+
+    g_thread_pool_push((GThreadPool *) thread_pool, (void *) message, NULL);
 
     OIC_LOG_V(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;

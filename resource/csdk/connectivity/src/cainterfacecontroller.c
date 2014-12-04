@@ -82,7 +82,7 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CAConnectivityTy
     OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", cType);
 }
 
-static void CAReceivedPacketCallback(CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
+static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "receivedPacketCallback in interface controller");
 
@@ -93,7 +93,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t* endpoint, void* data, u
     }
 }
 
-static void CANetworkChangedCallback(CALocalConnectivity_t* info, CANetworkStatus_t status)
+static void CANetworkChangedCallback(CALocalConnectivity_t *info, CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, TAG, "Network Changed callback");
 
@@ -112,7 +112,8 @@ void CAInitializeAdapters(u_thread_pool_t handle)
 
     // Initialize adapters and register callback.
 #ifdef ETHERNET_ADAPTER
-    CAInitializeEthernet(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
+    CAInitializeEthernet(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                         handle);
 #endif /* ETHERNET_ADAPTER */
 
 #ifdef WIFI_ADAPTER
@@ -183,20 +184,20 @@ void CAStopAdapter(CAConnectivityType_t cType)
     }
 }
 
-CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t* size)
+CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 {
     CAResult_t res = CA_STATUS_FAILED;
     int8_t index = 0;
     int8_t i = 0;
 
-    CALocalConnectivity_t* resInfo = NULL;
+    CALocalConnectivity_t *resInfo = NULL;
     uint32_t resSize = 0;
 
-    CALocalConnectivity_t* tempInfo[CA_CONNECTIVITY_TYPE_NUM];
+    CALocalConnectivity_t *tempInfo[CA_CONNECTIVITY_TYPE_NUM];
     uint32_t tempSize[CA_CONNECTIVITY_TYPE_NUM];
 
-    memset(tempInfo, 0, sizeof(CALocalConnectivity_t*) * CA_CONNECTIVITY_TYPE_NUM);
-    memset(tempSize, 0, sizeof(int8_t) * CA_CONNECTIVITY_TYPE_NUM);
+    memset(tempInfo, 0, sizeof(CALocalConnectivity_t *) * CA_CONNECTIVITY_TYPE_NUM);
+    memset(tempSize, 0, sizeof(uint32_t) * CA_CONNECTIVITY_TYPE_NUM);
 
     // #1. get information each adapter
     for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
@@ -227,12 +228,13 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t* size)
 
     if (resSize <= 0)
     {
+        res = CA_STATUS_FAILED;
         return res;
     }
 
     // #3. add data into result
     // memory allocation
-    resInfo = (CALocalConnectivity_t*) OICMalloc(sizeof(CALocalConnectivity_t) * resSize);
+    resInfo = (CALocalConnectivity_t *) OICMalloc(sizeof(CALocalConnectivity_t) * resSize);
     CA_MEMORY_ALLOC_CHECK(resInfo);
     memset(resInfo, 0, sizeof(CALocalConnectivity_t) * resSize);
 
@@ -262,12 +264,12 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t* size)
     return res;
 
     // memory error label.
-    memory_error_exit:
+memory_error_exit:
 
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-CAResult_t CASendUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t length)
+CAResult_t CASendUnicastData(CARemoteEndpoint_t* endpoint, void* data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "Send unicast data to enabled interface..");
 
@@ -294,11 +296,14 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uin
     {
         res = gAdapterHandler[index].sendData(endpoint, data, length);
     }
+    //For Unicast , data will be deleted by adapters
+
+    CADestroyRemoteEndpointInternal(endpoint);
 
     return res;
 }
 
-CAResult_t CASendMulticastData(void* data, uint32_t length)
+CAResult_t CASendMulticastData(void *data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "Send multicast data to enabled interface..");
 
@@ -315,7 +320,7 @@ CAResult_t CASendMulticastData(void* data, uint32_t length)
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(int*) u_arraylist_get(list, i);
+        type = *(uint8_t*) u_arraylist_get(list, i);
 
         index = CAGetAdapterIndex(type);
 
@@ -327,10 +332,11 @@ CAResult_t CASendMulticastData(void* data, uint32_t length)
 
         if (gAdapterHandler[index].sendDataToAll != NULL)
         {
-            res = gAdapterHandler[index].sendDataToAll(data, length);
+            void* payload = (void*) OICMalloc(length);
+            memcpy(payload, data, length);
+            res = gAdapterHandler[index].sendDataToAll(payload, length);
         }
     }
-
     return res;
 }
 
@@ -350,7 +356,7 @@ CAResult_t CAStartListeningServerAdapters()
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(int*) u_arraylist_get(list, i);
+        type = *(uint8_t*) u_arraylist_get(list, i);
 
         index = CAGetAdapterIndex(type);
 
@@ -385,7 +391,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(int*) u_arraylist_get(list, i);
+        type = *(uint8_t*) u_arraylist_get(list, i);
 
         index = CAGetAdapterIndex(type);
 

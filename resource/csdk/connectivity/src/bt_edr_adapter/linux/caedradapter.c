@@ -48,8 +48,6 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     handler.startDiscoverServer = CAStartEDRDiscoveryServer;
     handler.sendData = CASendEDRUnicastData;
     handler.sendDataToAll = CASendEDRMulticastData;
-    handler.startNotifyServer = CAStartEDRNotifyServer;
-    handler.sendNotification = CASendEDRNotification;
     handler.GetnetInfo = CAGetEDRInterfaceInformation;
     handler.readData = CAReadEDRData;
     handler.stopAdapter = CAStopEDR;
@@ -91,20 +89,6 @@ uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t* endpoint, void* data, ui
 uint32_t CASendEDRMulticastData(void* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendEDRMulticastData");
-
-    return 0;
-}
-
-CAResult_t CAStartEDRNotifyServer()
-{
-    OIC_LOG_V(DEBUG, TAG, "CAStartEDRNotifyServer");
-
-    return CA_STATUS_OK;
-}
-
-uint32_t CASendEDRNotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
-{
-    OIC_LOG_V(DEBUG, TAG, "CASendEDRNotification");
 
     return 0;
 }

@@ -27,7 +27,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "uthreadpool.h"
 
 /**
  * BLE Interface APIs.
