@@ -69,6 +69,11 @@ OCDeviceEntityHandler defaultDeviceHandler;
              TAG, PCF(#arg " is NULL")); return (retVal); } }
 
 //-----------------------------------------------------------------------------
+// Externs
+//-----------------------------------------------------------------------------
+extern void DeinitOCSecurityInfo();
+
+//-----------------------------------------------------------------------------
 // Internal API function
 //-----------------------------------------------------------------------------
 
@@ -307,6 +312,9 @@ OCStackResult OCStop()
     } else {
         result = OC_STACK_ERROR;
     }
+
+    // Deinit security blob
+    DeinitOCSecurityInfo();
 
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Stack stop error"));

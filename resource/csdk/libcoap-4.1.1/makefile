@@ -44,7 +44,7 @@ RANDOM_DIR    = $(ROOT_DIR)/ocrandom
 STACK_DIR     = $(ROOT_DIR)/stack
 OCMALLOC_DIR  = $(ROOT_DIR)/ocmalloc
 INC_DIRS      = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include \
-                -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include 
+                -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include -I$(STACK_DIR)/include
 
 # Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
 # includes Time.h header file which has C++ style definitions.

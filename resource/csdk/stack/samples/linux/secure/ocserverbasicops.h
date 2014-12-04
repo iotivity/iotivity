@@ -58,9 +58,6 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest);
 void ProcessPutRequest (OCEntityHandlerRequest *ehRequest);
 void ProcessPostRequest (OCEntityHandlerRequest *ehRequest);
 
-/* call getResult in common.cpp to get the result in string format. */
-const char *getResult(OCStackResult result);
-
 //-----------------------------------------------------------------------------
 // Callback functions
 //-----------------------------------------------------------------------------

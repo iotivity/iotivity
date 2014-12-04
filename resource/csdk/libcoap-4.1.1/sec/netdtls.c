@@ -24,11 +24,13 @@
 #include "debug.h"
 #include "logger.h"
 #include "mem.h"
+#include "ocsecurityconfig.h"
 
 #define MOD_NAME ("netdtls.c")
 
 #define get_dtls_ctx(coap_ctx) (coap_ctx->coap_dtls_ctx->dtls_ctx)
 
+extern void OCGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
 
 /**
  * An internal method to invoke tinyDTLS library 'dtls_write' method.
@@ -212,7 +214,7 @@ static void coap_send_cached_pdu( coap_context_t *ctx,
     if (!ctx)
         return ;
 
-    for (;node=get_cached_pdu(ctx, dst);) {
+    for (;(node=get_cached_pdu(ctx, dst));) {
         OC_LOG(DEBUG, MOD_NAME, PCF("Sending cached PDU"));
         OC_LOG_BUFFER(DEBUG, MOD_NAME, (uint8_t*)node->pdu->hdr, node->pdu->length);
         // Send this PDU to DTLS library for encryption
@@ -315,47 +317,38 @@ static int handle_secure_event(dtls_context_t *dtls_ctx,
 static int get_psk_credentials(dtls_context_t *ctx,
               const session_t *session,
               dtls_credentials_type_t type,
-              const unsigned char *desc, size_t descLen,
-              unsigned char *result, size_t resultLen)
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_len)
 {
+    int ret = -1;
+    OCDtlsPskCredsBlob *creds_blob = NULL;
 
-#define RS_IDENTITY     ("1111111111111111")
-#define CLIENT_IDENTITY ("2222222222222222")
-#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+    //Retrieve the credentials blob from security module
+    OCGetDtlsPskCredentials(&creds_blob);
 
-    if (type == DTLS_PSK_HINT)
-    {
-        if (sizeof(RS_IDENTITY) < resultLen)
-        {
-            memcpy(result, RS_IDENTITY, sizeof(RS_IDENTITY));
-            return sizeof(RS_IDENTITY);
-        }
-    }
-    else if (type == DTLS_PSK_IDENTITY)
-    {
-        if (sizeof(CLIENT_IDENTITY) < resultLen)
-        {
-            memcpy(result, CLIENT_IDENTITY, sizeof(CLIENT_IDENTITY));
-            return sizeof(CLIENT_IDENTITY);
-        }
-    }
-    else if (type == DTLS_PSK_KEY && (desc))
-    {
-        if (descLen == sizeof(RS_IDENTITY) &&
-            !memcmp(desc, RS_IDENTITY, descLen))
-        {
-            memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
-            return sizeof(RS_CLIENT_PSK);
-        }
-        if (descLen == sizeof(CLIENT_IDENTITY) &&
-            !memcmp(desc, CLIENT_IDENTITY, descLen))
-        {
-            memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
-            return sizeof(RS_CLIENT_PSK);
+    if (!creds_blob)
+        return ret;
+
+    if ((type == DTLS_PSK_HINT) || (type == DTLS_PSK_IDENTITY)) {
+        if (DTLS_PSK_ID_LEN <= result_len){
+            memcpy(result, creds_blob->identity, DTLS_PSK_ID_LEN);
+            ret = DTLS_PSK_ID_LEN;
         }
     }
 
-    return -1;
+    if ((type == DTLS_PSK_KEY) && (desc) && (desc_len == DTLS_PSK_PSK_LEN)) {
+        //Check if we have the credentials for the device with which we
+        //are trying to perform a handshake
+        for (int i =0; i < creds_blob->num; i++) {
+            if (memcmp(desc, creds_blob->creds[i].id, DTLS_PSK_ID_LEN) == 0)
+            {
+                memcpy(result, creds_blob->creds[i].psk, DTLS_PSK_PSK_LEN);
+                ret = DTLS_PSK_PSK_LEN;
+            }
+        }
+    }
+
+    return ret;
 }
 
 
