@@ -72,6 +72,11 @@ OCDeviceEntityHandler defaultDeviceHandler;
 //TODO: we should allow the server to define this
 #define MAX_OBSERVE_AGE (0x2FFFFUL)
 //-----------------------------------------------------------------------------
+// Externs
+//-----------------------------------------------------------------------------
+extern void DeinitOCSecurityInfo();
+
+//-----------------------------------------------------------------------------
 // Internal API function
 //-----------------------------------------------------------------------------
 
@@ -450,6 +455,9 @@ OCStackResult OCStop()
     } else {
         result = OC_STACK_ERROR;
     }
+
+    // Deinit security blob
+    DeinitOCSecurityInfo();
 
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Stack stop error"));

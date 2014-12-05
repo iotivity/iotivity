@@ -46,7 +46,7 @@ OCMALLOC_DIR  = $(ROOT_DIR)/ocmalloc
 EXTLIBS_DIR   = $(ROOT_DIR)/../../extlibs
 TINYDTLS_DIR  = $(EXTLIBS_DIR)/tinydtls
 INC_DIRS      = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include \
-                -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include 
+                -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include -I$(STACK_DIR)/include
 
 # Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
 # includes Time.h header file which has C++ style definitions.

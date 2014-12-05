@@ -64,9 +64,6 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
                                           char *payload,
                                           size_t maxPayloadSize);
 
-/* call getResult in common.cpp to get the result in string format. */
-const char *getResult(OCStackResult result);
-
 //-----------------------------------------------------------------------------
 // Callback functions
 //-----------------------------------------------------------------------------

@@ -28,6 +28,7 @@
 #include "logger.h"
 #include "cJSON.h"
 #include "ocserverbasicops.h"
+#include "common.h"
 
 int gQuitFlag = 0;
 
@@ -41,6 +42,11 @@ static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 char *gResourceUri= (char *)"/a/led";
 
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
+
+//File containing Server's Identity and the PSK credentials
+//of other devices which the server trusts
+//This can be generated using 'gen_sec_bin' application
+static char CRED_FILE[] = "server_cred.bin";
 
 //This function takes the request as an input and returns the response
 //in JSON format.
@@ -312,6 +318,15 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    /*
+     * Read DTLS PSK credentials from persistent storage and
+     * set in the OC stack.
+     */
+    if (SetCredentials(CRED_FILE) != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "SetCredentials failed");
+        return 0;
+    }
     /*
      * Declare and create the example resource: LED
      */
