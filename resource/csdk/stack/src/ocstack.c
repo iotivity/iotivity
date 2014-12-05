@@ -86,8 +86,7 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
 {
     OCStackResult result = OC_STACK_ERROR;
     ResourceObserver * observer = NULL;
-    OCEntityHandlerRequest ehRequest;
-    memset(&ehRequest, 0, sizeof(OCEntityHandlerRequest));
+    OCEntityHandlerRequest ehRequest = {0};
 
     switch(status)
     {
