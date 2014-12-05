@@ -43,7 +43,7 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
 uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo, char *outUri);
 
 uint32_t CAGetResponseInfoFromPdu(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
-                                  char *outUri);
+        char *outUri);
 
 coap_pdu_t* CACreatePDUforRequest(const code_t code, coap_list_t *options, const CAInfo_t info);
 
@@ -66,8 +66,8 @@ int CAOrderOpts(void *a, void *b);
 
 uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter);
 
-uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *result,
-        uint32_t buflen, uint32_t encode_always);
+uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *result, uint32_t buflen,
+        uint32_t encode_always);
 
 /**
  * funtion for get PDU information
@@ -77,7 +77,7 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
 /**
  * funtion for parsing
  */
-coap_pdu_t *CAParsePDU(const char *data, uint32_t *outCode);
+coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode);
 
 /**
  * function for token

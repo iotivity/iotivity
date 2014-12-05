@@ -35,10 +35,11 @@
 static CANetworkPacketReceivedCallback gWifiReceivedCallback = NULL;
 static u_thread_pool_t gThreadPoolHandle = NULL;
 
-static void CAWiFiPacketReceiveCallback(char* address, const int port, const char* data)
+static void CAWiFiPacketReceiveCallback(char* address, const int port, const char* data,
+        uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG,
-            "CAWiFiPacketReceiveCallback, from: %s:%d, data: %s", address, port, data);
+    OIC_LOG_V(DEBUG, TAG, "CAWiFiPacketReceiveCallback, from: %s:%d, data: %s", address, port,
+            data);
 
     // call the callback
     if (gWifiReceivedCallback != NULL)
@@ -60,7 +61,7 @@ static void CAWiFiPacketReceiveCallback(char* address, const int port, const cha
         // set connectivity type
         endpoint->connectivityType = CA_WIFI;
 
-        gWifiReceivedCallback(endpoint, (void *) data, strlen(data));
+        gWifiReceivedCallback(endpoint, (void *) data, dataLen);
     }
 }
 
@@ -170,7 +171,7 @@ uint32_t CASendWIFIMulticastData(void* data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CASendWIFIMulticastData");
 
-    CAWiFiSendMulticastMessage("0.0.0.0", (char*) data);
+    CAWiFiSendMulticastMessage("0.0.0.0", (char*) data, dataLen);
 
     return 0;
 }

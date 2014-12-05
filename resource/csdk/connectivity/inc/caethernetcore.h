@@ -35,15 +35,15 @@ extern "C"
 {
 #endif
 
-typedef void (*CAPacketReceiveCallback)(char* address, const char* data);
+typedef void (*CAPacketReceiveCallback)(char* address, const char* data, uint32_t length);
 
 void CAEthernetInitialize(u_thread_pool_t handle);
 
 void CAEthernetTerminate();
 
-int32_t CAEthernetSendUnicastMessage(const char* address, char* data, int32_t length);
+int32_t CAEthernetSendUnicastMessage(const char* address, char* data, uint32_t length);
 
-int32_t CAEthernetSendMulticastMessage(const char* m_address, char* data);
+int32_t CAEthernetSendMulticastMessage(const char* m_address, char* data, uint32_t length);
 
 int32_t CAEthernetStartUnicastServer();
 
@@ -57,9 +57,9 @@ void CAEthernetSetCallback(CAPacketReceiveCallback callback);
 
 void CAEthernetGetLocalAddress(char *addressBuffer);
 
-int32_t CAEthernetSendUnicastMessageImpl(const char *address, const char *data);
+int32_t CAEthernetSendUnicastMessageImpl(const char *address, const char *data, uint32_t length);
 
-int32_t CAEthernetSendMulticastMessageImpl(const char *msg);
+int32_t CAEthernetSendMulticastMessageImpl(const char *msg, uint32_t length);
 
 CAResult_t CAGetEthernetInterfaceInfo(CALocalConnectivity_t **info, uint32_t* size);
 

@@ -105,14 +105,14 @@ static void CASendThreadProcess(void *threadData)
             OIC_LOG_V(DEBUG, TAG, "requestInfo is available..");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
-                                               data->requestInfo->method, data->requestInfo->info);
+                    data->requestInfo->method, data->requestInfo->info);
         }
         else if (data->responseInfo != NULL)
         {
             OIC_LOG_V(DEBUG, TAG, "responseInfo is available..");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
-                                               data->responseInfo->result, data->responseInfo->info);
+                    data->responseInfo->result, data->responseInfo->info);
         }
         else
         {
@@ -167,7 +167,7 @@ static void CASendThreadProcess(void *threadData)
     {
         OIC_LOG(DEBUG, TAG, "unknown type!");
     }
-    OIC_LOG_V(DEBUG, TAG, " Result :%d",res);
+    OIC_LOG_V(DEBUG, TAG, " Result :%d", res);
 }
 
 static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
@@ -182,7 +182,10 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
 
     coap_pdu_t *pdu;
     uint32_t code = CA_NOT_FOUND;
-    pdu = (coap_pdu_t *) CAParsePDU((const char *) data, &code);
+
+    OIC_LOG_V(DEBUG, TAG, "data : %s", data);
+    pdu = (coap_pdu_t *) CAParsePDU((const char *) data, dataLen, &code);
+
     OICFree(data);
 
     char uri[CA_MAX_URI_LENGTH] =
@@ -209,7 +212,9 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         if (NULL != ReqInfo->info.payload)
         {
             OIC_LOG_V(DEBUG, TAG, "Request- payload: %s", ReqInfo->info.payload);
-        } OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method); OIC_LOG_V(DEBUG, TAG, "Request- token : %s", ReqInfo->info.token);
+        }
+        OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method);
+        OIC_LOG_V(DEBUG, TAG, "Request- token : %s", ReqInfo->info.token);
 
         if (NULL != endpoint)
         {
@@ -248,7 +253,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
             if (NULL != ResInfo->info.payload)
             {
                 OIC_LOG_V(DEBUG, TAG, "Response- payload: %s", ResInfo->info.payload);
-            } OIC_LOG_V(DEBUG, TAG, "Response- code: %d", ResInfo->result);
+            }
+            OIC_LOG_V(DEBUG, TAG, "Response- code: %d", ResInfo->result);
         }
 
         if (NULL != endpoint)
@@ -398,7 +404,7 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object, const CARequ
     return CA_STATUS_OK;
 
     // memory error label.
-memory_error_exit:
+    memory_error_exit:
 
     CADestroyRemoteEndpointInternal(remoteEndpoint);
 
@@ -413,7 +419,7 @@ memory_error_exit:
 }
 
 CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
-                                   const CAResponseInfo_t *response)
+        const CAResponseInfo_t *response)
 {
     OIC_LOG_V(DEBUG, TAG, "CADetachResponseMessage");
 
@@ -448,7 +454,7 @@ CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
     return CA_STATUS_OK;
 
     // memory error label.
-memory_error_exit:
+    memory_error_exit:
 
     CADestroyRemoteEndpointInternal(remoteEndpoint);
 
@@ -479,7 +485,7 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
     CAAddress_t addr;
     memset(&addr, 0, sizeof(CAAddress_t));
     CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, addr,
-                                         CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE);
+            CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE);
 
     // save data
     data->type = SEND_TYPE_MULTICAST;
@@ -499,7 +505,7 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
     {
         // copy data
         CAHeaderOption_t *temp = (CAHeaderOption_t *) OICMalloc(
-                                     sizeof(CAHeaderOption_t) * numOptions);
+                sizeof(CAHeaderOption_t) * numOptions);
 
         MEMORY_ALLOCK_CHECK(temp);
 
@@ -516,7 +522,7 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
     return CA_STATUS_OK;
 
     // memory error label.
-memory_error_exit:
+    memory_error_exit:
 
     CADestroyRemoteEndpointInternal(remoteEndpoint);
 

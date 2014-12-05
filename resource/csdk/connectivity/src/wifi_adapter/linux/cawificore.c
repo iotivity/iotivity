@@ -40,6 +40,7 @@ typedef struct
     char* address;
     int port;
     void* data;
+    uint32_t len;
 } CAThreadData_t;
 
 typedef struct
@@ -83,12 +84,12 @@ static void CASendProcess(void* threadData)
     if (data->transmissionType == CA_UNICAST)
     {
         // unicast
-        CASendUnicastMessageImpl(data->address, data->port, (char*) (data->data));
+        CASendUnicastMessageImpl(data->address, data->port, (char*) (data->data), data->len);
     }
     else if (data->transmissionType == CA_MULTICAST)
     {
         // multicast
-        CASendMulticastMessageImpl((char*) (data->data));
+        CASendMulticastMessageImpl((char*) (data->data), data->len);
     }
 }
 
@@ -105,7 +106,7 @@ static void CAReceiveProcess(void* threadData)
 
     if (gPacketReceiveCallback != NULL)
     {
-        gPacketReceiveCallback(data->address, data->port, (char*) (data->data));
+        gPacketReceiveCallback(data->address, data->port, (char*) (data->data), data->len);
     }
 }
 
@@ -212,6 +213,7 @@ static void CAUnicastListenThread(void* threadData)
         td->data = (void*) OICMalloc(sizeof(void) * CA_MAX_BUFFER_SIZE);
         memset(td->data, 0, CA_MAX_BUFFER_SIZE);
         memcpy(td->data, buf, sizeof(buf));
+        td->len = recv_len;
 
         CAQueueingThreadAddData(&gReceiveThread, td, sizeof(CAThreadData_t));
     }
@@ -293,6 +295,7 @@ static void CAMulticastListenThread(void* threadData)
         td->data = (void*) OICMalloc(sizeof(void) * CA_MAX_BUFFER_SIZE);
         memset(td->data, 0, CA_MAX_BUFFER_SIZE);
         memcpy(td->data, msgbuf, sizeof(msgbuf));
+        td->len = recv_bytes;
 
         CAQueueingThreadAddData(&gReceiveThread, td, sizeof(CAThreadData_t));
 
@@ -398,7 +401,7 @@ void CAWiFiTerminate()
     OIC_LOG(DEBUG, TAG, "end of CAWiFiTerminate");
 }
 
-int32_t CAWiFiSendUnicastMessage(const char* address, const int port, char* data, int lengh)
+int32_t CAWiFiSendUnicastMessage(const char* address, const int port, char* data, uint32_t lengh)
 {
     // store the data at queue.
     CAThreadData_t* td = NULL;
@@ -427,13 +430,14 @@ int32_t CAWiFiSendUnicastMessage(const char* address, const int port, char* data
 
     td->port = port;
     td->data = data;
+    td->len = lengh;
 
     CAQueueingThreadAddData(&gSendThread, td, sizeof(CAThreadData_t));
 
     return 0;
 }
 
-int32_t CAWiFiSendMulticastMessage(const char* m_address, char* data)
+int32_t CAWiFiSendMulticastMessage(const char* m_address, char* data, uint32_t dataLen)
 {
     // store the data at queue.
     CAThreadData_t* td = NULL;
@@ -448,6 +452,7 @@ int32_t CAWiFiSendMulticastMessage(const char* m_address, char* data)
     td->address = NULL;
     td->port = 0;
     td->data = data;
+    td->len = dataLen;
 
     CAQueueingThreadAddData(&gSendThread, td, sizeof(CAThreadData_t));
 
@@ -715,7 +720,8 @@ void CAGetLocalAddress(char* addressBuffer)
         freeifaddrs(ifAddrStruct);
 }
 
-int32_t CASendUnicastMessageImpl(const char* address, const int port, const char* data)
+int32_t CASendUnicastMessageImpl(const char* address, const int port, const char* data,
+        uint32_t len)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendUnicastMessageImpl, address: %s:%d, data: %s", address, port,
             data);
@@ -736,8 +742,7 @@ int32_t CASendUnicastMessageImpl(const char* address, const int port, const char
     }
 
     OIC_LOG_V(DEBUG, TAG, "CASendUnicastMessageImpl, sendto, to: %s, data: %s", address, data);
-    if (sendto(unicast_receive_socket, data, strlen(data), 0, (struct sockaddr *) &si_other, slen)
-            == -1)
+    if (sendto(unicast_receive_socket, data, len, 0, (struct sockaddr *) &si_other, slen) == -1)
     {
         OIC_LOG(DEBUG, TAG, "CASendUnicastMessageImpl, sendto, error...");
 
@@ -747,11 +752,11 @@ int32_t CASendUnicastMessageImpl(const char* address, const int port, const char
     return 0;
 }
 
-int32_t CASendMulticastMessageImpl(const char* msg)
+int32_t CASendMulticastMessageImpl(const char* msg, uint32_t len)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendMulticastMessageImpl, sendto, data: %s", msg);
 
-    int32_t result = sendto(unicast_receive_socket, msg, strlen(msg), 0,
+    int32_t result = sendto(unicast_receive_socket, msg, len, 0,
             (struct sockaddr *) &multicast_send_interface_addr,
             sizeof(multicast_send_interface_addr));
     if (result < 0)

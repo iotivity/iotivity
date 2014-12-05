@@ -35,10 +35,9 @@
 static CANetworkPacketReceivedCallback gEthernetReceivedCallback = NULL;
 static u_thread_pool_t gThreadPoolHandle = NULL;
 
-static void CAEthernetPacketReceiveCallback(char* address, const char* data)
+static void CAEthernetPacketReceiveCallback(char* address, const char* data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG,
-            "CAethernetPacketReceiveCallback, from: %s, data: %s", address, data);
+    OIC_LOG_V(DEBUG, TAG, "CAethernetPacketReceiveCallback, from: %s, data: %s", address, data);
 
     // call the callback
     if (gEthernetReceivedCallback != NULL)
@@ -48,7 +47,8 @@ static void CAEthernetPacketReceiveCallback(char* address, const char* data)
 
         // set address
         memset((void*) endpoint->addressInfo.IP.ipAddress, 0, CA_IPADDR_SIZE);
-        if (CA_IPADDR_SIZE > strlen(address)) {
+        if (CA_IPADDR_SIZE > strlen(address))
+        {
             strcpy((char*) endpoint->addressInfo.IP.ipAddress, address);
         }
         OICFree(address);
@@ -56,7 +56,7 @@ static void CAEthernetPacketReceiveCallback(char* address, const char* data)
         // set connectivity type
         endpoint->connectivityType = CA_ETHERNET;
 
-        gEthernetReceivedCallback(endpoint, (void *) data, strlen(data));
+        gEthernetReceivedCallback(endpoint, (void *) data, dataLen);
     }
 }
 
@@ -158,7 +158,7 @@ uint32_t CASendEthernetMulticastData(void* data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CASendEthernetMulticastData");
 
-    CAEthernetSendMulticastMessage("0.0.0.0", (char*) data);
+    CAEthernetSendMulticastMessage("0.0.0.0", (char*) data, dataLen);
 
     return 0;
 }
