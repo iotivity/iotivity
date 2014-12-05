@@ -1,0 +1,26 @@
+##
+# 'resource' sub-project main build script
+#
+##
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+
+# Build libcoap
+SConscript('csdk/libcoap/SConscript')
+
+# Build liboctbstack
+SConscript('csdk/SConscript')
+
+if target_os != 'arduino':
+	# Build liboc_logger
+	SConscript('oc_logger/SConscript')
+
+	# Build liboc
+	SConscript('src/SConscript')
+
+	# Build examples
+	SConscript('examples/SConscript')
+else:
+	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')

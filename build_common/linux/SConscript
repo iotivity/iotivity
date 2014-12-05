@@ -1,0 +1,33 @@
+##
+# This script set linux specific flags (GNU GCC)
+#
+##
+Import('env')
+
+# Set release/debug flags
+if env.get('RELEASE'):
+	env.AppendUnique(CCFLAGS = ['-Os'])
+	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+	env.AppendUnique(LINKFLAGS = ['-s'])
+else:
+	env.AppendUnique(CCFLAGS = ['-g'])
+
+# Set arch flags
+target_arch = env.get('TARGET_ARCH')
+if target_arch in ['x86']:
+	env.AppendUnique(CCFLAGS = ['-m32'])
+	env.AppendUnique(LINKFLAGS = ['-m32'])
+elif target_arch in ['x86_64']:
+	env.AppendUnique(CCFLAGS = ['-m64'])
+	env.AppendUnique(LINKFLAGS = ['-m64'])
+elif target_arch.find('v7a-hard') > 0:
+	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+	env.AppendUnique(CPPFLAGS = ['-mfloat-abi=hard'])
+	env.AppendUnique(CCFLAGS = ['-mfloat-abi=hard'])
+	env.AppendUnique(LINKFLAGS = ['-mfloat-abi=hard'])
+elif target_arch.find('v7a') > 0:
+	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+elif target_arch.find('arm64') > 0:
+	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+else:
+	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])

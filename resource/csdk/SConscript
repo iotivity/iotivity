@@ -1,18 +1,18 @@
 ##
-# liboctbstack (static library) build script
+# liboctbstack (share library) build script
 ##
 
-Import('env', 'BUILD_TARGET', 'TARGET_CPU_ARCH', 'RELEASE_BUILD', 'BUILD_DIR', 'SRC_TOP_DIR')
+Import('env')
 
-liboctbstack_env = env.Clone()
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
-# Add third party libraries
-SConscript(SRC_TOP_DIR + '/third_party_libs.scons')
-Import('OIC_UTILS')
+liboctbstack_env = lib_env.Clone()
 
+target_os = env.get('TARGET_OS')
 # As in the source code, it includes arduino Time library (C++)
 # It requires compile the .c with g++
-if BUILD_TARGET == 'arduino':
+if target_os == 'arduino':
 	liboctbstack_env.Replace(CC = env.get('CXX'))
 	liboctbstack_env.Replace(CFLAGS = env.get('CXXFLAGS'))
 
@@ -20,7 +20,7 @@ if BUILD_TARGET == 'arduino':
 # Build flags
 ######################################################################
 liboctbstack_env.PrependUnique(CPPPATH = [
-		OIC_UTILS + '/tb/cJSON/',
+		'../../extlibs/cjson/',
 		'ocsocket/include',
 		'logger/include',
 		'ocrandom/include',
@@ -32,14 +32,28 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'../oc_logger/include'
 		])
 
-if BUILD_TARGET not in ['arduino', 'windows', 'winrt']:
+if target_os not in ['arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
 
-if BUILD_TARGET not in ['windows', 'winrt']:
+if target_os not in ['windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
-if not RELEASE_BUILD:
+if target_os == 'android':
+	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
+
+if target_os == 'arduino':
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
+else:
+	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
+
+if target_os in ['darwin', 'ios']:
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	liboctbstack_env.AppendUnique(LIBS = ['coap'])
+
+if not env.get('RELEASE'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################
@@ -47,24 +61,20 @@ if not RELEASE_BUILD:
 ######################################################################
 OCTBSTACK_SRC = 'stack/src/'
 liboctbstack_src = [
+	'../../extlibs/cjson/cJSON.c',
 	'occoap/src/occoap.c',
 	'occoap/src/occoaphelper.c',
 	OCTBSTACK_SRC + 'ocstack.c',
 	OCTBSTACK_SRC + 'occlientcb.c',
 	OCTBSTACK_SRC + 'ocresource.c',
 	OCTBSTACK_SRC + 'ocobserve.c',
-	OCTBSTACK_SRC + 'ocserverrequest.c',
+        OCTBSTACK_SRC + 'ocserverrequest.c',
 	OCTBSTACK_SRC + 'occollection.c',
+	OCTBSTACK_SRC + 'ocsecurity.c'
 	]
-
-if RELEASE_BUILD:
-	prefix = TARGET_CPU_ARCH + '-'
+if target_os == 'arduino':
+	liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 else:
-	prefix = TARGET_CPU_ARCH + 'd-'
-cjson_obj = liboctbstack_env.Object(OIC_UTILS + '/tb/cJSON/cJSON.c', OBJPREFIX=prefix)
-liboctbstack_src.append(cjson_obj)
+	liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
 
-liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
-i_lctbs = liboctbstack_env.Install(BUILD_DIR, liboctbstack)
-Alias('liboctbstack', i_lctbs)
-env.AppendUnique(TS = ['liboctbstack'])
+liboctbstack_env.InstallTarget(liboctbstack, 'liboctbstack')

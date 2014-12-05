@@ -5,13 +5,19 @@ import os
 import platform
 import subprocess
 
-Import('env', 'RELEASE_BUILD', 'TARGET_CPU_ARCH', 'ANDROID_NDK')
+Import('env')
 
-if not ANDROID_NDK:
+help_vars = Variables()
+help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK root directory', os.environ.get('ANDROID_NDK')))
+help_vars.Update(env)
+Help(help_vars.GenerateHelpText(env))
+
+android_ndk = env.get('ANDROID_NDK')
+if not android_ndk:
 	print '''
 *************************************** Error *********************************
-*   Android NDK path (ANDROID_NDK) isn't set, you can set enviornment variable*
-* ANDROID_NDK or add it in command line as:                                   *
+*    Android NDK path isn't set, you can set enviornment variable ANDROID_NDK *
+* or add it in command line as:                                               *
 *      # scons ANDROID_NDK=<path to android NDK> ...                          *
 *******************************************************************************
 '''
@@ -46,7 +52,7 @@ env.AppendUnique(LINKFLAGS = ['-Wl,--gc-sections', '-Wl,-z,nocopyreloc'])
 ######################################################################
 # Probe Android NDK default flags
 ######################################################################
-ndk_build_cmd = ANDROID_NDK + '/ndk-build'
+ndk_build_cmd = android_ndk + '/ndk-build'
 if env['HOST_OS'] == 'win32':
 	if os.path.isfile(ndk_build_cmd + '.cmd'):
 		ndk_build_cmd += '.cmd'
@@ -57,7 +63,7 @@ if not os.path.isfile(ndk_build_cmd):
 *   It seems android ndk path is not set properly, please check if "%s"
 * is the root directory of android ndk.                                       *
 *******************************************************************************
-''' % ANDROID_NDK
+''' % android_ndk
 	Exit(1)
 
 ANDROID_HOME = os.environ.get('ANDROID_HOME')
@@ -72,24 +78,26 @@ if ANDROID_HOME is None or not os.path.exists(ANDROID_HOME):
 *******************************************************************************
 '''
 
+target_arch = env.get('TARGET_ARCH')
+
 # Android ndk early version doesn't support C++11. Detect the toolchain
 # and platform version to make sure the newest version is used.
 
 # Detect toolchain version
 for tc_ver in ['4.9', '4.8', '4.7', '']:
-	if os.path.exists(ANDROID_NDK + '/sources/cxx-stl/gnu-libstdc++/' + tc_ver):
+	if os.path.exists(android_ndk + '/sources/cxx-stl/gnu-libstdc++/' + tc_ver):
 		break
 
 # Detect platform version.
 platform_ver = ''
 for pf_ver in range(0, 100): # 100 should be big enough :)
-	if os.path.exists(ANDROID_NDK + '/platforms/android-%d' % pf_ver):
+	if os.path.exists(android_ndk + '/platforms/android-%d' % pf_ver):
 		platform_ver = "%d" % pf_ver
 
 cmd = [ndk_build_cmd]
-cmd.append('APP_ABI=' + TARGET_CPU_ARCH)
+cmd.append('APP_ABI=' + target_arch)
 cmd.append('APP_STL=gnustl_static')
-if RELEASE_BUILD:
+if env.get('RELEASE'):
 	cmd.append('APP_OPTIM=release')
 else:
 	cmd.append('APP_OPTIM=debug')
@@ -127,25 +135,30 @@ for flags in p.stdout.readlines():
 		env.AppendUnique(CPPPATH = Split(flags[8:]))
 
 	elif cmp(flags[0:8], 'SYSROOT=') == 0:
-		env.AppendUnique(LINKFLAGS = ['--sysroot=' + flags[8:].strip()])
-		env.AppendUnique(LIBPATH = [flags[8:].strip() + '/usr/lib'])
+		sysroot = flags[8:].strip()
+		env.AppendUnique(LINKFLAGS = ['--sysroot=' + sysroot])
+		env.AppendUnique(LIBPATH = [sysroot + '/usr/lib'])
+		# To fix android NDK issue
+		# Some functions, e.g. rand, srand. strtof ... are static in static inline
+		# prior to android-L. so libc.so before android-L doesn't have them. If build
+		# build on android-L and the function(s) is used, should link libc.a
+		if platform_ver == '' or int(platform_ver) > 20:
+			env.AppendUnique(LIBS = File(sysroot + '/usr/lib/libc.a'))
 
 	elif cmp(flags[0:8], 'LDFLAGS=') == 0:
 		env.AppendUnique(LINKFLAGS = Split(flags[8:]))
 
 	elif cmp(flags[0:7], 'TC_VER=') == 0:  # set gnustl library path
 		ver = flags[7:].strip()
-		env.AppendUnique(LIBPATH = [ANDROID_NDK + '/sources/cxx-stl/gnu-libstdc++/'
-				+ ver + '/libs/' + TARGET_CPU_ARCH])
+		env.AppendUnique(LIBPATH = [android_ndk + '/sources/cxx-stl/gnu-libstdc++/'
+				+ ver + '/libs/' + target_arch])
 
 ######################################################################
 # Set release/debug flags
 ######################################################################
-if RELEASE_BUILD:
-	env.AppendUnique(CFLAGS = ['-Os'])
-	env.AppendUnique(CXXFLAGS = ['-Os'])
+if env.get('RELEASE'):
+	env.AppendUnique(CCFLAGS = ['-Os'])
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 	env.AppendUnique(LINKFLAGS = ['-s'])
 else:
-	env.AppendUnique(CFLAGS = ['-g'])
-	env.AppendUnique(CXXFLAGS = ['-g'])
+	env.AppendUnique(CCFLAGS = ['-g'])

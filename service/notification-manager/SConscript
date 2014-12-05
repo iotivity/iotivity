@@ -1,0 +1,48 @@
+##
+# NotificationManager build script
+##
+
+Import('env')
+
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+notimgr_env = lib_env.Clone()
+
+target_os = env.get('TARGET_OS')
+######################################################################
+# Build flags
+######################################################################
+notimgr_env.AppendUnique(CPPPATH = ['NotificationManager/include'])
+notimgr_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap'])
+
+if target_os not in ['windows', 'winrt']:
+	notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+
+if target_os == 'linux':
+	notimgr_env.AppendUnique(LIBS = ['pthread'])
+
+if target_os == 'android':
+	notimgr_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	notimgr_env.AppendUnique(LIBS = ['gnustl_static'])
+	notimgr_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+
+	if not env.get('RELEASE'):
+		notimgr_env.AppendUnique(LIBS = ['log'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+NOTI_SRC_DIR = 'NotificationManager/src/'
+notimgr_src = [
+		NOTI_SRC_DIR + 'LinuxMain.cpp',
+		NOTI_SRC_DIR + 'NotificationManager.cpp',
+		NOTI_SRC_DIR + 'RegistrationManager.cpp',
+		NOTI_SRC_DIR + 'ResourceManager.cpp',
+		NOTI_SRC_DIR + 'VirtualRepresentation.cpp']
+
+notificationmanager = notimgr_env.Program('noti_manager', notimgr_src)
+
+notimgr_env.InstallTarget(notificationmanager, 'notificationmanager')
+
+# Go to build sample apps
+SConscript('SampleApp/SConscript')

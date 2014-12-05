@@ -1,13 +1,13 @@
 ##
-# OCLib (static library) build script
+# OCLib (share library) build script
 ##
-Import('env', 'BUILD_TARGET', 'BUILD_DIR', 'SRC_TOP_DIR')
+Import('env')
 
 # Add third party libraries
-SConscript(SRC_TOP_DIR + '/third_party_libs.scons')
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
-oclib_env = env.Clone()
-
+oclib_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
@@ -21,26 +21,33 @@ oclib_env.AppendUnique(CPPPATH = [
 		'../oc_logger/include'
 		])
 
-if BUILD_TARGET not in ['windows', 'winrt']:
-	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++11', '-Wall'])
+target_os = env.get('TARGET_OS')
+if target_os not in ['windows', 'winrt']:
+	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
 
-if BUILD_TARGET == 'android':
+if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	oclib_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger', 'boost_thread-gcc-mt-1_49', 'gnustl_static', 'log'])
+
+if target_os in ['darwin', 'ios']:
+	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 oclib_src = [
 		'OCPlatform.cpp',
+		'OCPlatform_impl.cpp',
 		'OCResource.cpp',
 		'OCUtilities.cpp',
 		'OCException.cpp',
+		'OCRepresentation.cpp',
 		'InProcServerWrapper.cpp',
 		'InProcClientWrapper.cpp'
 	]
 
-oclib = oclib_env.StaticLibrary('oc', oclib_src)
-i_ocl = oclib_env.Install(BUILD_DIR, oclib)
-Alias('liboc', i_ocl)
-env.AppendUnique(TS = ['liboc'])
+oclib = oclib_env.SharedLibrary('oc', oclib_src)
+oclib_env.InstallTarget(oclib, 'liboc')
