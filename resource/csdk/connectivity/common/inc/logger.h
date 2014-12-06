@@ -168,7 +168,7 @@ void OICLogv(LogLevel level, const char *tag, const int16_t lineNum, const char 
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
 #define OIC_LOG(level, tag, logStr)  OICLog((level), (tag), __LINE__, (logStr))
-#define OIC_LOG_V(level, tag, ...) OICLogv((level), (tag), __LINE__, __VA_ARGS__)
+#define OIC_LOG_V(level, tag, ...)
 #else
 #define OIC_LOG_CONFIG(ctx)    OICLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OICLogShutdown()

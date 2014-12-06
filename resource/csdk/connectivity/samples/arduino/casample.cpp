@@ -186,6 +186,8 @@ void loop()
                 break;
         }
     }
+    //1:Add check for startserver before calling below api
+    handle_request_response();
 }
 
 void initialize()

@@ -34,8 +34,8 @@ CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
 
 CAResult_t CAArduinoInitUdpSocket(int16_t *port, int32_t *socketID);
 
-CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress, int16_t *port,
-        int32_t *socketID);
+CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress, const int16_t *mport,
+        const int16_t *lport, int32_t *socketID);
 
 /**
  * @brief API to start multicast server.

@@ -30,7 +30,7 @@
  * @var gThreadpool
  * @brief Glib thread pool.
  */
-static GThreadPool *gThreadpool;
+static GThreadPool *gThreadpool = NULL;
 
 /**
  * @fn run
@@ -40,14 +40,14 @@ static void run(void *thread_data, void *user_data);
 
 CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_pool)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     GError *error = NULL;
 
     gThreadpool = g_thread_pool_new(run, NULL, num_of_threads, TRUE, &error);
     if (NULL == gThreadpool)
     {
-        OIC_LOG_V(ERROR, TAG, "g_thread_pool_new failed!");
+        OIC_LOG(ERROR, TAG, "g_thread_pool_new failed!");
         if (NULL != error)
         {
             OIC_LOG_V(ERROR, TAG, "Error is: %s", error->message);
@@ -57,24 +57,24 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
     }
     *thread_pool = (u_thread_pool_t) gThreadpool;
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(void *), void *data)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     if (NULL == routine)
     {
-        OIC_LOG_V(ERROR, TAG, "routine is NULL!");
+        OIC_LOG(ERROR, TAG, "routine is NULL!");
         return CA_STATUS_FAILED;
     }
 
     u_thread_msg_t *message = (u_thread_msg_t *) OICMalloc(sizeof(u_thread_msg_t));
     if (NULL == message)
     {
-        OIC_LOG_V(ERROR, TAG, "Memory allocation failed!");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -83,18 +83,22 @@ CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(v
 
     g_thread_pool_push((GThreadPool *) thread_pool, (void *) message, NULL);
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void u_thread_pool_free(u_thread_pool_t thread_pool)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
-
+    OIC_LOG(DEBUG, TAG, "IN");
+    if(NULL == thread_pool)
+    {
+         OIC_LOG(DEBUG, TAG, "thread_pool is NULL. Its already freed.");
+         return;
+    }
     GThreadPool *threadpool = (GThreadPool *) thread_pool;
     g_thread_pool_free(threadpool, TRUE, TRUE);
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void run(void *thread_data, void *user_data)
@@ -103,12 +107,12 @@ void run(void *thread_data, void *user_data)
 
     if (message && message->func)
     {
-        OIC_LOG_V(DEBUG, TAG, "Calling routine with data as parameter");
+        OIC_LOG(DEBUG, TAG, "Calling routine with data as parameter");
         message->func(message->data);
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "Invalid task data");
+        OIC_LOG(ERROR, TAG, "Invalid task data");
         return;
     }
 

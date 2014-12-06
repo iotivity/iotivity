@@ -41,7 +41,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 char localBTAddress[20] = "DB:F7:EB:B5:0F:07"; //BT Address is not used internally by OIC API.
 int number = 0;
-char coapData[7] = "hello";
+char coapData[30] = "Arduino Test Sample :  \0";
 
 CAConnectivityHandler_t *gConnectivityHandlers = NULL;
 CALocalConnectivity_t localEndpoint;
@@ -96,7 +96,6 @@ int CAInterfaceInitializeEndpoint()
         }
 
     }
-    //Serial.println("zz");
     return true;
 }
 
@@ -163,25 +162,25 @@ unsigned char len = 0;
 
 void loop()
 {
-    Serial.println("Loop");
-    if ((number % 2) == 0)
-        coapData[5] = 'a';
-    else
-        coapData[6] = 'b';
-    coapData[6] = '\0';
-    number++;
-    if (number == 10)
+    if (Serial.available() > 0)
     {
-        number = 0;
+        Serial.println("Serial available.");
+        switch (Serial.read())
+        {
+            case 's':
+        {
+                Serial.println("sending data");
+        if ( ble_connected() )
+        {
+            Serial.println("Sending Data");
+                gConnectivityHandlers->sendData(&remoteEndpoint[1], coapData, strlen(coapData));
+                Serial.println("Sent Data");
+        }
+       }
+           break;
     }
-    if ( ble_connected() )
-    {
-        Serial.println(PCF("Sending Data"));
-        gConnectivityHandlers->sendData(&remoteEndpoint[1], coapData, strlen(coapData));
-        Serial.println("Sent Data");
     }
     gConnectivityHandlers->readData();
-    delay(2000);
 }
 #else
 #include <stdlib.h>

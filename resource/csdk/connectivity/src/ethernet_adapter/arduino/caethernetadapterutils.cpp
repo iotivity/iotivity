@@ -47,6 +47,12 @@ static int32_t gMulticastSocket = 0;
 static bool gServerRunning = false;
 static TimedAction gRcvAction = TimedAction(3000, CACheckData);
 
+/**
+ * @var gUnicastPort
+ * @brief Unicast Port
+ */
+static int16_t gUnicastPort = 0;
+
 // Retrieves a empty socket and bind it for UDP with the input port
 /**
  * @brief API to start unicast server.
@@ -80,6 +86,9 @@ CAResult_t CAStartUnicastServer(const char *localAddress, int16_t *port)
         OIC_LOG(DEBUG, MOD_NAME, "failed");
         return CA_STATUS_FAILED;
     }
+
+    gUnicastPort = *port;
+    OIC_LOG_V(DEBUG, MOD_NAME, "gUnicastPort: %d", gUnicastPort);
 
     // start thread to monitor socket here
     if (!gServerRunning)
@@ -149,13 +158,14 @@ CAResult_t CAArduinoInitUdpSocket(int16_t *port, int32_t *socketID)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress, const int16_t *port,
-        int32_t *socketID)
+CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress, const int16_t *mport,
+        const int16_t *lport, int32_t *socketID)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     VERIFY_NON_NULL(mcastAddress, MOD_NAME, "address");
     VERIFY_NON_NULL(socketID, MOD_NAME, "socket");
-    VERIFY_NON_NULL(port, MOD_NAME, "port");
+    VERIFY_NON_NULL(lport, MOD_NAME, "port");
+    VERIFY_NON_NULL(mport, MOD_NAME, "port");
     uint8_t state;
     uint8_t mcastMacAddr[] = { 0x01, 0x00, 0x5E, 0x00, 0x00, 0x00};
     uint8_t ipAddr[4] = { 0 };
@@ -192,10 +202,10 @@ CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress, const int16
     mcastMacAddr[5] = ipAddr[3];
     W5100.writeSnDIPR(sockID, (uint8_t *)ipAddr);
     W5100.writeSnDHAR(sockID, mcastMacAddr);
-    W5100.writeSnDPORT(sockID, *port);
+    W5100.writeSnDPORT(sockID, *mport);
 
     //Create a datagram socket on which to recv/send.
-    if (!socket(sockID, SnMR::UDP, *port, SnMR::MULTI))
+    if (!socket(sockID, SnMR::UDP, *lport, SnMR::MULTI))
     {
         OIC_LOG(ERROR, MOD_NAME, "failed");
         return CA_STATUS_FAILED;
@@ -218,7 +228,7 @@ CAResult_t CAStartMulticastServer(const char *mcastAddress, const char *localAdd
                                   const int16_t *port)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
-    if (CAArduinoInitMulticastUdpSocket(mcastAddress, port, &gMulticastSocket) != CA_STATUS_OK)
+    if (CAArduinoInitMulticastUdpSocket(mcastAddress, port, port, &gMulticastSocket) != CA_STATUS_OK)
     {
         OIC_LOG(DEBUG, MOD_NAME, "failed");
         return CA_STATUS_FAILED;
@@ -279,10 +289,16 @@ uint32_t CAEthernetSendData(const char *remoteIpAddress, const int16_t port, con
                             int16_t isMulticast)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
+    if(!isMulticast && 0 == gUnicastPort)
+    {
+        OIC_LOG(ERROR, MOD_NAME, "UnicastPort 0");
+        return 0;
+    }
+
     int32_t socketID = 0;
     if (isMulticast)
     {
-        if (CAArduinoInitMulticastUdpSocket(remoteIpAddress, &port, &socketID) != CA_STATUS_OK)
+        if (CAArduinoInitMulticastUdpSocket(remoteIpAddress, &port, &gUnicastPort, &socketID) != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, MOD_NAME, "multicast");
             return 0;
@@ -290,10 +306,17 @@ uint32_t CAEthernetSendData(const char *remoteIpAddress, const int16_t port, con
     }
     else
     {
-        if (CAArduinoInitUdpSocket((int16_t *)&port, &socketID) != CA_STATUS_OK)
+        if(0 == gUnicastSocket)
         {
-            OIC_LOG(ERROR, MOD_NAME, "unicast");
-            return 0;
+            if (CAArduinoInitUdpSocket((int16_t *)&port, &socketID) != CA_STATUS_OK)
+            {
+                OIC_LOG(ERROR, MOD_NAME, "unicast");
+                return 0;
+            }
+        }
+        else
+        {
+            socketID = gUnicastSocket;
         }
     }
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
@@ -320,7 +343,11 @@ uint32_t CAArduinoSendData(int32_t sockFd, const uint8_t *buf, uint32_t bufLen,
 
     ret = sendto(sockFd, buf, bufLen, (uint8_t *)ipAddr, port);
     delay(10);
-    close(sockFd);
+    if(gUnicastSocket != sockFd)
+    {
+        close(sockFd);
+    }
+
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return ret;
 }

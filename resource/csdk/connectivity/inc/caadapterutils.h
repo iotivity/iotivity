@@ -31,6 +31,11 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * @def VERIFY_NON_NULL
  * @brief Macro to verify the validity of input argument
@@ -99,4 +104,7 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remote
  */
 void CAAdapterFreeRemoteEndpoint(CARemoteEndpoint_t *remoteEndPoint);
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 #endif  // _CA_ADAPTER_UTILS_H_

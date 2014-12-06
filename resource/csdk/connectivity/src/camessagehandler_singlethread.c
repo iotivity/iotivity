@@ -158,7 +158,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
 
     coap_pdu_t *pdu;
     uint32_t code = CA_NOT_FOUND;
-    pdu = (coap_pdu_t *) CAParsePDU((const char *) data, &code);
+    pdu = (coap_pdu_t *) CAParsePDU((const char *) data,dataLen, &code);
     //OICFree(data);
 
     char uri[CA_MAX_URI_LENGTH] = { 0, };
