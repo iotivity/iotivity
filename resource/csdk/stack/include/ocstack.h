@@ -263,10 +263,10 @@ typedef struct {
  * Response from queries to remote servers. Queries are made by calling the @ref OCDoResource API.
  */
 typedef struct {
-    // the is the result of our stack, OCStackResult should contain coap/other error codes;
-    OCStackResult result;
     // Address of remote server
     OCDevAddr * addr;
+    // the is the result of our stack, OCStackResult should contain coap/other error codes;
+    OCStackResult result;
     // If associated with observe, this will represent the sequence of notifications from server.
     uint32_t sequenceNumber;
     // resJSONPayload is retrieved from the payload of the received request PDU

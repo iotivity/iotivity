@@ -245,11 +245,10 @@ int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
     }
 
     // bind to multicast port
-    struct sockaddr_in sa;
+    struct sockaddr_in sa = {0};
     struct sockaddr_in *sin;
 
     sin = (struct sockaddr_in *)(ipmcastaddr->addr);
-    memset(&sa, 0, sizeof(sa));
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = sin->sin_addr.s_addr;
     sa.sin_port = sin->sin_port;
@@ -260,8 +259,7 @@ int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
     }
 
     // add membership to receiving socket
-    struct ip_mreq mreq;
-    memset(&mreq, 0, sizeof(struct ip_mreq));
+    struct ip_mreq mreq = {0};
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     mreq.imr_multiaddr.s_addr = sin->sin_addr.s_addr;
     if ((ret = setsockopt(sfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mreq, sizeof(mreq))) < 0) {

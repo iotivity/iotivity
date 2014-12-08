@@ -152,7 +152,6 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                     {
                         sprintf((char *)presenceResBuf, "%u:%u", resPtr->sequenceNum, maxAge);
                     }
-                    memset(&ehResponse, 0, sizeof(OCEntityHandlerResponse));
                     ehResponse.ehResult = OC_EH_OK;
                     ehResponse.payload = presenceResBuf;
                     ehResponse.payloadSize = strlen((const char *)presenceResBuf) + 1;
@@ -185,8 +184,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     uint8_t numSentNotification = 0;
     OCServerRequest * request = NULL;
     OCStackResult result = OC_STACK_ERROR;
-    OCEntityHandlerResponse ehResponse;
-    memset(&ehResponse, 0, sizeof(OCEntityHandlerResponse));
+    OCEntityHandlerResponse ehResponse = {0};
 
     OC_LOG(INFO, TAG, PCF("Entering SendListObserverNotification"));
     while(numIds)
@@ -286,10 +284,9 @@ OCStackResult AddObserver (const char         *resUri,
 {
     ResourceObserver *obsNode = NULL;
 
-    obsNode = (ResourceObserver *) OCMalloc(sizeof(ResourceObserver));
+    obsNode = (ResourceObserver *) OCCalloc(1, sizeof(ResourceObserver));
     if (obsNode)
     {
-        memset(obsNode, 0, sizeof(ResourceObserver));
         obsNode->observeId = obsId;
 
         obsNode->resUri = (unsigned char *)OCMalloc(strlen(resUri)+1);
