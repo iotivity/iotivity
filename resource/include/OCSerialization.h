@@ -57,6 +57,7 @@ namespace OC
                     {
                         // we swallow this exception, since it means the key
                         // doesn't exist, allowing these to be optional
+                        ar.setNextName(nullptr);
                     }
 
                     try
@@ -70,20 +71,26 @@ namespace OC
                         ar(cereal::make_nvp(OC::Key::PORTKEY, m_port));
                     }
                     catch(cereal::Exception&)
-                    {}
+                    {
+                        ar.setNextName(nullptr);
+                    }
 
                     try
                     {
                         ar(cereal::make_nvp(OC::Key::RESOURCETYPESKEY,m_resourceTypes));
                     }
                     catch(cereal::Exception&)
-                    {}
+                    {
+                        ar.setNextName(nullptr);
+                    }
                     try
                     {
                         ar(cereal::make_nvp(OC::Key::INTERFACESKEY, m_interfaces));
                     }
                     catch(cereal::Exception&)
-                    {}
+                    {
+                        ar.setNextName(nullptr);
+                    }
                 }
 
                 bool m_observable;
@@ -110,14 +117,18 @@ namespace OC
                     m_loaded=true;
                 }
                 catch(cereal::Exception&)
-                {}
+                {
+                    ar.setNextName(nullptr);
+                }
                 try
                 {
                     ar(cereal::make_nvp(OC::Key::PROPERTYKEY, m_props));
                     m_loaded=true;
                 }
                 catch(cereal::Exception&)
-                {}
+                {
+                    ar.setNextName(nullptr);
+                }
             }
 
 
