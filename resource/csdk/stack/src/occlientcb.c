@@ -33,29 +33,65 @@ struct ClientCB *cbList = NULL;
 OCMulticastNode * mcPresenceNodes = NULL;
 
 OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
-        OCCoAPToken * token, OCDoHandle handle, OCMethod method,
-        unsigned char * requestUri, unsigned char * resourceType) {
-    ClientCB *cbNode;
-    cbNode = (ClientCB*) OCMalloc(sizeof(ClientCB));
-    if (cbNode) {
-        cbNode->callBack = cbData->cb;
-        cbNode->context = cbData->context;
-        cbNode->deleteCallback = cbData->cd;
-        memcpy(&(cbNode->token), token, sizeof(OCCoAPToken));
-        cbNode->handle = handle;
-        cbNode->method = method;
-        cbNode->sequenceNumber = 0;
-        #ifdef WITH_PRESENCE
-        cbNode->presence = NULL;
-        cbNode->filterResourceType = resourceType;
-        #endif
-        cbNode->requestUri = requestUri;
-        LL_APPEND(cbList, cbNode);
-        *clientCB = cbNode;
-        return OC_STACK_OK;
+        OCCoAPToken * token, OCDoHandle *handle, OCMethod method,
+        unsigned char * requestUri, unsigned char * resourceTypeName) {
+
+    ClientCB *cbNode = NULL;
+
+    #ifdef WITH_PRESENCE
+    if(method == OC_REST_PRESENCE)
+    {   // Retrieve the presence callback structure for this specific requestUri.
+        cbNode = GetClientCB(NULL, NULL, requestUri);
     }
-    *clientCB = NULL;
-    return OC_STACK_NO_MEMORY;
+    #endif // WITH_PRESENCE
+
+    if(!cbNode)// If it does not already exist, create new node.
+    {
+        cbNode = (ClientCB*) OCMalloc(sizeof(ClientCB));
+        if(!cbNode)
+        {
+            *clientCB = NULL;
+            goto exit;
+        }
+        else
+        {
+            cbNode->callBack = cbData->cb;
+            cbNode->context = cbData->context;
+            cbNode->deleteCallback = cbData->cd;
+            memcpy(&(cbNode->token), token, sizeof(OCCoAPToken));
+            cbNode->handle = *handle;
+            cbNode->method = method;
+            cbNode->sequenceNumber = 0;
+            #ifdef WITH_PRESENCE
+            cbNode->presence = NULL;
+            cbNode->filterResourceType = NULL;
+            #endif // WITH_PRESENCE
+            cbNode->requestUri = requestUri;
+            LL_APPEND(cbList, cbNode);
+            *clientCB = cbNode;
+        }
+    }
+    else
+    {
+        // Ensure that the handle the SDK hands back up to the application layer for the
+        // OCDoResource call matches the found ClientCB Node.
+        *clientCB = cbNode;
+        OCFree(requestUri);
+        OCFree(*handle);
+        *handle = cbNode->handle;
+    }
+
+    #ifdef WITH_PRESENCE
+    if(method == OC_REST_PRESENCE && resourceTypeName)
+    {   // Amend the found or created node by adding a new resourceType to it.
+        return InsertResourceTypeFilter(cbNode, (const char *)resourceTypeName);
+    }
+    #endif
+
+    return OC_STACK_OK;
+
+    exit:
+        return OC_STACK_NO_MEMORY;
 }
 
 void DeleteClientCB(ClientCB * cbNode) {
@@ -74,9 +110,20 @@ void DeleteClientCB(ClientCB * cbNode) {
         if(cbNode->presence) {
             OCFree(cbNode->presence->timeOut);
             OCFree(cbNode->presence);
-            OCFree(cbNode->filterResourceType);
         }
-        #endif
+        if(cbNode->method == OC_REST_PRESENCE)
+        {
+            OCResourceType * pointer = cbNode->filterResourceType;
+            OCResourceType * next = NULL;
+            while(pointer)
+            {
+                next = pointer->next;
+                OCFree(pointer->resourcetypename);
+                OCFree(pointer);
+                pointer = next;
+            }
+        }
+        #endif // WITH_PRESENCE
         OCFree(cbNode);
         cbNode = NULL;
     }
@@ -113,6 +160,26 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * re
     return NULL;
 }
 
+OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceTypeName)
+{
+    OCResourceType * newResourceType = NULL;
+    if(cbNode && resourceTypeName)
+    {
+        // Form a new resourceType member.
+        newResourceType = (OCResourceType *) OCMalloc(sizeof(OCResourceType));
+        if(!newResourceType)
+        {
+            return OC_STACK_NO_MEMORY;
+        }
+
+        newResourceType->next = NULL;
+        newResourceType->resourcetypename = (char *) resourceTypeName;
+
+        LL_APPEND(cbNode->filterResourceType, newResourceType);
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
 
 void DeleteClientCBList() {
     ClientCB* out;

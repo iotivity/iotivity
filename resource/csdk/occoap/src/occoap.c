@@ -343,28 +343,30 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     if(!strcmp((char *)rcvdUri, (char *)OC_PRESENCE_URI)){
         isPresenceNotification = 1;
         OC_LOG(INFO, TAG, PCF("Received a presence notification"));
-        tok = strtok((char *)bufRes, "[:]");
-        tok = strtok(NULL, "[:]");
+        tok = strtok((char *)bufRes, "[:]}");
+        bufRes[strlen((char *)bufRes)] = ':';
+        tok = strtok(NULL, "[:]}");
+        bufRes[strlen((char *)bufRes)] = ':';
         VERIFY_NON_NULL(tok);
         sequenceNumber = (uint32_t )atol(tok);
         OC_LOG_V(DEBUG, TAG, "The received NONCE is %u", sequenceNumber);
-        tok = strtok(NULL, "[:]");
+        tok = strtok(NULL, "[:]}");
         VERIFY_NON_NULL(tok);
         maxAge = (uint32_t )atol(tok);
         OC_LOG_V(DEBUG, TAG, "The received TTL is %u", maxAge);
-        tok = strtok(NULL, "[:]");
-        bufRes[strlen((char *)bufRes)] = ':';
+        tok = strtok(NULL, "[:]}");
         if(tok) {
+            bufRes[strlen((char *)bufRes)] = ':';
             resourceTypeName = (char *)OCMalloc(strlen(tok));
             if(!resourceTypeName)
             {
                 goto exit;
             }
             strcpy(resourceTypeName, tok);
-            bufRes[strlen((char *)bufRes)] = ':';
             OC_LOG_V(DEBUG, TAG, "----------------resourceTypeName %s",
                     resourceTypeName);
         }
+        bufRes[strlen((char *)bufRes)] = ']';
     }
     #endif
 
@@ -381,7 +383,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     cbNode = GetClientCB(&rcvdToken, NULL, NULL);
 
     #ifdef WITH_PRESENCE
-    // Check if the application subcribed for presence
+    // Check if the application subscribed for presence
     if(!cbNode)
     {
         // get the address of the remote
@@ -400,6 +402,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         sprintf((char *)fullUri, "%s%s", OC_MULTICAST_IP, rcvdUri);
         cbNode = GetClientCB(NULL, NULL, fullUri);
         isMulticastPresence = 1;
+        isPresenceNotification = 0;
     }
     #endif
 
@@ -511,12 +514,11 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     cbNode->sequenceNumber = clientResponse.sequenceNumber;;
                 }
 
+                // Ensure that a filter is actually applied.
                 if(resourceTypeName && response->cbNode->filterResourceType)
                 {
-                    if(strcmp(resourceTypeName,
-                            (const char *)response->cbNode->filterResourceType)!=0)
+                    if(!findResourceType(response->cbNode->filterResourceType, resourceTypeName))
                     {
-                        //Ignore presence callback if resource type does not match filter.
                         goto exit;
                     }
                 }
@@ -564,16 +566,14 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     }
                 }
 
+                // Ensure that a filter is actually applied.
                 if(resourceTypeName && response->cbNode->filterResourceType)
                 {
-                    if(strcmp(resourceTypeName,
-                            (const char *)response->cbNode->filterResourceType)!=0)
+                    if(!findResourceType(response->cbNode->filterResourceType, resourceTypeName))
                     {
-                        //Ignore presence callback if resource type does not match filter.
                         goto exit;
                     }
                 }
-
             }
             #endif
         }
@@ -609,6 +609,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         VERIFY_SUCCESS(result, OC_STACK_OK);
     }
     exit:
+        OCFree(resourceTypeName);
         OCFree(response);
 }
 

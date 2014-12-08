@@ -395,9 +395,11 @@ OCStackResult OCStop();
 OCStackResult OCProcess();
 
 /**
- * Discover or Perform requests on a specified resource (specified by that Resource's respective URI).
+ * Discover or Perform requests on a specified resource (specified by that Resource's respective
+ * URI).
  *
- * @param handle             - @ref OCDoHandle to refer to the request sent out on behalf of calling this API.
+ * @param handle             - @ref OCDoHandle to refer to the request sent out on behalf of
+ *                             calling this API.
  * @param method             - @ref OCMethod to perform on the resource
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource
@@ -408,6 +410,10 @@ OCStackResult OCProcess();
  * @param options            - The address of an array containing the vendor specific
  *                             header options to be sent with the request
  * @param numOptions         - Number of header options to be included
+ *
+ * Note: Presence subscription amendments (ie. adding additional resource type filters by calling
+ * this API again) require the use of the same base URI as the original request to successfully
+ * amend the presence filters.
  *
  * @return
  *     OC_STACK_OK               - no errors
