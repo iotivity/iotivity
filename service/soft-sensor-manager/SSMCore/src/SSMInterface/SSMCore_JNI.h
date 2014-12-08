@@ -21,7 +21,6 @@
 #define _SSMCore_JNI_H_
 
 #include <jni.h>
-#include "SSMCore.h"
 
 #ifdef __cplusplus
 extern "C" {
