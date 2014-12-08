@@ -22,7 +22,7 @@
 #include "ocstack.h"
 #include "ocstackconfig.h"
 #include "ocstackinternal.h"
-#include "ocresource.h"
+#include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
 #include "occoap.h"
@@ -431,7 +431,7 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
         else
         {
             if(resource->resourceProperties & OC_ACTIVE){
-                SendPresenceNotification(resource->rsrcType);
+                SendPresenceNotification(NULL);
             }
         }
         #endif

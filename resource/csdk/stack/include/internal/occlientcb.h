@@ -24,6 +24,7 @@
 
 #include <ocstack.h>
 #include <occoaptoken.h>
+#include <ocresource.h>
 
 typedef struct OCPresence {
     // This is the TTL associated with presence
@@ -61,7 +62,7 @@ typedef struct ClientCB {
     // Struct to hold TTL info for presence
     #ifdef WITH_PRESENCE
     OCPresence * presence;
-    unsigned char * filterResourceType;
+    OCResourceType * filterResourceType;
     #endif
     // next node in this list
     struct ClientCB    *next;
@@ -85,7 +86,7 @@ extern struct ClientCB *cbList;
  * @param[in] requestUri
  *              the resource uri of the request.
  * @param[in] resourceType
- *              the resourceType associated with this request.
+ *              the resourceType associated with a presence request.
  *
  * @brief If the handle you're looking for does not exist, the stack will reply with a RST message.
  *
@@ -93,7 +94,7 @@ extern struct ClientCB *cbList;
  */
 //------------------------------------------------------------------------
 OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
-        OCCoAPToken * token, OCDoHandle handle, OCMethod method,
+        OCCoAPToken * token, OCDoHandle *handle, OCMethod method,
         unsigned char * requestUri, unsigned char * resourceType);
 
 //-- DeleteClientCB -----------------------------------------------------------
@@ -126,6 +127,20 @@ void DeleteClientCB(ClientCB *cbNode);
  */
 //------------------------------------------------------------------------
 ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * requestUri);
+
+
+/**
+ * Inserts a new resource type filter into this clientCB node.
+ *
+ * @param cbNode - the node to add the new resourceType filter to
+ * @param resourceTypeName - the value to create the new resourceType filter from
+ *
+ * @return
+ *      OC_STACK_OK on success
+ *      OC_STACK_ERROR with invalid parameters
+ *      OC_STACK_NO_MEMORY when out of memory
+ */
+OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceTypeName);
 
 //-- DeleteClientCBList --------------------------------------------------
 /** @ingroup ocstack

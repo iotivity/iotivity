@@ -24,7 +24,7 @@
 //-----------------------------------------------------------------------------
 #include "ocstack.h"
 #include "ocstackinternal.h"
-#include "ocresource.h"
+#include "ocresourcehandler.h"
 #include "occlientcb.h"
 #include "ocobserve.h"
 #include "ocrandom.h"
@@ -440,6 +440,12 @@ OCStackResult OCStop()
         return OC_STACK_ERROR;
     }
 
+    #ifdef WITH_PRESENCE
+    // Ensure that the TTL associated with ANY and ALL presence notifications originating from
+    // here send with the code "OC_STACK_PRESENCE_STOPPED" result.
+    presenceResource.presenceTTL = 0;
+    #endif // WITH_PRESENCE
+
     // Free memory dynamically allocated for resources
     deleteAllResources();
 
@@ -532,7 +538,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     ClientCB *clientCB = NULL;
     unsigned char * requestUri = NULL;
     unsigned char * resourceType = NULL;
-    char * newURI = (char *)requiredUri;
+    char * newUri = (char *)requiredUri;
     (void) referenceUri;
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
@@ -580,7 +586,14 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE)
     {
-        result = getResourceType(requiredUri, &resourceType, &newURI);
+        result = getResourceType(requiredUri, &resourceType, &newUri);
+        if(resourceType) {
+            OC_LOG_V(DEBUG, TAG, "Got Resource Type: %s", resourceType);
+        }
+        else
+        {
+            OC_LOG(DEBUG, TAG, "Got Resource Type is NULL.");
+        }
         if(result != OC_STACK_OK)
         {
             goto exit;
@@ -591,7 +604,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     requestUri = (unsigned char *) OCMalloc(uriLen + 1);
     if(requestUri)
     {
-        memcpy(requestUri, newURI, (uriLen + 1));
+        memcpy(requestUri, newUri, (uriLen + 1));
     }
     else
     {
@@ -610,7 +623,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     // with the request
     OCGenerateCoAPToken(&token);
 
-    if((result = AddClientCB(&clientCB, cbData, &token, *handle, method, requestUri, resourceType))
+    if((result = AddClientCB(&clientCB, cbData, &token, handle, method, requestUri, resourceType))
             != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
@@ -618,12 +631,12 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
     // Make call to OCCoAP layer
-    result = OCDoCoAPResource(method, qos, &token, newURI, request, options, numOptions);
+    result = OCDoCoAPResource(method, qos, &token, newUri, request, options, numOptions);
 
 exit:
-    if(newURI != requiredUri)
+    if(newUri != requiredUri)
     {
-        OCFree(newURI);
+        OCFree(newUri);
     }
     if (result != OC_STACK_OK)
     {
@@ -1737,10 +1750,18 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
     OCMethod method = OC_REST_NOMETHOD;
     uint32_t maxAge = 0;
 
+    OC_LOG(INFO, TAG, PCF("Entering OCNotifyAllObservers"));
+    #ifdef WITH_PRESENCE
+    if(handle == presenceResource.handle)
+    {
+        return OC_STACK_OK;
+    }
+    #endif // WITH_PRESENCE
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_ERROR);
+
     // Verify that the resource exists
     resPtr = findResource ((OCResource *) handle);
-    if (NULL == resPtr || myStackMode == OC_CLIENT)
+    if (NULL == resPtr)
     {
         return OC_STACK_NO_RESOURCE;
     }
@@ -1920,7 +1941,7 @@ OCStackResult initResources() {
     presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL;
     //presenceResource.token = OCGenerateCoAPToken();
     result = OCCreateResource(&presenceResource.handle,
-            "core.presence",
+            OC_RSRVD_RESOURCE_TYPE_PRESENCE,
             "core.r",
             OC_PRESENCE_URI,
             NULL,
@@ -1982,9 +2003,22 @@ void deleteAllResources()
     while (pointer)
     {
         temp = pointer->next;
-        deleteResource(pointer);
+        #ifdef WITH_PRESENCE
+        if(pointer != (OCResource *) presenceResource.handle)
+        {
+            #endif // WITH_PRESENCE
+            deleteResource(pointer);
+            #ifdef WITH_PRESENCE
+        }
+        #endif // WITH_PRESENCE
         pointer = temp;
     }
+
+    #ifdef WITH_PRESENCE
+    // Ensure that the last resource to be deleted is the presence resource. This allows for all
+    // presence notification attributed to their deletion to be processed.
+    deleteResource((OCResource *) presenceResource.handle);
+    #endif // WITH_PRESENCE
 }
 
 /**
@@ -2004,15 +2038,27 @@ int deleteResource(OCResource *resource) {
         if (temp == resource) {
             // Invalidate all Resource Properties.
             resource->resourceProperties = (OCResourceProperty) 0;
-            OCNotifyAllObservers((OCResourceHandle)resource, OC_HIGH_QOS);
-
             #ifdef WITH_PRESENCE
+            if(resource != (OCResource *) presenceResource.handle)
+            {
+            #endif // WITH_PRESENCE
+                OCNotifyAllObservers((OCResourceHandle)resource, OC_HIGH_QOS);
+            #ifdef WITH_PRESENCE
+            }
+
             if(presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-                SendPresenceNotification(resource->rsrcType);
+                if(resource != (OCResource *) presenceResource.handle)
+                {
+                    SendPresenceNotification(resource->rsrcType);
+                }
+                else
+                {
+                    SendPresenceNotification(NULL);
+                }
             }
-            #endif
+        #endif
 
             if (temp == headResource) {
                 headResource = temp->next;
@@ -2151,6 +2197,35 @@ OCResourceType *findResourceTypeAtIndex(OCResourceHandle handle, uint8_t index) 
 }
 
 /**
+ * Finds a resource type in an OCResourceType link-list.
+ *
+ * @param resourceTypeList - the link-list to be searched through
+ * @param resourceTypeName - the key to search for
+ *
+ * @return
+ *      resourceType that matches the key (ie. resourceTypeName)
+ *      NULL - either an invalid parameter or this function was unable to find the key.
+ */
+OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char * resourceTypeName)
+{
+    if(resourceTypeList && resourceTypeName)
+    {
+        OCResourceType * rtPointer = resourceTypeList;
+        while(resourceTypeName && rtPointer)
+        {
+            if(rtPointer->resourcetypename &&
+                    strcmp(resourceTypeName, (const char *)
+                    (rtPointer->resourcetypename)) == 0)
+            {
+                break;
+            }
+            rtPointer = rtPointer->next;
+        }
+        return rtPointer;
+    }
+    return NULL;
+}
+/**
  * Insert a resource interface into a resource's resource interface linked list.
  *
  * @param resource - resource where resource interface is to be inserted
@@ -2275,14 +2350,12 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
     {
         return OC_STACK_INVALID_PARAM;
     }
-    char * ptr = NULL;
     char * leftToken = NULL;
     char * tempURI = (char *) OCMalloc(strlen(uri));
     if(!tempURI)
     {
         goto exit;
     }
-    ptr = tempURI;
     strcpy(tempURI, uri);
     leftToken = strtok((char *)tempURI, "?");
 
@@ -2301,7 +2374,7 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
         leftToken = strtok(NULL, "?");
     }
 
-    *newURI = ptr;
+    *newURI = tempURI;
 
     return OC_STACK_OK;
 

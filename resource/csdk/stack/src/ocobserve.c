@@ -23,7 +23,7 @@
 #include "ocstackconfig.h"
 #include "ocstackinternal.h"
 #include "ocobserve.h"
-#include "ocresource.h"
+#include "ocresourcehandler.h"
 #include "occoap.h"
 #include "utlist.h"
 #include "debug.h"
@@ -134,7 +134,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
             {
                 OCEntityHandlerResponse ehResponse = {0};
                 unsigned char presenceResBuf[MAX_RESPONSE_LENGTH] = {0};
-                //we know it is the default entity handler
+                //This is effectively the implementation for the presence entity handler.
                 OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, OC_OBSERVE_NO_OPTION, OC_LOW_QOS,
@@ -143,7 +143,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 if(result == OC_STACK_OK)
                 {
                     // we create the payload here
-                    if(resourceType)
+                    if(resourceType && resourceType->resourcetypename)
                     {
                         sprintf((char *)presenceResBuf, "%u:%u:%s",
                                 resPtr->sequenceNum, maxAge, resourceType->resourcetypename);

@@ -22,7 +22,7 @@
 #include <string.h>
 #include "ocstack.h"
 #include "ocstackinternal.h"
-#include "ocresource.h"
+#include "ocresourcehandler.h"
 #include "logger.h"
 #include "debug.h"
 #include "cJSON.h"

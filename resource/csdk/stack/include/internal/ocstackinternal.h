@@ -51,102 +51,6 @@ extern OCDeviceEntityHandler defaultDeviceHandler;
 #define OC_COAP_SCHEME "coap://"
 #define OC_OFFSET_SEQUENCE_NUMBER (4) // the first outgoing sequence number will be 5
 
-#define OC_OBSERVER_NOT_INTERESTED       (0)
-#define OC_OBSERVER_STILL_INTERESTED     (1)
-#define OC_OBSERVER_FAILED_COMM          (2)
-
-//-----------------------------------------------------------------------------
-// Virtual Resource Presence Attributes
-//-----------------------------------------------------------------------------
-#ifdef WITH_PRESENCE
-typedef struct PRESENCERESOURCE{
-    OCResourceHandle handle;
-    uint32_t presenceTTL;
-} PresenceResource;
-#endif
-
-//-----------------------------------------------------------------------------
-// Forward declarations
-//-----------------------------------------------------------------------------
-struct rsrc_t;
-
-//-----------------------------------------------------------------------------
-// Typedefs
-//-----------------------------------------------------------------------------
-
-// IF here stands for Interface
-typedef enum {
-    STACK_IF_DEFAULT = 0,
-    STACK_IF_LL,
-    STACK_IF_BATCH,
-    STACK_IF_INVALID
-} OCStackIfTypes;
-
-typedef struct resourcetype_t {
-    struct resourcetype_t *next; // linked list; for multiple types on resource
-
-    // Name of the type; this string is ‘.’ (dot) separate list of segments where each segment is a
-    // namespace and the final segment is the type; type and sub-types can be separate with ‘-‘ (dash)
-    // usually only two segments would be defined. Either way this string is meant to be human friendly
-    // and is used opaquely and not parsed by code
-    // This name is used in the “rt=” parameter of a resource description when resources are introspected
-    // and is also use in the <base URI>/types list of available types
-    char *resourcetypename;
-} OCResourceType;
-
-typedef struct attr_t {
-    struct attr_t *next; // Points to next resource in list
-
-    // The name of the attribute; used to look up the attribute in list;
-    // for a given attribute SHOULD not be changed once assigned
-    const char *attrName;
-    char *attrValue; // value of the attribute as string
-} OCAttribute;
-
-typedef struct resourceinterface_t {
-    struct resourceinterface_t *next; // linked list; for multiple interfaces on resource
-
-    // Name of the interface; this is ‘.’ (dot) separate list of segments where each segment is
-    // a namespace and the final segment is the interface; usually only two segments would be defined.
-    // Either way this string is opaque and not parsed by segment
-    char *name ;
-
-    // Supported content types to serialize request and response on this interface
-    // (REMOVE for V1 – only jSON for all but core.ll that uses Link Format)
-#if 0
-    char *inputContentType ;
-    char *outputContentType ;
-#endif
-    /*** Future placeholder for access control and policy ***/
-} OCResourceInterface;
-
-typedef struct rsrc_t {
-    struct rsrc_t *next; // Points to next resource in list
-    // Relative path on the device; will be combined with base url to create fully qualified path
-    char *host;
-    char *uri;
-    OCResourceType *rsrcType; // Resource type(s); linked list
-    OCResourceInterface *rsrcInterface; // Resource interface(s); linked list
-    OCAttribute *rsrcAttributes; // Resource interface(s); linked list
-    // Array of pointers to resources; can be used to represent a container of resources
-    // (i.e. hierarchies of resources) or for reference resources (i.e. for a resource collection)
-    struct rsrc_t *rsrcResources[MAX_CONTAINED_RESOURCES];
-    //struct rsrc_t *rsrcResources;
-    // Pointer to function that handles the entity bound to the resource.
-    // This handler has to be explicitly defined by the programmer
-    OCEntityHandler entityHandler;
-    // Properties on the resource – defines meta information on the resource
-    OCResourceProperty resourceProperties ; /* ACTIVE, DISCOVERABLE etc */
-    // Pointer to an opaque object where app/user specific data can be placed with the resource;
-    // this could be information for the entity handler between invocations
-    void *context;
-    // NOTE: Methods supported by this resource should be based on the interface targeted
-    // i.e. look into the interface structure based on the query request Can be removed here; place holder for the note above
-    /* method_t methods; */
-    // Sequence number for observable resources. Per the CoAP standard it is a 24 bit value.
-    uint32_t sequenceNum;
-} OCResource;
-
 typedef struct {
     // Observe option field
     uint32_t option;
@@ -250,6 +154,7 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
 
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName);
+OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char * resourceTypeName);
 
 #ifdef WITH_PRESENCE
 //TODO: should the following function be public?
