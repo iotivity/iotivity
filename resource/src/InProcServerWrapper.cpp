@@ -47,6 +47,9 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                          OCEntityHandlerRequest * entityHandlerRequest,
                          std::shared_ptr<OCResourceRequest> pRequest)
 {
+    pRequest->setRequestHandle(entityHandlerRequest->requestHandle);
+    pRequest->setResourceHandle(entityHandlerRequest->resource);
+
     if(flag & OC_INIT_FLAG)
     {
         pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::InitFlag);
@@ -116,64 +119,12 @@ void formResourceRequest(OCEntityHandlerFlag flag,
     {
         pRequest->setRequestHandlerFlag(
                    OC::RequestHandlerFlag::RequestFlag | OC::RequestHandlerFlag::ObserverFlag);
-        if(entityHandlerRequest->obsInfo)
-        {
-            OC::ObservationInfo observationInfo;
-            observationInfo.action = (OC::ObserveAction) entityHandlerRequest->obsInfo->action;
-            observationInfo.obsId = entityHandlerRequest->obsInfo->obsId;
-            pRequest->setObservationInfo(observationInfo);
-        }
+
+        OC::ObservationInfo observationInfo;
+        observationInfo.action = (OC::ObserveAction) entityHandlerRequest->obsInfo.action;
+        observationInfo.obsId = entityHandlerRequest->obsInfo.obsId;
+        pRequest->setObservationInfo(observationInfo);
     }
-}
-
-void processResourceResponse(OCEntityHandlerFlag flag,
-                             OCEntityHandlerRequest * entityHandlerRequest,
-                             std::shared_ptr<OCResourceResponse> pResponse)
-{
-    if(flag & OC_REQUEST_FLAG)
-    {
-        // TODO we could use const reference
-        std::string payLoad;
-        HeaderOptions serverHeaderOptions;
-
-        if(pResponse)
-        {
-            payLoad = pResponse->getPayload();
-            serverHeaderOptions = pResponse->getHeaderOptions();
-        }
-        else
-        {
-            throw OCException(OC::Exception::STR_NULL_RESPONSE, OC_STACK_MALFORMED_RESPONSE);
-        }
-
-        if (payLoad.size() < entityHandlerRequest->resJSONPayloadLen)
-        {
-            int i = 0;
-            entityHandlerRequest->numSendVendorSpecificHeaderOptions =
-                        serverHeaderOptions.size();
-            for (auto it=serverHeaderOptions.begin(); it != serverHeaderOptions.end(); ++it)
-            {
-                entityHandlerRequest->sendVendorSpecificHeaderOptions[i].protocolID = OC_COAP_ID;
-                entityHandlerRequest->sendVendorSpecificHeaderOptions[i].optionID =
-                        static_cast<uint16_t>(it->getOptionID());
-                entityHandlerRequest->sendVendorSpecificHeaderOptions[i].optionLength =
-                        (it->getOptionData()).length() + 1;
-                memcpy(entityHandlerRequest->sendVendorSpecificHeaderOptions[i].optionData,
-                        (it->getOptionData()).c_str(),
-                        (it->getOptionData()).length() + 1);
-                i++;
-            }
-
-            strncpy((char*)entityHandlerRequest->resJSONPayload,
-                        payLoad.c_str(),
-                        entityHandlerRequest->resJSONPayloadLen);
-        }
-        else
-        {
-            throw OCException(OC::Exception::STR_PAYLOAD_OVERFLOW, OC_STACK_MALFORMED_RESPONSE);
-        }
-    }
-
 }
 
 OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
@@ -191,7 +142,6 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
     }
 
     auto pRequest = std::make_shared<OC::OCResourceRequest>();
-    auto pResponse = std::make_shared<OC::OCResourceResponse>();
 
     formResourceRequest(flag, entityHandlerRequest, pRequest);
 
@@ -199,15 +149,13 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
     if(defaultDeviceEntityHandler)
     {
-        result = defaultDeviceEntityHandler(pRequest, pResponse);
+        result = defaultDeviceEntityHandler(pRequest);
     }
     else
     {
         oclog() << "Default device entity handler was not set.";
         return OC_EH_ERROR;
     }
-
-    processResourceResponse(flag, entityHandlerRequest, pResponse);
 
     return result;
 }
@@ -227,7 +175,6 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
     }
 
     auto pRequest = std::make_shared<OC::OCResourceRequest>();
-    auto pResponse = std::make_shared<OC::OCResourceResponse>();
 
     formResourceRequest(flag, entityHandlerRequest, pRequest);
 
@@ -251,15 +198,7 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
         // Call CPP Application Entity Handler
         if(entityHandlerEntry->second)
         {
-            result = entityHandlerEntry->second(pRequest, pResponse);
-
-            if(OC_EH_RESOURCE_CREATED == result)
-            {
-                std::string createdUri = pResponse->getNewResourceUri();
-                strncpy(reinterpret_cast<char*>(entityHandlerRequest->newResourceUri),
-                        createdUri.c_str(),
-                        createdUri.length() + 1);
-            }
+            result = entityHandlerEntry->second(pRequest);
         }
         else
         {
@@ -273,17 +212,14 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
         return OC_EH_ERROR;
     }
 
-    processResourceResponse(flag, entityHandlerRequest, pResponse);
-
     return result;
 }
 
 namespace OC
 {
-    InProcServerWrapper::InProcServerWrapper(OC::OCPlatform_impl& owner,
+    InProcServerWrapper::InProcServerWrapper(
         std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
-     : IServerWrapper(owner),
-       m_csdkLock(csdkLock)
+     : m_csdkLock(csdkLock)
     {
         OCMode initType;
 
@@ -446,6 +382,7 @@ namespace OC
 
         return result;
     }
+
     OCStackResult InProcServerWrapper::setDefaultDeviceEntityHandler
                                         (EntityHandler entityHandler)
     {
@@ -571,6 +508,74 @@ namespace OC
             throw OCException(OC::Exception::END_PRESENCE_FAILED, result);
         }
         return result;
+    }
+
+    OCStackResult InProcServerWrapper::sendResponse(
+        const std::shared_ptr<OCResourceResponse> pResponse)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+
+        if(!pResponse)
+        {
+            result = OC_STACK_MALFORMED_RESPONSE;
+            throw OCException(OC::Exception::STR_NULL_RESPONSE, OC_STACK_MALFORMED_RESPONSE);
+        }
+        else
+        {
+            OCEntityHandlerResponse response;
+            std::string payLoad;
+            HeaderOptions serverHeaderOptions;
+
+            payLoad = pResponse->getPayload();
+            serverHeaderOptions = pResponse->getHeaderOptions();
+
+            response.requestHandle = pResponse->getRequestHandle();
+            response.resourceHandle = pResponse->getResourceHandle();
+            response.ehResult = pResponse->getResponseResult();
+            response.payload = (unsigned char*) payLoad.c_str();
+            response.payloadSize = payLoad.length() + 1;
+            response.persistentBufferFlag = 0;
+
+            response.numSendVendorSpecificHeaderOptions = serverHeaderOptions.size();
+            int i = 0;
+            for (auto it=serverHeaderOptions.begin(); it != serverHeaderOptions.end(); ++it)
+            {
+                response.sendVendorSpecificHeaderOptions[i].protocolID = OC_COAP_ID;
+                response.sendVendorSpecificHeaderOptions[i].optionID =
+                    static_cast<uint16_t>(it->getOptionID());
+                response.sendVendorSpecificHeaderOptions[i].optionLength =
+                    (it->getOptionData()).length() + 1;
+                memcpy(response.sendVendorSpecificHeaderOptions[i].optionData,
+                    (it->getOptionData()).c_str(),
+                    (it->getOptionData()).length() + 1);
+                i++;
+            }
+
+            if(OC_EH_RESOURCE_CREATED == response.ehResult)
+            {
+                std::string createdUri = pResponse->getNewResourceUri();
+                strncpy(reinterpret_cast<char*>(response.resourceUri),
+                        createdUri.c_str(),
+                        createdUri.length() + 1);
+            }
+
+            if(cLock)
+            {
+                std::lock_guard<std::recursive_mutex> lock(*cLock);
+                result = OCDoResponse(&response);
+            }
+            else
+            {
+                result = OC_STACK_ERROR;
+            }
+
+            if(result != OC_STACK_OK)
+            {
+                oclog() << "Error sending response\n";
+            }
+            return result;
+        }
     }
 
     InProcServerWrapper::~InProcServerWrapper()

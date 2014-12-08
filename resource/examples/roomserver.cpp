@@ -24,8 +24,6 @@
 
 #include <functional>
 
-#include <pthread.h>
-
 #include "OCPlatform.h"
 #include "OCApi.h"
 
@@ -34,12 +32,12 @@ using namespace std;
 
 
 // Forward declaring the entityHandler (room)
-OCEntityHandlerResult entityHandlerRoom(std::shared_ptr<OCResourceRequest> request,
-                                        std::shared_ptr<OCResourceResponse> response);
-OCEntityHandlerResult entityHandlerLight(std::shared_ptr<OCResourceRequest> request,
-                                         std::shared_ptr<OCResourceResponse> response);
-OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> request,
-                                       std::shared_ptr<OCResourceResponse> response);
+OCEntityHandlerResult entityHandlerRoom(std::shared_ptr<OCResourceRequest> request);
+OCEntityHandlerResult entityHandlerLight(std::shared_ptr<OCResourceRequest> request);
+OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> request);
+
+/// Specifies whether default collection entity handler is used or not
+bool useDefaultCollectionEH = false;
 
 class RoomResource
 {
@@ -110,13 +108,26 @@ public:
     /// This function internally calls registerResource API.
     void createResources()
     {
+        // This function internally creates and registers the resource.
         using namespace OC::OCPlatform;
-        // This will internally create and register the resource.
-        OCStackResult result = registerResource(
+        OCStackResult result = OC_STACK_ERROR;
+
+        // Based on the case, we will use default collection EH (by passing NULL in entity handler
+        // parameter) or use application entity handler.
+        if(useDefaultCollectionEH)
+        {
+            result = registerResource(
+                                    m_roomHandle, m_roomUri, m_roomTypes[0],
+                                    m_roomInterfaces[0], NULL,
+                                    OC_DISCOVERABLE | OC_OBSERVABLE);
+        }
+        else
+        {
+            result = registerResource(
                                     m_roomHandle, m_roomUri, m_roomTypes[0],
                                     m_roomInterfaces[0], entityHandlerRoom,
-                                    OC_DISCOVERABLE | OC_OBSERVABLE
-                                  );
+                                    OC_DISCOVERABLE | OC_OBSERVABLE);
+        }
 
         if (OC_STACK_OK != result)
         {
@@ -135,22 +146,18 @@ public:
             cout << "Binding TypeName to Resource was unsuccessful\n";
         }
 
-        result = registerResource(
-                                    m_lightHandle, m_lightUri, m_lightTypes[0],
-                                    m_lightInterfaces[0], entityHandlerLight,
-                                    OC_DISCOVERABLE | OC_OBSERVABLE
-                                   );
+        result = registerResource(m_lightHandle, m_lightUri, m_lightTypes[0],
+                                  m_lightInterfaces[0], entityHandlerLight,
+                                  OC_DISCOVERABLE | OC_OBSERVABLE);
 
         if (OC_STACK_OK != result)
         {
             cout << "Resource creation (light) was unsuccessful\n";
         }
 
-        result = registerResource(
-                                    m_fanHandle, m_fanUri, m_fanTypes[0],
-                                    m_fanInterfaces[0], entityHandlerFan,
-                                    OC_DISCOVERABLE | OC_OBSERVABLE
-                                   );
+        result = registerResource(m_fanHandle, m_fanUri, m_fanTypes[0],
+                                  m_fanInterfaces[0], entityHandlerFan,
+                                  OC_DISCOVERABLE | OC_OBSERVABLE);
 
         if (OC_STACK_OK != result)
         {
@@ -221,16 +228,10 @@ public:
 
     OCRepresentation getRoomRepresentation(void)
     {
-        std::vector<OCRepresentation> children;
+        m_roomRep.clearChildren();
 
-        OCRepresentation light = getLightRepresentation();
-        children.push_back(light);
-
-        OCRepresentation fan = getFanRepresentation();
-        children.push_back(fan);
-
-        m_roomRep.setChildren(children);
-
+        m_roomRep.addChild(getLightRepresentation());
+        m_roomRep.addChild(getFanRepresentation());
         return m_roomRep;
     }
 
@@ -239,117 +240,46 @@ public:
 // Create the instance of the resource class (in this case instance of class 'RoomResource').
 RoomResource myRoomResource;
 
-OCEntityHandlerResult entityHandlerRoom(std::shared_ptr<OCResourceRequest> request,
-                       std::shared_ptr<OCResourceResponse> response)
+OCStackResult sendRoomResponse(std::shared_ptr<OCResourceRequest> pRequest)
 {
-    cout << "\tIn Server CPP entity handler:\n";
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+    pResponse->setRequestHandle(pRequest->getRequestHandle());
+    pResponse->setResourceHandle(pRequest->getResourceHandle());
 
-    if(request)
+    // Check for query params (if any)
+    QueryParamsMap queryParamsMap = pRequest->getQueryParameters();
+
+    cout << "\t\t\tquery params: \n";
+    for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
     {
-        // Get the request type and request flag
-        std::string requestType = request->getRequestType();
-        int requestFlag = request->getRequestHandlerFlag();
+        cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
+    }
 
-        if(requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            cout << "\t\trequestFlag : Init\n";
+    OCRepresentation rep;
+    rep = myRoomResource.getRoomRepresentation();
 
-            // entity handler to perform resource initialization operations
-        }
-        else if(requestFlag == RequestHandlerFlag::RequestFlag)
-        {
-            cout << "\t\trequestFlag : Request\n";
+    auto findRes = queryParamsMap.find("if");
 
-            // If the request type is GET
-            if(requestType == "GET")
-            {
-                cout << "\t\t\trequestType : GET\n";
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                cout << "\t\t\tquery params: \n";
-                for(auto it = queryParamsMap.begin(); it != queryParamsMap.end(); it++)
-                {
-                    cout << "\t\t\t\t" << it->first << ":" << it->second << endl;
-                }
-
-                OCRepresentation rep;
-                rep = myRoomResource.getRoomRepresentation();
-
-                if(response)
-                {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
-                }
-
-            }
-            else if(requestType == "PUT")
-            {
-                cout << "\t\t\trequestType : PUT\n";
-
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                entityHandlerLight(request, response);
-                entityHandlerFan(request, response);
-
-                OCRepresentation rep;
-                rep = myRoomResource.getRoomRepresentation();
-
-                if(response)
-                {
-                    response->setErrorCode(200);
-
-                    auto findRes = queryParamsMap.find("if");
-
-                    if(findRes != queryParamsMap.end())
-                    {
-                        response->setResourceRepresentation(rep, findRes->second);
-                    }
-                    else
-                    {
-                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    }
-                }
-            }
-            else if(requestType == "POST")
-            {
-                // POST request operations
-            }
-            else if(requestType == "DELETE")
-            {
-                // DELETE request operations
-            }
-        }
-        else if(requestFlag == RequestHandlerFlag::ObserverFlag)
-        {
-            cout << "\t\trequestFlag : Observer\n";
-        }
+    if(findRes != queryParamsMap.end())
+    {
+        pResponse->setResourceRepresentation(rep, findRes->second);
     }
     else
     {
-        std::cout << "Request invalid" << std::endl;
+        pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
     }
 
-    return OC_EH_OK;
+    pResponse->setErrorCode(200);
+    pResponse->setResponseResult(OC_EH_OK);
+
+    return OCPlatform::sendResponse(pResponse);
 }
 
-OCEntityHandlerResult entityHandlerLight(std::shared_ptr<OCResourceRequest> request,
-                                         std::shared_ptr<OCResourceResponse> response)
+// This function prepares a response for any incoming request to Light resource.
+bool prepareLightResponse(std::shared_ptr<OCResourceRequest> request)
 {
-    cout << "\tIn Server CPP (Light) entity handler:\n";
-
+    cout << "\tIn Server CPP (Light) prepareLightResponse:\n";
+    bool result = false;
     if(request)
     {
         // Get the request type and request flag
@@ -370,31 +300,18 @@ OCEntityHandlerResult entityHandlerLight(std::shared_ptr<OCResourceRequest> requ
             if(requestType == "GET")
             {
                 cout << "\t\t\trequestType : GET\n";
-
-                if(response)
-                {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-                    response->setResourceRepresentation(myRoomResource.getLightRepresentation());
-                }
-
+                // GET operations are directly handled while sending the response
+                // in the sendLightResponse function
+                result = true;
             }
             else if(requestType == "PUT")
             {
                 cout << "\t\t\trequestType : PUT\n";
-
                 OCRepresentation rep = request->getResourceRepresentation();
 
                 // Do related operations related to PUT request
                 myRoomResource.setLightRepresentation(rep);
-
-                if(response)
-                {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-                    response->setResourceRepresentation(myRoomResource.getLightRepresentation());
-                }
-
+                result= true;
             }
             else if(requestType == "POST")
             {
@@ -415,13 +332,14 @@ OCEntityHandlerResult entityHandlerLight(std::shared_ptr<OCResourceRequest> requ
         std::cout << "Request invalid" << std::endl;
     }
 
-    return OC_EH_OK;
+    return result;
 }
 
-OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> request,
-                                       std::shared_ptr<OCResourceResponse> response)
+// This function prepares a response for any incoming request to Fan resource.
+bool prepareFanResponse(std::shared_ptr<OCResourceRequest> request)
 {
-    cout << "\tIn Server CPP (Fan) entity handler:\n";
+    cout << "\tIn Server CPP (Fan) prepareFanResponse:\n";
+    bool result = false;
 
     if(request)
     {
@@ -443,15 +361,9 @@ OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> reques
             if(requestType == "GET")
             {
                 cout << "\t\t\trequestType : GET\n";
-
-                if(response)
-                {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(myRoomResource.getFanRepresentation());
-                }
-
+                // GET operations are directly handled while sending the response
+                // in the sendLightResponse function
+                result = true;
             }
             else if(requestType == "PUT")
             {
@@ -461,12 +373,70 @@ OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> reques
 
                 // Do related operations related to PUT request
                 myRoomResource.setFanRepresentation(rep);
+                result = true;
+            }
+            else if(requestType == "POST")
+            {
+                // POST request operations
+            }
+            else if(requestType == "DELETE")
+            {
+                // DELETE request operations
+            }
+        }
+        else if(requestFlag == RequestHandlerFlag::ObserverFlag)
+        {
+            cout << "\t\trequestFlag : Observer\n";
+        }
+    }
+    else
+    {
+        std::cout << "Request invalid" << std::endl;
+    }
 
-                if(response)
+    return result;
+}
+
+OCEntityHandlerResult entityHandlerRoom(std::shared_ptr<OCResourceRequest> request)
+{
+    cout << "\tIn Server CPP entity handler:\n";
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+
+    if(request)
+    {
+        // Get the request type and request flag
+        std::string requestType = request->getRequestType();
+        int requestFlag = request->getRequestHandlerFlag();
+
+        if(requestFlag == RequestHandlerFlag::InitFlag)
+        {
+            cout << "\t\trequestFlag : Init\n";
+
+            // entity handler to perform resource initialization operations
+        }
+        else if(requestFlag == RequestHandlerFlag::RequestFlag)
+        {
+            cout << "\t\trequestFlag : Request\n";
+
+            // If the request type is GET
+            if(requestType == "GET")
+            {
+                cout << "\t\t\trequestType : GET\n";
+                if(OC_STACK_OK == sendRoomResponse(request))
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-                    response->setResourceRepresentation(myRoomResource.getFanRepresentation());
+                    ehResult = OC_EH_OK;
+                }
+            }
+            else if(requestType == "PUT")
+            {
+                cout << "\t\t\trequestType : PUT\n";
+                // Call these functions to prepare the response for child resources and
+                // then send the final response using sendRoomResponse function
+                prepareLightResponse(request);
+                prepareFanResponse(request);
+                if(OC_STACK_OK == sendRoomResponse(request))
+                {
+                    ehResult = OC_EH_OK;
                 }
             }
             else if(requestType == "POST")
@@ -488,11 +458,112 @@ OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> reques
         std::cout << "Request invalid" << std::endl;
     }
 
-    return OC_EH_OK;
+    return ehResult;
 }
 
-int main()
+OCStackResult sendLightResponse(std::shared_ptr<OCResourceRequest> pRequest)
 {
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+    pResponse->setRequestHandle(pRequest->getRequestHandle());
+    pResponse->setResourceHandle(pRequest->getResourceHandle());
+    pResponse->setResourceRepresentation(myRoomResource.getLightRepresentation());
+    pResponse->setErrorCode(200);
+    pResponse->setResponseResult(OC_EH_OK);
+
+    return OCPlatform::sendResponse(pResponse);
+}
+
+
+
+OCEntityHandlerResult entityHandlerLight(std::shared_ptr<OCResourceRequest> request)
+{
+    cout << "\tIn Server CPP (Light) entity handler:\n";
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+
+    if(prepareLightResponse(request))
+    {
+        if(OC_STACK_OK == sendLightResponse(request))
+        {
+            ehResult = OC_EH_OK;
+        }
+        else
+        {
+            std::cout << "sendLightResponse failed." << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "PrepareLightResponse failed." << std::endl;
+    }
+    return ehResult;
+}
+
+OCStackResult sendFanResponse(std::shared_ptr<OCResourceRequest> pRequest)
+{
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+    pResponse->setRequestHandle(pRequest->getRequestHandle());
+    pResponse->setResourceHandle(pRequest->getResourceHandle());
+    pResponse->setResourceRepresentation(myRoomResource.getFanRepresentation());
+    pResponse->setErrorCode(200);
+    pResponse->setResponseResult(OC_EH_OK);
+
+    return OCPlatform::sendResponse(pResponse);
+}
+
+
+OCEntityHandlerResult entityHandlerFan(std::shared_ptr<OCResourceRequest> request)
+{
+    cout << "\tIn Server CPP (Fan) entity handler:\n";
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+    if(prepareFanResponse(request))
+    {
+        if(OC_STACK_OK == sendFanResponse(request))
+        {
+            ehResult = OC_EH_OK;
+        }
+        else
+        {
+            std::cout << "sendFanResponse failed." << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "PrepareFanResponse failed." << std::endl;
+    }
+
+    return ehResult;
+}
+
+void printUsage()
+{
+    std::cout << std::endl;
+    std::cout << "Usage : roomserver <value>\n";
+    std::cout << "1 : Create room resource with default collection entity handler.\n";
+    std::cout << "2 : Create room resource with application collection entity handler.\n";
+}
+
+int main(int argc, char* argv[1])
+{
+    printUsage();
+
+    if(argc == 2)
+    {
+        int value = atoi(argv[1]);
+        switch (value)
+        {
+            case 1:
+                useDefaultCollectionEH = true;
+                break;
+            case 2:
+            default:
+                break;
+       }
+    }
+    else
+    {
+        return -1;
+    }
+
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,

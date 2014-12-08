@@ -26,11 +26,13 @@
 #ifndef __OCRESOURCEREQUEST_H
 #define __OCRESOURCEREQUEST_H
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
 #include "OCApi.h"
 #include "OCRepresentation.h"
+
+void formResourceRequest(OCEntityHandlerFlag,
+                         OCEntityHandlerRequest*,
+                         std::shared_ptr<OC::OCResourceRequest>);
+
 
 namespace OC
 {
@@ -77,7 +79,8 @@ namespace OC
 
         /**
         *  Provides the entire resource attribute representation
-        *  @return OCRepresentation reference containing the name value pairs representing the resource's attributes
+        *  @return OCRepresentation reference containing the name value pairs
+        *   representing the resource's attributes
         */
         const OCRepresentation& getResourceRepresentation() const {return m_representation;}
 
@@ -104,10 +107,35 @@ namespace OC
             return m_resourceUri;
         }
 
-        /** This API retrieves headerOptions which was sent from a client
+        /**
+        * This API retrieves headerOptions which was sent from a client
+        *
         * @return std::map HeaderOptions with the header options
         */
-        const HeaderOptions& getHeaderOptions() const {return m_headerOptions;}
+        const HeaderOptions& getHeaderOptions() const
+        {
+            return m_headerOptions;
+        }
+
+        /**
+        * This API retrieves the request handle
+        *
+        * @return OCRequestHandle
+        */
+        const OCRequestHandle& getRequestHandle() const
+        {
+            return m_requestHandle;
+        }
+
+        /**
+        * This API retrieves the resource handle
+        *
+        * return OCResourceHandle
+        */
+        const OCResourceHandle& getResourceHandle() const
+        {
+            return m_resourceHandle;
+        }
 
     private:
         std::string m_requestType;
@@ -117,79 +145,82 @@ namespace OC
         OCRepresentation m_representation;
         ObservationInfo m_observationInfo;
         HeaderOptions m_headerOptions;
+        OCRequestHandle m_requestHandle;
+        OCResourceHandle m_resourceHandle;
 
-    public:
-        // TODO: This is not a public API for app developers.
-        // This function will not be exposed in future
+
+    private:
+        friend void (::formResourceRequest)(OCEntityHandlerFlag, OCEntityHandlerRequest*,
+            std::shared_ptr<OC::OCResourceRequest>);
         void setRequestType(const std::string& requestType)
         {
             m_requestType = requestType;
         }
 
-        // TODO: This is not a public API for app developers.
-        // This function will not be exposed in future
         void setPayload(const std::string& requestPayload)
         {
-            AttributeMap attributeMap;
-            // TODO: The following JSON Parse implementation should be seperated into utitilites
-            // and used wherever required.
-            // e.g. parse(std::string& payload, Attributemap& attributeMap)
+            MessageContainer info;
+            info.setJSONRepresentation(requestPayload);
 
-            std::stringstream requestStream;
-            requestStream << requestPayload;
-            boost::property_tree::ptree root;
-            try
+            const std::vector<OCRepresentation>& reps = info.representations();
+            if(reps.size() >0)
             {
-                boost::property_tree::read_json(requestStream, root);
+                std::vector<OCRepresentation>::const_iterator itr = reps.begin();
+                std::vector<OCRepresentation>::const_iterator back = reps.end();
+                m_representation = *itr;
+                ++itr;
+
+                for(;itr != back; ++itr)
+                {
+                    m_representation.addChild(*itr);
+                }
             }
-            catch(boost::property_tree::json_parser::json_parser_error &e)
+            else
             {
-                //TOD: log this
-                return;
+                throw OCException(OC::Exception::INVALID_REPRESENTATION);
             }
-
-            // TODO this expects the representation oc:{} and not oc:[{}]
-            //      this representation is fine when setting for simple resource.
-            boost::property_tree::ptree payload = root.get_child(OC::Key::OCKEY, boost::property_tree::ptree());
-
-            for(auto& item: payload)
-            {
-                std::string name = item.first.data();
-                std::string value = item.second.data();
-
-                attributeMap[name] = value;
-            }
-
-            m_representation.setAttributeMap(attributeMap);
         }
 
-        // TODO: This is not a public API for app developers.
-        // This function will not be exposed in future
         void setQueryParams(QueryParamsMap& queryParams)
         {
             m_queryParameters = queryParams;
         }
 
-        // TODO: This is not a public API for app developers.
-        // This function will not be exposed in future
         void setRequestHandlerFlag(int requestHandlerFlag)
         {
             m_requestHandlerFlag = requestHandlerFlag;
         }
 
-        // TODO: This is not a public API for app developers.
-        // This function will not be exposed in future
         void setObservationInfo(const ObservationInfo& observationInfo)
         {
             m_observationInfo = observationInfo;
         }
 
-        // TODO: This is not a public API for app developers.
-        // This function will not be exposed in future
         void setHeaderOptions(const HeaderOptions& headerOptions)
         {
             m_headerOptions = headerOptions;
         }
+
+        /**
+        * This API allows to set request handle
+        * @param requestHandle - OCRequestHandle type used to set the
+        * request handle
+        */
+        void setRequestHandle(const OCRequestHandle& requestHandle)
+        {
+            m_requestHandle = requestHandle;
+        }
+
+        /**
+        * This API allows to set the resource handle
+        * @param resourceHandle - OCResourceHandle type used to set the
+        * resource handle
+        */
+        void setResourceHandle(const OCResourceHandle& resourceHandle)
+        {
+            m_resourceHandle = resourceHandle;
+        }
+
     };
  }// namespace OC
 

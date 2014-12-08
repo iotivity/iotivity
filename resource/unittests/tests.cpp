@@ -35,8 +35,7 @@ using namespace OC;
 using namespace std;
 
 // Entity handler used for register and find test
-OCEntityHandlerResult entityHandler_rf(std::shared_ptr<OCResourceRequest> request,
-                    std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandler_rf(std::shared_ptr<OCResourceRequest> request)
 {
     return OC_EH_OK;
 }

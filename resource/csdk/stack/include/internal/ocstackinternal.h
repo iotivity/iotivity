@@ -52,97 +52,6 @@ extern OCDeviceEntityHandler defaultDeviceHandler;
 #define OC_COAP_SCHEME "coap://"
 #define OC_OFFSET_SEQUENCE_NUMBER (4) // the first outgoing sequence number will be 5
 
-//-----------------------------------------------------------------------------
-// Virtual Resource Presence Attributes
-//-----------------------------------------------------------------------------
-#ifdef WITH_PRESENCE
-typedef struct PRESENCERESOURCE{
-    OCResourceHandle handle;
-    uint32_t presenceTTL;
-} PresenceResource;
-#endif
-
-//-----------------------------------------------------------------------------
-// Forward declarations
-//-----------------------------------------------------------------------------
-struct rsrc_t;
-
-//-----------------------------------------------------------------------------
-// Typedefs
-//-----------------------------------------------------------------------------
-
-// IF here stands for Interface
-typedef enum {
-    STACK_IF_DEFAULT = 0,
-    STACK_IF_LL,
-    STACK_IF_BATCH
-} OCStackIfTypes;
-
-typedef struct resourcetype_t {
-    struct resourcetype_t *next; // linked list; for multiple types on resource
-
-    // Name of the type; this string is ‘.’ (dot) separate list of segments where each segment is a
-    // namespace and the final segment is the type; type and sub-types can be separate with ‘-‘ (dash)
-    // usually only two segments would be defined. Either way this string is meant to be human friendly
-    // and is used opaquely and not parsed by code
-    // This name is used in the “rt=” parameter of a resource description when resources are introspected
-    // and is also use in the <base URI>/types list of available types
-    char *resourcetypename;
-} OCResourceType;
-
-typedef struct attr_t {
-    struct attr_t *next; // Points to next resource in list
-
-    // The name of the attribute; used to look up the attribute in list;
-    // for a given attribute SHOULD not be changed once assigned
-    const char *attrName;
-    char *attrValue; // value of the attribute as string
-} OCAttribute;
-
-typedef struct resourceinterface_t {
-    struct resourceinterface_t *next; // linked list; for multiple interfaces on resource
-
-    // Name of the interface; this is ‘.’ (dot) separate list of segments where each segment is
-    // a namespace and the final segment is the interface; usually only two segments would be defined.
-    // Either way this string is opaque and not parsed by segment
-    char *name ;
-
-    // Supported content types to serialize request and response on this interface
-    // (REMOVE for V1 – only jSON for all but core.ll that uses Link Format)
-#if 0
-    char *inputContentType ;
-    char *outputContentType ;
-#endif
-    /*** Future placeholder for access control and policy ***/
-} OCResourceInterface;
-
-typedef struct rsrc_t {
-    struct rsrc_t *next; // Points to next resource in list
-    // Relative path on the device; will be combined with base url to create fully qualified path
-    char *host;
-    char *uri;
-    OCResourceType *rsrcType; // Resource type(s); linked list
-    OCResourceInterface *rsrcInterface; // Resource interface(s); linked list
-    OCAttribute *rsrcAttributes; // Resource interface(s); linked list
-    // Array of pointers to resources; can be used to represent a container of resources
-    // (i.e. hierarchies of resources) or for reference resources (i.e. for a resource collection)
-    struct rsrc_t *rsrcResources[MAX_CONTAINED_RESOURCES];
-    //struct rsrc_t *rsrcResources;
-    // Pointer to function that handles the entity bound to the resource.
-    // This handler has to be explicitly defined by the programmer
-    OCEntityHandler entityHandler;
-    // Properties on the resource – defines meta information on the resource
-    OCResourceProperty resourceProperties ; /* ACTIVE, DISCOVERABLE etc */
-    // Pointer to an opaque object where app/user specific data can be placed with the resource;
-    // this could be information for the entity handler between invocations
-    void *context;
-    // NOTE: Methods supported by this resource should be based on the interface targeted
-    // i.e. look into the interface structure based on the query request Can be removed here; place holder for the note above
-    /* method_t methods; */
-    // Sequence number for observable resources. Per the CoAP standard it is a 24 bit value.
-    uint32_t sequenceNum;
-} OCResource;
-
 typedef struct {
     // Observe option field
     uint32_t option;
@@ -156,19 +65,69 @@ typedef struct {
 
 // following structure will be created in occoap and passed up the stack on the server side
 typedef struct {
+    // the REST method retrieved from received request PDU
+    OCMethod method;
     // resourceUrl will be filled in occoap using the path options in received request PDU
-    unsigned char * resourceUrl;
+    unsigned char resourceUrl[MAX_URI_LENGTH];
+    // resource query send by client
+    unsigned char query[MAX_QUERY_LENGTH];
+    // reqJSON is retrieved from the payload of the received request PDU
+    unsigned char reqJSONPayload[MAX_REQUEST_LENGTH];
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
-    // this structure points to the information for processing observe option
-    OCObserveReq *observe;
-    // If a subscription update, this is count of observe notifications from server perspective.
-    uint32_t sequenceNum;
-    // this structure will be passed to entity handler
-    OCEntityHandlerRequest * entityHandlerRequest;
-    // Indicate whether the request arrives on a secure port
-    uint8_t secure;
-} OCRequest;
+    // Observe option field
+    uint32_t observationOption;
+    // An array of the received vendor specific header options
+    uint8_t numRcvdVendorSpecificHeaderOptions;
+    OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
+    //////////////////////////////////////////////////////////
+    // TODO: Consider moving these member to CoAP
+    // IP address & port of client registered for observe
+    OCDevAddr requesterAddr;
+    // CoAP token for the observe request
+    OCCoAPToken requestToken;
+    // The ID of CoAP pdu
+    uint16_t coapID;
+    uint8_t delayedResNeeded;
+    uint8_t secured;
+    //////////////////////////////////////////////////////////
+    uint8_t reqMorePacket;
+    uint32_t reqPacketNum;
+    uint16_t reqPacketSize;
+    uint32_t resPacketNum;
+    uint16_t resPacketSize;
+    uint32_t reqTotalSize;
+} OCServerProtocolRequest;
+
+typedef struct
+{
+    // qos is indicating if the request is CON or NON
+    OCQualityOfService qos;
+    // Observe option field
+    uint32_t observationOption;
+    // Allow the entity handler to pass a result with the response
+    OCStackResult result;
+    // IP address & port of client registered for observe
+    OCDevAddr *requesterAddr;
+    // CoAP token for the observe request
+    OCCoAPToken *requestToken;
+    // The ID of CoAP pdu
+    uint16_t coapID;
+    // Flag indicating that response is to be delayed before sending
+    uint8_t delayedResNeeded;
+    uint8_t secured;
+    uint8_t slowFlag;
+    uint8_t notificationFlag;
+    // this is the pointer to server payload data to be transferred
+    unsigned char *payload;
+    // size of server payload data.  Don't rely on null terminated data for size
+    uint16_t payloadSize;
+    // An array of the vendor specific header options the entity handler wishes to use in response
+    uint8_t numSendVendorSpecificHeaderOptions;
+    OCHeaderOption *sendVendorSpecificHeaderOptions;
+    // URI of new resource that entity handler might create
+    unsigned char * resourceUri;
+} OCServerProtocolResponse;
 
 // following structure will be created in occoap and passed up the stack on the client side
 typedef struct {
@@ -186,16 +145,27 @@ typedef uint32_t ServerID;
 //-----------------------------------------------------------------------------
 // Internal function prototypes
 //-----------------------------------------------------------------------------
-
-OCStackResult HandleStackRequests(OCRequest * request);
-OCStackResult SendPresenceNotification(OCResourceType *resourceType, OCQualityOfService qos);
+OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status);
+OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 void HandleStackResponses(OCResponse * response);
 int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
+#ifdef WITH_PRESENCE
+OCStackResult SendPresenceNotification(OCResourceType *resourceType);
+#endif
+
+OCStackResult BindResourceInterfaceToResource(OCResource* resource,
+                                            const char *resourceInterfaceName);
+
+OCStackResult BindResourceTypeToResource(OCResource* resource,
+                                            const char *resourceTypeName);
+OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char * resourceTypeName);
+
 // returns the internal representation of the server instance ID.
 // Note: This will NOT seed the RNG, so it must be called after the RNG is seeded.
 // This is done automatically during the OCInit process (via the call to OCInitCoAP),
 // so ensure that this call is done after that.
 const ServerID OCGetServerInstanceID(void);
+
 // returns a string representation  the server instance ID.
 // The memory is managed internal to this function, so freeing externally will result
 // in a compiler error

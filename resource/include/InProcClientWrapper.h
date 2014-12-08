@@ -26,9 +26,6 @@
 #include <sstream>
 #include <iostream>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
 #include <OCApi.h>
 #include <ocstack.h>
 #include <IClientWrapper.h>
@@ -37,17 +34,46 @@
 
 namespace OC
 {
+    namespace ClientCallbackContext
+    {
+        struct GetContext
+        {
+            GetCallback callback;
+        };
+
+        struct SetContext
+        {
+            PutCallback callback;
+        };
+
+        struct ListenContext
+        {
+            FindCallback callback;
+            IClientWrapper::Ptr clientWrapper;
+        };
+
+        struct SubscribePresenceContext
+        {
+            SubscribeCallback callback;
+        };
+
+        struct DeleteContext
+        {
+            DeleteCallback callback;
+        };
+
+        struct ObserveContext
+        {
+            ObserveCallback callback;
+        };
+    }
+
     class InProcClientWrapper : public IClientWrapper
     {
 
     public:
-        enum OCSecureType
-        {
-            IPV4Secure,
-            IPV4
-        };
 
-        InProcClientWrapper(OC::OCPlatform_impl& owner, std::weak_ptr<std::recursive_mutex> csdkLock,
+        InProcClientWrapper(std::weak_ptr<std::recursive_mutex> csdkLock,
                             PlatformConfig cfg);
         virtual ~InProcClientWrapper();
 
@@ -84,15 +110,8 @@ namespace OC
             const std::string& resourceType, SubscribeCallback& presenceHandler);
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle);
-        // Note: this should never be called by anyone but the handler for the listen command.
-        // It is public becuase that needs to be a non-instance callback
-        virtual std::shared_ptr<OCResource> parseOCResource(IClientWrapper::Ptr clientWrapper,
-            OCDevAddr& addr, const boost::property_tree::ptree resourceNode);
-
         OCStackResult GetDefaultQos(QualityOfService& QoS);
     private:
-        std::string convertOCAddrToString(OCDevAddr& addr,
-        OCSecureType type, const std::string &portStr = std::string());
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
         std::string assembleSetResourcePayload(const OCRepresentation& attributes);
@@ -103,7 +122,6 @@ namespace OC
         std::weak_ptr<std::recursive_mutex> m_csdkLock;
 
     private:
-        OC::OCPlatform_impl& m_owner;
         PlatformConfig  m_cfg;
     };
 }

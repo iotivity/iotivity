@@ -22,7 +22,9 @@
 #define OC_COLLECTION_H
 
 #include "ocstack.h"
-#include "ocresource.h"
+#include "ocresourcehandler.h"
+
+uint8_t GetNumOfResourcesInCollection (OCResource *resource);
 
 OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *entityHandlerRequest);

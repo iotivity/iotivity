@@ -18,9 +18,54 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <ocstack.h>
+#include <ocsecurity.h>
+#include <logger.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ocstack.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#define TAG "sample-common"
+
+OCStackResult SetCredentials(const char* filename) {
+
+    FILE *fp = NULL;
+    uint8_t *data = NULL;
+    struct stat st;
+    OCStackResult ret = OC_STACK_ERROR;
+
+    fp = fopen(filename, "rb");
+    if (fp)
+    {
+        if (stat(filename, &st) == 0)
+        {
+            data = (uint8_t*)malloc(st.st_size);
+            if (data)
+            {
+                if (fread(data, 1, st.st_size, fp) == (size_t)st.st_size)
+                {
+                    // Provide credentials to OC Stack
+                    ret = OCSetDtlsPskCredentials((OCDtlsPskCredsBlob *)data,
+                            st.st_size);
+                }
+                else
+                {
+                    OC_LOG_V(FATAL, TAG, "Error in reading file %s", filename);
+                }
+            }
+        }
+        fclose(fp);
+    }
+    else
+    {
+        OC_LOG_V(FATAL, TAG, "Unable to open %s file", filename);
+    }
+
+    free(data);
+
+    return ret;
+}
 
 const char *getResult(OCStackResult result) {
     switch (result) {
@@ -59,8 +104,8 @@ const char *getResult(OCStackResult result) {
     case OC_STACK_NO_OBSERVERS:
         return "OC_STACK_NO_OBSERVERS";
     #ifdef WITH_PRESENCE
-    case OC_STACK_PRESENCE_DO_NOT_HANDLE:
-        return "OC_STACK_PRESENCE_DO_NOT_HANDLE";
+    case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
+        return "OC_STACK_VIRTUAL_DO_NOT_HANDLE";
     case OC_STACK_PRESENCE_STOPPED:
         return "OC_STACK_PRESENCE_STOPPED";
     #endif

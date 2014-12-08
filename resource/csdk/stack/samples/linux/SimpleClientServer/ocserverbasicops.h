@@ -54,9 +54,15 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest);
 /* Following methods process the PUT, GET, POST
  * requests
  */
-void ProcessGetRequest (OCEntityHandlerRequest *ehRequest);
-void ProcessPutRequest (OCEntityHandlerRequest *ehRequest);
-void ProcessPostRequest (OCEntityHandlerRequest *ehRequest);
+OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
+                                         char *payload,
+                                         uint16_t maxPayloadSize);
+OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
+                                         char *payload,
+                                         uint16_t maxPayloadSize);
+OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
+                                          char *payload,
+                                          uint16_t maxPayloadSize);
 
 /* call getResult in common.cpp to get the result in string format. */
 const char *getResult(OCStackResult result);

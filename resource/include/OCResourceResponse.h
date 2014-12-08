@@ -35,6 +35,8 @@ using namespace std;
 
 namespace OC
 {
+    class InProcServerWrapper;
+
     /**
     *   @brief  OCResourceResponse provides APIs to set the response details
     */
@@ -43,14 +45,9 @@ namespace OC
     public:
         typedef std::shared_ptr<OCResourceResponse> Ptr;
 
-        /**
-        *  Default destructor
-        */
-        OCResourceResponse() {}
+        OCResourceResponse()
+        {}
 
-        /**
-        *  Virtual destructor
-        */
         virtual ~OCResourceResponse(void) {}
 
         /**
@@ -87,25 +84,44 @@ namespace OC
         }
 
         /**
+        * This API allows to set request handle
+        *
+        * @param requestHandle - OCRequestHandle type used to set the request handle
+        */
+        void setRequestHandle(const OCRequestHandle& requestHandle)
+        {
+            m_requestHandle = requestHandle;
+        }
+
+        /**
+        * This API allows to set the resource handle
+        *
+        * @param resourceHandle - OCResourceHandle type used to set the resource handle
+        */
+        void setResourceHandle(const OCResourceHandle& resourceHandle)
+        {
+            m_resourceHandle = resourceHandle;
+        }
+
+        /**
+        * This API allows to set the EntityHandler response result
+        *
+        * @param responseResult - OCEntityHandlerResult type to set the result value
+        */
+        void setResponseResult(const OCEntityHandlerResult& responseResult)
+        {
+            m_responseResult = responseResult;
+        }
+
+        /**
         *  API to set the entire resource attribute representation
         *  @param attributeMap reference containing the name value pairs representing
         *         the resource's attributes
         *  @param interface specifies the interface
         */
         void setResourceRepresentation(OCRepresentation& rep, std::string interface) {
-            if(!interface.compare(LINK_INTERFACE))
-            {
-                setResourceRepresentationLL(rep);
-            }
-            else if(!interface.compare(BATCH_INTERFACE))
-            {
-                setResourceRepresentationBatch(rep);
-            }
-            else
-            {
-                setResourceRepresentationDefault(rep);
-            }
-            // TODO other interfaces
+            m_interface = interface;
+            m_representation = rep;
         }
 
         /**
@@ -125,7 +141,8 @@ namespace OC
         */
         void setResourceRepresentation(OCRepresentation& rep) {
             // Call the default
-            setResourceRepresentationDefault(rep);
+            m_interface = DEFAULT_INTERFACE;
+            m_representation = rep;
         }
 
         /**
@@ -137,187 +154,62 @@ namespace OC
             // Call the above function
             setResourceRepresentation(rep);
         }
-
-        /**
-        *  API to set the entire resource attribute representation (Linked List Interface))
-        *  @param attributeMap reference containing the name value pairs representing the resource's
-        *  attributes
-        */
-        void setResourceRepresentationLL(OCRepresentation& rep) {
-
-            // Default Set
-
-            ostringstream payload;
-
-            // Parent
-            payload << "{";
-            payload << "\"href\":";
-            payload << "\"" ;
-            payload << rep.getUri();
-            payload << "\"" ;
-            payload << "}";
-
-            // Children stuff
-            std::vector<OCRepresentation> children = rep.getChildren();
-
-            for(auto oitr = children.begin(); oitr != children.end(); ++oitr)
-            {
-                payload << ",{\"href\":";
-
-                payload << "\"" ;
-                payload << oitr->getUri();
-                payload << "\"" ;
-
-                payload << ",\"prop\":{";
-
-                payload << "\"rt\":[";
-                std::vector<std::string> types = oitr->getResourceTypes();
-                for(auto itr = types.begin(); itr != types.end(); ++itr)
-                {
-                    if(itr != types.begin())
-                    {
-                        payload << ',';
-                    }
-
-                    payload << *itr;
-                }
-                payload << "],";
-
-                payload << "\"if\":[";
-                std::vector<std::string> interfaces = oitr->getResourceInterfaces();
-                for(auto itr = interfaces.begin(); itr != interfaces.end(); ++itr)
-                {
-                    if(itr != interfaces.begin())
-                    {
-                        payload << ',';
-                    }
-
-                    payload << "\"" << *itr << "\"";
-                }
-                payload << "]";
-
-                payload << "}}";
-            }
-
-            m_payload = payload.str();
-        }
-
-        /**
-        *  API to set the entire resource attribute representation (Default))
-        *  @param attributeMap reference containing the name value pairs representing the resource's
-        *  attributes
-        */
-        void setResourceRepresentationDefault(OCRepresentation& rep) {
-
-            // Default Set
-
-            ostringstream payload;
-
-            // Parent
-            payload << "{";
-            payload << "\"href\":";
-            payload << "\"" ;
-            payload << rep.getUri();
-            payload << "\"" ;
-
-            payload << ",\"rep\":";
-
-            payload << rep.getJSONRepresentation();
-
-            payload << "}";
-
-            // Children stuff
-            std::vector<OCRepresentation> children = rep.getChildren();
-
-            for(auto oitr = children.begin(); oitr != children.end(); ++oitr)
-            {
-                payload << ",{\"href\":";
-
-                payload << "\"" ;
-                payload << oitr->getUri();
-                payload << "\"" ;
-
-                payload << ",\"prop\":{";
-
-                payload << "\"rt\":[";
-                std::vector<std::string> types = oitr->getResourceTypes();
-                for(auto itr = types.begin(); itr != types.end(); ++itr)
-                {
-                    if(itr != types.begin())
-                    {
-                        payload << ',';
-                    }
-
-                    payload << "\"" << *itr << "\"";
-                }
-                payload << "],";
-
-                payload << "\"if\":[";
-                std::vector<std::string> interfaces = oitr->getResourceInterfaces();
-                for(auto itr = interfaces.begin(); itr != interfaces.end(); ++itr)
-                {
-                    if(itr != interfaces.begin())
-                    {
-                        payload << ',';
-                    }
-
-                    payload << "\"" << *itr << "\"";
-                }
-                payload << "]";
-
-                payload << "}}";
-            }
-
-            m_payload = payload.str();
-        }
-
-        /**
-        *  API to set the entire resource attribute representation (BATCH)
-        *  @param attributeMap reference containing the name value pairs representing the resource's
-        *  attributes
-        */
-        void setResourceRepresentationBatch(OCRepresentation& rep) {
-            ostringstream payload;
-
-            // Parent
-            payload << "{";
-            payload << "\"href\":";
-            payload << "\"" ;
-            payload << rep.getUri();
-            payload << "\"" ;
-            payload << "}";
-
-            std::vector<OCRepresentation> children = rep.getChildren();
-
-            for(auto oitr = children.begin(); oitr != children.end(); ++oitr)
-            {
-                payload << ',';
-
-                payload << "{";
-
-                payload << "\"href\":";
-
-                payload << "\"" ;
-                payload << oitr->getUri();
-                payload << "\"" ;
-
-                payload << ",\"rep\":";
-
-                payload << oitr->getJSONRepresentation();
-
-                payload << "}";
-            }
-
-            m_payload = payload.str();
-        }
-
     private:
         std::string m_newResourceUri;
-        std::string m_payload;
         int m_errorCode;
         HeaderOptions m_headerOptions;
+        std::string m_interface;
+        OCRepresentation m_representation;
+        OCRequestHandle m_requestHandle;
+        OCResourceHandle m_resourceHandle;
+        OCEntityHandlerResult m_responseResult;
 
-    // TODO only stack should have visibility and apps should not
+    private:
+        friend class InProcServerWrapper;
+
+        std::string getPayload() const
+        {
+            MessageContainer inf;
+            OCRepresentation first(m_representation);
+
+            if(m_interface==LINK_INTERFACE)
+            {
+                first.setInterfaceType(InterfaceType::LinkParent);
+            }
+            else if(m_interface==BATCH_INTERFACE)
+            {
+                first.setInterfaceType(InterfaceType::BatchParent);
+            }
+            else
+            {
+                first.setInterfaceType(InterfaceType::DefaultParent);
+            }
+
+            inf.addRepresentation(first);
+
+            for(const OCRepresentation& rep : m_representation.getChildren())
+            {
+                OCRepresentation cur(rep);
+
+                if(m_interface==LINK_INTERFACE)
+                {
+                    cur.setInterfaceType(InterfaceType::LinkChild);
+                }
+                else if(m_interface==BATCH_INTERFACE)
+                {
+                    cur.setInterfaceType(InterfaceType::BatchChild);
+                }
+                else
+                {
+                    cur.setInterfaceType(InterfaceType::DefaultChild);
+                }
+
+                inf.addRepresentation(cur);
+
+            }
+
+            return inf.getJSONRepresentation(OCInfoFormat::ExcludeOC);
+        }
     public:
 
         /**
@@ -325,6 +217,13 @@ namespace OC
         */
         int getErrorCode() const;
 
+        /**
+         * Get the Response Representation
+         */
+        const OCRepresentation& getResourceRepresentation() const
+        {
+            return m_representation;
+        }
         /**
         * This API allows to retrieve headerOptions from a response
         */
@@ -334,14 +233,33 @@ namespace OC
         }
 
         /**
-        * Get the resource attribute representation
+        * This API retrieves the request handle
+        *
+        * @return OCRequestHandle value
         */
-        AttributeMap& getResourceRepresentation() const;
-
-        // TODO This should go away & just use getResourceRepresentation
-        std::string getPayload()
+        const OCRequestHandle& getRequestHandle() const
         {
-            return m_payload;
+            return m_requestHandle;
+        }
+
+        /**
+        * This API retrieves the resource handle
+        *
+        * @return OCResourceHandle value
+        */
+        const OCResourceHandle& getResourceHandle() const
+        {
+            return m_resourceHandle;
+        }
+
+        /**
+        * This API retrieves the entity handle response result
+        *
+        * @return OCEntityHandler result value
+        */
+        const OCEntityHandlerResult getResponseResult() const
+        {
+            return m_responseResult;
         }
     };
 

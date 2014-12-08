@@ -18,6 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// This contains the Boost MPL defines required for the boost_variant
+// serialization, so it must go before the boost/program_options
+#include "OCApi.h"
+
 #include <map>
 #include <string>
 #include <memory>
@@ -28,7 +32,6 @@
 
 #include <boost/program_options.hpp>
 
-#include "OCApi.h"
 #include "OCResource.h"
 #include "OCPlatform.h"
 

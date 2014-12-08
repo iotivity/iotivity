@@ -167,10 +167,12 @@ linux_tb_examples_all: linux_tb_stack_release linux_tb_examples_debug
 linux_tb_examples_release: linux_tb_stack_release
 	@echo "=====BUILD TB SAMPLE APPS FOR LINUX - RELEASE - <oic-resource>/csdk/stack/samples/linux/SimpleClientServer/release/====="
 	$(MAKE) -C csdk/stack/samples/linux/SimpleClientServer "PLATFORM=linux" "BUILD=release"
+	$(MAKE) -C csdk/stack/samples/linux/secure "PLATFORM=linux" "BUILD=release"
 
 linux_tb_examples_debug: linux_tb_stack_debug
 	@echo "=====BUILD TB SAMPLE APPS FOR LINUX - DEBUG - <oic-resource>/csdk/stack/samples/linux/SimpleClientServer/debug/====="
 	$(MAKE) -C csdk/stack/samples/linux/SimpleClientServer "PLATFORM=linux" "BUILD=debug"
+	$(MAKE) -C csdk/stack/samples/linux/secure "PLATFORM=linux" "BUILD=debug"
 
 ###############################################################################
 ####      UB Stack (& TB Stack as prerequisite) - Linux Only               ####
@@ -483,6 +485,7 @@ linux_clean:
 	-rm -rf -C csdk/linux
 	$(MAKE) -C csdk/stack/test/linux "clean"
 	$(MAKE) -C csdk/stack/samples/linux/SimpleClientServer "clean"
+	$(MAKE) -C csdk/stack/samples/linux/secure "clean"
 	$(MAKE) -C . "clean"
 
 ###############################################################################
@@ -513,6 +516,7 @@ clean:
 	$(MAKE) -C csdk "clean" "deepclean"
 	$(MAKE) -C csdk/stack/test/linux "clean"
 	$(MAKE) -C csdk/stack/samples/linux/SimpleClientServer "clean"
+	$(MAKE) -C csdk/stack/samples/linux/secure "clean"
 	$(MAKE) -C csdk/stack/samples/arduino/SimpleClientServer/ocserver "clean"
 	$(MAKE) -C . "clean"
 	$(MAKE) -C unittests/ "clean"

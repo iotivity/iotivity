@@ -423,6 +423,15 @@ namespace OC
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
 
+        /**
+        * Allows application entity handler to send response to an incoming request.
+        *
+        * @param pResponse - OCResourceResponse pointer that will permit to set values related
+        * to resource response. <br>
+        * @return OCStackResult - return value of the API. Returns OCSTACK_OK if success <br>
+        */
+        OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
+
     private:
         PlatformConfig m_cfg;
 
@@ -442,14 +451,14 @@ namespace OC
         OCPlatform_impl(const PlatformConfig& config);
 
         /**
-        *  Private function to initalize the platfrom
+        * Private function to initalize the platfrom
         */
         void init(const PlatformConfig& config);
 
         /**
-         * Private constructor/operators to prevent copying
-         * of this object
-         */
+        * Private constructor/operators to prevent copying
+        * of this object
+        */
         OCPlatform_impl(const OCPlatform_impl& other)= delete;
         OCPlatform_impl& operator=(const OCPlatform_impl&) = delete;
         OCPlatform_impl& operator=(const OCPlatform_impl&&) = delete;

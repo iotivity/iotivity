@@ -43,8 +43,10 @@ LOGGER_DIR    = $(ROOT_DIR)/logger
 RANDOM_DIR    = $(ROOT_DIR)/ocrandom
 STACK_DIR     = $(ROOT_DIR)/stack
 OCMALLOC_DIR  = $(ROOT_DIR)/ocmalloc
+EXTLIBS_DIR   = $(ROOT_DIR)/../../extlibs
+TINYDTLS_DIR  = $(EXTLIBS_DIR)/tinydtls
 INC_DIRS      = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include \
-                -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include 
+                -I$(OCMALLOC_DIR)/include -I$(OC_LOG_DIR)/include -I$(STACK_DIR)/include
 
 # Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
 # includes Time.h header file which has C++ style definitions.
@@ -105,11 +107,10 @@ VPATH += $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/s
          :$(OC_LOG_DIR)/c
 
 ifeq ($(PLATFORM),linux)
-ifneq ($(wildcard $(ROOT_DIR)/tinydtls/libtinydtls.a),)
+ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
     $(info "Building libcoap with DTLS support")
 	SOURCES += netdtls.c
 	VPATH += sec
-	TINYDTLS_DIR  = $(ROOT_DIR)/tinydtls
 	NETDTLS_DIR   = sec
 	INC_DIRS += -I$(TINYDTLS_DIR) -I$(NETDTLS_DIR) -I.
 	CC_FLAGS.debug += -DWITH_DTLS

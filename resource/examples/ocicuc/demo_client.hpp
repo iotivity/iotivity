@@ -143,20 +143,23 @@ void resource_handle::onResourceGet(const OC::HeaderOptions& headerOptions,
         return;
   }
 
- std::cout << "input attributes:\n" << rep.getAttributeMap() << '\n';
+ std::cout << "input attributes:\n";
+ std::cout << "Attribute \"" << "state" << "\": "<< rep.getValue<bool>("state")<<"; ";
+ std::cout << "Attribute \"" << "power" << "\": "<< rep.getValue<int>("power")<<"; \n";
 
  // Now, make a change to the light representation (replacing, rather than parsing):
- OC::AttributeMap attrs {
-                         { "state", { "true" } },
-                         { "power", { "10" } }
-                        };
+ bool state = true;
+ int power = 10;
 
- std::cout << "output attributes:\n" << attrs << '\n';
+ std::cout << "output attributes:\n";
+ std::cout << "Attribute \"" << "state" << "\": "<< state<<"; ";
+ std::cout << "Attribute \"" << "power" << "\": "<< power<<"; \n";
 
  call_timer.mark("put_resource");
 
  OC::OCRepresentation out_rep;
- out_rep.setAttributeMap(attrs);
+ out_rep.setValue("state", state);
+ out_rep.setValue("power", power);
 
  resource->put(out_rep, OC::QueryParamsMap(),
                std::bind(&resource_handle::onResourcePut, this, std::placeholders::_1,
@@ -179,7 +182,9 @@ void resource_handle::onResourcePut(const OC::HeaderOptions& headerOptions,
         throw OC::OCException(os.str());
   }
 
- std::cout << "input attributes:\n" << rep.getAttributeMap() << '\n';
+ std::cout << "input attributes:\n";
+ std::cout << "Attribute \"" << "state" << "\": "<< rep.getValue<bool>("state")<<"; ";
+ std::cout << "Attribute \"" << "power" << "\": "<< rep.getValue<int>("power")<<"; \n";
 
  call_timer.mark("observe_resource");
 
@@ -204,7 +209,8 @@ void resource_handle::onObserve(const OC::HeaderOptions& headerOptions,
 
  call_timer.report_and_reset("observe_resource");
 
- std::cout << rep.getAttributeMap() << '\n';
+ std::cout << "Attribute \"" << "state" << "\": "<< rep.getValue<bool>("state")<<"; ";
+ std::cout << "Attribute \"" << "power" << "\": "<< rep.getValue<int>("power")<<"; \n";
 
  const auto oc = observe_count();
 

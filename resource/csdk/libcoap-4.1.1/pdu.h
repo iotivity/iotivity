@@ -80,6 +80,7 @@ extern "C" {
 #define COAP_OPTION_LOCATION_QUERY 20 /* E, String,   0-255 B, (none) */
 #define COAP_OPTION_PROXY_URI    35 /* C, String, 1-1034 B, (none) */
 #define COAP_OPTION_PROXY_SCHEME 39 /* C, String, 1-255 B, (none) */
+#define COAP_OPTION_SIZE2        28 /* E, uint, 0-4 B, (none) */
 #define COAP_OPTION_SIZE1        60 /* E, uint, 0-4 B, (none) */
 
 /* option types from draft-ietf-coap-observe-09 */
@@ -343,7 +344,7 @@ int coap_add_token(coap_pdu_t *pdu, size_t len, const unsigned char *data);
  * This function returns the number of bytes written or @c 0 on error.
  */
 size_t coap_add_option(coap_pdu_t *pdu, unsigned short type,
-		       unsigned int len, const unsigned char *data);
+                       unsigned int len, const unsigned char *data);
 
 /**
  * Adds option of given type to pdu that is passed as first
@@ -353,7 +354,7 @@ size_t coap_add_option(coap_pdu_t *pdu, unsigned short type,
  * written before the PDU can be sent, or @c NULL on error.
  */
 unsigned char *coap_add_option_later(coap_pdu_t *pdu, unsigned short type,
-		      unsigned int len);
+                                     unsigned int len);
 
 /**
  * Adds given data to the pdu that is passed as first parameter. Note

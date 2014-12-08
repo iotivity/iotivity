@@ -68,16 +68,16 @@ namespace OC
         switch(config.mode)
         {
             case ModeType::Server:
-                m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
+                m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
                 break;
 
             case ModeType::Client:
-                m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
+                m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
                 break;
 
             case ModeType::Both:
-                m_server = m_WrapperInstance->CreateServerWrapper(*this, m_csdkLock, config);
-                m_client = m_WrapperInstance->CreateClientWrapper(*this, m_csdkLock, config);
+                m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
+                m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
                 break;
          }
     }
@@ -113,23 +113,23 @@ namespace OC
     }
 
     OCStackResult OCPlatform_impl::notifyListOfObservers(OCResourceHandle resourceHandle,
-                                                ObservationIds& observationIds,
-                                                const std::shared_ptr<OCResourceResponse> pResponse)
+                                       ObservationIds& observationIds,
+                                       const std::shared_ptr<OCResourceResponse> pResponse)
     {
         return notifyListOfObservers(resourceHandle, observationIds, pResponse, m_cfg.QoS);
     }
 
     OCStackResult OCPlatform_impl::notifyListOfObservers(OCResourceHandle resourceHandle,
-                                                ObservationIds& observationIds,
-                                                const std::shared_ptr<OCResourceResponse> pResponse,
-                                                QualityOfService QoS)
+                                       ObservationIds& observationIds,
+                                       const std::shared_ptr<OCResourceResponse> pResponse,
+                                       QualityOfService QoS)
     {
         if(!pResponse)
         {
          return result_guard(OC_STACK_ERROR);
         }
 
-        std::string payload(pResponse->getPayload());
+        std::string payload(pResponse->getResourceRepresentation().getJSONRepresentation());
 
         return result_guard(
                    OCNotifyListOfObservers(resourceHandle,
@@ -293,4 +293,9 @@ namespace OC
                              ref(presenceHandle));
     }
 
+    OCStackResult OCPlatform_impl::sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
+    {
+        return checked_guard(m_server, &IServerWrapper::sendResponse,
+                             pResponse);
+    }
 } //namespace OC

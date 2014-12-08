@@ -30,9 +30,30 @@ namespace OC
     class ResourceInitException : public std::exception
     {
     public:
-        ResourceInitException(bool missingUri, bool missingType, bool missingInterface, bool missingClientWrapper)
-        : m_missingUri(missingUri), m_missingType(missingType), m_missingInterface(missingInterface), m_missingClientWrapper(missingClientWrapper)
+        ResourceInitException(
+                bool missingUri,
+                bool missingType,
+                bool missingInterface,
+                bool missingClientWrapper,
+                bool invalidPort,
+                bool invalidIp)
+        : m_missingUri(missingUri),
+          m_missingType(missingType),
+          m_missingInterface(missingInterface),
+          m_missingClientWrapper(missingClientWrapper),
+          m_invalidPort(invalidPort),
+          m_invalidIp(invalidIp)
         {
+        }
+
+        bool isInvalidPort() const
+        {
+            return m_invalidPort;
+        }
+
+        bool isInvalidIp() const
+        {
+            return m_invalidIp;
         }
 
         bool isClientWrapperMissing() const
@@ -79,6 +100,16 @@ namespace OC
                 ret += OC::InitException::MISSING_CLIENT_WRAPPER;
             }
 
+            if(isInvalidPort())
+            {
+                ret += OC::InitException::INVALID_PORT;
+            }
+
+            if(isInvalidIp())
+            {
+                ret += OC::InitException::INVALID_IP;
+            }
+
             return ret.c_str();
         }
 
@@ -88,6 +119,8 @@ namespace OC
         bool m_missingType;
         bool m_missingInterface;
         bool m_missingClientWrapper;
+        bool m_invalidPort;
+        bool m_invalidIp;
     };
 }
 

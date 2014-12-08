@@ -29,7 +29,7 @@
 #include "cJSON.h"
 #include "ocserverbasicops.h"
 
-int gQuitFlag = 0;
+volatile sig_atomic_t gQuitFlag = 0;
 
 static LEDResource LED;
 // This variable determines instance number of the LED resource.
@@ -81,47 +81,56 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     return jsonResponse;
 }
 
-void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
 {
+    OCEntityHandlerResult ehResult;
     char *getResp = constructJsonResponse(ehRequest);
 
-    if (ehRequest->resJSONPayloadLen > strlen ((char *)getResp))
+    if (maxPayloadSize > strlen ((char *)getResp))
     {
-        strncpy((char *)ehRequest->resJSONPayload, getResp,
-                strlen((char *)getResp));
+        strncpy(payload, getResp, strlen((char *)getResp));
+        ehResult = OC_EH_OK;
     }
     else
     {
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                ehRequest->resJSONPayloadLen);
+                maxPayloadSize);
+        ehResult = OC_EH_ERROR;
     }
 
     free(getResp);
+
+    return ehResult;
 }
 
-void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
 {
+    OCEntityHandlerResult ehResult;
     char *putResp = constructJsonResponse(ehRequest);
 
-    if (ehRequest->resJSONPayloadLen > strlen ((char *)putResp))
+    if (maxPayloadSize > strlen ((char *)putResp))
     {
-        strncpy((char *)ehRequest->resJSONPayload, putResp,
-                strlen((char *)putResp));
+        strncpy(payload, putResp, strlen((char *)putResp));
+        ehResult = OC_EH_OK;
     }
     else
     {
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                ehRequest->resJSONPayloadLen);
+                maxPayloadSize);
+        ehResult = OC_EH_ERROR;
     }
 
     free(putResp);
+
+    return ehResult;
 }
 
-void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
 {
     char *respPLPost_led = NULL;
     cJSON *json;
     cJSON *format;
+    OCEntityHandlerResult ehResult;
 
     /*
      * The entity handler determines how to process a POST request.
@@ -183,18 +192,21 @@ void ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
         }
     }
 
-    if (respPLPost_led != NULL && ehRequest->resJSONPayloadLen > strlen ((char *)respPLPost_led))
+    if ((respPLPost_led != NULL) && (maxPayloadSize > strlen ((char *)respPLPost_led)))
     {
-        strncpy((char *)ehRequest->resJSONPayload, respPLPost_led,
-                strlen((char *)respPLPost_led));
+        strncpy(payload, respPLPost_led, strlen((char *)respPLPost_led));
+        ehResult = OC_EH_OK;
     }
     else
     {
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                ehRequest->resJSONPayloadLen);
+                maxPayloadSize);
+        ehResult = OC_EH_ERROR;
     }
 
     free(respPLPost_led);
+
+    return ehResult;
 }
 
 OCEntityHandlerResult
@@ -202,9 +214,15 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
+
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+    OCEntityHandlerResponse response;
+    char payload[MAX_RESPONSE_LENGTH] = {0};
+
     if (flag & OC_INIT_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");
+        ehResult = OC_EH_OK;
     }
     if (flag & OC_REQUEST_FLAG)
     {
@@ -214,26 +232,48 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             if (OC_REST_GET == entityHandlerRequest->method)
             {
                 OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
-                ProcessGetRequest (entityHandlerRequest);
+                ehResult = ProcessGetRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
             }
             else if (OC_REST_PUT == entityHandlerRequest->method)
             {
                 OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
-                ProcessPutRequest (entityHandlerRequest);
+                ehResult = ProcessPutRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
             }
             else if (OC_REST_POST == entityHandlerRequest->method)
             {
                 OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
-                ProcessPostRequest (entityHandlerRequest);
+                ehResult = ProcessPostRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
             }
             else
             {
                 OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                         entityHandlerRequest->method);
             }
+
+            if (ehResult == OC_EH_OK)
+            {
+                // Format the response.  Note this requires some info about the request
+                response.requestHandle = entityHandlerRequest->requestHandle;
+                response.resourceHandle = entityHandlerRequest->resource;
+                response.ehResult = ehResult;
+                response.payload = (unsigned char *)payload;
+                response.payloadSize = strlen(payload);
+                response.numSendVendorSpecificHeaderOptions = 0;
+                memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+                memset(response.resourceUri, 0, sizeof(response.resourceUri));
+                // Indicate that response is NOT in a persistent buffer
+                response.persistentBufferFlag = 0;
+
+                // Send the response
+                if (OCDoResponse(&response) != OC_STACK_OK)
+                {
+                    OC_LOG(ERROR, TAG, "Error sending response");
+                    ehResult = OC_EH_ERROR;
+                }
+            }
         }
     }
-    return OC_EH_OK;
+    return ehResult;
 }
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
@@ -251,8 +291,6 @@ int main(int argc, char* argv[])
     uint8_t* paddr = NULL;
     uint16_t port = OC_WELL_KNOWN_PORT;
     uint8_t ifname[] = "eth0";
-    int opt;
-
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
     /*Get Ip address on defined interface and initialize coap on it with random port number

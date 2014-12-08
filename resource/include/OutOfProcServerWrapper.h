@@ -28,9 +28,8 @@ namespace OC
     class OutOfProcServerWrapper : public IServerWrapper
     {
     public:
-        OutOfProcServerWrapper(OC::OCPlatform_impl& owner, PlatformConfig cfg)
-         : IServerWrapper(owner)
-        {};
+        OutOfProcServerWrapper(PlatformConfig cfg)
+        {}
 
         virtual OCStackResult registerResource(
                     OCResourceHandle& resourceHandle,
@@ -92,11 +91,16 @@ namespace OC
             return OC_STACK_NOTIMPL;
         }
 
-
         virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler)
         {
             //Not implemented yet
             return OC_STACK_NOTIMPL;
+        }
+
+        virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
+        {
+           //Not implemented yet
+           return OC_STACK_NOTIMPL;
         }
     };
 }

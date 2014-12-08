@@ -34,8 +34,7 @@ using namespace OC;
 using namespace std;
 
 // Forward declaring the entityHandler
-OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-                                    std::shared_ptr<OCResourceResponse> response);
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request);
 
 /// This class represents a single resource named 'lightResource'. This resource has
 /// two simple properties named 'state' and 'power'
@@ -151,7 +150,7 @@ public:
 // Create the instance of the resource class (in this case instance of class 'LightResource').
 LightResource myLightResource;
 
-OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
 {
     cout << "\tIn Server CPP entity handler:\n";
     return OC_EH_OK;

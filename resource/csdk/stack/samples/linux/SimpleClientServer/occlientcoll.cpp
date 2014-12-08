@@ -33,7 +33,7 @@ std::string getPortTBServer(OCClientResponse * clientResponse);
 std::string getQueryStrForGetPut(unsigned  const char * responsePayload);
 
 #define TAG PCF("occlient")
-#define CTX_VAL 0x99
+#define DEFAULT_CONTEXT_VALUE 0x99
 #ifndef MAX_LENGTH_IPv4_ADDR
 #define MAX_LENGTH_IPv4_ADDR 16
 #endif
@@ -98,7 +98,7 @@ int InitDiscovery();
 
 void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -t <Test Case>");
+    OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case>");
     OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an"\
             "available resource using default interface.");
     OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an"\
@@ -121,7 +121,7 @@ void PrintUsage()
 
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     if(clientResponse) {}
-    if(ctx == (void*)CTX_VAL) {
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE) {
         OC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Discovered", clientResponse->resJSONPayload);
     }
@@ -132,14 +132,14 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
     OC_LOG_V(INFO, TAG, "StackResult: %s",
             getResult(clientResponse->result));
-    if(ctx == (void*)CTX_VAL) {
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE) {
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
         if(clientResponse->sequenceNumber == 0) {
             OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
             OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
         }
         else {
-            OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumObserveNotifies);
+            OC_LOG_V(INFO, TAG, "Callback Context for Get recvd successfully %d", gNumObserveNotifies);
             OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
             gNumObserveNotifies++;
             if (gNumObserveNotifies == 3)
@@ -169,19 +169,18 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     OC_LOG_V(INFO, TAG, "StackResult: %s",
             getResult(clientResponse->result));
 
-    if (ctx == (void*) CTX_VAL) {
+    if (ctx == (void*) DEFAULT_CONTEXT_VALUE) {
         OC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
     }
 
     OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
             remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
     OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-#if 0
+
     OC_LOG_V(INFO, TAG,
             "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
             clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
             remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
-#endif
 
     if(TEST == TEST_UNKNOWN_RESOURCE_GET_DEFAULT || TEST == TEST_UNKNOWN_RESOURCE_GET_BATCH ||\
             TEST == TEST_UNKNOWN_RESOURCE_GET_LINK_LIST)
@@ -204,7 +203,7 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     std::ostringstream getQuery;
     getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << "/SomeUnknownResource";
     cbData.cb = getReqCB;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
     ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_LOW_QOS,
@@ -225,7 +224,7 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     std::ostringstream obsReg;
     obsReg << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
     cbData.cb = getReqCB;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "OBSERVE payload from client = %s ", putPayload.c_str());
 
@@ -253,7 +252,7 @@ int InitPutRequest(OCClientResponse * clientResponse)
     getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) <<
     "/a/room" << queryInterface[TEST].text;
     cbData.cb = putReqCB;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
 
@@ -288,7 +287,7 @@ int InitGetRequest(OCClientResponse * clientResponse)
     std::cout << "Get Query: " << getQuery.str() << std::endl;
 
     cbData.cb = getReqCB;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_LOW_QOS,
             &cbData, NULL, 0);
@@ -310,7 +309,7 @@ int InitDiscovery()
     strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
 
     cbData.cb = discoveryReqCB;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS,
             &cbData, NULL, 0);
@@ -322,24 +321,28 @@ int InitDiscovery()
 }
 
 int main(int argc, char* argv[]) {
-    if(argc >= 2 && strcmp(argv[1], "-t") == 0)
-    {
-        TEST = atoi(argv[2]);
-        if(TEST >= MAX_TESTS || TEST < 1)
-        {
-            PrintUsage();
-            return 0;
-        }
-    }
-    else
-    {
-        PrintUsage();
-        return 0;
-    }
     uint8_t addr[20] = {0};
     uint8_t* paddr = NULL;
     uint16_t port = USE_RANDOM_PORT;
     uint8_t ifname[] = "eth0";
+    int opt;
+
+    while ((opt = getopt(argc, argv, "t:")) != -1)
+    {
+        switch(opt)
+        {
+        case 't':
+            TEST = atoi(optarg);
+            break;
+        default:
+            PrintUsage();
+            return -1;
+        }
+    }
+    if(TEST <= TEST_INVALID || TEST >= MAX_TESTS){
+        PrintUsage();
+        return -1;
+    }
 
     /*Get Ip address on defined interface and initialize coap on it with random port number
      * this port number will be used as a source port in all coap communications*/

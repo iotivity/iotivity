@@ -67,7 +67,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     OCDoHandle handle;
 
     cbData.cb = cb;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
@@ -84,7 +84,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
     }
@@ -99,7 +99,7 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 
 OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
 {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
     }
@@ -115,7 +115,7 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
 
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-    if(ctx == (void*)CTX_VAL)
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
     }
@@ -154,7 +154,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
 
-    if (ctx == (void*) CTX_VAL)
+    if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
     }
@@ -262,7 +262,7 @@ int InitDiscovery()
         strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
     }
     cbData.cb = discoveryReqCB;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)

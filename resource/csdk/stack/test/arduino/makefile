@@ -72,7 +72,7 @@ CORE_COBJ = WInterrupts.o wiring.o wiring_digital.o
 CORE_CPPOBJ = main.o Stream.o WMath.o WString.o HardwareSerial.o Print.o SPI.o IPAddress.o wiring_analog.o
 ETH_CPPOBJ = Dhcp.o Dns.o Ethernet.o EthernetUdp.o
 ETH_UTIL_CPPOBJ = socket.o w5100.o
-OCSTACK_CPPOBJ = ocrandom.o ocresource.o occollection.o ocobserve.o ocstack.o occoaphelper.o occoap.o occlientcb.o
+OCSTACK_CPPOBJ = ocrandom.o ocresource.o occollection.o ocobserve.o ocserverrequest.o ocstack.o occoaphelper.o occoap.o occlientcb.o
 OCDEPENDENT_CPPOBJ = wiring_analog.o
 CJSON_COBJ = cJSON.o
 

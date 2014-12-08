@@ -41,9 +41,6 @@ typedef enum {
 // Function prototype
 //-----------------------------------------------------------------------------
 
-/* call getResult in common.cpp to get the result in string format. */
-const char *getResult(OCStackResult result);
-
 /* Get the IP address of the server */
 std::string getIPAddrTBServer(OCClientResponse * clientResponse);
 

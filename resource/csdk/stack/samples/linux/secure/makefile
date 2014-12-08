@@ -73,12 +73,13 @@ CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
 
 SOURCES		:= $(CJSON_SOURCES)
-SOURCES     += common.cpp ocserverbasicops.cpp occlientbasicops.cpp
+SOURCES     += common.cpp ocserverbasicops.cpp occlientbasicops.cpp gen_sec_bin.cpp
 
 OBJECTS:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
 
 PROGRAMS	+= ocserverbasicops
 PROGRAMS	+= occlientbasicops
+PROGRAMS	+= gen_sec_bin
 
 all:	c_sdk prep_dirs $(OBJECTS) $(PROGRAMS)
 
@@ -96,6 +97,9 @@ ocserverbasicops: $(OBJ_DIR)/ocserverbasicops.o $(OBJ_DIR)/common.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 occlientbasicops: $(OBJ_DIR)/occlientbasicops.o $(OBJ_DIR)/common.o
+	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
+
+gen_sec_bin: $(OBJ_DIR)/gen_sec_bin.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 .PHONY: clean

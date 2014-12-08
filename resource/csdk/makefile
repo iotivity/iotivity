@@ -90,7 +90,7 @@ OCTBSTACK_DIR		= stack
 OCMALLOC_DIR 		= ocmalloc
 EXTLIBS_DIR		= ../../extlibs
 CJSON_DIR		= $(EXTLIBS_DIR)/cjson
-TINYDTLS_DIR		= tinydtls
+TINYDTLS_DIR	= $(EXTLIBS_DIR)/tinydtls
 CONNECTIVITY_DIR	= connectivity
 
 OCCOAP_SRC		= $(OCCOAP_DIR)/src
@@ -137,7 +137,9 @@ OCTBSTACK_SOURCES	:= $(OCTBSTACK_SRC)/ocstack.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/occlientcb.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocresource.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocobserve.c
+OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocserverrequest.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/occollection.c
+OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocsecurity.c
 
 SOURCES			:= $(CJSON_SOURCES)
 SOURCES			+= $(OCCOAP_SOURCES)
@@ -178,9 +180,9 @@ liboctbstack.a:
     ifeq ($(PLATFORM),linux)
      ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
 			$(info "Building liboctbstack with DTLS support")
-			mkdir -p $(OBJ_DIR)/$(TINYDTLS_DIR)
-			@cd $(OBJ_DIR)/$(TINYDTLS_DIR) && $(AR) -x ../$(PLATFORM_SPECIFIC_BACKOUT)$(TINYDTLS_DIR)/libtinydtls.a
-			$(AR) -q $(OUT_DIR)/$@ $(OBJ_DIR)/$(TINYDTLS_DIR)/*.o
+			mkdir -p $(OBJ_DIR)/tinydtls
+			@cd $(OBJ_DIR)/tinydtls && $(AR) -x ../$(PLATFORM_SPECIFIC_BACKOUT)$(TINYDTLS_DIR)/libtinydtls.a
+			$(AR) -q $(OUT_DIR)/$@ $(OBJ_DIR)/tinydtls/*.o
      endif
     endif
 

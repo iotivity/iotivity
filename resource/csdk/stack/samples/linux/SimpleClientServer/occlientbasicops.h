@@ -27,7 +27,7 @@
 // Defines
 //-----------------------------------------------------------------------------
 #define TAG "occlientbasicops"
-#define CTX_VAL 0x99
+#define DEFAULT_CONTEXT_VALUE 0x99
 #ifndef MAX_LENGTH_IPv4_ADDR
 #define MAX_LENGTH_IPv4_ADDR 16
 #endif

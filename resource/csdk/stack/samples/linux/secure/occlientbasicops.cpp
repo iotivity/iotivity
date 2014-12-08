@@ -29,6 +29,7 @@
 #include "logger.h"
 #include "occlientbasicops.h"
 #include "cJSON.h"
+#include "common.h"
 
 #define TAG "occlientbasicops"
 static int UNICAST_DISCOVERY = 0;
@@ -39,6 +40,12 @@ static std::string coapServerIP;
 static std::string coapServerPort;
 static std::string coapServerResource;
 static int coapSecureResource;
+
+//File containing Client's Identity and the PSK credentials
+//of other devices which the client trusts
+//This can be generated using 'gen_sec_bin' application
+static char CRED_FILE[] = "client_cred.bin";
+
 
 int gQuitFlag = 0;
 
@@ -293,6 +300,16 @@ int main(int argc, char* argv[])
     if (OCInit((char *) paddr, port, OC_CLIENT) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack init error");
+        return 0;
+    }
+
+    /*
+     * Read DTLS PSK credentials from persistent storage and
+     * set in the OC stack.
+     */
+    if (SetCredentials(CRED_FILE) != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "SetCredentials failed");
         return 0;
     }
 

@@ -45,18 +45,20 @@ const char *getResult(OCStackResult result);
 
 PROGMEM const char TAG[] = "ArduinoServer";
 
-int gLEDUnderObservation = 0;
-void createLEDResource();
-typedef struct LEDRESOURCE{
+int gLightUnderObservation = 0;
+void createLightResource();
+
+/* Structure to represent a Light resource */
+typedef struct LIGHTRESOURCE{
     OCResourceHandle handle;
     bool state;
     int power;
-} LEDResource;
+} LightResource;
 
-static LEDResource LED;
+static LightResource Light;
 
-static char responsePayloadGet[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"on\",\"power\":10}}";
-static char responsePayloadPut[] = "{\"href\":\"/a/led\",\"rep\":{\"state\":\"off\",\"power\":0}}";
+static char responsePayloadGet[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"on\",\"power\":10}}";
+static char responsePayloadPut[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"off\",\"power\":0}}";
 
 /// This is the port which Arduino Server will use for all unicast communication with it's peers
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
@@ -134,7 +136,7 @@ int ConnectToNetwork()
 // http://www.atmel.com/webdoc/AVRLibcReferenceManual/malloc_1malloc_intro.html
 void PrintArduinoMemoryStats()
 {
-#ifdef ARDUINO_AVR_MEGA2560
+    #ifdef ARDUINO_AVR_MEGA2560
     //This var is declared in avr-libc/stdlib/malloc.c
     //It keeps the largest address not allocated for heap
     extern char *__brkval;
@@ -142,8 +144,8 @@ void PrintArduinoMemoryStats()
     int tmp;
     OC_LOG_V(INFO, TAG, "Stack: %u         Heap: %u", (unsigned int)&tmp, (unsigned int)__brkval);
     OC_LOG_V(INFO, TAG, "Unallocated Memory between heap and stack: %u",
-             ((unsigned int)&tmp - (unsigned int)__brkval));
-#endif
+            ((unsigned int)&tmp - (unsigned int)__brkval));
+    #endif
 }
 
 // This is the entity handler for the registered resource.
@@ -151,42 +153,69 @@ void PrintArduinoMemoryStats()
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest )
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
+    OCEntityHandlerResponse response = {0};
+    char payload[MAX_RESPONSE_LENGTH] = {0};
 
     if(entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+
         if(OC_REST_GET == entityHandlerRequest->method)
         {
-            if (strlen(responsePayloadGet) < entityHandlerRequest->resJSONPayloadLen)
+            size_t responsePayloadGetLength = strlen(responsePayloadGet);
+            if (responsePayloadGetLength < (sizeof(payload) - 1))
             {
-                strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadGet, entityHandlerRequest->resJSONPayloadLen);
+                strncpy(payload, responsePayloadGet, responsePayloadGetLength);
             }
             else
             {
                 ehRet = OC_EH_ERROR;
             }
         }
-        if(OC_REST_PUT == entityHandlerRequest->method)
+        else if(OC_REST_PUT == entityHandlerRequest->method)
         {
             //Do something with the 'put' payload
-            if (strlen(responsePayloadPut) < entityHandlerRequest->resJSONPayloadLen)
+            size_t responsePayloadPutLength = strlen(responsePayloadPut);
+            if (responsePayloadPutLength < (sizeof(payload) - 1))
             {
-                strncpy((char *)entityHandlerRequest->resJSONPayload, responsePayloadPut, entityHandlerRequest->resJSONPayloadLen);
+                strncpy((char *)payload, responsePayloadPut, responsePayloadPutLength);
             }
             else
             {
                 ehRet = OC_EH_ERROR;
             }
-         }
+        }
+
+        if (ehRet == OC_EH_OK)
+        {
+            // Format the response.  Note this requires some info about the request
+            response.requestHandle = entityHandlerRequest->requestHandle;
+            response.resourceHandle = entityHandlerRequest->resource;
+            response.ehResult = ehRet;
+            response.payload = (unsigned char *)payload;
+            response.payloadSize = strlen(payload);
+            response.numSendVendorSpecificHeaderOptions = 0;
+            memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+            memset(response.resourceUri, 0, sizeof response.resourceUri);
+            // Indicate that response is NOT in a persistent buffer
+            response.persistentBufferFlag = 0;
+
+            // Send the response
+            if (OCDoResponse(&response) != OC_STACK_OK)
+            {
+                OC_LOG(ERROR, TAG, "Error sending response");
+                ehRet = OC_EH_ERROR;
+            }
+        }
     }
     if (entityHandlerRequest && (flag & OC_OBSERVE_FLAG))
     {
-        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
-            gLEDUnderObservation = 1;
+            gLightUnderObservation = 1;
         }
-        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
         }
@@ -195,40 +224,35 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
     return ehRet;
 }
 
-
 // This method is used to display 'Observe' functionality of OC Stack.
 static uint8_t modCounter = 0;
-void *ChangeLEDRepresentation (void *param)
+void *ChangeLightRepresentation (void *param)
 {
     (void)param;
     OCStackResult result = OC_STACK_ERROR;
     modCounter += 1;
     if(modCounter % 10 == 0)  // Matching the timing that the Linux Sample Server App uses for the same functionality.
     {
-        LED.power += 5;
-        if (gLEDUnderObservation)
+        Light.power += 5;
+        if (gLightUnderObservation)
         {
-            OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", LED.power);
-            result = OCNotifyAllObservers (LED.handle, OC_NA_QOS);
+            OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", Light.power);
+            result = OCNotifyAllObservers (Light.handle, OC_NA_QOS);
             if (OC_STACK_NO_OBSERVERS == result)
             {
-                gLEDUnderObservation = 0;
+                gLightUnderObservation = 0;
             }
         }
     }
     return NULL;
 }
 
-
-
 //The setup function is called once at startup of the sketch
 void setup()
 {
     // Add your initialization code here
-
     // Note : This will initialize Serial port on Arduino at 115200 bauds
     OC_LOG_INIT();
-
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
     uint16_t port = OC_WELL_KNOWN_PORT;
 
@@ -246,9 +270,8 @@ void setup()
         return;
     }
 
-    // Declare and create the example resource: LED
-    createLEDResource();
-
+    // Declare and create the example resource: Light
+    createLightResource();
 }
 
 // The loop function is called in an endless loop
@@ -267,19 +290,19 @@ void loop()
         OC_LOG(ERROR, TAG, PCF("OCStack process error"));
         return;
     }
-    ChangeLEDRepresentation(NULL);
+    ChangeLightRepresentation(NULL);
 }
 
-void createLEDResource()
+void createLightResource()
 {
-    LED.state = false;
-    OCStackResult res = OCCreateResource(&LED.handle,
-            "core.led",
+    Light.state = false;
+    OCStackResult res = OCCreateResource(&Light.handle,
+            "core.light",
             "oc.mi.def",
-            "/a/led",
+            "/a/light",
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
+    OC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
 }
 
 const char *getResult(OCStackResult result) {

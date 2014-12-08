@@ -22,7 +22,7 @@
 #include "ocstack.h"
 #include "ocstackconfig.h"
 #include "ocstackinternal.h"
-#include "ocresource.h"
+#include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
 #include "occoap.h"
@@ -32,6 +32,9 @@
 
 /// Module Name
 #define TAG PCF("ocresource")
+#define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
+            {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
+
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, PCF(#arg " is NULL")); return (retVal); } }
 
@@ -189,6 +192,7 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
         }
     }
     jsonStr = cJSON_PrintUnformatted (resObj);
+
     jsonLen = strlen(jsonStr);
     if (jsonLen < *remaining)
     {
@@ -202,38 +206,9 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
     cJSON_Delete (resObj);
     free (jsonStr);
 
-
     OC_LOG(INFO, TAG, PCF("Exiting BuildVirtualResourceResponse"));
     return ret;
 }
-
-OCEntityHandlerResult
-BuildObsJSONResponse(OCResource *resource, OCEntityHandlerRequest *ehRequest)
-{
-    OCEntityHandlerResult ret = OC_EH_ERROR;
-    unsigned char* saveJSONPayLoadPtr = ehRequest->resJSONPayload;
-
-    if (ehRequest->resJSONPayloadLen > OC_JSON_PREFIX_LEN)
-    {
-        strcpy((char*)ehRequest->resJSONPayload, OC_JSON_PREFIX);
-        ehRequest->resJSONPayloadLen -= OC_JSON_PREFIX_LEN;
-        ehRequest->resJSONPayload += OC_JSON_PREFIX_LEN;
-    }
-
-    ret = resource->entityHandler(OC_REQUEST_FLAG, ehRequest);
-
-    ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen -
-            strlen((char*)ehRequest->resJSONPayload);
-    ehRequest->resJSONPayload += strlen((char*)ehRequest->resJSONPayload);
-
-    if (ehRequest->resJSONPayloadLen > OC_JSON_SUFFIX_LEN)
-    {
-        strcpy((char*)ehRequest->resJSONPayload, OC_JSON_SUFFIX);
-    }
-    ehRequest->resJSONPayload = saveJSONPayLoadPtr;
-    return ret;
-}
-
 
 TODO ("Does it make sense to make this method as inline")
 const char * GetVirtualResourceUri( OCVirtualResources resource)
@@ -284,7 +259,7 @@ OCResource *FindResourceByUri(const char* resourceUri)
 }
 
 
-OCStackResult DetermineResourceHandling (OCRequest *request,
+OCStackResult DetermineResourceHandling (OCServerRequest *request,
                                          ResourceHandling *handling,
                                          OCResource **resource)
 {
@@ -319,11 +294,12 @@ OCStackResult DetermineResourceHandling (OCRequest *request,
 
             // Resource does not exist
             // and default device handler does not exist
+            *handling = OC_RESOURCE_NOT_SPECIFIED;
             return OC_STACK_NO_RESOURCE;
         }
 
         // secure resource will entertain only authorized requests
-        if ((resourcePtr->resourceProperties & OC_SECURE) && (request->secure == 0))
+        if ((resourcePtr->resourceProperties & OC_SECURE) && (request->secured == 0))
         {
             OC_LOG(INFO, TAG, PCF("Un-authorized request. Ignore it!"));
             return OC_STACK_RESOURCE_ERROR;
@@ -363,6 +339,9 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
         case OC_EH_OK:
             result = OC_STACK_OK;
             break;
+        case OC_EH_SLOW:
+            result = OC_STACK_SLOW_RESOURCE;
+            break;
         case OC_EH_ERROR:
             result = OC_STACK_ERROR;
             break;
@@ -373,7 +352,7 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
             result = OC_STACK_RESOURCE_CREATED;
             break;
         case OC_EH_RESOURCE_DELETED:
-            result = OC_STACK_NO_RESOURCE;
+            result = OC_STACK_RESOURCE_DELETED;
             break;
         default:
             result = OC_STACK_ERROR;
@@ -383,26 +362,29 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
 }
 
 static OCStackResult
-HandleVirtualResource (OCRequest *request, OCResource* resource)
+HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
     OCStackResult result = OC_STACK_ERROR;
     char *filterValue = NULL;
     uint8_t filterOn = 0;
     uint16_t remaining = 0;
-    unsigned char *buffer = NULL;
+    unsigned char * ptr = NULL;
+    uint8_t firstLoopDone = 0;
+    unsigned char discoveryResBuf[MAX_RESPONSE_LENGTH] = {0};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleVirtualResource"));
 
     result = ValidateUrlQuery (request->resourceUrl,
-            request->entityHandlerRequest->query, &filterOn,
+            request->query, &filterOn,
             &filterValue);
 
     if (result == OC_STACK_OK)
     {
         if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0)
         {
-            remaining = request->entityHandlerRequest->resJSONPayloadLen;
-            buffer = request->entityHandlerRequest->resJSONPayload;
+            ptr = discoveryResBuf;
+            remaining = MAX_RESPONSE_LENGTH;
+
             while(resource)
             {
                 if((resource->resourceProperties & OC_ACTIVE)
@@ -410,205 +392,260 @@ HandleVirtualResource (OCRequest *request, OCResource* resource)
                 {
                     // if there is data on the buffer, we have already added a response,
                     // so we need to add a comma before we do anything
-                    if(buffer != request->entityHandlerRequest->resJSONPayload
-                        && remaining >= (sizeof(OC_JSON_SEPARATOR)+1))
+                    if(firstLoopDone
+                            && remaining >= (sizeof(OC_JSON_SEPARATOR)+1))
                     {
-                        *buffer = OC_JSON_SEPARATOR;
-                        buffer++;
+                        *ptr = OC_JSON_SEPARATOR;
+                        ptr++;
                         remaining--;
                     }
-
+                    firstLoopDone = 1;
                     result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
-                            (char*)buffer, &remaining);
+                            (char*)ptr, &remaining);
+
                     if (result != OC_STACK_OK)
                     {
                         // if this failed, we need to remove the comma added above.
-                        if(buffer != request->entityHandlerRequest->resJSONPayload)
+                        if(!firstLoopDone)
                         {
-                            buffer--;
-                            *buffer = '\0';
+                            ptr--;
+                            *ptr = '\0';
                             remaining++;
                         }
-
                         break;
                     }
-                    buffer += strlen((char*)buffer);
+                    ptr += strlen((char *)ptr);
+                    *(ptr + 1) = '\0';
                 }
                 resource = resource->next;
+            }
+
+            if(strlen((const char *)discoveryResBuf) > 0)
+            {
+                OCEntityHandlerResponse response = {0};
+
+                response.ehResult = OC_EH_OK;
+                response.payload = discoveryResBuf;
+                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
+                response.persistentBufferFlag = 0;
+                response.requestHandle = (OCRequestHandle) request;
+                response.resourceHandle = (OCResourceHandle) resource;
+
+                result = OCDoResponse(&response);
             }
         }
         #ifdef WITH_PRESENCE
         else
         {
             if(resource->resourceProperties & OC_ACTIVE){
-                SendPresenceNotification(resource->rsrcType, OC_LOW_QOS);
+                SendPresenceNotification(NULL);
             }
-            result = OC_STACK_PRESENCE_DO_NOT_HANDLE;
         }
         #endif
     }
-
-    if (result == OC_STACK_OK)
-    {
-        request->entityHandlerRequest->resJSONPayloadLen = remaining;
-        request->entityHandlerRequest->resJSONPayload = buffer;
-    }
-
+    result = OC_STACK_VIRTUAL_DO_NOT_HANDLE;
     return result;
 }
 
 static OCStackResult
-HandleDefaultDeviceEntityHandler (OCRequest *request)
+HandleDefaultDeviceEntityHandler (OCServerRequest *request)
 {
     OCStackResult result = OC_STACK_OK;
-    OCEntityHandlerResult ehResult;
-    OCEntityHandlerRequest *ehRequest = request->entityHandlerRequest;
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+    OCEntityHandlerRequest ehRequest = {0};
+
+    OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithDefaultDeviceEntityHandler"));
+    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
+            request->method, (OCResourceHandle) NULL, request->query,
+            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
+            request->rcvdVendorSpecificHeaderOptions, (OCObserveAction)request->observationOption, (OCObservationId)0);
+    VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // At this point we know for sure that defaultDeviceHandler exists
-    ehResult = defaultDeviceHandler(OC_REQUEST_FLAG, ehRequest,
+    ehResult = defaultDeviceHandler(OC_REQUEST_FLAG, &ehRequest,
                                   (char*) request->resourceUrl);
-
+    if(ehResult == OC_EH_SLOW)
+    {
+        OC_LOG(INFO, TAG, PCF("This is a slow resource"));
+        request->slowFlag = 1;
+    }
+    else if(ehResult == OC_EH_ERROR)
+    {
+        FindAndDeleteServerRequest(request);
+    }
     result = EntityHandlerCodeToOCStackCode(ehResult);
-
-    ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen -
-                                    strlen((char*)ehRequest->resJSONPayload);
-    ehRequest->resJSONPayload += strlen((char*)ehRequest->resJSONPayload);
-
+exit:
     return result;
 }
 
 static OCStackResult
-HandleResourceWithEntityHandler (OCRequest *request,
+HandleResourceWithEntityHandler (OCServerRequest *request,
                                  OCResource *resource,
                                  uint8_t collectionResource)
 {
-    OCStackResult result = OC_STACK_OK;
-    OCEntityHandlerResult ehResult = OC_EH_OK;
+    OCStackResult result = OC_STACK_ERROR;
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+    OCEntityHandlerFlag ehFlag = OC_REQUEST_FLAG;
+    ResourceObserver *resObs = NULL;
 
-    OCEntityHandlerRequest *ehRequest = request->entityHandlerRequest;
+    OCEntityHandlerRequest ehRequest = {0};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithEntityHandler"));
+    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
+            request->method, (OCResourceHandle) resource, request->query,
+            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
+            request->rcvdVendorSpecificHeaderOptions,
+            (OCObserveAction)request->observationOption, 0);
+    VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    ehRequest->resource = (OCResourceHandle)resource;
-
-    // status code from entity handler is ignored unless observe call
-    if (request->observe == NULL)
+    if(ehRequest.obsInfo.action == OC_OBSERVE_NO_OPTION)
     {
-        ehResult = resource->entityHandler(OC_REQUEST_FLAG, ehRequest);
-        result = EntityHandlerCodeToOCStackCode(ehResult);
+        OC_LOG(INFO, TAG, PCF("No observation requested"));
+        ehFlag = OC_REQUEST_FLAG;
     }
-    else
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER &&
+            !collectionResource)
     {
-        // If an observation register/deregister is included handle separately
-        if (!collectionResource)
+        OC_LOG(INFO, TAG, PCF("Registering observation requested"));
+        result = GenerateObserverId(&ehRequest.obsInfo.obsId);
+        VERIFY_SUCCESS(result, OC_STACK_OK);
+
+        result = AddObserver ((const char*)(request->resourceUrl),
+                (const char *)(request->query),
+                ehRequest.obsInfo.obsId, &request->requestToken,
+                &request->requesterAddr, resource, request->qos);
+        if(result == OC_STACK_OK)
         {
-            result = ProcessObserveRequest (resource, request);
+            OC_LOG(DEBUG, TAG, PCF("Added observer successfully"));
+            request->observeResult = OC_STACK_OK;
+            ehFlag = (OCEntityHandlerFlag)(OC_REQUEST_FLAG | OC_OBSERVE_FLAG);
         }
         else
         {
-            // Observation on collection resources not currently supported
+            result = OC_STACK_OK;
+            request->observeResult = OC_STACK_ERROR;
+            OC_LOG(DEBUG, TAG, PCF("Observer Addition failed"));
+            ehFlag = OC_REQUEST_FLAG;
+        }
+
+    }
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER &&
+            !collectionResource)
+    {
+        OC_LOG(INFO, TAG, PCF("Deregistering observation requested"));
+        resObs = GetObserverUsingToken (&request->requestToken);
+        if (NULL == resObs)
+        {
+            // Stack does not contain this observation request
+            // Either token is incorrect or observation list is corrupted
             result = OC_STACK_ERROR;
+            goto exit;
+        }
+        ehRequest.obsInfo.obsId = resObs->observeId;
+        ehFlag = (OCEntityHandlerFlag)(ehFlag | OC_OBSERVE_FLAG);
+
+        result = DeleteObserverUsingToken (&request->requestToken);
+        if(result == OC_STACK_OK)
+        {
+            OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
+            request->observeResult = OC_STACK_OK;
+        }
+        else
+        {
+            result = OC_STACK_OK;
+            request->observeResult = OC_STACK_ERROR;
+            OC_LOG(DEBUG, TAG, PCF("Observer Removal failed"));
         }
     }
-
-    if (result == OC_STACK_OK || OC_STACK_RESOURCE_CREATED)
+    else
     {
-        ehRequest->resJSONPayloadLen = ehRequest->resJSONPayloadLen -
-            strlen((char*)ehRequest->resJSONPayload);
-        ehRequest->resJSONPayload += strlen((char*)ehRequest->resJSONPayload);
+        result = OC_STACK_ERROR;
+        goto exit;
     }
 
+    ehResult = resource->entityHandler(ehFlag, &ehRequest);
+    if(ehResult == OC_EH_SLOW)
+    {
+        OC_LOG(INFO, TAG, PCF("This is a slow resource"));
+        request->slowFlag = 1;
+    }
+    else if(ehResult == OC_EH_ERROR)
+    {
+        FindAndDeleteServerRequest(request);
+    }
+    result = EntityHandlerCodeToOCStackCode(ehResult);
+exit:
     return result;
 }
 
-
 static OCStackResult
-HandleCollectionResourceDefaultEntityHandler (OCRequest *request,
+HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
                                               OCResource *resource)
 {
-    request->entityHandlerRequest->resource = (OCResourceHandle)resource;
-    return (DefaultCollectionEntityHandler (OC_REQUEST_FLAG, request->entityHandlerRequest));
-}
+    OCStackResult result = OC_STACK_ERROR;
+    OCEntityHandlerRequest ehRequest = {0};
 
-
-OCStackResult
-BuildJSONResponse(ResourceHandling resHandling, OCResource *resource, OCRequest *request)
-{
-    OCStackResult ret = OC_STACK_OK;
-
-    // save the response payload pointer, this pointer will be moved as
-    // different entity handlers will be called
-    unsigned char* saveJSONPayLoadPtr = request->entityHandlerRequest->resJSONPayload;
-    unsigned char* buffer = saveJSONPayLoadPtr;
-    uint16_t remaining = request->entityHandlerRequest->resJSONPayloadLen;
-
-    // add suffix in payload
-    if (remaining > OC_JSON_PREFIX_LEN)
+    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
+            request->method, (OCResourceHandle) resource, request->query,
+            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
+            request->rcvdVendorSpecificHeaderOptions,
+            (OCObserveAction)request->observationOption, (OCObservationId) 0);
+    if(result != OC_STACK_OK)
     {
-        strcpy((char*)buffer, OC_JSON_PREFIX);
-        remaining -= OC_JSON_PREFIX_LEN;
-        buffer += OC_JSON_PREFIX_LEN;
+        return result;
     }
 
-    // move the entity handler payload pointer and update
-    // remaining valid bytes to fill data
-    request->entityHandlerRequest->resJSONPayload = buffer;
-    request->entityHandlerRequest->resJSONPayloadLen = remaining;
+    return (DefaultCollectionEntityHandler (OC_REQUEST_FLAG, &ehRequest));
+}
+
+OCStackResult
+ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerRequest *request)
+{
+    OCStackResult ret = OC_STACK_OK;
 
     switch (resHandling)
     {
         case OC_RESOURCE_VIRTUAL:
-            {
-                ret = HandleVirtualResource (request, resource);
-                break;
-            }
-
+        {
+            ret = HandleVirtualResource (request, resource);
+            break;
+        }
         case OC_RESOURCE_DEFAULT_DEVICE_ENTITYHANDLER:
-            {
-                ret = HandleDefaultDeviceEntityHandler(request);
-                break;
-            }
+        {
+            ret = HandleDefaultDeviceEntityHandler(request);
+            break;
+        }
         case OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER:
-            {
-                OC_LOG(INFO, TAG, PCF("OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER"));
-                return OC_STACK_ERROR;
-            }
-
+        {
+            OC_LOG(INFO, TAG, PCF("OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER"));
+            return OC_STACK_ERROR;
+        }
         case OC_RESOURCE_NOT_COLLECTION_WITH_ENTITYHANDLER:
-            {
-                ret = HandleResourceWithEntityHandler (request, resource, 0);
-                break;
-            }
+        {
+            ret = HandleResourceWithEntityHandler (request, resource, 0);
+            break;
+        }
         case OC_RESOURCE_COLLECTION_WITH_ENTITYHANDLER:
-            {
-                ret = HandleResourceWithEntityHandler (request, resource, 1);
-                break;
-            }
-
+        {
+            ret = HandleResourceWithEntityHandler (request, resource, 1);
+            break;
+        }
         case OC_RESOURCE_COLLECTION_DEFAULT_ENTITYHANDLER:
-            {
-                ret = HandleCollectionResourceDefaultEntityHandler (request, resource);
-                break;
-            }
-
+        {
+            ret = HandleCollectionResourceDefaultEntityHandler (request, resource);
+            break;
+        }
+        case OC_RESOURCE_NOT_SPECIFIED:
+        {
+            ret = OC_STACK_NO_RESOURCE;
+            break;
+        }
         default:
-            {
-                OC_LOG(INFO, TAG, PCF("Invalid Resource Determination"));
-                return OC_STACK_ERROR;
-            }
+        {
+            OC_LOG(INFO, TAG, PCF("Invalid Resource Determination"));
+            return OC_STACK_ERROR;
+        }
     }
-
-    remaining = request->entityHandlerRequest->resJSONPayloadLen;
-
-    if (remaining > OC_JSON_SUFFIX_LEN)
-    {
-        strcpy((char*)request->entityHandlerRequest->resJSONPayload, OC_JSON_SUFFIX);
-    }
-
-    // update payload pointer with it's original location and original length
-    request->entityHandlerRequest->resJSONPayload = saveJSONPayLoadPtr;
-    request->entityHandlerRequest->resJSONPayloadLen = MAX_RESPONSE_LENGTH;
-
     return ret;
 }
 

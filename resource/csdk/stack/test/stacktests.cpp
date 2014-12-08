@@ -43,7 +43,7 @@ extern "C" {
 #include <stdint.h>
 using namespace std;
 
-#define CTX_VAL 0x99
+#define DEFAULT_CONTEXT_VALUE 0x99
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx, OCDoHan
 
     EXPECT_EQ(OC_STACK_OK, clientResponse->result);
 
-    if(ctx == (void*)CTX_VAL) {
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE) {
         OC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
     }
     OC_LOG_V(INFO, TAG, "result = %d", clientResponse->result);
@@ -128,9 +128,10 @@ TEST(StackTest, DoResourceDeviceDiscovery) {
     char szQueryUri[64] = { 0 };
     strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
     cbData.cb = asyncDoResourcesCallback;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData), NULL, 0);
+
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0));
     //EXPECT_EQ(OC_STACK_OK, OCUpdateResources(SERVICE_URI));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -158,9 +159,9 @@ TEST(StackTest, UpdateResourceNullURI) {
     char szQueryUri[64] = { 0 };
     strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
     cbData.cb = asyncDoResourcesCallback;
-    cbData.context = (void*)CTX_VAL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_NON_CONFIRMABLE, &cbData), NULL, 0);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0));
     //EXPECT_EQ(OC_STACK_INVALID_URI, OCUpdateResources(0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }

@@ -42,8 +42,6 @@ void * ChangeLightRepresentation (void *param);
 // 1 - notifies list of observers
 int isListOfObservers = 0;
 
-// Forward declaring the entityHandler
-
 /// This class represents a single resource named 'lightResource'. This resource has
 /// two simple properties named 'state' and 'power'
 
@@ -85,7 +83,7 @@ public:
         // OCResourceProperty is defined ocstack.h
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
-        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1);
 
         // This will internally create and register the resource.
         OCStackResult result = OCPlatform::registerResource(
@@ -107,7 +105,7 @@ public:
         // OCResourceProperty is defined ocstack.h
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
-        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1, PH::_2);
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this,PH::_1);
 
         OCResourceHandle resHandle;
 
@@ -180,7 +178,6 @@ public:
             if(OC_STACK_OK == createResource1())
             {
                 std::cout << "Created a new resource\n";
-
                 OCRepresentation rep1;
                 rep1.setValue("createduri", std::string("/a/light1"));
 
@@ -224,11 +221,41 @@ public:
     }
 
 private:
+
+OCStackResult sendResponse(std::shared_ptr<OCResourceRequest> pRequest)
+{
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+    pResponse->setRequestHandle(pRequest->getRequestHandle());
+    pResponse->setResourceHandle(pRequest->getResourceHandle());
+    pResponse->setResourceRepresentation(get());
+    pResponse->setErrorCode(200);
+    pResponse->setResponseResult(OC_EH_OK);
+
+    return OCPlatform::sendResponse(pResponse);
+}
+
+OCStackResult sendPostResponse(std::shared_ptr<OCResourceRequest> pRequest)
+{
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+    pResponse->setRequestHandle(pRequest->getRequestHandle());
+    pResponse->setResourceHandle(pRequest->getResourceHandle());
+
+    OCRepresentation rep = pRequest->getResourceRepresentation();
+    OCRepresentation rep_post = post(rep);
+
+    pResponse->setResourceRepresentation(rep_post);
+    pResponse->setErrorCode(200);
+    pResponse->setResponseResult(OC_EH_OK);
+
+    return OCPlatform::sendResponse(pResponse);
+}
+
 // This is just a sample implementation of entity handler.
 // Entity handler can be implemented in several ways by the manufacturer
-OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request, std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
 {
     cout << "\tIn Server CPP entity handler:\n";
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
 
     if(request)
     {
@@ -239,7 +266,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request, 
         if(requestFlag & RequestHandlerFlag::InitFlag)
         {
             cout << "\t\trequestFlag : Init\n";
-
             // entity handler to perform resource initialization operations
         }
         if(requestFlag & RequestHandlerFlag::RequestFlag)
@@ -250,13 +276,9 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request, 
             if(requestType == "GET")
             {
                 cout << "\t\t\trequestType : GET\n";
-
-                if(response)
+                if(OC_STACK_OK == sendResponse(request))
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(get());
+                    ehResult = OC_EH_OK;
                 }
             }
             else if(requestType == "PUT")
@@ -264,40 +286,21 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request, 
                 cout << "\t\t\trequestType : PUT\n";
 
                 OCRepresentation rep = request->getResourceRepresentation();
-
                 // Do related operations related to PUT request
-
                 // Update the lightResource
                 put(rep);
-
-                if(response)
+                if(OC_STACK_OK == sendResponse(request))
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(get());
+                    ehResult = OC_EH_OK;
                 }
-
             }
             else if(requestType == "POST")
             {
                 cout << "\t\t\trequestType : POST\n";
-
-                OCRepresentation rep = request->getResourceRepresentation();
-
-                // Do related operations related to POST request
-
-                OCRepresentation rep_post = post(rep);
-
-                if(response)
+                if(OC_STACK_OK == sendPostResponse(request))
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
-
-                    response->setResourceRepresentation(rep_post);
+                    ehResult = OC_EH_OK;
                 }
-
-                // POST request operations
             }
             else if(requestType == "DELETE")
             {
@@ -334,6 +337,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request, 
                 pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)this);
                 startedThread = 1;
             }
+            ehResult = OC_EH_OK;
         }
     }
     else
@@ -341,7 +345,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request, 
         std::cout << "Request invalid" << std::endl;
     }
 
-    return OC_EH_OK;
+    return ehResult;
 }
 
 };

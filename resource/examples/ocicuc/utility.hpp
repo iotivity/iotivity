@@ -30,22 +30,13 @@
 
 namespace Intel { namespace OCDemo {
 
-// Prettyprinter for AttributeMaps:
-inline std::ostream& operator<<(std::ostream& os, const OC::AttributeMap& attrs)
-{
- for(const auto& attr : attrs)
-  os << "Attribute \"" << attr.first << "\": " << attr.second << "; ";
-
- return os;
-}
-
 /* A static observation counter: */
 int observe_count();
 
 /* Helpers for measuring request times: */
-typedef std::pair< 
-                    std::chrono::time_point<std::chrono::high_resolution_clock>, 
-                    std::chrono::time_point<std::chrono::high_resolution_clock> 
+typedef std::pair<
+                    std::chrono::time_point<std::chrono::high_resolution_clock>,
+                    std::chrono::time_point<std::chrono::high_resolution_clock>
                  > clock_interval;
 
 struct call_times
@@ -64,7 +55,7 @@ struct call_times
  call_times(const bool& display_reports_)
   : display_reports(display_reports_)
  {}
- 
+
  public:
  void reset(const std::string& entry);
  void mark(const std::string& name);
@@ -73,8 +64,8 @@ struct call_times
  void report_and_reset(const std::string& name);
 };
 
-extern call_times call_timer; 
- 
+extern call_times call_timer;
+
 }} // namespace Intel::OCDemo
 
 #endif

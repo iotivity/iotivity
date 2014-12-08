@@ -57,6 +57,8 @@ void printUsage()
 // Callback to presence
 void presenceHandler(OCStackResult result, const unsigned int nonce)
 {
+    std::cout << "In presenceHandler: ";
+
     switch(result)
     {
         case OC_STACK_OK:
@@ -65,8 +67,11 @@ void presenceHandler(OCStackResult result, const unsigned int nonce)
         case OC_STACK_PRESENCE_STOPPED:
             std::cout << "Presence Stopped\n";
             break;
-        case OC_STACK_PRESENCE_DO_NOT_HANDLE:
-            std::cout << "Presence do not handle\n";
+        case OC_STACK_PRESENCE_TIMEOUT:
+            std::cout << "Presence Timeout\n";
+            break;
+        case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
+            std::cout << "Virtual do not handle\n";
             break;
         default:
             std::cout << "Error\n";

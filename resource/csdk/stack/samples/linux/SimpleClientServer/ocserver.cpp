@@ -101,43 +101,51 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     return jsonResponse;
 }
 
-void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
 {
+    OCEntityHandlerResult ehResult;
     char *getResp = constructJsonResponse(ehRequest);
 
-    if (ehRequest->resJSONPayloadLen > strlen ((char *)getResp))
+    if (maxPayloadSize > strlen ((char *)getResp))
     {
-        strncpy((char *)ehRequest->resJSONPayload, getResp,
-                strlen((char *)getResp));
+        strncpy(payload, getResp, strlen((char *)getResp));
+        ehResult = OC_EH_OK;
     }
     else
     {
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                ehRequest->resJSONPayloadLen);
+                maxPayloadSize);
+        ehResult = OC_EH_ERROR;
     }
 
     free(getResp);
+
+    return ehResult;
 }
 
-void ProcessPutRequest (OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
 {
+    OCEntityHandlerResult ehResult;
     char *putResp = constructJsonResponse(ehRequest);
 
-    if (ehRequest->resJSONPayloadLen > strlen ((char *)putResp))
+    if (maxPayloadSize > strlen ((char *)putResp))
     {
-        strncpy((char *)ehRequest->resJSONPayload, putResp,
-                strlen((char *)putResp));
+        strncpy(payload, putResp, strlen((char *)putResp));
+        ehResult = OC_EH_OK;
     }
     else
     {
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                ehRequest->resJSONPayloadLen);
+                maxPayloadSize);
+        ehResult = OC_EH_ERROR;
     }
 
     free(putResp);
+
+    return ehResult;
 }
 
-OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, OCEntityHandlerResponse *response, char *payload, uint16_t maxPayloadSize)
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
     char *respPLPost_light = NULL;
@@ -174,7 +182,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
                 gLightInstance[gCurrLightInstance].power = 0;
                 gCurrLightInstance++;
                 respPLPost_light = cJSON_Print(json);
-                strncpy ((char *)ehRequest->newResourceUri, newLightUri, MAX_URI_LENGTH);
+                strncpy ((char *)response->resourceUri, newLightUri, MAX_URI_LENGTH);
                 ehResult = OC_EH_RESOURCE_CREATED;
             }
 
@@ -209,23 +217,22 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest)
         }
     }
 
-    if (respPLPost_light != NULL && ehRequest->resJSONPayloadLen > \
-            strlen((char *)respPLPost_light))
+    if ((respPLPost_light != NULL) && (maxPayloadSize > strlen ((char *)respPLPost_light)))
     {
-        strncpy((char *)ehRequest->resJSONPayload, respPLPost_light,
-                strlen((char *)respPLPost_light));
+        strncpy(payload, respPLPost_light, strlen((char *)respPLPost_light));
     }
     else
     {
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                ehRequest->resJSONPayloadLen);
+                maxPayloadSize);
+        ehResult = OC_EH_ERROR;
     }
 
     free(respPLPost_light);
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
 
@@ -236,7 +243,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
      * 1a. pass the delete request to the c stack
      * 1b. internally, the c stack figures out what needs to be done and does it accordingly
      *    (e.g. send observers notification, remove observers...)
-     * 1c. the c stack returns with the result whether the request is fullfilLight.
+     * 1c. the c stack returns with the result whether the request is fullfilled.
      * 2. optionally, app removes observers out of its array 'interestedObservers'
      */
 
@@ -286,20 +293,21 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
         ehResult = OC_EH_FORBIDDEN;
     }
 
-    if (ehRequest->resJSONPayloadLen > strlen ((char *)deleteResponse))
+    if (maxPayloadSize > strlen ((char *)deleteResponse))
     {
-        strncpy((char *)ehRequest->resJSONPayload, deleteResponse, strlen((char *)deleteResponse));
+        strncpy(payload, deleteResponse, strlen((char *)deleteResponse));
     }
     else
     {
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                  ehRequest->resJSONPayloadLen);
+                maxPayloadSize);
+        ehResult = OC_EH_ERROR;
     }
 
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s ", __func__);
 
@@ -307,14 +315,14 @@ OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *
     response = responsePayloadResourceDoesNotExist;
 
     if ( (ehRequest != NULL) &&
-         (ehRequest->resJSONPayloadLen > strlen ((char *)response)) )
+         (maxPayloadSize > strlen ((char *)response)) )
     {
-        strncpy((char *)ehRequest->resJSONPayload, response, strlen((char *)response));
+        strncpy((char *)payload, response, strlen((char *)response));
     }
     else
     {
         OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                  ehRequest->resJSONPayloadLen);
+                maxPayloadSize);
     }
 
     return OC_EH_RESOURCE_DELETED;
@@ -323,12 +331,12 @@ OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *
 void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest)
 {
     OC_LOG_V (INFO, TAG, "Received observation registration request with observation Id %d",
-            ehRequest->obsInfo->obsId);
+            ehRequest->obsInfo.obsId);
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
         if (interestedObservers[i].valid == false)
         {
-            interestedObservers[i].observationId = ehRequest->obsInfo->obsId;
+            interestedObservers[i].observationId = ehRequest->obsInfo.obsId;
             interestedObservers[i].valid = true;
             gLightUnderObservation = 1;
             break;
@@ -341,10 +349,10 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
     bool clientStillObserving = false;
 
     OC_LOG_V (INFO, TAG, "Received observation deregistration request for observation Id %d",
-            ehRequest->obsInfo->obsId);
+            ehRequest->obsInfo.obsId);
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
-        if (interestedObservers[i].observationId == ehRequest->obsInfo->obsId)
+        if (interestedObservers[i].observationId == ehRequest->obsInfo.obsId)
         {
             interestedObservers[i].valid = false;
         }
@@ -365,6 +373,20 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
+    OCEntityHandlerResponse response;
+    char payload[MAX_RESPONSE_LENGTH] = {0};
+
+    // Validate pointer
+    if (!entityHandlerRequest)
+    {
+        OC_LOG (ERROR, TAG, "Invalid request pointer");
+        return OC_EH_ERROR;
+    }
+
+    // Initialize certain response fields
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
 
     if (flag & OC_INIT_FLAG)
     {
@@ -373,47 +395,62 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
-        if (entityHandlerRequest)
+        if (entityHandlerRequest->resource == NULL) {
+            OC_LOG (INFO, TAG, "Received request from client to a non-existing resource");
+            ehResult = ProcessNonExistingResourceRequest(entityHandlerRequest, payload, sizeof(payload) - 1);
+        }
+        else if (OC_REST_GET == entityHandlerRequest->method)
         {
-            if (entityHandlerRequest->resource == NULL) {
-                OC_LOG (INFO, TAG, "Received request from client to a non-existing resource");
-                ehResult = ProcessNonExistingResourceRequest(entityHandlerRequest);
-            }
-            else if (OC_REST_GET == entityHandlerRequest->method)
+            OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+            ehResult = ProcessGetRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+        }
+        else if (OC_REST_PUT == entityHandlerRequest->method)
+        {
+            OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+            ehResult = ProcessPutRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+        }
+        else if (OC_REST_DELETE == entityHandlerRequest->method)
+        {
+            OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
+            ehResult = ProcessDeleteRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+        }
+        else
+        {
+            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+                    entityHandlerRequest->method);
+            ehResult = OC_EH_ERROR;
+        }
+
+        // If the result isn't an error or forbidden, send response
+        if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
+        {
+            // Format the response.  Note this requires some info about the request
+            response.requestHandle = entityHandlerRequest->requestHandle;
+            response.resourceHandle = entityHandlerRequest->resource;
+            response.ehResult = ehResult;
+            response.payload = (unsigned char *)payload;
+            response.payloadSize = strlen(payload);
+            // Indicate that response is NOT in a persistent buffer
+            response.persistentBufferFlag = 0;
+
+            // Send the response
+            if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
-                ProcessGetRequest (entityHandlerRequest);
-            }
-            else if (OC_REST_PUT == entityHandlerRequest->method)
-            {
-                OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
-                ProcessPutRequest (entityHandlerRequest);
-            }
-            else if (OC_REST_DELETE == entityHandlerRequest->method)
-            {
-                OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
-                ehResult = ProcessDeleteRequest (entityHandlerRequest);
-            }
-            else
-            {
-                OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
-                        entityHandlerRequest->method);
+                OC_LOG(ERROR, TAG, "Error sending response");
+                ehResult = OC_EH_ERROR;
             }
         }
     }
     if (flag & OC_OBSERVE_FLAG)
     {
         OC_LOG(INFO, TAG, "Flag includes OC_OBSERVE_FLAG");
-        if (entityHandlerRequest)
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
-            {
-                OC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
-            }
-            else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
-            {
-                OC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
-            }
+            OC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
+        }
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
+        {
+            OC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
         }
     }
 
@@ -428,6 +465,20 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
+    OCEntityHandlerResponse response;
+    char payload[MAX_RESPONSE_LENGTH] = {0};
+
+    // Validate pointer
+    if (!entityHandlerRequest)
+    {
+        OC_LOG (ERROR, TAG, "Invalid request pointer");
+        return OC_EH_ERROR;
+    }
+
+    // Initialize certain response fields
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
 
     if (flag & OC_INIT_FLAG)
     {
@@ -436,80 +487,97 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
-        if (entityHandlerRequest)
+        if (OC_REST_GET == entityHandlerRequest->method)
         {
-            if (OC_REST_GET == entityHandlerRequest->method)
+            OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+            ehResult = ProcessGetRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+        }
+        else if (OC_REST_PUT == entityHandlerRequest->method)
+        {
+            OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+            ehResult = ProcessPutRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+        }
+        else if (OC_REST_POST == entityHandlerRequest->method)
+        {
+            OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
+            ehResult = ProcessPostRequest (entityHandlerRequest, &response, payload, sizeof(payload) - 1);
+        }
+        else if (OC_REST_DELETE == entityHandlerRequest->method)
+        {
+            OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
+            ehResult = ProcessDeleteRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+        }
+        else
+        {
+            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+                    entityHandlerRequest->method);
+        }
+
+        // If the result isn't an error or forbidden, send response
+        if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
+        {
+            // Format the response.  Note this requires some info about the request
+            response.requestHandle = entityHandlerRequest->requestHandle;
+            response.resourceHandle = entityHandlerRequest->resource;
+            response.ehResult = ehResult;
+            response.payload = (unsigned char *)payload;
+            response.payloadSize = strlen(payload);
+            // Indicate that response is NOT in a persistent buffer
+            response.persistentBufferFlag = 0;
+
+            // Handle vendor specific options
+            if(entityHandlerRequest->rcvdVendorSpecificHeaderOptions &&
+                    entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
             {
-                OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
-                ProcessGetRequest (entityHandlerRequest);
+                OC_LOG (INFO, TAG, "Received vendor specific options");
+                uint8_t i = 0;
+                OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
+                for( i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
+                {
+                    if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
+                    {
+                        OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                                ((OCHeaderOption)rcvdOptions[i]).optionID );
+                        OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                                ((OCHeaderOption)rcvdOptions[i]).optionLength);
+                    }
+                }
+                OCHeaderOption * sendOptions = response.sendVendorSpecificHeaderOptions;
+                uint8_t option2[] = {21,22,23,24,25,26,27,28,29,30};
+                uint8_t option3[] = {31,32,33,34,35,36,37,38,39,40};
+                sendOptions[0].protocolID = OC_COAP_ID;
+                sendOptions[0].optionID = 2248;
+                memcpy(sendOptions[0].optionData, option2, sizeof(option2));
+                sendOptions[0].optionLength = 10;
+                sendOptions[1].protocolID = OC_COAP_ID;
+                sendOptions[1].optionID = 2600;
+                memcpy(sendOptions[1].optionData, option3, sizeof(option3));
+                sendOptions[1].optionLength = 10;
+                response.numSendVendorSpecificHeaderOptions = 2;
             }
-            else if (OC_REST_PUT == entityHandlerRequest->method)
+
+            // Send the response
+            if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
-                ProcessPutRequest (entityHandlerRequest);
-            }
-            else if (OC_REST_POST == entityHandlerRequest->method)
-            {
-                OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
-                ehResult = ProcessPostRequest (entityHandlerRequest);
-            }
-            else if (OC_REST_DELETE == entityHandlerRequest->method)
-            {
-                OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
-                ehResult = ProcessDeleteRequest (entityHandlerRequest);
-            }
-            else
-            {
-                OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
-                        entityHandlerRequest->method);
+                OC_LOG(ERROR, TAG, "Error sending response");
+                ehResult = OC_EH_ERROR;
             }
         }
     }
     if (flag & OC_OBSERVE_FLAG)
     {
         OC_LOG(INFO, TAG, "Flag includes OC_OBSERVE_FLAG");
-        if (entityHandlerRequest)
+
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
-            {
-                OC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
-                ProcessObserveRegister (entityHandlerRequest);
-            }
-            else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
-            {
-                OC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
-                ProcessObserveDeregister (entityHandlerRequest);
-            }
+            OC_LOG (INFO, TAG, "Received OC_OBSERVE_REGISTER from client");
+            ProcessObserveRegister (entityHandlerRequest);
         }
-    }
-    if(entityHandlerRequest->rcvdVendorSpecificHeaderOptions &&
-            entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
-    {
-        OC_LOG (INFO, TAG, "Received vendor specific options");
-        uint8_t i = 0;
-        OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
-        for( i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
-            if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
-            {
-                OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
-                        ((OCHeaderOption)rcvdOptions[i]).optionID );
-                OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
-                        ((OCHeaderOption)rcvdOptions[i]).optionLength);
-            }
+            OC_LOG (INFO, TAG, "Received OC_OBSERVE_DEREGISTER from client");
+            ProcessObserveDeregister (entityHandlerRequest);
         }
-        OCHeaderOption * sendOptions = entityHandlerRequest->sendVendorSpecificHeaderOptions;
-        uint8_t option2[] = {21,22,23,24,25,26,27,28,29,30};
-        uint8_t option3[] = {31,32,33,34,35,36,37,38,39,40};
-        sendOptions[0].protocolID = OC_COAP_ID;
-        sendOptions[0].optionID = 2248;
-        memcpy(sendOptions[0].optionData, option2, sizeof(option2));
-        sendOptions[0].optionLength = 10;
-        sendOptions[1].protocolID = OC_COAP_ID;
-        sendOptions[1].optionID = 2600;
-        memcpy(sendOptions[1].optionData, option3, sizeof(option3));
-        sendOptions[1].optionLength = 10;
-        entityHandlerRequest->numSendVendorSpecificHeaderOptions = 2;
     }
 
     return ehResult;

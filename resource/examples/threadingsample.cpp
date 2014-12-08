@@ -59,7 +59,7 @@ struct FooResource
         uint8_t resourceProperty = OC_DISCOVERABLE;
 
         EntityHandler eh(std::bind(&FooResource::entityHandler, this,
-                                    std::placeholders::_1, std::placeholders::_2));
+                                    std::placeholders::_1));
         OCStackResult result = OCPlatform::registerResource(m_resourceHandle, m_uri,
                                     m_resourceType, resourceInterface, eh, resourceProperty);
         if(OC_STACK_OK != result)
@@ -85,10 +85,22 @@ struct FooResource
         rep.getValue("barCount", m_barCount);
     }
 
-    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-                        std::shared_ptr<OCResourceResponse> response)
+    OCStackResult sendResponse(std::shared_ptr<OCResourceRequest> pRequest)
+    {
+        auto pResponse = std::make_shared<OC::OCResourceResponse>();
+        pResponse->setRequestHandle(pRequest->getRequestHandle());
+        pResponse->setResourceHandle(pRequest->getResourceHandle());
+        pResponse->setResourceRepresentation(get(), "");
+        pResponse->setErrorCode(200);
+        pResponse->setResponseResult(OC_EH_OK);
+
+        return OCPlatform::sendResponse(pResponse);
+    }
+
+    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     {
         std::cout<<"\tConsumer Entity Handler:"<<std::endl;
+        OCEntityHandlerResult ehResult = OC_EH_ERROR;
 
         if(request)
         {
@@ -101,11 +113,9 @@ struct FooResource
                 if(request->getRequestType() == "GET")
                 {
                     std::cout<<"\t\t\trequestType : GET"<<std::endl;
-
-                    if(response)
+                    if(OC_STACK_OK == sendResponse(request))
                     {
-                        response->setErrorCode(200);
-                        response->setResourceRepresentation(get(), "");
+                        ehResult = OC_EH_OK;
                     }
                 }
                 else if (request->getRequestType() == "PUT")
@@ -114,11 +124,9 @@ struct FooResource
 
                     OCRepresentation rep = request->getResourceRepresentation();
                     put(rep);
-
-                    if(response)
+                    if(OC_STACK_OK == sendResponse(request))
                     {
-                        response->setErrorCode(200);
-                        response->setResourceRepresentation(get(), "");
+                        ehResult = OC_EH_OK;
                     }
                 }
                 else
@@ -146,9 +154,8 @@ struct FooResource
             std::cout << "Request Invalid!"<<std::endl;
         }
 
-        return OC_EH_OK;
+        return ehResult;
     }
-
 };
 
 void putResourceInfo(const HeaderOptions& headerOptions,
