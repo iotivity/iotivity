@@ -58,9 +58,6 @@ extern "C" {
  * Allocates a block of size bytes, returning a pointer to the beginning of
  * the allocated block.
  *
- * NOTE: This function is intended to be used internally by the TB Stack.
- *       It is not intended to be used by applications.
- *
  * @param size - Size of the memory block in bytes, where size > 0
  *
  * @return
@@ -70,10 +67,20 @@ extern "C" {
 void *OCMalloc(size_t size);
 
 /**
- * Deallocate a block of memory previously allocated by a call to OCMalloc
+ * Allocates a block of memory for an array of num elements, each of them
+ * size bytes long and initializes all its bits to zero.
  *
- * NOTE: This function is intended to be used internally by the TB Stack.
- *       It is not intended to be used by applications.
+ * @param num - The number of elements
+ * @param size - Size of the element type in bytes, where size > 0
+ *
+ * @return
+ *     on success, a pointer to the allocated memory block
+ *     on failure, a null pointer is returned
+ */
+void *OCCalloc(size_t num, size_t size);
+
+/**
+ * Deallocate a block of memory previously allocated by a call to OCMalloc
  *
  * @param ptr - Pointer to block of memory previously allocated by OCMalloc.
  *              If ptr is a null pointer, the function does nothing.
