@@ -2350,7 +2350,7 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
         return OC_STACK_INVALID_PARAM;
     }
     char * leftToken = NULL;
-    char * tempURI = (char *) OCMalloc(strlen(uri));
+    char * tempURI = (char *) OCMalloc(strlen(uri) + 1);
     if(!tempURI)
     {
         goto exit;
