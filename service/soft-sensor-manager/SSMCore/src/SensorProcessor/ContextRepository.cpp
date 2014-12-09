@@ -74,8 +74,28 @@ SSMRESULT CContextRepository::initRepository(IN std::string name, IN std::string
 
     m_name = name;
     m_type = type;
-    m_pathSoftSensors = pathSoftSensors;
-    m_pathSoftSensorsDescription = pathDescription;
+
+    if (pathSoftSensors.length() == 0)
+    {
+        SSM_CLEANUP_ASSERT(GetCurrentPath(&m_pathSoftSensors));
+        m_pathSoftSensors.append("/");
+    }
+    else
+    {
+        m_pathSoftSensors = pathSoftSensors;
+    }
+
+    if (pathDescription.length() == 0)
+    {
+        SSM_CLEANUP_ASSERT(GetCurrentPath(&m_pathSoftSensorsDescription));
+        m_pathSoftSensorsDescription.append("/");
+        m_pathSoftSensorsDescription.append(DEFAULT_PATH_SOFT_SENSORS);
+    }
+    else
+    {
+        m_pathSoftSensorsDescription = pathDescription;
+    }
+
 
     SSM_CLEANUP_ASSERT(loadXMLFromFile(m_pathSoftSensorsDescription.c_str(), &dict));
     SSM_CLEANUP_ASSERT(makeSSMResourceListForDictionaryData(dict, &m_lstSoftSensor));
@@ -178,22 +198,6 @@ SSMRESULT CContextRepository::loadXMLFromFile(std::string descriptionFilePath,
 {
     SSMRESULT res = SSM_E_FAIL;
     std::basic_ifstream< char > xmlFile(descriptionFilePath.c_str());
-
-    if (descriptionFilePath.length() > 0 && xmlFile.fail())
-    {
-        //error while opening given path, return error
-        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-    }
-
-    if (descriptionFilePath.length() == 0)
-    {
-        //No given path, try to open local Path
-        std::string path;
-        SSM_CLEANUP_ASSERT(GetCurrentPath(&path));
-        path.append("/");
-        path.append(DEFAULT_PATH_SOFT_SENSORS);
-        xmlFile.open(path);
-    }
 
     //path loaded
     if (!xmlFile.fail())
@@ -317,13 +321,6 @@ SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDel
     typedef void(*InitContext)(IN ICtxDelegate *);
     InitContext InitializeContextFunction = NULL;
 
-    if (m_pathSoftSensors.length() == 0)
-    {
-        SSM_CLEANUP_ASSERT(GetCurrentPath(&m_pathSoftSensors));
-    }
-
-    m_pathSoftSensors.append("/");
-
     // load dll(so)
     res = SSM_E_FAIL;
     for (unsigned int i = 1; i <= SSM_MODEL_RETRY; ++i)
@@ -340,8 +337,7 @@ SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDel
         {
             InitializeContextFunction = (InitContext)GetProcAddress(hModule, "InitializeContext");
         }
-#else
-        //sstream << "/data/data/com.example.javaproject/lib/lib" << modelName <<".so" << std::ends;
+#elif defined(LINUX)
         sstream << m_pathSoftSensors << "lib" << softSensorName.c_str() << ".so" << std::ends;
 
         void *hModule = NULL;
@@ -354,8 +350,10 @@ SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDel
 #endif
         if (hModule == NULL)
         {
-            InitializeContextFunction = NULL;
-            continue;
+            //load library failed. raise error
+            SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+            //InitializeContextFunction = NULL;
+            //continue;
         }
 
         if (InitializeContextFunction != NULL)

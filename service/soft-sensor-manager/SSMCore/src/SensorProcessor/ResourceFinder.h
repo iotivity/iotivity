@@ -124,9 +124,9 @@ CLEANUP:
                         {
                             for (size_t i = 0; i < attributeMap.size() / 3; i++)
                             {
-                                outputProperty["name"] = attributeMap.find(std::to_string(i * 3))->second;
-                                outputProperty["type"] = attributeMap.find(std::to_string(i * 3 + 1))->second;
-                                outputProperty["value"] = attributeMap.find(std::to_string(i * 3 + 2))->second;
+                                outputProperty["name"] = attributeMap.find(toString(i * 3))->second;
+                                outputProperty["type"] = attributeMap.find(toString(i * 3 + 1))->second;
+                                outputProperty["value"] = attributeMap.find(toString(i * 3 + 2))->second;
                                 ctxData.outputProperty.push_back(outputProperty);
                             }
 
@@ -166,9 +166,9 @@ CLEANUP:
                     //TODO: Temporally used for json parsing limitation
                     for (size_t i = 0; i < attributeMap.size() / 3; i++)
                     {
-                        outputProperty["name"] = attributeMap.find(std::to_string(i * 3))->second.front();
-                        outputProperty["type"] = attributeMap.find(std::to_string(i * 3 + 1))->second.front();
-                        outputProperty["value"] = attributeMap.find(std::to_string(i * 3 + 2))->second.front();
+                        outputProperty["name"] = attributeMap.find(toString(i * 3))->second;
+                        outputProperty["type"] = attributeMap.find(toString(i * 3 + 1))->second;
+                        outputProperty["value"] = attributeMap.find(toString(i * 3 + 2))->second;
                         pSSMResource->outputProperty.push_back(outputProperty);
                     }
                     /////////////////////////////////////////////////////
@@ -185,6 +185,13 @@ CLEANUP:
                 std::shared_ptr<OC::OCResource>     m_pResource;
                 IThreadClient                       *m_pResourceFinderClient;
                 IEvent                              *m_pEvent;
+
+                std::string toString(int t)
+                {
+                    std::ostringstream os;
+                    os << t;
+                    return os.str();
+                }
         };
 
         enum RESOURCE_DISCOVER_STATE {RESOURCE_DISCOVER_REQUESTPROFILE, RESOURCE_DISCOVER_SETUP_RESOURCE};
