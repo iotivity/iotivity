@@ -966,11 +966,10 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         }
     }
     // Create the pointer and insert it into the resource list
-    pointer = (OCResource *) OCMalloc(sizeof(OCResource));
+    pointer = (OCResource *) OCCalloc(1, sizeof(OCResource));
     if (!pointer) {
         goto exit;
     }
-    memset(pointer, 0, sizeof(OCResource));
     pointer->sequenceNum = OC_OFFSET_SEQUENCE_NUMBER;
 
     insertResource(pointer);
@@ -1217,11 +1216,10 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     TODO ("Make sure that the resourcetypename doesn't already exist in the resource");
 
     // Create the resourcetype and insert it into the resource list
-    pointer = (OCResourceType *) OCMalloc(sizeof(OCResourceType));
+    pointer = (OCResourceType *) OCCalloc(1, sizeof(OCResourceType));
     if (!pointer) {
         goto exit;
     }
-    memset(pointer, 0, sizeof(OCResourceType));
 
     // Set the resourceTypeName
     size = strlen(resourceTypeName) + 1;
@@ -1259,11 +1257,10 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
     TODO ("Make sure that the resourceinterface name doesn't already exist in the resource");
 
     // Create the resourceinterface and insert it into the resource list
-    pointer = (OCResourceInterface *) OCMalloc(sizeof(OCResourceInterface));
+    pointer = (OCResourceInterface *) OCCalloc(1, sizeof(OCResourceInterface));
     if (!pointer) {
         goto exit;
     }
-    memset(pointer, 0, sizeof(OCResourceInterface));
 
     // Set the resourceinterface name
     size = strlen(resourceInterfaceName) + 1;

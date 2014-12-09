@@ -70,7 +70,7 @@ int multicast_test(int argc, char* argv[])
     int32_t sfd;
     char loopch=0;
     int set_option_on = 1;
-    struct sockaddr_in mcastsock, peer;
+    struct sockaddr_in mcastsock = {0}, peer;
     uint8_t recvbuf[MAX_BUF];
     uint32_t len, bufLen, fromlen;
 
@@ -90,7 +90,6 @@ int multicast_test(int argc, char* argv[])
     }
 
     //Initialize the group sockaddr structure with a
-    memset((char *) &mcastsock, 0, sizeof(mcastsock));
     mcastsock.sin_family = AF_INET;
     mcastsock.sin_addr.s_addr = inet_addr(argv[2]);
     mcastsock.sin_port = htons(atoi(argv[3]));
@@ -118,8 +117,7 @@ int multicast_test(int argc, char* argv[])
         return -1;
     }
 
-    struct ip_mreq mreq;
-    memset(&mreq, 0, sizeof(struct ip_mreq));
+    struct ip_mreq mreq = {0};
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     mreq.imr_multiaddr.s_addr = mcastsock.sin_addr.s_addr;
     if ((setsockopt(sfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mreq, sizeof(mreq))) < 0) {

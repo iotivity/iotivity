@@ -266,8 +266,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
     jsonbufferLength = strlen((const char *)jsonbuffer);
     if(ret == OC_STACK_OK && jsonbufferLength)
     {
-        OCEntityHandlerResponse response;
-        memset(&response, 0, sizeof(OCEntityHandlerResponse));
+        OCEntityHandlerResponse response = {0};
         response.ehResult = OC_EH_OK;
         response.payload = jsonbuffer;
         response.payloadSize = jsonbufferLength + 1;
@@ -300,8 +299,7 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
     jsonbufferLength = strlen((const char *)jsonbuffer);
     if(jsonbufferLength)
     {
-        OCEntityHandlerResponse response;
-        memset(&response, 0, sizeof(OCEntityHandlerResponse));
+        OCEntityHandlerResponse response = {0};
         response.ehResult = OC_EH_OK;
         response.payload = jsonbuffer;
         response.payloadSize = jsonbufferLength + 1;

@@ -86,10 +86,8 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
 {
     OCServerRequest * serverRequest = NULL;
 
-    serverRequest = (OCServerRequest *) OCMalloc(sizeof(OCServerRequest) + reqTotalSize - 1);
+    serverRequest = (OCServerRequest *) OCCalloc(1, sizeof(OCServerRequest) + reqTotalSize - 1);
     VERIFY_NON_NULL(serverRequest);
-
-    memset(serverRequest, 0, sizeof(OCServerRequest) + reqTotalSize - 1);
 
     serverRequest->coapID = coapID;
     serverRequest->delayedResNeeded = delayedResNeeded;
@@ -149,9 +147,8 @@ OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle r
 {
     OCServerResponse * serverResponse = NULL;
 
-    serverResponse = (OCServerResponse *) OCMalloc(sizeof(OCServerResponse));
+    serverResponse = (OCServerResponse *) OCCalloc(1, sizeof(OCServerResponse));
     VERIFY_NON_NULL(serverResponse);
-    memset(serverResponse, 0, sizeof(OCServerResponse));
 
     serverResponse->payload = (unsigned char *) OCMalloc(MAX_RESPONSE_LENGTH);
     VERIFY_NON_NULL(serverResponse->payload);
@@ -255,8 +252,7 @@ void DeleteServerRequest(OCServerRequest * serverRequest)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    OCServerProtocolResponse protocolResponse;
-    memset(&protocolResponse, 0, sizeof(OCServerProtocolResponse));
+    OCServerProtocolResponse protocolResponse = {0};
 
     OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
 

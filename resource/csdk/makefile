@@ -145,10 +145,10 @@ all:	make_lcoap objdirs obj_build liboctbstack.a
 
 buildScript_all: objdirs obj_build liboctbstack.a
 
-make_lcoap: 
+make_lcoap:
 	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
 
-objdirs: 
+objdirs:
 	mkdir -p $(PLATFORM)
 	mkdir -p $(PLATFORM)/$(ARDUINO_SHIELD_TYPE)
 	mkdir -p $(OUT_DIR)
@@ -160,12 +160,12 @@ obj_build:
 	$(foreach source,$(SOURCES), $(CC) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/%, $(notdir $(source))));)
 
 liboctbstack.a: obj_build
-	@echo "Building $@" 
+	@echo "Building $@"
 	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
 	@cd $(OBJ_DIR) && $(AR) -x $(PLATFORM_SPECIFIC_BACKOUT)$(LCOAP_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/libcoap.a
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
 	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
-    
+
     ifeq ($(PLATFORM),linux)
      ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
 			$(info "Building liboctbstack with DTLS support")

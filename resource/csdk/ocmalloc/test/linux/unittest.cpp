@@ -82,3 +82,59 @@ TEST(OCMalloc, MallocFail2)
     EXPECT_TRUE(NULL == pBuffer);
     OCFree(pBuffer);
 }
+
+TEST(OCCalloc, CallocPass1)
+{
+    // Try to allocate a small buffer
+    pBuffer = (uint8_t *)OCCalloc(1, 1);
+    EXPECT_TRUE(pBuffer);
+    OCFree(pBuffer);
+}
+
+TEST(OCCalloc, CallocPass2)
+{
+    // Try to allocate a small buffer
+    pBuffer = (uint8_t *)OCCalloc(1, 128);
+    EXPECT_TRUE(pBuffer);
+    OCFree(pBuffer);
+}
+
+TEST(OCCalloc, CallocPass3)
+{
+    // Try to allocate a buffer for an array
+    pBuffer = (uint8_t *)OCCalloc(5, 128);
+    EXPECT_TRUE(pBuffer);
+    OCFree(pBuffer);
+}
+
+TEST(OCCalloc, CallocFail1)
+{
+    // Try to allocate a buffer of size 0
+    pBuffer = (uint8_t *)OCCalloc(1, 0);
+    EXPECT_TRUE(NULL == pBuffer);
+    OCFree(pBuffer);
+}
+
+TEST(OCCalloc, CallocFail2)
+{
+    // Try to allocate a buffer with num of 0
+    pBuffer = (uint8_t *)OCCalloc(0, 5);
+    EXPECT_TRUE(NULL == pBuffer);
+    OCFree(pBuffer);
+}
+
+TEST(OCCalloc, CallocFail3)
+{
+    // Try to allocate a buffer with size and num 0
+    pBuffer = (uint8_t *)OCCalloc(0, 0);
+    EXPECT_TRUE(NULL == pBuffer);
+    OCFree(pBuffer);
+}
+
+TEST(OCCalloc, CallocFail4)
+{
+    // Try to allocate a ridiculous amount of RAM
+    pBuffer = (uint8_t *)OCCalloc(1, (size_t)0x7FFFFFFFFFFFFFFF);
+    EXPECT_TRUE(NULL == pBuffer);
+    OCFree(pBuffer);
+}
