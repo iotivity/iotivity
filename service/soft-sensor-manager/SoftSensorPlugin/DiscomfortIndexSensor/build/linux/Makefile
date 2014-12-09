@@ -1,4 +1,4 @@
-
+-include ../../../../build/linux/root_path.inc
 -include ../../../../build/linux/environment.mk
 
 SRC_PATH=../../src
@@ -23,7 +23,7 @@ all: pre_job ${TARGET} post_job
 
 pre_job:
 	@echo " " 
-	@echo "---------- SoftSensor Build Begin. ------------" 
+	@echo "---------- ${TARGET} Build Begin. ------------" 
 	@mkdir -p ${RST_NAME}
 	@echo " "
 
@@ -38,8 +38,8 @@ ${TARGET}: ${OBJLIST}
 post_job:
 	@echo " " 
 	cp -Rdp ./${RST_NAME}/lib${TARGET}.so ${OUTPUTS_DIR}/
-	cp -Rdp ./HighContextDictionary.xml ${OUTPUTS_DIR}/
-	@echo "-------------- SoftSensor Build Successful. -------------"
+	cp -Rdp ../../${SSXML_NAME} ${OUTPUTS_DIR}/
+	@echo "-------------- ${TARGET} Build Successful. -------------"
 	@echo "Enter to ${RST_NAME} folder."
 	@echo " " 
 	

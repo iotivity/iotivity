@@ -23,11 +23,10 @@
 #include "QueryProcessor/ConditionedModel.h"
 #include "QueryProcessor/EvaluationEngine.h"
 #include "QueryProcessor/PropagationEngine.h"
-#include "SensorProcessor/ResponseReactor.h"
+#include "SensorProcessor/SensingEngine.h"
 #include "SensorProcessor/ContextExecutor.h"
 #include "SensorProcessor/ContextDataReader.h"
 #include "SensorProcessor/ResourceFinder.h"
-#include "SensorProcessor/ResourceConnectivity.h"
 
 inline bool operator<( const OID &lhs, const OID &rhs )
 {
@@ -121,8 +120,9 @@ SSMRESULT CSoftSensorManager::initializeCore(IN std::string xmlDescription)
     }
 
     SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IContextRepository, (IBase **)&m_pContextRepository));
-    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IResponseReactor, (IBase **)&m_pResponseReactor));
-    m_pContextRepository->setCurrentDeviceInfo(name, type, pathSoftSensors, pathDescription);
+    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ISensingEngine, (IBase **)&m_pSensingEngine));
+    SSM_CLEANUP_ASSERT(m_pContextRepository->initRepository(name, type, pathSoftSensors,
+                       pathDescription));
 
     SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IPropagationEngine, (IBase **)&m_pPropagationEngine));
 
@@ -173,7 +173,7 @@ unsigned long CSoftSensorManager::releaseQueryEngine(IN IQueryEngine *pQueryEngi
 
 SSMRESULT CSoftSensorManager::getInstalledModelList(OUT std::vector<ISSMResource *> *pList)
 {
-    m_pResponseReactor->getList(pList);
+    m_pSensingEngine->getList(pList);
 
     return SSM_S_OK;
 }
@@ -238,18 +238,11 @@ SSMRESULT CreateGlobalInstance(IN const OID &objectID, OUT IBase **ppvObject)
             SSM_CLEANUP_ASSERT(CreateInstance(OID_IContextDataReader, ppvObject));
         }
     }
-    else if (IsEqualOID(OID_IResponseReactor, objectID))
+    else if (IsEqualOID(OID_ISensingEngine, objectID))
     {
-        if (g_globalInstance->find(OID_IResponseReactor) == g_globalInstance->end())
+        if (g_globalInstance->find(OID_ISensingEngine) == g_globalInstance->end())
         {
-            SSM_CLEANUP_ASSERT(CreateInstance(OID_IResponseReactor, ppvObject));
-        }
-    }
-    else if (IsEqualOID(OID_IResourceConnectivity, objectID))
-    {
-        if (g_globalInstance->find(OID_IResourceConnectivity) == g_globalInstance->end())
-        {
-            SSM_CLEANUP_ASSERT(CreateInstance(OID_IResourceConnectivity, ppvObject));
+            SSM_CLEANUP_ASSERT(CreateInstance(OID_ISensingEngine, ppvObject));
         }
     }
     else
@@ -313,9 +306,9 @@ SSMRESULT CreateInstance(IN const OID &objectID, OUT IBase **ppObject)
     {
         SSM_CLEANUP_ASSERT(CreateNewObject<CContextRepository>(objectID, ppObject));
     }
-    else if (IsEqualOID(OID_IResponseReactor, objectID))
+    else if (IsEqualOID(OID_ISensingEngine, objectID))
     {
-        SSM_CLEANUP_ASSERT(CreateNewObject<CResponseReactor>(objectID, ppObject));
+        SSM_CLEANUP_ASSERT(CreateNewObject<CSensingEngine>(objectID, ppObject));
     }
     else if (IsEqualOID(OID_IContextExecutor, objectID))
     {
@@ -352,10 +345,6 @@ SSMRESULT CreateInstance(IN const OID &objectID, OUT IBase **ppObject)
     else if (IsEqualOID(OID_IContextDataReader, objectID))
     {
         SSM_CLEANUP_ASSERT(CreateNewObject<CContextDataReader>(objectID, ppObject));
-    }
-    else if (IsEqualOID(OID_IResourceConnectivity, objectID))
-    {
-        SSM_CLEANUP_ASSERT(CreateNewObject<CResourceConnectivity>(objectID, ppObject));
     }
 
 CLEANUP:

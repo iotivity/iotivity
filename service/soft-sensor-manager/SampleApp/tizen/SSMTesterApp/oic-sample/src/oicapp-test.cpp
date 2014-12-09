@@ -14,48 +14,58 @@
 #include <efl_assist.h>
 
 #include <string>
+#include <sstream>
 
 #include "oicapp-test.h"
 #include "oicapp-utils.h"
 
-#include "OCResource.h"
-#include "OCPlatform.h"
-#include "SSMClient.h"
-#include "ISSMClientListener.h"
+#include "SSMInterface.h"
 
 static oicapp_data *g_ad = NULL;
 
-class CSSMClientListener: public ISSMClientListener
+int g_CQID = 9999;
+
+class CQueryEngineEvent : public IQueryEngineEvent
 {
     public:
-        void onRegisterQuery(const AttributeMap &attributeMap, SSMReturn::SSMReturn &eCode)
-        {
-            //EFL UI printing
 
-            char *queryResult = "";
+        SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult)
+        {
             std::stringstream sstream;
 
-            for (AttributeMap::const_iterator itor = attributeMap.begin(); itor != attributeMap.end(); itor++)
+            int     dataCount = 0;
+            IModelData      *pModelData = NULL;
+            std::vector<std::string>        affectedModels;
+
+            pResult->getAffectedModels(&affectedModels);
+
+            for (std::vector<std::string>::iterator itor = affectedModels.begin();
+                 itor != affectedModels.end(); ++itor)
             {
-                //if (itor->first == "queryEngineId")
-                //{
-                //  sstream << itor->first.c_str() << " : " << std::hex << stoi(itor->second.front().c_str()) << "\n";
-                //}
-                //else
-                //{
-                sstream << itor->first.c_str() << " : " << itor->second.front().c_str() << "\n";
-                //}
+                printf("Printing %s\n", itor->c_str());
+                pResult->getModelDataCount(*itor, &dataCount);
+                for (int i = 0; i < dataCount; i++)
+                {
+                    pResult->getModelData(*itor, i, &pModelData);
+                    printf("dataId: %d\n", pModelData->getDataId());
+                    for (int j = 0; j < pModelData->getPropertyCount(); j++)
+                    {
+                        sstream << "Type: " << pModelData->getPropertyName(j).c_str() <<
+                                " Value: " << pModelData->getPropertyValue(j).c_str() << "<br>";
+                    }
+                }
             }
 
-//      queryResult = const_cast<char *>(sstream .str().c_str());
-            oicapp_util_put_msg (g_ad, g_ad->input_msg);
+            sstream << std::ends;
 
+            oicapp_util_put_msg(g_ad, sstream.str().c_str());
 
+            return SSM_S_OK;
         }
 };
 
-CSSMClientListener  *g_SSMClientListener = new CSSMClientListener();
-SSMClient           *g_SSMClient        = NULL;
+CQueryEngineEvent   *g_SSMClientListener = new CQueryEngineEvent();
+SSMInterface        *g_SSMClient = new SSMInterface();
 
 static Elm_Object_Item *oicapp_append_separator(Evas_Object *genlist,
         oicapp_data *ad)
@@ -64,7 +74,7 @@ static Elm_Object_Item *oicapp_append_separator(Evas_Object *genlist,
 
     item = elm_genlist_item_append(genlist, &ad->itc_seperator, NULL, NULL,
                                    ELM_GENLIST_ITEM_NONE, NULL, NULL);
-    elm_genlist_item_select_mode_set(item, ELM_OBJECT_SELECT_MODE_DISPLAY_ONLY);
+    //elm_genlist_item_select_mode_set(item, ELM_OBJECT_SELECT_MODE_DISPLAY_ONLY);
 
     return item;
 }
@@ -181,7 +191,7 @@ static Elm_Object_Item *_gl_append_item(oicapp_data *ad, Elm_Genlist_Item_Class 
 static void oicapp_append_contents(oicapp_data *ad)
 {
     Elm_Object_Item *item;
-
+    /*
     oicapp_append_separator(ad->genlist, ad);
 
     _gl_append_item(ad, &ad->itc_edit);
@@ -193,6 +203,26 @@ static void oicapp_append_contents(oicapp_data *ad)
     oicapp_append_separator(ad->genlist, ad);
 
     item = _gl_append_item(ad, &ad->itc_multiline);
+    ad->item_multiline = item;
+
+    oicapp_append_separator(ad->genlist, ad);
+    */
+    oicapp_append_separator(ad->genlist, ad);
+
+    elm_genlist_item_append(ad->genlist, &ad->itc_edit, ad, NULL, ELM_GENLIST_ITEM_NONE, NULL, NULL);
+
+    oicapp_append_separator(ad->genlist, ad);
+
+    elm_genlist_item_append(ad->genlist, &ad->itc_btn, ad, NULL, ELM_GENLIST_ITEM_NONE, NULL, NULL);
+
+    oicapp_append_separator(ad->genlist, ad);
+
+    oicapp_append_separator(ad->genlist, ad);
+
+    oicapp_append_separator(ad->genlist, ad);
+
+    item = _gl_append_item(ad, &ad->itc_multiline);
+
     ad->item_multiline = item;
 
     oicapp_append_separator(ad->genlist, ad);
@@ -236,9 +266,33 @@ static void _btn_clicked(void *data, Evas_Object *obj, void *event_info)
 {
     oicapp_data *ad = (oicapp_data *)data;
 
-    std::string cqid;
+    std::string str = std::string(ad->input_msg);
 
-    g_SSMClient->registerQuery(std::string(ad->input_msg), g_SSMClientListener, cqid);
+    std::string strGT = "&gt;";
+
+    std::string strLT = "&lt;";
+
+    std::size_t foundGT = str.find(strGT);
+
+    std::size_t foundLT = str.find(strLT);
+
+    std::stringstream sstream;
+
+    if (foundGT != std::string::npos)
+    {
+        str.replace(foundGT, strGT.length(), ">");
+    }
+
+    if (foundLT != std::string::npos)
+    {
+        str.replace(foundLT, strLT.length(), "<");
+    }
+
+    g_SSMClient->registerQuery(str, g_SSMClientListener, g_CQID);
+
+    sstream << "Query executed! cqid = " << g_CQID << std::ends;
+
+    oicapp_util_put_msg(ad, sstream.str().c_str());
 
     ERR("button clicked(%s)", ad->input_msg);
 }
@@ -264,8 +318,6 @@ static void _edit_unfocused(void *data, Evas_Object *obj, void *event_info)
 
     ad->input_msg = strdup(elm_entry_entry_get(obj));
 
-//  oicapp_util_put_msg(ad, ad->input_msg);
-
     DBG("Clicked : %s", ad->input_msg);
 
 }
@@ -282,6 +334,14 @@ static Evas_Object *_gl_edit_content_get(void *data, Evas_Object *obj,
     return entry;
 }
 
+static char *_item_Text_get(void *data, Evas_Object *obj, const char *part)
+{
+    char *buf =
+        "subscribe Device.DiscomfortIndexSensor if Device.DiscomfortIndexSensor.discomfortIndex > 0";
+
+    return strdup(buf);
+}
+
 static inline void oicapp_init_itcs(oicapp_data *ad)
 {
     ad->itc_seperator.item_style = "dialogue/separator";
@@ -291,7 +351,7 @@ static inline void oicapp_init_itcs(oicapp_data *ad)
     ad->itc_seperator.func.del = NULL;
 
     ad->itc_edit.item_style = "dialogue/editfield";
-    ad->itc_edit.func.text_get = NULL;
+    ad->itc_edit.func.text_get = _item_Text_get;
     ad->itc_edit.func.content_get = _gl_edit_content_get;
     ad->itc_edit.func.state_get = NULL;
     ad->itc_edit.func.del = NULL;
@@ -304,7 +364,6 @@ static inline void oicapp_init_itcs(oicapp_data *ad)
 
     ad->itc_multiline.item_style = "multiline/1text";
     ad->itc_multiline.func.text_get = _gl_multiline_text_get;
-    //ad->itc_multiline.func.text_get = NULL;
     ad->itc_multiline.func.content_get = NULL;
     ad->itc_multiline.func.state_get = NULL;
     ad->itc_multiline.func.del = NULL;
@@ -344,7 +403,7 @@ static int oicapp_create(void *data)
 
     ad->genlist = oicapp_create_genlist(ad->navi);
 
-    it = elm_naviframe_item_push(ad->navi, "OIC Tester", NULL, NULL, ad->genlist, NULL);
+    it = elm_naviframe_item_push(ad->navi, "SSM Tester", NULL, NULL, ad->genlist, NULL);
     elm_naviframe_item_pop_cb_set(it, _back_cb, ad);
 
     ad->ip_addr = oicapp_util_wifi();
@@ -360,14 +419,15 @@ static int oicapp_create(void *data)
 
     oicapp_append_contents(ad);
 
-    g_SSMClient = new SSMClient();
-
     return 0;
 }
 
 static int oicapp_terminate(void *data)
 {
     oicapp_data *ad = (oicapp_data *)data;
+
+    if (g_CQID != 9999)
+        g_SSMClient->unregisterQuery(g_CQID);
 
     if (ad->win)
         evas_object_del(ad->win);

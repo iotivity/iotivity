@@ -168,7 +168,6 @@ class SSMClient
 {
     private:
         SSMReturn m_retResponse;
-        OCPlatform *m_pPlatform;
         CSemaphore m_sem;
         /**
          * @brief SoftSensorManager Resource.
@@ -233,11 +232,16 @@ class SSMClient
 
         // friend option. for callback from SSMResource
         void onFoundResource(std::shared_ptr< OCResource > resource);
-        void onCreateQueryEngine(const OCRepresentation &rep, const int eCode);
-        void onReleaseQueryEngine(const OCRepresentation &rep, const int eCode);
-        void onRegisterQuery(const OCRepresentation &rep, const int eCode);
-        void onUnregisterQuery(const OCRepresentation &rep, const int eCode);
-        void onObserve(const OCRepresentation &rep, const int &eCode);
+        void onCreateQueryEngine(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                                 const int eCode);
+        void onReleaseQueryEngine(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                                  const int eCode);
+        void onRegisterQuery(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                             const int eCode);
+        void onUnregisterQuery(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                               const int eCode);
+        void onObserve(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int &eCode,
+                       const int &sequenceNumber);
 };
 
 #endif /* RESOURCECLIENT_H_ */

@@ -113,21 +113,21 @@ class IContextRepository : public IBase
                 ;
 
         /**
-        * @fn           setCurrentDeviceInfo
-        * @brief        set device information
+        * @fn           initRepository
+        * @brief        initialize repository using given info
         *
         * @param        [in] std::string name - Device name
         * @param        [in] std::string type - Device Type
         * @param        [in] std::string pathSoftSensors - SoftSensors Repository path
         * @param        [in] std::string pathDescription - SoftSensors Description path
-        * @return       void
+        * @return       SSMRESULT
         *
         * @warning
         * @exception
         * @see
         */
-        virtual void setCurrentDeviceInfo(IN std::string name, IN std::string type,
-                                          IN std::string pathSoftSensors, IN std::string pathDescription) = 0;
+        virtual SSMRESULT initRepository(IN std::string name, IN std::string type,
+                                         IN std::string pathSoftSensors, IN std::string pathDescription) = 0;
 
         virtual SSMRESULT registerResourceFinderEvent(IN IResourceEvent *pResourceEvent) = 0;
         virtual SSMRESULT startResourceFinder() = 0;
@@ -1123,16 +1123,15 @@ class IContextExecutor : public IBase
                                        IEvent *pEvent) = 0;
 };
 
-static const OID OID_IResponseReactor = { 0x3140a3dc, 0xf912, 0x4d88, { 0x97, 0x3c, 0x86, 0xe8, 0x35, 0x69, 0xa7, 0xf8 } };
+static const OID OID_ISensingEngine = { 0x3140a3dc, 0xf912, 0x4d88, { 0x97, 0x3c, 0x86, 0xe8, 0x35, 0x69, 0xa7, 0xf8 } };
 /**
- * @class    IResponseReactor
- * @brief    Interface for implement of reactor pattern
- *           Delegate requested context to context executor layer.
+ * @class    ISensingEngine
+ * @brief    Class for implementing main abstration of SensorProcessor
  *
  *
  * @see
  */
-class IResponseReactor : public IBase
+class ISensingEngine : public IBase
     , public IEvent
 {
     public:
@@ -1149,7 +1148,8 @@ class IResponseReactor : public IBase
         * @exception
         * @see
         */
-        virtual void registerContext(TypeofEvent callType, ISSMResource *pSSMResouce, IEvent *pEvent) = 0;
+        virtual SSMRESULT registerContext(TypeofEvent callType, ISSMResource *pSSMResouce,
+                                          IEvent *pEvent) = 0;
 
         /**
         * @fn     unregisterContext
@@ -1164,8 +1164,8 @@ class IResponseReactor : public IBase
         * @exception
         * @see
         */
-        virtual void unregisterContext(TypeofEvent callType, ISSMResource *pSSMResource,
-                                       IEvent *pEvent) = 0;
+        virtual SSMRESULT unregisterContext(TypeofEvent callType, ISSMResource *pSSMResource,
+                                            IEvent *pEvent) = 0;
 
         /**
         * @fn    getList
@@ -1178,7 +1178,7 @@ class IResponseReactor : public IBase
         * @exception
         * @see
         */
-        virtual void getList(std::vector<ISSMResource *> *pList) = 0;
+        virtual SSMRESULT getList(std::vector<ISSMResource *> *pList) = 0;
 };
 
 class IResourceFinderEvent
@@ -1197,13 +1197,6 @@ class IResourceFinder : public IBase
         virtual SSMRESULT startResourceFinder() = 0;
         virtual SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent) = 0;
         virtual SSMRESULT stopObserveResource(IN ISSMResource *pSensor) = 0;
-};
-
-static const OID OID_IResourceConnectivity = { 0x8e42b098, 0x9aa5, 0x43f3, { 0x84, 0xa, 0x21, 0x44, 0xc9, 0x4c, 0xc7, 0x99 } };
-class IResourceConnectivity : public IBase
-{
-    public:
-        virtual void *getPlatform() = 0;
 };
 
 /**

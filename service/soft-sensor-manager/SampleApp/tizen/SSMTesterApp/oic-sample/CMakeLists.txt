@@ -1,11 +1,11 @@
-SET(TESTAPP "oicapp-test")
+SET(TESTAPP "ssmtester")
 
 FILE(GLOB SRCS src/*.c src/*.cpp)
 
 SET(VENDOR "samsung")
 SET(PACKAGE ${TESTAPP})
 SET(PKGNAME "com.${VENDOR}.${PACKAGE}")
-SET(PREFIX "/usr/apps/com.samsung.oicapp-test")
+SET(PREFIX "/usr/apps/com.samsung.ssmtester")
 SET(BINDIR "${PREFIX}/bin")
 SET(RESDIR "${PREFIX}/res")
 SET(DATADIR "${PREFIX}/data")
@@ -38,8 +38,10 @@ ADD_DEFINITIONS("-DEDJDIR=\"${EDJDIR}\"")
 
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed")
 
+LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/lib)
+
 ADD_EXECUTABLE(${TESTAPP} ${SRCS})
-TARGET_LINK_LIBRARIES(${TESTAPP} ${pkgs_LDFLAGS} ${PROJECT_NAME} ${OCTBSTACK} pthread)
+TARGET_LINK_LIBRARIES(${TESTAPP} ${pkgs_LDFLAGS} ssmcore oc octbstack oc_logger oc_logger_core pthread dl)
 
 INSTALL(TARGETS ${TESTAPP} DESTINATION ${BINDIR})
 

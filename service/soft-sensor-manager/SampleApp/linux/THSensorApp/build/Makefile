@@ -1,4 +1,4 @@
-
+-include ../../../../build/linux/root_path.inc
 -include ../../../../build/linux/environment.mk
 
 BOOST=${BOOST_BASE}
@@ -11,10 +11,11 @@ TARGET=THSensorApp
 
 CXX=g++
 CXX_FLAGS=-std=c++0x -Wall -DLINUX
-CXX_INC=-I${INC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
+CXX_INC=-I${INC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
 
 CXX_LIB+=${IOT_RELEASE}/${IOT_LIB}
 CXX_LIB+=${IOT_CSDK_RELEASE}/${IOT_CSDK_LIB} 
+CXX_LIB+=${IOT_LOG_DIR}/lib/${IOT_LOG_LIB}
 CXX_LIB+=-lpthread
 
 SRCLIST=${wildcard ${SRC_PATH}/*.cpp}
@@ -28,7 +29,7 @@ all: pre_job ${TARGET} post_job
 
 pre_job:
 	@echo " " 
-	@echo "---------- THSensorApp Build Begin. ------------" 
+	@echo "---------- ${TARGET} Build Begin. ------------" 
 	@mkdir -p ${RST_NAME}
 	@echo " "
 
@@ -43,7 +44,7 @@ ${TARGET}: ${OBJLIST}
 post_job:
 	@echo " " 
 	cp -Rdp ./${RST_NAME}/* ${OUTPUTS_DIR}/
-	@echo "----------- THSensorApp Build Successful. -------------"
+	@echo "----------- ${TARGET} Build Successful. -------------"
 	@echo "Enter to ${RST_NAME} folder."
 	@echo " " 
 	

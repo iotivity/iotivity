@@ -180,6 +180,9 @@ DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue *data)
     int discomfortIndex = (int) ERROR;
     double sumDI = 0.0;
 
+    m_result.m_temperature = "";
+    m_result.m_humidity = "";
+
     for (int i = 0; i < PHYSICAL_EA; i++)
     {
         if (i != 0)
@@ -256,14 +259,14 @@ ContextData DiscomfortIndexSensor::setOutput(int property_count, InValue *data)
 
     output_property.clear();
     output_property.insert(std::make_pair("name", "temperature"));
-    output_property.insert(std::make_pair("type", "int"));
+    output_property.insert(std::make_pair("type", "string"));
     output_property.insert(std::make_pair("value", m_result.m_temperature));
 
     out.outputProperty.push_back(output_property);
 
     output_property.clear();
     output_property.insert(std::make_pair("name", "humidity"));
-    output_property.insert(std::make_pair("type", "int"));
+    output_property.insert(std::make_pair("type", "string"));
     output_property.insert(std::make_pair("value", m_result.m_humidity));
 
     out.outputProperty.push_back(output_property);

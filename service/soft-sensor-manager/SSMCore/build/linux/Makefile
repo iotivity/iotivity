@@ -1,4 +1,4 @@
-
+-include ../../../build/linux/root_path.inc
 -include ../../../build/linux/environment.mk
 
 BOOST=${BOOST_BASE}
@@ -7,13 +7,13 @@ INC_PATH=../../include
 RST_NAME=release
 
 # Insert your project name.
-TARGET=SSMCoreUbuntu
+TARGET=${SSMCORE_LIB}
 EXCLUDE_LIST=SSMCore_JNI.cpp
 
 # C++ type Compile Flag define.
 CXX=g++
-CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -DMODEL_DIRECTORY=${MODEL_DIR} -DHIGH_LOCATION=${HIGH_LOCATION} -ldl
-CXX_INC=-I../../ -I${INC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST} -I${SRC_PATH} -I${SRC_PATH}/Common -I${SRC_PATH}/QueryProcessor -I${SRC_PATH}/SensorProcessor -I${SRC_PATH}/SSMInterface
+CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -ldl
+CXX_INC=-I${INC_PATH}/ -I${SRC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
 CXX_LIB=-L""
 
 CXX_SRCPATH=${wildcard ${SRC_PATH}/**/*.cpp}
@@ -34,8 +34,8 @@ GCC_OBJLIST=${GCC_USESRCS:.c=.o}
 
 # Linker FLAGS define.
 LD_FLAGS=-std=c++0x -Wall -DLINUX
-# GAR=ar
-LD_LIB=${IOT_RELEASE}/${IOT_LIB} ${IOT_CSDK_RELEASE}/${IOT_CSDK_LIB} -lpthread -ldl 
+GAR=ar
+# LD_LIB=${IOT_RELEASE}/${IOT_LIB} ${IOT_CSDK_RELEASE}/${IOT_CSDK_LIB} ${IOT_LOG_DIR}/lib/${IOT_LOG_LIB} -lpthread -ldl 
 
 
 # Force metatargets to build:
@@ -51,8 +51,8 @@ pre_job:
 	@echo "${MODEL_DIR}"
 	
 ${TARGET}: ${GCC_OBJLIST} ${CXX_OBJLIST}
-	$(CXX) $(LD_FLAGS) -o ./${RST_NAME}/$@ $^ ${LD_LIB}		
-	# ${GAR} -r ./${RST_NAME}/$@  ./*.o
+	# $(CXX) $(LD_FLAGS) -o ./${RST_NAME}/$@ $^ ${LD_LIB}		
+	${GAR} -r ./${RST_NAME}/$@  ./*.o
 	@echo " "
 
 %.o : ${SRC_PATH}/**/%.c 
@@ -70,6 +70,7 @@ ${TARGET}: ${GCC_OBJLIST} ${CXX_OBJLIST}
 post_job:
 	@echo " " 
 	cp -Rdp ./${RST_NAME}/${TARGET} ${OUTPUTS_DIR}/
+	cp -Rdp ${INC_PATH}/SSMInterface.h ${OUTPUTS_DIR}/
 	cp -Rdp ${SRC_PATH}/SSMInterface/SSMModelDefinition.h ${OUTPUTS_DIR}/
 	@echo "---------------- SSMCore Build Successful. ---------------"
 	@echo "Enter to ${RST_NAME} folder."

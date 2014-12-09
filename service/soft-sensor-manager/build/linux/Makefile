@@ -1,4 +1,7 @@
+IOTIVITY_DIR=${shell cd ../../../../ && pwd}
+${shell echo "ROOT_DIR=${IOTIVITY_DIR}" > ./root_path.inc}
 
+-include ./root_path.inc
 -include ./environment.mk
 
 MAKE=make
@@ -21,7 +24,6 @@ pre_job:
 	@echo "*                                                       *"
 	@echo "* It's build script for SoftSensorManagement system.    *"
 	@echo "* Before build, Open the environment.mk file.           *"
-	@echo "* And, Modify ROOT_DIR path, which depend on your PC.   *"
 	@echo "* And, Modify BOOST_BASE path, which depend on your PC. *"
 	@echo "*                                                       *"
 	@echo "*********************************************************" 
@@ -51,13 +53,10 @@ post_job:
 
 clean:
  	
-#	@cd ${CUR_DIR}/../../../resource/ && make clean
-#	@cd ${CUR_DIR}/../../../resource/csdk && make deepclean
-#	@cd ${CUR_DIR}/9_Arduino_THSensorApp && make clean
-#	@cd ${CUR_DIR} 
 	rm -rf ./${RST_NAME}
 	@for subdir in ${MAKE_LIST} ; do \
 	echo ">>>>>>>>>>>> $${subdir}/Makefile clean run <<<<<<<<<<<<<<" ; \
 	${MAKE} clean -C $${subdir} ; \
 	echo " " ; \
 	done
+	rm -rf ./root_path.inc
