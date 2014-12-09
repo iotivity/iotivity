@@ -82,14 +82,37 @@ class ClientFridge
         OCResource::Ptr light = constructResourceObject(resource->host(),
                                 "/light", false, lightTypes, ifaces);
 
+        if(!light)
+        {
+            std::cout << "Error: Light Resource Object construction returned null\n";
+            return;
+        }
+
         std::vector<std::string> doorTypes = {"intel.fridge.door"};
 
         OCResource::Ptr leftdoor = constructResourceObject(resource->host(),
                                 "/door/left", false, doorTypes, ifaces);
+        if(!leftdoor)
+        {
+            std::cout << "Error: Left Door Resource Object construction returned null\n";
+            return;
+        }
+
         OCResource::Ptr rightdoor = constructResourceObject(resource->host(),
                                 "/door/right", false, doorTypes, ifaces);
+        if(!rightdoor)
+        {
+            std::cout << "Error: Right Door Resource Object construction returned null\n";
+            return;
+        }
+
         OCResource::Ptr randomdoor = constructResourceObject(resource->host(),
                                 "/door/random", false, doorTypes, ifaces);
+        if(!randomdoor)
+        {
+            std::cout << "Error: Random Door Resource Object construction returned null\n";
+            return;
+        }
 
         // Set header options with API version and token
         HeaderOptions headerOptions;
@@ -164,7 +187,7 @@ class ClientFridge
                 }
             case 1:
                 {
-                    bool isOn;
+                    bool isOn = false;
                     rep.getValue("on",isOn);
                     std::cout<<"The fridge light is "<< ((isOn)?"":"not ") <<"on"<<std::endl;
                 }
@@ -172,7 +195,7 @@ class ClientFridge
             case 2:
             case 3:
                 {
-                    bool isOpen;
+                    bool isOpen = false;
                     std::string side;
                     rep.getValue("open", isOpen);
                     rep.getValue("side", side);

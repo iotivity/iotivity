@@ -161,6 +161,7 @@ namespace OC
         }
         else
         {
+            delete context;
             result = OC_STACK_ERROR;
         }
         return result;
@@ -272,6 +273,7 @@ namespace OC
         }
         else
         {
+            delete ctx;
             result = OC_STACK_ERROR;
         }
         return result;
@@ -371,6 +373,7 @@ namespace OC
         }
         else
         {
+            delete ctx;
             result = OC_STACK_ERROR;
         }
 
@@ -415,6 +418,7 @@ namespace OC
         }
         else
         {
+            delete ctx;
             result = OC_STACK_ERROR;
         }
 
@@ -471,6 +475,7 @@ namespace OC
         }
         else
         {
+            delete ctx;
             result = OC_STACK_ERROR;
         }
 
@@ -544,6 +549,7 @@ namespace OC
         }
         else
         {
+            delete ctx;
             return OC_STACK_ERROR;
         }
 
@@ -626,7 +632,10 @@ namespace OC
         }
 
         if(!cLock)
+        {
+            delete ctx;
             return OC_STACK_ERROR;
+        }
 
         return OCDoResource(handle, OC_REST_PRESENCE, os.str().c_str(), nullptr, nullptr,
                             OC_LOW_QOS, &cbdata, NULL, 0);
