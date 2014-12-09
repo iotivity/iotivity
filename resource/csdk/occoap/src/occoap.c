@@ -533,7 +533,18 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     remotePortNu);
                 mcNode = GetMCPresenceNode(senderUri);
 
-                if(mcNode != NULL)
+                if(maxAge == 0)
+                {
+                    OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+                    response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
+                    if(cbNode->presence)
+                    {
+                        OCFree(cbNode->presence->timeOut);
+                        OCFree(cbNode->presence);
+                        cbNode->presence = NULL;
+                    }
+                }
+                else if(mcNode != NULL)
                 {
                     if(mcNode->nonce == clientResponse.sequenceNumber)
                     {
