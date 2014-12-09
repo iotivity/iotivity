@@ -23,6 +23,9 @@
 #include <string>
 #include <cstdlib>
 #include <pthread.h>
+#include <mutex>
+#include <condition_variable>
+
 #include "OCPlatform.h"
 #include "OCApi.h"
 
@@ -370,10 +373,15 @@ int main(int argc, char* argv[]) {
         // Find all resources
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
-        while(true)
-        {
-            // some operations
-        }
+
+        // A condition variable will free the mutex it is given, then do a non-
+        // intensive block until 'notify' is called on it.  In this case, since we
+        // don't ever call cv.notify, this should be a non-processor intensive version
+        // of while(true);
+        std::mutex blocker;
+        std::condition_variable cv;
+        std::unique_lock<std::mutex> lock(blocker);
+        cv.wait(lock);
 
     }catch(OCException& e)
     {

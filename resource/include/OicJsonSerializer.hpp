@@ -225,30 +225,6 @@ namespace cereal
       //! Saves a const char * to the current node
       void saveValue(char const * s)        { itsWriter.String(s);                                                       }
 
-    private:
-      // Some compilers/OS have difficulty disambiguating the above for various flavors of longs, so we provide
-      // special overloads to handle these cases.
-
-      //! 32 bit signed long saving to current node
-      template <class T> inline
-      typename std::enable_if<sizeof(T) == sizeof(std::int32_t) && std::is_signed<T>::value, void>::type
-      saveLong(T l){ saveValue( static_cast<std::int32_t>( l ) ); }
-
-      //! non 32 bit signed long saving to current node
-      template <class T> inline
-      typename std::enable_if<sizeof(T) != sizeof(std::int32_t) && std::is_signed<T>::value, void>::type
-      saveLong(T l){ saveValue( static_cast<std::int64_t>( l ) ); }
-
-      //! 32 bit unsigned long saving to current node
-      template <class T> inline
-      typename std::enable_if<sizeof(T) == sizeof(std::uint32_t) && !std::is_signed<T>::value, void>::type
-      saveLong(T lu){ saveValue( static_cast<std::uint32_t>( lu ) ); }
-
-      //! non 32 bit unsigned long saving to current node
-      template <class T> inline
-      typename std::enable_if<sizeof(T) != sizeof(std::uint32_t) && !std::is_signed<T>::value, void>::type
-      saveLong(T lu){ saveValue( static_cast<std::uint64_t>( lu ) ); }
-
     public:
 #ifdef _MSC_VER
       //! MSVC only long overload to current node
@@ -259,14 +235,22 @@ namespace cereal
       typename std::enable_if<std::is_same<T, long>::value &&
                               !std::is_same<T, std::int32_t>::value &&
                               !std::is_same<T, std::int64_t>::value, void>::type
-      saveValue( T t ){ saveLong( t ); }
+      saveValue( T t )
+      {
+          saveLong( t );
+          return t;
+      }
 
       //! Serialize an unsigned long if it would not be caught otherwise
       template <class T> inline
       typename std::enable_if<std::is_same<T, unsigned long>::value &&
                               !std::is_same<T, std::uint32_t>::value &&
                               !std::is_same<T, std::uint64_t>::value, void>::type
-      saveValue( T t ){ saveLong( t ); }
+      saveValue( T t )
+      {
+          saveLong( t );
+          return t;
+      }
 #endif // _MSC_VER
 
       //! Save exotic arithmetic as strings to current node
@@ -283,6 +267,7 @@ namespace cereal
         std::stringstream ss; ss.precision( std::numeric_limits<long double>::max_digits10 );
         ss << t;
         saveValue( ss.str() );
+        return t;
       }
 
       //! Write the name of the upcoming node and prepare object/array state

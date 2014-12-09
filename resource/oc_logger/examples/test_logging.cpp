@@ -92,5 +92,6 @@ int main()
  basic_demo();
  c_demo();
  alternative_demo();
+ return 0;
 }
 

@@ -161,8 +161,8 @@ struct FooResource
 void putResourceInfo(const HeaderOptions& headerOptions,
         const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
 {
-   bool m_isFoo;
-   int m_barCount;
+   bool m_isFoo = false;
+   int m_barCount = 0;
    std::cout << "In PutResourceInfo" << std::endl;
 
    std::cout <<"Clientside Put response to get was: "<<std::endl;
@@ -192,8 +192,8 @@ void getResourceInfo(std::shared_ptr<OCResource> resource, const HeaderOptions& 
             const OCRepresentation rep,
             const int eCode)
 {
-    bool m_isFoo;
-    int m_barCount;
+    bool m_isFoo = false;
+    int m_barCount = 0;
     std::cout << "In getResourceInfo" << std::endl;
 
     std::cout<<"Clientside response to get was: "<<std::endl;
@@ -284,10 +284,14 @@ void client1()
     std::cout<<"result1:" << OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo",
             foundResource1)<< std::endl;
 
-    while(1)
-    {
-        // client1 related operations
-    }
+    // A condition variable will free the mutex it is given, then do a non-
+    // intensive block until 'notify' is called on it.  In this case, since we
+    // don't ever call cv.notify, this should be a non-processor intensive version
+    // of while(true);
+    std::mutex blocker;
+    std::condition_variable cv;
+    std::unique_lock<std::mutex> lock(blocker);
+    cv.wait(lock);
 }
 
 void client2()
@@ -298,10 +302,14 @@ void client2()
                 "coap://224.0.1.187/oc/core?rt=core.foo",
                 foundResource2)<< std::endl;
 
-    while(1)
-    {
-        // client2 related operations
-    }
+    // A condition variable will free the mutex it is given, then do a non-
+    // intensive block until 'notify' is called on it.  In this case, since we
+    // don't ever call cv.notify, this should be a non-processor intensive version
+    // of while(true);
+    std::mutex blocker;
+    std::condition_variable cv;
+    std::unique_lock<std::mutex> lock(blocker);
+    cv.wait(lock);
 }
 
 void server()
@@ -313,10 +321,14 @@ void server()
         return;
     }
 
-    while(1)
-    {
-        // server related operations
-    }
+    // A condition variable will free the mutex it is given, then do a non-
+    // intensive block until 'notify' is called on it.  In this case, since we
+    // don't ever call cv.notify, this should be a non-processor intensive version
+    // of while(true);
+    std::mutex blocker;
+    std::condition_variable cv;
+    std::unique_lock<std::mutex> lock(blocker);
+    cv.wait(lock);
 }
 
 int main()
@@ -354,10 +366,14 @@ int main()
         std::thread t2(client2);
         t2.detach();
 
-        while(1)
-        {
-            // server related operations
-        }
+        // A condition variable will free the mutex it is given, then do a non-
+        // intensive block until 'notify' is called on it.  In this case, since we
+        // don't ever call cv.notify, this should be a non-processor intensive version
+        // of while(true);
+        std::mutex blocker;
+        std::condition_variable cv;
+        std::unique_lock<std::mutex> lock(blocker);
+        cv.wait(lock);
     }
     catch(OCException& e)
     {
