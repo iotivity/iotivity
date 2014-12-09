@@ -115,18 +115,21 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
 
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
+    if(clientResponse == NULL)
+    {
+        OC_LOG(INFO, TAG, "The clientResponse is NULL");
+        return   OC_STACK_DELETE_TRANSACTION;
+    }
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
     }
 
-    if(clientResponse)
-    {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response",
-                clientResponse->resJSONPayload);
-    }
+    OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+    OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+    OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response",
+            clientResponse->resJSONPayload);
+
     if(clientResponse->rcvdVendorSpecificHeaderOptions &&
             clientResponse->numRcvdVendorSpecificHeaderOptions)
     {
