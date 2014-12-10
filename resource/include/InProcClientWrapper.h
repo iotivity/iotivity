@@ -49,7 +49,7 @@ namespace OC
         struct ListenContext
         {
             FindCallback callback;
-            IClientWrapper::Ptr clientWrapper;
+            std::weak_ptr<IClientWrapper> clientWrapper;
         };
 
         struct SubscribePresenceContext

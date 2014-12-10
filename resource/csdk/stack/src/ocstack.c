@@ -37,7 +37,7 @@
 // Typedefs
 //-----------------------------------------------------------------------------
 typedef enum {
-    OC_STACK_UNINITIALIZED = 0, OC_STACK_INITIALIZED
+    OC_STACK_UNINITIALIZED = 0, OC_STACK_INITIALIZED, OC_STACK_UNINIT_IN_PROGRESS
 } OCStackState;
 
 #ifdef WITH_PRESENCE
@@ -433,11 +433,18 @@ OCStackResult OCStop()
 
     OC_LOG(INFO, TAG, PCF("Entering OCStop"));
 
-    if (stackState != OC_STACK_INITIALIZED)
+    if (stackState == OC_STACK_UNINIT_IN_PROGRESS)
+    {
+        OC_LOG(DEBUG, TAG, PCF("Stack already stopping, exiting"));
+        return OC_STACK_OK;
+    }
+    else if (stackState != OC_STACK_INITIALIZED)
     {
         OC_LOG(ERROR, TAG, PCF("Stack not initialized"));
         return OC_STACK_ERROR;
     }
+
+    stackState = OC_STACK_UNINIT_IN_PROGRESS;
 
     #ifdef WITH_PRESENCE
     // Ensure that the TTL associated with ANY and ALL presence notifications originating from
@@ -458,6 +465,7 @@ OCStackResult OCStop()
         stackState = OC_STACK_UNINITIALIZED;
         result = OC_STACK_OK;
     } else {
+        stackState = OC_STACK_INITIALIZED;
         result = OC_STACK_ERROR;
     }
 

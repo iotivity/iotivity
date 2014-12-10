@@ -58,7 +58,12 @@ namespace OC
             m_listeningThread.join();
         }
 
-        OCStop();
+        // only stop if we are the ones who actually called 'init'.  We are counting
+        // on the server to do the stop.
+        if(m_cfg.mode == ModeType::Client)
+        {
+            OCStop();
+        }
     }
 
     void InProcClientWrapper::listeningFunc()
@@ -102,12 +107,21 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
+        auto clientWrapper = context->clientWrapper.lock();
+
+        if(!clientWrapper)
+        {
+            oclog() << "listenCallback(): failed to get a shared_ptr to the client wrapper"
+                    << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
         std::stringstream requestStream;
         requestStream << clientResponse->resJSONPayload;
 
         try
         {
-            ListenOCContainer container(context->clientWrapper, *clientResponse->addr,
+            ListenOCContainer container(clientWrapper, *clientResponse->addr,
                     requestStream);
 
             // loop to ensure valid construction of all resources
