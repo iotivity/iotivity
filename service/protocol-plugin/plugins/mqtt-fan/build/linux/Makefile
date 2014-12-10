@@ -1,5 +1,3 @@
-include ../../../../config.mk
-
 CXX = g++
 
 CXX_FLAGS = -std=c++0x -Wall -pthread
@@ -7,6 +5,9 @@ CXX_FLAGS = -std=c++0x -Wall -pthread
 LIB_DIR = ../../../../../../resource
 
 SRC_DIR = ../../src
+
+DEPEND_DIR:= $(LIB_DIR)/dependencies
+CEREAL_DIR:= $(DEPEND_DIR)/cereal
 
 CXX_INC := -I$(LIB_DIR)/include/ 
 CXX_INC += -I$(LIB_DIR)/oc_logger/include/ 
@@ -17,6 +18,8 @@ CXX_INC += -I$(LIB_DIR)/csdk/logger/include/
 CXX_INC += -I$(BOOST_DIR) 
 CXX_INC += -I../../lib 
 CXX_INC += -I../../../../lib/cpluff/libcpluff
+CXX_INC	  += -I../csdk/libcoap
+CXX_INC   += -I$(CEREAL_DIR)/include
 
 LIB_OC_LOGGER := $(LIB_DIR)/oc_logger/lib/oc_logger.a
 CXX_LIBS  := $(LIB_DIR)/release/obj/liboc.a $(LIB_DIR)/csdk/linux/release/liboctbstack.a $(LIB_OC_LOGGER) ../../../../lib/cpluff/libcpluff/.libs/libcpluff.a

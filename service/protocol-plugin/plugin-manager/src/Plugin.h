@@ -141,22 +141,6 @@ namespace OIC
             */
             bool operator==(Plugin &plugin);
 
-            /**
-            * Get supported resourc type
-            *
-            *
-            * @return vector of surported resource type
-            */
-            std::vector<std::string> getSupportedType(void);
-            /**
-            * Add supported resource type for a plugin
-            *
-            * @param resource type string
-            * @return void
-            *
-            */
-            void addSupportedType(const std::string rscType);
-
         private:
             std::map<std::string, AttributeValue> m_attributeMap;
             std::vector<std::string> m_supportedType;

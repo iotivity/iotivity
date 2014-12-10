@@ -136,16 +136,6 @@ namespace OIC
             return false;
         }
     }
-
-    std::vector<std::string> Plugin::getSupportedType(void)
-    {
-        return m_supportedType;
-    }
-
-    void Plugin::addSupportedType(const std::string rscType)
-    {
-        m_supportedType.push_back(rscType);
-    }
 }
 
 

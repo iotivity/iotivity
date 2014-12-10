@@ -110,6 +110,23 @@ int PluginManagerImpl::unregisterAllPlugin()
     return flag;
 }
 
+int PluginManagerImpl::rescanPlugin()
+{
+    Config *config = Config::Getinstance();
+    std::string pluginpath = config->getPluginPath();
+    if (pluginpath != "")
+    {
+        printf("Current path is %s\n", pluginpath.c_str());
+    }
+    else
+    {
+        fprintf(stderr, "Pluing path does not exist\n");
+        pluginpath = "";
+    }
+    int result = registerAllPlugin(pluginpath);
+    return result;
+}
+
 
 std::vector<Plugin> &PluginManagerImpl::getAllPlugins(void)
 {

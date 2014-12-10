@@ -30,7 +30,18 @@ FelixAdapter *FelixAdapter::s_pinstance;
 
 FelixAdapter::FelixAdapter()
 {
-
+    config = Config::Getinstance();
+    std::string pluginpath = config->getPluginPath();
+    if (pluginpath != "")
+    {
+        printf("Current path is %s\n", pluginpath.c_str());
+    }
+    else
+    {
+        fprintf(stderr, "Pluing path is not exist\n");
+        pluginpath = "";
+    }
+    registerAllPlugin(pluginpath);
 }
 
 FelixAdapter::~FelixAdapter(void)
@@ -113,12 +124,12 @@ bool FelixAdapter::isStarted(Plugin *plugin)
 {
     return FALSE;
 }
-
+/*
 void FelixAdapter::observePluginPath(void *str)
 {
 
 }
-
+*/
 const std::string FelixAdapter::getState(const std::string plugID)
 {
     return "";
