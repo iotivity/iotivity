@@ -23,12 +23,78 @@
 /// @brief  This file contains the implementation of classes and its members
 ///         related to OCRepresentation
 
+
+#include <OCRepresentation.h>
+
 #include <cereal/cereal.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/utility.hpp>
+#include <OicJsonSerializer.hpp>
 #include <algorithm>
-#include <OCRepresentation.h>
+
+// code needed to serialize a string::Attribute value map
+namespace OC
+{
+    namespace detail
+    {
+        template<class Archive>
+        class WriteAttributeValue : public boost::static_visitor<>
+        {
+            public:
+                WriteAttributeValue(const std::string& name, Archive& ar)
+                    :m_name(name), m_archive(ar)
+                {}
+
+                template<class T>
+                void operator()(const T& value) const
+                {
+                    m_archive(cereal::make_nvp(m_name, value));
+                }
+            private:
+                std::string m_name;
+                Archive& m_archive;
+        };
+    }
+}
+
+namespace cereal
+{
+    // take no action when serializing the null type, because the 'save' below
+    // doesn't use the visitor for this type.
+    template <class Archive>
+    void serialize(Archive&, OC::NullType t)
+    {}
+
+    template<class Archive>
+    void save(Archive& ar, const std::map<std::string, OC::AttributeValue>& vals)
+    {
+        for(const auto& kv : vals)
+        {
+            const auto& k = kv.first;
+            const auto& v = kv.second;
+
+            if(v.which() != OC::AttributeValueNullIndex)
+            {
+                OC::detail::WriteAttributeValue<Archive> writer(k,ar);
+                boost::apply_visitor(writer, v);
+            }
+            else
+            {
+                ar.setNextName(k.c_str());
+                ar.writeName();
+                ar.saveValue();
+            }
+        }
+    }
+
+    template<class Archive>
+    void load(Archive& ar, std::map<std::string, OC::AttributeValue>& vals)
+    {
+        ar.loadAttributeValues(vals);
+    }
+}
+
 namespace OC
 {
     typedef cereal::JSONOutputArchive OutputArchiveType;
@@ -219,6 +285,92 @@ namespace OC
         {
             throw OCException(OC::Exception::INVALID_ATTRIBUTE+ str);
         }
+    }
+}
+
+namespace OC
+{
+    template <class Archive, class Val>
+    void OCRepresentation::optional_load(Archive& ar, Val&& v)
+    {
+        try
+        {
+            ar(v);
+        }
+        catch(cereal::Exception& e)
+        {
+            ar.setNextName(nullptr);
+            // Loading a key that doesn't exist results in an exception
+            // Since "Not Found" is a valid condition for us, we swallow
+            // this exception and the archive will not load anything
+        }
+    }
+
+    template<class Archive>
+    void OCRepresentation::save(Archive& ar) const
+    {
+        // printed for all interface types
+        if(!m_uri.empty())
+        {
+            ar(cereal::make_nvp(Key::URIKEY, m_uri));
+        }
+
+        if((m_interfaceType == InterfaceType::None
+                    || m_interfaceType==InterfaceType::DefaultChild
+                    || m_interfaceType==InterfaceType::LinkChild)
+                && (m_resourceTypes.size()>0 || m_interfaces.size()>0))
+        {
+            // The Prop object requires that it refer to non-const vectors
+            // so that it can alter them in the 'load' case.  In the save case
+            // (initiated here) it will not modify the object.  So, to keep the
+            // compiler happy, removing the 'const' context here is necessary.
+            const std::vector<std::string>& rt(m_resourceTypes);
+            const std::vector<std::string>& intf(m_interfaces);
+            Prop temp(const_cast<std::vector<std::string>&>(rt),
+                    const_cast<std::vector<std::string>&>(intf));
+            ar(cereal::make_nvp(Key::PROPERTYKEY, temp));
+        }
+
+        // printed only for BatchChildren and DefaultParent
+        if((m_interfaceType == InterfaceType::None
+                    || m_interfaceType == InterfaceType::BatchChild
+                    || m_interfaceType == InterfaceType::DefaultParent)
+                && m_values.size()>0)
+        {
+            ar(cereal::make_nvp(Key::REPKEY, m_values));
+        }
+    }
+
+    template<class Archive>
+    void OCRepresentation::load(Archive& ar)
+    {
+        optional_load(ar, cereal::make_nvp(Key::URIKEY, m_uri));
+        {
+            Prop temp(m_resourceTypes, m_interfaces);
+            optional_load(ar, cereal::make_nvp(Key::PROPERTYKEY, temp));
+        }
+        optional_load(ar, cereal::make_nvp(Key::REPKEY, m_values));
+    }
+
+    template<class Archive>
+    void OCRepresentation::Prop::save(Archive& ar) const
+    {
+        if(m_types.size() > 0)
+        {
+            ar(cereal::make_nvp(Key::RESOURCETYPESKEY, m_types));
+        }
+
+        if(m_interfaces.size()>0)
+        {
+            ar(cereal::make_nvp(Key::INTERFACESKEY, m_interfaces));
+        }
+    }
+
+    template<class Archive>
+    void OCRepresentation::Prop::load(Archive& ar)
+    {
+        optional_load(ar, cereal::make_nvp(Key::RESOURCETYPESKEY, m_types));
+        optional_load(ar, cereal::make_nvp(Key::INTERFACESKEY, m_interfaces));
     }
 }
 

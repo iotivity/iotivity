@@ -33,7 +33,6 @@
 #define BOOST_MPL_LIMIT_LIST_SIZE 30
 #define BOOST_MPL_LIMIT_VECTOR_SIZE 30
 #include <boost/variant.hpp>
-#include <cereal/external/rapidjson/document.h>
 
 namespace OC
 {
