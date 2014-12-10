@@ -44,6 +44,11 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
 
     GError *error = NULL;
 
+#ifdef __ANDROID__
+    //If not intialized, gthreadpool intialize check fails
+    g_thread_init(NULL);
+#endif //__ANDROID__
+
     gThreadpool = g_thread_pool_new(run, NULL, num_of_threads, TRUE, &error);
     if (NULL == gThreadpool)
     {

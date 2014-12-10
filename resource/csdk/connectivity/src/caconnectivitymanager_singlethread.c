@@ -249,9 +249,7 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 
 CAResult_t CAHandleRequestResponse()
 {
-    //OIC_LOG(DEBUG, TAG, "IN");
     CAHandleRequestResponseCallbacks();
-    //OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 

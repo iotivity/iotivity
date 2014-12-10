@@ -34,6 +34,7 @@ if echo $1 | grep -q -i "ALL"
 then
 echo "Building All the Transports"
 cp ../../src/wifi_adapter/tizen/* $sourcedir/tizen/tmp/
+cp ../../src/wifi_adapter/*.c $sourcedir/tizen/tmp/
 cp ../../src/bt_edr_adapter/* $sourcedir/tizen/tmp/
 cp ../../src/bt_edr_adapter/tizen/* $sourcedir/tizen/tmp/
 cp ../../src/bt_le_adapter/* $sourcedir/tizen/tmp/
@@ -43,6 +44,7 @@ else
 if echo $1 | grep -q -i "WIFI"
 then
 echo "Copying WIFI Adapter Source Codes"
+cp ../../src/wifi_adapter/*.c $sourcedir/tizen/tmp/
 cp ../../src/wifi_adapter/tizen/* $sourcedir/tizen/tmp/
 adapterMacro="$adapterMacro -DWIFI_ADAPTER"
 fi

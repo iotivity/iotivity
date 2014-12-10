@@ -37,6 +37,7 @@ void start_listening_server();
 void start_discovery_server();
 void find_resource();
 void send_request();
+void send_request_all();
 void send_response();
 void advertise_resource();
 void send_notification();
@@ -113,6 +114,11 @@ void process()
             case 's': // start server
             case 'S':
                 start_listening_server();
+                break;
+
+            case 't': // send request
+            case 'T':
+                send_request_all();
                 break;
 
             case 'c': // start client
@@ -347,6 +353,7 @@ void send_request()
     memset(&requestData, 0, sizeof(CAInfo_t));
     requestData.token = token;
     requestData.payload = "Temp Json Payload";
+    requestData.type = CA_MSG_NONCONFIRM;
 
     CARequestInfo_t requestInfo;
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
@@ -366,6 +373,79 @@ void send_request()
     {
         CADestroyRemoteEndpoint(endpoint);
     }
+
+    printf("=============================================\n");
+}
+
+void send_request_all()
+{
+    char buf[MAX_BUF_LEN];
+
+    memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+
+    printf("\n=============================================\n");
+    printf("10.11.12.13:4545/resource_uri ( for IP )\n");
+    printf("10:11:12:13:45:45/resource_uri ( for BT )\n");
+    printf("uri : ");
+
+    gets(buf);
+
+    // create remote endpoint
+    CARemoteEndpoint_t* endpoint = NULL;
+    CAResult_t res = CACreateRemoteEndpoint(buf, &endpoint);
+
+    if (res != CA_STATUS_OK)
+    {
+        printf("create remote endpoint error!!\n");
+        CADestroyRemoteEndpoint(endpoint);
+        return;
+    }
+
+
+    CAGroupEndpoint_t* group = NULL;
+    group = (CAGroupEndpoint_t*)malloc(sizeof(CAGroupEndpoint_t));
+    group->connectivityType = endpoint->connectivityType;
+    group->resourceUri = endpoint->resourceUri;
+    
+
+    // create token
+    CAToken_t token = NULL;
+    res = CAGenerateToken(&token);
+
+    if (res != CA_STATUS_OK)
+    {
+        printf("token generate error!!\n");
+        token = NULL;
+    }
+
+    printf("generated token %s\n", (token != NULL) ? token : "");
+
+    CAInfo_t requestData;
+    memset(&requestData, 0, sizeof(CAInfo_t));
+    requestData.token = token;
+    requestData.payload = "Temp Json Payload";
+
+    CARequestInfo_t requestInfo;
+    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
+
+    // send request
+    // CASendRequest(endpoint, &requestInfo);
+    CASendRequestToAll(group, &requestInfo);
+
+    if (token != NULL)
+    {
+        CADestroyToken(token);
+    }
+
+    // destroy remote endpoint
+    if (endpoint != NULL)
+    {
+        CADestroyRemoteEndpoint(endpoint);
+    }
+
+    free(group);
 
     printf("=============================================\n");
 }
@@ -469,7 +549,7 @@ void send_notification()
 
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
+    responseInfo.result = CA_SUCCESS;
     responseInfo.info = respondeData;
 
     // send request
@@ -566,6 +646,7 @@ char get_menu()
     printf("\tc : start client\n");
     printf("\tf : find resource\n");
     printf("\tr : send request\n");
+    printf("\tt : send request to all\n");
     printf("\ta : advertise resource\n");
     printf("\tb : send notification\n");
     printf("\tn : select network\n");
@@ -610,9 +691,9 @@ void get_network_info()
     tempInfo = (CALocalConnectivity_t*) malloc(sizeof(CALocalConnectivity_t));
 
     CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
-    if (res != CA_STATUS_OK)
+    if (!tempSize)
     {
-        printf("get network information error\n");
+        printf("network not connected\n");
         return;
     }
 

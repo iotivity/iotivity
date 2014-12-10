@@ -146,7 +146,17 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token);
 CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requestInfo);
 
 /**
- * @brief   Sendi the response
+ * @brief   Send control Request on a resource to multicast group
+ * @param   object      [IN]    Group Endpoint where the payload need to be sent.
+ *                              This Remote endpoint is delivered with Request or response callback.
+ * @param   requestInfo [IN ]   information for the request.
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CASendRequestToAll(const CAGroupEndpoint_t* object, 
+    const CARequestInfo_t* requestInfo);
+
+/**
+ * @brief   Send the response
  * @param   object          [IN]    Remote Endpoint where the payload need to be sent.
  *                                  This Remote endpoint is delivered with Request or response callback
  * @param   responseInfo    [IN ]   information for the response
@@ -170,8 +180,8 @@ CAResult_t CASendNotification(const CARemoteEndpoint_t *object, CAResponseInfo_t
  * @param   numOptions  [IN]    number of options
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token, CAHeaderOption_t* options,
-                               uint8_t numOptions);
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token, 
+                    CAHeaderOption_t* options,uint8_t numOptions);
 
 /**
  * @brief   Select network to use

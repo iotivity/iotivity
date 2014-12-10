@@ -9,7 +9,7 @@ BUILD	 := release
 PLATFORM := arduinomega
 TRANSPORT := BLE
 OBJ_DIR := ./bin
-APP_NAME := casample
+APP_NAME := sample_main
 ARDUINO_PORT := ttyACM0
 
 include ./local.properties

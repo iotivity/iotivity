@@ -168,17 +168,17 @@ void loop()
         switch (Serial.read())
         {
             case 's':
-        {
+	    {
                 Serial.println("sending data");
-        if ( ble_connected() )
-        {
-            Serial.println("Sending Data");
-                gConnectivityHandlers->sendData(&remoteEndpoint[1], coapData, strlen(coapData));
-                Serial.println("Sent Data");
-        }
-       }
-           break;
-    }
+		if ( ble_connected() )
+		{
+			Serial.println("Sending Data");
+		        gConnectivityHandlers->sendData(&remoteEndpoint[1], coapData, strlen(coapData));
+		        Serial.println("Sent Data");
+		}
+	   }
+    	   break;
+	}
     }
     gConnectivityHandlers->readData();
 }

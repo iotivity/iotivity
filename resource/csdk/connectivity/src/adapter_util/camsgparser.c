@@ -103,7 +103,7 @@ uint32_t CAParseHeader(const char *header)
     for (i = 0; i < 8; i++)
     {
         int pos = 8 - i;
-        int bit = !!((*header << pos) & 0x80);
+        int bit = !!((*header << i) & 0x80);
         if ( i >= 4)
         {
             if ( 1 == bit)
@@ -178,10 +178,11 @@ uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen,
     }
     else
     {
-        OIC_LOG_V(DEBUG, CA_MSG_PARSER_TAG, "Appending actual data of length [%d]", length);
+        OIC_LOG_V(DEBUG, CA_MSG_PARSER_TAG, "Appending actual data of length [%d] and offset [%d]", length,
+                  offset);
 
         *dataSegment = (char *) OICMalloc(sizeof(char) * length);
-        memcpy(*dataSegment, data, length);
+        memcpy(*dataSegment, data + offset, length);
     }
 
     return length;

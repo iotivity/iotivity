@@ -416,7 +416,7 @@ void send_notification()
 
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
+    responseInfo.result = CA_SUCCESS;
     responseInfo.info = respondeData;
 
     // send request

@@ -27,7 +27,7 @@
 CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
 {
     char *temp = NULL;
-    int len = 0;
+    uint32_t len = 0;
 
     if (rep == NULL)
         return NULL;
@@ -309,6 +309,13 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
     {
         // save the options
         clone->info.options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t));
+        if (clone->info.options == NULL)
+        {
+            OIC_LOG_V(DEBUG, TAG, "CACloneRequestInfo Out of memory");
+            OICFree(clone->info.token);
+            OICFree(clone);
+            return NULL;
+        }
         memset(clone->info.options, 0, sizeof(CAHeaderOption_t));
         memcpy(clone->info.options, rep->info.options, sizeof(CAHeaderOption_t));
     }
@@ -380,6 +387,13 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     {
         // save the options
         clone->info.options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t));
+        if (clone->info.options == NULL)
+        {
+            OIC_LOG_V(DEBUG, TAG, "CACloneResponseInfo Out of memory");
+            OICFree(clone->info.token);
+            OICFree(clone);
+            return NULL;
+        }
         memset(clone->info.options, 0, sizeof(CAHeaderOption_t));
         memcpy(clone->info.options, rep->info.options, sizeof(CAHeaderOption_t));
     }

@@ -151,15 +151,15 @@ typedef union
 } CAAddress_t;
 
 /**
- @brief Quality of service for Base source code
+ @brief Message Type for Base source code
  */
 typedef enum
 {
-    CA_LOW_QOS = 0,
-    CA_MEDIUM_QOS,
-    CA_HIGH_QOS,
-    CA_NA_QOS // No Quality is defined, let the stack decide
-} CAQualityOfService_t;
+    CA_MSG_CONFIRM = 0,  /* confirmable message (requires ACK/RST) */
+    CA_MSG_NONCONFIRM,   /* non-confirmable message (one-shot message) */
+    CA_MSG_ACKNOWLEDGE,  /* used to acknowledge confirmable messages */
+    CA_MSG_RESET         /* indicates error in received messages */
+} CAMessageType_t;
 
 /**
  @brief Allowed method to be used by resource model
@@ -184,6 +184,18 @@ typedef struct
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
 } CARemoteEndpoint_t;
+
+
+/**
+ @brief Group endpoint information for connectivities
+ */
+typedef struct
+{
+    /** Resource URI information **/
+    CAURI_t resourceUri;
+    /** Connectivity of the endpoint**/
+    CAConnectivityType_t connectivityType;
+} CAGroupEndpoint_t;
 
 /**
  @brief Local Connectivity information
@@ -225,10 +237,9 @@ typedef enum
 typedef enum
 {
     /* Success status code - START HERE */
+    CA_SUCCESS = 200,
     CA_CREATED = 201,
     CA_DELETED = 202,
-    CA_VALID = 203,
-    CA_CONTENT = 205,
     CA_BAD_REQ = 400,
     CA_BAD_OPT = 402,
     CA_NOT_FOUND = 404
@@ -269,7 +280,7 @@ typedef struct
 typedef struct
 {
     /**Qos for the request **/
-    CAQualityOfService_t qos;
+    CAMessageType_t type;
     /** Token for CA**/
     CAToken_t token;
     /** Header Options for the request **/

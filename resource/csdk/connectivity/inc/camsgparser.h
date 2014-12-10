@@ -90,7 +90,8 @@ uint32_t CAParseHeader(const char* header);
 *
 * @return
 */
-uint32_t CAFragmentData(const char* data, char** dataSegment, uint32_t TotalLen, uint32_t offset);
+uint32_t CAFragmentData(const char* data, char** dataSegment, uint32_t TotalLen, 
+                        uint32_t offset);
 
 /**
 * @fn CADeFragmentData
@@ -98,7 +99,8 @@ uint32_t CAFragmentData(const char* data, char** dataSegment, uint32_t TotalLen,
 *
 * @return
 */
-uint32_t CADeFragmentData(const char* datasegment, char** data, uint32_t TotalLen, uint32_t offset);
+uint32_t CADeFragmentData(const char* datasegment, char** data, uint32_t TotalLen, 
+                        uint32_t offset);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -48,7 +48,6 @@ static CANetworkChangeCallback gNetworkChangeCallback = NULL;
 
 static int8_t CAGetAdapterIndex(CAConnectivityType_t cType)
 {
-    //OIC_LOG(DEBUG, TAG, "IN");
     switch (cType)
     {
         case CA_ETHERNET:
@@ -60,7 +59,6 @@ static int8_t CAGetAdapterIndex(CAConnectivityType_t cType)
         case CA_LE:
             return 3;
     }
-    //OIC_LOG(DEBUG, TAG, "OUT");
     return -1;
 }
 
@@ -431,7 +429,6 @@ void CATerminateAdapters()
 
 CAResult_t CAReadData()
 {
-    //OIC_LOG(DEBUG, TAG, "IN");
 
     uint8_t i, type;
     int8_t index = -1;
@@ -462,6 +459,5 @@ CAResult_t CAReadData()
         }
     }
 
-    //OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

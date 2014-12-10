@@ -82,7 +82,8 @@ CAResult_t CAStartLEDiscoveryServer();
  * @param   dataLen   [IN]  Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen);
+uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, void *data, 
+                                uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the LE connectivity.
@@ -108,7 +109,8 @@ CAResult_t CAStartLENotifyServer();
  * @param   dataLen   [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen);
+uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, void *data, 
+                                    uint32_t dataLen);
 
 /**
  * @brief Get LE Connectivity network information

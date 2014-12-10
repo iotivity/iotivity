@@ -265,7 +265,7 @@ TEST(SendNotificationTest, TC_19_Positive_01)
     responseData.payload = (char *) "Temp Notification Data";
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
+    responseInfo.result = CA_SUCCESS;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
@@ -284,7 +284,7 @@ TEST(SendNotificationTest, TC_20_Nagative_01)
     responseData.payload = (char *) "Temp Notification Data";
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
+    responseInfo.result = CA_SUCCESS;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_FAILED, CASendNotification(tempRep, &responseInfo));
