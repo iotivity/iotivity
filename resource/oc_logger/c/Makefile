@@ -25,7 +25,19 @@ CC_FLAGS.debug=-Wall -std=c99 -Werror -O0 -g
 CC_FLAGS.release=-Wall -std=c99 -Werror -O2
 
 INC=-I../include/
-CC:=gcc
+
+PLATFORM := linux
+
+ifeq ($(PLATFORM),android)
+    CC=arm-linux-androideabi-gcc
+	NDK_INC=$(NDK_DIR)/platforms/android-19/arch-arm/usr/include
+	INC+=-I$(NDK_INC)
+
+else ifeq ($(PLATFORM),linux)
+    CC=gcc
+else
+   $(error Wrong value for PLATFORM !!)
+endif
 
 BIN_DIR=../bin
 LIB_DIR=../lib

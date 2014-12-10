@@ -21,15 +21,12 @@
 # override with `make BUILD=debug`
 # default to release build
 BUILD     := release
-CXX       := g++
-#CXX	  := clang
 
 ifeq ($(ROOT_DIR), )
 	ROOT_DIR := $(PWD)
 endif
-ifeq ($(PLATFORM), )
-	PLATFORM := "linux"
-endif
+
+PLATFORM := linux
 
 DEPEND_DIR:= $(ROOT_DIR)/dependencies
 CEREAL_DIR:= $(DEPEND_DIR)/cereal
@@ -37,8 +34,6 @@ CEREAL_DIR:= $(DEPEND_DIR)/cereal
 OUT_DIR	  := $(ROOT_DIR)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
-CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0
-CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3
 
 CXX_INC	  := -I./include/
 CXX_INC	  += -I./oc_logger/include
@@ -49,6 +44,30 @@ CXX_INC	  += -I./csdk/ocrandom/include
 CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
 CXX_INC   += -I$(CEREAL_DIR)/include
+
+ifeq ($(PLATFORM),android)
+	AR:=arm-linux-androideabi-ar
+	CXX:=arm-linux-androideabi-g++
+	CXX_FLAGS.debug     := -g3 -std=c++11 -Wall -O0 -DTB_LOG -Wno-unused
+	CXX_FLAGS.release   := -std=c++11 -Wall -O3 -Wno-unused
+	NDK_INC0=$(NDK_DIR)/platforms/android-19/arch-arm/usr/include
+	NDK_INC1=$(NDK_DIR)/sources/cxx-stl/gnu-libstdc++/4.8/include
+	NDK_INC2=$(NDK_DIR)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include
+
+	CXX_INC+=-I$(NDK_INC0)
+	CXX_INC+=-I$(NDK_INC1)
+	CXX_INC+=-I$(NDK_INC2)
+	CXX_INC+=-I../../oic-utilities/android/boost/include/
+else ifeq ($(PLATFORM),linux)
+	AR 		  := ar
+	CXX       := g++
+	CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0
+	CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3
+	#CXX	  := clang
+else
+   $(error Wrong value for PLATFORM !!)
+endif
+
 # Force metatargets to build:
 all.PHONY: applyDepPatches prep_dirs c_sdk oc_logger_target liboc.a examples
 
@@ -87,8 +106,16 @@ cpp_sdk: prep_dirs c_sdk liboc.a
 examples: liboc.a
 	cd examples && $(MAKE) apps "BUILD=$(BUILD)"
 
+ifeq ($(PLATFORM),android)
+liboc.a: OCAndroid.o OCPlatform_impl.o OCPlatform.o OCResource.o OCException.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o OCRepresentation.o
+	$(AR) -cvq $(OBJ_DIR)/liboc.a  $(OBJ_DIR)/OCAndroid.o $(OBJ_DIR)/OCPlatform_impl.o $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o $(OBJ_DIR)/OCRepresentation.o
+
+OCAndroid.o: src/OCAndroid.cpp
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCAndroid.cpp $(CXX_INC)
+else
 liboc.a: OCPlatform_impl.o OCPlatform.o OCResource.o OCException.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o OCRepresentation.o
-	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform_impl.o $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o $(OBJ_DIR)/OCRepresentation.o
+	$(AR) -cvq $(OBJ_DIR)/liboc.a  $(OBJ_DIR)/OCPlatform_impl.o $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o $(OBJ_DIR)/OCRepresentation.o
+endif
 
 OCPlatform_impl.o: src/OCPlatform_impl.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform_impl.cpp $(CXX_INC)

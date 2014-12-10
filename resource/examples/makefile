@@ -29,10 +29,6 @@ OUT_DIR	  := $(BUILD)
 DEPEND_DIR:= ../dependencies
 CEREAL_DIR:= $(DEPEND_DIR)/cereal
 
-CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
-
-CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
-
 CXX_INC	  := -I../include/
 CXX_INC   += -I../oc_logger/include
 CXX_INC	  += -I../csdk/stack/include
@@ -45,6 +41,34 @@ CXX_INC   += -I$(CEREAL_DIR)/include
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
 CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
+
+ifeq ($(PLATFORM), "")
+	PLATFORM := "linux"
+endif
+
+ifeq ($(PLATFORM),android)
+	CXX=arm-linux-androideabi-g++
+
+	CXX_FLAGS.debug     := -O0 -g3 -std=c++11 -Wall --sysroot=$(NDK_DIR)/platforms/android-19/arch-arm -L$(NDK_DIR)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/  -Wno-unused
+	CXX_FLAGS.release   := -O3 -std=c++11 -Wall --sysroot=$(NDK_DIR)/platforms/android-19/arch-arm -L$(NDK_DIR)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/ -Wno-unused
+	CXX_LIBS+=-lgnustl_static -llog 
+
+	NDK_INC0=$(NDK_DIR)/platforms/android-19/arch-arm/usr/include
+	NDK_INC1=$(NDK_DIR)/sources/cxx-stl/gnu-libstdc++/4.8/include
+	NDK_INC2=$(NDK_DIR)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include
+
+	CXX_INC+=-I$(NDK_INC0)
+	CXX_INC+=-I$(NDK_INC1)
+	CXX_INC+=-I$(NDK_INC2)
+	CXX_INC+=-I../../../oic-utilities/android/boost/include/
+else ifeq ($(PLATFORM),linux)
+	CXX:=g++
+	CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
+	CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
+else
+	$(error Wrong value for PLATFORM !!)
+endif
+
 
 # Force metatargets to build:
 all.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc_target threadingsample

@@ -28,10 +28,26 @@ LIB=$(LIB_DIR)/oc_logger.a
 
 BUILD := release
 
-CXX_FLAGS.debug=-Wall -std=c++0x -O0 -g
-CXX_FLAGS.release=-Wall -std=c++0x -O2
+PLATFORM := linux
 
-CXX := g++
+ifeq ($(PLATFORM),android)
+	CXX=arm-linux-androideabi-g++
+	CXX_FLAGS.debug=-Wall -std=c++11 -O0 -g -Wno-unused
+	CXX_FLAGS.release=-Wall -std=c++11 -O2 -Wno-unused
+	NDK_INC0=$(NDK_DIR)/platforms/android-19/arch-arm/usr/include
+	NDK_INC1=$(NDK_DIR)/sources/cxx-stl/gnu-libstdc++/4.8/include
+	NDK_INC2=$(NDK_DIR)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include
+	INC+=-I$(NDK_INC0)
+	INC+=-I$(NDK_INC1)
+	INC+=-I$(NDK_INC2)
+	INC+=-I../../../../oic-utilities/android/boost/include/
+else ifeq ($(PLATFORM),linux)
+	CXX=g++
+	CXX_FLAGS.debug=-Wall -std=c++0x -O0 -g
+	CXX_FLAGS.release=-Wall -std=c++0x -O2
+else
+	$(error Wrong value for PLATFORM !!)
+endif
 
 CXX_X=$(CXX) $(CXX_FLAGS.$(BUILD)) $(INC)
 
