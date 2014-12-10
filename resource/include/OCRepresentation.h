@@ -35,6 +35,9 @@
 #include <AttributeValue.h>
 #include <StringConstants.h>
 
+#ifdef __ANDROID__
+#include "OCAndroid.h"
+#endif
 // note: is there any way to move this later so that the implementers don't need to
 // reference them?
 #include <cereal/cereal.hpp>

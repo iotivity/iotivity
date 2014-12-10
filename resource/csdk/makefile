@@ -41,6 +41,13 @@ ifeq ($(PLATFORM),linux)
     RANLIB=ranlib
     CFLAGS_PLATFORM = -DWITH_POSIX -std=c99
     PLATFORM_TYPE=linux
+else ifeq ($(PLATFORM),android)
+    CXX=arm-linux-androideabi-g++
+    CC=arm-linux-androideabi-gcc
+    AR=arm-linux-androideabi-ar
+    RANLIB=arm-linux-androideabi-ranlib
+    CFLAGS_PLATFORM =  -DWITH_POSIX -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -std=c99
+    LDFLAGS_PLATFORM = -march=armv7-a -Wl,--fix-cortex-a8 -llog
 else ifeq ($(PLATFORM),arduinomega)
     include local.properties
     include $(PLATFORM).properties
@@ -106,6 +113,7 @@ OCCOAP_INC	= $(OCCOAP_DIR)/include
 OCTBSTACK_INC	= $(OCTBSTACK_DIR)/include
 OCMALLOC_INC	= $(OCMALLOC_DIR)/include
 CJSON_INC	= $(CJSON_DIR)
+NDK_INC 	= $(NDK_DIR)/platforms/android-19/arch-arm/usr/include
 
 INC_DIRS	:= -I$(OCLOGGER_INC)
 INC_DIRS	+= -I$(OC_LOG_INC)
@@ -117,6 +125,7 @@ INC_DIRS	+= -I$(OCMALLOC_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
+INC_DIRS	+= -I$(NDK_INC)
 
 CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
 CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic

@@ -51,6 +51,8 @@ INC_DIRS      = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)
 # Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
 # includes Time.h header file which has C++ style definitions.
 ifeq ($(PLATFORM),android)
+    NDK_INC= $(NDK_DIR)/platforms/android-19/arch-arm/usr/include
+    INC_DIRS+=-I$(NDK_INC)
     CXX=arm-linux-androideabi-g++
     CC=arm-linux-androideabi-gcc
     AR=arm-linux-androideabi-ar

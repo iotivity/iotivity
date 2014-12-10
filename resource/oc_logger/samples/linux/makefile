@@ -22,7 +22,12 @@
 # default to release build
 BUILD	 := release
 PLATFORM := linux
-CC	 := g++
+
+ifeq ($(PLATFORM), "")
+PLATFORM := "linux"
+endif
+
+
 OUT_DIR	  := $(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
@@ -58,12 +63,31 @@ INC_DIRS		+= -I$(LCOAP_INC)
 INC_DIRS		+= -I$(OCCOAP_INC)
 INC_DIRS		+= -I$(OCTBSTACK_INC)
 
+ifeq ($(PLATFORM),android)
+CC=arm-linux-androideabi-g++
+NDK_INC0=$(NDK_DIR)/platforms/android-19/arch-arm/usr/include
+INC_DIRS		+= -I$(NDK_INC0)
+
+CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections \
+                        $(INC_DIRS) -L$(ROOT_DIR)/$(PLATFORM)/$(BUILD) -DTB_LOG \
+						--sysroot=$(NDK_DIR)/platforms/android-19/arch-arm
+CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s \
+                        $(INC_DIRS) -L$(ROOT_DIR)/$(PLATFORM)/$(BUILD) \
+						--sysroot=$(NDK_DIR)/platforms/android-19/arch-arm
+
+LDLIBS		+= $(OC_LOG_LIB) -loctbstack
+else ifeq ($(PLATFORM),linux)
+CC	 := g++
 CC_FLAGS.debug      := -O0 -g3 -Wall -ffunction-sections -fdata-sections \
                         -std=c99 $(INC_DIRS) -L$(ROOT_DIR)/$(PLATFORM)/$(BUILD) -DTB_LOG
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s \
                         -std=c99 $(INC_DIRS) -L$(ROOT_DIR)/$(PLATFORM)/$(BUILD)
-
 LDLIBS		+= $(OC_LOG_LIB) -loctbstack -lpthread 
+else
+$(error Wrong value for PLATFORM !!)
+endif
+
+
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
 SOURCES     := test_logging.c

@@ -25,6 +25,17 @@ BUILD := release
 LIB_DIR=./lib/
 BIN_DIR=./bin/
 
+PLATFORM := linux
+
+ifeq ($(PLATFORM),android)
+	AR=arm-linux-androideabi-ar
+else ifeq ($(PLATFORM),linux)
+	AR=ar
+else
+	$(error Wrong value for PLATFORM !!)
+endif
+
+
 .PHONY: c_lib cpp_lib static_libs examples samples
 
 all: dirs c_lib cpp_lib static_libs examples samples
@@ -39,8 +50,8 @@ cpp_lib:
 	cd cpp && $(MAKE) "BUILD=$(BUILD)"
 
 static_libs:
-	ar -cvq $(LIB_DIR)/oc_logger_core.a $(BIN_DIR)/oc_logger.o
-	ar -cvq $(LIB_DIR)/oc_logger.a $(BIN_DIR)/oc_logger.o $(BIN_DIR)/targets/*.o
+	$(AR) -cvq $(LIB_DIR)/oc_logger_core.a $(BIN_DIR)/oc_logger.o
+	$(AR) -cvq $(LIB_DIR)/oc_logger.a $(BIN_DIR)/oc_logger.o $(BIN_DIR)/targets/*.o
 
 examples:
 	cd examples && $(MAKE) "BUILD=$(BUILD)"
