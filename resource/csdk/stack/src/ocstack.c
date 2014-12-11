@@ -22,6 +22,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#define _POSIX_C_SOURCE 200112L
+#include <string.h>
+
 #include "ocstack.h"
 #include "ocstackinternal.h"
 #include "ocresourcehandler.h"
@@ -2353,7 +2356,8 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
         goto exit;
     }
     strcpy(tempURI, uri);
-    leftToken = strtok((char *)tempURI, "?");
+    char* strTokPtr;
+    leftToken = strtok_r((char *)tempURI, "?", &strTokPtr);
 
     while(leftToken != NULL)
     {
@@ -2367,7 +2371,7 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
             strcpy((char *)*resourceType, ((const char *)&leftToken[3]));
             break;
         }
-        leftToken = strtok(NULL, "?");
+        leftToken = strtok_r(NULL, "?", &strTokPtr);
     }
 
     *newURI = tempURI;

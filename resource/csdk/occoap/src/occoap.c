@@ -22,6 +22,8 @@
 //=============================================================================
 // Includes
 //=============================================================================
+#define _POSIX_C_SOURCE 200112L
+#include <string.h>
 #include "occoap.h"
 #include "ocstackconfig.h"
 #include "occlientcb.h"
@@ -339,20 +341,22 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
 
     #ifdef WITH_PRESENCE
     if(!strcmp((char *)rcvdUri, (char *)OC_PRESENCE_URI)){
+        char* tokSavePtr;
+
         isPresenceNotification = 1;
         OC_LOG(INFO, TAG, PCF("Received a presence notification"));
-        tok = strtok((char *)bufRes, "[:]}");
+        tok = strtok_r((char *)bufRes, "[:]}", &tokSavePtr);
         bufRes[strlen((char *)bufRes)] = ':';
-        tok = strtok(NULL, "[:]}");
+        tok = strtok_r(NULL, "[:]}", &tokSavePtr);
         bufRes[strlen((char *)bufRes)] = ':';
         VERIFY_NON_NULL(tok);
         sequenceNumber = (uint32_t )atol(tok);
         OC_LOG_V(DEBUG, TAG, "The received NONCE is %u", sequenceNumber);
-        tok = strtok(NULL, "[:]}");
+        tok = strtok_r(NULL, "[:]}", &tokSavePtr);
         VERIFY_NON_NULL(tok);
         maxAge = (uint32_t )atol(tok);
         OC_LOG_V(DEBUG, TAG, "The received TTL is %u", maxAge);
-        tok = strtok(NULL, "[:]}");
+        tok = strtok_r(NULL, "[:]}", &tokSavePtr);
         if(tok) {
             bufRes[strlen((char *)bufRes)] = ':';
             resourceTypeName = (char *)OCMalloc(strlen(tok));
