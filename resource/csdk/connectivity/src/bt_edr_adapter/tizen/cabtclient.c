@@ -65,7 +65,7 @@ CAResult_t CABTClientConnect(const char *remoteAddress, const char *serviceUUID)
 
 CAResult_t CABTClientDisconnect(const int32_t clientID)
 {
-	OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
     //Input validation
     if (0 > clientID)
@@ -79,7 +79,7 @@ CAResult_t CABTClientDisconnect(const int32_t clientID)
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed close rfcomm client socket!, error num [%x]",
                   err);
-        return CA_STATUS_FAILED;    
+        return CA_STATUS_FAILED;
     }
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");

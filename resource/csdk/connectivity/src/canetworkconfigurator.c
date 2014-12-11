@@ -53,8 +53,10 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
 #endif /* ETHERNET_ADAPTER */
 
             OIC_LOG_V(DEBUG, TAG, "Add network type(ETHERNET)");
-            u_arraylist_add(gSelectedNetworkList, &NETWORK_ETHERNET);
-
+            if (!u_arraylist_contains(gSelectedNetworkList, &NETWORK_ETHERNET))
+            {
+                u_arraylist_add(gSelectedNetworkList, &NETWORK_ETHERNET);
+            }
             break;
 
         case CA_WIFI:
@@ -65,8 +67,10 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
 #endif /* WIFI_ADAPTER */
 
             OIC_LOG_V(DEBUG, TAG, "Add network type(WIFI)");
-            u_arraylist_add(gSelectedNetworkList, &NETWORK_WIFI);
-
+            if (!u_arraylist_contains(gSelectedNetworkList, &NETWORK_WIFI))
+            {
+                u_arraylist_add(gSelectedNetworkList, &NETWORK_WIFI);
+            }
             break;
 
         case CA_EDR:
@@ -77,7 +81,10 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
 #endif /* EDR_ADAPTER */
 
             OIC_LOG_V(DEBUG, TAG, "Add network type(EDR)");
-            u_arraylist_add(gSelectedNetworkList, &NETWORK_EDR);
+            if (!u_arraylist_contains(gSelectedNetworkList, &NETWORK_EDR))
+            {
+                u_arraylist_add(gSelectedNetworkList, &NETWORK_EDR);
+            }
             break;
 
         case CA_LE:
@@ -88,7 +95,10 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
 #endif /* LE_ADAPTER */
 
             OIC_LOG_V(DEBUG, TAG, "Add network type(LE)");
-            u_arraylist_add(gSelectedNetworkList, &NETWORK_LE);
+            if (!u_arraylist_contains(gSelectedNetworkList, &NETWORK_LE))
+            {
+                u_arraylist_add(gSelectedNetworkList, &NETWORK_LE);
+            }
             break;
 
     }

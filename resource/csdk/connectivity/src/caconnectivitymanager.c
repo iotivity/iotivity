@@ -133,6 +133,14 @@ CAResult_t CASendRequest(const CARemoteEndpoint_t* object, CARequestInfo_t* requ
     return CADetachRequestMessage(object, requestInfo);
 }
 
+CAResult_t CASendRequestToAll(const CAGroupEndpoint_t* object, 
+    const CARequestInfo_t* requestInfo)
+{
+    OIC_LOG_V(DEBUG, TAG, "CASendRequestToAll");
+
+    return CADetachRequestToAllMessage(object, requestInfo);
+}
+
 CAResult_t CASendNotification(const CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendNotification");
@@ -149,8 +157,8 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t* object, CAResponseInfo_t* re
 
 }
 
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token, CAHeaderOption_t* options,
-        uint8_t numOptions)
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token, 
+    CAHeaderOption_t* options,uint8_t numOptions)
 {
     OIC_LOG_V(DEBUG, TAG, "CAAdvertiseResource");
 

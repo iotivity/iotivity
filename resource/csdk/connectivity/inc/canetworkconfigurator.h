@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+/**
+ * @file canetworkconfigurator.h
+ * @brief This file contains  utility function for network configurations.
+ */
+
 #ifndef _NETWORK_CONFIGURATOR_H_
 #define _NETWORK_CONFIGURATOR_H_
 
@@ -28,13 +33,32 @@ extern "C"
 {
 #endif
 
-
+/**
+ * @brief   Add network type to the selected networks for network packets reception
+ * @param   CAConnectivityType       [IN]    connectivity type that needs to be added
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
 CAResult_t CAAddNetworkType(uint32_t CAConnectivityType);
 
+/**
+ * @brief   Add network type to the un selected for network packets reception
+ * @param   CAConnectivityType       [IN]    connectivity type that needs to be removed
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
 CAResult_t CARemoveNetworkType(uint32_t CAConnectivityType);
 
+/**
+ * @brief   Get selected network information
+ * @return array list having the connectivity types
+ */
 u_arraylist_t *CAGetSelectedNetworkList();
 
+/**
+ * @brief  Getnetwork informations of the selected networks
+ * @param   info    [OUT]   LocalConnectivity objects
+ * @param   size    [OUT]   No Of Array objects
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
 CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t *size);
 
 #ifdef __cplusplus

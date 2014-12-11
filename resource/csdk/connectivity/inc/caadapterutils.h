@@ -70,8 +70,8 @@ extern "C"
  * @fn CAAdapterCreateLocalEndpoint
  * @brief Create CALocalConnectivity_t instance.
  */
-CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CAConnectivityType_t type, const char *address,
-        const char *interfaceName);
+CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CAConnectivityType_t type, 
+            const char *address,const char *interfaceName);
 
 /**
  * @fn CAAdapterCopyLocalEndpoint
@@ -89,8 +89,8 @@ void CAAdapterFreeLocalEndpoint(CALocalConnectivity_t *localEndPoint);
  * @fn CAAdapterCreateRemoteEndpoint
  * @brief Allocate CARemoteEndpoint_t instance.
  */
-CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type, const char *address,
-        const char *resourceUri);
+CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type, 
+            const char *address,const char *resourceUri);
 
 /**
  * @fn CAAdapterCopyRemoteEndpoint

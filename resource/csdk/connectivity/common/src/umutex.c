@@ -23,7 +23,7 @@
 
 #include "umutex.h"
 #include <glib.h>
-
+#include <string.h>
 #include "logger.h"
 
 /**
@@ -158,6 +158,38 @@ void u_cond_wait(u_cond cond, u_mutex mutex)
     GMutex *mutexLock = (GMutex *) mutex;
     GCond *condition = (GCond *) cond;
     g_cond_wait(condition, mutexLock);
+}
+
+void u_cond_timed_wait(u_cond cond, u_mutex mutex, int32_t microseconds)
+{
+    if (NULL == mutex)
+    {
+        OIC_LOG_V(ERROR, TAG,"u_cond_wait, Invalid mutex !");
+        return;
+    }
+
+    if (NULL == cond)
+    {
+        OIC_LOG_V(ERROR, TAG,"u_cond_wait, Invalid condition !");
+        return;
+    }
+
+    GMutex *mutexLock = (GMutex *) mutex;
+    GCond *condition = (GCond *) cond;
+
+    if (microseconds <= 0)
+    {
+        g_cond_wait(condition, mutexLock);
+        return;
+    }
+
+    GTimeVal abs_time;
+    memset(&abs_time, 0, sizeof(GTimeVal));
+
+    g_get_current_time(&abs_time);
+    g_time_val_add(&abs_time, microseconds);
+
+    g_cond_timed_wait(condition, mutexLock, &abs_time);
 }
 
 void u_cond_free(u_cond cond)

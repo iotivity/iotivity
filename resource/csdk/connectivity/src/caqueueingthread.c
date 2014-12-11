@@ -53,6 +53,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         if (u_queue_get_size(thread->dataQueue) <= 0)
         {
             OIC_LOG_V(DEBUG, TAG, "wait..");
+            
             // wait
             u_cond_wait(thread->threadCond, thread->threadMutex);
 
@@ -109,7 +110,7 @@ CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_
     thread->dataQueue = u_queue_create();
     thread->threadMutex = u_mutex_new();
     thread->threadCond = u_cond_new();
-    thread->isStop = CA_FALSE;
+    thread->isStop = CA_TRUE;
     thread->threadTask = task;
 
     return CA_STATUS_OK;
@@ -137,6 +138,8 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
         OIC_LOG_V(DEBUG, TAG, "thread pool add task error(send thread).");
         return res;
     }
+
+    thread->isStop = CA_FALSE;
 
     return res;
 }
@@ -212,19 +215,22 @@ CAResult_t CAQueueingThreadStop(CAQueueingThread_t *thread)
 
     OIC_LOG_V(DEBUG, TAG, "thread stop request!!");
 
-    // mutex lock
-    u_mutex_lock(thread->threadMutex);
+    if (!thread->isStop)
+    {
+        // mutex lock
+        u_mutex_lock(thread->threadMutex);
 
-    // set stop flag
-    thread->isStop = CA_TRUE;
+        // set stop flag
+        thread->isStop = CA_TRUE;
 
-    // notity the thread
-    u_cond_signal(thread->threadCond);
+        // notity the thread
+        u_cond_signal(thread->threadCond);
 
-    u_cond_wait(thread->threadCond, thread->threadMutex);    
+        u_cond_wait(thread->threadCond, thread->threadMutex);
 
-    // mutex unlock
-    u_mutex_unlock(thread->threadMutex);
+        // mutex unlock
+        u_mutex_unlock(thread->threadMutex);
+    }
 
     return CA_STATUS_OK;
 }

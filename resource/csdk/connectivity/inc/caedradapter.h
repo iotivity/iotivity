@@ -42,7 +42,7 @@ extern "C"
  *
  * @param[in]  registerCallback  To register EDR interfaces to Connectivity Abstraction Layer
  * @param[in]  reqRespCallback  Callback to be notified on receival of request/responses from
- *                                          peer bluetooth devices.
+ * peer bluetooth devices.
  * @param[in]  netCallback  Callback to be notified when network adapter state changes.
  * @param[in]  threadPool  Thread pool for handling asynchronous tasks.
  *
@@ -50,7 +50,7 @@ extern "C"
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_INVALID_PARAM  Invalid input parameters
  * @retval  #CA_ADAPTER_NOT_ENABLED Initialization is successful, but bluetooth adapter is
- *                                                      not enabled
+ * not enabled
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
@@ -61,7 +61,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
 /**
  * @fn  CAStartEDR
  * @brief  Starting EDR connectivity adapters. As its peer to peer it doesnot require to start
- *           any servers.
+ * any servers.
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
@@ -74,7 +74,7 @@ CAResult_t CAStartEDR();
 /**
  * @fn  CAStartEDRListeningServer
  * @brief  Starting listening server for receiving multicast search requests.
- *            Starts RFCOMM Server with prefixed UUID as per OIC specification.
+ * Starts RFCOMM Server with prefixed UUID as per OIC specification.
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
@@ -88,12 +88,12 @@ CAResult_t CAStartEDRListeningServer();
 /**
  * @fn  CAStartEDRDiscoveryServer
  * @brief  Starting discovery server for receiving multicast advertisements.
- *            Starts RFCOMM Server with prefixed UUID as per OIC specification.
+ * Starts RFCOMM Server with prefixed UUID as per OIC specification.
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_SERVER_STARTED_ALREADY  Server is already started and running for the predefined
- *                                                            service UUID
+ * service UUID
  * @retval  #CA_STATUS_FAILED Operation failed
  *
  */
@@ -110,12 +110,13 @@ CAResult_t CAStartEDRDiscoveryServer();
  * @return  Number of bytes sent on the network. 0 indicates failed to send data.
  *
  */
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data, uint32_t dataLength);
+uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data, 
+                            uint32_t dataLength);
 
 /**
  * @fn  CASendEDRMulticastData
  * @brief  Sends multicast data to all discovered bluetooth OIC devices using the adapter
- *           connectivity.
+ * connectivity.
  *
  * @param[in]  data  Data which needs to be send to all discovered bluetooth OIC device.
  * @param[in]  dataLength  Length of data in bytes.
@@ -126,16 +127,6 @@ uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *da
 uint32_t CASendEDRMulticastData(void *data, uint32_t dataLength);
 
 /**
- *            Starts RFCOMM Server with prefixed UUID as per OIC specification.
- *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_SERVER_STARTED_ALREADY  Server is already started and running for the predefined
- *                                                            service UUID
- * @retval  #CA_STATUS_FAILED Operation failed
- *
- * @return  Number of bytes sent on the network. 0 indicates failed to send data.
- *
  * @fn  CAGetEDRInterfaceInformation
  * @brief  Get EDR Connectivity network information.
  *
@@ -165,7 +156,7 @@ CAResult_t CAReadEDRData();
 /**
  * @fn  CAStopEDR
  * @brief  Stopping the adapters and close socket connections
- *           EDR Stops all RFCOMM servers and close sockets.
+ * EDR Stops all RFCOMM servers and close sockets.
  *
  * @return  #CA_STATUS_OK on success
  *
@@ -175,7 +166,7 @@ CAResult_t CAStopEDR();
 /**
  * @fn  CATerminateEDR
  * @brief  Terminate the EDR connectivity adapter.
- *           Configuration information will be deleted from further use.
+ * Configuration information will be deleted from further use.
  *
  */
 void CATerminateEDR();

@@ -38,7 +38,8 @@
 
 #define TAG PCF("CA")
 
-#define CA_MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "memory error"); goto memory_error_exit;} }
+#define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
+    {OIC_LOG_V(DEBUG, TAG, "memory error");goto memory_error_exit;} }
 
 #define CA_CONNECTIVITY_TYPE_NUM   4
 
@@ -82,7 +83,8 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CAConnectivityTy
     OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", cType);
 }
 
-static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
+static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, 
+    uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "receivedPacketCallback in interface controller");
 
@@ -93,7 +95,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
     }
 }
 
-static void CANetworkChangedCallback(CALocalConnectivity_t *info, CANetworkStatus_t status)
+static void CANetworkChangedCallback(CALocalConnectivity_t *info, 
+    CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, TAG, "Network Changed callback");
 
@@ -117,15 +120,18 @@ void CAInitializeAdapters(u_thread_pool_t handle)
 #endif /* ETHERNET_ADAPTER */
 
 #ifdef WIFI_ADAPTER
-    CAInitializeWifi(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
+    CAInitializeWifi(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, 
+    handle);
 #endif /* WIFI_ADAPTER */
 
 #ifdef EDR_ADAPTER
-    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
+    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, 
+    handle);
 #endif /* EDR_ADAPTER */
 
 #ifdef LE_ADAPTER
-    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
+    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, 
+    handle);
 #endif /* LE_ADAPTER */
 
 }
@@ -269,7 +275,7 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-CAResult_t CASendUnicastData(CARemoteEndpoint_t* endpoint, void* data, uint32_t length)
+CAResult_t CASendUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "Send unicast data to enabled interface..");
 
@@ -296,9 +302,6 @@ CAResult_t CASendUnicastData(CARemoteEndpoint_t* endpoint, void* data, uint32_t 
     {
         res = gAdapterHandler[index].sendData(endpoint, data, length);
     }
-    //For Unicast , data will be deleted by adapters
-
-    CADestroyRemoteEndpointInternal(endpoint);
 
     return res;
 }
@@ -333,6 +336,11 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
         if (gAdapterHandler[index].sendDataToAll != NULL)
         {
             void* payload = (void*) OICMalloc(length);
+            if (!payload)
+            {
+                OIC_LOG_V(ERROR, TAG, "Out of memory!");
+                return CA_MEMORY_ALLOC_FAILED;
+            }
             memcpy(payload, data, length);
             res = gAdapterHandler[index].sendDataToAll(payload, length);
         }
@@ -420,7 +428,8 @@ void CATerminateAdapters()
     {
         if (gAdapterHandler[index].terminate != NULL)
         {
-            gAdapterHandler[index].terminate();
+           gAdapterHandler[index].stopAdapter(); 
+           gAdapterHandler[index].terminate();
         }
     }
 }

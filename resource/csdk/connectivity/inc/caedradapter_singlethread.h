@@ -49,7 +49,8 @@ extern "C"
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-                           CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback);
+                           CANetworkPacketReceivedCallback reqRespCallback, 
+                           CANetworkChangeCallback netCallback);
 /**
  * @brief Starting EDR connectivity adapters .As its peer to peer it doesnot require to start any servers
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
@@ -81,7 +82,8 @@ CAResult_t CAStartEDRDiscoveryServer();
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen);
+uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *endpoint, void *data, 
+                                    uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the EDR connectivity.
@@ -107,7 +109,8 @@ CAResult_t CAStartEDRNotifyServer();
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendEDRNotification(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen);
+uint32_t CASendEDRNotification(const CARemoteEndpoint_t *endpoint, void *data, 
+                        uint32_t dataLen);
 
 /**
  * @brief Get EDR Connectivity network information

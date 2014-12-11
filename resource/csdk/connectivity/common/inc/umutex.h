@@ -24,6 +24,8 @@
 #ifndef __UMUTEX_H_
 #define __UMUTEX_H_
 
+#include <stdint.h>
+
 #include "cacommon.h"
 
 #ifdef __cplusplus
@@ -126,6 +128,20 @@ void u_cond_broadcast(u_cond cond);
  *
  */
 void u_cond_wait(u_cond cond, u_mutex mutex);
+
+/**
+ * @fn  u_cond_wait
+ * @brief  Waits untill this thread woken up on @cond,
+ *      but not longer than until the time specified by milliseconds.
+ *      The mutex is unlocked before falling asleep and locked again before resuming.
+ *      If milliseconds is 0 or under, u_cond_timed_wait() acts like u_cond_wait().
+ *
+ * @param  cond  The condtion to be wait for to signal
+ * @param  mutex  The mutex which is currently locked from calling thread
+ * @param  microseconds  relative time for waiting, microseconds
+ *
+ */
+void u_cond_timed_wait(u_cond cond, u_mutex mutex, int32_t microseconds);
 
 /**
  * @fn  u_cond_free
