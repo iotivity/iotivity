@@ -1,16 +1,30 @@
 # Ignore output dirs
 /release
-/csdk/release
-/csdk/libcoap-4.1.1/release/
-/examples/release
+resource/release
+resource/csdk/release
+resource/csdk/libcoap-4.1.1/release/
+resource/examples/release
+resource/examples/debug
 
 /debug
-csdk/debug/
-csdk/libcoap-4.1.1/debug/
-/examples/debug
-csdk/stack/samples/linux/SimpleClientServer/debug/
+resource/debug
+resource/csdk/debug/
+resource/csdk/libcoap-4.1.1/debug/
+resource/csdk/libcoap-4.1.1/linux/
+resource/csdk/linux
+resource/csdk/stack/samples/linux/SimpleClientServer/debug/
+resource/csdk/stack/samples/linux/SimpleClientServer/release/
 
+resource/csdk/connectivity/build/out/
 
+resource/oc_logger/bin/
+resource/oc_logger/lib/
+resource/oc_logger/samples/linux/release/
+resource/oc_logger/samples/linux/debug
+
+service/things-manager/build/linux/release
+service/things-manager/build/linux/debug
+service/things-manager/sdk/build/linux/
 # Ignore any object files
 *.o
 *.obj
@@ -22,4 +36,11 @@ csdk/stack/samples/linux/SimpleClientServer/debug/
 *.project
 
 # Ignore dependencies folder, which should be generated
-/dependencies
+dependencies/
+
+#ignore Klocwork stuff
+.kwlp/
+.kwps/
+
+#ignore various swap files
+*.swp
