@@ -120,7 +120,11 @@ void PrintUsage()
 }
 
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
-    if(clientResponse) {}
+    if(clientResponse == NULL)
+    {
+        OC_LOG(INFO, TAG, "The clientResponse is NULL");
+        return   OC_STACK_DELETE_TRANSACTION;
+    }
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE) {
         OC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Discovered", clientResponse->resJSONPayload);

@@ -61,23 +61,37 @@
 
 void *OCMalloc(size_t size)
 {
-#ifdef ENABLE_MALLOC_DEBUG
-    void *ptr = 0;
-
     if (0 == size)
     {
         return NULL;
     }
+
+#ifdef ENABLE_MALLOC_DEBUG
+    void *ptr = 0;
 
     ptr = malloc(size);
     OC_LOG_V(INFO, TAG, "malloc: ptr=%p, size=%u", ptr, size);
     return ptr;
 #else
-    if (0 == size)
+    return malloc(size);
+#endif
+}
+
+void *OCCalloc(size_t num, size_t size)
+{
+    if(0 == size || 0 == num)
     {
         return NULL;
     }
-    return malloc(size);
+
+#ifdef ENABLE_MALLOC_DEBUG
+    void *ptr = 0;
+
+    ptr = calloc(num, size);
+    OC_LOG_V(INFO, TAG, "calloc: ptr=%p, num=%u, size=%u", ptr, num, size);
+    return ptr;
+#else
+    return calloc(num, size);
 #endif
 }
 

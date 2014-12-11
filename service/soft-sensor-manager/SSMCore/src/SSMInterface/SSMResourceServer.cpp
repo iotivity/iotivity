@@ -51,18 +51,18 @@ class CQueryEngineEvent: public IQueryEngineEvent
             std::stringstream sstream;
 
             // QueryEngine Id
-            queryEventResult["queryEngineId"].push_back(m_queryEngineId);
+            queryEventResult["queryEngineId"] = m_queryEngineId;
 
             // CQID
             sstream << cqid;
-            queryEventResult["CQID"].push_back(sstream.str());
+            queryEventResult["CQID"] = sstream.str();
             sstream.str("");
 
             pResult->getAffectedModels(&affectedModels);
 
             // Affected Model Count
             sstream << affectedModels.size();
-            queryEventResult["modelCount"].push_back(sstream.str());
+            queryEventResult["modelCount"] = sstream.str();
             sstream.str("");
 
             //TODO: we assume that contains only one model at time
@@ -71,14 +71,14 @@ class CQueryEngineEvent: public IQueryEngineEvent
             {
                 // Model Name
                 sstream << (*itor);
-                queryEventResult["modelName"].push_back(sstream.str());
+                queryEventResult["modelName"] = sstream.str();
                 sstream.str("");
 
                 pResult->getModelDataCount(*itor, &dataCount);
 
                 // Data Count
                 sstream << dataCount;
-                queryEventResult["dataCount"].push_back(sstream.str());
+                queryEventResult["dataCount"] = sstream.str();
                 sstream.str("");
 
                 //FixME: we have to support multiple data count
@@ -88,26 +88,28 @@ class CQueryEngineEvent: public IQueryEngineEvent
 
                     // Data Id
                     sstream << pModelData->getDataId();
-                    queryEventResult["dataId"].push_back(sstream.str());
+                    queryEventResult["dataId"] = sstream.str();
                     sstream.str("");
 
                     // Property Count
                     sstream << pModelData->getPropertyCount();
-                    queryEventResult["propertyCount"].push_back(sstream.str());
+                    queryEventResult["propertyCount"] = sstream.str();
                     sstream.str("");
 
                     for (int j = 0; j < pModelData->getPropertyCount(); j++)
                     {
                         // Property Name & Value
                         sstream << pModelData->getPropertyValue(j).c_str();
-                        queryEventResult[pModelData->getPropertyName(j).c_str()].push_back(sstream.str());
+                        queryEventResult[pModelData->getPropertyName(j).c_str()] = sstream.str();
                         sstream.str("");
                     }
                 }
             }
 
             g_vecQueryEventResults.push_back(queryEventResult);
-            OCPlatform::notifyObservers(m_hSSMResource);
+
+            //TODO: need to modify for notifying proper clients
+            OCPlatform::notifyAllObservers(m_hSSMResource);
 
             return SSM_S_OK;
         }
@@ -115,7 +117,6 @@ class CQueryEngineEvent: public IQueryEngineEvent
 
 SSMResourceServer::SSMResourceServer()
 {
-    m_pPlatform = NULL;
     m_hSSMResource = NULL;
 }
 
@@ -126,15 +127,9 @@ SSMResourceServer::~SSMResourceServer()
 int SSMResourceServer::initializeManager(std::string &xmlDescription)
 {
     SSMRESULT res = SSM_E_FAIL;
-    CObjectPtr < IResourceConnectivity > pResourceConnectivity;
 
     SSM_CLEANUP_ASSERT(InitializeSSMCore(xmlDescription));
     SSM_CLEANUP_ASSERT(StartSSMCore());
-
-    SSM_CLEANUP_ASSERT(
-        CreateGlobalInstance(OID_IResourceConnectivity, (IBase **) &pResourceConnectivity));
-
-    m_pPlatform = (OC::OCPlatform *) pResourceConnectivity->getPlatform();
 
     if (createResource() != 0)
     {
@@ -165,15 +160,14 @@ CLEANUP:
 int SSMResourceServer::createResource()
 {
     std::string resourceURI = "/service/SoftSensorManager"; // URI of the resource
-    std::string resourceTypeName =
-        "core.SoftSensorManager"; // resource type name. In this case, it is light
+    std::string resourceTypeName = "core.SoftSensorManager"; // resource type name.
     std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
     // OCResourceProperty is defined ocstack.h
     uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
     // This will internally create and register the resource.
-    OCStackResult result = m_pPlatform->registerResource(m_hSSMResource, resourceURI,
+    OCStackResult result = OCPlatform::registerResource(m_hSSMResource, resourceURI,
                            resourceTypeName, resourceInterface,
                            std::bind(&SSMResourceServer::entityHandler, this, std::placeholders::_1,
                                      std::placeholders::_2), resourceProperty);
@@ -186,8 +180,8 @@ int SSMResourceServer::createResource()
     return 0;
 }
 
-void SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > request,
-                                      std::shared_ptr< OCResourceResponse > response)
+OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > request,
+        std::shared_ptr< OCResourceResponse > response)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -195,14 +189,17 @@ void SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > reque
     {
         // Get the request type and request flag
         std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = request->getRequestHandlerFlag();
+        int requestFlag = request->getRequestHandlerFlag();
 
-        if (requestFlag == RequestHandlerFlag::InitFlag)
+        if (requestFlag & RequestHandlerFlag::InitFlag)
         {
             // entity handler to perform resource initialization operations
         }
-        else if (requestFlag == RequestHandlerFlag::RequestFlag)
+
+        if (requestFlag & RequestHandlerFlag::RequestFlag)
         {
+            cout << "\t\trequestFlag : Request\n";
+
             // If the request type is GET
             if (requestType == "GET")
             {
@@ -237,7 +234,7 @@ void SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > reque
                 AttributeMap responseAttributeMap;
 
                 // Process query params and do required operations ..
-                if (requestAttributeMap["command"].back() == "CreateQueryEngine")
+                if (requestAttributeMap["command"] == "CreateQueryEngine")
                 {
                     CQueryEngineEvent *queryEngineEvent = NULL;
 
@@ -245,7 +242,7 @@ void SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > reque
 
                     if (res != SSM_S_OK)
                     {
-                        responseAttributeMap["error"].push_back("CreateQueryEngine failed");
+                        responseAttributeMap["error"] = "CreateQueryEngine failed";
                         goto CLEANUP;
                     }
 
@@ -256,8 +253,8 @@ void SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > reque
 
                     if (queryEngineEvent == NULL)
                     {
-                        responseAttributeMap["error"].push_back(
-                            "QueryEngineEvent create failed");
+                        responseAttributeMap["error"] =
+                            "QueryEngineEvent create failed";
                         goto CLEANUP;
                     }
 
@@ -265,49 +262,49 @@ void SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > reque
 
                     if (res != SSM_S_OK)
                     {
-                        responseAttributeMap["error"].push_back("RegisterQueryEvent failed");
+                        responseAttributeMap["error"] = "RegisterQueryEvent failed";
                         goto CLEANUP;
                     }
 
-                    responseAttributeMap["queryEngineId"].push_back(sstream.str());
+                    responseAttributeMap["queryEngineId"] = sstream.str();
                 }
-                else if (requestAttributeMap["command"].back() == "ReleaseQueryEngine")
+                else if (requestAttributeMap["command"] == "ReleaseQueryEngine")
                 {
-                    pQueryEngine = (IQueryEngine *) stoi(
-                                       requestAttributeMap["queryEngineId"].back());
+                    pQueryEngine = (IQueryEngine *) std::stoi(
+                                       requestAttributeMap["queryEngineId"]);
 
                     ReleaseQueryEngine(pQueryEngine);
                 }
-                else if (requestAttributeMap["command"].back() == "ExecuteContextQuery")
+                else if (requestAttributeMap["command"] == "ExecuteContextQuery")
                 {
                     int CQID = 0;
 
-                    pQueryEngine = (IQueryEngine *) stoi(
-                                       requestAttributeMap["queryEngineId"].back());
+                    pQueryEngine = (IQueryEngine *) std::stoi(
+                                       requestAttributeMap["queryEngineId"]);
 
                     res = pQueryEngine->executeContextQuery(
-                              requestAttributeMap["contextQuery"].back(), &CQID);
+                              requestAttributeMap["contextQuery"], &CQID);
 
                     if (res != SSM_S_OK)
                     {
-                        responseAttributeMap["error"].push_back("ExecuteContextQuery failed");
+                        responseAttributeMap["error"] = "ExecuteContextQuery failed";
                         goto CLEANUP;
                     }
 
                     sstream << CQID;
 
-                    responseAttributeMap["CQID"].push_back(sstream.str());
+                    responseAttributeMap["CQID"] = sstream.str();
                 }
-                else if (requestAttributeMap["command"].back() == "KillContextQuery")
+                else if (requestAttributeMap["command"] == "KillContextQuery")
                 {
-                    pQueryEngine = (IQueryEngine *) stoi(
-                                       requestAttributeMap["queryEngineId"].back());
+                    pQueryEngine = (IQueryEngine *) std::stoi(
+                                       requestAttributeMap["queryEngineId"]);
 
-                    res = pQueryEngine->killContextQuery(stoi(requestAttributeMap["CQID"].back()));
+                    res = pQueryEngine->killContextQuery(std::stoi(requestAttributeMap["CQID"]));
 
                     if (res != SSM_S_OK)
                     {
-                        responseAttributeMap["error"].push_back("KillContextQuery failed");
+                        responseAttributeMap["error"] = "KillContextQuery failed";
                         goto CLEANUP;
                     }
                 }
@@ -330,12 +327,12 @@ CLEANUP:
                 // DELETE request operations
             }
         }
-        else if (requestFlag == RequestHandlerFlag::ObserverFlag)
+
+        if (requestFlag & RequestHandlerFlag::ObserverFlag)
         {
             // perform observe related operations on the resource.
         }
     }
-    else
-    {
-    }
+
+    return OC_EH_OK;
 }

@@ -30,6 +30,9 @@
 #include "cJSON.h"
 #include "ocserver.h"
 
+//string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
+// 9 + 9 + 1 = 19
+const int URI_MAXSIZE = 19;
 
 static int gObserveNotifyType = 3;
 
@@ -168,8 +171,9 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, OCE
         if (gCurrLightInstance < SAMPLE_MAX_NUM_POST_INSTANCE)
         {
             // Create new Light instance
-            char newLightUri[15] = "/a/light/";
-            sprintf (newLightUri + strlen(newLightUri), "%d", gCurrLightInstance);
+            char newLightUri[URI_MAXSIZE];
+            snprintf(newLightUri, URI_MAXSIZE, "/a/light/%d", gCurrLightInstance);
+
             json = cJSON_CreateObject();
             cJSON_AddStringToObject(json,"href",gResourceUri);
             cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
@@ -234,6 +238,11 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, OCE
 
 OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
 {
+    if(ehRequest == NULL)
+    {
+        OC_LOG(INFO, TAG, "The ehRequest is NULL");
+        return OC_EH_ERROR;
+    }
     OCEntityHandlerResult ehResult = OC_EH_OK;
 
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s for resource %d ", __func__, ehRequest->resource);
@@ -599,7 +608,7 @@ void *ChangeLightRepresentation (void *param)
     uint8_t numNotifies = (SAMPLE_MAX_NUM_OBSERVATIONS)/2;
     OCObservationId obsNotify[numNotifies];
 
-    while (1)
+    while (!gQuitFlag)
     {
         sleep(10);
         Light.power += 5;

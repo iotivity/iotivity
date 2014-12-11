@@ -1,0 +1,47 @@
+##
+# plugin-manager project build script
+##
+
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+plugin_manager_env = lib_env.Clone()
+
+target_os = env.get('TARGET_OS')
+######################################################################
+# Build flags
+######################################################################
+plugin_manager_env.AppendUnique(CPPPATH = [
+		'../lib/cpluff/libcpluff',
+		'src'
+		])
+
+if target_os not in ['windows', 'winrt']:
+	plugin_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall',
+		'-fpermissive', '-Wsign-compare'])
+
+if target_os == 'android':
+	plugin_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	plugin_manager_env.AppendUnique(LIBS = ['boost_thread-gcc-mt-1_49', 'gnustl_static'])
+
+plugin_manager_env.AppendUnique(LIBS = ['oc', 'octbstack', 'expat', 'dl'])
+######################################################################
+# Source files and Targets
+######################################################################
+ppm_src = ['src/Plugin.cpp', 'src/PluginManager.cpp']
+ppm = plugin_manager_env.StaticLibrary('ppm', ppm_src)
+
+pmimpl_src = [
+		'src/CpluffAdapter.cpp',
+		'src/FelixAdapter.cpp',
+		'src/Plugin.cpp',
+		'src/PluginManagerImpl.cpp']
+
+pmimpl_env = plugin_manager_env.Clone()
+pmimpl_env.PrependUnique(CCFLAGS = ['-fPIC'])
+pmimpl_env.PrependUnique(LIBS = File(env.get('BUILD_DIR') + '/libcpluff.a'))
+pmimpl = pmimpl_env.SharedLibrary('pmimpl', pmimpl_src)
+
+plugin_manager_env.InstallTarget([ppm, pmimpl], 'libppm')

@@ -38,6 +38,7 @@
 #include <internal.h>
 
 #include "Plugin.h"
+#include "Config.h"
 
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define BUF_LEN     (int)( 1024 * ( EVENT_SIZE + 16 ) )
@@ -160,6 +161,13 @@ namespace OIC
             */
             const std::string getState(const std::string plugID);
 
+            /**
+            * print whole plugin info.
+            *
+            * @param cpluff plugins
+            */
+            void printPluginList();
+
 
             /**
             *
@@ -181,15 +189,14 @@ namespace OIC
 
         private:
 
+            Config *config;
             typedef std::map<std::string, bool> File_list;
             std::vector<Plugin> m_plugins;
             cp_context_t *m_context;
             cp_status_t m_status;
             cp_plugin_info_t **m_cp_plugins;
             cp_plugin_info_t *m_plugin;
-            boost::thread m_file_detect_thread;
-            boost::thread_group m_thread_g;
-            std::string m_path;
+            //boost::thread_group m_thread_g;
             static CpluffAdapter *s_pinstance;
 
             /**
@@ -222,7 +229,7 @@ namespace OIC
             * @param plugin file path.
             * @return void
             */
-            void observePluginPath(void *);
+            //void observePluginPath(void *);
 
 
             /**
@@ -241,13 +248,6 @@ namespace OIC
             * @return true or false.
             */
             bool getFileList(File_list &list, const std::string strDir);
-
-            /**
-            * print whole plugin info.
-            *
-            * @param cpluff plugins
-            */
-            void printPluginList(cp_plugin_info_t **plugins);
 
             /**
             * install plugin using c-pluff.

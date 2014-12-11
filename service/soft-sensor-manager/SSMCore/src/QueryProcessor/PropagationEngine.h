@@ -56,7 +56,7 @@ class CPropagationEngine :
         CSimpleMutex                                m_mtxContextModelList;
         CSimpleMutex                                m_mtxLookUpList;
 
-        CObjectPtr<IResponseReactor>                m_pResponseReactor;
+        CObjectPtr<ISensingEngine>                  m_pSensingEngine;
 
         CObjectPtr<IContextModel>                   m_pDeviceModel;
 
@@ -75,9 +75,9 @@ class CPropagationEngine :
         SSMRESULT addResourceFromGetList();
 
         //TODO: Install Context model from SSMResource
-        SSMRESULT installContextModelFromISSMResource(IN ISSMResource *pSSMResource);
+        SSMRESULT installCurrentSensors();
 
-        SSMRESULT installResponseReactor(IN IResponseReactor *pResponseReactor);
+        SSMRESULT installContextModelFromISSMResource(IN ISSMResource *pSSMResource);
 
         SSMRESULT installContextModel(IN IContextModel *pParentModel,
                                       IN IContextModel::ConstructionType constructionType,

@@ -34,14 +34,27 @@ CpluffAdapter::CpluffAdapter()
     m_context = cp_create_context(&m_status);
     m_cp_plugins = nullptr;
     m_plugin = nullptr;
-    registerAllPlugin("../../../plugins");
+
+    config = Config::Getinstance();
+    std::string pluginpath = config->getPluginPath();
+    if (pluginpath != "")
+    {
+        printf("Current path is %s\n", pluginpath.c_str());
+    }
+    else
+    {
+        fprintf(stderr, "Pluing path does not exist\n");
+        pluginpath = "";
+    }
+    registerAllPlugin(pluginpath);
 }
 
 CpluffAdapter::~CpluffAdapter(void)
 {
     cp_release_info(m_context, m_cp_plugins);
-    m_thread_g.interrupt_all();
-    m_thread_g.join_all();
+    //Auto plugin detection is disabled
+    //m_thread_g.interrupt_all();
+    //m_thread_g.join_all();
     s_pinstance->deleteinstance();
     s_pinstance = nullptr;
 }
@@ -57,7 +70,12 @@ int CpluffAdapter::installPlugin(const std::string path)
     }
     else if ((m_status = cp_install_plugin(m_context, m_plugin)) != 0)
     {
-        printf("cp_install_plugin failed\n");
+        if (m_status == CP_ERR_CONFLICT)
+        {
+            printf("Plugin is already installed or conflicts symbol.\n");
+        }
+        printf("cp_install_plugin failed : %d \n" , m_status);
+
         return false;
     }
 
@@ -70,8 +88,7 @@ int CpluffAdapter::findPluginRecursive(const std::string path)
     File_list file_list;
     getFileList(file_list, path);
     File_list::iterator itr;
-    int flag = FALSE;
-
+    int flag = TRUE;
     for (itr = file_list.begin(); itr != file_list.end(); itr++)
     {
         if (itr->second == true)
@@ -91,9 +108,10 @@ int CpluffAdapter::findPluginRecursive(const std::string path)
                 }
             }
             std::string filename = filepath.substr(0, count );
-            //char *temp_char = const_cast<char *>(filename.c_str());
-            flag = installPlugin(filename);
-            //printf("plugin file path %s \n", plugin->plugin_path);
+            if (!installPlugin(filename))
+            {
+                printf("installPlugin failed path : %s \n", filename.c_str());
+            }
         }
     }
 
@@ -110,7 +128,7 @@ int CpluffAdapter::loadPluginInfoToManager(const std::string path)
     }
     else
     {
-        printPluginList(m_cp_plugins);
+        printPluginList();
     }
 
     for (int i = 0 ; m_cp_plugins[i] != nullptr; i++)
@@ -176,7 +194,8 @@ int CpluffAdapter::loadPluginInfoToManager(const std::string path)
         }
         if (plugin_compare_flag)
         {
-            m_plugins.push_back(*plugin);
+            //Auto plugin detection is disabled
+            /*
             try
             {
                 boost::thread *t = new boost::thread(boost::bind(&CpluffAdapter::observePluginPath,
@@ -188,6 +207,8 @@ int CpluffAdapter::loadPluginInfoToManager(const std::string path)
             {
                 printf("thread throw exception\n");
             }
+            */
+            m_plugins.push_back(*plugin);
             delete(plugin);
         }
         //printf("plugin size = %d\n",m_plugins.size());
@@ -208,11 +229,10 @@ int CpluffAdapter::registerPlugin(const std::string path)
     }
 
     //non recursive
-
-    flag = installPlugin(path);
-
-    flag = loadPluginInfoToManager(path);
-
+    if (installPlugin(path))
+    {
+        flag = loadPluginInfoToManager(path);
+    }
     return flag;
 }
 
@@ -227,11 +247,10 @@ int CpluffAdapter::registerAllPlugin(const std::string path)
     }
 
     //recursive
-
-    flag = findPluginRecursive(path);
-
-    flag = loadPluginInfoToManager(path);
-
+    if (findPluginRecursive(path))
+    {
+        flag = loadPluginInfoToManager(path);
+    }
     return flag;
 }
 
@@ -403,7 +422,7 @@ const char *CpluffAdapter::state_to_string(int state)
     }
 }
 
-void CpluffAdapter::printPluginList(cp_plugin_info_t **plugins)
+void CpluffAdapter::printPluginList()
 {
     const char format[] = "  %-30s %-15s %-15s %-20s\n";
     printf("\n====== Plugins List ======\n");
@@ -491,7 +510,8 @@ bool CpluffAdapter::isStarted(Plugin *plugin)
     }
     return FALSE;
 }
-
+//Auto plugin detection is disabled
+/*
 void CpluffAdapter::observePluginPath(void *str)
 {
     //printf("start observePluginPath\n");
@@ -568,7 +588,7 @@ void CpluffAdapter::observePluginPath(void *str)
     ( void ) close( fd );
     //printf("observePluginPath end\n");
 }
-
+*/
 const std::string CpluffAdapter::getState(const std::string plugID)
 {
     return state_to_string(cp_get_plugin_state(m_context, plugID.c_str()));

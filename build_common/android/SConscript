@@ -1,0 +1,164 @@
+##
+# This script includes android specific config (GNU GCC)
+##
+import os
+import platform
+import subprocess
+
+Import('env')
+
+help_vars = Variables()
+help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK root directory', os.environ.get('ANDROID_NDK')))
+help_vars.Update(env)
+Help(help_vars.GenerateHelpText(env))
+
+android_ndk = env.get('ANDROID_NDK')
+if not android_ndk:
+	print '''
+*************************************** Error *********************************
+*    Android NDK path isn't set, you can set enviornment variable ANDROID_NDK *
+* or add it in command line as:                                               *
+*      # scons ANDROID_NDK=<path to android NDK> ...                          *
+*******************************************************************************
+'''
+	Exit(1)
+
+# Overwrite suffixes and prefixes
+if env['HOST_OS'] == 'win32':
+	env['OBJSUFFIX'] = '.o'
+	env['SHOBJSUFFIX'] = '.os'
+	env['LIBPREFIX'] = 'lib'
+	env['LIBSUFFIX'] = '.a'
+	env['SHLIBPREFIX'] = 'lib'
+	env['SHLIBSUFFIX'] = '.so'
+	env['LIBPREFIXES'] = ['lib']
+	env['LIBSUFFIXES'] = ['.a', '.so']
+	env['PROGSUFFIX'] = ''
+elif platform.system().lower() == 'darwin':
+	env['SHLIBSUFFIX'] = '.so'
+	env['LIBSUFFIXES'] = ['.a', '.so']
+	env['PROGSUFFIX'] = ''
+
+######################################################################
+# Set common flags
+######################################################################
+
+# Android build system default cofig
+env.AppendUnique(CPPDEFINES = ['ANDROID'])
+env.AppendUnique(CFLAGS = ['-Wa,--noexecstack'])
+env.AppendUnique(CXXFLAGS = ['-Wa,--noexecstack', '-fstack-protector'])
+env.AppendUnique(LINKFLAGS = ['-Wl,--gc-sections', '-Wl,-z,nocopyreloc'])
+
+######################################################################
+# Probe Android NDK default flags
+######################################################################
+ndk_build_cmd = android_ndk + '/ndk-build'
+if env['HOST_OS'] == 'win32':
+	if os.path.isfile(ndk_build_cmd + '.cmd'):
+		ndk_build_cmd += '.cmd'
+
+if not os.path.isfile(ndk_build_cmd):
+	print '''
+*************************************** Error *********************************
+*   It seems android ndk path is not set properly, please check if "%s"
+* is the root directory of android ndk.                                       *
+*******************************************************************************
+''' % android_ndk
+	Exit(1)
+
+ANDROID_HOME = os.environ.get('ANDROID_HOME')
+if ANDROID_HOME is not None:
+	ANDROID_HOME = os.path.abspath(ANDROID_HOME)
+
+if ANDROID_HOME is None or not os.path.exists(ANDROID_HOME):
+	print '''
+*************************************** Warning *******************************
+*   Enviornment variable ANDROID_HOME is not set properly. It should be the   *
+* root directory of android sdk. If you'd like build Java code, it's required.*
+*******************************************************************************
+'''
+
+target_arch = env.get('TARGET_ARCH')
+
+# Android ndk early version doesn't support C++11. Detect the toolchain
+# and platform version to make sure the newest version is used.
+
+# Detect toolchain version
+for tc_ver in ['4.9', '4.8', '4.7', '']:
+	if os.path.exists(android_ndk + '/sources/cxx-stl/gnu-libstdc++/' + tc_ver):
+		break
+
+# Detect platform version.
+platform_ver = ''
+for pf_ver in range(0, 100): # 100 should be big enough :)
+	if os.path.exists(android_ndk + '/platforms/android-%d' % pf_ver):
+		platform_ver = "%d" % pf_ver
+
+cmd = [ndk_build_cmd]
+cmd.append('APP_ABI=' + target_arch)
+cmd.append('APP_STL=gnustl_static')
+if env.get('RELEASE'):
+	cmd.append('APP_OPTIM=release')
+else:
+	cmd.append('APP_OPTIM=debug')
+if tc_ver != '':
+	cmd.append('NDK_TOOLCHAIN_VERSION=' + tc_ver)
+else:
+	print '''
+*************************************** Warning *******************************
+*   To support C++11, the toolchain should be >= 4.7, please make sure your   *
+* android NDK is at least r8e!                                                *
+*******************************************************************************
+'''
+
+if platform_ver != '':
+	cmd.append('APP_PLATFORM=android-' + platform_ver)
+cmd.append('-n')
+
+p = subprocess.Popen(cmd, stdout = subprocess.PIPE)
+
+for flags in p.stdout.readlines():
+	if cmp(flags[0:10], 'TC_PREFIX=') == 0: # toolchain prefix (include path)
+		prefix = flags[10:].strip()
+		env.Replace(CC = prefix + 'gcc')
+		env.Replace(CXX = prefix + 'g++')
+		env.Replace(AR = prefix + 'ar')
+		env.Replace(RANLIB = prefix + 'ranlib')
+
+	elif cmp(flags[0:7], 'CFLAGS=') == 0:
+		env.AppendUnique(CFLAGS = Split(flags[7:]))
+
+	elif cmp(flags[0:9], 'CXXFLAGS=') == 0:
+		env.AppendUnique(CXXFLAGS = Split(flags[9:]))
+
+	elif cmp(flags[0:8], 'CPPPATH=') == 0:
+		env.AppendUnique(CPPPATH = Split(flags[8:]))
+
+	elif cmp(flags[0:8], 'SYSROOT=') == 0:
+		sysroot = flags[8:].strip()
+		env.AppendUnique(LINKFLAGS = ['--sysroot=' + sysroot])
+		env.AppendUnique(LIBPATH = [sysroot + '/usr/lib'])
+		# To fix android NDK issue
+		# Some functions, e.g. rand, srand. strtof ... are static in static inline
+		# prior to android-L. so libc.so before android-L doesn't have them. If build
+		# build on android-L and the function(s) is used, should link libc.a
+		if platform_ver == '' or int(platform_ver) > 20:
+			env.AppendUnique(LIBS = File(sysroot + '/usr/lib/libc.a'))
+
+	elif cmp(flags[0:8], 'LDFLAGS=') == 0:
+		env.AppendUnique(LINKFLAGS = Split(flags[8:]))
+
+	elif cmp(flags[0:7], 'TC_VER=') == 0:  # set gnustl library path
+		ver = flags[7:].strip()
+		env.AppendUnique(LIBPATH = [android_ndk + '/sources/cxx-stl/gnu-libstdc++/'
+				+ ver + '/libs/' + target_arch])
+
+######################################################################
+# Set release/debug flags
+######################################################################
+if env.get('RELEASE'):
+	env.AppendUnique(CCFLAGS = ['-Os'])
+	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+	env.AppendUnique(LINKFLAGS = ['-s'])
+else:
+	env.AppendUnique(CCFLAGS = ['-g'])

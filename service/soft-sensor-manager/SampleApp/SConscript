@@ -1,0 +1,24 @@
+##
+# sampleapp build script
+##
+
+Import('env')
+
+# Add third party libraries
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons')
+sample_env = env.Clone()
+target_os = env.get('TARGET_OS')
+
+######################################################################
+# Build flags
+######################################################################
+
+######################################################################
+# Source files and Targets
+######################################################################
+if target_os == 'linux' :
+	# Build linux sample app
+	SConscript('linux/ClientApp/SConscript')
+	SConscript('linux/THSensorApp/SConscript')
+	SConscript('linux/THSensorApp1/SConscript')
+

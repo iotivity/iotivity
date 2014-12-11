@@ -23,12 +23,14 @@ SSMRESULT CResourceFinder::finalConstruct()
 {
     SSMRESULT res = SSM_E_FAIL;
 
+    OC::PlatformConfig cfg(OC::ServiceType::InProc, OC::ModeType::Both,
+                           "0.0.0.0", 0, OC::QualityOfService::LowQos);
+
     SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ITasker, (IBase **)&m_pTasker));
-    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IResourceConnectivity,
-                                            (IBase **)&m_pResourceConnectivity));
+
+    OC::OCPlatform::Configure(cfg);
 
     m_pResourceFinderEvent = NULL;
-    m_pPlatform = (OC::OCPlatform *)m_pResourceConnectivity->getPlatform();
 
 CLEANUP:
     return res;
@@ -52,15 +54,21 @@ void CResourceFinder::onResourceFound(std::shared_ptr<OC::OCResource> resource)
         pMessage[0] = RESOURCE_DISCOVER_REQUESTPROFILE;
         pMessage[1] = (int)new std::shared_ptr<OC::OCResource>(resource);
 
+        std::string path = resource->host() + resource->uri();
+
         m_pTasker->addTask(this, pMessage);
     }
 }
 
 SSMRESULT CResourceFinder::startResourceFinder()
 {
-    //m_pPlatform->findResource("", "oc/core/service/SoftSensorManager/SoftSensor",
-    m_pPlatform->findResource("", "coap://224.0.1.187/oc/core?rt=SoftSensorManager.Sensor",
-                              std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
+    OCStackResult res = OC_STACK_ERROR;
+
+    res = OC::OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=SoftSensorManager.Sensor",
+                                       std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
+
+    if (res != OC_STACK_OK)
+        return SSM_E_FAIL;
 
     return SSM_S_OK;
 }
@@ -91,7 +99,7 @@ void CResourceFinder::onExecute(IN void *pArg)
             SSM_CLEANUP_ASSERT(pResourceHandler->initHandler(*pResource, this));
             m_mapResourceHandler[pResource->get()->host() + pResource->get()->uri()] = pResourceHandler;
             pResource->get()->get(queryParams, std::bind(&OICResourceHandler::onGetResourceProfile,
-                                  pResourceHandler, std::placeholders::_1, std::placeholders::_2));
+                                  pResourceHandler, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             break;
 
         case RESOURCE_DISCOVER_SETUP_RESOURCE:

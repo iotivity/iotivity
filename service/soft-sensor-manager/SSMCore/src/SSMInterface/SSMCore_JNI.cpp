@@ -17,6 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
+#include "SSMCore.h"
 #include "SSMInterface/SSMCore_JNI.h"
 #include "Common/PlatformLayer.h"
 

@@ -23,6 +23,9 @@
 #include <string>
 #include <cstdlib>
 #include <pthread.h>
+#include <mutex>
+#include <condition_variable>
+
 #include "OCPlatform.h"
 #include "OCApi.h"
 
@@ -55,8 +58,9 @@ void printUsage()
 }
 
 // Callback to presence
-void presenceHandler(OCStackResult result, const unsigned int nonce)
+void presenceHandler(OCStackResult result, const unsigned int nonce, const std::string& hostAddress)
 {
+    std::cout << "Received presence notification from : " << hostAddress << std::endl;
     std::cout << "In presenceHandler: ";
 
     switch(result)
@@ -120,7 +124,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
             if(resourceURI == "/a/light")
             {
                 curResource = resource;
-                OCPlatform::OCPresenceHandle presenceHandle;
+                OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
                 if(TEST_CASE == TEST_UNICAST_PRESENCE_NORMAL)
                 {
@@ -186,7 +190,7 @@ int main(int argc, char* argv[]) {
     {
         std::cout << "Created Platform..."<<std::endl;
 
-        OCPlatform::OCPresenceHandle presenceHandle;
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         if(TEST_CASE == TEST_MULTICAST_PRESENCE_NORMAL)
         {
@@ -205,10 +209,15 @@ int main(int argc, char* argv[]) {
             OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
             std::cout<< "Finding Resource... " <<std::endl;
         }
-        while(true)
-        {
-            // some operations
-        }
+        //
+        // A condition variable will free the mutex it is given, then do a non-
+        // intensive block until 'notify' is called on it.  In this case, since we
+        // don't ever call cv.notify, this should be a non-processor intensive version
+        // of while(true);
+        std::mutex blocker;
+        std::condition_variable cv;
+        std::unique_lock<std::mutex> lock(blocker);
+        cv.wait(lock);
 
     }catch(OCException& e)
     {

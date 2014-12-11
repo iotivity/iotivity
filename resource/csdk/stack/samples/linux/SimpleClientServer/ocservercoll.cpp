@@ -421,13 +421,14 @@ void *ChangeLightRepresentation (void *param)
     (void)param;
     OCStackResult result = OC_STACK_ERROR;
 
-    while (1)
+    while (!gQuitFlag)
     {
         sleep(10);
         light.power += 5;
         if (gLightUnderObservation)
         {
-     OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", light.power);
+            OC_LOG_V(INFO, TAG,
+                " =====> Notifying stack of new power level %d\n", light.power);
             result = OCNotifyAllObservers (light.handle, OC_NA_QOS);
             if (OC_STACK_NO_OBSERVERS == result)
             {
@@ -570,5 +571,3 @@ void createResources()
     res = OCBindResource(room, fan);
     OC_LOG_V(INFO, TAG, "OC Bind Contained Resource to resource: %s", getResult(res));
 }
-
-

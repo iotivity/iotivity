@@ -71,12 +71,13 @@ INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS  += -I$(GTEST_DIR)/include
 
 CC_FLAGS.debug      := -g -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
-                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) 
-    					
-LDLIBS		+= -loctbstack -lgtest -lgtest_main -lpthread
-CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS) -L$(GTEST_DIR)/lib/.libs
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD)
+
+LDLIBS		+= -loctbstack -lpthread
+CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS) $(GTEST_DIR)/lib/.libs/libgtest.a \
+			   $(GTEST_DIR)/lib/.libs/libgtest_main.a
 
 SOURCES := unittest.cpp
 
@@ -84,7 +85,7 @@ OBJECTS:= $(patsubst %.c, $(OBJ_DIR)/%.o, $(SOURCES))
 
 PROGRAMS := unittest
 
-all:	prep_dirs $(OBJECTS) $(PROGRAMS) 
+all:	prep_dirs $(OBJECTS) $(PROGRAMS)
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
@@ -93,7 +94,7 @@ prep_dirs:
 $(OBJ_DIR)/%.o: %.cpp
 	$(CC) -c $(CPPFLAGS) $< -o $@
 
-unittest: $(OBJ_DIR)/unittest.o 
+unittest: $(OBJ_DIR)/unittest.o
 	$(CC) $^ $(CPPFLAGS) -o $(OUT_DIR)/$(BUILD)/$@
 
 .PHONY: clean

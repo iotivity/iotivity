@@ -4,75 +4,66 @@
 #Note: The paths must keep consistent with oic-utilities
 ######################################################################
 import os
+import platform
 
-Import('env', 'BUILD_TARGET', 'TARGET_CPU_ARCH', 'SRC_TOP_DIR')
+Import('env', 'lib_env')
 
-# Add 'OIC_UTILS' build option for user to set oic-utilities project path
-default_dir = os.path.abspath(SRC_TOP_DIR + '/../oic-utilities')
-OIC_UTILS = ARGUMENTS.get('OIC_UTILS', default_dir)
-if not os.path.exists(OIC_UTILS):
-	print '''
-*********************************** Error: ************************************
-*   oic-utilities project directory(OIC_UTILS) isn't set properly, please set *
-* enviornment variable OIC_UTILS or set it in command line:                   *
-*     # scons  OIC_UTILS=<path to oic-utilities> ...                          *
-*******************************************************************************
-'''
-	Exit(1)
+target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
+src_dir = env.get('SRC_DIR')
 
-if env.get('OIC_UTILS') is None:
-	vars = Variables()
-	vars.Add(PathVariable('OIC_UTILS', 'oic-utilities project path', OIC_UTILS))
-	vars.Update(env)
-	Help(vars.GenerateHelpText(env))
-	Export('OIC_UTILS')
+if target_os not in ['linux', 'darwin']:
+	utils_path = env.get('OIC_UTILS')
 
-	######################################################################
-	# Check dependent packages (Linux)
-	######################################################################
-	if BUILD_TARGET == 'linux':
-		# Delete the temp files of configuration
-		if env.GetOption('clean'):
-			if os.path.exists(SRC_TOP_DIR + 'config.log'):
-				Execute(Delete(SRC_TOP_DIR + 'config.log'))
-				Execute(Delete(SRC_TOP_DIR + '.sconsign.dblite'))
-				Execute(Delete(SRC_TOP_DIR + '.sconf_temp'))
-		elif not env.GetOption('help'):
-			conf = Configure(env)
-
-			if not conf.CheckLib('boost_program_options'):
-				print 'Did not find boost_program_options, exiting!'
-				Exit(1)
-
-			conf.Finish()
-
-	######################################################################
-	# The 'include' path of third party libraries
-	######################################################################
-
-	if BUILD_TARGET == 'android':
-		env.AppendUnique(CPPPATH = [OIC_UTILS + '/android/boost/include'])
-
-	######################################################################
-	# The path of third party libraries binary
-	######################################################################
-	if BUILD_TARGET == 'android':
-		arch = TARGET_CPU_ARCH
-		if arch == 'armeabi-v7a-hard':
-			arch = 'armeabi-v7a'
-
-		if arch not in ['x86', 'armeabi', 'armeabi-v7a']:
+######################################################################
+# Check dependent packages (Linux only)
+######################################################################
+if target_os == 'linux':
+	if not env.GetOption('help'):
+		if not target_arch == platform.machine():
 			print '''
 *********************************** Warning ***********************************
-* current only x86, armeabi, armeabi-v7a libraries are offered!               *
+* You are trying cross build, please make sure (%s) version libraries are
+* installed!       	                                                      *
+*******************************************************************************
+''' % target_arch
+
+		conf = Configure(lib_env)
+
+		if not conf.CheckLib('boost_program_options'):
+			print 'Did not find boost_program_options, exiting!'
+			Exit(1)
+
+		conf.Finish()
+
+######################################################################
+# The 'include' path of third party libraries
+######################################################################
+if target_os == 'android':
+	lib_env.AppendUnique(CPPPATH = [utils_path + '/android/boost/include'])
+
+######################################################################
+# The path of third party libraries binary
+######################################################################
+if target_os == 'android':
+	if target_arch == 'armeabi-v7a-hard':
+		target_arch = 'armeabi-v7a'
+
+	if target_arch not in ['x86', 'armeabi', 'armeabi-v7a']:
+		if not env.GetOption('help') and not env.GetOption('clean'):
+			print '''
+*********************************** Warning ***********************************
+* current only x86, armeabi, armeabi-v7a libraries are provided!              *
 *******************************************************************************
 '''
-		else:
-			env.AppendUnique(LIBPATH = [OIC_UTILS + '/android/boost/libs/' + arch])
+	else:
+		lib_env.AppendUnique(LIBPATH = [utils_path + '/android/boost/libs/' + target_arch])
+		# Too much boost warning, suppress the warning
+		lib_env.AppendUnique(CCFLAGS = ['-w'])
 
-	elif BUILD_TARGET == 'ios':
-		env.AppendUnique(FRAMEWORKPATH = [OIC_UTILS + '/ios/frameworks/'])
-		env.AppendUnique(FRAMEWORKS = ['boost'])
-	elif BUILD_TARGET == 'darwin':
-		env.AppendUnique(CPPPATH = ['/usr/local/include'])
-		env.AppendUnique(LIBPATH = ['/usr/local/lib'])
+elif target_os == 'ios':
+	lib_env.AppendUnique(FRAMEWORKPATH = [utils_path + '/ios/frameworks/'])
+	lib_env.AppendUnique(FRAMEWORKS = ['boost'])
+elif target_os == 'darwin':
+	lib_env.AppendUnique(CPPPATH = ['/usr/local/include'])
+	lib_env.AppendUnique(LIBPATH = ['/usr/local/lib'])

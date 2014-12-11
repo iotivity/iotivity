@@ -24,6 +24,7 @@
 #include "Common/PlatformLayer.h"
 #include "Common/InternalInterface.h"
 #include "OCPlatform.h"
+#include "OCApi.h"
 
 class CResourceFinder :
     public CObjectRoot<CObjectMultiThreadModel>
@@ -90,7 +91,7 @@ CLEANUP:
 
                     m_pResource.get()->observe(OC::ObserveType::Observe, queryParams,
                                                std::bind(&OICResourceHandler::onResourceDataReceived,
-                                                         this, std::placeholders::_1, std::placeholders::_2));
+                                                         this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 
                     return SSM_S_OK;
                 }
@@ -102,7 +103,9 @@ CLEANUP:
                     return SSM_S_OK;
                 }
 
-                void onResourceDataReceived(const OC::OCRepresentation &representation, const int &eCode)
+                void onResourceDataReceived(const OC::HeaderOptions headerOptions,
+                                            const OC::OCRepresentation &representation,
+                                            const int &eCode, const int &sequenceNumber)
                 {
                     if (eCode == 0)
                     {
@@ -121,9 +124,9 @@ CLEANUP:
                         {
                             for (size_t i = 0; i < attributeMap.size() / 3; i++)
                             {
-                                outputProperty["name"] = attributeMap.find(std::to_string(i * 3))->second.front();
-                                outputProperty["type"] = attributeMap.find(std::to_string(i * 3 + 1))->second.front();
-                                outputProperty["value"] = attributeMap.find(std::to_string(i * 3 + 2))->second.front();
+                                outputProperty["name"] = attributeMap.find(toString(i * 3))->second;
+                                outputProperty["type"] = attributeMap.find(toString(i * 3 + 1))->second;
+                                outputProperty["value"] = attributeMap.find(toString(i * 3 + 2))->second;
                                 ctxData.outputProperty.push_back(outputProperty);
                             }
 
@@ -138,7 +141,8 @@ CLEANUP:
                     }
                 }
 
-                void onGetResourceProfile(const OC::OCRepresentation &representation, const int &eCode)
+                void onGetResourceProfile(const OC::HeaderOptions &headerOptions,
+                                          const OC::OCRepresentation &representation, const int &eCode)
                 {
                     //unpack attributeMap
 
@@ -162,9 +166,9 @@ CLEANUP:
                     //TODO: Temporally used for json parsing limitation
                     for (size_t i = 0; i < attributeMap.size() / 3; i++)
                     {
-                        outputProperty["name"] = attributeMap.find(std::to_string(i * 3))->second.front();
-                        outputProperty["type"] = attributeMap.find(std::to_string(i * 3 + 1))->second.front();
-                        outputProperty["value"] = attributeMap.find(std::to_string(i * 3 + 2))->second.front();
+                        outputProperty["name"] = attributeMap.find(toString(i * 3))->second;
+                        outputProperty["type"] = attributeMap.find(toString(i * 3 + 1))->second;
+                        outputProperty["value"] = attributeMap.find(toString(i * 3 + 2))->second;
                         pSSMResource->outputProperty.push_back(outputProperty);
                     }
                     /////////////////////////////////////////////////////
@@ -181,11 +185,16 @@ CLEANUP:
                 std::shared_ptr<OC::OCResource>     m_pResource;
                 IThreadClient                       *m_pResourceFinderClient;
                 IEvent                              *m_pEvent;
+
+                std::string toString(int t)
+                {
+                    std::ostringstream os;
+                    os << t;
+                    return os.str();
+                }
         };
 
         enum RESOURCE_DISCOVER_STATE {RESOURCE_DISCOVER_REQUESTPROFILE, RESOURCE_DISCOVER_SETUP_RESOURCE};
-        OC::OCPlatform                      *m_pPlatform;
-        CObjectPtr<IResourceConnectivity>   m_pResourceConnectivity;
         IResourceFinderEvent                *m_pResourceFinderEvent;
         CObjectPtr<ITasker>             m_pTasker;
         std::map<std::string , OICResourceHandler *> m_mapResourceHandler;

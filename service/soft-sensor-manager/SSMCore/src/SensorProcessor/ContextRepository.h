@@ -42,7 +42,8 @@ class CContextRepository :
 {
     private:
         CSimpleMutex                 m_mtxFileIO;
-        std::vector<ISSMResource *>   m_lstSensor;
+        std::vector<ISSMResource *>   m_lstPrimitiveSensor;
+        std::vector<ISSMResource *>   m_lstSoftSensor;
         CObjectPtr<IResourceFinder>  m_resourceFinder;
         std::string                  m_name;
         std::string                  m_type;
@@ -72,21 +73,21 @@ class CContextRepository :
 
 
         /**
-        * @fn           setCurrentDeviceInfo
-        * @brief        set device information
+        * @fn           initRepository
+        * @brief        initialize repository using given info
         *
         * @param        [in] std::string name - Device name
         * @param        [in] std::string type - Device Type
         * @param        [in] std::string pathSoftSensors - SoftSensors Repository path
         * @param        [in] std::string pathDescription - SoftSensors Description path
-        * @return       void
+        * @return       SSMRESULT
         *
         * @warning
         * @exception
         * @see
         */
-        void setCurrentDeviceInfo(IN std::string name, IN std::string type, IN std::string pathSoftSensors,
-                                  IN std::string pathDescription);
+        SSMRESULT initRepository(IN std::string name, IN std::string type, IN std::string pathSoftSensors,
+                                 IN std::string pathDescription);
 
         /**
         * @fn           getSoftSensorList

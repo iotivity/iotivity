@@ -1,0 +1,103 @@
+##
+# soft-sensor-manager project build script
+##
+
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+soft_sensor_manager_env = lib_env.Clone()
+
+target_os = env.get('TARGET_OS')
+# As in the source code, it includes arduino Time library (C++)
+# It requires compile the .c with g++
+if target_os == 'arduino':
+	soft_sensor_manager_env.Replace(CC = env.get('CXX'))
+	soft_sensor_manager_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+
+######################################################################
+# Build flags
+######################################################################
+if target_os not in ['windows', 'winrt']:
+	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+	if target_os != 'android':
+		soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
+
+#######################################################################
+## build SSM SDK
+#######################################################################
+sdk_env = soft_sensor_manager_env.Clone()
+sdk_env.AppendUnique(CPPPATH = ['SDK/include'])
+
+ssm_sdk = sdk_env.Object('SDK/src/SSMClient.cpp')
+i_ssmsdk = sdk_env.Install(env.get('BUILD_DIR'), )
+Alias('libSSMSDKLibrary', i_ssmsdk)
+env.AppendTarget('libSSMSDKLibrary')
+
+######################################################################
+# build DiscomfortIndexSensor plugin
+######################################################################
+DiscomfortIndexSensor_env = soft_sensor_manager_env.Clone()
+
+DiscomfortIndexSensor_env.AppendUnique(CCFLAGS = ['-fPIC'])
+DISCOMFORTINDEXSENSOR_DIR = 'SoftSensorPlugin/DiscomfortIndexSensor/'
+DiscomfortIndexSensor_env.AppendUnique(CPPPATH = [
+		DISCOMFORTINDEXSENSOR_DIR + 'include',
+		'SSMCore/src/SSMInterface/'
+		])
+
+DiscomfortIndexSensor_src = [ Glob(DISCOMFORTINDEXSENSOR_DIR + 'src/*.cpp')]
+
+DiscomfortIndexSensor = DiscomfortIndexSensor_env.SharedLibrary('DiscomfortIndexSensor', DiscomfortIndexSensor_src)
+DiscomfortIndexSensor_env.InstallTarget(DiscomfortIndexSensor, 'libDiscomfortIndexSensor')
+
+######################################################################
+# build SSM CORE
+######################################################################
+ssmcore_env = soft_sensor_manager_env.Clone()
+MODEL_DIR = "\"\\\"" + env.get('BUILD_DIR') + "\\\"\""
+LOCATION = "\"\\\"" + env.get('BUILD_DIR') + "HighContextDictionary.xml" + "\\\"\""
+
+ssmcore_env.AppendUnique(CPPDEFINES = ['MODEL_DIRECTORY='+MODEL_DIR, 'HIGH_LOCATION='+LOCATION])
+ssmcore_env.AppendUnique(CPPPATH = [
+		'SSMCore/include/',
+		'SSMCore/src/',
+		'SSMCore/src/Common/'
+		'SSMCore/src/QueryProcessor/'
+		'SSMCore/src/SensorProcessor/'
+		'SSMCore/src/SSMInterface/'
+		])
+
+import os.path
+
+if target_os != 'android':
+	SSMINTERFACE_PATH = 'SSMCore/src/SSMInterface/'
+	omit_src = ['SSMCore_JNI.cpp']
+	ssminterface_src = [f for f in env.Glob(SSMINTERFACE_PATH + '*.cpp') if os.path.basename(f.path) not in omit_src]
+else :
+	ssminterface_src = Glob(SSMINTERFACE_PATH + '*.cpp')
+
+ssm_core_cpp_src = [
+		'SSMCore/src/SSMResourceServerLauncher.cpp',
+		Glob('SSMCore/src/Common/*.cpp'),
+		Glob('SSMCore/src/QueryProcessor/*.cpp'),
+		Glob('SSMCore/src/SensorProcessor/*.cpp'),
+		ssminterface_src,
+		]
+
+ssm_core_c_src = [
+		'SSMCore/src/Common/sqlite3.c'
+]
+
+libssmcore = ssmcore_env.StaticLibrary(
+		target = 'SSMCoreUbuntu',
+		source = [ssm_core_cpp_src, ssm_core_c_src]
+		)
+
+ssmcore_env.InstallTarget(libssmcore, 'libSSMCORE')
+
+#######################################################################
+## build SampleApp
+#######################################################################
+#SConscript('SampleApp/SConscript')

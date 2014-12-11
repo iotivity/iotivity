@@ -1,4 +1,4 @@
-
+-include ../../../build/linux/root_path.inc
 -include ../../../build/linux/environment.mk
 
 BOOST=${BOOST_BASE}
@@ -6,12 +6,14 @@ SRC_PATH=../../src
 INC_PATH=../../include
 RST_NAME=release
 
+GAR=ar
+
 # Insert your project name.
-TARGET=SDKlib
+TARGET=${SSM_LIB}
 
 CXX=g++
 CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX
-CXX_INC=-I../../ -I${INC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
+CXX_INC=-I../../ -I${INC_PATH}/ -I${FD_SSMCORE}/include -I${FD_SSMCORE}/src -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
 CXX_LIB= 
 
 SRCLIST=${wildcard ${SRC_PATH}/*.cpp}
@@ -30,7 +32,7 @@ pre_job:
 	@echo " "
 
 ${TARGET}: ${OBJLIST}
-	@cp -Rdp ./*.o ./${RST_NAME}/ 
+	${GAR} -r ./${RST_NAME}/$@  ./*.o
 	@cp -Rdp ${INC_PATH}/*.h ./${RST_NAME}/
 	@echo " " 
 

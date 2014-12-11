@@ -245,11 +245,10 @@ int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
     }
 
     // bind to multicast port
-    struct sockaddr_in sa;
+    struct sockaddr_in sa = {0};
     struct sockaddr_in *sin;
 
     sin = (struct sockaddr_in *)(ipmcastaddr->addr);
-    memset(&sa, 0, sizeof(sa));
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = sin->sin_addr.s_addr;
     sa.sin_port = sin->sin_port;
@@ -260,8 +259,7 @@ int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
     }
 
     // add membership to receiving socket
-    struct ip_mreq mreq;
-    memset(&mreq, 0, sizeof(struct ip_mreq));
+    struct ip_mreq mreq = {0};
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     mreq.imr_multiaddr.s_addr = sin->sin_addr.s_addr;
     if ((ret = setsockopt(sfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mreq, sizeof(mreq))) < 0) {
@@ -354,6 +352,30 @@ int32_t OCClose(int32_t sockfd)
     return (close(sockfd));
 }
 
+//convert OCDevAddr to String
+int32_t OCDevAddrToString(OCDevAddr* addr, char* stringAddress)
+{
+    uint8_t a;
+    uint8_t b;
+    uint8_t c;
+    uint8_t d;
+
+    if(OCDevAddrToIPv4Addr(addr, &a, &b, &c, &d) == 0)
+    {
+        if (!stringAddress)
+        {
+            return ERR_INVALID_INPUT;
+        }
+
+        sprintf(stringAddress, "%u.%u.%u.%u",
+                a, b, c, d);
+        return ERR_SUCCESS;
+    }
+    else
+    {
+        return ERR_INVALID_INPUT;
+    }
+}
 
 /// Retrieve the IPv4 address embedded inside OCDev address data structure
 int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,

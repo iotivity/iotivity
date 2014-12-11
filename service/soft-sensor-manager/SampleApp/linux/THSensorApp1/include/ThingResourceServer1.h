@@ -35,8 +35,8 @@ using namespace std;
 #include <string>
 #include <cstdlib>
 
-#define COAP_IP                 "134.134.161.33"
-#define COAP_PORT               56838
+#define COAP_IP                 "0.0.0.0"
+#define COAP_PORT               0
 #define COAP_MODE               ModeType::Server
 #define COAP_SRVTYPE        ServiceType::InProc
 
@@ -50,27 +50,39 @@ class TemphumidResource
         /// Access this property from a TB client
         int m_humid;
         int m_temp;
-        string m_resourceUri;
+        std::string m_resourceUri;
+        std::vector<std::string> m_resourceTypes;
+        std::vector<std::string> m_resourceInterfaces;
         OCResourceHandle m_resourceHandle;
+        OCRepresentation m_resourceRep;
+        ObservationIds m_interestedObservers;
 
     public:
         /// Constructor
         TemphumidResource() :
-            m_humid(0), m_temp(0), m_resourceUri("/Thing_TempHumSensor1"), m_resourceHandle(NULL)
+            m_humid(0), m_temp(0)
         {
+            m_resourceUri = "/Thing_TempHumSensor1";
+            m_resourceTypes.push_back(COAP_TYPE_NAME);
+            m_resourceInterfaces.push_back(DEFAULT_INTERFACE);
+
+            printf("Running thing as %s\n", m_resourceUri.c_str());
+            m_resourceRep.setUri(m_resourceUri);
+            m_resourceRep.setResourceTypes(m_resourceTypes);
+            m_resourceRep.setResourceInterfaces(m_resourceInterfaces);
         }
 
         ~TemphumidResource()
         {
         }
 
-        void registerResource(OC::OCPlatform &platform);
+        void registerResource();
 
         OCResourceHandle getHandle();
 
-        void setRepresentation(AttributeMap &attributeMap);
+        void setResourceRepresentation(OCRepresentation &rep);
 
-        void getRepresentation(AttributeMap &attributeMap);
+        OCRepresentation getResourceRepresentation();
 };
 
 #endif /* THINGRESOURCESERVER_H_ */

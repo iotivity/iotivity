@@ -68,23 +68,13 @@ namespace OIC
             int stopPlugins(const std::string key, const std::string value);
 
             /**
-            * Start plugin
-            * This function will load dynamic plugin library on memory and call start function of plugin to be initialized.
+            * Rescan Plugin.
+            * This function will call rescan function of plugins in the configuration folder
             *
             * @param Plugin
             * @return int, 1 is success, 0 is fail.
             */
-            int startPlugins(Plugin *const plugin);
-
-
-            /**
-            * Stop Plugin.
-            * This function will call stop function of plugin and unload dynamic plugin library from memory.
-            *
-            * @param Plugin
-            * @return int, 1 is success, 0 is fail.
-            */
-            int stopPlugins(Plugin *const plugin);
+            int rescanPlugin();
 
             /**
             * Get Plugin list.
@@ -94,6 +84,14 @@ namespace OIC
             * @return
             */
             std::vector<Plugin> getPlugins(void);
+
+            /**
+            * Get Plugin state.
+            *
+            * @param Plugin ID
+            * @return Plugin state.
+            */
+            std::string getState(const std::string plugID);
 
         private:
             PluginManagerImpl *pluginManagerImpl;

@@ -65,6 +65,8 @@ typedef struct {
 
 // following structure will be created in occoap and passed up the stack on the server side
 typedef struct {
+    // Observe option field
+    uint32_t observationOption;
     // the REST method retrieved from received request PDU
     OCMethod method;
     // resourceUrl will be filled in occoap using the path options in received request PDU
@@ -75,8 +77,6 @@ typedef struct {
     unsigned char reqJSONPayload[MAX_REQUEST_LENGTH];
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
-    // Observe option field
-    uint32_t observationOption;
     // An array of the received vendor specific header options
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
@@ -101,10 +101,10 @@ typedef struct {
 
 typedef struct
 {
-    // qos is indicating if the request is CON or NON
-    OCQualityOfService qos;
     // Observe option field
     uint32_t observationOption;
+    // qos is indicating if the request is CON or NON
+    OCQualityOfService qos;
     // Allow the entity handler to pass a result with the response
     OCStackResult result;
     // IP address & port of client registered for observe

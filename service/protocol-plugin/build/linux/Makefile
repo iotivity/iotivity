@@ -20,14 +20,14 @@ plugins:
 	cd $(PROTOCOL_ROOT)plugins/mqtt-light/build/linux && $(MAKE)
 
 sample-app:
-	cd $(PROTOCOL_ROOT)sample-app/linux/fan-control && $(MAKE)
-	cp -Rdp $(PROTOCOL_ROOT)sample-app/linux/fan-control/fanclient release/
+	cd $(PROTOCOL_ROOT)sample-app/linux/mqtt && $(MAKE)
+	cp -Rdp $(PROTOCOL_ROOT)plugin-manager/build/linux/libpmimpl.so $(PROTOCOL_ROOT)sample-app/linux/mqtt/
+	cp -Rdp $(PROTOCOL_ROOT)sample-app/linux/mqtt/mqttclient release/
 	
 
 clean:
 	cd $(PROTOCOL_ROOT)plugin-manager/build/linux && $(MAKE) clean
 	cd $(PROTOCOL_ROOT)plugins/mqtt-fan/build/linux && $(MAKE) clean
 	cd $(PROTOCOL_ROOT)plugins/mqtt-light/build/linux && $(MAKE) clean
-	cd $(PROTOCOL_ROOT)plugins/hue/build/linux && $(MAKE) clean
-	cd $(PROTOCOL_ROOT)sample-app/linux/fan-control && $(MAKE) clean
+	cd $(PROTOCOL_ROOT)sample-app/linux/mqtt && $(MAKE) clean
 	rm -rf release

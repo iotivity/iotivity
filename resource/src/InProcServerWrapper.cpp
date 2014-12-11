@@ -120,10 +120,13 @@ void formResourceRequest(OCEntityHandlerFlag flag,
         pRequest->setRequestHandlerFlag(
                    OC::RequestHandlerFlag::RequestFlag | OC::RequestHandlerFlag::ObserverFlag);
 
-        OC::ObservationInfo observationInfo;
-        observationInfo.action = (OC::ObserveAction) entityHandlerRequest->obsInfo.action;
-        observationInfo.obsId = entityHandlerRequest->obsInfo.obsId;
-        pRequest->setObservationInfo(observationInfo);
+        if(entityHandlerRequest)
+        {
+            OC::ObservationInfo observationInfo;
+            observationInfo.action = (OC::ObserveAction) entityHandlerRequest->obsInfo.action;
+            observationInfo.obsId = entityHandlerRequest->obsInfo.obsId;
+            pRequest->setObservationInfo(observationInfo);
+        }
     }
 }
 

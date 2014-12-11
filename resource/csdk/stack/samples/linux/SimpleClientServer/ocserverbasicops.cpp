@@ -29,6 +29,10 @@
 #include "cJSON.h"
 #include "ocserverbasicops.h"
 
+//string length of "/a/led/" + std::numeric_limits<int>::digits10 + '\0'"
+// 7 + 9 + 1 = 17
+const int URI_MAXSIZE = 17;
+
 volatile sig_atomic_t gQuitFlag = 0;
 
 static LEDResource LED;
@@ -148,8 +152,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, cha
         if (gCurrLedInstance < SAMPLE_MAX_NUM_POST_INSTANCE)
         {
             // Create new LED instance
-            char newLedUri[15] = "/a/led/";
-            sprintf (newLedUri + strlen(newLedUri), "%d", gCurrLedInstance);
+            char newLedUri[URI_MAXSIZE ];
+            snprintf(newLedUri, URI_MAXSIZE, "/a/led/%d", gCurrLedInstance);
 
             json = cJSON_CreateObject();
 

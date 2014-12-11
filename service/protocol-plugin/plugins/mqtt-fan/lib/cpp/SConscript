@@ -1,0 +1,24 @@
+##
+# mosquittopp build script
+##
+import platform,os
+Import('env')
+
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+mosquittopp_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+######################################################################
+# Build flags
+######################################################################
+mosquittopp_env.AppendUnique(CPPPATH = ['./', '../'])
+if target_os not in ['windows', 'winrt']:
+	mosquittopp_env.AppendUnique(CFLAGS = ['-Wall', '-ggdb', '-O2', '-fPIC'])
+
+mosquittopp_env.AppendUnique(LIBS = ['mosquitto', 'ssl', 'crypto'])
+######################################################################
+# Source files and Targets
+######################################################################
+mosquittopp = mosquittopp_env.SharedLibrary('mosquittopp', 'mosquittopp.cpp')
+mosquittopp_env.InstallTarget(mosquittopp, 'libmosquittopp')

@@ -44,7 +44,7 @@ class CSoftSensorManager :
     private:
         CObjectPtr<IContextRepository>      m_pContextRepository;
         CObjectPtr<IPropagationEngine>      m_pPropagationEngine;
-        CObjectPtr<IResponseReactor>        m_pResponseReactor;
+        CObjectPtr<ISensingEngine>          m_pSensingEngine;
 
     public:
         SSMRESULT finalConstruct();

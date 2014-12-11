@@ -26,6 +26,8 @@
 #include <functional>
 
 #include <pthread.h>
+#include <mutex>
+#include <condition_variable>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
@@ -414,7 +416,7 @@ void PrintUsage()
 }
 
 
-int main(int argc, char* argv[1])
+int main(int argc, char* argv[])
 {
     PrintUsage();
 
@@ -456,11 +458,15 @@ int main(int argc, char* argv[1])
 
         myLight.addType(std::string("core.brightlight"));
         myLight.addInterface(std::string("oc.mi.ll"));
-        // Perform app tasks
-        while(true)
-        {
-            // some tasks
-        }
+
+        // A condition variable will free the mutex it is given, then do a non-
+        // intensive block until 'notify' is called on it.  In this case, since we
+        // don't ever call cv.notify, this should be a non-processor intensive version
+        // of while(true);
+        std::mutex blocker;
+        std::condition_variable cv;
+        std::unique_lock<std::mutex> lock(blocker);
+        cv.wait(lock);
     }
     catch(OCException e)
     {
@@ -469,4 +475,6 @@ int main(int argc, char* argv[1])
 
     // No explicit call to stop the platform.
     // When OCPlatform destructor is invoked, internally we do platform cleanup
+
+    return 0;
 }

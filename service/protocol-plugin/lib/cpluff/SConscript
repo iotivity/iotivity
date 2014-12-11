@@ -1,0 +1,31 @@
+##
+#c-pluff build script
+##
+import platform,os
+Import('env')
+
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+cpluff_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+######################################################################
+# Build flags
+######################################################################
+cpluff_env.AppendUnique(CPPPATH = ['libcpluff/'])
+if target_os not in ['windows', 'winrt']:
+	cpluff_env.AppendUnique(CFLAGS = ['-g','-fPIC', '-DPIC',
+				'-DDLOPEN_POSIX',
+				'-DCP_HOST=\\"' + platform.platform() + '\\"',
+				'-DCP_SHREXT=\\".so\\"',
+				'-DCP_FNAMESEP_CHAR=\\"\'/\'\\"',
+				'-DCP_THREADS=\\"Posix\\"'])
+	cpluff_env.AppendUnique(LIBS = ['dl'])
+######################################################################
+# Source files and Targets
+######################################################################
+cpluff_src = [f for f in env.Glob('libcpluff/*.c') if os.path.basename(f.path) not in ['thread_windows.c']]
+cpluff_src.extend(env.Glob('kazlib/*.c'))
+
+cpluff = cpluff_env.StaticLibrary('cpluff', cpluff_src)
+cpluff_env.InstallTarget(cpluff, 'libcpluff')

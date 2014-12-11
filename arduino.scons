@@ -1,0 +1,11 @@
+##
+# This script includes arduino specific config for oic-resource
+##
+Import('env')
+
+env.ImportLib('Time')
+if env.get('NET') == 'Ethernet':
+	env.ImportLib('Ethernet')
+else:
+	env.ImportLib('WiFi')
+env.ImportLib('SPI')

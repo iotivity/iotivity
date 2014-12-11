@@ -126,8 +126,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 {
     // silence warnings
     (void) ctx;
-    OCServerProtocolRequest protocolRequest;
-    memset(&protocolRequest, 0, sizeof(OCServerProtocolRequest));
+    OCServerProtocolRequest protocolRequest = {(OCMethod)0};
     coap_block_t rcvdBlock1;
     coap_block_t rcvdBlock2;
     memset(&rcvdBlock1, COAP_BLOCK_FILL_VALUE, sizeof(coap_block_t));
@@ -292,8 +291,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         const coap_queue_t * rcvdResponse) {
     OCResponse * response = NULL;
     OCCoAPToken rcvdToken;
-    OCClientResponse clientResponse;
-    memset(&clientResponse, 0, sizeof(OCClientResponse));
+    OCClientResponse clientResponse = {0};
     ClientCB * cbNode = NULL;
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
     uint32_t sequenceNumber = OC_OBSERVE_NO_OPTION;
@@ -533,7 +531,18 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                     remotePortNu);
                 mcNode = GetMCPresenceNode(senderUri);
 
-                if(mcNode != NULL)
+                if(maxAge == 0)
+                {
+                    OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+                    response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
+                    if(cbNode->presence)
+                    {
+                        OCFree(cbNode->presence->timeOut);
+                        OCFree(cbNode->presence);
+                        cbNode->presence = NULL;
+                    }
+                }
+                else if(mcNode != NULL)
                 {
                     if(mcNode->nonce == clientResponse.sequenceNumber)
                     {
