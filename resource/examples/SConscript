@@ -1,10 +1,12 @@
 ##
 # Examples build script
 ##
-Import('env', 'RELEASE_BUILD', 'BUILD_TARGET', 'BUILD_DIR', 'SRC_TOP_DIR')
+Import('env')
 # Add third party libraries
-SConscript(SRC_TOP_DIR + '/third_party_libs.scons')
-examples_env = env.Clone()
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+examples_env = lib_env.Clone()
 
 ######################################################################
 # Build flags
@@ -19,34 +21,52 @@ examples_env.AppendUnique(CPPPATH = [
 		'../oc_logger/include'
 		])
 
-if BUILD_TARGET not in ['windows', 'winrt']:
-	examples_env.AppendUnique(CXXFLAGS = ['-std=c++11', '-Wall'])
+target_os = env.get('TARGET_OS')
+if target_os not in ['windows', 'winrt']:
+	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 
-examples_env.AppendUnique(LIBPATH = [BUILD_DIR])
+	# Note: 'pthread' is in libc for android. On other platform, if use
+	# new gcc(>4.9?) it isn't required, otherwise, it's required
+	if target_os != 'android':
+		examples_env.AppendUnique(LIBS = ['-lpthread'])
+
+examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
 
-if BUILD_TARGET == 'android':
+if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	examples_env.AppendUnique(LIBS = ['gnustl_static'])
-	examples_env.AppendUnique(LINKFLAGS = ['-static'])
 	examples_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 
-	if not RELEASE_BUILD:
+	if not env.get('RELEASE'):
 		examples_env.AppendUnique(LIBS = ['log'])
+
+if target_os in ['darwin', 'ios']:
+	examples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
 simpleserver = examples_env.Program('simpleserver', 'simpleserver.cpp')
+simpleserverHQ = examples_env.Program('simpleserverHQ', 'simpleserverHQ.cpp')
 simpleclient = examples_env.Program('simpleclient', 'simpleclient.cpp')
+simpleclientHQ = examples_env.Program('simpleclientHQ', 'simpleclientHQ.cpp')
+fridgeserver = examples_env.Program('fridgeserver', 'fridgeserver.cpp')
+fridgeclient = examples_env.Program('fridgeclient', 'fridgeclient.cpp')
 presenceserver = examples_env.Program('presenceserver', 'presenceserver.cpp')
 presenceclient = examples_env.Program('presenceclient', 'presenceclient.cpp')
 simpleclientserver = examples_env.Program('simpleclientserver', 'simpleclientserver.cpp')
 roomserver = examples_env.Program('roomserver', 'roomserver.cpp')
 roomclient = examples_env.Program('roomclient', 'roomclient.cpp')
+garageserver = examples_env.Program('garageserver', 'garageserver.cpp')
+garageclient = examples_env.Program('garageclient', 'garageclient.cpp')
 
-Alias("examples", [simpleserver, simpleclient, presenceserver, presenceclient,
-		simpleclientserver, roomserver, roomclient])
-env.AppendUnique(TS = ['examples'])
+Alias("examples", [simpleserver, simpleserverHQ, simpleclient, simpleclientHQ,
+		fridgeserver, fridgeclient, presenceserver, presenceclient,
+		simpleclientserver, roomserver, roomclient, garageserver,
+		garageclient])
+env.AppendTarget('examples')
 
-if BUILD_TARGET not in ['ios']:
-	SConscript(BUILD_DIR + 'examples/ocicuc/SConscript')
+#ios doesn't allow run application from terminal, so won't build these examples
+if target_os != 'ios':
+	SConscript('ocicuc/SConscript')

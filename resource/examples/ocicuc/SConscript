@@ -1,11 +1,12 @@
 ##
 # Examples build script
 ##
-Import('env', 'RELEASE_BUILD', 'BUILD_TARGET', 'BUILD_DIR', 'SRC_TOP_DIR')
+Import('env')
 # Add third party libraries
-SConscript(SRC_TOP_DIR + '/third_party_libs.scons')
-ocicuc_env = env.Clone()
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
+ocicuc_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
@@ -18,22 +19,22 @@ ocicuc_env.AppendUnique(CPPPATH = [
 		'../../oc_logger/include'
 		])
 
-ocicuc_env.AppendUnique(LIBPATH = [BUILD_DIR])
+ocicuc_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 ocicuc_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
 
-if BUILD_TARGET not in ['windows', 'winrt']:
-	ocicuc_env.AppendUnique(CXXFLAGS = ['-std=c++11'])
+target_os = env.get('TARGET_OS')
+if target_os not in ['windows', 'winrt']:
+	ocicuc_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
 
-if BUILD_TARGET == 'android':
+if target_os == 'android':
 	ocicuc_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	ocicuc_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 	ocicuc_env.AppendUnique(LIBS = ['boost_program_options-gcc-mt-1_49', 'boost_thread-gcc-mt-1_49', 'gnustl_static'])
-	ocicuc_env.AppendUnique(LINKFLAGS = ['-static'])
 
-	if not RELEASE_BUILD:
+	if not env.get('RELEASE'):
 		ocicuc_env.AppendUnique(LIBS = ['log'])
 
-if BUILD_TARGET == 'darwin':
+if target_os == 'darwin':
 	ocicuc_env.AppendUnique(LIBS = ['boost_program_options'])
 
 ######################################################################
@@ -41,8 +42,8 @@ if BUILD_TARGET == 'darwin':
 ######################################################################
 client = ocicuc_env.Program('client', ['client.cpp', 'driver.cpp', 'utility.cpp'])
 server = ocicuc_env.Program('server', ['server.cpp', 'driver.cpp', 'utility.cpp', 'light_resource.cpp'])
-monoprocess = ocicuc_env.Program('monoprocess',
-		['monoprocess.cpp', 'driver.cpp', 'utility.cpp', 'light_resource.cpp'])
+monoprocess = ocicuc_env.Program('monoprocess', ['monoprocess.cpp', 'driver.cpp', 'utility.cpp', 'light_resource.cpp'])
+small_example = ocicuc_env.Program('small_example', ['small_example.cpp', 'driver.cpp', 'utility.cpp'])
 
-Alias("examples_ocicuc", [client, server, monoprocess])
-env.AppendUnique(TS = ['examples_ocicuc'])
+Alias("examples_ocicuc", [client, server, monoprocess, small_example])
+env.AppendTarget('examples_ocicuc')

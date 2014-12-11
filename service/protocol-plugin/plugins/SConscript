@@ -1,0 +1,40 @@
+##
+# Plugins build script
+##
+
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+plugins_env = lib_env.Clone()
+
+target_os = env.get('TARGET_OS')
+######################################################################
+# Build flags
+######################################################################
+plugins_env.AppendUnique(CPPPATH = ['../lib/cpluff/libcpluff'])
+
+if target_os not in ['windows', 'winrt']:
+	plugins_env.AppendUnique(CXXFLAGS = ['-g3', '-Wall', '-pthread', '-std=c++0x'])
+	plugins_env.AppendUnique(LINKFLAGS = ['-fPIC'])
+
+	if target_os not in ['arduino', 'android']:
+		plugins_env.AppendUnique(LIBS = ['pthread'])
+
+if target_os == 'android':
+	plugins_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	plugins_env.AppendUnique(LIBS = ['gnustl_static'])
+	plugins_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+mqtt_fan_src = Glob('mqtt-fan/src/' + '*.cpp')
+fanserver = plugins_env.SharedLibrary('fanserver_mqtt_plugin', mqtt_fan_src)
+
+mqtt_light_src = Glob('mqtt-light/src/' + '*.cpp')
+lightserver = plugins_env.SharedLibrary('lightserver_mqtt_plugin', mqtt_light_src)
+
+SConscript('mqtt-fan/lib/SConscript')

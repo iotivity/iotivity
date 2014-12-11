@@ -1,0 +1,36 @@
+##
+# things_manager project build script
+##
+
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+
+things_manager_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+######################################################################
+# Build flags
+######################################################################
+things_manager_env.AppendUnique(CPPPATH = ['tgm/inc'])
+things_manager_env.AppendUnique(CPPPATH = ['sdk/inc'])
+
+if target_os not in ['windows', 'winrt']:
+	things_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+	if target_os != 'android':
+		things_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
+
+if target_os == 'android':
+	things_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	things_manager_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+tgmsdk = things_manager_env.StaticLibrary('TGMSDKLibrary', 'sdk/src/TGMClient.cpp')
+
+things_manager_env.InstallTarget(tgmsdk, 'libTGMSDK')
+
+#Go to build sample apps
+SConscript('sampleapp/SConscript')

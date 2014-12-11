@@ -1,0 +1,9 @@
+##
+# sampleapp build script
+##
+
+Import('env')
+
+if env.get('TARGET_OS') == 'linux':
+	# Build linux sample app
+	SConscript('linux/tgmclient/SConscript')

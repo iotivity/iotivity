@@ -1,0 +1,13 @@
+##
+# protocol plugin build script
+##
+Import('env')
+
+SConscript('lib/cpluff/SConscript')
+SConscript('plugin-manager/SConscript')
+
+#The code include pthread_cancel method, can't build on android
+if env.get('TARGET_OS') != 'android':
+	SConscript('plugins/SConscript')
+
+SConscript('sample-app/SConscript')

@@ -1,0 +1,28 @@
+##
+# linux sample app  build script
+##
+
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+linux_sample_env = lib_env.Clone()
+######################################################################
+# Build flags
+######################################################################
+linux_sample_env.AppendUnique(CPPPATH = ['../../../sdk/inc'])
+linux_sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+linux_sample_env.AppendUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger', 'TGMSDKLibrary'])
+
+if env.get('TARGET_OS') not in ['windows', 'winrt']:
+	linux_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+tgmclient = linux_sample_env.Program('tgmclient', 'tgmsdkclient.cpp')
+
+Alias("tgmclient_sample", tgmclient)
+env.AppendTarget('tgmclient_sample')

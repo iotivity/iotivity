@@ -1,6 +1,6 @@
 include $(CLEAR_VARS)
 LOCAL_MODULE := flags_probe
-include $(BUILD_SHARE_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
 
 $(info TC_PREFIX=$(TOOLCHAIN_PREFIX))
 $(info CFLAGS=$(TARGET_CFLAGS))

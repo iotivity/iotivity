@@ -1,0 +1,65 @@
+######################################################################
+# This script manages extra build options
+#
+######################################################################
+import os
+import platform
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
+src_dir = env.get('SRC_DIR')
+
+# Add 'OIC_UTILS' build option for user to set oic-utilities project path
+if target_os not in ['linux', 'darwin', 'arduino']:
+	default_dir = os.environ.get('OIC_UTILS')
+	if not default_dir:
+		default_dir = os.path.abspath(src_dir + '/../oic-utilities')
+	else:
+		default_dir = os.path.abspath(default_dir)
+
+	if not os.path.exists(default_dir):
+		default_dir = None
+
+	help_vars = Variables()
+	help_vars.Add(PathVariable('OIC_UTILS', 'oic-utilities project path', default_dir))
+	help_vars.Update(env)
+	Help(help_vars.GenerateHelpText(env))
+
+	utils_path = env.get('OIC_UTILS', default_dir)
+	if utils_path:
+		utils_path = os.path.abspath(utils_path)
+
+	if not utils_path or not os.path.exists(utils_path):
+		print '''
+*********************************** Error: ************************************
+*   oic-utilities project directory isn't set properly, please set enviornment*
+* variable OIC_UTILS or set it in command line:                               *
+*     # scons  OIC_UTILS=<path to oic-utilities> ...                          *
+*******************************************************************************
+'''
+		Exit(1)
+
+if target_os == 'arduino':
+	# Add 'NET' build option, let user select board network connection type
+	vars = Variables()
+	vars.Add(EnumVariable('NET', 'Network connection type', 'Ethernet', ['Ethernet', 'Wifi']))
+	vars.Update(env)
+	Help(vars.GenerateHelpText(env))
+
+# check 'cereal' library, temporarily put it here
+if not os.path.exists(src_dir + '/extlibs/cereal'):
+	print '''
+*********************************** Error: **************************************
+*  'Cereal' library doesn't exist. please download cereal to extlibs directory  *
+* add apply the patch as following:                                             *
+*     $ git clone https://github.com/USCiLab/cereal.git <src_dir>/extlibs/cereal*
+*     $ cd <src_dir>/extlibs/cereal                                             *
+*     $ git reset --hard 7121e91e6ab8c3e6a6516d9d9c3e6804e6f65245               *
+*     $ git apply ../../resource/patches/cereal_gcc46.patch                     *
+*********************************************************************************
+'''
+	Exit(1)
+else:
+	env.AppendUnique(CPPPATH = [src_dir + '/extlibs/cereal/include'])

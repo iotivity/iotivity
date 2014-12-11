@@ -1,33 +1,36 @@
 ##
-# liboctbstack (static library) build script
+# liboc_logger (share library) build script
 ##
 
-Import('env', 'BUILD_TARGET', 'TARGET_CPU_ARCH', 'BUILD_DIR', 'SRC_TOP_DIR')
+Import('env')
 
-# Add third party libraries
-SConscript(SRC_TOP_DIR + '/third_party_libs.scons')
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
-liboc_logger_env = env.Clone()
-
+liboc_logger_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
 liboc_logger_env.PrependUnique(CPPPATH = ['include'])
 
-if BUILD_TARGET == 'android':
+target_os = env.get('TARGET_OS')
+if target_os == 'android':
 	liboc_logger_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	liboc_logger_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+	liboc_logger_env.AppendUnique(LIBS = ['gnustl_static', 'log'])
 
-if BUILD_TARGET not in ['arduino', 'windows', 'winrt']:
-	liboc_logger_env.AppendUnique(CFLAGS = ['-Wall', '-std=c99'])
-	liboc_logger_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+if target_os not in ['arduino', 'windows', 'winrt']:
+	liboc_logger_env.AppendUnique(CFLAGS = ['-Wall', '-std=c99', '-fPIC'])
+	liboc_logger_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x', '-fPIC'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-liboc_logger_core = liboc_logger_env.StaticLibrary('oc_logger_core', 'c/oc_logger.c',  OBJPREFIX='core')
-liboc_logger = liboc_logger_env.StaticLibrary('oc_logger',
+liboc_logger_core = liboc_logger_env.SharedLibrary('oc_logger_core', 'c/oc_logger.c',  OBJPREFIX='core_')
+liboc_logger = liboc_logger_env.SharedLibrary('oc_logger',
 		['c/oc_logger.c', 'c/oc_console_logger.c', 'cpp/oc_ostream_logger.cpp'])
-i_loggers = liboc_logger_env.Install(BUILD_DIR, [liboc_logger_core, liboc_logger])
-Alias('liboc_logger', i_loggers)
-env.AppendUnique(TS = ['liboc_logger'])
+
+liboc_logger_env.InstallTarget([liboc_logger_core, liboc_logger], 'liboc_logger')
+
+if target_os not in ['ios']:
+	SConscript('examples/SConscript')
