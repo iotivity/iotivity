@@ -45,23 +45,22 @@ struct tm *tblock;           // Define a structure for time block
 
 int gObservation = 0;
 void *ChangeFanRepresentation (void *param);
+void *handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest);
 
 // Specifies where to notify all observers or list of observers
-// 0 - notifies all observers
-// 1 - notifies list of observers
-int isListOfObservers = 0;
+// false: notifies all observers
+// true: notifies list of observers
+bool isListOfObservers = false;
+
+// Specifies secure or non-secure
+// false: non-secure resource
+// true: secure resource
+bool isSecure = false;
+
+/// Specifies whether Entity handler is going to do slow response or not
+bool isSlowResponse = false;
 
 // Forward declaring the entityHandler
-
-/// This class represents a single resource named 'fanResource'. This resource has
-/// two simple properties named 'state' and 'power'
-
-
-
-// Forward declaring the entityHandler
-// void entityHandler(std::shared_ptr<OCResourceRequest> request,
-//                    std::shared_ptr<OCResourceResponse> response);
-
 /// This class represents a single resource named 'fanResource'. This resource has
 /// two simple properties named 'state' and 'power'
 typedef struct plugin_data_t plugin_data_t;
@@ -114,7 +113,7 @@ class FanResource
             // OCResourceProperty is defined ocstack.h
             uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
-            EntityHandler cb = std::bind(&FanResource::entityHandler, this, PH::_1, PH::_2);
+            EntityHandler cb = std::bind(&FanResource::entityHandler, this, PH::_1);
 
             // This will internally create and register the resource.
             OCStackResult result = OCPlatform::registerResource(
@@ -136,7 +135,7 @@ class FanResource
             // OCResourceProperty is defined ocstack.h
             uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
-            EntityHandler cb = std::bind(&FanResource::entityHandler, this, PH::_1, PH::_2);
+            EntityHandler cb = std::bind(&FanResource::entityHandler, this, PH::_1);
 
             OCResourceHandle resHandle;
 
@@ -251,13 +250,10 @@ class FanResource
     private:
         // This is just a sample implementation of entity handler.
         // Entity handler can be implemented in several ways by the manufacturer
-        OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request,
-                                            std::shared_ptr<OCResourceResponse> response)
+        OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
         {
-            OCEntityHandlerResult result = OC_EH_OK;
-
             cout << "\tIn Server CPP entity handler:\n";
-
+            OCEntityHandlerResult ehResult = OC_EH_ERROR;
             if (request)
             {
                 // Get the request type and request flag
@@ -272,40 +268,52 @@ class FanResource
                 }
                 if (requestFlag & RequestHandlerFlag::RequestFlag)
                 {
-                    cout << "\t\trequestFlag : Request === Handle by FanServer\n";
+                    cout << "\t\trequestFlag : Request   ===  Handle by FanServer\n";
+                    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+                    pResponse->setRequestHandle(request->getRequestHandle());
+                    pResponse->setResourceHandle(request->getResourceHandle());
 
                     // If the request type is GET
                     if (requestType == "GET")
                     {
                         cout << "\t\t\trequestType : GET\n";
-
-                        if (response)
+                        if (isSlowResponse) // Slow response case
                         {
-                            // TODO Error Code
-                            response->setErrorCode(200);
-
-                            response->setResourceRepresentation(get());
+                            static int startedThread = 0;
+                            if (!startedThread)
+                            {
+                                std::thread t(handleSlowResponse, (void *)this, request);
+                                startedThread = 1;
+                                t.detach();
+                            }
+                            ehResult = OC_EH_SLOW;
+                        }
+                        else // normal response case.
+                        {
+                            pResponse->setErrorCode(200);
+                            pResponse->setResponseResult(OC_EH_OK);
+                            pResponse->setResourceRepresentation(get());
+                            if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                            {
+                                ehResult = OC_EH_OK;
+                            }
                         }
                     }
                     else if (requestType == "PUT")
                     {
                         cout << "\t\t\trequestType : PUT\n";
-
                         OCRepresentation rep = request->getResourceRepresentation();
 
                         // Do related operations related to PUT request
-
                         // Update the fanResource
                         put(rep);
-
-                        if (response)
+                        pResponse->setErrorCode(200);
+                        pResponse->setResponseResult(OC_EH_OK);
+                        pResponse->setResourceRepresentation(get());
+                        if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                         {
-                            // TODO Error Code
-                            response->setErrorCode(200);
-
-                            response->setResourceRepresentation(get());
+                            ehResult = OC_EH_OK;
                         }
-
                     }
                     else if (requestType == "POST")
                     {
@@ -314,26 +322,19 @@ class FanResource
                         OCRepresentation rep = request->getResourceRepresentation();
 
                         // Do related operations related to POST request
-
                         OCRepresentation rep_post = post(rep);
-
-                        if (response)
+                        pResponse->setResourceRepresentation(rep_post);
+                        pResponse->setErrorCode(200);
+                        if (rep_post.hasAttribute("createduri"))
                         {
-                            // TODO Error Code
-                            response->setErrorCode(200);
-
-                            response->setResourceRepresentation(rep_post);
-
-                            if (rep_post.hasAttribute("createduri"))
-                            {
-                                result = OC_EH_RESOURCE_CREATED;
-
-                                response->setNewResourceUri(rep_post.getValue<std::string>("createduri"));
-                            }
-
+                            pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
+                            pResponse->setNewResourceUri(rep_post.getValue<std::string>("createduri"));
                         }
 
-                        // POST request operations
+                        if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                        {
+                            ehResult = OC_EH_OK;
+                        }
                     }
                     else if (requestType == "DELETE")
                     {
@@ -370,6 +371,7 @@ class FanResource
                         pthread_create (&threadId, NULL, ChangeFanRepresentation, (void *)this);
                         startedThread = 1;
                     }
+                    ehResult = OC_EH_OK;
                 }
             }
             else
@@ -377,7 +379,7 @@ class FanResource
                 std::cout << "Request invalid" << std::endl;
             }
 
-            return result;
+            return ehResult;
         }
 };
 
@@ -436,34 +438,36 @@ void *ChangeFanRepresentation (void *param)
     return NULL;
 }
 
+void *handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest)
+{
+    // This function handles slow response case
+    FanResource *fanPtr = (FanResource *) param;
+    // Induce a case for slow response by using sleep
+    std::cout << "SLOW response" << std::endl;
+    sleep (10);
+
+    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+    pResponse->setRequestHandle(pRequest->getRequestHandle());
+    pResponse->setResourceHandle(pRequest->getResourceHandle());
+    pResponse->setResourceRepresentation(fanPtr->get());
+    pResponse->setErrorCode(200);
+    pResponse->setResponseResult(OC_EH_OK);
+
+    // Set the slow response flag back to false
+    isSlowResponse = false;
+    OCPlatform::sendResponse(pResponse);
+    return NULL;
+}
+
 
 //int start_fanserver(void*)                // 1
 void *start_fanserver(void *d)      // 2
 {
-    /*PlatformConfig cfg;
-    cfg.ipAddress = "192.168.2.5";
-    cfg.port = 56832;
-    cfg.mode = ModeType::Server;
-    cfg.serviceType = ServiceType::InProc;*/
-    // PlatformConfig cfg
-    // {
-    //     OC::ServiceType::InProc,
-    //     OC::ModeType::Server,
-    //     "192.168.2.5",
-    //     56832,
-    //     OC::QualityOfService::NonConfirmable
-    // };
-
-    // Create PlatformConfig object
-
-    // Create a OCPlatform instance.
-    // Note: Platform creation is synchronous call.
-
     // Create PlatformConfig object
     PlatformConfig cfg
     {
         OC::ServiceType::InProc,
-        OC::ModeType::Server,
+        OC::ModeType::Both,
         "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
         0,         // Uses randomly available port
         OC::QualityOfService::LowQos
@@ -487,18 +491,9 @@ void *start_fanserver(void *d)      // 2
             printf("Mosquitto is working\n");
         }
 
-        //plugin_data_t *data = (plugin_data_t *)d;
-        //OCPlatform *platform = (OCPlatform*)data->str;
-        //myFanResource.m_platform = (OCPlatform*)data->str;
-        //OCPlatform platform(cfg);
-        // Invoke createResource function of class fan.
-
-        //mosquitto_connect(myMosquitto, "192.168.2.5", 1883, 60);
         mosquitto_connect(myMosquitto, "127.0.0.1", 1883, 60);
         printf("Mosquitto Connection is done\n");
         myFanResource.createResource();
-        //myFanResource.addType(std::string("core.fan"));
-        //myFanResource.addInterface(std::string("oc.mi.ll"));
         // Get time of day
         timer = time(NULL);
         // Converts date/time to a structure

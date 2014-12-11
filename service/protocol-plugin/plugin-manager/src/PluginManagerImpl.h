@@ -120,7 +120,7 @@ namespace OIC
             * @param Plugin ID
             * @return Plugin state.
             */
-            std::string getState(const std::string plugID);
+            virtual std::string getState(const std::string plugID);
 
             /**
             * Start  plugins by resource type
@@ -145,7 +145,7 @@ namespace OIC
             * @param Plugin
             * @return int, 1 is success, 0 is fail.
             */
-            virtual int startPlugins(Plugin *const plugin);
+            int startPlugins(Plugin *const plugin);
 
 
             /**
@@ -155,7 +155,16 @@ namespace OIC
             * @param Plugin
             * @return int, 1 is success, 0 is fail.
             */
-            virtual int stopPlugins(Plugin *const plugin);
+            int stopPlugins(Plugin *const plugin);
+
+            /**
+            * Rescan Plugin.
+            * This function will call rescan function of plugins in the configuration folder
+            *
+            * @param Plugin
+            * @return int, 1 is success, 0 is fail.
+            */
+            virtual int rescanPlugin();
 
             /**
             * get all plugins which currently registered.

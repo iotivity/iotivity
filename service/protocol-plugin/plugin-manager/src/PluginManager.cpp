@@ -56,18 +56,17 @@ int PluginManager::stopPlugins(const std::string key, const std::string value)
     return pluginManagerImpl->stopPlugins(key, value);
 }
 
-int PluginManager::startPlugins(Plugin *const plugin)
+int PluginManager::rescanPlugin()
 {
-    printf("PluginManager::startPlugins\n");
-    return pluginManagerImpl->startPlugins(plugin);
-}
-
-int PluginManager::stopPlugins(Plugin *const plugin)
-{
-    return pluginManagerImpl->stopPlugins(plugin);
+    return pluginManagerImpl->rescanPlugin();
 }
 
 std::vector<Plugin> PluginManager::getPlugins(void)
 {
     return pluginManagerImpl->getAllPlugins();
+}
+
+std::string PluginManager::getState(const std::string plugID)
+{
+    return pluginManagerImpl->getState(plugID);
 }

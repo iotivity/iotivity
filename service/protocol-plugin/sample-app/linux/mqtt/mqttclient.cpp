@@ -32,7 +32,8 @@
 using namespace OC;
 using namespace OIC;
 
-std::shared_ptr<OCResource> curResource;
+std::shared_ptr<OCResource> curFanResource;
+std::shared_ptr<OCResource> curLightResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
 time_t timer;                // Define the timer
@@ -78,7 +79,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
         if (observe_count() > 30)
         {
             std::cout << "Cancelling Observe..." << std::endl;
-            OCStackResult result = curResource->cancelObserve();
+            OCStackResult result = curFanResource->cancelObserve();
 
             std::cout << "Cancel result: " << result << std::endl;
             sleep(10);
@@ -120,7 +121,7 @@ void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, co
         else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
             std::cout << endl << "ObserveAll is used." << endl << endl;
 
-        curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
+        //curFanResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
 
     }
     else
@@ -162,7 +163,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
         rep2.setValue("state", myfan.m_state);
         rep2.setValue("power", myfan.m_power);
 
-        curResource->post(rep2, QueryParamsMap(), &onPost2);
+        curFanResource->post(rep2, QueryParamsMap(), &onPost2);
     }
     else
     {
@@ -206,7 +207,7 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         std::cout << "\tpower: " << myfan.m_power << std::endl;
         std::cout << "\tname: " << myfan.m_name << std::endl;
 
-        postFanRepresentation(curResource);
+        postFanRepresentation(curFanResource);
     }
     else
     {
@@ -251,7 +252,7 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         std::cout << "\tpower: " << myfan.m_power << std::endl;
         std::cout << "\tname: " << myfan.m_name << std::endl;
 
-        putFanRepresentation(curResource);
+        putFanRepresentation(curFanResource);
     }
     else
     {
@@ -288,7 +289,7 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResourceFan(std::shared_ptr<OCResource> resource)
 {
-    if (curResource)
+    if (curFanResource)
     {
         std::cout << "Found another resource, ignoring" << std::endl;
     }
@@ -325,7 +326,7 @@ void foundResourceFan(std::shared_ptr<OCResource> resource)
 
             if (resourceURI == "/a/fan")
             {
-                curResource = resource;
+                curFanResource = resource;
                 // Call a local function which will internally invoke get API on the resource pointer
                 getFanRepresentation(resource);
             }
@@ -346,7 +347,7 @@ void foundResourceFan(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResourceLight(std::shared_ptr<OCResource> resource)
 {
-    if (curResource)
+    if (curLightResource)
     {
         std::cout << "Found another resource, ignoring" << std::endl;
     }
@@ -383,7 +384,7 @@ void foundResourceLight(std::shared_ptr<OCResource> resource)
 
             if (resourceURI == "/a/light")
             {
-                curResource = resource;
+                curLightResource = resource;
                 // Call a local function which will internally invoke get API on the resource pointer
                 getLightRepresentation(resource);
             }
@@ -425,7 +426,9 @@ void client1()
     std::cout << "Finding Fan Resource... time : " << asctime(tblock) << std::endl;
     while (1)
     {
-        // client1 related operations
+        std::cout << "Get Fan Resource....." << std::endl;
+        sleep(5);
+        getFanRepresentation(curFanResource);
     }
 }
 
@@ -449,7 +452,9 @@ void client2()
 
     while (1)
     {
-        // client2 related operations
+        std::cout << "Get Light Resource....." << std::endl;
+        sleep(5);
+        getLightRepresentation(curLightResource);
     }
 }
 
@@ -457,6 +462,11 @@ void client2()
 
 int main(int argc, char *argv[])
 {
+    std::string name;
+    std::string key = "Name";
+    std::string  state = "";
+    std::string  id = "";
+
     if (argc == 1)
     {
         OBSERVE_TYPE_TO_USE = ObserveType::Observe;
@@ -494,41 +504,83 @@ int main(int argc, char *argv[])
 
         std::cout << "Created Platform..." << std::endl;
 
-
         PluginManager *m_pm = new PluginManager();
 
+        std::cout << "==== 1st TEST CASE ===" << std::endl;
         std::cout << "======================" << std::endl;
-
         std::cout << "start light Plugin by Resource Type"  << std::endl;
+
         m_pm->startPlugins("ResourceType", "oic.light");
 
         sleep(2);
 
+        std::cout << "\n==== 2nd TEST CASE =====" << std::endl;
         std::cout << "======================" << std::endl;
-        std::cout << "get Plugin List" << std::endl;
+        std::cout << "Get Plugin List\n" << std::endl;
         std::vector<Plugin> user_plugin;
+
         user_plugin = m_pm->getPlugins();
+
         for (unsigned int i = 0; i < user_plugin.size(); i++)
         {
-            printf("value Name = %s\n", user_plugin[i].getName().c_str());
-            printf("value ID = %s\n", user_plugin[i].getID().c_str());
+            std::cout << "value Name = " << user_plugin[i].getName() << std::endl;
+            std::cout << "value ID = " << user_plugin[i].getID() << std::endl;
+            id =  user_plugin[i].getID();
         }
-
+        std::cout << "\n===== 3rd TEST CASE =====" << std::endl;
         std::cout << "======================" << std::endl;
-        std::cout << "start Fan Plugin by Name" << std::endl;
-        m_pm->startPlugins("Name", "mqtt-fan");
+        std::cout << "Start Fan Plugin by Name\n" << std::endl;
 
+        name = user_plugin[0].getName().c_str();
+        m_pm->startPlugins(key, name);
+
+        sleep(5);
+
+        std::cout << "\n====== 4th TEST CASE ======" << std::endl;
+        std::cout << "========================" << std::endl;
+        std::cout << "Get Plugin Status\n" << std::endl;
+
+        state = m_pm->getState(id);
+
+        std::cout << "last plugin status :  " << state << std::endl;
+        std::cout << "sleep 15 seconds please add new plugin in the plugin folder  " << std::endl;
+
+        sleep(15);
+
+        std::cout << "\n====  5th TEST CASE  ====" << std::endl;
+        std::cout << "========================" << std::endl;
+        std::cout << "Rescan Plugins.........\n" << std::endl;
+
+        m_pm->rescanPlugin();
+
+        std::cout << "\n====  6th TEST CASE  ====" << std::endl;
+        std::cout << "========================" << std::endl;
+        std::cout << "Try to start new resource type.........\n" << std::endl;
+        std::cout << "start oic.test resource" <<  std::endl;
+
+        sleep(5);
+
+        int flag = m_pm->startPlugins("ResourceType", "oic.test");
+
+        if (!flag)
+            std::cout << "There are no resouce type. Start plugin failed" << std::endl;
+        // Start each client in a seperate thread
+
+        sleep(10);
+
+        std::cout << "\n====== 7th TEST CASE =======" << std::endl;
+        std::cout << "========================" << std::endl;
+        std::cout << " start client to find resource" << std::endl;
+
+        std::thread t1(client1);
+        t1.detach();
+
+        sleep(5);
 
         // Start each client in a seperate thread
-//        std::thread t1(client1);
-//        t1.detach();
+        std::thread t2(client2);
+        t2.detach();
 
-///*
-//        sleep(5);
-        // Start each client in a seperate thread
-//        std::thread t2(client2);
-//        t2.detach();
-//*/
         while (true)
         {
             // some operations

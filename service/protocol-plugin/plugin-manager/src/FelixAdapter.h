@@ -38,6 +38,7 @@
 #include <internal.h>
 
 #include "Plugin.h"
+#include "Config.h"
 
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define BUF_LEN     (int)( 1024 * ( EVENT_SIZE + 16 ) )
@@ -180,7 +181,7 @@ namespace OIC
 
 
         private:
-
+            Config *config;
             typedef std::map<std::string, bool> File_list;
             std::vector<Plugin> m_plugins;
             boost::thread m_file_detect_thread;
@@ -224,7 +225,7 @@ namespace OIC
             * @param plugin file path.
             * @return void
             */
-            void observePluginPath(void *);
+            //void observePluginPath(void *);
 
             /**
             * Get whole "SO" file list.
