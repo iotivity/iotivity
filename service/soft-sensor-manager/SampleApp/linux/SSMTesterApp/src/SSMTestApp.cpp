@@ -84,58 +84,11 @@ void SSMTestApp::unregisterQuery(void)
 }
 
 /* APP. Level Callback Function for Observer of client. */
-void SSMTestApp::onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eCode)
+void SSMTestApp::onRegisterQuery(const std::string &jsonData, SSMReturn &eCode)
 {
     if (eCode == SSM_SUCCESS)
     {
-        printf("onListener!!!!\n");
-        printf("\n");
-        printf("T : dry bult temperature. (℃)\n");
-        printf("H : relative humidity. (%%)\n");
-        printf("Discomport level = 9/5 * T + 32 - 0.55*(1 - H/100)*(9/5 * T - 26) \n");
-        printf("\n");
-        printf("**************************************\n");
-        printf("* All    Discomport level : 80 over. *\n");
-        printf("* Half   Discomport level : 75 over. *\n");
-        printf("* Little Discomport level : 68 over. *\n");
-        printf("* All    Comport    level : 67 under.*\n");
-        printf("**************************************\n");
-        printf("\n");
-
-        for (AttributeMap::const_iterator itor = attributeMap.begin(); itor != attributeMap.end();
-             ++itor)
-        {
-            if (strcmp(itor->first.c_str(), "temperature") == 0)
-            {
-                std::cout << "* Temperature : " << itor->second.c_str() << "℃" << std::endl;
-            }
-            else if (strcmp(itor->first.c_str(), "humidity") == 0)
-            {
-                std::cout << "* Humidity : " << itor->second.c_str() << "%" << std::endl;
-            }
-            else if (strcmp(itor->first.c_str(), "discomfortIndex") == 0)
-            {
-                int DI = std::stoi(itor->second.c_str());
-
-                std::cout << "* DiscomfortIndex : " << DI << "%" << std::endl;
-
-                switch (DI)
-                {
-                    case ALL_DISCOMPORT:
-                        std::cout << "* [Result] All person Discomfort." << std::endl;
-                        break;
-                    case HALF_DISCOMPORT:
-                        std::cout << "* [Result] Half person Discomfort." << std::endl;
-                        break;
-                    case LITTLE_DISCOMPORT:
-                        std::cout << "* [Result] Little person Discomfort." << std::endl;
-                        break;
-                    case ALL_COMPORT:
-                        std::cout << "* [Result] All person Comfort." << std::endl;
-                        break;
-                }
-            }
-        }
+        std::cout << jsonData << std::endl;
     }
     else
     {

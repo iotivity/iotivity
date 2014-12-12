@@ -45,14 +45,14 @@ class ISSMClientListener
     public:
         /**
          * @brief   onRegisterQuery is a pure virtual operation which should be implemented in applications to get callback messages.
-         * @param [in] attributeMap - A data map in which SoftSensorManager service sends sensor data with cqid.
+         * @param [in] jsonData - A data map in which SoftSensorManager service sends sensor data with cqid.
          * @param [in] eCode - The address of listener class.  When an application which inherits the ISSMClientListener calls this operation, it sends its address for the listener so that
          *                          SSMClient can callback message to the appication.
          * @param [out] cqid - A query id generated from SoftSensorManager service for the queryString request.
          * @return  SSMReturn
 
          */
-        virtual void onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eCode) = 0;
+        virtual void onRegisterQuery(const std::string &jsonData, SSMReturn &eCode) = 0;
         virtual ~ISSMClientListener()
         {
         }
