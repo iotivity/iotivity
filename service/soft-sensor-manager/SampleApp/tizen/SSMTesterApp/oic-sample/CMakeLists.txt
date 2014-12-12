@@ -41,7 +41,7 @@ SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed")
 LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 ADD_EXECUTABLE(${TESTAPP} ${SRCS})
-TARGET_LINK_LIBRARIES(${TESTAPP} ${pkgs_LDFLAGS} ssmcore oc octbstack oc_logger oc_logger_core pthread dl)
+TARGET_LINK_LIBRARIES(${TESTAPP} ${pkgs_LDFLAGS} ssmcore oc octbstack oc_logger pthread dl)
 
 INSTALL(TARGETS ${TESTAPP} DESTINATION ${BINDIR})
 

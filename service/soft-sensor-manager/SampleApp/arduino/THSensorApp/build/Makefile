@@ -1,23 +1,39 @@
+# //******************************************************************
+# //
+# // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# //
+# // Licensed under the Apache License, Version 2.0 (the "License");
+# // you may not use this file except in compliance with the License.
+# // You may obtain a copy of the License at
+# //
+# //      http://www.apache.org/licenses/LICENSE-2.0
+# //
+# // Unless required by applicable law or agreed to in writing, software
+# // distributed under the License is distributed on an "AS IS" BASIS,
+# // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# // See the License for the specific language governing permissions and
+# // limitations under the License.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
 -include ../../../../build/arduino/environment.mk
-
 ARDUINO_DIR = /usr/share/arduino
-SRC_PATH=../src
 
+BUILD := release
+PLATFORM := arduinomega
+ARDUINO_PORT := ttyACM0
+
+SRC_PATH=../src
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
 ARDUINOWIFI := 0
 
 APP_NAME := thserver
 
-BUILD := release
-#BUILD := debug
-PLATFORM := arduinomega
-ARDUINO_PORT := /dev/ttyACM0
-
-OBJ_DIR := ./bin
-
-TB_DIR = ${IOT_BASE}/csdk
-BUILD_DIR = $(TB_DIR)/build/arduino
+TB_DIR = ../../../../../../resource/csdk
 LOGGER_DIR = $(TB_DIR)/logger
+OC_LOG_DIR = $(TB_DIR)/../oc_logger
 TBSTACK_DIR = $(TB_DIR)/stack
 TBSOCKET_DIR = $(TB_DIR)/ocsocket
 
@@ -30,56 +46,81 @@ VPATH := $(SDIR_ARD_PLATFORM)
 OCSOCK_DIR = $(TB_DIR)/ocsocket
 LOGGER_DIR = $(TB_DIR)/logger
 STACK_DIR  = $(TB_DIR)/stack
-INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
+INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(OC_LOG_DIR)/include -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
 
-CFLAGS	:= -Os -Wall -c -DTB_LOG
+CC_FLAGS.debug		:= -O1 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic
+CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic
+
+CFLAGS := $(CC_FLAGS.$(BUILD)) -DTB_LOG
 
 ifeq ($(ARDUINOWIFI),1)
 	CFLAGS += -DARDUINOWIFI
+	ARDUINO_SHIELD_TYPE := "/wifi_shield"
+	TRANSPORT_OBJS = $(WIFI_COBJ)
+else
+	ARDUINO_SHIELD_TYPE := "/ethernet_shield"
+	TRANSPORT_OBJS = $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ)
 endif
 
-#all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
-all: preclean prebuild precopy prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
+OUT_DIR := $(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)
 
-precopy:
-#	@cd $(TB_DIR) && mkdir -p ${BUILD} && cp -Rdp release/liboctbstack.a ${BUILD}/
+OBJ_DIR := $(OUT_DIR)/bin
 
-preclean: 
-	@cd $(BUILD_DIR) && make deepclean 
-	
-prebuild:
-	@cd $(BUILD_DIR) && make PLATFORM=arduinomega ARDUINOWIFI=0
+all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
 
 core.a: $(PLATFORM_OBJS)
-	@cd $(OBJ_DIR) && $(AR) -x $(TB_DIR)/build/arduino/$(BUILD)/liboctbstack.a
-	$(AR) rcs $@ $^ $(OBJ_DIR)/*.o
-	$(RANLIB) $@
+	@cd $(OBJ_DIR) && $(AR) -x ../../../../$(TB_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/liboctbstack.a
+	$(AR) rcs $(OBJ_DIR)/$@ $(foreach obj, $^, $(OBJ_DIR)/$(obj)) $(OBJ_DIR)/*.o
+	@cd $(OBJ_DIR) && $(RANLIB) $@
 
 prep_dirs:
+	-mkdir $(PLATFORM)
+	-mkdir $(PLATFORM)/$(ARDUINO_SHIELD_TYPE)
+	-mkdir $(OUT_DIR)
 	-mkdir $(OBJ_DIR)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
-
+	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 %.o: %.cpp
-	$(CCPLUS) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
-
+	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@	
 %.o: ${SRC_PATH}/%.cpp
-	$(CCPLUS) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $@
+	$(CXX) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIRS) $(INC_DIR_PLATFORM) $< -o $(OBJ_DIR)/$@
 
 $(APP_NAME).elf: $(APP_NAME).o core.a
-	$(CC) -Os -Wl,--gc-sections,--relax $(CFLAGS_PLATFORM) $^ -lm -o $@
+ifeq ($(PLATFORM),arduinomega)
+	$(CC) -Os -Wl,--gc-sections,--relax $(CFLAGS_PLATFORM) $(foreach obj, $^, $(OBJ_DIR)/$(obj)) -lm -o $(OBJ_DIR)/$@
+else ifeq ($(PLATFORM),arduinodue)
+	$(CXX) -Os -Wl,--gc-sections -mcpu=cortex-m3 -T/$(SDIR_ARD_CORE_3)/linker_scripts/gcc/flash.ld -Wl,-Map,$(APP_NAME).map -o $(OBJ_DIR)/$@ -lm -lgcc -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group $(foreach obj, $(APP_NAME).o $(SYSCALLS_SAM3_OBJ) $(SPI_OBJ) $(TRANSPORT_OBJS) $(VARIANT_OBJ) core.a, $(OBJ_DIR)/$(obj)) $(SDIR_ARD_CORE_3)/libsam_sam3x8e_gcc_rel.a -Wl,--end-group
+else
+	$(error Wrong value for PLATFORM !!)
+endif
 
 $(APP_NAME).hex: $(APP_NAME).elf
-	$(AVR_OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $< $(APP_NAME).eep
-	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
+ifeq ($(PLATFORM),arduinomega)
+	$(AVR_OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $(OBJ_DIR)/$< $(OBJ_DIR)/$(APP_NAME).eep
+	$(AVR_OBJCOPY) -O ihex -R .eeprom $(OBJ_DIR)/$< $(OUT_DIR)/$@
+else ifeq ($(PLATFORM),arduinodue)
+	$(ARDUINO_TOOLS_DIR)/arm-none-eabi-objcopy -O binary $(OBJ_DIR)/$< $(OUT_DIR)/$@
+else
+	$(error Wrong value for PLATFORM !!)
+endif
 
 install: all
-	$(AVR_PROGRAMMER) -C$(ARDUINO_DIR)/hardware/tools/avrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P$(ARDUINO_PORT) -b115200 -D -Uflash:w:$(APP_NAME).hex:i
+ifeq ($(PLATFORM),arduinomega)
+	$(AVR_PROGRAMMER) -C$(ARDUINO_DIR)/hardware/tools/avrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/$(ARDUINO_PORT) -b115200 -D -Uflash:w:$(OUT_DIR)/$(APP_NAME).hex:i
+else ifeq ($(PLATFORM),arduinodue)
+	stty -F /dev/$(ARDUINO_PORT) speed 1200 cs8 -cstopb -parenb
+	$(ARDUINO_DIR)/hardware/tools/bossac -i -d --port=$(ARDUINO_PORT) -U false -e -w -v -b $(OUT_DIR)/$(APP_NAME).hex -R
+else
+	$(error Wrong value for PLATFORM !!)
+endif
 
 .PHONY: clean
 
-clean:
-	@rm -f *.o *.d *.elf *.eep *.a *.hex *.bin *.map *-
-	@rm -rf $(OBJ_DIR)
+clean: legacy_clean
+	rm -rf arduinomega
+	rm -rf arduinodue
 
+legacy_clean:
+	@rm -rf bin
+	@rm -f *.o *.d *.elf *.eep *.a *.hex *.bin *.map *-

@@ -20,7 +20,7 @@ if target_os == 'arduino':
 # Build flags
 ######################################################################
 if target_os not in ['windows', 'winrt']:
-	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-DLINUX'])
 	if target_os != 'android':
 		soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
@@ -28,12 +28,20 @@ if target_os not in ['windows', 'winrt']:
 ## build SSM SDK
 #######################################################################
 sdk_env = soft_sensor_manager_env.Clone()
+sdk_env.AppendUnique(CPPPATH = ['SSMCore/include'])
+sdk_env.AppendUnique(CPPPATH = ['SSMCore/src'])
 sdk_env.AppendUnique(CPPPATH = ['SDK/include'])
 
-ssm_sdk = sdk_env.Object('SDK/src/SSMClient.cpp')
-i_ssmsdk = sdk_env.Install(env.get('BUILD_DIR'), )
-Alias('libSSMSDKLibrary', i_ssmsdk)
-env.AppendTarget('libSSMSDKLibrary')
+ssm_sdk_cpp_src = [
+		Glob('SDK/src/*.cpp')
+		]
+
+env.AppendTarget('libSSMSDK')
+libssmsdk = sdk_env.StaticLibrary(
+		target = 'libSSMSDK',
+		source = [ssm_sdk_cpp_src]
+		)		
+sdk_env.InstallTarget(libssmsdk, 'libSSMCORE')
 
 ######################################################################
 # build DiscomfortIndexSensor plugin
@@ -56,10 +64,7 @@ DiscomfortIndexSensor_env.InstallTarget(DiscomfortIndexSensor, 'libDiscomfortInd
 # build SSM CORE
 ######################################################################
 ssmcore_env = soft_sensor_manager_env.Clone()
-MODEL_DIR = "\"\\\"" + env.get('BUILD_DIR') + "\\\"\""
-LOCATION = "\"\\\"" + env.get('BUILD_DIR') + "HighContextDictionary.xml" + "\\\"\""
 
-ssmcore_env.AppendUnique(CPPDEFINES = ['MODEL_DIRECTORY='+MODEL_DIR, 'HIGH_LOCATION='+LOCATION])
 ssmcore_env.AppendUnique(CPPPATH = [
 		'SSMCore/include/',
 		'SSMCore/src/',
@@ -79,7 +84,6 @@ else :
 	ssminterface_src = Glob(SSMINTERFACE_PATH + '*.cpp')
 
 ssm_core_cpp_src = [
-		'SSMCore/src/SSMResourceServerLauncher.cpp',
 		Glob('SSMCore/src/Common/*.cpp'),
 		Glob('SSMCore/src/QueryProcessor/*.cpp'),
 		Glob('SSMCore/src/SensorProcessor/*.cpp'),
@@ -91,7 +95,7 @@ ssm_core_c_src = [
 ]
 
 libssmcore = ssmcore_env.StaticLibrary(
-		target = 'SSMCoreUbuntu',
+		target = 'SSMCore',
 		source = [ssm_core_cpp_src, ssm_core_c_src]
 		)
 
@@ -100,4 +104,4 @@ ssmcore_env.InstallTarget(libssmcore, 'libSSMCORE')
 #######################################################################
 ## build SampleApp
 #######################################################################
-#SConscript('SampleApp/SConscript')
+SConscript('SampleApp/SConscript')
