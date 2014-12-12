@@ -126,7 +126,7 @@ void DeleteClientCB(ClientCB *cbNode);
  * @retval address of the node if found, otherwise NULL
  */
 //------------------------------------------------------------------------
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * requestUri);
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned char * requestUri);
 
 
 /**
@@ -140,7 +140,9 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * re
  *      OC_STACK_ERROR with invalid parameters
  *      OC_STACK_NO_MEMORY when out of memory
  */
+#ifdef WITH_PRESENCE
 OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceTypeName);
+#endif // WITH_PRESENCE
 
 //-- DeleteClientCBList --------------------------------------------------
 /** @ingroup ocstack
@@ -174,7 +176,7 @@ void FindAndDeleteClientCB(ClientCB * cbNode);
  *              The resulting node from making this call. Null if doesn't exist.
  */
 //------------------------------------------------------------------------
-OCMulticastNode* GetMCPresenceNode(unsigned char * uri);
+OCMulticastNode* GetMCPresenceNode(const unsigned char * uri);
 
 /** @ingroup ocstack
  *

@@ -134,7 +134,15 @@ typedef struct {
     // handle is retrieved by comparing the token-handle pair in the PDU.
     ClientCB * cbNode;
     // This is how long this response is valid for (in seconds).
-    uint32_t TTL;
+    uint32_t maxAge;
+    // This is the Uri of the resource. (ex. "coap://192.168.1.1/a/led")
+    unsigned char * fullUri;
+    // This is the relative Uri of the resource. (ex. "/a/led")
+    unsigned char * rcvdUri;
+    // This is the received payload.
+    unsigned char * bufRes;
+    // This is the token received OTA.
+    OCCoAPToken * rcvdToken;
     // this structure will be passed to client
     OCClientResponse * clientResponse;
 } OCResponse;
@@ -147,11 +155,11 @@ typedef uint32_t ServerID;
 //-----------------------------------------------------------------------------
 OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status);
 OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
-void HandleStackResponses(OCResponse * response);
-int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
+OCStackResult HandleStackResponses(OCResponse * response);
 #ifdef WITH_PRESENCE
 OCStackResult SendPresenceNotification(OCResourceType *resourceType);
-#endif
+#endif // WITH_PRESENCE
+int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
 
 OCStackResult BindResourceInterfaceToResource(OCResource* resource,
                                             const char *resourceInterfaceName);

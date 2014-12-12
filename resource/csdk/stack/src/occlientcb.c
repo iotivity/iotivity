@@ -129,7 +129,7 @@ void DeleteClientCB(ClientCB * cbNode) {
     }
 }
 
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * requestUri) {
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned char * requestUri) {
     ClientCB* out = NULL;
     if(token) {
         LL_FOREACH(cbList, out) {
@@ -160,6 +160,7 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * re
     return NULL;
 }
 
+#ifdef WITH_PRESENCE
 OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceTypeName)
 {
     OCResourceType * newResourceType = NULL;
@@ -180,6 +181,7 @@ OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceT
     }
     return OC_STACK_ERROR;
 }
+#endif // WITH_PRESENCE
 
 void DeleteClientCBList() {
     ClientCB* out;
@@ -222,7 +224,7 @@ OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, unsigned char* uri, u
     return OC_STACK_NO_MEMORY;
 }
 
-OCMulticastNode* GetMCPresenceNode(unsigned char * uri) {
+OCMulticastNode* GetMCPresenceNode(const unsigned char * uri) {
     OCMulticastNode* out = NULL;
 
     if(uri) {

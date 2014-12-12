@@ -105,6 +105,19 @@ uint8_t OCToCoAPQoS(OCQualityOfService qos)
             break;
     }
 }
+
+OCQualityOfService CoAPToOCQoS(uint8_t qos)
+{
+    switch (qos)
+    {
+        case COAP_MESSAGE_CON:
+            return OC_HIGH_QOS;
+        case COAP_MESSAGE_NON:
+            return OC_LOW_QOS;
+        default:
+            return OC_NA_QOS;
+    }
+}
 // Convert CoAP code to OCStack code
 OCStackResult CoAPToOCResponseCode(uint8_t coapCode)
 {
@@ -336,8 +349,9 @@ void RetrieveOCCoAPToken(const coap_pdu_t * pdu, OCCoAPToken * rcvdToken)
     }
 }
 
-OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
-        uint8_t TTL, OCClientResponse * clientResponse)
+OCStackResult FormOCResponse(OCResponse * * responseLoc,  ClientCB * cbNode, uint32_t maxAge,
+        unsigned char * fullUri, unsigned char * rcvdUri, OCCoAPToken * rcvdToken,
+        OCClientResponse * clientResponse, unsigned char * bufRes)
 {
     OCResponse * response = (OCResponse *) OCMalloc(sizeof(OCResponse));
     if (!response)
@@ -345,8 +359,12 @@ OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
         return OC_STACK_NO_MEMORY;
     }
     response->cbNode = cbNode;
-    response->TTL = TTL;
+    response->maxAge = maxAge;
+    response->fullUri = fullUri;
+    response->rcvdUri = rcvdUri;
+    response->rcvdToken = rcvdToken;
     response->clientResponse = clientResponse;
+    response->bufRes = bufRes;
 
     *responseLoc = response;
     return OC_STACK_OK;
@@ -652,7 +670,7 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     {
         goto observation;
     }
-    result = FormOCResponse(&response, cbNode, 0, &clientResponse);
+    result = FormOCResponse(&response, cbNode, NULL, NULL, NULL, &token, &clientResponse, NULL);
     if(result != OC_STACK_OK)
     {
         goto observation;

@@ -201,10 +201,10 @@ OCStackResult result_guard(const OCStackResult r)
     case OC_STACK_SLOW_RESOURCE:
     case OC_STACK_NO_OBSERVERS:
     case OC_STACK_OBSERVER_NOT_FOUND:
+    case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
 #ifdef WITH_PRESENCE
     case OC_STACK_PRESENCE_STOPPED:
 #endif
-
     break;
  }
 

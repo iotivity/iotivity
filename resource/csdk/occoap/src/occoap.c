@@ -289,29 +289,19 @@ uint32_t GetTime(float afterSeconds)
 //This function is called back by libcoap when a response is received
 static void HandleCoAPResponses(struct coap_context_t *ctx,
         const coap_queue_t * rcvdResponse) {
+    OCStackResult result = OC_STACK_OK;
+    OCCoAPToken rcvdToken = {{0}};
     OCResponse * response = NULL;
-    OCCoAPToken rcvdToken;
-    OCClientResponse clientResponse = {0};
-    ClientCB * cbNode = NULL;
+    OCClientResponse * clientResponse = NULL;
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
-    uint32_t sequenceNumber = OC_OBSERVE_NO_OPTION;
-    uint32_t maxAge = 0;
-    OCStackResult result = OC_STACK_ERROR;
     coap_pdu_t * sendPdu = NULL;
     coap_pdu_t * recvPdu = NULL;
-    unsigned char rcvdUri[MAX_URI_LENGTH] = { 0 };
-    uint8_t isObserveNotification = 0;
-    #ifdef WITH_PRESENCE
-    char * resourceTypeName = NULL;
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
+    uint8_t remoteIpAddr[4] = {0};
+    uint16_t remotePortNu = 0;
+    uint32_t sequenceNumber = OC_OBSERVE_NO_OPTION;
+    uint32_t maxAge = 0;
     unsigned char fullUri[MAX_URI_LENGTH] = { 0 };
-    uint8_t isPresenceNotification = 0;
-    uint8_t isMulticastPresence = 0;
-    uint32_t lowerBound;
-    uint32_t higherBound;
-    char * tok = NULL;
-    #endif
+    unsigned char rcvdUri[MAX_URI_LENGTH] = { 0 };
     coap_block_t rcvdBlock1 = {COAP_BLOCK_FILL_VALUE};
     coap_block_t rcvdBlock2 = {COAP_BLOCK_FILL_VALUE};
     uint16_t rcvdSize2 = 0;
@@ -320,53 +310,21 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     VERIFY_NON_NULL(rcvdResponse);
     recvPdu = rcvdResponse->pdu;
 
-    result = ParseCoAPPdu(recvPdu, rcvdUri, NULL, &sequenceNumber, &maxAge,
-            &clientResponse.numRcvdVendorSpecificHeaderOptions,
-            clientResponse.rcvdVendorSpecificHeaderOptions,
-            &rcvdBlock1, &rcvdBlock2, NULL, &rcvdSize2, bufRes);
+    clientResponse = (OCClientResponse *) OCCalloc(1, sizeof(OCClientResponse));
 
+    result = ParseCoAPPdu(recvPdu, rcvdUri, NULL, &sequenceNumber, &maxAge,
+            &(clientResponse->numRcvdVendorSpecificHeaderOptions),
+            clientResponse->rcvdVendorSpecificHeaderOptions,
+            &rcvdBlock1, &rcvdBlock2, NULL, &rcvdSize2, bufRes);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    OC_LOG_V(DEBUG, TAG, "The sequenceNumber/NONCE of this response %u", sequenceNumber);
-    OC_LOG_V(DEBUG, TAG, "The maxAge/TTL of this response %u", maxAge);
-    OC_LOG_V(DEBUG, TAG, "The response received is %s", bufRes);
-
-    if(sequenceNumber >= OC_OFFSET_SEQUENCE_NUMBER)
-    {
-        isObserveNotification = 1;
-        OC_LOG(INFO, TAG, PCF("Received an observe notification"));
-    }
-
-    #ifdef WITH_PRESENCE
-    if(!strcmp((char *)rcvdUri, (char *)OC_PRESENCE_URI)){
-        isPresenceNotification = 1;
-        OC_LOG(INFO, TAG, PCF("Received a presence notification"));
-        tok = strtok((char *)bufRes, "[:]}");
-        bufRes[strlen((char *)bufRes)] = ':';
-        tok = strtok(NULL, "[:]}");
-        bufRes[strlen((char *)bufRes)] = ':';
-        VERIFY_NON_NULL(tok);
-        sequenceNumber = (uint32_t )atol(tok);
-        OC_LOG_V(DEBUG, TAG, "The received NONCE is %u", sequenceNumber);
-        tok = strtok(NULL, "[:]}");
-        VERIFY_NON_NULL(tok);
-        maxAge = (uint32_t )atol(tok);
-        OC_LOG_V(DEBUG, TAG, "The received TTL is %u", maxAge);
-        tok = strtok(NULL, "[:]}");
-        if(tok) {
-            bufRes[strlen((char *)bufRes)] = ':';
-            resourceTypeName = (char *)OCMalloc(strlen(tok));
-            if(!resourceTypeName)
-            {
-                goto exit;
-            }
-            strcpy(resourceTypeName, tok);
-            OC_LOG_V(DEBUG, TAG, "----------------resourceTypeName %s",
-                    resourceTypeName);
-        }
-        bufRes[strlen((char *)bufRes)] = ']';
-    }
-    #endif
+    // get the address of the remote
+    OCDevAddrToIPv4Addr((OCDevAddr *) &(rcvdResponse->remote), remoteIpAddr,
+            remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
+    OCDevAddrToPort((OCDevAddr *) &(rcvdResponse->remote), &remotePortNu);
+    snprintf((char *)fullUri, MAX_URI_LENGTH, "coap://%d.%d.%d.%d:%d%s",
+            remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
+            remotePortNu,rcvdUri);
 
     // fill OCCoAPToken structure
     RetrieveOCCoAPToken(recvPdu, &rcvdToken);
@@ -374,224 +332,20 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     OC_LOG_BUFFER(INFO, TAG, rcvdToken.token, rcvdToken.tokenLength);
 
     // fill OCClientResponse structure
-    result = FormOCClientResponse(&clientResponse, CoAPToOCResponseCode(recvPdu->hdr->code),
-            (OCDevAddr *) &(rcvdResponse->remote), sequenceNumber, bufRes);
+    result = FormOCClientResponse(clientResponse, CoAPToOCResponseCode(recvPdu->hdr->code),
+            (OCDevAddr *) &(rcvdResponse->remote), sequenceNumber, NULL);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    cbNode = GetClientCB(&rcvdToken, NULL, NULL);
-
-    #ifdef WITH_PRESENCE
-    // Check if the application subscribed for presence
-    if(!cbNode)
-    {
-        // get the address of the remote
-        OCDevAddrToIPv4Addr((OCDevAddr *) &(rcvdResponse->remote), remoteIpAddr,
-                remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) &(rcvdResponse->remote), &remotePortNu);
-        sprintf((char *)fullUri, "coap://%d.%d.%d.%d:%d%s",
-                remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
-                remotePortNu,rcvdUri);
-        cbNode = GetClientCB(NULL, NULL, fullUri);
-    }
-
-    // Check if application subscribed for multicast presence
-    if(!cbNode)
-    {
-        sprintf((char *)fullUri, "%s%s", OC_MULTICAST_IP, rcvdUri);
-        cbNode = GetClientCB(NULL, NULL, fullUri);
-        isMulticastPresence = 1;
-        isPresenceNotification = 0;
-    }
-    #endif
-
-    // fill OCResponse structure
-    result = FormOCResponse(&response, cbNode, maxAge, &clientResponse);
+    result = FormOCResponse(&response, NULL, maxAge, fullUri, rcvdUri,
+            &rcvdToken, clientResponse, bufRes);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    if(cbNode)
+    result = HandleStackResponses(response);
+
+    if(result == OC_STACK_ERROR)
     {
-        if(!isObserveNotification)
-        {
-            #ifdef WITH_PRESENCE
-            if(!isPresenceNotification)
-            {
-            #endif
-                OC_LOG(INFO, TAG, PCF("Received a regular response"));
-                if(recvPdu->hdr->type == COAP_MESSAGE_CON)
-                {
-                    sendPdu = GenerateCoAPPdu(COAP_MESSAGE_ACK, 0,
-                            recvPdu->hdr->id, NULL, NULL, NULL);
-                    VERIFY_NON_NULL(sendPdu);
-                    result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote,
-                            sendPdu,
-                            (coap_send_flags_t)(rcvdResponse->secure ? SEND_SECURE_PORT : 0));
-                }
-            #ifdef WITH_PRESENCE
-            }
-            #endif
-        }
-        if(isObserveNotification)
-        {
-            OC_LOG(INFO, TAG, PCF("Received an observe notification"));
-            if(recvPdu->hdr->type == COAP_MESSAGE_CON)
-            {
-                sendPdu = GenerateCoAPPdu(COAP_MESSAGE_ACK, 0,
-                        recvPdu->hdr->id, NULL, NULL, NULL);
-                VERIFY_NON_NULL(sendPdu);
-                result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote,
-                        sendPdu,
-                        (coap_send_flags_t)(rcvdResponse->secure ? SEND_SECURE_PORT : 0));
-            }
-            //TODO: check the standard for methods to detect wrap around condition
-            if(cbNode->method == OC_REST_OBSERVE &&
-                    (clientResponse.sequenceNumber <= cbNode->sequenceNumber ||
-                            (clientResponse.sequenceNumber > cbNode->sequenceNumber &&
-                                    clientResponse.sequenceNumber == (MAX_SEQUENCE_NUMBER))))
-            {
-                OC_LOG_V(DEBUG, TAG, "Observe notification came out of order. \
-                        Ignoring Incoming:%d  Against Current:%d.",
-                        clientResponse.sequenceNumber, cbNode->sequenceNumber);
-                goto exit;
-            }
-            if(clientResponse.sequenceNumber > cbNode->sequenceNumber){
-                cbNode->sequenceNumber = clientResponse.sequenceNumber;
-            }
-        }
-        else
-        {
-            #ifdef WITH_PRESENCE
-            if(isPresenceNotification)
-            {
-                OC_LOG(INFO, TAG, PCF("Received a presence notification"));
-                if(!cbNode->presence)
-                {
-                    cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
-                    VERIFY_NON_NULL(cbNode->presence);
-                    cbNode->presence->timeOut = NULL;
-                    cbNode->presence->timeOut = (uint32_t *)
-                            OCMalloc(PresenceTimeOutSize * sizeof(uint32_t));
-                    if(!(cbNode->presence->timeOut)){
-                        OCFree(cbNode->presence);
-                        goto exit;
-                    }
-                }
-                if(maxAge == 0)
-                {
-                    OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
-                    response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
-                    if(cbNode->presence)
-                    {
-                        OCFree(cbNode->presence->timeOut);
-                        OCFree(cbNode->presence);
-                        cbNode->presence = NULL;
-                    }
-                }
-                else
-                {
-                    OC_LOG_V(INFO, TAG, "===============Update presence TTL, now time is %d", GetTime(0));
-                    cbNode->presence->TTL = maxAge;
-                    for(int index = 0; index < PresenceTimeOutSize; index++)
-                    {
-                        lowerBound = GetTime(((float)(PresenceTimeOut[index])
-                                /(float)100)*(float)cbNode->presence->TTL);
-                        higherBound = GetTime(((float)(PresenceTimeOut[index + 1])
-                                /(float)100)*(float)cbNode->presence->TTL);
-                        cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
-                        OC_LOG_V(DEBUG, TAG, "----------------lowerBound timeout  %d", lowerBound);
-                        OC_LOG_V(DEBUG, TAG, "----------------higherBound timeout %d", higherBound);
-                        OC_LOG_V(DEBUG, TAG, "----------------timeOut entry  %d", cbNode->presence->timeOut[index]);
-                    }
-                    cbNode->presence->TTLlevel = 0;
-                    OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
-                    if(cbNode->sequenceNumber == clientResponse.sequenceNumber)
-                    {
-                        OC_LOG(INFO, TAG, PCF("===============No presence change"));
-                        goto exit;
-                    }
-                    OC_LOG(INFO, TAG, PCF("===============Presence changed, calling up the stack"));
-                    cbNode->sequenceNumber = clientResponse.sequenceNumber;;
-                }
-
-                // Ensure that a filter is actually applied.
-                if(resourceTypeName && response->cbNode->filterResourceType)
-                {
-                    if(!findResourceType(response->cbNode->filterResourceType, resourceTypeName))
-                    {
-                        goto exit;
-                    }
-                }
-            }
-            else if(isMulticastPresence)
-            {
-                // Check if the same nonce for a given host
-                OCMulticastNode* mcNode = NULL;
-                unsigned char senderUri[MAX_URI_LENGTH] = { 0 };
-                sprintf((char *)senderUri, "%d.%d.%d.%d:%d",
-                    remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
-                    remotePortNu);
-                mcNode = GetMCPresenceNode(senderUri);
-
-                if(maxAge == 0)
-                {
-                    OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
-                    response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
-                    if(cbNode->presence)
-                    {
-                        OCFree(cbNode->presence->timeOut);
-                        OCFree(cbNode->presence);
-                        cbNode->presence = NULL;
-                    }
-                }
-                else if(mcNode != NULL)
-                {
-                    if(mcNode->nonce == clientResponse.sequenceNumber)
-                    {
-                        OC_LOG(INFO, TAG, PCF("===============No presence change (Multicast)"));
-                        goto exit;
-                    }
-                    mcNode->nonce = clientResponse.sequenceNumber;
-                }
-                else
-                {
-                    uint32_t uriLen = strlen((char*)senderUri);
-                    unsigned char* uri = (unsigned char *) OCMalloc(uriLen + 1);
-                    if(uri)
-                    {
-                        memcpy(uri, senderUri, (uriLen + 1));
-                    }
-                    else
-                    {
-                        OC_LOG(INFO, TAG,
-                            PCF("===============No Memory for URI to store in the presence node"));
-                        goto exit;
-                    }
-                    result = AddMCPresenceNode(&mcNode, (unsigned char*) uri,
-                                                clientResponse.sequenceNumber);
-                    if(result == OC_STACK_NO_MEMORY)
-                    {
-                        OC_LOG(INFO, TAG,
-                            PCF("===============No Memory for Multicast Presence Node"));
-                        goto exit;
-                    }
-                }
-
-                // Ensure that a filter is actually applied.
-                if(resourceTypeName && response->cbNode->filterResourceType)
-                {
-                    if(!findResourceType(response->cbNode->filterResourceType, resourceTypeName))
-                    {
-                        goto exit;
-                    }
-                }
-            }
-            #endif
-        }
-        HandleStackResponses(response);
-    }
-    else if(!cbNode && isObserveNotification)
-    {
-        OC_LOG(INFO, TAG, PCF("Received an observe notification, but I do not have callback \
-                 ------------ sending RESET"));
+        OC_LOG(INFO, TAG, PCF("Received a notification or response that is malformed or incorrect \
+                         ------------ sending RESET"));
         sendPdu = GenerateCoAPPdu(COAP_MESSAGE_RST, 0,
                 recvPdu->hdr->id, NULL, NULL, NULL);
         VERIFY_NON_NULL(sendPdu);
@@ -599,27 +353,26 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                      (coap_send_flags_t)(rcvdResponse->secure ? SEND_SECURE_PORT : 0));
         VERIFY_SUCCESS(result, OC_STACK_OK);
     }
-    #ifdef WITH_PRESENCE
-    else if(!cbNode && isPresenceNotification)
+    else if(result == OC_STACK_NO_MEMORY)
     {
-        OC_LOG(INFO, TAG, PCF("Received a presence notification, but I do not have callback \
-                     ------------ ignoring"));
+        OC_LOG(ERROR, TAG, PCF("Received a notification or response. While processing, local " \
+                "platform or memory pool ran out memory."));
     }
-    #endif
-    else
+
+    if(recvPdu->hdr->type == COAP_MESSAGE_CON)
     {
-        OC_LOG(INFO, TAG, PCF("Received a response, but I do not have callback. \
-                 ------------ sending RESET"));
-        sendPdu = GenerateCoAPPdu(COAP_MESSAGE_RST, 0,
+        sendPdu = GenerateCoAPPdu(COAP_MESSAGE_ACK, 0,
                 recvPdu->hdr->id, NULL, NULL, NULL);
         VERIFY_NON_NULL(sendPdu);
-        result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote, sendPdu,
-                    (coap_send_flags_t)(rcvdResponse->secure ? SEND_SECURE_PORT : 0));
+        result = SendCoAPPdu(gCoAPCtx, (coap_address_t*) &rcvdResponse->remote,
+                sendPdu,
+                (coap_send_flags_t)(rcvdResponse->secure ? SEND_SECURE_PORT : 0));
         VERIFY_SUCCESS(result, OC_STACK_OK);
     }
+
     exit:
-        OCFree(resourceTypeName);
         OCFree(response);
+        OCFree(clientResponse);
 }
 
 //=============================================================================
@@ -754,9 +507,6 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
     // Decide method type
     switch (method) {
         case OC_REST_GET:
-        #ifdef WITH_PRESENCE
-        case OC_REST_PRESENCE:
-        #endif
             coapMethod = COAP_REQUEST_GET;
             break;
         case OC_REST_PUT:
@@ -876,14 +626,11 @@ OCStackResult OCDoCoAPResponse(OCServerProtocolResponse *response)
         OC_LOG(ERROR, TAG, PCF("A problem occurred in sending a pdu"));
         return OC_STACK_ERROR;
     }
-
     return OC_STACK_OK;
-
 exit:
     OC_LOG(ERROR, TAG, PCF("Error formatting server response"));
     return OC_STACK_ERROR;
 }
-
 
 /**
  * Stop the CoAP client or server processing

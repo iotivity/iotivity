@@ -66,8 +66,12 @@ OCDeviceEntityHandler defaultDeviceHandler;
 // Macros
 //-----------------------------------------------------------------------------
 #define TAG  PCF("OCStack")
+#define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
+            {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, PCF(#arg " is NULL")); return (retVal); } }
+#define VERIFY_NON_NULL_V(arg) { if (!arg) {OC_LOG_V(FATAL, TAG, "%s is NULL", #arg);\
+    goto exit;} }
 
 //TODO: we should allow the server to define this
 #define MAX_OBSERVE_AGE (0x2FFFFUL)
@@ -237,23 +241,268 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 }
 
 //This function will be called back by occoap layer when a response is received
-void HandleStackResponses(OCResponse * response)
+OCStackResult HandleStackResponses(OCResponse * response)
 {
-    OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
     OC_LOG(INFO, TAG, PCF("Entering HandleStackResponses (OCStack Layer)"));
+    OCStackResult result = OC_STACK_OK;
+    OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
+    uint8_t isObserveNotification = 0;
+    ClientCB * cbNode = NULL;
+    #ifdef WITH_PRESENCE
+    uint8_t isPresenceNotification = 0;
+    uint8_t isMulticastPresence = 0;
+    char * resourceTypeName = NULL;
+    uint32_t lowerBound = 0;
+    uint32_t higherBound = 0;
+    char * tok = NULL;
+    unsigned char * bufRes = response->bufRes;
+    #endif // WITH_PRESENCE
 
-    if (response->cbNode)
+    cbNode = response->cbNode;
+    if(!cbNode)
     {
-        OC_LOG(INFO, TAG, PCF("Calling into application address space"));
-        result = response->cbNode->callBack(response->cbNode->context,
-                response->cbNode->handle, response->clientResponse);
-        if (result == OC_STACK_DELETE_TRANSACTION ||
-                response->clientResponse->result == OC_STACK_COMM_ERROR ||
-                response->clientResponse->result == OC_STACK_RESOURCE_DELETED)
+        cbNode = GetClientCB(response->rcvdToken, NULL, NULL);
+    }
+
+    if(response->clientResponse->sequenceNumber >= OC_OFFSET_SEQUENCE_NUMBER)
+    {
+        isObserveNotification = 1;
+        OC_LOG(INFO, TAG, PCF("Received an observe notification"));
+    }
+
+    OC_LOG_V(DEBUG, TAG, "The sequenceNumber/NONCE of this response %u",
+            response->clientResponse->sequenceNumber);
+    OC_LOG_V(DEBUG, TAG, "The maxAge/TTL of this response %u", response->maxAge);
+    OC_LOG_V(DEBUG, TAG, "The response received is %s", bufRes);
+
+#ifdef WITH_PRESENCE
+    if(!strcmp((char *)response->rcvdUri, (char *)OC_PRESENCE_URI)){
+        isPresenceNotification = 1;
+        if(!bufRes)
         {
-            FindAndDeleteClientCB(response->cbNode);
+            result = OC_STACK_INVALID_PARAM;
+            goto exit;
+        }
+        tok = strtok((char *)bufRes, "[:]}");
+        bufRes[strlen((char *)bufRes)] = ':';
+        tok = strtok(NULL, "[:]}");
+        bufRes[strlen((char *)bufRes)] = ':';
+        response->clientResponse->sequenceNumber = (uint32_t )atoi(tok);
+        OC_LOG_V(DEBUG, TAG, "The received NONCE is %u", response->clientResponse->sequenceNumber);
+        tok = strtok(NULL, "[:]}");
+        response->maxAge = (uint32_t )atoi(tok);
+        OC_LOG_V(DEBUG, TAG, "The received TTL is %u", response->maxAge);
+        tok = strtok(NULL, "[:]}");
+        if(tok)
+        {
+            resourceTypeName = (char *)OCMalloc(strlen(tok));
+            if(!resourceTypeName)
+            {
+                goto exit;
+            }
+            bufRes[strlen((char *)bufRes)] = ':';
+            strcpy(resourceTypeName, tok);
+            OC_LOG_V(DEBUG, TAG, "----------------resourceTypeName %s",
+                    resourceTypeName);
+        }
+        bufRes[strlen((char *)bufRes)] = ']';
+    }
+
+    // Check if the application subcribed for presence
+    if(!cbNode)
+    {
+        cbNode = GetClientCB(NULL, NULL, response->fullUri);
+    }
+
+    // Check if application subscribed for multicast presence
+    if(!cbNode)
+    {
+        snprintf((char *)response->fullUri, MAX_URI_LENGTH, "%s%s",
+                OC_MULTICAST_IP, response->rcvdUri);
+        cbNode = GetClientCB(NULL, NULL, response->fullUri);
+        if(cbNode)
+        {
+            isMulticastPresence = 1;
+            isPresenceNotification = 0;
         }
     }
+
+    if(cbNode && isPresenceNotification)
+    {
+        OC_LOG(INFO, TAG, PCF("Received a presence notification"));
+        if(!cbNode->presence)
+        {
+            cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
+            VERIFY_NON_NULL_V(cbNode->presence);
+            cbNode->presence->timeOut = NULL;
+            cbNode->presence->timeOut = (uint32_t *)
+                    OCMalloc(PresenceTimeOutSize * sizeof(uint32_t));
+            if(!(cbNode->presence->timeOut)){
+                OCFree(cbNode->presence);
+                result = OC_STACK_NO_MEMORY;
+            }
+        }
+        if(response->maxAge == 0)
+        {
+            OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+            response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
+            if(cbNode->presence)
+            {
+                OCFree(cbNode->presence->timeOut);
+                OCFree(cbNode->presence);
+                cbNode->presence = NULL;
+            }
+        }
+        else
+        {
+            OC_LOG_V(INFO, TAG, "===============Update presence TTL, now time is %d", GetTime(0));
+            cbNode->presence->TTL = response->maxAge;
+            for(int index = 0; index < PresenceTimeOutSize; index++)
+            {
+                lowerBound = GetTime(((float)(PresenceTimeOut[index])
+                        /(float)100)*(float)cbNode->presence->TTL);
+                higherBound = GetTime(((float)(PresenceTimeOut[index + 1])
+                        /(float)100)*(float)cbNode->presence->TTL);
+                cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
+                OC_LOG_V(DEBUG, TAG, "----------------lowerBound timeout  %d", lowerBound);
+                OC_LOG_V(DEBUG, TAG, "----------------higherBound timeout %d", higherBound);
+                OC_LOG_V(DEBUG, TAG, "----------------timeOut entry  %d",
+                        cbNode->presence->timeOut[index]);
+            }
+            cbNode->presence->TTLlevel = 0;
+            OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
+            if(cbNode->sequenceNumber == response->clientResponse->sequenceNumber)
+            {
+                OC_LOG(INFO, TAG, PCF("===============No presence change"));
+                goto exit;
+            }
+            OC_LOG(INFO, TAG, PCF("===============Presence changed, calling up the stack"));
+            cbNode->sequenceNumber = response->clientResponse->sequenceNumber;;
+        }
+
+        // Ensure that a filter is actually applied.
+        if(resourceTypeName && cbNode->filterResourceType)
+        {
+            if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+            {
+                goto exit;
+            }
+        }
+    }
+    else if(cbNode && isMulticastPresence)
+    {
+        // Check if the same nonce for a given host
+        OCMulticastNode* mcNode = NULL;
+        mcNode = GetMCPresenceNode(response->fullUri);
+
+        if(response->maxAge == 0)
+        {
+            OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+            response->clientResponse->result = OC_STACK_PRESENCE_STOPPED;
+            if(cbNode->presence)
+            {
+                OCFree(cbNode->presence->timeOut);
+                OCFree(cbNode->presence);
+                cbNode->presence = NULL;
+            }
+        }
+        else if(mcNode != NULL)
+        {
+            if(mcNode->nonce == response->clientResponse->sequenceNumber)
+            {
+                OC_LOG(INFO, TAG, PCF("===============No presence change (Multicast)"));
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+            mcNode->nonce = response->clientResponse->sequenceNumber;
+        }
+        else
+        {
+            uint32_t uriLen = strlen((char*)response->fullUri);
+            unsigned char* uri = (unsigned char *) OCMalloc(uriLen + 1);
+            if(uri)
+            {
+                memcpy(uri, response->fullUri, (uriLen + 1));
+            }
+            else
+            {
+                OC_LOG(INFO, TAG,
+                    PCF("===============No Memory for URI to store in the presence node"));
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+            result = AddMCPresenceNode(&mcNode, (unsigned char*) uri,
+                    response->clientResponse->sequenceNumber);
+            if(result == OC_STACK_NO_MEMORY)
+            {
+                OC_LOG(INFO, TAG,
+                    PCF("===============No Memory for Multicast Presence Node"));
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+        }
+
+        // Ensure that a filter is actually applied.
+        if(resourceTypeName && cbNode->filterResourceType)
+        {
+            if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+            {
+                goto exit;
+            }
+        }
+    }
+
+    else if(!cbNode && isPresenceNotification)
+    {
+    OC_LOG(INFO, TAG, PCF("Received a presence notification, but I do not have callback \
+                 ------------ ignoring"));
+    }
+    #endif // WITH_PRESENCE
+
+    if(cbNode)
+    {
+        if(isObserveNotification)
+        {
+            OC_LOG(INFO, TAG, PCF("Received an observe notification"));
+            //TODO: check the standard for methods to detect wrap around condition
+            if(cbNode->method == OC_REST_OBSERVE &&
+                    (response->clientResponse->sequenceNumber <= cbNode->sequenceNumber ||
+                            (response->clientResponse->sequenceNumber > cbNode->sequenceNumber &&
+                                    response->clientResponse->sequenceNumber ==
+                                            MAX_SEQUENCE_NUMBER)))
+            {
+                OC_LOG_V(DEBUG, TAG, "Observe notification came out of order. \
+                        Ignoring Incoming:%d  Against Current:%d.",
+                        response->clientResponse->sequenceNumber, cbNode->sequenceNumber);
+                goto exit;
+            }
+            if(response->clientResponse->sequenceNumber > cbNode->sequenceNumber){
+                cbNode->sequenceNumber = response->clientResponse->sequenceNumber;
+            }
+        }
+
+        response->clientResponse->resJSONPayload = bufRes;
+
+        cbResult = cbNode->callBack(cbNode->context, cbNode->handle, response->clientResponse);
+
+        if (cbResult == OC_STACK_DELETE_TRANSACTION ||
+                response->clientResponse->result == OC_STACK_COMM_ERROR ||
+                (response->clientResponse->result == OC_STACK_RESOURCE_DELETED &&
+                        !isPresenceNotification && !isMulticastPresence))
+        {
+            FindAndDeleteClientCB(cbNode);
+        }
+    }
+    else
+    {
+        result = OC_STACK_ERROR;
+    }
+
+    exit:
+    #ifdef WITH_PRESENCE
+    OCFree(resourceTypeName);
+    #endif
+    return result;
 }
 
 int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
@@ -591,7 +840,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         }
         else
         {
-            OC_LOG(DEBUG, TAG, "Got Resource Type is NULL.");
+            OC_LOG(DEBUG, TAG, PCF("Got Resource Type is NULL."));
         }
         if(result != OC_STACK_OK)
         {
@@ -628,6 +877,14 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
+
+#ifdef WITH_PRESENCE
+    if(method == OC_REST_PRESENCE)
+    {
+        // Replacing method type with GET because "presence" is a stack layer only implementation.
+        method = OC_REST_GET;
+    }
+#endif
 
     // Make call to OCCoAP layer
     result = OCDoCoAPResource(method, qos, &token, newUri, request, options, numOptions);
@@ -760,7 +1017,8 @@ OCStackResult OCProcessPresence()
                         {
                             goto exit;
                         }
-                        result = FormOCResponse(&response, cbNode, 0, &clientResponse);
+                        result = FormOCResponse(&response, cbNode, NULL, NULL, NULL,
+                                &cbNode->token, &clientResponse, NULL);
                         if(result != OC_STACK_OK)
                         {
                             goto exit;
@@ -1693,7 +1951,6 @@ void incrementSequenceNumber(OCResource * resPtr)
     return;
 }
 
-#ifdef WITH_PRESENCE
 /**
  * Notify Presence subscribers that a resource has been modified
  *
@@ -1702,6 +1959,7 @@ void incrementSequenceNumber(OCResource * resPtr)
  * @param qos          - Quality Of Service
  *
  */
+#ifdef WITH_PRESENCE
 OCStackResult SendPresenceNotification(OCResourceType *resourceType)
 {
     OCResource *resPtr = NULL;
@@ -1725,8 +1983,7 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType)
     result = SendAllObserverNotification(method, resPtr, maxAge, resourceType, OC_LOW_QOS);
     return result;
 }
-#endif
-
+#endif // WITH_PRESENCE
 /**
  * Notify observers that an observed value has changed.
  *

@@ -82,8 +82,9 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
 void RetrieveOCCoAPToken(const coap_pdu_t * pdu, OCCoAPToken * rcvdToken);
 
 // Internal function to create OCResponse struct at the client from a received coap pdu
-OCStackResult FormOCResponse(OCResponse * * responseLoc, ClientCB * cbNode,
-        uint8_t TTL, OCClientResponse * clientResponse);
+OCStackResult FormOCResponse(OCResponse * * responseLoc,  ClientCB * cbNode, uint32_t maxAge,
+        unsigned char * fullUri, unsigned char * rcvdUri, OCCoAPToken * rcvdToken,
+        OCClientResponse * clientResponse, unsigned char * bufRes);
 
 // Internal function to create OCClientResponse struct at the client from a received coap pdu
 OCStackResult FormOCClientResponse(OCClientResponse * clientResponse,
