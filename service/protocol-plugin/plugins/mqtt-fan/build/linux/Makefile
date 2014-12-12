@@ -2,6 +2,7 @@ CXX = g++
 
 CXX_FLAGS = -std=c++0x -Wall -pthread
 
+TOP_DIR = ../../../../../..
 LIB_DIR = ../../../../../../resource
 
 SRC_DIR = ../../src
@@ -22,7 +23,7 @@ CXX_INC	  += -I../csdk/libcoap
 CXX_INC   += -I$(CEREAL_DIR)/include
 
 LIB_OC_LOGGER := $(LIB_DIR)/oc_logger/lib/oc_logger.a
-CXX_LIBS  := $(LIB_DIR)/release/obj/liboc.a $(LIB_DIR)/csdk/linux/release/liboctbstack.a $(LIB_OC_LOGGER) ../../../../lib/cpluff/libcpluff/.libs/libcpluff.a
+CXX_LIBS  := ../../../../lib/cpluff/libcpluff/.libs/libcpluff.a
 
 .PHONY: lib release_build ./release/fanserver_mqtt_plugin.so 
 
@@ -37,7 +38,7 @@ release_build:
 	cp plugin.xml release
 
 ./release/fanserver_mqtt_plugin.so: ./release/obj/fanserver_mqtt_plugin.o ./release/obj/fanserver.o
-	$(CXX) -shared -o ./release/fanserver_mqtt_plugin.so ./release/obj/fanserver_mqtt_plugin.o ./release/obj/fanserver.o $(CXX_LIBS)  -L../../lib -lmosquitto -lssl -lrt
+	$(CXX) -shared -o ./release/fanserver_mqtt_plugin.so ./release/obj/fanserver_mqtt_plugin.o ./release/obj/fanserver.o $(CXX_LIBS)  -L../../lib -L$(TOP_DIR)/out/linux/x86/release -lmosquitto -lssl -lrt -loc -loctbstack -loc_logger -lcoap
 
 ./release/obj/fanserver_mqtt_plugin.o: $(SRC_DIR)/fanserver_mqtt_plugin.cpp
 	$(CXX) $(CXX_INC) -fPIC -o ./release/obj/fanserver_mqtt_plugin.o -c $(SRC_DIR)/fanserver_mqtt_plugin.cpp 

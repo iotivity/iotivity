@@ -2,6 +2,7 @@ CXX = g++
 
 CXX_FLAGS = -std=c++0x -Wall -pthread
 
+TOP_DIR = ../../../../..
 LIB_DIR = ../../../../../resource
 
 DEPEND_DIR:= $(LIB_DIR)/dependencies
@@ -21,8 +22,8 @@ CXX_INC   += -I$(CEREAL_DIR)/include
 CXX_INC += -I../../../lib/rapidxml 
 
 LIB_OC_LOGGER := $(LIB_DIR)/oc_logger/lib/oc_logger.a
-CXX_LIBS  := $(LIB_DIR)/release/obj/liboc.a $(LIB_DIR)/csdk/linux/release/liboctbstack.a $(LIB_OC_LOGGER) ../../../build/linux/release/libppm.a ../../../lib/cpluff/libcpluff/.libs/libcpluff.a
-LINK_LIB = -lboost_system -ldl -lexpat -lboost_thread 
+CXX_LIBS  := ../../../build/linux/release/libppm.a ../../../lib/cpluff/libcpluff/.libs/libcpluff.a
+LINK_LIB = -lboost_system -ldl -lexpat -lboost_thread -L$(TOP_DIR)/out/linux/x86/release -loc -loctbstack -loc_logger -lcoap
 
 .PHONY: mqttclient
 
@@ -37,4 +38,5 @@ mqttclient.o: mqttclient.cpp
 	
 clean:
 	rm -f *.o
+	rm -f *.so
 	rm -f mqttclient
