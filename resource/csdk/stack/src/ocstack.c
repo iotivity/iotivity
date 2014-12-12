@@ -935,8 +935,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         return result;
     }
     // Validate parameters
+    if(!uri || (strlen(uri) == 0))
+    {
+        OC_LOG(ERROR, TAG, PCF("URI is invalid"));
+        return OC_STACK_INVALID_URI;
+    }
     // Is it presented during resource discovery?
-    if (!handle || !resourceTypeName || !uri) {
+    if (!handle || !resourceTypeName) {
         OC_LOG(ERROR, TAG, PCF("Input parameter is NULL"));
         return OC_STACK_INVALID_PARAM;
     }
