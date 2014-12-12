@@ -144,7 +144,6 @@ CAResult_t CABTManagerSendData(const char *remoteAddress, const char *serviceUUI
  * @brief  Start RFCOMM server for given service UUID.
  *
  * @param[in]  serviceUUID  The UUID of service with which RFCOMM server needs to be started
- * @param[out]  serverID  The ID for the server which started
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
@@ -153,13 +152,11 @@ CAResult_t CABTManagerSendData(const char *remoteAddress, const char *serviceUUI
  * @retval  #CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CABTManagerStartServer(const char *serviceUUID, int32_t *serverID);
+CAResult_t CABTManagerStartServer(void);
 
 /**
  * @fn  CABTManagerStopServer
  * @brief  Stop RFCOMM server
- *
- * @param[in]  serverID  The ID of server which needs to be stopped
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
@@ -169,7 +166,7 @@ CAResult_t CABTManagerStartServer(const char *serviceUUID, int32_t *serverID);
  *
  * @see  CABTManagerStartServer()
  */
-CAResult_t CABTManagerStopServer(const int32_t serverID);
+CAResult_t CABTManagerStopServer(void);
 
 /**
  * @fn  CABTManagerGetInterface

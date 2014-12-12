@@ -196,7 +196,7 @@ void CAEthernetTerminateServer(void)
 }
 
 CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                      const int16_t multicastPort, int32_t *serverFD)
+        const int16_t multicastPort, int32_t *serverFD)
 {
     OIC_LOG(DEBUG, ETHERNET_SERVER_TAG, "IN");
 
@@ -323,7 +323,7 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
 }
 
 CAResult_t CAEthernetStartUnicastServer(const char *localAddress, int16_t *port,
-                                    const bool forceStart, int32_t *serverFD)
+                                        const bool forceStart, const bool secured, int32_t *serverFD)
 {
     OIC_LOG(DEBUG, ETHERNET_SERVER_TAG, "IN");
 
@@ -555,7 +555,8 @@ CAResult_t CAEthernetStopUnicastServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEthernetGetUnicastServerInfo(char **ipAddress, int16_t *port, int32_t *serverFD)
+CAResult_t CAEthernetGetUnicastServerInfo(const bool secure, char **ipAddress, int16_t *port,
+                                          int32_t *serverFD)
 {
     OIC_LOG(DEBUG, ETHERNET_SERVER_TAG, "IN");
 

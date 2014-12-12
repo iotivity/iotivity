@@ -40,8 +40,8 @@
 #include <time.h>
 #endif //#ifdef __ARDUINO__
 
-uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo, 
-                                            char *outUri)
+uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
+                                 char *outUri)
 {
     OIC_LOG(DEBUG, TAG, "CAGetRequestInfoFromPdu IN");
 
@@ -55,8 +55,8 @@ uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqI
     return 1;
 }
 
-uint32_t CAGetResponseInfoFromPdu(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo, 
-                                            char *outUri)
+uint32_t CAGetResponseInfoFromPdu(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
+                                  char *outUri)
 {
     OIC_LOG(DEBUG, TAG, "CAGetResponseInfoFromPdu IN");
     if (NULL == pdu)
@@ -139,7 +139,7 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
 }
 
 coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *options,
-        const char* payload, const CAInfo_t info)
+                                             const char *payload, const CAInfo_t info)
 {
     OIC_LOG(DEBUG, TAG, "CACreatePDUforRequestWithPayload IN");
 
@@ -153,19 +153,30 @@ coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *opt
     if (!(pdu = coap_new_pdu()))
         return NULL;
 
-    /* initialize message id */
     unsigned short message_id;
-    prng((unsigned char * )&message_id, sizeof(unsigned short));
+
+    if (info.messageId == 0)
+    {
+        /* initialize message id */
+        prng((unsigned char * )&message_id, sizeof(unsigned short));
+        ++message_id;
+
+        OIC_LOG_V(DEBUG, TAG, "generate the message id(%d)", message_id);
+    }
+    else
+    {
+        /* use saved message id */
+        message_id = info.messageId;
+    }
 
     pdu->hdr->type = info.type;
-    ++message_id;
     pdu->hdr->id = htons(message_id);
     pdu->hdr->code = code;
 
     if (info.token)
     {
         pdu->hdr->token_length = CA_MAX_TOKEN_LEN;
-        if (!coap_add_token(pdu, CA_MAX_TOKEN_LEN, (unsigned char*) info.token))
+        if (!coap_add_token(pdu, CA_MAX_TOKEN_LEN, (unsigned char *) info.token))
         {
             OIC_LOG(DEBUG, TAG, "cannot add token to request");
         }
@@ -195,8 +206,8 @@ coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *opt
     return pdu;
 }
 
-coap_pdu_t* CACreatePDUforRequest(const code_t code, coap_list_t *options, 
-    const CAInfo_t info)
+coap_pdu_t *CACreatePDUforRequest(const code_t code, coap_list_t *options,
+                                  const CAInfo_t info)
 {
     OIC_LOG(DEBUG, TAG, "CACreatePDUforRequest IN");
 
@@ -209,19 +220,30 @@ coap_pdu_t* CACreatePDUforRequest(const code_t code, coap_list_t *options,
         return NULL;
     }
 
-    /* initialize message id */
     unsigned short message_id;
-    prng((unsigned char * )&message_id, sizeof(unsigned short));
+
+    if (info.messageId == 0)
+    {
+        /* initialize message id */
+        prng((unsigned char * )&message_id, sizeof(unsigned short));
+        ++message_id;
+
+        OIC_LOG_V(DEBUG, TAG, "generate the message id(%d)", message_id);
+    }
+    else
+    {
+        /* use saved message id */
+        message_id = info.messageId;
+    }
 
     pdu->hdr->type = info.type;
-    ++message_id;
     pdu->hdr->id = htons(message_id);
     pdu->hdr->code = code;
 
     OIC_LOG_V(DEBUG, TAG, "token info : %s, %d", info.token, strlen(info.token));
     pdu->hdr->token_length = CA_MAX_TOKEN_LEN;
 
-    if (!coap_add_token(pdu, CA_MAX_TOKEN_LEN, (unsigned char*) info.token))
+    if (!coap_add_token(pdu, CA_MAX_TOKEN_LEN, (unsigned char *) info.token))
     {
         OIC_LOG(DEBUG, TAG, "cannot add token to request");
     }
@@ -256,7 +278,7 @@ void CAParseURI(const char *uriInfo, coap_list_t **optlist)
     {
         coap_insert(optlist,
                     CACreateNewOptionNode(COAP_OPTION_URI_PORT,
-                                          coap_encode_var_bytes(portbuf, uri.port), portbuf), 
+                                          coap_encode_var_bytes(portbuf, uri.port), portbuf),
                                           CAOrderOpts);
     }
 
@@ -312,7 +334,7 @@ void CAParseHeadOption(const uint32_t code, const CAInfo_t info, coap_list_t **o
             OIC_LOG_V(DEBUG, TAG, "Head Option length: %d", info.options[i].optionLength);
 
             coap_insert(optlist,
-                        CACreateNewOptionNode(info.options[i].optionID, 
+                        CACreateNewOptionNode(info.options[i].optionID,
                                             info.options[i].optionLength,
                                               info.options[i].optionData), CAOrderOpts);
         }
@@ -320,8 +342,8 @@ void CAParseHeadOption(const uint32_t code, const CAInfo_t info, coap_list_t **o
     OIC_LOG(DEBUG, TAG, "CAParseHeadOption OUT");
 }
 
-coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length, 
-                                           const uint8_t *data)
+coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length,
+                                   const uint8_t *data)
 {
     OIC_LOG(DEBUG, TAG, "CACreateNewOptionNode IN");
     coap_option *option;
@@ -333,7 +355,7 @@ coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length,
         OIC_LOG(DEBUG, TAG, "Out of memory");
         return NULL;
     }
-    memset(option, 0, sizeof(coap_option)+length);
+    memset(option, 0, sizeof(coap_option) + length);
 
     COAP_OPTION_KEY(*option) = key;
     COAP_OPTION_LENGTH(*option) = length;
@@ -380,7 +402,9 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
         if (COAP_OPTION_URI_PATH == opt_iter.type || COAP_OPTION_URI_QUERY == opt_iter.type)
         {
 
-        } else {
+        }
+        else
+        {
             count++;
         }
     }
@@ -388,8 +412,8 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
     return count;
 }
 
-void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo, 
-                                char *outUri)
+void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo,
+                         char *outUri)
 {
     OIC_LOG(DEBUG, TAG, "CAGetRequestPDUInfo IN");
     char buf[COAP_MAX_PDU_SIZE]; /* need some space for output creation */
@@ -417,7 +441,10 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
     // set type
     outInfo->type = pdu->hdr->type;
 
-    if(count > 0)
+    // set message id
+    outInfo->messageId = ntohs(pdu->hdr->id);
+
+    if (count > 0)
     {
         outInfo->options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t) * count);
         if (outInfo->options == NULL)
@@ -431,9 +458,9 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
     while ((option = coap_option_next(&opt_iter)))
     {
 
-        if (CAGetOptionData((uint8_t*)(COAP_OPT_VALUE(option)), 
-            COAP_OPT_LENGTH(option), (uint8_t*)buf, sizeof(buf),
-                           encode))
+        if (CAGetOptionData((uint8_t *)(COAP_OPT_VALUE(option)),
+                            COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf),
+                            encode))
         {
             if (COAP_OPTION_URI_PATH == opt_iter.type || COAP_OPTION_URI_QUERY == opt_iter.type)
             {
@@ -459,14 +486,16 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
                     memcpy(optionResult + optionLength, buf, strlen((const char *) buf));
                     optionLength += strlen((const char *) buf);
                 }
-            } else {
+            }
+            else
+            {
 
                 if (idx < count)
                 {
                     uint32_t length = (uint32_t) strlen((const char *) buf);
 
-                if (length <= CA_MAX_HEADER_OPTION_DATA_LENGTH)
-                {
+                    if (length <= CA_MAX_HEADER_OPTION_DATA_LENGTH)
+                    {
                         outInfo->options[idx].optionID = opt_iter.type;
                         outInfo->options[idx].optionLength = length;
                         outInfo->options[idx].protocolID = CA_COAP_ID;
@@ -484,11 +513,11 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
         OIC_LOG(DEBUG, TAG, "inside pdu->hdr->token_length");
         outInfo->token = (char *) OICMalloc(CA_MAX_TOKEN_LEN);
         if (outInfo->token == NULL)
-         {
-             OIC_LOG(DEBUG, TAG, "CAGetRequestPDUInfo, Memory allocation failed !");
-             OICFree(outInfo->options);
-             return;
-         }
+        {
+            OIC_LOG(DEBUG, TAG, "CAGetRequestPDUInfo, Memory allocation failed !");
+            OICFree(outInfo->options);
+            return;
+        }
         memcpy(outInfo->token, pdu->hdr->token, CA_MAX_TOKEN_LEN);
     }
 
@@ -592,7 +621,7 @@ void CADeinitialize(CAInfo_t *info)
 }
 
 uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *result,
-        uint32_t buflen, uint32_t encode_always)
+                         uint32_t buflen, uint32_t encode_always)
 {
     const unsigned char hex[] = "0123456789ABCDEF";
     uint32_t cnt = 0;
@@ -630,4 +659,26 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *result,
 
     *result = '\0';
     return cnt;
+}
+
+CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void* pdu, uint32_t size)
+{
+    // pdu minimum size is 4 byte.
+    if (size < 4)
+        return CA_MSG_NONCONFIRM;
+
+    coap_hdr_t* hdr = (coap_hdr_t*) pdu;
+
+    return (CAMessageType_t) hdr->type;
+}
+
+uint16_t CAGetMessageIdFromPduBinaryData(const void* pdu, uint32_t size)
+{
+    // pdu minimum size is 4 byte.
+    if (size < 4)
+        return 0;
+
+    coap_hdr_t* hdr = (coap_hdr_t*) pdu;
+
+    return ntohs(hdr->id);
 }

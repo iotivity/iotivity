@@ -24,6 +24,9 @@
 #ifndef __UMUTEX_H_
 #define __UMUTEX_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 
 #include "cacommon.h"

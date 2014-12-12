@@ -29,7 +29,9 @@
 #include <stdbool.h>
 
 #include "cacommon.h"
-#include "uthreadpool.h"
+#ifndef ARDUINO
+#include "uthreadpool.h" /* for thread pool */
+#endif  //ARDUINO
 
 #ifdef __cplusplus
 extern "C"
@@ -55,11 +57,12 @@ typedef enum
  * @param[in]  port  Port number on which data is received.
  * @param[in]  data  Data received from remote OIC device.
  * @param[in]  dataLength  Length of data in bytes.
+ * @param[in]  secure  Indicates the data is secure or not.
  *
  * @pre  Callback must be registered using CAEthernetSetPacketReceiveCallback()
  */
 typedef void (*CAEthernetPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-        const void *data, const uint32_t dataLength);
+              const void *data, const uint32_t dataLength);
 
 /**
  * @fn  CAEthernetExceptionCallback
@@ -73,6 +76,7 @@ typedef void (*CAEthernetExceptionCallback)(CAAdapterServerType_t type);
 
 /**
  * @fn  CAEthernetInitializeServer
+ * @brief  API to initialize Wifi server
  * @brief  API to initialize Ethernet server
  *
  * @param[in]  threadPool  Thread pool for managing Unicast/Multicast server threads.
@@ -82,9 +86,10 @@ typedef void (*CAEthernetExceptionCallback)(CAAdapterServerType_t type);
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
+#ifndef ARDUINO
 CAResult_t CAEthernetInitializeServer(const u_thread_pool_t threadPool);
 
-#ifdef ARDUINO
+#else
 /**
  * @fn  CAEthernetInitializeServer
  * @brief  API to initialize Ethernet server
@@ -118,8 +123,9 @@ void CAEthernetTerminateServer(void);
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                      const int16_t multicastPort, int32_t *serverFD);
+                                          const int16_t multicastPort, int32_t *serverFD);
 
+#ifdef ARDUINO
 /**
  * @fn  CAEthernetStartUnicastServer
  * @brief  API to start unicast server for specified local address and port
@@ -128,6 +134,7 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
  * @param[in][out]  port  Port number on which server to be running.
  * Port number on which server actually started will be returned.
  * @param[in]  forceStart  Indicate whether to start server forcesfully on specified port or not.
+ * @param[in]  secured  true if the secure server to be started, otherwise false.
  * @param[out]  serverFD  Unicast server socket FD.
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
@@ -137,7 +144,28 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStartUnicastServer(const char *localAddress, int16_t *port,
-                                    const bool forceStart, int32_t *serverFD);
+                                        const bool forceStart, int32_t *serverFD);
+#else
+/**
+ * @fn  CAEthernetStartUnicastServer
+ * @brief  API to start unicast server for specified local address and port
+ *
+ * @param[in]  localAddress  Local adapter address to which server to be binded.
+ * @param[in][out]  port  Port number on which server to be running.
+ * Port number on which server actually started will be returned.
+ * @param[in]  forceStart  Indicate whether to start server forcesfully on specified port or not.
+ * @param[in]  secured  true if the secure server to be started, otherwise false.
+ * @param[out]  serverFD  Unicast server socket FD.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
+ * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
+ * @retval  #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAEthernetStartUnicastServer(const char *localAddress, int16_t *port,
+                                        const bool forceStart, const bool secured, int32_t *serverFD);
+#endif //ARDUINO
 
 /**
  * @fn  CAEthernetStopMulticastServer
@@ -160,10 +188,22 @@ CAResult_t CAEthernetStopMulticastServer(void);
 CAResult_t CAEthernetStopUnicastServer();
 
 /**
+ * @fn  CAEthernetStopSecureUnicastServer
+ * @brief  API to stop secured unicast server.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAEthernetStopSecureUnicastServer();
+
+#ifdef ARDUINO
+/**
  * @fn  CAEthernetGetUnicastServerInfo
  * @brief  API to get running unicast server information.
  * @remarks  @ipAddress must be freed using free().
  *
+ * @param[in]  secure  true if the secure server information needed, otherwise false.
  * @param[in]  ipAddress  IP address on which server is binded and running.
  * @param[out]  port  Port number on which server is running
  * @param[out]  serverFD  Server socket fd.
@@ -173,7 +213,30 @@ CAResult_t CAEthernetStopUnicastServer();
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
  */
+
 CAResult_t CAEthernetGetUnicastServerInfo(char **ipAddress, int16_t *port, int32_t *serverFD);
+
+#else
+
+/**
+ * @fn  CAEthernetGetUnicastServerInfo
+ * @brief  API to get running unicast server information.
+ * @remarks  @ipAddress must be freed using free().
+ *
+ * @param[in]  secure  true if the secure server information needed, otherwise false.
+ * @param[in]  ipAddress  IP address on which server is binded and running.
+ * @param[out]  port  Port number on which server is running
+ * @param[out]  serverFD  Server socket fd.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
+ * @retval  #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAEthernetGetUnicastServerInfo(const bool secure, char **ipAddress, int16_t *port,
+                                          int32_t *serverFD);
+
+#endif // ARDUINO
 
 /**
  * @fn  CAEthernetSetPacketReceiveCallback
@@ -217,6 +280,25 @@ void CAEthernetSetExceptionCallback(CAEthernetExceptionCallback callback);
 void CAEthernetSetUnicastSocket(const int32_t socketFD);
 
 /**
+ * @fn  CAEthernetSetUnicastPort
+ * @brief  API to set port description for sending unicast UDP data
+ *
+ * @param[in]  port  Port descriptor used for sending UDP data.
+ *
+ */
+void CAEthernetSetUnicastPort(const int32_t port);
+
+/**
+ * @fn  CAEthernetSetSecureUnicastSocket
+ * @brief  API to set socket description for sending secured (encrypted) unicast UDP data
+ *
+ * @param[in]  socketFD  Socket descriptor used for sending secured (encrypted) UDP data.
+ *
+ */
+void CAEthernetSetSecureUnicastSocket(const int32_t socketFD);
+
+#ifdef ARDUINO
+/**
  * @fn  CAEthernetSendUnicastData
  * @brief  API to send unicast UDP data
  *
@@ -225,7 +307,30 @@ void CAEthernetSetUnicastSocket(const int32_t socketFD);
  * @param[in]  data  Data to be send.
  * @param[in]  dataLength  Length of data in bytes
  * @param[in]  isMulticast  whether data needs to be sent to multicast ip
- * @param[out]  sentLength  Number of bytes actually sent
+ * @param[in]  isSecure  Indicate the whether data needs to be send on secure channel.
+ * @isSecure will be ignored when @isMulticast is true.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
+ * @retval  #CA_STATUS_FAILED Operation failed
+ */
+
+uint32_t CAEthernetSendData(const char *remoteAddress, const int16_t port,
+                            const char *buf, const uint32_t bufLen, bool isMulticast);
+
+#else
+/**
+ * @fn  CAEthernetSendUnicastData
+ * @brief  API to send unicast UDP data
+ *
+ * @param[in]  remoteAddress  IP address to which data needs to be send.
+ * @param[in]  port  Port to which data needs to be send.
+ * @param[in]  data  Data to be send.
+ * @param[in]  dataLength  Length of data in bytes
+ * @param[in]  isMulticast  whether data needs to be sent to multicast ip
+ * @param[in]  isSecure  Indicate the whether data needs to be send on secure channel.
+ * @isSecure will be ignored when @isMulticast is true.
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
@@ -233,7 +338,10 @@ void CAEthernetSetUnicastSocket(const int32_t socketFD);
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
-                        const void *data, const uint32_t dataLength, bool isMulticast);
+                            const void *data, const uint32_t dataLength,
+                            CABool_t isMulticast, CABool_t isSecure);
+
+#endif //ARDUINO
 
 /**
  * @fn  CAEthernetConnectionStateChangeCallback
@@ -258,9 +366,10 @@ typedef void (*CAEthernetConnectionStateChangeCallback)(const char *ipAddress,
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
+#ifndef ARDUINO
 CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool);
 
-#ifdef ARDUINO
+#else
 /**
  * @fn  CAEthernetInitializeServer
  * @brief  API to initialize Ethernet server

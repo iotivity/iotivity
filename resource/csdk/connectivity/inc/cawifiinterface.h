@@ -29,7 +29,9 @@
 #include <stdbool.h>
 
 #include "cacommon.h"
+#ifndef ARDUINO
 #include "uthreadpool.h"
+#endif  //ARDUINO
 
 #ifdef __cplusplus
 extern "C"
@@ -55,11 +57,18 @@ typedef enum
  * @param[in]  port  Port number on which data is received.
  * @param[in]  data  Data received from remote OIC device.
  * @param[in]  dataLength  Length of data in bytes.
+ * @param[in]  secure  Indicates the data is secure or not.
  *
  * @pre  Callback must be registered using CAWiFiSetPacketReceiveCallback()
  */
+#ifndef ARDUINO
+typedef void (*CAWiFiPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
+        const void *data, const uint32_t dataLength, const CABool_t isSecure);
+
+#else
 typedef void (*CAWiFiPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
         const void *data, const uint32_t dataLength);
+#endif  //ARDUINO
 
 /**
  * @fn  CAWiFiExceptionCallback
@@ -82,18 +91,14 @@ typedef void (*CAWiFiExceptionCallback)(CAAdapterServerType_t type);
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
+#ifdef ARDUINO
+
+CAResult_t CAWiFiInitializeServer(void);
+
+#else
+
 CAResult_t CAWiFiInitializeServer(const u_thread_pool_t threadPool);
 
-#ifdef ARDUINO
-/**
- * @fn  CAWiFiInitializeServer
- * @brief  API to initialize Wifi server
- *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Initialization failed
- */
-CAResult_t CAWiFiInitializeServer(void);
 #endif //ARDUINO
 
 /**
@@ -128,6 +133,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
  * @param[in][out]  port  Port number on which server to be running.
  * Port number on which server actually started will be returned.
  * @param[in]  forceStart  Indicate whether to start server forcesfully on specified port or not.
+ * @param[in]  secured  true if the secure server to be started, otherwise false.
  * @param[out]  serverFD  Unicast server socket FD.
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
@@ -136,8 +142,15 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
  * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
+
+#ifdef ARDUINO
 CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
                                     const bool forceStart, int32_t *serverFD);
+#else
+
+CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
+                                    const bool forceStart, const CABool_t isSecured, int32_t *serverFD);
+#endif //ARDUINO
 
 /**
  * @fn  CAWiFiStopMulticastServer
@@ -159,11 +172,24 @@ CAResult_t CAWiFiStopMulticastServer(void);
  */
 CAResult_t CAWiFiStopUnicastServer();
 
+#ifdef __WITH_DTLS__
+/**
+ * @fn  CAWiFiStopSecureUnicastServer
+ * @brief  API to stop secured unicast server.
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAWiFiStopSecureUnicastServer();
+#endif
+
 /**
  * @fn  CAWiFiGetUnicastServerInfo
  * @brief  API to get running unicast server information.
  * @remarks  @ipAddress must be freed using free().
  *
+ * @param[in]  secure  true if the secure server information needed, otherwise false.
  * @param[in]  ipAddress  IP address on which server is binded and running.
  * @param[out]  port  Port number on which server is running
  * @param[out]  serverFD  Server socket fd.
@@ -173,7 +199,17 @@ CAResult_t CAWiFiStopUnicastServer();
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
  */
+
+#ifdef ARDUINO
+
 CAResult_t CAWiFiGetUnicastServerInfo(char **ipAddress, int16_t *port, int32_t *serverFD);
+
+#else
+
+CAResult_t CAWiFiGetUnicastServerInfo(const CABool_t isSecured, char **ipAddress, int16_t *port,
+                                      int32_t *serverFD);
+
+#endif // ARDUINO
 
 /**
  * @fn  CAWiFiSetPacketReceiveCallback
@@ -216,6 +252,17 @@ void CAWiFiSetExceptionCallback(CAWiFiExceptionCallback callback);
  */
 void CAWiFiSetUnicastSocket(const int32_t socketFD);
 
+#ifdef __WITH_DTLS__
+/**
+ * @fn  CAWiFiSetSecureUnicastSocket
+ * @brief  API to set socket description for sending secured (encrypted) unicast UDP data
+ *
+ * @param[in]  socketFD  Socket descriptor used for sending secured (encrypted) UDP data.
+ *
+ */
+void CAWiFiSetSecureUnicastSocket(const int32_t socketFD);
+#endif
+
 /**
  * @fn  CAWiFiSendUnicastData
  * @brief  API to send unicast UDP data
@@ -225,15 +272,27 @@ void CAWiFiSetUnicastSocket(const int32_t socketFD);
  * @param[in]  data  Data to be send.
  * @param[in]  dataLength  Length of data in bytes
  * @param[in]  isMulticast  whether data needs to be sent to multicast ip
- * @param[out]  sentLength  Number of bytes actually sent
+ * @param[in]  isSecure  Indicate the whether data needs to be send on secure channel.
+ * @isSecure will be ignored when @isMulticast is true.
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
  */
+
+#ifdef ARDUINO
+
 uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
                         const void *data, const uint32_t dataLength, bool isMulticast);
+
+#else
+
+uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
+                        const void *data, const uint32_t dataLength,
+                        CABool_t isMulticast, CABool_t isSecured);
+
+#endif //ARDUINO
 
 /**
  * @fn  CAWiFiConnectionStateChangeCallback
@@ -258,7 +317,16 @@ typedef void (*CAWiFiConnectionStateChangeCallback)(const char *ipAddress,
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
+
+#ifndef ARDUINO
+
 CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool);
+
+#else
+
+CAResult_t CAWiFiInitializeNetworkMonitor(void);
+
+#endif //ARDUINO
 
 #ifdef ARDUINO
 /**

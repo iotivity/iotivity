@@ -24,7 +24,12 @@ make
 
 cd ../../build/linux
 make clean
+if echo $1 | grep -q -i "WITH_DTLS"
+then
+make DTLS=1
+else
 make
+fi
 
 cd ../../samples/linux
 make clean

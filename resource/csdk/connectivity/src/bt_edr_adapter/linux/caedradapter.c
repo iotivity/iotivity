@@ -31,8 +31,8 @@ static CANetworkPacketReceivedCallback gEDRReceivedCallback = NULL;
 static u_thread_pool_t gThreadPoolHandle = NULL;
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
-        u_thread_pool_t handle)
+                           CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+                           u_thread_pool_t handle)
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitializeEDR");
 
@@ -79,21 +79,21 @@ CAResult_t CAStartEDRDiscoveryServer()
     return CA_STATUS_OK;
 }
 
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
+uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendEDRUnicastData");
 
     return 0;
 }
 
-uint32_t CASendEDRMulticastData(void* data, uint32_t dataLen)
+uint32_t CASendEDRMulticastData(void *data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendEDRMulticastData");
 
     return 0;
 }
 
-CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
+CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGetEDRInterfaceInformation");
 

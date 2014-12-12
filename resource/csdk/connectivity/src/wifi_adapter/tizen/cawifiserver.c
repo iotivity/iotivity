@@ -45,51 +45,16 @@
 #define CA_UDP_BIND_RETRY_COUNT 10
 
 /**
- * @var gUnicastServerSocketDescriptor
- * @brief socket descriptor for unicast server
+ * @var gUnicastServerSocketFD
+ * @brief Unicast server socket descriptor
  */
-static int32_t gUnicastServerSocketDescriptor = -1;
+static int32_t gUnicastServerSocketFD = -1;
 
 /**
- * @var gUnicastServerSocketDescriptor
- * @brief socket descriptor for unicast server
+ * @var gMutexUnicastServer
+ * @brief Mutex to synchronize unicast server
  */
-static char *gUnicastServerAddress = NULL;
-
-/**
- * @var gUnicastServerSocketDescriptor
- * @brief socket descriptor for unicast server
- */
-static int16_t gUnicastServerPort = -1;
-
-/**
- * @var gMutexUnicastServerSocketDescriptor
- * @brief Mutex for socket descriptor for unicast server
- */
-static u_mutex gMutexUnicastServerSocketDescriptor = NULL;
-/**
- * @var gMulticastServerSocketDescriptor
- * @brief socket descriptor for multicast server
- */
-static int32_t gMulticastServerSocketDescriptor = -1;
-
-/**
- * @var gMutexMulticastServerSocketDescriptor
- * @brief Mutex for socket descriptor for Multicast server
- */
-static u_mutex gMutexMulticastServerSocketDescriptor = NULL;
-
-/**
- * @var gThreadPool
- * @brief ThreadPool for storing u_thread_pool_t handle passed from adapter
- */
-static u_thread_pool_t gThreadPool = NULL;
-
-/**
- * @var gMReq
- * @brief ip_mreq structure passed to join a multicast group
- */
-static struct ip_mreq gMReq;
+static u_mutex gMutexUnicastServer = NULL;
 
 /**
  * @var gStopUnicast
@@ -98,10 +63,16 @@ static struct ip_mreq gMReq;
 static bool gStopUnicast = false;
 
 /**
- * @var gMutexStopUnicast
- * @brief Mutex for gStopUnicast
+ * @var gMulticastServerSocketFD
+ * @brief socket descriptor for multicast server
  */
-static u_mutex gMutexStopUnicast = NULL;
+static int32_t gMulticastServerSocketFD = -1;
+
+/**
+ * @var gMutexMulticastServer
+ * @brief Mutex to synchronize secure multicast server
+ */
+static u_mutex gMutexMulticastServer = NULL;
 
 /**
  * @var gStopMulticast
@@ -109,11 +80,43 @@ static u_mutex gMutexStopUnicast = NULL;
  */
 static bool gStopMulticast = false;
 
+#ifdef __WITH_DTLS__
 /**
- * @var gMutexStopMulticast
- * @brief Mutex for gStopMulticast
+ * @var gSecureUnicastServerSocketFD
+ * @brief Secure unicast server socket descriptor
  */
-static u_mutex gMutexStopMulticast = NULL;
+static int32_t gSecureUnicastServerSocketFD = -1;
+
+/**
+ * @var gMutexUnicastServer
+ * @brief Mutex to synchronize secure unicast server
+ */
+static u_mutex gMutexSecureUnicastServer = NULL;
+
+/**
+ * @var gStopSecureUnicast
+ * @brief Flag to control the unicast secure data receive thread
+ */
+static bool gStopSecureUnicast = false;
+
+/**
+ * @var gSecureUnicastRecvBuffer
+ * @brief Character buffer used for receiving unicast data from network
+ */
+static char gSecureUnicastRecvBuffer[COAP_MAX_PDU_SIZE] = {0};
+#endif
+
+/**
+ * @var gThreadPool
+ * @brief ThreadPool for storing u_thread_pool_t handle passed from adapter
+ */
+static u_thread_pool_t gThreadPool = NULL;
+
+/**
+ * @var gMulticastMemberReq
+ * @brief ip_mreq structure passed to join a multicast group
+ */
+static struct ip_mreq gMulticastMemberReq;
 
 /**
  * @var gPacketReceivedCallback
@@ -139,29 +142,407 @@ static char gUnicastRecvBuffer[COAP_MAX_PDU_SIZE] = {0};
  */
 static char gMulticastRecvBuffer[COAP_MAX_PDU_SIZE] = {0};
 
-/**
- * @fn CAWiFiServerCreateMutex
- * @brief Creates and initializes mutex
- */
-static CAResult_t CAWiFiServerCreateMutex(void);
+static void CAUnicastReceiveHandler(void *data)
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "[CAUnicastReceiveHandler] IN");
 
-/**
- * @fn CAWiFiServerDestroyMutex
- * @brief Releases all created mutex
- */
-static void CAWiFiServerDestroyMutex(void);
+    fd_set reads;
+    struct timeval timeout;
 
-/**
- * @fn CAReceiveThreadForMulticast
- * @brief Handler thread for receiving data on multicast server
- */
-static void *CAReceiveThreadForMulticast(void *data);
+    while (!gStopUnicast)
+    {
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
 
-/**
- * @fn CAWiFiReceiveThreadForUnicast
- * @brief Handler thread for receiving data on unicast server
- */
-static void *CAWiFiReceiveThreadForUnicast(void *data);
+        FD_ZERO(&reads);
+        FD_SET(gUnicastServerSocketFD, &reads);
+
+        int32_t ret = select(gUnicastServerSocketFD + 1, &reads, NULL, NULL, &timeout);
+        if (gStopUnicast)
+        {
+            OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Stop request already received for unicast server");
+            break;
+        }
+        if (ret < 0)
+        {
+            OIC_LOG_V(FATAL, WIFI_SERVER_TAG, "select returned error %s", strerror(errno));
+            continue;
+        }
+        if (!FD_ISSET(gUnicastServerSocketFD, &reads))
+        {
+            continue;
+        }
+
+        memset(gUnicastRecvBuffer, 0, sizeof(char)*COAP_MAX_PDU_SIZE);
+
+        // Read data from socket
+        struct sockaddr_in srcSockAddress;
+        int32_t recvLen;
+        socklen_t srcAddressLen = sizeof(srcSockAddress);
+        if (-1 == (recvLen = recvfrom(gUnicastServerSocketFD, gUnicastRecvBuffer,
+                                      COAP_MAX_PDU_SIZE, 0, (struct sockaddr *) &srcSockAddress,
+                                      &srcAddressLen)))
+        {
+            OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "%s", strerror(errno));
+            continue;
+        }
+        else if (0 == recvLen)
+        {
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Unicast server socket is shutdown !");
+
+            // Notify upper layer this exception
+            if (gExceptionCallback)
+            {
+                gExceptionCallback(CA_UNICAST_SERVER);
+            }
+            return;
+        }
+
+        const char *srcIPAddress = NULL;
+        int32_t srcPort = -1;
+
+        srcIPAddress = inet_ntoa(srcSockAddress.sin_addr);
+        srcPort = ntohs(srcSockAddress.sin_port);
+
+        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Received packet from %s:%d\n",
+                  srcIPAddress, srcPort);
+        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Data: %s\t, DataLength: %d\n",
+                  gUnicastRecvBuffer, recvLen);
+
+        // Notify data to upper layer
+        if (gPacketReceivedCallback)
+        {
+            gPacketReceivedCallback(srcIPAddress, srcPort, gUnicastRecvBuffer, recvLen, false);
+        }
+    }
+
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "[CAUnicastReceiveHandler] OUT");
+}
+
+#ifdef __WITH_DTLS__
+static void CASecureUnicastReceiveHandler(void *data)
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "[CASecureUnicastReceiveHandler] IN");
+
+    fd_set reads;
+    struct timeval timeout;
+
+    while (!gStopSecureUnicast)
+    {
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        FD_ZERO(&reads);
+        FD_SET(gSecureUnicastServerSocketFD, &reads);
+
+        int32_t ret = select(gSecureUnicastServerSocketFD + 1, &reads, NULL, NULL, &timeout);
+        if (gStopSecureUnicast)
+        {
+            OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Stop request already received for secure server");
+            break;
+        }
+
+        if (ret < 0)
+        {
+            OIC_LOG_V(FATAL, WIFI_SERVER_TAG, "select returned error %s", strerror(errno));
+            continue;
+        }
+
+        if (!FD_ISSET(gSecureUnicastServerSocketFD, &reads))
+        {
+            continue;
+        }
+
+        memset(gUnicastRecvBuffer, 0, sizeof(char)*COAP_MAX_PDU_SIZE);
+
+        // Read data from socket
+        struct sockaddr_in srcSockAddress;
+        int32_t recvLen;
+        socklen_t srcAddressLen = sizeof(srcSockAddress);
+        if (-1 == (recvLen = recvfrom(gSecureUnicastServerSocketFD, gSecureUnicastRecvBuffer,
+                                      COAP_MAX_PDU_SIZE, 0, (struct sockaddr *) &srcSockAddress,
+                                      &srcAddressLen)))
+        {
+            OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "%s", strerror(errno));
+            continue;
+        }
+        else if (0 == recvLen)
+        {
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Unicast server socket is shutdown !");
+
+            // Notify upper layer this exception
+            if (gExceptionCallback)
+            {
+                gExceptionCallback(CA_UNICAST_SERVER);
+            }
+            return;
+        }
+
+        const char *srcIPAddress = NULL;
+        int32_t srcPort = -1;
+
+        srcIPAddress = inet_ntoa(srcSockAddress.sin_addr);
+        srcPort = ntohs(srcSockAddress.sin_port);
+
+        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Received packet from %s:%d\n",
+                  srcIPAddress, srcPort);
+        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Data: %s\t, DataLength: %d\n",
+                  gSecureUnicastRecvBuffer, recvLen);
+
+        CAResult_t result = CAAdapterNetDtlsDecrypt(srcIPAddress,
+                            srcPort,
+                            gSecureUnicastRecvBuffer,
+                            recvLen);
+
+        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, " CAAdapterNetDtlsDecrypt returns [%d]", result);
+    }
+
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "[CASecureUnicastReceiveHandler] OUT");
+}
+#endif
+
+static void CAMulticastReceiveHandler(void *data)
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
+
+    fd_set reads;
+    struct timeval timeout;
+
+    while (!gStopMulticast)
+    {
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        FD_ZERO(&reads);
+        FD_SET(gMulticastServerSocketFD, &reads);
+
+        int32_t ret = select(gMulticastServerSocketFD + 1, &reads, NULL, NULL, &timeout);
+        if (gStopMulticast)
+        {
+            OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Stop request already received for multicast server");
+            break;
+        }
+        if ( ret < 0)
+        {
+            OIC_LOG_V(FATAL, WIFI_SERVER_TAG, "select returned error %s", strerror(errno));
+            continue;
+        }
+        if (!FD_ISSET(gMulticastServerSocketFD, &reads))
+        {
+            continue;
+        }
+
+        memset(gMulticastRecvBuffer, 0, sizeof(char)*COAP_MAX_PDU_SIZE);
+
+        // Read data from socket
+        struct sockaddr_in srcSockAddress;
+        int32_t recvLen;
+        socklen_t srcAddressLen = sizeof(srcSockAddress);
+        if (-1 == (recvLen = recvfrom(gMulticastServerSocketFD, gMulticastRecvBuffer,
+                                      COAP_MAX_PDU_SIZE, 0, (struct sockaddr *) &srcSockAddress,
+                                      &srcAddressLen)))
+        {
+            OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "%s", strerror(errno));
+            continue;
+        }
+        else if (0 == recvLen)
+        {
+            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Multicast socket is shutdown!\n");
+
+            // Notify upper layer this exception
+            if (gExceptionCallback)
+            {
+                gExceptionCallback(CA_MULTICAST_SERVER);
+            }
+            return;
+        }
+
+        const char *srcIPAddress = NULL;
+        int32_t srcPort = -1;
+
+        srcIPAddress = inet_ntoa(srcSockAddress.sin_addr);
+        srcPort = ntohs(srcSockAddress.sin_port);
+
+        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Received packet from %s:%d\n",
+                  srcIPAddress, srcPort);
+        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Data: %s\t, DataLength: %d\n",
+                  gMulticastRecvBuffer, recvLen);
+
+
+        // Notify data to upper layer
+        if (gPacketReceivedCallback)
+        {
+            gPacketReceivedCallback(srcIPAddress, srcPort, gMulticastRecvBuffer, recvLen, false);
+        }
+    }
+
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
+}
+
+static CAResult_t CAStartUnicastServer(const char *localAddress, int16_t *port,
+                                       const bool forceStart, u_thread_func receiveThread,
+                                       int32_t *serverFD)
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
+
+    int32_t socketFD = -1;
+
+    // Create a UDP socket
+    if (-1 == (socketFD = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)))
+    {
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to create Socket, Error code: %s",
+                  strerror(errno));
+        return CA_STATUS_FAILED;
+    }
+
+    // Make the socket non-blocking
+    if (-1 == fcntl(socketFD, F_SETFL, O_NONBLOCK))
+    {
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to set non-block mode, Error code: %s",
+                  strerror(errno));
+
+        close(socketFD);
+        return CA_STATUS_FAILED;
+    }
+
+    if (true == forceStart)
+    {
+        int32_t setOptionOn = 1;
+        if (-1 == setsockopt(socketFD, SOL_SOCKET, SO_REUSEADDR,
+                             (char *) &setOptionOn,
+                             sizeof(setOptionOn)))
+        {
+            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to set SO_REUSEADDR! Error code: %s",
+                      strerror(errno));
+
+            close(socketFD);
+            return CA_STATUS_FAILED;
+        }
+    }
+
+    struct sockaddr_in sockAddr;
+    bool isBound = false;
+    int16_t serverPort = *port;
+
+    memset((char *) &sockAddr, 0, sizeof(sockAddr));
+    sockAddr.sin_family = AF_INET;
+    sockAddr.sin_port = htons(serverPort);
+    sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    int16_t i;
+    for (i = 0; i < CA_UDP_BIND_RETRY_COUNT; i++)
+    {
+        if (-1 == bind(socketFD, (struct sockaddr *) &sockAddr,
+                       sizeof(sockAddr)))
+        {
+            if (false == forceStart)
+            {
+                OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to bind socket[%s]. Trying again... ",
+                          strerror(errno));
+
+                //Set the port to next one
+                serverPort += 1;
+                sockAddr.sin_port = htons(serverPort);
+                continue;
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to bind socket[%s]!",
+                          strerror(errno));
+                break;
+            }
+        }
+
+        isBound = true;
+        break;
+    }
+
+    if (false == isBound)
+    {
+        close(socketFD);
+        return CA_STATUS_FAILED;
+    }
+
+    *port = serverPort;
+    *serverFD = socketFD;
+
+    /**
+      * The task to listen for data from unicast socket is added to the thread pool.
+      * This is a blocking call is made where we try to receive some data..
+      * We will keep waiting until some data is received.
+      * This task will be terminated when thread pool is freed on stopping the adapters.
+      */
+    if (CA_STATUS_OK != u_thread_pool_add_task(gThreadPool, receiveThread, NULL))
+    {
+        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to create read thread!");
+
+        close(socketFD);
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+static void CAWiFiServerDestroyMutex(void)
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
+
+    if (gMutexUnicastServer)
+    {
+        u_mutex_free(gMutexUnicastServer);
+        gMutexUnicastServer = NULL;
+    }
+
+#ifdef __WITH_DTLS__
+    if (gMutexSecureUnicastServer)
+    {
+        u_mutex_free(gMutexSecureUnicastServer);
+        gMutexSecureUnicastServer = NULL;
+    }
+#endif
+
+    if (gMutexMulticastServer)
+    {
+        u_mutex_free(gMutexMulticastServer);
+        gMutexMulticastServer = NULL;
+    }
+
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
+}
+
+static CAResult_t CAWiFiServerCreateMutex(void)
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
+
+    gMutexUnicastServer = u_mutex_new();
+    if (!gMutexUnicastServer)
+    {
+        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
+        return CA_STATUS_FAILED;
+    }
+
+#ifdef __WITH_DTLS__
+    gMutexSecureUnicastServer = u_mutex_new();
+    if (!gMutexSecureUnicastServer)
+    {
+        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
+        return CA_STATUS_FAILED;
+    }
+#endif
+
+    gMutexMulticastServer = u_mutex_new();
+    if (!gMutexMulticastServer)
+    {
+        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
+
+        CAWiFiServerDestroyMutex();
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
 
 CAResult_t CAWiFiInitializeServer(const u_thread_pool_t threadPool)
 {
@@ -195,17 +576,88 @@ void CAWiFiTerminateServer(void)
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
 }
 
+CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
+                                    const bool forceStart, const CABool_t isSecured,
+                                    int32_t *serverFD)
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
+
+    // Input validation
+    VERIFY_NON_NULL(localAddress, WIFI_SERVER_TAG, "localAddress");
+    VERIFY_NON_NULL(port, WIFI_SERVER_TAG, "port");
+    VERIFY_NON_NULL(serverFD, WIFI_SERVER_TAG, "server socket FD");
+
+    if (0 >= *port)
+    {
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Invalid input: port is invalid!");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    *serverFD = -1;
+    if (CA_FALSE == isSecured)
+    {
+        u_mutex_lock(gMutexUnicastServer);
+        if (-1 != gUnicastServerSocketFD)
+        {
+            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Unicast Server is Started Already!",
+                      CA_SERVER_STARTED_ALREADY);
+
+            *serverFD = gUnicastServerSocketFD;
+            u_mutex_unlock(gMutexUnicastServer);
+            return CA_SERVER_STARTED_ALREADY;
+        }
+
+        gStopUnicast = false;
+        if (CA_STATUS_OK != CAStartUnicastServer(localAddress, port, forceStart,
+                CAUnicastReceiveHandler, &gUnicastServerSocketFD))
+        {
+            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
+            gUnicastServerSocketFD = -1;
+            u_mutex_unlock(gMutexUnicastServer);
+            return CA_STATUS_FAILED;
+        }
+
+        *serverFD = gUnicastServerSocketFD;
+        u_mutex_unlock(gMutexUnicastServer);
+    }
+#ifdef __WITH_DTLS__
+    else // Start unicast server for secured communication
+    {
+        u_mutex_lock(gMutexSecureUnicastServer);
+        if (-1 != gSecureUnicastServerSocketFD)
+        {
+            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Unicast Server is Started Already!",
+                      CA_SERVER_STARTED_ALREADY);
+
+            *serverFD = gSecureUnicastServerSocketFD;
+            u_mutex_unlock(gMutexSecureUnicastServer);
+            return CA_SERVER_STARTED_ALREADY;
+        }
+
+        gStopSecureUnicast = false;
+        if (CA_STATUS_OK != CAStartUnicastServer(localAddress, port, forceStart,
+                CASecureUnicastReceiveHandler, &gSecureUnicastServerSocketFD))
+        {
+            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
+            gSecureUnicastServerSocketFD = -1;
+            u_mutex_unlock(gMutexSecureUnicastServer);
+            return CA_STATUS_FAILED;
+        }
+
+        *serverFD = gSecureUnicastServerSocketFD;
+        u_mutex_unlock(gMutexSecureUnicastServer);
+    }
+#endif
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
 CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *multicastAddress,
                                       const int16_t multicastPort, int32_t *serverFD)
 {
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
-    if (gMulticastServerSocketDescriptor != -1)
-    {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Multicast Server is already running!");
-        return CA_SERVER_STARTED_ALREADY;
-    }
-
+    // Input validation
     VERIFY_NON_NULL(localAddress, WIFI_SERVER_TAG, "Local address is NULL");
     VERIFY_NON_NULL(multicastAddress, WIFI_SERVER_TAG, "Multicast address is NULL");
 
@@ -215,46 +667,46 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
         return CA_STATUS_INVALID_PARAM;
     }
 
-    // Create a datagram socket on which to recv/send.
-    u_mutex_lock(gMutexStopMulticast);
-    gStopMulticast = false;
-    u_mutex_unlock(gMutexStopMulticast);
+    u_mutex_lock(gMutexMulticastServer);
 
-    u_mutex_lock(gMutexMulticastServerSocketDescriptor);
+    if (gMulticastServerSocketFD != -1)
+    {
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Multicast Server is already running!");
+        return CA_SERVER_STARTED_ALREADY;
+    }
 
-    // create a UDP socket
-    if ((gMulticastServerSocketDescriptor = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    if ((gMulticastServerSocketFD = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
         OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to Create Socket, Error code: %s",
                   strerror(errno));
-        u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-        return CA_SOCKET_OPERATION_FAILED;
+        u_mutex_unlock(gMutexMulticastServer);
+        return CA_STATUS_FAILED;
     }
 
     // Make the socket non-blocking
-    if (-1 == fcntl(gMulticastServerSocketDescriptor, F_SETFL, O_NONBLOCK))
+    if (-1 == fcntl(gMulticastServerSocketFD, F_SETFL, O_NONBLOCK))
     {
         OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to set non-block mode, Error code: %s",
                   strerror(errno));
-        close(gMulticastServerSocketDescriptor);
-        gMulticastServerSocketDescriptor = -1;
-        u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
+        close(gMulticastServerSocketFD);
+        gMulticastServerSocketFD = -1;
+        u_mutex_unlock(gMutexMulticastServer);
         return CA_STATUS_FAILED;
     }
 
     OIC_LOG(INFO, WIFI_SERVER_TAG, "socket creation success");
 
     int32_t setOptionOn = 1;
-    if (-1 == setsockopt(gMulticastServerSocketDescriptor, SOL_SOCKET, SO_REUSEADDR,
+    if (-1 == setsockopt(gMulticastServerSocketFD, SOL_SOCKET, SO_REUSEADDR,
                          (char *) &setOptionOn,
                          sizeof(setOptionOn)))
     {
         OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to setsockopt for SO_REUSEADDR, Error code: %s",
                   strerror(errno));
-        close(gMulticastServerSocketDescriptor);
-        gMulticastServerSocketDescriptor = -1;
-        u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-        return CA_SOCKET_OPERATION_FAILED;
+        close(gMulticastServerSocketFD);
+        gMulticastServerSocketFD = -1;
+        u_mutex_unlock(gMutexMulticastServer);
+        return CA_STATUS_FAILED;
     }
 
     struct sockaddr_in sockAddr;
@@ -265,309 +717,187 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
     sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // bind socket to multicast port
-    if (-1 == bind(gMulticastServerSocketDescriptor, (struct sockaddr *) &sockAddr,
+    if (-1 == bind(gMulticastServerSocketFD, (struct sockaddr *) &sockAddr,
                    sizeof(sockAddr)))
     {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to Bind Socket! Return Code[%d]",
-                  CA_SOCKET_OPERATION_FAILED);
-        close(gMulticastServerSocketDescriptor);
-        gMulticastServerSocketDescriptor = -1;
-        u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-        return CA_SOCKET_OPERATION_FAILED;
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to Bind Socket!");
+        close(gMulticastServerSocketFD);
+        gMulticastServerSocketFD = -1;
+        u_mutex_unlock(gMutexMulticastServer);
+        return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(INFO, WIFI_SERVER_TAG, "socket bind success");
-
     // Add membership to receiving socket (join group)
-    memset(&gMReq, 0, sizeof(struct ip_mreq));
-    gMReq.imr_interface.s_addr = htonl(INADDR_ANY);
-    inet_aton(multicastAddress, &gMReq.imr_multiaddr);
+    memset(&gMulticastMemberReq, 0, sizeof(struct ip_mreq));
+    gMulticastMemberReq.imr_interface.s_addr = htonl(INADDR_ANY);
+    inet_aton(multicastAddress, &gMulticastMemberReq.imr_multiaddr);
 
-    if (-1 == setsockopt(gMulticastServerSocketDescriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                         (char *) &gMReq,
+    if (-1 == setsockopt(gMulticastServerSocketFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                         (char *) &gMulticastMemberReq,
                          sizeof(struct ip_mreq)))
     {
         OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to add to multicast group, Error code: %s\n",
                   strerror(errno));
-        close(gMulticastServerSocketDescriptor);
-        gMulticastServerSocketDescriptor = -1;
-        u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-        return CA_SOCKET_OPERATION_FAILED;
+        close(gMulticastServerSocketFD);
+        gMulticastServerSocketFD = -1;
+        u_mutex_unlock(gMutexMulticastServer);
+        return CA_STATUS_FAILED;
     }
 
     /**
       * The task to listen to data from multicastcast socket is added to the thread pool.
-      * This is a blocking call is made where we try to receive some data.. We will keep waiting until some data is received.
-      * This task will be terminated when thread pool is freed on stopping the adapters.
-      */
-    if (CA_STATUS_OK != u_thread_pool_add_task(gThreadPool, (void *) CAReceiveThreadForMulticast,
-            (void *)NULL))
-    {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "[testThreadPool] thread_pool_add_task failed!");
-
-        close(gMulticastServerSocketDescriptor);
-        gMulticastServerSocketDescriptor = -1;
-        u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-        return CA_STATUS_FAILED;
-    }
-
-    *serverFD = gMulticastServerSocketDescriptor;
-    u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-
-    OIC_LOG(INFO, WIFI_SERVER_TAG, "thread_pool_add_task done");
-    OIC_LOG(INFO, WIFI_SERVER_TAG, "Multicast Server Started Successfully");
-
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
-    return CA_STATUS_OK;
-
-}
-
-CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
-                                    const bool forceStart, int32_t *serverFD)
-{
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
-
-    if (gUnicastServerSocketDescriptor != -1)
-    {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Unicast Server is Started Already! Return Code[%d]",
-                  CA_SERVER_STARTED_ALREADY);
-        return CA_SERVER_STARTED_ALREADY;
-    }
-
-    VERIFY_NON_NULL(localAddress, WIFI_SERVER_TAG, "Invalid argument : localAddress is NULL");
-    VERIFY_NON_NULL(port, WIFI_SERVER_TAG, "Invalid argument : port is NULL");
-
-    if (0 >= port)
-    {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Invalid input: port is invalid!");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
-    u_mutex_lock(gMutexStopUnicast);
-    gStopUnicast = false;
-    u_mutex_unlock(gMutexStopUnicast);
-
-    u_mutex_lock(gMutexUnicastServerSocketDescriptor);
-    // Create a UDP socket
-    if ((gUnicastServerSocketDescriptor = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-    {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to Create Socket, Error code: %s",
-                  strerror(errno));
-        u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
-        return CA_SOCKET_OPERATION_FAILED;
-    }
-
-    // Make the socket non-blocking
-    if (-1 == fcntl(gUnicastServerSocketDescriptor, F_SETFL, O_NONBLOCK))
-    {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to set non-block mode, Error code: %s",
-                  strerror(errno));
-        close(gUnicastServerSocketDescriptor);
-        gUnicastServerSocketDescriptor = -1;
-        u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
-        return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG(INFO, WIFI_SERVER_TAG, "socket creation success");
-
-    if (true == forceStart)
-    {
-        int32_t setOptionOn = 1;
-        if (-1 == setsockopt(gUnicastServerSocketDescriptor, SOL_SOCKET, SO_REUSEADDR,
-                             (char *) &setOptionOn,
-                             sizeof(setOptionOn)))
-        {
-            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to set SO_REUSEADDR! Error code: %s",
-                      strerror(errno));
-            close(gUnicastServerSocketDescriptor);
-            gUnicastServerSocketDescriptor = -1;
-            u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
-            return CA_SOCKET_OPERATION_FAILED;
-        }
-    }
-
-    struct sockaddr_in sockAddr;
-    bool isBound = false;
-    int16_t serverPort = *port;
-
-    memset((char *) &sockAddr, 0, sizeof(sockAddr));
-    sockAddr.sin_family = AF_INET;
-    sockAddr.sin_port = htons(serverPort);
-    sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    // Trying for bind in a loop
-    int16_t i;
-    for (i = 0; i < CA_UDP_BIND_RETRY_COUNT; i++)
-    {
-        if (-1 == bind(gUnicastServerSocketDescriptor, (struct sockaddr *) &sockAddr,
-                       sizeof(sockAddr)))
-        {
-            if (false == forceStart)
-            {
-                OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to bind socket[%s]. Trying again... ",
-                          strerror(errno));
-
-                // Set the port to next one
-                serverPort += 1;
-                sockAddr.sin_port = htons(serverPort);
-                continue;
-            }
-            else
-            {
-                OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to bind socket[%s]!",
-                          strerror(errno));
-                break;
-            }
-        }
-
-        isBound = true;
-        break;
-    }
-
-    if (false == isBound)
-    {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to bind Socket! Return code[%d]",
-                  CA_SOCKET_OPERATION_FAILED);
-        close(gUnicastServerSocketDescriptor);
-        gUnicastServerSocketDescriptor = -1;
-        u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
-        return CA_SOCKET_OPERATION_FAILED;
-    }
-
-    OIC_LOG(INFO, WIFI_SERVER_TAG, "socket bind success");
-
-    socklen_t len;
-    char *serverAddress = NULL;
-    if (-1 != getsockname(gUnicastServerSocketDescriptor, (struct sockaddr *)&sockAddr, &len))
-    {
-        serverPort = ntohs(sockAddr.sin_port);
-        serverAddress = inet_ntoa(sockAddr.sin_addr);
-    }
-
-    /**
-      * The task to listen for data from unicast socket is added to the thread pool.
-      * This is a blocking call is made where we try to receive some data..
+      * This is a blocking call is made where we try to receive some data.
       * We will keep waiting until some data is received.
       * This task will be terminated when thread pool is freed on stopping the adapters.
       */
-    if (CA_STATUS_OK != u_thread_pool_add_task(gThreadPool, (void *) CAWiFiReceiveThreadForUnicast,
-            (void *) NULL))
+    gStopMulticast = false;
+    if (CA_STATUS_OK != u_thread_pool_add_task(gThreadPool, CAMulticastReceiveHandler, NULL))
     {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "[testThreadPool] thread_pool_add_task failed!");
+        OIC_LOG(ERROR, WIFI_SERVER_TAG, "thread_pool_add_task failed!");
 
-        close(gUnicastServerSocketDescriptor);
-        gUnicastServerSocketDescriptor = -1;
-        u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
+        close(gMulticastServerSocketFD);
+        gMulticastServerSocketFD = -1;
+        gStopMulticast = true;
+        u_mutex_unlock(gMutexMulticastServer);
         return CA_STATUS_FAILED;
     }
 
-    // Free the server address previously stored
-    OICFree(gUnicastServerAddress);
-    gUnicastServerAddress = NULL;
-    gUnicastServerPort = serverPort;
-    gUnicastServerAddress = (serverAddress) ? strndup(serverAddress, strlen(serverAddress)) :
-                            NULL;
-    *port = serverPort;
-    *serverFD = gUnicastServerSocketDescriptor;
-    u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
-
-    OIC_LOG(INFO, WIFI_SERVER_TAG, "Unicast Server Started Successfully");
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAWiFiStopMulticastServer(void)
-{
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
-
-    u_mutex_lock(gMutexMulticastServerSocketDescriptor);
-
-    if (gMulticastServerSocketDescriptor == -1)
-    {
-        OIC_LOG(INFO, WIFI_SERVER_TAG, "Multicast Server is not yet Started");
-        u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-        return CA_SERVER_NOT_STARTED;
-    }
-
-    u_mutex_lock(gMutexStopMulticast);
-    gStopMulticast = true;
-
-    // leave the group after you are done
-    if (-1 == setsockopt(gMulticastServerSocketDescriptor, IPPROTO_IP, IP_DROP_MEMBERSHIP,
-                         (char *)&gMReq,
-                         sizeof(struct ip_mreq)))
-    {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "cannot leave multicast group, Error code: %s\n",
-                  strerror(errno));
-    }
-
-    // close the socket
-    if (-1 == close(gMulticastServerSocketDescriptor))
-    {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Multicast Server socket close failed, Error code: %s\n",
-                  strerror(errno));
-        u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-        u_mutex_unlock(gMutexStopMulticast);
-        return CA_SOCKET_OPERATION_FAILED;
-    }
-
-    u_mutex_unlock(gMutexStopMulticast);
-
-    gMulticastServerSocketDescriptor = -1;
-    u_mutex_unlock(gMutexMulticastServerSocketDescriptor);
-
-    OIC_LOG(INFO, WIFI_SERVER_TAG, "Multicast Server Stopped Successfully");
+    *serverFD = gMulticastServerSocketFD;
+    u_mutex_unlock(gMutexMulticastServer);
 
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
-
 }
 
 CAResult_t CAWiFiStopUnicastServer()
 {
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
-    u_mutex_lock(gMutexUnicastServerSocketDescriptor);
 
-    if (gUnicastServerSocketDescriptor == -1)
+    u_mutex_lock(gMutexUnicastServer);
+    if (-1 == gUnicastServerSocketFD)
     {
-        OIC_LOG(INFO, WIFI_SERVER_TAG, "Unicast Server is not yet Started");
-        u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
+        OIC_LOG(INFO, WIFI_SERVER_TAG, "Unicast server is not yet started");
+        u_mutex_unlock(gMutexUnicastServer);
         return CA_SERVER_NOT_STARTED;
     }
-    u_mutex_lock(gMutexStopUnicast);
+
     gStopUnicast = true;
 
     // close the socket
-    if (-1 == close(gUnicastServerSocketDescriptor))
+    if (-1 == close(gUnicastServerSocketFD))
     {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Unicast Server socket close failed, Error code: %s\n",
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to close socket, Error code: %s\n",
                   strerror(errno));
-        u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
-        u_mutex_unlock(gMutexStopUnicast);
-        return CA_SOCKET_OPERATION_FAILED;
+        u_mutex_unlock(gMutexUnicastServer);
+        return CA_STATUS_FAILED;
     }
 
-    u_mutex_unlock(gMutexStopUnicast);
-    gUnicastServerSocketDescriptor = -1;
+    gUnicastServerSocketFD = -1;
+    u_mutex_unlock(gMutexUnicastServer);
 
-    u_mutex_unlock(gMutexUnicastServerSocketDescriptor);
-
-    OIC_LOG(INFO, WIFI_SERVER_TAG, "Unicast Server Stopped Successfully");
+    OIC_LOG(INFO, WIFI_SERVER_TAG, "Unicast server stopped successfully");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAWiFiGetUnicastServerInfo(char **ipAddress, int16_t *port, int32_t *serverFD)
+#ifdef __WITH_DTLS__
+CAResult_t CAWiFiStopSecureUnicastServer()
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
+
+    u_mutex_lock(gMutexSecureUnicastServer);
+    if (-1 == gSecureUnicastServerSocketFD)
+    {
+        OIC_LOG(INFO, WIFI_SERVER_TAG, "Secure unicast server is not yet started");
+        u_mutex_unlock(gMutexSecureUnicastServer);
+        return CA_SERVER_NOT_STARTED;
+    }
+
+    gStopSecureUnicast = true;
+
+    // close the socket
+    if (-1 == close(gSecureUnicastServerSocketFD))
+    {
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to close the socket, Error code: %s\n",
+                  strerror(errno));
+        u_mutex_unlock(gMutexSecureUnicastServer);
+        return CA_STATUS_FAILED;
+    }
+
+    gSecureUnicastServerSocketFD = -1;
+    u_mutex_unlock(gMutexSecureUnicastServer);
+
+    OIC_LOG(INFO, WIFI_SERVER_TAG, "Secure unicast server stopped successfully");
+    return CA_STATUS_OK;
+}
+#endif
+
+CAResult_t CAWiFiStopMulticastServer(void)
+{
+    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
+
+    u_mutex_lock(gMutexMulticastServer);
+
+    if (gMulticastServerSocketFD == -1)
+    {
+        OIC_LOG(INFO, WIFI_SERVER_TAG, "Multicast server is not yet started");
+        u_mutex_unlock(gMutexMulticastServer);
+        return CA_SERVER_NOT_STARTED;
+    }
+
+    gStopMulticast = true;
+
+    // leave the group after you are done
+    if (-1 == setsockopt(gMulticastServerSocketFD, IPPROTO_IP, IP_DROP_MEMBERSHIP,
+                         (char *)&gMulticastMemberReq,
+                         sizeof(struct ip_mreq)))
+    {
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to leave multicast group, Error code: %s\n",
+                  strerror(errno));
+    }
+
+    // close the socket
+    if (-1 == close(gMulticastServerSocketFD))
+    {
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to close the socket, Error code: %s\n",
+                  strerror(errno));
+        u_mutex_unlock(gMutexMulticastServer);
+        return CA_SOCKET_OPERATION_FAILED;
+    }
+
+    gMulticastServerSocketFD = -1;
+    u_mutex_unlock(gMutexMulticastServer);
+
+    OIC_LOG(INFO, WIFI_SERVER_TAG, "Multicast server stopped successfully");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAWiFiGetUnicastServerInfo(const CABool_t isSecured, char **ipAddress,
+                                      int16_t *port, int32_t *serverFD)
 {
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
     // Input validation
-    VERIFY_NON_NULL(ipAddress, WIFI_SERVER_TAG, "ipAddress holder is NULL");
-    VERIFY_NON_NULL(port, WIFI_SERVER_TAG, "port holder is NULL");
-    VERIFY_NON_NULL(serverFD, WIFI_SERVER_TAG, "serverID holder is NULL");
+    VERIFY_NON_NULL(ipAddress, WIFI_SERVER_TAG, "IP address");
+    VERIFY_NON_NULL(port, WIFI_SERVER_TAG, "Port");
+    VERIFY_NON_NULL(serverFD, WIFI_SERVER_TAG, "Server ID");
 
-    *ipAddress = gUnicastServerAddress;
-    *port = gUnicastServerPort;
-    *serverFD = gUnicastServerSocketDescriptor;
+    struct sockaddr_in sockAddr;
+    socklen_t len = sizeof(struct sockaddr_in);
+    if (-1 == getsockname(gUnicastServerSocketFD, (struct sockaddr *)&sockAddr, &len))
+    {
+        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed in getsockname [%s]!", strerror(errno));
+        return CA_STATUS_FAILED;
+    }
 
+
+    const char *serverAddress = inet_ntoa(sockAddr.sin_addr);
+    *ipAddress = (serverAddress) ? strndup(serverAddress, strlen(serverAddress)) : NULL;
+    *port = ntohs(sockAddr.sin_port);
+#ifdef __WITH_DTLS__
+    *serverFD = (CA_TRUE == isSecured) ? gSecureUnicastServerSocketFD : gUnicastServerSocketFD;
+#else
+    *serverFD = gUnicastServerSocketFD;
+#endif
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -584,239 +914,6 @@ void CAWiFiSetExceptionCallback(CAWiFiExceptionCallback callback)
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
     gExceptionCallback = callback;
-}
-
-CAResult_t CAWiFiServerCreateMutex(void)
-{
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
-
-    gMutexUnicastServerSocketDescriptor = u_mutex_new();
-    if (!gMutexUnicastServerSocketDescriptor)
-    {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
-        return CA_STATUS_FAILED;
-    }
-
-    gMutexMulticastServerSocketDescriptor = u_mutex_new();
-    if (!gMutexMulticastServerSocketDescriptor)
-    {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
-
-        CAWiFiServerDestroyMutex();
-        return CA_STATUS_FAILED;
-    }
-
-    gMutexStopUnicast = u_mutex_new();
-    if (!gMutexStopUnicast)
-    {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
-
-        CAWiFiServerDestroyMutex();
-        return CA_STATUS_FAILED;
-    }
-
-    gMutexStopMulticast = u_mutex_new();
-    if (!gMutexStopMulticast)
-    {
-        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
-
-        CAWiFiServerDestroyMutex();
-        return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-void CAWiFiServerDestroyMutex(void)
-{
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
-
-    if (gMutexUnicastServerSocketDescriptor)
-    {
-        u_mutex_free(gMutexUnicastServerSocketDescriptor);
-        gMutexUnicastServerSocketDescriptor = NULL;
-    }
-
-    if (gMutexMulticastServerSocketDescriptor)
-    {
-        u_mutex_free(gMutexMulticastServerSocketDescriptor);
-        gMutexMulticastServerSocketDescriptor = NULL;
-    }
-
-    if (gMutexStopUnicast)
-    {
-        u_mutex_free(gMutexStopUnicast);
-        gMutexStopUnicast = NULL;
-    }
-
-    if (gMutexStopMulticast)
-    {
-        u_mutex_free(gMutexStopMulticast);
-        gMutexStopMulticast = NULL;
-    }
-
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
-}
-
-void *CAWiFiReceiveThreadForUnicast(void *data)
-{
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
-
-    fd_set reads;
-    struct timeval timeout;
-
-    // keep listening for data
-    while (!gStopUnicast)
-    {
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
-
-        FD_ZERO(&reads);
-        FD_SET(gUnicastServerSocketDescriptor, &reads);
-
-        int32_t ret = select(gUnicastServerSocketDescriptor + 1, &reads, NULL, NULL, &timeout);
-        if (gStopUnicast)
-        {
-            OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Stop Unicast is called");
-            break;
-        }
-        if (ret < 0)
-        {
-            OIC_LOG_V(FATAL, WIFI_SERVER_TAG, "select returned error %s", strerror(errno));
-            continue;
-        }
-        if (!FD_ISSET(gUnicastServerSocketDescriptor, &reads))
-        {
-            continue;
-        }
-
-        memset(gUnicastRecvBuffer, 0, sizeof(char)*COAP_MAX_PDU_SIZE);
-
-        // Read data from socket
-        struct sockaddr_in srcSockAddress;
-        int32_t recvLen;
-        socklen_t srcAddressLen = sizeof(srcSockAddress);
-        if (-1 == (recvLen = recvfrom(gUnicastServerSocketDescriptor, gUnicastRecvBuffer,
-                                      COAP_MAX_PDU_SIZE, 0, (struct sockaddr *) &srcSockAddress,
-                                      &srcAddressLen)))
-        {
-            OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "%s", strerror(errno));
-            continue;
-        }
-        else if (0 == recvLen)
-        {
-            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Unicast server socket is shutdown !");
-
-            // Notify upper layer this exception
-            if (gExceptionCallback)
-            {
-                gExceptionCallback(CA_UNICAST_SERVER);
-            }
-            return NULL;
-        }
-
-        const char *srcIPAddress = NULL;
-        int32_t srcPort = -1;
-
-        srcIPAddress = inet_ntoa(srcSockAddress.sin_addr);
-        srcPort = ntohs(srcSockAddress.sin_port);
-
-        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Received packet from %s:%d\n",
-                  srcIPAddress, srcPort);
-        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Data: %s\t, DataLength: %d\n",
-                  gUnicastRecvBuffer, recvLen);
-
-        // Notify data to upper layer
-        if (gPacketReceivedCallback)
-        {
-            gPacketReceivedCallback(srcIPAddress, srcPort, gUnicastRecvBuffer, recvLen);
-        }
-    }
-
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
-    return NULL;
-}
-
-void *CAReceiveThreadForMulticast(void *data)
-{
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
-
-    fd_set reads;
-    struct timeval timeout;
-
-    // keep listening for data
-    while (!gStopMulticast)
-    {
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
-
-        FD_ZERO(&reads);
-        FD_SET(gMulticastServerSocketDescriptor, &reads);
-
-        int32_t ret = select(gMulticastServerSocketDescriptor + 1, &reads, NULL, NULL, &timeout);
-        if (gStopMulticast)
-        {
-            OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Stop Multicast is called");
-            break;
-        }
-        if ( ret < 0)
-        {
-            OIC_LOG_V(FATAL, WIFI_SERVER_TAG, "select returned error %s", strerror(errno));
-            continue;
-        }
-        if (!FD_ISSET(gMulticastServerSocketDescriptor, &reads))
-        {
-            continue;
-        }
-
-        memset(gMulticastRecvBuffer, 0, sizeof(char)*COAP_MAX_PDU_SIZE);
-
-        // Read data from socket
-        struct sockaddr_in srcSockAddress;
-        int32_t recvLen;
-        socklen_t srcAddressLen = sizeof(srcSockAddress);
-        if (-1 == (recvLen = recvfrom(gMulticastServerSocketDescriptor, gMulticastRecvBuffer,
-                                      COAP_MAX_PDU_SIZE, 0, (struct sockaddr *) &srcSockAddress,
-                                      &srcAddressLen)))
-        {
-            OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "%s", strerror(errno));
-            continue;
-        }
-        else if (0 == recvLen)
-        {
-            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Multicast socket is shutdown, returning from \
-                thread\n");
-
-            // Notify upper layer this exception
-            if (gExceptionCallback)
-            {
-                gExceptionCallback(CA_MULTICAST_SERVER);
-            }
-            return NULL;
-        }
-
-        const char *srcIPAddress = NULL;
-        int32_t srcPort = -1;
-
-        srcIPAddress = inet_ntoa(srcSockAddress.sin_addr);
-        srcPort = ntohs(srcSockAddress.sin_port);
-
-        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Received packet from %s:%d\n",
-                  srcIPAddress, srcPort);
-        OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Data: %s\t, DataLength: %d\n",
-                  gMulticastRecvBuffer, recvLen);
-
-
-        // Notify data to upper layer
-        if (gPacketReceivedCallback)
-        {
-            gPacketReceivedCallback(srcIPAddress, srcPort, gMulticastRecvBuffer, recvLen);
-        }
-    }
-
-    OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
-    return NULL;
 }
 
 

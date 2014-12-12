@@ -18,66 +18,42 @@
 *
 ******************************************************************/
 
-#ifndef _ETHERNET_ADAPTER_ARDUINO_H_
-#define _ETHERNET_ADAPTER_ARDUINO_H_
+/**
+ * @file caethernetadapterutils.h
+ * @brief This file provides APIs ethernet client/server/network monitor modules
+ */
 
+#ifndef _CA_ETHERNET_ADAPTER_UTILS_
+#define _CA_ETHERNET_ADAPTER_UTILS_
+
+#include <Arduino.h>
+#include <Ethernet.h>
+#include <socket.h>
+#include <w5100.h>
+#include <EthernetUdp.h>
+#include <IPAddress.h>
+
+#include "logger.h"
+#include "cacommon.h"
 #include "caadapterinterface.h"
+#include "caethernetadapter.h"
+#include "caadapterutils.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-
-CAResult_t CAStartUnicastServer(const char *localAddress, int16_t *port);
-
-// Retrieves the IP address assigned to Arduino Ethernet shield
-CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
 
 CAResult_t CAArduinoInitUdpSocket(int16_t *port, int32_t *socketID);
 
 CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress, const int16_t *mport,
         const int16_t *lport, int32_t *socketID);
 
-/**
- * @brief API to start multicast server.
- * @param mcastAddress - IP address to join multicast group.
- * @param localAddress - Local Unicast IP address to bind the socket.
- * @param port - multicast port number where socket will listen for incoming request.
- * @return - Error Code
- */
-CAResult_t CAStartMulticastServer(const char *mcastAddress, const char *localAddress,
-                                  const int16_t *port);
-
-CAResult_t CAStopUnicastServer();
-
-void CAArduoinoCheckServerData();
-
-CAResult_t CAStopMulticastServer();
-
-uint32_t CAEthernetSendData(const char *remoteIpAddress, const int16_t port, const char *buf,
-                            uint32_t bufLen,
-                            int16_t isMulticast);
-
-/// Send data to requested end-point using UDP socket
-uint32_t CAArduinoSendData(int32_t sockFd, const uint8_t *buf, uint32_t bufLen,
-                           const char *ipAddress,
-                           int32_t port);
-
-void CACheckData();
-
-void CANotifyCallback(void *data, int32_t dataLen, const char *senderIp, int32_t senderPort);
-
-/// Retrieve any available data from UDP socket. This is a non-blocking call.
-int32_t CAArduinoRecvData(int32_t sockFd, uint8_t *buf, uint32_t bufLen, uint8_t *senderAddr,
-                          uint16_t *senderPort);
-
-void CASetEthernetNetworkPacketCallback(CANetworkPacketReceivedCallback callback);
-
 int16_t CAParseIPv4AddressLocal(unsigned char *ipAddrStr, uint8_t *ipAddr, uint16_t *port);
 
 #ifdef __cplusplus
 }
-#endif // __cplusplus
-
 #endif
 
+#endif //_CA_ETHERNET_ADAPTER_UTILS_
 

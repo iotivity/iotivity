@@ -24,6 +24,7 @@
 BUILD = debug
 PLATFORM = linux
 TRANSPORT = ALL
+DTLS = 0
 OBJ_DIR = ./$(BUILD)
 VERSION_MAJOR = 0
 VERSION_MINOR = 1
@@ -41,7 +42,11 @@ LE = NO_LE_ADAPTER
 ETHERNET = ETHERNET_ADAPTER
 
 #Add Pre processor definitions
+
 DEFINE_FLAG = -D$(EDR) -D$(LE) -D$(WIFI) -D$(ETHERNET)
+ifeq ($(DTLS),1)
+DEFINE_FLAG += -D__WITH_DTLS__
+endif
 #Add For memory checking
 #DEBUG_FLAG = -DENABLE_MALLOC_DEBUG
 #Add Debug flags here
@@ -70,9 +75,16 @@ TARGET_ALIAS = lib$(PROJECT_NAME).so
 ##
 libcoap_build_dir = $(PROJECT_LIB_PATH)/libcoap-4.1.1
 
-LDFLAGS := -L$(libcoap_build_dir)
-LDLIBS := -lcoap
+ifeq ($(DTLS),1)
+libtiny_lib_dir = $(PROJECT_LIB_PATH)/extlibs/tinydtls
 
+LDFLAGS := -L$(libcoap_build_dir) -L$(libtiny_lib_dir)
+LDLIBS := -lcoap -ltinydtls
+else
+LDFLAGS := -L$(libcoap_build_dir) 
+LDLIBS := -lcoap 
+
+endif
 BUILD_FLAG.debug = $(DEFINE_FLAG) $(DEBUG_FLAG)
 BUILD_FLAG.release =	$(DEFINE_FLAG)
 BUILD_FLAG = $(BUILD_FLAG.$(BUILD))
@@ -84,11 +96,15 @@ RELEASE_DIR = ./release
 ##	file declaration
 ##
 COMPONENT_SRCS := logger.c oic_logger.c oic_console_logger.c oic_malloc.c oic_string.c uqueue.c uarraylist.c umutex.c uthreadpool.c
+COMPONENT_SRCS += caretransmission.c
 COMPONENT_SRCS += caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c camessagehandler.c caqueueingthread.c canetworkconfigurator.c caprotocolmessage.c
-COMPONENT_SRCS += caadapterutils.c camessagequeue.c
+COMPONENT_SRCS += caadapterutils.c
 COMPONENT_SRCS += caethernetadapter.c cawifiadapter.c caedradapter.c caleadapter.c
 COMPONENT_SRCS += cawifiserver.c cawificlient.c cawifinwmonitor.c
 COMPONENT_SRCS += caethernetserver.c caethernetclient.c caethernetnwmonitor.c
+ifeq ($(DTLS),1)
+COMPONENT_SRCS += caadapternetdtls.c
+endif
 COMPONENT_OBJS = $(COMPONENT_SRCS:%.c=$(OBJ_DIR)/%.o)
 
 ##
@@ -103,7 +119,11 @@ IFLAGS = -I$(PROJECT_COMMON_INC_PATH)	\
 	-I$(WIFI_ADAPTER_PATH)	\
 	-I$(BT_ADAPTER_PATH)	\
 	-I$(BLE_ADAPTER_PATH)   \
-        -I$(libcoap_build_dir)
+        -I$(libcoap_build_dir) 
+
+ifeq ($(DTLS),1)
+	IFLAGS += -I$(libtiny_lib_dir)
+endif
 
 DFLAGS = -D__LINUX__ -DWITH_POSIX $(BUILD_FLAG)
 

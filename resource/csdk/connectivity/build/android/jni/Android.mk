@@ -107,7 +107,7 @@ LOCAL_CFLAGS += $(BUILD_FLAG)
 
 LOCAL_SRC_FILES	= \
 					caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c camessagehandler.c \
-					canetworkconfigurator.c caprotocolmessage.c \
+					canetworkconfigurator.c caprotocolmessage.c caretransmission.c \
 					caqueueingthread.c \
 					$(ADAPTER_UTILS)/caadapterutils.c $(ADAPTER_UTILS)/camessagequeue.c \
 					$(ADAPTER_UTILS)/camsgparser.c \

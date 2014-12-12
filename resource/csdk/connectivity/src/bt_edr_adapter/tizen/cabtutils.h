@@ -57,7 +57,7 @@ extern "C"
  *
  */
 bool CABTIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
-                                const char *matchService);
+                            const char *matchService);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -27,7 +27,9 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h"
+#ifndef ARDUINO
+#include "uthreadpool.h" /* for thread pool */
+#endif  //ARDUINO
 
 /**
  * BLE Interface APIs.
@@ -38,18 +40,36 @@ extern "C"
 #endif
 
 /**
- * @brief Initialize LE connectivity interface.
+ * @Structure CABLEData
+ * @brief Stores the information of the Data to be sent from the queues.
+ *           This structure will be pushed to the sender/receiver queue for processing.
+ */
+typedef struct
+{
+    CARemoteEndpoint_t
+    *remoteEndpoint;    /**< Remote endpoint contains the inforamtion of remote device */
+    void *data;                                               /**< Data to be transmitted over LE tranport */
+    uint32_t dataLen;                                     /**< Length of the data being transmitted */
+} CABLEData;
+
+/** @brief Initialize LE connectivity interface.
  * @param registerCallback [IN] To register LE interfaces to Connectivity Abstraction Layer
  * @param reqRespCallback [IN] sending responses and discovery messages from unicast , \
  *                                             multicast servers
  * @param netCallback [IN] Intimate the network additions to Connectivity Abstraction Layer.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-
+#ifdef ARDUINO
+CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
+                          CANetworkPacketReceivedCallback reqRespCallback,
+                          CANetworkChangeCallback netCallback);
+#else
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CANetworkChangeCallback netCallback,
                           u_thread_pool_t handle);
+#endif //#ifdef ARDUINO
+
 /**
  * @brief Starting LE connectivity adapters . \
  *           As its peer to peer it doesnot require to start any servers
@@ -77,13 +97,13 @@ CAResult_t CAStartLEDiscoveryServer();
  * @brief Sends data to the endpoint using the adapter connectivity.
  * Note: length must be > 0.
  * @param   endpoint  [IN]  Remote Endpoint information (like ipaddress , port, reference uri \
- *                                            and connectivity type) to which the unicast data has to be sent.
+ *                          and connectivity type) to which the unicast data has to be sent.
  * @param   data        [IN]  Data which required to be sent.
  * @param   dataLen   [IN]  Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, void *data, 
-                                uint32_t dataLen);
+uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, void *data,
+                             uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the LE connectivity.
@@ -104,13 +124,13 @@ CAResult_t CAStartLENotifyServer();
  * @brief Send notification information.
  * Note: length must be > 0.
  * @param   endpoint  [IN]    Remote Endpoint information (like ipaddress , port, reference uri \
- *                                          and connectivity type) to which the unicast data has to be sent.
+ *                            and connectivity type) to which the unicast data has to be sent.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen   [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, void *data, 
-                                    uint32_t dataLen);
+uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, void *data,
+                              uint32_t dataLen);
 
 /**
  * @brief Get LE Connectivity network information
@@ -138,6 +158,83 @@ CAResult_t CAStopLE();
  * Configuration information will be deleted from further use
  */
 void CATerminateLE();
+
+CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *serviceUUID,
+                                        void *data, uint32_t dataLength, uint32_t *sentLength);
+
+CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *serviceUUID,
+                                        void *data, uint32_t dataLength, uint32_t *sentLength);
+
+void CASetBLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
+
+CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
+        void *data, uint32_t dataLen);
+
+CAResult_t CABLEClientSendData(const CARemoteEndpoint_t *remoteEndpoint,
+        void *data,  uint32_t dataLen);
+
+void CABLEClientSendDataThread(void *threadData);
+
+void CABLEClientDataReceiverHandler(void *threadData);
+
+void CATerminateBleQueues();
+
+CAResult_t CAInitBleClientReceiverQueue();
+
+CAResult_t CAInitBleServerReceiverQueue();
+
+void CAInitBleQueues();
+
+void CATerminateBleQueues();
+
+CAResult_t CAInitBleServerQueues();
+
+CAResult_t CAInitBleClientQueues();
+
+CAResult_t CAInitBleServerSenderQueue();
+
+CAResult_t CAInitBleClientSenderQueue();
+
+
+
+/**
+ * @fn CABLEDataReceiverHandler
+ * @brief This function handles data from recv message queue.
+ */
+void CABLEServerDataReceiverHandler(void *context);
+
+/**
+ * @fn CABLESendDataThread
+ * @brief This function handles data from sender message queue.
+ */
+void CABLEServerSendDataThread(void *threadData);
+
+/**
+* @fn  CACreateBLEData
+* @brief  This function will create the Data required to send it in the queue.
+*
+* @param[in]  remoteEndpoint  Remote endpoint information of the server.
+* @param[in]  data Data to be transmitted from LE.
+* @param[in]  length of the Data being transmitted.
+*
+* @return  0 on success otherwise a positive error value.
+* @retval  CA_STATUS_OK  Successful
+* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
+* @retval  CA_STATUS_FAILED Operation failed
+*
+*/
+CABLEData *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+                                  uint32_t dataLength);
+
+/**
+* @fn  CAFreeBLEData
+* @brief  Used to free the BLE information stored in the sender/receiver queues.
+*
+* @param[in]  bleData  Structure contains the information of a particular data segment.
+*
+* @return  none.
+*/
+void CAFreeBLEData(CABLEData *bleData);
 
 #ifdef __cplusplus
 } /* extern "C" */

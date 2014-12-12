@@ -54,7 +54,7 @@ static void CADestroyBTData(BTData *data);
 
 
 CAResult_t CACreateAndAddToDeviceList(BTDeviceList **deviceList, const char *deviceAddress,
-        const char *uuid, BTDevice **device)
+                                      const char *uuid, BTDevice **device)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
@@ -119,7 +119,7 @@ CAResult_t CACreateBTDevice(const char *deviceAddress, const char *uuid, BTDevic
         if (NULL == (*device)->serviceUUID)
         {
             OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG,
-                    "[createBTDevice] Out of memory (service uuid)!");
+                      "[createBTDevice] Out of memory (service uuid)!");
 
             OICFree((*device)->remoteAddress);
             OICFree(*device);
@@ -371,7 +371,7 @@ void CADestroyBTDataList(BTDataList **dataList)
     {
         BTDataList *curNode = *dataList;
         *dataList = (*dataList)->next;
-        
+
         CADestroyBTData(curNode->data);
         OICFree(curNode);
     }

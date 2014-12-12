@@ -56,7 +56,7 @@ void u_mutex_lock(u_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG_V(ERROR, TAG ,"u_mutex_lock, Invalid mutex !");
+        OIC_LOG_V(ERROR, TAG , "u_mutex_lock, Invalid mutex !");
         return;
     }
 
@@ -68,7 +68,7 @@ CABool_t u_mutex_trylock(u_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG_V(ERROR, TAG,"u_mutex_trylock, Invalid mutex !");
+        OIC_LOG_V(ERROR, TAG, "u_mutex_trylock, Invalid mutex !");
         return CA_FALSE;
     }
 
@@ -86,7 +86,7 @@ void u_mutex_unlock(u_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG_V(ERROR, TAG,"u_mutex_unlock, Invalid mutex !");
+        OIC_LOG_V(ERROR, TAG, "u_mutex_unlock, Invalid mutex !");
         return;
     }
 
@@ -98,7 +98,7 @@ void u_mutex_free(u_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG_V(ERROR, TAG,"u_mutex_free, Invalid mutex !");
+        OIC_LOG_V(ERROR, TAG, "u_mutex_free, Invalid mutex !");
         return;
     }
 
@@ -121,7 +121,7 @@ void u_cond_signal(u_cond cond)
 {
     if (NULL == cond)
     {
-        OIC_LOG_V(ERROR, TAG,"u_cond_signal, Invalid condition !");
+        OIC_LOG_V(ERROR, TAG, "u_cond_signal, Invalid condition !");
         return;
     }
 
@@ -133,7 +133,7 @@ void u_cond_broadcast(u_cond cond)
 {
     if (NULL == cond)
     {
-        OIC_LOG_V(ERROR, TAG,"u_cond_broadcast, Invalid condition !");
+        OIC_LOG_V(ERROR, TAG, "u_cond_broadcast, Invalid condition !");
         return;
     }
 
@@ -145,13 +145,13 @@ void u_cond_wait(u_cond cond, u_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG_V(ERROR, TAG,"u_cond_wait, Invalid mutex !");
+        OIC_LOG_V(ERROR, TAG, "u_cond_wait, Invalid mutex !");
         return;
     }
 
     if (NULL == cond)
     {
-        OIC_LOG_V(ERROR, TAG,"u_cond_wait, Invalid condition !");
+        OIC_LOG_V(ERROR, TAG, "u_cond_wait, Invalid condition !");
         return;
     }
 
@@ -164,13 +164,13 @@ void u_cond_timed_wait(u_cond cond, u_mutex mutex, int32_t microseconds)
 {
     if (NULL == mutex)
     {
-        OIC_LOG_V(ERROR, TAG,"u_cond_wait, Invalid mutex !");
+        OIC_LOG_V(ERROR, TAG, "u_cond_wait, Invalid mutex !");
         return;
     }
 
     if (NULL == cond)
     {
-        OIC_LOG_V(ERROR, TAG,"u_cond_wait, Invalid condition !");
+        OIC_LOG_V(ERROR, TAG, "u_cond_wait, Invalid condition !");
         return;
     }
 
@@ -196,7 +196,7 @@ void u_cond_free(u_cond cond)
 {
     if (NULL == cond)
     {
-        OIC_LOG_V(ERROR, TAG,"u_cond_free, Invalid condition !");
+        OIC_LOG_V(ERROR, TAG, "u_cond_free, Invalid condition !");
         return;
     }
 

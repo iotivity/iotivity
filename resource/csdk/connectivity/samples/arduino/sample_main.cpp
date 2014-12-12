@@ -35,7 +35,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include "Arduino.h"
 #include "caadapterinterface.h"
 #include "cacommon.h"
-#include "caleadapter_singlethread.h"
+#include "caleadapter.h"
 #include <TimedAction.h>
 #include <logger.h>
 
@@ -168,17 +168,17 @@ void loop()
         switch (Serial.read())
         {
             case 's':
-	    {
-                Serial.println("sending data");
-		if ( ble_connected() )
-		{
-			Serial.println("Sending Data");
-		        gConnectivityHandlers->sendData(&remoteEndpoint[1], coapData, strlen(coapData));
-		        Serial.println("Sent Data");
-		}
-	   }
-    	   break;
-	}
+                {
+                    Serial.println("sending data");
+                    if ( ble_connected() )
+                    {
+                        Serial.println("Sending Data");
+                        gConnectivityHandlers->sendData(&remoteEndpoint[1], coapData, strlen(coapData));
+                        Serial.println("Sent Data");
+                    }
+                }
+                break;
+        }
     }
     gConnectivityHandlers->readData();
 }
@@ -192,7 +192,7 @@ void loop()
 
 #include "Arduino.h"
 
-#include "cawifiadapter_singlethread.h"
+#include "cawifiadapter.h"
 
 #include <logger.h>
 #include "caadapterinterface.h"
@@ -230,7 +230,7 @@ int16_t CAInterfaceInitializeEndpoint()
         memset((void *)remoteEndpoint[i].addressInfo.IP.ipAddress, 0, sizeof(remoteIPAddress) + 1);
         strncpy((char *)remoteEndpoint[i].addressInfo.IP.ipAddress, remoteIPAddress,
                 strlen(remoteIPAddress));
-        remoteEndpoint[i].addressInfo.IP.port = 5283; /* Send the corresponding port here */
+        remoteEndpoint[i].addressInfo.IP.port = 5683; /* Send the corresponding port here */
     }
 
     remoteMulticastEndpoint.connectivityType = CA_WIFI;
@@ -356,8 +356,8 @@ int16_t CAInterfaceStartServer(CAConnectivityType_t connType)
             uint32_t size = 0;
             tempConnectivityHandlers->handler.GetnetInfo(&localWifiEndpoint, &size);
             OIC_LOG(DEBUG, MOD_NAME, "tempConnectivityHandlers ->NetInfoCallback");
-            localWifiEndpoint->addressInfo.IP.port = 5283;
-            OIC_LOG(DEBUG, MOD_NAME, "LocalWiFiEndPoint Port is 5283");
+            localWifiEndpoint->addressInfo.IP.port = 5683;
+            OIC_LOG(DEBUG, MOD_NAME, "LocalWiFiEndPoint Port is 5683");
             OIC_LOG(DEBUG, MOD_NAME, "Local Address = ");
             OIC_LOG(DEBUG, MOD_NAME, localWifiEndpoint->addressInfo.IP.ipAddress);
             tempConnectivityHandlers->handler.startAdapter();
@@ -392,7 +392,7 @@ int16_t CAInterfaceSendUnicastData(CAConnectivityType_t connType)
     strncpy(readIpAddress, (Serial.readStringUntil('\n')).c_str(), 20);
     strncpy((char *)remoteEndpoint[0].addressInfo.IP.ipAddress, readIpAddress,
             strlen(readIpAddress));
-    remoteEndpoint[0].addressInfo.IP.port = 5283;
+    remoteEndpoint[0].addressInfo.IP.port = 5683;
 
     ConnectivityHandlerList *tempConnectivityHandlers = gConnectivityHandlers;
     if (NULL == tempConnectivityHandlers)

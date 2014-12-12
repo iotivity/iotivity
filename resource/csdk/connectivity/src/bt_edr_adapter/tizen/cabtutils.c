@@ -29,7 +29,7 @@
 #include <bluetooth.h>
 
 bool CABTIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
-                                const char *matchService)
+                            const char *matchService)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 

@@ -108,6 +108,7 @@ CAConnectivityType_t getConnectivityType()
         case 3:
             return CA_LE;
     }
+    return CA_ETHERNET;
 }
 void setup()
 {
@@ -269,6 +270,27 @@ void send_request()
         return;
     }
     endpoint->connectivityType = getConnectivityType();
+
+    memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+
+    printf("\n=============================================\n");
+    printf("0:CON, 1:NON\n");
+    printf("select message type : ");
+
+    getData(buf, sizeof(buf), &len);
+
+    int32_t msg_type = (CAMessageType_t) (buf[0] == '0' || buf[0] == '1') ? buf[0] - '0' : 0;
+    CAMessageType_t msgType; // = (CAMessageType_t) (buf[0] == '0' || buf[0] == '1') ? buf[0] - '0' : 0;
+    if(msg_type == 0)
+	msgType = CA_MSG_CONFIRM;
+    else if(msg_type == 1)
+	msgType = CA_MSG_NONCONFIRM;
+    else if(msg_type == 2)
+	msgType = CA_MSG_ACKNOWLEDGE;
+    else if(msg_type == 3)
+	msgType = CA_MSG_RESET;
+	
+    
     // create token
     CAToken_t token = NULL;
     res = CAGenerateToken(&token);
@@ -283,7 +305,9 @@ void send_request()
     CAInfo_t requestData;
     memset(&requestData, 0, sizeof(CAInfo_t));
     requestData.token = token;
-    requestData.payload = "Json Payload";
+    requestData.payload = (CAPayload_t)"Json Payload";
+
+    requestData.type = msgType;
 
     CARequestInfo_t requestInfo;
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
@@ -411,8 +435,8 @@ void send_notification()
     endpoint->connectivityType = getConnectivityType();
     CAInfo_t respondeData;
     memset(&respondeData, 0, sizeof(CAInfo_t));
-    respondeData.token = "token";
-    respondeData.payload = "Notification Data";
+    respondeData.token = (CAToken_t)"token";
+    respondeData.payload = (CAPayload_t)"Notification Data";
 
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
@@ -523,7 +547,7 @@ void send_response(CARemoteEndpoint_t *endpoint, CAToken_t request_token)
     CAInfo_t responseData;
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.token = request_token;
-    responseData.payload = "response payload";
+    responseData.payload = (CAPayload_t)"response payload";
 
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
@@ -545,7 +569,7 @@ void send_request_tmp(CARemoteEndpoint_t *endpoint, CAToken_t token)
     CAInfo_t requestData;
     memset(&requestData, 0, sizeof(CAInfo_t));
     requestData.token = token;
-    requestData.payload = "Json Payload";
+    requestData.payload = (CAPayload_t)"Json Payload";
 
     CARequestInfo_t requestInfo;
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));

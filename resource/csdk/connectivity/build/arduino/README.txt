@@ -1,27 +1,28 @@
 Setting Wi-Fi SSID and Password for Arduino Wi-FI Shield
 =====================================
-PreCondition: In connectivity\src\wifi_adapter\arduino\cawifiadapterutils.cpp	
+PreCondition: In connectivity\src\wifi_adapter\arduino\cawifiserver.cpp	
 Update the SSID and Password credentials before testing with Wi-Fi Shield
 char ssid[] = "";     //  your network SSID (name)
 char pass[] = "";  // your network password
 
 Compiling Interface APIs for ARDUINOMEGA:
 ========================================
-PREREQ: Arduino MUST be installed in the machine where we compile
-1) Open the local.properties file and change the path for ARDUINO_DIR to your own arduino installation directory.
-2) Similarly change the path for ARDUINO_TOOLS_DIR to your arduino tools directory.
-NOTE: We have changed local.properties so that, this could be a generic location (/usr/share/arduino).
-So, this assumes arduino files to be installed in this location. If there's a change, we need to change accordingly in local.properties.
-
+PREREQ: Arduino MUST be installed in the machine where we compile. Suppose ARDUINO_DIR = <PATH_TO_ARDUINO_INSTALL_DIR>/arduino-1.5.x
+1) Patch the Wiznet Ethernet library with the patch available at :
+        I. connectivity\lib\extlibs\arduino_linux_ethernet_cpp.patch
+		II.connectivity\lib\extlibs\arduino_linux_ethernet_socket_cpp.patch
+	Place both these libraries in the ARDUINO_DIR/libraries/ folder where remaining libraries are present.
+2) Arduino builds are dependent on latest Time and TimedAction libraries. Download it from here:
+		I. http://playground.arduino.cc/Code/Time
+		II.http://playground.arduino.cc/Code/TimedAction
 3) Go to "connectivity\build\arduino" directory, Open Makefile and change ARDUINO_PORT according to connected PORT
-4) Go to "connectivity\build" directory. To build a specific TRANSPORT [ETHERNET,BLE,WIFI], use the following command :
-	sudo make PLATFORM=arduinomega TRANSPORT=<ETHERNET/BLE/WIFI>    
+4) BUILD :  Go to "connectivity\build" directory. To build a specific TRANSPORT [ETHERNET,BLE,WIFI], use the following command :
+	sudo make PLATFORM=arduinomega TRANSPORT=<ETHERNET/BLE/WIFI> ARDUINO_DIR = <PATH_TO_ARDUINO_INSTALL_DIR>/arduino-1.5.x
 
 Note: Prior to building for BLE Transport, following additional steps are required:
 -	Copy the directory "connectivity\src\bt_le_adapter\arduino\external\RBL_nRF8001" to "arduino-<x.x.x>/library" folder
 -	Download BLE library from internet and place it in "arduino-<x.x.x>/library" folder
-	
-	
+
 Flashing Interface APIs for ARDUINOMEGA:
 ========================================	
 Precondition: Connect Arduino Mega Board to Linux PC. Open Arduino IDE and select corresponding connected PORT

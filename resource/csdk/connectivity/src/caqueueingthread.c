@@ -53,7 +53,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         if (u_queue_get_size(thread->dataQueue) <= 0)
         {
             OIC_LOG_V(DEBUG, TAG, "wait..");
-            
+
             // wait
             u_cond_wait(thread->threadCond, thread->threadMutex);
 
@@ -76,6 +76,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         thread->threadTask(data);
 
         // free
+        OICFree(message);
     }
 
     u_cond_signal(thread->threadCond);
@@ -130,16 +131,15 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
         return CA_STATUS_FAILED;
     }
 
+    thread->isStop = CA_FALSE;
     CAResult_t res = u_thread_pool_add_task(thread->threadPool, CAQueueingThreadBaseRoutine,
                                             thread);
-
     if (res != CA_STATUS_OK)
     {
         OIC_LOG_V(DEBUG, TAG, "thread pool add task error(send thread).");
+        thread->isStop = CA_TRUE;
         return res;
     }
-
-    thread->isStop = CA_FALSE;
 
     return res;
 }

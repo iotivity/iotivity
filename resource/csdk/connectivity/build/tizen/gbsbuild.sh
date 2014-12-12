@@ -16,10 +16,12 @@ sourcedir=`pwd`
 
 cd $sourcedir/tizen
 mkdir ./tmp
+mkdir -p ./tmp/dtls
 
 cp -R ./* $sourcedir/tizen/tmp/
 rm -rf $sourcedir/tizen/tmp/tmp/
 cp -R ../../inc/* $sourcedir/tizen/tmp/
+cp -R ../../lib/extlibs/tinydtls/* $sourcedir/tizen/tmp/dtls/
 cp -R ../../api/* $sourcedir/tizen/tmp/
 cp ../../src/adapter_util/* $sourcedir/tizen/tmp/
 # Including All CA Adapter code for Tizen Compilation
@@ -27,6 +29,7 @@ cp -R ../../common/src/* $sourcedir/tizen/tmp/
 cp -R ../../common/inc/* $sourcedir/tizen/tmp/
 cp ../../src/* $sourcedir/tizen/tmp/
 cp ../../lib/libcoap-4.1.1/*.h $sourcedir/tizen/tmp/
+cp -R ../../lib/extlibs/tinydtls/*.h $sourcedir/tizen/tmp/tinydtls/
 cp ../../lib $sourcedir/tizen/tmp/ -rf
 adapterMacro=""
 
@@ -74,6 +77,8 @@ cd $sourcedir/tizen/tmp/
 #removing the files which needs for only arduino to avoid
 #multiple definition error.
 rm -rf *_singlethread.*
+
+rm -rf *dtls.*
 
 #cd $builddir
 #cp -R ./* $sourcedir/tmp/

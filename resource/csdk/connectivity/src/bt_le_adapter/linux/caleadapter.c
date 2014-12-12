@@ -31,8 +31,8 @@ static CANetworkPacketReceivedCallback gLEReceivedCallback = NULL;
 static u_thread_pool_t gThreadPoolHandle = NULL;
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
-        u_thread_pool_t handle)
+                          CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+                          u_thread_pool_t handle)
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitializeLE");
 
@@ -79,21 +79,21 @@ CAResult_t CAStartLEDiscoveryServer()
     return CA_STATUS_OK;
 }
 
-uint32_t CASendLEUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
+uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendLEUnicastData");
 
     return 0;
 }
 
-uint32_t CASendLEMulticastData(void* data, uint32_t dataLen)
+uint32_t CASendLEMulticastData(void *data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendLEMulticastData");
 
     return 0;
 }
 
-CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
+CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGetLEInterfaceInformation");
 

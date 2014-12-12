@@ -123,9 +123,9 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
     for (index = 0; index < u_arraylist_length(gSelectedNetworkList); index++)
     {
-        type = *(uint32_t*) u_arraylist_get(gSelectedNetworkList, index);
+        type = *(uint32_t *) u_arraylist_get(gSelectedNetworkList, index);
 
-        if(ConnectivityType == type)
+        if (ConnectivityType == type)
         {
             switch (ConnectivityType)
             {

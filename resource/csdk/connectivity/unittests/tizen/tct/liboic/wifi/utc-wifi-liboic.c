@@ -10,10 +10,11 @@
 
 //Wifi callbacks
 
-CALocalConnectivity* localWifiEndpoint = NULL;
+CALocalConnectivity *localWifiEndpoint = NULL;
 CARemoteEndpoint remoteMulticastEndpoint;
 CARemoteEndpoint remoteEndpoint[10]; /* 10 RemoteEndpoints are currently kept */
-char remoteIPAddress[CA_IPADDR_SIZE] = "192.168.1.103";  //Change the Corresponding IP address during testing.
+char remoteIPAddress[CA_IPADDR_SIZE] =
+    "192.168.1.103";  //Change the Corresponding IP address during testing.
 char localIPAddress[CA_IPADDR_SIZE] = {0};
 int localPort = -1;
 int32_t serverId;
@@ -21,15 +22,17 @@ int32_t serverId;
 //int gMainloopStatus = 0;
 
 //Hardcoded values to Test
-typedef struct ConnectivityHandlerList {
+typedef struct ConnectivityHandlerList
+{
     CAConnectivityType type;
     CAConnectivityHandler handler;
-    struct ConnectivityHandlerList* nextHandler;
+    struct ConnectivityHandlerList *nextHandler;
 } ConnectivityHandlerList;
 
-char coapData[500] = "{\"oc:\[{href\":\"/a/light\",\"ref\":{\"power\":\"20\",\"state\":\"true\"}}\]}";
+char coapData[500] =
+    "{\"oc:\[{href\":\"/a/light\",\"ref\":{\"power\":\"20\",\"state\":\"true\"}}\]}";
 
-#define CA_PORT         5283
+#define CA_PORT         5683
 #define CA_MCAST_PORT   5298
 
 /**
@@ -39,40 +42,42 @@ char coapData[500] = "{\"oc:\[{href\":\"/a/light\",\"ref\":{\"power\":\"20\",\"s
 #define CA_MULTICAST_IP "224.0.1.187"
 
 
-CAConnectivityHandler* gCAConnectivityHandlers = NULL;
+CAConnectivityHandler *gCAConnectivityHandlers = NULL;
 
 int interfaceInitializeEndpoint(int d)
 {
-	int i = 0;
+    int i = 0;
     /* As of initializing one endpoint */
     for (i = 0; i < 1; i++)
     {
         remoteEndpoint[i].connectivityType = CA_WIFI;
         strncpy(remoteEndpoint[i].addressInfo.IP.ipAddress, remoteIPAddress, CA_IPADDR_SIZE);
-        remoteEndpoint[i].addressInfo.IP.port = 5283; /* Send the corresponding port here */
+        remoteEndpoint[i].addressInfo.IP.port = 5683; /* Send the corresponding port here */
     }
 
     remoteMulticastEndpoint.connectivityType = CA_WIFI;
 }
 
-void storeInterfaceCallbacks(CAConnectivityHandler* newHandler)
+void storeInterfaceCallbacks(CAConnectivityHandler *newHandler)
 {
     printf("\nstoreInterfaceCallbacks Entry in Sample");
-	#if 0
+#if 0
     newHandler->nextHandler = NULL;
 
-    CAConnectivityHandler* tempCAConnectivityHandlers = gCAConnectivityHandlers;
+    CAConnectivityHandler *tempCAConnectivityHandlers = gCAConnectivityHandlers;
 
-    if (!tempCAConnectivityHandlers) {
+    if (!tempCAConnectivityHandlers)
+    {
         gCAConnectivityHandlers = newHandler;
         return;
     }
-    while (tempCAConnectivityHandlers->nextHandler) {
+    while (tempCAConnectivityHandlers->nextHandler)
+    {
         tempCAConnectivityHandlers = tempCAConnectivityHandlers->nextHandler;
     }
 
     tempCAConnectivityHandlers->nextHandler = newHandler;
-	#endif
+#endif
     printf("\nstoreInterfaceCallbacks Exit in Sample");
 }
 
@@ -81,16 +86,16 @@ void interfaceRegisterCallback(CAConnectivityHandler handler , CAConnectivityTyp
 {
     printf("\ninterfaceRegisterCallback Entry in Sample");
     CAConnectivityHandler newCAConnectivityHandler;
-	newCAConnectivityHandler.start = handler.start;
-	newCAConnectivityHandler.stop = handler.stop;
-	newCAConnectivityHandler.startAdapter = handler.startAdapter;
-	newCAConnectivityHandler.sendData= handler.sendData;
-	newCAConnectivityHandler.sendDataToAll= handler.sendDataToAll;
-	newCAConnectivityHandler.statNotifyServer= handler.statNotifyServer;
-	newCAConnectivityHandler.sendNotification= handler.sendNotification;
-	newCAConnectivityHandler.GetnetInfo= handler.GetnetInfo;
-	//newCAConnectivityHandler.cType= cType;
-	storeInterfaceCallbacks(&newCAConnectivityHandler);
+    newCAConnectivityHandler.start = handler.start;
+    newCAConnectivityHandler.stop = handler.stop;
+    newCAConnectivityHandler.startAdapter = handler.startAdapter;
+    newCAConnectivityHandler.sendData= handler.sendData;
+    newCAConnectivityHandler.sendDataToAll= handler.sendDataToAll;
+    newCAConnectivityHandler.statNotifyServer= handler.statNotifyServer;
+    newCAConnectivityHandler.sendNotification= handler.sendNotification;
+    newCAConnectivityHandler.GetnetInfo= handler.GetnetInfo;
+    //newCAConnectivityHandler.cType= cType;
+    storeInterfaceCallbacks(&newCAConnectivityHandler);
     printf("\ninterfaceRegisterCallback Exit in Sample");
 }
 */
@@ -101,13 +106,14 @@ void interfaceRegisterCallback(CAConnectivityHandler handler,
     printf("interfaceRegisterCallback Entry in Sample\n");
 // connectivity Handlerlist is not used
 #if 0
-    ConnectivityHandlerList* newConnectivityHandler = (ConnectivityHandlerList*) malloc(sizeof(ConnectivityHandlerList));
+    ConnectivityHandlerList *newConnectivityHandler = (ConnectivityHandlerList *) malloc(sizeof(
+                ConnectivityHandlerList));
     if (NULL == newConnectivityHandler)
     {
         printf("Memory allocation failed!\n");
         return;
     }
-    
+
     newConnectivityHandler->type = connType;
     newConnectivityHandler->handler = handler;
     storeInterfaceCallbacks(newConnectivityHandler);
@@ -116,10 +122,11 @@ void interfaceRegisterCallback(CAConnectivityHandler handler,
 }
 
 
-void requestResponseHandler(CARemoteEndpoint* object, void* data)
+void requestResponseHandler(CARemoteEndpoint *object, void *data)
 {
     printf("\nrequestResponseHandler Entry in Sample");
-    if (object == NULL || data == NULL) {
+    if (object == NULL || data == NULL)
+    {
         printf("\nNULL Object");
         return;
     }
@@ -127,7 +134,7 @@ void requestResponseHandler(CARemoteEndpoint* object, void* data)
     if (object->addressInfo.IP.ipAddress)
         printf("\nData Received from %s\n", object->addressInfo.IP.ipAddress);
     if (data)
-        printf("\nReceived Data : %s \n", (char*)data);
+        printf("\nReceived Data : %s \n", (char *)data);
     /*
     gMainloopStatus = 1;
     if (mainloop)
@@ -140,10 +147,12 @@ void requestResponseHandler(CARemoteEndpoint* object, void* data)
 }
 
 
-void networkInterfaceCallback(CALocalConnectivity* localEndPoint, CANetworkStatus networkConnectivityState)
+void networkInterfaceCallback(CALocalConnectivity *localEndPoint,
+                              CANetworkStatus networkConnectivityState)
 {
     printf("\nnetworkInterfaceCallback Entry in Sample");
-    if (localEndPoint == NULL) {
+    if (localEndPoint == NULL)
+    {
         printf("\nNULL Object");
         return;
     }
@@ -172,7 +181,8 @@ void utc_liboic_cleanup(void)
 int wifi_tc_001_initializeWifi_p(void)
 {
     CAResult error = CA_STATUS_FAILED;
-    error = CAInitializeWifi(interfaceRegisterCallback, requestResponseHandler, networkInterfaceCallback);
+    error = CAInitializeWifi(interfaceRegisterCallback, requestResponseHandler,
+                             networkInterfaceCallback);
     assert_eq(error, CA_STATUS_OK);
     return 0;
 }
@@ -213,14 +223,14 @@ int wifi_tc_005_sendWifiUnicastData_p(void)
 {
     uint32_t dataSize;
     CAResult error = CA_STATUS_FAILED;
-    
+
     //Startup
     CAInitializeWifi(interfaceRegisterCallback, requestResponseHandler, networkInterfaceCallback);
     uint32_t size = 0;
     error = CAGetWIFIInterfaceInformation(&localWifiEndpoint, &size);
     assert_eq(error, CA_STATUS_OK);
-    
-    localWifiEndpoint->addressInfo.IP.port = 5283;
+
+    localWifiEndpoint->addressInfo.IP.port = 5683;
     //StartWifiAdapter(localWifiEndpoint);
 
     interfaceInitializeEndpoint(0);
@@ -301,7 +311,7 @@ int wifi_tc_011_startUnicastServer_n(void)
     uint32_t size = 0;
     error = CAGetWIFIInterfaceInformation(&localWifiEndpoint, &size);
     assert_eq(error, CA_STATUS_OK);
-    
+
     error = CAStartUnicastServer(localWifiEndpoint->addressInfo.IP.ipAddress, NULL);
     assert_eq(error, CA_STATUS_INVALID_PARAM);
     //Cleanup
@@ -318,7 +328,7 @@ int wifi_tc_012_startUnicastServer_n(void)
     uint32_t size = 0;
     error = CAGetWIFIInterfaceInformation(&localWifiEndpoint, &size);
     assert_eq(error, CA_STATUS_OK);
-    
+
     error = CAStartUnicastServer(NULL, NULL);
     assert_eq(error, CA_STATUS_INVALID_PARAM);
     //Cleanup

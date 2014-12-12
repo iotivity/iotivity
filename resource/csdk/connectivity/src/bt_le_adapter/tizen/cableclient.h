@@ -30,7 +30,7 @@
 #include "caadapterinterface.h"
 #include "logger.h"
 #include "uthreadpool.h"
-
+#include "caleinterface.h"
 
 
 /**
@@ -77,7 +77,8 @@ void CABleGattDescriptorDiscoveredCb(int32_t result, unsigned char format, int32
 
 /**
 * @fn  CABleGattCharacteristicsDiscoveredCb
-* @brief  This is the callback which will be called after the characteristics are discovered by bt_gatt_discover_characteristics()
+* @brief  This is the callback which will be called after the characteristics are discovered by
+*            bt_gatt_discover_characteristics()
 *
 * @param[in]  result  The result of discovering
 * @param[in]  inputIndex  The index of characteristics in a service, starts from 0
@@ -121,7 +122,8 @@ CABool_t CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int32_t index, i
 
 /**
 * @fn  CABleGattConnectionStateChangedCb
-* @brief  This is the callback which will be called whenever there is change in gatt connection with server(Connected/Disconnected)
+* @brief  This is the callback which will be called whenever there is change in gatt connection
+*            with server(Connected/Disconnected)
 *
 * @param[in]  result  The result of discovering
 * @param[in]  connected  State of connection
@@ -174,32 +176,10 @@ void CAPrintDiscoveryInformation(bt_adapter_le_device_discovery_info_s *discover
 void CASetBleClientThreadPoolHandle(u_thread_pool_t handle);
 
 /**
- * @fn  CASetBLEReqRespClientCallback
- * @brief  used to store upper layer callback locally which will be used to send the data to application
- *
- * @param[in]  CANetworkPacketReceivedCallback  -  upper layer callback function to pass the data to CA layer.
- *
- * @return  void
- *
- */
-void CASetBLEReqRespClientCallback(CANetworkPacketReceivedCallback callback);
-
-/**
-* @fn  CAStartBLEGattClient
-* @brief  Used to start CAStartBleGattClientThread for initializing Gatt Client
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*
-*/
-CAResult_t CAStartBLEGattClient();
-
-/**
 * @fn  CAStartBleGattClientThread
 * @brief  This is thread which will be used to initialize the Gatt Client and start device discovery.
-*              1. Set scan parameters 2.Setting neccessary callbacks for connection, characteristics changed and discovery and bond creation.
+*              1. Set scan parameters 2.Setting neccessary callbacks for connection, characteristics changed and
+*                  discovery and bond creation.
 *              3. Start device discovery
 *
 * @param[in] data - Currently it will be NULL(no parameter)
@@ -208,27 +188,6 @@ CAResult_t CAStartBLEGattClient();
 *
 */
 void *CAStartBleGattClientThread(void *data);
-
-/**
-* @fn  CAStopBLEGattClient
-* @brief  Used to stop Gatt Client gracefully in turn it will call CATerminateBLEGattClient function.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*
-*/
-void CAStopBLEGattClient();
-
-/**
-* @fn  CATerminateBLEGattClient
-* @brief  Used to unset all the callbacks and stop service discovery
-*
-* @return  void
-*
-*/
-void CATerminateBLEGattClient();
 
 /**
 * @fn  CAInitGattClientMutexVaraibles
@@ -250,24 +209,6 @@ CAResult_t CAInitGattClientMutexVaraibles();
 *
 */
 void CATerminateGattClientMutexVariables();
-
-/**
-* @fn  CAInitBleQueues
-* @brief  Used to initiate sender and receiver queues which will be used for data processing.
-*
-* @return  void
-*
-*/
-CAResult_t CAInitBleQueues();
-
-/**
-* @fn  CATerminateBleQueues
-* @brief  Used to terminate sender and receiver queues which will be used for data processing.
-*
-* @return  void
-*
-*/
-void CATerminateBleQueues();
 
 /**
 * @fn  CAClearNonOICDeviceList
@@ -396,7 +337,8 @@ CAResult_t CABleGattDisConnect(const char *remoteAddress);
 
 /**
 * @fn  CADiscoverBLEServicesThread
-* @brief  This is thread which will be spawned for discovering ble services. Once called discover api, then it will be terminated.
+* @brief  This is thread which will be spawned for discovering ble services. Once called discover api,
+*            then it will be terminated.
 *
 * @param[in]  remoteAddress  Mac address of the remote device in which we want to search services.
 *
@@ -423,7 +365,8 @@ CAResult_t CABleGattDiscoverServices(const char *remoteAddress);
 * @fn  CADiscoverCharThread
 * @brief  This is the thread which will be used for finding characteristic of a service.
 *
-* @param[in]  stServiceInfo  Service Information which contains the remote address and service handle, characteristic handle.
+* @param[in]  stServiceInfo  Service Information which contains the remote address and service handle,
+*                                         characteristic handle.
 *
 * @return  NULL on success or failure.
 *
@@ -449,7 +392,8 @@ CAResult_t CABleGattDiscoverCharacteristics(bt_gatt_attribute_h service, const c
 * @fn  CADiscoverDescriptorThread
 * @brief  This is the thread which will be used for finding descriptor of characteristic.
 *
-* @param[in]  stServiceInfo  Service Information which contains the remote address and service handle, characteristic handle.
+* @param[in]  stServiceInfo  Service Information which contains the remote address and service handle,
+*                                         characteristic handle.
 *
 * @return  NULL on success or failure.
 *
@@ -475,7 +419,8 @@ CAResult_t CABleGattDiscoverDescriptor(bt_gatt_attribute_h service, const char *
 * @fn  CASetCharacteristicDescriptorValueThread
 * @brief  This is thread which will be used for calling CASetCharacteristicDescriptorValue api.
 *
-* @param[in] stServiceInfo -  Service Information which contains the remote address and service handle, characteristic handle.
+* @param[in] stServiceInfo -  Service Information which contains the remote address and service handle,
+*                                          characteristic handle.
 *
 * @return NULL on sucess or failure.
 *
@@ -500,7 +445,8 @@ CAResult_t CASetCharacteristicDescriptorValue(stGattCharDescriptor_t *stGattChar
 * @fn  CAGATTCreateBondThread
 * @brief  This is the thread  which will be used for creating bond with remote device.
 *
-* @param[in]  stServiceInfo  Service Information which contains the remote address and service handle, characteristic handle.
+* @param[in]  stServiceInfo  Service Information which contains the remote address and service handle,
+*                                         characteristic handle.
 *
 * @return  NULL on success or failure.
 *
@@ -523,7 +469,8 @@ CAResult_t CABleGATTCreateBond(const char *remoteAddress);
 
 /**
 * @fn  CABleClientSenderQueueEnqueueMessage
-* @brief  Used to enqueue the message into sender queue using CAAdapterEnqueueMessage and make signal to the thread to process.
+* @brief  Used to enqueue the message into sender queue using CAAdapterEnqueueMessage and make signal
+*            to the thread to process.
 *
 * @param[in]  remoteEndpoint  Remote device information
 * @param[in]  data  data which we wants to send to remote device
@@ -546,38 +493,6 @@ CAResult_t CABleClientSenderQueueEnqueueMessage(const CARemoteEndpoint_t *remote
 *
 */
 void *CABleClientSenderQueueProcessor();
-
-/**
-* @fn  CAUpdateCharacteristicsToGattServer
-* @brief  Sets the value of characteristic and update the value to GATTServer(unicast).
-*
-* @param[in]  remoteAddress  The address of the remote device
-* @param[in]  data  The value of characteristic (byte array)
-* @param[in]  dataLen  The length of value
-* @param[in]  TRANSFER_TYPE (UNICAST/MULTICAST)
-* @param[in]  position  The unique index of each ble server. Used for multicast feature.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*/
-CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
-        int32_t dataLen, TRANSFER_TYPE type, int32_t position);
-
-/**
- * @fn  CAUpdateCharacteristicsToAllGattServers
- * @brief  Sets the value of characteristic and update the value to All registered GATTServer -> Multicast
- *
- * @param[in]  data  The value of characteristic (byte array)
- * @param[in]  dataLen  The length of value
- *
- * @return  0 on success otherwise a positive error value.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
- */
-CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, int32_t dataLen);
 
 /**
 * @fn  CALEReadDataFromLEClient

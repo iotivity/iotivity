@@ -12,3 +12,7 @@
 #4 	execute sample.sh in "connectivity/samples/linux/" folder
  ex.    $./sample.sh (This will make a clean build and execute application)
 
+#4 	execute sample.sh in if you want to build with DTLS
+ ex.    $./sample.sh  WITH_DTLS (This will make a clean build and execute application)
+
+

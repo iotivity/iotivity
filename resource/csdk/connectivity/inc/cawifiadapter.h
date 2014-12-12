@@ -27,7 +27,9 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#ifndef ARDUINO
 #include "uthreadpool.h" /* for thread pool */
+#endif  //ARDUINO
 
 #ifdef __cplusplus
 extern "C"
@@ -42,9 +44,15 @@ extern "C"
  * @param netCallback [IN] Intimate the network additions to Connectivity Abstraction Layer.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
+#ifdef ARDUINO
+CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
+                            CANetworkPacketReceivedCallback networkPacketCallback,
+                            CANetworkChangeCallback netCallback);
+#else
 CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
                             CANetworkPacketReceivedCallback networkPacketCallback,
                             CANetworkChangeCallback netCallback, u_thread_pool_t handle);
+#endif
 
 /**
  * @brief Start WiFi Interface adapter.
@@ -79,8 +87,8 @@ CAResult_t CAStartWIFIDiscoveryServer();
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *endpoint, void *data, 
-                                        uint32_t dataLen);
+uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *endpoint, void *data,
+                               uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the WIFI connectivity.

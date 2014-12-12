@@ -218,14 +218,16 @@ bool CAWiFiIsConnected(void)
     return true;
 }
 
-void CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateChangeCallback callback)
+void CAWiFiSetConnectionStateChangeCallback(
+    CAWiFiConnectionStateChangeCallback callback)
 {
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     gNetworkChangeCb = callback;
 }
 
-void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap, void *userData)
+void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
+                                    void *userData)
 {
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
 
@@ -315,7 +317,7 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress)
         wifi_ap_h accessPoint = NULL;
         if (WIFI_ERROR_NONE != (ret = wifi_get_connected_ap(&accessPoint)))
         {
-            OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get connected access point! error num [%d]",
+            OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get access point! error num [%d]",
                       ret);
 
             OICFree(interfaceName);
@@ -326,7 +328,8 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress)
         if (WIFI_ERROR_NONE != (ret = wifi_ap_get_ip_address(accessPoint, WIFI_ADDRESS_FAMILY_IPV4,
                                       ipAddress)))
         {
-            OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface address! error num [%d]", ret);
+            OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface address! error num [%d]",
+                      ret);
 
             OICFree(interfaceName);
             u_mutex_unlock(gWifiNetInfoMutex);

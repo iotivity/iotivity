@@ -40,7 +40,7 @@ extern "C"
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *endpoint,
-        const CARequestInfo_t *request);
+                                  const CARequestInfo_t *request);
 
 /**
  * @brief   Detaches control from the caller for sending multicast request
@@ -48,8 +48,8 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *endpoint,
  * @param   request              [IN]    request that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t* object, 
-            const CARequestInfo_t* request);
+CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
+                                       const CARequestInfo_t *request);
 
 /**
  * @brief   Detaches control from the caller for sending response
@@ -58,7 +58,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t* object,
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *endpoint,
-        const CAResponseInfo_t *response);
+                                   const CAResponseInfo_t *response);
 
 /**
  * @brief   Detaches control from the caller for sending request
@@ -69,7 +69,7 @@ CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *endpoint,
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
-        const CAHeaderOption_t* options, uint8_t numOptions);
+                                      const CAHeaderOption_t *options, uint8_t numOptions);
 
 /**
  * @brief   Setting the request and response callbacks for network packets
@@ -77,8 +77,8 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
  * @param   RespHandler  [IN]    callback for receiving the response
  * @return  void
  */
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, 
-                            CAResponseCallback RespHandler);
+void CASetRequestResponseCallbacks(CARequestCallback ReqHandler,
+                                   CAResponseCallback RespHandler);
 
 /**
  * @brief  Initialize the message handler by starting thread pool and initializing the send and reive queue

@@ -38,7 +38,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 +
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__
 #ifdef ADB_SHELL
-static const char * LEVEL[] =
+static const char *LEVEL[] =
 {   "DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 
 #else

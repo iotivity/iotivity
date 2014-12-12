@@ -179,7 +179,7 @@ void find_resource()
 
     gets(buf);
 
-	// create token
+    // create token
     CAToken_t token = NULL;
     CAResult_t res = CAGenerateToken(&token);
     if (res != CA_STATUS_OK)
@@ -285,7 +285,7 @@ void advertise_resource()
     scanf("%d", &optionNum);
     CAHeaderOption_t *headerOpt;
 
-    if(optionNum > 0)
+    if (optionNum > 0)
     {
         headerOpt = (CAHeaderOption_t *) malloc(sizeof(CAHeaderOption_t) * optionNum);
         if (NULL == headerOpt)
@@ -417,19 +417,22 @@ void handle_request_response()
 void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo)
 {
 
-    printf("[CALLBACK] request_handler, uri : %s, data : %s\n", (object != NULL) ? object->resourceUri : "",
-            (requestInfo != NULL) ? requestInfo->info.payload : "");
+    printf("[CALLBACK] request_handler, uri : %s, data : %s\n",
+           (object != NULL) ? object->resourceUri : "",
+           (requestInfo != NULL) ? requestInfo->info.payload : "");
 
-    printf("[CALLBACK] request_handler, address : %s\n", (object != NULL) ? object->addressInfo.IP.ipAddress : "");
+    printf("[CALLBACK] request_handler, address : %s\n",
+           (object != NULL) ? object->addressInfo.IP.ipAddress : "");
 
-    if(requestInfo->info.options)
+    if (requestInfo->info.options)
     {
         uint32_t len =  requestInfo->info.numOptions;
         uint32_t i;
-        for(i = 0 ; i < len ; i++)
+        for (i = 0 ; i < len ; i++)
         {
             printf("[CALLBACK] request_handler, option ID : %d\n", requestInfo->info.options[i].optionID);
-            printf("[CALLBACK] request_handler, options data length : %d\n", requestInfo->info.options[i].optionLength);
+            printf("[CALLBACK] request_handler, options data length : %d\n",
+                   requestInfo->info.options[i].optionLength);
             printf("[CALLBACK] request_handler, options data : %s\n", requestInfo->info.options[i].optionData );
         }
     }
@@ -439,23 +442,27 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
 
 }
 
-void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo)
+void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo)
 {
 
-    printf("[CALLBACK] response_handler, uri : %s, data : %s\n", (object != NULL) ? object->resourceUri : "",
-            (responseInfo != NULL) ? responseInfo->info.payload : "");
+    printf("[CALLBACK] response_handler, uri : %s, data : %s\n",
+           (object != NULL) ? object->resourceUri : "",
+           (responseInfo != NULL) ? responseInfo->info.payload : "");
 
-    printf("[CALLBACK] response_handler, address : %s\n", (object != NULL) ? object->addressInfo.IP.ipAddress : "");
+    printf("[CALLBACK] response_handler, address : %s\n",
+           (object != NULL) ? object->addressInfo.IP.ipAddress : "");
 
-    if(responseInfo->info.options)
+    if (responseInfo->info.options)
     {
         uint32_t len =  responseInfo->info.numOptions;
         uint32_t i;
-        for(i = 0 ; i < len ; i++)
+        for (i = 0 ; i < len ; i++)
         {
             printf("[CALLBACK] response_handler, option ID : %d\n", responseInfo->info.options[i].optionID);
-            printf("[CALLBACK] response_handler, options data length : %d\n", responseInfo->info.options[i].optionLength);
-            printf("[CALLBACK] response_handler, options data : %s\n", responseInfo->info.options[i].optionData );
+            printf("[CALLBACK] response_handler, options data length : %d\n",
+                   responseInfo->info.options[i].optionLength);
+            printf("[CALLBACK] response_handler, options data : %s\n",
+                   responseInfo->info.options[i].optionData );
         }
     }
 

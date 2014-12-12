@@ -84,7 +84,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size);
  * @param   length              [IN]    length of the data that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASendUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t length);
+CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t length);
 
 /**
  * @brief   Sends multicast data to all endpoints in the network.

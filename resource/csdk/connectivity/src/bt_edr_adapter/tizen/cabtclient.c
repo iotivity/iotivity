@@ -32,8 +32,8 @@ CAResult_t CABTClientConnect(const char *remoteAddress, const char *serviceUUID)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    int err = BT_ERROR_NONE;
-    int addressLen = 0;
+    bt_error_e err = BT_ERROR_NONE;
+    int32_t addressLen = 0;
 
     VERIFY_NON_NULL(remoteAddress, BLUETOOTH_ADAPTER_TAG, "Remote address is null");
     VERIFY_NON_NULL(serviceUUID, BLUETOOTH_ADAPTER_TAG, "Service UUID is null");
@@ -74,7 +74,7 @@ CAResult_t CABTClientDisconnect(const int32_t clientID)
         return CA_STATUS_INVALID_PARAM;
     }
 
-    int err = BT_ERROR_NONE;
+    bt_error_e err = BT_ERROR_NONE;
     if (BT_ERROR_NONE != (err = bt_socket_disconnect_rfcomm(clientID)))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed close rfcomm client socket!, error num [%x]",
@@ -83,5 +83,6 @@ CAResult_t CABTClientDisconnect(const int32_t clientID)
     }
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
 }
 

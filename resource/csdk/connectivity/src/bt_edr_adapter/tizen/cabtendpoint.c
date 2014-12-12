@@ -42,7 +42,7 @@ CAResult_t CABTSendData(const int32_t serverFD, const void *data, const uint32_t
         return CA_STATUS_INVALID_PARAM;
     }
 
-    int dataLen = 0;
+    int32_t dataLen = 0;
     dataLen = bt_socket_send_data(serverFD, (const char *)data, dataLength);
     if (dataLen == -1)
     {

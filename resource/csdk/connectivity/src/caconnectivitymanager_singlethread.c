@@ -142,8 +142,9 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *re
     return CADetachResponseMessage(object, responseInfo);
 }
 
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token, CAHeaderOption_t* options,
-        uint8_t numOptions)
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token,
+                               CAHeaderOption_t *options,
+                               uint8_t numOptions)
 {
     return CADetachMessageResourceUri(resourceUri, token, options, numOptions);
 }

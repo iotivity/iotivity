@@ -83,8 +83,8 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CAConnectivityTy
     OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", cType);
 }
 
-static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, 
-    uint32_t dataLen)
+static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
+                                     uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "receivedPacketCallback in interface controller");
 
@@ -95,8 +95,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
     }
 }
 
-static void CANetworkChangedCallback(CALocalConnectivity_t *info, 
-    CANetworkStatus_t status)
+static void CANetworkChangedCallback(CALocalConnectivity_t *info,
+                                     CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, TAG, "Network Changed callback");
 
@@ -120,18 +120,18 @@ void CAInitializeAdapters(u_thread_pool_t handle)
 #endif /* ETHERNET_ADAPTER */
 
 #ifdef WIFI_ADAPTER
-    CAInitializeWifi(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, 
-    handle);
+    CAInitializeWifi(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                     handle);
 #endif /* WIFI_ADAPTER */
 
 #ifdef EDR_ADAPTER
-    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, 
-    handle);
+    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                    handle);
 #endif /* EDR_ADAPTER */
 
 #ifdef LE_ADAPTER
-    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, 
-    handle);
+    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   handle);
 #endif /* LE_ADAPTER */
 
 }
@@ -213,7 +213,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
             res = gAdapterHandler[index].GetnetInfo(&tempInfo[index], &tempSize[index]);
 
             OIC_LOG_V(DEBUG, TAG, "%d adapter network info size is %d res:%d", index,
-                    tempSize[index], res);
+                      tempSize[index], res);
         }
     }
 
@@ -275,7 +275,7 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-CAResult_t CASendUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t length)
+CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "Send unicast data to enabled interface..");
 
@@ -323,7 +323,7 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t*) u_arraylist_get(list, i);
+        type = *(uint8_t *) u_arraylist_get(list, i);
 
         index = CAGetAdapterIndex(type);
 
@@ -335,7 +335,7 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
 
         if (gAdapterHandler[index].sendDataToAll != NULL)
         {
-            void* payload = (void*) OICMalloc(length);
+            void *payload = (void *) OICMalloc(length);
             if (!payload)
             {
                 OIC_LOG_V(ERROR, TAG, "Out of memory!");
@@ -364,7 +364,7 @@ CAResult_t CAStartListeningServerAdapters()
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t*) u_arraylist_get(list, i);
+        type = *(uint8_t *) u_arraylist_get(list, i);
 
         index = CAGetAdapterIndex(type);
 
@@ -399,7 +399,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t*) u_arraylist_get(list, i);
+        type = *(uint8_t *) u_arraylist_get(list, i);
 
         index = CAGetAdapterIndex(type);
 
@@ -428,8 +428,8 @@ void CATerminateAdapters()
     {
         if (gAdapterHandler[index].terminate != NULL)
         {
-           gAdapterHandler[index].stopAdapter(); 
-           gAdapterHandler[index].terminate();
+            gAdapterHandler[index].stopAdapter();
+            gAdapterHandler[index].terminate();
         }
     }
 }

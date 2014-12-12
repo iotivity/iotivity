@@ -26,6 +26,7 @@
 BUILD	 := debug
 PLATFORM := linux
 TRANSPORT := ALL
+ARDUINO_DIR := /usr/share/arduino
 APPNAME := casample
 OBJ_DIR := ./bin
 VERSION_MAJOR := 0
@@ -40,14 +41,14 @@ all:
 else ifeq ($(PLATFORM),arduinomega)
 $(info *********ArduinoMega Build!!**********)
 all:
-	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(APPNAME)
-	sudo sh arduino/build.sh make $(PLATFORM) $(TRANSPORT) $(APPNAME)
+	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
+	sudo sh arduino/build.sh make $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
 
 clean:	
-	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(APPNAME)
+	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
 
 install:
-	sudo sh arduino/build.sh install $(PLATFORM) $(TRANSPORT) $(APPNAME)
+	sudo sh arduino/build.sh install $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
 	
 else
    $(info *********error**********)

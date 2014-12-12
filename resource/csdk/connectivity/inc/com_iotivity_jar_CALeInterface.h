@@ -13,7 +13,7 @@ extern "C" {
  * Signature: (Landroid/bluetooth/BluetoothAdapter/LeScanCallback;)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CARegisterLeScanCallback
-  (JNIEnv *, jobject, jobject);
+(JNIEnv *, jobject, jobject);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -21,7 +21,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CARegisterLeScanCallb
  * Signature: (Landroid/bluetooth/BluetoothGattCallback;)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CARegisterLeGattCallback
-  (JNIEnv *, jobject, jobject);
+(JNIEnv *, jobject, jobject);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -29,7 +29,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CARegisterLeGattCallb
  * Signature: (Landroid/bluetooth/BluetoothDevice;I[B)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeScanCallback
-  (JNIEnv *, jobject, jobject, jint, jbyteArray);
+(JNIEnv *, jobject, jobject, jint, jbyteArray);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -37,7 +37,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeScanCallback
  * Signature: (Landroid/bluetooth/BluetoothGatt;II)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattConnectionStateChangeCallback
-  (JNIEnv *, jobject, jobject, jint, jint);
+(JNIEnv *, jobject, jobject, jint, jint);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -45,7 +45,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattConnectionSta
  * Signature: (Landroid/bluetooth/BluetoothGatt;I)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattServicesDiscoveredCallback
-  (JNIEnv *, jobject, jobject, jint);
+(JNIEnv *, jobject, jobject, jint);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -53,7 +53,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattServicesDisco
  * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattCharacteristic;I)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristicReadCallback
-  (JNIEnv *, jobject, jobject, jobject, jstring, jint);
+(JNIEnv *, jobject, jobject, jobject, jstring, jint);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -61,7 +61,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristi
  * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattCharacteristic;I)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristicWriteCallback
-  (JNIEnv *, jobject, jobject, jobject, jstring, jint);
+(JNIEnv *, jobject, jobject, jobject, jstring, jint);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -69,7 +69,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristi
  * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattCharacteristic;)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristicChangedCallback
-  (JNIEnv *, jobject, jobject, jobject, jstring);
+(JNIEnv *, jobject, jobject, jobject, jstring);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -77,7 +77,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristi
  * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattDescriptor;I)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattDescriptorReadCallback
-  (JNIEnv *, jobject, jobject, jobject, jint);
+(JNIEnv *, jobject, jobject, jobject, jint);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -85,7 +85,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattDescriptorRea
  * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattDescriptor;I)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattDescriptorWriteCallback
-  (JNIEnv *, jobject, jobject, jobject, jint);
+(JNIEnv *, jobject, jobject, jobject, jint);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -93,7 +93,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattDescriptorWri
  * Signature: (Landroid/bluetooth/BluetoothGatt;I)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattReliableWriteCompletedCallback
-  (JNIEnv *, jobject, jobject, jint);
+(JNIEnv *, jobject, jobject, jint);
 
 /*
  * Class:     com_iotivity_jar_CALeInterface
@@ -101,7 +101,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattReliableWrite
  * Signature: (Landroid/bluetooth/BluetoothGatt;II)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattReadRemoteRssiCallback
-  (JNIEnv *, jobject, jobject, jint, jint);
+(JNIEnv *, jobject, jobject, jint, jint);
 
 #ifdef __cplusplus
 }

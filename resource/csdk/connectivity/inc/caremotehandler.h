@@ -42,14 +42,14 @@ extern "C"
  * @param   endpoint       [IN]    endpoint information where the data has to be sent
  * @return  remote endpoint created
  */
-CARemoteEndpoint_t* CACloneRemoteEndpoint(const CARemoteEndpoint_t* endpoint);
+CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *endpoint);
 
 /**
  * @brief   Creates a new remote endpoint from the input uri
  * @param   uri       [IN]    absolute uri information to  create remote endpoint
  * @return  remote endpoint created
  */
-CARemoteEndpoint_t* CACreateRemoteEndpointUriInternal(const CAURI_t uri);
+CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri);
 
 /**
  * @brief   Creates a new remote endpoint from the input and other information
@@ -58,7 +58,7 @@ CARemoteEndpoint_t* CACreateRemoteEndpointUriInternal(const CAURI_t uri);
  * @param   type       [IN]    connectivity type of the endpoint
  * @return  remote endpoint created
  */
-CARemoteEndpoint_t* CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
+CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
         const CAAddress_t addr, const CAConnectivityType_t type);
 
 /**
@@ -66,35 +66,35 @@ CARemoteEndpoint_t* CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
  * @param   endpoint       [IN]    endpoint information where the data has to be sent
  * @return  none
  */
-void CADestroyRemoteEndpointInternal(CARemoteEndpoint_t* rep);
+void CADestroyRemoteEndpointInternal(CARemoteEndpoint_t *rep);
 
 /**
  * @brief   Creates a new request information
  * @param   rep       [IN]    request information that needs to be duplicated
  * @return  remote endpoint created
  */
-CARequestInfo_t* CACloneRequestInfo(const CARequestInfo_t* request);
+CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *request);
 
 /**
  * @brief   Destroy the request information
  * @param   rep       [IN]    request information that needs to be destroyed
  * @return none
  */
-void CADestroyRequestInfoInternal(CARequestInfo_t* request);
+void CADestroyRequestInfoInternal(CARequestInfo_t *request);
 
 /**
  * @brief   Creates a new response information
  * @param   rep       [IN]    response information that needs to be duplicated
  * @return  remote endpoint created
  */
-CAResponseInfo_t* CACloneResponseInfo(const CAResponseInfo_t* response);
+CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *response);
 
 /**
  * @brief   Destroy the response information
  * @param   rep       [IN]    response information that needs to be destroyed
  * @return
  */
-void CADestroyResponseInfoInternal(CAResponseInfo_t* response);
+void CADestroyResponseInfoInternal(CAResponseInfo_t *response);
 
 #ifdef __cplusplus
 } /* extern "C" */

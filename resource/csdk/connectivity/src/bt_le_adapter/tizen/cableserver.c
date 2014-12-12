@@ -18,13 +18,17 @@
 *
 ******************************************************************/
 
+#include <bluetooth.h>
+#include <bluetooth_type.h>
+#include <bluetooth_product.h>
+
 #include "cableserver.h"
 #include <pthread.h>
 #include "cacommon.h"
 #include "caadapterutils.h"
 #include <gio/gio.h>
 #include "umutex.h"
-#include "camessagequeue.h"
+#include "caqueueingthread.h"
 #include "caadapterutils.h"
 #include "camsgparser.h"
 #include "cableclientutil.h"
@@ -35,7 +39,14 @@
  */
 #define TZ_BLE_SERVER_TAG "TZ_BLE_GATT_SERVER"
 
-///TODO:: Currently keeping as single service. Later service path will be added in list for supporting multiple services.
+///TODO:: Currently keeping as single service. Later service path will be added in list for \
+///TODO:: supporting multiple services.
+
+#define CA_BLE_SERVICE_UUID  "713d0000-503e-4c75-ba94-3148f18d941e"
+
+#define CA_BLE_READ_CHAR_UUID "00002af5-0000-1000-8000-00805f9b34fb"
+
+#define CA_BLE_WRITE_CHAR_UUID "00002af6-0000-1000-8000-00805f9b34fb"
 
 /**
  * @var gGattSvcPath
@@ -62,23 +73,11 @@ static char *gGattWriteCharPath = NULL;
 static bt_advertiser_h hAdvertiser = NULL;
 
 /**
- * @var    gNetworkPacketReceivedServerCallback
+ * @var    gCABLEServerDataReceivedCallback
  * @brief  Maintains the callback to be notified on receival of network packets from other
  *           BLE devices
  */
-static CANetworkPacketReceivedCallback gNetworkPacketReceivedServerCallback = NULL;
-
-/**
- * @var gCABleServerSenderQueue
- * @brief Queue to process the outgoing packets from GATTServer.
- */
-static CAAdapterMessageQueue_t *gCABleServerSenderQueue = NULL;
-
-/**
- * @var gCABleServerReceiverQueue
- * @brief Queue to process the incoming packets to GATTServer
- */
-static CAAdapterMessageQueue_t *gCABleServerReceiverQueue = NULL;
+static CABLEServerDataReceivedCallback gCABLEServerDataReceivedCallback = NULL;
 
 /**
  * @var gIsBleGattServerStarted
@@ -113,12 +112,6 @@ static  u_mutex gBleServiceMutex = NULL;
 static  u_mutex gBleReqRespCbMutex = NULL;
 
 /**
- * @var gBleServerSendDataMutex
- * @brief Mutex to synchronize the queing of the data from SenderQueue.
- */
-static u_mutex gBleServerSendDataMutex = NULL;
-
-/**
  * @var gBleServerThreadPoolMutex
  * @brief Mutex to synchronize the task to be pushed to thread pool.
  */
@@ -143,23 +136,12 @@ static u_cond gReceiverDataCond = NULL;
 static bool gDataReceiverHandlerState = false;
 
 /**
- * @var isHeaderAvailable
- * @brief to differentiate btw header and data packet.
- */
-static CABool_t isHeaderAvailable = false;
-
-/**
  * @struct gRemoteAddress
  * @brief Remote address of Gatt client
  *
  */
 static const char *gRemoteClientAddress = "DB:F7:EB:B5:0F:07";
 ///TODO: later this will be replaced with the platform apis.
-/**
- * @var gBleServerReceiveDataMutex
- * @brief Mutex to synchronize the queing of the data from ReceiverQueue.
- */
-static u_mutex gBleServerReceiveDataMutex = NULL;
 
 /**
  * @var g_event_loop
@@ -178,232 +160,6 @@ static u_thread_pool_t gBleServerThreadPool = NULL;
  * @brief Boolean variable to maintain the GATT Server state.
  */
 static CABool_t gServerUp = CA_FALSE;
-
-/**
- * @fn CABLEDataReceiverHandler
- * @brief This function handles data from recv message queue.
- */
-static void CABLEDataReceiverHandler(void *context);
-
-CAResult_t CABLEPushDataToServerReceiverQueue(const char *remoteAddress, const char *serviceUUID,
-        void *data, uint32_t dataLength, uint32_t *sentLength)
-{
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "IN");
-
-    //Input validation
-    VERIFY_NON_NULL(serviceUUID, TZ_BLE_SERVER_TAG, "service UUID is null");
-    VERIFY_NON_NULL(data, TZ_BLE_SERVER_TAG, "Data is null");
-    VERIFY_NON_NULL(sentLength, TZ_BLE_SERVER_TAG, "Sent data length holder is null");
-
-    //Add message to data queue
-    CARemoteEndpoint_t *remoteEndpoint = CAAdapterCreateRemoteEndpoint(CA_LE, remoteAddress,
-                                         serviceUUID);
-    if (NULL == remoteEndpoint)
-    {
-        OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "Failed to create remote endpoint !");
-        return CA_STATUS_FAILED;
-    }
-
-    if (CA_STATUS_OK != CAAdapterEnqueueMessage(gCABleServerReceiverQueue, remoteEndpoint, data,
-            dataLength))
-    {
-        OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "Failed to add message to queue !");
-
-        CAAdapterFreeRemoteEndpoint(remoteEndpoint);
-        return CA_STATUS_FAILED;
-    }
-
-    *sentLength = dataLength;
-
-    OICFree(data);
-    data = NULL;
-
-    //Signal message handler for processing data for sending
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Signalling message send handler");
-    u_mutex_lock(gBleServerReceiveDataMutex);
-    u_cond_signal(gReceiverDataCond);
-    u_mutex_unlock(gBleServerReceiveDataMutex);
-
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-void *CABleServerSenderQueueProcessor()
-{
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN ");
-
-    while (gServerUp)
-    {
-        CAAdapterMessage_t *message = NULL;
-        const char *remoteAddress = NULL;
-        const char *serviceUUID = NULL;
-        uint32_t sentLength = 0;
-        int32_t headerAdded = 0;
-
-        OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, " conditional wait");
-
-        u_mutex_lock(gBleServerSendDataMutex);
-        u_cond_wait(gBleServerSendCondWait, gBleServerSendDataMutex);
-
-        OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "wait unlocked");
-
-        CAResult_t result = CA_STATUS_FAILED;
-
-        while (CA_STATUS_OK == CAAdapterDequeueMessage(gCABleServerSenderQueue, &message))
-        {
-            if (message == NULL)
-            {
-                OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "senderData is NULL");
-                continue;
-            }
-            char *dataSegment = NULL;
-            uint32_t offset = 0, ret = 1;
-            int32_t datalen = message->dataLen;
-            while ( 1)
-            {
-                OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "fragmenting the data DataLen [%d] Offset [%d]", datalen,
-                          offset);
-                ret = CAFragmentData(message->data, &dataSegment, datalen, offset);
-                sleep(1);
-                if (0 == ret)
-                {
-                    break;
-                }
-
-                OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "Sending Multicast data");
-                result = CAUpdateCharacteristicsInGattServer(dataSegment, ret);
-                if (CA_STATUS_OK != result)
-                {
-                    OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,
-                              "Failed to CAUpdateCharacteristicsInGattServer !");
-                }
-
-                OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "freeing dataSegment");
-
-                OICFree(dataSegment);
-                dataSegment = NULL;
-                offset += ret;
-                if (headerAdded == 0)
-                {
-                    datalen -= offset - CA_HEADER_LENGTH;
-                    offset = offset - CA_HEADER_LENGTH;
-                    headerAdded = 1;
-                }
-                else
-                {
-                    datalen -= ret;
-                }
-
-                if (datalen < 0)
-                {
-                    datalen += ret ;
-                }
-                if (datalen == message->dataLen)
-                {
-                    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "All data has been fragmented and sent");
-                    break;
-                }
-            }
-            CAAdapterFreeMessage(message);
-        }
-
-        u_mutex_unlock(gBleServerSendDataMutex);
-    }
-
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT ");
-    return NULL;
-}
-
-void CABLEDataReceiverHandler(void *context)
-{
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "IN");
-
-    CAAdapterMessage_t *message = NULL;
-    const char *remoteAddress = NULL;
-    const char *serviceUUID = NULL;
-    uint32_t recvDataLen = 0;
-    uint32_t totalDataLen = 0;
-    char *dataSegment = NULL;
-    char *defragData = NULL;
-    isHeaderAvailable = false;
-    CARemoteEndpoint_t *remoteEndpoint = NULL;
-
-    u_mutex_lock(gBleServerReceiveDataMutex);
-
-    while (gDataReceiverHandlerState)
-    {
-
-        OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, " waiting for the data");
-
-        u_cond_wait(gReceiverDataCond, gBleServerReceiveDataMutex);
-
-        OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "wait unlocked");
-
-        //Extract the message from queue and send to remote ble device
-        while (CA_STATUS_OK == CAAdapterDequeueMessage(gCABleServerReceiverQueue, &message))
-        {
-            OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "checking for DE Fragmentation");
-
-            if (!isHeaderAvailable)
-            {
-                OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Parsing the header");
-                char *header = (char *) OICMalloc(sizeof(char) * CA_HEADER_LENGTH);
-                memcpy(header, message->data, CA_HEADER_LENGTH);
-                totalDataLen = CAParseHeader(header);
-                OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Total data to be accumulated [%d] bytes", totalDataLen);
-                defragData = (char *) OICMalloc(sizeof(char) * totalDataLen);
-                OICFree(header);
-
-                remoteAddress = message->remoteEndpoint->addressInfo.BT.btMacAddress;
-                serviceUUID = message->remoteEndpoint->resourceUri;
-
-                remoteEndpoint = CAAdapterCreateRemoteEndpoint(CA_EDR, remoteAddress,
-                                 serviceUUID);
-
-                memcpy(defragData + recvDataLen, message->data + CA_HEADER_LENGTH,
-                       message->dataLen - CA_HEADER_LENGTH);
-                recvDataLen += message->dataLen - CA_HEADER_LENGTH;
-                isHeaderAvailable = true;
-            }
-            else
-            {
-                OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Copying the data of length [%d]", message->dataLen);
-                memcpy(defragData + recvDataLen, message->data, message->dataLen);
-                recvDataLen += message->dataLen ;
-                OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "totalDatalength  [%d] recveived Datalen [%d]",
-                          totalDataLen, recvDataLen);
-            }
-            CAAdapterFreeMessage(message);
-            if (totalDataLen == recvDataLen)
-            {
-                u_mutex_lock(gBleReqRespCbMutex);
-                if (NULL == gNetworkPacketReceivedServerCallback)
-                {
-                    OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gReqRespCallback is NULL!");
-                    u_mutex_unlock(gBleReqRespCbMutex);
-                    return;
-                }
-                OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Sending data up !");
-                gNetworkPacketReceivedServerCallback(remoteEndpoint, defragData, recvDataLen);
-                OICFree(remoteEndpoint);
-                OICFree(defragData);
-                recvDataLen = 0;
-                totalDataLen = 0;
-                isHeaderAvailable = false;
-                u_mutex_unlock(gBleReqRespCbMutex);
-            }
-
-        }
-
-        if (false == gDataReceiverHandlerState)
-        {
-            break;
-        }
-
-
-    }
-    u_mutex_unlock(gBleServerReceiveDataMutex);
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
-}
 
 CAResult_t CAStartBleGattServer()
 {
@@ -438,39 +194,8 @@ CAResult_t CAStartBleGattServer()
         return CA_STATUS_FAILED;
     }
 
-    ret = CAAdapterInitializeMessageQueue(&gCABleServerSenderQueue);
-    if (CA_STATUS_OK != ret )
-    {
-        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAdapterInitializeMessageQueue failed!");
-        CATerminateBleGattServer();
-        u_mutex_unlock(gBleServerThreadPoolMutex);
-        return CA_STATUS_FAILED;
-    }
-
-    ret = CAAdapterInitializeMessageQueue(&gCABleServerReceiverQueue);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAdapterInitializeMessageQueue failed!");
-        CATerminateBleGattServer();
-        u_mutex_unlock(gBleServerThreadPoolMutex);
-        return CA_STATUS_FAILED;
-    }
-    gServerUp = CA_TRUE;
-    ret = u_thread_pool_add_task(gBleServerThreadPool, (void *) CABleServerSenderQueueProcessor,
-                                 (void *) NULL);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "u_thread_pool_add_task failed with ret [%d]", ret);
-
-        u_mutex_unlock(gBleServerThreadPoolMutex);
-        return CA_STATUS_FAILED;
-    }
     gDataReceiverHandlerState = true;
-    if (CA_STATUS_OK != u_thread_pool_add_task(gBleServerThreadPool, CABLEDataReceiverHandler, NULL))
-    {
-        OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "Failed to start data send handler!");
-        return ;
-    }
+
     u_mutex_unlock(gBleServerThreadPoolMutex);
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -500,7 +225,7 @@ void *CAStartBleGattServerThread(void *data)
 
     sleep(5); // Sleep is must. otherwise its crashing
 
-    char *serviceUUID = "713d0000-503e-4c75-ba94-3148f18d941e";
+    char *serviceUUID = CA_BLE_SERVICE_UUID;
 
     ret  = CAAddNewBleServiceInGattServer(serviceUUID);
 
@@ -512,7 +237,7 @@ void *CAStartBleGattServerThread(void *data)
         return NULL;
     }
 
-    char *charReadUUID = "00002af5-0000-1000-8000-00805f9b34fb";
+    char *charReadUUID = CA_BLE_READ_CHAR_UUID;
 
     char charReadValue[4] = {33, 44, 55, 66};
 
@@ -527,7 +252,7 @@ void *CAStartBleGattServerThread(void *data)
         return NULL;
     }
 
-    char *charWriteUUID = "00002af6-0000-1000-8000-00805f9b34fb";
+    char *charWriteUUID = CA_BLE_WRITE_CHAR_UUID;
 
     char charWriteValue[4] = {33, 44, 55, 66};
 
@@ -611,13 +336,10 @@ CAResult_t CAStopBleGattServer()
     }
     u_mutex_unlock(gBleServerStateMutex);
 
-    //Stop data send and receive handlers
-    if (gBleServerReceiveDataMutex && gReceiverDataCond && gDataReceiverHandlerState)
+    // Stop data send and receive handlers
+    if (gDataReceiverHandlerState)
     {
-        u_mutex_lock(gBleServerReceiveDataMutex);
-        gDataReceiverHandlerState = CA_FALSE;
         u_cond_signal(gReceiverDataCond);
-        u_mutex_unlock(gBleServerReceiveDataMutex);
     }
 
     CATerminateBleGattServer();
@@ -698,24 +420,6 @@ void CATerminateBleGattServer()
 
     u_mutex_unlock(gBleServerStateMutex);
 
-    // Terminating gCABleServerSenderQueue
-    u_mutex_lock(gBleServerSendDataMutex);
-    if (NULL != gCABleServerSenderQueue)
-    {
-        CAAdapterTerminateMessageQueue(gCABleServerSenderQueue);
-        gCABleServerSenderQueue = NULL;
-    }
-    u_mutex_unlock(gBleServerSendDataMutex);
-
-    // Terminating gCABleServerReceiverQueue
-    u_mutex_lock(gBleServerReceiveDataMutex);
-    if (NULL != gCABleServerReceiverQueue)
-    {
-        CAAdapterTerminateMessageQueue(gCABleServerReceiverQueue);
-        gCABleServerReceiverQueue = NULL;
-    }
-    u_mutex_unlock(gBleServerReceiveDataMutex);
-
     // Terminating all mutex variables.
     CATerminateGattServerMutexVaraibles();
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
@@ -764,47 +468,6 @@ CAResult_t CAInitGattServerMutexVaraibles()
             return CA_STATUS_FAILED;
         }
     }
-
-    if (NULL == gBleServerSendDataMutex)
-    {
-        gBleServerSendDataMutex = u_mutex_new();
-        if (NULL == gBleServerSendDataMutex)
-        {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_mutex_new failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    if (NULL == gBleServerReceiveDataMutex)
-    {
-        gBleServerReceiveDataMutex = u_mutex_new();
-        if (NULL == gBleServerReceiveDataMutex)
-        {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_mutex_new failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    if (NULL == gBleServerSendCondWait)
-    {
-        gBleServerSendCondWait = u_cond_new();
-        if (NULL == gBleServerSendCondWait)
-        {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_mutex_new failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    if (!gReceiverDataCond)
-    {
-        gReceiverDataCond = u_cond_new();
-        if (NULL == gReceiverDataCond)
-        {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_cond_new failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
     return CA_STATUS_OK;
 }
 void CATerminateGattServerMutexVaraibles()
@@ -813,11 +476,6 @@ void CATerminateGattServerMutexVaraibles()
     u_mutex_free(gBleServerStateMutex);
     gBleServerStateMutex = NULL;
 
-    u_mutex_free(gBleServerReceiveDataMutex);
-    gBleServerReceiveDataMutex = NULL;
-    u_mutex_free(gBleServerSendDataMutex);
-    gBleServerSendDataMutex = NULL;
-
     gBleServerStateMutex = NULL;
     u_mutex_free(gBleServiceMutex);
     gBleServiceMutex = NULL;
@@ -825,15 +483,6 @@ void CATerminateGattServerMutexVaraibles()
     gBleCharacteristicMutex = NULL;
     u_mutex_free(gBleReqRespCbMutex);
     gBleReqRespCbMutex = NULL;
-
-    u_cond_free(gBleServerSendCondWait);
-    gBleServerSendCondWait = NULL;
-
-    if (gReceiverDataCond)
-    {
-        u_cond_free(gReceiverDataCond);
-        gReceiverDataCond = NULL;
-    }
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }
@@ -873,14 +522,6 @@ void CASetBleServerThreadPoolHandle(u_thread_pool_t handle)
     gBleServerThreadPool = handle;
     u_mutex_unlock(gBleServerThreadPoolMutex);
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
-}
-
-
-CAResult_t CALEReadDataFromLEServer()
-{
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT ");
-
-    return CA_STATUS_OK;
 }
 
 CAResult_t CAAddNewBleServiceInGattServer(const char *serviceUUID)
@@ -977,7 +618,6 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Malloc failed!");
-        //    OICFree(remoteEndPoint);
         return;
     }
 
@@ -987,47 +627,20 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
 
     uint32_t sentLength = 0;
 
-    CAResult_t res = CABLEPushDataToServerReceiverQueue(gRemoteClientAddress, OIC_BLE_SERVICE_ID,
-                     data, strlen(data), &sentLength);
-    if (CA_STATUS_OK != res)
+    u_mutex_lock(gBleReqRespCbMutex);
+    if (NULL == gCABLEServerDataReceivedCallback)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "CABLEPushDataToReceiverQueue failed");
-        OICFree(data);
-        return ;
+        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gReqRespCallback is NULL!");
+        u_mutex_unlock(gBleReqRespCbMutex);
+        return;
     }
+
+    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Sending data up !");
+    gCABLEServerDataReceivedCallback(gRemoteClientAddress, OIC_BLE_SERVICE_ID,
+                                     data, strlen(data), &sentLength);
+    u_mutex_unlock(gBleReqRespCbMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
-}
-
-CAResult_t CABleServerSenderQueueEnqueueMessage(const CARemoteEndpoint_t *remoteEndpoint,
-        void *data, uint32_t dataLen)
-{
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN ");
-
-    VERIFY_NON_NULL(data, NULL, "Param data is NULL");
-
-    VERIFY_NON_NULL_RET(gCABleServerSenderQueue, TZ_BLE_SERVER_TAG, "BleServerReceiverQueue is  NULL",
-                        CA_STATUS_FAILED);
-    VERIFY_NON_NULL_RET(gBleServerSendDataMutex, TZ_BLE_SERVER_TAG, "BleServerSendDataMutex is NULL",
-                        CA_STATUS_FAILED);
-    VERIFY_NON_NULL_RET(gBleServerSendCondWait, TZ_BLE_SERVER_TAG, "BleServerSendCondWait is NULL",
-                        CA_STATUS_FAILED);
-
-    u_mutex_lock(gBleServerSendDataMutex);
-    CAResult_t retVal = CAAdapterEnqueueMessage(gCABleServerSenderQueue, remoteEndpoint, data, dataLen);
-    if (CA_STATUS_OK != retVal )
-    {
-        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAdapterEnqueueMessage failed!");
-        u_mutex_unlock(gBleServerSendDataMutex);
-        return CA_STATUS_FAILED;
-    }
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "Sending signal for the sender processor ");
-    u_mutex_unlock(gBleServerSendDataMutex);
-    u_cond_signal(gBleServerSendCondWait);
-
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT ");
-
-    return CA_STATUS_OK;
 }
 
 CAResult_t CARegisterBleServicewithGattServer(const char *svcPath)
@@ -1051,8 +664,8 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, char *charUUID, char *charValue,
-        int32_t charValueLen, int32_t read)
+CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, char *charUUID,
+        char *charValue, int32_t charValueLen, int32_t read)
 {
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
@@ -1109,7 +722,8 @@ CAResult_t CARemoveCharacteristicsFromGattServer(const char *charPath)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue, int32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue,
+        const uint32_t charValueLen)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -1125,7 +739,6 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue, int32_t ch
     }
 
     char *data = (char *) OICMalloc(sizeof(char) * (charValueLen + 1));
-
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "malloc failed!");
@@ -1149,7 +762,6 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue, int32_t ch
         return CA_STATUS_FAILED;
     }
     OICFree(data);
-    data = NULL;
 
     u_mutex_unlock(gBleCharacteristicMutex);
 
@@ -1158,13 +770,13 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue, int32_t ch
     return CA_STATUS_OK;
 }
 
-void CASetBLEReqRespServerCallback(CANetworkPacketReceivedCallback callback)
+void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
     u_mutex_lock(gBleReqRespCbMutex);
 
-    gNetworkPacketReceivedServerCallback = callback;
+    gCABLEServerDataReceivedCallback = callback;
 
     u_mutex_unlock(gBleReqRespCbMutex);
 

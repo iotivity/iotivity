@@ -29,11 +29,7 @@
 #include "caadapterutils.h"
 #include "logger.h"
 
-static int32_t gDiscoveryServerID = -1;
-static int32_t gListeningServerID = -1;
-static int32_t gNotificationServerID = -1;
-
-static CAResult_t CAStartServer(const char *serviceUUID, int32_t *serverID);
+static CAResult_t CAStartServer(void);
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback packetReceivedCallback,
@@ -46,11 +42,11 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
 
     //Input validation
     VERIFY_NON_NULL(registerCallback, BLUETOOTH_ADAPTER_TAG,
-               "register callback is NULL");
+                    "register callback is NULL");
     VERIFY_NON_NULL(packetReceivedCallback, BLUETOOTH_ADAPTER_TAG,
-               "data receive callback is NULL");
+                    "data receive callback is NULL");
     VERIFY_NON_NULL(networkStateChangeCallback, BLUETOOTH_ADAPTER_TAG,
-               "network state change callback is NULL");
+                    "network state change callback is NULL");
     VERIFY_NON_NULL(handle, BLUETOOTH_ADAPTER_TAG, "Thread pool hanlde is NULL");
 
     //Register the callbacks with BT Manager
@@ -102,18 +98,18 @@ CAResult_t CAStartEDRListeningServer(void)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    return CAStartServer(OIC_BT_SERVICE_ID, &gListeningServerID);
+    return CAStartServer();
 }
 
 CAResult_t CAStartEDRDiscoveryServer(void)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    return CAStartServer(OIC_BT_SERVICE_ID, &gDiscoveryServerID);
+    return CAStartServer();
 }
 
 uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
-                               uint32_t dataLength)
+                              uint32_t dataLength)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
@@ -139,7 +135,7 @@ uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *da
     const char *serviceUUID = OIC_BT_SERVICE_ID;
     const char *address = remoteEndpoint->addressInfo.BT.btMacAddress;
     if (CA_STATUS_OK != (err = CABTManagerSendData(address, serviceUUID, data,
-                 dataLength, &sentLength)))
+                               dataLength, &sentLength)))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Send unicast data failed!, error num [%d]", err);
         return 0;
@@ -210,23 +206,7 @@ CAResult_t CAStopEDR(void)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    //Stop the Discovery server
-    if (-1 < gDiscoveryServerID)
-    {
-        CABTManagerStopServer(gDiscoveryServerID);
-    }
-
-    //Stop the Listening server
-    if (-1 < gListeningServerID)
-    {
-        CABTManagerStopServer(gListeningServerID);
-    }
-
-    //Stop the Notification server
-    if (-1 < gNotificationServerID)
-    {
-        CABTManagerStopServer(gNotificationServerID);
-    }
+    CABTManagerStopServer();
 
     //Stop the adapter
     CABTManagerStop();
@@ -245,22 +225,13 @@ void CATerminateEDR(void)
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
 }
 
-CAResult_t CAStartServer(const char *serviceUUID, int32_t *serverID)
+CAResult_t CAStartServer(void)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
     CAResult_t err = CA_STATUS_OK;
 
-    //Input validation
-    VERIFY_NON_NULL(serviceUUID, BLUETOOTH_ADAPTER_TAG,  "Service UUID is NULL");
-    VERIFY_NON_NULL(serverID, BLUETOOTH_ADAPTER_TAG,  "Server ID is NULL");
-    if (0 == strlen(serviceUUID))
-    {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: Service UUID is empty!");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
-    if (CA_STATUS_OK != (err = CABTManagerStartServer(serviceUUID, serverID)))
+    if (CA_STATUS_OK != (err = CABTManagerStartServer()))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to start RFCOMM server!, error num [%d]",
                   err);

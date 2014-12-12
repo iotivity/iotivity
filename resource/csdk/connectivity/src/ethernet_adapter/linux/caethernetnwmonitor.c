@@ -79,7 +79,7 @@ static CAEthernetConnectionStateChangeCallback gNetworkChangeCb = NULL;
  */
 static void CAEthernetGetInterfaceInformation(char **interfaceName, char **ipAddress);
 
-static void CANetworkMonitorThread(void* threadData);
+static void CANetworkMonitorThread(void *threadData);
 
 CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 {
@@ -181,14 +181,15 @@ CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
     if (gEthernetInterfaceName && strlen(gEthernetInterfaceName))
     {
-        *interfaceName = (gEthernetInterfaceName) ? strndup(gEthernetInterfaceName, strlen(gEthernetInterfaceName)) :
-                                NULL;
+        *interfaceName = (gEthernetInterfaceName) ? strndup(gEthernetInterfaceName,
+                         strlen(gEthernetInterfaceName)) :
+                         NULL;
     }
 
     if (gEthernetIPAddress && strlen(gEthernetIPAddress))
     {
         *ipAddress = (gEthernetIPAddress) ? strndup(gEthernetIPAddress, strlen(gEthernetIPAddress)) :
-                                NULL;
+                     NULL;
     }
 
     u_mutex_unlock(gEthernetNetInfoMutex);
@@ -259,7 +260,7 @@ void CAEthernetGetInterfaceInformation(char **interfaceName, char **ipAddress)
     freeifaddrs(ifp);
 }
 
-void CANetworkMonitorThread(void* threadData)
+void CANetworkMonitorThread(void *threadData)
 {
     while (!gStopNetworkMonitor)
     {

@@ -25,10 +25,10 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "cawifiadapter_singlethread.h"
-#include "caethernetadapter_singlethread.h"
-#include "caedradapter_singlethread.h"
-#include "caleadapter_singlethread.h"
+#include "cawifiadapter.h"
+#include "caethernetadapter.h"
+#include "caedradapter.h"
+#include "caleadapter.h"
 
 #include "canetworkconfigurator.h"
 #include "oic_malloc.h"
@@ -36,7 +36,7 @@
 
 #define TAG "CAIFCNT_ST"
 
-#define MEMORY_ALLOCK_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "Out of memory"); goto memory_error_exit;} }
+#define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "Out of memory"); goto memory_error_exit;} }
 
 #define CA_CONNECTIVITY_TYPE_NUM   4
 
@@ -240,7 +240,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     // #3. add data into result
     // memory allocation
     resInfo = (CALocalConnectivity_t *) OICMalloc(sizeof(CALocalConnectivity_t) * resSize);
-    MEMORY_ALLOCK_CHECK(resInfo);
+    MEMORY_ALLOC_CHECK(resInfo);
     memset(resInfo, 0, sizeof(CALocalConnectivity_t) * resSize);
 
     i = 0;
@@ -320,9 +320,16 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
         return CA_STATUS_FAILED;
     }
 
+    void *ptrType = NULL;
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t *) u_arraylist_get(list, i);
+        ptrType = u_arraylist_get(list, i);
+        if (NULL == ptrType)
+        {
+            OIC_LOG(ERROR, TAG, "error");
+            return CA_STATUS_FAILED;
+        }
+        type = *(uint8_t *) ptrType;
 
         index = CAGetAdapterIndex(type);
 
@@ -355,9 +362,16 @@ CAResult_t CAStartListeningServerAdapters()
         return CA_STATUS_FAILED;
     }
 
+    void *ptrType = NULL;
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t *) u_arraylist_get(list, i);
+        ptrType = u_arraylist_get(list, i);
+        if (NULL == ptrType)
+        {
+            OIC_LOG(ERROR, TAG, "error");
+            return CA_STATUS_FAILED;
+        }
+        type = *(uint8_t *) ptrType;
 
         index = CAGetAdapterIndex(type);
 
@@ -390,9 +404,16 @@ CAResult_t CAStartDiscoveryServerAdapters()
         return CA_STATUS_FAILED;
     }
 
+    void *ptrType = NULL;
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t *) u_arraylist_get(list, i);
+        ptrType = u_arraylist_get(list, i);
+        if (NULL == ptrType)
+        {
+            OIC_LOG(ERROR, TAG, "error");
+            return CA_STATUS_FAILED;
+        }
+        type = *(uint8_t *) ptrType;
 
         index = CAGetAdapterIndex(type);
 
@@ -440,10 +461,16 @@ CAResult_t CAReadData()
         OIC_LOG(DEBUG, TAG, "No selected network");
         return CA_STATUS_FAILED;
     }
-
+    void *ptrType = NULL;
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t *) u_arraylist_get(list, i);
+        ptrType = u_arraylist_get(list, i);
+        if (NULL == ptrType)
+        {
+            OIC_LOG(ERROR, TAG, "error");
+            return CA_STATUS_FAILED;
+        }
+        type = *(uint8_t *) ptrType;
 
         index = CAGetAdapterIndex(type);
 

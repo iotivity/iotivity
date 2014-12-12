@@ -101,9 +101,9 @@ void OICLog(LogLevel level, const char *tag, const char *logStr)
 #else //#elif __TIZEN__
     LOGD(logStr);
     /*#ifdef LOG_TAG
- #undef LOG_TAG
- #define LOG_TAG tag
- #endif
+#undef LOG_TAG
+#define LOG_TAG tag
+#endif
     if(level == DEBUG || level == INFO){
         LOGD(logStr);
     }else if(level == WARNING){

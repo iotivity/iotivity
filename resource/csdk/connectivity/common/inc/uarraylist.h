@@ -49,7 +49,7 @@ typedef struct u_arraylist_t
  * @brief API to creates array list and initializes the elements.
  * @return  u_arraylist_t if Success, NULL otherwise
  */
-u_arraylist_t* u_arraylist_create();
+u_arraylist_t *u_arraylist_create();
 
 /**
  * @brief Resets and deletes the array list
@@ -68,7 +68,7 @@ CAResult_t u_arraylist_free(u_arraylist_t *list);
  *     [IN] index of array list
  * @return void pointer of the data
  */
-void* u_arraylist_get(const u_arraylist_t *list, uint32_t index);
+void *u_arraylist_get(const u_arraylist_t *list, uint32_t index);
 
 /**
  * @brief Add data in the array list
@@ -89,7 +89,7 @@ CAResult_t u_arraylist_add(u_arraylist_t *list, void *data);
  *     [IN] index of array list
  * @return void pointer of the data
  */
-void* u_arraylist_remove(u_arraylist_t *list, uint32_t index);
+void *u_arraylist_remove(u_arraylist_t *list, uint32_t index);
 
 /**
  * @brief Returns the length of the array list

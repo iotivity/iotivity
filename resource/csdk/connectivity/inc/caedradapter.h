@@ -29,7 +29,9 @@
  **/
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#ifndef ARDUINO
 #include "uthreadpool.h" /* for thread pool */
+#endif  //ARDUINO
 
 #ifdef __cplusplus
 extern "C"
@@ -53,10 +55,17 @@ extern "C"
  * not enabled
  * @retval  #CA_STATUS_FAILED Operation failed
  */
+#ifdef ARDUINO
+CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
+                           CANetworkPacketReceivedCallback reqRespCallback,
+                           CANetworkChangeCallback netCallback);
+#else
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback reqRespCallback,
                            CANetworkChangeCallback netCallback,
                            u_thread_pool_t handle);
+#endif //#ifdef ARDUINO
+
 
 /**
  * @fn  CAStartEDR
@@ -110,8 +119,8 @@ CAResult_t CAStartEDRDiscoveryServer();
  * @return  Number of bytes sent on the network. 0 indicates failed to send data.
  *
  */
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data, 
-                            uint32_t dataLength);
+uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+                              uint32_t dataLength);
 
 /**
  * @fn  CASendEDRMulticastData

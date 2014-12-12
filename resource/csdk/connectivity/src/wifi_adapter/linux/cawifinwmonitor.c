@@ -20,14 +20,17 @@
 
 #include "cawifiinterface.h"
 
-#include <string.h>
+#include <sys/types.h>
 #include <ifaddrs.h>
+#include <net/if.h>
+#include <sys/socket.h>
 #include <netdb.h>
-
-#include "caadapterutils.h"
-#include "umutex.h"
+#include <string.h>
+#include <errno.h>
 #include "logger.h"
 #include "oic_malloc.h"
+#include "umutex.h"
+#include "caadapterutils.h"
 
 #define WIFI_MONITOR_TAG "WIFI_MONITOR"
 
@@ -79,7 +82,7 @@ static CAWiFiConnectionStateChangeCallback gNetworkChangeCb = NULL;
  */
 static void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress);
 
-static void CANetworkMonitorThread(void* threadData);
+static void CANetworkMonitorThread(void *threadData);
 
 CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 {
@@ -139,7 +142,7 @@ CAResult_t CAWiFiStartNetworkMonitor(void)
 
     if (gStopNetworkMonitor)
     {
-        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Network Monitor Thread is already running!");
+        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Stop network monitor requested!");
         return CA_SERVER_STARTED_ALREADY;
     }
 
@@ -177,26 +180,20 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 {
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
 
-    VERIFY_NON_NULL(interfaceName, WIFI_MONITOR_TAG, "interface name holder is NULL");
-    VERIFY_NON_NULL(ipAddress, WIFI_MONITOR_TAG, "IP address holder is NULL");
+    VERIFY_NON_NULL(interfaceName, WIFI_MONITOR_TAG, "interface name");
+    VERIFY_NON_NULL(ipAddress, WIFI_MONITOR_TAG, "ip address");
 
+    // Get the interface and ipaddress information from cache
     u_mutex_lock(gWifiNetInfoMutex);
 
-    if (gWifiInterfaceName && strlen(gWifiInterfaceName))
-    {
-        *interfaceName = (gWifiInterfaceName) ? strndup(gWifiInterfaceName, strlen(gWifiInterfaceName)) :
-                                NULL;
-    }
-
-    if (gWifiIPAddress && strlen(gWifiIPAddress))
-    {
-        *ipAddress = (gWifiIPAddress) ? strndup(gWifiIPAddress, strlen(gWifiIPAddress)) :
-                                NULL;
-    }
+    *interfaceName = (gWifiInterfaceName) ? strndup(gWifiInterfaceName,strlen(gWifiInterfaceName))
+                               : NULL;
+    *ipAddress = (gWifiIPAddress) ? strndup(gWifiIPAddress,strlen(gWifiIPAddress))
+                               : NULL;
 
     u_mutex_unlock(gWifiNetInfoMutex);
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -210,7 +207,8 @@ bool CAWiFiIsConnected(void)
     return true;
 }
 
-void CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateChangeCallback callback)
+void CAWiFiSetConnectionStateChangeCallback(
+    CAWiFiConnectionStateChangeCallback callback)
 {
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
 
@@ -222,35 +220,47 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress)
     struct ifaddrs *ifa = NULL;
     struct ifaddrs *ifp = NULL;
 
-    if (getifaddrs(&ifp) < 0)
+    if (!interfaceName || !ipAddress)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Get network interface list error");
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "Invalid input: interface/ipaddress holder is NULL!");
+        return;
+    }
+
+    if (-1 == getifaddrs(&ifp))
+    {
+        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface list!, Error code: %s",
+                          strerror(errno));
+        return;
     }
 
     for (ifa = ifp; ifa; ifa = ifa->ifa_next)
     {
         char localIPAddress[CA_IPADDR_SIZE];
-        socklen_t len;
+        socklen_t len = sizeof(struct sockaddr_in);
 
         if (ifa->ifa_addr == NULL)
             continue;
 
-        if (ifa->ifa_addr->sa_family == AF_INET)
-            len = sizeof(struct sockaddr_in);
-        else if (ifa->ifa_addr->sa_family == AF_INET6)
-            continue;
-        else
-            continue;
-
-        if (getnameinfo(ifa->ifa_addr, len, localIPAddress,
-                        sizeof(localIPAddress), NULL, 0, NI_NUMERICHOST) < 0)
+        int type = ifa->ifa_addr->sa_family;
+        if (ifa->ifa_flags & IFF_LOOPBACK
+            || !((ifa->ifa_flags & IFF_UP) && (ifa->ifa_flags & IFF_RUNNING)))
         {
-            OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Get IPAddress fail");
+            continue;
         }
 
-        // except loopback address
-        if (strcmp(localIPAddress, "127.0.0.1") == 0)
+        if (AF_INET != type)
+        {
             continue;
+        }
+
+        if (0 != getnameinfo(ifa->ifa_addr, len, localIPAddress,
+                        sizeof(localIPAddress), NULL, 0, NI_NUMERICHOST))
+        {
+                OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get IPAddress, Error code: %s",
+                          strerror(errno));
+                freeifaddrs(ifp);
+                return;
+        }
 
         // set interface name
         *interfaceName = strndup(ifa->ifa_name, strlen(ifa->ifa_name));
@@ -262,16 +272,12 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress)
     freeifaddrs(ifp);
 }
 
-void CANetworkMonitorThread(void* threadData)
+void CANetworkMonitorThread(void *threadData)
 {
+    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+
     while (!gStopNetworkMonitor)
     {
-        if (gStopNetworkMonitor)
-        {
-            OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "Stop Network Monitor Thread is called");
-            break;
-        }
-
         // Get network information
         CANetworkStatus_t currNetworkStatus;
         char *interfaceName = NULL;
@@ -304,4 +310,6 @@ void CANetworkMonitorThread(void* threadData)
         OICFree(interfaceName);
         OICFree(ipAddress);
     }
+
+    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
 }

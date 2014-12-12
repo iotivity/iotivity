@@ -32,8 +32,8 @@ typedef struct
 oic_log_ctx_t *oic_make_console_logger()
 {
     return oic_log_make_ctx(NULL, OIC_LOG_ALL, oic_console_logger_init, oic_console_logger_destroy,
-            oic_console_logger_flush, oic_console_logger_set_level, oic_console_logger_write,
-            oic_console_logger_set_module);
+                            oic_console_logger_flush, oic_console_logger_set_level, oic_console_logger_write,
+                            oic_console_logger_set_module);
 }
 
 int oic_console_logger_init(oic_log_ctx_t *ctx, void *world)

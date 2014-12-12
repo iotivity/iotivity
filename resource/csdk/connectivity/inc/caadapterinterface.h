@@ -162,6 +162,19 @@ typedef void (*CANetworkPacketReceivedCallback)(CARemoteEndpoint_t *endPoint, vo
  */
 typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkStatus_t status);
 
+/**
+ * @brief This will be used during the recive of network requests and response.
+ * @see SendUnitcastData(), SendMulticastData()
+ */
+typedef void (*CABLEClientDataReceivedCallback)(const char *remoteAddress, const char *serviceUUID,
+                                        void *data, uint32_t dataLength, uint32_t *sentLength);
+
+/**
+ * @brief This will be used during the recive of network requests and response.
+ * @see SendUnitcastData(), SendMulticastData()
+ */
+typedef void (*CABLEServerDataReceivedCallback)(const char *remoteAddress, const char *serviceUUID,
+                                            void *data, uint32_t dataLength, uint32_t *sentLength);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

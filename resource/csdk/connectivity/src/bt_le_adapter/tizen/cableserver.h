@@ -20,25 +20,10 @@
 #ifndef __TZ_BLE_SERVER_H_
 #define __TZ_BLE_SERVER_H_
 
-#include <bluetooth.h>
-#include <bluetooth_type.h>
-#include <bluetooth_product.h>
-
 #include "caadapterinterface.h"
 #include "logger.h"
 #include "uthreadpool.h"
-
-/**
-* @fn  CAStartBleGattServer
-* @brief  Used to start Gatt Server thread for service creation and advertise ble service.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*
-*/
-CAResult_t CAStartBleGattServer();
+#include "caleinterface.h"
 
 /**
 * @fn  CAStartBleGattServerThread
@@ -52,18 +37,6 @@ CAResult_t CAStartBleGattServer();
 *
 */
 void *CAStartBleGattServerThread(void *data);
-
-/**
-* @fn  CAStopBleGattServer
-* @brief  Used to terminate BLE Gatt Service.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*
-*/
-CAResult_t CAStopBleGattServer();
 
 /**
 * @fn  CATerminateBleGattServer
@@ -206,8 +179,9 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath);
 * @retval  CA_STATUS_FAILED Operation failed
 *
 */
-CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, char *charUUID, char *charValue,
-        int32_t charValueLen, int32_t read);
+CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, char *charUUID,
+                                               char *charValue, int32_t charValueLen,
+                                               int32_t read);
 
 /**
 * @fn  CARemoveCharacteristicsFromGattServer
@@ -222,22 +196,6 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, char *charUU
 *
 */
 CAResult_t CARemoveCharacteristicsFromGattServer(const char *charPath);
-
-/**
-* @fn  CAUpdateCharacteristicsInGattServer
-* @brief  Used to update characteristics(Read/Write) value that we want to send to particular client.
-*              Both unicast and multicast will use the same api. In mulicast, we will be sending in loop to all clients.
-*
-* @param[in]  charValue  - data that we want to send to client(unicast)/clients(multicast)
-* @param[in]  charValueLen  - length of the data.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*
-*/
-CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue, int32_t charValueLen);
 
 /**
 * @fn  CABleGattRemoteCharacteristicWriteCb
@@ -255,17 +213,6 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
         unsigned char *charValue, int32_t charValueLen, void *userData);
 
 /**
-* @fn  CASetBLEReqRespServerCallback
-* @brief  used to store upper layer callback locally which will be used to send the data to application
-*
-* @param[in]  CANetworkPacketReceivedCallback  -  upper layer callback function to pass the data to CA layer.
-*
-* @return  void
-*
-*/
-void CASetBLEReqRespServerCallback(CANetworkPacketReceivedCallback callback);
-
-/**
 * @fn  CALEReadDataFromLEServer
 * @brief  synchronous function for reading characteristic value.
 *
@@ -279,7 +226,8 @@ CAResult_t CALEReadDataFromLEServer();
 
 /**
 * @fn  CABleServerSenderQueueEnqueueMessage
-* @brief  Used to enqueue the message into sender queue using CAAdapterEnqueueMessage and make signal to the thread to process.
+* @brief  Used to enqueue the message into sender queue using CAAdapterEnqueueMessage and make
+*            signal to the thread to process.
 *
 * @param[in]  remoteEndpoint  Remote device information
 * @param[in]  data  data which we wants to send to remote device

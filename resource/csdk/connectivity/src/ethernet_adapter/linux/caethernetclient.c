@@ -47,7 +47,8 @@ void CAEthernetSetUnicastSocket(const int32_t socketFD)
 }
 
 uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
-                        const void *data, const uint32_t dataLength, bool isMulticast)
+                            const void *data, const uint32_t dataLength,
+                            CABool_t isMulticast, CABool_t isSecure)
 {
     OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
 

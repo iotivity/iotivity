@@ -34,17 +34,17 @@ extern "C"
 {
 #endif
 
-typedef void (*CAPacketReceiveCallback)(const char* address, const char* data);
+typedef void (*CAPacketReceiveCallback)(const char *address, const char *data);
 
 void CALEInitialize(u_thread_pool_t handle);
 
 void CALETerminate();
 
-int32_t CALESendUnicastMessage(const char* address, const char* data, uint32_t dataLen);
+int32_t CALESendUnicastMessage(const char *address, const char *data, uint32_t dataLen);
 
-int32_t CALESendMulticastMessage(const char* data, uint32_t dataLen);
+int32_t CALESendMulticastMessage(const char *data, uint32_t dataLen);
 
-int32_t CALEStartUnicastServer(const char* address);
+int32_t CALEStartUnicastServer(const char *address);
 
 int32_t CALEStartMulticastServer();
 
@@ -54,13 +54,13 @@ int32_t CALEStopMulticastServer(int32_t serverID);
 
 void CALESetCallback(CAPacketReceiveCallback callback);
 
-void CALEGetInterfaceInfo(CALocalConnectivity_t **info, uint32_t* size);
+void CALEGetInterfaceInfo(CALocalConnectivity_t **info, uint32_t *size);
 
-void CAGetLocalAddress(char* address);
+void CAGetLocalAddress(char *address);
 
-int32_t CALESendUnicastMessageImpl(const char* address, const char* data, uint32_t dataLen);
+int32_t CALESendUnicastMessageImpl(const char *address, const char *data, uint32_t dataLen);
 
-int32_t CALESendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t dataLen);
+int32_t CALESendMulticastMessageImpl(JNIEnv *env, const char *data, uint32_t dataLen);
 
 /**
  * BT Common Method : JNI
@@ -90,14 +90,14 @@ void CANativeLEStartScanImpl(JNIEnv *env, jobject callback);
 
 void CANativeLEStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobject callback);
 
-jobject CANativeGetUUIDObject(JNIEnv *env, const char* uuid);
+jobject CANativeGetUUIDObject(JNIEnv *env, const char *uuid);
 
 void CANativeLEStopScan();
 
 void CANativeLEStopScanImpl(JNIEnv *env, jobject callback);
 
 void CANativeLEConnect(JNIEnv *env, jobject bluetoothDevice, jobject context, jboolean autoconnect,
-    jobject callback);
+                       jobject callback);
 
 void CANativeLEDisconnect(JNIEnv *env, jobject bluetoothGatt);
 
@@ -120,7 +120,7 @@ void CANativeCreateScanDeviceList(JNIEnv *env);
 
 void CANativeAddScanDeviceToList(JNIEnv *env, jobject device);
 
-jboolean CANativeIsDeviceInList(JNIEnv *env, const char* remoteAddress);
+jboolean CANativeIsDeviceInList(JNIEnv *env, const char *remoteAddress);
 
 void CANativeRemoveAllDevices(JNIEnv *env);
 
@@ -135,7 +135,7 @@ void CANativeCreateGattObjList(JNIEnv *env);
 
 void CANativeAddGattobjToList(JNIEnv *env, jobject gatt);
 
-jboolean CANativeIsGattObjInList(JNIEnv *env, const char* remoteAddress);
+jboolean CANativeIsGattObjInList(JNIEnv *env, const char *remoteAddress);
 
 void CANativeRemoveAllGattObjsList(JNIEnv *env);
 

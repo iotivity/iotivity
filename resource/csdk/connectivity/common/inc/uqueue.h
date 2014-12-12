@@ -53,9 +53,9 @@ typedef struct u_queue_element_t u_queue_element;
 struct u_queue_element_t
 {
     /* pointer to queue message */
-    u_queue_message_t* message;
+    u_queue_message_t *message;
     /* Pointer to next queue element*/
-    u_queue_element* next;
+    u_queue_element *next;
 };
 
 /**
@@ -65,7 +65,7 @@ struct u_queue_element_t
 typedef struct u_queue_t
 {
     /* Head of the queue */
-    u_queue_element* element;
+    u_queue_element *element;
     /* Number of messages in Queue*/
     uint32_t count;
 } u_queue_t;
@@ -74,7 +74,7 @@ typedef struct u_queue_t
  * @brief API to creates queue and initializes the elements.
  * @return  u_queue_t pointer if Success, NULL otherwise
  */
-u_queue_t* u_queue_create();
+u_queue_t *u_queue_create();
 
 /**
  * @fn u_queue_delete
@@ -83,7 +83,7 @@ u_queue_t* u_queue_create();
  * @return CAResult_t - CA_STATUS_OK, if Success
  * @return            CA_STATUS_FAILED - otherwise
  */
-CAResult_t u_queue_delete(u_queue_t* queue);
+CAResult_t u_queue_delete(u_queue_t *queue);
 
 /**
  * @fn u_queue_add_element
@@ -93,7 +93,7 @@ CAResult_t u_queue_delete(u_queue_t* queue);
  * @return CAResult_t - CA_STATUS_OK, if Success
  * @return            CA_STATUS_FAILED - otherwise
  */
-CAResult_t u_queue_add_element(u_queue_t* queue, u_queue_message_t *message);
+CAResult_t u_queue_add_element(u_queue_t *queue, u_queue_message_t *message);
 
 /**
  * @fn u_queue_get_element
@@ -103,7 +103,7 @@ CAResult_t u_queue_add_element(u_queue_t* queue, u_queue_message_t *message);
  * @return pointer to Message, if Success
  * @return NULL - otherwise
  */
-u_queue_message_t* u_queue_get_element(u_queue_t* queue);
+u_queue_message_t *u_queue_get_element(u_queue_t *queue);
 
 /**
  * @fn u_queueRemoveElement
@@ -112,7 +112,7 @@ u_queue_message_t* u_queue_get_element(u_queue_t* queue);
  * @return CAResult_t - CA_STATUS_OK, if Success
  * @return            CA_STATUS_FAILED - otherwise
  */
-CAResult_t u_queue_remove_element(u_queue_t* queue);
+CAResult_t u_queue_remove_element(u_queue_t *queue);
 
 /**
  * @fn u_queue_get_size
@@ -120,7 +120,7 @@ CAResult_t u_queue_remove_element(u_queue_t* queue);
  * Input : queue - pointer to queue
  * Return : number of elements in queue
  */
-uint32_t u_queue_get_size(u_queue_t* queue);
+uint32_t u_queue_get_size(u_queue_t *queue);
 
 /**
  * @fn u_queue_reset
@@ -129,7 +129,7 @@ uint32_t u_queue_get_size(u_queue_t* queue);
  * @return CAResult_t - CA_STATUS_OK, if Success
  * @return            CA_STATUS_FAILED - otherwise
  */
-CAResult_t u_queue_reset(u_queue_t* queue);
+CAResult_t u_queue_reset(u_queue_t *queue);
 
 /**
  * @fn u_queue_get_head
@@ -138,7 +138,7 @@ CAResult_t u_queue_reset(u_queue_t* queue);
  * @return pointer to Message, if Success
  * @return NULL - otherwise
  */
-u_queue_message_t* u_queue_get_head(u_queue_t* queue);
+u_queue_message_t *u_queue_get_head(u_queue_t *queue);
 
 #ifdef __cplusplus
 } /* extern "C" */

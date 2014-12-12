@@ -34,12 +34,13 @@
 #include "coap.h"
 #include "uthreadpool.h" /* for thread pool */
 #include "caqueueingthread.h"
+#include "caretransmission.h"
 #include "umutex.h"
 #include "oic_malloc.h"
 
 #define TAG PCF("CA")
 
-#define MEMORY_ALLOCK_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "memory error"); \
+#define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "memory error"); \
 goto memory_error_exit;} }
 
 #define MAX_THREAD_POOL_SIZE    10
@@ -65,6 +66,8 @@ static u_thread_pool_t gThreadPoolHandle = NULL;
 // message handler main thread
 static CAQueueingThread_t gSendThread;
 static CAQueueingThread_t gReceiveThread;
+
+static CARetransmission_t gRetransmissionContext;
 
 // handler field
 static CARequestCallback gRequestHandler = NULL;
@@ -113,7 +116,7 @@ static void CASendThreadProcess(void *threadData)
             OIC_LOG_V(DEBUG, TAG, "responseInfo is available..");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
-                                          data->responseInfo->result, data->responseInfo->info);
+                                               data->responseInfo->result, data->responseInfo->info);
         }
         else
         {
@@ -129,13 +132,17 @@ static void CASendThreadProcess(void *threadData)
 
             OIC_LOG_V(DEBUG, TAG, "PDU Maker - code : %d", pdu->hdr->code);
 
-            OIC_LOG_V(DEBUG, TAG, "PDU Maker - id : %d", pdu->hdr->id);
+            OIC_LOG_V(DEBUG, TAG, "PDU Maker - id : %d", ntohs(pdu->hdr->id));
 
             OIC_LOG_V(DEBUG, TAG, "PDU Maker - token : %s", pdu->hdr->token);
 
             OIC_LOG_V(DEBUG, TAG, "PDU Maker - buffer data : %s", pdu->hdr);
 
             res = CASendUnicastData(data->remoteEndpoint, pdu->hdr, pdu->length);
+
+            // for retransmission
+            CARetransmissionSentData(&gRetransmissionContext, data->remoteEndpoint, pdu->hdr,
+                    pdu->length);
 
             //For Unicast , data will be deleted by adapters
             CADestroyRemoteEndpointInternal(data->remoteEndpoint);
@@ -164,7 +171,7 @@ static void CASendThreadProcess(void *threadData)
 
             OIC_LOG_V(DEBUG, TAG, "PDU Maker - code : %d", pdu->hdr->code);
 
-            OIC_LOG_V(DEBUG, TAG, "PDU Maker - id : %d", pdu->hdr->id);
+            OIC_LOG_V(DEBUG, TAG, "PDU Maker - id : %d", ntohs(pdu->hdr->id));
 
             OIC_LOG_V(DEBUG, TAG, "PDU Maker - token : %s", pdu->hdr->token);
 
@@ -177,11 +184,11 @@ static void CASendThreadProcess(void *threadData)
     {
         OIC_LOG(DEBUG, TAG, "unknown type!");
     }
-    OIC_LOG_V(DEBUG, TAG, " Result :%d",res);
+    OIC_LOG_V(DEBUG, TAG, " Result :%d", res);
 }
 
-static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, 
-    uint32_t dataLen)
+static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
+                                     uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "receivedPacketCallback in message handler!!");
 
@@ -229,8 +236,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         if (NULL != ReqInfo->info.payload)
         {
             OIC_LOG_V(DEBUG, TAG, "Request- payload: %s", ReqInfo->info.payload);
-        } 
-        OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method); 
+        }
+        OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method);
         OIC_LOG_V(DEBUG, TAG, "Request- token : %s", ReqInfo->info.token);
 
         if (NULL != endpoint)
@@ -328,6 +335,9 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         cadata->responseInfo = ResInfo;
 
         CAQueueingThreadAddData(&gReceiveThread, cadata, sizeof(CAData_t));
+
+        // for retransmission
+        CARetransmissionReceivedData(&gRetransmissionContext, endpoint, pdu->hdr, pdu->length);
     }
 }
 
@@ -423,8 +433,8 @@ void CAHandleRequestResponseCallbacks()
     OICFree(rep);
 }
 
-CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object, 
-    const CARequestInfo_t *request)
+CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object,
+                                  const CARequestInfo_t *request)
 {
     OIC_LOG_V(DEBUG, TAG, "CADetachRequestMessage");
 
@@ -434,18 +444,18 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object,
     }
 
     CAData_t *data = (CAData_t *) OICMalloc(sizeof(CAData_t));
-    MEMORY_ALLOCK_CHECK(data);
+    MEMORY_ALLOC_CHECK(data);
 
     // initialize
     memset(data, 0, sizeof(CAData_t));
 
     // clone remote endpoint
     CARemoteEndpoint_t *remoteEndpoint = CACloneRemoteEndpoint(object);
-    MEMORY_ALLOCK_CHECK(remoteEndpoint);
+    MEMORY_ALLOC_CHECK(remoteEndpoint);
 
     // clone request info
     CARequestInfo_t *requestInfo = CACloneRequestInfo(request);
-    MEMORY_ALLOCK_CHECK(requestInfo);
+    MEMORY_ALLOC_CHECK(requestInfo);
 
     // save data
     data->type = SEND_TYPE_UNICAST;
@@ -474,19 +484,19 @@ memory_error_exit:
 }
 
 CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t* object, 
-    const CARequestInfo_t* request)
+                                       const CARequestInfo_t *request)
 {
     // ToDo
     OIC_LOG_V(DEBUG, TAG, "CADetachRequestToAllMessage");
-    
+
 
     if (object == NULL || request == NULL)
     {
         return CA_STATUS_FAILED;
     }
 
-    CAData_t* data = (CAData_t*) OICMalloc(sizeof(CAData_t));
-    MEMORY_ALLOCK_CHECK(data);
+    CAData_t *data = (CAData_t *) OICMalloc(sizeof(CAData_t));
+    MEMORY_ALLOC_CHECK(data);
 
     // initialize
     memset(data, 0, sizeof(CAData_t));
@@ -494,11 +504,11 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t* object,
     CAAddress_t addr;
     memset(&addr, 0, sizeof(CAAddress_t));
     CARemoteEndpoint_t* remoteEndpoint = CACreateRemoteEndpointInternal(object->resourceUri, addr, 
-        object->connectivityType);
+                                         object->connectivityType);
 
     // clone request info
-    CARequestInfo_t* requestInfo = CACloneRequestInfo(request);
-    MEMORY_ALLOCK_CHECK(requestInfo);
+    CARequestInfo_t *requestInfo = CACloneRequestInfo(request);
+    MEMORY_ALLOC_CHECK(requestInfo);
 
     // save data
     data->type = SEND_TYPE_MULTICAST;
@@ -512,7 +522,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t* object,
     return CA_STATUS_OK;
 
     // memory error label.
-    memory_error_exit:
+memory_error_exit:
 
     CADestroyRemoteEndpointInternal(remoteEndpoint);
 
@@ -537,18 +547,18 @@ CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
     }
 
     CAData_t *data = (CAData_t *) OICMalloc(sizeof(CAData_t));
-    MEMORY_ALLOCK_CHECK(data);
+    MEMORY_ALLOC_CHECK(data);
 
     // initialize
     memset(data, 0, sizeof(CAData_t));
 
     // clone remote endpoint
     CARemoteEndpoint_t *remoteEndpoint = CACloneRemoteEndpoint(object);
-    MEMORY_ALLOCK_CHECK(remoteEndpoint);
+    MEMORY_ALLOC_CHECK(remoteEndpoint);
 
     // clone response info
     CAResponseInfo_t *responseInfo = CACloneResponseInfo(response);
-    MEMORY_ALLOCK_CHECK(responseInfo);
+    MEMORY_ALLOC_CHECK(responseInfo);
 
     // save data
     data->type = SEND_TYPE_UNICAST;
@@ -577,14 +587,14 @@ memory_error_exit:
 }
 
 CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
-        const CAHeaderOption_t* options, uint8_t numOptions)
+                                      const CAHeaderOption_t *options, uint8_t numOptions)
 {
     if (resourceUri == NULL)
     {
         return CA_STATUS_FAILED;
     }
     CAData_t *data = (CAData_t *) OICMalloc(sizeof(CAData_t));
-    MEMORY_ALLOCK_CHECK(data);
+    MEMORY_ALLOC_CHECK(data);
 
     // initialize
     memset(data, 0, sizeof(CAData_t));
@@ -597,8 +607,8 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
     // save data
     data->type = SEND_TYPE_MULTICAST;
     data->remoteEndpoint = remoteEndpoint;
-    CARequestInfo_t* ReqInfo;
-    ReqInfo = (CARequestInfo_t*) OICMalloc(sizeof(CARequestInfo_t));
+    CARequestInfo_t *ReqInfo;
+    ReqInfo = (CARequestInfo_t *) OICMalloc(sizeof(CARequestInfo_t));
     if (ReqInfo == NULL)
     {
         OIC_LOG(DEBUG, TAG, "CADetachMessageResourceUri, Memory allocation failed !");
@@ -620,7 +630,7 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
         CAHeaderOption_t *temp = (CAHeaderOption_t *) OICMalloc(
                                      sizeof(CAHeaderOption_t) * numOptions);
 
-        MEMORY_ALLOCK_CHECK(temp);
+        MEMORY_ALLOC_CHECK(temp);
 
         memset(temp, 0, sizeof(CAHeaderOption_t) * numOptions);
         memcpy(temp, options, sizeof(CAHeaderOption_t) * numOptions);
@@ -647,8 +657,8 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, 
-    CAResponseCallback RespHandler)
+void CASetRequestResponseCallbacks(CARequestCallback ReqHandler,
+                                   CAResponseCallback RespHandler)
 {
     OIC_LOG_V(DEBUG, TAG, "set request, response handler callback.");
 
@@ -699,6 +709,18 @@ CAResult_t CAInitializeMessageHandler()
 //        return res;
 //    }
 
+    // retransmission initialize
+    CARetransmissionInitialize(&gRetransmissionContext, gThreadPoolHandle, CASendUnicastData, NULL);
+
+    // start retransmission
+    res = CARetransmissionStart(&gRetransmissionContext);
+
+    if (res != CA_STATUS_OK)
+    {
+        OIC_LOG_V(DEBUG, TAG, "thread start error(retransmission thread).");
+        return res;
+    }
+
     // initialize interface adapters by controller
     CAInitializeAdapters(gThreadPoolHandle);
 
@@ -709,6 +731,10 @@ void CATerminateMessageHandler()
 {
     // terminate interface adapters by controller
     CATerminateAdapters();
+
+    // stop retransmission
+    CARetransmissionStop(&gRetransmissionContext);
+    CARetransmissionDestroy(&gRetransmissionContext);
 
     // stop thread
     // delete thread data

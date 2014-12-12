@@ -26,8 +26,8 @@
 
 #define CA_ADAPTER_UTILS_TAG "CA_ADAPTER_UTILS"
 
-CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CAConnectivityType_t type, const char *address,
-        const char *interfaceName)
+CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CAConnectivityType_t type,
+                                                    const char *address)
 {
     CALocalConnectivity_t *info = (CALocalConnectivity_t *)
                                   OICMalloc(sizeof(CALocalConnectivity_t));
@@ -93,8 +93,10 @@ CALocalConnectivity_t *CAAdapterCopyLocalEndpoint(CALocalConnectivity_t *connect
         strncpy(info->addressInfo.IP.ipAddress, connectivity->addressInfo.IP.ipAddress,
                 CA_IPADDR_SIZE - 1);
         info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
+        info->addressInfo.IP.port = connectivity->addressInfo.IP.port;
     }
 
+    info->isSecured = connectivity->isSecured;
     return info;
 }
 
@@ -106,8 +108,9 @@ void CAAdapterFreeLocalEndpoint(CALocalConnectivity_t *localEndpoint)
     }
 }
 
-CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type, const char *address,
-        const char *resourceUri)
+CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type,
+                                                  const char *address,
+                                                  const char *resourceUri)
 {
     CARemoteEndpoint_t *info = (CARemoteEndpoint_t *)
                                OICMalloc(sizeof(CARemoteEndpoint_t));
@@ -186,6 +189,7 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remote
         info->resourceUri = OICStrdup(remoteEndpoint->resourceUri);
     }
 
+    info->isSecured = remoteEndpoint->isSecured;
     return info;
 }
 

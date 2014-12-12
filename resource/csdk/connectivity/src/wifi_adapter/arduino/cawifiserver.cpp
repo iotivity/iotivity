@@ -18,10 +18,11 @@
 *
 ******************************************************************/
 
-#include "cawifiadapterutils.h"
+#include "cawifiinterface.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiUdp.h>
 #include <SPI.h>
 #include <utility/server_drv.h>
 #include <utility/wifi_drv.h>
@@ -32,21 +33,19 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "caadapterinterface.h"
+#include "cawifiadapter.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 
 #define COAP_MAX_PDU_SIZE 320
-#define MOD_NAME "WAU"
+#define MOD_NAME "WiFiServer"
 
-char ssid[] = "network_ssid";     //  your network SSID (name)
-char pass[] = "network_pswd";  // your network password
+char ssid[] = "NETGEAR99";         // your network SSID (name)
+char pass[] = "jollysky325";            // your network password
+int16_t status = WL_IDLE_STATUS;    // the Wifi radio's status
 
-int16_t status = WL_IDLE_STATUS;     // the Wifi radio's status
-
-/// Length of the IP address decimal notation string
+// Length of the IP address decimal notation string
 #define IPNAMESIZE (16)
-/// This is the max buffer size between Arduino and WiFi Shield
-#define ARDUINO_WIFI_SPI_RECV_BUFFERSIZE (64)
 
 // Start offsets based on end of received data buffer
 #define WIFI_RECBUF_IPADDR_OFFSET  (6)
@@ -56,19 +55,42 @@ int16_t status = WL_IDLE_STATUS;     // the Wifi radio's status
 #define WIFI_RECBUF_PORT_SIZE      (WIFI_RECBUF_PORT_OFFSET - 0)
 #define WIFI_RECBUF_FOOTER_SIZE    (WIFI_RECBUF_IPADDR_SIZE + WIFI_RECBUF_PORT_SIZE)
 
-static CANetworkPacketReceivedCallback gNetworkPacketCallback;
+static CAResult_t CAArduinoInitUdpSocket(int16_t *port, int32_t *socketID);
+static int32_t CAArduinoRecvData(int32_t sockFd, uint8_t *buf, uint32_t bufLen,
+                                 uint8_t *senderAddr, uint16_t *senderPort);
+static CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
+static void CAArduinoCheckData();
+void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
+                              const void *data, const uint32_t dataLength);
+
+static CAWiFiPacketReceivedCallback gPacketReceivedCallback = NULL;
 static int32_t gUnicastSocket = 0;
 static bool gServerRunning = false;
-static TimedAction gRcvAction = TimedAction(3000, CACheckData);
+static TimedAction gRcvAction = TimedAction(3000, CAArduinoCheckData);
 static WiFiUDP Udp;
 
-CAResult_t CAArduinoInitUdpSocket(const int16_t *port, int32_t *socketID)
+CAResult_t CAWiFiInitializeServer(void)
 {
-    uint8_t sock;
+    return CA_STATUS_OK;
+}
+
+void CAWiFiTerminateServer(void)
+{
+
+}
+
+CAResult_t CAWiFiGetUnicastServerInfo(char **ipAddress, int *port, int32_t *serverID)
+{
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAArduinoInitUdpSocket(int16_t *port, int32_t *socketID)
+{
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     VERIFY_NON_NULL(port, MOD_NAME, "port");
-    VERIFY_NON_NULL(socketID, MOD_NAME, "socket");
+    VERIFY_NON_NULL(socketID, MOD_NAME, "socketID");
 
+    uint8_t sock;
     //Is any socket available to work with ?
     *socketID = -1;
 
@@ -76,7 +98,7 @@ CAResult_t CAArduinoInitUdpSocket(const int16_t *port, int32_t *socketID)
     if (sock != NO_SOCKET_AVAIL)
     {
         *socketID = (int32_t)sock;
-        OIC_LOG_V(ERROR, MOD_NAME, "Set SOCKETID=%d", *socketID);
+        OIC_LOG_V(ERROR, MOD_NAME, "socket: %d", *socketID);
     }
     else
     {
@@ -88,7 +110,8 @@ CAResult_t CAArduinoInitUdpSocket(const int16_t *port, int32_t *socketID)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartUnicastServer(const char *localAddress, const int16_t *port)
+CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
+                                    const bool forceStart, int32_t *serverFD)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     VERIFY_NON_NULL(port, MOD_NAME, "port");
@@ -122,7 +145,7 @@ CAResult_t CAStartUnicastServer(const char *localAddress, const int16_t *port)
     }
 
     OIC_LOG_V(DEBUG, MOD_NAME, "port: %d", *port);
-    Udp.begin((unsigned int16_t)*port);
+    Udp.begin((uint16_t ) *port);
 
     // start thread to monitor socket here
     if (!gServerRunning)
@@ -134,39 +157,16 @@ CAResult_t CAStartUnicastServer(const char *localAddress, const int16_t *port)
     return CA_STATUS_OK;
 }
 
-/// Retrieves the IP address assigned to Arduino Ethernet shield
-CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
-{
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
-    VERIFY_NON_NULL(address, MOD_NAME, "address");
-    if (addrLen < IPNAMESIZE)
-    {
-        OIC_LOG_V(ERROR, MOD_NAME, "min addrLen %d", IPNAMESIZE);
-        return CA_STATUS_FAILED;
-    }
-
-    IPAddress ip = WiFi.localIP();
-    sprintf(address, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-
-    OIC_LOG_V(DEBUG, MOD_NAME, "address: %s", address);
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAStartMulticastServer(const char *mcastAddress, const char *localAddress, int16_t *port)
+CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *multicastAddress,
+                                      const int16_t multicastPort, int32_t *serverFD)
 {
     // wifi shield do not support multicast
     OIC_LOG(DEBUG, MOD_NAME, "IN");
-    if (gServerRunning)
-    {
-        // already running
-        OIC_LOG(DEBUG, MOD_NAME, "failed");
-        return CA_STATUS_FAILED;
-    }
-    return CAStartUnicastServer(localAddress, port);
+    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    return CA_NOT_SUPPORTED;
 }
 
-CAResult_t CAStopUnicastServer()
+CAResult_t CAWiFiStopUnicastServer()
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     if (gUnicastSocket >= MAX_SOCK_NUM)
@@ -187,42 +187,39 @@ CAResult_t CAStopUnicastServer()
     return CA_STATUS_OK;
 }
 
-void CAArduoinoCheckServerData()
+CAResult_t CAWiFiStopMulticastServer()
 {
-    gRcvAction.check();
+    return CAWiFiStopUnicastServer();
 }
 
-CAResult_t CAStopMulticastServer()
+void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
+                              const void *data, const uint32_t dataLength)
 {
-    return CAStopUnicastServer();
+    OIC_LOG(DEBUG, MOD_NAME, "notifyCallback Entry");
+    if (gPacketReceivedCallback)
+    {
+        gPacketReceivedCallback(ipAddress, port, data, dataLength);
+        OIC_LOG(DEBUG, MOD_NAME, "Notified network packet");
+    }
+    OIC_LOG(DEBUG, MOD_NAME, "notifyCallback Exit");
 }
 
-uint32_t CAWIFISendData(const char *remoteIpAddress, const int16_t port, const char *buf,
-                        uint32_t bufLen,
-                        int16_t isMulticast)
+void CAArduinoCheckData()
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
-    int32_t ret = 1;
-    OIC_LOG_V(DEBUG, MOD_NAME, "remoteip: %s, port: %d", remoteIpAddress, port);
-    Udp.beginPacket(remoteIpAddress, port);
-    ret = (int32_t)Udp.write((char *)buf);
-    Udp.endPacket();
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
-    return ret;
-}
-
-void CACheckData()
-{
+    OIC_LOG(DEBUG, MOD_NAME, "CAACD Being called");
     char *data = (char *)OICMalloc(COAP_MAX_PDU_SIZE);
     int32_t dataLen = 0;
     char addr[IPNAMESIZE] = {0};
     uint16_t senderPort = 0;
     int16_t packetSize = Udp.parsePacket();
     OIC_LOG_V(DEBUG, MOD_NAME, "Rcv packet of size:%d ", packetSize);
+    senderPort = Udp.remotePort();
+    OIC_LOG_V(DEBUG, MOD_NAME, "senderport: %d", senderPort);
     if (packetSize)
     {
         IPAddress remoteIp = Udp.remoteIP();
         senderPort = Udp.remotePort();
+        OIC_LOG_V(DEBUG, MOD_NAME, "senderport: %d", senderPort);
         sprintf(addr, "%d.%d.%d.%d", remoteIp[0], remoteIp[1], remoteIp[2], remoteIp[3]);
         OIC_LOG_V(DEBUG, MOD_NAME, "remoteip: %s, port: %d", addr, senderPort);
         // read the packet into packetBufffer
@@ -231,36 +228,28 @@ void CACheckData()
         {
             data[len] = 0;
         }
-        CANotifyCallback(data, len, addr, senderPort);
+        CAPacketReceivedCallback(addr, senderPort, data, dataLen);
     }
     OICFree(data);
-}
-
-void CANotifyCallback(void *data, int32_t dataLen, char *senderIp, int32_t senderPort)
-{
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
-    if (gNetworkPacketCallback)
-    {
-        CARemoteEndpoint_t endPoint;
-        endPoint.resourceUri = NULL;     // will be filled by upper layer
-        endPoint.connectivityType = CA_WIFI;
-        strncpy(endPoint.addressInfo.IP.ipAddress, senderIp, strlen(senderIp));
-        endPoint.addressInfo.IP.port = senderPort;
-        gNetworkPacketCallback(&endPoint, data, dataLen);
-    }
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
 }
 
 /// Retrieve any available data from UDP socket. This is a non-blocking call.
 int32_t CAArduinoRecvData(int32_t sockFd, uint8_t *buf, uint32_t bufLen, uint8_t *senderAddr,
                           uint16_t *senderPort)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
-    VERIFY_NON_NULL(buf, MOD_NAME, "buf");
-    VERIFY_NON_NULL(senderAddr, MOD_NAME, "senderAddr");
-    VERIFY_NON_NULL(senderPort, MOD_NAME, "senderPort");
-
+    OIC_LOG(DEBUG, MOD_NAME, "arduinoRecvData Entry");
+    /**Bug : When there are multiple UDP packets in Wiznet buffer, W5100.getRXReceivedSize
+     * will not return correct length of the first packet.
+     * Fix : Use the patch provided for arduino/libraries/Ethernet/utility/socket.cpp
+     */
+    //int32_t ret = 0;
     uint16_t recvLen = 0;
+
+    VERIFY_NON_NULL(buf, MOD_NAME, "Invalid buf");
+    VERIFY_NON_NULL(senderAddr, MOD_NAME, "Invalid senderAddr");
+    VERIFY_NON_NULL(senderPort, MOD_NAME, "Invalid senderPort");
+
+    OIC_LOG(DEBUG, MOD_NAME, "arduinoRecvData Begin");
     if (sockFd >= MAX_SOCK_NUM)
     {
         OIC_LOG(ERROR, MOD_NAME, "Invalid sockfd");
@@ -293,73 +282,61 @@ int32_t CAArduinoRecvData(int32_t sockFd, uint8_t *buf, uint32_t bufLen, uint8_t
     *((uint8_t *)senderPort + 1) = buf[recvLen - (WIFI_RECBUF_PORT_OFFSET)];
 
     recvLen -= WIFI_RECBUF_FOOTER_SIZE;
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, MOD_NAME, "arduinoRecvData End");
     return (int32_t)recvLen;
 }
 
+void CAWiFiSetPacketReceiveCallback(CAWiFiPacketReceivedCallback callback)
+{
+    OIC_LOG(DEBUG, MOD_NAME, "CAWSPRC Entry");
+    gPacketReceivedCallback = callback;
+    OIC_LOG(DEBUG, MOD_NAME, "CAWSPRC Exit");
+}
 
-void CASetWIFINetworkPacketCallback(CANetworkPacketReceivedCallback callback)
+void CAWiFiSetExceptionCallback(CAWiFiExceptionCallback callback)
+{
+    // TODO
+}
+
+void CAWiFiPullData()
+{
+    gRcvAction.check();
+}
+
+/// Retrieves the IP address assigned to Arduino Ethernet shield
+CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
-    gNetworkPacketCallback = callback;
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    // WiFiClass WiFi;
+    if (WiFi.status() == WL_NO_SHIELD)
+    {
+        OIC_LOG(DEBUG, MOD_NAME, "WIFI SHIELD NOT PRESENT");
+        return CA_STATUS_FAILED;
+    }
+
+    while ( status != WL_CONNECTED)
+    {
+        OIC_LOG_V(ERROR, MOD_NAME, "Attempting to connect to WPA SSID: %s", ssid);
+        status = WiFi.begin(ssid, pass);  // Connect to WPA/WPA2 network:
+
+        // wait 10 seconds for connection:
+        delay(10000);
+        OIC_LOG(DEBUG, MOD_NAME, "Attempting connection again");
+    }
+
+    VERIFY_NON_NULL(address, MOD_NAME, "Invalid address");
+    if (addrLen < IPNAMESIZE)
+    {
+        OIC_LOG_V(ERROR, MOD_NAME, "arduinoGetInterfaceAddress: addrLen MUST be atleast %d", IPNAMESIZE);
+        return CA_STATUS_FAILED;
+    }
+
+    IPAddress ip = WiFi.localIP();
+    sprintf((char *)address, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+
+    OIC_LOG_V(DEBUG, MOD_NAME, "Wifi shield address is: %s", address);
+    OIC_LOG(DEBUG, MOD_NAME, "arduinoGetInterfaceAddress::Exit");
+    return CA_STATUS_OK;
 }
 
-int16_t CAParseIPv4AddressLocal(unsigned char *ipAddrStr, uint8_t *ipAddr, uint16_t *port)
-{
-    size_t index = 0;
-    unsigned char *itr;
-    uint8_t dotCount = 0;
 
-    ipAddr[index] = 0;
-    *port = 0;
-    itr = ipAddrStr;
-    if (!isdigit((unsigned char) *ipAddrStr))
-    {
-        return -1;
-    }
-    ipAddrStr = itr;
-
-    while (*ipAddrStr)
-    {
-        if (isdigit((unsigned char) *ipAddrStr))
-        {
-            ipAddr[index] *= 10;
-            ipAddr[index] += *ipAddrStr - '0';
-        }
-        else if ((unsigned char) *ipAddrStr == '.')
-        {
-            index++;
-            dotCount++;
-            ipAddr[index] = 0;
-        }
-        else
-        {
-            break;
-        }
-        ipAddrStr++;
-    }
-    if (*ipAddrStr == ':')
-    {
-        ipAddrStr++;
-        while (*ipAddrStr)
-        {
-            if (isdigit((unsigned char) *ipAddrStr))
-            {
-                *port *= 10;
-                *port += *ipAddrStr - '0';
-            }
-            else
-            {
-                break;
-            }
-            ipAddrStr++;
-        }
-    }
-    if (ipAddr[0] < 255 && ipAddr[1] < 255 && ipAddr[2] < 255 && ipAddr[3] < 255
-        && dotCount == 3)
-    {
-        return 1;
-    }
-    return 0;
-}

@@ -110,11 +110,18 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
         return CA_STATUS_FAILED;
     }
 
+    void *ptrType = NULL;
     for (index = 0; index < u_arraylist_length(gSelectedNetworkList); index++)
     {
-        type = *(uint32_t*) u_arraylist_get(gSelectedNetworkList, index);
+        ptrType = u_arraylist_get(gSelectedNetworkList, index);
+        if (NULL == ptrType)
+        {
+            OIC_LOG(ERROR, TAG, "error");
+            return CA_STATUS_FAILED;
+        }
+        type = *(uint32_t *) ptrType;
 
-        if(ConnectivityType == type)
+        if (ConnectivityType == type)
         {
             switch (ConnectivityType)
             {

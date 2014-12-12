@@ -68,6 +68,9 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
 
 #define COAP_PREFIX         "coap://"
 #define COAP_PREFIX_LEN     7
+#define COAPS_PREFIX         "coaps://"
+#define COAPS_PREFIX_LEN     8
+
 
 // return 1 : ip
 // return 0 : mac
@@ -132,11 +135,18 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri)
     // parse uri
     // #1. check prefix
     int startIndex = 0;
-
+    CABool_t secured = 0;
     if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
     {
         OIC_LOG_V(DEBUG, TAG, "uri has '%s' prefix.", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
+    }
+
+    if (strncmp(COAPS_PREFIX, uri, COAPS_PREFIX_LEN) == 0)
+    {
+        OIC_LOG_V(DEBUG, TAG, "uri has '%s' prefix.", COAPS_PREFIX);
+        startIndex = COAPS_PREFIX_LEN;
+        secured = CA_TRUE;
     }
 
     // #2. copy uri for parse
@@ -211,9 +221,11 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri)
     }
 
     CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address, type);
+    remoteEndpoint->isSecured = secured;
 
     OICFree(cloneUri);
 
+    OIC_LOG_V(DEBUG, TAG, "Remote endpoint successfully created [%d]!", remoteEndpoint->isSecured);
     return remoteEndpoint;
 }
 

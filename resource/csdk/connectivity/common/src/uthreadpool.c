@@ -16,6 +16,7 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
  * @file    uthreadpool.c
  * @brief   This file provides APIs related to thread pool
@@ -24,6 +25,7 @@
 #include "uthreadpool.h"
 #include "logger.h"
 #include "oic_malloc.h"
+
 #define TAG PCF("UTHREADPOOL")
 
 /**
@@ -60,6 +62,7 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
         }
         return CA_STATUS_FAILED;
     }
+
     *thread_pool = (u_thread_pool_t) gThreadpool;
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -95,11 +98,12 @@ CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(v
 void u_thread_pool_free(u_thread_pool_t thread_pool)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    if(NULL == thread_pool)
+    if (NULL == thread_pool)
     {
-         OIC_LOG(DEBUG, TAG, "thread_pool is NULL. Its already freed.");
-         return;
+        OIC_LOG(DEBUG, TAG, "thread_pool is NULL. Its already freed.");
+        return;
     }
+
     GThreadPool *threadpool = (GThreadPool *) thread_pool;
     g_thread_pool_free(threadpool, TRUE, TRUE);
 
@@ -110,18 +114,19 @@ void run(void *thread_data, void *user_data)
 {
     u_thread_msg_t *message = (u_thread_msg_t *) thread_data;
 
-    if (message && message->func)
-    {
-        OIC_LOG(DEBUG, TAG, "Calling routine with data as parameter");
-        message->func(message->data);
-    }
-    else
+    if (NULL == message)
     {
         OIC_LOG(ERROR, TAG, "Invalid task data");
         return;
     }
 
-    //Free message
+    if(message->func)
+    {
+        OIC_LOG(DEBUG, TAG, "Calling routine with data as parameter");
+        message->func(message->data);
+    }
+
+    // Free message
     OICFree(message);
     message = NULL;
 }

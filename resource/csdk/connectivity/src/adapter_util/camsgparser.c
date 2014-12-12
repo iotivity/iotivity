@@ -167,6 +167,7 @@ uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen,
         if (CA_STATUS_OK != result )
         {
             OIC_LOG(ERROR, CA_MSG_PARSER_TAG, "Generate header failed");
+            OICFree(header);
             return -1;
         }
 
@@ -188,29 +189,4 @@ uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen,
     return length;
 
 }
-
-uint32_t CADeFragmentData(const char *datasegment, char **data, uint32_t TotalLen, uint32_t offset)
-{
-    OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "IN");
-
-    VERIFY_NON_NULL(*data, NULL, "Param data is NULL");
-
-    uint32_t  length = 0;
-
-    memcpy(*data + offset, datasegment, strlen(datasegment));
-
-    length = TotalLen - offset;
-
-    if ( length < 0)
-    {
-        length = 0;
-    }
-
-    OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "OUT");
-
-    return length;
-
-}
-
-
 

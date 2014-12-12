@@ -38,7 +38,7 @@ u_arraylist_t *u_arraylist_create()
     list->size = U_ARRAYLIST_DEFAULT_SIZE;
     list->length = 0;
 
-    if (!(list->data = (void*) OICMalloc(list->size * sizeof(void*))))
+    if (!(list->data = (void *) OICMalloc(list->size * sizeof(void *))))
     {
         OIC_LOG_V(DEBUG, TAG, "Out of memory");
         OICFree(list);
@@ -114,6 +114,9 @@ void *u_arraylist_remove(u_arraylist_t *list, uint32_t index)
 
     list->size--;
     list->length--;
+
+    // check minimum size.
+    list->size = (list->size <= U_ARRAYLIST_DEFAULT_SIZE) ? U_ARRAYLIST_DEFAULT_SIZE : list->size;
 
     if (!(list->data = (void **) realloc(list->data, list->size * sizeof(void *))))
     {

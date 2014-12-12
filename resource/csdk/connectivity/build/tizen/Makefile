@@ -6,6 +6,7 @@
 BUILD	 := debug
 PLATFORM := tizen
 OBJ_DIR := ./bin
+ROOT_DIR := .
 VERSION_MAJOR := 0
 VERSION_MINOR := 1
 VERSION_PATCH := 0
@@ -17,6 +18,9 @@ CC=gcc
 LIBCOAP=./lib/libcoap-4.1.1/
 LIBCOAP_OBJ_DIR=./lib/libcoap-4.1.1/obj
 
+TINYDTLS=./lib/extlibs/tinydtls
+TINYDTLS_OBJ_DIR=./lib/extlibs/tinydtls/obj
+
 # TODO : Currently Hardcoded WIFI_ADAPTER. Change it to generic
 CFLAGS.debug = -DWITH_POSIX -D__TIZEN__ -Wall -std=c99 -DSLP_SDK_LOG -g -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG $(ADAPTER_MACRO)
 CFLAGS.release = -DWITH_POSIX -D__TIZEN__ -Wall -std=c99 -DSLP_SDK_LOG -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG $(ADAPTER_MACRO)
@@ -24,6 +28,12 @@ COMPILEFLAG = `pkg-config --cflags --libs capi-network-wifi dlog capi-network-bl
 
 # Include files will be copied into a single folder on gbsbuild.
 # NO NEED to mention the path explicitly.
+
+CA_INC              = $(ROOT_DIR)/
+DTLS_INC           = $(ROOT_DIR)/dtls/
+
+INC_DIRS        := -I$(CA_INC)
+INC_DIRS        += -I$(DTLS_INC)
 
 SRC = $(wildcard *.c)
 OBJECTS = $(patsubst %.c, %.o, $(SRC))
@@ -38,7 +48,7 @@ all: $(OBJECTS)
 	ar rcs liboicinterface.a $(OBJECTS) $(LIBCOAP_OBJ_DIR)/*.o
 
 %.o : %.c
-	$(CC) -c $(CFLAGS.$(BUILD)) $(COMPILEFLAG) $< -o $@
+	$(CC) -c $(CFLAGS.$(BUILD)) $(COMPILEFLAG) $(INC_DIRS) $< -o $@
 
 
 pack:

@@ -34,11 +34,11 @@
 #define MOD_NAME "TizenSample"
 
 /**
- * Enable/disable one or more of the following macros to enable/disable 
+ * Enable/disable one or more of the following macros to enable/disable
  * functionality of that particular adapter type in the interfacesample.
  */
-//#define WIFI_ADAPTER_TEST
-#define BT_ADAPTER_TEST
+#define WIFI_ADAPTER_TEST
+//#define BT_ADAPTER_TEST
 //#define BLE_ADAPTER_TEST
 
 #if defined(WIFI_ADAPTER_TEST)
@@ -53,10 +53,10 @@ static  u_thread_pool_t gBTThreadPool = NULL;
 static u_thread_pool_t gLEThreadPool = NULL;
 #endif
 
-static GMainLoop *mainloop;
-static GIOChannel *channel;
-static guint g_test_io_watch_id;
-static GError *g_err_Sample;
+static GMainLoop *mainloop = NULL;
+static GIOChannel *channel = NULL;
+static guint g_test_io_watch_id = 0;
+static GError *g_err_Sample = NULL;
 
 static CALocalConnectivity_t *localWifiEndpoint = NULL;
 //Hardcoded coap data for Test
@@ -104,7 +104,7 @@ void initializeThreadPool(CAConnectivityType_t type)
 #ifdef BLE_ADAPTER_TEST
     if (CA_LE == type && NULL == gLEThreadPool)
     {
-        if (CA_STATUS_OK != u_thread_pool_init(3, &gLEThreadPool))
+        if (CA_STATUS_OK != u_thread_pool_init(5, &gLEThreadPool))
         {
             printf("Failed to create thread pool for BT adapter!\n");
             return;
@@ -347,7 +347,7 @@ int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
         }
         endpoint.connectivityType = CA_WIFI;
         strncpy(endpoint.addressInfo.IP.ipAddress, remoteIPAddress, CA_IPADDR_SIZE);
-        endpoint.addressInfo.IP.port = 5283; /* Send the corresponding port here */
+        endpoint.addressInfo.IP.port = 5683; /* Send the corresponding port here */
 
         int sdatalen = tempConnectivityHandlers->handler.sendData(&endpoint, coapData,
                        strlen(coapData));
@@ -412,8 +412,8 @@ int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
         }
 
         endpoint.connectivityType = CA_LE;
-        strncpy(endpoint.addressInfo.BT.btMacAddress, deviceaddress, CA_MACADDR_SIZE - 1);
-        endpoint.addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+        strncpy(endpoint.addressInfo.LE.leMacAddress, deviceaddress, CA_MACADDR_SIZE - 1);
+        endpoint.addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
         endpoint.resourceUri = strdup(uuid);
 
         tempConnectivityHandlers->handler.sendData(&endpoint, coapData, strlen(coapData));
@@ -955,6 +955,7 @@ void testTerminateBTInterface(void)
 
     printf( "Terminating BT Adapter thread pool");
     u_thread_pool_free(gBTThreadPool);
+    gBTThreadPool = NULL;
 }
 #endif //BT_ADAPTER_TEST
 
@@ -987,6 +988,7 @@ void testTerminateWIFIInterface(void)
     // Freeing threadpool for wifi communication adapter
     printf( "Terminating WIFI Adapter thread pool");
     u_thread_pool_free(gWiFiThreadPool);
+    gWiFiThreadPool = NULL;
 
     //Terminate the Wifi communication adapter
     CATerminateWIfI();
@@ -1024,6 +1026,7 @@ void testTerminateBLEInterface(void)
 
     printf( "Terminating BLE Adapter thread pool");
     u_thread_pool_free(gLEThreadPool);
+    gLEThreadPool = NULL;
 
     printf("testTerminateBLEInterface OUT\n");
 }

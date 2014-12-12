@@ -34,9 +34,9 @@ CAResult_t CABTServerStart(const char *serviceUUID, int32_t *serverFD)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    int err = BT_ERROR_NONE;
+    bt_error_e err = BT_ERROR_NONE;
     bool isRunning = false;
-    int socketFD;
+    int32_t socketFD;
 
     VERIFY_NON_NULL(serviceUUID, BLUETOOTH_ADAPTER_TAG, "Service UUID is null");
     VERIFY_NON_NULL(serverFD, BLUETOOTH_ADAPTER_TAG, "Server fd holder is null");
@@ -89,7 +89,7 @@ CAResult_t CABTServerStop(const int32_t serverFD)
 {
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
 
-    int err = BT_ERROR_NONE;
+    bt_error_e err = BT_ERROR_NONE;
     if (BT_ERROR_NONE != (err = bt_socket_destroy_rfcomm(serverFD)))
     {
         OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed close server socket!, error num [%x]",

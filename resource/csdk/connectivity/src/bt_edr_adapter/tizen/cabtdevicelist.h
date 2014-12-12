@@ -92,7 +92,7 @@ typedef struct _BTDeviceList
  *
  */
 CAResult_t CACreateAndAddToDeviceList(BTDeviceList **deviceList, const char *deviceAddress,
-        const char *uuid, BTDevice **device);
+                                      const char *uuid, BTDevice **device);
 
 /**
  * @fn  CAAddBTDeviceToList

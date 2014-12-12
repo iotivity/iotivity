@@ -43,11 +43,11 @@ typedef enum
 
 typedef struct _oic_log_ctx
 {
-    void* ctx;
+    void *ctx;
 
     oic_log_level log_level;
 
-    char* module_name;
+    char *module_name;
 
     /* Required interface: */
     int (*init)(struct _oic_log_ctx *, void *);

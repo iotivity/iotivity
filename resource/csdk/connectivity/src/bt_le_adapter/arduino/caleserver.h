@@ -28,7 +28,6 @@
 #include <boards.h>
 #include <RBL_nRF8001.h>
 #include <services.h>
-#include <TimedAction.h>
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
@@ -48,38 +47,6 @@ CAResult_t CAInitializeBle();
  * @return - Error Code
  */
 void CANotifyCallback(void *data, int32_t dataLen, char *senderAdrs, int32_t senderPort);
-
-/**
- * @brief API to read the data from characteristics and invoke notifyCallback
- * @return - void
- */
-void CACheckData();
-
-/**
- * @brief API to invoke CheckData at a regular interval of time.
- * @return - void
- */
-void CAArduoinoCheckServerData();
-
-/**
- * @brief API to set request response callback to upper layer.
- * @param[in] callback - upper layer callback function to pass the data received in the server.
- * @return - Error Code
- */
-void CASetBLEReqRescallback(CANetworkPacketReceivedCallback callback);
-
-/**
- * @brief API to start Ble Gatt server.
- * @return - Error Code
- */
-CAResult_t CAStartBleGattServer();
-
-/**
- * @brief API to stop  Ble Gatt server.
- * @param[in] serverID - unique identifier for each server.
- * @return - Error Code
- */
-CAResult_t CAStopBleGattServer();
 
 /**
  * @brief API to add new service in Gatt Server
@@ -119,27 +86,53 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svc_path);
  * @param[out] char_path    characteristic path registered on the interface.
  * @return - Error Code
  */
-CAResult_t CAAddNewCharacteristicsToGattServer(const char *svc_path, const char *char_uuid,
+CAResult_t CAAddNewCharacteristicsToGattServer(const char *svc_path,
+        const char *char_uuid,
         const char *char_value,
         int char_value_len,
         int read);
 
 /**
  * @brief API to remove the characteristics.
- * @param[in]  char_path    characteristic path registered on the interface and unique identifier for added characteristics.
+ * @param[in]  char_path    characteristic path registered on the interface and unique
+ * identifier for added characteristics.
  * @return - Error Code
  */
 CAResult_t CARemoveCharacteristicsFromGattServer(const char *char_path);
 
 /**
- * @brief API to update the characteristic value from server side.
- * @param[in]  char_path    characteristic path registered on the interface and unique identifier for added characteristics.
- * @param[in]  char_value   Gatt characteristic value.
- * @param[in]  value_length Caracteristic value length.
+ * @brief API to check whether data is available in BLE shield
+ * @return - unsigned char
+ */
+unsigned char CAIsBleDataAvailable();
+
+/**
+ * @brief API to check whether client is connected with BLE Shield
+ * @return - unsigned char
+ */
+unsigned char CAIsBleConnected();
+
+/**
+ * @brief API to read data from BLE shield
+ * @return - char
+ */
+char CAReadBleData();
+
+/**
+ * @brief API to perform BLE events
  * @return - Error Code
  */
-CAResult_t CAUpdateCharacteristicsInGattServer(const char *char_path, const char *char_value,
-        int value_length);
+CAResult_t CABleDoEvents();
+
+/**
+ * @brief  API used to send data to connected ble client
+ *
+ * @param[in]  data  -  data to be sent
+ * @param[in]  len  -  data length
+ *
+ * @return  Error Code
+ */
+CAResult_t CAWriteBleData(unsigned char *data, uint8_t len);
 
 
 #endif //#ifndef _BLE_ADAPTER_ARDUINO_H_

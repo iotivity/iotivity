@@ -76,11 +76,11 @@ CAResult_t CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback Re
     return CA_STATUS_OK;
 }
 
-CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, CARemoteEndpoint_t** remoteEndpoint)
+CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, CARemoteEndpoint_t **remoteEndpoint)
 {
     OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpoint");
 
-    CARemoteEndpoint_t* remote = CACreateRemoteEndpointUriInternal(uri);
+    CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri);
 
     *remoteEndpoint = remote;
 
@@ -90,14 +90,14 @@ CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, CARemoteEndpoint_t** remote
     return CA_STATUS_OK;
 }
 
-void CADestroyRemoteEndpoint(CARemoteEndpoint_t* rep)
+void CADestroyRemoteEndpoint(CARemoteEndpoint_t *rep)
 {
     OIC_LOG_V(DEBUG, TAG, "CADestroyRemoteEndpoint");
 
     CADestroyRemoteEndpointInternal(rep);
 }
 
-CAResult_t CAGenerateToken(CAToken_t* token)
+CAResult_t CAGenerateToken(CAToken_t *token)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGenerateToken");
 
@@ -111,7 +111,7 @@ void CADestroyToken(CAToken_t token)
     CADestroyTokenInternal(token);
 }
 
-CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t* size)
+CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGetNetworkInformation");
 
@@ -126,22 +126,22 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token)
 
 }
 
-CAResult_t CASendRequest(const CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo)
+CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requestInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendGetRequest");
 
     return CADetachRequestMessage(object, requestInfo);
 }
 
-CAResult_t CASendRequestToAll(const CAGroupEndpoint_t* object, 
-    const CARequestInfo_t* requestInfo)
+CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
+                              const CARequestInfo_t *requestInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendRequestToAll");
 
     return CADetachRequestToAllMessage(object, requestInfo);
 }
 
-CAResult_t CASendNotification(const CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo)
+CAResult_t CASendNotification(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendNotification");
 
@@ -149,7 +149,7 @@ CAResult_t CASendNotification(const CARemoteEndpoint_t* object, CAResponseInfo_t
 
 }
 
-CAResult_t CASendResponse(const CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo)
+CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendResponse");
 
@@ -157,8 +157,8 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t* object, CAResponseInfo_t* re
 
 }
 
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token, 
-    CAHeaderOption_t* options,uint8_t numOptions)
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token,
+                               CAHeaderOption_t *options, uint8_t numOptions)
 {
     OIC_LOG_V(DEBUG, TAG, "CAAdvertiseResource");
 

@@ -13,7 +13,7 @@ extern "C" {
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CAWiFiInterface_CAWiFiStateEnabled
-  (JNIEnv *, jclass);
+(JNIEnv *, jclass);
 
 /*
  * Class:     com_iotivity_jar_CAWiFiInterface
@@ -21,7 +21,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CAWiFiInterface_CAWiFiStateEnabled
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CAWiFiInterface_CAWiFiStateDisabled
-  (JNIEnv *, jclass);
+(JNIEnv *, jclass);
 
 #ifdef __cplusplus
 }

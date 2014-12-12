@@ -18,7 +18,8 @@ extern int wifi_tc_009_startWifiServers_p(void);
 extern int wifi_tc_010_startWifiServers_n(void);
 extern int wifi_tc_011_stopWifiServers_p(void);
 
-testcase tc_array[] = {
+testcase tc_array[] =
+{
     {"wifi_tc_001_initializeWifi_p", wifi_tc_001_initializeWifi_p, utc_liboic_startup, utc_liboic_cleanup},
     {"wifi_tc_002_initializeWifi_n", wifi_tc_002_initializeWifi_n, utc_liboic_startup, utc_liboic_cleanup},
     {"wifi_tc_003_getWIFIInterfaceInformation_p", wifi_tc_003_getWIFIInterfaceInformation_p, utc_liboic_startup, utc_liboic_cleanup},
