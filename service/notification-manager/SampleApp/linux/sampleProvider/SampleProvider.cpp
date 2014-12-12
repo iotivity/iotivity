@@ -24,6 +24,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "OCResourceResponse.h"
 
 #include <memory>
 
@@ -32,8 +33,11 @@ using namespace std;
 
 int g_Observation = 0;
 
+pthread_cond_t m_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t m_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request ,
-        std::shared_ptr< OCResourceResponse > response);
+                                    std::shared_ptr< OCResourceResponse > response);
 
 class TempHumidResource
 {
@@ -142,7 +146,7 @@ public:
 			}
 			else
 			{
-				cout << "\t\t\t\t" << "m_power not found in the representation" << endl;
+				cout << "\t\t\t\t" << "humidity not found in the representation" << endl;
 			}
 		}
 		catch (exception& e)
@@ -154,8 +158,11 @@ public:
 
     OCRepresentation get()
 	{
+    	cout << "resource get\n";
 		m_Rep.setValue("temperature", m_temp);
 		m_Rep.setValue("humidity", m_humid);
+
+		cout << "resource get : done\n";
 
 		return m_Rep;
 	}
@@ -166,54 +173,78 @@ TempHumidResource myResource;
 
 void *ChangeLightRepresentation(void *param)
 {
+	cout << "ChangeLigthRepresentation Enter\n";
+	while(1){
+		cout << "pthread_cond_wait\n";
+		pthread_cond_wait(&m_cond, &m_mutex);
+		cout << "pthread_cond_start\n";
+		if(g_Observation)
+		{
 
-    if(g_Observation)
-    {
+			cout << endl;
+			cout << "========================================================" << endl;
+			cout << "HUMTepm updated to : " << myResource.m_temp << endl;
+			cout << "Notifying observers with resource handle: " << myResource.getHandle() << endl;
 
-        cout << endl;
-        cout << "========================================================" << endl;
-        cout << "HUMTepm updated to : " << myResource.m_temp << endl;
-        cout << "Notifying observers with resource handle: " << myResource.getHandle() << endl;
+			cout << endl;
+			cout << "========================================================" << endl;
+			cout << "Send data : \n";
+			cout << "Attribute Name: Temp\tvalue: " << myResource.m_temp << endl;
+			cout << "Attribute Name: Humid\tvalue: " << myResource.m_humid << endl;
 
-        cout << endl;
-        cout << "========================================================" << endl;
-        cout << "Send data : \n";
-        cout << "Attribute Name: Temp\tvalue: " << myResource.m_temp << endl;
-        cout << "Attribute Name: Humid\tvalue: " << myResource.m_humid << endl;
+			OCStackResult result = OCPlatform::notifyAllObservers(myResource.getHandle());
+			cout << "Notify Success\n";
 
-        OCStackResult result = OCPlatform::notifyAllObservers(myResource.getHandle());
+			if(OC_STACK_NO_OBSERVERS == result)
+			{
+				cout << "No More observers, stopping notifications" << endl;
+				g_Observation = 0;
+			}
+		}
+		cout << "ChangeLigthRepresentation Out\n";
 
-        if(OC_STACK_NO_OBSERVERS == result)
-        {
-            cout << "No More observers, stopping notifications" << endl;
-            g_Observation = 0;
-        }
-    }
-
+	}
     return NULL;
 }
 
 OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request ,
         std::shared_ptr< OCResourceResponse > response)
 {
-
+	cout << "Sample Provider entityHandler\n";
     if(request)
     {
+    	cout << "flag : request\n";
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
         if(requestFlag == RequestHandlerFlag::InitFlag)
         {
+        	cout << "\t\trequestFlag : Init\n";
         }
+
         if(requestFlag == RequestHandlerFlag::RequestFlag)
         {
+        	cout << "\t\trequestFlag : Request\n";
             if(requestType == "GET")
             {
-                if(response)
-                {
-                    response->setErrorCode(200);
-                    response->setResourceRepresentation(myResource.get());
-                }
+            	cout << "\t\trequestType : GET\n";
+            	try
+            	{
+					if(response)
+					{
+						OCRepresentation rep = myResource.get();
+						cout << rep.getJSONRepresentation() << endl;
+						response->setErrorCode(200);
+						response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+					}
+					else
+					{
+						cout << "response is null\n";
+					}
+            	} catch(exception& e)
+            	{
+            		cout << e.what() << endl;
+            	}
             }
             else if(requestType == "PUT")
             {
@@ -237,16 +268,21 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
         }
         else if(requestFlag & RequestHandlerFlag::ObserverFlag)
         {
-            pthread_t threadId;
+        	pthread_t threadId;
+
+            cout << request->getResourceUri() << endl;
+            cout << request->getResourceRepresentation().getUri() << endl;
 
             cout << "========================================================" << endl;
             cout << "Receive ObserverFlag : Start Observe\n";
             cout << "========================================================" << endl;
             g_Observation = 1;
 
+            cout << "\t\trequestFlag : Observer\n";
             static int startedThread = 0;
             if(!startedThread)
             {
+            	cout << "\t\tpthrerad_create\n";
                 pthread_create(&threadId , NULL , ChangeLightRepresentation , (void *) NULL);
                 startedThread = 1;
             }
@@ -297,16 +333,16 @@ int main()
                 {
                     cout << "Temp is up!" << endl;
                     myResource.m_temp += 10;
-                    ChangeLightRepresentation((void *) NULL);
-
+                    pthread_cond_signal(&m_cond);
+                    cout << "ChangeLightRepresentation Done!" << endl;
                     break;
                 }
                 case 2:
                 {
                     cout << "Temp is down!" << endl;
                     myResource.m_temp -= 10;
-                    ChangeLightRepresentation((void *) NULL);
-
+                    pthread_cond_signal(&m_cond);
+                    cout << "ChangeLightRepresentation Done!" << endl;
                     break;
                 }
                 case 3:
@@ -327,7 +363,8 @@ int main()
             }
         }
     }
-    catch(OCException e)
+    catch(exception& e)
     {
+    	cout << "main exception  : " << e.what() << endl;
     }
 }

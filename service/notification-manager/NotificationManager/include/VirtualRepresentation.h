@@ -21,11 +21,6 @@
 #ifndef VIRTUALREPRESENTATION_H_
 #define VIRTUALREPRESENTATION_H_
 
-#include <functional>
-#include <condition_variable>
-
-#include "OCPlatform.h"
-#include "OCApi.h"
 #include "NotificationManager.h"
 
 #define SUCCESS_RESPONSE 0
@@ -78,9 +73,9 @@ public:
     std::string addVirtualTag(std::string uri);
 
     OCEntityHandlerResult entityHandler(const std::shared_ptr<OCResourceRequest> request ,
-    		const std::shared_ptr<OCResourceResponse> response);
+        		const std::shared_ptr<OCResourceResponse> response);
     void onObserve(const HeaderOptions &headerOption, const OCRepresentation &rep ,
-            const int eCode , const int sequenceNumber);
+                const int eCode , const int sequenceNumber);
 
 };
 

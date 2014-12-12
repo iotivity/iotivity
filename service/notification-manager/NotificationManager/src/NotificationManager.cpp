@@ -21,40 +21,47 @@
 #include "NotificationManager.h"
 
 NotificationManager *NotificationManager::s_instance = NULL;
-//OCPlatform *NotificationManager::s_nmOCPlatform = NULL;
-PlatformConfig NotificationManager::s_cfg;
-//(ServiceType::InProc, ModeType::Both, "134.134.161.33", 5683, QualityOfService::NonConfirmable);
+mutex NotificationManager::s_mutexForCreation;
 
 NotificationManager::NotificationManager()
 {
 
-    m_print = NULL;
-    m_onfound = NULL;
-    m_onObserve = NULL;
-    m_startHosting = NULL;
-    m_findHosting = NULL;
-    m_addExtraStr = NULL;
+}
+
+NotificationManager::NotificationManager(HostingConfig cfg)
+{
+
 }
 
 NotificationManager::~NotificationManager()
 {
+
 }
 
 void NotificationManager::initialize()
 {
+	// find local ip address
+    std::string ipAddress;
+    NotificationManager::getInstance()->scanAndGetNetworkInterface(ipAddress);
 
-    Configure(s_cfg);
+    // set ip address
+    OICPlatformConfig::getInstance()->setIP(ipAddress);
 
-    setPrint(NULL);
-    setOnFoundHostingCandidate(NULL);
-    setStartHosting(NotificationManager::getInstance()->m_startHosting);
-    setFindHosting(NotificationManager::getInstance()->m_findHosting);
-    setAddExtraStr(NotificationManager::getInstance()->m_addExtraStr);
+    // initialize hosting handler
+    HostingHandler::initialize();
+}
 
-#ifndef ISFORDEMO
-    findHostingCandidate();
-#endif
+void NotificationManager::initialize(HostingConfig cfg)
+{
+	// find local ip address
+    std::string ipAddress;
+    NotificationManager::getInstance()->scanAndGetNetworkInterface(ipAddress);
 
+    // set ip address
+    OICPlatformConfig::getInstance()->setIP(ipAddress);
+
+    // initialize hosting handler
+    HostingHandler::initialize(cfg);
 }
 
 void NotificationManager::registerHostingEventListener()
@@ -62,187 +69,94 @@ void NotificationManager::registerHostingEventListener()
     // TODO : Initial HostingEventListener (v1.0)
 }
 
-void NotificationManager::findHostingCandidate()
-{
-    try
-    {
-        ResourceManager::getInstance()->findNMResource("" , "coap://224.0.1.187/oc/core" , true);
-    }
-    catch(OCException e)
-    {
-    }
-}
-
 NotificationManager *NotificationManager::getInstance()
 {
-    if(!s_instance)
-    {
-        s_instance = new NotificationManager();
-    }
+	if(!s_instance)
+	{
+		s_mutexForCreation.lock();
+		if(!s_instance)
+		{
+			s_instance = new NotificationManager();
+		}
+		s_mutexForCreation.unlock();
+	}
 
     return s_instance;
 }
 
-int NotificationManager::setPrint(std::function< void(AttributeMap &inputAttMap) > func)
+int NotificationManager::getNetInfo(IN int& sck, IN struct ifreq* item, OUT std::string& ip_addres)
 {
-    if(func != NULL)
-    {
-        try
-        {
-            NotificationManager::getInstance()->m_print = func;
-        }
-        catch(exception e)
-        {
-            return false;
-        }
-    }
-    else
-    {
-        NotificationManager::getInstance()->m_print =
-                std::function< void(AttributeMap &inputAttMap) >(
-                        std::bind(&ResourceManager::printAttributeMap ,
-                                ResourceManager::getInstance() , std::placeholders::_1));
-    }
-    return true;
+	struct ifreq temp_ifr;
+	memset(&temp_ifr, 0, sizeof(temp_ifr));
+	strcpy(temp_ifr.ifr_name, item->ifr_name);
+
+	if (ioctl(sck, SIOCGIFFLAGS, &temp_ifr))
+	{
+		return -1;
+	}
+
+	if (!((temp_ifr.ifr_flags & IFF_UP) && (temp_ifr.ifr_flags & IFF_RUNNING)))
+	{
+		return -1;
+	}
+
+	std::string ip(inet_ntoa(((struct sockaddr_in *) &item->ifr_addr)->sin_addr));
+	if (ip.empty())
+	{
+		return -1;
+	}
+
+	if (ip.find("127.0.0") == 0)
+	{
+		return -1;
+	}
+
+	ip_addres = ip;
+	return 0;
 }
 
-int NotificationManager::setOnFoundHostingCandidate(
-        std::function< void(std::shared_ptr< OCResource > resource) > func)
+bool NotificationManager::scanAndGetNetworkInterface(OUT std::string& ip_addres)
 {
-    if(func != NULL)
-    {
-        try
-        {
-            NotificationManager::getInstance()->m_onfound = func;
-        }
-        catch(exception e)
-        {
-            return false;
-        }
-    }
-    else
-    {
-        NotificationManager::getInstance()->m_onfound = std::function<
-                void(std::shared_ptr< OCResource > resource) >(
-                std::bind(&ResourceManager::onFoundReport , ResourceManager::getInstance() ,
-                        std::placeholders::_1));
-    }
+	while(1)
+	{
+		char buf[1024] =	{ 0, };
+		struct ifconf ifc;
+		struct ifreq *ifr;
+		int sck;
+		int interfaces;
+		int i;
 
-    return true;
-}
+		sck = socket(AF_INET, SOCK_DGRAM, 0);
+		if (sck < 0)
+		{
+			usleep(10);
+			continue;
+		}
 
-int NotificationManager::setOnObserve(std::function< void(AttributeMap &inputAttMap) > func)
-{
-    if(func != NULL)
-    {
-        try
-        {
-            NotificationManager::getInstance()->m_onObserve = func;
-        }
-        catch(exception e)
-        {
-            return false;
-        }
-    }
-    return true;
-}
+		ifc.ifc_len = sizeof(buf);
+		ifc.ifc_buf = buf;
+		if (ioctl(sck, SIOCGIFCONF, &ifc) < 0)
+		{
+			printf( "SIOCGIFCONF Failed ");
+			close(sck);
+			usleep(10);
+			continue;
+		}
 
-std::function< void(AttributeMap &inputAttMap) > NotificationManager::getPrint()
-{
-    return m_print;
-}
+		ifr = ifc.ifc_req;
+		interfaces = ifc.ifc_len / sizeof(struct ifreq);
 
-std::function< void(std::shared_ptr< OCResource > resource) > NotificationManager::getOnFoundHostingCandidate()
-{
-    return m_onfound;
-}
+		for (i = 0; i < interfaces; i++)
+		{
+			if(  getNetInfo(sck, &ifr[i], ip_addres) == 0 )
+			{
+				return 0;
+			}
+			continue;
+		}
+		close(sck);
+		usleep(10);
+	}
 
-std::function< void(AttributeMap &inputAttMap) > NotificationManager::getOnObserve()
-{
-    return m_onObserve;
-}
-
-int NotificationManager::setStartHosting(
-        std::function< void(std::shared_ptr< OCResource > resource) > &func)
-{
-    try
-    {
-        func = std::function< void(std::shared_ptr< OCResource > resource) >(
-                std::bind(&ResourceManager::startHosting , ResourceManager::getInstance() ,
-                        std::placeholders::_1));
-    }
-    catch(exception e)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-int NotificationManager::setFindHosting(std::function< void() > &func)
-{
-    try
-    {
-        func = std::function< void() >(
-                std::bind(&NotificationManager::findHostingCandidate ,
-                        NotificationManager::getInstance()));
-    }
-    catch(exception e)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-int NotificationManager::setAddExtraStr(std::function< void(std::string) > &func)
-{
-    try
-    {
-        func = std::function< void(std::string str) >(
-                std::bind(&ResourceManager::addExtraStr , ResourceManager::getInstance() ,
-                        std::placeholders::_1));
-    }
-    catch(exception e)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-std::function< void(std::shared_ptr< OCResource > resource) > NotificationManager::getStartHosting()
-{
-    if(m_startHosting)
-    {
-        return m_startHosting;
-    }
-    else
-    {
-        return NULL;
-    }
-}
-
-std::function< void() > NotificationManager::getFindHosting()
-{
-    if(m_findHosting)
-    {
-        return m_findHosting;
-    }
-    else
-    {
-        return NULL;
-    }
-}
-
-std::function< void(std::string) > NotificationManager::getAddExtraStr()
-{
-    if(m_addExtraStr)
-    {
-        return m_addExtraStr;
-    }
-    else
-    {
-        return NULL;
-    }
+	return 0;
 }
