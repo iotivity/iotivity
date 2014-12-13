@@ -670,7 +670,7 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     {
         goto observation;
     }
-    result = FormOCResponse(&response, cbNode, NULL, NULL, NULL, &token, &clientResponse, NULL);
+    result = FormOCResponse(&response, cbNode, 0, NULL, NULL, &token, &clientResponse, NULL);
     if(result != OC_STACK_OK)
     {
         goto observation;

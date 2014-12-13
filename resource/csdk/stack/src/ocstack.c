@@ -1017,7 +1017,7 @@ OCStackResult OCProcessPresence()
                         {
                             goto exit;
                         }
-                        result = FormOCResponse(&response, cbNode, NULL, NULL, NULL,
+                        result = FormOCResponse(&response, cbNode, 0, NULL, NULL,
                                 &cbNode->token, &clientResponse, NULL);
                         if(result != OC_STACK_OK)
                         {
