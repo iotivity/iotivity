@@ -33,6 +33,11 @@
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
 
+#ifdef CA_INT
+    #include "cacommon.h"
+    #include "cainterface.h"
+#endif
+
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -180,6 +185,65 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
         }
     return result;
 }
+
+#ifdef CA_INT
+OCStackResult CAResultToOCStackResult(CAResult_t caResult)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    switch(caResult)
+    {
+        case CA_STATUS_OK:
+            ret = OC_STACK_OK;
+            break;
+        //TODO-CA Add other CA Results
+        default:
+            break;
+    }
+    return ret;
+}
+
+//This function will be called back by CA layer when a response is received
+void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
+{
+    OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
+    OC_LOG_V(INFO, TAG, PCF("Received payload: %s\n"), (char*)responseInfo->info.payload);
+    OC_LOG(INFO, TAG, PCF("Exit HandleCAResponses"));
+}
+
+//This function will be called back by CA layer when a request is received
+void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
+{
+    CAInfo_t responseData;
+    CAResponseInfo_t responseInfo;
+
+    // generate the pdu, if the request was CON, then the response is ACK, otherwire NON
+    memset(&responseData, 0, sizeof(CAInfo_t));
+    responseData.token = (requestInfo != NULL) ? requestInfo->info.token : "";
+
+    // TODO : I guess we need to allocate memeory?
+    responseData.payload = "Test data";
+
+    //responseInfo = (CAResponseInfo*) malloc(sizeof(CAResponseInfo));
+    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
+    responseInfo.result = 200;
+    responseInfo.info = responseData;
+
+    // send request (connectivityType from remoteEndpoint of request Info)
+    OC_LOG(INFO, TAG, PCF("CASendResponse in HandleCARequests"));
+    //TODO-CA: CASendResponse returns the result (we need to check if the
+    // result is ok)
+    CAResult_t caResult = CASendResponse(endPoint, &responseInfo);
+    if(caResult != CA_STATUS_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
+    }
+
+    OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
+    OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
+}
+
+#endif // CA_INT
 
 //This function will be called back by occoap layer when a request is received
 OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
@@ -627,7 +691,47 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     {
         OC_LOG_V(INFO, TAG, "IP Address = %s", ipAddr);
     }
+#ifdef CA_INT
+    CAInitialize();
+    //It is ok to select network to CA_WIFI for now
+    CAResult_t caResult = CASelectNetwork(CA_WIFI);
+    if(caResult == CA_STATUS_OK)
+    {
+        OC_LOG(INFO, TAG, PCF("CASelectNetwork to WIFI"));
+        caResult = CARegisterHandler(HandleCARequests, HandleCAResponses);
+        if(caResult == CA_STATUS_OK)
+        {
+            OC_LOG(INFO, TAG, PCF("CARegisterHandler..."));
+            stackState = OC_STACK_INITIALIZED;
+            result = OC_STACK_OK;
+            switch (mode)
+            {
+                case OC_CLIENT:
+                    caResult = CAStartDiscoveryServer();
+                    OC_LOG(INFO, TAG, PCF("Client mode: CAStartDiscoveryServer"));
+                    break;
+                case OC_SERVER:
+                    caResult = CAStartListeningServer();
+                    OC_LOG(INFO, TAG, PCF("Server mode: CAStartListeningServer"));
+                    break;
+                case OC_CLIENT_SERVER:
+                    caResult = CAStartListeningServer();
+                    if(caResult == CA_STATUS_OK)
+                    {
+                        caResult = CAStartDiscoveryServer();
+                    }
+                    OC_LOG(INFO, TAG, PCF("Client-server mode"));
+                    break;
+                default:
+                    OC_LOG(ERROR, TAG, PCF("Invalid mode"));
+                    return OC_STACK_ERROR;
+                    break;
+            }
 
+        }
+        result = CAResultToOCStackResult(caResult);
+    }
+#else
     switch (mode)
     {
     case OC_CLIENT:
@@ -644,16 +748,18 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
         return OC_STACK_ERROR;
         break;
     }
-    myStackMode = mode;
 
+    // Make call to OCCoAP layer
+    result = OCInitCoAP(ipAddr, (uint16_t) port, myStackMode);
+#endif //CA_INT
+
+    myStackMode = mode;
     defaultDeviceHandler = NULL;
 
 #ifdef WITH_PRESENCE
     PresenceTimeOutSize = sizeof(PresenceTimeOut)/sizeof(PresenceTimeOut[0]) - 1;
 #endif // WITH_PRESENCE
 
-    // Make call to OCCoAP layer
-    result = OCInitCoAP(ipAddr, (uint16_t) port, myStackMode);
     if (result == OC_STACK_OK)
     {
         stackState = OC_STACK_INITIALIZED;
@@ -1077,7 +1183,11 @@ OCStackResult OCProcess() {
     #ifdef WITH_PRESENCE
     OCProcessPresence();
     #endif
+#ifdef CA_INT
+    CAHandleRequestResponse();
+#else
     OCProcessCoAP();
+#endif // CA_INT
 
     return OC_STACK_OK;
 }
