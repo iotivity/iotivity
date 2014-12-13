@@ -121,9 +121,12 @@ INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
 INC_DIRS	+= -I$(CONNECTIVITY_INC)
+INC_DIRS	+= -I$(CONNECTIVITY_DIR)/api
 
-CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
-CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic
+# TODO-CA Remove -fstack-protector-all before merging to master
+CC_FLAGS.debug		:= -O0 -g3 -Wall -fstack-protector-all -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
+# TODO-CA Remove -fstack-protector-all before merging to master
+CC_FLAGS.release	:= -Os -Wall -fstack-protector-all -c -fmessage-length=0 -fpic
 
 CFLAGS		+= $(CC_FLAGS.$(BUILD)) $(INC_DIRS) $(CFLAGS_PLATFORM) $(INC_DIR_PLATFORM)
 LDLIBS		+= -lcoap

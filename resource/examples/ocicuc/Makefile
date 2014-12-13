@@ -48,7 +48,7 @@ BOOST_LIBS=-lboost_program_options
 
 LIB_OC_LOGGER:=../../oc_logger/lib/oc_logger.a
 
-CXX_LIBS=$(OCLIB_LIB) ../../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) $(BOOST_LIBS)
+CXX_LIBS=$(OCLIB_LIB) ../../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) $(BOOST_LIBS) -L../../csdk/connectivity/build/out -lconnectivity_abstraction
 
 APPS += client
 APPS += server

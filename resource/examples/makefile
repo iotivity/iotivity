@@ -40,7 +40,7 @@ CXX_INC	  += -I../csdk/libcoap
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
-CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
+CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) -L../csdk/connectivity/build/out -lconnectivity_abstraction
 
 # Force metatargets to build:
 all.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient ocicuc_target threadingsample

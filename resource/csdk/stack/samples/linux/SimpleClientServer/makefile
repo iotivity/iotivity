@@ -65,14 +65,14 @@ INC_DIRS	+= -I$(OCMALLOC_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(CJSON_INC)
 
-CC_FLAGS.debug   := -O0 -g3 -Wall -ffunction-sections -fdata-sections -fno-exceptions \
-                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG \
-                        -L$(CONNECTIVITY_DIR)/build/out -lconnectivity_abstraction
-CC_FLAGS.release := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG \
-                        -L$(CONNECTIVITY_DIR)/build/out -lconnectivity_abstraction
+# TODO-CA Remove -fstack-protector-all before merging to master
+CC_FLAGS.debug   := -O0 -g3 -Wall -fstack-protector-all -ffunction-sections -fdata-sections -fno-exceptions \
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG
+# TODO-CA Remove -fstack-protector-all before merging to master
+CC_FLAGS.release := -Os -Wall -fstack-protector-all -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG
 
-LDLIBS		+= -loctbstack -lpthread 
+LDLIBS		+= -loctbstack -lpthread -L$(CONNECTIVITY_DIR)/build/out -lconnectivity_abstraction
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)
 
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
