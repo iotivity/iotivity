@@ -26,15 +26,34 @@
 #include "ocmalloc.h"
 #include <string.h>
 
+#ifdef CA_INT
+    #include "cacommon.h"
+    #include "cainterface.h"
+#endif
+
 /// Module Name
 #define TAG PCF("occlientcb")
+
+#ifdef CA_INT
+// TODO-CA: This has been defined in CA layer as well, but is not exposed externally.
+// Need to expose it from CA and remove the definition below.
+#define CA_MAX_TOKEN_LEN   (8)
+#endif //CA_INT
 
 struct ClientCB *cbList = NULL;
 OCMulticastNode * mcPresenceNodes = NULL;
 
-OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
-        OCCoAPToken * token, OCDoHandle *handle, OCMethod method,
-        unsigned char * requestUri, unsigned char * resourceTypeName) {
+OCStackResult
+#ifdef CA_INT
+AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
+             CAToken_t * token, OCDoHandle *handle, OCMethod method,
+             unsigned char * requestUri, unsigned char * resourceTypeName)
+#else // CA_INT
+AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
+             OCCoAPToken * token, OCDoHandle *handle, OCMethod method,
+             unsigned char * requestUri, unsigned char * resourceTypeName)
+#endif // CA_INT
+{
 
     ClientCB *cbNode = NULL;
 
@@ -58,7 +77,12 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
             cbNode->callBack = cbData->cb;
             cbNode->context = cbData->context;
             cbNode->deleteCallback = cbData->cd;
+            #ifdef CA_INT
+            cbNode->token = (CAToken_t *)OCMalloc(CA_MAX_TOKEN_LEN);
+            memcpy(&(cbNode->token), token, CA_MAX_TOKEN_LEN);
+            #else // CA_INT
             memcpy(&(cbNode->token), token, sizeof(OCCoAPToken));
+            #endif // CA_INT
             cbNode->handle = *handle;
             cbNode->method = method;
             cbNode->sequenceNumber = 0;
@@ -98,7 +122,11 @@ void DeleteClientCB(ClientCB * cbNode) {
     if(cbNode) {
         LL_DELETE(cbList, cbNode);
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
+        #ifdef CA_INT
+        CADestroyToken (cbNode->token);
+        #else
         OC_LOG_BUFFER(INFO, TAG, cbNode->token.token, cbNode->token.tokenLength);
+        #endif // CA_INT
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
         if(cbNode->deleteCallback)
@@ -129,17 +157,29 @@ void DeleteClientCB(ClientCB * cbNode) {
     }
 }
 
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned char * requestUri) {
+#ifdef CA_INT
+ClientCB* GetClientCB(CAToken_t * token, OCDoHandle handle, const unsigned char * requestUri)
+#else // CA_INT
+ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned char * requestUri)
+#endif // CA_INT
+{
     ClientCB* out = NULL;
     if(token) {
         LL_FOREACH(cbList, out) {
             OC_LOG(INFO, TAG, PCF("comparing tokens"));
+            #ifdef CA_INT
+            if(memcmp(out->token, token, CA_MAX_TOKEN_LEN) == 0)
+            {
+                return out;
+            }
+            #else // CA_INT
             OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
             OC_LOG_BUFFER(INFO, TAG, out->token.token, out->token.tokenLength);
             if((out->token.tokenLength == token->tokenLength) &&
                 (memcmp(out->token.token, token->token, token->tokenLength) == 0) ) {
                 return out;
             }
+            #endif // CA_INT
         }
     }
     else if(handle) {

@@ -25,6 +25,9 @@
 #include <ocstack.h>
 #include <occoaptoken.h>
 #include <ocresource.h>
+#ifdef CA_INT
+#include "cacommon.h"
+#endif
 
 typedef struct OCPresence {
     // This is the TTL associated with presence
@@ -49,7 +52,11 @@ typedef struct ClientCB {
     // callback method to delete context data
     OCClientContextDeleter deleteCallback;
     //  when a response is recvd with this token, above callback will be invoked
+    #ifdef CA_INT
+    CAToken_t token;
+    #else // CA_INT
     OCCoAPToken token;
+    #endif // CA_INT
     // Invocation handle tied to original call to OCDoResource()
     OCDoHandle handle;
     // This is used to determine if all responses should be consumed or not.
@@ -93,9 +100,16 @@ extern struct ClientCB *cbList;
  * @retval OC_STACK_OK for Success, otherwise some error value
  */
 //------------------------------------------------------------------------
-OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
-        OCCoAPToken * token, OCDoHandle *handle, OCMethod method,
-        unsigned char * requestUri, unsigned char * resourceType);
+OCStackResult
+#ifdef CA_INT
+AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
+             CAToken_t * token, OCDoHandle *handle, OCMethod method,
+             unsigned char * requestUri, unsigned char * resourceTypeName);
+#else // CA_INT
+AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
+             OCCoAPToken * token, OCDoHandle *handle, OCMethod method,
+             unsigned char * requestUri, unsigned char * resourceTypeName);
+#endif // CA_INT
 
 //-- DeleteClientCB -----------------------------------------------------------
 /** @ingroup ocstack
@@ -126,7 +140,11 @@ void DeleteClientCB(ClientCB *cbNode);
  * @retval address of the node if found, otherwise NULL
  */
 //------------------------------------------------------------------------
+#ifdef CA_INT
+ClientCB* GetClientCB(CAToken_t * token, OCDoHandle handle, const unsigned char * requestUri);
+#else // CA_INT
 ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned char * requestUri);
+#endif // CA_INT
 
 
 /**

@@ -80,6 +80,7 @@ OCDeviceEntityHandler defaultDeviceHandler;
 
 //TODO: we should allow the server to define this
 #define MAX_OBSERVE_AGE (0x2FFFFUL)
+
 //-----------------------------------------------------------------------------
 // Externs
 //-----------------------------------------------------------------------------
@@ -207,6 +208,7 @@ OCStackResult CAResultToOCStackResult(CAResult_t caResult)
 void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
+    printf ("Received payload: %s\n", (char *)responseInfo->info.payload);
     OC_LOG_V(INFO, TAG, PCF("Received payload: %s\n"), (char*)responseInfo->info.payload);
     OC_LOG(INFO, TAG, PCF("Exit HandleCAResponses"));
 }
@@ -217,6 +219,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     CAInfo_t responseData;
     CAResponseInfo_t responseInfo;
 
+    OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
     // generate the pdu, if the request was CON, then the response is ACK, otherwire NON
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.token = (requestInfo != NULL) ? requestInfo->info.token : "";
@@ -239,7 +242,6 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
         OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
     }
 
-    OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
 
@@ -894,6 +896,15 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     unsigned char * resourceType = NULL;
     char * newUri = (char *)requiredUri;
     (void) referenceUri;
+#ifdef CA_INT
+    CARemoteEndpoint_t* endpoint = NULL;
+    CAResult_t caResult;
+    CAToken_t caToken = NULL;
+    CAInfo_t requestData;
+    CARequestInfo_t requestInfo;
+    // To track if memory is allocated for additional header options
+    uint8_t hdrOptionMemAlloc = 0;
+#endif // CA_INT
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
 
@@ -973,6 +984,58 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
+#ifdef CA_INT
+    // CA integration logic - TODO: remove this comment after integration is done
+
+    // Assuming request is not multi-cast
+    // Create remote end point
+    caResult = CACreateRemoteEndpoint(newUri, &endpoint);
+    endpoint->connectivityType = CA_WIFI;
+    if (caResult != CA_STATUS_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
+        goto exit;
+    }
+
+    // create token
+    caResult = CAGenerateToken(&caToken);
+
+    if (caResult != CA_STATUS_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
+        caToken = NULL;
+        goto exit;
+    }
+
+    memset(&requestData, 0, sizeof(CAInfo_t));
+    // TODO-CA: Map QoS to the right CA msg type
+    requestData.type = CA_MSG_CONFIRM;
+    requestData.token = caToken;
+    requestData.options = (CAHeaderOption_t*)options;
+    requestData.numOptions = numOptions;
+    requestData.payload = (char *)request;
+
+    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
+
+    // send request
+    caResult = CASendRequest(endpoint, &requestInfo);
+    if (caResult != CA_STATUS_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("CASendRequest"));
+        goto exit;
+    }
+
+    if((result = AddClientCB(&clientCB, cbData, &caToken, *handle, method,
+                             requestUri, resourceType)) != OC_STACK_OK)
+    {
+        result = OC_STACK_NO_MEMORY;
+        goto exit;
+    }
+
+#else // CA_INT
+
     // Generate token which will be used by OCStack to match responses received
     // with the request
     OCGenerateCoAPToken(&token);
@@ -994,6 +1057,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     // Make call to OCCoAP layer
     result = OCDoCoAPResource(method, qos, &token, newUri, request, options, numOptions);
+#endif // CA_INT
 
 exit:
     if(newUri != requiredUri)
@@ -1005,6 +1069,14 @@ exit:
         OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
         FindAndDeleteClientCB(clientCB);
     }
+#ifdef CA_INT
+    CADestroyRemoteEndpoint(endpoint);
+    if (hdrOptionMemAlloc)
+    {
+        OCFree(requestData.options);
+    }
+    //TODO-CA: CADestroyToken here
+#endif // CA_INT
     return result;
 }
 
