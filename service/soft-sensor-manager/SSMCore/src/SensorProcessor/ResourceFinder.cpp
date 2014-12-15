@@ -54,8 +54,6 @@ void CResourceFinder::onResourceFound(std::shared_ptr<OC::OCResource> resource)
         pMessage[0] = RESOURCE_DISCOVER_REQUESTPROFILE;
         pMessage[1] = (int)new std::shared_ptr<OC::OCResource>(resource);
 
-        std::string path = resource->host() + resource->uri();
-
         m_pTasker->addTask(this, pMessage);
     }
 }

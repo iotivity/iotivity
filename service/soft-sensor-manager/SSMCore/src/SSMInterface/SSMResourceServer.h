@@ -34,8 +34,7 @@ class SSMResourceServer
         int initializeManager(std::string &xmlDescription);
         int terminateManager();
 
-        OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest > request,
-                                            std::shared_ptr< OC::OCResourceResponse > response);
+        OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest > request);
 
     private:
         OCResourceHandle m_hSSMResource;

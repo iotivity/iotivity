@@ -15,17 +15,15 @@
 #include <map>
 #include <fstream>
 
-#define LOCATION_SSM_DB ":memory:"
-#define RAPIDXML_STATIC_POOL_SIZE 4*1024
-
 #if defined(WIN32)
+
 #include <Windows.h>
 #include <Shlwapi.h>
-
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "../Outputs/sqlite3.lib")
 
 #elif defined(LINUX)
+
 #include <stdio.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -33,136 +31,58 @@
 #include <dlfcn.h>
 #include <semaphore.h>
 
-#elif defined(ANDROID)
+#if defined(ANDROID)
+
 #include <android/log.h>
 
 #elif defined(TIZEN)
-#include <FBase.h>
 
 #endif
 
+#endif
+
+
+#define LOCATION_SSM_DB ":memory:"
+#define RAPIDXML_STATIC_POOL_SIZE 4*1024
 #define DEFAULT_PATH_SOFT_SENSORS "SoftSensorDescription.xml"
-
-//#define LOCATION_SSM_DB_DUMP "myBackup.db"
 #define LOCATION_SSM_DB_DUMP ""
+//#define LOCATION_SSM_DB_DUMP "myBackup.db"
 
-#if defined(WIN32) || defined(LINUX)
 
-#define REPORT_MESSAGE(tag, msg) {printf("[%s] %s\n", tag, msg);}
+#if defined(WIN32)
 
-#define SSM_VOID_ASSERT(Exp, STRErrorMsg) \
-    { \
-    if(!(Exp)) \
-        { \
-        printf("[SSM] %s:%d Return message: %s\n", __FUNCTION__, __LINE__, STRErrorMsg); \
-        assert(0); \
-        return; \
-        } \
-    }
+#define PRINT_LOG(strError) printf("[SSM] %s:%d %s\n", __FUNCTION__, __LINE__, strError)
+#define REPORT_MESSAGE(tag, msg) printf("[%s] %s\n", tag, msg)
 
-#define SSM_RESULT_ASSERT(Exp, STRErrorMsg, Result) \
-    { \
-    if(!(Exp)) \
-        { \
-        printf("[SSM] %s:%d Return message: %s\n", __FUNCTION__, __LINE__, STRErrorMsg); \
-        assert(0); \
-        return Result; \
-        } \
-    }
+#elif defined(LINUX)
 
-#define SSM_CLEANUP_ASSERT(Exp) \
-    { \
-    if((res = (Exp)) != SSM_S_OK) \
-        { \
-        printf("[SSM] %s:%d Return message: %s\n", __FUNCTION__, __LINE__, GetSSMError(res)); \
-        assert(0); \
-        goto CLEANUP; \
-        } \
-    }
-
-#define SSM_CLEANUP_COND_ASSERT(Exp, Cond, STRErrorMsg) \
-    { \
-    if(Exp != Cond) \
-        { \
-        printf("[SSM] %s:%d Return message: %s\n", __FUNCTION__, __LINE__, STRErrorMsg); \
-        assert(0); \
-        goto CLEANUP; \
-        } \
-    }
-
-#define SSM_CLEANUP_NULL_ASSERT(Val) \
-    { \
-    if(!(Val)) \
-        { \
-        printf("[SSM] %s:%d Return message: NULL value\n", __FUNCTION__, __LINE__); \
-        assert(Val); \
-        goto CLEANUP; \
-        } \
-    }
-
-#elif defined(ANDROID)
+#if defined(ANDROID)
 
 void ReportMessage(const char *tag, const char *msg);
-#define REPORT_MESSAGE(tag, msg) {ReportMessage(tag, msg);}
-
-#define SSM_VOID_ASSERT(Exp, STRErrorMsg) \
-    { \
-        if(!(Exp)) \
-        { \
-            __android_log_print(ANDROID_LOG_ERROR, "[SSM]", "%s:%d Return message: %s", __PRETTY_FUNCTION__, __LINE__, STRErrorMsg); \
-            assert(0); \
-            return; \
-        } \
-    }
-
-#define SSM_RESULT_ASSERT(Exp, STRErrorMsg, Result) \
-    { \
-        if(!(Exp)) \
-        { \
-            __android_log_print(ANDROID_LOG_ERROR, "[SSM]", "%s:%d Return message: %s", __PRETTY_FUNCTION__, __LINE__, STRErrorMsg); \
-            assert(0); \
-            return Result; \
-        } \
-    }
-
-#define SSM_CLEANUP_ASSERT(Exp) \
-    { \
-        if((res = (Exp)) != SSM_S_OK) \
-        { \
-            __android_log_print(ANDROID_LOG_ERROR, "[SSM]", "%s:%d Return message: %s", __PRETTY_FUNCTION__, __LINE__, GetSSMError(res)); \
-            assert(0); \
-            goto CLEANUP; \
-        } \
-    }
-
-#define SSM_CLEANUP_COND_ASSERT(Exp, Cond, STRErrorMsg) \
-    { \
-        if(Exp != Cond) \
-        { \
-            __android_log_print(ANDROID_LOG_ERROR, "[SSM]", "%s:%d Return message: %s", __PRETTY_FUNCTION__, __LINE__, STRErrorMsg); \
-            assert(0); \
-            goto CLEANUP; \
-        } \
-    }
-
-#define SSM_CLEANUP_NULL_ASSERT(Val) \
-    { \
-        if(!(Val)) \
-        { \
-            __android_log_print(ANDROID_LOG_ERROR, "[SSM]", "%s:%d Return message: NULL value", __PRETTY_FUNCTION__, __LINE__); \
-            assert(Val); \
-            goto CLEANUP; \
-        } \
-    }
+#define REPORT_MESSAGE(tag, msg) ReportMessage(tag, msg)
+#define PRINT_LOG(strError) __android_log_print(ANDROID_LOG_ERROR, "[SSM]", "%s:%d %s", __PRETTY_FUNCTION__, __LINE__, strError)
 
 #elif defined(TIZEN)
-#define REPORT_MESSAGE(tag, msg)
+
+#define REPORT_MESSAGE(tag, msg) printf("[%s] %s\n", tag, msg)
+#define PRINT_LOG(strError) printf("[SSM] %s:%d %s\n", __FUNCTION__, __LINE__, strError)
+
+#else //Default linux
+
+#define REPORT_MESSAGE(tag, msg) printf("[%s] %s\n", tag, msg)
+#define PRINT_LOG(strError) printf("[SSM] %s:%d %s\n", __FUNCTION__, __LINE__, strError)
+
+#endif
+
+#endif
+
+
 
 #define SSM_VOID_ASSERT(Exp, STRErrorMsg) \
     { \
     if(!(Exp)) \
         { \
-        AppLog("%s", STRErrorMsg); \
+        PRINT_LOG(STRErrorMsg); \
         assert(0); \
         return; \
         } \
@@ -172,7 +92,7 @@ void ReportMessage(const char *tag, const char *msg);
     { \
     if(!(Exp)) \
         { \
-        AppLog("%s", STRErrorMsg); \
+        PRINT_LOG(STRErrorMsg); \
         assert(0); \
         return Result; \
         } \
@@ -182,7 +102,7 @@ void ReportMessage(const char *tag, const char *msg);
     { \
     if((res = (Exp)) != SSM_S_OK) \
         { \
-        AppLog("%s", GetSSMError(res)); \
+        PRINT_LOG(GetSSMError(res)); \
         assert(0); \
         goto CLEANUP; \
         } \
@@ -192,7 +112,7 @@ void ReportMessage(const char *tag, const char *msg);
     { \
     if(Exp != Cond) \
         { \
-        AppLog("%s", STRErrorMsg); \
+        PRINT_LOG(STRErrorMsg); \
         assert(0); \
         goto CLEANUP; \
         } \
@@ -202,13 +122,11 @@ void ReportMessage(const char *tag, const char *msg);
     { \
     if(!(Val)) \
         { \
-        AppLog("NULL value"); \
+        PRINT_LOG("NULL value"); \
         assert(Val); \
         goto CLEANUP; \
         } \
     }
-
-#endif
 
 #define CLEAN_STACKVARIABLE(val) memset(&val, 0, sizeof(val))
 #define SAFE_RELEASE(p) {if(p != NULL){p->release();p = NULL;}else{;/*NULL*/}}

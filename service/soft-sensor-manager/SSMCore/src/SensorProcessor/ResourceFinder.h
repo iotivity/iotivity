@@ -112,21 +112,20 @@ CLEANUP:
                         std::vector<ContextData>        lstCtxData;
                         ContextData             ctxData;
                         std::map<std::string, std::string>  outputProperty;
-                        OC::AttributeMap            attributeMap = representation.getAttributeMap();
 
                         //Bind data
                         ctxData.rootName = m_pResource->uri().substr(1);
 
                         //TODO: Temporally used for json parsing limitation
-                        ctxData.outputPropertyCount = attributeMap.size() / 3;
+                        ctxData.outputPropertyCount = representation.numberOfAttributes() / 3;
 
                         if (ctxData.outputPropertyCount > 0)
                         {
-                            for (size_t i = 0; i < attributeMap.size() / 3; i++)
+                            for (int i = 0; i < ctxData.outputPropertyCount; i++)
                             {
-                                outputProperty["name"] = attributeMap.find(toString(i * 3))->second;
-                                outputProperty["type"] = attributeMap.find(toString(i * 3 + 1))->second;
-                                outputProperty["value"] = attributeMap.find(toString(i * 3 + 2))->second;
+                                outputProperty["name"] = representation.getValue<std::string>(toString(i * 3));
+                                outputProperty["type"] = representation.getValue<std::string>(toString(i * 3 + 1));
+                                outputProperty["value"] = representation.getValue<std::string>(toString(i * 3 + 2));
                                 ctxData.outputProperty.push_back(outputProperty);
                             }
 
@@ -148,7 +147,6 @@ CLEANUP:
 
                     //Create SSMResource using OCResource attributeMap
                     std::map<std::string, std::string>      outputProperty;
-                    OC::AttributeMap                    attributeMap = representation.getAttributeMap();
                     ISSMResource        *pSSMResource = new ISSMResource();
                     pSSMResource->location = SENSOR_LOCATION_REMOTE;
                     pSSMResource->name = m_pResource->host() + m_pResource->uri();
@@ -164,11 +162,11 @@ CLEANUP:
                     //bind default primitive sensor property, value to resource class for schema creating
 
                     //TODO: Temporally used for json parsing limitation
-                    for (size_t i = 0; i < attributeMap.size() / 3; i++)
+                    for (int i = 0; i < representation.numberOfAttributes() / 3; i++)
                     {
-                        outputProperty["name"] = attributeMap.find(toString(i * 3))->second;
-                        outputProperty["type"] = attributeMap.find(toString(i * 3 + 1))->second;
-                        outputProperty["value"] = attributeMap.find(toString(i * 3 + 2))->second;
+                        outputProperty["name"] = representation.getValue<std::string>(toString(i * 3));
+                        outputProperty["type"] = representation.getValue<std::string>(toString(i * 3 + 1));
+                        outputProperty["value"] = representation.getValue<std::string>(toString(i * 3 + 2));
                         pSSMResource->outputProperty.push_back(outputProperty);
                     }
                     /////////////////////////////////////////////////////

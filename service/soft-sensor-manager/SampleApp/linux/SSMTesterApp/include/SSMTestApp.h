@@ -63,7 +63,7 @@ class SSMTestApp: public ISSMClientListener
         void unregisterQuery();
 
         /* operations from listener interface */
-        void onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eCode);
+        void onRegisterQuery(const std::string &jsonData, SSMReturn &eCode);
         SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult);
 };
 

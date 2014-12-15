@@ -215,9 +215,7 @@ void SSMClient::onRegisterQuery(const HeaderOptions &headerOptions, const OCRepr
         goto CLEANUP;
     }
 
-    m_responseAttributeMap = rep.getAttributeMap();
-
-    if (m_responseAttributeMap.find("error") != m_responseAttributeMap.end())
+    if (rep.hasAttribute("error"))
     {
         m_retResponse = SSM_ERROR_QUERY_PARSING;
         goto CLEANUP;
@@ -226,6 +224,10 @@ void SSMClient::onRegisterQuery(const HeaderOptions &headerOptions, const OCRepr
     m_SSMResource->observe(ObserveType::Observe, queryParamsMap,
                            std::bind(&SSMClient::onObserve, this, std::placeholders::_1,
                                      std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+
+    m_responseAttributeMap.clear();
+
+    m_responseAttributeMap["CQID"] = rep.getValue<std::string>("CQID");
 
     m_retResponse = SSM_SUCCESS;
 
@@ -241,13 +243,13 @@ void SSMClient::onUnregisterQuery(const HeaderOptions &headerOptions, const OCRe
         goto CLEANUP;
     }
 
-    m_responseAttributeMap = rep.getAttributeMap();
-
-    if (m_responseAttributeMap.find("error") != m_responseAttributeMap.end())
+    if (rep.hasAttribute("error"))
     {
         m_retResponse = SSM_ERROR_NO_QUERY;
         goto CLEANUP;
     }
+
+    m_responseAttributeMap.clear();
 
     m_retResponse = SSM_SUCCESS;
 
@@ -262,8 +264,6 @@ void SSMClient::onReleaseQueryEngine(const HeaderOptions &headerOptions,
         m_retResponse = SSM_ERROR_NETWORK;
         goto CLEANUP;
     }
-
-    m_responseAttributeMap = rep.getAttributeMap();
 
     m_retResponse = SSM_SUCCESS;
 
@@ -280,5 +280,5 @@ void SSMClient::onObserve(const HeaderOptions &headerOptions, const OCRepresenta
         ret = SSM_ERROR_NETWORK;
     }
 
-    m_appListener->onRegisterQuery(rep.getAttributeMap(), ret);
+    m_appListener->onRegisterQuery(rep.getJSONRepresentation(), ret);
 }

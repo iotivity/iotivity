@@ -176,7 +176,7 @@ class SSMClient
         /**
          * @brief attribute map .
          */
-        AttributeMap m_responseAttributeMap;
+        std::map<std::string, std::string> m_responseAttributeMap;
         /**
          * @brief query engine.
          */

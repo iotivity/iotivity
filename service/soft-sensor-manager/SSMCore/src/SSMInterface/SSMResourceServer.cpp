@@ -24,7 +24,7 @@
 #include "Common/InternalInterface.h"
 using namespace OC;
 
-static std::vector< OC::AttributeMap > g_vecQueryEventResults;
+static std::vector< std::map<std::string, std::string> > g_vecQueryEventResults;
 
 class CQueryEngineEvent: public IQueryEngineEvent
 {
@@ -46,7 +46,7 @@ class CQueryEngineEvent: public IQueryEngineEvent
             IModelData *pModelData = NULL;
             std::vector < std::string > affectedModels;
 
-            AttributeMap queryEventResult;
+            std::map<std::string, std::string> queryEventResult;
 
             std::stringstream sstream;
 
@@ -169,8 +169,8 @@ int SSMResourceServer::createResource()
     // This will internally create and register the resource.
     OCStackResult result = OCPlatform::registerResource(m_hSSMResource, resourceURI,
                            resourceTypeName, resourceInterface,
-                           std::bind(&SSMResourceServer::entityHandler, this, std::placeholders::_1,
-                                     std::placeholders::_2), resourceProperty);
+                           std::bind(&SSMResourceServer::entityHandler, this, std::placeholders::_1
+                                    ), resourceProperty);
 
     if (OC_STACK_OK != result)
     {
@@ -180,16 +180,20 @@ int SSMResourceServer::createResource()
     return 0;
 }
 
-OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > request,
-        std::shared_ptr< OCResourceResponse > response)
+OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > request)
 {
     SSMRESULT res = SSM_E_FAIL;
+
+    auto response = std::make_shared<OC::OCResourceResponse>();
 
     if (request)
     {
         // Get the request type and request flag
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
+
+        response->setRequestHandle(request->getRequestHandle());
+        response->setResourceHandle(request->getResourceHandle());
 
         if (requestFlag & RequestHandlerFlag::InitFlag)
         {
@@ -203,7 +207,7 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
             // If the request type is GET
             if (requestType == "GET")
             {
-                AttributeMap responseAttributeMap;
+                std::map<std::string, std::string> responseAttributeMap;
 
                 OCRepresentation rep = request->getResourceRepresentation();
 
@@ -215,7 +219,12 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
 
                 if (response)
                 {
-                    rep.setAttributeMap(responseAttributeMap);
+                    for (std::map<std::string, std::string>::iterator itor =
+                             responseAttributeMap.begin(); itor != responseAttributeMap.end();
+                         ++itor)
+                    {
+                        rep.setValue(itor->first, itor->second);
+                    }
 
                     response->setErrorCode(200);
                     response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
@@ -225,16 +234,12 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
             {
                 OCRepresentation rep = request->getResourceRepresentation();
 
-                AttributeMap requestAttributeMap = rep.getAttributeMap();
-
                 IQueryEngine *pQueryEngine = NULL;
 
                 std::stringstream sstream;
 
-                AttributeMap responseAttributeMap;
-
                 // Process query params and do required operations ..
-                if (requestAttributeMap["command"] == "CreateQueryEngine")
+                if (rep.getValue<std::string>("command") == "CreateQueryEngine")
                 {
                     CQueryEngineEvent *queryEngineEvent = NULL;
 
@@ -242,7 +247,7 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
 
                     if (res != SSM_S_OK)
                     {
-                        responseAttributeMap["error"] = "CreateQueryEngine failed";
+                        rep.setValue("error", "CreateQueryEngine failed");
                         goto CLEANUP;
                     }
 
@@ -253,8 +258,7 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
 
                     if (queryEngineEvent == NULL)
                     {
-                        responseAttributeMap["error"] =
-                            "QueryEngineEvent create failed";
+                        rep.setValue("error", "QueryEngineEvent create failed");
                         goto CLEANUP;
                     }
 
@@ -262,49 +266,49 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
 
                     if (res != SSM_S_OK)
                     {
-                        responseAttributeMap["error"] = "RegisterQueryEvent failed";
+                        rep.setValue("error", "RegisterQueryEvent failed");
                         goto CLEANUP;
                     }
 
-                    responseAttributeMap["queryEngineId"] = sstream.str();
+                    rep.setValue("queryEngineId", sstream.str());
                 }
-                else if (requestAttributeMap["command"] == "ReleaseQueryEngine")
+                else if (rep.getValue<std::string>("command") == "ReleaseQueryEngine")
                 {
                     pQueryEngine = (IQueryEngine *) std::stoi(
-                                       requestAttributeMap["queryEngineId"]);
+                                       rep.getValue<std::string>("queryEngineId"));
 
                     ReleaseQueryEngine(pQueryEngine);
                 }
-                else if (requestAttributeMap["command"] == "ExecuteContextQuery")
+                else if (rep.getValue<std::string>("command") == "ExecuteContextQuery")
                 {
                     int CQID = 0;
 
                     pQueryEngine = (IQueryEngine *) std::stoi(
-                                       requestAttributeMap["queryEngineId"]);
+                                       rep.getValue<std::string>("queryEngineId"));
 
                     res = pQueryEngine->executeContextQuery(
-                              requestAttributeMap["contextQuery"], &CQID);
+                              rep.getValue<std::string>("contextQuery"), &CQID);
 
                     if (res != SSM_S_OK)
                     {
-                        responseAttributeMap["error"] = "ExecuteContextQuery failed";
+                        rep.setValue("error", "ExecuteContextQuery failed");
                         goto CLEANUP;
                     }
 
                     sstream << CQID;
 
-                    responseAttributeMap["CQID"] = sstream.str();
+                    rep.setValue("CQID", sstream.str());
                 }
-                else if (requestAttributeMap["command"] == "KillContextQuery")
+                else if (rep.getValue<std::string>("command") == "KillContextQuery")
                 {
                     pQueryEngine = (IQueryEngine *) std::stoi(
-                                       requestAttributeMap["queryEngineId"]);
+                                       rep.getValue<std::string>("queryEngineId"));
 
-                    res = pQueryEngine->killContextQuery(std::stoi(requestAttributeMap["CQID"]));
+                    res = pQueryEngine->killContextQuery(std::stoi(rep.getValue<std::string>("CQID")));
 
                     if (res != SSM_S_OK)
                     {
-                        responseAttributeMap["error"] = "KillContextQuery failed";
+                        rep.setValue("error", "KillContextQuery failed");
                         goto CLEANUP;
                     }
                 }
@@ -312,8 +316,6 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
 CLEANUP:
                 if (response)
                 {
-                    rep.setAttributeMap(responseAttributeMap);
-
                     response->setErrorCode(200);
                     response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
                 }
@@ -334,5 +336,5 @@ CLEANUP:
         }
     }
 
-    return OC_EH_OK;
+    return OCPlatform::sendResponse(response) == OC_STACK_OK ? OC_EH_OK : OC_EH_ERROR;
 }

@@ -337,7 +337,8 @@ SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDel
         {
             InitializeContextFunction = (InitContext)GetProcAddress(hModule, "InitializeContext");
         }
-#elif defined(LINUX)
+#else
+        //sstream << "/data/data/com.example.javaproject/lib/lib" << modelName <<".so" << std::ends;
         sstream << m_pathSoftSensors << "lib" << softSensorName.c_str() << ".so" << std::ends;
 
         void *hModule = NULL;

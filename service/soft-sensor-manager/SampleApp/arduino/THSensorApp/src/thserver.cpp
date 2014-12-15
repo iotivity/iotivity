@@ -58,13 +58,37 @@ typedef struct THRESOURCE
 
 static THResource TH;
 
-String g_responsePayloadPut =
-    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
-String g_responsePayloadGet =
-    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
+//char* g_responsePayloadPut =    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
+//char* g_responsePayloadGet =    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
 
 /// This is the port which Arduino Server will use for all unicast communication with it's peers
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
+
+#define JSON_BASE00 "{\"href\":\"\",\"rep\":{"
+#define JSON_BASE01 "\"0\":\"temperature\",\"1\":\"int\",\"2\":\""
+#define JSON_BASE02 "\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\""
+#define JSON_BASE03 "\"}}"
+
+char temp[100];
+
+#define LENGTH_VAR      100
+static int base_length = 0;
+
+bool JsonGenerator( THResource &th, char *jsonBuf, uint16_t buf_length )
+{
+    if ( (buf_length - base_length) < LENGTH_VAR )
+    {
+        OC_LOG_V(ERROR, TAG, "Error : length is very long.");
+        return false;
+    }
+
+    sprintf(jsonBuf, JSON_BASE00 JSON_BASE01"%d", th.m_temp);
+    sprintf(jsonBuf + strlen(jsonBuf), JSON_BASE02"%d"JSON_BASE03, th.m_humid);
+
+    Serial.println(jsonBuf);
+
+    return true;
+}
 
 byte read_dht11_dat()
 {
@@ -92,6 +116,9 @@ static const char INTEL_WIFI_SHIELD_FW_VER[] = "1.2.0";
 /// WiFi network info and credentials
 char ssid[] = "SoftSensor_AP";
 char pass[] = "1234567890";
+
+//char ssid[] = "Iotivity-1";
+//char pass[] = "1234567890";
 
 int ConnectToNetwork()
 {
@@ -141,7 +168,8 @@ int ConnectToNetwork()
         OC_LOG_V(ERROR, TAG, "error is: %d", error);
         return -1;
     }
-    OC_LOG_V(INFO, TAG, "IPAddress : %s", Serial.print(Ethernet.localIP()));
+    IPAddress ip = Ethernet.localIP();
+    OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     return 0;
 }
 #endif //ARDUINOWIFI
@@ -159,10 +187,12 @@ void PrintArduinoMemoryStats()
     extern char *__brkval;
     //address of tmp gives us the current stack boundry
     int tmp;
+    OC_LOG_V(INFO, TAG, "Stack: %u         Heap: %u", (unsigned int)&tmp, (unsigned int)__brkval);
     OC_LOG_V(INFO, TAG, "Unallocated Memory between heap and stack: %u",
              ((unsigned int)&tmp - (unsigned int)__brkval));
 #endif
 }
+
 
 // This is the entity handler for the registered resource.
 // This is invoked by OCStack whenever it recevies a request for this resource.
@@ -170,77 +200,48 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest *entityHandlerRequest )
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
-    const char *typeOfMessage;
 
-    switch (flag)
+    if (entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
-        case OC_INIT_FLAG:
-            typeOfMessage = "OC_INIT_FLAG";
-            break;
-        case OC_REQUEST_FLAG:
-            typeOfMessage = "OC_REQUEST_FLAG";
-            break;
-        case OC_OBSERVE_FLAG:
-            typeOfMessage = "OC_OBSERVE_FLAG";
-            break;
-        default:
-            typeOfMessage = "UNKNOWN";
-    }
-    OC_LOG_V(INFO, TAG, "Receiving message type: %s", typeOfMessage);
-
-    if (entityHandlerRequest && flag == OC_REQUEST_FLAG)
-    {
+        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            int str_len = g_responsePayloadGet.length() + 1;
-            char charBuf[str_len + 1];
-
-            g_responsePayloadGet.toCharArray(charBuf, str_len);
-
-            if (strlen(charBuf) < entityHandlerRequest->resJSONPayloadLen)
+            if (JsonGenerator( TH, (char *)entityHandlerRequest->resJSONPayload, \
+                               entityHandlerRequest->resJSONPayloadLen))
             {
-                strncpy((char *)entityHandlerRequest->resJSONPayload, charBuf,
-                        entityHandlerRequest->resJSONPayloadLen);
             }
             else
+            {
                 ehRet = OC_EH_ERROR;
+            }
         }
         if (OC_REST_PUT == entityHandlerRequest->method)
         {
-
-            int str_len1 = g_responsePayloadPut.length() + 1;
-            char charBuf1[str_len1];
-
-            g_responsePayloadPut.toCharArray(charBuf1, str_len1);
-
-            if (strlen(charBuf1) < entityHandlerRequest->resJSONPayloadLen)
+            //Do something with the 'put' payload
+            if (JsonGenerator( TH, (char *)entityHandlerRequest->resJSONPayload, \
+                               entityHandlerRequest->resJSONPayloadLen))
             {
-                strncpy((char *)entityHandlerRequest->resJSONPayload, charBuf1,
-                        entityHandlerRequest->resJSONPayloadLen);
             }
             else
+            {
                 ehRet = OC_EH_ERROR;
+            }
         }
     }
-    else if (entityHandlerRequest && flag == OC_OBSERVE_FLAG)
+    if (entityHandlerRequest && (flag & OC_OBSERVE_FLAG))
     {
-        g_THUnderObservation = 1;
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
+        {
+            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
+            g_THUnderObservation = 1;
+        }
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
+        {
+            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
+        }
     }
 
     return ehRet;
-}
-
-/* Json Generator */
-String JsonGenerator(THResource TH)
-{
-    String a = "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"";
-    String b = "\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"";
-    String c = "\"}}";
-
-    String ss;
-
-    ss = a + TH.m_temp + b + TH.m_humid + c;
-    return ss;
 }
 
 // This method is used to display 'Observe' functionality of OC Stack.
@@ -297,18 +298,15 @@ void *ChangeTHRepresentation (void *param)
         Serial.print(dht11_dat[2], DEC);
         Serial.println("C  ");
 
-// delay(2000); //fresh time
         TH.m_humid = dht11_dat[0];
         TH.m_temp = dht11_dat[2];
-
-        g_responsePayloadGet = JsonGenerator(TH);
 
         if (g_THUnderObservation)
         {
             OC_LOG_V(INFO, TAG, " =====> Notifying stack of new humid level %d\n", TH.m_humid);
             OC_LOG_V(INFO, TAG, " =====> Notifying stack of new temp level %d\n", TH.m_temp);
 
-            result = OCNotifyObservers (TH.m_handle);
+            result = OCNotifyAllObservers (TH.m_handle, OC_NA_QOS);
 
             if (OC_STACK_NO_OBSERVERS == result)
             {
