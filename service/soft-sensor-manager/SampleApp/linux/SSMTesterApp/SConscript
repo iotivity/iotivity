@@ -13,18 +13,24 @@ linux_sample_env = lib_env.Clone()
 # Build flags
 ######################################################################
 linux_sample_env.AppendUnique(CPPPATH = ['include'])
+linux_sample_env.AppendUnique(CPPPATH = ['../../../SSMCore/include'])
+linux_sample_env.AppendUnique(CPPPATH = ['../../../SSMCore/src'])
+linux_sample_env.AppendUnique(CPPPATH = ['../../../SDK/include'])
 linux_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 linux_sample_env.AppendUnique(CPPDEFINES = ['LINUX'])
 linux_sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+linux_sample_env.AppendUnique(LIBS = ['libSSMSDK'])
+linux_sample_env.AppendUnique(LIBS = ['libSSMCORE'])
 linux_sample_env.AppendUnique(LIBS = ['oc'])
 linux_sample_env.AppendUnique(LIBS = ['octbstack'])
 linux_sample_env.AppendUnique(LIBS = ['libcoap'])
 linux_sample_env.AppendUnique(LIBS = ['liboc_logger'])
+linux_sample_env.AppendUnique(LIBS = ['dl'])
 linux_sample_env.AppendUnique(LIBS = ['pthread'])
 
 ######################################################################
 #build sampleapp
 ######################################################################
-thsensorapp = linux_sample_env.Program('THSensorApp', 'src/ThingResourceServer.cpp')
-Alias("thsensorapp_sample", thsensorapp)
-env.AppendTarget('thsensorapp_sample')
+ssmtesterapp = linux_sample_env.Program('SSMTesterApp', 'src/SSMTestApp.cpp')
+Alias("SSMTesterApp", ssmtesterapp)
+env.AppendTarget('SSMTesterApp')

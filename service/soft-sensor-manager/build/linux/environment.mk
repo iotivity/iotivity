@@ -35,5 +35,4 @@ MAKE_05=${FD_SOFTSENSOR}/DiscomfortIndexSensor/build/linux
 MAKE_06=${FD_SOFTSENSOR}/IndoorTrajectorySensor/build/linux
 
 
-MAKE_LIST=${MAKE_01} ${MAKE_02} ${MAKE_05} ${MAKE_06} ${MAKE_03}
-#MAKE_LIST=${MAKE_01} ${MAKE_02} ${MAKE_05} ${MAKE_03}
+MAKE_LIST=${MAKE_01} ${MAKE_02} ${MAKE_03} ${MAKE_05} ${MAKE_06}

@@ -1,4 +1,7 @@
+IOTIVITY_DIR=${shell cd ../../../../ && pwd}
+${shell echo "ROOT_DIR=${IOTIVITY_DIR}" > ./root_path.inc}
 
+-include ./root_path.inc
 -include ./environment.mk
 
 MAKE=make
@@ -24,13 +27,12 @@ pre_job:
 	@echo "*********************************************************" 
 	@mkdir -p ${RST_NAME}
 	@echo " "
-#	@cd ${IOT_BASE} &&	${MAKE};
-#	@cd ${CUR_DIR};
+
 	
 build:
 	@for subdir in ${MAKE_LIST} ; do \
 	echo ">>>>>>>>>>>> $${subdir}/Makefile run <<<<<<<<<<<<<" ; \
-	${MAKE} -C $${subdir} ; \
+	cd $${subdir} && ${MAKE} ${OPTION} ; \
 	echo " " ; \
 	done
 	@echo " "
@@ -46,11 +48,7 @@ post_job:
 	@echo " " 
 
 clean:
- 	
-#	@cd ${CUR_DIR}/../../../resource/ && make clean
-#	@cd ${CUR_DIR}/../../../resource/csdk && make deepclean
-#	@cd ${CUR_DIR}/9_Arduino_THSensorApp && make clean
-#	@cd ${CUR_DIR} 
+
 	rm -rf ./${RST_NAME}
 	@for subdir in ${MAKE_LIST} ; do \
 	echo ">>>>>>>>>>>> $${subdir}/Makefile clean run <<<<<<<<<<<<<<" ; \
