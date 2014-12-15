@@ -27,6 +27,14 @@
 #include "debug.h"
 #include "cJSON.h"
 /// Module Name
+#include <stdio.h>
+
+#define WITH_GROUPACTION 1
+
+#ifdef WITH_GROUPACTION
+#include "oicgroup.h"
+#endif
+
 #define TAG PCF("occollection")
 
 #define NUM_PARAM_IN_QUERY  2
@@ -140,6 +148,10 @@ ValidateQuery (const unsigned char *query, OCResourceHandle resource,
         else if (strcmp (ifPtr, OC_RSRVD_INTERFACE_BATCH) == 0)
         {
             *ifParam = STACK_IF_BATCH;
+        }
+        else if(strcmp (ifPtr, OC_RSRVD_INTERFACE_GROUP) == 0)
+        {
+            *ifParam = STACK_IF_GROUP;
         }
         else
         {
@@ -379,8 +391,10 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
     if (result != OC_STACK_OK)
         return result;
 
-    if ((ehRequest->method != OC_REST_GET) &&
-        (ehRequest->method != OC_REST_PUT))
+  
+    if(!((ehRequest->method == OC_REST_GET) || 
+        (ehRequest->method == OC_REST_PUT) ||
+        (ehRequest->method == OC_REST_POST)))
         return OC_STACK_ERROR;
 
     if (ehRequest->method == OC_REST_GET)
@@ -404,7 +418,11 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                 ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
                         GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
                 return HandleBatchInterface(ehRequest);
-
+#ifdef WITH_GROUPACTION
+            case STACK_IF_GROUP:
+                return BuildCollectionGroupActionJSONResponse(OC_REST_GET/*flag*/, (OCResource *)ehRequest->resource,
+				 ehRequest);
+#endif  // WITH_GROUPACTION
             default:
                 return OC_STACK_ERROR;
         }
@@ -425,10 +443,35 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                         GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
                 return HandleBatchInterface(ehRequest);
 
+
+#ifdef WITH_GROUPACTION
+            case STACK_IF_GROUP:
+            {
+                OC_LOG_V(INFO, TAG, "IF_COLLECTION PUT with request ::\n%s\n ", ehRequest->reqJSONPayload);
+                printf("PUT ::\n%s\n", ehRequest->reqJSONPayload);
+                return BuildCollectionGroupActionJSONResponse(OC_REST_PUT/*flag*/, (OCResource *)ehRequest->resource, ehRequest);
+            }
+#endif // WITH_GROUPACTION
             default:
                 return OC_STACK_ERROR;
         }
     }
+#ifdef WITH_GROUPACTION
+    else if(ehRequest->method == OC_REST_POST) {
+
+        switch(ifQueryParam)
+        {
+            case STACK_IF_GROUP:
+            {
+                OC_LOG_V(INFO, TAG, "IF_COLLECTION POST with request :: \n%s\n ", ehRequest->reqJSONPayload);
+                printf("POST ::\n%s\n", ehRequest->reqJSONPayload);
+                return BuildCollectionGroupActionJSONResponse(OC_REST_POST/*flag*/, (OCResource *)ehRequest->resource, ehRequest);
+            }
+            default:
+                return OC_STACK_ERROR;
+        }
+    }
+#endif // WITH_GROUPACTION
     return result;
 }
 

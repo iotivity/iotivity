@@ -34,6 +34,9 @@
 #define OC_RSRVD_INTERFACE_DEFAULT      "oc.mi.def"
 #define OC_RSRVD_INTERFACE_LL           "oc.mi.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oc.mi.b"
+#define OC_RSRVD_INTERFACE_GROUP        "oc.mi.c"
+
+
 #define OC_RSRVD_OBSERVABLE             "obs"
 #define OC_RSRVD_SECURE                 "sec"
 #define OC_RSRVD_HOSTING_PORT           "port"
