@@ -1,6 +1,6 @@
 PROTOCOL_ROOT = ../../
 
-.PHONY:pre resource plugin-manager plugins sample-app
+.PHONY:pre plugin-manager plugins sample-app
 
 all: .PHONY
 

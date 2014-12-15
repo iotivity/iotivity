@@ -74,9 +74,6 @@ int PluginManagerImpl::unregisterPlugin(std::string id)
 {
     int flag = 0;
 
-    Plugin *plugin = new Plugin;
-    plugin->setValue("Id", id);
-
     for (unsigned int i = 0 ; i < m_plugins.size(); i++)
     {
         if (!m_plugins[i].getID().compare(id))

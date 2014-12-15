@@ -60,11 +60,7 @@ namespace OIC
     */
     class Plugin
     {
-
-
         public:
-
-
             /**
             * Constructor for Plugin.
             *
@@ -120,18 +116,6 @@ namespace OIC
             */
             std::string getValueByAttribute(const std::string attribute);
 
-
-            /**
-            * Set key, value. key is attribute name.
-            *
-            * @param key is atrribute name.
-            * @param value for the attribute.
-            * @return void
-            *
-            */
-            void setValue(const std::string key, const std::string value);
-
-
             /**
             * Check whether the plugin same or not.
             *
@@ -142,6 +126,18 @@ namespace OIC
             bool operator==(Plugin &plugin);
 
         private:
+            friend class CpluffAdapter;
+            friend class FelixAdapter;
+              /**
+            * Set key, value. key is attribute name.
+            *
+            * @param key is atrribute name.
+            * @param value for the attribute.
+            * @return void
+            *
+            */
+            void setValue(const std::string key, const std::string value);
+
             std::map<std::string, AttributeValue> m_attributeMap;
             std::vector<std::string> m_supportedType;
     };
