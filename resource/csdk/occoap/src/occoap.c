@@ -392,7 +392,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         OCDevAddrToIPv4Addr((OCDevAddr *) &(rcvdResponse->remote), remoteIpAddr,
                 remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
         OCDevAddrToPort((OCDevAddr *) &(rcvdResponse->remote), &remotePortNu);
-        sprintf((char *)fullUri, "coap://%d.%d.%d.%d:%d%s",
+        snprintf((char *)fullUri, sizeof(fullUri), "coap://%d.%d.%d.%d:%d%s",
                 remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
                 remotePortNu,rcvdUri);
         cbNode = GetClientCB(NULL, NULL, fullUri);
@@ -401,7 +401,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     // Check if application subscribed for multicast presence
     if(!cbNode)
     {
-        sprintf((char *)fullUri, "%s%s", OC_MULTICAST_IP, rcvdUri);
+        snprintf((char *)fullUri, sizeof(fullUri), "%s%s", OC_MULTICAST_IP, rcvdUri);
         cbNode = GetClientCB(NULL, NULL, fullUri);
         isMulticastPresence = 1;
         isPresenceNotification = 0;
@@ -530,7 +530,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                 // Check if the same nonce for a given host
                 OCMulticastNode* mcNode = NULL;
                 unsigned char senderUri[MAX_URI_LENGTH] = { 0 };
-                sprintf((char *)senderUri, "%d.%d.%d.%d:%d",
+                snprintf((char *)senderUri, sizeof(senderUri), "%d.%d.%d.%d:%d",
                     remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
                     remotePortNu);
                 mcNode = GetMCPresenceNode(senderUri);

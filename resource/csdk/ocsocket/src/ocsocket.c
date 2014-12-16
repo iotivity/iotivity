@@ -367,7 +367,7 @@ int32_t OCDevAddrToString(OCDevAddr* addr, char* stringAddress)
             return ERR_INVALID_INPUT;
         }
 
-        sprintf(stringAddress, "%u.%u.%u.%u",
+        snprintf(stringAddress, DEV_ADDR_SIZE_MAX, "%u.%u.%u.%u",
                 a, b, c, d);
         return ERR_SUCCESS;
     }

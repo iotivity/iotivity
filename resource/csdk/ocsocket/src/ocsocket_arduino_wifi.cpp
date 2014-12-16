@@ -96,7 +96,7 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
     }
 
     IPAddress ip = WiFi.localIP();
-    sprintf((char *)addr,"%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    snprintf((char *)addr, addrLen, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
     OC_LOG_BUFFER(INFO, MOD_NAME, addr, addrLen);
 
