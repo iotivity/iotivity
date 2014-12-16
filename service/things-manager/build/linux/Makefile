@@ -1,5 +1,4 @@
 .PHONY : pre resource sdk sampleapp
-
 #.PHONY : lib tgm sdk sampleapp 
 all: .PHONY
 
@@ -16,8 +15,8 @@ sdk:
 
 
 sampleapp:
-	cd ../../sampleapp/linux/tgmclient && $(MAKE)
-	cp -Rdp ../../sampleapp/linux/tgmclient/tgmclient release/
+#	cd ../../sampleapp/linux/tgmclient && $(MAKE)
+#	cp -Rdp ../../sampleapp/linux/tgmclient/tgmclient release/
 
 clean:
 	cd ../../sdk/build/linux && $(MAKE) clean

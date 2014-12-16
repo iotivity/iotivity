@@ -190,9 +190,10 @@ namespace OC
                                             const std::shared_ptr< OCResource > resource)
     {
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+        std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
         return checked_guard(m_server, &IServerWrapper::registerResourceWithHost,
-                ref(resourceHandle), resource->host(), resource->uri(), "core.remote", "oc.mi.def",
+                ref(resourceHandle), resource->host(), resource->uri(), resourceTypes[0]/*"core.remote"*/, "oc.mi.def",
                 (EntityHandler) nullptr, resourceProperty);
 
     }
