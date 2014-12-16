@@ -23,8 +23,8 @@
  * @brief This file contains message functionality.
  */
 
-#ifndef __CA_MESSAGE_HANDLER_H_
-#define __CA_MESSAGE_HANDLER_H_
+#ifndef __CA_MESSAGE_HANDLER_SINGLETHREAD_H_
+#define __CA_MESSAGE_HANDLER_SINGLETHREAD_H_
 
 #include <stdint.h>
 #include "cacommon.h"
@@ -108,4 +108,4 @@ void CAHandleRequestResponseCallbacks();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_MESSAGE_HANDLER_H_
+#endif //#ifndef __CA_MESSAGE_HANDLER_SINGLETHREAD_H_

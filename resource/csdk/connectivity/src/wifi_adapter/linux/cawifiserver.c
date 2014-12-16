@@ -48,6 +48,12 @@
 #define CA_UDP_BIND_RETRY_COUNT 10
 
 /**
+ * @def IPNAMESIZE
+ * @brief max length for ip
+ */
+#define IPNAMESIZE 16
+
+/**
  * @var gUnicastServerSocketFD
  * @brief Unicast server socket descriptor
  */
@@ -110,6 +116,12 @@ static bool gStopSecureUnicast = false;
 static u_thread_pool_t gThreadPool = NULL;
 
 /**
+ * @var gMulticastServerInterface
+ * @brief Local interface on which multicast server is running
+ */
+static char gMulticastServerInterface[IPNAMESIZE];
+
+/**
  * @var gMulticastMemberReq
  * @brief ip_mreq structure passed to join a multicast group
  */
@@ -148,7 +160,7 @@ static void CAReceiveHandler(void *data)
     struct timeval timeout;
     char recvBuffer[COAP_MAX_PDU_SIZE] = {0};
 
-    while (*(ctx->stopFlag) == false)
+    while (true != *(ctx->stopFlag))
     {
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
@@ -209,6 +221,20 @@ static void CAReceiveHandler(void *data)
         OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Data: %s\t, DataLength: %d\n",
                   recvBuffer, recvLen);
 
+        char *netMask = NULL;
+        if (CA_STATUS_OK != CAWiFiGetInterfaceSubnetMask(&netMask))
+        {
+            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to get ethernet subnet");
+            continue;
+        }
+
+        if(!CAAdapterIsSameSubnet(gMulticastServerInterface, srcIPAddress, netMask))
+        {
+            OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Packet received from different subnet, Ignore!");
+            continue;
+        }
+
+        OICFree(netMask);
         switch(ctx->type)
         {
             case CA_UNICAST_SERVER:
@@ -225,7 +251,7 @@ static void CAReceiveHandler(void *data)
                     CAResult_t ret = CAAdapterNetDtlsDecrypt(srcIPAddress,
                                         srcPort,
                                         (uint8_t *)recvBuffer,
-                                        recvLen);
+                                        recvLen, DTLS_WIFI);
                     OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "CAAdapterNetDtlsDecrypt returns [%d]", ret);
                 }
                 break;
@@ -241,7 +267,8 @@ static void CAReceiveHandler(void *data)
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
 }
 
-static CAResult_t CAWiFiCreateSocket(int32_t* socketFD, int16_t *port, const bool forceStart)
+static CAResult_t CAWiFiCreateSocket(int32_t* socketFD, const char *localIp, int16_t *port,
+                                     const bool forceStart)
 {
     int32_t sock = -1;
     // Create a UDP socket
@@ -284,7 +311,14 @@ static CAResult_t CAWiFiCreateSocket(int32_t* socketFD, int16_t *port, const boo
     memset((char *) &sockAddr, 0, sizeof(sockAddr));
     sockAddr.sin_family = AF_INET;
     sockAddr.sin_port = htons(serverPort);
-    sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if(localIp)
+    {
+        sockAddr.sin_addr.s_addr = inet_addr(localIp);
+    }
+    else
+    {
+        sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    }
 
     int16_t i;
     for (i = 0; i < CA_UDP_BIND_RETRY_COUNT; i++)
@@ -350,8 +384,8 @@ static CAResult_t CAStartUnicastServer(const char *localAddress, int16_t *port,
 {
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
-    CAResult_t ret = CAWiFiCreateSocket(serverFD, port, forceStart);
-    if(ret != CA_STATUS_OK)
+    CAResult_t ret = CAWiFiCreateSocket(serverFD, localAddress, port, forceStart);
+    if(CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to create unicast socket");
         return ret;
@@ -431,6 +465,8 @@ static CAResult_t CAWiFiServerCreateMutex(void)
     if (!gMutexSecureUnicastServer)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
+
+        CAWiFiServerDestroyMutex();
         return CA_STATUS_FAILED;
     }
 #endif
@@ -581,7 +617,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
         return CA_SERVER_STARTED_ALREADY;
     }
 
-    CAResult_t ret = CAWiFiCreateSocket(&gMulticastServerSocketFD, &port, true);
+    CAResult_t ret = CAWiFiCreateSocket(&gMulticastServerSocketFD, multicastAddress, &port, true);
     if(ret != CA_STATUS_OK)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to create multicast socket");
@@ -591,7 +627,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
 
     // Add membership to receiving socket (join group)
     memset(&gMulticastMemberReq, 0, sizeof(struct ip_mreq));
-    gMulticastMemberReq.imr_interface.s_addr = htonl(INADDR_ANY);
+    gMulticastMemberReq.imr_interface.s_addr = inet_addr(localAddress);
     inet_aton(multicastAddress, &gMulticastMemberReq.imr_multiaddr);
 
     if (-1 == setsockopt(gMulticastServerSocketFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
@@ -640,6 +676,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
     }
 
     *serverFD = gMulticastServerSocketFD;
+    strncpy(gMulticastServerInterface, localAddress, sizeof(gMulticastServerInterface));
     u_mutex_unlock(gMutexMulticastServer);
 
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");

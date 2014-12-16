@@ -34,11 +34,8 @@
 #define CA_BUFSIZE 128
 #define CA_COAP_MESSAGE_CON 0
 
-#ifdef __ARDUINO__
-#include "util.h"
-#else
 #include <time.h>
-#endif //#ifdef __ARDUINO__
+
 
 uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
                                  char *outUri)
@@ -563,9 +560,7 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token)
     // set random byte
     uint32_t index;
 
-#ifndef __ARDUINO__
     srand(time(NULL));
-#endif //#ifndef __ARDUINO__
     for (index = 0; index < CA_MAX_TOKEN_LEN; index++)
     {
         // use valid characters

@@ -18,10 +18,6 @@
 # *
 #******************************************************************/
 
-cd ../../lib/libcoap-4.1.1
-make clean
-make
-
 cd ../../build/linux
 make clean
 if echo $1 | grep -q -i "WITH_DTLS"

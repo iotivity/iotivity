@@ -19,12 +19,12 @@
 ******************************************************************/
 
 /**
- * @file caleinterface.h
+ * @file caleinterface_singlethread.h
  * @brief This file provides APIs for BLE modules
  */
 
-#ifndef _CA_LE_INTERFACE_H_
-#define _CA_LE_INTERFACE_H_
+#ifndef _CA_LE_INTERFACE_SINGLETHREAD_H_
+#define _CA_LE_INTERFACE_SINGLETHREAD_H_
 
 #include <stdbool.h>
 
@@ -171,4 +171,4 @@ void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback);
 }
 #endif
 
-#endif //_CA_LE_INTERFACE_H_
+#endif //_CA_LE_INTERFACE_SINGLETHREAD_H_

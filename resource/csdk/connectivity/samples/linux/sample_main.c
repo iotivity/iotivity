@@ -37,9 +37,7 @@
  * @brief
  */
 #define IDENTITY     ("1111111111111111")
-
-/**
- * @def RS_CLIENT_PSK
+/* @def RS_CLIENT_PSK
  * @brief
  */
 #define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
@@ -48,6 +46,7 @@
 int gReceived;
 CABool_t gLocalUnicastPort;
 CABool_t gLocalSecurePort;
+CAConnectivityType_t gSelectedNwType = CA_ETHERNET;
 
 char get_menu();
 void process();
@@ -152,6 +151,7 @@ int main()
         return 0;
     }
 
+#if 0
     // network enable
     // default
     printf("select default network(WIFI)\n");
@@ -161,6 +161,7 @@ int main()
         printf("CASelectNetwork fail\n");
         return 0;
     }
+#endif
 
     // set handler.
     res = CARegisterHandler(request_handler, response_handler);
@@ -426,6 +427,8 @@ void send_request()
         CADestroyRemoteEndpoint(endpoint);
         return;
     }
+
+    endpoint->connectivityType = gSelectedNwType;
 
     char buf[MAX_BUF_LEN];
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
@@ -702,12 +705,13 @@ void select_network()
 
     int number = buf[0] - '0';
 
-    number = (number < 0 || number > 3) ? 1 : number;
+    number = (number < 0 || number > 3) ? 0 : number;
 
     CAResult_t res = CASelectNetwork(1 << number);
     if (res != CA_STATUS_OK)
     {
         printf("select network error\n");
+        gSelectedNwType = 1 << number;
     }
     else
     {
@@ -911,6 +915,7 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
                 printf("Failed to create duplicate of remote endpoint!\n");
                 return;
             }
+            endpoint->connectivityType = object->connectivityType;
             endpoint->isSecured = CA_TRUE;
             object = endpoint;
         }

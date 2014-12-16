@@ -763,7 +763,7 @@ void CABTManagerDataReceiverHandler(void *context)
         if (NULL == header)
         {
             OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Out of memory (header)!");
-            return CA_MEMORY_ALLOC_FAILED;
+            return;
         }
         memcpy(header, (char *)message->data, CA_HEADER_LENGTH);
         totalDataLen = CAParseHeader(header);
@@ -1204,7 +1204,7 @@ void CABTAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState,
             if (gServerState == TRUE)
             {
                 CABTManagerStartServer();
-                gServerState == FALSE;
+                gServerState = FALSE;
             }
         }
         //Notity to upper layer

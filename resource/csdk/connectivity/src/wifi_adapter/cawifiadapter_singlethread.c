@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include "cawifiadapter.h"
+#include "cawifiadapter_singlethread.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +27,7 @@
 #include "caadapterutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "cawifiinterface.h"
+#include "cawifiinterface_singlethread.h"
 
 /**
  * @def WIFI_ETHERNET_ADAPTER_TAG
@@ -37,7 +37,7 @@
 
 /**
  * @def CA_PORT
- * @brief Port to listen for incoming data
+ * @brief Port to listen for incoming data. Port 5683 is as per COAP RFC.
  */
 #define CA_PORT   5683
 
@@ -119,7 +119,7 @@ void CAWiFiNotifyNetworkChange(const char *address, const int16_t port,
     CAAdapterFreeLocalEndpoint(localEndpoint);
 }
 
-void CAWiFiConnectionStateCB(const char *ipAddress,
+void CAWiFiConnectionStateCB(const char *ipAddr,
                              const CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
@@ -420,9 +420,7 @@ CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t 
 
 CAResult_t CAReadWIFIData()
 {
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
     CAWiFiPullData();
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 

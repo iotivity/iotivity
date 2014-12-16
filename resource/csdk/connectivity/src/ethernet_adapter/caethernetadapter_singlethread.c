@@ -18,14 +18,14 @@
  *
  ******************************************************************/
 
-#include "caethernetadapter.h"
+#include "caethernetadapter_singlethread.h"
 
 #include <stdio.h>
 #include <stdint.h>
 #include "caadapterutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "caethernetinterface.h"
+#include "caethernetinterface_singlethread.h"
 
 /**
  * @def ETHERNET_ADAPTER_TAG
@@ -35,9 +35,9 @@
 
 /**
  * @def CA_PORT
- * @brief Port to listen for incoming data
+ * @brief Port to listen for incoming data. Port 5683 is as per COAP RFC.
  */
-#define CA_PORT   5283
+#define CA_PORT   5683
 
 #define CA_MCAST_PORT   5298
 
@@ -113,7 +113,7 @@ void CAEthernetNotifyNetworkChange(const char *address, const int16_t port,
     CAAdapterFreeLocalEndpoint(localEndpoint);
 }
 
-void CAEthernetConnectionStateCB(const char *ipAddress,
+void CAEthernetConnectionStateCB(const char *ipAddr,
                                  const CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
@@ -415,9 +415,7 @@ CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t **info, uint3
 
 CAResult_t CAReadEthernetData()
 {
-    OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
     CAEthernetPullData();
-    OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 

@@ -27,9 +27,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#ifndef ARDUINO
 #include "uthreadpool.h" /* for thread pool */
-#endif  //ARDUINO
 
 #ifdef __cplusplus
 extern "C"
@@ -44,14 +42,9 @@ extern "C"
  * @param netCallback [IN] Intimate the network additions to Connectivity Abstraction Layer.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-#ifdef ARDUINO
-CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
-                                CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback);
-#else
 CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
                                 CANetworkPacketReceivedCallback networkPacketCallback,
                                 CANetworkChangeCallback netCallback, u_thread_pool_t handle);
-#endif
 
 /**
  * @brief Start Ethernet Interface adapter.

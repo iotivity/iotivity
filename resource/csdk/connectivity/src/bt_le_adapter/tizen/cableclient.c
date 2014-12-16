@@ -175,6 +175,7 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "gReqRespCallback is NULL!");
         u_mutex_unlock(gBleReqRespClientCbMutex);
+        OICFree(data);
         return;
     }
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Sending data up !");
@@ -601,8 +602,8 @@ CABool_t CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int32_t index, i
         if (CA_STATUS_OK != result)
         {
             OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG , "CAAddBLEServiceInfoToList failed!");
-            OICFree(stTemp);
             OICFree(stTemp->address);
+            OICFree(stTemp);
             CAFreeBLEServiceInfo(bleServiceInfo);
             bleServiceInfo = NULL;
             u_mutex_unlock(gBleServiceListMutex);
@@ -662,7 +663,7 @@ void CABleGattConnectionStateChangedCb(int32_t result, bool connected, const cha
         OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "DisConnected from [%s] ", remoteAddress);
 
         ret = CABleGattStartDeviceDiscovery();
-        if (CA_STATUS_OK != result)
+        if (CA_STATUS_OK != ret)
         {
             OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "CABleGattStartDeviceDiscovery failed");
             return;

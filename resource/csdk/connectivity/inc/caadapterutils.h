@@ -26,6 +26,8 @@
 #ifndef _CA_ADAPTER_UTILS_H_
 #define _CA_ADAPTER_UTILS_H_
 
+#include <stdbool.h>
+
 #include "cacommon.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -105,6 +107,12 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(
  */
 void CAAdapterFreeRemoteEndpoint(CARemoteEndpoint_t *remoteEndPoint);
 
+/**
+ * @fn CAAdapterIsSameSubnet
+ * @brief Check if two ip address belong to same subnet
+ */
+bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
+                           const char *netMask);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

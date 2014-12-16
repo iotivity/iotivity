@@ -131,6 +131,12 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
         return CA_STATUS_FAILED;
     }
 
+    if (CA_FALSE == thread->isStop) //Queueing thread already running
+    {
+        OIC_LOG_V(DEBUG, TAG, "queueing thread already running..");
+        return CA_STATUS_OK;
+    }
+
     thread->isStop = CA_FALSE;
     CAResult_t res = u_thread_pool_add_task(thread->threadPool, CAQueueingThreadBaseRoutine,
                                             thread);

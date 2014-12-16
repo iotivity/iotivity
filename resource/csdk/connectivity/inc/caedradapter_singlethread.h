@@ -18,18 +18,17 @@
  *
  ******************************************************************/
 /**
- * @file caedradapter.h
+ * @file caedradapter_singlethread.h
  * @brief This file contains the APIs for EDR adapters to be implemented
  */
-#ifndef __CA_EDRADAPTER_H_
-#define __CA_EDRADAPTER_H_
+#ifndef __CA_EDRADAPTER_SINGLETHREAD_H_
+#define __CA_EDRADAPTER_SINGLETHREAD_H_
 
 /**
  * BT Interface AP
  **/
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -55,8 +54,7 @@ extern "C"
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback reqRespCallback,
-                           CANetworkChangeCallback netCallback,
-                           u_thread_pool_t handle);
+                           CANetworkChangeCallback netCallback);
 
 /**
  * @fn  CAStartEDR
@@ -175,4 +173,4 @@ void CATerminateEDR();
 } /* extern "C" */
 #endif
 
-#endif  //__CA_EDRADAPTER_H_
+#endif  //__CA_EDRADAPTER_SINGLETHREAD_H_

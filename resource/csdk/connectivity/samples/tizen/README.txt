@@ -9,7 +9,7 @@ Compiling Sample App FOR TIZEN:
 ===============================
 1) Get the oic-resource code(Changes done for Logging by SRI-B) from SRI-B and build it in Tizen GBS
 2) Get the latest interface APIs code from repo and build it in Tizen GBS
-	To Build in Tizen GBS Platform, Use this command "sudo gbs build -A armv7l --include-all"
+	To Build in Tizen GBS Platform, Use this command "gbs build -A armv7l --include-all -B ~/GBS-ROOT-NEW"
 3) For Verification, Build Sample Console App and execute in Tizen Device	
 
 Procedure to Execute Sample App:

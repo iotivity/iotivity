@@ -35,7 +35,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include "Arduino.h"
 #include "caadapterinterface.h"
 #include "cacommon.h"
-#include "caleadapter.h"
+#include "caleadapter_singlethread.h"
 #include <TimedAction.h>
 #include <logger.h>
 
@@ -192,7 +192,7 @@ void loop()
 
 #include "Arduino.h"
 
-#include "cawifiadapter.h"
+#include "cawifiadapter_singlethread.h"
 
 #include <logger.h>
 #include "caadapterinterface.h"

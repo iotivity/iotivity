@@ -19,17 +19,16 @@
 ******************************************************************/
 
 /**
- * @file caethernetinterface.h
+ * @file caethernetinterface_singlethread.h
  * @brief This file provides APIs ethernet client/server/network monitor modules
  */
 
-#ifndef _CA_ETHERNET_INTERFACE_H_
-#define _CA_ETHERNET_INTERFACE_H_
+#ifndef _CA_ETHERNET_INTERFACE_SINGLETHREAD_H_
+#define _CA_ETHERNET_INTERFACE_SINGLETHREAD_H_
 
 #include <stdbool.h>
 
 #include "cacommon.h"
-#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -60,7 +59,7 @@ typedef enum
  * @pre  Callback must be registered using CAEthernetSetPacketReceiveCallback()
  */
 typedef void (*CAEthernetPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-              const void *data, const uint32_t dataLength, const CABool_t isSecured);
+              const void *data, const uint32_t dataLength);
 
 /**
  * @fn  CAEthernetExceptionCallback
@@ -74,17 +73,13 @@ typedef void (*CAEthernetExceptionCallback)(CAAdapterServerType_t type);
 
 /**
  * @fn  CAEthernetInitializeServer
- * @brief  API to initialize Wifi server
  * @brief  API to initialize Ethernet server
- *
- * @param[in]  threadPool  Thread pool for managing Unicast/Multicast server threads.
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-CAResult_t CAEthernetInitializeServer(const u_thread_pool_t threadPool);
+CAResult_t CAEthernetInitializeServer(void);
 
 /**
  * @fn  CAEthernetTerminateServer
@@ -128,7 +123,7 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStartUnicastServer(const char *localAddress, int16_t *port,
-                                        const bool forceStart, const bool secured, int32_t *serverFD);
+                                        const bool forceStart, int32_t *serverFD);
 
 /**
  * @fn  CAEthernetStopMulticastServer
@@ -175,8 +170,8 @@ CAResult_t CAEthernetStopSecureUnicastServer();
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAEthernetGetUnicastServerInfo(const bool secure, char **ipAddress, int16_t *port,
-                                          int32_t *serverFD);
+
+CAResult_t CAEthernetGetUnicastServerInfo(char **ipAddress, int16_t *port, int32_t *serverFD);
 
 /**
  * @fn  CAEthernetSetPacketReceiveCallback
@@ -189,6 +184,12 @@ CAResult_t CAEthernetGetUnicastServerInfo(const bool secure, char **ipAddress, i
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 void CAEthernetSetPacketReceiveCallback(CAEthernetPacketReceivedCallback callback);
+
+/**
+ * @fn  CAEthernetReadData
+ * @brief  API to pull data
+ */
+void CAEthernetPullData();
 
 /**
  * @fn  CAEthernetSetExceptionCallback
@@ -220,7 +221,6 @@ void CAEthernetSetUnicastSocket(const int32_t socketFD);
  */
 void CAEthernetSetUnicastPort(const int32_t port);
 
-#ifdef __WITH_DTLS__
 /**
  * @fn  CAEthernetSetSecureUnicastSocket
  * @brief  API to set socket description for sending secured (encrypted) unicast UDP data
@@ -229,7 +229,6 @@ void CAEthernetSetUnicastPort(const int32_t port);
  *
  */
 void CAEthernetSetSecureUnicastSocket(const int32_t socketFD);
-#endif
 
 /**
  * @fn  CAEthernetSendUnicastData
@@ -248,9 +247,9 @@ void CAEthernetSetSecureUnicastSocket(const int32_t socketFD);
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
-                            const void *data, const uint32_t dataLength,
-                            CABool_t isMulticast, CABool_t isSecure);
+
+uint32_t CAEthernetSendData(const char *remoteAddress, const int16_t port,
+                            const char *buf, const uint32_t bufLen, bool isMulticast);
 
 /**
  * @fn  CAEthernetConnectionStateChangeCallback
@@ -264,19 +263,15 @@ uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
 typedef void (*CAEthernetConnectionStateChangeCallback)(const char *ipAddress,
         const CANetworkStatus_t status);
 
-/**
- * @fn  CAEthernetInitializeNetworkMonitor
- * @brief  API to initialize Ethernet network monitor
- *
- * @param[in]  threadPool  Thread pool for managing network monitor thread.
+ /**
+ * @fn  CAEthernetInitializeServer
+ * @brief  API to initialize Ethernet server
  *
  * @return  #CA_STATUS_OK on success otherwise proper error code.
  * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-
-CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool);
+CAResult_t CAEthernetInitializeNetworkMonitor(void);
 
 /**
  * @fn  CAEthernetTerminateNetworkMonitor
@@ -320,20 +315,6 @@ CAResult_t CAEthernetStopNetworkMonitor(void);
 CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress);
 
 /**
- * @fn  CAEthernetGetInterfaceSubnetMask
- * @brief  API to get local adapter network subnet mask.
- * @remarks  @subnetMaskmust be freed using free().
- *
- * @param[out]  subnetMask  Local adapter interface subnet mask
- *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_STATUS_FAILED Operation failed
- */
-CAResult_t CAEthernetGetInterfaceSubnetMask(char **subnetMask);
-
-/**
  * @fn  CAEthernetIsConnected
  * @brief  API to get ethernet adapter connection state.
  *
@@ -354,4 +335,4 @@ void CAEthernetSetConnectionStateChangeCallback(CAEthernetConnectionStateChangeC
 }
 #endif
 
-#endif //_CA_ETHERNET_INTERFACE_H_
+#endif //_CA_ETHERNET_INTERFACE_SINGLETHREAD_H_

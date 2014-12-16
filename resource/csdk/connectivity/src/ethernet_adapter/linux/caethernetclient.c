@@ -39,29 +39,29 @@
  */
 static int32_t gUnicastServerSocketDescClient = -1;
 
-void CAEthernetSetUnicastSocket(const int32_t socketFD)
-{
-    OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
+#ifdef __WITH_DTLS__
+/**
+ * @var gUnicastServerSocketDescClient
+ * @brief socket descriptor for secure unicast server
+ */
+static int32_t gUnicastServerSecureSocketDescClient = -1;
+#endif
 
-    gUnicastServerSocketDescClient = socketFD;
-}
-
-uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
-                            const void *data, const uint32_t dataLength,
-                            CABool_t isMulticast, CABool_t isSecure)
+static uint32_t CASendData(const char *remoteAddress, const uint32_t port,
+                           const void *data, const uint32_t dataLength, int32_t sockfd)
 {
     OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
 
     VERIFY_NON_NULL_RET(remoteAddress, ETHERNET_CLIENT_TAG, "IP address is NULL", 0);
     VERIFY_NON_NULL_RET(data, ETHERNET_CLIENT_TAG, "data is NULL", 0);
 
-    if (dataLength == 0)
+    if (0 == dataLength)
     {
         OIC_LOG(ERROR, ETHERNET_CLIENT_TAG, "Data length is 0 !");
         return 0;
     }
 
-    if (0 > gUnicastServerSocketDescClient)
+    if (0 > sockfd)
     {
         OIC_LOG(ERROR, ETHERNET_CLIENT_TAG, "Unicast Server is not running !");
         return 0;
@@ -73,23 +73,58 @@ uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
     destAddr.sin_port = htons(port);
 
     // Conversion from ASCII format to Network format
-    if (inet_aton(remoteAddress, &destAddr.sin_addr) == 0)
+    if (0 == inet_aton(remoteAddress, &destAddr.sin_addr))
     {
         OIC_LOG(ERROR, ETHERNET_CLIENT_TAG, "Failed to convert from ASCII to Network Address");
         return 0;
     }
 
-    int32_t sendDataLength = sendto(gUnicastServerSocketDescClient, data, dataLength, 0,
+    int32_t sendDataLength = sendto(sockfd, data, dataLength, 0,
                                     (struct sockaddr *)&destAddr, sizeof(destAddr));
-    if (sendDataLength == -1)
+    if (-1 == sendDataLength)
     {
         OIC_LOG_V(ERROR, ETHERNET_CLIENT_TAG, "Failed to Send Data, Error code: %s", strerror(errno));
         return 0;
     }
 
     OIC_LOG_V(INFO, ETHERNET_CLIENT_TAG, "Sending data is successful, sent bytes[%d]", sendDataLength);
-
-    OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "OUT");
     return sendDataLength;
+}
+
+void CAEthernetSetUnicastSocket(const int32_t socketFD)
+{
+    OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
+    gUnicastServerSocketDescClient = socketFD;
+}
+
+#ifdef __WITH_DTLS__
+void CAEthernetSetSecureUnicastSocket(const int32_t socketFD)
+{
+    OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
+    gUnicastServerSecureSocketDescClient = socketFD;
+}
+#endif
+
+uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
+                            const void *data, const uint32_t dataLength,
+                            CABool_t isMulticast, CABool_t isSecured)
+{
+    uint32_t len = 0;
+
+#ifdef __WITH_DTLS__
+    if (CA_TRUE == isSecured)
+    {
+        len  = CASendData(remoteAddress, port,
+                          data, dataLength, gUnicastServerSecureSocketDescClient);
+    }
+    else
+    {
+#endif
+        len =  CASendData(remoteAddress, port,
+                          data, dataLength, gUnicastServerSocketDescClient);
+#ifdef __WITH_DTLS__
+    }
+#endif
+    return len;
 }
 

@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "cawifiinterface.h"
+#include "cawifiinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -33,7 +33,7 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "caadapterinterface.h"
-#include "cawifiadapter.h"
+#include "cawifiadapter_singlethread.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 
@@ -208,6 +208,10 @@ void CAArduinoCheckData()
 {
     OIC_LOG(DEBUG, MOD_NAME, "CAACD Being called");
     char *data = (char *)OICMalloc(COAP_MAX_PDU_SIZE);
+    if (NULL == data)
+    {
+        return;
+    }
     int32_t dataLen = 0;
     char addr[IPNAMESIZE] = {0};
     uint16_t senderPort = 0;

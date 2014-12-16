@@ -19,15 +19,14 @@
  ******************************************************************/
 
 /**
- * @file caleadapter.h
+ * @file caleadapter_singlethread.h
  * @brief This file contains the APIs for LE adapters to be implemented
  */
-#ifndef _CA_LEADAPTER_H_
-#define _CA_LEADAPTER_H_
+#ifndef _CA_LEADAPTER_SINGLETHREAD_H_
+#define _CA_LEADAPTER_SINGLETHREAD_H_
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
 
 /**
  * BLE Interface APIs.
@@ -59,8 +58,7 @@ typedef struct
  */
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
-                          CANetworkChangeCallback netCallback,
-                          u_thread_pool_t handle);
+                          CANetworkChangeCallback netCallback);
 
 /**
  * @brief Starting LE connectivity adapters . \
@@ -232,4 +230,4 @@ void CAFreeBLEData(CABLEData *bleData);
 } /* extern "C" */
 #endif
 
-#endif //#ifndef _CA_LEADAPTER_H_
+#endif //#ifndef _CA_LEADAPTER_SINGLETHREAD_H_

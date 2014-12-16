@@ -17,11 +17,11 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "caleadapter.h"
+#include "caleadapter_singlethread.h"
 
 #include <TimedAction.h>
 
-#include "caleinterface.h"
+#include "caleinterface_singlethread.h"
 #include "caleserver.h"
 #include "logger.h"
 #include "caadapterutils.h"
