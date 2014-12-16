@@ -116,11 +116,6 @@ namespace OC
 
     std::string MessageContainer::getJSONRepresentation(OCInfoFormat f) const
     {
-        if(empty())
-        {
-            return "{}";
-        }
-
         std::stringstream os;
 
         // note: the block is required because cereal closes the JSON string
@@ -170,6 +165,11 @@ namespace OC
     { }
     std::string OCRepresentation::getJSONRepresentation() const
     {
+        if(empty())
+        {
+            return "{}";
+        }
+
         std::stringstream os;
 
         // note: the block is required because cereal closes the JSON string
