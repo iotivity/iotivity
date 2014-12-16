@@ -35,7 +35,12 @@
 #include "occoaptoken.h"
 #include "ocstackinternal.h"
 
-#define BUF_SIZE (64)
+/**
+ * The Max Size of the buffer that is used to parse uri and query
+ * individually.
+ */
+#define MAX_URI_QUERY_BUF_SIZE ((MAX_URI_LENGTH) >= (MAX_QUERY_LENGTH) ?\
+                            (MAX_URI_LENGTH) : (MAX_QUERY_LENGTH))
 
 // checks if optionID is within vendor specific range
 OCStackResult isVendorSpecific(uint16_t optionID);

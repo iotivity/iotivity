@@ -374,7 +374,7 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
     coap_list_t * optNode = NULL;
     int res;
     size_t buflen;
-    unsigned char _buf[BUF_SIZE];
+    unsigned char _buf[MAX_URI_QUERY_BUF_SIZE];
     unsigned char *buf = _buf;
 
     if(addMediaType)
@@ -412,7 +412,7 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
     if(uri && uriLength)
     {
         buf = _buf;
-        buflen = BUF_SIZE;
+        buflen = MAX_URI_QUERY_BUF_SIZE;
         res = coap_split_path(uri, uriLength, buf, &buflen);
         while (res--) {
             optNode = CreateNewOptionNode(COAP_OPTION_URI_PATH,
@@ -426,7 +426,7 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
     if(query && queryLength)
     {
         buf = _buf;
-        buflen = BUF_SIZE;
+        buflen = MAX_URI_QUERY_BUF_SIZE;
         res = coap_split_query(query, queryLength, buf, &buflen);
         while (res--) {
             optNode = CreateNewOptionNode(COAP_OPTION_URI_QUERY,
