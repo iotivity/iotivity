@@ -351,7 +351,7 @@ namespace OC
                         resourceTypeName.c_str(), // const char * resourceTypeName
                         resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix
                         resourceHOST.c_str(), // const char * host
-                        resourceURI.c_str(), // const char * uri
+                        (resourceHOST + resourceURI).c_str(), // const char * uri
                         EntityHandlerWrapper, // OCEntityHandler entityHandler
                         resourceProperties // uint8_t resourceProperties
                         );
@@ -362,7 +362,7 @@ namespace OC
                         resourceTypeName.c_str(), // const char * resourceTypeName
                         resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix
                         resourceHOST.c_str(), // const char * host
-                        resourceURI.c_str(), // const char * uri
+                        (resourceHOST + resourceURI).c_str(), // const char * uri
                         nullptr, // OCEntityHandler entityHandler
                         resourceProperties // uint8_t resourceProperties
                         );
