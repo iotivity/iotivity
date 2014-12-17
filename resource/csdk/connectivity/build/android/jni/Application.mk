@@ -2,7 +2,7 @@
 APP_PROJECT_PATH = ./
 
 APP_STL = gnustl_shared
-
+APP_MODULES := CA
 APP_PLATFORM = android-19
 APP_CPPFLAGS += -fexceptions
 APP_CPPFLAGS += -frtti += -Wno-error=format-security

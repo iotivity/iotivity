@@ -88,7 +88,7 @@ static CAEthernetConnectionStateChangeCallback gNetworkChangeCb = NULL;
  * @brief This methods gets local interface name and IP address information.
  */
 static void CAEthernetGetInterfaceInformation(char **interfaceName, char **ipAddress,
-                                              char **subnetMask);
+        char **subnetMask);
 
 static void CANetworkMonitorThread(void *threadData);
 
@@ -104,7 +104,8 @@ CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool)
     }
 
     u_mutex_lock(gEthernetNetInfoMutex);
-    CAEthernetGetInterfaceInformation(&gEthernetInterfaceName, &gEthernetIPAddress, &gEthernetSubnetMask);
+    CAEthernetGetInterfaceInformation(&gEthernetInterfaceName, &gEthernetIPAddress,
+                                      &gEthernetSubnetMask);
     u_mutex_unlock(gEthernetNetInfoMutex);
 
     nwConnectivityStatus = (gEthernetIPAddress) ? CA_INTERFACE_UP : CA_INTERFACE_DOWN;
@@ -192,16 +193,16 @@ CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
     // Get the interface and ipaddress information from cache
     u_mutex_lock(gEthernetNetInfoMutex);
-    if(gEthernetInterfaceName == NULL || gEthernetIPAddress == NULL)
+    if (gEthernetInterfaceName == NULL || gEthernetIPAddress == NULL)
     {
         OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "Network not enabled");
         return CA_ADAPTER_NOT_ENABLED;
     }
 
     *interfaceName = (gEthernetInterfaceName) ? strndup(gEthernetInterfaceName,
-                               strlen(gEthernetInterfaceName)) : NULL;
-    *ipAddress = (gEthernetIPAddress) ? strndup(gEthernetIPAddress,strlen(gEthernetIPAddress))
-                               : NULL;
+                     strlen(gEthernetInterfaceName)) : NULL;
+    *ipAddress = (gEthernetIPAddress) ? strndup(gEthernetIPAddress, strlen(gEthernetIPAddress))
+                 : NULL;
 
     u_mutex_unlock(gEthernetNetInfoMutex);
 
@@ -216,14 +217,14 @@ CAResult_t CAEthernetGetInterfaceSubnetMask(char **subnetMask)
     VERIFY_NON_NULL(subnetMask, ETHERNET_MONITOR_TAG, "subnet mask");
 
     u_mutex_lock(gEthernetNetInfoMutex);
-    if(NULL == gEthernetSubnetMask)
+    if (NULL == gEthernetSubnetMask)
     {
         OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "There is no subnet mask information!");
         return CA_STATUS_FAILED;
     }
 
-    *subnetMask = (gEthernetSubnetMask) ? strndup(gEthernetSubnetMask,strlen(gEthernetSubnetMask))
-                               : NULL;
+    *subnetMask = (gEthernetSubnetMask) ? strndup(gEthernetSubnetMask, strlen(gEthernetSubnetMask))
+                  : NULL;
     u_mutex_unlock(gEthernetNetInfoMutex);
 
     OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
@@ -246,7 +247,7 @@ void CAEthernetSetConnectionStateChangeCallback(CAEthernetConnectionStateChangeC
     gNetworkChangeCb = callback;
 }
 
-void CAEthernetGetInterfaceInformation(char **interfaceName, char **ipAddress, char ** subnetMask)
+void CAEthernetGetInterfaceInformation(char **interfaceName, char **ipAddress, char **subnetMask)
 {
     struct ifaddrs *ifa = NULL;
     struct ifaddrs *ifp = NULL;
@@ -261,7 +262,7 @@ void CAEthernetGetInterfaceInformation(char **interfaceName, char **ipAddress, c
     if (-1 == getifaddrs(&ifp))
     {
         OIC_LOG_V(ERROR, ETHERNET_MONITOR_TAG, "Failed to get interface list!, Error code: %s",
-                          strerror(errno));
+                  strerror(errno));
         return;
     }
 
@@ -288,24 +289,24 @@ void CAEthernetGetInterfaceInformation(char **interfaceName, char **ipAddress, c
             continue;
         }
 
-        if (!strncasecmp(ifa->ifa_name,matchName,strlen(matchName)))
+        if (!strncasecmp(ifa->ifa_name, matchName, strlen(matchName)))
         {
             // get the interface ip address
             if (0 != getnameinfo(ifa->ifa_addr, len, interfaceAddress,
-                            sizeof(interfaceAddress), NULL, 0, NI_NUMERICHOST))
+                                 sizeof(interfaceAddress), NULL, 0, NI_NUMERICHOST))
             {
-                    OIC_LOG_V(ERROR, ETHERNET_MONITOR_TAG, "Failed to get IPAddress, Error code: %s",
-                              strerror(errno));
-                    break;
+                OIC_LOG_V(ERROR, ETHERNET_MONITOR_TAG, "Failed to get IPAddress, Error code: %s",
+                          strerror(errno));
+                break;
             }
 
             // get the interface subnet mask
             if (0 != getnameinfo(ifa->ifa_netmask, len, interfaceSubnetMask,
-                            sizeof(interfaceSubnetMask), NULL, 0, NI_NUMERICHOST))
+                                 sizeof(interfaceSubnetMask), NULL, 0, NI_NUMERICHOST))
             {
-                    OIC_LOG_V(ERROR, ETHERNET_MONITOR_TAG, "Failed to get subnet mask, Error code: %s",
-                              strerror(errno));
-                    break;
+                OIC_LOG_V(ERROR, ETHERNET_MONITOR_TAG, "Failed to get subnet mask, Error code: %s",
+                          strerror(errno));
+                break;
             }
 
             // set interface name

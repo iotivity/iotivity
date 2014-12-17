@@ -93,7 +93,8 @@ void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback);
 * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
 * @retval  CA_STATUS_FAILED Operation failed
 */
-CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue, const uint32_t charValueLen);
+CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue, 
+                                                            const uint32_t charValueLen);
 
 /**
 * @fn  CAStartBLEGattClient
@@ -155,7 +156,8 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const
  * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval  CA_STATUS_FAILED Operation failed
  */
-CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, const int32_t dataLen);
+CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, 
+                                                            const int32_t dataLen);
 
 /**
  * @fn  CASetBLEReqRespClientCallback

@@ -136,7 +136,7 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
 }
 
 coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *options,
-                                             const char *payload, const CAInfo_t info)
+        const char *payload, const CAInfo_t info)
 {
     OIC_LOG(DEBUG, TAG, "CACreatePDUforRequestWithPayload IN");
 
@@ -276,7 +276,7 @@ void CAParseURI(const char *uriInfo, coap_list_t **optlist)
         coap_insert(optlist,
                     CACreateNewOptionNode(COAP_OPTION_URI_PORT,
                                           coap_encode_var_bytes(portbuf, uri.port), portbuf),
-                                          CAOrderOpts);
+                    CAOrderOpts);
     }
 
     if (uri.path.length)
@@ -332,7 +332,7 @@ void CAParseHeadOption(const uint32_t code, const CAInfo_t info, coap_list_t **o
 
             coap_insert(optlist,
                         CACreateNewOptionNode(info.options[i].optionID,
-                                            info.options[i].optionLength,
+                                              info.options[i].optionLength,
                                               info.options[i].optionData), CAOrderOpts);
         }
     }
@@ -656,24 +656,24 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *result,
     return cnt;
 }
 
-CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void* pdu, uint32_t size)
+CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size)
 {
     // pdu minimum size is 4 byte.
     if (size < 4)
         return CA_MSG_NONCONFIRM;
 
-    coap_hdr_t* hdr = (coap_hdr_t*) pdu;
+    coap_hdr_t *hdr = (coap_hdr_t *) pdu;
 
     return (CAMessageType_t) hdr->type;
 }
 
-uint16_t CAGetMessageIdFromPduBinaryData(const void* pdu, uint32_t size)
+uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size)
 {
     // pdu minimum size is 4 byte.
     if (size < 4)
         return 0;
 
-    coap_hdr_t* hdr = (coap_hdr_t*) pdu;
+    coap_hdr_t *hdr = (coap_hdr_t *) pdu;
 
     return ntohs(hdr->id);
 }

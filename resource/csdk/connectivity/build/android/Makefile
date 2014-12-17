@@ -1,5 +1,6 @@
 #Assumes ndk directory is at ~/
 #set ndk directory PATH in .bashrc and use the ndk-build directly
+#change NDK_PATH to ${your_ndk_path}
 NDK_PATH = ~/ndk
 NDK_BUILD = $(NDK_PATH)/ndk-build
 

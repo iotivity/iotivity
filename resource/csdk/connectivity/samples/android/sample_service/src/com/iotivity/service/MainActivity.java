@@ -1,4 +1,3 @@
-
 package com.iotivity.service;
 
 import java.util.ArrayList;
@@ -20,311 +19,440 @@ import com.iotivity.sample_service.R;
 
 public class MainActivity extends Activity {
 
-    static RMInterface RM = new RMInterface();
+	static RMInterface RM = new RMInterface();
 
-    private final CharSequence[] mCheckBoxItems = {
-            Network.WIFI.name(), Network.LE.name()
-    };
+	private final CharSequence[] mCheckBoxItems = { Network.WIFI.name(),
+			Network.LE.name() };
 
-    private enum Mode {
-        SERVER, CLIENT, BOTH, UNKNOWN
-    };
+	private final CharSequence[] mDTLSCheckBoxItems = { DTLS.SECURED.name(),
+			DTLS.UNSECURED.name() };
 
-    private enum Network {
-        WIFI, LE
-    };
+	private final CharSequence[] mMsgTyleCheckBoxItems = { MsgType.CON.name(),
+			MsgType.NON.name() };
 
-    private Mode mCurrentMode = Mode.UNKNOWN;
+	private enum Mode {
+		SERVER, CLIENT, BOTH, UNKNOWN
+	};
 
-    private ArrayList<Integer> mSelectedItems = new ArrayList<Integer>();
+	private enum Network {
+		WIFI, LE
+	};
 
-    private boolean mCheckedItems[] = {
-            false, false
-    };
+	private enum DTLS {
+		SECURED, UNSECURED
+	};
 
-    private RelativeLayout mFindResourceLayout = null;
+	private enum MsgType {
+		CON, NON
+	};
 
-    private RelativeLayout mSendNotificationLayout = null;
+	private Mode mCurrentMode = Mode.UNKNOWN;
 
-    private RelativeLayout mSendRequestLayout = null;
+	private ArrayList<Integer> mSelectedItems = new ArrayList<Integer>();
 
-    private RelativeLayout mSendResponseLayout = null;
+	private ArrayList<Integer> mSRSelectedItems = new ArrayList<Integer>();
 
-    private RelativeLayout mReceiveLayout = null;
+	private boolean mCheckedItems[] = { false, false };
 
-    private TextView mMode_tv = null;
+	private RelativeLayout mFindResourceLayout = null;
 
-    private TextView mNetwork_tv = null;
+	private RelativeLayout mSendNotificationLayout = null;
 
-    private EditText mUri_ed = null;
+	private RelativeLayout mSendRequestLayout = null;
+	
+	private RelativeLayout mSendRequestSettingLayout = null;
 
-    private EditText mNotification_ed = null;
+	private RelativeLayout mSendResponseLayout = null;
 
-    private EditText mReqData_ed = null;
+	private RelativeLayout mReceiveLayout = null;
 
-    private EditText mRespData_ed = null;
+	private TextView mMode_tv = null;
 
-    private Button mFind_btn = null;
+	private TextView mNetwork_tv = null;
 
-    private Button mNotify_btn = null;
+	private EditText mUri_ed = null;
 
-    private Button mReqeust_btn = null;
+	private EditText mNotification_ed = null;
 
-    private Button mResponse_btn = null;
+	private EditText mReqData_ed = null;
 
-    private Button mRecv_btn = null;
+	private EditText mRespData_ed = null;
 
-    /**
-     * Defined ConnectivityType in cacommon.c
-     *
-     * CA_ETHERNET = (1 << 0)
-     * CA_WIFI = (1 << 1)
-     * CA_EDR = (1 << 2)
-     * CA_LE = (1 << 3)
-     */
-    private int CA_WIFI = (1 << 1);
-    private int CA_LE = (1 << 3);
+	private Button mFind_btn = null;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+	private Button mNotify_btn = null;
 
-        // Initialize UI
-        mFindResourceLayout = (RelativeLayout)findViewById(R.id.layout_find);
-        mSendNotificationLayout = (RelativeLayout)findViewById(R.id.layout_notify);
-        mSendRequestLayout = (RelativeLayout)findViewById(R.id.layout_request);
-        mSendResponseLayout = (RelativeLayout)findViewById(R.id.layout_response);
-        mReceiveLayout = (RelativeLayout)findViewById(R.id.layout_receive);
+	private Button mReqeust_btn = null;
+	
+	private Button mReqeust_setting_btn = null;
 
-        mMode_tv = (TextView)findViewById(R.id.tv_mode);
-        mNetwork_tv = (TextView)findViewById(R.id.tv_network);
+	private Button mResponse_btn = null;
 
-        mUri_ed = (EditText)findViewById(R.id.et_uri);
-        mNotification_ed = (EditText)findViewById(R.id.et_notification);
-        mReqData_ed = (EditText)findViewById(R.id.et_req_data);
-        mRespData_ed = (EditText)findViewById(R.id.et_resp_data);
+	private Button mRecv_btn = null;
 
-        mFind_btn = (Button)findViewById(R.id.btn_find_resource);
-        mNotify_btn = (Button)findViewById(R.id.btn_notify);
-        mReqeust_btn = (Button)findViewById(R.id.btn_Request);
-        mResponse_btn = (Button)findViewById(R.id.btn_Response);
-        mRecv_btn = (Button)findViewById(R.id.btn_receive);
+	/**
+	 * Defined ConnectivityType in cacommon.c
+	 * 
+	 * CA_ETHERNET = (1 << 0) CA_WIFI = (1 << 1) CA_EDR = (1 << 2) CA_LE = (1 <<
+	 * 3)
+	 */
+	private int CA_WIFI = (1 << 1);
+	private int CA_LE = (1 << 3);
+	private int isSecured = 0;
+	private int msgType = 0;
+	int selectedNetwork = 0;
 
-        mFind_btn.setOnClickListener(mFindResourceHandler);
-        mNotify_btn.setOnClickListener(mNotifyHandler);
-        mReqeust_btn.setOnClickListener(mSendRequestHandler);
-        mResponse_btn.setOnClickListener(mSendResponseHandler);
-        mRecv_btn.setOnClickListener(mResponseHandler);
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
 
-        showSelectModeView();
+		// Initialize UI
+		mFindResourceLayout = (RelativeLayout) findViewById(R.id.layout_find);
+		mSendNotificationLayout = (RelativeLayout) findViewById(R.id.layout_notify);
+		mSendRequestLayout = (RelativeLayout) findViewById(R.id.layout_request);
+		mSendRequestSettingLayout = (RelativeLayout) findViewById(R.id.layout_request_setting);
+		mSendResponseLayout = (RelativeLayout) findViewById(R.id.layout_response);
+		mReceiveLayout = (RelativeLayout) findViewById(R.id.layout_receive);
 
-        // Initialize Connectivity Abstraction
-        RM.RMInitialize(getApplicationContext());
-        // Select default network(WIFI)
-        RM.RMSelectNetwork(CA_WIFI);
-        // set handler
-        RM.RMRegisterHandler();
-    }
+		mMode_tv = (TextView) findViewById(R.id.tv_mode);
+		mNetwork_tv = (TextView) findViewById(R.id.tv_network);
 
-    private void showSelectModeView() {
+		mUri_ed = (EditText) findViewById(R.id.et_uri);
+		mNotification_ed = (EditText) findViewById(R.id.et_notification);
+		mReqData_ed = (EditText) findViewById(R.id.et_req_data);
+		mRespData_ed = (EditText) findViewById(R.id.et_resp_data);
 
-        mFindResourceLayout.setVisibility(View.INVISIBLE);
-        mSendNotificationLayout.setVisibility(View.INVISIBLE);
-        mSendRequestLayout.setVisibility(View.INVISIBLE);
-        mSendResponseLayout.setVisibility(View.INVISIBLE);
-        mReceiveLayout.setVisibility(View.INVISIBLE);
+		mFind_btn = (Button) findViewById(R.id.btn_find_resource);
+		mNotify_btn = (Button) findViewById(R.id.btn_notify);
+		mReqeust_btn = (Button) findViewById(R.id.btn_Request);
+		mReqeust_setting_btn  = (Button) findViewById(R.id.btn_Request_setting);
+		mResponse_btn = (Button) findViewById(R.id.btn_Response);
+		mRecv_btn = (Button) findViewById(R.id.btn_receive);
 
-        mMode_tv.setText("Select Mode (Server or Client)");
-    }
+		mFind_btn.setOnClickListener(mFindResourceHandler);
+		mNotify_btn.setOnClickListener(mNotifyHandler);
+		mReqeust_btn.setOnClickListener(mSendRequestHandler);
+		mReqeust_setting_btn.setOnClickListener(mSendRequestSettingHandler);
+		mResponse_btn.setOnClickListener(mSendResponseHandler);
+		mRecv_btn.setOnClickListener(mResponseHandler);
 
-    private void showNetworkView() {
+		showSelectModeView();
 
-        mNetwork_tv.setText("Select Network Type");
-    }
+		// Initialize Connectivity Abstraction
+		RM.RMInitialize(getApplicationContext());
+		// Select default network(WIFI)
+		RM.RMSelectNetwork(CA_WIFI);
+		// set handler
+		RM.RMRegisterHandler();
+	}
 
-    private void showModeView() {
+	private void showSelectModeView() {
 
-        if (mCurrentMode == Mode.SERVER) {
+		mFindResourceLayout.setVisibility(View.INVISIBLE);
+		mSendNotificationLayout.setVisibility(View.INVISIBLE);
+		mSendRequestLayout.setVisibility(View.INVISIBLE);
+		mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
+		mSendResponseLayout.setVisibility(View.INVISIBLE);
+		mReceiveLayout.setVisibility(View.INVISIBLE);
 
-            mFindResourceLayout.setVisibility(View.INVISIBLE);
-            mSendNotificationLayout.setVisibility(View.VISIBLE);
-            mSendRequestLayout.setVisibility(View.INVISIBLE);
-            mSendResponseLayout.setVisibility(View.VISIBLE);
-            mReceiveLayout.setVisibility(View.VISIBLE);
+		mMode_tv.setText("Select Mode (Server or Client)");
+	}
 
-            mNetwork_tv.setText("");
+	private void showNetworkView() {
 
-        } else if (mCurrentMode == Mode.CLIENT) {
+		mNetwork_tv.setText("Select Network Type");
+	}
 
-            mFindResourceLayout.setVisibility(View.VISIBLE);
-            mSendNotificationLayout.setVisibility(View.INVISIBLE);
-            mSendRequestLayout.setVisibility(View.VISIBLE);
-            mSendResponseLayout.setVisibility(View.INVISIBLE);
-            mReceiveLayout.setVisibility(View.VISIBLE);
+	private void showModeView() {
 
-            mNetwork_tv.setText("");
-        }
-    }
+		if (mCurrentMode == Mode.SERVER) {
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
+			mFindResourceLayout.setVisibility(View.INVISIBLE);
+			mSendNotificationLayout.setVisibility(View.VISIBLE);
+			mSendRequestLayout.setVisibility(View.INVISIBLE);
+			mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
+			mSendResponseLayout.setVisibility(View.VISIBLE);
+			mReceiveLayout.setVisibility(View.VISIBLE);
 
-        // Terminate Connectivity Abstraction
-        RM.RMTerminate();
-    }
+			mNetwork_tv.setText("");
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+		} else if (mCurrentMode == Mode.CLIENT) {
 
-        menu.add(0, 1, Menu.NONE, "Start Server");
-        menu.add(0, 2, Menu.NONE, "Start Client");
-        menu.add(0, 3, Menu.NONE, "Select Network");
+			mFindResourceLayout.setVisibility(View.VISIBLE);
+			mSendNotificationLayout.setVisibility(View.INVISIBLE);
+			mSendRequestLayout.setVisibility(View.VISIBLE);
+			mSendRequestSettingLayout.setVisibility(View.VISIBLE);
+			mSendResponseLayout.setVisibility(View.INVISIBLE);
+			mReceiveLayout.setVisibility(View.VISIBLE);
 
-        return true;
-    }
+			mNetwork_tv.setText("");
+		}
+	}
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
 
-        switch (item.getItemId()) {
+		// Terminate Connectivity Abstraction
+		RM.RMTerminate();
+	}
 
-            case 1:
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
 
-                RM.RMStartListeningServer();
+		menu.add(0, 1, Menu.NONE, "Start Server");
+		menu.add(0, 2, Menu.NONE, "Start Client");
+		menu.add(0, 3, Menu.NONE, "Select Network");
 
-                if (mCurrentMode == Mode.UNKNOWN || mSelectedItems.size() == 0) {
-                    mCurrentMode = Mode.SERVER;
-                    mMode_tv.setText("MODE: " + mCurrentMode.toString());
-                    showNetworkView();
+		return true;
+	}
 
-                } else {
-                    mCurrentMode = Mode.SERVER;
-                    mMode_tv.setText("MODE: " + mCurrentMode.toString());
-                    showModeView();
-                }
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
 
-                break;
+		switch (item.getItemId()) {
 
-            case 2:
+		case 1:
 
-                RM.RMStartDiscoveryServer();
+			RM.RMStartListeningServer();
 
-                if (mCurrentMode == Mode.UNKNOWN || mSelectedItems.size() == 0) {
-                    mCurrentMode = Mode.CLIENT;
-                    mMode_tv.setText("MODE: " + mCurrentMode.toString());
-                    showNetworkView();
+			if (mCurrentMode == Mode.UNKNOWN || mSelectedItems.size() == 0) {
+				mCurrentMode = Mode.SERVER;
+				mMode_tv.setText("MODE: " + mCurrentMode.toString());
+				showNetworkView();
 
-                } else {
-                    mCurrentMode = Mode.CLIENT;
-                    mMode_tv.setText("MODE: " + mCurrentMode.toString());
-                    showModeView();
-                }
+			} else {
+				mCurrentMode = Mode.SERVER;
+				mMode_tv.setText("MODE: " + mCurrentMode.toString());
+				showModeView();
+			}
 
-                break;
+			break;
 
-            case 3:
+		case 2:
 
-                showAlertDialog("Select Network");
+			RM.RMStartDiscoveryServer();
 
-                break;
-        }
+			if (mCurrentMode == Mode.UNKNOWN || mSelectedItems.size() == 0) {
+				mCurrentMode = Mode.CLIENT;
+				mMode_tv.setText("MODE: " + mCurrentMode.toString());
+				showNetworkView();
 
-        return super.onOptionsItemSelected(item);
-    }
+			} else {
+				mCurrentMode = Mode.CLIENT;
+				mMode_tv.setText("MODE: " + mCurrentMode.toString());
+				showModeView();
+			}
 
-    private OnClickListener mFindResourceHandler = new OnClickListener() {
+			break;
 
-        @Override
-        public void onClick(View v) {
+		case 3:
 
-            RM.RMFindResource(mUri_ed.getText().toString());
+			showAlertDialog("Select Network");
 
-        }
-    };
+			break;
+		}
 
-    private OnClickListener mNotifyHandler = new OnClickListener() {
+		return super.onOptionsItemSelected(item);
+	}
 
-        @Override
-        public void onClick(View v) {
+	private OnClickListener mFindResourceHandler = new OnClickListener() {
 
-            RM.RMSendNotification(mNotification_ed.getText().toString());
+		@Override
+		public void onClick(View v) {
 
-        }
-    };
+			RM.RMFindResource(mUri_ed.getText().toString());
 
-    private OnClickListener mSendRequestHandler = new OnClickListener() {
+		}
+	};
 
-        @Override
-        public void onClick(View v) {
+	private OnClickListener mNotifyHandler = new OnClickListener() {
 
-            RM.RMSendRequest(mReqData_ed.getText().toString());
+		@Override
+		public void onClick(View v) {
 
-        }
-    };
+			RM.RMSendNotification(mNotification_ed.getText().toString(), selectedNetwork);
 
-    private OnClickListener mSendResponseHandler = new OnClickListener() {
+		}
+	};
 
-        @Override
-        public void onClick(View v) {
+	private OnClickListener mSendRequestHandler = new OnClickListener() {
 
-            RM.RMSendResponse(mRespData_ed.getText().toString());
+		@Override
+		public void onClick(View v) {
 
-        }
-    };
+			RM.RMSendRequest(mReqData_ed.getText().toString(), selectedNetwork, isSecured, msgType);
 
-    private OnClickListener mResponseHandler = new OnClickListener() {
+		}
+	};
+	
+	private OnClickListener mSendRequestSettingHandler = new OnClickListener() {
 
-        @Override
-        public void onClick(View v) {
+		@Override
+		public void onClick(View v) {
 
-            RM.RMHandleRequestResponse();
-        }
-    };
+			checkMsgSecured("Select DTLS Type");
+			checkMsgType("Select Msg Type");
+		}
+	};
 
-    private void showAlertDialog(String title) {
+	private OnClickListener mSendResponseHandler = new OnClickListener() {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle(title)
-        .setMultiChoiceItems(mCheckBoxItems, mCheckedItems,
-                new DialogInterface.OnMultiChoiceClickListener() {
+		@Override
+		public void onClick(View v) {
 
-            @Override
-            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+			RM.RMSendResponse(mRespData_ed.getText().toString(), selectedNetwork);
 
-                if (isChecked) {
+		}
+	};
 
-                    mSelectedItems.add(which);
+	private OnClickListener mResponseHandler = new OnClickListener() {
 
-                } else if (mSelectedItems.contains(which)) {
+		@Override
+		public void onClick(View v) {
 
-                    mSelectedItems.remove(Integer.valueOf(which));
-                }
-            }
-        }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			RM.RMHandleRequestResponse();
+		}
+	};
 
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
+	private void showAlertDialog(String title) {
 
-                int interestedNetwork = 0;
+		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		builder.setTitle(title)
+				.setMultiChoiceItems(mCheckBoxItems, mCheckedItems,
+						new DialogInterface.OnMultiChoiceClickListener() {
 
-                for (int i = 0; i < mSelectedItems.size(); i++) {
+							@Override
+							public void onClick(DialogInterface dialog,
+									int which, boolean isChecked) {
 
-                    if (mSelectedItems.get(i) == Network.WIFI.ordinal()) {
-                        interestedNetwork |= CA_WIFI;
+								if (isChecked) {
 
-                    } else if (mSelectedItems.get(i) == Network.LE.ordinal()) {
-                        interestedNetwork |= CA_LE;
-                    }
-                }
+									mSelectedItems.add(which);
 
-                RM.RMSelectNetwork(interestedNetwork);
+								} else if (mSelectedItems.contains(which)) {
 
-                if (interestedNetwork != 0 && mCurrentMode != Mode.UNKNOWN) {
-                    showModeView();
-                }
-            }
-        }).show();
-    }
+									mSelectedItems.remove(Integer
+											.valueOf(which));
+								}
+							}
+						})
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+
+						int interestedNetwork = 0;
+
+						for (int i = 0; i < mSelectedItems.size(); i++) {
+
+							if (mSelectedItems.get(i) == Network.WIFI.ordinal()) {
+								interestedNetwork |= CA_WIFI;
+
+							} else if (mSelectedItems.get(i) == Network.LE
+									.ordinal()) {
+								interestedNetwork |= CA_LE;
+							}
+						}
+
+						RM.RMSelectNetwork(interestedNetwork);
+						selectedNetwork = interestedNetwork;
+
+						if (interestedNetwork != 0
+								&& mCurrentMode != Mode.UNKNOWN) {
+							showModeView();
+						}
+					}
+				}).show();
+	}
+
+	private void checkMsgSecured(String title) {
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		builder.setTitle(title)
+				.setMultiChoiceItems(mDTLSCheckBoxItems, mCheckedItems,
+						new DialogInterface.OnMultiChoiceClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialog,
+									int which, boolean isChecked) {
+
+								if (isChecked) {
+
+									mSRSelectedItems.add(which);
+
+								} else if (mSRSelectedItems.contains(which)) {
+
+									mSRSelectedItems.remove(Integer
+											.valueOf(which));
+								}
+							}
+						})
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+
+						for (int i = 0; i < mSRSelectedItems.size(); i++) {
+
+							if (mSRSelectedItems.get(i) == DTLS.SECURED
+									.ordinal()) {
+								isSecured = 1;
+
+							} else if (mSRSelectedItems.get(i) == DTLS.UNSECURED
+									.ordinal()) {
+								isSecured = 0;
+							}
+						}
+					}
+				}).show();
+
+		mSRSelectedItems.clear();
+	}
+
+	private void checkMsgType(String title) {
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		builder.setTitle(title)
+				.setMultiChoiceItems(mMsgTyleCheckBoxItems, mCheckedItems,
+						new DialogInterface.OnMultiChoiceClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialog,
+									int which, boolean isChecked) {
+
+								if (isChecked) {
+
+									mSRSelectedItems.add(which);
+
+								} else if (mSRSelectedItems.contains(which)) {
+
+									mSRSelectedItems.remove(Integer
+											.valueOf(which));
+								}
+							}
+						})
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+
+						for (int i = 0; i < mSRSelectedItems.size(); i++) {
+
+							if (mSRSelectedItems.get(i) == MsgType.CON
+									.ordinal()) {
+								msgType = 0;
+
+							} else if (mSRSelectedItems.get(i) == MsgType.NON
+									.ordinal()) {
+								msgType = 1;
+							}
+						}
+						
+					}
+				}).show();
+
+		mSRSelectedItems.clear();
+	}
 }

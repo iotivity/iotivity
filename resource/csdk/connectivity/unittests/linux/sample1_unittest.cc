@@ -80,7 +80,7 @@ TEST(CreateRemoteEndpointTest, TC_06_Positive_01)
 {
     uri = (char *) "123.123.123.123:1234/b/light";
 
-    EXPECT_EQ(CA_STATUS_OK, CACreateRemoteEndpoint(uri, &tempRep));
+    EXPECT_EQ(CA_STATUS_OK, CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep));
 
     CADestroyRemoteEndpoint(tempRep);
 }
@@ -89,7 +89,7 @@ TEST(CreateRemoteEndpointTest, TC_06_Positive_01)
 TEST(CreateRemoteEndpointTest, TC_07_Positive_02)
 {
     uri = (char *) "123.123.123.123:1234/b/light";
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     EXPECT_TRUE(tempRep != NULL);
 
@@ -106,7 +106,7 @@ TEST(CreateRemoteEndpointTest, TC_08_Nagative_01)
 {
     uri = NULL;
 
-    EXPECT_EQ(CA_STATUS_FAILED, CACreateRemoteEndpoint(uri, &tempRep));
+    EXPECT_EQ(CA_STATUS_FAILED, CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep));
 
     CADestroyRemoteEndpoint(tempRep);
 }
@@ -115,7 +115,7 @@ TEST(CreateRemoteEndpointTest, TC_08_Nagative_01)
 TEST(CreateRemoteEndpointTest, TC_09_Nagative_02)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     if (tempRep != NULL)
     {
@@ -130,7 +130,7 @@ TEST(CreateRemoteEndpointTest, TC_09_Nagative_02)
 TEST(DestroyRemoteEndpointTest, TC_10_Positive_01)
 {
     uri = (char *) "123.123.123.123:1234/b/light";
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     CADestroyRemoteEndpoint(tempRep);
 
@@ -181,7 +181,7 @@ TEST(SendRequestTest, TC_15_Positive_01)
 {
     uri = (char *) "123.123.123.123:1234/b/light";
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
     CAGenerateToken(&tempToken);
     requestInfo.method = CA_GET;
     requestInfo.info.token = tempToken;
@@ -198,7 +198,7 @@ TEST(SendRequestTest, TC_16_Nagative_01)
 {
     uri = NULL;
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
     CAGenerateToken(&tempToken);
     requestInfo.method = CA_GET;
     requestInfo.info.token = tempToken;
@@ -215,7 +215,7 @@ TEST(SendRequestTest, TC_16_Nagative_01)
 TEST(SendResponseTest, TC_17_Positive_01)
 {
     uri = (char *) "123.123.123.123:1234/b/light";
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     CAGenerateToken(&tempToken);
@@ -236,7 +236,7 @@ TEST(SendResponseTest, TC_17_Positive_01)
 TEST(SendResponseTest, TC_18_Nagative_01)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     CAGenerateToken(&tempToken);
@@ -258,7 +258,7 @@ TEST(SendResponseTest, TC_18_Nagative_01)
 TEST(SendNotificationTest, TC_19_Positive_01)
 {
     uri = (char *) "123.123.123.123:1234/b/light";
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.token = (char *) "client token";
@@ -277,7 +277,7 @@ TEST(SendNotificationTest, TC_19_Positive_01)
 TEST(SendNotificationTest, TC_20_Nagative_01)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.token = (char *) "client token";

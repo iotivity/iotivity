@@ -23,7 +23,7 @@
 #include "oic_malloc.h"
 #include "caadapterutils.h"
 
-#define TAG "CLS"
+#define TAG "LES"
 
 CAResult_t CAInitializeBle()
 {
@@ -32,7 +32,7 @@ CAResult_t CAInitializeBle()
     // Set your BLE Shield name here, max. length 10
     ble_set_name("SAMSUNG");
 
-    OIC_LOG(DEBUG, TAG, "BLE Name Set is completed");
+    OIC_LOG(DEBUG, TAG, "LEName Set");
 
     ble_begin();
 

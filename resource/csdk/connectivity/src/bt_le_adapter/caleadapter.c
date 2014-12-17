@@ -102,24 +102,9 @@ static u_mutex gBleClientReceiveDataMutex = NULL;
 static bool gDataReceiverHandlerState = false;
 
 /**
- * @var isHeaderAvailable
- * @brief to differentiate btw header and data packet.
- */
-static CABool_t isHeaderAvailable = false;
-
-/**
- * @var    gNetworkPacketReceivedServerCallback
- * @brief  Maintains the callback to be notified on receival of network packets from other
- *           BLE devices
- */
-static CANetworkPacketReceivedCallback gNetworkPacketReceivedServerCallback = NULL;
-
-/**
  * @var gSendQueueHandle
  * @brief Queue to process the outgoing packets from GATTServer.
  */
-//static CAAdapterMessageQueue_t *gSendQueueHandle = NULL;
-
 static CAQueueingThread_t *gSendQueueHandle = NULL;
 
 /**
@@ -159,6 +144,8 @@ typedef enum
 static CALeServerStatus gLeServerStatus = CA_SERVER_NOTSTARTED;
 
 int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
+
+void CASetBleAdapterThreadPoolHandle(u_thread_pool_t handle);
 
 #ifdef __TIZEN__
 void CALEDeviceStateChangedCb(int32_t result, bt_adapter_state_e adapter_state,
@@ -978,7 +965,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
     static uint32_t recvDataLen = 0;
     static uint32_t totalDataLen = 0;
     static char *defragData = NULL;
-    static isHeaderAvailable = false;
+    static bool isHeaderAvailable = false;
     static CARemoteEndpoint_t *remoteEndpoint = NULL;
 
     u_mutex_lock(gBleClientReceiveDataMutex);
@@ -1076,7 +1063,7 @@ void CABLEClientDataReceiverHandler(void *threadData)
     static uint32_t recvDataLen = 0;
     static uint32_t totalDataLen = 0;
     static char *defragData = NULL;
-    static isHeaderAvailable = false;
+    static bool isHeaderAvailable = false;
     static CARemoteEndpoint_t *remoteEndpoint = NULL;
 
     u_mutex_lock(gBleClientReceiveDataMutex);
@@ -1256,7 +1243,7 @@ void CABLEClientSendDataThread(void *threadData)
         return;
     }
     char *header = (char *) OICMalloc(sizeof(char) * CA_HEADER_LENGTH);
-    VERIFY_NON_NULL_VOID(*header, CALEADAPTER_TAG, "Malloc failed");
+    VERIFY_NON_NULL_VOID(header, CALEADAPTER_TAG, "Malloc failed");
 
     char *dataSegment = (char *) OICMalloc(sizeof(char) * bleData->dataLen + CA_HEADER_LENGTH);
     if (NULL == dataSegment)

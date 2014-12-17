@@ -13,26 +13,24 @@ public class RMInterface {
         System.loadLibrary("CAInterface");
     }
 
-    public native int RMInitialize(Context context);
+    public native void RMInitialize(Context context);
 
     public native void RMTerminate();
 
-    public native int RMStartListeningServer();
+    public native void RMStartListeningServer();
 
-    public native int RMStartDiscoveryServer();
+    public native void RMStartDiscoveryServer();
 
-    public native int RMRegisterHandler();
+    public native void RMRegisterHandler();
 
-    public native int RMFindResource(String uri);
+    public native void RMFindResource(String uri);
 
-    public native int RMSendRequest(String requestData);
+    public native void RMSendRequest(String requestUri, int selectedNetwork, int isSecured, int msgType);
 
-    public native int RMSendResponse(String responseData);
+    public native void RMSendNotification(String notification, int selectedNetwork);
 
-    public native int RMSendNotification(String notification);
+    public native void RMSelectNetwork(int interestedNetwork);
 
-    public native int RMSelectNetwork(int interestedNetwork);
-
-    public native int RMHandleRequestResponse();
+    public native void RMHandleRequestResponse();
 
 }

@@ -85,10 +85,12 @@ void CASetMessageHandlerCallback(CAMessageHandlerCallback callback);
  * @param   RespHandler  [IN]    callback for receiving the response
  * @return   void
  */
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, 
+                                                   CAResponseCallback RespHandler);
 
 /**
- * @brief  Initialize the message handler by starting thread pool and initializing the send and reive queue
+ * @brief  Initialize the message handler by starting thread pool and initializing the 
+ *  send and reive queue
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAInitializeMessageHandler();

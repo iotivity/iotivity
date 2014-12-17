@@ -46,7 +46,7 @@ void start_listening_server();
 void start_discovery_server();
 void find_resource();
 void send_request();
-void send_response(CARemoteEndpoint_t *endpoint, CAToken_t request_token);
+void send_response(CARemoteEndpoint_t *endpoint, const CAInfo_t* info);
 void advertise_resource();
 void send_notification();
 void select_network();
@@ -57,6 +57,8 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
 void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
 void send_request_tmp(CARemoteEndpoint_t *endpoint, CAToken_t token);
 void terminate();
+CAConnectivityType_t get_network_type();
+
 
 void getData(char *readInput, int bufferLength, int *dataLength)
 {
@@ -252,6 +254,9 @@ void send_request()
     char buf[MAX_BUF_LEN];
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
 
+    CAConnectivityType_t selectedNetwork;
+    selectedNetwork = get_network_type();
+    
     printf("============");
     printf("10.11.12.13:4545/res_uri (for IP)");
     printf("10:11:12:13:45:45/res_uri (for BT)");
@@ -262,7 +267,7 @@ void send_request()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf, &endpoint);
+    CAResult_t res = CACreateRemoteEndpoint(buf,selectedNetwork,&endpoint);
     if (res != CA_STATUS_OK)
     {
         printf("Out of memory");
@@ -414,6 +419,8 @@ void send_notification()
 {
     char buf[MAX_BUF_LEN];
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+    CAConnectivityType_t selectedNetwork;
+    selectedNetwork = get_network_type();
 
     printf("============");
     printf("10.11.12.13:4545/res_uri (for IP)");
@@ -425,7 +432,7 @@ void send_notification()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf, &endpoint);
+    CAResult_t res = CACreateRemoteEndpoint(buf,selectedNetwork,&endpoint);
     if (CA_STATUS_OK != res)
     {
         printf("Out of memory");
@@ -522,13 +529,45 @@ void handle_request_response()
 
 void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo)
 {
-    printf("uri: ");
-    printf((object != NULL) ? object->resourceUri : "");
-    printf("data: ");
-    printf((requestInfo != NULL) ? requestInfo->info.payload : "");
+    if (!object)
+    {
+        printf("Remote endpoint is NULL!");
+        return;
+    }
 
+    if (!requestInfo)
+    {
+        printf("Request info is NULL!");
+        return;
+    }
+
+    printf("uri: ");
+    printf(object->resourceUri);
+    printf("RAddr: ");
+    printf(object->addressInfo.IP.ipAddress);
+    printf("Port: ");
+    printf(object->addressInfo.IP.port);
+    printf("data: ");
+    printf(requestInfo->info.payload);
+
+#if 1
+    if (requestInfo->info.options)
+    {
+        uint32_t len = requestInfo->info.numOptions;
+        uint32_t i;
+        for (i = 0; i < len; i++)
+        {
+            printf("Option:");
+            printf(i+1);
+            printf("ID:");
+            printf(requestInfo->info.options[i].optionID);
+            printf("Data:");
+            printf((char*)requestInfo->info.options[i].optionData);
+        }
+    }
+#endif
     printf("send response");
-    send_response((CARemoteEndpoint_t *)object, requestInfo->info.token);
+    send_response((CARemoteEndpoint_t *)object, (requestInfo != NULL) ? &requestInfo->info : NULL);
 }
 
 void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo)
@@ -537,16 +576,23 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
     printf((object != NULL) ? object->resourceUri : "");
     printf("data: ");
     printf((responseInfo != NULL) ? responseInfo->info.payload : "");
+    printf("res result=");
+    printf(responseInfo->result);
 }
 
-void send_response(CARemoteEndpoint_t *endpoint, CAToken_t request_token)
+void send_response(CARemoteEndpoint_t *endpoint, const CAInfo_t* info)
 {
 
     printf("============");
 
     CAInfo_t responseData;
     memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.token = request_token;
+    responseData.type =
+            (info != NULL) ?
+                    ((info->type == CA_MSG_CONFIRM) ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM) :
+                    CA_MSG_NONCONFIRM;
+    responseData.messageId = (info != NULL) ? info->messageId : 0;
+    responseData.token = (info != NULL) ? (CAToken_t)info->token : (CAToken_t)"";
     responseData.payload = (CAPayload_t)"response payload";
 
     CAResponseInfo_t responseInfo;
@@ -555,7 +601,15 @@ void send_response(CARemoteEndpoint_t *endpoint, CAToken_t request_token)
     responseInfo.info = responseData;
 
     // send request (connectivityType from remoteEndpoint of request Info)
-    CASendResponse(endpoint, &responseInfo);
+    CAResult_t res = CASendResponse(endpoint, &responseInfo);
+    if(res != CA_STATUS_OK)
+    {
+        printf("Snd Resp error");
+    }
+    else
+    {
+        printf("Snd Resp success");
+    }
 
     printf("============");
 
@@ -588,3 +642,43 @@ void terminate()
 {
     unselect_network();
 }
+
+CAConnectivityType_t get_network_type()
+{
+    char buf[MAX_BUF_LEN];
+
+    printf("\n=============================================\n");
+    printf("\tselect network type\n");
+    printf("ETHERNET : 0\n");
+    printf("WIFI : 1\n");
+    printf("EDR : 2\n");
+    printf("LE : 3\n");
+    printf("select : ");
+
+    memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+    gets(buf);
+
+    int number = buf[0] - '0';
+
+    number = (number < 0 || number > 3) ? 0 : 1 << number;
+
+    if (number & CA_ETHERNET)
+    {
+        return CA_ETHERNET;
+    }
+    if (number & CA_WIFI)
+    {
+        return CA_WIFI;
+    }
+    if (number & CA_EDR)
+    {
+        return CA_EDR;
+    }
+    if (number & CA_LE)
+    {
+        return CA_LE;
+    }
+
+    printf("\n=============================================\n");
+}
+

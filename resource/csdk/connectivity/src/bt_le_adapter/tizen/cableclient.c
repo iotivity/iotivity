@@ -166,7 +166,7 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
     }
 
     memset(data, 0x0, valueLen + 1);
-    strncpy(data, value, valueLen);
+    strncpy(data, (char *)value, valueLen);
 
     uint32_t sentLength = 0;
 
@@ -188,7 +188,7 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
     return;
 }
 
-void CABleGattCharacteristicWriteCb(bt_gatt_attribute_h handle)
+void CABleGattCharacteristicWriteCb(int32_t result, void *userData)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN ");
 
@@ -261,7 +261,7 @@ void CABleGattDescriptorDiscoveredCb(int32_t result, unsigned char format, int32
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-CABool_t CABleGattCharacteristicsDiscoveredCb(int32_t result,
+bool CABleGattCharacteristicsDiscoveredCb(int32_t result,
         int32_t inputIndex, int32_t total,
         bt_gatt_attribute_h characteristic, void *userData)
 {
@@ -473,7 +473,7 @@ void CABtGattBondCreatedCb(int32_t result, bt_device_info_s *device_info, void *
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-CABool_t CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int32_t index, int32_t count,
+bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int32_t index, int32_t count,
                                    void *userData)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
@@ -1671,7 +1671,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const
     VERIFY_NON_NULL_RET(value, TZ_BLE_CLIENT_TAG, "malloc failed", CA_STATUS_FAILED);
 
     memset(value, 0x0, (dataLen + 1));
-    strncpy(value, data, dataLen);
+    strncpy((char *)value, data, dataLen);
 
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Updating the data of length [%d] to [%s] ", dataLen,
               bleServiceInfo->bdAddress);

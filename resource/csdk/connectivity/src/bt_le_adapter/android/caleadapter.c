@@ -25,9 +25,13 @@
 #include "jni.h"
 #include "caleadapter.h"
 #include "calecore.h"
+#include "caleserver.h"
 #include "logger.h"
 
-#define TAG PCF("CA")
+#define TAG PCF("CA_LE_ADAPTER")
+
+// GATT server type
+static jboolean gIsBluetoothGattServer;
 
 // received packet callback
 static CANetworkPacketReceivedCallback gLEReceivedCallback = NULL;
@@ -89,7 +93,10 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     registerCallback(handler, CA_LE);
 
     CALEInitialize(handle);
+    CALEServerInitialize(handle);
+
     CALESetCallback(CALEPacketReceiveCallback);
+    CALEServerSetCallback(CALEPacketReceiveCallback);
 
     return CA_STATUS_OK;
 }
@@ -97,7 +104,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 CAResult_t CAStartLE()
 {
     OIC_LOG_V(DEBUG, TAG, "CAStartLE");
-    CANativeLEStartScan();
+    //CANativeLEStartScan();
 
     return CA_STATUS_OK;
 }
@@ -105,8 +112,11 @@ CAResult_t CAStartLE()
 CAResult_t CAStartLEListeningServer()
 {
     OIC_LOG_V(DEBUG, TAG, "CAStartLEListeningServer");
-    CALEStartMulticastServer();
-//    CALESendMulticastMessage("1111", 4);
+
+    gIsBluetoothGattServer = JNI_TRUE;
+
+    // start gatt service
+    CALEServerStartMulticastServer();
 
     return CA_STATUS_OK;
 }
@@ -114,6 +124,10 @@ CAResult_t CAStartLEListeningServer()
 CAResult_t CAStartLEDiscoveryServer()
 {
     OIC_LOG_V(DEBUG, TAG, "CAStartLEDiscoveryServer");
+
+    gIsBluetoothGattServer = JNI_FALSE;
+
+    // start scan through gatt client
     CALEStartMulticastServer();
 
     return CA_STATUS_OK;
@@ -121,17 +135,33 @@ CAResult_t CAStartLEDiscoveryServer()
 
 uint32_t CASendLEUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendLEUnicastData");
-//    "E1:70:56:CF:E3:67"
-    CALESendUnicastMessage(endpoint->addressInfo.BT.btMacAddress, data, dataLen);
+
+    if(gIsBluetoothGattServer == JNI_FALSE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CALESendUnicastData");
+        CALESendUnicastMessage(endpoint->addressInfo.BT.btMacAddress, data, dataLen);
+    }
+    else if(gIsBluetoothGattServer == JNI_TRUE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CALEServerSendUnicastData");
+        CALEServerSendUnicastMessage(endpoint->addressInfo.BT.btMacAddress, data, dataLen);
+    }
 
     return 0;
 }
 
 uint32_t CASendLEMulticastData(void* data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendLEMulticastData");
-    CALESendMulticastMessage(data, dataLen);
+    if(gIsBluetoothGattServer == JNI_FALSE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CASendLEMulticastData");
+        CALESendMulticastMessage(data, dataLen);
+    }
+    else if(gIsBluetoothGattServer == JNI_TRUE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CALEServerSendMulticastMessage");
+        CALEServerSendMulticastMessage(data, dataLen);
+    }
 
     return 0;
 }
@@ -145,8 +175,16 @@ CAResult_t CAStartLENotifyServer()
 
 uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendLENotification");
-    CALESendUnicastMessage(endpoint->addressInfo.BT.btMacAddress, data, dataLen);
+    if(gIsBluetoothGattServer == JNI_FALSE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "not server mode");
+        return -1;
+    }
+    else if(gIsBluetoothGattServer == JNI_TRUE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CALEServerSendLEUnicastData");
+        CALEServerSendUnicastMessage(endpoint->addressInfo.BT.btMacAddress, data, dataLen);
+    }
 
     return 0;
 }
@@ -168,14 +206,30 @@ CAResult_t CAReadLEData()
 
 CAResult_t CAStopLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStopLE");
-    CANativeLEStopScan();
+
+    if(gIsBluetoothGattServer == JNI_FALSE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CA Stop LE Scan");
+        CANativeLEStopScan();
+    }
+    else if(gIsBluetoothGattServer == JNI_TRUE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CA Stop Gatt Server");
+    }
 
     return CA_STATUS_OK;
 }
 
 void CATerminateLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "TerminatLE");
-    CALETerminate();
+    if(gIsBluetoothGattServer == JNI_FALSE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Terminat Gatt Client");
+        CALETerminate();
+    }
+    else if(gIsBluetoothGattServer == JNI_TRUE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Terminat Gatt Server");
+        CALEServerTerminate();
+    }
 }

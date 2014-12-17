@@ -44,7 +44,7 @@ typedef struct CAAdapterCallbacks
 {
     CAPacketReceivedCallback recvCallback;
     CAPacketSendCallback sendCallback;
-}stCAAdapterCallbacks_t;
+} stCAAdapterCallbacks_t;
 
 /**
  * @struct stCADtlsContext_t
@@ -139,7 +139,7 @@ typedef enum
  */
 
 void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
-                                    CAPacketSendCallback sendCallback, eDtlsAdapterType_t type);
+                               CAPacketSendCallback sendCallback, eDtlsAdapterType_t type);
 
 /**
  * @fn  CAAdapterNetDtlsInit

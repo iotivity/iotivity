@@ -152,18 +152,18 @@ CAResult_t CAStopLE();
 void CATerminateLE();
 
 CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *serviceUUID,
-                                        void *data, uint32_t dataLength, uint32_t *sentLength);
+                                   void *data, uint32_t dataLength, uint32_t *sentLength);
 
 CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *serviceUUID,
-                                        void *data, uint32_t dataLength, uint32_t *sentLength);
+                                   void *data, uint32_t dataLength, uint32_t *sentLength);
 
 void CASetBLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
 
 CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
-        void *data, uint32_t dataLen);
+                               void *data, uint32_t dataLen);
 
 CAResult_t CABLEClientSendData(const CARemoteEndpoint_t *remoteEndpoint,
-        void *data,  uint32_t dataLen);
+                               void *data,  uint32_t dataLen);
 
 void CABLEClientSendDataThread(void *threadData);
 
@@ -216,7 +216,7 @@ void CABLEServerSendDataThread(void *threadData);
 *
 */
 CABLEData *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
-                                  uint32_t dataLength);
+                           uint32_t dataLength);
 
 /**
 * @fn  CAFreeBLEData

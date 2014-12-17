@@ -69,7 +69,8 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
     return CA_STATUS_OK;
 }
 
-CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(void *), void *data)
+CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(void *), 
+                                    void *data)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 

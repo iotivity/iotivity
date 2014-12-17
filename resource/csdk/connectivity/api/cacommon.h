@@ -267,8 +267,9 @@ typedef enum
     CA_DELETED = 202,
     CA_BAD_REQ = 400,
     CA_BAD_OPT = 402,
-    CA_NOT_FOUND = 404
-                   /* Response status code - END HERE */
+    CA_NOT_FOUND = 404,
+    CA_RETRANSMIT_TIMEOUT = 500
+    /* Response status code - END HERE */
 } CAResponseResult_t;
 
 /**
@@ -351,8 +352,8 @@ typedef struct
  */
 typedef struct
 {
-   unsigned char clientIdentity[DTLS_PSK_ID_LEN];
-   unsigned char rsClientPsk[DTLS_PSK_PSK_LEN];
+    unsigned char clientIdentity[DTLS_PSK_ID_LEN];
+    unsigned char rsClientPsk[DTLS_PSK_PSK_LEN];
 } CADtlsPskCreds_t;
 
 /**
@@ -361,11 +362,11 @@ typedef struct
  */
 typedef struct
 {
-   uint16_t blobVer;                        /**< version of the blob */
-   uint16_t reserved;                       /**< reserved for future use */
-   unsigned char rsIdentity[DTLS_PSK_ID_LEN]; /**< identity of self */
-   uint32_t num;                            /**< number of credentials in this blob */
-   CADtlsPskCreds_t *creds;                 /**< list of credentials. Size of this
+    uint16_t blobVer;                        /**< version of the blob */
+    uint16_t reserved;                       /**< reserved for future use */
+    unsigned char rsIdentity[DTLS_PSK_ID_LEN]; /**< identity of self */
+    uint32_t num;                            /**< number of credentials in this blob */
+    CADtlsPskCreds_t *creds;                 /**< list of credentials. Size of this
                                                  array is determined by 'num' variable. */
 } CADtlsPskCredsBlob_t;
 

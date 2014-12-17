@@ -50,6 +50,7 @@ CAConnectivityType_t gSelectedNwType = CA_ETHERNET;
 
 char get_menu();
 void process();
+CAConnectivityType_t get_network_type();
 
 void start_listening_server();
 void start_discovery_server();
@@ -77,9 +78,7 @@ static const char *gSecureInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\"
 static const char *gNormalInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
 
-
 static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
-
 
 void clearDtlsCredentialInfo()
 {
@@ -87,7 +86,7 @@ void clearDtlsCredentialInfo()
     if (pskCredsBlob)
     {
         // Initialize sensitive data to zeroes before freeing.
-        memset(pskCredsBlob->creds, 0, sizeof(CADtlsPskCreds_t)*(pskCredsBlob->num));
+        memset(pskCredsBlob->creds, 0, sizeof(CADtlsPskCreds_t) * (pskCredsBlob->num));
         free(pskCredsBlob->creds);
 
         memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
@@ -117,7 +116,7 @@ int32_t SetCredentials()
 
     pskCredsBlob->num = 1;
 
-    pskCredsBlob->creds = (CADtlsPskCreds_t *)malloc(sizeof(CADtlsPskCreds_t) *(pskCredsBlob->num));
+    pskCredsBlob->creds = (CADtlsPskCreds_t *)malloc(sizeof(CADtlsPskCreds_t) * (pskCredsBlob->num));
 
     memcpy(pskCredsBlob->creds[0].clientIdentity, IDENTITY, DTLS_PSK_ID_LEN);
     memcpy(pskCredsBlob->creds[0].rsClientPsk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
@@ -401,6 +400,10 @@ void find_resource()
 void send_request()
 {
     char secureRequest[2] = {0};
+    CAConnectivityType_t selectedNetwork;
+
+    selectedNetwork = get_network_type();
+
     printf("Do you want to send secure request ?.... enter (0/1): ");
     gets(secureRequest);
     if ('1' == secureRequest[0])
@@ -420,7 +423,7 @@ void send_request()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, &endpoint)
+    if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, selectedNetwork, &endpoint)
         || !endpoint)
     {
         printf("Failed to create remote endpoint!\n");
@@ -428,7 +431,7 @@ void send_request()
         return;
     }
 
-    endpoint->connectivityType = gSelectedNwType;
+    //endpoint->connectivityType = gSelectedNwType;
 
     char buf[MAX_BUF_LEN];
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
@@ -496,8 +499,11 @@ void send_request()
 void send_request_all()
 {
     char buf[MAX_BUF_LEN];
+    CAConnectivityType_t selectedNetwork;
 
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+
+    selectedNetwork = get_network_type();
 
     printf("\n=============================================\n");
     printf("10.11.12.13:4545/resource_uri ( for IP )\n");
@@ -508,7 +514,7 @@ void send_request_all()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf, &endpoint);
+    CAResult_t res = CACreateRemoteEndpoint(buf, selectedNetwork, &endpoint);
 
     if (res != CA_STATUS_OK)
     {
@@ -637,8 +643,11 @@ void advertise_resource()
 void send_notification()
 {
     char buf[MAX_BUF_LEN];
+    CAConnectivityType_t selectedNetwork;
 
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+
+    selectedNetwork = get_network_type();
 
     printf("\n=============================================\n");
     printf("10.11.12.13:4545/resource_uri ( for IP )\n");
@@ -649,7 +658,7 @@ void send_notification()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf, &endpoint);
+    CAResult_t res = CACreateRemoteEndpoint(buf, selectedNetwork, &endpoint);
 
     if (res != CA_STATUS_OK)
     {
@@ -900,22 +909,22 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
             length += strlen(object->addressInfo.IP.ipAddress) + 5; // length of "ipaddress:port"
             length += strlen(object->resourceUri) + 1;
 
-            uri = calloc(1,sizeof(char)*length);
+            uri = calloc(1, sizeof(char) * length);
             if (!uri)
             {
                 printf("Failed to create new uri\n");
                 return;
             }
-            sprintf(uri,"coaps://%s:%d/%s",object->addressInfo.IP.ipAddress,
-                      securePort, object->resourceUri);
+            sprintf(uri, "coaps://%s:%d/%s", object->addressInfo.IP.ipAddress,
+                    securePort, object->resourceUri);
 
             CARemoteEndpoint_t *endpoint = NULL;
-            if (CA_STATUS_OK != CACreateRemoteEndpoint(uri,&endpoint))
+            if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, object->connectivityType, &endpoint))
             {
                 printf("Failed to create duplicate of remote endpoint!\n");
                 return;
             }
-            endpoint->connectivityType = object->connectivityType;
+            //endpoint->connectivityType = object->connectivityType;
             endpoint->isSecured = CA_TRUE;
             object = endpoint;
         }
@@ -933,6 +942,7 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
     printf("Uri: %s\n", object->resourceUri);
     printf("Remote Address: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
            object->addressInfo.IP.port, object->isSecured);
+    printf("response result : %d\n", responseInfo->result);
     printf("Data: %s\n", responseInfo->info.payload);
 
     if (responseInfo->info.options)
@@ -961,16 +971,16 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
     }
 }
 
-void send_response(CARemoteEndpoint_t* endpoint, CAInfo_t* info)
+void send_response(CARemoteEndpoint_t *endpoint, CAInfo_t *info)
 {
     printf("entering send_response\n");
 
     CAInfo_t responseData;
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type =
-            (info != NULL) ?
-                    ((info->type == CA_MSG_CONFIRM) ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM) :
-                    CA_MSG_NONCONFIRM;
+        (info != NULL) ?
+        ((info->type == CA_MSG_CONFIRM) ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM) :
+            CA_MSG_NONCONFIRM;
     responseData.messageId = (info != NULL) ? info->messageId : 0;
     responseData.token = (info != NULL) ? info->token : "";
     responseData.payload = "response payload";
@@ -988,7 +998,7 @@ void send_response(CARemoteEndpoint_t* endpoint, CAInfo_t* info)
     // send request (connectivityType from remoteEndpoint of request Info)
     CAResult_t res = CASendResponse(endpoint, &responseInfo);
     if (res != CA_STATUS_OK)
-    {
+{
         printf("send response error\n");
     }
     else
@@ -1069,7 +1079,7 @@ int get_secure_information(CAPayload_t payLoad)
     }
 
     char portStr[4] = {0};
-    memcpy(portStr, startPos + 1, (endPos-1) - startPos);
+    memcpy(portStr, startPos + 1, (endPos - 1) - startPos);
 
     printf("secured port is: %s\n", portStr);
     return atoi(portStr);
@@ -1100,4 +1110,43 @@ void get_resource_uri(char *URI, char *resourceURI, int length)
         memcpy(resourceURI, startPos + 1, endPos - startPos);
 
     printf("URI: %s, ResourceURI:%s\n", URI, resourceURI);
+}
+
+CAConnectivityType_t get_network_type()
+{
+    char buf[MAX_BUF_LEN];
+
+    printf("\n=============================================\n");
+    printf("\tselect network type\n");
+    printf("ETHERNET : 0\n");
+    printf("WIFI : 1\n");
+    printf("EDR : 2\n");
+    printf("LE : 3\n");
+    printf("select : ");
+
+    memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+    gets(buf);
+
+    int number = buf[0] - '0';
+
+    number = (number < 0 || number > 3) ? 0 : 1 << number;
+
+    if (number & CA_ETHERNET)
+    {
+        return CA_ETHERNET;
+    }
+    if (number & CA_WIFI)
+    {
+        return CA_WIFI;
+    }
+    if (number & CA_EDR)
+    {
+        return CA_EDR;
+    }
+    if (number & CA_LE)
+    {
+        return CA_LE;
+    }
+
+    printf("\n=============================================\n");
 }

@@ -19,10 +19,12 @@
  ******************************************************************/
 
 #include "camsgparser.h"
-#include "cacommon.h"
-#include "caadapterutils.h"
 
 #include <string.h>
+#include <math.h>
+
+#include "cacommon.h"
+#include "caadapterutils.h"
 
 #define CA_MSG_PARSER_TAG "CA_MSG_PARSER"
 
@@ -66,22 +68,22 @@ CAResult_t CAGenerateHeader(char *header, uint32_t length)
         {
             if (i > 7)
             {
-                *header |= 1 << i - 8;
+                *header |= (1 << (i - 8));
             }
             else
             {
-                *(header + 1) |= 1 << i;
+                *(header + 1) |= (1 << i);
             }
         }
         else
         {
             if (i > 7)
             {
-                *header |= 0 << i - 8 ;
+                *header |= (0 << (i - 8));
             }
             else
             {
-                *(header + 1) |= 0 << i;
+                *(header + 1) |= (0 << i);
             }
         }
     }
@@ -131,7 +133,7 @@ uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen,
 {
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "IN");
 
-    VERIFY_NON_NULL(*data, NULL, "Param data is NULL");
+    VERIFY_NON_NULL(data, NULL, "Param data is NULL");
 
     uint32_t length = 0;
 
@@ -155,9 +157,11 @@ uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen,
         OIC_LOG_V(DEBUG, CA_MSG_PARSER_TAG, "generatingf the Header info");
 
         char *header = (char *) OICMalloc(sizeof(char) * CA_HEADER_LENGTH);
-        VERIFY_NON_NULL_RET(*header, CA_MSG_PARSER_TAG, "Malloc failed", -1);
+        VERIFY_NON_NULL_RET(header, CA_MSG_PARSER_TAG, "Malloc failed", -1);
+
 
         *dataSegment = (char *) OICMalloc(sizeof(char) * length);
+        ///TODO: memory leak is here.
         VERIFY_NON_NULL_RET(*dataSegment, CA_MSG_PARSER_TAG, "Malloc failed", -1);
 
         memset(header, 0x0, sizeof(char) * CA_HEADER_LENGTH );

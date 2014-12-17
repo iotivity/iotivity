@@ -180,8 +180,8 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath);
 *
 */
 CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, char *charUUID,
-                                               char *charValue, int32_t charValueLen,
-                                               int32_t read);
+        char *charValue, int32_t charValueLen,
+        int32_t read);
 
 /**
 * @fn  CARemoveCharacteristicsFromGattServer

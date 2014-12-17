@@ -139,7 +139,7 @@ static void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
                                    const CABool_t isSecured);
 #ifdef __WITH_DTLS__
 static uint32_t CAWiFiPacketSendCB(const char *ipAddress, const uint32_t port,
-        const void *data, const uint32_t dataLength);
+                                   const void *data, const uint32_t dataLength);
 #endif
 static CAResult_t CAWiFiStopServers();
 static void CAWiFiSendDataThread(void *threadData);
@@ -285,15 +285,27 @@ void CAWiFiConnectionStateCB(const char *ipAddress,
         if (CA_STATUS_OK != ret || NULL == address)
         {
             OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to get interface info [%d]", ret);
-            OICFree(address);
-            OICFree(ifcName);
+            if(address)
+            {
+                OICFree(address);
+            }
+            if(ifcName)
+            {
+                OICFree(ifcName);
+            }
             return;
         }
 
         // Notify network change to CA
         CAWiFiNotifyNetworkChange(address, port, status);
-        OICFree(address);
-        OICFree(ifcName);
+        if(address)
+        {
+            OICFree(address);
+        }
+        if(ifcName)
+        {
+            OICFree(ifcName);
+        }
     }
     else
     {
@@ -308,7 +320,7 @@ void CAWiFiConnectionStateCB(const char *ipAddress,
 
 #ifdef __WITH_DTLS__
 uint32_t CAWiFiPacketSendCB(const char *ipAddress, const uint32_t port,
-                                 const void *data, const uint32_t dataLength)
+                            const void *data, const uint32_t dataLength)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
@@ -437,10 +449,10 @@ CAResult_t CAStartWIFI()
         return CA_STATUS_OK;
     }
 
-    char *ifcName;
-    char *ifcAdrs;
+    char *ifcName = NULL;
+    char *ifcAdrs = NULL;
     ret = CAWiFiGetInterfaceInfo(&ifcName, &ifcAdrs);
-    if(CA_STATUS_OK != ret)
+    if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Failed to get wifi interface info [%d]", ret);
         return ret;
@@ -468,10 +480,16 @@ CAResult_t CAStartWIFI()
         gSecureUnicastServerport = unicastPort;
     }
 #endif
-    OICFree(ifcName);
-    OICFree(ifcAdrs);
+    if(ifcName)
+    {
+         OICFree(ifcName);
+    }
+    if(ifcAdrs)
+    {
+         OICFree(ifcAdrs);
+    }
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
-    return ret;;
+    return ret;
 }
 
 CAResult_t CAStartWIFIListeningServer()
@@ -497,10 +515,10 @@ CAResult_t CAStartWIFIListeningServer()
         return CA_STATUS_OK;
     }
 
-    char *ifcName;
-    char *ifcAdrs;
+    char *ifcName = NULL;
+    char *ifcAdrs = NULL;
     ret = CAWiFiGetInterfaceInfo(&ifcName, &ifcAdrs);
-    if(CA_STATUS_OK != ret)
+    if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Failed to get wifi interface info [%d]", ret);
         return ret;
@@ -514,8 +532,14 @@ CAResult_t CAStartWIFIListeningServer()
         gIsMulticastServerStarted = true;
     }
 
-    OICFree(ifcName);
-    OICFree(ifcAdrs);
+    if(ifcName)
+    {
+         OICFree(ifcName);
+    }
+    if(ifcAdrs)
+    {
+        OICFree(ifcAdrs);
+    }
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return ret;
 }
@@ -619,9 +643,18 @@ CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t 
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to get interface info [%d]", ret);
 
-        OICFree(netInfo);
-        OICFree(ipAddress);
-        OICFree(ifcName);
+        if(netInfo)
+        {
+            OICFree(netInfo);
+        }
+        if(ipAddress)
+        {
+            OICFree(ipAddress);
+        }
+        if(ifcName)
+        {
+            OICFree(ifcName);
+        }
         return ret;
     }
 
@@ -631,9 +664,18 @@ CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t 
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to create Local Endpoint!",
                   CA_MEMORY_ALLOC_FAILED);
-        OICFree(netInfo);
-        OICFree(ipAddress);
-        OICFree(ifcName);
+        if(netInfo)
+        {
+            OICFree(netInfo);
+        }
+        if(ipAddress)
+        {
+            OICFree(ipAddress);
+        }
+        if(ifcName)
+        {
+            OICFree(ifcName);
+        }
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -654,8 +696,14 @@ CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t 
 #endif
     *info = netInfo;
 
-    OICFree(ipAddress);
-    OICFree(ifcName);
+    if(ipAddress)
+    {
+        OICFree(ipAddress);
+    }
+    if(ifcName)
+    {
+        OICFree(ifcName);
+    }
     CAAdapterFreeLocalEndpoint(endpoint);
 
     OIC_LOG(INFO, WIFI_ADAPTER_TAG, "GetWIFIInterfaceInformation success");
@@ -733,6 +781,9 @@ void CATerminateWIfI()
 
     // Stop wifi adapter
     CAStopWIFI();
+
+    // Terminate wifi server
+    CAWiFiTerminateServer();
 
     // Terminate network monitor
     CAWiFiSetConnectionStateChangeCallback(NULL);

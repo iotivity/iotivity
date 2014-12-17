@@ -93,11 +93,25 @@
                 android:text="@string/notification" />
         </RelativeLayout>
         
+         <RelativeLayout
+            android:id="@+id/layout_request_setting"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/layout_find" >
+
+            <Button
+                android:id="@+id/btn_Request_setting"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="@string/request_setting" />
+        </RelativeLayout>
+        
         <RelativeLayout
             android:id="@+id/layout_request"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/layout_find" >
+            android:layout_below="@id/layout_request_setting" >
 
             <Button
                 android:id="@+id/btn_Request"

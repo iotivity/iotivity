@@ -12,7 +12,7 @@ extern "C" {
  * Method:    RMInitialize
  * Signature: (Landroid/content/Context;)I
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
   (JNIEnv *, jobject, jobject);
 
 /*
@@ -26,73 +26,65 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMTerminate
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMStartListeningServer
- * Signature: ()I
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMStartListeningServer
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMStartListeningServer
   (JNIEnv *, jobject);
 
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMStartDiscoveryServer
- * Signature: ()I
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMStartDiscoveryServer
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMStartDiscoveryServer
   (JNIEnv *, jobject);
 
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMRegisterHandler
- * Signature: ()I
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMRegisterHandler
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMRegisterHandler
   (JNIEnv *, jobject);
 
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMFindResource
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMFindResource
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMFindResource
   (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMSendRequest
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest
-  (JNIEnv *, jobject, jstring);
-
-/*
- * Class:     com_iotivity_service_RMInterface
- * Method:    RMSendResponse
- * Signature: (Ljava/lang/String;)I
- */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse
-  (JNIEnv *, jobject, jstring);
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest
+  (JNIEnv *, jobject, jstring, jint, jint, jint);
 
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMSendNotification
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification
-  (JNIEnv *, jobject, jstring);
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification
+  (JNIEnv *, jobject, jstring, jint);
 
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMSelectNetwork
- * Signature: (I)I
+ * Signature: (I)V
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSelectNetwork
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSelectNetwork
   (JNIEnv *, jobject, jint);
 
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMHandleRequestResponse
- * Signature: ()I
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMHandleRequestResponse
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMHandleRequestResponse
   (JNIEnv *, jobject);
 
 #ifdef __cplusplus

@@ -36,9 +36,15 @@ extern "C"
 
 typedef void (*CAPacketReceiveCallback)(const char *address, const char *data);
 
+void CALEClientJNISetContext(JNIEnv *env, jobject context);
+
+void CALeCreateJniInterfaceObject();
+
 void CALEInitialize(u_thread_pool_t handle);
 
 void CALETerminate();
+
+void CANativeSendFinsih(JNIEnv *env, jobject gatt);
 
 int32_t CALESendUnicastMessage(const char *address, const char *data, uint32_t dataLen);
 
@@ -96,23 +102,26 @@ void CANativeLEStopScan();
 
 void CANativeLEStopScanImpl(JNIEnv *env, jobject callback);
 
-void CANativeLEConnect(JNIEnv *env, jobject bluetoothDevice, jobject context, jboolean autoconnect,
-                       jobject callback);
+int32_t CANativeLEConnect(JNIEnv *env, jobject bluetoothDevice, jobject context,
+                          jboolean autoconnect, jobject callback);
 
 void CANativeLEDisconnect(JNIEnv *env, jobject bluetoothGatt);
 
 void CANativeLEDiscoverServices(JNIEnv *env, jobject bluetoothGatt);
 
-void CANativeLESendData(JNIEnv *env, jobject bluetoothGatt, jobject gattCharacteristic);
+jboolean CANativeLESendData(JNIEnv *env, jobject bluetoothGatt, jobject gattCharacteristic);
 
-jboolean CANativeSetCharacteristicNoti(JNIEnv *env, jobject bluetoothGatt);
+void CANativeReadCharacteristic(JNIEnv *env, jobject bluetoothGatt);
 
-jobject CANativeCreateGattCharacteristic(JNIEnv *env, jobject bluetoothGatt, jstring data);
+jboolean CANativeSetCharacteristicNoti(JNIEnv *env, jobject bluetoothGatt, const char* uuid);
+
+jobject CANativeCreateGattCharacteristic(JNIEnv *env, jobject bluetoothGatt, jbyteArray data);
 
 jobject CANativeGetGattService(JNIEnv *env, jobject bluetoothGatt, jstring characterUUID);
 
 jbyteArray CANativeGetValueFromCharacteristic(JNIEnv *env, jobject characteristic);
 
+void CANativeCreateUUIDList();
 /**
  * BluetoothDevice List
  */
@@ -144,6 +153,8 @@ void CANativeLEDisconnectAll(JNIEnv *env);
 void CANativeRemoveGattObj(JNIEnv *env, jstring address);
 
 void CAReorderingGattList(uint32_t index);
+
+void CANativeupdateSendCnt(JNIEnv *env);
 
 #ifdef __cplusplus
 } /* extern "C" */

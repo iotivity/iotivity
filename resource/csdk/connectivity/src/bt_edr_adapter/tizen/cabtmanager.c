@@ -218,14 +218,14 @@ static void CABTManagerDataReceiverHandler(void *context);
  * @brief This function sends data to specified remote bluetooth device.
  */
 static CAResult_t CABTManagerSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                             void *data, uint32_t dataLength, uint32_t *sentLength);
+        void *data, uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @fn CABTManagerSendMulticastData
  * @brief This function sends data to all bluetooth devices running OIC service.
  */
 static CAResult_t CABTManagerSendMulticastData(const char *serviceUUID, void *data,
-                                               uint32_t dataLength, uint32_t *sentLength);
+        uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @fn CABTGetAdapterEnableState
@@ -1320,30 +1320,12 @@ void CABTDataRecvCallback(bt_socket_received_data_s *data, void *userData)
     }
     u_mutex_unlock(gBTDeviceListMutex);
 
-    /*    //Create RemoteEndPoint
-        CARemoteEndpoint_t *remoteEndpoint = NULL;
-        remoteEndpoint = CAAdapterCreateRemoteEndpoint(CA_EDR, device->remoteAddress,
-                         OIC_BT_SERVICE_ID);
-        if (NULL == remoteEndpoint)
-        {
-            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed to crate remote endpoint!");
-            return;
-        }
-
-        void *copyData = OICMalloc(data->data_size);
-        if (NULL == copyData)
-        {
-            OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Failed allocate memory!");
-            CAAdapterFreeRemoteEndpoint(remoteEndpoint);
-            return;
-        }
-        memcpy(copyData, data->data, data->data_size);
-    */
     uint32_t sentLength = 0;
 
     CAResult_t res = CABTManagerPushDataToReceiverQueue(device->remoteAddress, OIC_BT_SERVICE_ID,
                      data->data, (uint32_t)data->data_size, &sentLength);
-//    gNetworkPacketReceivedCallback(remoteEndpoint, copyData, (uint32_t)data->data_size);
+
+    OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "CABTManagerPushDataToReceiverQueue done [%d]", res);
 
     OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
 }

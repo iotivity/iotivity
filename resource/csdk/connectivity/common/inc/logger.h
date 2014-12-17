@@ -162,13 +162,14 @@ void OICLogv(LogLevel level, const char *tag, const int16_t lineNum, const char 
 #define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
 #else // These macros are defined for Linux, Android, and Arduino
 #define OIC_LOG_INIT()    OICLogInit()
-#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)  OICLogBuffer((level), (tag), (buffer), (bufferSize))
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
+    OICLogBuffer((level), (tag), (buffer), (bufferSize))
 
 #ifdef ARDUINO
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
 #define OIC_LOG(level, tag, logStr)  OICLog((level), (tag), __LINE__, (logStr))
-#define OIC_LOG_V(level, tag, ...)
+#define OIC_LOG_V(level, tag, ...) OICLogv((level), (tag), __LINE__, __VA_ARGS__)
 #else
 #define OIC_LOG_CONFIG(ctx)    OICLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OICLogShutdown()

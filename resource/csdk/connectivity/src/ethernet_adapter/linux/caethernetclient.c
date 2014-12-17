@@ -94,6 +94,7 @@ static uint32_t CASendData(const char *remoteAddress, const uint32_t port,
 void CAEthernetSetUnicastSocket(const int32_t socketFD)
 {
     OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
+
     gUnicastServerSocketDescClient = socketFD;
 }
 
@@ -101,6 +102,7 @@ void CAEthernetSetUnicastSocket(const int32_t socketFD)
 void CAEthernetSetSecureUnicastSocket(const int32_t socketFD)
 {
     OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
+
     gUnicastServerSecureSocketDescClient = socketFD;
 }
 #endif
@@ -127,4 +129,3 @@ uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
 #endif
     return len;
 }
-

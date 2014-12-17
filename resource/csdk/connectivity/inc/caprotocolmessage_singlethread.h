@@ -194,7 +194,7 @@ void CADeinitialize(CAInfo_t *info);
  * @param   size       [IN]    size of pdu data
  * @return  message type
  */
-CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void* pdu, uint32_t size);
+CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size);
 
 /**
  * @brief   gets message ID PDU binary data
@@ -202,7 +202,7 @@ CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void* pdu, uint32_t size
  * @param   size       [IN]    size of pdu data
  * @return  message ID
  */
-uint16_t CAGetMessageIdFromPduBinaryData(const void* pdu, uint32_t size);
+uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size);
 
 #ifdef __cplusplus
 } /* extern "C" */

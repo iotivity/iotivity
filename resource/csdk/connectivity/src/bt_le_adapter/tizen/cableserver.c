@@ -39,8 +39,8 @@
  */
 #define TZ_BLE_SERVER_TAG "TZ_BLE_GATT_SERVER"
 
-///TODO:: Currently keeping as single service. Later service path will be added in list for \
-///TODO:: supporting multiple services.
+/* TODO:: Currently keeping as single service. Later service path will be added in list for
+  * supporting multiple services */
 
 #define CA_BLE_SERVICE_UUID  "713d0000-503e-4c75-ba94-3148f18d941e"
 
@@ -623,7 +623,7 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
 
     memset(data, 0x0, charValueLen + 1);
 
-    strncpy(data, charValue, charValueLen);
+    strncpy(data, (char *)charValue, charValueLen);
 
     uint32_t sentLength = 0;
 

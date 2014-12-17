@@ -30,13 +30,31 @@ BUILD_FLAG.release	=	$(DEFINE_FLAG)
 BUILD_FLAG = $(BUILD_FLAG.$(BUILD))
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#Build glib
+#include glib
+
 include $(CLEAR_VARS)
+LOCAL_PATH = $(PROJECT_LIB_PATH)/android
+LOCAL_MODULE = Glib
+LOCAL_SRC_FILES := libglib-2.0.so
+LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-master \
+                          $(PROJECT_LIB_PATH)/android/glib-master/android
+include $(PREBUILT_SHARED_LIBRARY)
 
-include $(PROJECT_LIB_PATH)/android/glib-master/Android.mk
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#include glibthread
 
+include $(CLEAR_VARS)
+LOCAL_PATH = $(PROJECT_LIB_PATH)/android
+LOCAL_MODULE = GLibThread
+LOCAL_SRC_FILES := libgthread-2.0.so
+LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-master \
+                          $(PROJECT_LIB_PATH)/android/glib-master/android
+
+include $(PREBUILT_SHARED_LIBRARY)
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #Build CACommon
+
 include $(CLEAR_VARS)
 
 #Build Common Libraries
@@ -44,14 +62,11 @@ LOCAL_PATH = $(PROJECT_COMMON_SRC_PATH)
 LOCAL_MODULE = CACommon
 LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
 
-LOCAL_SHARED_LIBRARIES = glib-2.0 gthread-2.0
-
+LOCAL_SHARED_LIBRARIES = Glib GLibThread
 LOCAL_CFLAGS = -D__ANDROID__ $(DEBUG_FLAG)
 
 LOCAL_C_INCLUDES = $(PROJECT_COMMON_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_API_PATH)
-LOCAL_C_INCLUDES += $(PROJECT_LIB_PATH)/android/glib-master \
-					$(PROJECT_LIB_PATH)/android/glib-master/android
 
 LOCAL_SRC_FILES	=	oic_logger.c \
 					oic_console_logger.c logger.c oic_malloc.c \
@@ -100,8 +115,6 @@ LOCAL_C_INCLUDES += $(PROJECT_COMMON_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_LIB_PATH)/libcoap-4.1.1
 
-LOCAL_C_INCLUDES += $(PROJECT_LIB_PATH)/android/glib-master \
-					$(PROJECT_LIB_PATH)/android/glib-master/android
 
 LOCAL_CFLAGS += $(BUILD_FLAG)
 
@@ -109,10 +122,10 @@ LOCAL_SRC_FILES	= \
 					caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c camessagehandler.c \
 					canetworkconfigurator.c caprotocolmessage.c caretransmission.c \
 					caqueueingthread.c \
-					$(ADAPTER_UTILS)/caadapterutils.c $(ADAPTER_UTILS)/camessagequeue.c \
+					$(ADAPTER_UTILS)/caadapterutils.c \
 					$(ADAPTER_UTILS)/camsgparser.c \
 					$(EDR_ADAPTER_PATH)/caedradapter.c \
-					$(LE_ADAPTER_PATH)/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c $(LE_ADAPTER_PATH)/caleserver.c \
+					$(LE_ADAPTER_PATH)/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c $(LE_ADAPTER_PATH)/caleserver.c $(LE_ADAPTER_PATH)/caleutils.c $(LE_ADAPTER_PATH)/calenwmonitor.c \
 					wifi_adapter/cawifiadapter.c $(WIFI_ADAPTER_PATH)/cawifiserver.c \
 					$(WIFI_ADAPTER_PATH)/cawificlient.c $(WIFI_ADAPTER_PATH)/cawifinwmonitor.c 
 

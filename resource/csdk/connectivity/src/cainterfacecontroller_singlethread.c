@@ -36,7 +36,8 @@
 
 #define TAG "CAIFCNT_ST"
 
-#define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "Out of memory"); goto memory_error_exit;} }
+#define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "Out of memory");\
+    goto memory_error_exit;} }
 
 #define CA_CONNECTIVITY_TYPE_NUM   4
 
@@ -81,7 +82,8 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CAConnectivityTy
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
+static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, 
+    uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 

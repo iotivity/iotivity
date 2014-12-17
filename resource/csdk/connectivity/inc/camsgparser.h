@@ -149,8 +149,8 @@ uint32_t CAParseHeader(const char *header);
 *            data segment.
 * @param[in]  data       Pointer to the Complete data which needs to be fragmented.
 * @param[in]  TotalLen Total length of the data sent from the CA layer. This will be
-*                                 decremented everytime when we call this function for the subsequent
-*                                 time withthe MTU size.
+*                                 decremented everytime when we call this function for the 
+*								subsequent time withthe MTU size.
 * @param[in]  Offset     Initially this value will be zero. Later this value will be represented
 *                                 as the amount of data which has already been fragmented.
 *
@@ -161,7 +161,8 @@ uint32_t CAParseHeader(const char *header);
 * @return  -1 On error condition.
 * @retval  Returns the length of the data which has been fragmented and sent to the upper layer.
 */
-uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen, uint32_t offset);
+uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen, 
+                                        uint32_t offset);
 
 #ifdef __cplusplus
 } /* extern "C" */

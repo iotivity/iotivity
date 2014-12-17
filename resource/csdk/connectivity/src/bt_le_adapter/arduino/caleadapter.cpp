@@ -30,7 +30,7 @@
 static CANetworkChangeCallback networkCallback = NULL;
 static bool gServerRunning = false;
 #define BLE_ADDRESS "DB:F7:EB:B5:0F:07"
-#define TAG "CALEADAPTER"
+#define TAG "LAD"
 
 #define COAP_MAX_PDU_SIZE 320
 
@@ -72,7 +72,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == registerCallback || NULL == reqRespCallback || NULL == netCallback)
     {
-        OIC_LOG(ERROR, TAG, "Invalid Parameter");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -135,7 +135,7 @@ CAResult_t CAStartLENotifyServer()
 }
 
 uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, void *data,
-                                        uint32_t dataLen)
+                              uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -161,42 +161,42 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *char_value,
 
     if (CA_STATUS_OK != result)
     {
-         return CA_STATUS_FAILED;
+        return CA_STATUS_FAILED;
     }
 
     int32_t index = 0;
 
-    if(!CAIsBleConnected())
+    if (!CAIsBleConnected())
     {
-        OIC_LOG(DEBUG, TAG, "ble is not connected");
+        OIC_LOG(DEBUG, TAG, "le not conn");
         return CA_STATUS_FAILED;
     }
 
     CAWriteBleData((unsigned char *)header, CA_HEADER_LENGTH);
-    int32_t iter = value_length/CA_SUPPORTED_BLE_MTU_SIZE;
+    int32_t iter = value_length / CA_SUPPORTED_BLE_MTU_SIZE;
 
     for (index = 0; index < iter; index++)
     {
         CAWriteBleData((unsigned char *)(char_value + (index * CA_SUPPORTED_BLE_MTU_SIZE)),
-                                                   (unsigned char) CA_SUPPORTED_BLE_MTU_SIZE);
+                       (unsigned char) CA_SUPPORTED_BLE_MTU_SIZE);
         CABleDoEvents();
     }
 
     CAWriteBleData((unsigned char *)(char_value + (index * CA_SUPPORTED_BLE_MTU_SIZE)),
-                                    (unsigned char) value_length%CA_SUPPORTED_BLE_MTU_SIZE);
+                   (unsigned char) value_length % CA_SUPPORTED_BLE_MTU_SIZE);
     CABleDoEvents();
-    OIC_LOG(DEBUG, TAG, "ble_write_bytes had been done");
+    OIC_LOG(DEBUG, TAG, "writebytes done");
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
-                                        uint32_t dataLen)
+                             uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == remoteEndpoint)
     {
-        OIC_LOG(ERROR, TAG, "Invalid Input Parameter");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_STATUS_INVALID_PARAM;
     }
     CAUpdateCharacteristicsInGattServer((char *)data, dataLen);
@@ -209,7 +209,7 @@ uint32_t CASendLEMulticastData(void *data, uint32_t dataLen)
     OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == data || 0 == dataLen)
     {
-        OIC_LOG(ERROR, TAG, "Invalid Parameter");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_STATUS_INVALID_PARAM;
     }
     CAUpdateCharacteristicsInGattServer((char *)data, dataLen);
@@ -223,7 +223,7 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
 
     if (NULL == info || NULL == size)
     {
-        OIC_LOG(DEBUG, TAG, "Invalid Parameter");
+        OIC_LOG(DEBUG, TAG, "error");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -233,7 +233,7 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     (*info) = CAAdapterCreateLocalEndpoint(CA_LE, BLE_ADDRESS);
     if (NULL == (*info))
     {
-        OIC_LOG(DEBUG, TAG, "Out of memory");
+        OIC_LOG(DEBUG, TAG, "error");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -292,27 +292,35 @@ void CACheckData()
         if (NULL == gCoapBuffer)
         {
             OIC_LOG(DEBUG, TAG, "IN");
-            gCoapBuffer = (char *)OICMalloc(COAP_MAX_PDU_SIZE);
+            char headerArray[2] = "";
+            while (CAIsBleDataAvailable() && dataLen < 2)
+            {
+                headerArray[dataLen++] = CAReadBleData();
+            }
+
+            packetDataLen = CAParseHeader(headerArray);
+
+    	    if (packetDataLen > COAP_MAX_PDU_SIZE)
+    	    {
+        		OIC_LOG(ERROR, TAG, "error");
+        		return;
+    	    }
+            gCoapBuffer = (char *)OICMalloc(packetDataLen);
             if (NULL == gCoapBuffer)
             {
                 OIC_LOG(DEBUG, TAG, "error");
                 return;
             }
-            while (CAIsBleDataAvailable() && dataLen < 2)
-            {
-                gCoapBuffer[dataLen++] = CAReadBleData();
-            }
 
-            packetDataLen = CAParseHeader(gCoapBuffer);
             OIC_LOG(DEBUG, TAG, "OUT");
-            memset(gCoapBuffer, 0, COAP_MAX_PDU_SIZE);
+            memset(gCoapBuffer, 0, packetDataLen);
             dataLen = 0;
         }
 
         OIC_LOG(DEBUG, TAG, "IN");
         while (CAIsBleDataAvailable())
         {
-            OIC_LOG(DEBUG, TAG, "Inside While loop");
+            OIC_LOG(DEBUG, TAG, "In While loop");
             gCoapBuffer[dataLen++] = CAReadBleData();
             if (dataLen == packetDataLen)
             {
@@ -333,7 +341,7 @@ void CACheckData()
     }
     else
     {
-        OIC_LOG(DEBUG, TAG, "No Data on BLE server");
+        OIC_LOG(DEBUG, TAG, "NoData");
     }
     return;
 }

@@ -99,13 +99,16 @@ CAResult_t CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback Re
  * @brief   Create a Remote endpoint if the URI is available already.
  *          for FindResource-> unicast requests , this API is used.
  *          FindResource(URI)-> CACreateRemoteEndpoint , CASendRequest(GET)
- * @param   uri     [IN]    Absolute URI of the resource to be used to generate the Remote endpoint
+ * @param   uri     [IN]    Absolute URI of the resource to be used to generate the
+ *                          Remote endpoint
  *                          for ex : coap://10.11.12.13:4545/resource_uri ( for IP)
  *                          coap://10:11:12:13:45:45/resource_uri ( for BT)
+ * @param   type    [IN]    connectivity type of the endpoint
  * @param   object  [OUT ]  Endpoint object which contains the above parsed data
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, CARemoteEndpoint_t **object);
+CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
+        const CAConnectivityType_t connectivityType, CARemoteEndpoint_t **object);
 
 /**
  * @brief   API Destroy the remote endpoint created

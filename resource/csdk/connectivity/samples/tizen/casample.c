@@ -58,6 +58,8 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
 void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
 void send_request_tmp(CARemoteEndpoint_t *endpoint, CAToken_t token);
 void terminate();
+CAConnectivityType_t get_network_type();
+
 
 void pthread_func()
 {
@@ -209,6 +211,9 @@ void send_request()
     char buf[MAX_BUF_LEN];
 
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+    CAConnectivityType_t selectedNetwork;
+
+    selectedNetwork = get_network_type();
 
     printf("\n=============================================\n");
     printf("10.11.12.13:4545/resource_uri ( for IP )\n");
@@ -219,7 +224,7 @@ void send_request()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf, &endpoint);
+    CAResult_t res = CACreateRemoteEndpoint(buf,selectedNetwork, &endpoint);
 
     if (res != CA_STATUS_OK)
     {
@@ -521,3 +526,43 @@ void terminate()
 {
     unselect_network();
 }
+
+CAConnectivityType_t get_network_type()
+{
+    char buf[MAX_BUF_LEN];
+
+    printf("\n=============================================\n");
+    printf("\tselect network type\n");
+    printf("ETHERNET : 0\n");
+    printf("WIFI : 1\n");
+    printf("EDR : 2\n");
+    printf("LE : 3\n");
+    printf("select : ");
+
+    memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+    gets(buf);
+
+    int number = buf[0] - '0';
+
+    number = (number < 0 || number > 3) ? 0 : 1 << number;
+
+    if (number & CA_ETHERNET)
+    {
+        return CA_ETHERNET;
+    }
+    if (number & CA_WIFI)
+    {
+        return CA_WIFI;
+    }
+    if (number & CA_EDR)
+    {
+        return CA_EDR;
+    }
+    if (number & CA_LE)
+    {
+        return CA_LE;
+    }
+
+    printf("\n=============================================\n");
+}
+

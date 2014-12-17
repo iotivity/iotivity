@@ -87,7 +87,7 @@ static CAWiFiConnectionStateChangeCallback gNetworkChangeCb = NULL;
  * @brief This methods gets local interface name and IP address information.
  */
 static void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress,
-                                          char **subnetMask);
+        char **subnetMask);
 
 static void CANetworkMonitorThread(void *threadData);
 
@@ -193,16 +193,16 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
     // Get the interface and ipaddress information from cache
     u_mutex_lock(gWifiNetInfoMutex);
 
-    if(gWifiInterfaceName == NULL || gWifiIPAddress == NULL)
+    if (gWifiInterfaceName == NULL || gWifiIPAddress == NULL)
     {
         OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Network not enabled");
         return CA_ADAPTER_NOT_ENABLED;
 
     }
-    *interfaceName = (gWifiInterfaceName) ? strndup(gWifiInterfaceName,strlen(gWifiInterfaceName))
-                               : NULL;
-    *ipAddress = (gWifiIPAddress) ? strndup(gWifiIPAddress,strlen(gWifiIPAddress))
-                               : NULL;
+    *interfaceName = (gWifiInterfaceName) ? strndup(gWifiInterfaceName, strlen(gWifiInterfaceName))
+                     : NULL;
+    *ipAddress = (gWifiIPAddress) ? strndup(gWifiIPAddress, strlen(gWifiIPAddress))
+                 : NULL;
 
     u_mutex_unlock(gWifiNetInfoMutex);
 
@@ -217,14 +217,14 @@ CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask)
     VERIFY_NON_NULL(subnetMask, WIFI_MONITOR_TAG, "subnet mask");
 
     u_mutex_lock(gWifiNetInfoMutex);
-    if(NULL == gWifiSubnetMask)
+    if (NULL == gWifiSubnetMask)
     {
         OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "There is no subnet mask information!");
         return CA_STATUS_FAILED;
     }
 
-    *subnetMask = (gWifiSubnetMask) ? strndup(gWifiSubnetMask,strlen(gWifiSubnetMask))
-                               : NULL;
+    *subnetMask = (gWifiSubnetMask) ? strndup(gWifiSubnetMask, strlen(gWifiSubnetMask))
+                  : NULL;
     u_mutex_unlock(gWifiNetInfoMutex);
 
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
@@ -264,7 +264,7 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
     if (-1 == getifaddrs(&ifp))
     {
         OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface list!, Error code: %s",
-                          strerror(errno));
+                  strerror(errno));
         return;
     }
 
@@ -291,24 +291,24 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
             continue;
         }
 
-        if (!strncasecmp(ifa->ifa_name,matchName,strlen(matchName)))
+        if (!strncasecmp(ifa->ifa_name, matchName, strlen(matchName)))
         {
             // get the interface ip address
             if (0 != getnameinfo(ifa->ifa_addr, len, interfaceAddress,
-                            sizeof(interfaceAddress), NULL, 0, NI_NUMERICHOST))
+                                 sizeof(interfaceAddress), NULL, 0, NI_NUMERICHOST))
             {
-                    OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get IPAddress, Error code: %s",
-                              strerror(errno));
-                    break;
+                OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get IPAddress, Error code: %s",
+                          strerror(errno));
+                break;
             }
 
             // get the interface subnet mask
             if (0 != getnameinfo(ifa->ifa_netmask, len, interfaceSubnetMask,
-                            sizeof(interfaceSubnetMask), NULL, 0, NI_NUMERICHOST))
+                                 sizeof(interfaceSubnetMask), NULL, 0, NI_NUMERICHOST))
             {
-                    OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get subnet mask, Error code: %s",
-                              strerror(errno));
-                    break;
+                OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get subnet mask, Error code: %s",
+                          strerror(errno));
+                break;
             }
 
             // set interface name

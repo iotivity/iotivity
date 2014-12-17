@@ -37,17 +37,18 @@
  * @var gUnicastServerSocketDescClient
  * @brief socket descriptor for unicast server
  */
-static int gUnicastServerSocketDescClient = -1;
+static int32_t gUnicastServerSocketDescClient = -1;
 
-void CAWiFiSetUnicastSocket(const int32_t socketFD)
-{
-    OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "IN");
+#ifdef __WITH_DTLS__
+/**
+ * @var gUnicastServerSocketDescClient
+ * @brief socket descriptor for secure unicast server
+ */
+static int32_t gUnicastServerSecureSocketDescClient = -1;
+#endif
 
-    gUnicastServerSocketDescClient = socketFD;
-}
-
-uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
-                        const void *data, const uint32_t dataLength, bool isMulticast)
+static uint32_t CASendData(const char *remoteAddress, const uint32_t port,
+                           const void *data, const uint32_t dataLength, int32_t sockfd)
 {
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "IN");
 
@@ -60,7 +61,7 @@ uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
         return 0;
     }
 
-    if (0 > gUnicastServerSocketDescClient)
+    if (0 > sockfd)
     {
         OIC_LOG(ERROR, WIFI_CLIENT_TAG, "Unicast Server is not running !");
         return 0;
@@ -78,7 +79,7 @@ uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
         return 0;
     }
 
-    int32_t sendDataLength = sendto(gUnicastServerSocketDescClient, data, dataLength, 0,
+    int32_t sendDataLength = sendto(sockfd, data, dataLength, 0,
                                     (struct sockaddr *)&destAddr, sizeof(destAddr));
     if (sendDataLength == -1)
     {
@@ -91,4 +92,47 @@ uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "OUT");
     return sendDataLength;
 }
+
+void CAWiFiSetUnicastSocket(const int32_t socketFD)
+{
+    OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "IN");
+
+    gUnicastServerSocketDescClient = socketFD;
+
+    OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "OUT");
+}
+
+#ifdef __WITH_DTLS__
+void CAWiFiSetSecureUnicastSocket(const int32_t socketFD)
+{
+    OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "IN");
+
+    gUnicastServerSecureSocketDescClient = socketFD;
+
+    OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "OUT");
+}
+#endif
+uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
+                        const void *data, const uint32_t dataLength,
+                        CABool_t isMulticast, CABool_t isSecured)
+{
+    uint32_t len = 0;
+
+#ifdef __WITH_DTLS__
+    if (CA_TRUE == isSecured)
+    {
+        len  = CASendData(remoteAddress, port,
+                          data, dataLength, gUnicastServerSecureSocketDescClient);
+    }
+    else
+    {
+#endif
+        len =  CASendData(remoteAddress, port,
+                          data, dataLength, gUnicastServerSocketDescClient);
+#ifdef __WITH_DTLS__
+    }
+#endif
+    return len;
+}
+
 

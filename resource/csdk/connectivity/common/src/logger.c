@@ -27,10 +27,13 @@
 #include <avr/pgmspace.h>
 #endif
 
+#ifndef __TIZEN__
 static oic_log_ctx_t *logCtx = 0;
 
 static oic_log_level LEVEL_XTABLE[] =
 { OIC_LOG_DEBUG, OIC_LOG_INFO, OIC_LOG_WARNING, OIC_LOG_ERROR, OIC_LOG_FATAL };
+
+#endif
 
 static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 +
         1; // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
@@ -393,4 +396,3 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const __FlashStringHelper 
 }
 
 #endif //ARDUINO
-

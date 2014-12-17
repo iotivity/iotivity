@@ -147,7 +147,7 @@ typedef struct
     bool *stopFlag;
     int32_t socket_fd;
     CAAdapterServerType_t type;
-}CAAdapterReceiveThreadContext_t;
+} CAAdapterReceiveThreadContext_t;
 
 static void CAReceiveHandler(void *data)
 {
@@ -228,14 +228,14 @@ static void CAReceiveHandler(void *data)
             continue;
         }
 
-        if(!CAAdapterIsSameSubnet(gMulticastServerInterface, srcIPAddress, netMask))
+        if (!CAAdapterIsSameSubnet(gMulticastServerInterface, srcIPAddress, netMask))
         {
             OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Packet received from different subnet, Ignore!");
             continue;
         }
 
         OICFree(netMask);
-        switch(ctx->type)
+        switch (ctx->type)
         {
             case CA_UNICAST_SERVER:
             case CA_MULTICAST_SERVER:
@@ -249,9 +249,9 @@ static void CAReceiveHandler(void *data)
             case CA_SECURED_UNICAST_SERVER:
                 {
                     CAResult_t ret = CAAdapterNetDtlsDecrypt(srcIPAddress,
-                                        srcPort,
-                                        (uint8_t *)recvBuffer,
-                                        recvLen, DTLS_WIFI);
+                                     srcPort,
+                                     (uint8_t *)recvBuffer,
+                                     recvLen, DTLS_WIFI);
                     OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "CAAdapterNetDtlsDecrypt returns [%d]", ret);
                 }
                 break;
@@ -267,7 +267,7 @@ static void CAReceiveHandler(void *data)
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
 }
 
-static CAResult_t CAWiFiCreateSocket(int32_t* socketFD, const char *localIp, int16_t *port,
+static CAResult_t CAWiFiCreateSocket(int32_t *socketFD, const char *localIp, int16_t *port,
                                      const bool forceStart)
 {
     int32_t sock = -1;
@@ -311,7 +311,7 @@ static CAResult_t CAWiFiCreateSocket(int32_t* socketFD, const char *localIp, int
     memset((char *) &sockAddr, 0, sizeof(sockAddr));
     sockAddr.sin_family = AF_INET;
     sockAddr.sin_port = htons(serverPort);
-    if(localIp)
+    if (localIp)
     {
         sockAddr.sin_addr.s_addr = inet_addr(localIp);
     }
@@ -385,7 +385,7 @@ static CAResult_t CAStartUnicastServer(const char *localAddress, int16_t *port,
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
     CAResult_t ret = CAWiFiCreateSocket(serverFD, localAddress, port, forceStart);
-    if(CA_STATUS_OK != ret)
+    if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to create unicast socket");
         return ret;
@@ -399,8 +399,8 @@ static CAResult_t CAStartUnicastServer(const char *localAddress, int16_t *port,
       * Thread context will be freed by thread on exit.
       */
     CAAdapterReceiveThreadContext_t *ctx = (CAAdapterReceiveThreadContext_t *)
-                                            OICMalloc(sizeof(CAAdapterReceiveThreadContext_t));
-    if(!ctx)
+                                           OICMalloc(sizeof(CAAdapterReceiveThreadContext_t));
+    if (!ctx)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Out of memory!");
         close(*serverFD);
@@ -409,7 +409,7 @@ static CAResult_t CAStartUnicastServer(const char *localAddress, int16_t *port,
 
     ctx->stopFlag = &gStopUnicast;
     ctx->socket_fd = *serverFD;
-    ctx->type = isSecured ? CA_SECURED_UNICAST_SERVER:CA_UNICAST_SERVER;
+    ctx->type = isSecured ? CA_SECURED_UNICAST_SERVER : CA_UNICAST_SERVER;
     if (CA_STATUS_OK != u_thread_pool_add_task(gThreadPool, CAReceiveHandler, (void *)ctx))
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to create read thread!");
@@ -549,7 +549,7 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
 
         gStopUnicast = false;
         if (CA_STATUS_OK != CAStartUnicastServer(localAddress, port, forceStart, isSecured,
-                                                 &gUnicastServerSocketFD))
+                &gUnicastServerSocketFD))
         {
             OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
             gUnicastServerSocketFD = -1;
@@ -576,7 +576,7 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
 
         gStopSecureUnicast = false;
         if (CA_STATUS_OK != CAStartUnicastServer(localAddress, port, forceStart, isSecured,
-                                                 &gSecureUnicastServerSocketFD))
+                &gSecureUnicastServerSocketFD))
         {
             OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
             gSecureUnicastServerSocketFD = -1;
@@ -618,7 +618,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
     }
 
     CAResult_t ret = CAWiFiCreateSocket(&gMulticastServerSocketFD, multicastAddress, &port, true);
-    if(ret != CA_STATUS_OK)
+    if (ret != CA_STATUS_OK)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to create multicast socket");
         u_mutex_unlock(gMutexMulticastServer);
@@ -650,8 +650,8 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
       * Thread context will be freed by thread on exit.
       */
     CAAdapterReceiveThreadContext_t *ctx = (CAAdapterReceiveThreadContext_t *)
-                                            OICMalloc(sizeof(CAAdapterReceiveThreadContext_t));
-    if(!ctx)
+                                           OICMalloc(sizeof(CAAdapterReceiveThreadContext_t));
+    if (!ctx)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Out of memory!");
         close(gMulticastServerSocketFD);

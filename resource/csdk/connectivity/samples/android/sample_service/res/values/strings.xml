@@ -3,12 +3,13 @@
     <string name="app_name">sample_service</string>
     <string name="find">Find</string>
     <string name="notify">Notify</string>
+    <string name="request_setting">Request Setting</string>
     <string name="request">Request</string>
     <string name="response">Response</string>
     <string name="uri">127.0.0.0:5000/a/light</string>
-    <string name="notification">notification</string>
-    <string name="req_data">request data</string>
-    <string name="resp_data">response data</string>
+    <string name="notification">resourceUri/notification</string>
+    <string name="req_data">coaps://10.11.12.13:4545/resource_uri</string>
+    <string name="resp_data">resourceUri/response</string>
     <string name="receive">Receive</string>
     <string name="received">Received Message</string>
     <string name="action_settings">Settings</string>

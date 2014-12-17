@@ -77,7 +77,7 @@ static void CAWIFIDeviceStateChangedCb(wifi_device_state_e state, void *userData
  * @brief This methods gets local interface name and IP address information.
  */
 static void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress,
-                                          char **subnetMask);
+        char **subnetMask);
 
 CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 {
@@ -152,6 +152,8 @@ CAResult_t CAWiFiStartNetworkMonitor(void)
         return CA_STATUS_FAILED;
     }
 
+    CAWiFiGetInterfaceInformation(&gWifiInterfaceName, &gWifiIPAddress, &gWifiSubnetMask);
+
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -187,6 +189,13 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
     u_mutex_lock(gWifiNetInfoMutex);
 
+    if (NULL == gWifiInterfaceName || NULL == gWifiIPAddress)
+    {
+        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Network not enabled");
+        u_mutex_unlock(gWifiNetInfoMutex);
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
     if (gWifiInterfaceName && strlen(gWifiInterfaceName))
     {
         *interfaceName = strndup(gWifiInterfaceName, strlen(gWifiInterfaceName));
@@ -210,14 +219,14 @@ CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask)
     VERIFY_NON_NULL(subnetMask, WIFI_MONITOR_TAG, "subnet mask");
 
     u_mutex_lock(gWifiNetInfoMutex);
-    if(NULL == gWifiSubnetMask)
+    if (NULL == gWifiSubnetMask)
     {
         OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "There is no subnet mask information!");
         return CA_STATUS_FAILED;
     }
 
-    *subnetMask = (gWifiSubnetMask) ? strndup(gWifiSubnetMask,strlen(gWifiSubnetMask))
-                               : NULL;
+    *subnetMask = (gWifiSubnetMask) ? strndup(gWifiSubnetMask, strlen(gWifiSubnetMask))
+                  : NULL;
     u_mutex_unlock(gWifiNetInfoMutex);
 
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
@@ -349,7 +358,8 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
         OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get access point! error num [%d]",
                   ret);
 
-        OICFree(interfaceName);
+        OICFree(*interfaceName);
+        *interfaceName = NULL;
         u_mutex_unlock(gWifiNetInfoMutex);
         return;
     }
@@ -361,7 +371,8 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
         {
             OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface address! error num [%d]",
                       ret);
-            OICFree(interfaceName);
+            OICFree(*interfaceName);
+            *interfaceName = NULL;
             u_mutex_unlock(gWifiNetInfoMutex);
             return;
         }
@@ -369,13 +380,15 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
 
     if (subnetMask)
     {
-        if (WIFI_ERROR_NONE != (ret = wifi_ap_set_subnet_mask(accessPoint, WIFI_ADDRESS_FAMILY_IPV4,
+        if (WIFI_ERROR_NONE != (ret = wifi_ap_get_subnet_mask(accessPoint, WIFI_ADDRESS_FAMILY_IPV4,
                                       subnetMask)))
         {
             OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface address! error num [%d]",
                       ret);
-            OICFree(ipAddress);
-            OICFree(interfaceName);
+            OICFree(*ipAddress);
+            OICFree(*interfaceName);
+            *ipAddress = NULL;
+            *interfaceName = NULL;
             u_mutex_unlock(gWifiNetInfoMutex);
             return;
         }

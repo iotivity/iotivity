@@ -47,9 +47,11 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *endpoint);
 /**
  * @brief   Creates a new remote endpoint from the input uri
  * @param   uri       [IN]    absolute uri information to  create remote endpoint
+ * @param   type      [IN]    connectivity type of the endpoint
  * @return  remote endpoint created
  */
-CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri);
+CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
+        const CAConnectivityType_t connectivityType);
 
 /**
  * @brief   Creates a new remote endpoint from the input and other information

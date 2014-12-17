@@ -27,7 +27,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 
-#define TAG "CA"
+#define TAG "CPM"
 
 #define CA_MAX_TOKEN_LEN   (8)
 #define CA_FLAGS_BLOCK 0x01
@@ -88,7 +88,7 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
     coapUri = (char *) OICMalloc(length + coapHeaderLength + 1);
     if (coapUri == NULL)
     {
-        OIC_LOG(ERROR, TAG, "Mem alloc failed");
+        OIC_LOG(ERROR, TAG, "error");
         return NULL;
     }
     memset(coapUri, 0, length + coapHeaderLength + 1);
@@ -135,7 +135,7 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
 }
 
 coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *options,
-                                             const char *payload, const CAInfo_t info)
+        const char *payload, const CAInfo_t info)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -157,7 +157,7 @@ coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *opt
         prng((unsigned char * )&message_id, sizeof(unsigned short));
         ++message_id;
 
-        OIC_LOG_V(DEBUG, TAG, "gen msg id(%d)", message_id);
+        OIC_LOG_V(DEBUG, TAG, "gen msg id=%d", message_id);
     }
     else
     {
@@ -189,12 +189,12 @@ coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *opt
         uint32_t len = strlen(payload);
         if ((CAFlags & CA_FLAGS_BLOCK) == 0)
         {
-            OIC_LOG_V(DEBUG, TAG, "add data, payload: %s", payload);
+            OIC_LOG_V(DEBUG, TAG, "add data,payload:%s", payload);
             coap_add_data(pdu, len, (const unsigned char *) payload);
         }
         else
         {
-            OIC_LOG_V(DEBUG, TAG, "add block, payload: %s", payload);
+            OIC_LOG_V(DEBUG, TAG, "add block,payload: %s", payload);
             coap_add_block(pdu, len, (const unsigned char *) payload, CABlock.num, CABlock.szx);
         }
     }
@@ -212,7 +212,7 @@ coap_pdu_t *CACreatePDUforRequest(const code_t code, coap_list_t *options,
 
     if (!(pdu = coap_new_pdu()))
     {
-        OIC_LOG(ERROR, TAG, "mem alloc failed");
+        OIC_LOG(ERROR, TAG, "error");
         return NULL;
     }
 
@@ -275,7 +275,7 @@ void CAParseURI(const char *uriInfo, coap_list_t **optlist)
         coap_insert(optlist,
                     CACreateNewOptionNode(COAP_OPTION_URI_PORT,
                                           coap_encode_var_bytes(portbuf, uri.port), portbuf),
-                                          CAOrderOpts);
+                    CAOrderOpts);
     }
 
     if (uri.path.length)
@@ -331,7 +331,7 @@ void CAParseHeadOption(const uint32_t code, const CAInfo_t info, coap_list_t **o
 
             coap_insert(optlist,
                         CACreateNewOptionNode(info.options[i].optionID,
-                                            info.options[i].optionLength,
+                                              info.options[i].optionLength,
                                               info.options[i].optionData), CAOrderOpts);
         }
     }
@@ -348,7 +348,7 @@ coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length,
     option = coap_malloc(sizeof(coap_option) + length);
     if (!option)
     {
-        OIC_LOG(ERROR, TAG, "mem alloc failed");
+        OIC_LOG(ERROR, TAG, "error");
         return NULL;
     }
     memset(option, 0, sizeof(coap_option) + length);
@@ -366,7 +366,7 @@ coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length,
         coap_free(option);
         return NULL;
     }
-    //coap_free(option);
+    coap_free(option);
     OIC_LOG(DEBUG, TAG, "OUT");
     return node;
 }
@@ -445,7 +445,7 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
         outInfo->options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t) * count);
         if (outInfo->options == NULL)
         {
-            OIC_LOG(DEBUG, TAG, "Mem alloc failed");
+            OIC_LOG(DEBUG, TAG, "error");
             return;
         }
         memset(outInfo->options, 0, sizeof(CAHeaderOption_t) * count);
@@ -510,7 +510,7 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
         outInfo->token = (char *) OICMalloc(CA_MAX_TOKEN_LEN);
         if (outInfo->token == NULL)
         {
-            OIC_LOG(DEBUG, TAG, "Mem alloc failed");
+            OIC_LOG(DEBUG, TAG, "error");
             OICFree(outInfo->options);
             return;
         }
@@ -524,7 +524,7 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
         outInfo->payload = (char *) OICMalloc(strlen((const char *) pdu->data) + 1);
         if (outInfo->payload == NULL)
         {
-            OIC_LOG(DEBUG, TAG, "Mem alloc failed");
+            OIC_LOG(DEBUG, TAG, "error");
             OICFree(outInfo->options);
             OICFree(outInfo->token);
             return;
@@ -551,7 +551,7 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token)
     char *temp = (char *) OICMalloc(sizeof(char) * (CA_MAX_TOKEN_LEN + 1));
     if (temp == NULL)
     {
-        OIC_LOG(DEBUG, TAG, "Mem alloc failed");
+        OIC_LOG(DEBUG, TAG, "error");
         return CA_MEMORY_ALLOC_FAILED;
     }
     memset(temp, 0, sizeof(char) * (CA_MAX_TOKEN_LEN + 1));
@@ -654,24 +654,24 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *result,
     return cnt;
 }
 
-CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void* pdu, uint32_t size)
+CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size)
 {
     // pdu minimum size is 4 byte.
     if (size < 4)
         return CA_MSG_NONCONFIRM;
 
-    coap_hdr_t* hdr = (coap_hdr_t*) pdu;
+    coap_hdr_t *hdr = (coap_hdr_t *) pdu;
 
     return (CAMessageType_t) hdr->type;
 }
 
-uint16_t CAGetMessageIdFromPduBinaryData(const void* pdu, uint32_t size)
+uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size)
 {
     // pdu minimum size is 4 byte.
     if (size < 4)
         return 0;
 
-    coap_hdr_t* hdr = (coap_hdr_t*) pdu;
+    coap_hdr_t *hdr = (coap_hdr_t *) pdu;
 
     return ntohs(hdr->id);
 }

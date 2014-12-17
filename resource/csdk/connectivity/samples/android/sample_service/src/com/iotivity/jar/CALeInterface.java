@@ -9,15 +9,21 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
+import android.bluetooth.le.AdvertiseCallback;
+import android.bluetooth.le.AdvertiseSettings;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.util.Log;
 
 public class CALeInterface {
     
     public CALeInterface() {
         CARegisterLeScanCallback(mLeScanCallback);
         CARegisterLeGattCallback(mGattCallback);
-//        CARegisterLeGattServerCallback(mGattServerCallback);
-//        CARegisterBluetoothLeAdvertiseCallback(mAdvertiseCallback);
-//        CARegisterBluetoothLeScanCallback(mScanCallback);
+        CARegisterLeGattServerCallback(mGattServerCallback);
+        CARegisterBluetoothLeAdvertiseCallback(mAdvertiseCallback);
     }
     
     public static void getLeScanCallback() {
@@ -28,23 +34,27 @@ public class CALeInterface {
         CARegisterLeGattCallback(mGattCallback);
     }
     
-//    public static void getLeGattServerCallback() {
-//        CARegisterLeGattServerCallback(mGattServerCallback);
-//    }
+    public static void getLeGattServerCallback() {
+        CARegisterLeGattServerCallback(mGattServerCallback);
+    }
     
-//    public static void getBluetoothLeAdvertiseCallback() {
-//        CARegisterBluetoothLeAdvertiseCallback(mAdvertiseCallback);
-//    }
-//    
-//    public static void getBluetoothLeScanCallback() {
-//        CARegisterBluetoothLeScanCallback(mScanCallback);
-//    }
-
+    public static void getBluetoothLeAdvertiseCallback() {
+        CARegisterBluetoothLeAdvertiseCallback(mAdvertiseCallback);
+    }
+    
+    public static IntentFilter getActionStateIntentFilter() {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        return filter;
+    }
+    
     public native static void CARegisterLeScanCallback(BluetoothAdapter.LeScanCallback callback);
+    
     public native static void CARegisterLeGattCallback(BluetoothGattCallback callback);
+    
     public native static void CARegisterLeGattServerCallback(BluetoothGattServerCallback callback);
-//    public native static void CARegisterBluetoothLeAdvertiseCallback(AdvertiseCallback callback);
-//    public native static void CARegisterBluetoothLeScanCallback(ScanCallback callback);
+    
+    public native static void CARegisterBluetoothLeAdvertiseCallback(AdvertiseCallback callback);
     
     // BluetoothAdapter.LeScanCallback
     public native static void CALeScanCallback(BluetoothDevice device, int rssi, byte[] scanRecord);
@@ -54,11 +64,11 @@ public class CALeInterface {
     
     public native static void CALeGattServicesDiscoveredCallback(BluetoothGatt gatt, int status);
     
-    public native static void CALeGattCharacteristicReadCallback(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, String data, int status);
+    public native static void CALeGattCharacteristicReadCallback(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] data, int status);
     
-    public native static void CALeGattCharacteristicWriteCallback(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, String data, int status);
+    public native static void CALeGattCharacteristicWriteCallback(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] data, int status);
     
-    public native static void CALeGattCharacteristicChangedCallback(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic);
+    public native static void CALeGattCharacteristicChangedCallback(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] data);
     
     public native static void CALeGattDescriptorReadCallback(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status);
     
@@ -74,10 +84,11 @@ public class CALeInterface {
     public native static void CALeGattServerServiceAddedCallback(int status, BluetoothGattService service);
     
     public native static void CALeGattServerCharacteristicReadRequestCallback(BluetoothDevice device,
-            int requestId, int offset, BluetoothGattCharacteristic characteristic);
+            int requestId, int offset, BluetoothGattCharacteristic characteristic, byte[] data);
     
     public native static void CALeGattServerCharacteristicWriteRequestCallback(BluetoothDevice device, int requestId,
-            BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value);
+            BluetoothGattCharacteristic characteristic, byte[] data, boolean preparedWrite, 
+            boolean responseNeeded, int offset, byte[] value);
     
     public native static void CALeGattServerDescriptorReadRequestCallback(BluetoothDevice device,
             int requestId, int offset, BluetoothGattDescriptor descriptor);
@@ -90,18 +101,14 @@ public class CALeInterface {
     public native static void CALeGattServerNotificationSentCallback(BluetoothDevice device, int status);
 
     // AdvertiseCallback
-//    public native static void CALeAdvertiseStartSuccessCallback(AdvertiseSettings settingsInEffect);
-//    
-//    public native static void CALeAdvertiseStartFailureCallback(int errorCode);
+    public native static void CALeAdvertiseStartSuccessCallback(AdvertiseSettings settingsInEffect);
     
-    // ScanCallback
-//    public native static void CABluetoothLeScanResultCallback(int callbackType, ScanResult result);
-//    
-//    public native static void CABluetoothLeBatchScanResultsCallback(List<ScanResult> results);
-//    
-//    public native static void CABluetoothLeScanFailedCallback(int errorCode);
+    public native static void CALeAdvertiseStartFailureCallback(int errorCode);
     
-     
+    // Network Monitor
+    public native static void CALeStateChangedCallback(int state); 
+    
+    // Callback
     private static BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         
         @Override
@@ -136,8 +143,8 @@ public class CALeInterface {
                 BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
             
-            String data = new String(characteristic.getValue());
-            CALeGattCharacteristicReadCallback(gatt, characteristic, data, status);
+            CALeGattCharacteristicReadCallback(gatt, characteristic, 
+            		characteristic.getValue(), status);
         }
 
         @Override
@@ -145,8 +152,8 @@ public class CALeInterface {
                 BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
             
-            String data = new String(characteristic.getValue());
-            CALeGattCharacteristicWriteCallback(gatt, characteristic, data, status);
+            CALeGattCharacteristicWriteCallback(gatt, characteristic, 
+            		characteristic.getValue(), status);
         }
 
         @Override
@@ -154,8 +161,8 @@ public class CALeInterface {
                 BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
             
-            String data = new String(characteristic.getValue());
-            CALeGattCharacteristicChangedCallback(gatt, characteristic, data);
+            CALeGattCharacteristicChangedCallback(gatt, characteristic, 
+            		characteristic.getValue());
         }
 
         @Override
@@ -189,7 +196,7 @@ public class CALeInterface {
         }
     };
     
-    /*
+    
     private static final BluetoothGattServerCallback mGattServerCallback = new BluetoothGattServerCallback() {
 
         @Override
@@ -213,7 +220,7 @@ public class CALeInterface {
                 BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
             
-            CALeGattServerCharacteristicReadRequestCallback(device, requestId, offset, characteristic);
+            CALeGattServerCharacteristicReadRequestCallback(device, requestId, offset, characteristic, characteristic.getValue());
         }
 
         @Override
@@ -225,7 +232,7 @@ public class CALeInterface {
                     preparedWrite, responseNeeded, offset, value);
             
             CALeGattServerCharacteristicWriteRequestCallback(device, requestId, characteristic,
-                    preparedWrite, responseNeeded, offset, value);
+                    value, preparedWrite, responseNeeded, offset, value);
         }
 
         @Override
@@ -281,28 +288,22 @@ public class CALeInterface {
         }
     };
     
-    private static final ScanCallback mScanCallback = new ScanCallback() {
-
+    private static final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        
         @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            super.onScanResult(callbackType, result);
+        public void onReceive(Context context, Intent intent) {
             
-            CABluetoothLeScanResultCallback(callbackType, result);
-        }
-
-        @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            super.onBatchScanResults(results);
+            String action = intent.getAction();
             
-            CABluetoothLeBatchScanResultsCallback(results);
-        }
-
-        @Override
-        public void onScanFailed(int errorCode) {
-            super.onScanFailed(errorCode);
-            
-            CABluetoothLeScanFailedCallback(errorCode);
+            if (action != null && action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                
+                if (state == BluetoothAdapter.STATE_ON || state == BluetoothAdapter.STATE_OFF) // STATE_ON:12, STATE_OFF:10
+                { 
+                    CALeStateChangedCallback(state);
+                } 
+            }
         }
     };
-    */
 }

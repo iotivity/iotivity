@@ -73,6 +73,50 @@ static CARetransmission_t gRetransmissionContext;
 static CARequestCallback gRequestHandler = NULL;
 static CAResponseCallback gResponseHandler = NULL;
 
+static void CATimeoutCallback(const CARemoteEndpoint_t *endpoint, void *pdu, uint32_t size)
+{
+    CARemoteEndpoint_t* ep = CACloneRemoteEndpoint(endpoint);
+    if (ep == NULL)
+    {
+        OIC_LOG(DEBUG, TAG, "memory allocation failed !");
+        return;
+    }
+
+    CAResponseInfo_t* resInfo = (CAResponseInfo_t*) OICMalloc(sizeof(CAResponseInfo_t));
+
+    if (resInfo == NULL)
+    {
+        OIC_LOG(DEBUG, TAG, "memory allocation failed !");
+        CADestroyRemoteEndpointInternal(ep);
+        return;
+    }
+    memset(resInfo, 0, sizeof(CAResponseInfo_t));
+
+    CAMessageType_t type = CAGetMessageTypeFromPduBinaryData(pdu, size);
+    uint16_t messageId = CAGetMessageIdFromPduBinaryData(pdu, size);
+
+    resInfo->result = CA_RETRANSMIT_TIMEOUT;
+    resInfo->info.type = type;
+    resInfo->info.messageId = messageId;
+
+    CAData_t *cadata = (CAData_t *) OICMalloc(sizeof(CAData_t));
+    if (cadata == NULL)
+    {
+        OIC_LOG(DEBUG, TAG, "memory allocation failed !");
+        CADestroyRemoteEndpointInternal(ep);
+        OICFree(resInfo);
+        return;
+    }
+    memset(cadata, 0, sizeof(CAData_t));
+
+    cadata->type = SEND_TYPE_UNICAST;
+    cadata->remoteEndpoint = ep;
+    cadata->requestInfo = NULL;
+    cadata->responseInfo = resInfo;
+
+    CAQueueingThreadAddData(&gReceiveThread, cadata, sizeof(CAData_t));
+}
+
 static void CAReceiveThreadProcess(void *threadData)
 {
     // TODO
@@ -116,7 +160,8 @@ static void CASendThreadProcess(void *threadData)
             OIC_LOG_V(DEBUG, TAG, "responseInfo is available..");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
-                                               data->responseInfo->result, data->responseInfo->info);
+                                               data->responseInfo->result, 
+                                               data->responseInfo->info);
         }
         else
         {
@@ -142,12 +187,12 @@ static void CASendThreadProcess(void *threadData)
 
             // for retransmission
             CARetransmissionSentData(&gRetransmissionContext, data->remoteEndpoint, pdu->hdr,
-                    pdu->length);
+                                     pdu->length);
 
             //For Unicast , data will be deleted by adapters
             CADestroyRemoteEndpointInternal(data->remoteEndpoint);
         }
-
+        coap_delete_pdu(pdu);
     }
     else if (type == SEND_TYPE_MULTICAST)
     {
@@ -179,6 +224,7 @@ static void CASendThreadProcess(void *threadData)
 
             res = CASendMulticastData(pdu->hdr, pdu->length);
         }
+        coap_delete_pdu(pdu);
     }
     else
     {
@@ -339,6 +385,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         // for retransmission
         CARetransmissionReceivedData(&gRetransmissionContext, endpoint, pdu->hdr, pdu->length);
     }
+    OICFree(pdu);
 }
 
 static void CANetworkChangedCallback(CALocalConnectivity_t *info, CANetworkStatus_t status)
@@ -483,7 +530,7 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t* object, 
+CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
                                        const CARequestInfo_t *request)
 {
     // ToDo
@@ -503,7 +550,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t* object,
 
     CAAddress_t addr;
     memset(&addr, 0, sizeof(CAAddress_t));
-    CARemoteEndpoint_t* remoteEndpoint = CACreateRemoteEndpointInternal(object->resourceUri, addr, 
+    CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(object->resourceUri, addr,
                                          object->connectivityType);
 
     // clone request info
@@ -710,7 +757,8 @@ CAResult_t CAInitializeMessageHandler()
 //    }
 
     // retransmission initialize
-    CARetransmissionInitialize(&gRetransmissionContext, gThreadPoolHandle, CASendUnicastData, NULL);
+    CARetransmissionInitialize(&gRetransmissionContext, gThreadPoolHandle, CASendUnicastData,
+            CATimeoutCallback, NULL);
 
     // start retransmission
     res = CARetransmissionStart(&gRetransmissionContext);

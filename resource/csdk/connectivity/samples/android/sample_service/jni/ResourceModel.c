@@ -12,17 +12,96 @@
 #define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define  LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
+/**
+ * @def RS_IDENTITY
+ * @brief
+ */
+#define IDENTITY     ("1111111111111111")
+/* @def RS_CLIENT_PSK
+ * @brief
+ */
+#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+
+int gReceived;
+CABool_t gLocalUnicastPort;
+CABool_t gLocalSecurePort;
+
 void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* requestInfo);
 void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo);
+void get_resource_uri(char *URI, char *resourceURI, int length);
+int get_secure_information(CAPayload_t payLoad);
+void send_response(CARemoteEndpoint_t* endpoint, CAInfo_t* info);
+CAConnectivityType_t get_network_type(int selectedNetwork);
 
+CAConnectivityType_t gSelectedNwType = CA_LE;
 static CAToken_t gLastRequestToken = NULL;
+static const char *gSecureInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
+                                     "\"if\":[\"oc.mi.def\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
+static const char *gNormalInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
+                                     "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
+static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
+
+
+void clearDtlsCredentialInfo()
+{
+    printf("clearDtlsCredentialInfo IN\n");
+    if (pskCredsBlob)
+    {
+        // Initialize sensitive data to zeroes before freeing.
+        memset(pskCredsBlob->creds, 0, sizeof(CADtlsPskCreds_t)*(pskCredsBlob->num));
+        free(pskCredsBlob->creds);
+
+        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
+        free(pskCredsBlob);
+        pskCredsBlob = NULL;
+    }
+    printf("clearDtlsCredentialInfo OUT\n");
+}
+
+// Internal API. Invoked by OC stack to retrieve credentials from this module
+void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
+{
+    printf("CAGetDtlsPskCredentials IN\n");
+
+    *credInfo = pskCredsBlob;
+
+    printf("CAGetDtlsPskCredentials OUT\n");
+}
+
+int32_t SetCredentials()
+{
+    printf("SetCredentials IN\n");
+    pskCredsBlob = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
+
+    memset(pskCredsBlob, 0x0, sizeof(CADtlsPskCredsBlob_t));
+    memcpy(pskCredsBlob->rsIdentity, IDENTITY, DTLS_PSK_ID_LEN);
+
+    pskCredsBlob->num = 1;
+
+    pskCredsBlob->creds = (CADtlsPskCreds_t *)malloc(sizeof(CADtlsPskCreds_t) *(pskCredsBlob->num));
+
+    memcpy(pskCredsBlob->creds[0].clientIdentity, IDENTITY, DTLS_PSK_ID_LEN);
+    memcpy(pskCredsBlob->creds[0].rsClientPsk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
+
+    printf("SetCredentials OUT\n");
+    return 1;
+}
+
+
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
   (JNIEnv *env, jobject obj, jobject context)
 {
     LOGI("RMInitialize");
     //Currently set context for WiFiCore
     CAJniSetContext(context);
+    CALEServerJNISetContext(env, context);
+    CALEClientJNISetContext(env, context);
+
+    if (SetCredentials() == 0)
+    {
+        printf("SetCredentials failed\n");
+    }
 
     if(CA_STATUS_OK != CAInitialize())
     {
@@ -37,7 +116,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMTerminate(JNIEnv 
     CATerminate();
 }
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMStartListeningServer(JNIEnv *env,
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMStartListeningServer(JNIEnv *env,
     jobject obj)
 {
     LOGI("RMStartListeningServer");
@@ -48,7 +127,7 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMStartListeningSer
     }
 }
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMStartDiscoveryServer(JNIEnv *env,
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMStartDiscoveryServer(JNIEnv *env,
     jobject obj)
 {
     LOGI("RMStartDiscoveryServer");
@@ -59,7 +138,7 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMStartDiscoverySer
     }
 }
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMRegisterHandler(JNIEnv *env,
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMRegisterHandler(JNIEnv *env,
     jobject obj)
 {
     LOGI("RMRegisterHandler");
@@ -70,7 +149,7 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMRegisterHandler(J
     }
 }
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMFindResource(JNIEnv *env, jobject obj,
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMFindResource(JNIEnv *env, jobject obj,
     jstring uri)
 {
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
@@ -85,6 +164,8 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMFindResource(JNIE
         token = NULL;
     }
 
+    LOGI("generated token %s\n", (token != NULL) ? token : "");
+
     if(CA_STATUS_OK != CAFindResource(strUri, token))
     {
         LOGI("Could not find resource");
@@ -92,15 +173,29 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMFindResource(JNIE
     else
     {
         LOGI("find resource to %s URI", strUri);
-        gLastRequestToken = "";
+        gLastRequestToken = token;
     }
 }
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
-    jstring data)
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
+    jstring uri, jint selectedNetwork, jint isSecured, jint msgType)
 {
-    const char* strData = (*env)->GetStringUTFChars(env, data, NULL);
-    LOGI("RMSendRequest - %s", strData);
+    const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
+    LOGI("RMSendRequest - %s", strUri);
+
+    CAConnectivityType_t connectivityType;
+    connectivityType = get_network_type(selectedNetwork);
+
+    //create remote endpoint
+    CARemoteEndpoint_t* endpoint = NULL;
+
+    if(CA_STATUS_OK != CACreateRemoteEndpoint(strUri, connectivityType, &endpoint))
+    {
+        LOGI("Could not create remote end point");
+        CADestroyRemoteEndpoint(endpoint);
+    }
+
+    CAMessageType_t messageType = msgType;
 
     // create token
     CAToken_t token = NULL;
@@ -111,23 +206,34 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
         token = NULL;
     }
 
+    char resourceURI[15] = {0};
+
+    get_resource_uri(strUri, resourceURI, 14);
+
     CAInfo_t requestData;
     memset(&requestData, 0, sizeof(CAInfo_t));
     requestData.token = token;
-    requestData.payload = "Temp Json Payload";
+
+
+    if (isSecured == 1)
+    {
+        int length = strlen(gSecureInfoData) + strlen(resourceURI) + 1;
+        requestData.payload = (CAPayload_t) malloc(length);
+        sprintf(requestData.payload, gSecureInfoData, resourceURI, gLocalSecurePort);
+    }
+    else
+    {
+        int length = strlen(gNormalInfoData) + strlen(resourceURI) + 1;
+        requestData.payload = (CAPayload_t) malloc(length);
+        sprintf(requestData.payload, gNormalInfoData, resourceURI);
+    }
+
+    requestData.type = messageType;
 
     CARequestInfo_t requestInfo;
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
     requestInfo.method = CA_GET;
     requestInfo.info = requestData;
-
-    //create remote endpoint
-    CARemoteEndpoint_t* endpoint = NULL;
-
-    if(CA_STATUS_OK != CACreateRemoteEndpoint(strData, &endpoint))
-    {
-        LOGI("Could not create remote end point");
-    }
 
     // send request
     if(CA_STATUS_OK != CASendRequest(endpoint, &requestInfo))
@@ -148,87 +254,50 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
     }
 }
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj,
-    jstring data)
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification(JNIEnv *env,
+    jobject obj, jstring uri, jint selectedNetwork)
 {
-    const char* strData = (*env)->GetStringUTFChars(env, data, NULL);
-    LOGI("RMSendResponse - %s", strData);
+    const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
+    LOGI("RMSendNotification - %s", strUri);
 
-    const CAURI_t endpoint_uri = "/a/temp_uri";
+    CAConnectivityType_t connectivityType;
+    connectivityType = get_network_type(selectedNetwork);
 
-    // create token
-    CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
-    {
-        printf("token generate error!!\n");
-        token = NULL;
-    }
-
-    CAInfo_t responseData;
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.token = token;
-    responseData.payload = (char*) strData;
-
-    CAResponseInfo_t responseInfo;
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = 203;
-    responseInfo.info = responseData;
-
+    // create remote endpoint
     CARemoteEndpoint_t* endpoint = NULL;
 
-    if(CA_STATUS_OK != CACreateRemoteEndpoint(endpoint_uri, &endpoint))
+    if(CA_STATUS_OK != CACreateRemoteEndpoint(strUri, connectivityType, &endpoint))
     {
         LOGI("Could not create remote end point");
-    }
-
-    if(CA_STATUS_OK != CASendResponse(endpoint, &responseInfo))
-    {
-        LOGI("Could not send response");
-    }
-}
-
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification(JNIEnv *env,
-    jobject obj, jstring data)
-{
-    const char* strData = (*env)->GetStringUTFChars(env, data, NULL);
-    LOGI("RMSendNotification - %s", strData);
-
-    const CAURI_t endpoint_uri = "/a/temp_uri";
-
-    // create token
-    CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
-    {
-        printf("token generate error!!\n");
-        token = NULL;
+        CADestroyRemoteEndpoint(endpoint);
+        return;
     }
 
     CAInfo_t respondeData;
     memset(&respondeData, 0, sizeof(CAInfo_t));
-    respondeData.token = token;
-    respondeData.payload = (char*)strData;
+    respondeData.token = "client token";
+    respondeData.payload = "Temp Notification Data";
 
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = CA_SUCCESS;
     responseInfo.info = respondeData;
 
-    CARemoteEndpoint_t* endpoint = NULL;
-
-    if(CA_STATUS_OK != CACreateRemoteEndpoint(endpoint_uri, &endpoint))
-    {
-        LOGI("Could not create remote end point");
-    }
-
+    // send request
     if(CA_STATUS_OK != CASendNotification(endpoint, &responseInfo))
     {
         LOGI("Could not send notification");
     }
+
+    // destroy remote endpoint
+    if (endpoint != NULL)
+    {
+        CADestroyRemoteEndpoint(endpoint);
+    }
+
 }
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj,
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj,
     jint networkType)
 {
     LOGI("RMSelectNetwork Type : %d", networkType);
@@ -239,7 +308,7 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMSelectNetwork(JNI
     }
 }
 
-JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMHandleRequestResponse(JNIEnv *env,
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMHandleRequestResponse(JNIEnv *env,
     jobject obj)
 {
     LOGI("RMHandleRequestResponse");
@@ -252,26 +321,31 @@ JNIEXPORT jint JNICALL Java_com_iotivity_service_RMInterface_RMHandleRequestResp
 
 void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* requestInfo)
 {
-    /*
-    printf("[CALLBACK] request_handler, uri : %s, data : %s\n",
-            (object != NULL) ? object->resourceUri : "",
-            (requestInfo != NULL) ? requestInfo->info.payload : "");
-    */
-    LOGI("[CALLBACK] request_handler, uri: %s, data: %s, token: %s \n",
-            (object != NULL) ? object->resourceUri : "",
-            (requestInfo != NULL) ? requestInfo->info.payload : "",
-            (requestInfo->info.token != NULL) ? requestInfo->info.token : "");
-
-    if (gLastRequestToken != NULL && requestInfo->info.token != NULL
-        && (strcmp((char*)gLastRequestToken, requestInfo->info.token) == 0))
+    if (!object)
     {
-        printf("token is same. received request of it's own. skip.. \n");
-
+        LOGI("Remote endpoint is NULL!");
         return;
     }
 
-    LOGI("[CALLBACK] request_handler, address : %s\n",
-            (object != NULL) ? object->addressInfo.IP.ipAddress : "");
+    if (!requestInfo)
+    {
+        LOGI("Request info is NULL!");
+        return;
+    }
+
+    LOGI("##########received request from remote device #############\n");
+    LOGI("Uri: %s\n", object->resourceUri);
+    LOGI("Remote Address: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
+           object->addressInfo.IP.port, object->isSecured);
+
+    LOGI("Data: %s\n", requestInfo->info.payload);
+
+    if (gLastRequestToken != NULL && requestInfo->info.token != NULL
+        && (strcmp((char *)gLastRequestToken, requestInfo->info.token) == 0))
+    {
+        LOGI("token is same. received request of it's own. skip.. \n");
+        return;
+    }
 
     if (requestInfo->info.options)
     {
@@ -279,38 +353,188 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
         uint32_t i;
         for (i = 0; i < len; i++)
         {
-            LOGI("[CALLBACK] request_handler, option ID : %d\n",
-                    requestInfo->info.options[i].optionID);
-            LOGI("[CALLBACK] request_handler, options data length : %d\n",
-                    requestInfo->info.options[i].optionLength);
-            LOGI("[CALLBACK] request_handler, options data : %s\n",
-                    requestInfo->info.options[i].optionData);
+            LOGI("Option %d\n", i + 1);
+            LOGI("ID : %d\n", requestInfo->info.options[i].optionID);
+            LOGI("Data[%d]: %s\n", requestInfo->info.options[i].optionLength,
+                   requestInfo->info.options[i].optionData);
+        }
+    }
+    printf("############################################################\n");
+
+    //Check if this has secure communication information
+    if (requestInfo->info.payload)
+    {
+        int securePort = get_secure_information(requestInfo->info.payload);
+        if (0 < securePort) //Set the remote endpoint secure details and send response
+        {
+            LOGI("This is secure resource...\n");
+            char *uri = NULL;
+            int length = 0;
+
+            length = 8; //length of "coaps://"
+            length += strlen(object->addressInfo.IP.ipAddress) + 5; // length of "ipaddress:port"
+            length += strlen(object->resourceUri) + 1;
+
+            uri = calloc(1,sizeof(char)*length);
+            if (!uri)
+            {
+                printf("Failed to create new uri\n");
+                return;
+            }
+            sprintf(uri,"coaps://%s:%d/%s",object->addressInfo.IP.ipAddress,
+                      securePort, object->resourceUri);
+
+            CARemoteEndpoint_t *endpoint = NULL;
+            if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, object->connectivityType, &endpoint))
+            {
+                LOGI("Failed to create duplicate of remote endpoint!\n");
+                return;
+            }
+            endpoint->isSecured = CA_TRUE;
+            object = endpoint;
         }
     }
 
-    printf("send response with URI\n");
+    LOGI("send response with URI\n");
+    send_response(object, (requestInfo != NULL) ? &requestInfo->info : NULL);
+
+    gReceived = 1;
+
+}
+
+void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo)
+{
+
+    LOGI("##########Received response from remote device #############\n");
+    LOGI("Uri: %s\n", object->resourceUri);
+    LOGI("Remote Address: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
+              object->addressInfo.IP.port, object->isSecured);
+    LOGI("response result : %d\n", responseInfo->result);
+    LOGI("Data: %s\n", responseInfo->info.payload);
+
+    if (responseInfo->info.options)
+    {
+        uint32_t len = responseInfo->info.numOptions;
+        uint32_t i;
+        for (i = 0; i < len; i++)
+        {
+            LOGI("Option %d\n", i + 1);
+            LOGI("ID : %d\n", responseInfo->info.options[i].optionID);
+            LOGI("Data[%d]: %s\n", responseInfo->info.options[i].optionLength,
+                      responseInfo->info.options[i].optionData);
+        }
+    }
+    LOGI("############################################################\n");
+    gReceived = 1;
+
+    //Check if this has secure communication information
+    if (responseInfo->info.payload)
+    {
+        int securePort = get_secure_information(responseInfo->info.payload);
+        if (0 < securePort) //Set the remote endpoint secure details and send response
+        {
+            LOGI("This is secure resource...\n");
+        }
+    }
+}
+
+void get_resource_uri(char *URI, char *resourceURI, int length)
+{
+    char *startPos = URI;
+    char *temp = NULL;
+    if (NULL != (temp = strstr(URI, "://")))
+    {
+        startPos = strchr(temp + 3, '/');
+        if (!startPos)
+        {
+            printf("Resource URI is missing\n");
+            return;
+        }
+    }
+
+    char *endPos = strchr(startPos, '?');
+    if (!endPos)
+    {
+        endPos = URI + strlen(URI);
+    }
+    endPos -= 1;
+
+    if (endPos - startPos <= length)
+        memcpy(resourceURI, startPos + 1, endPos - startPos);
+
+    printf("URI: %s, ResourceURI:%s\n", URI, resourceURI);
+}
+
+int get_secure_information(CAPayload_t payLoad)
+{
+    printf("entering get_secure_information\n");
+
+    if (!payLoad)
+    {
+        printf("Payload is NULL\n");
+        return -1;
+    }
+
+    char *subString = NULL;
+    if (NULL == (subString = strstr(payLoad, "\"sec\":1")))
+    {
+        printf("This is not secure resource\n");
+        return -1;
+    }
+
+    if (NULL == (subString = strstr(payLoad, "\"port\":")))
+    {
+        printf("This secure resource does not have port information\n");
+        return -1;
+    }
+
+    char *startPos = strstr(subString, ":");
+    if (!startPos)
+    {
+        printf("Parsing failed !\n");
+        return -1;
+    }
+
+    char *endPos = strstr(startPos, "}");
+    if (!endPos)
+    {
+        printf("Parsing failed !\n");
+        return -1;
+    }
+
+    char portStr[4] = {0};
+    memcpy(portStr, startPos + 1, (endPos-1) - startPos);
+
+    printf("secured port is: %s\n", portStr);
+    return atoi(portStr);
+}
+
+void send_response(CARemoteEndpoint_t* endpoint, CAInfo_t* info)
+{
+    LOGI("entering send_response\n");
 
     CAInfo_t responseData;
-    //responseData = (CAInfo*) malloc(sizeof(CAInfo));
     memset(&responseData, 0, sizeof(CAInfo_t));
-    if (requestInfo != NULL)
-    {
-        responseData.token = requestInfo->info.token;
-    }
-    else
-    {
-        responseData.token = "";
-    }
+    responseData.type =
+            (info != NULL) ?
+                    ((info->type == CA_MSG_CONFIRM) ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM) :
+                    CA_MSG_NONCONFIRM;
+    responseData.messageId = (info != NULL) ? info->messageId : 0;
+    responseData.token = (info != NULL) ? info->token : "";
     responseData.payload = "response payload";
 
     CAResponseInfo_t responseInfo;
-    //responseInfo = (CAResponseInfo*) malloc(sizeof(CAResponseInfo));
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = 203;
     responseInfo.info = responseData;
 
+    if (CA_TRUE == endpoint->isSecured)
+        LOGI("Sending response on secure communication\n");
+    else
+        LOGI("Sending response on non-secure communication\n");
+
     // send request (connectivityType from remoteEndpoint of request Info)
-    CAResult_t res = CASendResponse(object, &responseInfo);
+    CAResult_t res = CASendResponse(endpoint, &responseInfo);
     if (res != CA_STATUS_OK)
     {
         LOGI("send response error\n");
@@ -320,33 +544,31 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
         LOGI("send response success\n");
     }
 
+    LOGI("=============================================\n");
 }
 
-void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo)
+CAConnectivityType_t get_network_type(int selectedNetwork)
 {
 
-    LOGI("[CALLBACK] response_handler, uri : %s, data : %s\n",
-            (object != NULL) ? object->resourceUri : "",
-            (responseInfo != NULL) ? responseInfo->info.payload : "");
+    int number = selectedNetwork;
 
-    LOGI("[CALLBACK] response_handler, address : %s\n",
-            (object != NULL) ? object->addressInfo.IP.ipAddress : "");
+    number = (number < 0 || number > 3) ? 0 : 1 << number;
 
-    if (responseInfo->info.options)
+    if (number & CA_ETHERNET)
     {
-        uint32_t len = responseInfo->info.numOptions;
-        uint32_t i;
-        for (i = 0; i < len; i++)
-        {
-            LOGI("[CALLBACK] response_handler, option ID : %d\n",
-                    responseInfo->info.options[i].optionID);
-            LOGI("[CALLBACK] response_handler, options data length : %d\n",
-                    responseInfo->info.options[i].optionLength);
-            LOGI("[CALLBACK] response_handler, options data : %s\n",
-                    responseInfo->info.options[i].optionData);
-        }
+        return CA_ETHERNET;
+    }
+    if (number & CA_WIFI)
+    {
+        return CA_WIFI;
+    }
+    if (number & CA_EDR)
+    {
+        return CA_EDR;
+    }
+    if (number & CA_LE)
+    {
+        return CA_LE;
     }
 
-    //printf("send request with URI\n");
-    //send_request_tmp(object, (responseInfo != NULL) ? responseInfo->info.token : "");
 }

@@ -26,7 +26,6 @@
 #include <w5100.h>
 #include <EthernetUdp.h>
 #include <IPAddress.h>
-#include <TimedAction.h>
 
 #include "logger.h"
 #include "cacommon.h"
@@ -45,7 +44,7 @@
 
 CAResult_t CAEthernetStartUnicastServer(const char *localAddress, int16_t *port,
                                         const bool forceStart, int32_t *serverFD);
-static int32_t CAArduinoRecvData(int32_t sockFd, uint8_t *buf, uint32_t bufLen,
+static int32_t CAArduinoRecvData(int32_t sockFd, uint8_t **buf, uint32_t bufLen,
                                  uint8_t *senderAddr, uint16_t *senderPort);
 static CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
 static void CAArduinoCheckData();
@@ -55,8 +54,6 @@ void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
 static CAEthernetPacketReceivedCallback gPacketReceivedCallback = NULL;
 static int32_t gUnicastSocket = 0;
 static int32_t gMulticastSocket = 0;
-static bool gServerRunning = false;
-static TimedAction gRcvAction = TimedAction(3000, CAArduinoCheckData);
 
 /**
  * @var gUnicastPort
@@ -112,19 +109,12 @@ CAResult_t CAEthernetStartUnicastServer(const char *localAddress, int16_t *port,
     gUnicastSocket = *serverFD;
     OIC_LOG_V(DEBUG, MOD_NAME, "gUnicastPort: %d", gUnicastPort);
     OIC_LOG_V(DEBUG, MOD_NAME, "gUnicastSocket: %d", gUnicastSocket);
-
-    // start thread to monitor socket here
-    if (!gServerRunning)
-    {
-        gRcvAction.enable();
-        gServerRunning = true;
-    }
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                          const int16_t multicastPort, int32_t *serverFD)
+        const int16_t multicastPort, int32_t *serverFD)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     if (CAArduinoInitMulticastUdpSocket(multicastAddress, &multicastPort, &multicastPort,
@@ -137,13 +127,6 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
     gMulticastSocket = *serverFD;
     OIC_LOG_V(DEBUG, MOD_NAME, "gMulticastPort: %d", multicastPort);
     OIC_LOG_V(DEBUG, MOD_NAME, "gMulticastSocket: %d", gMulticastSocket);
-    // start thread to monitor socket here
-    if (!gServerRunning)
-    {
-        gRcvAction.enable();
-        gServerRunning = true;
-    }
-
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return CA_STATUS_OK;
 }
@@ -151,14 +134,6 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
 CAResult_t CAEthernetStopUnicastServer()
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
-    // terminate server thread
-    // Stop thread if both server stopped
-    if (gMulticastSocket == 0)
-    {
-        gRcvAction.disable();
-        gServerRunning = false;
-    }
-
     close(gUnicastSocket);
     gUnicastSocket = 0;
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
@@ -168,14 +143,6 @@ CAResult_t CAEthernetStopUnicastServer()
 CAResult_t CAEthernetStopMulticastServer()
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
-    // terminate server thread
-    // Stop thread if both server stopped
-    if (gUnicastSocket == 0)
-    {
-        gRcvAction.disable();
-        gServerRunning = false;
-    }
-
     close(gMulticastSocket);
     gMulticastSocket = 0;
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
@@ -189,19 +156,13 @@ void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
     if (gPacketReceivedCallback)
     {
         gPacketReceivedCallback(ipAddress, port, data, dataLength);
-        OIC_LOG(DEBUG, MOD_NAME, "NNP");
     }
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
 }
 
 void CAArduinoCheckData()
 {
-    void *data = malloc(COAP_MAX_PDU_SIZE);
-    if (NULL == data)
-    {
-        return;
-    }
-    memset(data, 0, COAP_MAX_PDU_SIZE);
+    void *data = NULL;
     int32_t dataLen = 0;
     uint8_t senderAddr[4] = { 0 };
     char addr[IPNAMESIZE] = {0};
@@ -209,7 +170,7 @@ void CAArduinoCheckData()
 
     if (gUnicastSocket)
     {
-        dataLen = CAArduinoRecvData(gUnicastSocket, (uint8_t *)data, COAP_MAX_PDU_SIZE, senderAddr,
+        dataLen = CAArduinoRecvData(gUnicastSocket, (uint8_t **)&data, COAP_MAX_PDU_SIZE, senderAddr,
                                     &senderPort);
         if (dataLen < 0)
         {
@@ -218,20 +179,22 @@ void CAArduinoCheckData()
         }
         else if (dataLen > 0)
         {
-            OIC_LOG(DEBUG, MOD_NAME, "Data recvd on unicast server");
+            OIC_LOG(DEBUG, MOD_NAME, "unicast data recvd");
             sprintf(addr, "%d.%d.%d.%d", senderAddr[0], senderAddr[1], senderAddr[2], senderAddr[3]);
             CAPacketReceivedCallback(addr, senderPort, data, dataLen);
         }
-        else
+
+        if(data)
         {
-            OIC_LOG(DEBUG, MOD_NAME, "No data");
+            OICFree(data);
+            data = NULL;
         }
     }
 
     if (gMulticastSocket)
     {
-        dataLen = CAArduinoRecvData(gMulticastSocket, (uint8_t *)data, COAP_MAX_PDU_SIZE, senderAddr,
-                                    &senderPort);
+        dataLen = CAArduinoRecvData(gMulticastSocket, (uint8_t **)&data, COAP_MAX_PDU_SIZE,
+                                    senderAddr, &senderPort);
         if (dataLen < 0)
         {
             CAEthernetStopMulticastServer();
@@ -242,33 +205,47 @@ void CAArduinoCheckData()
             sprintf(addr, "%d.%d.%d.%d", senderAddr[0], senderAddr[1], senderAddr[2], senderAddr[3]);
             CAPacketReceivedCallback(addr, senderPort, data, dataLen);
         }
+
+        if(data)
+        {
+            OICFree(data);
+            data = NULL;
+        }
     }
-    OICFree(data);
 }
 
 /// Retrieve any available data from UDP socket. This is a non-blocking call.
-int32_t CAArduinoRecvData(int32_t sockFd, uint8_t *buf, uint32_t bufLen, uint8_t *senderAddr,
-                          uint16_t *senderPort)
+int32_t CAArduinoRecvData(int32_t sockFd, uint8_t **buf, uint32_t bufLen,
+                          uint8_t *senderAddr, uint16_t *senderPort)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    //OIC_LOG(DEBUG, MOD_NAME, "IN");
     /**Bug : When there are multiple UDP packets in Wiznet buffer, W5100.getRXReceivedSize
      * will not return correct length of the first packet.
      * Fix : Use the patch provided for arduino/libraries/Ethernet/utility/socket.cpp
      */
 
-    VERIFY_NON_NULL(buf, MOD_NAME, "Invalid buf");
-    VERIFY_NON_NULL(senderAddr, MOD_NAME, "Invalid senderAddr");
-    VERIFY_NON_NULL(senderPort, MOD_NAME, "Invalid senderPort");
+    VERIFY_NON_NULL(buf, MOD_NAME, "buf");
+    VERIFY_NON_NULL(senderAddr, MOD_NAME, "senderAddr");
+    VERIFY_NON_NULL(senderPort, MOD_NAME, "senderPort");
     int32_t ret = 0;
     uint16_t recvLen = W5100.getRXReceivedSize(sockFd);
     if (recvLen == 0)
     {
-        OIC_LOG_V(DEBUG, MOD_NAME, "rcvd %d", recvLen);
         return recvLen;
     }
 
+    OIC_LOG_V(DEBUG, MOD_NAME, "rcvd %d", recvLen);
+    recvLen = recvLen > COAP_MAX_PDU_SIZE ? COAP_MAX_PDU_SIZE:recvLen;
+
+    *buf = (uint8_t *)OICMalloc(recvLen + 1);
+    if (NULL == *buf)
+    {
+        OIC_LOG(DEBUG, MOD_NAME, "Out of memory!");
+        return 0;
+    }
+    memset(*buf, 0, recvLen + 1);
     // Read available data.
-    ret = recvfrom(sockFd, buf, bufLen, senderAddr, senderPort);
+    ret = recvfrom(sockFd, *buf, bufLen, senderAddr, senderPort);
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return ret;
 }
@@ -287,7 +264,7 @@ void CAEthernetSetExceptionCallback(CAEthernetExceptionCallback callback)
 
 void CAEthernetPullData()
 {
-    gRcvAction.check();
+    CAArduinoCheckData();
 }
 
 /// Retrieves the IP address assigned to Arduino Ethernet shield

@@ -51,12 +51,13 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic, unsign
 * @fn  CABleGattCharacteristicWriteCb
 * @brief  This is the callback which will be called after the characteristics changed.
 *
-* @param[in]  handle  The attribute handle of characteristic
+* @param[in]  result  result of write value
+* @param[in]  userData  user context
 *
 * @return  void
 *
 */
-void CABleGattCharacteristicWriteCb(bt_gatt_attribute_h handle);
+void CABleGattCharacteristicWriteCb(int32_t result, void *userData);
 
 /**
 * @fn  CABleGattDescriptorDiscoveredCb
@@ -89,7 +90,7 @@ void CABleGattDescriptorDiscoveredCb(int32_t result, unsigned char format, int32
 * @return  0 on failure and 1 on success.
 *
 */
-CABool_t CABleGattCharacteristicsDiscoveredCb(int32_t result, int32_t inputIndex, int32_t total,
+bool CABleGattCharacteristicsDiscoveredCb(int32_t result, int32_t inputIndex, int32_t total,
         bt_gatt_attribute_h characteristic, void *userData);
 
 /**
@@ -117,7 +118,7 @@ void CABtGattBondCreatedCb(int32_t result, bt_device_info_s *device_info, void *
 * @return  0 on failure and 1 on success.
 *
 */
-CABool_t CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int32_t index, int32_t count,
+bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int32_t index, int32_t count,
                                    void *userData);
 
 /**

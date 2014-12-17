@@ -166,15 +166,15 @@ typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkSt
  * @brief This will be used during the recive of network requests and response.
  * @see SendUnitcastData(), SendMulticastData()
  */
-typedef void (*CABLEClientDataReceivedCallback)(const char *remoteAddress, const char *serviceUUID,
-                                        void *data, uint32_t dataLength, uint32_t *sentLength);
+typedef CAResult_t (*CABLEClientDataReceivedCallback)(const char *remoteAddress, const char *serviceUUID,
+        void *data, uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @brief This will be used during the recive of network requests and response.
  * @see SendUnitcastData(), SendMulticastData()
  */
-typedef void (*CABLEServerDataReceivedCallback)(const char *remoteAddress, const char *serviceUUID,
-                                            void *data, uint32_t dataLength, uint32_t *sentLength);
+typedef CAResult_t (*CABLEServerDataReceivedCallback)(const char *remoteAddress, const char *serviceUUID,
+        void *data, uint32_t dataLength, uint32_t *sentLength);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -59,7 +59,7 @@ typedef enum
  * @pre  Callback must be registered using CAEthernetSetPacketReceiveCallback()
  */
 typedef void (*CAEthernetPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-              const void *data, const uint32_t dataLength);
+        const void *data, const uint32_t dataLength);
 
 /**
  * @fn  CAEthernetExceptionCallback
@@ -103,7 +103,7 @@ void CAEthernetTerminateServer(void);
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                          const int16_t multicastPort, int32_t *serverFD);
+        const int16_t multicastPort, int32_t *serverFD);
 
 /**
  * @fn  CAEthernetStartUnicastServer
@@ -263,14 +263,14 @@ uint32_t CAEthernetSendData(const char *remoteAddress, const int16_t port,
 typedef void (*CAEthernetConnectionStateChangeCallback)(const char *ipAddress,
         const CANetworkStatus_t status);
 
- /**
- * @fn  CAEthernetInitializeServer
- * @brief  API to initialize Ethernet server
- *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Initialization failed
- */
+/**
+* @fn  CAEthernetInitializeServer
+* @brief  API to initialize Ethernet server
+*
+* @return  #CA_STATUS_OK on success otherwise proper error code.
+* @retval  #CA_STATUS_OK  Successful
+* @retval  #CA_STATUS_FAILED Initialization failed
+*/
 CAResult_t CAEthernetInitializeNetworkMonitor(void);
 
 /**

@@ -180,7 +180,6 @@ CAResult_t CAWiFiStopSecureUnicastServer();
 CAResult_t CAWiFiGetUnicastServerInfo(const CABool_t isSecured, char **ipAddress, int16_t *port,
                                       int32_t *serverFD);
 
-
 /**
  * @fn  CAWiFiSetPacketReceiveCallback
  * @brief  API to set callback for receiving data packets from peer devices.

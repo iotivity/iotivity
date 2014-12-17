@@ -184,7 +184,6 @@ CAResult_t CABTManagerStopServer(void);
  */
 CAResult_t CABTManagerGetInterface(CALocalConnectivity_t **info);
 
-#if 0
 /**
  * @fn  CABTManagerReadData
  * @brief  All received data will be notified to upper layer.
@@ -195,7 +194,6 @@ CAResult_t CABTManagerGetInterface(CALocalConnectivity_t **info);
  *
  */
 CAResult_t CABTManagerReadData(void);
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

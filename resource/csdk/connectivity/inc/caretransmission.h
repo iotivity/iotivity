@@ -34,15 +34,21 @@
 /** CA_ETHERNET, CA_WIFI **/
 #define DEFAULT_RETRANSMISSION_TYPE     ((1<<0)|(1<<1))
 
-/** default retransmission trying count is 4. **/
-#define DEFAULT_RETRANSMISSION_COUNT    4
+/** default ACK time is 2 sec.(CoAP) **/
+#define DEFAULT_ACK_TIMEOUT         2
+
+/** default max retransmission trying count is 4.(CoAP) **/
+#define DEFAULT_MAX_RETRANSMIT      4
 
 /** check period is 1 sec. **/
 #define RETRANSMISSION_CHECK_PERIOD     1000000
 
 /** retransmission data send method type**/
-typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, void *data,
-        uint32_t length);
+typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, void *pdu,
+        uint32_t size);
+
+/** retransmission timeout callback type**/
+typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, void *pdu, uint32_t size);
 
 typedef struct
 {
@@ -63,12 +69,14 @@ typedef struct
     u_cond threadCond;
     /** send method for retransmission data **/
     CADataSendMethod_t dataSendMethod;
+    /** callback function for retransmit timeout **/
+    CATimeoutCallback_t timeoutCallback;
     /** retransmission configure data **/
     CARetransmissionConfig_t config;
     /** Variable to inform the thread to stop **/
     CABool_t isStop;
     /** array list on which the thread is operating. **/
-    u_arraylist_t* dataList;
+    u_arraylist_t *dataList;
 } CARetransmission_t;
 
 #ifdef __cplusplus
@@ -76,20 +84,63 @@ extern "C"
 {
 #endif
 
-CAResult_t CARetransmissionInitialize(CARetransmission_t* context, u_thread_pool_t handle,
-        CADataSendMethod_t retransmissionSendMethod, CARetransmissionConfig_t* config);
+/**
+ * @brief   Initializes the retransmission context
+ * @param   context [IN]context for retransmission
+ * @param   handle  [IN]thread pool handle
+ * @param   retransmissionSendMethod    [IN]function to be called for retransmission
+ * @param   timeoutCallback [IN]callback for retransmit timeout
+ * @param   config  [IN]configuration for retransmission. if NULL is coming, it will set default values.
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool_t handle,
+        CADataSendMethod_t retransmissionSendMethod, CATimeoutCallback_t timeoutCallback,
+        CARetransmissionConfig_t* config);
 
-CAResult_t CARetransmissionStart(CARetransmission_t* context);
+/**
+ * @brief   Starting the retransmission context
+ * @param   context [IN]context for retransmission
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CARetransmissionStart(CARetransmission_t *context);
 
-CAResult_t CARetransmissionSentData(CARetransmission_t* context, const CARemoteEndpoint_t* endpoint,
-        const void* pdu, uint32_t size);
+/**
+ * @brief   Pass the sent pdu data. if retransmission process need, internal thread will wake up and 
+ *             process the retransmission data.
+ * @param   context     [IN]context for retransmission
+ * @param   endpoint    [IN]endpoint information
+ * @param   pdu         [IN]sent pdu binary data
+ * @param   size        [IN]sent pdu binary data size
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CARetransmissionSentData(CARetransmission_t* context, 
+                        const CARemoteEndpoint_t* endpoint,const void* pdu, uint32_t size);
 
-CAResult_t CARetransmissionReceivedData(CARetransmission_t* context,
-        const CARemoteEndpoint_t* endpoint, const void* pdu, uint32_t size);
+/**
+ * @brief   Paas the received pdu data. if received pdu is ACK data for the retransmission CON data, 
+ *             the specified CON data will remove on retransmission list.
+ * @param   context     [IN]context for retransmission
+ * @param   endpoint    [IN]endpoint information
+ * @param   pdu         [IN]received pdu binary data
+ * @param   size        [IN]received pdu binary data size
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
+                                        const CARemoteEndpoint_t *endpoint, const void *pdu, uint32_t size);
 
-CAResult_t CARetransmissionStop(CARetransmission_t* context);
+/**
+ * @brief   Stopping the retransmission context
+ * @param   context [IN]context for retransmission
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CARetransmissionStop(CARetransmission_t *context);
 
-CAResult_t CARetransmissionDestroy(CARetransmission_t* context);
+/**
+ * @brief   Terminating the retransmission context
+ * @param   context [IN]context for retransmission
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CARetransmissionDestroy(CARetransmission_t *context);
 
 #ifdef __cplusplus
 } /* extern "C" */

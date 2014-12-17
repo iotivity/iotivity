@@ -1,466 +1,1179 @@
 #include <jni.h>
 #include <stdio.h>
+#include <string.h>
 #include <android/log.h>
+#include "caleserver.h"
+#include "caleutils.h"
+#include "logger.h"
+#include "oic_malloc.h"
+#include "uthreadpool.h"
+#include "uarraylist.h"
 #include "com_iotivity_jar_CALeInterface.h"
 
-#define  LOG_TAG   "jni_BLE_Server"
+#define TAG PCF("CA_LE_SERVER")
+
 #define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define  LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-static const char *OIC_GATT_SERVICE_UUID = "713d0000-503e-4c75-ba94-3148f18d941e";
-static const char *OIC_GATT_CHARACTERISTIC_RESPONSE_UUID = "713d0002-503e-4c75-ba94-3148f18d941e";
-static const char *OIC_GATT_CHARACTERISTIC_REQUEST_UUID = "713d0003-503e-4c75-ba94-3148f18d941e";
+/* Service UUID */
+//static const char *OIC_GATT_SERVICE_UUID = "000018f3-0000-1000-8000-00805f9b34fb";
+//static const char *OIC_GATT_CHARACTERISTIC_RESPONSE_UUID = "00002af5-0000-1000-8000-00805f9b34fb";  //read
+//static const char *OIC_GATT_CHARACTERISTIC_REQUEST_UUID = "00002af6-0000-1000-8000-00805f9b34fb";  //write
 
+static const char *OIC_GATT_SERVICE_UUID = "713d0000-503e-4c75-ba94-3148f18d941e";
+static const char *OIC_GATT_CHARACTERISTIC_RESPONSE_UUID = "713d0002-503e-4c75-ba94-3148f18d941e"; //read
+static const char *OIC_GATT_CHARACTERISTIC_REQUEST_UUID = "713d0003-503e-4c75-ba94-3148f18d941e"; //write
+
+static JavaVM *g_jvm;
 static jobject gContext;
 static jobject gBluetoothGattServer;
 static jobject gBluetoothGattServerCallback;
-static jobject gAdvertiseCallback;
+static jobject gLeAdvertiseCallback;
 
-jobject getUuidFromString(JNIEnv *env, const char* uuid)
+static CAPacketReceiveCallback gPacketReceiveCallback = NULL;
+static u_arraylist_t *gConnectedDeviceList = NULL;
+static u_thread_pool_t gThreadPoolHandle = NULL;
+
+static jboolean gIsStartServer;
+static jboolean gResposeInProgress;
+
+//FIXME getting context
+void CALEServerJNISetContext(JNIEnv *env, jobject context)
 {
+    OIC_LOG_V(DEBUG, TAG, "CALEServerJNISetContext");
 
-    LOGI("[BLE Server] getUuidFromString");
+    if(context == NULL)
+        OIC_LOG_V(DEBUG, TAG, "context is null");
 
-    jclass jni_cid_UUID = (*env)->FindClass(env, "java/util/UUID");
-    if (!jni_cid_UUID)
-    {
-        LOGI("[BLE Server] jni_cid_UUID is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_fromString = (*env)->GetStaticMethodID(env, jni_cid_UUID, "fromString",
-            "(Ljava/lang/String;)Ljava/util/UUID;");
-    if (!jni_mid_fromString)
-    {
-        LOGI("[BLE Server] jni_mid_fromString is null");
-        return NULL;
-    }
-
-    jstring str_serviceUUID = (*env)->NewStringUTF(env, uuid);
-    LOGI("[BLE Server] uuid: %s", uuid);
-    jobject jni_obj_serviceUUID = (*env)->CallStaticObjectMethod(env, jni_cid_UUID,
-            jni_mid_fromString, str_serviceUUID);
-    if (!jni_obj_serviceUUID)
-    {
-        LOGI("[BLE][Server] jni_obj_serviceUUID is null");
-        return NULL;
-    }
-
-    return jni_obj_serviceUUID;
+    gContext = (*env)->NewGlobalRef(env, context);
 }
 
-jobject getParcelUuid(JNIEnv *env, jobject uuid)
+//FIXME getting jvm
+void CALeServerJniInit(JNIEnv *env, JavaVM *jvm)
 {
-
-    jclass jni_cid_ParcelUuid = (*env)->FindClass(env, "android/os/ParcelUuid");
-    if (!jni_cid_ParcelUuid)
-    {
-        LOGI("[BLE Server] jni_cid_ParcelUuid is null");
-        return;
-    }
-
-    jmethodID jni_mid_ParcelUuid = (*env)->GetMethodID(env, jni_cid_ParcelUuid, "<init>",
-            "(Ljava/util/UUID;)V");
-    if (!jni_mid_ParcelUuid)
-    {
-        LOGI("[BLE Server] jni_mid_ParcelUuid is null");
-        return;
-    }
-
-    jobject jni_ParcelUuid = (*env)->NewObject(env, jni_cid_ParcelUuid, jni_mid_ParcelUuid, uuid);
-    if (!jni_ParcelUuid)
-    {
-        LOGI("[BLE Server] jni_ParcelUuid is null");
-        return;
-    }
-
-    return jni_ParcelUuid;
+    OIC_LOG_V(DEBUG, TAG, "CALeServerJniInit");
+    g_jvm = jvm;
 }
 
-jobject setData(JNIEnv *env, char* responseData)
+jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
 {
 
-    LOGI("[BLE Server] set response");
+    OIC_LOG_V(DEBUG, TAG, "CALEServerSetResponseData");
 
     jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
             "android/bluetooth/BluetoothGattServer");
+
     jclass jni_cid_bluetoothGattService = (*env)->FindClass(env,
             "android/bluetooth/BluetoothGattService");
+
     jclass jni_cid_bluetoothGattCharacteristic = (*env)->FindClass(env,
             "android/bluetooth/BluetoothGattCharacteristic");
-    LOGI("[BLE Server] get classes");
 
-    jmethodID jni_mid_getService = (*env)->GetMethodID(env, jni_cid_bluetoothGattService,
-            "getService", "(Ljava/util/UUID;)Landroid/bluetooth/BluetoothGattService;");
-    LOGI("[BLE Server] get methodID");
+    jmethodID jni_mid_getService = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattServer, "getService",
+            "(Ljava/util/UUID;)Landroid/bluetooth/BluetoothGattService;");
 
-    jobject jni_obj_serviceUUID = getUuidFromString(env, OIC_GATT_SERVICE_UUID);
-    LOGI("[BLE Server] get serviceUUID");
+    jobject jni_obj_serviceUUID = CALEGetUuidFromString(env, OIC_GATT_SERVICE_UUID);
 
     if (!gBluetoothGattServer)
     {
-        LOGI("[BLE Server] gBluetoothGattServer is null");
+        OIC_LOG_V(DEBUG, TAG, "Check BluetoothGattServer status");
         return NULL;
     }
+    jobject jni_obj_bluetoothGattService = (*env)->CallObjectMethod(env,
+            gBluetoothGattServer, jni_mid_getService, jni_obj_serviceUUID);
 
-    jobject jni_obj_bluetoothGattService = (*env)->CallObjectMethod(env, gBluetoothGattServer,
-            jni_mid_getService, jni_obj_serviceUUID);
-    LOGI("[BLE Server] jni_obj_bluetoothGattService");
+    jmethodID jni_mid_getCharacteristic =
+            (*env)->GetMethodID(env, jni_cid_bluetoothGattService,
+                    "getCharacteristic",
+                    "(Ljava/util/UUID;)Landroid/bluetooth/BluetoothGattCharacteristic;");
 
-    jmethodID jni_mid_getCharacteristic = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
-            "getCharacteristic",
-            "(Ljava/util/UUID;)Landroid/bluetooth/BluetoothGattCharacteristic;");
+    jobject jni_obj_responseUUID = CALEGetUuidFromString(env,
+            OIC_GATT_CHARACTERISTIC_RESPONSE_UUID);
 
-    jobject jni_obj_responseUUID = getUuidFromString(env, OIC_GATT_CHARACTERISTIC_RESPONSE_UUID);
     jobject jni_obj_bluetoothGattCharacteristic = (*env)->CallObjectMethod(env,
-            jni_obj_bluetoothGattService, jni_mid_getCharacteristic, jni_obj_responseUUID);
-    LOGI("[BLE Server] jni_obj_bluetoothGattCharacteristic");
+            jni_obj_bluetoothGattService, jni_mid_getCharacteristic,
+            jni_obj_responseUUID);
 
-    jmethodID jni_mid_setValue = (*env)->GetMethodID(env, jni_cid_bluetoothGattCharacteristic,
-            "setValue", "(Ljava/land/String;)Z");
-    jstring str_responseData = (*env)->NewStringUTF(env, responseData);
+    jmethodID jni_mid_setValue = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattCharacteristic, "setValue",
+            "([B)Z");
+
     jboolean jni_boolean_setValue = (*env)->CallBooleanMethod(env,
-            jni_obj_bluetoothGattCharacteristic, jni_mid_setValue, str_responseData);
+            jni_obj_bluetoothGattCharacteristic, jni_mid_setValue,
+            responseData);
+
+    if (jni_boolean_setValue == JNI_FALSE) {
+        OIC_LOG_V(DEBUG, TAG, "Fail to set response data");
+    }
 
     return jni_obj_bluetoothGattCharacteristic;
 }
 
-jboolean sendData(JNIEnv *env, jobject device, jobject responseData)
+jboolean CALEServerSendResponseData(JNIEnv *env, jobject device, jobject responseData)
 {
 
-    if (!device)
-    {
-        LOGI("[BLE Server] device is null");
-        return JNI_FALSE;
-    }
-
-    if (!responseData)
-    {
-        LOGI("[BLE Server] responseData is null");
-        return JNI_FALSE;
-    }
+    OIC_LOG_V(DEBUG, TAG, "CALEServerSendResponseData");
 
     jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
             "android/bluetooth/BluetoothGattServer");
 
     jmethodID jni_mid_notifyCharacteristicChanged =
-            (*env)->GetMethodID(env, jni_cid_bluetoothGattServer, "notifyCharacteristicChanged",
+            (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
+                    "notifyCharacteristicChanged",
                     "(Landroid/bluetooth/BluetoothDevice;Landroid/bluetooth/BluetoothGattCharacteristic;Z)Z");
-    jboolean jni_boolean_notifyCharacteristicChanged = (*env)->CallBooleanMethod(env,
-            gBluetoothGattServer, jni_mid_notifyCharacteristicChanged, device, responseData,
-            JNI_TRUE);
 
-    if (!jni_boolean_notifyCharacteristicChanged)
-        return JNI_FALSE;
+    jboolean jni_boolean_notifyCharacteristicChanged =
+            (*env)->CallBooleanMethod(env, gBluetoothGattServer,
+                    jni_mid_notifyCharacteristicChanged, device, responseData,
+                    JNI_TRUE);
 
-    return JNI_TRUE;
+    if (jni_boolean_notifyCharacteristicChanged == JNI_FALSE) {
+        OIC_LOG_V(DEBUG, TAG, "Fail to notify characteristic");
+    }
+
+    return jni_boolean_notifyCharacteristicChanged;
 }
 
-jboolean sendResponse(JNIEnv *env, jobject device, jint requestId, jint status, jint offset)
+jboolean CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, jint status,
+        jint offset, jbyteArray value)
 {
+
+    OIC_LOG_V(DEBUG, TAG, "CALEServerSendResponse");
 
     jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
             "android/bluetooth/BluetoothGattServer");
-    jmethodID jni_mid_sendResponse = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
-            "sendResponse", "(Landroid/bluetooth/BluetoothDevice;III)Z");
-    (*env)->CallVoidMethod(env, gBluetoothGattServer, jni_mid_sendResponse, device, requestId,
-            status, offset);
-    LOGI("[BLE Server] sendResponse");
 
+    jmethodID jni_mid_sendResponse = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattServer, "sendResponse",
+            "(Landroid/bluetooth/BluetoothDevice;III[B)Z");
+
+    jboolean jni_boolean_sendResponse = (*env)->CallBooleanMethod(env, gBluetoothGattServer,
+            jni_mid_sendResponse, device, requestId, status, offset, value);
+
+    if (jni_boolean_sendResponse == JNI_FALSE) {
+        OIC_LOG_V(DEBUG, TAG, "Fail to send response for gatt characteristic write request");
+    }
+
+    return jni_boolean_sendResponse;
 }
 
-void startAdvertize(JNIEnv *env, jobject advertiseCallback)
+void LEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
 {
+
+    OIC_LOG_V(DEBUG, TAG, "LEServerStartAdvertise");
 
     jclass jni_cid_AdvertiseSettings = (*env)->FindClass(env,
             "android/bluetooth/le/AdvertiseSettings$Builder");
 
-    jmethodID jni_mid_AdvertiseSettings = (*env)->GetMethodID(env, jni_cid_AdvertiseSettings,
-            "<init>", "()V");
-
-    jobject jni_AdvertiseSettings = (*env)->NewObject(env, jni_cid_AdvertiseSettings,
-            jni_mid_AdvertiseSettings);
-    if (!jni_AdvertiseSettings)
-    {
-        LOGI("[BLE Server] jni_AdvertiseSettings is null");
-        return;
-    }
-
-    jmethodID jni_mid_setConnectable = (*env)->GetMethodID(env, jni_cid_AdvertiseSettings,
-            "setConnectable", "(Z)Landroid/bluetooth/le/AdvertiseSettings$Builder;");
-
-    jobject jni_obj_setConnectable = (*env)->CallObjectMethod(env, jni_AdvertiseSettings,
-            jni_mid_setConnectable, JNI_TRUE);
-    if (!jni_obj_setConnectable)
-    {
-        LOGI("[BLE][Server] jni_obj_setConnectable is null");
-        return;
-    }
-
-    jmethodID jni_mid_setTimeout = (*env)->GetMethodID(env, jni_cid_AdvertiseSettings, "setTimeout",
-            "(I)Landroid/bluetooth/le/AdvertiseSettings$Builder;");
-
-    jobject jni_obj_setTimeout = (*env)->CallObjectMethod(env, jni_AdvertiseSettings,
-            jni_mid_setTimeout, 10000);
-    if (!jni_obj_setTimeout)
-    {
-        LOGI("[BLE][Server] jni_obj_setTimeout is null");
-        return;
-    }
-
     jclass jni_cid_AdvertiseDataBuilder = (*env)->FindClass(env,
             "android/bluetooth/le/AdvertiseData$Builder");
 
-    jmethodID jni_mid_AdvertiseDataBuilder = (*env)->GetMethodID(env, jni_cid_AdvertiseDataBuilder,
-            "<init>", "()V");
-
-    jobject jni_AdvertiseDataBuilder = (*env)->NewObject(env, jni_cid_AdvertiseDataBuilder,
-            jni_mid_AdvertiseDataBuilder);
-    if (!jni_AdvertiseDataBuilder)
-    {
-        LOGI("[BLE Server] jni_AdvertiseDataBuilder is null");
-        return;
-    }
-
-    jobject jni_obj_serviceUUID = getUuidFromString(env, OIC_GATT_SERVICE_UUID);
-    jobject jni_ParcelUuid = getParcelUuid(env, jni_obj_serviceUUID);
-    jmethodID jni_mid_addServiceUuid = (*env)->GetMethodID(env, jni_cid_AdvertiseDataBuilder,
-            "addServiceUuid",
-            "(Landroid/os/ParcelUuid;)Landroid/bluetooth/le/AdvertiseData$Builder;");
-
-    jobject jni_obj_addServiceUuid = (*env)->CallObjectMethod(env, jni_AdvertiseDataBuilder,
-            jni_mid_addServiceUuid, jni_ParcelUuid);
-    if (!jni_obj_addServiceUuid)
-    {
-        LOGI("[BLE Server] jni_obj_addServiceUuid is null");
-        return;
-    }
-
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env, "android/bluetooth/BluetoothAdapter");
-    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
-            "getDefaultAdapter", "()Landroid/bluetooth/BluetoothAdapter;");
-
-    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
-            jni_mid_getDefaultAdapter);
-    if (!jni_obj_BTAdapter)
-    {
-        LOGI("[BLE Server] jni_obj_BTAdapter is null");
-        return;
-    }
-
-    jmethodID jni_mid_getBluetoothLeAdvertiser = (*env)->GetMethodID(env, jni_cid_BTAdapter,
-            "getBluetoothLeAdvertiser", "()Landroid/bluetooth/le/BluetoothLeAdvertiser;");
-
-    jobject jni_obj_getBluetoothLeAdvertiser = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
-            jni_mid_getBluetoothLeAdvertiser);
-    if (!jni_obj_getBluetoothLeAdvertiser)
-    {
-        LOGI("[BLE Server] jni_obj_getBluetoothLeAdvertiser is null");
-        return;
-    }
-
-    jmethodID jni_mid_build_LeAdvertiseSettings = (*env)->GetMethodID(env,
-            jni_cid_AdvertiseSettings, "build", "()Landroid/bluetooth/le/AdvertiseSettings;");
-
-    jobject jni_obj_build_LeAdvertiseSettings = (*env)->CallObjectMethod(env, jni_AdvertiseSettings,
-            jni_mid_build_LeAdvertiseSettings);
-    if (!jni_obj_build_LeAdvertiseSettings)
-    {
-        LOGI("[BLE Server] jni_obj_build_LeAdvertiseSettings is null");
-        return;
-    }
-
-    jmethodID jni_mid_build_LeAdvertiseData = (*env)->GetMethodID(env, jni_cid_AdvertiseDataBuilder,
-            "build", "()Landroid/bluetooth/le/AdvertiseData;");
-
-    jobject jni_obj_build_LeAdvertiseData = (*env)->CallObjectMethod(env, jni_AdvertiseDataBuilder,
-            jni_mid_build_LeAdvertiseData);
-    if (!jni_obj_build_LeAdvertiseData)
-    {
-        LOGI("[BLE Server] jni_obj_build_LeAdvertiseData is null");
-        return;
-    }
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env,
+            "android/bluetooth/BluetoothAdapter");
 
     jclass jni_cid_leAdvertiser = (*env)->FindClass(env,
             "android/bluetooth/le/BluetoothLeAdvertiser");
+
+    jmethodID jni_mid_AdvertiseSettings = (*env)->GetMethodID(env,
+            jni_cid_AdvertiseSettings, "<init>", "()V");
+
+    jmethodID jni_mid_setAdvertiseMode = (*env)->GetMethodID(env,
+            jni_cid_AdvertiseSettings, "setAdvertiseMode",
+                "(I)Landroid/bluetooth/le/AdvertiseSettings$Builder;");
+
+    jmethodID jni_mid_setConnectable = (*env)->GetMethodID(env,
+            jni_cid_AdvertiseSettings, "setConnectable",
+            "(Z)Landroid/bluetooth/le/AdvertiseSettings$Builder;");
+
+    jmethodID jni_mid_setTimeout = (*env)->GetMethodID(env,
+            jni_cid_AdvertiseSettings, "setTimeout",
+            "(I)Landroid/bluetooth/le/AdvertiseSettings$Builder;");
+
+    jmethodID jni_mid_AdvertiseDataBuilder = (*env)->GetMethodID(env,
+            jni_cid_AdvertiseDataBuilder, "<init>", "()V");
+
+    jmethodID jni_mid_addServiceUuid =
+            (*env)->GetMethodID(env, jni_cid_AdvertiseDataBuilder,
+                    "addServiceUuid",
+                    "(Landroid/os/ParcelUuid;)Landroid/bluetooth/le/AdvertiseData$Builder;");
+
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env,
+            jni_cid_BTAdapter, "getDefaultAdapter",
+            "()Landroid/bluetooth/BluetoothAdapter;");
+
+    jmethodID jni_mid_getBluetoothLeAdvertiser = (*env)->GetMethodID(env,
+            jni_cid_BTAdapter, "getBluetoothLeAdvertiser",
+            "()Landroid/bluetooth/le/BluetoothLeAdvertiser;");
+
+    jmethodID jni_mid_build_LeAdvertiseSettings = (*env)->GetMethodID(env,
+            jni_cid_AdvertiseSettings, "build",
+            "()Landroid/bluetooth/le/AdvertiseSettings;");
+
+    jmethodID jni_mid_build_LeAdvertiseData = (*env)->GetMethodID(env,
+            jni_cid_AdvertiseDataBuilder, "build",
+            "()Landroid/bluetooth/le/AdvertiseData;");
 
     jmethodID jni_mid_startAdvertising =
             (*env)->GetMethodID(env, jni_cid_leAdvertiser, "startAdvertising",
                     "(Landroid/bluetooth/le/AdvertiseSettings;Landroid/bluetooth/le/AdvertiseData;Landroid/bluetooth/le/AdvertiseCallback;)V");
 
-    (*env)->CallVoidMethod(env, jni_obj_getBluetoothLeAdvertiser, jni_mid_startAdvertising,
-            jni_obj_build_LeAdvertiseSettings, jni_obj_build_LeAdvertiseData, advertiseCallback);
+    jobject jni_AdvertiseSettings = (*env)->NewObject(env,
+            jni_cid_AdvertiseSettings, jni_mid_AdvertiseSettings);
 
-    LOGI("[BLE Server] jni start Advertising");
+    jobject jni_obj_setAdvertiseMode = (*env)->CallObjectMethod(env,
+                jni_AdvertiseSettings, jni_mid_setAdvertiseMode, 0); // 0: Low power, 1: Balanced
+
+    jobject jni_obj_setConnectable = (*env)->CallObjectMethod(env,
+            jni_AdvertiseSettings, jni_mid_setConnectable, JNI_TRUE);
+
+    jobject jni_obj_setTimeout = (*env)->CallObjectMethod(env,
+            jni_AdvertiseSettings, jni_mid_setTimeout, 0); //A value of 0 will disable the time limit
+
+    jobject jni_AdvertiseDataBuilder = (*env)->NewObject(env,
+            jni_cid_AdvertiseDataBuilder, jni_mid_AdvertiseDataBuilder);
+
+    jobject jni_obj_serviceUUID = CALEGetUuidFromString(env, OIC_GATT_SERVICE_UUID);
+
+    jobject jni_ParcelUuid = CALEGetParcelUuid(env, jni_obj_serviceUUID);
+
+    jobject jni_obj_addServiceUuid = (*env)->CallObjectMethod(env,
+            jni_AdvertiseDataBuilder, jni_mid_addServiceUuid, jni_ParcelUuid);
+
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env,
+            jni_cid_BTAdapter, jni_mid_getDefaultAdapter);
+
+    jobject jni_obj_getBluetoothLeAdvertiser = (*env)->CallObjectMethod(env,
+            jni_obj_BTAdapter, jni_mid_getBluetoothLeAdvertiser);
+
+    jobject jni_obj_build_LeAdvertiseSettings = (*env)->CallObjectMethod(env,
+            jni_AdvertiseSettings, jni_mid_build_LeAdvertiseSettings);
+
+    jobject jni_obj_build_LeAdvertiseData = (*env)->CallObjectMethod(env,
+            jni_AdvertiseDataBuilder, jni_mid_build_LeAdvertiseData);
+
+    (*env)->CallVoidMethod(env, jni_obj_getBluetoothLeAdvertiser,
+            jni_mid_startAdvertising, jni_obj_build_LeAdvertiseSettings,
+            jni_obj_build_LeAdvertiseData, advertiseCallback);
+
+    OIC_LOG_V(DEBUG, TAG, "Advertising started!!");
 }
 
-jobject openGattServer(JNIEnv *env)
+jboolean CALEStartGattServer(JNIEnv *env, jobject gattServerCallback)
 {
 
-    jclass jni_cid_context = (*env)->FindClass(env, "android/content/Context");
-    jfieldID jni_fid_bluetoothService = (*env)->GetStaticFieldID(env, jni_cid_context,
-            "BLUETOOTH_SERVICE", "Ljava/lang/String;");
-    jobject jni_obj_bluetoothService = (*env)->GetStaticObjectField(env, jni_cid_context,
-            jni_fid_bluetoothService);
+    OIC_LOG_V(DEBUG, TAG, "CALEStartGattServer");
 
-    jmethodID jni_mid_getSystemService = (*env)->GetMethodID(env, jni_cid_context,
-            "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
-    jobject jni_obj_bluetoothManager = (*env)->CallObjectMethod(env, gContext,
-            jni_mid_getSystemService, jni_obj_bluetoothService);
-
-    jclass jni_cid_bluetoothManager = (*env)->FindClass(env, "android/bluetooth/BluetoothManager");
-    jmethodID jni_mid_openGattServer =
-            (*env)->GetMethodID(env, jni_cid_bluetoothManager, "openGattServer",
-                    "(Landroid/content/Context;Landroid/bluetooth/BluetoothGattServerCallback;)Landroid/bluetooth/BluetoothGattServer;");
-    jobject jni_obj_bluetoothGattServer = (*env)->CallObjectMethod(env, jni_obj_bluetoothManager,
-            jni_mid_openGattServer, gContext, gBluetoothGattServerCallback);
-
-    return jni_obj_bluetoothGattServer;
-}
-
-jobject createGattService(JNIEnv *env)
-{
-
-    jclass jni_cid_bluetoothGattService = (*env)->FindClass(env,
-            "android/bluetooth/BluetoothGattService");
-    jmethodID jni_mid_bluetoothGattService = (*env)->GetMethodID(env, jni_cid_bluetoothGattService,
-            "<init>", "(Ljava/util/UUID;I)V");
-
-    // service uuid object
-    jobject jni_obj_serviceUUID = getUuidFromString(env, OIC_GATT_SERVICE_UUID);
-
-    // service type object
-    jfieldID jni_fid_serviceType = (*env)->GetStaticFieldID(env, jni_cid_bluetoothGattService,
-            "SERVICE_TYPE_PRIMARY", "I");
-    jobject jni_obj_serviceType = (*env)->GetStaticObjectField(env, jni_cid_bluetoothGattService,
-            jni_fid_serviceType);
-
-    jobject jni_bluetoothGattService = (*env)->NewObject(env, jni_cid_bluetoothGattService,
-            jni_mid_bluetoothGattService, jni_obj_serviceUUID, jni_obj_serviceType);
-    if (!jni_bluetoothGattService)
-    {
-        LOGI("[BLE Server] fail to create gatt service instance!");
-        return NULL;
-    }
-
-    jclass jni_cid_bluetoothGattCharacteristic = (*env)->FindClass(env,
-            "android/bluetooth/BluetoothGattCharacteristic");
-    jmethodID jni_mid_bluetoothGattCharacteristic = (*env)->GetMethodID(env,
-            jni_cid_bluetoothGattCharacteristic, "<init>", "(Ljava/util/UUID;II)V");
-
-    // characteristic uuid for response
-    jobject jni_obj_readUuid = getUuidFromString(env, OIC_GATT_CHARACTERISTIC_RESPONSE_UUID);
-
-    // characteristic properties
-    jfieldID jni_fid_readProperties = (*env)->GetStaticFieldID(env,
-            jni_cid_bluetoothGattCharacteristic, "PROPERTY_READ", "I");
-    jobject jni_obj_readProperties = (*env)->GetStaticObjectField(env,
-            jni_cid_bluetoothGattCharacteristic, jni_fid_readProperties);
-
-    // characteristic permissions
-    jfieldID jni_fid_readPermissions = (*env)->GetStaticFieldID(env,
-            jni_cid_bluetoothGattCharacteristic, "PERMISSION_READ", "I");
-    jobject jni_obj_readPermissions = (*env)->GetStaticObjectField(env,
-            jni_cid_bluetoothGattCharacteristic, jni_fid_readPermissions);
-
-    jobject jni_readCharacteristic = (*env)->NewObject(env, jni_cid_bluetoothGattCharacteristic,
-            jni_mid_bluetoothGattCharacteristic, jni_obj_readUuid, jni_obj_readProperties,
-            jni_obj_readPermissions);
-    if (!jni_readCharacteristic)
-    {
-        LOGI("[BLE Server] fail to create Response Characteristic");
-        return NULL;
-    }
-
-    jobject jni_obj_writeUuid = getUuidFromString(env, OIC_GATT_CHARACTERISTIC_REQUEST_UUID);
-
-    // characteristic properties
-    jfieldID jni_fid_writeProperties = (*env)->GetStaticFieldID(env,
-            jni_cid_bluetoothGattCharacteristic, "PROPERTY_WRITE", "I");
-    jobject jni_obj_writeProperties = (*env)->GetStaticObjectField(env,
-            jni_cid_bluetoothGattCharacteristic, jni_fid_writeProperties);
-
-    // characteristic permissions
-    jfieldID jni_fid_writePermissions = (*env)->GetStaticFieldID(env,
-            jni_cid_bluetoothGattCharacteristic, "PERMISSION_WRITE", "I");
-    jobject jni_obj_writePermissions = (*env)->GetStaticObjectField(env,
-            jni_cid_bluetoothGattCharacteristic, jni_fid_writePermissions);
-
-    jobject jni_writeCharacteristic = (*env)->NewObject(env, jni_cid_bluetoothGattCharacteristic,
-            jni_mid_bluetoothGattCharacteristic, jni_obj_writeUuid, jni_obj_writeProperties,
-            jni_obj_writePermissions);
-    if (!jni_writeCharacteristic)
-    {
-        LOGI("[BLE Server] fail to create Request Characteristic");
-        return NULL;
-    }
-
-    jmethodID jni_mid_addCharacteristic = (*env)->GetMethodID(env, jni_cid_bluetoothGattService,
-            "addCharacteristic", "(Landroid/bluetooth/BluetoothGattCharacteristic;)Z");
-    jboolean jni_boolean_addReadCharacteristic = (*env)->CallBooleanMethod(env,
-            jni_bluetoothGattService, jni_mid_addCharacteristic, jni_readCharacteristic);
-    if (jni_boolean_addReadCharacteristic == JNI_FALSE)
-    {
-        LOGI("[BLE Server] fail to add jni_boolean_addReadCharacteristic!!");
-        return NULL;
-    }
-
-    jboolean jni_boolean_addWriteCharacteristic = (*env)->CallBooleanMethod(env,
-            jni_bluetoothGattService, jni_mid_addCharacteristic, jni_writeCharacteristic);
-    if (jni_boolean_addWriteCharacteristic == JNI_FALSE)
-    {
-        LOGI("[BLE Server] fail to add jni_boolean_addReadCharacteristic!!");
-        return NULL;
-    }
-
-    LOGI("[BLE Server] jni gatt characteristic added!!");
-    return jni_bluetoothGattService;
-}
-
-void startGattServer(JNIEnv *env, jobject gattServerCallback)
-{
+    if(gIsStartServer)
+        OIC_LOG_V(DEBUG, TAG, "Gatt server already started");
 
     gBluetoothGattServerCallback = (*env)->NewGlobalRef(env, gattServerCallback);
 
     // open gatt server
-    jobject bluetoothGattServer = openGattServer(env);
-
+    jobject bluetoothGattServer = CALEServerOpenGattServer(env);
     gBluetoothGattServer = (*env)->NewGlobalRef(env, bluetoothGattServer);
-    LOGI("[BLE Server] Bluetooth Gatt Server started!!");
 
-    // get bluetooth gatt service
-    jobject bluetoothGattService = createGattService(env);
+    // create gatt service
+    jobject bluetoothGattService = CALEServerCreateGattService(env);
+
+    // add gatt service
+    return CALEServerAddGattService(env, bluetoothGattServer, bluetoothGattService);
+}
+
+jobject CALEServerOpenGattServer(JNIEnv *env)
+{
+
+    OIC_LOG_V(DEBUG, TAG, "CALEServerOpenGattServer");
+
+    jclass jni_cid_context = (*env)->FindClass(env, "android/content/Context");
+
+    jclass jni_cid_bluetoothManager = (*env)->FindClass(env,
+            "android/bluetooth/BluetoothManager");
+
+    jfieldID jni_fid_bluetoothService = (*env)->GetStaticFieldID(env,
+            jni_cid_context, "BLUETOOTH_SERVICE", "Ljava/lang/String;");
+
+    jmethodID jni_mid_getSystemService = (*env)->GetMethodID(env,
+            jni_cid_context, "getSystemService",
+            "(Ljava/lang/String;)Ljava/lang/Object;");
+
+    jmethodID jni_mid_openGattServer =
+            (*env)->GetMethodID(env, jni_cid_bluetoothManager, "openGattServer",
+                    "(Landroid/content/Context;Landroid/bluetooth/BluetoothGattServerCallback;)Landroid/bluetooth/BluetoothGattServer;");
+
+    jobject jni_obj_bluetoothService = (*env)->GetStaticObjectField(env,
+            jni_cid_context, jni_fid_bluetoothService);
+
+    jobject jni_obj_bluetoothManager = (*env)->CallObjectMethod(env, gContext,
+            jni_mid_getSystemService, jni_obj_bluetoothService);
+
+    jobject jni_obj_bluetoothGattServer = (*env)->CallObjectMethod(env,
+            jni_obj_bluetoothManager, jni_mid_openGattServer, gContext,
+            gBluetoothGattServerCallback);
+
+    return jni_obj_bluetoothGattServer;
+}
+
+jobject CALEServerCreateGattService(JNIEnv *env)
+{
+
+    OIC_LOG_V(DEBUG, TAG, "CALEServerCreateGattService");
+
+    jclass jni_cid_bluetoothGattService = (*env)->FindClass(env,
+            "android/bluetooth/BluetoothGattService");
+
+    jclass jni_cid_bluetoothGattCharacteristic = (*env)->FindClass(env,
+            "android/bluetooth/BluetoothGattCharacteristic");
+
+    jfieldID jni_fid_serviceType = (*env)->GetStaticFieldID(env,
+            jni_cid_bluetoothGattService, "SERVICE_TYPE_PRIMARY", "I");
+
+    jfieldID jni_fid_readProperties = (*env)->GetStaticFieldID(env,
+            jni_cid_bluetoothGattCharacteristic, "PROPERTY_READ", "I");
+
+    jfieldID jni_fid_writeProperties = (*env)->GetStaticFieldID(env,
+            jni_cid_bluetoothGattCharacteristic, "PROPERTY_WRITE", "I");
+
+    jfieldID jni_fid_readPermissions = (*env)->GetStaticFieldID(env,
+            jni_cid_bluetoothGattCharacteristic, "PERMISSION_READ", "I");
+
+    jfieldID jni_fid_writePermissions = (*env)->GetStaticFieldID(env,
+            jni_cid_bluetoothGattCharacteristic, "PERMISSION_WRITE", "I");
+
+    jmethodID jni_mid_bluetoothGattService = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattService, "<init>", "(Ljava/util/UUID;I)V");
+
+    jmethodID jni_mid_addCharacteristic = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattService, "addCharacteristic",
+            "(Landroid/bluetooth/BluetoothGattCharacteristic;)Z");
+
+    jmethodID jni_mid_bluetoothGattCharacteristic = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattCharacteristic, "<init>",
+            "(Ljava/util/UUID;II)V");
+
+    jobject jni_obj_serviceUUID = CALEGetUuidFromString(env, OIC_GATT_SERVICE_UUID);
+
+    jobject jni_obj_serviceType = (*env)->GetStaticObjectField(env,
+            jni_cid_bluetoothGattService, jni_fid_serviceType);
+
+    jobject jni_bluetoothGattService = (*env)->NewObject(env,
+            jni_cid_bluetoothGattService, jni_mid_bluetoothGattService,
+            jni_obj_serviceUUID, jni_obj_serviceType);
+
+    jobject jni_obj_readUuid = CALEGetUuidFromString(env,
+            OIC_GATT_CHARACTERISTIC_RESPONSE_UUID);
+
+    jint jni_int_readProperties = (*env)->GetStaticIntField(env,
+            jni_cid_bluetoothGattCharacteristic, jni_fid_readProperties);
+
+    jint jni_int_readPermissions = (*env)->GetStaticIntField(env,
+            jni_cid_bluetoothGattCharacteristic, jni_fid_readPermissions);
+
+    jobject jni_readCharacteristic = (*env)->NewObject(env,
+            jni_cid_bluetoothGattCharacteristic,
+            jni_mid_bluetoothGattCharacteristic, jni_obj_readUuid,
+            jni_int_readProperties, jni_int_readPermissions);
+
+    jboolean jni_boolean_addReadCharacteristic = (*env)->CallBooleanMethod(env,
+            jni_bluetoothGattService, jni_mid_addCharacteristic,
+            jni_readCharacteristic);
+
+    jobject jni_obj_writeUuid = CALEGetUuidFromString(env,
+            OIC_GATT_CHARACTERISTIC_REQUEST_UUID);
+
+    jint jni_int_writeProperties = (*env)->GetStaticIntField(env,
+            jni_cid_bluetoothGattCharacteristic, jni_fid_writeProperties);
+
+    jint jni_int_writePermissions = (*env)->GetStaticIntField(env,
+            jni_cid_bluetoothGattCharacteristic, jni_fid_writePermissions);
+
+    jobject jni_writeCharacteristic = (*env)->NewObject(env,
+            jni_cid_bluetoothGattCharacteristic,
+            jni_mid_bluetoothGattCharacteristic, jni_obj_writeUuid,
+            jni_int_writeProperties, jni_int_writePermissions);
+
+    jboolean jni_boolean_addWriteCharacteristic = (*env)->CallBooleanMethod(env,
+            jni_bluetoothGattService, jni_mid_addCharacteristic,
+            jni_writeCharacteristic);
+
+    if (jni_boolean_addWriteCharacteristic == JNI_FALSE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Fail to add jni_boolean_addReadCharacteristic");
+        return NULL;
+    }
+
+    return jni_bluetoothGattService;
+}
+
+jboolean CALEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
+        jobject bluetoothGattService)
+{
+
+    OIC_LOG_V(DEBUG, TAG, "CALEServerAddGattService");
 
     jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
             "android/bluetooth/BluetoothGattServer");
-    jmethodID jni_mid_addService = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
-            "addService", "(Landroid/bluetooth/BluetoothGattService;)Z");
+
+    jmethodID jni_mid_addService = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattServer, "addService",
+            "(Landroid/bluetooth/BluetoothGattService;)Z");
+
     jboolean jni_boolean_addService = (*env)->CallBooleanMethod(env, bluetoothGattServer,
             jni_mid_addService, bluetoothGattService);
 
-    LOGI("[BLE Server] jni gatt service added!!");
+    if (jni_boolean_addService == JNI_FALSE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Fail to add gatt service");
+    }
+
+    return jni_boolean_addService;
 }
 
-void connect(JNIEnv *env, jobject bluetoothDevice)
+jboolean CALEServerConnect(JNIEnv *env, jobject bluetoothDevice)
 {
+
+    OIC_LOG_V(DEBUG, TAG, "CALEConnect");
 
     jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
             "android/bluetooth/BluetoothGattServer");
-    jmethodID jni_mid_connect = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer, "connect",
+
+    jmethodID jni_mid_connect = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattServer, "connect",
             "(Landroid/bluetooth/BluetoothDevice;Z)Z");
-    jboolean jni_boolean_connect = (*env)->CallBooleanMethod(env, gBluetoothGattServer,
-            jni_mid_connect, bluetoothDevice, JNI_FALSE);
-    LOGI("[BLE Server] connection requested!!");
+
+    jboolean jni_boolean_connect = (*env)->CallBooleanMethod(env,
+            gBluetoothGattServer, jni_mid_connect, bluetoothDevice, JNI_FALSE);
+
+    if(jni_boolean_connect == JNI_FALSE) {
+        OIC_LOG_V(DEBUG, TAG, "Fail to connect");
+    }
+
+    return jni_boolean_connect;
 }
 
-void disconnect(JNIEnv *env, jobject bluetoothDevice)
+void CALEServerDisconnect(JNIEnv *env, jobject bluetoothDevice)
 {
+
+    OIC_LOG_V(DEBUG, TAG, "CALEDisconnect");
 
     jclass jni_cid_bluetoothGattServer = (*env)->FindClass(env,
             "android/bluetooth/BluetoothGattServer");
-    jmethodID jni_mid_cancelConnection = (*env)->GetMethodID(env, jni_cid_bluetoothGattServer,
-            "cancelConnection", "(Landroid/bluetooth/BluetoothDevice;)V");
-    (*env)->CallVoidMethod(env, gBluetoothGattServer, jni_mid_cancelConnection, bluetoothDevice);
-    LOGI("[BLE Server] disconnection requested!!");
+
+    jmethodID jni_mid_cancelConnection = (*env)->GetMethodID(env,
+            jni_cid_bluetoothGattServer, "cancelConnection",
+            "(Landroid/bluetooth/BluetoothDevice;)V");
+
+    (*env)->CallVoidMethod(env, gBluetoothGattServer, jni_mid_cancelConnection,
+            bluetoothDevice);
+}
+
+jboolean CALEServerSend(JNIEnv *env, jobject bluetoothDevice, jbyteArray responseData)
+{
+
+    OIC_LOG_V(DEBUG, TAG, "CALESend");
+
+    jobject responseChar = CALEServerSetResponseData(env, responseData);
+
+    jboolean result = CALEServerSendResponseData(env, bluetoothDevice, responseChar);
+
+    if(result == JNI_FALSE)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Fail to send response data");
+    }
+
+    return result;
+}
+
+void CALeServerCreateJniInterfaceObject()
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeServerCreateJniInterfaceObject");
+
+    jboolean isAttached = FALSE;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
+    if(res != JNI_OK)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if(res != JNI_OK)
+        {
+            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            return;
+        }
+        isAttached = TRUE;
+    }
+
+    // initialize le server code
+
+    if(isAttached)
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+}
+
+void CALEServerInitialize(u_thread_pool_t handle)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerInitialize");
+
+    gResposeInProgress = JNI_FALSE;
+
+    gThreadPoolHandle = handle;
+
+    CALEServerCreateCachedDeviceList();
+
+    //CALeServerCreateJniInterfaceObject();
+}
+
+void CALEServerTerminate()
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerTerminate");
+
+    jboolean isAttached = FALSE;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
+    if(res != JNI_OK)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if(res != JNI_OK)
+        {
+            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            return;
+        }
+        isAttached = TRUE;
+    }
+
+    CALEServerRemoveAllDevices(env);
+
+    if(gLeAdvertiseCallback)
+    {
+        (*env)->DeleteGlobalRef(env, gLeAdvertiseCallback);
+    }
+
+    if(gBluetoothGattServer)
+    {
+        (*env)->DeleteGlobalRef(env, gBluetoothGattServer);
+    }
+
+    if(gBluetoothGattServerCallback)
+    {
+        (*env)->DeleteGlobalRef(env, gBluetoothGattServerCallback);
+    }
+
+    if(gContext)
+    {
+        (*env)->DeleteGlobalRef(env, gContext);
+    }
+
+
+    gIsStartServer = FALSE;
+    gResposeInProgress = FALSE;
+
+    if(isAttached)
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+}
+
+int32_t CALEServerSendUnicastMessage(const char* address, const char* data, uint32_t dataLen)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEServerSendUnicastMessage(%s, %s)", address, data);
+
+    jboolean isAttached = FALSE;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
+    if(res != JNI_OK)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if(res != JNI_OK)
+        {
+            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            return;
+        }
+        isAttached = TRUE;
+    }
+
+    CALEServerSendUnicastMessageImpl(env, address, data, dataLen);
+
+    if(isAttached)
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+
+    return 0;
+}
+
+int32_t CALEServerSendMulticastMessage(const char* data, uint32_t dataLen)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEServerSendMulticastMessage(%s)", data);
+
+    jboolean isAttached = FALSE;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
+    if(res != JNI_OK)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if(res != JNI_OK)
+        {
+            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            return;
+        }
+        isAttached = TRUE;
+    }
+
+    CALEServerSendMulticastMessageImpl(env, data, dataLen);
+
+    if(isAttached)
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+
+    return 0;
+}
+
+int32_t CALEServerStartUnicastServer(const char* address)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEServerStartUnicastServer(%s)", address);
+
+    return 0;
+}
+
+int32_t CALEServerStartMulticastServer()
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEServerStartMulticastServer");
+
+    if(gIsStartServer)
+    {
+        OIC_LOG_V(DEBUG, TAG, "server is already started..it will be skipped");
+        return 0;
+    }
+
+    jboolean isAttached = FALSE;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
+    if(res != JNI_OK)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if(res != JNI_OK)
+        {
+            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            return;
+        }
+        isAttached = TRUE;
+    }
+
+    gIsStartServer = TRUE;
+
+    // start gatt server
+    if( CALEStartGattServer(env, gBluetoothGattServerCallback) == JNI_FALSE) {
+        OIC_LOG_V(DEBUG, TAG, "Fail to start gatt server");
+        return -1;
+    }
+
+    // start advertise
+    LEServerStartAdvertise(env, gLeAdvertiseCallback);
+
+    if(isAttached)
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+
+    return 0;
+}
+
+int32_t CALEServerStopUnicastServer(int32_t serverID)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerStopUnicastServer");
+
+    return 0;
+}
+
+int32_t CALEServerStopMulticastServer(int32_t serverID)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerStopMulticastServer");
+    gIsStartServer = FALSE;
+
+    // stop advertise
+
+    return 0;
+}
+
+void CALEServerSetCallback(CAPacketReceiveCallback callback)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerSetCallback");
+    gPacketReceiveCallback = callback;
+}
+
+void CALEServerGetInterfaceInfo(CALocalConnectivity_t **info, uint32_t* size)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerGetInterfaceInfo");
+    return;
+}
+
+void CALEServerGetLocalAddress(char* address)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerGetLocalAddress");
+
+    jboolean isAttached = FALSE;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
+    if(res != JNI_OK)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+        if(res != JNI_OK)
+        {
+            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            return;
+        }
+        isAttached = TRUE;
+    }
+
+    jstring jni_address = CALEGetLocalDeviceAddress(env);
+    const char* localAddress = (*env)->GetStringUTFChars(env, jni_address, NULL);
+    memcpy(address, localAddress, strlen(localAddress));
+
+    OIC_LOG_V(DEBUG, TAG, "Local Address : %s", address);
+    if(isAttached)
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+}
+
+int32_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, const char* data,
+        uint32_t dataLen)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEServerSendUnicastMessageImpl, address: %s, data: %s", address, data);
+
+    // 1. get device object with address from cache
+    // 2. connect to the gatt client device
+    // 3. write a characteristic for response
+    // 4. notify it
+    // 5. disconnect
+
+    jobject jni_obj_bluetoothDevice = NULL;
+
+    if(gConnectedDeviceList == NULL)
+    {
+        OIC_LOG(DEBUG, TAG, "gConnectedDeviceList is null");
+    }
+
+    if(gConnectedDeviceList)
+    {
+        jint index;
+        for (index = 0; index < u_arraylist_length(gConnectedDeviceList); index++)
+        {
+            OIC_LOG(DEBUG, TAG, "check device address");
+            jobject jarrayObj = (jobject) u_arraylist_get(gConnectedDeviceList, index);
+            if(!jarrayObj)
+            {
+                OIC_LOG(DEBUG, TAG, "jarrayObj is null");
+                return -1;
+            }
+
+            jstring jni_setAddress = CALEGetAddressFromBTDevice(env, jarrayObj);
+            if(!jni_setAddress)
+            {
+                OIC_LOG(DEBUG, TAG, "jni_setAddress is null");
+                return -1;
+            }
+            const char* setAddress = (*env)->GetStringUTFChars(env, jni_setAddress, NULL);
+
+            if(jarrayObj == NULL) {
+                OIC_LOG(DEBUG, TAG, "jarrayObj is null");
+            }
+
+            if(!strcmp(setAddress, address))
+            {
+                OIC_LOG(DEBUG, TAG, "device address matched");
+                jni_obj_bluetoothDevice = jarrayObj;
+                break;
+            }
+            jni_obj_bluetoothDevice = jarrayObj;
+        }
+
+        if(jni_obj_bluetoothDevice)
+        {
+            jbyteArray jni_bytearr_data = (*env)->NewByteArray(env, dataLen);
+            (*env)->SetByteArrayRegion(env, jni_bytearr_data, 0, dataLen, (jbyte*)data);
+
+            CALEServerSend(env, jni_obj_bluetoothDevice, jni_bytearr_data);
+
+            // set progress
+            gResposeInProgress = JNI_TRUE;
+        } else {
+            OIC_LOG(DEBUG, TAG, "jni_obj_bluetoothDevice is null");
+        }
+    }
+}
+
+int32_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t dataLen)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEServerSendMulticastMessageImpl, send to, data: %s", data);
+
+    gResposeInProgress = JNI_FALSE;
+
+    if(!gConnectedDeviceList)
+    {
+        OIC_LOG(DEBUG, TAG, "gConnectedDeviceList is null");
+        return 0;
+    }
+
+    // 1. get all the device objects from cache
+    // 2. connect to the gatt client devices
+    // 3. write a characteristic for response
+    // 4. notify it to every devices
+    // 5. disconnect
+
+    jint index;
+    for (index = 0; index < u_arraylist_length(gConnectedDeviceList); index++)
+    {
+        jobject jarrayObj = (jobject) u_arraylist_get(gConnectedDeviceList, index);
+        if(!jarrayObj)
+        {
+            OIC_LOG(DEBUG, TAG, "jarrayObj is null");
+            return;
+        }
+
+        CALEServerConnect(env, jarrayObj);
+
+        gResposeInProgress = JNI_TRUE;
+
+        sleep(1);
+    }
+
+    return 0;
+}
+
+JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CARegisterLeGattServerCallback
+  (JNIEnv *env, jobject obj, jobject callback)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - Register Le Gatt Server Callback");
+
+    gBluetoothGattServerCallback = (*env)->NewGlobalRef(env, callback);
+}
+
+JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CARegisterBluetoothLeAdvertiseCallback
+  (JNIEnv *env, jobject obj, jobject callback)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - Register Le Advertise Callback");
+
+    gLeAdvertiseCallback = (*env)->NewGlobalRef(env, callback);
+}
+
+JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattServerConnectionStateChangeCallback
+  (JNIEnv *env, jobject obj, jobject device, jint status, jint newState)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - Gatt Server ConnectionStateChange Callback");
+
+    OIC_LOG_V(DEBUG, TAG, "New connection State: %d", newState);
+
+    if (!device)
+    {
+        OIC_LOG(DEBUG, TAG, "device is null");
+        return;
+    }
+
+    jclass jni_cid_bluetoothProfile = (*env)->FindClass(env,
+            "android/bluetooth/BluetoothProfile");
+
+    jfieldID jni_fid_state_connected = (*env)->GetStaticFieldID(env,
+            jni_cid_bluetoothProfile, "STATE_CONNECTED", "I");
+
+    jfieldID jni_fid_state_disconnected = (*env)->GetStaticFieldID(env,
+                jni_cid_bluetoothProfile, "STATE_DISCONNECTED", "I");
+
+    // STATE_CONNECTED
+    jint jni_int_state_connected = (*env)->GetStaticIntField(env,
+            jni_cid_bluetoothProfile, jni_fid_state_connected);
+
+    // STATE_DISCONNECTED
+    jint jni_int_state_disconnected = (*env)->GetStaticIntField(env,
+                jni_cid_bluetoothProfile, jni_fid_state_disconnected);
+
+    if(newState == jni_int_state_connected) {
+
+        OIC_LOG_V(DEBUG, TAG, "LE CONNECTED");
+
+        jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
+        if (!jni_remoteAddress)
+        {
+            OIC_LOG(DEBUG, TAG, "jni_remoteAddress is null");
+            return;
+        }
+
+        const char* remoteAddress = (*env)->GetStringUTFChars(env, jni_remoteAddress, NULL);
+
+        if (gConnectedDeviceList == NULL)
+        {
+            OIC_LOG_V(DEBUG, TAG, "gConnectedDeviceList is null");
+        }
+
+        if(CALEServerIsDeviceInList(env, remoteAddress) == JNI_FALSE)
+        {
+            OIC_LOG_V(DEBUG, TAG, "add connected device to cache");
+            CALEServerAddDeviceToList(env, device);
+        }
+
+    }
+    else if(newState == jni_int_state_disconnected) {
+        OIC_LOG_V(DEBUG, TAG, "LE DISCONNECTED");
+    }
+}
+
+void CALEServerCreateCachedDeviceList()
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerCreateCachedDeviceList");
+
+    // create new object array
+    if (gConnectedDeviceList == NULL)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Create device list");
+
+        gConnectedDeviceList = u_arraylist_create();
+    }
+}
+
+jboolean CALEServerIsDeviceInList(JNIEnv *env, const char* remoteAddress)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerIsDeviceInList");
+
+    if(gConnectedDeviceList == NULL)
+        OIC_LOG(DEBUG, TAG, "list is null");
+
+    uint32_t len = u_arraylist_length(gConnectedDeviceList);
+    OIC_LOG_V(DEBUG, TAG, "list length: %d", len);
+
+    uint32_t index;
+    for (index = 0; index < u_arraylist_length(gConnectedDeviceList); index++)
+    {
+        jobject jarrayObj = (jobject) u_arraylist_get(gConnectedDeviceList, index);
+
+        if (!jarrayObj)
+        {
+            OIC_LOG(DEBUG, TAG, "jarrayObj is null");
+            return JNI_TRUE;
+        }
+
+        jstring jni_setAddress = CALEGetAddressFromBTDevice(env, jarrayObj);
+        if (!jni_setAddress)
+        {
+            OIC_LOG(DEBUG, TAG, "jni_setAddress is null");
+            return JNI_TRUE;
+        }
+
+        const char* setAddress = (*env)->GetStringUTFChars(env, jni_setAddress,
+                NULL);
+
+        if (!strcmp(remoteAddress, setAddress))
+        {
+            OIC_LOG_V(DEBUG, TAG, "the device is already set");
+            return JNI_TRUE;
+        }
+        else
+        {
+            continue;
+        }
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "no device in list");
+    return JNI_FALSE;
+}
+
+void CALEServerAddDeviceToList(JNIEnv *env, jobject device)
+{
+    if (device == NULL)
+    {
+        OIC_LOG(DEBUG, TAG, "device is null");
+        return;
+    }
+
+    if (gConnectedDeviceList == NULL)
+    {
+        OIC_LOG(DEBUG, TAG, "list is null");
+        return;
+    }
+
+    jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
+    if (!jni_remoteAddress)
+    {
+        OIC_LOG(DEBUG, TAG, "jni_remoteAddress is null");
+        return;
+    }
+
+    const char* remoteAddress = (*env)->GetStringUTFChars(env,
+            jni_remoteAddress, NULL);
+
+    if (CALEServerIsDeviceInList(env, remoteAddress) == JNI_FALSE)
+    {
+        jobject gdevice = (*env)->NewGlobalRef(env, device);
+        u_arraylist_add(gConnectedDeviceList, gdevice);
+        OIC_LOG_V(DEBUG, TAG, "Set Object to Array as Element");
+    }
+}
+
+void CALEServerRemoveAllDevices(JNIEnv *env)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEServerRemoveAllDevices");
+
+    if (!gConnectedDeviceList)
+    {
+        OIC_LOG(DEBUG, TAG, "no deviceList");
+        return;
+    }
+
+    uint32_t index;
+    for (index = 0; index < u_arraylist_length(gConnectedDeviceList); index++)
+    {
+        jobject jarrayObj = (jobject) u_arraylist_get(gConnectedDeviceList, index);
+
+        if (jarrayObj)
+        {
+            (*env)->DeleteGlobalRef(env, jarrayObj);
+        }
+    }
+
+    OICFree(gConnectedDeviceList);
+    gConnectedDeviceList = NULL;
+    return;
+}
+
+void CALEServerRemoveDevice(JNIEnv *env, jstring address)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEServerRemoveDevice");
+
+    if (!gConnectedDeviceList)
+    {
+        OIC_LOG(DEBUG, TAG, "no deviceList");
+        return;
+    }
+
+    uint32_t index;
+    for (index = 0; index < u_arraylist_length(gConnectedDeviceList); index++)
+    {
+        jobject jarrayObj = (jobject) u_arraylist_get(gConnectedDeviceList, index);
+
+        if (jarrayObj)
+        {
+            jstring jni_setAddress = CALEGetAddressFromBTDevice(env, jarrayObj);
+            if (!jni_setAddress)
+            {
+                OIC_LOG(DEBUG, TAG, "wrong device address");
+                continue;
+            }
+            const char* setAddress = (*env)->GetStringUTFChars(env, jni_setAddress,
+                    NULL);
+            const char* remoteAddress = (*env)->GetStringUTFChars(env, address,
+                    NULL);
+
+            if (!strcmp(setAddress, remoteAddress))
+            {
+                OIC_LOG_V(DEBUG, TAG, "device address : %s", remoteAddress);
+                (*env)->DeleteGlobalRef(env, jarrayObj);
+
+                CALEServerReorderinglist(index);
+                return;
+            }
+        }
+    }
+    OIC_LOG(DEBUG, TAG, "no target object");
+    return;
+}
+
+void CALEServerReorderinglist(uint32_t index)
+{
+    if (index >= gConnectedDeviceList->length)
+        return;
+
+    if (index < gConnectedDeviceList->length - 1)
+    {
+        memmove(&gConnectedDeviceList->data[index], &gConnectedDeviceList->data[index + 1],
+                (gConnectedDeviceList->length - index - 1) * sizeof(void *));
+    }
+
+    gConnectedDeviceList->size--;
+    gConnectedDeviceList->length--;
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeGattServerServiceAddedCallback
+(JNIEnv *env, jobject obj, jint status, jobject gattService)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - Gatt Service Added Callback(%d)", status);
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeGattServerCharacteristicReadRequestCallback
+(JNIEnv *env, jobject obj, jobject device, jint requestId, jint offset, jobject characteristic, jbyteArray data)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - Gatt Server Characteristic Read Request Callback");
+
+    CALEServerSendResponse(env, device, requestId, 0, offset, NULL);
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeGattServerCharacteristicWriteRequestCallback
+(JNIEnv *env, jobject obj, jobject device, jint requestId, jobject characteristic, jbyteArray data,
+        jboolean preparedWrite, jboolean responseNeeded, jint offset, jbyteArray value)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - Gatt Server Characteristic Write Request Callback");
+
+    CALEServerSendResponse(env, device, requestId, 0, offset, value);
+
+    if(data == NULL)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Reqeust data is null");
+        return;
+    }
+
+    jboolean isCopy;
+    char* requestData = (char*)(*env)->GetByteArrayElements(env, data, &isCopy);
+
+    jstring jni_address = CALEGetAddressFromBTDevice(env, device);
+    const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
+    OIC_LOG_V(DEBUG, TAG, "remote device address : %s", address);
+
+    gPacketReceiveCallback(address, requestData);
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeGattServerDescriptorReadRequestCallback
+(JNIEnv *env, jobject obj, jobject device, jint requestId, jint offset, jobject descriptor)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface_CALeGattServerDescriptorReadRequestCallback");
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeGattServerDescriptorWriteRequestCallback
+(JNIEnv *env, jobject obj, jobject device, jint requestId, jobject descriptor,
+        jboolean preparedWrite, jboolean responseNeeded, jint offset, jbyteArray value)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface_CALeGattServerDescriptorWriteRequestCallback");
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeGattServerExecuteWriteCallback
+(JNIEnv *env, jobject obj, jobject device, jint requestId, jboolean execute)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface_CALeGattServerExecuteWriteCallback");
+
+    CALEServerSendResponse(env, device, requestId, 0, 0, NULL);
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeGattServerNotificationSentCallback
+(JNIEnv *env, jobject obj, jobject device, jint status)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - Gatt Server Notification Sent Callback");
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeAdvertiseStartSuccessCallback
+(JNIEnv *env, jobject obj, jobject settingsInEffect)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - LE Advertise Start Success Callback");
+}
+
+JNIEXPORT void JNICALL
+Java_com_iotivity_jar_CALeInterface_CALeAdvertiseStartFailureCallback
+(JNIEnv *env, jobject obj, jint errorCode)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALeInterface - LE Advertise Start Failure Callback(%)", errorCode);
 }
 

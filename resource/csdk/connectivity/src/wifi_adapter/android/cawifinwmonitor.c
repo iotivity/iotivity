@@ -411,6 +411,8 @@ void CASendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus)
 
         gNetworkChangeCb(gWifiIPAddress, nwConnectivityStatus);
     }
+    OICFree(interfaceName);
+    OICFree(ipAddress);
 }
 
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CAWiFiInterface_CAWiFiStateEnabled

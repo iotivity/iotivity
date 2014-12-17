@@ -123,7 +123,8 @@ static int32_t getCAAddress(const char *pAddress, CAAddress_t *outAddress)
     return isIp;
 }
 
-CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri)
+CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
+                                                      const CAConnectivityType_t connectivityType)
 {
     // support URI type
     // coap://10.11.12.13:4545/resource_uri
@@ -208,19 +209,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri)
     // resource uri
     CAURI_t resourceUri = pResourceUri;
 
-    // connectivity type
-    CAConnectivityType_t type;
-
-    if (resType == 1)
-    {
-        type = CA_WIFI;
-    }
-    else
-    {
-        type = CA_EDR;
-    }
-
-    CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address, type);
+    CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address, connectivityType);
     remoteEndpoint->isSecured = secured;
 
     OICFree(cloneUri);

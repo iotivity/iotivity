@@ -60,7 +60,7 @@ typedef enum
  * @pre  Callback must be registered using CAEthernetSetPacketReceiveCallback()
  */
 typedef void (*CAEthernetPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-              const void *data, const uint32_t dataLength, const CABool_t isSecured);
+        const void *data, const uint32_t dataLength, const CABool_t isSecured);
 
 /**
  * @fn  CAEthernetExceptionCallback
@@ -108,7 +108,7 @@ void CAEthernetTerminateServer(void);
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                          const int16_t multicastPort, int32_t *serverFD);
+        const int16_t multicastPort, int32_t *serverFD);
 
 /**
  * @fn  CAEthernetStartUnicastServer
@@ -176,7 +176,7 @@ CAResult_t CAEthernetStopSecureUnicastServer();
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetGetUnicastServerInfo(const bool secure, char **ipAddress, int16_t *port,
-                                          int32_t *serverFD);
+        int32_t *serverFD);
 
 /**
  * @fn  CAEthernetSetPacketReceiveCallback
