@@ -206,3 +206,96 @@ void CAAdapterFreeRemoteEndpoint(CARemoteEndpoint_t *remoteEndpoint)
     }
 }
 
+bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
+                           const char *netMask)
+{
+    VERIFY_NON_NULL_RET(ipAddress1, CA_ADAPTER_UTILS_TAG, "First address", false);
+    VERIFY_NON_NULL_RET(ipAddress2, CA_ADAPTER_UTILS_TAG, "Second address", false);
+    VERIFY_NON_NULL_RET(netMask, CA_ADAPTER_UTILS_TAG, "netMask", false);
+    int32_t ipList1[8] = {0};
+    int32_t ipList2[8] = {0};
+    int32_t maskList[8] = {0};
+
+    /* IP address check */
+    if(!ipAddress1 || !ipAddress2)
+    {
+        return false;
+    }
+
+    /* Local Loopback Address */
+    if(0 == strncmp(ipAddress1, "127.", 4)
+       || 0 == strncmp(ipAddress2, "127.", 4))
+    {
+        return true;
+    }
+
+    char *ipAdrs1 = strdup(ipAddress1);
+    int16_t index = 0;
+    int16_t lastDotIndex = 0;
+    int16_t ip1TokenCount = 0;
+    while('\0' != ipAdrs1[index])
+    {
+        if('.' == ipAdrs1[index])
+        {
+            ipAdrs1[index] = '\0';
+            ipList1[ip1TokenCount++] = atoi(ipAdrs1 + lastDotIndex);
+            lastDotIndex = index + 1;
+        }
+        index++;
+    }
+    // Add last touple
+    ipList1[ip1TokenCount] = atoi(ipAdrs1 + lastDotIndex);
+
+    char *ipAdrs2 = strdup(ipAddress2);
+    index = 0;
+    lastDotIndex = 0;
+    int16_t ip2TokenCount = 0;
+    while('\0' != ipAdrs2[index])
+    {
+        if('.' == ipAdrs2[index])
+        {
+            ipAdrs2[index] = '\0';
+            ipList2[ip2TokenCount++] = atoi(ipAdrs2 + lastDotIndex);
+            lastDotIndex = index + 1;
+        }
+        index++;
+    }
+    // Add last touple
+    ipList2[ip2TokenCount] = atoi(ipAdrs2 + lastDotIndex);
+
+    char *nMask = strdup(netMask);
+    index = 0;
+    lastDotIndex = 0;
+    int16_t maskTokenCount = 0;
+    while('\0' != nMask[index])
+    {
+        if('.' == nMask[index])
+        {
+            nMask[index] = '\0';
+            maskList[maskTokenCount++] = atoi(nMask + lastDotIndex);
+            lastDotIndex = index + 1;
+        }
+        index++;
+    }
+    // Add last touple
+    maskList[maskTokenCount] = atoi(nMask + lastDotIndex);
+
+	if(ip1TokenCount < 3 || ip2TokenCount < 3 || maskTokenCount < 3)
+	{
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Address or mask is invalid!");
+		return false;
+	}
+
+    OICFree(ipAdrs1);
+    OICFree(ipAdrs2);
+    OICFree(nMask);
+
+    if(((ipList1[0]& maskList[0]) == (ipList2[0]& maskList[0]))
+       &&((ipList1[1]& maskList[1]) == (ipList2[1]& maskList[1]))
+       &&((ipList1[2]& maskList[2]) == (ipList2[2]& maskList[2]))
+       &&((ipList1[3]& maskList[3]) == (ipList2[3]& maskList[3])))
+    {
+        return true;
+    }
+    return false;
+}

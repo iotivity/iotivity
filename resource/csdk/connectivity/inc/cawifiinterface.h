@@ -23,15 +23,13 @@
  * @brief This file provides APIs wifi client/server/network monitor modules
  */
 
-#ifndef _CA_WIFI_INTERFACE_
-#define _CA_WIFI_INTERFACE_
+#ifndef _CA_WIFI_INTERFACE_H_
+#define _CA_WIFI_INTERFACE_H_
 
 #include <stdbool.h>
 
 #include "cacommon.h"
-#ifndef ARDUINO
 #include "uthreadpool.h"
-#endif  //ARDUINO
 
 #ifdef __cplusplus
 extern "C"
@@ -61,14 +59,8 @@ typedef enum
  *
  * @pre  Callback must be registered using CAWiFiSetPacketReceiveCallback()
  */
-#ifndef ARDUINO
 typedef void (*CAWiFiPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
         const void *data, const uint32_t dataLength, const CABool_t isSecure);
-
-#else
-typedef void (*CAWiFiPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-        const void *data, const uint32_t dataLength);
-#endif  //ARDUINO
 
 /**
  * @fn  CAWiFiExceptionCallback
@@ -91,15 +83,8 @@ typedef void (*CAWiFiExceptionCallback)(CAAdapterServerType_t type);
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-#ifdef ARDUINO
-
-CAResult_t CAWiFiInitializeServer(void);
-
-#else
-
 CAResult_t CAWiFiInitializeServer(const u_thread_pool_t threadPool);
 
-#endif //ARDUINO
 
 /**
  * @fn  CAWiFiTerminateServer
@@ -142,15 +127,8 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
  * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-
-#ifdef ARDUINO
-CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
-                                    const bool forceStart, int32_t *serverFD);
-#else
-
 CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
                                     const bool forceStart, const CABool_t isSecured, int32_t *serverFD);
-#endif //ARDUINO
 
 /**
  * @fn  CAWiFiStopMulticastServer
@@ -199,17 +177,9 @@ CAResult_t CAWiFiStopSecureUnicastServer();
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-
-#ifdef ARDUINO
-
-CAResult_t CAWiFiGetUnicastServerInfo(char **ipAddress, int16_t *port, int32_t *serverFD);
-
-#else
-
 CAResult_t CAWiFiGetUnicastServerInfo(const CABool_t isSecured, char **ipAddress, int16_t *port,
                                       int32_t *serverFD);
 
-#endif // ARDUINO
 
 /**
  * @fn  CAWiFiSetPacketReceiveCallback
@@ -222,14 +192,6 @@ CAResult_t CAWiFiGetUnicastServerInfo(const CABool_t isSecured, char **ipAddress
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 void CAWiFiSetPacketReceiveCallback(CAWiFiPacketReceivedCallback callback);
-
-#ifdef ARDUINO
-/**
- * @fn  CAWiFiReadData
- * @brief  API to pull data
- */
-void CAWiFiPullData();
-#endif // ARDUINO
 
 /**
  * @fn  CAWiFiSetExceptionCallback
@@ -280,19 +242,9 @@ void CAWiFiSetSecureUnicastSocket(const int32_t socketFD);
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-
-#ifdef ARDUINO
-
-uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
-                        const void *data, const uint32_t dataLength, bool isMulticast);
-
-#else
-
 uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
                         const void *data, const uint32_t dataLength,
                         CABool_t isMulticast, CABool_t isSecured);
-
-#endif //ARDUINO
 
 /**
  * @fn  CAWiFiConnectionStateChangeCallback
@@ -317,28 +269,7 @@ typedef void (*CAWiFiConnectionStateChangeCallback)(const char *ipAddress,
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-
-#ifndef ARDUINO
-
 CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool);
-
-#else
-
-CAResult_t CAWiFiInitializeNetworkMonitor(void);
-
-#endif //ARDUINO
-
-#ifdef ARDUINO
-/**
- * @fn  CAWiFiInitializeServer
- * @brief  API to initialize Wifi server
- *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Initialization failed
- */
-CAResult_t CAWiFiInitializeNetworkMonitor(void);
-#endif //ARDUINO
 
 /**
  * @fn  CAWiFiTerminateNetworkMonitor
@@ -382,6 +313,20 @@ CAResult_t CAWiFiStopNetworkMonitor(void);
 CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress);
 
 /**
+ * @fn  CAWiFiGetInterfaceSubnetMask
+ * @brief  API to get local adapter network subnet mask.
+ * @remarks  @subnetMaskmust be freed using free().
+ *
+ * @param[out]  subnetMask  Local adapter interface subnet mask
+ *
+ * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
+ * @retval  #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask);
+
+/**
  * @fn  CAWiFiIsConnected
  * @brief  API to get wifi adapter connection state.
  *
@@ -402,4 +347,4 @@ void CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateChangeCallback 
 }
 #endif
 
-#endif //_CA_WIFI_INTERFACE_
+#endif //_CA_WIFI_INTERFACE_H_

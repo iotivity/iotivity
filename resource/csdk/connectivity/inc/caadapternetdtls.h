@@ -25,13 +25,29 @@
 #include "umutex.h"
 #include "caadapterutils.h"
 
+#define MAX_SUPPORTED_ADAPTERS 2
+
+///TODO: once proper .h provided for this function, it will be removed
 extern void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
 
 typedef void (*CAPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
         const void *data, const uint32_t dataLength, const CABool_t isSecured);
 
+typedef uint32_t (*CAPacketSendCallback)(const char *ipAddress, const uint32_t port,
+        const void *data, const uint32_t dataLength);
+
 /**
- *@struct stCADtlsContext_t
+ * @struct stCAAdapterCallbacks_t
+ * @brief  Data structure for holding the send and recv callbacks.
+ */
+typedef struct CAAdapterCallbacks
+{
+    CAPacketReceivedCallback recvCallback;
+    CAPacketSendCallback sendCallback;
+}stCAAdapterCallbacks_t;
+
+/**
+ * @struct stCADtlsContext_t
  * @brief  Data structure for holding the tinyDTLS interface
  *              related info.
  */
@@ -39,14 +55,14 @@ typedef struct stCADtlsContext
 {
     u_arraylist_t  *cacheList;          /**< pdu's are cached until DTLS session is formed */
     struct dtls_context_t *dtlsContext;    /**< pointer to tinyDTLS context */
-    struct stPacketInfo
-            *packetInfo;          /**< used by callback during  decryption to hold address/length */
+    struct stPacketInfo *packetInfo;          /**< used by callback during
+                                                                    decryption to hold address/length */
     dtls_handler_t callbacks;           /**< pointer to callbacks needed by tinyDTLS */
-    CAPacketReceivedCallback gPacketReceivedCallback;
+    stCAAdapterCallbacks_t adapterCallbacks[MAX_SUPPORTED_ADAPTERS];
 } stCADtlsContext_t;
 
 /**
- *@struct stPacketInfo_t
+ * @struct stPacketInfo_t
  * @brief  Data structure for holding the decrypted data address
  *              and length provided by tinyDTLS callback interface.
  */
@@ -84,7 +100,7 @@ typedef struct
         struct sockaddr_in  sin;
         struct sockaddr_in6 sin6;
     } addr;
-    uint8_t ifindex;
+    uint8_t ifIndex;
 } stCADtlsAddrInfo_t;
 
 /**
@@ -92,14 +108,38 @@ typedef struct
  * @brief structure to holds the information of cachemessage and address info.
  *
  */
-typedef struct CACacheMessage_t
+typedef struct CACacheMessage
 {
     void *data;
     uint32_t dataLen;
     stCADtlsAddrInfo_t *destSession;
 } stCACacheMessage_t;
 
-void CADTLSSetPacketReceiveCallback(CAPacketReceivedCallback callback);
+/**
+ * @enum eDtlsAdapterType_t
+ * @brief adapter types
+ *
+ */
+typedef enum
+{
+    DTLS_ETHERNET = 0,
+    DTLS_WIFI
+} eDtlsAdapterType_t;
+
+/**
+ * @fn  CADTLSSetAdapterCallbacks
+ * @brief  Used set send and recv callbacks for different adapters(WIFI,EtherNet)
+ *
+ * @param[in]  recvCallback  packet received callback
+ * @param[in]  sendCallback  packet sent callback
+ * @param[in]  type  type of adapter
+ *
+ * @retval  void
+ *
+ */
+
+void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
+                                    CAPacketSendCallback sendCallback, eDtlsAdapterType_t type);
 
 /**
  * @fn  CAAdapterNetDtlsInit
@@ -150,7 +190,8 @@ CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
                                    const uint32_t port,
                                    const void *data,
                                    uint32_t dataLen,
-                                   uint8_t *cacheFlag);
+                                   uint8_t *cacheFlag,
+                                   eDtlsAdapterType_t type);
 
 /**
  * @fn  CAAdapterNetDtlsDecrypt
@@ -170,7 +211,8 @@ CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
 CAResult_t CAAdapterNetDtlsDecrypt(const char *remoteAddress,
                                    const uint32_t port,
                                    uint8_t *data,
-                                   uint32_t dataLen);
+                                   uint32_t dataLen,
+                                   eDtlsAdapterType_t type);
 
 #endif //_CA_ADAPTER_NET_DTLS_H
 

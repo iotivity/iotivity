@@ -8,7 +8,7 @@ version=`echo $version|cut -d" " -f 1`
 
 name=cmsample
 
-sudo rm -rf $name-$version
+rm -rf $name-$version
 
 builddir=`pwd`
 sourcedir=`pwd`
@@ -94,8 +94,8 @@ rm -rf *dtls.*
 #build
 #cd $name-$version
 git init
-gbs build -A armv7l --include-all
+gbs build -A armv7l --include-all -B ~/GBS-ROOT-NEW
 
 rm -rf $sourcedir/tizen/tmp
 #cd $builddir
-#sudo rm -rf $name-$version
+#rm -rf $name-$version

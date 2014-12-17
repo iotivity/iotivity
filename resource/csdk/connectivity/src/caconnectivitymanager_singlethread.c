@@ -24,7 +24,7 @@
 
 #include "cainterface.h"
 #include "caremotehandler.h"
-#include "caprotocolmessage.h"
+#include "caprotocolmessage_singlethread.h"
 #include "canetworkconfigurator.h"
 #include "logger.h"
 

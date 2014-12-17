@@ -29,7 +29,7 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "caethernetadapter.h"
+#include "caethernetadapter_singlethread.h"
 #include "caadapterutils.h"
 
 #define MOD_NAME "EU"

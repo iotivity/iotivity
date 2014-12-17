@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "caethernetinterface.h"
+#include "caethernetinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <Ethernet.h>
@@ -32,7 +32,7 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "caadapterinterface.h"
-#include "caethernetadapter.h"
+#include "caethernetadapter_singlethread.h"
 #include "caethernetadapterutils.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
@@ -197,6 +197,10 @@ void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
 void CAArduinoCheckData()
 {
     void *data = malloc(COAP_MAX_PDU_SIZE);
+    if (NULL == data)
+    {
+        return;
+    }
     memset(data, 0, COAP_MAX_PDU_SIZE);
     int32_t dataLen = 0;
     uint8_t senderAddr[4] = { 0 };

@@ -18,11 +18,11 @@
  *
  ******************************************************************/
 /**
- * @file caretransmission.h
+ * @file caretransmission_singlethread.h
  * @brief
  */
-#ifndef __CA_RETRANSMISSION_H_
-#define __CA_RETRANSMISSION_H_
+#ifndef __CA_RETRANSMISSION_SINGLETHREAD_H_
+#define __CA_RETRANSMISSION_SINGLETHREAD_H_
 
 #include <stdint.h>
 
@@ -91,4 +91,4 @@ void CARetransmissionBaseRoutine(void *threadValue);
 } /* extern "C" */
 #endif
 
-#endif  // __CA_RETRANSMISSION_H_
+#endif  // __CA_RETRANSMISSION_SINGLETHREAD_H_

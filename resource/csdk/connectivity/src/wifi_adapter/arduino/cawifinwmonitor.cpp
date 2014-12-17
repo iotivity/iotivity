@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "cawifiinterface.h"
+#include "cawifiinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -29,7 +29,7 @@
 #include <IPAddress.h>
 #include "logger.h"
 #include "caadapterutils.h"
-#include "cawifiadapter.h"
+#include "cawifiadapter_singlethread.h"
 
 #define WIFI_MONITOR_TAG "WIFI_MONITOR"
 

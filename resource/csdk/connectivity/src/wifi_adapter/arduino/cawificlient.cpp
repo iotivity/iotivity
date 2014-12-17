@@ -17,7 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "cawifiinterface.h"
+#include "cawifiinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -31,7 +31,7 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "cawifiadapter.h"
+#include "cawifiadapter_singlethread.h"
 #include "caadapterutils.h"
 
 /// This is the max buffer size between Arduino and WiFi Shield

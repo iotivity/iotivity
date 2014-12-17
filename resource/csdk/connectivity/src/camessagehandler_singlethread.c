@@ -28,7 +28,7 @@
 #include "cainterface.h"
 #include "caremotehandler.h"
 #include "cainterfacecontroller_singlethread.h"
-#include "caprotocolmessage.h"
+#include "caprotocolmessage_singlethread.h"
 #include "logger.h"
 #include "config.h" /* for coap protocol */
 #include "coap.h"
@@ -40,6 +40,7 @@
 #define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG1, "Out of memory"); goto memory_error_exit;} }
 
 #define MAX_THREAD_POOL_SIZE    10
+#define CA_MAX_RT_ARRAY_SIZE    3
 
 typedef enum
 {
@@ -311,6 +312,13 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object, const CARequ
     VERIFY_NON_NULL(request, TAG1, "request");
     CARemoteEndpoint_t *remoteEndpoint = NULL;
     CARequestInfo_t *requestInfo = NULL;
+
+    // If max retransmission queue is reached, then don't handle new request
+    if (CA_MAX_RT_ARRAY_SIZE == u_arraylist_length(gRetransmissionContext.dataList))
+    {
+        OIC_LOG(DEBUG, TAG1, "max RT queue size rchd");
+        return CA_SEND_FAILED;
+    }
 
     CAData_t *data = (CAData_t *) OICMalloc(sizeof(CAData_t));
     MEMORY_ALLOC_CHECK(data);

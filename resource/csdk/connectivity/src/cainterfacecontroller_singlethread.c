@@ -25,10 +25,10 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "cawifiadapter.h"
-#include "caethernetadapter.h"
-#include "caedradapter.h"
-#include "caleadapter.h"
+#include "cawifiadapter_singlethread.h"
+#include "caethernetadapter_singlethread.h"
+#include "caedradapter_singlethread.h"
+#include "caleadapter_singlethread.h"
 
 #include "canetworkconfigurator.h"
 #include "oic_malloc.h"
@@ -458,7 +458,6 @@ CAResult_t CAReadData()
 
     if (!list)
     {
-        OIC_LOG(DEBUG, TAG, "No selected network");
         return CA_STATUS_FAILED;
     }
     void *ptrType = NULL;

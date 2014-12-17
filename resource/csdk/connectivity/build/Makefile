@@ -36,19 +36,19 @@ VERSION_PATCH := 0
 ifeq ($(PLATFORM),tizen)
 $(info *******************tizen Build !!******************)
 all:
-	sudo sh tizen/gbsbuild.sh $(TRANSPORT)
+	sh tizen/gbsbuild.sh $(TRANSPORT)
 
 else ifeq ($(PLATFORM),arduinomega)
 $(info *********ArduinoMega Build!!**********)
 all:
-	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
-	sudo sh arduino/build.sh make $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
+	sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
+	sh arduino/build.sh make $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
 
 clean:	
-	sudo sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
+	sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
 
 install:
-	sudo sh arduino/build.sh install $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
+	sh arduino/build.sh install $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
 	
 else
    $(info *********error**********)

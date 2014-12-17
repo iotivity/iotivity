@@ -19,15 +19,14 @@
  ******************************************************************/
 
 /**
- * @file cawifiadapter.h
- * @brief This file contains the APIs for WiFi Adapter.
+ * @file caethernetadapter_singlethread.h
+ * @brief This file contains the APIs for Ethernet Adapter.
  */
-#ifndef __CA_WIFI_ADAPTER_H__
-#define __CA_WIFI_ADAPTER_H__
+#ifndef __CA_ETHERNET_ADAPTER_SINGLETHREAD_H__
+#define __CA_ETHERNET_ADAPTER_SINGLETHREAD_H__
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -35,40 +34,39 @@ extern "C"
 #endif
 
 /**
- * @brief API to initialize WiFi Interface.
- * @param registerCallback [IN] To register WIFI interfaces to Connectivity Abstraction Layer
+ * @brief API to initialize Ethernet Interface.
+ * @param registerCallback [IN] To register ETHERNET interfaces to Connectivity Abstraction Layer
  * @param networkPacketCallback [IN] sending responses and discovery messages
  * from unicast , multicast servers
  * @param netCallback [IN] Intimate the network additions to Connectivity Abstraction Layer.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
-                            CANetworkPacketReceivedCallback networkPacketCallback,
-                            CANetworkChangeCallback netCallback, u_thread_pool_t handle);
+CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
+                                CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback);
 
 /**
- * @brief Start WiFi Interface adapter.
+ * @brief Start Ethernet Interface adapter.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStartWIFI();
+CAResult_t CAStartEthernet();
 
 /**
  * @brief Starting listening server for receiving multicast search requests
  * Transport Specific Behavior:
- * WIFI Starts Multicast Server on  all available IPs and prefixed port number and
+ * Ethernet Starts Multicast Server on  all available IPs and prefixed port number and
  * as per OIC Specification.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStartWIFIListeningServer();
+CAResult_t CAStartEthernetListeningServer();
 
 /**
  * @brief for starting discovery servers for receiving multicast advertisements
  * Transport Specific Behavior:
- * WIFI Starts Start multicast server on all available IPs and prefixed port
+ * Ethernet Starts Start multicast server on all available IPs and prefixed port
  * number as per OIC Specification
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStartWIFIDiscoveryServer();
+CAResult_t CAStartEthernetDiscoveryServer();
 
 /**
  * @brief Sends data to the endpoint using the adapter connectivity.
@@ -79,47 +77,47 @@ CAResult_t CAStartWIFIDiscoveryServer();
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *endpoint, void *data,
-                               uint32_t dataLen);
+uint32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *endpoint, void *data,
+                                   uint32_t dataLen);
 
 /**
- * @brief Sends Multicast data to the endpoint using the WIFI connectivity.
+ * @brief Sends Multicast data to the endpoint using the Ethernet connectivity.
  * Note: length must be > 0.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
  */
-uint32_t CASendWIFIMulticastData(void *data, uint32_t dataLen);
+uint32_t CASendEthernetMulticastData(void *data, uint32_t dataLen);
 
 /**
- * @brief Get WIFI Connectivity network information
+ * @brief Get Ethernet Connectivity network information
  * @param   info        [OUT]   Local connectivity information structures
  * @param   size        [OUT]   Number of local connectivity structures.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAReadWIFIData();
+CAResult_t CAReadEthernetData();
 
 /**
  * @brief Stopping the adapters and close socket connections
- *   WIFI Stops all multicast and unicast servers and close sockets.
+ *   Ethernet Stops all multicast and unicast servers and close sockets.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStopWIFI();
+CAResult_t CAStopEthernet();
 
 /**
- * @brief Terminate the WIFI connectivity adapter.
+ * @brief Terminate the Ethernet connectivity adapter.
  * Configuration information will be deleted from further use
  */
-void CATerminateWIfI();
+void CATerminateEthernet();
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif  // #ifndef __CA_WIFI_ADAPTER_H__
+#endif  // #ifndef __CA_ETHERNET_ADAPTER_SINGLETHREAD_H__

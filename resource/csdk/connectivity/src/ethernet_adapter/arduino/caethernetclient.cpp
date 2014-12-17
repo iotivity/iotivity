@@ -17,7 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "caethernetinterface.h"
+#include "caethernetinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <Ethernet.h>
@@ -30,7 +30,7 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "caethernetadapter.h"
+#include "caethernetadapter_singlethread.h"
 #include "caethernetadapterutils.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"

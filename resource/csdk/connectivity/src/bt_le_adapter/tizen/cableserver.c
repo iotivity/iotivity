@@ -632,6 +632,7 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gReqRespCallback is NULL!");
         u_mutex_unlock(gBleReqRespCbMutex);
+        OICFree(data);
         return;
     }
 

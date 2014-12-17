@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "caethernetinterface.h"
+#include "caethernetinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <Ethernet.h>
@@ -28,7 +28,7 @@
 #include <IPAddress.h>
 #include "logger.h"
 #include "caadapterutils.h"
-#include "caethernetadapter.h"
+#include "caethernetadapter_singlethread.h"
 
 #define ETHERNET_MONITOR_TAG "ETHERNET_MONITOR"
 

@@ -19,15 +19,14 @@
  ******************************************************************/
 
 /**
- * @file cawifiadapter.h
+ * @file cawifiadapter_singlethread.h
  * @brief This file contains the APIs for WiFi Adapter.
  */
-#ifndef __CA_WIFI_ADAPTER_H__
-#define __CA_WIFI_ADAPTER_H__
+#ifndef __CA_WIFI_ADAPTER_SINGLETHREAD_H__
+#define __CA_WIFI_ADAPTER_SINGLETHREAD_H__
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -44,7 +43,7 @@ extern "C"
  */
 CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
                             CANetworkPacketReceivedCallback networkPacketCallback,
-                            CANetworkChangeCallback netCallback, u_thread_pool_t handle);
+                            CANetworkChangeCallback netCallback);
 
 /**
  * @brief Start WiFi Interface adapter.
@@ -122,4 +121,4 @@ void CATerminateWIfI();
 } /* extern "C" */
 #endif
 
-#endif  // #ifndef __CA_WIFI_ADAPTER_H__
+#endif  // #ifndef __CA_WIFI_ADAPTER_SINGLETHREAD_H__

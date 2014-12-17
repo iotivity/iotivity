@@ -24,12 +24,10 @@
 #include <stdint.h>
 
 #include "cainterfacecontroller.h"
-#include "cawifiadapter.h"
 #include "caethernetadapter.h"
 #include "caedradapter.h"
 #include "caleadapter.h"
 #include "cawifiadapter.h"
-#include "caethernetadapter.h"
 #include "canetworkconfigurator.h"
 #include "caremotehandler.h"
 #include "oic_malloc.h"
