@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#define _POSIX_C_SOURCE 200112L
 #include <string.h>
 #include "ocstack.h"
 #include "ocstackconfig.h"
@@ -73,8 +74,9 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
     if (strcmp ((char *)url, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0) {
         *filterOn = STACK_RES_DISCOVERY_NOFILTER;
         if (query && *query) {
-            filterParam = strtok ((char *)query, "=");
-            *filterValue = strtok (NULL, " ");
+            char* strTokPtr;
+            filterParam = strtok_r((char *)query, "=", &strTokPtr);
+            *filterValue = strtok_r(NULL, " ", &strTokPtr);
             if (!(*filterValue)) {
                 return OC_STACK_INVALID_QUERY;
             } else if (strcmp (filterParam, OC_RSRVD_INTERFACE) == 0) {
