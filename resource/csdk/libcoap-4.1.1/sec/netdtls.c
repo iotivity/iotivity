@@ -406,7 +406,7 @@ int coap_dtls_init(coap_context_t *ctx, uint8_t ipAddr[]) {
     ret = 0;
 
 exit:
-    if (ret == -1 && coap_dtls_ctx) {
+    if (ret == -1) {
         coap_dtls_deinit(ctx);
     }
     return ret;
@@ -420,18 +420,21 @@ exit:
  *
  */
 void coap_dtls_deinit(coap_context_t *ctx) {
-    if (!ctx)
+
+    if (!ctx || !ctx->coap_dtls_ctx)
         return;
 
     coap_dtls_context_t *coap_dtls_ctx = ctx->coap_dtls_ctx;
 
-    if (coap_dtls_ctx) {
-        coap_delete_all(coap_dtls_ctx->cachedqueue);
-        if (ctx->sockfd_dtls != -1)
-            OCClose(ctx->sockfd_dtls);
-        dtls_free_context(coap_dtls_ctx->dtls_ctx);
-        coap_free(coap_dtls_ctx);
-    }
+    coap_delete_all(coap_dtls_ctx->cachedqueue);
+
+    dtls_free_context(coap_dtls_ctx->dtls_ctx);
+    coap_dtls_ctx->dtls_ctx = NULL;
+
+    if (ctx->sockfd_dtls != -1)
+        OCClose(ctx->sockfd_dtls);
+
+    coap_free(coap_dtls_ctx);
     ctx->coap_dtls_ctx = NULL;
 }
 
