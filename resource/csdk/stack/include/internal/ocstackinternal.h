@@ -36,6 +36,11 @@
 #include <logger.h>
 #include <ocrandom.h>
 
+#ifdef CA_INT
+    #include "cacommon.h"
+    #include "cainterface.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -80,6 +85,13 @@ typedef struct {
     // An array of the received vendor specific header options
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
+#ifdef CA_INT
+    /** Remote Endpoint address **/
+    CAAddress_t addressInfo;
+    /** Connectivity of the endpoint**/
+    CAConnectivityType_t connectivityType;
+    char token[32];   // TODO-CA:  What is max CAToken_t length?  Get rid of magic number
+#endif
     //////////////////////////////////////////////////////////
     // TODO: Consider moving these member to CoAP
     // IP address & port of client registered for observe

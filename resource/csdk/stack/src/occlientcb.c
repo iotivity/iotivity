@@ -168,7 +168,7 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned cha
         LL_FOREACH(cbList, out) {
             OC_LOG(INFO, TAG, PCF("comparing tokens"));
             #ifdef CA_INT
-            if(memcmp(out->token, token, CA_MAX_TOKEN_LEN) == 0)
+            if(memcmp(out->token, *token, CA_MAX_TOKEN_LEN) == 0)
             {
                 return out;
             }

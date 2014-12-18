@@ -22,6 +22,12 @@
 #include "ocserverrequest.h"
 #include "ocresourcehandler.h"
 
+
+#ifdef CA_INT
+    #include "cacommon.h"
+    #include "cainterface.h"
+#endif
+
 // Module Name
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
@@ -128,6 +134,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     {
         memcpy(serverRequest->resourceUrl, resourceUrl, strlen((const char *)resourceUrl) + 1);
     }
+
     *request = serverRequest;
     OC_LOG(INFO, TAG, PCF("Server Request Added!!"));
     LL_APPEND (serverRequestList, serverRequest);
@@ -142,6 +149,87 @@ exit:
     *request = NULL;
     return OC_STACK_NO_MEMORY;
 }
+
+#ifdef CA_INT
+OCStackResult AddServerCARequest (OCServerRequest ** request, uint16_t coapID,
+        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
+        uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
+        OCQualityOfService qos, unsigned char * query,
+        OCHeaderOption * rcvdVendorSpecificHeaderOptions,
+        unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
+        OCDevAddr * requesterAddr, unsigned char * resourceUrl, uint32_t reqTotalSize,
+        CAAddress_t *addressInfo, CAConnectivityType_t connectivityType, char *token)
+{
+    OCServerRequest * serverRequest = NULL;
+
+    serverRequest = (OCServerRequest *) OCCalloc(1, sizeof(OCServerRequest) + reqTotalSize - 1);
+    VERIFY_NON_NULL(serverRequest);
+
+    serverRequest->coapID = coapID;
+    serverRequest->delayedResNeeded = delayedResNeeded;
+    serverRequest->secured = secured;
+    serverRequest->notificationFlag = notificationFlag;
+
+    serverRequest->method = method;
+    serverRequest->numRcvdVendorSpecificHeaderOptions = numRcvdVendorSpecificHeaderOptions;
+    serverRequest->observationOption = observationOption;
+    serverRequest->observeResult = OC_STACK_ERROR;
+    serverRequest->qos = qos;
+    serverRequest->ehResponseHandler = HandleSingleResponse;
+    serverRequest->numResponses = 1;
+    if(query)
+    {
+        memcpy(serverRequest->query, query, strlen((const char *)query) + 1);
+    }
+    if(rcvdVendorSpecificHeaderOptions)
+    {
+        memcpy(serverRequest->rcvdVendorSpecificHeaderOptions, rcvdVendorSpecificHeaderOptions,
+            MAX_HEADER_OPTIONS * sizeof(OCHeaderOption));
+    }
+    if(reqJSONPayload)
+    {
+        memcpy((void *)serverRequest->reqJSONPayload, (void *)reqJSONPayload,
+            strlen((const char *)reqJSONPayload) + 1);
+    }
+    serverRequest->requestComplete = 0;
+    if(requestToken)
+    {
+        memcpy(&serverRequest->requestToken, requestToken, sizeof(OCCoAPToken));
+    }
+    if(requesterAddr)
+    {
+        memcpy(&serverRequest->requesterAddr, requesterAddr, sizeof(OCDevAddr));
+    }
+    if(resourceUrl)
+    {
+        memcpy(serverRequest->resourceUrl, resourceUrl, strlen((const char *)resourceUrl) + 1);
+    }
+
+    if (addressInfo)
+    {
+        serverRequest->addressInfo = *addressInfo;
+    }
+    serverRequest->connectivityType = connectivityType;
+    if (token)
+    {
+        strncpy(serverRequest->token, token, sizeof(serverRequest->token) - 1);
+    }
+
+    *request = serverRequest;
+    OC_LOG(INFO, TAG, PCF("Server Request Added!!"));
+    LL_APPEND (serverRequestList, serverRequest);
+    return OC_STACK_OK;
+
+exit:
+    if (serverRequest)
+    {
+        OCFree(serverRequest);
+        serverRequest = NULL;
+    }
+    *request = NULL;
+    return OC_STACK_NO_MEMORY;
+}
+#endif
 
 OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle)
 {
@@ -251,8 +339,108 @@ void DeleteServerRequest(OCServerRequest * serverRequest)
 
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
+#ifdef CA_INT
     OCStackResult result = OC_STACK_ERROR;
-    OCServerProtocolResponse protocolResponse = {0};
+    CARemoteEndpoint_t responseEndpoint;
+    CAResponseInfo_t responseInfo;
+
+    OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
+
+    OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
+
+    // Copy the address
+    responseEndpoint.resourceUri      = serverRequest->resourceUrl;
+    responseEndpoint.addressInfo      = serverRequest->addressInfo;
+    responseEndpoint.connectivityType = serverRequest->connectivityType;
+
+    // Copy the info
+    switch (ehResponse->ehResult)
+    {
+        case OC_EH_OK:
+            responseInfo.result = CA_SUCCESS;
+            break;
+        case OC_EH_ERROR:
+            responseInfo.result = CA_BAD_REQ;
+            break;
+        case OC_EH_RESOURCE_CREATED:
+            responseInfo.result = CA_CREATED;
+            break;
+        case OC_EH_RESOURCE_DELETED:
+            responseInfo.result = CA_DELETED;
+            break;
+        case OC_EH_SLOW:
+            responseInfo.result = CA_SUCCESS;
+            break;
+        case OC_EH_FORBIDDEN:
+            responseInfo.result = CA_BAD_REQ;
+            break;
+        default:
+            responseInfo.result = CA_BAD_REQ;
+            break;
+    }
+
+    // TODO-CA: Need to do something with a slow response if a confirmed request was sent
+    // from client
+
+    // TODO-CA:  Need to handle CA_MSG_RESET and CA_MSG_ACKNOWLEDGE
+    switch (serverRequest->qos)
+    {
+        case OC_LOW_QOS:
+            responseInfo.info.type = CA_MSG_NONCONFIRM;
+            break;
+        case OC_MEDIUM_QOS:
+            responseInfo.info.type = CA_MSG_NONCONFIRM;
+            break;
+        case OC_HIGH_QOS:
+            responseInfo.info.type = CA_MSG_CONFIRM;
+            break;
+        case OC_NA_QOS:
+            responseInfo.info.type = CA_MSG_NONCONFIRM;
+            break;
+        default:
+            responseInfo.info.type = CA_MSG_NONCONFIRM;
+            break;
+    }
+    responseInfo.info.token = serverRequest->token;
+    responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions;
+    if (ehResponse->numSendVendorSpecificHeaderOptions)
+    {
+        memcpy(responseInfo.info.options, ehResponse->sendVendorSpecificHeaderOptions, sizeof(OCHeaderOption) * ehResponse->numSendVendorSpecificHeaderOptions);
+    }
+
+
+    // Allocate memory for the payload.
+    char *payload = (char *)OCMalloc(MAX_RESPONSE_LENGTH);
+    if(!payload)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+    memset(payload, 0, MAX_RESPONSE_LENGTH);
+
+    // Put the JSON prefix and suffix around the payload
+    strcpy(payload, (const char *)OC_JSON_PREFIX);
+    strcat(payload, (const char *)ehResponse->payload);
+    strcat(payload, (const char *)OC_JSON_SUFFIX);
+    responseInfo.info.payload = (CAPayload_t)payload;
+
+    CAResult_t caResult = CASendResponse(&responseEndpoint, &responseInfo);
+    if(caResult != CA_STATUS_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
+    }
+    else
+    {
+        result = OC_STACK_OK;
+    }
+
+    OCFree(payload);
+    //Delete the request
+    FindAndDeleteServerRequest(serverRequest);
+    return result;
+#else
+    OCStackResult result = OC_STACK_ERROR;
+    OCServerProtocolResponse protocolResponse;
+    memset(&protocolResponse, 0, sizeof(OCServerProtocolResponse));
 
     OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
 
@@ -306,6 +494,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     //Delete the request
     FindAndDeleteServerRequest(serverRequest);
     return result;
+#endif
 }
 
 OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)

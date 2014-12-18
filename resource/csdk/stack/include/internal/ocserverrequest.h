@@ -23,6 +23,10 @@
 
 #include "occoap.h"
 
+#ifdef CA_INT
+    #include "cacommon.h"
+    #include "cainterface.h"
+#endif
 /**
  * The signature of the internal call back functions to handle responses from entity handler
  */
@@ -46,6 +50,13 @@ typedef struct OCServerRequest {
     OCStackResult observeResult;
     uint8_t numResponses;
     OCEHResponseHandler ehResponseHandler;
+#ifdef CA_INT
+    /** Remote Endpoint address **/
+    CAAddress_t addressInfo;
+    /** Connectivity of the endpoint**/
+    CAConnectivityType_t connectivityType;
+    char token[32];   // TODO-CA:  What is max CAToken_t length?  Get rid of magic number
+#endif
     //////////////////////////////////////////////////////////
     // IP address & port of client registered for observe   //These
     OCDevAddr requesterAddr;                                //Members
@@ -90,6 +101,17 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
         OCDevAddr * requesterAddr, unsigned char * resourceUrl, uint32_t reqTotalSize);
+
+#ifdef CA_INT
+OCStackResult AddServerCARequest (OCServerRequest ** request, uint16_t coapID,
+        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
+        uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
+        OCQualityOfService qos, unsigned char * query,
+        OCHeaderOption * rcvdVendorSpecificHeaderOptions,
+        unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
+        OCDevAddr * requesterAddr, unsigned char * resourceUrl, uint32_t reqTotalSize,
+        CAAddress_t *addressInfo, CAConnectivityType_t connectivityType, char *token);
+#endif
 
 OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle);
 

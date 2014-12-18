@@ -188,16 +188,30 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
 }
 
 #ifdef CA_INT
-OCStackResult CAResultToOCStackResult(CAResult_t caResult)
+OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    switch(caResult)
+    switch(caCode)
     {
-        case CA_STATUS_OK:
+        case CA_SUCCESS:
             ret = OC_STACK_OK;
             break;
-        //TODO-CA Add other CA Results
+        case CA_CREATED:
+            ret = OC_STACK_RESOURCE_CREATED;
+            break;
+        case CA_DELETED:
+            ret = OC_STACK_RESOURCE_DELETED;
+            break;
+        case CA_BAD_REQ:
+            ret = OC_STACK_INVALID_QUERY;
+            break;
+        case CA_BAD_OPT:
+            ret = OC_STACK_INVALID_OPTION;
+            break;
+        case CA_NOT_FOUND:
+            ret = OC_STACK_NO_RESOURCE;
+            break;
         default:
             break;
     }
@@ -209,6 +223,49 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
     printf ("Received payload: %s\n", (char *)responseInfo->info.payload);
+    OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
+    ClientCB *cbNode = GetClientCB((CAToken_t *)&responseInfo->info.token, NULL, NULL);
+    if (cbNode)
+    {
+        OC_LOG(INFO, TAG, PCF("Calling into application address space"));
+        OCClientResponse response;
+        struct sockaddr_in sa;
+
+        inet_pton(AF_INET, endPoint->addressInfo.IP.ipAddress, &(sa.sin_addr));
+        sa.sin_port = htons(endPoint->addressInfo.IP.port);
+        static OCDevAddr address;
+        memcpy((void*)&address.addr, &(sa), sizeof(sa));
+        response.addr = &address;
+        response.result = CAToOCStackResult(responseInfo->result);
+        response.resJSONPayload = (unsigned char*)responseInfo->info.payload;
+        response.numRcvdVendorSpecificHeaderOptions = 0;
+        if(responseInfo->info.numOptions > 0)
+        {
+            //First option alwas with option ID COAP_OPTION_OBSERVE if it is availbale
+            if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
+            {
+                memcpy (&(response.sequenceNumber),
+                &(responseInfo->info.options[0].optionData), 4);
+            }
+            else
+            {
+               memcpy (&(response.rcvdVendorSpecificHeaderOptions[0]),
+                 &(responseInfo->info.options[0]), sizeof(OCHeaderOption));
+            }
+            for (uint8_t i = 1; i < responseInfo->info.numOptions; i++)
+            {
+                memcpy (&(response.rcvdVendorSpecificHeaderOptions[i]),
+                 &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+            }
+            response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions;
+        }
+        result = cbNode->callBack(cbNode->context,
+                cbNode->handle, &response);
+        if (result == OC_STACK_DELETE_TRANSACTION)
+        {
+            FindAndDeleteClientCB(cbNode);
+        }
+    }
     OC_LOG_V(INFO, TAG, PCF("Received payload: %s\n"), (char*)responseInfo->info.payload);
     OC_LOG(INFO, TAG, PCF("Exit HandleCAResponses"));
 }
@@ -218,14 +275,127 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 {
     CAInfo_t responseData;
     CAResponseInfo_t responseInfo;
+    OCStackResult requestResult = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
+
+#if 1
+    if(myStackMode == OC_CLIENT)
+    {
+        //TODO: should the client be responding to requests?
+        return;
+    }
+
+    OCServerProtocolRequest serverRequest;
+
+    memset (&serverRequest, 0, sizeof(OCServerProtocolRequest));
+    // copy URI of resource
+    memcpy (&(serverRequest.resourceUrl), endPoint->resourceUri, strlen(endPoint->resourceUri));
+    //copy query
+    // TODO-CA: Is the query part of header option?
+    //copy request payload
+    if (requestInfo->info.payload)
+    {
+        memcpy (&(serverRequest.reqJSONPayload), requestInfo->info.payload,
+                strlen(requestInfo->info.payload));
+    }
+    switch (requestInfo->method)
+    {
+        case CA_GET:
+            {
+                serverRequest.method = OC_REST_GET;
+                break;
+            }
+        case CA_PUT:
+            {
+                serverRequest.method = OC_REST_PUT;
+                break;
+            }
+        case CA_POST:
+            {
+                serverRequest.method = OC_REST_POST;
+                break;
+            }
+        case CA_DELETE:
+            {
+                serverRequest.method = OC_REST_DELETE;
+                break;
+            }
+        default:
+            {
+                OC_LOG(ERROR, TAG, PCF("Received CA method %d not supported"));
+                return;
+            }
+    }
+
+    // copy token
+    OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", strlen(requestInfo->info.token));
+    OC_LOG_BUFFER(INFO, TAG, requestInfo->info.token, strlen(requestInfo->info.token));
+    // TODO-CA: For CA integration currently copying CAToken to OCCoapToken:
+    // Need to remove OCCoapToken
+    memcpy (&(serverRequest.requestToken.token), requestInfo->info.token,
+            strlen(requestInfo->info.token));
+    serverRequest.requestToken.tokenLength = strlen(requestInfo->info.token);
+    serverRequest.observationOption = OC_OBSERVE_NO_OPTION;
+    if (requestInfo->info.type == CA_MSG_CONFIRM)
+    {
+        serverRequest.qos = OC_HIGH_QOS;
+    }
+    else if (requestInfo->info.type == CA_MSG_NONCONFIRM)
+    {
+        serverRequest.qos = OC_LOW_QOS;
+    }
+    else if (requestInfo->info.type == CA_MSG_ACKNOWLEDGE)
+    {
+        // TODO-CA: Need to handle this
+    }
+    else if (requestInfo->info.type == CA_MSG_RESET)
+    {
+        // TODO-CA: Need to handle this
+    }
+    // CA does not need the following 3 fields
+    serverRequest.coapID = 0;
+    serverRequest.delayedResNeeded = 0;
+    serverRequest.secured = 0;
+
+    // copy the address
+    serverRequest.addressInfo      = endPoint->addressInfo;
+    serverRequest.connectivityType = endPoint->connectivityType;
+    if (requestInfo->info.token)
+    {
+        strncpy(serverRequest.token, requestInfo->info.token, sizeof(serverRequest.token) - 1);
+    }
+#if 0
+    struct sockaddr_in sa;
+    inet_pton(AF_INET, endPoint->addressInfo.IP.ipAddress, &(sa.sin_addr));
+    sa.sin_port = htons(endPoint->addressInfo.IP.port);
+    memcpy((void*)&serverRequest.requesterAddr, &(sa), sizeof(sa));
+#endif
+    // copy vendor specific header options
+    // TODO-CA: CA is including non-vendor header options as well, like observe.
+    // Need to filter those out
+    if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
+    {
+        // TODO-CA: Need to send an error indicating the num of options is incorrect
+        return;
+    }
+    serverRequest.numRcvdVendorSpecificHeaderOptions = requestInfo->info.numOptions;
+    if (serverRequest.numRcvdVendorSpecificHeaderOptions)
+    {
+        memcpy (&(serverRequest.rcvdVendorSpecificHeaderOptions), requestInfo->info.options,
+            sizeof(CAHeaderOption_t)*requestInfo->info.numOptions);
+    }
+
+    requestResult = HandleStackRequests (&serverRequest);
+#endif
+
+#if 0
     // generate the pdu, if the request was CON, then the response is ACK, otherwire NON
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.token = (requestInfo != NULL) ? requestInfo->info.token : "";
 
     // TODO : I guess we need to allocate memeory?
-    responseData.payload = "Test data";
+    responseData.payload = "{\"oc\":[{\"href\":\"/a/led\",\"sid\":\"\",\"prop\":{\"rt\":[\"core.led\"],\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
 
     //responseInfo = (CAResponseInfo*) malloc(sizeof(CAResponseInfo));
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
@@ -241,6 +411,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
     }
+#endif
 
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
@@ -260,6 +431,17 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     if(!request)
     {
         OC_LOG(INFO, TAG, PCF("This is a new Server Request"));
+#ifdef CA_INT
+        result = AddServerCARequest(&request, protocolRequest->coapID,
+                protocolRequest->delayedResNeeded, protocolRequest->secured, 0,
+                protocolRequest->method, protocolRequest->numRcvdVendorSpecificHeaderOptions,
+                protocolRequest->observationOption, protocolRequest->qos,
+                protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
+                protocolRequest->reqJSONPayload, &protocolRequest->requestToken,
+                &protocolRequest->requesterAddr, protocolRequest->resourceUrl,
+                protocolRequest->reqTotalSize,
+                &protocolRequest->addressInfo, protocolRequest->connectivityType, protocolRequest->token);
+#else
         result = AddServerRequest(&request, protocolRequest->coapID,
                 protocolRequest->delayedResNeeded, protocolRequest->secured, 0,
                 protocolRequest->method, protocolRequest->numRcvdVendorSpecificHeaderOptions,
@@ -268,6 +450,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->reqJSONPayload, &protocolRequest->requestToken,
                 &protocolRequest->requesterAddr, protocolRequest->resourceUrl,
                 protocolRequest->reqTotalSize);
+#endif
         if (OC_STACK_OK != result)
         {
             OC_LOG(ERROR, TAG, PCF("Error adding server request"));
@@ -731,7 +914,14 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
             }
 
         }
-        result = CAResultToOCStackResult(caResult);
+        if (caResult == CA_STATUS_OK)
+        {
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            result = OC_STACK_ERROR;
+        }
     }
 #else
     switch (mode)
@@ -989,7 +1179,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     // Assuming request is not multi-cast
     // Create remote end point
-    caResult = CACreateRemoteEndpoint(newUri, &endpoint);
+    caResult = CACreateRemoteEndpoint(newUri, CA_WIFI, &endpoint);
     endpoint->connectivityType = CA_WIFI;
     if (caResult != CA_STATUS_OK)
     {
@@ -1027,7 +1217,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    if((result = AddClientCB(&clientCB, cbData, &caToken, *handle, method,
+    if((result = AddClientCB(&clientCB, cbData, &caToken, handle, method,
                              requestUri, resourceType)) != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
