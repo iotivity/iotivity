@@ -54,6 +54,21 @@ class Fan
 
 Fan myfan;
 
+class Light
+{
+    public:
+
+        bool m_state;
+        int m_power;
+        std::string m_name;
+
+        Light() : m_state(false), m_power(0), m_name("")
+        {
+        }
+};
+
+Light mylight;
+
 int observe_count()
 {
     static int oc = 0;
@@ -237,11 +252,11 @@ void putFanRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // Callback handler on GET request
-void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
+void onFanGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
     if (eCode == OC_STACK_OK)
     {
-        std::cout << "GET request was successful" << std::endl;
+        std::cout << "GET Fan request was successful" << std::endl;
         std::cout << "Resource URI: " << rep.getUri() << std::endl;
 
         rep.getValue("state", myfan.m_state);
@@ -261,6 +276,29 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
     }
 }
 
+void onLightGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
+{
+    if (eCode == OC_STACK_OK)
+    {
+        std::cout << "GET Light request was successful" << std::endl;
+        std::cout << "Resource URI: " << rep.getUri() << std::endl;
+
+        rep.getValue("state", mylight.m_state);
+        rep.getValue("power", mylight.m_power);
+        rep.getValue("name", mylight.m_name);
+
+        std::cout << "\tstate: " << mylight.m_state << std::endl;
+        std::cout << "\tpower: " << mylight.m_power << std::endl;
+        std::cout << "\tname: " << mylight.m_name << std::endl; 
+    }
+    else
+    {
+        std::cout << "onGET Response error: " << eCode << std::endl;
+        std::exit(-1);
+    }
+}
+
+
 // Local function to get representation of fan resource
 void getFanRepresentation(std::shared_ptr<OCResource> resource)
 {
@@ -270,7 +308,7 @@ void getFanRepresentation(std::shared_ptr<OCResource> resource)
         // Invoke resource's get API with the callback parameter
 
         QueryParamsMap test;
-        resource->get(test, &onGet);
+        resource->get(test, &onFanGet);
     }
 }
 
@@ -282,7 +320,7 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
         // Invoke resource's get API with the callback parameter
 
         QueryParamsMap test;
-        resource->get(test, &onGet);
+        resource->get(test, &onLightGet);
     }
 }
 
@@ -531,7 +569,7 @@ int main(int argc, char *argv[])
         std::cout << "======================" << std::endl;
         std::cout << "Start Fan Plugin by Name\n" << std::endl;
 
-        name = user_plugin[0].getName().c_str();
+        name = user_plugin[0].getName();
         m_pm->startPlugins(key, name);
 
         sleep(5);

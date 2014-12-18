@@ -51,6 +51,10 @@ PMRESULT Config::loadConfigFile(const std::string configfilepath)
 {
     // Read the xml file
     std::ifstream xmlFile(configfilepath.c_str());
+    if(!xmlFile.good())
+    {
+        return PM_S_FALSE;
+    }
     xml_document<> doc;
     //into a vector
     std::vector<char> buffer((istreambuf_iterator<char>(xmlFile)), istreambuf_iterator<char>());
