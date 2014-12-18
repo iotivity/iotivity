@@ -100,7 +100,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCQualityOfService qos, unsigned char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
-        OCDevAddr * requesterAddr, unsigned char * resourceUrl, uint32_t reqTotalSize);
+        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize);
 
 #ifdef CA_INT
 OCStackResult AddServerCARequest (OCServerRequest ** request, uint16_t coapID,
@@ -109,7 +109,7 @@ OCStackResult AddServerCARequest (OCServerRequest ** request, uint16_t coapID,
         OCQualityOfService qos, unsigned char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
-        OCDevAddr * requesterAddr, unsigned char * resourceUrl, uint32_t reqTotalSize,
+        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType, char *token);
 #endif
 

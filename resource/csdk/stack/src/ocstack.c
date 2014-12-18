@@ -296,9 +296,15 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     //copy request payload
     if (requestInfo->info.payload)
     {
+        serverRequest.reqTotalSize = strlen(requestInfo->info.payload) + 1;
         memcpy (&(serverRequest.reqJSONPayload), requestInfo->info.payload,
                 strlen(requestInfo->info.payload));
     }
+    else
+    {
+        serverRequest.reqTotalSize = 1;
+    }
+
     switch (requestInfo->method)
     {
         case CA_GET:

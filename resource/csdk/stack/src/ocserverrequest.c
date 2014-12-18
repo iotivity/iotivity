@@ -88,10 +88,13 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCQualityOfService qos, unsigned char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
-        OCDevAddr * requesterAddr, unsigned char * resourceUrl, uint32_t reqTotalSize)
+        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize)
 {
     OCServerRequest * serverRequest = NULL;
 
+    //Note: OCServerRequest includes 1 byte for the JSON Payload.  payloadSize is calculated
+    //as the required length of the string, so this will result in enough room for the
+    //null terminator as well.
     serverRequest = (OCServerRequest *) OCCalloc(1, sizeof(OCServerRequest) + reqTotalSize - 1);
     VERIFY_NON_NULL(serverRequest);
 
@@ -118,8 +121,10 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     }
     if(reqJSONPayload)
     {
-        memcpy((void *)serverRequest->reqJSONPayload, (void *)reqJSONPayload,
-            strlen((const char *)reqJSONPayload) + 1);
+        // destination is at least 1 greater than the source, so a NULL always exists in the
+        // last character
+        strncpy((char*)serverRequest->reqJSONPayload,
+                (const char*)reqJSONPayload, reqTotalSize - 1);
     }
     serverRequest->requestComplete = 0;
     if(requestToken)
@@ -157,11 +162,14 @@ OCStackResult AddServerCARequest (OCServerRequest ** request, uint16_t coapID,
         OCQualityOfService qos, unsigned char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
-        OCDevAddr * requesterAddr, unsigned char * resourceUrl, uint32_t reqTotalSize,
+        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType, char *token)
 {
     OCServerRequest * serverRequest = NULL;
 
+    //Note: OCServerRequest includes 1 byte for the JSON Payload.  payloadSize is calculated
+    //as the required length of the string, so this will result in enough room for the
+    //null terminator as well.
     serverRequest = (OCServerRequest *) OCCalloc(1, sizeof(OCServerRequest) + reqTotalSize - 1);
     VERIFY_NON_NULL(serverRequest);
 
@@ -188,8 +196,10 @@ OCStackResult AddServerCARequest (OCServerRequest ** request, uint16_t coapID,
     }
     if(reqJSONPayload)
     {
-        memcpy((void *)serverRequest->reqJSONPayload, (void *)reqJSONPayload,
-            strlen((const char *)reqJSONPayload) + 1);
+        // destination is at least 1 greater than the source, so a NULL always exists in the
+        // last character
+        strncpy((char*)serverRequest->reqJSONPayload,
+                (const char*)reqJSONPayload, reqTotalSize - 1);
     }
     serverRequest->requestComplete = 0;
     if(requestToken)

@@ -131,7 +131,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     coap_block_t rcvdBlock2;
     memset(&rcvdBlock1, COAP_BLOCK_FILL_VALUE, sizeof(coap_block_t));
     memset(&rcvdBlock2, COAP_BLOCK_FILL_VALUE, sizeof(coap_block_t));
-    uint16_t rcvdSize1 = 0;
+    size_t rcvdSize1 = 0;
     coap_pdu_t * rcvdPdu = rcvdRequest->pdu;
     coap_pdu_t * sendPdu = NULL;
     coap_send_flags_t sendFlag;
@@ -211,7 +211,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     else
     {
         // No block1 received
-        rcvdSize1 = strlen((const char *)protocolRequest.reqJSONPayload)+1;
+        rcvdSize1= strlen((const char*)protocolRequest.reqJSONPayload)+1;
         protocolRequest.reqTotalSize = rcvdSize1;
     }
 

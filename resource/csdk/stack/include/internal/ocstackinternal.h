@@ -108,7 +108,7 @@ typedef struct {
     uint16_t reqPacketSize;
     uint32_t resPacketNum;
     uint16_t resPacketSize;
-    uint32_t reqTotalSize;
+    size_t reqTotalSize;
 } OCServerProtocolRequest;
 
 typedef struct
