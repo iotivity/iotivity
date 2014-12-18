@@ -41,12 +41,12 @@ The Protocol Plug-in directory includes following sub directories;
 2. Compiling C-Pluff library 
 Before building Protocol-Plugin Manager, C-Pluff library should be compiled as follows.
 
-~/oic/oic-service/protocol-plugin/lib/cpluff$ aclocal
-~/oic/oic-service/protocol-plugin/lib/cpluff$ autoconf
-~/oic/oic-service/protocol-plugin/lib/cpluff$ autoheader
-~/oic/oic-service/protocol-plugin/lib/cpluff$ automake
-~/oic/oic-service/protocol-plugin/lib/cpluff$ ./configure
-~/oic/oic-service/protocol-plugin/lib/cpluff$ make
+~/service/protocol-plugin/lib/cpluff$ aclocal
+~/service/protocol-plugin/lib/cpluff$ autoconf
+~/service/protocol-plugin/lib/cpluff$ autoheader
+~/service/protocol-plugin/lib/cpluff$ automake
+~/service/protocol-plugin/lib/cpluff$ ./configure
+~/service/protocol-plugin/lib/cpluff$ make
 
  
 3. Run make
@@ -54,7 +54,7 @@ By running make in the protocol-plugin path, protocol-plugin manager, all plugin
  
 NOTE: To build plugins in 64-bit Ubuntu Linux, OCLib.a and libcoap.a library should be re-compiled with ?fPIC option.
  
-~/oic/oic-service/protocol-plugin/build/linux$make
+~/service/protocol-plugin/build/linux$make
 
 
 4. Using Plugins 
@@ -63,6 +63,8 @@ This version of protocol plug-in source code has following functionality.
 1) provides plug-in manager which can start and stop plug-in library.
 2) provides plug-in library which can communicate with MQTT protocol Fan and Light.
 3) provides OIC Sample Client which can get info about Fan and Light with configuration file(pluginmanager.xml).
+   before starting sample app need as below command. 
+   $export LD_LIBRARY_PATH={Top_Dir}/out/linux/x86/release/:$LD_LIBRARY_PATH
 
 So, to test a plug-in, follow below steps.
 
@@ -70,6 +72,6 @@ So, to test a plug-in, follow below steps.
 2) Register the plug-in with directory path input from plug-in manager sample.
 3) Start the plug-in from plug-in manager sample.
 4) Run OIC sample client.
-   ex)service/protocol-plugin/sample-app/linux/mqtt$./mqttclient
+   ex)~service/protocol-plugin/sample-app/linux/mqtt$./mqttclient
   (mqtt broker is already installed in the local system.)
 

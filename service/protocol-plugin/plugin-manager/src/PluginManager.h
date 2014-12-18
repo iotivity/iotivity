@@ -96,6 +96,7 @@ namespace OIC
         private:
             PluginManagerImpl *pluginManagerImpl;
             void (*destroy)(PluginManagerImpl *);
+            void *handle;
     };
 }
 #endif //__PLUGINMANAGER_H

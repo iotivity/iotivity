@@ -29,7 +29,7 @@ using namespace OIC;
 
 PluginManager::PluginManager()
 {
-    void *handle = dlopen("./libpmimpl.so", RTLD_LAZY);
+    handle = dlopen("./libpmimpl.so", RTLD_LAZY);
     if (!handle)
     {
         fprintf(stderr, "%s\n", dlerror());
@@ -44,6 +44,7 @@ PluginManager::PluginManager()
 PluginManager::~PluginManager(void)
 {
     destroy(pluginManagerImpl);
+    free(handle);
 }
 
 int PluginManager::startPlugins(const std::string key, const std::string value)
