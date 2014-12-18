@@ -251,7 +251,7 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
                         goto CLEANUP;
                     }
 
-                    sstream << (int) pQueryEngine;
+                    sstream << reinterpret_cast<intptr_t>(pQueryEngine);
 
                     // Register QueryEngineEvent
                     queryEngineEvent = new CQueryEngineEvent(sstream.str(), m_hSSMResource);
