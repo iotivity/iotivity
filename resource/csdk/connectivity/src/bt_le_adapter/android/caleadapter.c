@@ -27,6 +27,7 @@
 #include "calecore.h"
 #include "caleserver.h"
 #include "logger.h"
+#include "caadapterutils.h"
 
 #define TAG PCF("CA_LE_ADAPTER")
 
@@ -35,6 +36,7 @@ static jboolean gIsBluetoothGattServer;
 
 // received packet callback
 static CANetworkPacketReceivedCallback gLEReceivedCallback = NULL;
+static CANetworkChangeCallback gLENetworkChangeCallback = NULL;
 
 static void CALEPacketReceiveCallback(const char* address, const char* data)
 {
@@ -69,6 +71,49 @@ static void CALEPacketReceiveCallback(const char* address, const char* data)
     }
 }
 
+static void CALENetStateChangeCallback(const char* address, const uint32_t status)
+{
+    OIC_LOG_V(DEBUG, TAG,
+            "CALENetStateChangeCallback, status:%d", status);
+
+    // call the callback
+    if (gLENetworkChangeCallback != NULL)
+    {
+        CARemoteEndpoint_t* endpoint = NULL;
+        endpoint = (CARemoteEndpoint_t*) OICMalloc(sizeof(CARemoteEndpoint_t));
+
+        if (endpoint == NULL)
+        {
+            OIC_LOG(DEBUG, TAG, "CALENetworkStateChangedCallback, Memory allocation failed !");
+            OICFree(address);
+            return;
+        }
+
+        // set address
+        memset((void*) endpoint->addressInfo.BT.btMacAddress, 0, CA_MACADDR_SIZE);
+        if (CA_MACADDR_SIZE > strlen(address))
+        {
+            strcpy((char*) endpoint->addressInfo.BT.btMacAddress, address);
+        }
+        OICFree(address);
+
+        // set connectivity type
+        endpoint->connectivityType = CA_LE;
+
+        CANetworkStatus_t netStatus = CA_INTERFACE_DOWN;
+        if(status == 12)
+        {
+            netStatus = CA_INTERFACE_UP;
+        }
+        else if(status == 10)
+        {
+            netStatus = CA_INTERFACE_DOWN;
+        }
+
+        gLENetworkChangeCallback(endpoint, netStatus);
+    }
+}
+
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
         u_thread_pool_t handle)
@@ -76,6 +121,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     OIC_LOG(DEBUG, TAG, "IntializeBLE");
 
     gLEReceivedCallback = reqRespCallback;
+    gLENetworkChangeCallback = netCallback;
 
     // register handlers
     CAConnectivityHandler_t handler;
@@ -96,6 +142,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     CALEServerInitialize(handle);
 
     CALESetCallback(CALEPacketReceiveCallback);
+    CALESetNetStateCallback(CALENetStateChangeCallback);
     CALEServerSetCallback(CALEPacketReceiveCallback);
 
     return CA_STATUS_OK;
@@ -192,8 +239,49 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, void* data, ui
 CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGetLEInterfaceInformation");
-    CALEGetInterfaceInfo(info, size);
 
+    CALocalConnectivity_t *netInfo = NULL;
+
+    int32_t netInfoSize = 1;
+
+    netInfo = (CALocalConnectivity_t *) OICMalloc(sizeof(CALocalConnectivity_t) * netInfoSize);
+    VERIFY_NON_NULL_RET(netInfo, TAG, "malloc failed", CA_MEMORY_ALLOC_FAILED);
+    memset(netInfo, 0, sizeof(CALocalConnectivity_t) * netInfoSize);
+
+    char *macAddress = NULL;
+    CAResult_t ret = CALEGetInterfaceInfo(&macAddress);
+    OIC_LOG_V(ERROR, TAG, "address : %s", macAddress);
+    if (CA_STATUS_OK != ret || NULL == macAddress)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to get interface info [%d]", ret);
+
+        OICFree(netInfo);
+        OICFree(macAddress);
+        return ret;
+    }
+
+    // Create local endpoint using util function
+    CALocalConnectivity_t *endpoint = CAAdapterCreateLocalEndpoint(CA_LE, macAddress);
+    if (NULL == endpoint)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create Local Endpoint!",
+                  CA_MEMORY_ALLOC_FAILED);
+        OICFree(netInfo);
+        OICFree(macAddress);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    // copy unciast server information
+    endpoint->isSecured = CA_FALSE;
+    memcpy(&netInfo[0], endpoint, sizeof(CALocalConnectivity_t));
+    *size = 1;
+    *info = netInfo;
+
+    OICFree(macAddress);
+    CAAdapterFreeLocalEndpoint(endpoint);
+
+    OIC_LOG(INFO, TAG, "GetLEInterfaceInformation success");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 

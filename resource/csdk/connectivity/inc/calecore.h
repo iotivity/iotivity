@@ -60,9 +60,9 @@ int32_t CALEStopMulticastServer(int32_t serverID);
 
 void CALESetCallback(CAPacketReceiveCallback callback);
 
-void CALEGetInterfaceInfo(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CALEGetInterfaceInfo(char **address);
 
-void CAGetLocalAddress(char *address);
+void CALEGetLocalAddress(char** address);
 
 int32_t CALESendUnicastMessageImpl(const char *address, const char *data, uint32_t dataLen);
 

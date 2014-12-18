@@ -61,6 +61,9 @@ u_arraylist_t *CAGetSelectedNetworkList();
  */
 CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t *size);
 
+CAResult_t CATerminateNetworkType();
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -6,9 +6,9 @@
     <string name="request_setting">Request Setting</string>
     <string name="request">Request</string>
     <string name="response">Response</string>
-    <string name="uri">127.0.0.0:5000/a/light</string>
+    <string name="uri">a/light</string>
     <string name="notification">resourceUri/notification</string>
-    <string name="req_data">coaps://10.11.12.13:4545/resource_uri</string>
+    <string name="req_data">FC:88:0D:47:0C:0F/a/light</string>
     <string name="resp_data">resourceUri/response</string>
     <string name="receive">Receive</string>
     <string name="received">Received Message</string>

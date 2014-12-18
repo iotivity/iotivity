@@ -78,6 +78,8 @@ void CALeServerCreateJniInterfaceObject();
 
 void LEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback);
 
+void LEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback);
+
 jobject CALEServerOpenGattServer(JNIEnv *env);
 
 jobject CALEServerCreateGattService(JNIEnv *env);

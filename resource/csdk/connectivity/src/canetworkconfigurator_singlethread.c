@@ -197,3 +197,13 @@ CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_
 {
     return CAGetNetworkInfo(info, size);
 }
+
+CAResult_t CATerminateNetworkType()
+{
+    OIC_LOG_V(DEBUG, TAG, "CATerminateNetworkType()");
+    if(gSelectedNetworkList != NULL)
+    {
+        u_arraylist_free(gSelectedNetworkList);
+    }
+    return CA_STATUS_OK;
+}

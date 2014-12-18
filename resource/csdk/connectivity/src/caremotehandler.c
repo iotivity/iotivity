@@ -167,7 +167,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
         return NULL;
     }
     memset(cloneUri, 0, sizeof(char) * (len + 1));
-    memcpy(cloneUri, &uri[startIndex], sizeof(char) * (len + 1));
+    memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
 
     // #3. parse address
     // #4. parse resource uri
@@ -210,6 +210,13 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
     CAURI_t resourceUri = pResourceUri;
 
     CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address, connectivityType);
+    if (remoteEndpoint == NULL)
+    {
+        OIC_LOG_V(DEBUG, TAG, "create remote endpoint fail");
+
+        OICFree(cloneUri);
+        return NULL;
+    }
     remoteEndpoint->isSecured = secured;
 
     OICFree(cloneUri);

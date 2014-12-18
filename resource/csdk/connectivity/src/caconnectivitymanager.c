@@ -51,6 +51,8 @@ void CATerminate()
     OIC_LOG_V(DEBUG, TAG, "CATerminate");
 
     CATerminateMessageHandler();
+
+    CATerminateNetworkType();
 }
 
 CAResult_t CAStartListeningServer()

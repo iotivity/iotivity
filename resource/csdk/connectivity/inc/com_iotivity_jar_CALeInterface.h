@@ -7,6 +7,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 /*
  * Class:     com_iotivity_jar_CALeInterface
  * Method:    CARegisterLeScanCallback

@@ -136,24 +136,32 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
         {
             CARetransmissionData_t *removedData = u_arraylist_remove(context->dataList, i);
 
-            OIC_LOG_V(DEBUG, TAG, "max trying count, remove retransmission CON data!!,\
-                    message id(%d)", removedData->messageId);
-
-            // callback for retransmit timeout
-            if (context->timeoutCallback != NULL)
+            if (removedData != NULL)
             {
-                context->timeoutCallback(removedData->endpoint, removedData->pdu,
-                        removedData->size);
+                OIC_LOG_V(DEBUG, TAG, "max trying count, remove retransmission CON data!!,\
+                        message id(%d)", removedData->messageId);
+
+                // callback for retransmit timeout
+                if (context->timeoutCallback != NULL)
+                {
+                    context->timeoutCallback(removedData->endpoint, removedData->pdu,
+                            removedData->size);
+                }
+
+                CADestroyRemoteEndpointInternal(removedData->endpoint);
+                OICFree(removedData->pdu);
+
+                OICFree(removedData);
+
+                // modify loop value.
+                len = u_arraylist_length(context->dataList);
+                --i;
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "arraylist remove error");
             }
 
-            CADestroyRemoteEndpointInternal(removedData->endpoint);
-            OICFree(removedData->pdu);
-
-            OICFree(removedData);
-
-            // modify loop value.
-            len = u_arraylist_length(context->dataList);
-            --i;
         }
     }
 
@@ -429,12 +437,15 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     {
         CARetransmissionData_t *removedData = u_arraylist_remove(context->dataList, i);
 
-        OIC_LOG_V(DEBUG, TAG, "remove retransmission CON data!!, message id(%d)", messageId);
+        if (removedData != NULL)
+        {
+            OIC_LOG_V(DEBUG, TAG, "remove retransmission CON data!!, message id(%d)", messageId);
 
-        CADestroyRemoteEndpointInternal(removedData->endpoint);
-        OICFree(removedData->pdu);
+            CADestroyRemoteEndpointInternal(removedData->endpoint);
+            OICFree(removedData->pdu);
 
-        OICFree(removedData);
+            OICFree(removedData);
+        }
     }
 
     // mutex unlock

@@ -50,7 +50,7 @@ CAConnectivityType_t gSelectedNwType = CA_ETHERNET;
 
 char get_menu();
 void process();
-CAConnectivityType_t get_network_type();
+CAResult_t get_network_type();
 
 void start_listening_server();
 void start_discovery_server();
@@ -400,9 +400,13 @@ void find_resource()
 void send_request()
 {
     char secureRequest[2] = {0};
-    CAConnectivityType_t selectedNetwork;
+    CAResult_t res;
 
-    selectedNetwork = get_network_type();
+    res = get_network_type();
+    if (res != CA_STATUS_OK)
+    {
+        return;
+    }
 
     printf("Do you want to send secure request ?.... enter (0/1): ");
     gets(secureRequest);
@@ -423,7 +427,7 @@ void send_request()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, selectedNetwork, &endpoint)
+    if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, gSelectedNwType, &endpoint)
         || !endpoint)
     {
         printf("Failed to create remote endpoint!\n");
@@ -499,11 +503,15 @@ void send_request()
 void send_request_all()
 {
     char buf[MAX_BUF_LEN];
-    CAConnectivityType_t selectedNetwork;
-
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
 
-    selectedNetwork = get_network_type();
+    CAResult_t res;
+
+    res = get_network_type();
+    if (res != CA_STATUS_OK)
+    {
+        return;
+    }
 
     printf("\n=============================================\n");
     printf("10.11.12.13:4545/resource_uri ( for IP )\n");
@@ -514,7 +522,7 @@ void send_request_all()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf, selectedNetwork, &endpoint);
+    res = CACreateRemoteEndpoint(buf, gSelectedNwType, &endpoint);
 
     if (res != CA_STATUS_OK)
     {
@@ -643,11 +651,15 @@ void advertise_resource()
 void send_notification()
 {
     char buf[MAX_BUF_LEN];
-    CAConnectivityType_t selectedNetwork;
-
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
 
-    selectedNetwork = get_network_type();
+    CAResult_t res;
+
+    res = get_network_type();
+    if (res != CA_STATUS_OK)
+    {
+        return;
+    }
 
     printf("\n=============================================\n");
     printf("10.11.12.13:4545/resource_uri ( for IP )\n");
@@ -658,7 +670,7 @@ void send_notification()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf, selectedNetwork, &endpoint);
+    res = CACreateRemoteEndpoint(buf, gSelectedNwType, &endpoint);
 
     if (res != CA_STATUS_OK)
     {
@@ -1112,7 +1124,7 @@ void get_resource_uri(char *URI, char *resourceURI, int length)
     printf("URI: %s, ResourceURI:%s\n", URI, resourceURI);
 }
 
-CAConnectivityType_t get_network_type()
+CAResult_t get_network_type()
 {
     char buf[MAX_BUF_LEN];
 
@@ -1131,21 +1143,29 @@ CAConnectivityType_t get_network_type()
 
     number = (number < 0 || number > 3) ? 0 : 1 << number;
 
+    if (!(number & 0xf))
+    {
+        return CA_NOT_SUPPORTED;
+    }
     if (number & CA_ETHERNET)
     {
-        return CA_ETHERNET;
+        gSelectedNwType = CA_ETHERNET;
+        return CA_STATUS_OK;
     }
     if (number & CA_WIFI)
     {
-        return CA_WIFI;
+        gSelectedNwType = CA_WIFI;
+        return CA_STATUS_OK;
     }
     if (number & CA_EDR)
     {
-        return CA_EDR;
+        gSelectedNwType = CA_EDR;
+        return CA_STATUS_OK;
     }
     if (number & CA_LE)
     {
-        return CA_LE;
+        gSelectedNwType = CA_LE;
+        return CA_STATUS_OK;
     }
 
     printf("\n=============================================\n");

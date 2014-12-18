@@ -69,6 +69,10 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
 
         // get data
         u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
+        if (message == NULL)
+        {
+            continue;
+        }
 
         void *data = message->msg;
 

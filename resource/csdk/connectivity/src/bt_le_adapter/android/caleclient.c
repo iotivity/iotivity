@@ -92,14 +92,14 @@ void CALeCreateJniInterfaceObject()
     }
 
     jmethodID LeInterfaceConstructorMethod =
-            (*env)->GetMethodID(env, LeJniInterface, "<init>", "()V");
+            (*env)->GetMethodID(env, LeJniInterface, "<init>", "(Landroid/content/Context;)V");
     if (!LeInterfaceConstructorMethod)
     {
         OIC_LOG_V(DEBUG, TAG, "Could not get CALeInterface constructor method");
         return;
     }
 
-    (*env)->NewObject(env, LeJniInterface, LeInterfaceConstructorMethod);
+    (*env)->NewObject(env, LeJniInterface, LeInterfaceConstructorMethod, gContext);
     OIC_LOG_V(DEBUG, TAG, "Create CALeInterface instance");
 
     if(isAttached)
@@ -117,7 +117,6 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
     }
     g_jvm = jvm;  /* cache the JavaVM pointer */
 
-    //FIXME
     //JVM required for WifiCore to work with JNI interface
     CAWiFiJniInit(jvm);
     CALeServerJniInit(env, jvm);
@@ -180,10 +179,8 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattConnectionSta
     else if (GATT_SUCCESS == status && STATE_DISCONNECTED == newstate)  // le disconnected
     {
         if(gatt) {
-#ifdef DEBUG_MODE
             CANativeGattClose(env, gatt);
             CANativeRemoveGattObj(env, gatt);
-#endif
         }
     }
     else  // other error
@@ -271,8 +268,6 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristi
 
     jstring jni_address = CANativeGetAddressFromGattObj(env, gatt);
     const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
-
-    gPacketReceiveCallback(address, writeData);
 
     OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicWriteCallback - write data : %s", writeData);
 
@@ -546,12 +541,13 @@ void CALESetCallback(CAPacketReceiveCallback callback)
     gPacketReceiveCallback = callback;
 }
 
-void CALEGetInterfaceInfo(CALocalConnectivity_t **info, uint32_t* size)
+CAResult_t CALEGetInterfaceInfo(char **address)
 {
-    return;
+    CALEGetLocalAddress(address);
+    return CA_STATUS_OK;
 }
 
-void CALEGetLocalAddress(char* address)
+void CALEGetLocalAddress(char** address)
 {
     jboolean isAttached = FALSE;
     JNIEnv* env;
@@ -569,10 +565,14 @@ void CALEGetLocalAddress(char* address)
     }
 
     jstring jni_address = CANativeGetLocalDeviceAddress(env);
-    const char* localAddress = (*env)->GetStringUTFChars(env, jni_address, NULL);
-    memcpy(address, localAddress, strlen(localAddress));
+    if(jni_address)
+    {
+        const char* localAddress = (*env)->GetStringUTFChars(env, jni_address, NULL);
+        *address = (char*)OICMalloc(strlen(localAddress) + 1);
+        memcpy(*address, localAddress, strlen(localAddress));
+    }
 
-    OIC_LOG_V(DEBUG, TAG, "Local Address : %s", address);
+    OIC_LOG_V(DEBUG, TAG, "Local Address : %s", *address);
     if(isAttached)
         (*g_jvm)->DetachCurrentThread(g_jvm);
 }

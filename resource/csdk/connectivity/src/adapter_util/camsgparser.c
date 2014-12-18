@@ -187,6 +187,10 @@ uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen,
                   offset);
 
         *dataSegment = (char *) OICMalloc(sizeof(char) * length);
+        if (*dataSegment == NULL)
+        {
+            return -1;
+        }
         memcpy(*dataSegment, data + offset, length);
     }
 

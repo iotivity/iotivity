@@ -679,7 +679,7 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
     }
 
     *serverFD = gMulticastServerSocketFD;
-    strncpy(gMulticastServerInterface, localAddress, sizeof(IPNAMESIZE));
+    strncpy(gMulticastServerInterface, localAddress, IPNAMESIZE);
     u_mutex_unlock(gMutexMulticastServer);
 
     OIC_LOG(DEBUG, ETHERNET_SERVER_TAG, "OUT");

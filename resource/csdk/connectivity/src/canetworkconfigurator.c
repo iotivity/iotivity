@@ -123,7 +123,14 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
     for (index = 0; index < u_arraylist_length(gSelectedNetworkList); index++)
     {
-        type = *(uint32_t *) u_arraylist_get(gSelectedNetworkList, index);
+        void* cType = u_arraylist_get(gSelectedNetworkList, index);
+
+        if(cType == NULL)
+        {
+            continue;
+        }
+
+        type = *(uint32_t *) cType;
 
         if (ConnectivityType == type)
         {
@@ -205,3 +212,15 @@ CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_
 
     return CAGetNetworkInfo(info, size);
 }
+
+CAResult_t CATerminateNetworkType()
+{
+    OIC_LOG_V(DEBUG, TAG, "CATerminateNetworkType()");
+
+    if(gSelectedNetworkList != NULL) {
+        u_arraylist_free(gSelectedNetworkList);
+    }
+
+    return CA_STATUS_OK;
+}
+

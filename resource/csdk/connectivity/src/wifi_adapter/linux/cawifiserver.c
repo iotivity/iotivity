@@ -674,7 +674,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
     }
 
     *serverFD = gMulticastServerSocketFD;
-    strncpy(gMulticastServerInterface, localAddress, sizeof(IPNAMESIZE));
+    strncpy(gMulticastServerInterface, localAddress, IPNAMESIZE);
     u_mutex_unlock(gMutexMulticastServer);
 
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");

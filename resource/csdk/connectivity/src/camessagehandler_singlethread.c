@@ -115,7 +115,7 @@ static void CAProcessData(CAData_t *data)
             CARetransmissionSentData(&gRetransmissionContext, data->remoteEndpoint, pdu->hdr,
                                      pdu->length);
         }
-
+        free(pdu);
     }
     else if (type == SEND_TYPE_MULTICAST)
     {
@@ -146,6 +146,7 @@ static void CAProcessData(CAData_t *data)
 
             res = CASendMulticastData(pdu->hdr, pdu->length);
         }
+        free(pdu);
     }
     else
     {

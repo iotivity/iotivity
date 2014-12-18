@@ -35,11 +35,13 @@ extern "C"
 {
 #endif
 
+typedef void (*CALENetStateChantedCallback)(const char* address, const uint32_t status);
+
 void CALENetworkMonitorJNISetContext(JNIEnv *env, jobject context);
 
 void CALeNetworkMonitorJniInit(JNIEnv *env, JavaVM *jvm);
 
-void CALEStartNetworkMonitor(JNIEnv *env, jobject obj);
+void CALESetNetStateCallback(CALENetStateChantedCallback callback);
 
 #ifdef __cplusplus
 } /* extern "C" */

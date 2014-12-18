@@ -302,7 +302,7 @@ public class MainActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 
-			RM.RMSendResponse(mRespData_ed.getText().toString(), selectedNetwork);
+		//RM.RMSendResponse(mRespData_ed.getText().toString(), selectedNetwork);
 
 		}
 	};

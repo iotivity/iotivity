@@ -60,6 +60,8 @@ void CATerminate()
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CATerminateMessageHandler();
+
+    CATerminateNetworkType();
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -82,7 +84,7 @@ CAResult_t CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback Re
     return CA_STATUS_OK;
 }
 
-CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, 
+CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
     const CAConnectivityType_t connectivityType,CARemoteEndpoint_t **remoteEndpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");

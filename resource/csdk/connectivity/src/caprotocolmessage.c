@@ -625,6 +625,11 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *result,
     if (buflen == 0 || len == 0)
         return 0;
 
+    if (data == NULL)
+    {
+        return 0;
+    }
+
     while (len)
     {
         if (!encode_always)

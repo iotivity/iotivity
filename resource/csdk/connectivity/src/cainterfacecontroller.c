@@ -321,7 +321,14 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t *) u_arraylist_get(list, i);
+        void* cType = u_arraylist_get(list, i);
+
+        if(cType == NULL)
+        {
+            continue;
+        }
+
+        type = *(uint8_t *) cType;
 
         index = CAGetAdapterIndex(type);
 
@@ -362,7 +369,14 @@ CAResult_t CAStartListeningServerAdapters()
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t *) u_arraylist_get(list, i);
+        void* cType = u_arraylist_get(list, i);
+
+        if(cType == NULL)
+        {
+            continue;
+        }
+
+        type = *(uint8_t *) cType;
 
         index = CAGetAdapterIndex(type);
 
@@ -397,7 +411,14 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        type = *(uint8_t *) u_arraylist_get(list, i);
+        void* cType = u_arraylist_get(list, i);
+
+        if(cType == NULL)
+        {
+            continue;
+        }
+
+        type = *(uint8_t *) cType;
 
         index = CAGetAdapterIndex(type);
 

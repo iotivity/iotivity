@@ -226,10 +226,7 @@ static void CASendThreadProcess(void *threadData)
         }
         coap_delete_pdu(pdu);
     }
-    else
-    {
-        OIC_LOG(DEBUG, TAG, "unknown type!");
-    }
+
     OIC_LOG_V(DEBUG, TAG, " Result :%d", res);
 }
 
@@ -306,7 +303,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         if (cadata == NULL)
         {
             OIC_LOG(DEBUG, TAG, "CAReceivedPacketCallback, Memory allocation failed !");
-            OICFree(endpoint->resourceUri);
+            if (endpoint->resourceUri != NULL)
+                OICFree(endpoint->resourceUri);
             OICFree(ReqInfo);
             coap_delete_pdu(pdu);
             return;
@@ -368,7 +366,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         if (cadata == NULL)
         {
             OIC_LOG(DEBUG, TAG, "CAReceivedPacketCallback, Memory allocation failed !");
-            OICFree(endpoint->resourceUri);
+            if (endpoint->resourceUri != NULL)
+                OICFree(endpoint->resourceUri);
             OICFree(ResInfo);
             coap_delete_pdu(pdu);
             return;

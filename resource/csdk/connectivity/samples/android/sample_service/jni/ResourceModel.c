@@ -31,9 +31,9 @@ void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* 
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
 void send_response(CARemoteEndpoint_t* endpoint, CAInfo_t* info);
-CAConnectivityType_t get_network_type(int selectedNetwork);
+CAResult_t get_network_type(int selectedNetwork);
 
-CAConnectivityType_t gSelectedNwType = CA_LE;
+CAConnectivityType_t gSelectedNwType;
 static CAToken_t gLastRequestToken = NULL;
 static const char *gSecureInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
@@ -97,6 +97,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
     CAJniSetContext(context);
     CALEServerJNISetContext(env, context);
     CALEClientJNISetContext(env, context);
+    CALENetworkMonitorJNISetContext(env, context);
 
     if (SetCredentials() == 0)
     {
@@ -183,23 +184,29 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
     LOGI("RMSendRequest - %s", strUri);
 
-    CAConnectivityType_t connectivityType;
-    connectivityType = get_network_type(selectedNetwork);
+    CAResult_t res;
+
+    res = get_network_type(selectedNetwork);
+    if (res != CA_STATUS_OK)
+    {
+        return;
+    }
 
     //create remote endpoint
     CARemoteEndpoint_t* endpoint = NULL;
 
-    if(CA_STATUS_OK != CACreateRemoteEndpoint(strUri, connectivityType, &endpoint))
+    if(CA_STATUS_OK != CACreateRemoteEndpoint(strUri, gSelectedNwType, &endpoint))
     {
         LOGI("Could not create remote end point");
         CADestroyRemoteEndpoint(endpoint);
+        return;
     }
 
     CAMessageType_t messageType = msgType;
 
     // create token
     CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
+    res = CAGenerateToken(&token);
     if (res != CA_STATUS_OK)
     {
         printf("token generate error!!\n");
@@ -260,13 +267,18 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification(
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
     LOGI("RMSendNotification - %s", strUri);
 
-    CAConnectivityType_t connectivityType;
-    connectivityType = get_network_type(selectedNetwork);
+    CAResult_t res;
+
+    res = get_network_type(selectedNetwork);
+    if (res != CA_STATUS_OK)
+    {
+        return;
+    }
 
     // create remote endpoint
     CARemoteEndpoint_t* endpoint = NULL;
 
-    if(CA_STATUS_OK != CACreateRemoteEndpoint(strUri, connectivityType, &endpoint))
+    if(CA_STATUS_OK != CACreateRemoteEndpoint(strUri, gSelectedNwType, &endpoint))
     {
         LOGI("Could not create remote end point");
         CADestroyRemoteEndpoint(endpoint);
@@ -388,10 +400,12 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
             if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, object->connectivityType, &endpoint))
             {
                 LOGI("Failed to create duplicate of remote endpoint!\n");
+                OICFree(uri);
                 return;
             }
             endpoint->isSecured = CA_TRUE;
             object = endpoint;
+            OICFree(uri);
         }
     }
 
@@ -547,28 +561,37 @@ void send_response(CARemoteEndpoint_t* endpoint, CAInfo_t* info)
     LOGI("=============================================\n");
 }
 
-CAConnectivityType_t get_network_type(int selectedNetwork)
+CAResult_t get_network_type(int selectedNetwork)
 {
 
     int number = selectedNetwork;
 
     number = (number < 0 || number > 3) ? 0 : 1 << number;
 
+    if (!(number & 0xf))
+    {
+        return CA_NOT_SUPPORTED;
+    }
     if (number & CA_ETHERNET)
     {
-        return CA_ETHERNET;
+        gSelectedNwType = CA_ETHERNET;
+        return CA_STATUS_OK;
     }
     if (number & CA_WIFI)
     {
-        return CA_WIFI;
+        gSelectedNwType = CA_WIFI;
+        return CA_STATUS_OK;
     }
     if (number & CA_EDR)
     {
-        return CA_EDR;
+        gSelectedNwType = CA_EDR;
+        return CA_STATUS_OK;
     }
     if (number & CA_LE)
     {
-        return CA_LE;
+        gSelectedNwType = CA_LE;
+        return CA_STATUS_OK;
     }
 
+    return CA_NOT_SUPPORTED;
 }

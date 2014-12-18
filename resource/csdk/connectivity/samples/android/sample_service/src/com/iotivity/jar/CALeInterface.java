@@ -19,11 +19,14 @@ import android.util.Log;
 
 public class CALeInterface {
     
-    public CALeInterface() {
+    public CALeInterface(Context context) {
+        
         CARegisterLeScanCallback(mLeScanCallback);
         CARegisterLeGattCallback(mGattCallback);
         CARegisterLeGattServerCallback(mGattServerCallback);
         CARegisterBluetoothLeAdvertiseCallback(mAdvertiseCallback);
+        
+        registerIntentFilter(context);
     }
     
     public static void getLeScanCallback() {
@@ -42,9 +45,10 @@ public class CALeInterface {
         CARegisterBluetoothLeAdvertiseCallback(mAdvertiseCallback);
     }
     
-    public static IntentFilter getActionStateIntentFilter() {
+    public static IntentFilter registerIntentFilter(Context context) {
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        context.registerReceiver(mReceiver, filter);
         return filter;
     }
     
