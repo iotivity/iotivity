@@ -24,6 +24,8 @@
 
 #include "SSMTestApp.h"
 
+using namespace std;
+
 SSMTestApp::SSMTestApp()
 {
 }
@@ -84,18 +86,6 @@ void SSMTestApp::unregisterQuery(void)
 }
 
 /* APP. Level Callback Function for Observer of client. */
-void SSMTestApp::onRegisterQuery(const std::string &jsonData, SSMReturn &eCode)
-{
-    if (eCode == SSM_SUCCESS)
-    {
-        std::cout << jsonData << std::endl;
-    }
-    else
-    {
-        std::cout << "Response error: " << eCode << std::endl;
-    }
-}
-
 SSMRESULT SSMTestApp::onQueryEngineEvent(int cqid, IDataReader *pResult)
 {
     int     dataCount = 0;

@@ -60,7 +60,7 @@ class TemphumidResource
     public:
         /// Constructor
         TemphumidResource() :
-            m_humid(0), m_temp(0)
+            m_humid(0), m_temp(0), m_resourceHandle(0)
         {
             m_resourceUri = "/Thing_TempHumSensor1";
             m_resourceTypes.push_back(COAP_TYPE_NAME);

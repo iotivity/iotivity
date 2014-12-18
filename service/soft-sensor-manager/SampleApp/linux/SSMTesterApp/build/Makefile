@@ -11,7 +11,7 @@ TARGET=SSMTesterApp
 
 CXX=g++
 CXX_FLAGS=-std=c++0x -Wall -DLINUX
-CXX_INC=-I${SRC_PATH}/ -I${INC_PATH}/ -I${OUTPUTS_DIR} -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
+CXX_INC=-I${SRC_PATH}/ -I${INC_PATH}/ -I${OUTPUTS_DIR} -I${BOOST}
 
 
 CXX_LIB+=${OUTPUTS_DIR}/${SSM_LIB} 

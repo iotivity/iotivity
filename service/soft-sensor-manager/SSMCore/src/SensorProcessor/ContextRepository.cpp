@@ -322,55 +322,46 @@ SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDel
     InitContext InitializeContextFunction = NULL;
 
     // load dll(so)
-    res = SSM_E_FAIL;
-    for (unsigned int i = 1; i <= SSM_MODEL_RETRY; ++i)
-    {
-        sstream.str("");
 
 #ifdef WIN32
-        sstream << m_pathSoftSensors << softSensorName.c_str() << ".dll" << std::ends;
+    sstream << m_pathSoftSensors << softSensorName.c_str() << ".dll" << std::ends;
 
-        HINSTANCE hModule = NULL;
-        hModule = LoadLibraryA(sstream.str().c_str());
+    HINSTANCE hModule = NULL;
+    hModule = LoadLibraryA(sstream.str().c_str());
 
-        if (hModule != NULL)
-        {
-            InitializeContextFunction = (InitContext)GetProcAddress(hModule, "InitializeContext");
-        }
+    if (hModule != NULL)
+    {
+        InitializeContextFunction = (InitContext)GetProcAddress(hModule, "InitializeContext");
+    }
 #else
-        //sstream << "/data/data/com.example.javaproject/lib/lib" << modelName <<".so" << std::ends;
-        sstream << m_pathSoftSensors << "lib" << softSensorName.c_str() << ".so" << std::ends;
+    //sstream << "/data/data/com.example.javaproject/lib/lib" << modelName <<".so" << std::ends;
+    sstream << m_pathSoftSensors << "lib" << softSensorName.c_str() << ".so" << std::ends;
 
-        void *hModule = NULL;
-        hModule = dlopen(sstream.str().c_str(), RTLD_LOCAL | RTLD_LAZY);
+    void *hModule = NULL;
+    hModule = dlopen(sstream.str().c_str(), RTLD_LOCAL | RTLD_LAZY);
 
-        if (hModule != NULL)
-        {
-            InitializeContextFunction = (InitContext)dlsym(hModule, "InitializeContext");
-        }
+    if (hModule != NULL)
+    {
+        InitializeContextFunction = (InitContext)dlsym(hModule, "InitializeContext");
+    }
 #endif
-        if (hModule == NULL)
-        {
-            //load library failed. raise error
-            SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-            //InitializeContextFunction = NULL;
-            //continue;
-        }
+    if (hModule == NULL)
+    {
+        //load library failed. raise error
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+    }
 
-        if (InitializeContextFunction != NULL)
-        {
-            InitializeContextFunction(pDelegate);
-            *hSoftSensor = hModule;
-            res = SSM_S_OK;
-        }
-        else
-        {
-            //Unload module and return error
-            SSM_CLEANUP_ASSERT(unloadSoftSensor(hModule));
-            SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-        }
-
-        break;
+    if (InitializeContextFunction != NULL)
+    {
+        InitializeContextFunction(pDelegate);
+        *hSoftSensor = hModule;
+        res = SSM_S_OK;
+    }
+    else
+    {
+        //Unload module and return error
+        SSM_CLEANUP_ASSERT(unloadSoftSensor(hModule));
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
     }
 
 CLEANUP:
@@ -419,6 +410,8 @@ SSMRESULT CContextRepository::GetCurrentPath(std::string *path)
     {
         SSM_CLEANUP_ASSERT(SSM_E_FAIL);
     }
+
+    buffer[length] = '\0';
 
     strPath = strrchr(buffer, '/');
 
