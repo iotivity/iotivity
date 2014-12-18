@@ -13,7 +13,7 @@ IOT_LOG_LIB=liboc_logger.a
 
 # service folder path.
 FD_SSM=${ROOT_DIR}/service/soft-sensor-manager
-FD_SDK=${FD_SSM}/SDK
+FD_SDK=${FD_SSM}/SDK/cpp
 FD_SSMCORE=${FD_SSM}/SSMCore
 FD_SAMPLEAPP=${FD_SSM}/SampleApp
 FD_SOFTSENSOR=${FD_SSM}/SoftSensorPlugin
@@ -23,7 +23,7 @@ FD_BUILD=${FD_SSM}/build
 OUTPUTS_DIR=${FD_BUILD}/linux/release
 EXEC_DIR=${OUTPUTS_DIR}
 SSXML_NAME="SoftSensorDescription.xml"
-SSM_LIB = libSSM.a
+SSM_LIB = libSSMSDK.a
 SSMCORE_LIB=libSSMCore.a
 
 # SoftSensorManager makefile path

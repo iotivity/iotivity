@@ -1,5 +1,5 @@
--include ../../../build/linux/root_path.inc
--include ../../../build/linux/environment.mk
+-include ../../../../build/linux/root_path.inc
+-include ../../../../build/linux/environment.mk
 
 BOOST=${BOOST_BASE}
 SRC_PATH=../../src
@@ -13,7 +13,7 @@ TARGET=${SSM_LIB}
 
 CXX=g++
 CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX
-CXX_INC=-I../../ -I${INC_PATH}/ -I${FD_SSMCORE}/include -I${FD_SSMCORE}/src -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
+CXX_INC=-I../../ -I${INC_PATH}/ -I${FD_SSMCORE}/include -I${FD_SSMCORE}/src -I${BOOST}
 CXX_LIB= 
 
 SRCLIST=${wildcard ${SRC_PATH}/*.cpp}

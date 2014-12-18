@@ -30,10 +30,10 @@ if target_os not in ['windows', 'winrt']:
 sdk_env = soft_sensor_manager_env.Clone()
 sdk_env.AppendUnique(CPPPATH = ['SSMCore/include'])
 sdk_env.AppendUnique(CPPPATH = ['SSMCore/src'])
-sdk_env.AppendUnique(CPPPATH = ['SDK/include'])
+sdk_env.AppendUnique(CPPPATH = ['SDK/cpp/include'])
 
 ssm_sdk_cpp_src = [
-		Glob('SDK/src/*.cpp')
+		Glob('SDK/cpp/src/*.cpp')
 		]
 
 env.AppendTarget('libSSMSDK')
