@@ -13,8 +13,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-things_manager_env.AppendUnique(CPPPATH = ['tgm/inc'])
-things_manager_env.AppendUnique(CPPPATH = ['sdk/inc'])
+things_manager_env.AppendUnique(CPPPATH = ['sdk/inc', 'sdk/src'])
 
 if target_os not in ['windows', 'winrt']:
 	things_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -28,7 +27,8 @@ if target_os == 'android':
 ######################################################################
 # Source files and Targets
 ######################################################################
-tgmsdk = things_manager_env.StaticLibrary('TGMSDKLibrary', 'sdk/src/TGMClient.cpp')
+tgm_src = env.Glob('sdk/src/*.cpp')
+tgmsdk = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
 
 things_manager_env.InstallTarget(tgmsdk, 'libTGMSDK')
 
