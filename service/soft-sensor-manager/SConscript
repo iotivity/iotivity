@@ -105,3 +105,12 @@ ssmcore_env.InstallTarget(libssmcore, 'libSSMCORE')
 ## build SampleApp
 #######################################################################
 SConscript('SampleApp/SConscript')
+
+
+######################################################################
+# Copy description xml and deliverables
+######################################################################
+Command("SSMTesterApp","SampleApp/linux/SSMTesterApp/SSMTesterApp", Copy("$TARGET", "$SOURCE"))
+Command("SoftSensorDescription.xml", "SoftSensorPlugin/SoftSensorDescription.xml", Copy("$TARGET", "$SOURCE"))
+Command("THSensorApp","SampleApp/linux/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
+Command("THSensorApp1","SampleApp/linux/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))

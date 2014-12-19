@@ -31,5 +31,5 @@ linux_sample_env.AppendUnique(LIBS = ['pthread'])
 #build sampleapp
 ######################################################################
 ssmtesterapp = linux_sample_env.Program('SSMTesterApp', 'src/SSMTestApp.cpp')
-Alias("SSMTesterApp", ssmtesterapp)
+Alias("ssmtesterapp_sample", ssmtesterapp)
 env.AppendTarget('SSMTesterApp')
