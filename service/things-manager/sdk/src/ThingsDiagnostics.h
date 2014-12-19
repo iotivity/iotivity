@@ -35,190 +35,189 @@
 #include "GroupManager.h"
 
 using namespace OC;
-
-/// Declearation of Diagnostics Callback funtion type
-typedef std::function<
-        void(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode) > DiagnosticsCallback;
-
-/**
- *  @brief
- *  The following class is used as a item stacking in request queue. The class stores a request and
- *  referential information (e.g., a diagnostics name, a target resource object, a callback functi-
- *  on passed from the applications, and a update value). When the function for updating/getting
- *  diagnostics value is called from applications, this class instance is created and stored in the
- *  request queue. The queue is maintained in a std::map structure so if desiring to find a specific
- *  request, you can find it by querying a diagnostics name.
- */
-class DiagnosticsRequestEntry
+namespace OIC
 {
-public:
-    DiagnosticsRequestEntry(std::string ID, DiagnosticsCallback callback,
-            std::shared_ptr< OCResource > resource, std::string updateVal) :
-            m_ID(ID), m_callback(callback), m_resource(resource), m_updateVal(updateVal)
+
+    /// Declearation of Diagnostics Callback funtion type
+    typedef std::function<
+            void(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+            > DiagnosticsCallback;
+
+    /**
+     *  @brief
+     *  The following class is used as a item stacking in request queue. The class stores a request
+     *  and referential information (e.g., a diagnostics name, a target resource object, a callback
+     *  function passed from the applications, and a update value). When the function for updating/
+     *  getting diagnostics value is called from applications, this class instance is created and
+     *  stored in the request queue. The queue is maintained in a std::map structure so if desiring
+     *  to find a specific request, you can find it by querying a diagnostics name.
+     */
+    class DiagnosticsRequestEntry
     {
-    }
-    ;
+    public:
+        DiagnosticsRequestEntry(std::string ID, DiagnosticsCallback callback,
+                std::shared_ptr< OCResource > resource, std::string updateVal) :
+                m_ID(ID), m_callback(callback), m_resource(resource), m_updateVal(updateVal)
+        {
+        }
+        ;
 
-    // Diagnostics Name (used in key value in std::map structure)
-    // e.g., reboot and factoryset
-    std::string m_ID;
+        // Diagnostics Name (used in key value in std::map structure)
+        // e.g., reboot and factoryset
+        std::string m_ID;
 
-    // Reference callback pointer
-    DiagnosticsCallback m_callback;
+        // Reference callback pointer
+        DiagnosticsCallback m_callback;
 
-    // Reference resource object
-    std::shared_ptr< OCResource > m_resource;
+        // Reference resource object
+        std::shared_ptr< OCResource > m_resource;
 
-    // Update value only used for diagnostics update (always "true")
-    std::string m_updateVal;
-};
+        // Update value only used for diagnostics update (always "true")
+        std::string m_updateVal;
+    };
 
-/**
- *  @brief
- *  The following class is used to store providing diagnostics name and its relevant information
- *  The relevant information includes a brief description, uri, and attribute key.
- *  Note that a developer only specifies a diagnostics name, not URI nor attribute key, to
- *  update a value to a remote. Thus, using diagnostics name, we convert it to more specific
- *  information (i.e. uri and attribute key) to send a request. This class is reponsible to storing
- *  these information.
- */
-class DiagnosticsUnitInfo
-{
-public:
-    DiagnosticsUnitInfo(std::string name, std::string description, std::string uri,
-            std::string attribute) :
-            m_name(name), m_description(description), m_uri(uri), m_attribute(attribute)
+    /**
+     *  @brief
+     *  The following class is used to store providing diagnostics name and its relevant information
+     *  The relevant information includes a brief description, uri, and attribute key.
+     *  Note that a developer only specifies a diagnostics name, not URI nor attribute key, to
+     *  update a value to a remote. Thus, using diagnostics name, we convert it to more specific
+     *  information (i.e. uri and attribute key) to send a request. This class is reponsible to
+     *  storing these information.
+     */
+    class DiagnosticsUnitInfo
     {
-    }
-    ;
+    public:
+        DiagnosticsUnitInfo(std::string name, std::string description, std::string uri,
+                std::string attribute) :
+                m_name(name), m_description(description), m_uri(uri), m_attribute(attribute)
+        {
+        }
+        ;
 
-    std::string m_name;
-    std::string m_description;
-    std::string m_uri;
-    std::string m_attribute;
+        std::string m_name;
+        std::string m_description;
+        std::string m_uri;
+        std::string m_attribute;
 
-    // If a developer wants to know a list of diagnostics names, gives it in JSON format.
-    std::string getJSON()
-    {
-        std::string res;
+        // If a developer wants to know a list of diagnostics names, gives it in JSON format.
+        std::string getJSON()
+        {
+            std::string res;
 
-        res = "{\"name\":\"" + m_name + "\",\"description\":\"" + m_description + "\"}";
+            res = "{\"name\":\"" + m_name + "\",\"description\":\"" + m_description + "\"}";
 
-        return res;
-    }
-};
+            return res;
+        }
+    };
 
 #define NUMDIAGUNIT 3
-typedef std::string DiagnosticsName;
-typedef std::string DiagnosticsValue;
+    typedef std::string DiagnosticsName;
+    typedef std::string DiagnosticsValue;
 
-class ThingsDiagnostics
-{
-public:
-    /**
-     * Constructor for ThingsDiagnostics. Constructs a new ThingsDiagnostics
-     */
-    ThingsDiagnostics(void)
+    class ThingsDiagnostics
     {
-        DiagnosticsUnitInfo unit[] =
+    public:
+        /**
+         * Constructor for ThingsDiagnostics. Constructs a new ThingsDiagnostics
+         */
+        ThingsDiagnostics(void)
         {
-            { "reboot",
-                "reboot",
-                "/oic/diag", "reboot" },
-            { "startcollection",
-                "Toggles between collecting and not collecting any device statistics depending on the value being 0 or 1",
-                "/oic/diag", "startCollection" },
-            { "factoryreset",
-                "restore all configuration values to default values",
-                "/oic/diag", "factoryReset" } };
+            DiagnosticsUnitInfo unit[] =
+                    {
+                    { "reboot", "reboot", "/oic/diag/0/reboot", "value" },
+                            { "value",
+                                    "Collecting any device statistics",
+                                    "/oic/diag/0/startCollection", "value" },
+                            { "factoryreset", "restore all configuration values to default values",
+                                    "/oic/diag/0/factoryReset", "value" } };
 
-        for (int i = 0; i < NUMDIAGUNIT; i++)
-            DiagnosticsUnitTable.push_back(unit[i]);
-    }
-    ;
+            for (int i = 0; i < NUMDIAGUNIT; i++)
+                DiagnosticsUnitTable.push_back(unit[i]);
+        }
+        ;
 
-    /**
-     * Virtual destructor
-     */
-    ~ThingsDiagnostics(void)
-    {
-    }
-    ;
+        /**
+         * Virtual destructor
+         */
+        ~ThingsDiagnostics(void)
+        {
+        }
+        ;
 
-    static ThingsDiagnostics *thingsDiagnosticsInstance;
-    static ThingsDiagnostics* getInstance();
-    void deleteInstance();
+        static ThingsDiagnostics *thingsDiagnosticsInstance;
+        static ThingsDiagnostics* getInstance();
+        void deleteInstance();
 
-    void setGroupManager(GroupManager *groupmanager)
-    {
-        g_groupmanager = groupmanager;
-    }
-    ;
+        void setGroupManager(GroupManager *groupmanager)
+        {
+            g_groupmanager = groupmanager;
+        }
+        ;
 
-    /**
-     * API to make things reboot
-     * Callback call when a response arrives.
-     *
-     * @param resource - resource pointer representing the target group
-     * @param callback - callback.
-     *
-     * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-     *
-     * NOTE: OCStackResult is defined in ocstack.h.
-     */
-    OCStackResult reboot(std::shared_ptr< OCResource > resource, DiagnosticsCallback callback);
+        /**
+         * API to make things reboot
+         * Callback call when a response arrives.
+         *
+         * @param resource - resource pointer representing the target group
+         * @param callback - callback.
+         *
+         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult reboot(std::shared_ptr< OCResource > resource, DiagnosticsCallback callback);
 
-    /**
-     * API for factory reset on device
-     * Callback call when a response arrives.
-     *
-     * @param resource - resource pointer representing the target group
-     * @param callback - callback.
-     *
-     * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-     *
-     * NOTE: OCStackResult is defined in ocstack.h.
-     */
+        /**
+         * API for factory reset on device
+         * Callback call when a response arrives.
+         *
+         * @param resource - resource pointer representing the target group
+         * @param callback - callback.
+         *
+         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
 
-    OCStackResult factoryReset(std::shared_ptr< OCResource > resource,
-            DiagnosticsCallback callback);
+        OCStackResult factoryReset(std::shared_ptr< OCResource > resource,
+                DiagnosticsCallback callback);
 
-    /**
-     * API to show a list of supported diagnostics units
-     * Callback call when a response arrives.
-     *
-     * @return the list in JSON format
-     */
-    std::string getListOfSupportedDiagnosticsUnits();
+        /**
+         * API to show a list of supported diagnostics units
+         * Callback call when a response arrives.
+         *
+         * @return the list in JSON format
+         */
+        std::string getListOfSupportedDiagnosticsUnits();
 
-private:
+    private:
 
-    GroupManager *g_groupmanager;
+        GroupManager *g_groupmanager;
 
-    std::vector< DiagnosticsUnitInfo > DiagnosticsUnitTable;
+        std::vector< DiagnosticsUnitInfo > DiagnosticsUnitTable;
 
-    void onExecuteForGroupAction(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-            const int eCode, std::string conf);
-    void onGetChildInfoForUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-            const int eCode, std::string conf);
-    void onCreateActionSet(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-            const int eCode, std::string conf);
-    void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode,
-            std::string conf);
-    void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode,
-            std::string conf);
+        void onExecuteForGroupAction(const HeaderOptions& headerOptions,
+                const OCRepresentation& rep, const int eCode, std::string conf);
+        void onGetChildInfoForUpdate(const HeaderOptions& headerOptions,
+                const OCRepresentation& rep, const int eCode, std::string conf);
+        void onCreateActionSet(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+                const int eCode, std::string conf);
+        void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode,
+                std::string conf);
+        void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode,
+                std::string conf);
 
-    std::shared_ptr< OCResource > getResource(std::string conf);
-    DiagnosticsCallback getCallback(std::string conf);
-    std::string getUpdateVal(std::string conf);
-    std::string getAttributeByDiagnosticsName(DiagnosticsName name);
-    std::string getUriByDiagnosticsName(DiagnosticsName name);
+        std::shared_ptr< OCResource > getResource(std::string conf);
+        DiagnosticsCallback getCallback(std::string conf);
+        std::string getUpdateVal(std::string conf);
+        std::string getAttributeByDiagnosticsName(DiagnosticsName name);
+        std::string getUriByDiagnosticsName(DiagnosticsName name);
 
-    std::string getHostFromURI(std::string oldUri);
+        std::string getHostFromURI(std::string oldUri);
 
-    bool isSimpleResource(std::shared_ptr< OCResource > resource);
+        bool isSimpleResource(std::shared_ptr< OCResource > resource);
 
-};
-
+    };
+}
 #endif  /* __OC_THINGSCONFIGURATION__*/
-

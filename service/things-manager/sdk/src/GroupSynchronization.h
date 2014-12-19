@@ -18,9 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file   GroupSynchronizatin.h
+/// @file   GroupSynchronization.h
 
-/// @brief  This file contains the declaration of classes and its members related to GroupSynchronization.
+/// @brief  This file contains the declaration of classes and
+///its members related to GroupSynchronization.
 
 #ifndef __OC_GROUPSYNCHRONIZATION__
 #define __OC_GROUPSYNCHRONIZATION__
@@ -34,88 +35,104 @@
 
 using namespace OC;
 
+namespace OIC
+{
 class GroupSynchronization
 {
-private :
+private:
 
-    std::map<std::string, OCResourceHandle> collectionResourceHandleList;        // collection resource handle list
+    std::map< std::string, OCResourceHandle > collectionResourceHandleList;
+    // collection resource handle list
+    std::map< OCResourceHandle, std::vector< OCResourceHandle > > childResourceHandleList;
 
-    std::map<std::string, OCResourceHandle> groupSyncResourceHandleList;        // group sync resource handle list
-    std::map<std::string, std::shared_ptr< OCResource>> groupSyncResourceList;    // remote group sync resource list
+    std::map< std::string, OCResourceHandle > groupSyncResourceHandleList;
+    // group sync resource handle list
+    std::map< std::string, std::shared_ptr< OCResource > > groupSyncResourceList;
+    // remote group sync resource list
 
-    std::vector<OCResourceHandle> deviceResourceHandleList;            // these cannot be removed.
+    std::vector< OCResourceHandle > deviceResourceHandleList; // these cannot be removed.
     OCResourceHandle deviceResourceHandle;
 
-    OCResourceHandle collectionResourceHandle;        // collection handle
-    std::shared_ptr< OCResource> remoteCollectionResource;
-
-    std::map<OCResourceHandle, std::vector<OCResourceHandle>> childResourceHandleList;
+    OCResourceHandle collectionResourceHandle; // collection handle
+    std::shared_ptr< OCResource > remoteCollectionResource;
 
     FindCallback findCallback;
-    std::vector<std::shared_ptr< OCResource >> foundGroupResourceList;
+
+    std::vector< std::shared_ptr< OCResource > > foundGroupResourceList;
 
     std::mutex foundGroupMutex;
-    std::mutex groupSyncMutex;
+//    std::mutex groupSyncMutex;
 
-    std::shared_ptr<OCResourceRequest> resourceRequest;        // this is used for slow response
+    std::shared_ptr< OCResourceRequest > resourceRequest; // this is used for slow response
 
     static GroupSynchronization* groupSyncnstance;
 
-
-    GroupSynchronization ()
+    GroupSynchronization()
     {
         collectionResourceHandleList.clear();
+        childResourceHandleList.clear();
         groupSyncResourceHandleList.clear();
         groupSyncResourceList.clear();
-        foundGroupResourceList.clear();
         deviceResourceHandleList.clear();
 
         deviceResourceHandle = NULL;
+        collectionResourceHandle = NULL;
         remoteCollectionResource = NULL;
         findCallback = NULL;
-    };
+    }
+    ;
 
-    ~GroupSynchronization ()
+    ~GroupSynchronization()
     {
-        std::map<std::string, OCResourceHandle>::iterator handleIt;
-        for (handleIt = collectionResourceHandleList.begin(); handleIt != collectionResourceHandleList.end(); ++handleIt)
+        std::map< std::string, OCResourceHandle >::iterator handleIt;
+        for (handleIt = collectionResourceHandleList.begin();
+                handleIt != collectionResourceHandleList.end(); ++handleIt)
         {
-            deleteGroup (handleIt->first);
+            deleteGroup(handleIt->first);
         }
-    };
+    }
+    ;
 
+public:
 
-public :
-
-    static GroupSynchronization* getInstance ();
+    static GroupSynchronization* getInstance();
     void deleteInstance();
 
-    OCStackResult findGroup (std::vector <std::string> collectionResourceTypes, FindCallback resourceHandler);
-    OCStackResult createGroup (std::string collectionResourceType);
-    OCStackResult joinGroup (std::string collectionResourceTyps, OCResourceHandle resourceHandle);
-    OCStackResult joinGroup (const std::shared_ptr<OCResource> resource, OCResourceHandle resourceHandle);
-    OCStackResult leaveGroup (std::string collectionResourceType, OCResourceHandle resourceHandle);
-    void deleteGroup (std::string collectionResourceType);
+    OCStackResult findGroup(std::vector< std::string > collectionResourceTypes,
+            FindCallback callback);
+    OCStackResult createGroup(std::string collectionResourceType);
+    OCStackResult joinGroup(std::string collectionResourceTyps,
+            OCResourceHandle resourceHandle);
+    OCStackResult joinGroup(const std::shared_ptr< OCResource > resource,
+            OCResourceHandle resourceHandle);
+    OCStackResult leaveGroup(std::string collectionResourceType,
+            OCResourceHandle resourceHandle);
+    void deleteGroup(std::string collectionResourceType);
 
-    std::map<std::string, OCResourceHandle> getGroupList ();
+    std::map< std::string, OCResourceHandle > getGroupList();
 
-private : 
+private:
 
-    OCEntityHandlerResult groupEntityHandler(const std::shared_ptr<OCResourceRequest> request);
+    OCEntityHandlerResult groupEntityHandler(
+            const std::shared_ptr< OCResourceRequest > request);
 
     void onFindGroup(std::shared_ptr< OCResource > resource);
-    void onJoinGroup(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
-    void onFindResource (std::shared_ptr<OCResource> resource);
-    void onGetJoinedRemoteChild(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
-    void onLeaveGroup(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
-//    void onSubscribePresence (OCStackResult result, const unsigned int nonce/*, std::string resourceType, std::string host*/);
+    void onJoinGroup(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            const int eCode);
+    void onFindResource(std::shared_ptr< OCResource > resource);
+    void onGetJoinedRemoteChild(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            const int eCode);
+    void onLeaveGroup(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            const int eCode);
+//    void onSubscribePresence (OCStackResult result,
+//        const unsigned int nonce/*, std::string resourceType, std::string host*/);
 
-    void checkFindGroup (void);
-    bool IsSameGroup (std::shared_ptr< OCResource > resource);
-    void saveGroup (std::shared_ptr< OCResource > resource);
+    void checkFindGroup(void);
+    bool IsSameGroup(std::shared_ptr< OCResource > resource);
+    void saveGroup(std::shared_ptr< OCResource > resource);
 
-    void debugGroupSync (void);
+    void debugGroupSync(void);
 
 };
-
+}
 #endif    // __OC_GROUPSYNCHRONIZATION__

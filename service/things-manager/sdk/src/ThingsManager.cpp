@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 /// @file    ThingsManager.cpp
-///  @brief
 
 #include "ThingsManager.h"
 #include "GroupManager.h"
@@ -29,148 +28,161 @@
 #include <algorithm>
 #include <thread>
 
-
 using namespace OC;
-
-GroupManager *g_groupManager;
-GroupSynchronization *g_groupSync = NULL;
-ThingsConfiguration *g_thingsConf = NULL;
-ThingsDiagnostics *g_thingsDiag = NULL;
-
-ThingsManager::ThingsManager(void)
+namespace OIC
 {
-    g_groupManager = new GroupManager();
-	g_groupSync = GroupSynchronization::getInstance();
-    g_thingsConf = ThingsConfiguration::getInstance();
-    g_thingsDiag = ThingsDiagnostics::getInstance();
-    g_thingsConf->setGroupManager(g_groupManager);
-    g_thingsDiag->setGroupManager(g_groupManager);
-}
 
-/**
- * Virtual destructor
- */
-ThingsManager::~ThingsManager(void)
-{
-    delete g_groupManager;
-	g_groupSync->deleteInstance();
-    g_thingsConf->deleteInstance();
-    g_thingsDiag->deleteInstance();
-}
+    GroupManager *g_groupManager;
+    GroupSynchronization *g_groupSync = NULL;
+    ThingsConfiguration *g_thingsConf = NULL;
+    ThingsDiagnostics *g_thingsDiag = NULL;
 
+    ThingsManager::ThingsManager(void)
+    {
+        g_groupManager = new GroupManager();
+        g_groupSync = GroupSynchronization::getInstance();
+        g_thingsConf = ThingsConfiguration::getInstance();
+        g_thingsDiag = ThingsDiagnostics::getInstance();
+        g_thingsConf->setGroupManager(g_groupManager);
+        g_thingsDiag->setGroupManager(g_groupManager);
+    }
 
+    /**
+     * Virtual destructor
+     */
+    ThingsManager::~ThingsManager(void)
+    {
+        delete g_groupManager;
+        g_groupSync->deleteInstance();
+        g_thingsConf->deleteInstance();
+        g_thingsDiag->deleteInstance();
+    }
 
-OCStackResult ThingsManager::findCandidateResources(std::vector< std::string > resourceTypes,
-        std::function< void(std::vector< std::shared_ptr< OCResource > >) >  callback, int waitsec)
-{
-    OCStackResult result = g_groupManager->findCandidateResources(resourceTypes,callback,waitsec);
+    OCStackResult ThingsManager::findCandidateResources(std::vector< std::string > resourceTypes,
+            std::function< void(std::vector< std::shared_ptr< OCResource > >) > callback,
+            int waitsec)
+    {
+        OCStackResult result = g_groupManager->findCandidateResources(resourceTypes, callback,
+                waitsec);
 
-    return result;
-}
+        return result;
+    }
 
-OCStackResult ThingsManager::subscribeCollectionPresence(std::shared_ptr< OCResource > resource, std::function< void(std::string, OCStackResult) >  callback)
-{
-    OCStackResult result = g_groupManager->subscribeCollectionPresence(resource,callback);
+    OCStackResult ThingsManager::subscribeCollectionPresence(std::shared_ptr< OCResource > resource,
+            std::function< void(std::string, OCStackResult) > callback)
+    {
+        OCStackResult result = g_groupManager->subscribeCollectionPresence(resource, callback);
 
-    return result;
-}
+        return result;
+    }
 
-OCStackResult ThingsManager::findGroup (std::vector<std::string> collectionResourceTypes, FindCallback resourceHandler)
-{
-	OCStackResult result = g_groupSync->findGroup(collectionResourceTypes, resourceHandler);
+    OCStackResult ThingsManager::findGroup(std::vector< std::string > collectionResourceTypes,
+            FindCallback callback)
+    {
+        OCStackResult result = g_groupSync->findGroup(collectionResourceTypes, callback);
 
-	return result;
-}
+        return result;
+    }
 
-OCStackResult ThingsManager::createGroup (std::string collectionResourceType)
-{
-	OCStackResult result = g_groupSync->createGroup(collectionResourceType);
+    OCStackResult ThingsManager::createGroup(std::string collectionResourceType)
+    {
+        OCStackResult result = g_groupSync->createGroup(collectionResourceType);
 
-	return result;
-}
+        return result;
+    }
 
-OCStackResult ThingsManager::joinGroup (std::string collectionResourceType, OCResourceHandle resourceHandle)
-{
-	OCStackResult result = g_groupSync->joinGroup(collectionResourceType, resourceHandle);
+    OCStackResult ThingsManager::joinGroup(std::string collectionResourceType,
+            OCResourceHandle resourceHandle)
+    {
+        OCStackResult result = g_groupSync->joinGroup(collectionResourceType, resourceHandle);
 
-	return result;
-}
+        return result;
+    }
 
-OCStackResult ThingsManager::joinGroup (const std::shared_ptr<OCResource> resource, OCResourceHandle resourceHandle)
-{
-	OCStackResult result = g_groupSync->joinGroup(resource, resourceHandle);
+    OCStackResult ThingsManager::joinGroup(const std::shared_ptr< OCResource > resource,
+            OCResourceHandle resourceHandle)
+    {
+        OCStackResult result = g_groupSync->joinGroup(resource, resourceHandle);
 
-	return result;
-}
+        return result;
+    }
 
-OCStackResult ThingsManager::leaveGroup (std::string collectionResourceType, OCResourceHandle resourceHandle)
-{
-	OCStackResult result = g_groupSync->leaveGroup(collectionResourceType, resourceHandle);
+    OCStackResult ThingsManager::leaveGroup(std::string collectionResourceType,
+            OCResourceHandle resourceHandle)
+    {
+        OCStackResult result = g_groupSync->leaveGroup(collectionResourceType, resourceHandle);
 
-	return result;
-}
+        return result;
+    }
 
-void ThingsManager::deleteGroup (std::string collectionResourceType)
-{
-	g_groupSync->deleteGroup(collectionResourceType);
-}
+    void ThingsManager::deleteGroup(std::string collectionResourceType)
+    {
+        g_groupSync->deleteGroup(collectionResourceType);
+    }
 
-std::map<std::string, OCResourceHandle> ThingsManager::getGroupList ()
-{
-	return g_groupSync->getGroupList();
-}
+    std::map< std::string, OCResourceHandle > ThingsManager::getGroupList()
+    {
+        return g_groupSync->getGroupList();
+    }
 
-OCStackResult ThingsManager::updateConfigurations(std::shared_ptr< OCResource > resource, std::map<ConfigurationName, ConfigurationValue> configurations, ConfigurationCallback callback)
-{
-    return g_thingsConf->updateConfigurations(resource, configurations, callback);
-}
-OCStackResult ThingsManager::getConfigurations(std::shared_ptr< OCResource > resource, std::vector<ConfigurationName> configurations, ConfigurationCallback callback)
-{
-    return g_thingsConf->getConfigurations( resource,  configurations, callback);
-}
-std::string ThingsManager::getListOfSupportedConfigurationUnits()
-{
-    return g_thingsConf->getListOfSupportedConfigurationUnits();
-}
+    OCStackResult ThingsManager::updateConfigurations(std::shared_ptr< OCResource > resource,
+            std::map< ConfigurationName, ConfigurationValue > configurations,
+            ConfigurationCallback callback)
+    {
+        return g_thingsConf->updateConfigurations(resource, configurations, callback);
+    }
+    OCStackResult ThingsManager::getConfigurations(std::shared_ptr< OCResource > resource,
+            std::vector< ConfigurationName > configurations, ConfigurationCallback callback)
+    {
+        return g_thingsConf->getConfigurations(resource, configurations, callback);
+    }
+    std::string ThingsManager::getListOfSupportedConfigurationUnits()
+    {
+        return g_thingsConf->getListOfSupportedConfigurationUnits();
+    }
 
-OCStackResult ThingsManager::doBootstrap(ConfigurationCallback callback)
-{
-    return g_thingsConf->doBootstrap(callback);
-}
+    OCStackResult ThingsManager::doBootstrap(ConfigurationCallback callback)
+    {
+        return g_thingsConf->doBootstrap(callback);
+    }
 
+    OCStackResult ThingsManager::reboot(std::shared_ptr< OCResource > resource,
+            ConfigurationCallback callback)
+    {
+        return g_thingsDiag->reboot(resource, callback);
+    }
+    OCStackResult ThingsManager::factoryReset(std::shared_ptr< OCResource > resource,
+            ConfigurationCallback callback)
+    {
+        return g_thingsDiag->factoryReset(resource, callback);
+    }
 
-OCStackResult ThingsManager::reboot(std::shared_ptr< OCResource > resource, ConfigurationCallback callback)
-{
-    return g_thingsDiag->reboot( resource, callback);
-}
-OCStackResult ThingsManager::factoryReset(std::shared_ptr< OCResource > resource, ConfigurationCallback callback)
-{
-    return g_thingsDiag->factoryReset(  resource,  callback);
-}
-
-
-
-std::string ThingsManager::getStringFromActionSet(const ActionSet *newActionSet)
-{
-    return g_groupManager->getStringFromActionSet(newActionSet);
-}
-ActionSet* ThingsManager::getActionSetfromString(std::string desc)
-{
-   return g_groupManager->getActionSetfromString(desc);
-}
-OCStackResult ThingsManager::addActionSet(std::shared_ptr< OCResource > resource, const ActionSet* newActionSet, PutCallback cb)
-{
-    return g_groupManager->addActionSet(resource, newActionSet, cb);
-}
-OCStackResult ThingsManager::executeActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName, PostCallback cb)
-{
-    return g_groupManager->executeActionSet(resource, actionsetName, cb);
-}
-OCStackResult ThingsManager::getActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName, GetCallback cb)
-{
-    return g_groupManager->getActionSet(resource, actionsetName, cb);
-}
-OCStackResult ThingsManager::deleteActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName, PostCallback cb)
-{
-    return g_groupManager->deleteActionSet(resource, actionsetName, cb);
+    std::string ThingsManager::getStringFromActionSet(const ActionSet *newActionSet)
+    {
+        return g_groupManager->getStringFromActionSet(newActionSet);
+    }
+    ActionSet* ThingsManager::getActionSetfromString(std::string desc)
+    {
+        return g_groupManager->getActionSetfromString(desc);
+    }
+    OCStackResult ThingsManager::addActionSet(std::shared_ptr< OCResource > resource,
+            const ActionSet* newActionSet, PutCallback cb)
+    {
+        return g_groupManager->addActionSet(resource, newActionSet, cb);
+    }
+    OCStackResult ThingsManager::executeActionSet(std::shared_ptr< OCResource > resource,
+            std::string actionsetName, PostCallback cb)
+    {
+        return g_groupManager->executeActionSet(resource, actionsetName, cb);
+    }
+    OCStackResult ThingsManager::getActionSet(std::shared_ptr< OCResource > resource,
+            std::string actionsetName, GetCallback cb)
+    {
+        return g_groupManager->getActionSet(resource, actionsetName, cb);
+    }
+    OCStackResult ThingsManager::deleteActionSet(std::shared_ptr< OCResource > resource,
+            std::string actionsetName, PostCallback cb)
+    {
+        return g_groupManager->deleteActionSet(resource, actionsetName, cb);
+    }
 }
