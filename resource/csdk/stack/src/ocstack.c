@@ -1234,7 +1234,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
     // TODO-CA: Map QoS to the right CA msg type
-    requestData.type = CA_MSG_CONFIRM;
+    requestData.type = CA_MSG_NONCONFIRM;
     requestData.token = caToken;
     requestData.options = (CAHeaderOption_t*)options;
     requestData.numOptions = numOptions;
