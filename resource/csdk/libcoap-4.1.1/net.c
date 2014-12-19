@@ -997,9 +997,9 @@ int coap_remove_from_queue(coap_queue_t **queue, coap_tid_t id,
 
     if (!queue || !*queue)
         return 0;
+    debug("*** looking for transaction %u == %u\n", id, (*queue)->id);
 
     /* replace queue head if PDU's time is less than head's time */
-
     if (id == (*queue)->id) { /* found transaction */
         *node = *queue;
         *queue = (*queue)->next;

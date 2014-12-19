@@ -425,7 +425,10 @@ OCStackResult OCProcess();
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource
  * @param request            - JSON encoded request
- * @param qos                - quality of service
+ * @param qos                - quality of service. Note that if this API is called on a uri with
+ *                             the well-known multicast IP address, the qos will be forced to
+ *                             OC_LOW_QOS
+ *                             since it is impractical to send other QOS levels on such addresses.
  * @param clientApplicationCB- asynchronous callback function that is invoked
  *                             by the stack when discovery or resource interaction is complete
  * @param options            - The address of an array containing the vendor specific

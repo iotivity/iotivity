@@ -55,7 +55,6 @@
 // Private Variables
 //=============================================================================
 
-static uint8_t coapWKIpAddr[] = { 224, 0, 1, 187 };
 static coap_context_t *gCoAPCtx = NULL;
 
 //=============================================================================
@@ -676,8 +675,8 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
 
     // To allow presence notification work we need to init socket gCoAPCtx->sockfd_wellknown
     // for servers as well as clients
-    OCBuildIPv4Address(coapWKIpAddr[0], coapWKIpAddr[1], coapWKIpAddr[2],
-            coapWKIpAddr[3], COAP_DEFAULT_PORT, &mcastAddr);
+    OCBuildIPv4Address(COAP_WK_IPAddr_0, COAP_WK_IPAddr_1, COAP_WK_IPAddr_2,
+            COAP_WK_IPAddr_3, COAP_DEFAULT_PORT, &mcastAddr);
     VERIFY_SUCCESS(
             coap_join_wellknown_group(gCoAPCtx,
                     (coap_address_t* )&mcastAddr), 0);
@@ -754,7 +753,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
         OC_LOG_V(DEBUG, TAG, "secure uri %d", uri.secure);
     }
 
-    coapMsgType = OCToCoAPQoS(qos);
+    coapMsgType = OCToCoAPQoS(qos, ipAddr);
 
     // Decide method type
     switch (method) {
