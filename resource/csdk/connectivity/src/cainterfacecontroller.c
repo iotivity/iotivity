@@ -262,6 +262,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     // #5. save data
     *info = resInfo;
     *size = resSize;
+    res = CA_STATUS_OK;
 
     OIC_LOG_V(DEBUG, TAG, "each network info save success!");
 

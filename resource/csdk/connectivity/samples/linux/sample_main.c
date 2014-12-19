@@ -823,13 +823,11 @@ void get_network_info()
 {
     int index;
 
-    CALocalConnectivity_t *tempInfo;
+    CALocalConnectivity_t *tempInfo = NULL;
     uint32_t tempSize = 0;
 
-    tempInfo = (CALocalConnectivity_t *) malloc(sizeof(CALocalConnectivity_t));
-
-    CAGetNetworkInformation(&tempInfo, &tempSize);
-    if (!tempSize)
+    if((CAGetNetworkInformation(&tempInfo, &tempSize) != CA_STATUS_OK) ||
+        !tempInfo || !tempSize)
     {
         printf("network not connected\n");
         return;
@@ -839,29 +837,22 @@ void get_network_info()
     printf("network info total size is %d\n\n", tempSize);
     for (index = 0; index < tempSize; index++)
     {
-        if (tempInfo == NULL)
-        {
-            break;
-        }
+        printf("Type: %d\n", tempInfo[index].type);
+        printf("Address: %s\n", tempInfo[index].addressInfo.IP.ipAddress);
+        printf("Port: %d\n", tempInfo[index].addressInfo.IP.port);
+        printf("Secured: %d\n\n", tempInfo[index].isSecured);
 
-        printf("Type: %d\n", tempInfo->type);
-        printf("Address: %s\n", tempInfo->addressInfo.IP.ipAddress);
-        printf("Port: %d\n", tempInfo->addressInfo.IP.port);
-        printf("Secured: %d\n\n", tempInfo->isSecured);
-
-        if (CA_TRUE == tempInfo->isSecured)
+        if (CA_TRUE == tempInfo[index].isSecured)
         {
-            gLocalSecurePort = tempInfo->addressInfo.IP.port;
+            gLocalSecurePort = tempInfo[index].addressInfo.IP.port;
         }
         else
         {
-            gLocalUnicastPort = tempInfo->addressInfo.IP.port;
+            gLocalUnicastPort = tempInfo[index].addressInfo.IP.port;
         }
-
-        tempInfo++;
     }
 
-    //free(tempInfo);
+    free(tempInfo);
     printf("##############################################################");
 }
 
