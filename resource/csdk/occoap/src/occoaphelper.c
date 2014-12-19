@@ -90,8 +90,13 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
     return ret;
 }
 
-uint8_t OCToCoAPQoS(OCQualityOfService qos)
+uint8_t OCToCoAPQoS(OCQualityOfService qos, uint8_t * ipAddr)
 {
+    if(ipAddr[0] == COAP_WK_IPAddr_0 && ipAddr[1] == COAP_WK_IPAddr_1 &&
+            ipAddr[2] == COAP_WK_IPAddr_2 && ipAddr[3] == COAP_WK_IPAddr_3)
+    {
+        return COAP_MESSAGE_NON;
+    }
     switch (qos)
     {
         case OC_HIGH_QOS:

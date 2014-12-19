@@ -42,6 +42,11 @@
 #define MAX_URI_QUERY_BUF_SIZE ((MAX_URI_LENGTH) >= (MAX_QUERY_LENGTH) ?\
                             (MAX_URI_LENGTH) : (MAX_QUERY_LENGTH))
 
+#define COAP_WK_IPAddr_0 (224)
+#define COAP_WK_IPAddr_1 (0)
+#define COAP_WK_IPAddr_2 (1)
+#define COAP_WK_IPAddr_3 (187)
+
 // checks if optionID is within vendor specific range
 OCStackResult isVendorSpecific(uint16_t optionID);
 
@@ -49,7 +54,7 @@ OCStackResult isVendorSpecific(uint16_t optionID);
 uint8_t OCToCoAPResponseCode(OCStackResult result);
 
 //Convert OCQualityOfService to coap NON vs CON
-uint8_t OCToCoAPQoS(OCQualityOfService qos);
+uint8_t OCToCoAPQoS(OCQualityOfService qos, uint8_t * ipAddr);
 
 // Convert CoAP code to OCStack code
 OCStackResult CoAPToOCResponseCode(uint8_t coapCode);
