@@ -203,11 +203,15 @@ int main()
     {
         OC::OCPlatform::Configure(cfg);
 
+        OC::OCPlatform::startPresence(60);
+
         g_myResource.registerResource();
 
         int input = 0;
         cout << "Type any key to terminate" << endl;
         cin >> input;
+
+        OC::OCPlatform::stopPresence();
     }
     catch (std::exception e)
     {
