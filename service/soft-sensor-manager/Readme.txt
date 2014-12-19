@@ -29,7 +29,7 @@ In this context, we assume that the code was downloaded into 'oic' folder.
 
 
 =======================================
-1. Download source code download 
+1. Download source code
 =======================================
 
 Once you download the codes, please make sure that the downloaded code structure is as follows; 
@@ -82,6 +82,7 @@ Please refer the files for specific setup.
 
 3.1.2 If you type "make" at ¡°soft-sensor-manager/build/linux¡±, all packages will be pushed to "/soft-sensor-manager/build/linux/release".  
    You can also found other packages in the folder
+
 +--------------------------------------------------------------+
 | ~/oic/service/soft-sensor-manager/build/linux$ make          |
 +--------------------------------------------------------------+
@@ -128,38 +129,40 @@ Please refer the files for specific setup.
    To build all sample  applications for arduino, just do as below.
 
 +------------------------------------------------------------------------------------------------+
-|~/oic/service/soft-sensor-manager/ build/Arduino$ make PLATFORM=arduinomega ARDUINOWIFI=1       |                           |
+|~/oic/service/soft-sensor-manager/ build/Arduino$ make PLATFORM=arduinomega ARDUINOWIFI=1       |                           
 +------------------------------------------------------------------------------------------------+ 
 
    If you want to build each sample application separately, go to build directory for sample application. 
    Belowing is example for THSensor App. 
+   
 +-------------------------------------------------------------------------------------------------------------------+
-|~/oic/service/soft-sensor-manager/SampleApp/arduino/THSensorApp/build$ make PLATFORM=arduinomega ARDUINOWIFI=1     |                           |
+|~/oic/service/soft-sensor-manager/SampleApp/arduino/THSensorApp/build$ make PLATFORM=arduinomega ARDUINOWIFI=1     |                           
 +-------------------------------------------------------------------------------------------------------------------+ 
 
 3.2.6. To build and deploy the binary into the target hardware board, Aruino in this case, you need 'install' option. 
-   Please refer to below example for THSensorApp ;
+   Please refer to below example for THSensorApp;
 
 +--------------------------------------------------------------------------------------------------------------------------+
-|~/oic/service/soft-sensor-manager/SampleApp/arduino/THSensorApp/build$ make install PLATFORM=arduinomega ARDUINOWIFI=1    |                           |
+|~/oic/service/soft-sensor-manager/SampleApp/arduino/THSensorApp/build$ make install PLATFORM=arduinomega ARDUINOWIFI=1    |                           
 +--------------------------------------------------------------------------------------------------------------------------+ 
    Before ¡®make install¡¯, you need to check the file located at "/oic/service/soft-sensor-manager/SampleApp/arduino/THSensorApp/build/Makefile". 
    Line 26, ARDUINO_PORT is the serial port path, which has to be aligned on your system.  
 
 
 =======================================
-5. Execute THSensorApp and SSMTesterApp
+4. Execute THSensorApp and SSMTesterApp
 =======================================
+
 If you want to check how soft-sensor-manager is working, you can run simple applications - THSensorApp and SSMTesterApp
 
-5.1 To initiate THSensorApp, please enter as following; 
+4.1 To initiate THSensorApp, please enter as following; 
 
 +------------------------------------------------------------------------+
-|~/oic/service/soft-sensor-manager/build/linux/release$ ./THSensorApp    |           |
+|~/oic/service/soft-sensor-manager/build/linux/release$ ./THSensorApp    |           
 |~/oic/service/soft-sensor-manager/build/linux/release$ ./THSensorApp1   |                 
 +------------------------------------------------------------------------+
  
-5.2 To initiate SSMTesterApp , please enter as following;
+4.2 To initiate SSMTesterApp, please enter as following;
 
 +--------------------------------------------------------------------------+
 |~/oic/service/soft-sensor-manager/build/linux/release$ ./SSMTesterApp     |
@@ -168,3 +171,42 @@ If you want to check how soft-sensor-manager is working, you can run simple appl
 Note that the sequence of process initiations should be followed due to the process dependencies.
 
 
+=======================================
+5. Build with SCons
+=======================================
+
+If you want to use Scons to build soft-sensor-manager, build the source code and execute sample applications as following steps.
+
+5.1 After downloading the source codes, type "scons" at project root directory "oic/"
+
++---------------------------------------+
+|~/oic$ scons                           |
++---------------------------------------+
+
+5.2 To execute Soft Sensor Manager and its applications, some shared libraries must be exported.
+
+5.2.1 Go to "oic/out/<target_os>/<target_arch>/release", and check if there are following .so files
+ liboc.so
+ liboctbstack.so
+ liboc_logger.so
+ 
+5.2.2 To export the shared libraries, please enter as following;
+
++---------------------------------------------------------------------------------------------------------------------------+
+|~/oic/out/<target_os>/<target_arch>/release$ export LD_LIBRARY_PATH=~/oic/out/<target_os>/<target_arch>/release            |
++---------------------------------------------------------------------------------------------------------------------------+
+
+5.3 Generated outputs from building soft-sensor-manager will be in "oic/out/<target_os>/<target_arch>/release/service/soft-sensor-manager".
+
+5.4 To initiate THSensorApp, please enter as following;
+
++------------------------------------------------------------------------------------------+
+|~/oic/out/<target_os>/<target_arch>/release/service/soft-sensor-manager$ ./THSensorApp    |           
+|~/oic/out/<target_os>/<target_arch>/release/service/soft-sensor-manager$ ./THSensorApp1   |                 
++------------------------------------------------------------------------------------------+
+
+5.5 To initiate SSMTesterApp, please enter as following;
+
++--------------------------------------------------------------------------------------------+
+|~/oic/out/<target_os>/<target_arch>/release/service/soft-sensor-manager$ ./SSMTesterApp     |
++--------------------------------------------------------------------------------------------+

@@ -21,6 +21,9 @@
 #define _SSMCore_H_
 
 #include "SSMInterface.h"
+
+using namespace OIC;
+
 #include "SSMModelDefinition.h"
 
 #define IN

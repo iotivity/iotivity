@@ -29,6 +29,8 @@
 
 #include "SSMInterface.h"
 
+using namespace OIC;
+
 namespace APPMenu
 {
     typedef enum
