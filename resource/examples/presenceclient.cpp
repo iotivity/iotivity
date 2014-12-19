@@ -41,8 +41,10 @@ static int TEST_CASE = 0;
 typedef enum {
     TEST_UNICAST_PRESENCE_NORMAL = 1,
     TEST_UNICAST_PRESENCE_WITH_FILTER,
+    TEST_UNICAST_PRESENCE_WITH_FILTERS,
     TEST_MULTICAST_PRESENCE_NORMAL,
     TEST_MULTICAST_PRESENCE_WITH_FILTER,
+    TEST_MULTICAST_PRESENCE_WITH_FILTERS,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -52,9 +54,13 @@ void printUsage()
     std::cout << "-t 1 : Discover Resources and Initiate Unicast Presence" << std::endl;
     std::cout << "-t 2 : Discover Resources and Initiate Unicast Presence with Filter"
               << std::endl;
-    std::cout << "-t 3 : Discover Resources and Initiate Multicast Presence" << std::endl;
-    std::cout << "-t 4 : Discover Resources and Initiate Multicast Presence with Filter"
+    std::cout << "-t 3 : Discover Resources and Initiate Unicast Presence with Two Filters"
+            << std::endl;
+    std::cout << "-t 4 : Discover Resources and Initiate Multicast Presence" << std::endl;
+    std::cout << "-t 5 : Discover Resources and Initiate Multicast Presence with Filter"
               << std::endl;
+    std::cout << "-t 6 : Discover Resources and Initiate Multicast Presence with two Filters"
+                  << std::endl;
 }
 
 // Callback to presence
@@ -123,21 +129,52 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
             if(resourceURI == "/a/light")
             {
+                OCStackResult result = OC_STACK_OK;
                 curResource = resource;
                 OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
                 if(TEST_CASE == TEST_UNICAST_PRESENCE_NORMAL)
                 {
-                    OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                    result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                             &presenceHandler);
-                    std::cout<< "Subscribed to unicast address:" << hostAddress <<std::endl;
+                    if(result == OC_STACK_OK)
+                    {
+                        std::cout<< "Subscribed to unicast address: " << hostAddress << std::endl;
+                    }
+                    else
+                    {
+                        std::cout<< "Failed to subscribe to unicast address:" << hostAddress
+                                << std::endl;
+                    }
                 }
-                else if(TEST_CASE == TEST_UNICAST_PRESENCE_WITH_FILTER)
+                if(TEST_CASE == TEST_UNICAST_PRESENCE_WITH_FILTER ||
+                        TEST_CASE == TEST_UNICAST_PRESENCE_WITH_FILTERS)
                 {
-                    OCPlatform::subscribePresence(presenceHandle, hostAddress, "core.light",
+                    result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                            "core.light", &presenceHandler);
+                    if(result == OC_STACK_OK)
+                    {
+                        std::cout<< "Subscribed to unicast address: " << hostAddress;
+                    }
+                    else
+                    {
+                        std::cout<< "Failed to subscribe to unicast address: " << hostAddress;
+                    }
+                    std::cout << " with resource type \"core.light\"." << std::endl;
+                }
+                if(TEST_CASE == TEST_UNICAST_PRESENCE_WITH_FILTERS)
+                {
+                    result = OCPlatform::subscribePresence(presenceHandle, hostAddress, "core.fan",
                             &presenceHandler);
-                    std::cout<< "Subscribed (with resource type) to unicast address:"
-                                << hostAddress << std::endl;
+                    if(result == OC_STACK_OK)
+                    {
+                        std::cout<< "Subscribed to unicast address: " << hostAddress;
+                    }
+                    else
+                    {
+                        std::cout<< "Failed to subscribe to unicast address: " << hostAddress;
+                    }
+                    std::cout << " with resource type \"core.fan\"." << std::endl;
                 }
             }
         }
@@ -191,23 +228,73 @@ int main(int argc, char* argv[]) {
         std::cout << "Created Platform..."<<std::endl;
 
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        OCStackResult result = OC_STACK_OK;
 
         if(TEST_CASE == TEST_MULTICAST_PRESENCE_NORMAL)
         {
-            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, presenceHandler);
-            std::cout<< "Subscribed to multicast" <<std::endl;
+            result = OCPlatform::subscribePresence(presenceHandle,
+                    OC_MULTICAST_IP, presenceHandler);
+            if(result == OC_STACK_OK)
+            {
+                std::cout << "Subscribed to multicast presence." << std::endl;
+            }
+            else
+            {
+                std::cout << "Failed to subscribe to multicast presence." << std::endl;
+            }
         }
         else if(TEST_CASE == TEST_MULTICAST_PRESENCE_WITH_FILTER)
         {
-            OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
+            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
                     &presenceHandler);
-            std::cout<< "Subscribed to multicast with resource type" <<std::endl;
+            if(result == OC_STACK_OK)
+            {
+                std::cout << "Subscribed to multicast presence with resource type";
+            }
+            else
+            {
+                std::cout << "Failed to subscribe to multicast presence with resource type";
+            }
+            std::cout << "\"core.light\"." << std::endl;
+        }
+        else if(TEST_CASE == TEST_MULTICAST_PRESENCE_WITH_FILTERS)
+        {
+            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
+                    &presenceHandler);
+            if(result == OC_STACK_OK)
+            {
+                std::cout << "Subscribed to multicast presence with resource type";
+            }
+            else
+            {
+                std::cout << "Failed to subscribe to multicast presence with resource type";
+            }
+            std::cout << "\"core.light\"." << std::endl;
+
+            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.fan",
+                    &presenceHandler);
+            if(result == OC_STACK_OK)
+            {
+                std::cout<< "Subscribed to multicast presence with resource type";
+            }
+            else
+            {
+                std::cout << "Failed to subscribe to multicast presence with resource type.";
+            }
+            std::cout << "\"core.fan\"." << std::endl;
         }
         else
         {
             // Find all resources
-            OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
-            std::cout<< "Finding Resource... " <<std::endl;
+            result = OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+            if(result == OC_STACK_OK)
+            {
+                std::cout << "Finding Resource... " << std::endl;
+            }
+            else
+            {
+                std::cout << "Failed to request to find resource(s)." << std::endl;
+            }
         }
         //
         // A condition variable will free the mutex it is given, then do a non-

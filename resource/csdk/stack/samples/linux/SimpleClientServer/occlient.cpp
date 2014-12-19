@@ -79,12 +79,17 @@ static void PrintUsage()
 
     #ifdef WITH_PRESENCE
     OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Nonconfirmable presence");
-    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence with filter");
+    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence with "\
+            "filter");
+    OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable presence with "\
+            "2 filters");
     #endif
 
-    OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
-    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
-    OC_LOG(INFO, TAG, "-t 16  :  Discover Devices");
+    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
+            "then cancel immediately");
+    OC_LOG(INFO, TAG, "-t 16 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
+            "add  vendor specific header options");
+    OC_LOG(INFO, TAG, "-t 17 :  Discover Devices");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -327,6 +332,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             #ifdef WITH_PRESENCE
             case TEST_OBS_PRESENCE:
             case TEST_OBS_PRESENCE_WITH_FILTER:
+            case TEST_OBS_PRESENCE_WITH_FILTERS:
                 InitPresence();
                 break;
             #endif
@@ -367,14 +373,34 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
 #ifdef WITH_PRESENCE
 int InitPresence()
 {
+    OCStackResult result = OC_STACK_OK;
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
+    std::ostringstream querySuffix;
     query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI;
-    if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTER)
+    if(TEST_CASE == TEST_OBS_PRESENCE)
     {
-        query << "?rt=core.light";
+        result = InvokeOCDoResource(query, OC_REST_PRESENCE, OC_LOW_QOS,
+                presenceCB, NULL, 0);
     }
-    return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_LOW_QOS, presenceCB, NULL, 0));
+    if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTER || TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTERS)
+    {
+        querySuffix.str("");
+        querySuffix << query.str() << "?rt=core.light";
+        result = InvokeOCDoResource(querySuffix, OC_REST_PRESENCE, OC_LOW_QOS,
+                presenceCB, NULL, 0);
+    }
+    if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTERS)
+    {
+        if(result == OC_STACK_OK)
+        {
+            querySuffix.str("");
+            querySuffix << query.str() << "?rt=core.fan";
+            result = InvokeOCDoResource(querySuffix, OC_REST_PRESENCE, OC_LOW_QOS,
+                    presenceCB, NULL, 0);
+        }
+    }
+    return result;
 }
 #endif
 int InitGetRequestToUnavailableResource()
