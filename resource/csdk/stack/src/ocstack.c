@@ -1242,8 +1242,22 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     // TODO-CA: Map QoS to the right CA msg type
     requestData.type = CA_MSG_NONCONFIRM;
     requestData.token = caToken;
-    requestData.options = (CAHeaderOption_t*)options;
-    requestData.numOptions = numOptions;
+    if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
+    {
+        result = CreateObserveHeaderOption (&(requestData.options), options, 
+                                    numOptions, OC_RESOURCE_OBSERVE_REGISTER);
+        if (result != OC_STACK_OK)
+        {
+            goto exit;
+        }
+        hdrOptionMemAlloc = 1;
+        requestData.numOptions = numOptions + 1;
+    }
+    else
+    {
+        requestData.options = (CAHeaderOption_t*)options;
+        requestData.numOptions = numOptions;
+    }
     requestData.payload = (char *)request;
 
     requestInfo.info = requestData;

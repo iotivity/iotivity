@@ -394,3 +394,34 @@ void DeleteObserverList()
     }
     serverObsList = NULL;
 }
+
+#ifdef CA_INT
+OCStackResult
+CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
+                           OCHeaderOption *ocHdrOpt,
+                           uint8_t numOptions,
+                           uint8_t observeFlag)
+{
+    CAHeaderOption_t *tmpHdrOpt = NULL;
+
+    tmpHdrOpt = (CAHeaderOption_t *) OCMalloc ((numOptions+1)*sizeof(CAHeaderOption_t));
+    if (NULL == tmpHdrOpt)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+    tmpHdrOpt[0].protocolID = CA_COAP_ID;
+    // TODO-CA: COAP_OPTION_OBSERVE is defined in CoAP header files which will be abstracted
+    // from resource model. We have to define a new macro for this in the stack layer.
+    tmpHdrOpt[0].optionID = COAP_OPTION_OBSERVE;
+    // Length is one byte
+    tmpHdrOpt[0].optionLength = 1;
+    tmpHdrOpt[0].optionData[0] = observeFlag;
+    for (uint8_t i = 0; i < numOptions; i++)
+    {
+        memcpy (&(tmpHdrOpt[i+1]), &(ocHdrOpt[i]), sizeof(CAHeaderOption_t));
+    }
+
+    *caHdrOpt = tmpHdrOpt;
+    return OC_STACK_OK;
+}
+#endif // CA_INT

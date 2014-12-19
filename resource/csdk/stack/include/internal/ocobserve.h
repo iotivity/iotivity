@@ -27,6 +27,13 @@
 #define MAX_OBSERVER_FAILED_COMM         (2)
 #define MAX_OBSERVER_NON_COUNT           (3)
 
+#ifdef CA_INT
+// NOTE: These values are based on the observe option values as defined in the CoAP RFC
+// The values should not be changed unless there is a change in the RFC.
+#define OC_RESOURCE_OBSERVE_REGISTER      (0)
+#define OC_RESOURCE_OBSERVE_DEREGISTER    (1)
+#endif // CA_INT
+
 /* This information is stored for each registerd observer */
 typedef struct ResourceObserver {
     // Observation Identifier for request
@@ -82,5 +89,13 @@ OCStackResult DeleteObserverUsingToken (OCCoAPToken * token);
 ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token);
 
 ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
+
+#ifdef CA_INT
+OCStackResult
+CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
+                           OCHeaderOption *ocHdrOpt,
+                           uint8_t numOptions,
+                           uint8_t observeFlag);
+#endif // CA_INT
 
 #endif //OC_OBSERVE_H
