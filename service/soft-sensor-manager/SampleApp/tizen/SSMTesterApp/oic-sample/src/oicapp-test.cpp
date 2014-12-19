@@ -21,6 +21,8 @@
 
 #include "SSMInterface.h"
 
+using namespace OIC;
+
 static oicapp_data *g_ad = NULL;
 
 int g_CQID = 9999;
