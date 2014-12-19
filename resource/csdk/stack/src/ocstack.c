@@ -1175,11 +1175,47 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
 #ifdef CA_INT
-    // CA integration logic - TODO: remove this comment after integration is done
+    memset(&requestData, 0, sizeof(CAInfo_t));
+    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
+    switch (method)
+    {
+        case OC_REST_GET:
+        case OC_REST_OBSERVE:
+        case OC_REST_OBSERVE_ALL:
+        case OC_REST_CANCEL_OBSERVE:
+            {
+                requestInfo.method = CA_GET;
+                break;
+            }
+        case OC_REST_PUT:
+            {
+                requestInfo.method = CA_PUT;
+                break;
+            }
+        case OC_REST_POST:
+            {
+                requestInfo.method = CA_POST;
+                break;
+            }
+        case OC_REST_DELETE:
+            {
+                requestInfo.method = CA_DELETE;
+                break;
+            }
+        #ifdef WITH_PRESENCE
+        case OC_REST_PRESENCE:
+            //TODO-CA: What should be the CA method?
+            break;
+        #endif
+        default:
+            result = OC_STACK_INVALID_METHOD;
+            goto exit;
+    }
 
-    // Assuming request is not multi-cast
+    // TODO-CA: Handle multi-cast scenario
     // Create remote end point
     caResult = CACreateRemoteEndpoint(newUri, CA_WIFI, &endpoint);
+    // TODO-CA: Connectivity type should be passed to API
     endpoint->connectivityType = CA_WIFI;
     if (caResult != CA_STATUS_OK)
     {
@@ -1197,7 +1233,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    memset(&requestData, 0, sizeof(CAInfo_t));
     // TODO-CA: Map QoS to the right CA msg type
     requestData.type = CA_MSG_CONFIRM;
     requestData.token = caToken;
@@ -1205,8 +1240,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     requestData.numOptions = numOptions;
     requestData.payload = (char *)request;
 
-    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
-    requestInfo.method = CA_GET;
     requestInfo.info = requestData;
 
     // send request
