@@ -274,6 +274,75 @@ exit:
     return OC_STACK_ERROR;
 }
 
+#ifdef CA_INT
+OCStackResult AddCAObserver (const char         *resUri,
+                           const char           *query,
+                           OCObservationId      obsId,
+                           OCCoAPToken          *token,
+                           OCDevAddr            *addr,
+                           OCResource           *resHandle,
+                           OCQualityOfService   qos,
+                           CAAddress_t          *addressInfo,
+                           CAConnectivityType_t connectivityType,
+                           char                 *CAtoken)
+{
+    ResourceObserver *obsNode = NULL;
+
+    obsNode = (ResourceObserver *) OCCalloc(1, sizeof(ResourceObserver));
+    if (obsNode)
+    {
+        obsNode->observeId = obsId;
+
+        obsNode->resUri = (unsigned char *)OCMalloc(strlen(resUri)+1);
+        VERIFY_NON_NULL (obsNode->resUri);
+        memcpy (obsNode->resUri, resUri, strlen(resUri)+1);
+
+        obsNode->qos = qos;
+        if(query)
+        {
+            obsNode->query = (unsigned char *)OCMalloc(strlen(query)+1);
+            VERIFY_NON_NULL (obsNode->query);
+            memcpy (obsNode->query, query, strlen(query)+1);
+        }
+
+        if(token)
+        {
+            obsNode->token.tokenLength = token->tokenLength;
+            memcpy (obsNode->token.token, token->token, token->tokenLength);
+        }
+
+        if(addr)
+        {
+            obsNode->addr = (OCDevAddr *)OCMalloc(sizeof(OCDevAddr));
+            VERIFY_NON_NULL (obsNode->addr);
+            memcpy (obsNode->addr, addr, sizeof(OCDevAddr));
+        }
+
+        obsNode->addressInfo = *addressInfo;
+        obsNode->connectivityType = connectivityType;
+        if(CAtoken)
+        {
+            strncpy(obsNode->CAToken, CAtoken, sizeof(obsNode->CAToken) - 1);
+        }
+
+        obsNode->resource = resHandle;
+
+        LL_APPEND (serverObsList, obsNode);
+        return OC_STACK_OK;
+    }
+
+exit:
+    if (obsNode)
+    {
+        OCFree(obsNode->resUri);
+        OCFree(obsNode->query);
+        OCFree(obsNode->addr);
+        OCFree(obsNode);
+    }
+    return OC_STACK_NO_MEMORY;
+}
+#endif //CA_INT
+
 OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
@@ -422,6 +491,34 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
     }
 
     *caHdrOpt = tmpHdrOpt;
+    return OC_STACK_OK;
+}
+
+OCStackResult
+GetObserveHeaderOption (uint32_t * observationOption,
+                        CAHeaderOption_t *options,
+                        uint8_t * numOptions)
+{
+    *observationOption = OC_OBSERVE_NO_OPTION;
+    uint8_t i = 0;
+    uint8_t c = 0;
+    for(i = 0; i < *numOptions; i++)
+    {
+        if(options[i].protocolID == CA_COAP_ID &&
+                options[i].optionID == COAP_OPTION_OBSERVE)
+        {
+            *observationOption = options[i].optionData[0];
+            for(c = i; c < *numOptions-1; c++)
+            {
+                options[i].protocolID = options[i+1].protocolID;
+                options[i].optionID = options[i+1].optionID;
+                options[i].optionLength = options[i+1].optionLength;
+                memcpy(options[i].optionData, options[i+1].optionData, options[i+1].optionLength);
+            }
+            (*numOptions)--;
+            return OC_STACK_OK;
+        }
+    }
     return OC_STACK_OK;
 }
 #endif // CA_INT

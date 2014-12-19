@@ -299,6 +299,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
         serverRequest.reqTotalSize = strlen(requestInfo->info.payload) + 1;
         memcpy (&(serverRequest.reqJSONPayload), requestInfo->info.payload,
                 strlen(requestInfo->info.payload));
+        serverRequest.reqTotalSize = strlen((const char *)requestInfo->info.payload) + 1;
     }
     else
     {
@@ -342,7 +343,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     memcpy (&(serverRequest.requestToken.token), requestInfo->info.token,
             strlen(requestInfo->info.token));
     serverRequest.requestToken.tokenLength = strlen(requestInfo->info.token);
-    serverRequest.observationOption = OC_OBSERVE_NO_OPTION;
+
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
         serverRequest.qos = OC_HIGH_QOS;
@@ -380,6 +381,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // copy vendor specific header options
     // TODO-CA: CA is including non-vendor header options as well, like observe.
     // Need to filter those out
+    GetObserveHeaderOption(&serverRequest.observationOption, requestInfo->info.options, &(requestInfo->info.numOptions));
+    printf("\n*****************************\nobservation is %u\n**********************************\n",serverRequest.observationOption);
     if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
     {
         // TODO-CA: Need to send an error indicating the num of options is incorrect
@@ -1245,7 +1248,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
     {
         result = CreateObserveHeaderOption (&(requestData.options), options, 
-                                    numOptions, OC_RESOURCE_OBSERVE_REGISTER);
+                                    numOptions, OC_OBSERVE_REGISTER);
         if (result != OC_STACK_OK)
         {
             goto exit;

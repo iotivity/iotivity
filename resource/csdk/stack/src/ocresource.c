@@ -519,11 +519,19 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         OC_LOG(INFO, TAG, PCF("Registering observation requested"));
         result = GenerateObserverId(&ehRequest.obsInfo.obsId);
         VERIFY_SUCCESS(result, OC_STACK_OK);
-
+#ifdef CA_INT
+        result = AddCAObserver ((const char*)(request->resourceUrl),
+                (const char *)(request->query),
+                ehRequest.obsInfo.obsId, &request->requestToken,
+                &request->requesterAddr, resource, request->qos,
+                &request->addressInfo, request->connectivityType,
+                request->token);
+#else
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, &request->requestToken,
                 &request->requesterAddr, resource, request->qos);
+#endif //CA_INT
         if(result == OC_STACK_OK)
         {
             OC_LOG(DEBUG, TAG, PCF("Added observer successfully"));

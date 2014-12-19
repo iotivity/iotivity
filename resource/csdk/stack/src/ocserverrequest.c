@@ -411,13 +411,13 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             responseInfo.info.type = CA_MSG_NONCONFIRM;
             break;
     }
+
     responseInfo.info.token = serverRequest->token;
     responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions;
     if (ehResponse->numSendVendorSpecificHeaderOptions)
     {
         memcpy(responseInfo.info.options, ehResponse->sendVendorSpecificHeaderOptions, sizeof(OCHeaderOption) * ehResponse->numSendVendorSpecificHeaderOptions);
     }
-
 
     // Allocate memory for the payload.
     char *payload = (char *)OCMalloc(MAX_RESPONSE_LENGTH);
@@ -426,7 +426,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         return OC_STACK_NO_MEMORY;
     }
     memset(payload, 0, MAX_RESPONSE_LENGTH);
-
     // Put the JSON prefix and suffix around the payload
     strcpy(payload, (const char *)OC_JSON_PREFIX);
     strcat(payload, (const char *)ehResponse->payload);

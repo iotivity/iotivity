@@ -27,13 +27,6 @@
 #define MAX_OBSERVER_FAILED_COMM         (2)
 #define MAX_OBSERVER_NON_COUNT           (3)
 
-#ifdef CA_INT
-// NOTE: These values are based on the observe option values as defined in the CoAP RFC
-// The values should not be changed unless there is a change in the RFC.
-#define OC_RESOURCE_OBSERVE_REGISTER      (0)
-#define OC_RESOURCE_OBSERVE_DEREGISTER    (1)
-#endif // CA_INT
-
 /* This information is stored for each registerd observer */
 typedef struct ResourceObserver {
     // Observation Identifier for request
@@ -48,6 +41,13 @@ typedef struct ResourceObserver {
     OCResource *resource;
     // IP address & port of client registered for observe
     OCDevAddr *addr;
+#ifdef CA_INT
+    /** Remote Endpoint address **/
+    CAAddress_t addressInfo;
+    /** Connectivity of the endpoint**/
+    CAConnectivityType_t connectivityType;
+    char CAToken[32];   // TODO-CA:  What is max CAToken_t length?  Get rid of magic number
+#endif
     // Quality of service of the request
     OCQualityOfService qos;
     // number of times the server failed to reach the observer
@@ -91,11 +91,26 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token);
 ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
 
 #ifdef CA_INT
+OCStackResult AddCAObserver (const char         *resUri,
+                           const char           *query,
+                           OCObservationId      obsId,
+                           OCCoAPToken          *token,
+                           OCDevAddr            *addr,
+                           OCResource           *resHandle,
+                           OCQualityOfService   qos,
+                           CAAddress_t          *addressInfo,
+                           CAConnectivityType_t connectivityType,
+                           char                 *CAtoken);
+
 OCStackResult
 CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
                            OCHeaderOption *ocHdrOpt,
                            uint8_t numOptions,
                            uint8_t observeFlag);
+OCStackResult
+GetObserveHeaderOption (uint32_t * observationOption,
+                        CAHeaderOption_t *options,
+                        uint8_t * numOptions);
 #endif // CA_INT
 
 #endif //OC_OBSERVE_H
