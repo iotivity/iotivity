@@ -58,9 +58,6 @@ typedef struct THRESOURCE
 
 static THResource TH;
 
-//char* g_responsePayloadPut =    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
-//char* g_responsePayloadGet =    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
-
 /// This is the port which Arduino Server will use for all unicast communication with it's peers
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
@@ -71,23 +68,23 @@ static uint16_t OC_WELL_KNOWN_PORT = 5683;
 
 char temp[100];
 
-#define LENGTH_VAR      100
+#define LENGTH_VAR		100
 static int base_length = 0;
 
-bool JsonGenerator( THResource &th, char *jsonBuf, uint16_t buf_length )
+bool JsonGenerator( THResource& th, char* jsonBuf, uint16_t buf_length )
 {
-    if ( (buf_length - base_length) < LENGTH_VAR )
-    {
-        OC_LOG_V(ERROR, TAG, "Error : length is very long.");
-        return false;
-    }
+	if( (buf_length - base_length) < LENGTH_VAR )
+	{
+		OC_LOG_V(ERROR, TAG, "Error : length is very long.");
+		return false;
+	}
 
-    sprintf(jsonBuf, JSON_BASE00 JSON_BASE01"%d", th.m_temp);
-    sprintf(jsonBuf + strlen(jsonBuf), JSON_BASE02"%d"JSON_BASE03, th.m_humid);
+	sprintf(jsonBuf, JSON_BASE00 JSON_BASE01"%d",th.m_temp);
+	sprintf(jsonBuf+strlen(jsonBuf), JSON_BASE02"%d"JSON_BASE03, th.m_humid);
 
-    Serial.println(jsonBuf);
+	Serial.println(jsonBuf);
 
-    return true;
+	return true;
 }
 
 byte read_dht11_dat()
@@ -196,46 +193,67 @@ void PrintArduinoMemoryStats()
 
 // This is the entity handler for the registered resource.
 // This is invoked by OCStack whenever it recevies a request for this resource.
-OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest *entityHandlerRequest )
+OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest )
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
+    OCEntityHandlerResponse response = {0};
+    char payload[MAX_RESPONSE_LENGTH] = {0};
 
-    if (entityHandlerRequest && (flag & OC_REQUEST_FLAG))
+    if(entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
-        if (OC_REST_GET == entityHandlerRequest->method)
+        if(OC_REST_GET == entityHandlerRequest->method)
         {
-            if (JsonGenerator( TH, (char *)entityHandlerRequest->resJSONPayload, \
-                               entityHandlerRequest->resJSONPayloadLen))
-            {
-            }
-            else
+        	if(JsonGenerator( TH, payload, MAX_RESPONSE_LENGTH))
+        	 {
+        	 }
+           else
             {
                 ehRet = OC_EH_ERROR;
             }
         }
-        if (OC_REST_PUT == entityHandlerRequest->method)
+        if(OC_REST_PUT == entityHandlerRequest->method)
         {
             //Do something with the 'put' payload
-            if (JsonGenerator( TH, (char *)entityHandlerRequest->resJSONPayload, \
-                               entityHandlerRequest->resJSONPayloadLen))
+            if (JsonGenerator( TH, payload, MAX_RESPONSE_LENGTH))
             {
             }
             else
             {
                 ehRet = OC_EH_ERROR;
             }
-        }
+         }
+
+        if (ehRet == OC_EH_OK)
+		{
+			// Format the response.  Note this requires some info about the request
+			response.requestHandle = entityHandlerRequest->requestHandle;
+			response.resourceHandle = entityHandlerRequest->resource;
+			response.ehResult = ehRet;
+			response.payload = (unsigned char *)payload;
+			response.payloadSize = strlen(payload);
+			response.numSendVendorSpecificHeaderOptions = 0;
+			memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+			memset(response.resourceUri, 0, sizeof response.resourceUri);
+			// Indicate that response is NOT in a persistent buffer
+			response.persistentBufferFlag = 0;
+
+			// Send the response
+			if (OCDoResponse(&response) != OC_STACK_OK)
+			{
+				OC_LOG(ERROR, TAG, "Error sending response");
+				ehRet = OC_EH_ERROR;
+			}
+		}
     }
     if (entityHandlerRequest && (flag & OC_OBSERVE_FLAG))
     {
-        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
             g_THUnderObservation = 1;
         }
-        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
         }
@@ -301,7 +319,7 @@ void *ChangeTHRepresentation (void *param)
         TH.m_humid = dht11_dat[0];
         TH.m_temp = dht11_dat[2];
 
-        if (g_THUnderObservation)
+           if (g_THUnderObservation)
         {
             OC_LOG_V(INFO, TAG, " =====> Notifying stack of new humid level %d\n", TH.m_humid);
             OC_LOG_V(INFO, TAG, " =====> Notifying stack of new temp level %d\n", TH.m_temp);
@@ -344,7 +362,7 @@ void setup()
         OC_LOG(ERROR, TAG, PCF("OCStack init error"));
         return;
     }
-
+    OCStartPresence(60);
     // Declare and create the example resource: TH
     createTHResource();
 
