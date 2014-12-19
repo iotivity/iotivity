@@ -103,7 +103,7 @@ CAResult_t CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback Re
  *                          Remote endpoint
  *                          for ex : coap://10.11.12.13:4545/resource_uri ( for IP)
  *                          coap://10:11:12:13:45:45/resource_uri ( for BT)
- * @param   type    [IN]    connectivity type of the endpoint
+ * @param   connectivityType    [IN]    connectivity type of the endpoint
  * @param   object  [OUT ]  Endpoint object which contains the above parsed data
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
@@ -135,6 +135,7 @@ void CADestroyToken(CAToken_t token);
  *          all connectivity adapters. Responses are delivered via response callbacks.
  *
  * @param   resourceUri [IN]    Uri to send multicast search request
+ * @param   token   [IN]    token for the request
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token);
@@ -180,6 +181,7 @@ CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
 /**
  * @brief   for advertise the resource
  * @param   resourceUri [IN]    URI to be advertised
+ * @param   token   [IN]    token for the request
  * @param   options     [IN]    header options information
  * @param   numOptions  [IN]    number of options
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)

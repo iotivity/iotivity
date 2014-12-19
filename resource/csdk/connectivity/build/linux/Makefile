@@ -110,8 +110,7 @@ COMPONENT_OBJS = $(COMPONENT_SRCS:%.c=$(OBJ_DIR)/%.o)
 ##
 ##	compiler flags
 ##
-# TODO-CA Remove -fstack-protector-all before merging to master
-CFLAGS = -g -c -Wall -fstack-protector-all -fPIC `pkg-config --cflags glib-2.0`
+CFLAGS = -g -c -Wall -fPIC `pkg-config --cflags glib-2.0`
 LFLAGS = -ldl -lpthread `pkg-config --libs glib-2.0`
 IFLAGS = -I$(PROJECT_COMMON_INC_PATH)	\
 	-I$(PROJECT_API_PATH)	\

@@ -46,48 +46,50 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
     {
         case CA_ETHERNET:
 
-#ifndef ETHERNET_ADAPTER
+#ifdef ETHERNET_ADAPTER
+            OIC_LOG_V(DEBUG, TAG, "Add network type(ETHERNET)");
+            u_arraylist_add(gSelectedNetworkList, &NETWORK_ETHERNET);
+#else
             OIC_LOG_V(DEBUG, TAG, "Add network type(ETHERNET) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* ETHERNET_ADAPTER */
-
-            OIC_LOG_V(DEBUG, TAG, "Add network type(ETHERNET)");
-            u_arraylist_add(gSelectedNetworkList, &NETWORK_ETHERNET);
 
             break;
 
         case CA_WIFI:
 
-#ifndef WIFI_ADAPTER
+#ifdef WIFI_ADAPTER
+            OIC_LOG_V(DEBUG, TAG, "Add network type(WIFI)");
+            u_arraylist_add(gSelectedNetworkList, &NETWORK_WIFI);
+#else
             OIC_LOG_V(DEBUG, TAG, "Add network type(WIFI) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* WIFI_ADAPTER */
-
-            OIC_LOG_V(DEBUG, TAG, "Add network type(WIFI)");
-            u_arraylist_add(gSelectedNetworkList, &NETWORK_WIFI);
 
             break;
 
         case CA_EDR:
 
-#ifndef EDR_ADAPTER
+#ifdef EDR_ADAPTER
+            OIC_LOG_V(DEBUG, TAG, "Add network type(EDR)");
+            u_arraylist_add(gSelectedNetworkList, &NETWORK_EDR);
+#else
             OIC_LOG_V(DEBUG, TAG, "Add network type(EDR) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* EDR_ADAPTER */
 
-            OIC_LOG_V(DEBUG, TAG, "Add network type(EDR)");
-            u_arraylist_add(gSelectedNetworkList, &NETWORK_EDR);
             break;
 
         case CA_LE:
 
-#ifndef LE_ADAPTER
+#ifdef LE_ADAPTER
+            OIC_LOG_V(DEBUG, TAG, "Add network type(LE)");
+            u_arraylist_add(gSelectedNetworkList, &NETWORK_LE);
+#else
             OIC_LOG_V(DEBUG, TAG, "Add network type(LE) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* LE_ADAPTER */
 
-            OIC_LOG_V(DEBUG, TAG, "Add network type(LE)");
-            u_arraylist_add(gSelectedNetworkList, &NETWORK_LE);
             break;
 
     }
@@ -184,12 +186,6 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
 u_arraylist_t *CAGetSelectedNetworkList()
 {
-    if (gSelectedNetworkList == NULL)
-    {
-        OIC_LOG_V(DEBUG, TAG, "Selected network not found");
-
-        return NULL;
-    }
     return gSelectedNetworkList;
 }
 

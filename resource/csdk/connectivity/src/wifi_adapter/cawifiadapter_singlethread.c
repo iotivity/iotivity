@@ -144,7 +144,7 @@ void CAWiFiConnectionStateCB(const char *ipAddr,
             }
             else
             {
-                OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to start Unicast server [%d]", ret);
+                OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed [%d]", ret);
             }
         }
 
@@ -160,7 +160,7 @@ void CAWiFiConnectionStateCB(const char *ipAddr,
             }
             else
             {
-                OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to start Multicast server [%d]", ret);
+                OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed [%d]", ret);
             }
         }
 
@@ -187,7 +187,8 @@ void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
                             const void *data, const uint32_t dataLength)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
-    OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Address: %s, port:%d, data:%s", ipAddress, port, data);
+    OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Address: %s, port:%d ", ipAddress, port);
+    OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Data:%s", data);
 
     /* CA is freeing this memory */
     CARemoteEndpoint_t *endPoint = CAAdapterCreateRemoteEndpoint(CA_WIFI, ipAddress, NULL);
@@ -255,7 +256,7 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
     wifiHandler.terminate = CATerminateWIfI;
     registerCallback(wifiHandler, CA_WIFI);
 
-    OIC_LOG(INFO, WIFI_ADAPTER_TAG, "IntializeWifi is Success");
+    OIC_LOG(INFO, WIFI_ADAPTER_TAG, "IntializeWifi Success");
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -303,8 +304,7 @@ CAResult_t CAStartWIFIListeningServer()
 
     if (gIsMulticastServerStarted == true)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG,
-                  "Failed to Start Multicast Server, Already Started!");
+        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Multicast Server, Already Started!");
         return CA_SERVER_STARTED_ALREADY;
     }
 
@@ -312,15 +312,14 @@ CAResult_t CAStartWIFIListeningServer()
     bool retVal = CAWiFiIsConnected();
     if (false == retVal)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG,
-                  "Failed to Start Multicast Server, WIFI not Connected");
+        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed : WIFI not Connected");
         return CA_ADAPTER_NOT_ENABLED;
     }
 
     ret = CAWiFiStartMulticastServer("0.0.0.0", CA_MULTICAST_IP, multicastPort, NULL);
     if (CA_STATUS_OK == ret)
     {
-        OIC_LOG(INFO, WIFI_ADAPTER_TAG, "Multicast Server is Started Successfully");
+        OIC_LOG(INFO, WIFI_ADAPTER_TAG, "Multicast Server Started Successfully");
         gIsMulticastServerStarted = true;
     }
 
@@ -413,7 +412,6 @@ CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t 
     OICFree(ipAddress);
     OICFree(ifcName);
 
-    OIC_LOG(INFO, WIFI_ADAPTER_TAG, "GetWIFIInterfaceInformation success");
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -471,7 +469,6 @@ void CATerminateWIfI()
     CAWiFiTerminateNetworkMonitor();
     OIC_LOG(INFO, WIFI_ADAPTER_TAG, "nw monitor terminated");
     CAWiFiSetPacketReceiveCallback(NULL);
-    OIC_LOG(INFO, WIFI_ADAPTER_TAG, "TerminateWifi Success");
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return;
 }

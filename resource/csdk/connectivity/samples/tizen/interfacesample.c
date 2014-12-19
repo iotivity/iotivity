@@ -33,22 +33,15 @@
 
 #define MOD_NAME "TizenSample"
 
-/**
- * Enable/disable one or more of the following macros to enable/disable
- * functionality of that particular adapter type in the interfacesample.
- */
-#define WIFI_ADAPTER_TEST
-//#define BT_ADAPTER_TEST
-//#define BLE_ADAPTER_TEST
-
 #if defined(WIFI_ADAPTER_TEST)
 #include "cawifiadapter.h"
-#include "caethernetadapter.h"
 static u_thread_pool_t gWiFiThreadPool = NULL;
-#elif defined(BT_ADAPTER_TEST)
+#endif
+#if defined(BT_ADAPTER_TEST)
 #include "caedradapter.h"
 static  u_thread_pool_t gBTThreadPool = NULL;
-#elif defined(BLE_ADAPTER_TEST)
+#endif
+#if defined(BLE_ADAPTER_TEST)
 #include "caleadapter.h"
 static u_thread_pool_t gLEThreadPool = NULL;
 #endif
@@ -96,7 +89,7 @@ void initializeThreadPool(CAConnectivityType_t type)
     {
         if (CA_STATUS_OK != u_thread_pool_init(3, &gWiFiThreadPool))
         {
-            printf("Failed to create thread pool for BT adapter!\n");
+            printf("Failed to create thread pool for WIFI adapter!\n");
             return;
         }
     }
@@ -106,7 +99,7 @@ void initializeThreadPool(CAConnectivityType_t type)
     {
         if (CA_STATUS_OK != u_thread_pool_init(5, &gLEThreadPool))
         {
-            printf("Failed to create thread pool for BT adapter!\n");
+            printf("Failed to create thread pool for BLE adapter!\n");
             return;
         }
     }

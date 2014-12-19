@@ -38,6 +38,8 @@
 #define printf Serial.println
 //#define printf
 
+bool isLeSelected = false;
+
 void print_menu();
 void process();
 
@@ -188,7 +190,11 @@ void loop()
         }
     }
     //1:Add check for startserver before calling below api
-    handle_request_response();
+    if (true == isLeSelected)
+    {
+        handle_request_response();
+    }
+    delay(1000);
 }
 
 void initialize()
@@ -217,7 +223,7 @@ void find_resource()
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
 
     printf("============");
-    printf("ex) a/light");
+    printf("ex) /a/light");
     printf("uri: ");
     int len = 0;
     getData(buf, sizeof(buf), &len);
@@ -472,6 +478,10 @@ void select_network()
     getData(buf, sizeof(buf), &len);
     int number = buf[0] - '0';
     number = (number < 0 || number > 3) ? 1 : number;
+    if (number == 3)
+    {
+        isLeSelected = true;
+    }
     CASelectNetwork(1 << number);
     printf("============");
 }
@@ -493,6 +503,10 @@ void unselect_network()
     int number = buf[0] - '0';
     printf(number);
     number = (number < 0 || number > 3) ? 1 : number;
+    if (number == 3)
+    {
+        isLeSelected = false;
+    }
     CAUnSelectNetwork(1 << number);
     printf("Terminate");
     CATerminate();

@@ -159,7 +159,6 @@ uint32_t CAFragmentData(const char *data, char **dataSegment, uint32_t TotalLen,
         char *header = (char *) OICMalloc(sizeof(char) * CA_HEADER_LENGTH);
         VERIFY_NON_NULL_RET(header, CA_MSG_PARSER_TAG, "Malloc failed", -1);
 
-
         *dataSegment = (char *) OICMalloc(sizeof(char) * length);
         ///TODO: memory leak is here.
         VERIFY_NON_NULL_RET(*dataSegment, CA_MSG_PARSER_TAG, "Malloc failed", -1);

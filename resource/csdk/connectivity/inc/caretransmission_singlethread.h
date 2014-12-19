@@ -44,7 +44,7 @@ typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, voi
 
 /** retransmission timeout callback type**/
 typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, void *pdu,
-        uint32_t size);
+                                    uint32_t size);
 
 typedef struct
 {
@@ -76,25 +76,25 @@ extern "C"
 
 /**
  * @brief   Initializes the retransmission context
- * @param   context [IN]context for retransmission
- * @param   handle  [IN]thread pool handle
- * @param   retransmissionSendMethod    [IN]function to be called for retransmission
- * @param   timeoutCallback [IN]callback for retransmit timeout
- * @param   config  [IN]configuration for retransmission. if NULL is coming, it will set default values.
+ * @param   context [IN]    context for retransmission
+ * @param   handle  [IN]    thread pool handle
+ * @param   retransmissionSendMethod    [IN]    function to be called for retransmission
+ * @param   timeoutCallback [IN]    callback for retransmit timeout
+ * @param   config  [IN]    configuration for retransmission.
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CARetransmissionInitialize(CARetransmission_t* context,
-                                            CADataSendMethod_t retransmissionSendMethod,
-                                            CATimeoutCallback_t timeoutCallback,
-                                            CARetransmissionConfig_t* config);
+CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
+                                      CADataSendMethod_t retransmissionSendMethod,
+                                      CATimeoutCallback_t timeoutCallback,
+                                      CARetransmissionConfig_t *config);
 
 /**
  * @brief   Pass the sent pdu data. if retransmission process need, internal thread will wake up and
  *             process the retransmission data.
- * @param   context     [IN]context for retransmission
- * @param   endpoint    [IN]endpoint information
- * @param   pdu         [IN]sent pdu binary data
- * @param   size        [IN]sent pdu binary data size
+ * @param   context     [IN]    context for retransmission
+ * @param   endpoint    [IN]    endpoint information
+ * @param   pdu         [IN]    sent pdu binary data
+ * @param   size        [IN]    sent pdu binary data size
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionSentData(CARetransmission_t *context,
@@ -104,10 +104,10 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 /**
  * @brief   Paas the received pdu data. if received pdu is ACK data for the retransmission CON data,
  *             the specified CON data will remove on retransmission list.
- * @param   context     [IN]context for retransmission
- * @param   endpoint    [IN]endpoint information
- * @param   pdu         [IN]received pdu binary data
- * @param   size        [IN]received pdu binary data size
+ * @param   context     [IN]    context for retransmission
+ * @param   endpoint    [IN]    endpoint information
+ * @param   pdu         [IN]    received pdu binary data
+ * @param   size        [IN]    received pdu binary data size
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
@@ -115,20 +115,27 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
 /**
  * @brief   Stopping the retransmission context
- * @param   context [IN]context for retransmission
+ * @param   context [IN]    context for retransmission
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionStop(CARetransmission_t *context);
 
 /**
  * @brief   Terminating the retransmission context
- * @param   context [IN]context for retransmission
+ * @param   context [IN]    context for retransmission
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionDestroy(CARetransmission_t *context);
 
+/**
+ * @brief   Retransmitting the request/response for CONFIRMABLE type
+ */
 void CACheckRetransmissionList();
 
+/**
+ * @brief   Invoke Retranmission according to TimedAction Response
+ * @param   context [IN]    context for retransmission
+ */
 void CARetransmissionBaseRoutine(void *threadValue);
 
 #ifdef __cplusplus

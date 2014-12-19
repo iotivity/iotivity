@@ -18,7 +18,14 @@
 *
 ******************************************************************/
 
-#include "caleserver.h"
+#include "cableserver.h"
+
+#include <Arduino.h>
+#include <SPI.h>
+#include <boards.h>
+#include <RBL_nRF8001.h>
+#include <services.h>
+
 #include <logger.h>
 #include "oic_malloc.h"
 #include "caadapterutils.h"

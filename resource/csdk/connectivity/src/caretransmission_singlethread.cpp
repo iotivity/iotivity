@@ -165,12 +165,12 @@ void CARetransmissionBaseRoutine(void *threadValue)
         return;
     }
     gRetransmissionPtr = context;
-    gRcvAction.check();
+    CACheckRetransmissionList();
 }
 
 CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
                                       CADataSendMethod_t retransmissionSendMethod,
-									  CATimeoutCallback_t timeoutCallback,
+                                      CATimeoutCallback_t timeoutCallback,
                                       CARetransmissionConfig_t *config)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -205,7 +205,6 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
 
     // Enable TimedAction for CACheckRetransmissionList API
     gRetransmissionPtr = context;
-    gRcvAction.enable();
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -224,7 +223,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     // #0. check support connectivity type
     if (!(context->config.supportType & endpoint->connectivityType))
     {
-	    OIC_LOG(DEBUG, TAG, "error");
+        OIC_LOG(DEBUG, TAG, "error");
         OIC_LOG_V(DEBUG, TAG, "not supported conntype=%d", endpoint->connectivityType);
         return CA_STATUS_OK;
     }
@@ -237,7 +236,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
     if (type != CA_MSG_CONFIRM)
     {
-	    OIC_LOG(DEBUG, TAG, "error");
+        OIC_LOG(DEBUG, TAG, "error");
         return CA_STATUS_OK;
     }
 
@@ -368,9 +367,6 @@ CAResult_t CARetransmissionStop(CARetransmission_t *context)
         OIC_LOG_V(DEBUG, TAG, "error");
         return CA_STATUS_FAILED;
     }
-
-    // Disable TimedAction for CACheckRetransmissionList API
-    gRcvAction.disable();
 
     // set stop flag
     context->isStop = CA_TRUE;

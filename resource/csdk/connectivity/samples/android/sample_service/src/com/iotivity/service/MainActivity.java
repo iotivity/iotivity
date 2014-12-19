@@ -172,7 +172,7 @@ public class MainActivity extends Activity {
 			mSendNotificationLayout.setVisibility(View.VISIBLE);
 			mSendRequestLayout.setVisibility(View.INVISIBLE);
 			mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
-			mSendResponseLayout.setVisibility(View.VISIBLE);
+			mSendResponseLayout.setVisibility(View.INVISIBLE);
 			mReceiveLayout.setVisibility(View.VISIBLE);
 
 			mNetwork_tv.setText("");

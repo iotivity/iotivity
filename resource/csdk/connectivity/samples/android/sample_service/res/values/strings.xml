@@ -2,13 +2,13 @@
 <resources>
     <string name="app_name">sample_service</string>
     <string name="find">Find</string>
-    <string name="notify">Notify</string>
+    <string name="notify">send</string>
     <string name="request_setting">Request Setting</string>
     <string name="request">Request</string>
     <string name="response">Response</string>
     <string name="uri">a/light</string>
-    <string name="notification">resourceUri/notification</string>
-    <string name="req_data">FC:88:0D:47:0C:0F/a/light</string>
+    <string name="notification">coap://D8:07:62:33:CE:11/a/bulb</string>
+    <string name="req_data">coap://FC:88:0D:47:0C:0F/b/light</string>
     <string name="resp_data">resourceUri/response</string>
     <string name="receive">Receive</string>
     <string name="received">Received Message</string>

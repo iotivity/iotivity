@@ -391,7 +391,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         clone->info.token = temp;
     }
 
-    if (rep->info.options != NULL && rep->info.numOptions)
+    if (rep->info.options != NULL)
     {
         // save the options
         clone->info.options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t));
