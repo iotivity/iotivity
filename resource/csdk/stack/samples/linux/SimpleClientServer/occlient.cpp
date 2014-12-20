@@ -508,7 +508,12 @@ int InitDiscovery()
     }
     else
     {
+    #ifdef CA_INT
+        // TODO-CA CA is using 5298 for MC. Why 5298?
+        strcpy(szQueryUri, "coap://224.0.1.187:5298/oc/core");
+    #else
         strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
+    #endif
     }
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
