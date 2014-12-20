@@ -1,0 +1,221 @@
+
+Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR')
+env1 = env.Clone()
+
+env1.AppendUnique(CXXFLAGS = "-std=c++0x")
+
+#CD_SRC_DIR          =  SRC_TOP_DIR  + 'controllee/'
+CD_SRC_DIR             = './'
+OPENSOURCE_DIR      =  SRC_TOP_DIR  + 'opensource/'
+OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
+OIC_UTILS_DIR       =  SRC_TOP_DIR  + '../../../oic-utilities/'
+
+env1.PrependUnique(CPPPATH = [
+			CD_SRC_DIR + 'include',
+			CD_SRC_DIR + 'include/api',
+			CD_SRC_DIR + 'include/core',
+			CD_SRC_DIR + 'include/device',
+			CD_SRC_DIR + 'include/Notification',
+			CD_SRC_DIR + 'include/Serialization',
+			CD_SRC_DIR + 'include/Server',
+			CD_SRC_DIR + 'include/SubscriptionStore',
+			CD_SRC_DIR + 'include/utils',
+			CD_SRC_DIR + 'include/xsd',
+			OPENSOURCE_DIR + 'sqlite3/include',
+			OPENSOURCE_DIR + 'jsoncpp/include',
+			OIC_RESOURCE_DIR + 'include',
+			OIC_RESOURCE_DIR + 'csdk/stack/include',
+			OIC_RESOURCE_DIR + 'csdk/occoap/include',
+			OIC_RESOURCE_DIR + 'csdk/ocrandom/include',
+			OIC_RESOURCE_DIR + 'csdk/ocsocket/include',
+			OIC_RESOURCE_DIR + 'dependencies/cereal/include',
+			OIC_RESOURCE_DIR + 'oc_logger/include',
+		])
+		
+if TARGET_OS == 'android':
+	env1.AppendUnique(CPPPATH = [OIC_UTILS_DIR + 'android/boost/include' , ])
+	env1.PrependUnique(LIBPATH = [OIC_UTILS_DIR + 'android/boost/libs/armeabi' , OIC_RESOURCE_DIR + 'csdk/android/release' , ])
+else:
+	env1.AppendUnique(CPPPATH = ['/usr/local/boost/include' , ])
+	env1.PrependUnique(LIBPATH = ['/usr/local/boost/lib/', OIC_RESOURCE_DIR + 'csdk/linux/release', ])
+
+env1.AppendUnique(LIBPATH = [OPENSOURCE_DIR + 'sqlite3/static/',
+                             OPENSOURCE_DIR + 'jsoncpp/static/', 
+							 OIC_RESOURCE_DIR + 'release/obj/',
+							 OIC_RESOURCE_DIR + 'oc_logger/lib', 
+							])
+
+if TARGET_OS == 'android':
+	BOOST_SYSTEM_LIB = 'boost_system-gcc-mt-1_49'
+	BOOST_THREAD_LIB = 'boost_thread-gcc-mt-1_49'
+	BOOST_REGEX_LIB  = 'boost_regex-gcc-mt-1_49'
+else:							
+	BOOST_SYSTEM_LIB = 'boost_system'
+	BOOST_THREAD_LIB = 'boost_thread'
+	BOOST_REGEX_LIB  = 'boost_regex'
+	
+OC_LIB        = 'oc'
+OCTBSTACK_LIB = 'octbstack'
+OCLOGGER_LIB  = 'oc_logger'
+
+env1.PrependUnique(LIBS = [ BOOST_SYSTEM_LIB, BOOST_THREAD_LIB, BOOST_REGEX_LIB,OC_LIB, OCTBSTACK_LIB, OCLOGGER_LIB, 'sqlite3','jsoncpp','dl','rt','pthread' ])
+
+#print "\nCD_SRC_DIR: %s \n" % (CD_SRC_DIR)
+
+			
+lib_target  = "libcontrollee.a"
+lib_sources = [ CD_SRC_DIR + 'api/CDError.cpp',
+		CD_SRC_DIR + 'api/Configuration.cpp',
+		CD_SRC_DIR + 'api/Device.cpp',
+		CD_SRC_DIR + 'api/ControlResponse.cpp',
+		CD_SRC_DIR + 'api/HeadersList.cpp',
+		CD_SRC_DIR + 'core/CDContext.cpp',
+		CD_SRC_DIR + 'core/CDCoreResourceHandlerFactory.cpp',
+		CD_SRC_DIR + 'core/CDSerializableDataFactory.cpp',
+		CD_SRC_DIR + 'core/CDServer.cpp',
+		CD_SRC_DIR + 'device/ControlDevice.cpp',
+		CD_SRC_DIR + 'device/ControlDeviceFactory.cpp',
+		CD_SRC_DIR + 'device/ControlleeManager.cpp',
+		CD_SRC_DIR + 'device/MyDevice.cpp',
+		CD_SRC_DIR + 'Notification/NotificationResponse.cpp',
+		CD_SRC_DIR + 'Notification/SubscriptionManager.cpp',
+		CD_SRC_DIR + 'Notification/SubscriptionResourceHandler.cpp',
+		CD_SRC_DIR + 'Notification/SubscriptionResourceHandlerFactory.cpp',
+		CD_SRC_DIR + 'Notification/SubscriptionSerializationFactory.cpp',
+		CD_SRC_DIR + 'Notification/SubscriptionsResourceHandler.cpp',
+		CD_SRC_DIR + 'Serialization/CDDeserializer.cpp',
+		CD_SRC_DIR + 'Serialization/CDErrorMessage.cpp',
+		CD_SRC_DIR + 'Serialization/CDSerializationFactory.cpp',
+		CD_SRC_DIR + 'Serialization/CDSerializer.cpp',
+		CD_SRC_DIR + 'Serialization/IDeserializer.cpp',
+		CD_SRC_DIR + 'Serialization/ISerializable.cpp',
+		CD_SRC_DIR + 'Serialization/JsonSerializer.cpp',
+		CD_SRC_DIR + 'Serialization/JsonDeserializer.cpp',
+		CD_SRC_DIR + 'Serialization/XSDClassesImpl.cpp',
+		CD_SRC_DIR + 'Server/AccessPointResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/AccessPointsResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/AlarmResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/AlarmsResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/AsyncResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/CapabilityResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/CDResourceHandlerFactory.cpp',
+		CD_SRC_DIR + 'Server/ConfigurationResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/DetectionResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/DeviceResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/DevicesResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/DoorResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/DoorsResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/DRLCResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/EnergyConsumptionResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/EnergyResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/HumidityResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/InformationResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/LevelResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/LightResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/LongPollingNotificationResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/MessageResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/MessagesResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/ModeResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/MovementResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/NetworkResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/NetworksResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/OperationResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/RecordResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/RecordsResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/RemoteResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/ResourceHandlerFactory.cpp',
+		CD_SRC_DIR + 'Server/ResourceTypeEnum.cpp',
+		CD_SRC_DIR + 'Server/SyncResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/TemperatureResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/TemperaturesResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/ThermostatResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/TimeResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/UsageLimitResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/UsageLimitsResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/UsagesResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/VersionResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/VersionsResourceHandler.cpp',
+		CD_SRC_DIR + 'Server/WiFiResourceHandler.cpp',
+		CD_SRC_DIR + 'SubscriptionStore/SubscriptionRecord.cpp',
+		CD_SRC_DIR + 'SubscriptionStore/SubscriptionSqliteDatabase.cpp',
+		CD_SRC_DIR + 'utils/IPUtils.cpp',
+		CD_SRC_DIR + 'utils/Utils.cpp',
+		CD_SRC_DIR + 'xsd/AccessPoint.cpp',
+		CD_SRC_DIR + 'xsd/AccessPoints.cpp',
+		CD_SRC_DIR + 'xsd/AccessPointsLink.cpp',
+		CD_SRC_DIR + 'xsd/ActionsLink.cpp',
+		CD_SRC_DIR + 'xsd/Actuators.cpp',
+		CD_SRC_DIR + 'xsd/Alarm.cpp',
+		CD_SRC_DIR + 'xsd/Alarms.cpp',
+		CD_SRC_DIR + 'xsd/ArrayOfAnyURI.cpp',
+		CD_SRC_DIR + 'xsd/ArrayOfConnectivityType.cpp',
+		CD_SRC_DIR + 'xsd/ArrayOfDayType.cpp',
+		CD_SRC_DIR + 'xsd/ArrayOfResourceType.cpp',
+		CD_SRC_DIR + 'xsd/ArrayOfString.cpp',
+		CD_SRC_DIR + 'xsd/ArrayOfTimeType.cpp',
+		CD_SRC_DIR + 'xsd/ArrayOfUuid.cpp',
+		CD_SRC_DIR + 'xsd/Capability.cpp',
+		CD_SRC_DIR + 'xsd/Color.cpp',
+		CD_SRC_DIR + 'xsd/Configuration.cpp',
+		CD_SRC_DIR + 'xsd/ConfigurationLink.cpp',
+		CD_SRC_DIR + 'xsd/Detection.cpp',
+		CD_SRC_DIR + 'xsd/Device.cpp',
+		CD_SRC_DIR + 'xsd/Devices.cpp',
+		CD_SRC_DIR + 'xsd/DevicesLink.cpp',
+		CD_SRC_DIR + 'xsd/Door.cpp',
+		CD_SRC_DIR + 'xsd/Doors.cpp',
+		CD_SRC_DIR + 'xsd/DRLC.cpp',
+		CD_SRC_DIR + 'xsd/Energy.cpp',
+		CD_SRC_DIR + 'xsd/EnergyConsumption.cpp',
+		CD_SRC_DIR + 'xsd/EnergyLink.cpp',
+		CD_SRC_DIR + 'xsd/Events.cpp',
+		CD_SRC_DIR + 'xsd/FoodManagerLink.cpp',
+		CD_SRC_DIR + 'xsd/GroupsLink.cpp',
+		CD_SRC_DIR + 'xsd/Humidity.cpp',
+		CD_SRC_DIR + 'xsd/IdentifiedObject.cpp',
+		CD_SRC_DIR + 'xsd/Image.cpp',
+		CD_SRC_DIR + 'xsd/Information.cpp',
+		CD_SRC_DIR + 'xsd/InformationLink.cpp',
+		CD_SRC_DIR + 'xsd/Level.cpp',
+		CD_SRC_DIR + 'xsd/Light.cpp',
+		CD_SRC_DIR + 'xsd/Link.cpp',
+		CD_SRC_DIR + 'xsd/List.cpp',
+		CD_SRC_DIR + 'xsd/LongPollingNotification.cpp',
+		CD_SRC_DIR + 'xsd/LongPollingNotificationLink.cpp',
+		CD_SRC_DIR + 'xsd/Message.cpp',
+		CD_SRC_DIR + 'xsd/Messages.cpp',
+		CD_SRC_DIR + 'xsd/MessagesLink.cpp',
+		CD_SRC_DIR + 'xsd/Mode.cpp',
+		CD_SRC_DIR + 'xsd/Movement.cpp',
+		CD_SRC_DIR + 'xsd/Network.cpp',
+		CD_SRC_DIR + 'xsd/Networks.cpp',
+		CD_SRC_DIR + 'xsd/Notification.cpp',
+		CD_SRC_DIR + 'xsd/NotificationsLink.cpp',
+		CD_SRC_DIR + 'xsd/Operation.cpp',
+		CD_SRC_DIR + 'xsd/PatternsLink.cpp',
+		CD_SRC_DIR + 'xsd/Record.cpp',
+		CD_SRC_DIR + 'xsd/Records.cpp',
+		CD_SRC_DIR + 'xsd/RecordsLink.cpp',
+		CD_SRC_DIR + 'xsd/Remote.cpp',
+		CD_SRC_DIR + 'xsd/Resource.cpp',
+		CD_SRC_DIR + 'xsd/Specification.cpp',
+		CD_SRC_DIR + 'xsd/Subscription.cpp',
+		CD_SRC_DIR + 'xsd/Subscriptions.cpp',
+		CD_SRC_DIR + 'xsd/SubscriptionsLink.cpp',
+		CD_SRC_DIR + 'xsd/Temperature.cpp',
+		CD_SRC_DIR + 'xsd/Temperatures.cpp',
+		CD_SRC_DIR + 'xsd/Thermostat.cpp',
+		CD_SRC_DIR + 'xsd/Time.cpp',
+		CD_SRC_DIR + 'xsd/Usage.cpp',
+		CD_SRC_DIR + 'xsd/UsageLimit.cpp',
+		CD_SRC_DIR + 'xsd/UsageLimits.cpp',
+		CD_SRC_DIR + 'xsd/Usages.cpp',
+		CD_SRC_DIR + 'xsd/Version.cpp',
+		CD_SRC_DIR + 'xsd/Versions.cpp',
+		CD_SRC_DIR + 'xsd/WiFi.cpp',]
+
+				
+cm = env1.StaticLibrary(target = lib_target, source = lib_sources)
+i_lc = env1.Install(BUILD_DIR, lib_target)
+Alias(lib_target, i_lc)
+

@@ -1,0 +1,84 @@
+##
+# This script includes arduino specific config
+##
+import os
+import platform
+
+Import('env', 'RELEASE_BUILD', 'TARGET_CPU_ARCH', 'ARDUINO_HOME')
+
+if not ARDUINO_HOME:
+	print '''
+************************************* Error ***********************************
+*   Arduino root directory (ARDUINO_HOME) isn't set, you can set enviornment  *
+* variable ARDUINO_HOME or add it in command line as:                         *
+*      # scons ARDUINO_HOME=<path to arduino root directory> ...              *
+*******************************************************************************
+'''
+	Exit(1)
+
+# Overwrite suffixes and prefixes
+if env['HOST_OS'] == 'win32':
+	env['OBJSUFFIX'] = '.o'
+	env['SHOBJSUFFIX'] = '.os'
+	env['LIBPREFIX'] = 'lib'
+	env['LIBSUFFIX'] = '.a'
+	env['SHLIBPREFIX'] = 'lib'
+	env['SHLIBSUFFIX'] = '.so'
+	env['LIBPREFIXES'] = ['lib']
+	env['LIBSUFFIXES'] = ['.a', '.so']
+	env['PROGSUFFIX'] = ''
+elif platform.system().lower() == 'darwin':
+	env['SHLIBSUFFIX'] = '.so'
+	env['LIBSUFFIXES'] = ['.a', '.so']
+	env['PROGSUFFIX'] = ''
+
+# Set toolchain
+def find_toolchain(dir, tc):
+	for root, dirs, files in os.walk(dir, True, None, False):
+		for f in files:
+			lf = f.lower()
+			if lf == tc:
+				return root
+	return None
+
+if TARGET_CPU_ARCH == 'arm':
+	prefix = 'arm-none-eabi-'
+else:
+	prefix = 'avr-'
+
+tc_path = find_toolchain(ARDUINO_HOME + '/hardware/tools/', prefix + 'g++')
+if not tc_path:
+	print '''
+************************************* Error ***********************************
+*   Arduino toolchain isn't detected. Please specify the toolchain prefix and *
+* path, you can do it by setting enviornment variable TC_PREFIX and TC_PATH or*
+* add it in command line as:                                                  *
+*     # scons TC_PREFIX=<prefix> TC_PATH=<path to toolchain> ...              *
+* e.g. scons TC_PREFIX=avr- TC_PATH=/opt/arduino-1.5.7/hardware/tools/avr/bin *                                                                         *
+* Note: TC_PREFIX shouldn't include path                                      *
+*******************************************************************************
+'''
+	Exit(1)
+
+env.PrependENVPath('PATH', tc_path)
+env.Replace(CC = prefix + 'gcc')
+env.Replace(CXX = prefix + 'g++')
+env.Replace(AR = prefix + 'ar')
+env.Replace(AS = prefix + 'as')
+env.Replace(LINK = prefix + 'ld')
+env.Replace(RANLIB = prefix + 'ranlib')
+
+sys_root = os.path.abspath(os.path.join(tc_path, '..'))
+env.AppendUnique(CFLAGS = ['--sysroot=' + sys_root])
+env.AppendUnique(CXXFLAGS = ['--sysroot=' + sys_root])
+env.AppendUnique(LINKFLAGS = ['--sysroot=' + sys_root])
+
+# Debug/release relative flags
+if RELEASE_BUILD:
+	env.AppendUnique(CFLAGS = ['-Os'])
+	env.AppendUnique(CXXFLAGS = ['-Os'])
+	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+	env.AppendUnique(LINKFLAGS = ['-s'])
+else:
+	env.AppendUnique(CFLAGS = ['-g'])
+	env.AppendUnique(CXXFLAGS = ['-g'])

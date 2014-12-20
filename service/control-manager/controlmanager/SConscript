@@ -1,0 +1,252 @@
+
+Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR','TARGET_ARCH')
+env1 = env.Clone()
+
+env1.AppendUnique(CXXFLAGS = "-std=c++0x")
+
+#CM_SRC_DIR          =  SRC_TOP_DIR  + 'controlmanager/'
+CM_SRC_DIR             = './'
+OPENSOURCE_DIR      =  SRC_TOP_DIR  + 'opensource/'
+OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
+OIC_UTILS_DIR       =  SRC_TOP_DIR  + '../../../oic-utilities/'
+
+env1.PrependUnique(CPPPATH = [
+			CM_SRC_DIR + 'platform/include',
+			CM_SRC_DIR + 'api/include',
+			CM_SRC_DIR + 'api/include/Client',
+			CM_SRC_DIR + 'api/include/Server',
+			CM_SRC_DIR + 'api/include/xsd',
+			CM_SRC_DIR + 'core/src',
+			CM_SRC_DIR + 'core/src/DeviceFinder',
+			CM_SRC_DIR + 'api/src',
+			CM_SRC_DIR + 'core/src/subscriptionstore/include',
+			CM_SRC_DIR + 'core/src/subscriptionstore/sqlite/src',
+			CM_SRC_DIR + 'core/src/subscriptionmanager/src',
+			CM_SRC_DIR + 'core/src/Connector/Client',
+			OPENSOURCE_DIR + 'sqlite3/include',
+			OPENSOURCE_DIR + 'jsoncpp/include',
+			OIC_RESOURCE_DIR + 'include',
+			OIC_RESOURCE_DIR + 'csdk/stack/include',
+			OIC_RESOURCE_DIR + 'csdk/occoap/include',
+			OIC_RESOURCE_DIR + 'csdk/ocrandom/include',
+			OIC_RESOURCE_DIR + 'csdk/ocsocket/include',
+			OIC_RESOURCE_DIR + 'dependencies/cereal/include',
+			OIC_RESOURCE_DIR + 'oc_logger/include',
+		])
+		
+if TARGET_OS == 'android':
+	env1.AppendUnique(CPPPATH = [OIC_UTILS_DIR + 'android/boost/include' , ])
+	env1.PrependUnique(LIBPATH = [OIC_UTILS_DIR + 'android/boost/libs/' + TARGET_ARCH , OIC_RESOURCE_DIR + 'csdk/android/release' , ])
+else:
+	env1.AppendUnique(CPPPATH = ['/usr/local/boost/include' , ])
+	env1.PrependUnique(LIBPATH = ['/usr/local/boost/lib/', OIC_RESOURCE_DIR + 'csdk/linux/release', ])
+
+env1.AppendUnique(LIBPATH = [OPENSOURCE_DIR + 'sqlite3/static/',
+                             OPENSOURCE_DIR + 'jsoncpp/static/', 
+							 OIC_RESOURCE_DIR + 'release/obj/',
+							 OIC_RESOURCE_DIR + 'oc_logger/lib', 
+							])
+
+if TARGET_OS == 'android':
+	BOOST_SYSTEM_LIB = 'boost_system-gcc-mt-1_49'
+	BOOST_THREAD_LIB = 'boost_thread-gcc-mt-1_49'
+	BOOST_REGEX_LIB  = 'boost_regex-gcc-mt-1_49'
+else:							
+	BOOST_SYSTEM_LIB = 'boost_system'
+	BOOST_THREAD_LIB = 'boost_thread'
+	BOOST_REGEX_LIB  = 'boost_regex'
+	
+OC_LIB        = 'oc'
+OCTBSTACK_LIB = 'octbstack'
+OCLOGGER_LIB  = 'oc_logger'
+
+env1.PrependUnique(LIBS = [ BOOST_SYSTEM_LIB, BOOST_THREAD_LIB, BOOST_REGEX_LIB,OC_LIB, OCTBSTACK_LIB, OCLOGGER_LIB, 'sqlite3','jsoncpp','dl','rt','pthread', ])
+
+#print "\nCM_SRC_DIR: %s \n" % (CM_SRC_DIR)
+
+if TARGET_OS == 'android':
+	env1.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	env1.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+	env1.AppendUnique(LIBS = ['stdc++',])
+	
+			
+lib_target  = "libcontrolmanager.a"
+lib_sources = [ CM_SRC_DIR + 'api/src/Connector/HeadersList.cpp',
+				CM_SRC_DIR + 'api/src/Client/VersionResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/TemperaturesResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/DevicesResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/NotificationsResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/DetectionResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/ThermostatResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/HumidityResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/NotificationResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/TimeResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/ModeResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/AccessPointResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/AccessPointsResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/UsageLimitsResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/NetworkResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/SubscriptionsResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/AlarmsResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/TemperatureResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/UsagesResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/AlarmResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/CapabilityResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/UsageLimitResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/InformationResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/LightResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/SubscriptionResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/VersionsResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/DeviceResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/NetworksResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/WiFiResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/MovementResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/ConfigurationResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/OperationResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/DoorResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/EnergyResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/DoorsResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/EnergyConsumptionResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/LongPollingNotificationResource.cpp',
+				CM_SRC_DIR + 'api/src/Client/Resource/Resource.cpp',
+				CM_SRC_DIR + 'api/src/Client/LevelResource.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Records.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Time.cpp',
+				CM_SRC_DIR + 'api/src/xsd/List.cpp',
+				CM_SRC_DIR + 'api/src/xsd/PatternsLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/NotificationsLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/SubscriptionsLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/DevicesLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Message.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ArrayOfString.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Link.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Temperatures.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Resource.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Door.cpp',
+				CM_SRC_DIR + 'api/src/xsd/UsageLimit.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Events.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Image.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Movement.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Remote.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Usages.cpp',
+				CM_SRC_DIR + 'api/src/xsd/LongPollingNotification.cpp',
+				CM_SRC_DIR + 'api/src/xsd/MessagesLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Networks.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Doors.cpp',
+				CM_SRC_DIR + 'api/src/xsd/WiFi.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Device.cpp',
+				CM_SRC_DIR + 'api/src/xsd/GroupsLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ActionsLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/AccessPointsLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/IdentifiedObject.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Messages.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Light.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Level.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Specification.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Temperature.cpp',
+				CM_SRC_DIR + 'api/src/xsd/LongPollingNotificationLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Subscription.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Actuators.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Alarms.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ArrayOfDayType.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Mode.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ArrayOfUuid.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ArrayOfConnectivityType.cpp',
+				CM_SRC_DIR + 'api/src/xsd/AccessPoints.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ConfigurationLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Humidity.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Thermostat.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Subscriptions.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Energy.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ArrayOfTimeType.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Versions.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Operation.cpp',
+				CM_SRC_DIR + 'api/src/xsd/RecordsLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/EnergyLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Record.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Capability.cpp',
+				CM_SRC_DIR + 'api/src/xsd/UsageLimits.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Information.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Usage.cpp',
+				CM_SRC_DIR + 'api/src/xsd/EnergyConsumption.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Network.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Version.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Configuration.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Detection.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Color.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ArrayOfAnyURI.cpp',
+				CM_SRC_DIR + 'api/src/xsd/ArrayOfResourceType.cpp',
+				CM_SRC_DIR + 'api/src/xsd/AccessPoint.cpp',
+				CM_SRC_DIR + 'api/src/xsd/FoodManagerLink.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Alarm.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Devices.cpp',
+				CM_SRC_DIR + 'api/src/xsd/DRLC.cpp',
+				CM_SRC_DIR + 'api/src/xsd/Notification.cpp',
+				CM_SRC_DIR + 'api/src/xsd/InformationLink.cpp',
+				CM_SRC_DIR + 'api/src/Serialization/xsd/CMErrorMessage.cpp',
+				CM_SRC_DIR + 'api/src/Serialization/xsd/XSDClassesImpl.cpp',
+				CM_SRC_DIR + 'api/src/Serialization/CMSerializationFactory.cpp',
+				CM_SRC_DIR + 'api/src/Serialization/IDeserializer.cpp',
+				CM_SRC_DIR + 'api/src/Serialization/ISerializable.cpp',
+				CM_SRC_DIR + 'api/src/CMError.cpp',
+				CM_SRC_DIR + 'api/src/Device.cpp',
+				CM_SRC_DIR + 'api/src/Notification/NotificationResponse.cpp',
+				CM_SRC_DIR + 'api/src/ControlManager.cpp',
+				CM_SRC_DIR + 'api/src/Configuration.cpp',
+				CM_SRC_DIR + 'api/src/MyDevice.cpp',
+				CM_SRC_DIR + 'platform/windows/src/Net/IPUtils.cpp',
+				CM_SRC_DIR + 'platform/windows/src/Thread/Thread.cpp',
+				CM_SRC_DIR + 'platform/windows/src/Thread/Mutex.cpp',
+				CM_SRC_DIR + 'platform/windows/src/Thread/ThreadImpl.cpp',
+				CM_SRC_DIR + 'platform/windows/src/Thread/RecursiveMutex.cpp',
+				CM_SRC_DIR + 'platform/windows/src/StringConversion.cpp',
+				CM_SRC_DIR + 'platform/windows/src/Log.cpp',
+				CM_SRC_DIR + 'core/src/Connector/Session.cpp',
+				CM_SRC_DIR + 'core/src/Connector/Client/ClientSessionData.cpp',
+				CM_SRC_DIR + 'core/src/Connector/Client/ClientSession.cpp',
+				CM_SRC_DIR + 'core/src/Connector/Server/ServerSession.cpp',
+				CM_SRC_DIR + 'core/src/Connector/Server/ServerSessionData.cpp',
+				CM_SRC_DIR + 'core/src/Connector/ControlResponse.cpp',
+				CM_SRC_DIR + 'core/src/Connector/ResourceIdentifier.cpp',
+				CM_SRC_DIR + 'core/src/Connector/MethodIdentifier.cpp',
+				CM_SRC_DIR + 'core/src/Connector/SessionStore.cpp',
+				CM_SRC_DIR + 'core/src/Connector/ControlRequest.cpp',
+				CM_SRC_DIR + 'core/src/Server/InformationResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/Server/CapabilityResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/Server/DeviceResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/Server/CMResourceHandlerFactory.cpp',
+				CM_SRC_DIR + 'core/src/Server/DevicesResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/Server/ResourceHandler/AsyncResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/Server/ResourceHandler/SyncResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/Server/ResourceHandler/ResourceHandlerFactory.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionmanager/src/ResourceHandlers/SubscriptionResourceHandlerFactory.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionmanager/src/ResourceHandlers/SubscriptionsResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionmanager/src/ResourceHandlers/NotificationResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionmanager/src/ResourceHandlers/NotificationsResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionmanager/src/ResourceHandlers/SubscriptionResourceHandler.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionmanager/src/Serialization/SubscriptionSerializationFactory.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionmanager/src/SubscriptionManager.cpp',
+				CM_SRC_DIR + 'core/src/Client/OCClient.cpp',
+				CM_SRC_DIR + 'core/src/Server/OCServer.cpp',
+				CM_SRC_DIR + 'core/src/Serialization/Json/JsonSerializer.cpp',
+				CM_SRC_DIR + 'core/src/Serialization/Json/JsonDeserializer.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionstore/src/SubscriptionRecord.cpp',
+				CM_SRC_DIR + 'core/src/subscriptionstore/sqlite/src/SubscriptionSqliteDatabase.cpp',
+				CM_SRC_DIR + 'core/src/DeviceFinder/Service/DeviceFinderServiceDevice.cpp',
+				CM_SRC_DIR + 'core/src/DeviceFinder/OC/OCDevice.cpp',
+				CM_SRC_DIR + 'core/src/DeviceFinder/OC/OCDeviceManager.cpp',
+				CM_SRC_DIR + 'core/src/DeviceFinder/OC/OCDeviceFinder.cpp',
+				CM_SRC_DIR + 'core/src/DeviceFinder/DeviceFinderImpl.cpp',
+				CM_SRC_DIR + 'core/src/DeviceFinder/ControlDeviceFactory.cpp',
+				CM_SRC_DIR + 'core/src/Engine/CMCoreSerializableDataFactory.cpp',
+				CM_SRC_DIR + 'core/src/Engine/CMCoreResourceHandlerFactory.cpp',
+				CM_SRC_DIR + 'core/src/Engine/CMEngine.cpp',
+				CM_SRC_DIR + 'core/src/Utils.cpp',
+				CM_SRC_DIR + 'core/src/CMContext.cpp',]
+
+				
+cm = env1.StaticLibrary(target = lib_target, source = lib_sources)
+Execute(Chmod(BUILD_DIR, 0755))
+i_lc = env1.Install(BUILD_DIR, lib_target)
+Alias(lib_target, i_lc)
+

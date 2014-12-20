@@ -1,0 +1,131 @@
+##
+# This script includes generic build options:
+#    release/debug, build target, CPU ARCH, toolchain, build environment etc
+##
+import os
+import platform
+
+host = platform.system()
+default_arch = platform.machine()
+defualt_sample = 'no'
+
+if host not in ['Linux', 'Windows', 'Darwin']:
+	host = 'Linux'
+
+# Map of host and allowed targets
+allow_target_map = {
+		'Linux': ['Linux', 'android', 'Arduino'],
+		'Windows': ['Windows', 'WinRT', 'Android', 'Arduino'],
+		'Darwin': ['Darwin', 'IOS', 'Android', 'Arduino'],
+		}
+
+# Map of platform(target) and allowed archs
+allow_arch_map = {
+		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
+		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
+		'windows': ['x86', 'amd64', 'arm'],
+		'winrt': ['arm'],
+		'darwin': ['i386', 'x86_64'],
+		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
+		'arduino': ['avr', 'arm'],
+		}
+
+######################################################################
+# Get build options (the optins from command line)
+######################################################################
+TARGET_OS = ARGUMENTS.get('TARGET_OS', host).lower() # target platform
+
+if not allow_arch_map.has_key(TARGET_OS):
+	print "\nError: Unknown target platform: %s (Allow values: %s)\n" % (TARGET_OS, allow_target_map[host])
+	Exit(1)
+
+if default_arch not in allow_arch_map[TARGET_OS]:
+	default_arch = allow_arch_map[TARGET_OS][0]
+	default_arch = default_arch.lower()
+
+TARGET_ARCH = ARGUMENTS.get('TARGET_ARCH', default_arch) # target CPU ARCH
+ANDROID_NDK = ARGUMENTS.get('ANDROID_NDK', os.environ.get('ANDROID_NDK')) # ANDROID NDK base directory
+SYS_VERSION = ARGUMENTS.get('SYS_VERSION', os.environ.get('SYS_VERSION'))  # OSX/IOS version
+ARDUINO_HOME = ARGUMENTS.get('ARDUINO_HOME', os.environ.get('ARDUINO_HOME')) # ARDUINO root directory
+SAMPLE = ARGUMENTS.get('SAMPLE', defualt_sample) # sample build required or not
+
+
+######################################################################
+# Common build options (release, build target, CPU)
+######################################################################
+vars = Variables()
+vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
+vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, allow_target_map[host]))
+vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, allow_arch_map[TARGET_OS]))
+
+######################################################################
+# Platform(build target) specific options: SDK/NDK & toolchain
+######################################################################
+targets_support_cc = ['linux', 'arduino']
+
+if TARGET_OS == 'android':
+	vars.Add(PathVariable('ANDROID_NDK', 'Android NDK root directory', os.environ.get('ANDROID_NDK')))
+
+elif TARGET_OS in ['darwin', 'ios']:
+	vars.Add('SYS_VERSION', 'MAC OS X version / IOS version', os.environ.get('SYS_VERSION'))
+
+elif TARGET_OS == 'arduino':
+	vars.Add(PathVariable('ARDUINO_HOME', 'ARDUINO root directory', os.environ.get('ARDUINO_HOME')))
+
+if TARGET_OS in targets_support_cc:
+	# Set cross compile toolchain
+	vars.Add('TC_PREFIX', "Toolchain prefix (Generally only be required for cross-compiling)", os.environ.get('TC_PREFIX'))
+	vars.Add(PathVariable('TC_PATH',
+			'Toolchain path (Generally only be required for cross-compiling)',
+			os.environ.get('TC_PATH')))
+
+if TARGET_OS == 'android': # Android always uses GNU compiler regardless of the host
+	env = Environment(variables = vars,
+			tools = ['gnulink', 'gcc', 'g++', 'ar', 'as']
+			)
+else:
+	env = Environment(variables = vars, TARGET_ARCH = TARGET_ARCH, TARGET_OS = TARGET_OS)
+
+Help(vars.GenerateHelpText(env))
+
+RELEASE_BUILD = env.get('RELEASE') # Whethere is release build, True: release, False: debug
+
+tc_set_msg = '''
+************************************ Warning **********************************
+*   Enviornment variable TC_PREFIX/TC_PATH is set. It will change the default *
+* toolchain, if it isn't what you expect you should unset it, otherwise it may*
+* cause inexplicable errors.                                                  *
+*******************************************************************************
+'''
+
+if TARGET_OS in targets_support_cc:
+	prefix = ARGUMENTS.get('TC_PREFIX', os.environ.get('TC_PREFIX'))
+	tc_path = ARGUMENTS.get('TC_PATH', os.environ.get('TC_PATH'))
+	if prefix:
+		env.Replace(CC = prefix + 'gcc')
+		env.Replace(CXX = prefix + 'g++')
+		env.Replace(AR = prefix + 'ar')
+		env.Replace(AS = prefix + 'as')
+		env.Replace(LINK = prefix + 'ld')
+		env.Replace(RANLIB = prefix + 'ranlib')
+
+	if tc_path:
+		env.PrependENVPath('PATH', tc_path)
+		sys_root = os.path.abspath(tc_path + '/../')
+		env.AppendUnique(CFLAGS = ['--sysroot=' + sys_root])
+		env.AppendUnique(CXXFLAGS = ['--sysroot=' + sys_root])
+		env.AppendUnique(LINKFLAGS = ['--sysroot=' + sys_root])
+
+	if prefix or tc_path:
+		print tc_set_msg
+
+# Ensure scons be able to change its working directory
+env.SConscriptChdir(1)
+
+Export('env', 'RELEASE_BUILD', 'TARGET_OS', 'TARGET_ARCH',
+		'ANDROID_NDK', 'SYS_VERSION', 'ARDUINO_HOME','SAMPLE')
+
+# Load config of specific platform(build target)
+env.SConscript(TARGET_OS + '/SConscript')
+
+Return('env')

@@ -1,0 +1,37 @@
+##
+# This script set linux specific flags (GNU GCC)
+#
+##
+Import('env', 'RELEASE_BUILD', 'TARGET_ARCH')
+
+# Set release/debug flags
+if RELEASE_BUILD:
+	env.AppendUnique(CFLAGS = ['-Os'])
+	env.AppendUnique(CXXFLAGS = ['-Os'])
+	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+	env.AppendUnique(LINKFLAGS = ['-s'])
+else:
+	env.AppendUnique(CFLAGS = ['-g'])
+	env.AppendUnique(CXXFLAGS = ['-g'])
+
+# Set arch flags
+if TARGET_ARCH in ['x86']:
+	env.AppendUnique(CFLAGS = ['-m32'])
+	env.AppendUnique(CXXFLAGS = ['-m32'])
+	env.AppendUnique(LINKFLAGS = ['-m32'])
+elif TARGET_ARCH in ['x86_64']:
+	env.AppendUnique(CXXFLAGS = ['-m64'])
+	env.AppendUnique(CFLAGS = ['-m64'])
+	env.AppendUnique(LINKFLAGS = ['-m64'])
+elif TARGET_ARCH.find('v7a-hard') > 0:
+	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+	env.AppendUnique(CPPFLAGS = ['-mfloat-abi=hard'])
+	env.AppendUnique(CFLAGS = ['-mfloat-abi=hard'])
+	env.AppendUnique(CXXFLAGS = ['-mfloat-abi=hard'])
+	env.AppendUnique(LINKFLAGS = ['-mfloat-abi=hard'])
+elif TARGET_ARCH.find('v7a') > 0:
+	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+elif TARGET_ARCH.find('arm64') > 0:
+	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+else:
+	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])

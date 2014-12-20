@@ -1,0 +1,22 @@
+import os
+
+Import('env','BUILD_DIR','TARGET_OS')
+env1 = env.Clone()
+
+SRC_DIR = './src/'
+
+if TARGET_OS == 'android':
+	env1.AppendUnique(CXXFLAGS = ['-fexceptions'])
+
+env1.PrependUnique(CPPPATH = [
+			'./include',			
+		])
+
+lib_target  = "libjsoncpp.a"
+lib_sources = [SRC_DIR + 'json_reader.cpp',
+				SRC_DIR + 'json_value.cpp',
+				SRC_DIR + 'json_writer.cpp',]
+
+env1.StaticLibrary(target = lib_target, source = lib_sources)
+#env1.Install('../../../../opensource/jsoncpp/static/', lib_target)
+env1.Install(BUILD_DIR + 'opensource/jsoncpp/static/', lib_target)

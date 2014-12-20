@@ -1,0 +1,37 @@
+import os
+env = Environment(CXXFLAGS="-std=c++0x")  # Initialize the environment
+
+SRC_TOP_DIR = os.path.abspath('.') + '/' 
+
+Export('env','SRC_TOP_DIR')
+# Common build options
+SConscript('./build_common/SConscript')
+Import('RELEASE_BUILD', 'TARGET_OS', 'TARGET_ARCH','SAMPLE')
+print "\nTarget platform: %s \nBuild Mode: %s \nTarget CPU Architecture: %s\n" % (TARGET_OS, RELEASE_BUILD, TARGET_ARCH)
+
+if RELEASE_BUILD:
+	BUILD_DIR = SRC_TOP_DIR + '/out/' + TARGET_OS + '/' + TARGET_ARCH + '/release/'
+else:
+	BUILD_DIR = SRC_TOP_DIR + '/out/' + TARGET_OS + '/' + TARGET_ARCH + '/debug/'
+VariantDir(BUILD_DIR, SRC_TOP_DIR, duplicate=0)
+Export('BUILD_DIR', 'TARGET_OS')
+
+if SAMPLE == 'no':
+#	SConscript(BUILD_DIR + 'makefiles/modules/opensource/jsoncpp/SConscript')
+#	SConscript(BUILD_DIR + 'makefiles/modules/opensource/sqlite3/SConscript')
+#	SConscript(BUILD_DIR + 'makefiles/modules/controlmanager/SConscript')
+	SConscript(BUILD_DIR + 'opensource/jsoncpp/SConscript')
+	SConscript(BUILD_DIR + 'opensource/sqlite3/SConscript')
+	SConscript(BUILD_DIR + 'controlmanager/SConscript')
+	if TARGET_OS == 'linux':
+		SConscript(BUILD_DIR + 'controllee/SConscript')
+		SConscript(BUILD_DIR + 'RESTframework/SConscript')
+else:
+	if TARGET_OS == 'linux':
+		print "\n creating sample for linux, make sure library is already created \n"
+		SConscript(BUILD_DIR + 'samples/controller-client/SConscript')
+		SConscript(BUILD_DIR + 'samples/controlee-server/SConscript')
+		SConscript(BUILD_DIR + 'samples/REST-client/SConscript')
+
+if TARGET_OS == 'android':
+	SConscript(BUILD_DIR + 'controlmanager/jni/SConscript')

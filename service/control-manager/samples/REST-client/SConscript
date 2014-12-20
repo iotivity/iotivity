@@ -1,0 +1,50 @@
+import os
+
+Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR','TARGET_ARCH','RELEASE_BUILD')
+env1 = env.Clone()
+env1.AppendUnique(CXXFLAGS = "-std=c++0x")
+
+SRC_DIR =  'src/'
+OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
+LIB_DIR = os.path.abspath('.') + '/../../' 
+
+print "\nLIB_DIR: %s \n" % (LIB_DIR)
+
+if RELEASE_BUILD:
+        OIC_LIB_PATH        =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' + TARGET_ARCH + '/release/'
+else:
+        OIC_LIB_PATH        =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' +TARGET_ARCH + '/debug/'
+
+if RELEASE_BUILD:
+        BASE_LIB_PATH        =  SRC_TOP_DIR  + 'RESTframework/opensource/base/lib/release'
+else:
+        BASE_LIB_PATH        =  SRC_TOP_DIR  + 'RESTframework/opensource/base/lib/debug'
+
+if RELEASE_BUILD:
+        UUID_LIB_PATH        =  SRC_TOP_DIR  + 'RESTframework/opensource/uuid/lib/release'
+else:
+        UUID_LIB_PATH        =  SRC_TOP_DIR  + 'RESTframework/opensource/uuid/lib/debug'
+
+env1.AppendUnique(CPPPATH = [
+          '../../RESTframework/include',
+          '../../RESTframework/opensource/base/include',
+          '../../RESTframework/opensource/base',
+          ])
+
+env1.AppendUnique(LIBPATH = [BUILD_DIR,
+						     OIC_LIB_PATH,
+                             BASE_LIB_PATH,
+		                     UUID_LIB_PATH,
+							 BUILD_DIR + 'opensource/sqlite3/static/',
+							 BUILD_DIR + 'opensource/jsoncpp/static/',
+							 '/usr/local/boost/lib/',
+							 ])
+
+env1.PrependUnique(LIBS = ['restfw','boost_system','boost_regex','boost_thread','sqlite3','dl','rt','pthread','jsoncpp','oc','octbstack','oc_logger','coap','uuid','base'])
+samples = 'REST-client'
+source_files = ['src/rest_client_test.cc']
+
+env1.Program(target = samples, source = source_files)
+i_lc = env1.Install(BUILD_DIR, samples)
+Alias(samples, i_lc)
+

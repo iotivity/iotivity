@@ -1,0 +1,53 @@
+import os
+
+Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR','TARGET_ARCH')
+env1 = env.Clone()
+env1.AppendUnique(CXXFLAGS = "-std=c++0x")
+
+SRC_DIR =  'src/'
+OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
+LIB_DIR = os.path.abspath('.') + '/../../' 
+OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
+
+print "\nLIB_DIR: %s \n" % (LIB_DIR)
+
+if 'RELEASE_BUILD':
+        OIC_LIB_PATH        =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' + TARGET_ARCH + '/release/'
+else:
+        OIC_LIB_PATH        =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' +TARGET_ARCH + '/debug/'
+
+
+env1.AppendUnique(CPPPATH = ['.',SRC_TOP_DIR + 'controllee/include',
+				 SRC_TOP_DIR + 'controllee/include/api',
+				 SRC_TOP_DIR + 'controllee/include/device',
+				 SRC_TOP_DIR + 'controllee/include/Notification',
+				 SRC_TOP_DIR + 'controllee/include/Serialization',
+				 SRC_TOP_DIR + 'controllee/include/Server',
+				 SRC_TOP_DIR + 'controllee/include/SubscriptionStore',
+				 SRC_TOP_DIR + 'controllee/include/xsd',
+				 OIC_RESOURCE_DIR + 'include',
+				 OIC_RESOURCE_DIR + 'csdk/stack/include',
+				 OIC_RESOURCE_DIR + 'csdk/ocsocket/include',
+				 OIC_RESOURCE_DIR + 'oc_logger/include',
+				 OIC_RESOURCE_DIR + 'dependencies/cereal/include',])
+
+env1.AppendUnique(LIBPATH = [BUILD_DIR, 
+							 BUILD_DIR + 'opensource/sqlite3/static/',
+							 BUILD_DIR + 'opensource/jsoncpp/static/',
+							OIC_LIB_PATH,
+							 OIC_RESOURCE_DIR + 'release/obj/',
+							 OIC_RESOURCE_DIR + 'oc_logger/lib',
+							 OIC_RESOURCE_DIR + 'csdk/linux/release',
+							 '/usr/local/boost/lib/',
+							 ])
+
+env1.PrependUnique(LIBS = ['controllee','boost_system','boost_regex','boost_thread','sqlite3','dl','rt','pthread','jsoncpp','oc','octbstack','oc_logger','coap'])
+samples = 'controllee-server'
+lib_sources = [SRC_DIR+'main.cpp', 
+	       SRC_DIR+'ProgramUtils.cpp', 
+              ]
+			   
+env1.Program(target = samples,source =lib_sources)
+i_lc = env1.Install(BUILD_DIR, samples)
+Alias(samples, i_lc)
+

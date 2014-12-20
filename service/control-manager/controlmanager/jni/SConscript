@@ -1,0 +1,106 @@
+
+Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR','TARGET_ARCH','RELEASE_BUILD')
+env1 = env.Clone()
+
+env1.AppendUnique(CXXFLAGS = ['-std=c++11', '-Wall'])
+
+
+CM_SRC_DIR          = '../'
+JNI_SRC_DIR         = './native/src/'
+if RELEASE_BUILD:
+	OIC_RESOURCE_LIB    =  SRC_TOP_DIR  + '../../out/' + TARGET_OS + '/' +  TARGET_ARCH  + '/release/'
+else:
+	OIC_RESOURCE_LIB    =  SRC_TOP_DIR  + '../../out/' + TARGET_OS + '/' +  TARGET_ARCH + + '/debug/'
+	
+
+OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
+OPENSOURCE_DIR      =  SRC_TOP_DIR  + 'opensource/'
+OIC_UTILS_DIR       =  SRC_TOP_DIR  + '../../../oic-utilities/'
+
+
+env1.PrependUnique(CPPPATH = [
+			CM_SRC_DIR + 'platform/include',
+			CM_SRC_DIR + 'api/include',
+			CM_SRC_DIR + 'api/include/Client',
+			CM_SRC_DIR + 'api/include/Server',
+			CM_SRC_DIR + 'api/include/xsd',
+			CM_SRC_DIR + 'core/src',
+			CM_SRC_DIR + 'core/src/DeviceFinder',
+			CM_SRC_DIR + 'api/src',
+			CM_SRC_DIR + 'core/src/subscriptionstore/include',
+			CM_SRC_DIR + 'core/src/subscriptionstore/sqlite/src',
+			CM_SRC_DIR + 'core/src/subscriptionmanager/src',
+			CM_SRC_DIR + 'core/src/Connector/Client',
+			CM_SRC_DIR + 'jni/native/include',
+			CM_SRC_DIR + 'jni/native/src',
+			OPENSOURCE_DIR + 'sqlite3/include',
+			OPENSOURCE_DIR + 'jsoncpp/include',
+			OIC_RESOURCE_DIR + 'include',
+			OIC_RESOURCE_DIR + 'csdk/stack/include',
+			OIC_RESOURCE_DIR + 'csdk/occoap/include',
+			OIC_RESOURCE_DIR + 'csdk/ocrandom/include',
+			OIC_RESOURCE_DIR + 'csdk/ocsocket/include',
+			OIC_RESOURCE_DIR + 'dependencies/cereal/include',
+			OIC_RESOURCE_DIR + 'oc_logger/include',
+			OIC_UTILS_DIR + 'android/boost/include' ,
+		])
+
+#print "\OIC_RESOURCE_LIB: %s \n" % (OIC_RESOURCE_LIB)
+#print "\BUILD_DIR: %s \n" % (BUILD_DIR)
+
+env1.PrependUnique(LIBPATH = [OIC_UTILS_DIR + 'android/boost/libs/' + TARGET_ARCH + '/',])
+env1.AppendUnique(LIBPATH  = [BUILD_DIR + 'opensource/sqlite3/static/',
+                              BUILD_DIR + 'opensource/jsoncpp/static/', 
+							  OIC_RESOURCE_LIB,
+							  BUILD_DIR,
+							 ])
+
+BOOST_SYSTEM_LIB = 'boost_system-gcc-mt-1_49'
+BOOST_THREAD_LIB = 'boost_thread-gcc-mt-1_49'
+BOOST_REGEX_LIB  = 'boost_regex-gcc-mt-1_49'
+OC_LIB        = 'oc'
+OCTBSTACK_LIB = 'octbstack'
+OCLOGGER_LIB  = 'oc_logger'
+
+env1.PrependUnique(LIBS = ['stdc++','gnustl_shared','controlmanager',BOOST_SYSTEM_LIB, BOOST_THREAD_LIB, BOOST_REGEX_LIB,OC_LIB, OCTBSTACK_LIB, OCLOGGER_LIB, 'sqlite3','jsoncpp','dl' ,'log' ])
+
+env1.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+env1.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
+												
+lib_target  = "libcmjni.so"
+lib_sources = [ JNI_SRC_DIR + 'JNIInvocation.cpp',
+				JNI_SRC_DIR + 'JNIControlManager.cpp',
+				JNI_SRC_DIR + 'JNIResourceHandlerFactory.cpp',
+				JNI_SRC_DIR + 'JNIDeSerializer.cpp',
+				JNI_SRC_DIR + 'JNISerializer.cpp',
+				JNI_SRC_DIR + 'JNIGlobal.cpp',
+				JNI_SRC_DIR + 'JNIDeviceFinder.cpp',
+				JNI_SRC_DIR + 'JNIDevice.cpp',
+				JNI_SRC_DIR + 'JNIResourceHandler.cpp',
+				JNI_SRC_DIR + 'JNISession.cpp',
+				JNI_SRC_DIR + 'JNIServerSession.cpp',
+				JNI_SRC_DIR + 'JNIHeadersList.cpp',
+				JNI_SRC_DIR + 'JNIResource.cpp',
+				JNI_SRC_DIR + 'JNISubscriptionManager.cpp',
+				JNI_SRC_DIR + 'JNINotificationResponse.cpp',
+				JNI_SRC_DIR + 'JNIConfiguration.cpp',
+				JNI_SRC_DIR + 'JNISerializable.cpp',
+				JNI_SRC_DIR + 'JNIDeviceFactory.cpp',
+				JNI_SRC_DIR + 'JNISerializableDataFactory.cpp',
+				JNI_SRC_DIR + 'MyCMListener.cpp',
+				JNI_SRC_DIR + 'CMResourceHandlerFactory.cpp',
+				JNI_SRC_DIR + 'CMResourceHandler.cpp',
+				JNI_SRC_DIR + 'CMJNISubscriptionProviderImpl.cpp',
+				JNI_SRC_DIR + 'CMSerializableDataFactory.cpp',
+				JNI_SRC_DIR + 'CMDeviceFactory.cpp',
+				JNI_SRC_DIR + 'CMConfiguration.cpp',
+				JNI_SRC_DIR + 'Serializable.cpp',
+				JNI_SRC_DIR + 'MyNotificationListener.cpp',
+				JNI_SRC_DIR + 'MyDeviceFinderListener.cpp',
+				JNI_SRC_DIR + 'MyResourceResponseListener.cpp',]
+			
+
+cm = env1.SharedLibrary(target = lib_target, source = lib_sources)
+i_lc = env1.Install(BUILD_DIR, lib_target)
+Alias(lib_target, i_lc)
+

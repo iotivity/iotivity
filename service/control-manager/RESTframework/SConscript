@@ -1,0 +1,225 @@
+
+Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR', 'RELEASE_BUILD')
+Import('TARGET_ARCH')
+env1 = env.Clone()
+
+env1.AppendUnique(CXXFLAGS = "-std=c++0x")
+
+REST_SRC_DIR        =  '../RESTframework/'
+OPENSOURCE_DIR      =  SRC_TOP_DIR  + 'opensource/'
+OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
+OIC_UTILS_DIR       =  SRC_TOP_DIR  + '../../../oic-utilities/'
+
+if 'RELEASE_BUILD':
+	OIC_LIB_PATH	    =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' + TARGET_ARCH + '/release/'
+else:
+	OIC_LIB_PATH	    =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' +TARGET_ARCH + '/debug/'
+
+env1.AppendUnique(CPPPATH = [
+          REST_SRC_DIR + 'include',
+          REST_SRC_DIR + 'core',
+          REST_SRC_DIR + '../controlmanager/api/include',
+          REST_SRC_DIR + 'opensource/base',
+          REST_SRC_DIR + 'opensource/base/include',
+          REST_SRC_DIR + 'opensource/uuid/include',
+          ])
+
+if TARGET_OS == 'android':
+	env1.AppendUnique(CPPPATH = [OIC_UTILS_DIR + 'android/boost/include' , ])
+	env1.PrependUnique(LIBPATH = [OIC_UTILS_DIR + 'android/boost/libs/armeabi' , OIC_RESOURCE_DIR + 'csdk/android/release' , ])
+else:
+	env1.AppendUnique(CPPPATH = ['/usr/local/boost/include', '/usr/local/boost/include/boost'])
+	env1.PrependUnique(LIBPATH = ['/usr/local/boost/lib/', OIC_RESOURCE_DIR + 'csdk/linux/release'])
+
+# By default setting the opensource lib path as 'debug'
+BASE_LIB_PATH = 'opensource/base/lib/debug'
+UUID_LIB_PATH = 'opensource/uuid/lib/debug'
+if RELEASE_BUILD:
+  BASE_LIB_PATH = 'opensource/base/lib/release'
+  UUID_LIB_PATH = 'opensource/uuid/lib/release'
+  
+
+env1.AppendUnique(LIBPATH = [BUILD_DIR + 'opensource/sqlite3/static/',
+                             BUILD_DIR + 'opensource/jsoncpp/static/',
+                             OIC_LIB_PATH,
+                             OIC_RESOURCE_DIR + 'release/obj/',
+                             OIC_RESOURCE_DIR + 'oc_logger/lib',
+                             BUILD_DIR,
+                             BASE_LIB_PATH,
+                             UUID_LIB_PATH
+                            ])
+
+if TARGET_OS == 'android':
+	BOOST_SYSTEM_LIB = 'boost_system-gcc-mt-1_49'
+	BOOST_THREAD_LIB = 'boost_thread-gcc-mt-1_49'
+	BOOST_REGEX_LIB  = 'boost_regex-gcc-mt-1_49'
+else:							
+	BOOST_SYSTEM_LIB = 'boost_system'
+	BOOST_THREAD_LIB = 'boost_thread'
+	BOOST_REGEX_LIB  = 'boost_regex'
+	
+OC_LIB        = 'oc'
+OCTBSTACK_LIB = 'octbstack'
+OCLOGGER_LIB  = 'oc_logger'
+CONTROL_MGR_LIB = 'controlmanager'
+
+# Note: Do not change the linking order
+env1.PrependUnique(LIBS = [BOOST_SYSTEM_LIB, BOOST_THREAD_LIB, BOOST_REGEX_LIB,CONTROL_MGR_LIB,OC_LIB, OCTBSTACK_LIB, OCLOGGER_LIB, 'coap','sqlite3','jsoncpp','dl','rt','pthread', 'base', 'uuid'])
+
+lib_target  = "librestfw.so"
+http_util_files = [
+                        # HTTP Start Line
+                        REST_SRC_DIR + 'core/http_start_line/http_request_line.cc',
+                        REST_SRC_DIR + 'core/http_start_line/http_request_line_impl.cc',
+                        REST_SRC_DIR + 'core/http_start_line/http_status_code.cc',
+                        REST_SRC_DIR + 'core/http_start_line/http_status_code_impl.cc',
+                        # HTTP Header
+                        REST_SRC_DIR + 'core/http_header/http_header_impl.cc',
+                        REST_SRC_DIR + 'core/http_header/http_header_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/http_header/http_request_header.cc',
+                        REST_SRC_DIR + 'core/http_header/http_response_header.cc',
+                        # HTTP Body
+                        REST_SRC_DIR + 'core/http_body/creator_http_body_generator.cc',
+                        REST_SRC_DIR + 'core/http_body/creator_http_body_parser.cc',
+                        REST_SRC_DIR + 'core/http_body/http_body_json_generator.cc',
+                        REST_SRC_DIR + 'core/http_body/http_body_json_parser.cc',
+                  ]
+wrapper_files =   [
+                        # Wrapper Functions
+                        REST_SRC_DIR + 'core/wrapped_component/control_manager_wrapper.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/access_point_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/alarm_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/common_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/configuration_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/detection_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/device_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/door_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/energy_consumption_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/humidity_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/information_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/level_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/light_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/mode_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/movement_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/network_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/operation_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/temperature_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/thermostat_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/time_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/version_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/wifi_wrapper_functions.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/access_point_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/access_points_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/alarm_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/alarms_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/configuration_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/detection_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/device_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/door_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/doors_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/energy_consumption_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/humidity_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/information_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/level_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/light_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/mode_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/movement_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/network_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/networks_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/operation_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/temperature_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/temperatures_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/thermostat_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/time_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/version_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/versions_rsc_resp_listener.cc',
+                        REST_SRC_DIR + 'core/wrapped_component/response_listeners/wifi_rsc_resp_listener.cc',
+                  ]
+base_rest_files = [
+                        # Web Cache
+                        REST_SRC_DIR + 'core/web_cache/web_cache_manager.cc',
+                        REST_SRC_DIR + 'core/web_cache/web_cache_storage.cc',
+                        REST_SRC_DIR + 'core/web_cache/web_cache_wrapper_functions.cc',
+                        # Web Filter
+                        REST_SRC_DIR + 'core/web_filter/web_filter_wrapper_functions.cc',
+                        # Rest Engine
+                        REST_SRC_DIR + 'core/rest_request_handler.cc',
+                        REST_SRC_DIR + 'core/resource_request_handler.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/creator_identified_object.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/creator_link.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/creator_linked_child.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/creator_list.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/creator_resource.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/creator_simple_object_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_identified_object.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_link.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_linked_child.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_list.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_common_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_get_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_get_device_resources_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_notsupported_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_post_multiple_resources_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_post_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_put_child_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_put_no_child_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_object_delete_child_strategy.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_resource.cc',
+                        REST_SRC_DIR + 'core/abstract_resource/simple_root.cc',
+                        REST_SRC_DIR + 'core/base_resource/base_identified_object.cc',
+                        REST_SRC_DIR + 'core/base_resource/base_link.cc',
+                        REST_SRC_DIR + 'core/base_resource/base_linked_child.cc',
+                        REST_SRC_DIR + 'core/base_resource/base_list.cc',
+                        REST_SRC_DIR + 'core/base_resource/base_resource.cc',
+                        REST_SRC_DIR + 'core/base_resource/base_simple_object.cc',
+                        REST_SRC_DIR + 'core/base_resource/process_attribute.cc',
+                  ]
+resource_files =  [
+                        # Validate ID of identified object
+                        REST_SRC_DIR + 'core/object_id_manager/creator_object_id_manager.cc',
+                        REST_SRC_DIR + 'core/object_id_manager/accesspoint_id_manager.cc',
+                        REST_SRC_DIR + 'core/object_id_manager/alarm_id_manager.cc',
+                        REST_SRC_DIR + 'core/object_id_manager/device_id_manager.cc',
+                        REST_SRC_DIR + 'core/object_id_manager/door_id_manager.cc',
+                        REST_SRC_DIR + 'core/object_id_manager/network_id_manager.cc',
+                        REST_SRC_DIR + 'core/object_id_manager/temperature_id_manager.cc',
+                        REST_SRC_DIR + 'core/object_id_manager/version_id_manager.cc',
+                        # following are resource files
+                        REST_SRC_DIR + 'core/generated_resource/resources.cc',    
+                        REST_SRC_DIR + 'core/generated_resource/list_devices.cc',
+                        REST_SRC_DIR + 'core/generated_resource/list_versions.cc',
+                        REST_SRC_DIR + 'core/generated_resource/list_accesspoints.cc',
+                        REST_SRC_DIR + 'core/generated_resource/list_networks.cc',
+                        REST_SRC_DIR + 'core/generated_resource/list_alarms.cc',
+                        REST_SRC_DIR + 'core/generated_resource/list_doors.cc',
+                        REST_SRC_DIR + 'core/generated_resource/list_temperatures.cc',
+                        REST_SRC_DIR + 'core/generated_resource/link_information.cc',
+                        REST_SRC_DIR + 'core/generated_resource/link_accesspoints.cc',
+                        REST_SRC_DIR + 'core/generated_resource/link_configuration.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_information.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_wifi.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_configuration.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_time.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_energyconsumption.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_detection.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_humidity.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_level.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_light.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_mode.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_movement.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_thermostat.cc',
+                        REST_SRC_DIR + 'core/generated_resource/resource_operation.cc',
+                        REST_SRC_DIR + 'core/generated_resource/linked_child_specification.cc',
+                        REST_SRC_DIR + 'core/generated_resource/linked_child_color.cc',
+                        REST_SRC_DIR + 'core/generated_resource/identified_object_device.cc',
+                        REST_SRC_DIR + 'core/generated_resource/identified_object_version.cc',
+                        REST_SRC_DIR + 'core/generated_resource/identified_object_accesspoint.cc',
+                        REST_SRC_DIR + 'core/generated_resource/identified_object_network.cc',
+                        REST_SRC_DIR + 'core/generated_resource/identified_object_alarm.cc',
+                        REST_SRC_DIR + 'core/generated_resource/identified_object_door.cc',
+                        REST_SRC_DIR + 'core/generated_resource/identified_object_temperature.cc'
+                  ]
+
+rest_lib = env1.SharedLibrary(target = lib_target, source = http_util_files + wrapper_files + base_rest_files + resource_files)
+i_lc = env1.Install(BUILD_DIR, lib_target)
+Alias(lib_target, i_lc)

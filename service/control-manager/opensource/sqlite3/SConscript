@@ -1,0 +1,16 @@
+Import('env','BUILD_DIR')
+env1 = env.Clone()
+
+SRC_DIR = './src/'
+
+
+env.PrependUnique(CPPPATH = [
+			'./include',			
+		])
+
+lib_target  = "libsqlite3.a"
+lib_sources = [SRC_DIR + 'sqlite3.c',]
+
+env.StaticLibrary(target = lib_target, source = lib_sources)
+#env.Install('../../../../opensource/sqlite3/static', lib_target)
+env1.Install(BUILD_DIR + 'opensource/sqlite3/static/', lib_target)

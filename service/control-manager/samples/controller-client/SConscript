@@ -1,0 +1,55 @@
+import os
+
+Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR','TARGET_ARCH')
+env1 = env.Clone()
+env1.AppendUnique(CXXFLAGS = "-std=c++0x")
+
+SRC_DIR =  'src/'
+OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
+LIB_DIR = os.path.abspath('.') + '/../../' 
+
+print "\nLIB_DIR: %s \n" % (LIB_DIR)
+
+if 'RELEASE_BUILD':
+        OIC_LIB_PATH        =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' + TARGET_ARCH + '/release/'
+else:
+        OIC_LIB_PATH        =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' +TARGET_ARCH + '/debug/'
+
+
+env1.AppendUnique(CPPPATH = ['.',SRC_TOP_DIR + 'controlmanager/api/include/',])
+
+env1.AppendUnique(LIBPATH = [BUILD_DIR, 
+							 BUILD_DIR + 'opensource/sqlite3/static/',
+							 BUILD_DIR + 'opensource/jsoncpp/static/',
+							OIC_LIB_PATH,
+							 OIC_RESOURCE_DIR + 'release/obj/',
+							 OIC_RESOURCE_DIR + 'oc_logger/lib',
+							 OIC_RESOURCE_DIR + 'csdk/linux/release',
+							 '/usr/local/boost/lib/',
+							 ])
+
+env1.PrependUnique(LIBS = ['controlmanager','boost_system','boost_regex','boost_thread','sqlite3','dl','rt','pthread','jsoncpp','oc','octbstack','oc_logger','coap'])
+samples = 'controller-client'
+lib_sources = [SRC_DIR+'main.cpp', 
+			   SRC_DIR+'ProgramUtils.cpp', 
+			   SRC_DIR+'testConfiguration.cpp', 
+			   SRC_DIR+'testDoors.cpp', 
+			   SRC_DIR+'testEnergyConsumptionResource.cpp', 
+			   SRC_DIR+'testHumidityResource.cpp', 
+			   SRC_DIR+'testNetworksResource.cpp', 
+			   SRC_DIR+'testSubscriptionListener.cpp', 
+			   SRC_DIR+'testInformationController.cpp', 
+			   SRC_DIR+'testLightResource.cpp', 
+			   SRC_DIR+'testMode.cpp', 
+			   SRC_DIR+'testOperationResource.cpp', 
+			   SRC_DIR+'testTemperaturesResource.cpp',
+			   SRC_DIR+'testUsage.cpp',
+			   SRC_DIR+'testAccessPointsResource.cpp',
+			   SRC_DIR+'testWifiResource.cpp', 
+			   SRC_DIR+'ControlManagerListener.cpp'
+			   ]
+			   
+env1.Program(target = samples,source =lib_sources)
+i_lc = env1.Install(BUILD_DIR, samples)
+Alias(samples, i_lc)
+
