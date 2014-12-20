@@ -51,18 +51,18 @@ OCDeviceInfo deviceInfo;
 
 void DeleteDeviceInfo()
 {
-    delete deviceInfo.contentType;
-    delete deviceInfo.dateOfManufacture;
-    delete deviceInfo.deviceName;
-    delete deviceInfo.deviceUUID;
-    delete deviceInfo.firmwareVersion;
-    delete deviceInfo.hostName;
-    delete deviceInfo.manufacturerName;
-    delete deviceInfo.manufacturerUrl;
-    delete deviceInfo.modelNumber;
-    delete deviceInfo.platformVersion;
-    delete deviceInfo.supportUrl;
-    delete deviceInfo.version;
+    delete[] deviceInfo.contentType;
+    delete[] deviceInfo.dateOfManufacture;
+    delete[] deviceInfo.deviceName;
+    delete[] deviceInfo.deviceUUID;
+    delete[] deviceInfo.firmwareVersion;
+    delete[] deviceInfo.hostName;
+    delete[] deviceInfo.manufacturerName;
+    delete[] deviceInfo.manufacturerUrl;
+    delete[] deviceInfo.modelNumber;
+    delete[] deviceInfo.platformVersion;
+    delete[] deviceInfo.supportUrl;
+    delete[] deviceInfo.version;
 }
 
 void DuplicateString(char ** targetString, std::string sourceString)
