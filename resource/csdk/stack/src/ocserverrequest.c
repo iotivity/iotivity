@@ -419,6 +419,10 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     {
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions + 1;
     }
+    else
+    {
+        responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions;
+    }
 
     responseInfo.info.options = (CAHeaderOption_t *)
                                     malloc(sizeof(CAHeaderOption_t) * responseInfo.info.numOptions);
