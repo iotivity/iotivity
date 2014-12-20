@@ -29,6 +29,7 @@ PLATFORM=linux
 PLATFORM_TYPE=linux
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
 ARDUINOWIFI := 0
+CA_INT_DTLS := 0
 
 ifeq ($(ROOT_DIR), )
 	ROOT_DIR = ..
@@ -106,6 +107,7 @@ SOURCES+= pdu.c net.c debug.c encode.c uri.c coap_list.c hashkey.c \
 VPATH += $(OCSOCK_DIR)/src:$(LOGGER_DIR)/src:$(RANDOM_DIR)/src:$(OCMALLOC_DIR)/src\
          :$(OC_LOG_DIR)/c
 
+ifeq ($(CA_INT_DTLS),0)
 ifeq ($(PLATFORM),linux)
 ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
     $(info "Building libcoap with DTLS support")
@@ -115,6 +117,7 @@ ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
 	INC_DIRS += -I$(TINYDTLS_DIR) -I$(NETDTLS_DIR) -I.
 	CC_FLAGS.debug += -DWITH_DTLS
 	CC_FLAGS.release += -DWITH_DTLS
+endif
 endif
 endif
 

@@ -27,6 +27,7 @@ PLATFORM := linux
 
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
 ARDUINOWIFI := 0
+CA_INT_DTLS := 0
 
 ifeq ($(ROOT_DIR), )
 ROOT_DIR	= ./
@@ -154,7 +155,7 @@ buildScript_all: objdirs obj_build ca liboctbstack.a
 
 make_lcoap:
 	@echo "Building $@"
-	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
+	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)" "CA_INT_DTLS=$(CA_INT_DTLS)"
 
 objdirs:
 	mkdir -p $(PLATFORM)
@@ -180,12 +181,14 @@ liboctbstack.a:
 	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
 	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
 
-    ifeq ($(PLATFORM),linux)
-     ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
+    ifeq ($(CA_INT_DTLS),0)
+     ifeq ($(PLATFORM),linux)
+      ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
 			$(info "Building liboctbstack with DTLS support")
 			mkdir -p $(OBJ_DIR)/tinydtls
 			@cd $(OBJ_DIR)/tinydtls && $(AR) -x ../$(PLATFORM_SPECIFIC_BACKOUT)$(TINYDTLS_DIR)/libtinydtls.a
 			$(AR) -q $(OUT_DIR)/$@ $(OBJ_DIR)/tinydtls/*.o
+      endif
      endif
     endif
 

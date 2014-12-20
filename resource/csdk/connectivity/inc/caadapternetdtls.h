@@ -24,11 +24,14 @@
 #include "uarraylist.h"
 #include "umutex.h"
 #include "caadapterutils.h"
+#include "ocsecurityconfig.h"
 
 #define MAX_SUPPORTED_ADAPTERS 2
 
-///TODO: once proper .h provided for this function, it will be removed
-extern void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
+/**
+ * @brief The implementation will be provided by OIC RI layer.
+ */
+extern void OCGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
 
 typedef void (*CAPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
         const void *data, const uint32_t dataLength, const CABool_t isSecured);

@@ -30,6 +30,12 @@
 #include "debug.h"
 #include "cJSON.h"
 
+#ifdef CA_INT
+    #include "cacommon.h"
+    #include "cainterface.h"
+#endif
+
+
 /// Module Name
 #define TAG PCF("ocresource")
 #define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
@@ -60,6 +66,37 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
     (void) request;
     return  OC_EH_OK; // Making sure that the Default EH and the Vendor EH have matching signatures
 }
+
+#ifdef CA_INT
+/* This method  will return the port at which the secure resource is hosted */
+static OCStackResult GetSecurePortInfo(CAConnectivityType_t connType, uint32_t *port)
+{
+    CALocalConnectivity_t* info = NULL;
+    uint32_t size = 0;
+    OCStackResult ret = OC_STACK_ERROR;
+
+    CAResult_t caResult = CAGetNetworkInformation(&info, &size);
+    if ((caResult == CA_STATUS_OK) && info && size)
+    {
+        while (size--)
+        {
+            if (info[size].isSecured == CA_TRUE && info[size].type == connType)
+            {
+                if (info[size].type == CA_ETHERNET ||
+                    info[size].type == CA_WIFI)
+                {
+                    *port = info[size].addressInfo.IP.port;
+                    ret = OC_STACK_OK;
+                    break;
+                }
+            }
+        }
+    }
+
+    free(info);
+    return ret;
+}
+#endif
 
 static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
                                 uint8_t *filterOn, char **filterValue)
@@ -104,8 +141,17 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
     return OC_STACK_OK;
 }
 
-OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
-                                            char *filterValue, char * out, uint16_t *remaining)
+
+#ifdef CA_INT
+OCStackResult
+BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
+                        char *filterValue, char * out, uint16_t *remaining,
+                        CAConnectivityType_t connType )
+#else
+OCStackResult
+BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
+                        char *filterValue, char * out, uint16_t *remaining)
+#endif
 {
     OCResourceType *resourceTypePtr;
     OCResourceInterface *interfacePtr;
@@ -181,10 +227,15 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
             }
             // Set secure flag for secure resources
             if (resourcePtr->resourceProperties & OC_SECURE) {
-                uint16_t port;
                 cJSON_AddNumberToObject (propObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
                 //Set the IP port also as secure resources are hosted on a different port
+#ifdef CA_INT
+                uint32_t port;
+                if (GetSecurePortInfo (connType, &port) == OC_STACK_OK) {
+#else
+                uint16_t port;
                 if (OCGetResourceEndPointInfo (resourcePtr, &port) == OC_STACK_OK) {
+#endif
                     cJSON_AddNumberToObject (propObj, OC_RSRVD_HOSTING_PORT, port);
                 }
             }
@@ -400,8 +451,13 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                         remaining--;
                     }
                     firstLoopDone = 1;
+#ifdef CA_INT
+                    result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
+                            (char*)ptr, &remaining, request->connectivityType );
+#else
                     result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
                             (char*)ptr, &remaining);
+#endif
 
                     if (result != OC_STACK_OK)
                     {

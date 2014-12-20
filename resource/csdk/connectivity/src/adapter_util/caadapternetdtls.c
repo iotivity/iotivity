@@ -346,29 +346,32 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
 
     int32_t ret  = -1;
+    OCDtlsPskCredsBlob *credInfo = NULL;
 
-    CADtlsPskCredsBlob_t *credInfo = NULL;
-    CAGetDtlsPskCredentials(&credInfo);
+    //Retrieve the credentials blob from security module
+    OCGetDtlsPskCredentials(&credInfo);
 
-    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "CAGetDtlsPskCredentials credInfo is NULL", 0);
+    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "OCGetDtlsPskCredentials credInfo is NULL", ret);
 
     if ((type == DTLS_PSK_HINT) || (type == DTLS_PSK_IDENTITY))
     {
         if (DTLS_PSK_ID_LEN <= resultLen)
         {
-            memcpy(result, credInfo->rsIdentity, DTLS_PSK_ID_LEN);
+            memcpy(result, credInfo->identity, DTLS_PSK_ID_LEN);
             ret = DTLS_PSK_ID_LEN;
         }
     }
 
     if ((type == DTLS_PSK_KEY) && (desc) && (descLen == DTLS_PSK_PSK_LEN))
     {
+        //Check if we have the credentials for the device with which we
+        //are trying to perform a handshake
         int index = 0;
-        for (index = 0; index < credInfo->num; index++)
+        for (; index < credInfo->num; index++)
         {
-            if (memcmp(desc, credInfo->creds[index].clientIdentity, DTLS_PSK_ID_LEN) == 0)
+            if (memcmp(desc, credInfo->creds[index].id, DTLS_PSK_ID_LEN) == 0)
             {
-                memcpy(result, credInfo->creds[index].rsClientPsk, DTLS_PSK_PSK_LEN);
+                memcpy(result, credInfo->creds[index].psk, DTLS_PSK_PSK_LEN);
                 ret = DTLS_PSK_PSK_LEN;
             }
         }

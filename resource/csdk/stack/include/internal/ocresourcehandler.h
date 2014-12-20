@@ -78,9 +78,16 @@ OCStackResult DetermineResourceHandling (OCServerRequest *request,
 OCStackResult
 ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerRequest *request);
 
+#ifdef CA_INT
+OCStackResult
+BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
+                        char *filterValue, char * out, uint16_t *remaining,
+                        CAConnectivityType_t connType );
+#else
 OCStackResult
 BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
                         char *filterValue, char * out, uint16_t *remaining);
+#endif
 
 OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
 

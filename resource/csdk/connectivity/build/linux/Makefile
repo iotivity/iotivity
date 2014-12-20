@@ -123,7 +123,8 @@ IFLAGS = -I$(PROJECT_COMMON_INC_PATH)	\
         -I$(libcoap_build_dir)
 
 ifeq ($(DTLS),1)
-	IFLAGS += -I$(libtiny_lib_dir)
+	IFLAGS += -I$(libtiny_lib_dir) \
+		-I$(PROJECT_SEC_PATH)
 endif
 
 DFLAGS = -D__LINUX__ -DWITH_POSIX $(BUILD_FLAG)

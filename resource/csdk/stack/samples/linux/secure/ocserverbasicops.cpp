@@ -39,7 +39,11 @@ static int gCurrLedInstance = 0;
 #define SAMPLE_MAX_NUM_POST_INSTANCE  2
 static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
+#ifdef CA_INT_DTLS
+char *gResourceUri= (char *)"a/led";
+#else
 char *gResourceUri= (char *)"/a/led";
+#endif
 
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
 

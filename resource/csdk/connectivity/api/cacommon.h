@@ -71,27 +71,6 @@ extern "C"
 #define CA_OPTION_OBSERVE 6
 
 /**
- @brief Max length of ID
- */
-#define DTLS_PSK_ID_LEN 16
-
-/**
- @brief Max length of PSK
- */
-#define DTLS_PSK_PSK_LEN 16
-
-/**
- @brief version
- */
-#define DtlsPskCredsBlobVer_1 1
-
-/**
- @brief current version
- */
-#define DtlsPskCredsBlobVer_CurrentVersion DtlsPskCredsBlobVer_1
-
-
-/**
  @brief Payload information from resource model
  */
 typedef char *CAPayload_t;
@@ -346,29 +325,6 @@ typedef struct
     /**Information of the response.**/
     CAInfo_t info;
 } CAResponseInfo_t;
-
-/**
- * Credentials for a device. Includes identity and the associated PSK.
- */
-typedef struct
-{
-    unsigned char clientIdentity[DTLS_PSK_ID_LEN];
-    unsigned char rsClientPsk[DTLS_PSK_PSK_LEN];
-} CADtlsPskCreds_t;
-
-/**
- * Binary blob containing device identity and the credentials for all devices
- * trusted by this device.
- */
-typedef struct
-{
-    uint16_t blobVer;                        /**< version of the blob */
-    uint16_t reserved;                       /**< reserved for future use */
-    unsigned char rsIdentity[DTLS_PSK_ID_LEN]; /**< identity of self */
-    uint32_t num;                            /**< number of credentials in this blob */
-    CADtlsPskCreds_t *creds;                 /**< list of credentials. Size of this
-                                                 array is determined by 'num' variable. */
-} CADtlsPskCredsBlob_t;
 
 #ifdef __cplusplus
 } /* extern "C" */

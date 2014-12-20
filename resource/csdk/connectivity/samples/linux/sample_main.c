@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include "cacommon.h"
 #include "cainterface.h"
+#include "ocsecurityconfig.h"
 
 
 #define MAX_BUF_LEN 1024
@@ -65,6 +66,7 @@ void unselect_network();
 void handle_request_response();
 void find_fixed_resource();
 void get_network_info();
+void send_secure_request();
 
 void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
 void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
@@ -78,51 +80,57 @@ static const char *gSecureInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\"
 static const char *gNormalInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
 
-static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
+static OCDtlsPskCredsBlob *pskCredsBlob = NULL;
 
 void clearDtlsCredentialInfo()
 {
     printf("clearDtlsCredentialInfo IN\n");
     if (pskCredsBlob)
     {
-        // Initialize sensitive data to zeroes before freeing.
-        memset(pskCredsBlob->creds, 0, sizeof(CADtlsPskCreds_t) * (pskCredsBlob->num));
+        // Zero out sensitive data before freeing.
+        if (pskCredsBlob->num)
+        {
+            memset(pskCredsBlob->creds, 0,
+                    sizeof(OCDtlsPskCredsBlob) + (sizeof(OCDtlsPskCreds)*(pskCredsBlob->num - 1)));
+        }
         free(pskCredsBlob->creds);
-
-        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
-        free(pskCredsBlob);
         pskCredsBlob = NULL;
     }
     printf("clearDtlsCredentialInfo OUT\n");
 }
 
 // Internal API. Invoked by OC stack to retrieve credentials from this module
-void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
+void OCGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
 {
-    printf("CAGetDtlsPskCredentials IN\n");
+    printf("OCGetDtlsPskCredentials IN\n");
 
     *credInfo = pskCredsBlob;
 
-    printf("CAGetDtlsPskCredentials OUT\n");
+    printf("OCGetDtlsPskCredentials OUT\n");
 }
 
 int32_t SetCredentials()
 {
+    int32_t ret = 0;
     printf("SetCredentials IN\n");
-    pskCredsBlob = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
+    pskCredsBlob = (OCDtlsPskCredsBlob *)malloc(sizeof(OCDtlsPskCredsBlob));
 
-    memset(pskCredsBlob, 0x0, sizeof(CADtlsPskCredsBlob_t));
-    memcpy(pskCredsBlob->rsIdentity, IDENTITY, DTLS_PSK_ID_LEN);
+    if (pskCredsBlob)
+    {
+        memset(pskCredsBlob, 0x0, sizeof(OCDtlsPskCredsBlob));
+        pskCredsBlob->num = DtlsPskCredsBlobVer_CurrentVersion;
+        memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
 
-    pskCredsBlob->num = 1;
+        pskCredsBlob->num = 1;
 
-    pskCredsBlob->creds = (CADtlsPskCreds_t *)malloc(sizeof(CADtlsPskCreds_t) * (pskCredsBlob->num));
+        memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
+        memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
 
-    memcpy(pskCredsBlob->creds[0].clientIdentity, IDENTITY, DTLS_PSK_ID_LEN);
-    memcpy(pskCredsBlob->creds[0].rsClientPsk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
+        ret = 1;
+    }
 
     printf("SetCredentials OUT\n");
-    return 1;
+    return ret;
 }
 
 int main()
@@ -258,6 +266,20 @@ void process()
                     }
                 }
                 break;
+
+            case 'w':
+            case 'W':
+                gReceived = 0;
+                start_discovery_server();
+                send_secure_request();
+                while (gReceived == 0)
+                {
+                    sleep(1);
+                    handle_request_response();
+                }
+
+                break;
+
             case 'z':
             case 'Z':
                 start_listening_server();
@@ -470,7 +492,7 @@ void send_request()
     requestData.token = token;
     if ('1' == secureRequest[0])
     {
-        int length = strlen(gSecureInfoData) + strlen(resourceURI) + 1;
+        int length = strlen(resourceURI) + 1;
         requestData.payload = (CAPayload_t) malloc(length);
         sprintf(requestData.payload, gSecureInfoData, resourceURI, gLocalSecurePort);
     }
@@ -499,6 +521,56 @@ void send_request()
     CADestroyRemoteEndpoint(endpoint);
     printf("=============================================\n");
 }
+
+void send_secure_request()
+{
+    char uri[MAX_BUF_LEN];
+    char ipv4addr[CA_IPADDR_SIZE];
+
+    printf("Enter IPv4 address of the source hosting secure resource (Ex: 11.12.13.14)\n");
+
+    fgets(ipv4addr, CA_IPADDR_SIZE, stdin);
+    snprintf(uri, MAX_BUF_LEN, "coaps://%s:5684/a/light", ipv4addr);
+
+    printf("\n=============================================\n");
+    // create remote endpoint
+    CARemoteEndpoint_t *endpoint = NULL;
+    if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, CA_ETHERNET, &endpoint))
+    {
+        printf("Failed to create remote endpoint!\n");
+        goto exit;
+    }
+
+    // create token
+    CAToken_t token = NULL;
+    if (CA_STATUS_OK != CAGenerateToken(&token))
+    {
+        printf("Failed to generate token !\n");
+        goto exit;
+    }
+
+    // create request data
+    CAMessageType_t msgType = CA_MSG_NONCONFIRM;
+    CAInfo_t requestData;
+    memset(&requestData, 0, sizeof(CAInfo_t));
+    requestData.token = token;
+    requestData.type = msgType;
+
+    CARequestInfo_t requestInfo;
+    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
+
+    // send request
+    CASendRequest(endpoint, &requestInfo);
+
+exit:
+    // cleanup
+    CADestroyToken(token);
+    CADestroyRemoteEndpoint(endpoint);
+    printf("=============================================\n");
+}
+
 
 void send_request_all()
 {
@@ -793,6 +865,7 @@ char get_menu()
     printf("\th : handle request response\n");
     printf("\ty : run static client\n");
     printf("\tz : run static server\n");
+    printf("\tw : send secure request\n");
     printf("\tq : quit\n");
     printf("=============================================\n");
     printf("select : ");

@@ -363,7 +363,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // CA does not need the following 3 fields
     serverRequest.coapID = 0;
     serverRequest.delayedResNeeded = 0;
-    serverRequest.secured = 0;
+    serverRequest.secured = endPoint->isSecured;
 
     // copy the address
     serverRequest.addressInfo      = endPoint->addressInfo;

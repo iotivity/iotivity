@@ -34,7 +34,12 @@
 #define TAG "occlientbasicops"
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
+
+#ifdef CA_INT_DTLS
+static int IPV4_ADDR_SIZE = 16;
+#else
 static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
+#endif
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 static std::string coapServerIP;
 static std::string coapServerPort;
@@ -180,7 +185,11 @@ int InitPutRequest()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort << coapServerResource;
+        << ":" << coapServerPort
+#ifdef CA_INT_DTLS
+        << "/"
+#endif
+        << coapServerResource;
     return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
 }
 
@@ -222,7 +231,11 @@ int InitGetRequest(OCQualityOfService qos)
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort << coapServerResource;
+        << ":" << coapServerPort
+#ifdef CA_INT_DTLS
+        << "/"
+#endif
+        << coapServerResource;
 
     return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)?
             OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
@@ -234,10 +247,19 @@ int InitDiscovery()
     OCCallbackData cbData;
     OCDoHandle handle;
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_URI_LENGTH] = { 0 };
+
     if (UNICAST_DISCOVERY)
     {
+#ifdef CA_INT_DTLS
+        char ipv4addr[IPV4_ADDR_SIZE];
+
+        printf("Enter IPv4 address of the Server hosting secure resource (Ex: 11.12.13.14)\n");
+        fgets(ipv4addr, IPV4_ADDR_SIZE, stdin);
+        snprintf(szQueryUri, sizeof(szQueryUri), "coap://%s:5683/oc/core", ipv4addr);
+#else
         strcpy(szQueryUri, TEST_APP_UNICAST_DISCOVERY_QUERY);
+#endif
     }
     else
     {
