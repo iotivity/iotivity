@@ -382,7 +382,6 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // TODO-CA: CA is including non-vendor header options as well, like observe.
     // Need to filter those out
     GetObserveHeaderOption(&serverRequest.observationOption, requestInfo->info.options, &(requestInfo->info.numOptions));
-    printf("\n*****************************\nobservation is %u\n**********************************\n",serverRequest.observationOption);
     if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
     {
         // TODO-CA: Need to send an error indicating the num of options is incorrect
@@ -1247,7 +1246,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     requestData.token = caToken;
     if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
     {
-        result = CreateObserveHeaderOption (&(requestData.options), options, 
+        result = CreateObserveHeaderOption (&(requestData.options), options,
                                     numOptions, OC_OBSERVE_REGISTER);
         if (result != OC_STACK_OK)
         {
