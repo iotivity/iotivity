@@ -353,6 +353,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     OCStackResult result = OC_STACK_ERROR;
     CARemoteEndpoint_t responseEndpoint;
     CAResponseInfo_t responseInfo;
+    CAHeaderOption_t* optionsPointer;
 
     OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
 
@@ -413,10 +414,39 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     responseInfo.info.token = serverRequest->token;
-    responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions;
+
+    if(serverRequest->observeResult == OC_STACK_OK)
+    {
+        responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions + 1;
+    }
+
+    responseInfo.info.options = (CAHeaderOption_t *)
+                                    malloc(sizeof(CAHeaderOption_t) * responseInfo.info.numOptions);
+
+    optionsPointer = responseInfo.info.options;
+
+    if(serverRequest->observeResult == OC_STACK_OK)
+    {
+        responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions + 1;
+    }
+
+    // TODO-CA Revisit this logic
+    if(serverRequest->observeResult == OC_STACK_OK)
+    {
+        responseInfo.info.options[0].protocolID = CA_COAP_ID;
+        responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;
+        // TODO-CA Remove the magic number 4
+        responseInfo.info.options[0].optionLength = 4;
+        memcpy(responseInfo.info.options[0].optionData, &(serverRequest->observationOption), 4);
+
+        // Point to the next header option before copying vender specific header options
+        optionsPointer += 1;
+    }
+
     if (ehResponse->numSendVendorSpecificHeaderOptions)
     {
-        memcpy(responseInfo.info.options, ehResponse->sendVendorSpecificHeaderOptions, sizeof(OCHeaderOption) * ehResponse->numSendVendorSpecificHeaderOptions);
+        memcpy(optionsPointer, ehResponse->sendVendorSpecificHeaderOptions,
+                        sizeof(OCHeaderOption) * ehResponse->numSendVendorSpecificHeaderOptions);
     }
 
     // Allocate memory for the payload.
