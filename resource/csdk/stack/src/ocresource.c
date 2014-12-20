@@ -41,22 +41,12 @@
 extern OCResource *headResource;
 
 static const char * VIRTUAL_RSRCS[] = {
-// TODO-CA We will use the regular path once CA fixes this issue
-#ifdef CA_INT
-       "oc/core",
-       "oc/core/d",
-       "oc/core/types/d",
-       #ifdef WITH_PRESENCE
-       "oc/presence"
-       #endif
-#else
        "/oc/core",
        "/oc/core/d",
        "/oc/core/types/d",
        #ifdef WITH_PRESENCE
        "/oc/presence"
        #endif
-#endif
 };
 
 //-----------------------------------------------------------------------------

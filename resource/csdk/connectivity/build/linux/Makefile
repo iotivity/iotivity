@@ -81,8 +81,8 @@ libtiny_lib_dir = $(PROJECT_LIB_PATH)/extlibs/tinydtls
 LDFLAGS := -L$(libcoap_build_dir) -L$(libtiny_lib_dir)
 LDLIBS := -lcoap -ltinydtls
 else
-LDFLAGS := -L$(libcoap_build_dir) 
-LDLIBS := -lcoap 
+LDFLAGS := -L$(libcoap_build_dir)
+LDLIBS := -lcoap
 
 endif
 BUILD_FLAG.debug = $(DEFINE_FLAG) $(DEBUG_FLAG)
@@ -110,7 +110,8 @@ COMPONENT_OBJS = $(COMPONENT_SRCS:%.c=$(OBJ_DIR)/%.o)
 ##
 ##	compiler flags
 ##
-CFLAGS = -g -c -Wall -fPIC `pkg-config --cflags glib-2.0`
+#TODO-CA Remove -fstack-protector-all before merging to master
+CFLAGS = -g -c -Wall -fstack-protector-all -fPIC `pkg-config --cflags glib-2.0`
 LFLAGS = -ldl -lpthread `pkg-config --libs glib-2.0`
 IFLAGS = -I$(PROJECT_COMMON_INC_PATH)	\
 	-I$(PROJECT_API_PATH)	\
@@ -119,7 +120,7 @@ IFLAGS = -I$(PROJECT_COMMON_INC_PATH)	\
 	-I$(WIFI_ADAPTER_PATH)	\
 	-I$(BT_ADAPTER_PATH)	\
 	-I$(BLE_ADAPTER_PATH)   \
-        -I$(libcoap_build_dir) 
+        -I$(libcoap_build_dir)
 
 ifeq ($(DTLS),1)
 	IFLAGS += -I$(libtiny_lib_dir)
