@@ -457,7 +457,7 @@ int CpluffAdapter::start(Plugin *const plugin, void *const arg)
         {
             ctx = cpi_new_context((cp_plugin_t *)hnode_get(hash_lookup(m_context->env->plugins, id.c_str())),
                                   m_context->env, &status);
-            cp_define_symbol(ctx, "START_ARGUMENT", arg);
+            //cp_define_symbol(ctx, "START_ARGUMENT", arg);
             //printf("start ocplatform address : %x\n", arg);
 
             if ((status = cp_start_plugin(m_context, (char *)id.c_str()) ) != CP_OK)

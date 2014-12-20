@@ -74,7 +74,7 @@ CP_C_API cp_status_t cp_define_symbol(cp_context_t *context, const char *name, v
 	
 	CHECK_NOT_NULL(context);
 	CHECK_NOT_NULL(name);
-	CHECK_NOT_NULL(ptr);
+//	CHECK_NOT_NULL(ptr);
 	if (context->plugin == NULL) {
 		cpi_fatalf(_("Only plug-ins can define context specific symbols."));
 	}
