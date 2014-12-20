@@ -107,11 +107,23 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
             {
             #endif
                 qos = DetermineObserverQoS(method, resourceObserver, qos);
+
+#ifdef CA_INT
+                result = AddServerCARequest(&request, 0, 0, 0, 1, OC_REST_GET,
+                        0, resPtr->sequenceNum, qos, resourceObserver->query,
+                        NULL, NULL,
+                        &resourceObserver->token, resourceObserver->addr,
+                        resourceObserver->resUri, 0,
+                        &(resourceObserver->addressInfo), resourceObserver->connectivityType,
+                        resourceObserver->CAToken);
+#else
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         &resourceObserver->token, resourceObserver->addr,
                         resourceObserver->resUri, 0);
+#endif // CA_INT
+
                 request->observeResult = OC_STACK_OK;
                 if(request && result == OC_STACK_OK)
                 {
@@ -199,10 +211,21 @@ OCStackResult SendListObserverNotification (OCResource * resource,
             {
                 qos = DetermineObserverQoS(OC_REST_GET, observation, qos);
 
+
+#ifdef CA_INT
+                result = AddServerCARequest(&request, 0, 0, 0, 1, OC_REST_GET,
+                        0, resource->sequenceNum, qos, observation->query,
+                        NULL, NULL, &observation->token,
+                        observation->addr, observation->resUri, 0,
+                        &(observation->addressInfo), observation->connectivityType,
+                        observation->CAToken);
+#else
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observation->query,
                         NULL, NULL, &observation->token,
                         observation->addr, observation->resUri, 0);
+#endif //CA_INT
+
                 request->observeResult = OC_STACK_OK;
                 if(request && result == OC_STACK_OK)
                 {
