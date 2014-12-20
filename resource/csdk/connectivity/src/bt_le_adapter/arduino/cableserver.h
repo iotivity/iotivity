@@ -22,15 +22,13 @@
 #ifndef _BLE_ADAPTER_ARDUINO_H_
 #define _BLE_ADAPTER_ARDUINO_H_
 
-
-#include <Arduino.h>
-#include <SPI.h>
-#include <boards.h>
-#include <RBL_nRF8001.h>
-#include <services.h>
-
 #include "cacommon.h"
 #include "caadapterinterface.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /**
  * @brief API to initialize Arduino BLE module and advertise the service
@@ -134,5 +132,8 @@ CAResult_t CABleDoEvents();
  */
 CAResult_t CAWriteBleData(unsigned char *data, uint8_t len);
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif //#ifndef _BLE_ADAPTER_ARDUINO_H_

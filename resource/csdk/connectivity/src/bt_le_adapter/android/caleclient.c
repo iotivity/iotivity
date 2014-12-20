@@ -569,6 +569,10 @@ void CALEGetLocalAddress(char** address)
     {
         const char* localAddress = (*env)->GetStringUTFChars(env, jni_address, NULL);
         *address = (char*)OICMalloc(strlen(localAddress) + 1);
+        if (*address == NULL)
+        {
+            return;
+        }
         memcpy(*address, localAddress, strlen(localAddress));
     }
 

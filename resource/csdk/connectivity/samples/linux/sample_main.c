@@ -317,7 +317,7 @@ void find_fixed_resource()
 {
     char buf[MAX_BUF_LEN] =
     { 0, };
-    strcpy(buf, "a/light");
+    strcpy(buf, "/a/light");
 
     // create token
     CAToken_t token = NULL;
@@ -358,7 +358,7 @@ void find_resource()
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
 
     printf("\n=============================================\n");
-    printf("ex) a/light\n");
+    printf("ex) /a/light\n");
     printf("reference uri : ");
 
     gets(buf);

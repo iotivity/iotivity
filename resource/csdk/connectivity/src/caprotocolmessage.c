@@ -180,6 +180,7 @@ coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *opt
     }
     for (opt = options; opt; opt = opt->next)
     {
+        OIC_LOG_V(DEBUG, TAG, "[%s] opt will be added.", COAP_OPTION_DATA(*(coap_option * )opt->data));
         coap_add_option(pdu, COAP_OPTION_KEY(*(coap_option * )opt->data),
                         COAP_OPTION_LENGTH(*(coap_option * )opt->data),
                         COAP_OPTION_DATA(*(coap_option * )opt->data));
@@ -459,14 +460,16 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
                             COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf),
                             encode))
         {
+            OIC_LOG_V(DEBUG, TAG, "COAP URI element : %s", buf);
             if (COAP_OPTION_URI_PATH == opt_iter.type || COAP_OPTION_URI_QUERY == opt_iter.type)
             {
                 if (0 == isfirstsetflag)
                 {
                     isfirstsetflag = 1;
+                    memcpy(optionResult + optionLength, "/", 1);
+                    optionLength++;
                     memcpy(optionResult + optionLength, buf, strlen((const char *) buf));
                     optionLength += strlen((const char *) buf);
-
                 }
                 else
                 {
@@ -486,7 +489,6 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
             }
             else
             {
-
                 if (idx < count)
                 {
                     uint32_t length = (uint32_t) strlen((const char *) buf);

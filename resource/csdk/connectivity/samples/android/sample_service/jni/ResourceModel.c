@@ -30,7 +30,6 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
 void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
-void send_response(CARemoteEndpoint_t* endpoint, CAInfo_t* info);
 CAResult_t get_network_type(int selectedNetwork);
 
 CAConnectivityType_t gSelectedNwType;
@@ -186,6 +185,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
 
     CAResult_t res;
 
+    LOGI("selectedNetwork - %d", selectedNetwork);
     res = get_network_type(selectedNetwork);
     if (res != CA_STATUS_OK)
     {
@@ -264,18 +264,23 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification(JNIEnv *env,
     jobject obj, jstring uri, jint selectedNetwork)
 {
+    jint isSecured = 0;
+
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
-    LOGI("RMSendNotification - %s", strUri);
+    LOGI("RMSendResponse - %s", strUri);
 
     CAResult_t res;
+
+    LOGI("selectedNetwork - %d", selectedNetwork);
 
     res = get_network_type(selectedNetwork);
     if (res != CA_STATUS_OK)
     {
+    	LOGI("Not supported network type");
         return;
     }
 
-    // create remote endpoint
+    //create remote endpoint
     CARemoteEndpoint_t* endpoint = NULL;
 
     if(CA_STATUS_OK != CACreateRemoteEndpoint(strUri, gSelectedNwType, &endpoint))
@@ -285,20 +290,58 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification(
         return;
     }
 
-    CAInfo_t respondeData;
-    memset(&respondeData, 0, sizeof(CAInfo_t));
-    respondeData.token = "client token";
-    respondeData.payload = "Temp Notification Data";
+    CAMessageType_t messageType = CA_MSG_ACKNOWLEDGE;
+
+    // create token
+    CAToken_t token = NULL;
+    res = CAGenerateToken(&token);
+    if (res != CA_STATUS_OK)
+    {
+        LOGI("token generate error!");
+        token = NULL;
+    }
+
+    char resourceURI[15] = {0};
+
+    get_resource_uri(strUri, resourceURI, 14);
+
+    CAInfo_t responseData;
+    memset(&responseData, 0, sizeof(CAInfo_t));
+    responseData.token = token;
+
+
+    if (isSecured == 1)
+    {
+        int length = strlen(gSecureInfoData) + strlen(resourceURI) + 1;
+        responseData.payload = (CAPayload_t) malloc(length);
+        sprintf(responseData.payload, gSecureInfoData, resourceURI, gLocalSecurePort);
+    }
+    else
+    {
+        int length = strlen(gNormalInfoData) + strlen(resourceURI) + 1;
+        responseData.payload = (CAPayload_t) malloc(length);
+        sprintf(responseData.payload, gNormalInfoData, resourceURI);
+    }
+
+    responseData.type = messageType;
 
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = CA_SUCCESS;
-    responseInfo.info = respondeData;
+    responseInfo.info = responseData;
 
     // send request
-    if(CA_STATUS_OK != CASendNotification(endpoint, &responseInfo))
+    if(CA_STATUS_OK != CASendResponse(endpoint, &responseInfo))
     {
-        LOGI("Could not send notification");
+        LOGI("Could not send response");
+    }
+
+    LOGI("Send response");
+
+    // destroy token
+    if (token != NULL)
+    {
+        CADestroyToken(token);
     }
 
     // destroy remote endpoint
@@ -306,7 +349,6 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification(
     {
         CADestroyRemoteEndpoint(endpoint);
     }
-
 }
 
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj,
@@ -400,17 +442,12 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
             if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, object->connectivityType, &endpoint))
             {
                 LOGI("Failed to create duplicate of remote endpoint!\n");
-                OICFree(uri);
                 return;
             }
             endpoint->isSecured = CA_TRUE;
             object = endpoint;
-            OICFree(uri);
         }
     }
-
-    LOGI("send response with URI\n");
-    send_response(object, (requestInfo != NULL) ? &requestInfo->info : NULL);
 
     gReceived = 1;
 
@@ -523,50 +560,10 @@ int get_secure_information(CAPayload_t payLoad)
     return atoi(portStr);
 }
 
-void send_response(CARemoteEndpoint_t* endpoint, CAInfo_t* info)
-{
-    LOGI("entering send_response\n");
-
-    CAInfo_t responseData;
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type =
-            (info != NULL) ?
-                    ((info->type == CA_MSG_CONFIRM) ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM) :
-                    CA_MSG_NONCONFIRM;
-    responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.token = (info != NULL) ? info->token : "";
-    responseData.payload = "response payload";
-
-    CAResponseInfo_t responseInfo;
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = 203;
-    responseInfo.info = responseData;
-
-    if (CA_TRUE == endpoint->isSecured)
-        LOGI("Sending response on secure communication\n");
-    else
-        LOGI("Sending response on non-secure communication\n");
-
-    // send request (connectivityType from remoteEndpoint of request Info)
-    CAResult_t res = CASendResponse(endpoint, &responseInfo);
-    if (res != CA_STATUS_OK)
-    {
-        LOGI("send response error\n");
-    }
-    else
-    {
-        LOGI("send response success\n");
-    }
-
-    LOGI("=============================================\n");
-}
-
 CAResult_t get_network_type(int selectedNetwork)
 {
 
     int number = selectedNetwork;
-
-    number = (number < 0 || number > 3) ? 0 : 1 << number;
 
     if (!(number & 0xf))
     {

@@ -5,6 +5,7 @@
 # default to build for linux
 BUILD	 := release
 PLATFORM := linux
+ADAPTER_MACRO := -DWIFI_ADAPTER_TEST
 
 ifeq ($(PLATFORM),linux)
 $(info *******************linux Build !!******************)
@@ -17,7 +18,7 @@ INC_DIRS	  := -I$(ROOT_DIR)/
 #CFLAGS=$(INC_DIRS) -std=c99 -DWITH_POSIX
 #CFLAGS=-std=c99
 #CFLAGS=$(INC_DIRS) -std=c99 -DWITH_POSIX -g
-CFLAGS=$(INC_DIRS) -DWITH_POSIX -D__TIZEN__
+CFLAGS=$(INC_DIRS) -DWITH_POSIX -D__TIZEN__ $(ADAPTER_MACRO)
 #COMPILEFLAG = `pkg-config --cflags --libs com.samsung.oicca com.samsung.oicca-devel`
 COMPILEFLAG = `pkg-config --cflags --libs com.samsung.oicca capi-network-wifi gobject-2.0 glib-2.0 dlog capi-network-bluetooth`
 

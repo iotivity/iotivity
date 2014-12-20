@@ -9,6 +9,7 @@ PROJECT_COMMON_PATH			= $(PROJECT_ROOT_PATH)/common
 PROJECT_COMMON_INC_PATH		= $(PROJECT_COMMON_PATH)/inc
 PROJECT_COMMON_SRC_PATH		= $(PROJECT_COMMON_PATH)/src
 PROJECT_LIB_PATH			= $(PROJECT_ROOT_PATH)/lib
+DTLS_LIB 					= $(PROJECT_LIB_PATH)/extlibs/tinydtls
 
 #Modify below values to enable/disable the Adapter
 #Suffix "NO_" to disable given adapter  
@@ -18,7 +19,7 @@ LE			= LE_ADAPTER
 ETHERNET	= NO_ETHERNET_ADAPTER
 
 #Add Pre processor definitions
-DEFINE_FLAG =  -DWITH_POSIX -D__ANDROID__
+DEFINE_FLAG =  -DWITH_POSIX -D__ANDROID__ -D__WITH_DTLS__
 DEFINE_FLAG += -D$(EDR) -D$(LE) -D$(WIFI) -D$(ETHERNET) 
 
 #Add Debug flags here
@@ -51,6 +52,13 @@ LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-master \
                           $(PROJECT_LIB_PATH)/android/glib-master/android
 
 include $(PREBUILT_SHARED_LIBRARY)
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#include TinyDtls
+
+include $(CLEAR_VARS)
+include $(DTLS_LIB)/Android.mk
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #Build CACommon
@@ -108,25 +116,26 @@ LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
 LOCAL_PATH = $(PROJECT_SRC_PATH)
 LOCAL_MODULE = CA
 
-LOCAL_STATIC_LIBRARIES = CACommon CACoap
+LOCAL_STATIC_LIBRARIES = CACommon CACoap TinyDtls
 
 LOCAL_C_INCLUDES = $(PROJECT_API_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_COMMON_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_LIB_PATH)/libcoap-4.1.1
-
+LOCAL_C_INCLUDES += $(DTLS_LIB)
 
 LOCAL_CFLAGS += $(BUILD_FLAG)
 
 LOCAL_SRC_FILES	= \
-					caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c camessagehandler.c \
-					canetworkconfigurator.c caprotocolmessage.c caretransmission.c \
-					caqueueingthread.c \
-					$(ADAPTER_UTILS)/caadapterutils.c \
-					$(ADAPTER_UTILS)/camsgparser.c \
-					$(EDR_ADAPTER_PATH)/caedradapter.c \
-					$(LE_ADAPTER_PATH)/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c $(LE_ADAPTER_PATH)/caleserver.c $(LE_ADAPTER_PATH)/caleutils.c $(LE_ADAPTER_PATH)/calenwmonitor.c \
+					caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c \
+					camessagehandler.c canetworkconfigurator.c caprotocolmessage.c \
+					caretransmission.c caqueueingthread.c \
+					$(ADAPTER_UTILS)/caadapternetdtls.c $(ADAPTER_UTILS)/caadapterutils.c \
+					$(ADAPTER_UTILS)/camsgparser.c $(EDR_ADAPTER_PATH)/caedradapter.c \
+					$(LE_ADAPTER_PATH)/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c \
+					$(LE_ADAPTER_PATH)/caleserver.c $(LE_ADAPTER_PATH)/caleutils.c \
 					wifi_adapter/cawifiadapter.c $(WIFI_ADAPTER_PATH)/cawifiserver.c \
-					$(WIFI_ADAPTER_PATH)/cawificlient.c $(WIFI_ADAPTER_PATH)/cawifinwmonitor.c 
+					$(WIFI_ADAPTER_PATH)/cawificlient.c $(WIFI_ADAPTER_PATH)/cawifinwmonitor.c \
+					$(LE_ADAPTER_PATH)/calenwmonitor.c \
 
 include $(BUILD_STATIC_LIBRARY)

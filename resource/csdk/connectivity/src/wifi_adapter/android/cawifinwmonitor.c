@@ -25,7 +25,7 @@
 #include <arpa/inet.h>
 #include <linux/if.h>
 #include <netdb.h>
-
+#include <errno.h>
 #include "caadapterutils.h"
 #include "umutex.h"
 #include "logger.h"
@@ -59,6 +59,12 @@ static char *gWifiInterfaceName = NULL;
 static char *gWifiIPAddress = NULL;
 
 /**
+ * @var gWifiSubnetMask
+ * @brief  Maintains interface subnetmask.
+ */
+static char *gWifiSubnetMask = NULL;
+
+/**
  * @var gThreadPool
  * @brief ThreadPool for storing u_thread_pool_t handle passed from adapter
  */
@@ -90,10 +96,10 @@ static CAWiFiConnectionStateChangeCallback gNetworkChangeCb = NULL;
 
 /**
  * @fn CAWiFiGetInterfaceInformation
- * @brief Gets local interface name and IP address information.
+ * @brief This methods gets local interface name and IP address information.
  */
-static void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress);
-
+static void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress,
+                                          char **subnetMask);
 /**
  * @fn CACreateWiFiJNIInterfaceObject
  * @brief creates new instance of CAWiFiInterface through JNI
@@ -120,7 +126,7 @@ CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
     CACreateWiFiJNIInterfaceObject(g_context);
 
     u_mutex_lock(gWifiNetInfoMutex);
-    CAWiFiGetInterfaceInformation(&gWifiInterfaceName, &gWifiIPAddress);
+    CAWiFiGetInterfaceInformation(&gWifiInterfaceName, &gWifiIPAddress, &gWifiSubnetMask);
     u_mutex_unlock(gWifiNetInfoMutex);
 
     nwConnectivityStatus = (gWifiIPAddress) ? CA_INTERFACE_UP : CA_INTERFACE_DOWN;
@@ -166,8 +172,8 @@ CAResult_t CAWiFiStartNetworkMonitor(void)
 
     if (gStopNetworkMonitor)
     {
-        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Network Monitor Thread is already running!");
-        return CA_SERVER_STARTED_ALREADY;
+        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Stop network monitor requested!");
+        return CA_STATUS_FAILED;
     }
 
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
@@ -197,20 +203,45 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 {
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
 
+    VERIFY_NON_NULL(interfaceName, WIFI_MONITOR_TAG, "interface name");
+    VERIFY_NON_NULL(ipAddress, WIFI_MONITOR_TAG, "ip address");
+
+    // Get the interface and ipaddress information from cache
     u_mutex_lock(gWifiNetInfoMutex);
 
-    if (gWifiInterfaceName && strlen(gWifiInterfaceName))
+    if(gWifiInterfaceName == NULL || gWifiIPAddress == NULL)
     {
-        *interfaceName = (gWifiInterfaceName) ? strndup(gWifiInterfaceName, strlen(gWifiInterfaceName)) :
-                                NULL;
+        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Network not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
+
     }
 
-    if (gWifiIPAddress && strlen(gWifiIPAddress))
+    *interfaceName = (gWifiInterfaceName) ? strndup(gWifiInterfaceName,strlen(gWifiInterfaceName))
+                               : NULL;
+    *ipAddress = (gWifiIPAddress) ? strndup(gWifiIPAddress,strlen(gWifiIPAddress))
+                               : NULL;
+
+    u_mutex_unlock(gWifiNetInfoMutex);
+
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask)
+{
+    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+
+    VERIFY_NON_NULL(subnetMask, WIFI_MONITOR_TAG, "subnet mask");
+
+    u_mutex_lock(gWifiNetInfoMutex);
+    if(NULL == gWifiSubnetMask)
     {
-        *ipAddress = (gWifiIPAddress) ? strndup(gWifiIPAddress, strlen(gWifiIPAddress)) :
-                                NULL;
+        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "There is no subnet mask information!");
+        return CA_STATUS_FAILED;
     }
 
+    *subnetMask = (gWifiSubnetMask) ? strndup(gWifiSubnetMask,strlen(gWifiSubnetMask))
+                               : NULL;
     u_mutex_unlock(gWifiNetInfoMutex);
 
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
@@ -227,14 +258,15 @@ bool CAWiFiIsConnected(void)
     return true;
 }
 
-void CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateChangeCallback callback)
+void CAWiFiSetConnectionStateChangeCallback(
+    CAWiFiConnectionStateChangeCallback callback)
 {
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     gNetworkChangeCb = callback;
 }
 
-void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress)
+void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char **subnetMask)
 {
     char buf[1024] =  { 0, };
     struct ifconf ifc;
@@ -243,8 +275,15 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress)
     int32_t sck;
     int32_t interfaces;
     int32_t i;
+    const char *matchName = "wlan";
 
-    /* Get a socket handle. */
+    if (!interfaceName || !ipAddress || !subnetMask)
+    {
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "Invalid input: interface/ipaddress holder is NULL!");
+        return;
+    }
+
+   /* Get a socket handle. */
     sck = socket(AF_INET, SOCK_DGRAM, 0);
     if (sck < 0)
     {
@@ -263,14 +302,18 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress)
 
     /* Iterate through the list of interfaces. */
     ifr = ifc.ifc_req;
-    interfaces = ifc.ifc_len / sizeof(struct ifreq);
-
+//    interfaces = ifc.ifc_len / sizeof(struct ifreq);
+    interfaces = 2;
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "CAWiFiGetInterfaceInformation : %d", interfaces);
 
     for (i = 0; i < interfaces; i++)
     {
         struct ifreq temp_ifr;
         struct ifreq* item = &ifr[i];
+
+        char interfaceAddress[CA_IPADDR_SIZE] = {0};
+        char interfaceSubnetMask[CA_IPADDR_SIZE] = {0};
+        socklen_t len = sizeof(struct sockaddr_in);
 
         memset(&temp_ifr, 0, sizeof(temp_ifr));
         strcpy(temp_ifr.ifr_name, item->ifr_name);
@@ -292,19 +335,52 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress)
         }
 
         char* ip = inet_ntoa(((struct sockaddr_in*) &item->ifr_addr)->sin_addr);
-
+        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "ip : %s", ip);
         if(strcmp(ip, "127.0.0.1") == 0)
         {
             continue;
         }
 
-        // set interface name
-        *interfaceName = strndup(item->ifr_name, strlen(item->ifr_name));
+        if (!strncasecmp(item->ifr_name,matchName,strlen(matchName))) {
+            // get the interface ip address
+            if (0 != getnameinfo(&item->ifr_addr, len, interfaceAddress,
+                            sizeof(interfaceAddress), NULL, 0, NI_NUMERICHOST))
+            {
+                    OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get IPAddress, Error code: %s",
+                              strerror(errno));
+                    break;
+            }
 
-        // set local ip address
-        *ipAddress = strndup(ip, strlen(ip));
+            // get the interface subnet mask
+            if (0 != getnameinfo(&item->ifr_netmask, len, interfaceSubnetMask,
+                            sizeof(interfaceSubnetMask), NULL, 0, NI_NUMERICHOST))
+            {
+                    OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get subnet mask, Error code: %s",
+                              strerror(errno));
+                    break;
+            }
 
-       OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "ipAddress : %s, interfaceName : %s", *ipAddress, *interfaceName);
+            // set interface name
+            *interfaceName = strndup(item->ifr_name, strlen(item->ifr_name));
+
+            // set local ip address
+            *ipAddress = strndup(interfaceAddress, strlen(interfaceAddress));
+
+            // set subnet mask
+           // *subnetMask = strndup(interfaceSubnetMask, strlen(interfaceSubnetMask));
+            *subnetMask = strndup("255.255.255.0", strlen("255.255.255.0"));
+        }
+        else
+        {
+            OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "did not match name : wlan");
+            // set interface name
+            *interfaceName = strndup(item->ifr_name, strlen(item->ifr_name));
+
+            // set local ip address
+            *ipAddress = strndup(ip, strlen(ip));
+        }
+
+       OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "ipAddress : %s, interfaceName : %s, subnetmask : %s", *ipAddress, *interfaceName, *subnetMask);
        break;
     }
 
@@ -321,7 +397,7 @@ void CAWiFiJniInit(JavaVM* jvm)
 void CAJniSetContext(jobject context)
 {
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "caWifiSetObject");
-	g_context = context;
+    g_context = context;
 }
 
 void CACreateWiFiJNIInterfaceObject(jobject context)
@@ -363,7 +439,7 @@ void CACreateWiFiJNIInterfaceObject(jobject context)
     }
 
     jmethodID WiFiInterfaceConstructorMethod = (*env)->GetMethodID(env,
-    		WiFiJniInterface, "<init>", "(Landroid/content/Context;)V");
+            WiFiJniInterface, "<init>", "(Landroid/content/Context;)V");
     if (!WiFiInterfaceConstructorMethod)
     {
         OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get CAWiFiInterface constructor method");
@@ -381,6 +457,7 @@ void CASendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus)
     // Get network information
     char *interfaceName = NULL;
     char *ipAddress = NULL;
+    char *subnetMask = NULL;
 
     if (gStopNetworkMonitor)
     {
@@ -397,7 +474,7 @@ void CASendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus)
     // if network status is changed
     if (currNetworkStatus != nwConnectivityStatus)
     {
-        CAWiFiGetInterfaceInformation(&interfaceName, &ipAddress);
+        CAWiFiGetInterfaceInformation(&interfaceName, &ipAddress, & subnetMask);
 
         // set current network information
         u_mutex_lock(gWifiNetInfoMutex);
@@ -413,6 +490,7 @@ void CASendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus)
     }
     OICFree(interfaceName);
     OICFree(ipAddress);
+    OICFree(subnetMask);
 }
 
 JNIEXPORT void JNICALL Java_com_iotivity_jar_CAWiFiInterface_CAWiFiStateEnabled

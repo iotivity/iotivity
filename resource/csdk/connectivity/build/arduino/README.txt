@@ -8,18 +8,22 @@ char pass[] = "";  // your network password
 Compiling Interface APIs for ARDUINOMEGA:
 ========================================
 PREREQ: Arduino MUST be installed in the machine where we compile. Suppose ARDUINO_DIR = <PATH_TO_ARDUINO_INSTALL_DIR>/arduino-1.5.x
-1) Patch the Wiznet Ethernet library with the patch available at :
-        I. connectivity\lib\extlibs\arduino_linux_ethernet_cpp.patch
-		II.connectivity\lib\extlibs\arduino_linux_ethernet_socket_cpp.patch
-	Place both these libraries in the ARDUINO_DIR/libraries/ folder where remaining libraries are present.
-2) Arduino builds are dependent on latest Time and TimedAction libraries. Download it from here:
+1) Change permissions for executable in "ARDUINO_DIR"
+		chmod -R 777 ./*
+2) ONE TIME ONLY - ADDITIONAL LIBRARIES
+	Arduino builds are dependent on latest Time and TimedAction libraries. Download it from here:
 		I. http://playground.arduino.cc/Code/Time
 		II.http://playground.arduino.cc/Code/TimedAction
-3) For TimedAction library. Apply the following patch.
-    (Also the updated library has been pushed for reference at : connectivity\lib\extlibs\TimedAction)
-	TimedAction.h Line 33 : Replace "WProgram.h" with "Arduino.h"
-4) Go to "connectivity\build\arduino" directory, Open Makefile and change ARDUINO_PORT according to connected PORT
-5) BUILD :  Go to "connectivity\build" directory. To build a specific TRANSPORT [ETHERNET,BLE,WIFI], use the following command :
+	Place both these libraries in the "ARDUINO_DIR/libraries/" folder where remaining libraries are present.
+3) ONE TIME ONLY - PATCH
+	Complete patch has been provided at : "connectivity\lib\extlibs\arduino_libraries.patch"
+		Copy this patch file to "ARDUINO_DIR/libraries/"
+4) To apply patch give the command : 
+		patch -p1 < arduino_libraries.patch
+	To undo the patch give the command :
+		patch -R -p1 < arduino_libraries.patch
+5) Go to "connectivity\build\arduino" directory, Open Makefile and change ARDUINO_PORT according to connected PORT
+6) BUILD :  Go to "connectivity\build" directory. To build a specific TRANSPORT [ETHERNET,BLE,WIFI], use the following command :
 	sudo make PLATFORM=arduinomega TRANSPORT=<ETHERNET/BLE/WIFI> ARDUINO_DIR = <PATH_TO_ARDUINO_INSTALL_DIR>/arduino-1.5.x
 
 Note: Prior to building for BLE Transport, following additional steps are required:

@@ -19,10 +19,8 @@
 ******************************************************************/
 #include "caleadapter_singlethread.h"
 
-#include <TimedAction.h>
-
 #include "caleinterface_singlethread.h"
-#include "caleserver.h"
+#include "cableserver.h"
 #include "logger.h"
 #include "caadapterutils.h"
 #include "camsgparser.h"
@@ -62,9 +60,6 @@ void CANotifyCallback(void *data, int32_t dataLen, char *senderAdrs, int32_t sen
  */
 void CACheckData();
 
-static TimedAction gRcvAction = TimedAction(2000, CACheckData);
-
-
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CANetworkChangeCallback netCallback)
@@ -95,7 +90,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 CAResult_t CAReadLEData()
 {
     CABleDoEvents();
-    gRcvAction.check();
+    CACheckData();
     return CA_STATUS_OK;
 }
 
@@ -104,7 +99,6 @@ void CATerminateLE()
     OIC_LOG(DEBUG, TAG, "IN");
     gRespCallback = NULL;
     LERegisterNetworkNotifications(NULL);
-    gRcvAction.disable();
     CAStopBleGattServer();
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
@@ -113,9 +107,8 @@ CAResult_t CAStartLEListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CAInitializeBle();
-    gRcvAction.enable();
     CABleDoEvents();
-    gRcvAction.check();
+    CACheckData();
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -148,15 +141,9 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *char_value,
     // Only 1 characteristic will be used for sending data from server
     OIC_LOG(DEBUG, TAG, "IN");
 
-    char *header = NULL;
-    header = (char *) OICMalloc(sizeof(char) * CA_HEADER_LENGTH);
-    if (NULL == header)
-    {
-        OIC_LOG(DEBUG, TAG, "error");
-        return CA_STATUS_FAILED;
-    }
-
+    char header[CA_HEADER_LENGTH] = "";
     memset(header, 0, sizeof(char) * CA_HEADER_LENGTH);
+
     CAResult_t result = CAGenerateHeader(header, value_length);
 
     if (CA_STATUS_OK != result)
@@ -292,19 +279,20 @@ void CACheckData()
         if (NULL == gCoapBuffer)
         {
             OIC_LOG(DEBUG, TAG, "IN");
-            char headerArray[2] = "";
-            while (CAIsBleDataAvailable() && dataLen < 2)
+            char headerArray[CA_HEADER_LENGTH] = "";
+            while (CAIsBleDataAvailable() && dataLen < CA_HEADER_LENGTH)
             {
                 headerArray[dataLen++] = CAReadBleData();
             }
 
             packetDataLen = CAParseHeader(headerArray);
 
-    	    if (packetDataLen > COAP_MAX_PDU_SIZE)
-    	    {
-        		OIC_LOG(ERROR, TAG, "error");
-        		return;
-    	    }
+            if (packetDataLen > COAP_MAX_PDU_SIZE)
+            {
+                OIC_LOG(ERROR, TAG, "error");
+                return;
+            }
+
             gCoapBuffer = (char *)OICMalloc(packetDataLen);
             if (NULL == gCoapBuffer)
             {

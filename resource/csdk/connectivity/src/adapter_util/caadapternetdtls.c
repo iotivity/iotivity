@@ -143,6 +143,10 @@ static void CAClearCacheList()
     {
         stCACacheMessage_t *msg = (stCACacheMessage_t *)u_arraylist_get(gCaDtlsContext->cacheList,
                                   list_index);
+        if (msg == NULL)
+        {
+            continue;
+        }
         CAFreeCacheMsg(msg);
     }
     u_arraylist_free(gCaDtlsContext->cacheList);
