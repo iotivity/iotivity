@@ -597,7 +597,11 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
             !collectionResource)
     {
         OC_LOG(INFO, TAG, PCF("Deregistering observation requested"));
+        #ifdef CA_INT
+        resObs = GetObserverUsingToken (request->token);
+        #else
         resObs = GetObserverUsingToken (&request->requestToken);
+        #endif
         if (NULL == resObs)
         {
             // Stack does not contain this observation request
@@ -608,7 +612,11 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         ehRequest.obsInfo.obsId = resObs->observeId;
         ehFlag = (OCEntityHandlerFlag)(ehFlag | OC_OBSERVE_FLAG);
 
+        #ifdef CA_INT
+        resObs = GetObserverUsingToken (request->token);
+        #else
         result = DeleteObserverUsingToken (&request->requestToken);
+        #endif
         if(result == OC_STACK_OK)
         {
             OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));

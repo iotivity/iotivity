@@ -57,6 +57,12 @@ extern OCDeviceEntityHandler defaultDeviceHandler;
 #define OC_COAP_SCHEME "coap://"
 #define OC_OFFSET_SEQUENCE_NUMBER (4) // the first outgoing sequence number will be 5
 
+#ifdef CA_INT
+// TODO-CA: This has been defined in CA layer as well, but is not exposed externally.
+// Need to expose it from CA and remove the definition below.
+#define CA_MAX_TOKEN_LEN   (8)
+#endif //CA_INT
+
 typedef struct {
     // Observe option field
     uint32_t option;
@@ -90,7 +96,7 @@ typedef struct {
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
-    char token[32];   // TODO-CA:  What is max CAToken_t length?  Get rid of magic number
+    char token[CA_MAX_TOKEN_LEN+1];
 #endif
     //////////////////////////////////////////////////////////
     // TODO: Consider moving these member to CoAP

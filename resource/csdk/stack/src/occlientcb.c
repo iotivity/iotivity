@@ -34,12 +34,6 @@
 /// Module Name
 #define TAG PCF("occlientcb")
 
-#ifdef CA_INT
-// TODO-CA: This has been defined in CA layer as well, but is not exposed externally.
-// Need to expose it from CA and remove the definition below.
-#define CA_MAX_TOKEN_LEN   (8)
-#endif //CA_INT
-
 struct ClientCB *cbList = NULL;
 OCMulticastNode * mcPresenceNodes = NULL;
 

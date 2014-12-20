@@ -222,7 +222,7 @@ OCStackResult AddServerCARequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->connectivityType = connectivityType;
     if (token)
     {
-        strncpy(serverRequest->token, token, sizeof(serverRequest->token) - 1);
+        strncpy(serverRequest->token, token, CA_MAX_TOKEN_LEN);
     }
 
     *request = serverRequest;

@@ -46,7 +46,7 @@ typedef struct ResourceObserver {
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
-    char CAToken[32];   // TODO-CA:  What is max CAToken_t length?  Get rid of magic number
+    char CAToken[CA_MAX_TOKEN_LEN+1];
 #endif
     // Quality of service of the request
     OCQualityOfService qos;
@@ -84,9 +84,17 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos);
 
+#ifdef CA_INT
+OCStackResult DeleteObserverUsingToken (char * token);
+#else
 OCStackResult DeleteObserverUsingToken (OCCoAPToken * token);
+#endif
 
+#ifdef CA_INT
+ResourceObserver* GetObserverUsingToken (const char * token);
+#else
 ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token);
+#endif
 
 ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
 

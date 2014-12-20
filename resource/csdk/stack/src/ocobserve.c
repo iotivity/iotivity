@@ -345,7 +345,7 @@ OCStackResult AddCAObserver (const char         *resUri,
         obsNode->connectivityType = connectivityType;
         if(CAtoken)
         {
-            strncpy(obsNode->CAToken, CAtoken, sizeof(obsNode->CAToken) - 1);
+            strncpy(obsNode->CAToken, CAtoken, CA_MAX_TOKEN_LEN);
         }
 
         obsNode->resource = resHandle;
@@ -435,7 +435,11 @@ ResourceObserver* GetObserverUsingId (const OCObservationId observeId)
     return NULL;
 }
 
+#ifdef CA_INT
+ResourceObserver* GetObserverUsingToken (const char * token)
+#else
 ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
+#endif
 {
     ResourceObserver *out = NULL;
 
@@ -443,6 +447,13 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
     {
         LL_FOREACH (serverObsList, out)
         {
+            #ifdef CA_INT
+            if((strlen(token) == strlen(out->CAToken)) &&
+               (memcmp(out->CAToken, token, strlen(token)) == 0))
+            {
+                return out;
+            }
+            #else
             OC_LOG(INFO, TAG,PCF("comparing tokens"));
             OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
             OC_LOG_BUFFER(INFO, TAG, out->token.token, out->token.tokenLength);
@@ -451,13 +462,18 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
             {
                 return out;
             }
+            #endif // CA_INT
         }
     }
     OC_LOG(INFO, TAG, PCF("Observer node not found!!"));
     return NULL;
 }
 
+#ifdef CA_INT
+OCStackResult DeleteObserverUsingToken (char * token)
+#else
 OCStackResult DeleteObserverUsingToken (OCCoAPToken * token)
+#endif
 {
     ResourceObserver *obsNode = NULL;
 
@@ -482,7 +498,11 @@ void DeleteObserverList()
     ResourceObserver *tmp = NULL;
     LL_FOREACH_SAFE (serverObsList, out, tmp)
     {
+        #ifdef CA_INT
+        DeleteObserverUsingToken (out->CAToken);
+        #else
         DeleteObserverUsingToken (&(out->token));
+        #endif
     }
     serverObsList = NULL;
 }

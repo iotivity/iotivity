@@ -102,7 +102,11 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
     {
     case OC_OBSERVER_NOT_INTERESTED:
         OC_LOG(DEBUG, TAG, PCF("observer is not interested in our notifications anymore"));
+        #ifdef CA_INT
+        observer = GetObserverUsingToken (token->token);
+        #else
         observer = GetObserverUsingToken (token);
+        #endif
         if(observer)
         {
             result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) NULL,
@@ -115,7 +119,11 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
             observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
         }
         //observer is not observing anymore
+        #ifdef CA_INT
+        result = DeleteObserverUsingToken (token->token);
+        #else
         result = DeleteObserverUsingToken (token);
+        #endif
         if(result == OC_STACK_OK)
         {
             OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
@@ -130,7 +138,11 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
         //observer is still interested
         OC_LOG(DEBUG, TAG, PCF("observer is interested in our \
                 notifications, reset the failedCount"));
-        observer = GetObserverUsingToken(token);
+        #ifdef CA_INT
+        observer = GetObserverUsingToken (token->token);
+        #else
+        observer = GetObserverUsingToken (token);
+        #endif
         if(observer)
         {
             observer->forceHighQos = 0;
@@ -145,7 +157,11 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
     case OC_OBSERVER_FAILED_COMM:
         //observer is not reachable
         OC_LOG(DEBUG, TAG, PCF("observer is unreachable"));
-        observer = GetObserverUsingToken(token);
+        #ifdef CA_INT
+        observer = GetObserverUsingToken (token->token);
+        #else
+        observer = GetObserverUsingToken (token);
+        #endif
         if(observer)
         {
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
@@ -1320,7 +1336,6 @@ exit:
     {
         OCFree(requestData.options);
     }
-    //TODO-CA: CADestroyToken here
 #endif // CA_INT
     return result;
 }
@@ -1339,7 +1354,8 @@ exit:
  *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
  */
 OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
-        uint8_t numOptions) {
+        uint8_t numOptions) 
+{
     /*
      * This ftn is implemented one of two ways in the case of observation:
      *
@@ -1358,6 +1374,14 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      *      Remove the callback associated on client side.
      */
     OCStackResult ret = OC_STACK_OK;
+#ifdef CA_INT
+    CARemoteEndpoint_t* endpoint = NULL;
+    CAResult_t caResult;
+    CAInfo_t requestData;
+    CARequestInfo_t requestInfo;
+    // Track if memory is allocated for additional header options
+    uint8_t hdrOptionMemAlloc = 0;
+#endif // CA_INT
 
     if(!handle) {
         return OC_STACK_INVALID_PARAM;
@@ -1372,6 +1396,41 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         {
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
+                #ifdef CA_INT
+                caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri, CA_WIFI, 
+                                                  &endpoint);
+                endpoint->connectivityType = CA_WIFI;
+                if (caResult != CA_STATUS_OK)
+                {
+                    OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
+                    return OC_STACK_ERROR;
+                }
+
+                memset(&requestData, 0, sizeof(CAInfo_t));
+                // TODO-CA: Map QoS to the right CA msg type
+                requestData.type = CA_MSG_NONCONFIRM;
+                requestData.token = clientCB->token;
+                if (CreateObserveHeaderOption (&(requestData.options),
+                            options, numOptions, OC_OBSERVE_DEREGISTER) != OC_STACK_OK)
+                {
+                    return OC_STACK_ERROR;
+                }
+                hdrOptionMemAlloc = 1;
+                requestData.numOptions = numOptions + 1;
+                memset(&requestInfo, 0, sizeof(CARequestInfo_t));
+                requestInfo.method = CA_GET;
+                requestInfo.info = requestData;
+                // send request
+                caResult = CASendRequest(endpoint, &requestInfo);
+                if (caResult != CA_STATUS_OK)
+                {
+                    OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
+                }
+                if(caResult == CA_STATUS_OK)
+                {
+                    ret = OC_STACK_OK;
+                }
+                #else // CA_INT
                 if(qos == OC_HIGH_QOS)
                 {
                     ret = OCDoCoAPResource(OC_REST_CANCEL_OBSERVE, qos,
@@ -1383,6 +1442,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                     FindAndDeleteClientCB(clientCB);
                 }
                 break;
+                #endif // CA_INT
             #ifdef WITH_PRESENCE
             case OC_REST_PRESENCE:
                 FindAndDeleteClientCB(clientCB);
@@ -1392,6 +1452,14 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 return OC_STACK_INVALID_METHOD;
         }
     }
+#ifdef CA_INT
+    CADestroyRemoteEndpoint(endpoint);
+    if (hdrOptionMemAlloc)
+    {
+        OCFree(requestData.options);
+    }
+#endif // CA_INT
+
     return ret;
 }
 #ifdef WITH_PRESENCE
