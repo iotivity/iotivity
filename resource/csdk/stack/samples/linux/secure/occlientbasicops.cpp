@@ -185,11 +185,7 @@ int InitPutRequest()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort
-#ifdef CA_INT_DTLS
-        << "/"
-#endif
-        << coapServerResource;
+        << ":" << coapServerPort  << coapServerResource;
     return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
 }
 
@@ -231,11 +227,7 @@ int InitGetRequest(OCQualityOfService qos)
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort
-#ifdef CA_INT_DTLS
-        << "/"
-#endif
-        << coapServerResource;
+        << ":" << coapServerPort << coapServerResource;
 
     return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)?
             OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
