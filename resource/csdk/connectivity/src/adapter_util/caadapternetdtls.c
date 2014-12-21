@@ -205,7 +205,7 @@ static void CASendCachedMsg(const stCADtlsAddrInfo_t *dstSession)
     uint32_t list_length = 0;
     u_mutex_lock(gDtlsListMutex);
     list_length = u_arraylist_length(gCaDtlsContext->cacheList);
-    for (list_index = 0; list_index < list_length; list_index++)
+    for (list_index = 0; list_index < list_length; )
     {
         stCACacheMessage_t *msg = (stCACacheMessage_t *)u_arraylist_get(gCaDtlsContext->cacheList,
                                   list_index);
@@ -221,11 +221,24 @@ static void CASendCachedMsg(const stCADtlsAddrInfo_t *dstSession)
             {
                 OIC_LOG(ERROR, NET_DTLS_TAG, "CAAdapterNetDtlsEncryptInternal failed.");
             }
-            u_arraylist_remove(gCaDtlsContext->cacheList, list_index);
-            CAFreeCacheMsg(msg);
-            break;
-        }
 
+            if (u_arraylist_remove(gCaDtlsContext->cacheList, list_index))
+            {
+                CAFreeCacheMsg(msg);
+                // Reduce list length by 1 as we removed one element.
+                list_length--;
+            }
+            else
+            {
+                OIC_LOG(ERROR, NET_DTLS_TAG, "CAAdapterNetDtlsEncryptInternal failed.");
+                break;
+            }
+        }
+        else
+        {
+            // Move to the next element
+            ++list_index;
+        }
     }
     u_mutex_unlock(gDtlsListMutex);
 
