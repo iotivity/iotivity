@@ -131,7 +131,7 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     coap_block_t rcvdBlock2;
     memset(&rcvdBlock1, COAP_BLOCK_FILL_VALUE, sizeof(coap_block_t));
     memset(&rcvdBlock2, COAP_BLOCK_FILL_VALUE, sizeof(coap_block_t));
-    size_t rcvdSize1 = 0;
+    uint16_t rcvdSize1 = 0;
     coap_pdu_t * rcvdPdu = rcvdRequest->pdu;
     coap_pdu_t * sendPdu = NULL;
     coap_send_flags_t sendFlag;
