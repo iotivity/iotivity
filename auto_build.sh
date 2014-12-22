@@ -23,17 +23,21 @@ function build()
 	# it requires gcc-4.9, currently only android-ndk-r10(for linux)
 	# and windows android-ndk-r10(64bit target version) support these features.
 
-	echo "*********** Build for android x86 *************"
-	scons TARGET_OS=android TARGET_ARCH=x86 ANDROID_NDK=$1 RELEASE=$3
+	if [ "$BUILD_FOR_ANDROID" = "true" ]
+		then
 
-	echo "*********** Build for android armeabi *************"
-	scons TARGET_OS=android TARGET_ARCH=armeabi ANDROID_NDK=$1 RELEASE=$3
+		echo "*********** Build for android x86 *************"
+		scons TARGET_OS=android TARGET_ARCH=x86 ANDROID_NDK=$1 RELEASE=$3
 
-	echo "*********** Build for android armeabi-v7a *************"
-	scons TARGET_OS=android TARGET_ARCH=armeabi-v7a ANDROID_NDK=$1 RELEASE=$3
+		echo "*********** Build for android armeabi *************"
+		scons TARGET_OS=android TARGET_ARCH=armeabi ANDROID_NDK=$1 RELEASE=$3
 
-	echo "*********** Build for android armeabi-v7a-hard *************"
-	scons TARGET_OS=android TARGET_ARCH=armeabi-v7a-hard ANDROID_NDK=$1 RELEASE=$3
+		echo "*********** Build for android armeabi-v7a *************"
+		scons TARGET_OS=android TARGET_ARCH=armeabi-v7a ANDROID_NDK=$1 RELEASE=$3
+
+		echo "*********** Build for android armeabi-v7a-hard *************"
+		scons TARGET_OS=android TARGET_ARCH=armeabi-v7a-hard ANDROID_NDK=$1 RELEASE=$3
+	fi
 
 	echo "*********** Build for arduino avr *************"
 	scons TARGET_OS=arduino TARGET_ARCH=avr ARDUINO_HOME=$2 RELEASE=$3
