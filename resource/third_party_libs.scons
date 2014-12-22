@@ -12,8 +12,6 @@ target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 src_dir = env.get('SRC_DIR')
 
-if target_os not in ['linux', 'darwin']:
-	utils_path = env.get('OIC_UTILS')
 
 ######################################################################
 # Check dependent packages (Linux only)
@@ -36,11 +34,6 @@ if target_os == 'linux':
 
 		conf.Finish()
 
-######################################################################
-# The 'include' path of third party libraries
-######################################################################
-if target_os == 'android':
-	lib_env.AppendUnique(CPPPATH = [utils_path + '/android/boost/include'])
 
 ######################################################################
 # The path of third party libraries binary
@@ -57,12 +50,10 @@ if target_os == 'android':
 *******************************************************************************
 '''
 	else:
-		lib_env.AppendUnique(LIBPATH = [utils_path + '/android/boost/libs/' + target_arch])
 		# Too much boost warning, suppress the warning
 		lib_env.AppendUnique(CCFLAGS = ['-w'])
 
 elif target_os == 'ios':
-	lib_env.AppendUnique(FRAMEWORKPATH = [utils_path + '/ios/frameworks/'])
 	lib_env.AppendUnique(FRAMEWORKS = ['boost'])
 elif target_os == 'darwin':
 	lib_env.AppendUnique(CPPPATH = ['/usr/local/include'])
