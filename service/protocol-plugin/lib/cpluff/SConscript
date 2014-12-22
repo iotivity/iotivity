@@ -12,7 +12,9 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-cpluff_env.AppendUnique(CPPDEFINES = ['CP_C_API=CP_EXPORT',
+cpluff_env.AppendUnique(CPPPATH= ['libcpluff/'])
+if target_os not in ['windows', 'winrt']:
+	cpluff_env.AppendUnique(CPPDEFINES = ['CP_C_API=CP_EXPORT',
 					'CP_HOST=\"\\"'+env.get('TARGET_OS')+'\\"\"',
 					'CP_DATADIR=\"\\\"/usr/local/share\\\"\"',
 					'DLOPEN_POSIX',
@@ -22,8 +24,9 @@ cpluff_env.AppendUnique(CPPDEFINES = ['CP_C_API=CP_EXPORT',
 					'CP_FNAMESEP_CHAR=\"\'/\'\"',
 					'CP_FNAMESEP_STR=\"\\\"/\\"\"',
 					'PACKAGE=\"\\\"cpluff\\\"\"'])
-cpluff_env.AppendUnique(LIBS = ['dl'])
-cpluff_env.PrependUnique(CCFLAGS = ['-fPIC'])
+	cpluff_env.AppendUnique(LIBS = ['dl'])
+	cpluff_env.PrependUnique(CCFLAGS = ['-fPIC'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
