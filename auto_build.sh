@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# Ideally we will capture the exit code of each step and try them all before failing
+# the build script.  For now, use set -e and fail the build at first failure.
+set -e
+
 function clean()
 {
 	echo "*********** Clean build *************"
