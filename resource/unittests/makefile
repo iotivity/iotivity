@@ -26,11 +26,9 @@ CXX 	 := g++
 
 ROOT_DIR	= ./
 
-# You must create the file "local.properties" on your local machine which contains any local paths, etc
-# local.properties should NOT be committed to repo
-include $(ROOT_DIR)/../csdk/local.properties
-
 GTEST_DIR= ../../extlibs/gtest-1.7.0
+MOCKS_DIR= ../../extlibs/hippomocks-master
+
 OUT_DIR	  := $(BUILD)
 
 ifeq ($(ROOT_DIR),)
@@ -45,6 +43,8 @@ INC_DIRS  += -I../csdk/ocrandom/include
 INC_DIRS  += -I../csdk/logger/include
 INC_DIRS  += -I../csdk/libcoap
 INC_DIRS  += -I$(GTEST_DIR)/include
+INC_DIRS  += -I$(MOCKS_DIR)/HippoMocks
+INC_DIRS  += -I$(MOCKS_DIR)/HippoMocksTest
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
@@ -59,21 +59,26 @@ CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s \
 
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(CXX_LIBS) -lpthread
 
-all: prep_dirs tests
+all: prep_dirs $(MOCKS_DIR) unittests 
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
 
-tests: tests.cpp $(GTEST_LIBS)
+unittests: OCPlatformTest.cpp OCResourceTest.cpp ConstructResourceTest.cpp $(GTEST_LIBS)
 	$(CXX) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
-
-$(GTEST_LIBS): $(GTEST_DIR)
-	cd $(GTEST_DIR) && ./configure && make
-
-$(GTEST_DIR):
+	
+$(GTEST_DIR):		
 	cd ../../extlibs && \
 	wget -q https://googletest.googlecode.com/files/gtest-1.7.0.zip && \
 	unzip gtest-1.7.0.zip
+	
+$(GTEST_LIBS): $(GTEST_DIR)		
+	cd $(GTEST_DIR) && ./configure && make		
+
+$(MOCKS_DIR):
+	cd ../../extlibs && \
+	wget -q https://github.com/dascandy/hippomocks/archive/master.zip && \
+	unzip master.zip	
 
 .PHONY: clean
 

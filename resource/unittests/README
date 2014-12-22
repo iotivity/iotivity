@@ -11,17 +11,14 @@ in auto_build.sh which is also in the the repository root directory.
 
 //---------------------------------------------------------------------
 
-tests.cpp contains unittests for C++ APIs. It uses Google Test for the unit
-tests.  Note that the unit tests are only to test the functionality of OCApi.h.
+The unittests folder contains unit tests for OCPlatfrom and OCResource APIs. 
+It uses Google Test for the unit tests. Please note that the unit tests are 
+only to test the functionality of public APIs.
 It is not a system or end-to-end test.
-
-Unit Test Requirements:
 
 1. To run the unit test, first build the unit tests with the following command
    from <oic-resource>:
-
    make -f buildScript.mk linux_ub_unittests
 
 2. Run the unit test by issuing the following command from <oic-resource>:
-
-   ./unittests/tests
+   ./unittests/unittests
