@@ -69,6 +69,7 @@ uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 
 OCMode myStackMode;
 OCDeviceEntityHandler defaultDeviceHandler;
+OCStackResult getQueryFromUri(const char * uri, unsigned char** resourceType, char ** newURI);
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -308,10 +309,21 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     OCServerProtocolRequest serverRequest;
 
     memset (&serverRequest, 0, sizeof(OCServerProtocolRequest));
-    // copy URI of resource
-    memcpy (&(serverRequest.resourceUrl), endPoint->resourceUri, strlen(endPoint->resourceUri));
+    OC_LOG_V(INFO, TAG, PCF("***** Endpoint URI ***** : %s\n"), (char*)endPoint->resourceUri);
+
+    char * newUri = (char *)endPoint->resourceUri;
+    unsigned char * query = NULL;
+    unsigned char * resourceType = NULL;
+    getQueryFromUri(endPoint->resourceUri, &query, &newUri);
+    OC_LOG_V(INFO, TAG, PCF("**********URI without query ****: %s\n"), newUri);
+    OC_LOG_V(INFO, TAG, PCF("**********Query ****: %s\n"), query);
+    //copy URI
+    memcpy (&(serverRequest.resourceUrl), newUri, strlen(newUri));
     //copy query
-    // TODO-CA: Is the query part of header option?
+    if(query)
+    {
+        memcpy (&(serverRequest.query), query, strlen(query));
+    }
     //copy request payload
     if (requestInfo->info.payload)
     {
@@ -845,7 +857,7 @@ static void incrementSequenceNumber(OCResource * resPtr);
 static OCStackResult verifyUriQueryLength(const char * inputUri,
         uint16_t uriLen);
 static uint8_t OCIsPacketTransferRequired(const char *request, const char *response, uint16_t size);
-OCStackResult getResourceType(const char * uri, unsigned char** resourceType, char ** newURI);
+OCStackResult getResourceType(const char * query, unsigned char** resourceType);
 
 //-----------------------------------------------------------------------------
 // Public APIs
@@ -1091,6 +1103,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     ClientCB *clientCB = NULL;
     unsigned char * requestUri = NULL;
     unsigned char * resourceType = NULL;
+    unsigned char * query = NULL;
     char * newUri = (char *)requiredUri;
     (void) referenceUri;
 #ifdef CA_INT
@@ -1150,14 +1163,22 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     {
         // Replacing method type with GET because "presence" is a stack layer only implementation.
         method = OC_REST_GET;
-
-        result = getResourceType(requiredUri, &resourceType, &newUri);
-        if(resourceType) {
-            OC_LOG_V(DEBUG, TAG, "Got Resource Type: %s", resourceType);
+        result = getQueryFromUri(requiredUri, &query, &newUri);
+        if(query)
+        {
+            result = getResourceType((char *) query, &resourceType);
+            if(resourceType)
+            {
+                OC_LOG_V(DEBUG, TAG, "Got Resource Type: %s", resourceType);
+            }
+            else
+            {
+                OC_LOG(DEBUG, TAG, PCF("Resource type is NULL."));
+            }
         }
         else
         {
-            OC_LOG(DEBUG, TAG, PCF("Got Resource Type is NULL."));
+            OC_LOG(DEBUG, TAG, PCF("Query string is NULL."));
         }
         if(result != OC_STACK_OK)
         {
@@ -3067,29 +3088,50 @@ uint8_t OCIsPacketTransferRequired(const char *request, const char *response, ui
 }
 
 /**
- * Retrieves a resource type based upon a uri string if the uri string contains only just one
+ * Retrieves a resource type based upon a query ontains only just one
  * resource attribute (and that has to be of type "rt").
  *
- * @remark This API malloc's memory for the resource type and newURI. Do not malloc resourceType
- * or newURI before passing in.
+ * @remark This API malloc's memory for the resource type. Do not malloc resourceType
+ * before passing in.
  *
- * @param uri - Valid URI for "requiredUri" parameter to OCDoResource API.
+ * @param query - The quert part of the URI
  * @param resourceType - The resource type to be populated; pass by reference.
- * @param newURI - Return URI without resourceType appended to the end of it. This is used to
- *                 ensure that the uri parameter is not modified; pass by reference.
  *
  * @return
- *  OC_STACK_INVALID_URI   - Returns this if the URI is invalid/NULL.
  *  OC_STACK_INVALID_PARAM - Returns this if the resourceType parameter is invalid/NULL.
  *  OC_STACK_OK            - Success
  */
-OCStackResult getResourceType(const char * uri, unsigned char** resourceType, char ** newURI)
+OCStackResult getResourceType(const char * query, unsigned char** resourceType)
+{
+    if(!query)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCStackResult result = OC_STACK_ERROR;
+
+    if(strncmp(query, "rt=", 3) == 0)
+    {
+        *resourceType = (unsigned char *) OCMalloc(strlen(query)-3);
+        if(!*resourceType)
+        {
+            result = OC_STACK_NO_MEMORY;
+        }
+
+        strcpy((char *)*resourceType, ((const char *)&query[3]));
+        result = OC_STACK_OK;
+    }
+
+    return result;
+}
+
+OCStackResult getQueryFromUri(const char * uri, unsigned char** query, char ** newURI)
 {
     if(!uri)
     {
         return OC_STACK_INVALID_URI;
     }
-    if(!resourceType || !newURI)
+    if(!query || !newURI)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -3103,16 +3145,17 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
     char* strTokPtr;
     leftToken = strtok_r((char *)tempURI, "?", &strTokPtr);
 
+    //TODO-CA: This could be simplified. Clean up required.
     while(leftToken != NULL)
     {
-        if(strncmp(leftToken, "rt=", 3) == 0)
+        if(strncmp(leftToken, "rt=", 3) == 0 || strncmp(leftToken, "if=", 3) == 0)
         {
-            *resourceType = (unsigned char *) OCMalloc(strlen(leftToken)-3);
-            if(!*resourceType)
+            *query = (unsigned char *) OCMalloc(strlen(leftToken));
+            if(!*query)
             {
                 goto exit;
             }
-            strcpy((char *)*resourceType, ((const char *)&leftToken[3]));
+            strcpy((char *)*query, ((const char *)&leftToken[0]));
             break;
         }
         leftToken = strtok_r(NULL, "?", &strTokPtr);
