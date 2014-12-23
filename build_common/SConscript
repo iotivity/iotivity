@@ -7,7 +7,7 @@ import platform
 
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
-		'linux': ['linux', 'android', 'arduino', 'yocto'],
+		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
 		'windows': ['windows', 'winrt', 'android', 'arduino'],
 		'darwin': ['darwin', 'ios', 'android', 'arduino'],
 		}
@@ -15,13 +15,14 @@ host_target_map = {
 # Map of os and allowed archs (os: allowed archs)
 os_arch_map = {
 		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
+		'tizen': ['x86', 'x86_64', 'arm', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
 		'winrt': ['arm'],
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
-                'yocto': ['x86', 'x86_64'],
+		'yocto': ['x86', 'x86_64'],
 		}
 
 host = platform.system().lower()
@@ -221,7 +222,10 @@ else:
     If target_os is not Yocto, continue with the regular build process
     '''
     # Load config of target os
-    env.SConscript(target_os + '/SConscript')
+    if target_os in ['linux', 'tizen']:
+		env.SConscript('linux/SConscript')
+    else:
+		env.SConscript(target_os + '/SConscript')
 
 # Delete the temp files of configuration
 if env.GetOption('clean'):
