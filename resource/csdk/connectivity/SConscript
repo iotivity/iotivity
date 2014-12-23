@@ -1,0 +1,77 @@
+##
+# CA library (share library) build script
+##
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+calib_env = lib_env.Clone()
+######################################################################
+# Build flags
+######################################################################
+calib_env.AppendUnique(CPPPATH = [
+		'./common/inc',
+		'./api',
+		'./inc',
+		'./src/ethernet_adapter/linux',
+		'./src/wifi_adapter/linux',
+		'./src/bt_edr_adapter/linux',
+		'./src/bt_le_adapter/linux',
+		'./lib/libcoap-4.1.1'
+		])
+
+target_os = env.get('TARGET_OS')
+
+if target_os not in ['windows', 'winrt']:
+	calib_env.AppendUnique(CFLAGS = ['-Wall', '-fPIC', '-fstack-protector-all']);
+	calib_env.AppendUnique(CPPDEFINES = [
+			'__LINUX__', 'WITH_POSIX',
+			'NO_EDR_ADAPTER', 'NO_LE_ADAPTER',
+			'WIFI_ADAPTER', 'ETHERNET_ADAPTER',
+			#'TB_LOG'
+			])
+
+calib_env.ParseConfig('pkg-config --cflags glib-2.0')
+
+#TODO add SConscript for libcoap
+#`/home/tester/iotivity/resource/csdk/connectivity/lib/libcoap-4.1.1'
+
+######################################################################
+# Source files and Targets
+######################################################################
+calib_src = [
+		'./common/src/logger.c',
+		'./common/src/oic_logger.c',
+		'./common/src/oic_console_logger.c',
+		'./common/src/oic_malloc.c',
+		'./common/src/oic_string.c',
+		'./common/src/uqueue.c',
+		'./common/src/uarraylist.c',
+		'./common/src/umutex.c',
+		'./common/src/uthreadpool.c',
+		'./src/caretransmission.c',
+		'./src/caconnectivitymanager.c',
+		'./src/caremotehandler.c',
+		'./src/cainterfacecontroller.c',
+		'./src/camessagehandler.c',
+		'./src/caqueueingthread.c',
+		'./src/canetworkconfigurator.c',
+		'./src/caprotocolmessage.c',
+		'./src/adapter_util/caadapterutils.c',
+		'./src/ethernet_adapter/caethernetadapter.c',
+		'./src/wifi_adapter/cawifiadapter.c',
+		'./src/bt_edr_adapter/linux/caedradapter.c',
+		'./src/bt_le_adapter/linux/caleadapter.c',
+		'./src/wifi_adapter/linux/cawifiserver.c',
+		'./src/wifi_adapter/linux/cawificlient.c',
+		'./src/wifi_adapter/linux/cawifinwmonitor.c',
+		'./src/ethernet_adapter/linux/caethernetserver.c',
+		'./src/ethernet_adapter/linux/caethernetclient.c',
+		'./src/ethernet_adapter/linux/caethernetnwmonitor.c'
+	]
+
+calib = calib_env.SharedLibrary('connectivity_abstraction', calib_src)
+calib_env.InstallTarget(calib, 'libconnectivity_abstraction')
+
