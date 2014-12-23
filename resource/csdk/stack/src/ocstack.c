@@ -1165,6 +1165,9 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE)
     {
+        // Replacing method type with GET because "presence" is a stack layer only implementation.
+        method = OC_REST_GET;
+
         result = getResourceType(requiredUri, &resourceType, &newUri);
         if(resourceType) {
             OC_LOG_V(DEBUG, TAG, "Got Resource Type: %s", resourceType);
@@ -1308,14 +1311,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-#ifdef WITH_PRESENCE
-    if(method == OC_REST_PRESENCE)
-    {
-        // Replacing method type with GET because "presence" is a stack layer only implementation.
-        method = OC_REST_GET;
-    }
-#endif
-
     // Make call to OCCoAP layer
     result = OCDoCoAPResource(method, qos, &token, newUri, request, options, numOptions);
 #endif // CA_INT
@@ -1354,7 +1349,7 @@ exit:
  *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
  */
 OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
-        uint8_t numOptions) 
+        uint8_t numOptions)
 {
     /*
      * This ftn is implemented one of two ways in the case of observation:
@@ -1397,7 +1392,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
                 #ifdef CA_INT
-                caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri, CA_WIFI, 
+                caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri, CA_WIFI,
                                                   &endpoint);
                 endpoint->connectivityType = CA_WIFI;
                 if (caResult != CA_STATUS_OK)
