@@ -388,12 +388,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         strncpy(serverRequest.token, requestInfo->info.token, sizeof(serverRequest.token) - 1);
     }
-#if 0
-    struct sockaddr_in sa;
-    inet_pton(AF_INET, endPoint->addressInfo.IP.ipAddress, &(sa.sin_addr));
-    sa.sin_port = htons(endPoint->addressInfo.IP.port);
-    memcpy((void*)&serverRequest.requesterAddr, &(sa), sizeof(sa));
-#endif
+
     // copy vendor specific header options
     // TODO-CA: CA is including non-vendor header options as well, like observe.
     // Need to filter those out
@@ -411,30 +406,6 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     }
 
     requestResult = HandleStackRequests (&serverRequest);
-#endif
-
-#if 0
-    // generate the pdu, if the request was CON, then the response is ACK, otherwire NON
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.token = (requestInfo != NULL) ? requestInfo->info.token : "";
-
-    // TODO : I guess we need to allocate memeory?
-    responseData.payload = "{\"oc\":[{\"href\":\"/a/led\",\"sid\":\"\",\"prop\":{\"rt\":[\"core.led\"],\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
-
-    //responseInfo = (CAResponseInfo*) malloc(sizeof(CAResponseInfo));
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = 200;
-    responseInfo.info = responseData;
-
-    // send request (connectivityType from remoteEndpoint of request Info)
-    OC_LOG(INFO, TAG, PCF("CASendResponse in HandleCARequests"));
-    //TODO-CA: CASendResponse returns the result (we need to check if the
-    // result is ok)
-    CAResult_t caResult = CASendResponse(endPoint, &responseInfo);
-    if(caResult != CA_STATUS_OK)
-    {
-        OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
-    }
 #endif
 
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
@@ -1354,7 +1325,7 @@ exit:
  *     OC_STACK_INVALID_PARAM    - The handle provided is invalid.
  */
 OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
-        uint8_t numOptions) 
+        uint8_t numOptions)
 {
     /*
      * This ftn is implemented one of two ways in the case of observation:
@@ -1397,7 +1368,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
                 #ifdef CA_INT
-                caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri, CA_WIFI, 
+                caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri, CA_WIFI,
                                                   &endpoint);
                 endpoint->connectivityType = CA_WIFI;
                 if (caResult != CA_STATUS_OK)
