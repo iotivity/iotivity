@@ -49,8 +49,41 @@ typedef enum {
     STACK_IF_DEFAULT = 0,
     STACK_IF_LL,
     STACK_IF_BATCH,
+    STACK_IF_GROUP,
     STACK_IF_INVALID
 } OCStackIfTypes;
+
+// following structure will be created in occollection.
+typedef struct occapability {
+    struct occapability* next;
+
+    char *capability;           // It is a name about resource capability.
+    char *status;               // It is mean status of capability.
+} OCCapability;
+
+
+// following structure will be created in occollection.
+typedef struct ocaction {
+    struct ocaction *next;
+
+    // Target Uri.
+    // It will be used to execute the action.
+    char *resourceUri;
+
+    OCCapability* head;
+} OCAction;
+
+// following structure will be created in occollection.
+typedef struct ocactionset {
+
+    struct ocactionset *next;
+
+    char *actionsetName;
+
+    OCAction* head;
+} OCActionSet;
+
+
 
 typedef struct resourcetype_t {
     struct resourcetype_t *next; // linked list; for multiple types on resource
@@ -116,6 +149,8 @@ typedef struct rsrc_t {
     /* method_t methods; */
     // Sequence number for observable resources. Per the CoAP standard it is a 24 bit value.
     uint32_t sequenceNum;
+    // Pointer of ActionSet which to support group action.
+    OCActionSet *actionsetHead;
 } OCResource;
 
 

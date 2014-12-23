@@ -4,24 +4,11 @@ It is not a system or end-to-end test.
 
 Unit Test Requirements:
 
-1. Install Google Test 1.7.0 on a Linux build machine to <gtest-1.7.0> from the
-   following address:
-
-	http://code.google.com/p/googletest/downloads/list
-
-2. Create/Append a file named "local.properties" at <oic-resource>/csdk.
-   "local.properties" is used by the build process to specify the path to the
-   Google Test directory.
-
-   local.properties should contain GTEST_DIR, as follows:
-
-   GTEST_DIR := <gtest-1.7.0>
-
-3. To run the unit test, first build the unit tests with the following command
+1. To run the unit test, first build the unit tests with the following command
    from <oic-resource>:
 
    make -f buildScript.mk linux_ub_unittests
 
-4. Run the unit test by issuing the following command from <oic-resource>:
+2. Run the unit test by issuing the following command from <oic-resource>:
 
    ./unittests/tests

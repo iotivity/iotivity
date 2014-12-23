@@ -44,3 +44,14 @@ dependencies/
 
 #ignore various swap files
 *.swp
+
+# Ignore SCons generated files and directories
+.scon*
+config.log
+os
+out/
+platform
+
+# Ignore downloaded dependencies
+extlibs/gtest*
+extlibs/cereal

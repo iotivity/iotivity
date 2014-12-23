@@ -29,7 +29,7 @@
 
 using namespace OC;
 
-const int SUCCESS_RESPONSE = 0;
+const int SUCCESS_RESPONSE = OC_STACK_OK;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
 std::shared_ptr< OCResource > g_curResource;
@@ -81,7 +81,8 @@ int observe_count()
 void onObserve(const HeaderOptions &headerOption , const OCRepresentation& rep , const int& eCode, const int& sequenceNumber)
 {
 	std::cout << "onObserve" << std::endl;
-    if(eCode == SUCCESS_RESPONSE)
+//    if(eCode == SUCCESS_RESPONSE)
+	if(eCode <= OC_STACK_RESOURCE_DELETED)
     {
 
         AttributeMap attributeMap = rep.getAttributeMap();
@@ -96,6 +97,7 @@ void onObserve(const HeaderOptions &headerOption , const OCRepresentation& rep ,
 
         if(rep.getUri().empty())
         {
+        	cout << "uri is null\n";
             return;
         }
 
@@ -140,7 +142,8 @@ void foundResource(std::shared_ptr< OCResource > resource)
     {
         if(resource)
         {
-            if(resource->uri().find("/a/NM/TempHumSensor/virtual") != std::string::npos)
+//            if(resource->uri().find("/a/NM/TempHumSensor/virtual") != std::string::npos)
+			if(resource->uri().find("/a/NM/TempHumSensor") != std::string::npos)
             {
                 std::cout << std::endl;
                 std::cout << "========================================================" << std::endl;

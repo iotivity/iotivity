@@ -29,19 +29,26 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <condition_variable>
 
-#include "OCApi.h"
-#include "OCPlatform.h"
-#include "OCResource.h"
-#include "OCResourceRequest.h"
-#include "OCResourceResponse.h"
-#include "ocstack.h"
-
+#include "OICPlatformConfig.h"
+#include "HostingConfig.h"
 #include "ResourceManager.h"
 #include "RegistrationManager.h"
 #include "VirtualRepresentation.h"
+#include "HostingHandler.h"
+#include "HostingInterface.h"
 
-#define ISFORDEMO 1
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+
+#define IN
+#define OUT
 
 using namespace OC;
 using namespace OCPlatform;
@@ -53,46 +60,23 @@ class NotificationManager
 
 private:
 
+    NotificationManager();
+    NotificationManager(HostingConfig cfg);
+    ~NotificationManager();
+
     static NotificationManager *s_instance;
-//    static OCPlatform *s_nmOCPlatform;
+    static mutex s_mutexForCreation;
 
-    static PlatformConfig s_cfg;
-
-    std::function< void(AttributeMap &inputAttMap) > m_print;
-    std::function< void(std::shared_ptr< OCResource > resource) > m_onfound;
-    std::function< void(AttributeMap &inputAttMap) > m_onObserve;
-
-    std::function< void(std::shared_ptr< OCResource > resource) > m_startHosting;
-    std::function< void() > m_findHosting;
-    std::function< void(std::string) > m_addExtraStr;
+    int getNetInfo(IN int& sck, IN struct ifreq* item, OUT std::string& ip_addres);
+    bool scanAndGetNetworkInterface(OUT std::string& ip_addres);
 
 public:
 
-    NotificationManager();
-    ~NotificationManager();
-
+    static void initialize();
+    static void initialize(HostingConfig cfg);
     static NotificationManager *getInstance();
 
-    void initialize();
-    void findHostingCandidate();
     void registerHostingEventListener();
-
-    int setPrint(std::function< void(AttributeMap &inputAttMap) > func);
-    int setOnFoundHostingCandidate(
-            std::function< void(std::shared_ptr< OCResource > resource) > func);
-    int setOnObserve(std::function< void(AttributeMap &inputAttMap) > func);
-
-    std::function< void(AttributeMap &inputAttMap) > getPrint();
-    std::function< void(std::shared_ptr< OCResource > resource) > getOnFoundHostingCandidate();
-    std::function< void(AttributeMap &inputAttMap) > getOnObserve();
-
-    int setStartHosting(std::function< void(std::shared_ptr< OCResource > resource) > &func);
-    int setFindHosting(std::function< void() > &func);
-    int setAddExtraStr(std::function< void(std::string) > &func);
-
-    std::function< void(std::shared_ptr< OCResource > resource) > getStartHosting();
-    std::function< void() > getFindHosting();
-    std::function< void(std::string) > getAddExtraStr();
 
 };
 

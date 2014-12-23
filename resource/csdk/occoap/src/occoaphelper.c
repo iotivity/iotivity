@@ -90,8 +90,13 @@ uint8_t OCToCoAPResponseCode(OCStackResult result)
     return ret;
 }
 
-uint8_t OCToCoAPQoS(OCQualityOfService qos)
+uint8_t OCToCoAPQoS(OCQualityOfService qos, uint8_t * ipAddr)
 {
+    if(ipAddr[0] == COAP_WK_IPAddr_0 && ipAddr[1] == COAP_WK_IPAddr_1 &&
+            ipAddr[2] == COAP_WK_IPAddr_2 && ipAddr[3] == COAP_WK_IPAddr_3)
+    {
+        return COAP_MESSAGE_NON;
+    }
     switch (qos)
     {
         case OC_HIGH_QOS:
@@ -392,7 +397,7 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
     coap_list_t * optNode = NULL;
     int res;
     size_t buflen;
-    unsigned char _buf[BUF_SIZE];
+    unsigned char _buf[MAX_URI_QUERY_BUF_SIZE];
     unsigned char *buf = _buf;
 
     if(addMediaType)
@@ -430,7 +435,7 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
     if(uri && uriLength)
     {
         buf = _buf;
-        buflen = BUF_SIZE;
+        buflen = MAX_URI_QUERY_BUF_SIZE;
         res = coap_split_path(uri, uriLength, buf, &buflen);
         while (res--) {
             optNode = CreateNewOptionNode(COAP_OPTION_URI_PATH,
@@ -444,7 +449,7 @@ OCStackResult FormOptionList(coap_list_t * * optListLoc, uint8_t * addMediaType,
     if(query && queryLength)
     {
         buf = _buf;
-        buflen = BUF_SIZE;
+        buflen = MAX_URI_QUERY_BUF_SIZE;
         res = coap_split_query(query, queryLength, buf, &buflen);
         while (res--) {
             optNode = CreateNewOptionNode(COAP_OPTION_URI_QUERY,

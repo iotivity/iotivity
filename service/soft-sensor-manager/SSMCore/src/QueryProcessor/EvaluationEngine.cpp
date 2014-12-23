@@ -83,7 +83,7 @@ void CEvaluationEngine::onSQLTrigger(IN sqlite3_context *context, IN int argc,
 void CEvaluationEngine::onExecute(IN void *pArg)
 {
     std::map<int, IEvaluationEngineEvent *>::iterator itor;
-    int     *pData = (int *)pArg;
+    intptr_t *pData = (intptr_t *)pArg;
 
     m_mtxTriggerId.lock();
     itor = m_mapTriggers.find(pData[0]);
@@ -97,13 +97,13 @@ void CEvaluationEngine::onExecute(IN void *pArg)
 
 void CEvaluationEngine::onTerminate(IN void *pArg)
 {
-    int *pData = (int *)pArg;
+    intptr_t *pData = (intptr_t *)pArg;
     SAFE_ARRAY_DELETE(pData);
 }
 
 SSMRESULT CEvaluationEngine::onWatcherTriggered(IN int triggerId, IN int dataId)
 {
-    int     *pData = new int[2];
+    intptr_t     *pData = new intptr_t[2];
     pData[0] = triggerId;
     pData[1] = dataId;
     m_pTasker->addTask(this, (void *)pData);
@@ -912,14 +912,14 @@ SSMRESULT CEvaluationEngine::watchModelData(IN int modelId, IN ModelConditionVec
     sstream << "CREATE TRIGGER WatchInsertModel" << m_iTriggerId << " AFTER INSERT ON [ModelData" <<
             modelId << "] WHEN ";
     sstream << sstreamCondition.str().c_str() << " BEGIN SELECT OnSQLTrigger(" <<
-            (int)this << ", " << m_iTriggerId << ", NEW.dataId); END;" << std::ends;
+            reinterpret_cast<intptr_t>(this) << ", " << m_iTriggerId << ", NEW.dataId); END;" << std::ends;
     SSM_CLEANUP_ASSERT(executeSQL_NoReturn(sstream.str()));
     sstream.str("");
 
     sstream << "CREATE TRIGGER WatchUpdateModel" << m_iTriggerId << " AFTER UPDATE ON [ModelData" <<
             modelId << "] WHEN ";
     sstream << sstreamCondition.str().c_str() << " BEGIN SELECT OnSQLTrigger(" <<
-            (int)this << ", " << m_iTriggerId << ", NEW.dataId); END;" << std::ends;
+            reinterpret_cast<intptr_t>(this) << ", " << m_iTriggerId << ", NEW.dataId); END;" << std::ends;
     SSM_CLEANUP_ASSERT(executeSQL_NoReturn(sstream.str()));
 
     m_mtxTriggerId.lock();

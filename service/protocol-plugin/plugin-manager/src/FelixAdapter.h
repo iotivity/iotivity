@@ -31,7 +31,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/inotify.h>
 #include <unistd.h>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -40,7 +39,6 @@
 #include "Plugin.h"
 #include "Config.h"
 
-#define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define BUF_LEN     (int)( 1024 * ( EVENT_SIZE + 16 ) )
 
 namespace OIC

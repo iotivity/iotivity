@@ -574,7 +574,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         {
             OC_LOG(INFO, TAG, PCF("There is room in response buffer"));
             // append
-            sprintf((char *)serverResponse->payload, "%s%s", (char *)serverResponse->payload, (char *)ehResponse->payload);
+            snprintf((char *)serverResponse->payload, serverResponse->remainingPayloadSize, "%s%s", (char *)serverResponse->payload, (char *)ehResponse->payload);
             OC_LOG_V(INFO, TAG, "Current aggregated response  ...%s", serverResponse->payload);
             serverResponse->remainingPayloadSize -= ehResponse->payloadSize;
             (serverRequest->numResponses)--;
@@ -592,7 +592,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             {
                 OC_LOG(INFO, TAG, PCF("More response fragment to come"));
                 // TODO: we should consider using strcat rather than setting a char by char here!
-                sprintf((char *)serverResponse->payload, "%s%c", (char *)serverResponse->payload,OC_JSON_SEPARATOR);
+                snprintf((char *)serverResponse->payload, serverResponse->remainingPayloadSize, "%s%c", (char *)serverResponse->payload,OC_JSON_SEPARATOR);
                 OC_LOG_V(INFO, TAG, "Current aggregated response  ...%s", serverResponse->payload);
                 (serverResponse->remainingPayloadSize)--;
                 stackRet = OC_STACK_OK;

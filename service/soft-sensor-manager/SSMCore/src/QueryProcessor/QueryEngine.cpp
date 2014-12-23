@@ -71,7 +71,7 @@ SSMRESULT CQueryEngine::processQueryResult(IN int userTriggerId,
     IContextModel           *temp_contextmodel = NULL;
     IContextModel           *temp_contextmodel2 = NULL;
 
-    int             *pData = NULL;
+    intptr_t             *pData = NULL;
 
     CDataReader *pDataReader = NULL;
 
@@ -160,10 +160,10 @@ SSMRESULT CQueryEngine::processQueryResult(IN int userTriggerId,
 
         SSM_CLEANUP_ASSERT(pDataReader->addModelData((result_model_data_id)[i].modelName, &modelDataSet));
     }
-    pData = new int[3];
+    pData = new intptr_t [3];
     pData[0] = EVENT_TYPE_OUTER;
     pData[1] = userTriggerId;
-    pData[2] = (int)pDataReader;
+    pData[2] = reinterpret_cast<intptr_t>(pDataReader);
 
     m_pTasker->addTask(this, (void *)pData);
 
@@ -234,7 +234,7 @@ CLEANUP:
 
 void CQueryEngine::onExecute(void *pArg)
 {
-    int *pData = (int *)pArg;
+    intptr_t *pData = (intptr_t *)pArg;
 
     switch (pData[0])
     {
@@ -256,7 +256,7 @@ void CQueryEngine::onExecute(void *pArg)
 
 void CQueryEngine::onTerminate(void *pArg)
 {
-    int *pData = (int *)pArg;
+    intptr_t *pData = (intptr_t *)pArg;
     std::vector<result_model>   *pResult = NULL;
     CDataReader                 *pDataReader = NULL;
 
@@ -329,10 +329,10 @@ SSMRESULT CQueryEngine::executeContextQuery(IN std::string contextQuery, OUT int
         if (validateQueryResult(pConditionedQueryResult, pResult) == SSM_S_OK)
         {
             //We have valid data, let's deliver to application.
-            int *pData = new int[3];
+            intptr_t  *pData = new intptr_t [3];
             pData[0] = EVENT_TYPE_INNER;
             pData[1] = m_cqid;
-            pData[2] = (int)pResult;
+            pData[2] = reinterpret_cast<intptr_t>(pResult);
 
             m_pTasker->addTask(this, (void *)pData);
         }

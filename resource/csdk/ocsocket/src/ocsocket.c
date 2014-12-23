@@ -259,7 +259,7 @@ int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
     }
 
     // add membership to receiving socket
-    struct ip_mreq mreq = {0};
+    struct ip_mreq mreq = {{0}};
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     mreq.imr_multiaddr.s_addr = sin->sin_addr.s_addr;
     if ((ret = setsockopt(sfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mreq, sizeof(mreq))) < 0) {
@@ -367,7 +367,7 @@ int32_t OCDevAddrToString(OCDevAddr* addr, char* stringAddress)
             return ERR_INVALID_INPUT;
         }
 
-        sprintf(stringAddress, "%u.%u.%u.%u",
+        snprintf(stringAddress, DEV_ADDR_SIZE_MAX, "%u.%u.%u.%u",
                 a, b, c, d);
         return ERR_SUCCESS;
     }

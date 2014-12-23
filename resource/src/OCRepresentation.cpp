@@ -33,7 +33,7 @@
 #include <OicJsonSerializer.hpp>
 #include <algorithm>
 
-// code needed to serialize a string::Attribute value map
+// code needed to serialize a string=>Attribute value map
 namespace OC
 {
     namespace detail
@@ -165,6 +165,11 @@ namespace OC
     { }
     std::string OCRepresentation::getJSONRepresentation() const
     {
+        if(empty())
+        {
+            return "{}";
+        }
+
         std::stringstream os;
 
         // note: the block is required because cereal closes the JSON string
@@ -251,6 +256,11 @@ namespace OC
                         || m_interfaceType == InterfaceType::BatchChild
                         || m_interfaceType == InterfaceType::DefaultParent)
                     && m_values.size()>0)
+        {
+            return false;
+        }
+
+        if(m_children.size() > 0)
         {
             return false;
         }

@@ -27,11 +27,9 @@
 
 #include <string>
 
-#include "OCResource.h"
-#include "OCPlatform.h"
 #include "SSMInterface.h"
-#include "SSMClient.h"
-#include "ISSMClientListener.h"
+
+using namespace OIC;
 
 namespace APPMenu
 {
@@ -47,11 +45,9 @@ typedef enum
     ALL_DISCOMPORT = 2, HALF_DISCOMPORT, LITTLE_DISCOMPORT, ALL_COMPORT
 } DIResult;
 
-class SSMTestApp: public ISSMClientListener
-    , public IQueryEngineEvent
+class SSMTestApp: public IQueryEngineEvent
 {
     private:
-        //SSMClient m_SSMClient;
         SSMInterface m_SSMClient;
 
     public:
@@ -63,7 +59,6 @@ class SSMTestApp: public ISSMClientListener
         void unregisterQuery();
 
         /* operations from listener interface */
-        void onRegisterQuery(const AttributeMap &attributeMap, SSMReturn &eCode);
         SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult);
 };
 

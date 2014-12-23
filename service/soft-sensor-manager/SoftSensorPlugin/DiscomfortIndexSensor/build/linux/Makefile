@@ -38,7 +38,7 @@ ${TARGET}: ${OBJLIST}
 post_job:
 	@echo " " 
 	cp -Rdp ./${RST_NAME}/lib${TARGET}.so ${OUTPUTS_DIR}/
-	cp -Rdp ../../${SSXML_NAME} ${OUTPUTS_DIR}/
+	cp -Rdp ../../../${SSXML_NAME} ${OUTPUTS_DIR}/
 	@echo "-------------- ${TARGET} Build Successful. -------------"
 	@echo "Enter to ${RST_NAME} folder."
 	@echo " " 

@@ -146,6 +146,21 @@ namespace OC
                     FindCallback resourceHandler, QualityOfService QoS);
 
         /**
+         * API for Device Discovery
+         *
+         * @param host - Host IP Address. If null or empty, Multicast is performed.
+         * @param resourceURI - Uri containing address to the virtual device in C Stack
+         *                       ("/oc/core/d")
+         *
+         * @param QualityOfService the quality of communication
+         *
+         */
+        OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
+                    FindDeviceCallback deviceInfoHandler);
+        OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
+                    FindDeviceCallback deviceInfoHandler, QualityOfService QoS);
+
+        /**
         * This API registers a resource with the server
         * NOTE: This API applies to server side only.
         *
@@ -191,6 +206,17 @@ namespace OC
 
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
                         const std::shared_ptr<OCResource> resource);
+
+        /**
+         * This API registers all the device specific information
+         *
+         * @param OCDeviceInfo - Structure containing all the device related information
+         *
+         * @return OCStackResult return value of the API. Returns OC_STACK_OK if success
+         *
+         * Note: OCDeviceInfo is defined in OCStack.h
+         */
+        OCStackResult registerDeviceInfo(const OCDeviceInfo deviceInfo);
 
         /**
         * Set default device entity handler

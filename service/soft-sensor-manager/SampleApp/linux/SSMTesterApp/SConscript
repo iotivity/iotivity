@@ -1,0 +1,35 @@
+##
+# linux sample app  build script
+##
+
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+linux_sample_env = lib_env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+linux_sample_env.AppendUnique(CPPPATH = ['include'])
+linux_sample_env.AppendUnique(CPPPATH = ['../../../SDK/cpp/include'])
+linux_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+linux_sample_env.AppendUnique(CPPDEFINES = ['LINUX'])
+linux_sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+linux_sample_env.AppendUnique(LIBS = ['libSSMSDK'])
+#linux_sample_env.AppendUnique(LIBS = ['libSSMCORE'])
+linux_sample_env.AppendUnique(LIBS = ['libSSMCore'])
+linux_sample_env.AppendUnique(LIBS = ['oc'])
+linux_sample_env.AppendUnique(LIBS = ['octbstack'])
+linux_sample_env.AppendUnique(LIBS = ['libcoap'])
+linux_sample_env.AppendUnique(LIBS = ['liboc_logger'])
+linux_sample_env.AppendUnique(LIBS = ['dl'])
+linux_sample_env.AppendUnique(LIBS = ['pthread'])
+
+######################################################################
+#build sampleapp
+######################################################################
+ssmtesterapp = linux_sample_env.Program('SSMTesterApp', 'src/SSMTestApp.cpp')
+Alias("ssmtesterapp_sample", ssmtesterapp)
+env.AppendTarget('SSMTesterApp')

@@ -60,11 +60,13 @@ roomserver = examples_env.Program('roomserver', 'roomserver.cpp')
 roomclient = examples_env.Program('roomclient', 'roomclient.cpp')
 garageserver = examples_env.Program('garageserver', 'garageserver.cpp')
 garageclient = examples_env.Program('garageclient', 'garageclient.cpp')
+devicediscoveryserver = examples_env.Program('devicediscoveryserver', 'devicediscoveryserver.cpp')
+devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicediscoveryclient.cpp')
 
 Alias("examples", [simpleserver, simpleserverHQ, simpleclient, simpleclientHQ,
 		fridgeserver, fridgeclient, presenceserver, presenceclient,
 		simpleclientserver, roomserver, roomclient, garageserver,
-		garageclient])
+		garageclient, devicediscoveryserver, devicediscoveryclient])
 env.AppendTarget('examples')
 
 #ios doesn't allow run application from terminal, so won't build these examples

@@ -18,6 +18,7 @@ plugins_env.AppendUnique(CPPPATH = ['../lib/cpluff/libcpluff'])
 
 if target_os not in ['windows', 'winrt']:
 	plugins_env.AppendUnique(CXXFLAGS = ['-g3', '-Wall', '-pthread', '-std=c++0x'])
+	plugins_env.PrependUnique(CCFLAGS = ['-fPIC']) 
 	plugins_env.AppendUnique(LINKFLAGS = ['-fPIC'])
 
 	if target_os not in ['arduino', 'android']:
@@ -28,13 +29,19 @@ if target_os == 'android':
 	plugins_env.AppendUnique(LIBS = ['gnustl_static'])
 	plugins_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 
+plugins_env.AppendUnique(LIBS = [File(env.get('BUILD_DIR') + '/libmosquitto.a'),
+		'mosquitto', 'ssl', 'rt'])
+
+
 ######################################################################
 # Source files and Targets
 ######################################################################
+plugins_env['LIBPREFIX'] = ''
+
 mqtt_fan_src = Glob('mqtt-fan/src/' + '*.cpp')
-fanserver = plugins_env.SharedLibrary('fanserver_mqtt_plugin', mqtt_fan_src)
+fanserver = plugins_env.SharedLibrary('mqtt-fan/fanserver_mqtt_plugin', mqtt_fan_src)
 
 mqtt_light_src = Glob('mqtt-light/src/' + '*.cpp')
-lightserver = plugins_env.SharedLibrary('lightserver_mqtt_plugin', mqtt_light_src)
+lightserver = plugins_env.SharedLibrary('mqtt-light/lightserver_mqtt_plugin', mqtt_light_src)
 
 SConscript('mqtt-fan/lib/SConscript')

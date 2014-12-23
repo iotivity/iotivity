@@ -22,8 +22,7 @@
 
 int g_Observation = 0;
 
-OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request,
-                                    std::shared_ptr< OCResourceResponse > response);
+OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request);
 
 /*
  * TempResourceFunctions
@@ -113,16 +112,20 @@ void *TestSensorVal(void *param)
     return NULL;
 }
 
-OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request,
-                                    std::shared_ptr< OCResourceResponse > response)
+OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request)
 {
     cout << "\tIn Server CPP entity handler:\n";
+
+    auto response = std::make_shared<OC::OCResourceResponse>();
 
     if (request)
     {
         // Get the request type and request flag
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
+
+        response->setRequestHandle(request->getRequestHandle());
+        response->setResourceHandle(request->getResourceHandle());
 
         if (requestFlag & RequestHandlerFlag::InitFlag)
         {
@@ -188,7 +191,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
         std::cout << "Request invalid" << std::endl;
     }
 
-    return OC_EH_OK;
+    return OCPlatform::sendResponse(response) == OC_STACK_OK ? OC_EH_OK : OC_EH_ERROR;
 }
 
 int main()
@@ -200,11 +203,15 @@ int main()
     {
         OC::OCPlatform::Configure(cfg);
 
+        OC::OCPlatform::startPresence(60);
+
         g_myResource.registerResource();
 
         int input = 0;
         cout << "Type any key to terminate" << endl;
         cin >> input;
+
+        OC::OCPlatform::stopPresence();
     }
     catch (std::exception e)
     {

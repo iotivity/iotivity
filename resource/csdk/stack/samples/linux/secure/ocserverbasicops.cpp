@@ -158,7 +158,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            sprintf (newLedUri + strlen(newLedUri), "%d", gCurrLedInstance);
+            int newLedUriLength = strlen(newLedUri);
+            snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
 
             json = cJSON_CreateObject();
 

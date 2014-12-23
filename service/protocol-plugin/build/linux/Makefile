@@ -1,6 +1,6 @@
 PROTOCOL_ROOT = ../../
 
-.PHONY:pre resource plugin-manager plugins sample-app
+.PHONY:pre plugin-manager plugins sample-app
 
 all: .PHONY
 
@@ -23,7 +23,7 @@ sample-app:
 	cd $(PROTOCOL_ROOT)sample-app/linux/mqtt && $(MAKE)
 	cp -Rdp $(PROTOCOL_ROOT)plugin-manager/build/linux/libpmimpl.so $(PROTOCOL_ROOT)sample-app/linux/mqtt/
 	cp -Rdp $(PROTOCOL_ROOT)sample-app/linux/mqtt/mqttclient release/
-	
+	cp -Rdp $(PROTOCOL_ROOT)sample-app/linux/mqtt/pluginmanager.xml release/
 
 clean:
 	cd $(PROTOCOL_ROOT)plugin-manager/build/linux && $(MAKE) clean

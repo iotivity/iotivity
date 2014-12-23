@@ -56,11 +56,17 @@ const OID OID_IBase = {0x3b465976, 0x6486, 0x4c1f, {0x84, 0xb9, 0xeb, 0x80, 0x79
 */
 inline int IsEqualOID(const OID &oid1, const OID &oid2)
 {
-    return (
-               ((unsigned long *) &oid1)[0] == ((unsigned long *) &oid2)[0] &&
-               ((unsigned long *) &oid1)[1] == ((unsigned long *) &oid2)[1] &&
-               ((unsigned long *) &oid1)[2] == ((unsigned long *) &oid2)[2] &&
-               ((unsigned long *) &oid1)[3] == ((unsigned long *) &oid2)[3]);
+    return (( oid1.data1 ==  oid2.data1) &&
+            ( oid1.data2 ==  oid2.data2) &&
+            ( oid1.data3 ==  oid2.data3) &&
+            ( oid1.data4[0] ==  oid2.data4[0]) &&
+            ( oid1.data4[1] ==  oid2.data4[1]) &&
+            ( oid1.data4[2] ==  oid2.data4[2]) &&
+            ( oid1.data4[3] ==  oid2.data4[3]) &&
+            ( oid1.data4[4] ==  oid2.data4[4]) &&
+            ( oid1.data4[5] ==  oid2.data4[5]) &&
+            ( oid1.data4[6] ==  oid2.data4[6]) &&
+            ( oid1.data4[7] ==  oid2.data4[7]));
 }
 
 /**

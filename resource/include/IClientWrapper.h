@@ -44,6 +44,10 @@ namespace OC
                         const std::string& resourceType, FindCallback& callback,
                         QualityOfService QoS) = 0;
 
+        virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
+                        const std::string& deviceURI, FindDeviceCallback& callback,
+                        QualityOfService QoS) = 0;
+
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
                         const std::string& uri, const QueryParamsMap& queryParams,
                         const HeaderOptions& headerOptions,

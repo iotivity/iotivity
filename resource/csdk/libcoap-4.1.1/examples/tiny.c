@@ -39,7 +39,7 @@ make_pdu( unsigned int value ) {
   enc = COAP_PSEUDOFP_ENCODE_8_4_DOWN(value,ls);
   coap_add_data( pdu, 1, &enc);
 
-  len = sprintf((char *)buf, "%u", COAP_PSEUDOFP_DECODE_8_4(enc));
+  len = snprintf((char *)buf, sizeof(buf), "%u", COAP_PSEUDOFP_DECODE_8_4(enc));
   if ( len > 0 ) {
     coap_add_data( pdu, len, buf );
   }

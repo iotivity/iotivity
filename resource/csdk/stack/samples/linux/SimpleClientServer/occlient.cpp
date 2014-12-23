@@ -32,6 +32,8 @@
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
+static const char * TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core/d";
+static const char * TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY = "coap://224.0.1.187:5683/oc/core/d";
 static std::string putPayload = "{\"state\":\"on\",\"power\":5}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
@@ -77,11 +79,17 @@ static void PrintUsage()
 
     #ifdef WITH_PRESENCE
     OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Nonconfirmable presence");
-    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence with filter");
+    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence with "\
+            "filter");
+    OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable presence with "\
+            "2 filters");
     #endif
 
-    OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable Observe Requests then cancel immediately");
-    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable Get Request and add  vendor specific header options");
+    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
+            "then cancel immediately");
+    OC_LOG(INFO, TAG, "-t 16 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
+            "add  vendor specific header options");
+    OC_LOG(INFO, TAG, "-t 17 :  Discover Devices");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -324,11 +332,15 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             #ifdef WITH_PRESENCE
             case TEST_OBS_PRESENCE:
             case TEST_OBS_PRESENCE_WITH_FILTER:
+            case TEST_OBS_PRESENCE_WITH_FILTERS:
                 InitPresence();
                 break;
             #endif
             case TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS:
                 InitGetRequest(OC_LOW_QOS, 1);
+                break;
+            case TEST_DISCOVER_DEV_REQ:
+                InitDeviceDiscovery();
                 break;
             default:
                 PrintUsage();
@@ -339,17 +351,56 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
+
+OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
+        OCClientResponse * clientResponse)
+{
+    if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
+    {
+        OC_LOG(INFO, TAG, "Callback Context for Device DISCOVER query recvd successfully");
+    }
+
+    if(clientResponse)
+    {
+        //OC_LOG truncates the response as it is too long.
+        fprintf(stderr, "Discovery response: \n %s\n", clientResponse->resJSONPayload);
+        fflush(stderr);
+    }
+
+    return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
+}
+
 #ifdef WITH_PRESENCE
 int InitPresence()
 {
+    OCStackResult result = OC_STACK_OK;
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
+    std::ostringstream querySuffix;
     query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI;
-    if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTER)
+    if(TEST_CASE == TEST_OBS_PRESENCE)
     {
-        query << "?rt=core.light";
+        result = InvokeOCDoResource(query, OC_REST_PRESENCE, OC_LOW_QOS,
+                presenceCB, NULL, 0);
     }
-    return (InvokeOCDoResource(query, OC_REST_PRESENCE, OC_LOW_QOS, presenceCB, NULL, 0));
+    if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTER || TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTERS)
+    {
+        querySuffix.str("");
+        querySuffix << query.str() << "?rt=core.light";
+        result = InvokeOCDoResource(querySuffix, OC_REST_PRESENCE, OC_LOW_QOS,
+                presenceCB, NULL, 0);
+    }
+    if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTERS)
+    {
+        if(result == OC_STACK_OK)
+        {
+            querySuffix.str("");
+            querySuffix << query.str() << "?rt=core.fan";
+            result = InvokeOCDoResource(querySuffix, OC_REST_PRESENCE, OC_LOW_QOS,
+                    presenceCB, NULL, 0);
+        }
+    }
+    return result;
 }
 #endif
 int InitGetRequestToUnavailableResource()
@@ -493,6 +544,38 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     {
         return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
     }
+}
+
+int InitDeviceDiscovery()
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+    OCDoHandle handle;
+    char szQueryUri[64] = { 0 };
+
+    cbData.cb = DeviceDiscoveryReqCB;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    if(UNICAST_DISCOVERY)
+    {
+        strncpy(szQueryUri, TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY,
+                        (strlen(TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY) + 1));
+    }
+    else
+    {
+        strncpy(szQueryUri, TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY,
+                (strlen(TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY) + 1));
+    }
+
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+
+    if (ret != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "OCStack device error");
+    }
+
+    return ret;
 }
 
 int InitDiscovery()

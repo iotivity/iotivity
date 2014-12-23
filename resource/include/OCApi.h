@@ -194,7 +194,13 @@ namespace OC
     // Used in GET, PUT, POST, DELETE methods on links to other resources of a collection.
     const std::string BATCH_INTERFACE = "oc.mi.b";
 
+    // Used in GET, PUT, POST methods on links to other remote resources of a group.
+    const std::string GROUP_INTERFACE = "oc.mi.c";
+
+
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
+
+    typedef std::function<void(const OCRepresentation&)> FindDeviceCallback;
 
     typedef std::function<OCEntityHandlerResult(
                             const std::shared_ptr<OCResourceRequest>)> EntityHandler;

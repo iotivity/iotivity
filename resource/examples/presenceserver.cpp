@@ -26,6 +26,7 @@
 #include <functional>
 
 #include <pthread.h>
+#include <array>
 #include <mutex>
 #include <condition_variable>
 
@@ -34,6 +35,8 @@
 
 using namespace OC;
 using namespace std;
+
+#define numPresenceResources (2)
 
 // Forward declaring the entityHandler
 OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request);
@@ -149,6 +152,35 @@ public:
 
 };
 
+void createPresenceResources()
+{
+    std::array<std::string, numPresenceResources> resourceURI { {
+        "/a/fan",
+        "/a/led" } };
+    std::array<std::string, numPresenceResources> resourceTypeName { {
+        "core.fan",
+        "core.led" } };
+
+    std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
+    OCResourceHandle handle;
+    // OCResourceProperty is defined ocstack.h
+    uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+
+    // This will internally create and register the resource.
+    OCStackResult result = OC_STACK_OK;
+    for(int i=0; i<numPresenceResources; i++)
+    {
+        result = OCPlatform::registerResource(handle,
+                resourceURI.at(i), resourceTypeName.at(i), resourceInterface,
+                &entityHandler, resourceProperty);
+        if (result != OC_STACK_OK)
+        {
+            cout << "Resource creation was unsuccessful with resource URI "
+                    << resourceURI.at(i);
+        }
+    }
+}
+
 // Create the instance of the resource class (in this case instance of class 'LightResource').
 LightResource myLightResource;
 
@@ -178,8 +210,9 @@ int main()
 
         // Invoke createResource function of class light.
         myLightResource.createResource();
+        printf("Created first resource of type \"core.light\"");
 
-        printf("\nEnter a key to create the second resource\n");
+        printf("\nEnter a key to create the second resource of type \"core.light\"\n");
         getchar();
 
         myLightResource.createResource2();
@@ -193,10 +226,15 @@ int main()
 
         startPresence(30);
 
-        printf("\nEnter a key to create the third resource\n");
+        printf("\nEnter a key to create the third resource of type \"core.light\"\n");
         getchar();
 
         myLightResource.createResource3();
+
+        printf("\nEnter a key to create two non-operational resources.\"\n");
+        getchar();
+
+        createPresenceResources();
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

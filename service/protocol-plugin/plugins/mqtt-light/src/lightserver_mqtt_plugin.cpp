@@ -43,7 +43,7 @@ static int start(void *d)
 {
     plugin_data_t *data = (plugin_data_t *)d;
 
-    data->str = (void *)cp_resolve_symbol(data->ctx, "lightserver_mqtt_plugin", "START_ARGUMENT", NULL);
+    //data->str = (void *)cp_resolve_symbol(data->ctx, "lightserver_mqtt_plugin", "START_ARGUMENT", NULL);
 
     //cp_run_function(data->ctx, (cp_run_func_t)start_fanserver);           // 1
     pthread_create(&(data->m_thread), NULL, start_lightserver, data);         // 2
@@ -56,7 +56,7 @@ static void stop(void *d)
     plugin_data_t *data = (plugin_data_t *)d;
 
     data->flag = false;
-    cp_release_symbol(data->ctx, data->str);
+    //cp_release_symbol(data->ctx, data->str);
     pthread_join(data->m_thread, (void **)NULL);
 }
 

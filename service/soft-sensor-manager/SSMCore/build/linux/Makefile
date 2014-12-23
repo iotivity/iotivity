@@ -69,6 +69,7 @@ ${TARGET}: ${GCC_OBJLIST} ${CXX_OBJLIST}
 
 post_job:
 	@echo " " 
+	cp -Rdp ${INC_PATH}/SSMInterface.h ${FD_SDK}/include/
 	cp -Rdp ./${RST_NAME}/${TARGET} ${OUTPUTS_DIR}/
 	cp -Rdp ${INC_PATH}/SSMInterface.h ${OUTPUTS_DIR}/
 	cp -Rdp ${SRC_PATH}/SSMInterface/SSMModelDefinition.h ${OUTPUTS_DIR}/

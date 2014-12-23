@@ -364,7 +364,7 @@ void CPropagationEngine::onExecute(IN void *pArg)
 {
     SSMRESULT res = SSM_E_FAIL;
 
-    int         *pMessage = (int *)pArg;
+    intptr_t         *pMessage = (intptr_t *)pArg;
 
     RESOURCE_EVENT_TYPE eventType = (RESOURCE_EVENT_TYPE)pMessage[0];
     ISSMResource            *pResource = (ISSMResource *)pMessage[1];
@@ -395,7 +395,7 @@ CLEANUP:
 
 void CPropagationEngine::onTerminate(IN void *pArg)
 {
-    int         *pMessage = (int *)pArg;
+    intptr_t         *pMessage = (intptr_t *)pArg;
 
     delete[] pMessage;
 }
@@ -403,10 +403,10 @@ void CPropagationEngine::onTerminate(IN void *pArg)
 int CPropagationEngine::onResourceEvent(IN RESOURCE_EVENT_TYPE eventType,
                                         IN ISSMResource *pSSMResource, IN std::string info)
 {
-    int         *pMessage = new int[2];
+    intptr_t          *pMessage = new intptr_t [2];
 
     pMessage[0] = eventType;
-    pMessage[1] = (int)pSSMResource;
+    pMessage[1] = reinterpret_cast<intptr_t>(pSSMResource);
     return (int)m_pTasker->addTask(this, (void *)pMessage);
 }
 

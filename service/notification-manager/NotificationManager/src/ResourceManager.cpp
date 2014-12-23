@@ -21,12 +21,16 @@
 #include "ResourceManager.h"
 
 ResourceManager *ResourceManager::s_instance = NULL;
+mutex ResourceManager::s_mutexForCreation;
 std::list< VirtualRepresentation > ResourceManager::s_resourceList;
 
 std::string ResourceManager::s_extraStr;
 
 ResourceManager::ResourceManager()
 {
+	m_onFoundforHosting	= NULL;
+	m_onObserve			= NULL;
+	m_notify				= NULL;
 }
 
 ResourceManager::~ResourceManager()
@@ -37,7 +41,12 @@ ResourceManager *ResourceManager::getInstance()
 {
     if(!s_instance)
     {
-        s_instance = new ResourceManager();
+        s_mutexForCreation.lock();
+        if(!s_instance)
+        {
+        	s_instance = new ResourceManager();
+        }
+        s_mutexForCreation.unlock();
     }
     return s_instance;
 }
@@ -59,13 +68,15 @@ VirtualRepresentation ResourceManager::findVirtualRepresentation(std::string uri
     return retObject;
 }
 
-OCStackResult ResourceManager::findNMResource(const std::string& host ,
-        const std::string& resourceName , bool ishosting)
+void ResourceManager::findNMResource(bool isHosting)
 {
-	return findResource(host , resourceName ,
-            std::function< void(std::shared_ptr< OCResource > resource) >(
-                    std::bind(&ResourceManager::foundResourceforhosting , this ,
-                            std::placeholders::_1)));
+	if(isHosting)
+	{
+		findResource("" , "coap://224.0.1.187/oc/core",
+				std::function< void(std::shared_ptr< OCResource > resource) >(
+									std::bind(&ResourceManager::foundResourceforhosting , ResourceManager::getInstance() ,
+											std::placeholders::_1)));
+	}
 }
 
 void ResourceManager::foundResourceforhosting(std::shared_ptr< OCResource > resource)
@@ -76,21 +87,24 @@ void ResourceManager::foundResourceforhosting(std::shared_ptr< OCResource > reso
         {
             if(resource->uri().find("/a/NM") != std::string::npos)
             {
-                NotificationManager::getInstance()->getOnFoundHostingCandidate()(resource);
+                ResourceManager::getInstance()->m_onFoundforHosting(resource);
             }
         }
         else
         {
+        	// TODO
         }
 
     }
-    catch(std::exception& e)
+    catch(std::exception &e)
     {
     }
 }
 
 void ResourceManager::startHosting(std::shared_ptr< OCResource > resource)
 {
+
+	cout << "start hosting" << endl;
     VirtualRepresentation tmp = findVirtualRepresentation( resource->uri() );
 
     if( !tmp.getUri().empty() )
@@ -124,13 +138,40 @@ void ResourceManager::startHosting(std::shared_ptr< OCResource > resource)
 
 }
 
+void ResourceManager::notifyObservers(OCResourceHandle resourceHandle)
+{
+	OCStackResult result = OC_STACK_OK;
+
+	result = notifyAllObservers(resourceHandle);
+
+	if(OC_STACK_NO_OBSERVERS == result)
+	{
+		// No observers.
+		// TODO
+	}
+}
+
 AttributeMap ResourceManager::copyAttributeMap(AttributeMap &inputAttMap)
 {
 
     AttributeMap retAttMap;
 
     retAttMap = inputAttMap;
-
+//    for(auto it = inputAttMap.begin() ; it != inputAttMap.end() ; ++it)
+//    {
+//        AttributeValues tmpVal;
+//
+//        for(auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
+//        {
+//            std::string tmpStr;
+//
+//            tmpStr.append(*valueItr);
+//
+//            tmpVal.push_back(tmpStr);
+//        }
+//        retAttMap[it->first] = tmpVal;
+//
+//    }
     return retAttMap;
 }
 
@@ -146,9 +187,13 @@ bool ResourceManager::isEmptyAttributeMap(AttributeMap &inputAttMap)
     return false;
 }
 
-void ResourceManager::onFoundReport(std::shared_ptr< OCResource > resource)
+void ResourceManager::onFoundforHostingDefault(std::shared_ptr< OCResource > resource)
 {
-    NotificationManager::getInstance()->getStartHosting()(resource);
+    ResourceManager::getInstance()->startHosting(resource);
+}
+void ResourceManager::onObserveDefault(AttributeMap &inputAttMap , OCResourceHandle resourceHandle)
+{
+	ResourceManager::getInstance()->notifyObservers(resourceHandle);
 }
 
 void ResourceManager::printAttributeMap(AttributeMap &inputAttMap)

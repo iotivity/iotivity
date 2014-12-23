@@ -9,11 +9,11 @@ IOT_CSDK_RELEASE=${IOT_BASE}/csdk/linux/release
 IOT_LOG_DIR=${IOT_BASE}/oc_logger
 IOT_LIB=liboc.a
 IOT_CSDK_LIB=liboctbstack.a
-IOT_LOG_LIB=liboc_logger.a
+IOT_LOG_LIB=oc_logger.a
 
 # service folder path.
 FD_SSM=${ROOT_DIR}/service/soft-sensor-manager
-FD_SDK=${FD_SSM}/SDK
+FD_SDK=${FD_SSM}/SDK/cpp
 FD_SSMCORE=${FD_SSM}/SSMCore
 FD_SAMPLEAPP=${FD_SSM}/SampleApp
 FD_SOFTSENSOR=${FD_SSM}/SoftSensorPlugin
@@ -23,7 +23,7 @@ FD_BUILD=${FD_SSM}/build
 OUTPUTS_DIR=${FD_BUILD}/linux/release
 EXEC_DIR=${OUTPUTS_DIR}
 SSXML_NAME="SoftSensorDescription.xml"
-SSM_LIB = libSSM.a
+SSM_LIB = libSSMSDK.a
 SSMCORE_LIB=libSSMCore.a
 
 # SoftSensorManager makefile path
@@ -35,5 +35,4 @@ MAKE_05=${FD_SOFTSENSOR}/DiscomfortIndexSensor/build/linux
 MAKE_06=${FD_SOFTSENSOR}/IndoorTrajectorySensor/build/linux
 
 
-MAKE_LIST=${MAKE_01} ${MAKE_02} ${MAKE_05} ${MAKE_06} ${MAKE_03}
-#MAKE_LIST=${MAKE_01} ${MAKE_02} ${MAKE_05} ${MAKE_03}
+MAKE_LIST=${MAKE_01} ${MAKE_02} ${MAKE_03} ${MAKE_05} ${MAKE_06}

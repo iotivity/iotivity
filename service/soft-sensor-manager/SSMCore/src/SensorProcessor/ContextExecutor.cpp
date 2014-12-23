@@ -150,7 +150,7 @@ void CContextExecutor::registerContext(TypeofEvent callType, ISSMResource *pSSMR
 
 void CContextExecutor::onExecute(IN void *pArg)
 {
-    int         *pMessage = (int *)pArg;
+    intptr_t         *pMessage = (intptr_t *)pArg;
 
     RESOURCE_EVENT_TYPE     eventType = (RESOURCE_EVENT_TYPE)pMessage[0];
     ISSMResource            *pResource = (ISSMResource *)pMessage[1];
@@ -191,7 +191,7 @@ void CContextExecutor::onExecute(IN void *pArg)
 
 void CContextExecutor::onTerminate(IN void *pArg)
 {
-    int         *pMessage = (int *)pArg;
+    intptr_t         *pMessage = (intptr_t *)pArg;
 
     delete[] pMessage;
 }
@@ -199,10 +199,10 @@ void CContextExecutor::onTerminate(IN void *pArg)
 int CContextExecutor::onResourceEvent(RESOURCE_EVENT_TYPE eventType, ISSMResource *pSSMResource,
                                       std::string info)
 {
-    int         *pMessage = new int[2];
+    intptr_t          *pMessage = new intptr_t [2];
 
     pMessage[0] = eventType;
-    pMessage[1] = (int)pSSMResource;
+    pMessage[1] = reinterpret_cast<intptr_t>(pSSMResource);
     return (int)m_pTasker->addTask(this, (void *)pMessage);
 }
 

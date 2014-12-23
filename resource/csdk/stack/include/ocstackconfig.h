@@ -56,6 +56,18 @@
 #define MAX_QUERY_LENGTH (64)
 
 /**
+ * Maximum length of the Manufacturer name supported by the server
+ * for manufacturer name
+ */
+#define MAX_MANUFACTURER_NAME_LENGTH (16)
+
+/**
+ * Maximum length of the URL to the Manufacturer details supported by
+ * the server.
+ */
+#define MAX_MANUFACTURER_URL_LENGTH (32)
+
+/**
  * Maximum number of resources which can be contained inside collection
  * resource.
  */

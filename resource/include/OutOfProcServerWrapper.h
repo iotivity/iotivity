@@ -43,6 +43,14 @@ namespace OC
             // Not implemented
             return OC_STACK_NOTIMPL;
         }
+
+        virtual OCStackResult registerDeviceInfo(
+                    const OCDeviceInfo deviceInfo)
+        {
+            // Not implemented
+            return OC_STACK_NOTIMPL;
+        }
+
         virtual OCStackResult registerResourceWithHost(
                     OCResourceHandle& resourceHandle,
                     std::string& resourceHOST,

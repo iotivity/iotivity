@@ -22,6 +22,8 @@
 //=============================================================================
 // Includes
 //=============================================================================
+#define _POSIX_C_SOURCE 200112L
+#include <string.h>
 #include "occoap.h"
 #include "ocstackconfig.h"
 #include "occlientcb.h"
@@ -53,7 +55,6 @@
 // Private Variables
 //=============================================================================
 
-static uint8_t coapWKIpAddr[] = { 224, 0, 1, 187 };
 static coap_context_t *gCoAPCtx = NULL;
 
 //=============================================================================
@@ -226,7 +227,8 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
     if(requestResult == OC_STACK_VIRTUAL_DO_NOT_HANDLE ||
             requestResult == OC_STACK_OK ||
             requestResult == OC_STACK_RESOURCE_CREATED ||
-            requestResult == OC_STACK_RESOURCE_DELETED)
+            requestResult == OC_STACK_RESOURCE_DELETED ||
+            requestResult == OC_STACK_INVALID_DEVICE_INFO)
     {
         goto exit;
     }
@@ -424,8 +426,8 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
 
     // To allow presence notification work we need to init socket gCoAPCtx->sockfd_wellknown
     // for servers as well as clients
-    OCBuildIPv4Address(coapWKIpAddr[0], coapWKIpAddr[1], coapWKIpAddr[2],
-            coapWKIpAddr[3], COAP_DEFAULT_PORT, &mcastAddr);
+    OCBuildIPv4Address(COAP_WK_IPAddr_0, COAP_WK_IPAddr_1, COAP_WK_IPAddr_2,
+            COAP_WK_IPAddr_3, COAP_DEFAULT_PORT, &mcastAddr);
     VERIFY_SUCCESS(
             coap_join_wellknown_group(gCoAPCtx,
                     (coap_address_t* )&mcastAddr), 0);
@@ -502,7 +504,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
         OC_LOG_V(DEBUG, TAG, "secure uri %d", uri.secure);
     }
 
-    coapMsgType = OCToCoAPQoS(qos);
+    coapMsgType = OCToCoAPQoS(qos, ipAddr);
 
     // Decide method type
     switch (method) {

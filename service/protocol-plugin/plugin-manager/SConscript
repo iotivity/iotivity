@@ -15,7 +15,8 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 plugin_manager_env.AppendUnique(CPPPATH = [
 		'../lib/cpluff/libcpluff',
-		'src'
+		'src',
+		'../lib/rapidxml'
 		])
 
 if target_os not in ['windows', 'winrt']:
@@ -25,6 +26,18 @@ if target_os not in ['windows', 'winrt']:
 if target_os == 'android':
 	plugin_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	plugin_manager_env.AppendUnique(LIBS = ['boost_thread-gcc-mt-1_49', 'gnustl_static'])
+
+plugin_manager_env.AppendUnique(CPPDEFINES = ['CP_C_API=CP_EXPORT',
+					'CP_HOST=\"\\"'+env.get('TARGET_OS')+'\\"\"',
+					'CP_DATADIR=\"\\\"/usr/local/share\\\"\"',
+					'DLOPEN_POSIX',
+					'DPIC',
+					'CP_THREADS=\"\\\"Posix\\"\"',
+					'CP_SHREXT=\"\\".so\\"\"',
+					'CP_FNAMESEP_CHAR=\"\'/\'\"',
+					'CP_FNAMESEP_STR=\"\\\"/\\"\"',
+					'PACKAGE=\"\\\"cpluff\\\"\"'])
+
 
 plugin_manager_env.AppendUnique(LIBS = ['oc', 'octbstack', 'expat', 'dl'])
 ######################################################################
@@ -37,7 +50,8 @@ pmimpl_src = [
 		'src/CpluffAdapter.cpp',
 		'src/FelixAdapter.cpp',
 		'src/Plugin.cpp',
-		'src/PluginManagerImpl.cpp']
+		'src/PluginManagerImpl.cpp',
+		'src/Config.cpp']
 
 pmimpl_env = plugin_manager_env.Clone()
 pmimpl_env.PrependUnique(CCFLAGS = ['-fPIC'])

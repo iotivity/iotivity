@@ -92,7 +92,7 @@ CLEANUP:
 void CContextModel::registerSSMResource(IN ActivationType activationType, IN int targetDeviceDataId,
                                         IN ISSMResource *pSSMResource)
 {
-    int     *pData = NULL;
+    intptr_t     *pData = NULL;
 
     m_mtxActivationCount.lock();
     switch (activationType)
@@ -100,9 +100,9 @@ void CContextModel::registerSSMResource(IN ActivationType activationType, IN int
         case ACTIVATION_TYPE_SUBSCRIBE:
             if (m_mapSubscribedDevice.find(targetDeviceDataId) == m_mapSubscribedDevice.end())
             {
-                pData = new int[2];
+                pData = new intptr_t  [2];
                 pData[0] = STATUS_ACTIVATE;
-                pData[1] = (int)pSSMResource;
+                pData[1] = reinterpret_cast<intptr_t>(pSSMResource);
                 m_pTasker->addTask(this, (void *)pData);
                 m_mapSubscribedDevice[targetDeviceDataId] = 1;
             }
@@ -117,9 +117,9 @@ void CContextModel::registerSSMResource(IN ActivationType activationType, IN int
             {
                 if (m_mapGetDevice.find(targetDeviceDataId) == m_mapGetDevice.end())
                 {
-                    pData = new int[2];
+                    pData = new intptr_t[2];
                     pData[0] = STATUS_START_READ_VALUE;
-                    pData[1] = (int)pSSMResource;
+                    pData[1] = reinterpret_cast<intptr_t>(pSSMResource);
                     m_pTasker->addTask(this, (void *)pData);
                     m_mapGetDevice[targetDeviceDataId] = 1;
                 }
@@ -139,7 +139,7 @@ void CContextModel::registerSSMResource(IN ActivationType activationType, IN int
 void CContextModel::unregisterSSMResource(IN ActivationType activationType,
         IN int targetDeviceDataId, IN ISSMResource *pSSMResource)
 {
-    int     *pData = NULL;
+    intptr_t     *pData = NULL;
 
     m_mtxActivationCount.lock();
     switch (activationType)
@@ -149,9 +149,9 @@ void CContextModel::unregisterSSMResource(IN ActivationType activationType,
             {
                 if (--m_mapSubscribedDevice[targetDeviceDataId] == 0)
                 {
-                    pData = new int[2];
+                    pData = new intptr_t [2];
                     pData[0] = STATUS_DEACTIVATE;
-                    pData[1] = (int)pSSMResource;
+                    pData[1] = reinterpret_cast<intptr_t>(pSSMResource);
                     m_pTasker->addTask(this, (void *)pData);
                     m_mapSubscribedDevice.erase(targetDeviceDataId);
                 }
@@ -163,9 +163,9 @@ void CContextModel::unregisterSSMResource(IN ActivationType activationType,
             {
                 if (--m_mapGetDevice[targetDeviceDataId] == 0)
                 {
-                    pData = new int[2];
+                    pData = new intptr_t [2];
                     pData[0] = STATUS_STOP_READ_VALUE;
-                    pData[1] = (int)pSSMResource;
+                    pData[1] = reinterpret_cast<intptr_t>(pSSMResource);
                     m_pTasker->addTask(this, (void *)pData);
                 }
             }
@@ -213,7 +213,7 @@ SSMRESULT CContextModel::registerContextModelEvent(IN IContextModelEvent *pConte
 
 void CContextModel::onExecute(IN void *pArg)
 {
-    int *pData = (int *)pArg;
+    intptr_t *pData = (intptr_t *)pArg;
 
     if (m_pContextModelEvent)
     {
@@ -223,7 +223,7 @@ void CContextModel::onExecute(IN void *pArg)
 
 void CContextModel::onTerminate(IN void *pArg)
 {
-    int *pData = (int *)pArg;
+    intptr_t *pData = (intptr_t *)pArg;
     SAFE_ARRAY_DELETE(pData);
 }
 

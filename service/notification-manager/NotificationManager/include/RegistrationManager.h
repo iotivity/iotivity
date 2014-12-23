@@ -26,17 +26,20 @@
 using namespace OC;
 using namespace OCPlatform;
 
+class OICPlatformConfig;
 class VirtualRepresentation;
 
 class RegistrationManager
 {
 
 private:
-    static RegistrationManager *s_instance;
-
-public:
     RegistrationManager();
     ~RegistrationManager();
+
+    static RegistrationManager *s_instance;
+    static mutex s_mutexForCreation;
+
+public:
 
     static RegistrationManager *getInstance();
 

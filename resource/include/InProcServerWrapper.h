@@ -45,6 +45,9 @@ namespace OC
                     EntityHandler& entityHandler,
                     uint8_t resourceProperty);
 
+        virtual OCStackResult registerDeviceInfo(
+                    const OCDeviceInfo deviceInfo);
+
         virtual OCStackResult registerResourceWithHost(
                     OCResourceHandle& resourceHandle,
                     std::string& resourceHOST,

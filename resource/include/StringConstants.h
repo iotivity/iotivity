@@ -88,10 +88,8 @@ namespace OC
         static const std::string STACK_RESOURCE_DELETED     =
                 "The specified resource has been deleted";
         static const std::string PRESENCE_STOPPED           = "Stack presence stopped";
-        static const std::string PRESENCE_NOT_HANDLED       =
-                "Stack presence should not be handled";
-        static const std::string REQUEST_NOT_HANDLED        =
-                "Incoming Request should not be handled";
+        static const std::string PRESENCE_TIMEOUT           = "Stack presence timed out";
+        static const std::string PRESENCE_NOT_HANDLED       = "Stack presence should not be handled";
         static const std::string INVALID_OPTION             = "Invalid option";
         static const std::string GENERAL_FAULT              = "General Fault";
         static const std::string MALFORMED_STACK_RESPONSE   =

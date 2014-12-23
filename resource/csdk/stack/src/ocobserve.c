@@ -157,12 +157,13 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                     // we create the payload here
                     if(resourceType && resourceType->resourcetypename)
                     {
-                        sprintf((char *)presenceResBuf, "%u:%u:%s",
+                        snprintf((char *)presenceResBuf, sizeof(presenceResBuf), "%u:%u:%s",
                                 resPtr->sequenceNum, maxAge, resourceType->resourcetypename);
                     }
                     else
                     {
-                        sprintf((char *)presenceResBuf, "%u:%u", resPtr->sequenceNum, maxAge);
+                        snprintf((char *)presenceResBuf, sizeof(presenceResBuf), "%u:%u",
+                                resPtr->sequenceNum, maxAge);
                     }
                     ehResponse.ehResult = OC_EH_OK;
                     ehResponse.payload = presenceResBuf;

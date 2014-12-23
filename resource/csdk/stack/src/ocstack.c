@@ -22,6 +22,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#define _POSIX_C_SOURCE 200112L
+#include <string.h>
+
 #include "ocstack.h"
 #include "ocstackinternal.h"
 #include "ocresourcehandler.h"
@@ -42,7 +45,7 @@
 // Typedefs
 //-----------------------------------------------------------------------------
 typedef enum {
-    OC_STACK_UNINITIALIZED = 0, OC_STACK_INITIALIZED
+    OC_STACK_UNINITIALIZED = 0, OC_STACK_INITIALIZED, OC_STACK_UNINIT_IN_PROGRESS
 } OCStackState;
 
 #ifdef WITH_PRESENCE
@@ -1004,11 +1007,18 @@ OCStackResult OCStop()
 
     OC_LOG(INFO, TAG, PCF("Entering OCStop"));
 
-    if (stackState != OC_STACK_INITIALIZED)
+    if (stackState == OC_STACK_UNINIT_IN_PROGRESS)
+    {
+        OC_LOG(DEBUG, TAG, PCF("Stack already stopping, exiting"));
+        return OC_STACK_OK;
+    }
+    else if (stackState != OC_STACK_INITIALIZED)
     {
         OC_LOG(ERROR, TAG, PCF("Stack not initialized"));
         return OC_STACK_ERROR;
     }
+
+    stackState = OC_STACK_UNINIT_IN_PROGRESS;
 
     #ifdef WITH_PRESENCE
     // Ensure that the TTL associated with ANY and ALL presence notifications originating from
@@ -1018,6 +1028,7 @@ OCStackResult OCStop()
 
     // Free memory dynamically allocated for resources
     deleteAllResources();
+    DeleteDeviceInfo();
 
     // Make call to OCCoAP layer
     if (OCStopCoAP() == OC_STACK_OK)
@@ -1029,6 +1040,7 @@ OCStackResult OCStop()
         stackState = OC_STACK_UNINITIALIZED;
         result = OC_STACK_OK;
     } else {
+        stackState = OC_STACK_INITIALIZED;
         result = OC_STACK_ERROR;
     }
 
@@ -1655,6 +1667,18 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
     return OC_STACK_OK;
 }
 
+OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
+{
+    OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
+
+    if(myStackMode == OC_CLIENT)
+    {
+        return OC_STACK_ERROR;
+    }
+
+    return SaveDeviceInfo(deviceInfo);
+}
+
 /**
  * Create a resource
  *
@@ -1688,8 +1712,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         return result;
     }
     // Validate parameters
+    if(!uri || (strlen(uri) == 0))
+    {
+        OC_LOG(ERROR, TAG, PCF("URI is invalid"));
+        return OC_STACK_INVALID_URI;
+    }
     // Is it presented during resource discovery?
-    if (!handle || !resourceTypeName || !uri) {
+    if (!handle || !resourceTypeName) {
         OC_LOG(ERROR, TAG, PCF("Input parameter is NULL"));
         return OC_STACK_INVALID_PARAM;
     }
@@ -3105,7 +3134,8 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
         goto exit;
     }
     strcpy(tempURI, uri);
-    leftToken = strtok((char *)tempURI, "?");
+    char* strTokPtr;
+    leftToken = strtok_r((char *)tempURI, "?", &strTokPtr);
 
     while(leftToken != NULL)
     {
@@ -3119,7 +3149,7 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
             strcpy((char *)*resourceType, ((const char *)&leftToken[3]));
             break;
         }
-        leftToken = strtok(NULL, "?");
+        leftToken = strtok_r(NULL, "?", &strTokPtr);
     }
 
     *newURI = tempURI;

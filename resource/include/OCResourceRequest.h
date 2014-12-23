@@ -159,6 +159,11 @@ namespace OC
 
         void setPayload(const std::string& requestPayload)
         {
+            if(requestPayload.empty())
+            {
+                return;
+            }
+
             MessageContainer info;
             info.setJSONRepresentation(requestPayload);
 

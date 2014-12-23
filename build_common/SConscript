@@ -7,7 +7,7 @@ import platform
 
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
-		'linux': ['linux', 'android', 'arduino'],
+		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
 		'windows': ['windows', 'winrt', 'android', 'arduino'],
 		'darwin': ['darwin', 'ios', 'android', 'arduino'],
 		}
@@ -15,12 +15,14 @@ host_target_map = {
 # Map of os and allowed archs (os: allowed archs)
 os_arch_map = {
 		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
+		'tizen': ['x86', 'x86_64', 'arm', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
 		'winrt': ['arm'],
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
+		'yocto': ['x86', 'x86_64'],
 		}
 
 host = platform.system().lower()
@@ -167,8 +169,63 @@ env.SetDir(env.GetLaunchDir())
 
 Export('env')
 
-# Load config of target os
-env.SConscript(target_os + '/SConscript')
+######################################################################
+# Link scons to Yocto cross-toolchain ONLY when target_os is yocto
+######################################################################
+if target_os == "yocto":
+    '''
+    This code injects Yocto cross-compilation tools+flags into scons' 
+    build environment in order to invoke the relevant tools while 
+    performing a build.
+    '''
+    import os.path
+    try:
+        CC = os.environ['CC']
+        target_prefix = CC.split()[0]
+        target_prefix = target_prefix[:len(target_prefix)-3]
+        tools = {"CC" : target_prefix+"gcc",
+                "CXX" : target_prefix+"g++",
+                "AS" : target_prefix+"as",
+                "LD" : target_prefix+"ld",
+                "GDB" : target_prefix+"gdb",
+                "STRIP" : target_prefix+"strip",
+                "RANLIB" : target_prefix+"ranlib",
+                "OBJCOPY" : target_prefix+"objcopy",
+                "OBJDUMP" : target_prefix+"objdump",
+                "AR" : target_prefix+"ar",
+                "NM" : target_prefix+"nm",
+                "M4" : "m4",
+                "STRINGS": target_prefix+"strings"}
+        PATH = os.environ['PATH'].split(os.pathsep)
+        for tool in tools:
+            if tool in os.environ:
+                for path in PATH:
+                    if os.path.isfile(os.path.join(path, tools[tool])):
+                        env[tool] = os.path.join(path, os.environ[tool])
+                        break
+    except:
+        print "ERROR in Yocto cross-toolchain environment"
+        Exit(1)
+    '''
+    Now reset TARGET_OS to linux so that all linux specific build configurations
+    hereupon apply for the entirety of the build process.
+    '''
+    env['TARGET_OS'] = 'linux'
+    '''
+    We want to preserve debug symbols to allow BitBake to generate both DEBUG and
+    RELEASE packages for OIC. 
+    '''
+    env['CCFLAGS'].append('-g')
+    Export('env')
+else:
+    '''
+    If target_os is not Yocto, continue with the regular build process
+    '''
+    # Load config of target os
+    if target_os in ['linux', 'tizen']:
+		env.SConscript('linux/SConscript')
+    else:
+		env.SConscript(target_os + '/SConscript')
 
 # Delete the temp files of configuration
 if env.GetOption('clean'):

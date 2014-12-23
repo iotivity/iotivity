@@ -170,6 +170,7 @@ typedef enum {
     OC_STACK_MALFORMED_RESPONSE,        /* the remote reply contained malformed data */
     OC_STACK_PERSISTENT_BUFFER_REQUIRED,
     OC_STACK_INVALID_REQUEST_HANDLE,
+    OC_STACK_INVALID_DEVICE_INFO,
     OC_STACK_ERROR
     /* Error status code - END HERE */
 } OCStackResult;
@@ -275,6 +276,26 @@ typedef struct {
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 }OCClientResponse;
+
+/**
+ * Following structure describes the device properties. All non-Null properties will be included
+ * in a device discovery request.
+ */
+typedef struct
+{
+    char *deviceName;
+    char *hostName;
+    char *deviceUUID;
+    char *contentType;
+    char *version;
+    char *manufacturerName;
+    char *manufacturerUrl;
+    char *modelNumber;
+    char *dateOfManufacture;
+    char *platformVersion;
+    char *firmwareVersion;
+    char *supportUrl;
+} OCDeviceInfo;
 
 typedef struct
 {
@@ -404,7 +425,10 @@ OCStackResult OCProcess();
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource
  * @param request            - JSON encoded request
- * @param qos                - quality of service
+ * @param qos                - quality of service. Note that if this API is called on a uri with
+ *                             the well-known multicast IP address, the qos will be forced to
+ *                             OC_LOW_QOS
+ *                             since it is impractical to send other QOS levels on such addresses.
  * @param clientApplicationCB- asynchronous callback function that is invoked
  *                             by the stack when discovery or resource interaction is complete
  * @param options            - The address of an array containing the vendor specific
@@ -488,6 +512,20 @@ OCStackResult OCStopPresence();
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler);
+
+/**
+ * Set device information.
+ *
+ * @param deviceInfo - Structure passed by the server application containing
+ *                     the device information.
+ *
+ *
+ * @return
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_INVALID_PARAM   - invalid paramerter
+ *     OC_STACK_ERROR           - stack process error
+ */
+OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
 
 /**
  * Create a resource.

@@ -204,6 +204,8 @@ OCStackResult result_guard(const OCStackResult r)
     case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
 #ifdef WITH_PRESENCE
     case OC_STACK_PRESENCE_STOPPED:
+    case OC_STACK_PRESENCE_TIMEOUT:
+    case OC_STACK_PRESENCE_DO_NOT_HANDLE:
 #endif
     break;
  }

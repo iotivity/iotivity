@@ -58,7 +58,12 @@ namespace OC
             m_listeningThread.join();
         }
 
-        OCStop();
+        // only stop if we are the ones who actually called 'init'.  We are counting
+        // on the server to do the stop.
+        if(m_cfg.mode == ModeType::Client)
+        {
+            OCStop();
+        }
     }
 
     void InProcClientWrapper::listeningFunc()
@@ -87,6 +92,33 @@ namespace OC
         }
     }
 
+    OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
+    {
+        if(clientResponse->resJSONPayload == nullptr || clientResponse->resJSONPayload[0] == '\0')
+        {
+            throw OCException(OC::Exception::STR_NULL_RESPONSE, OC_STACK_ERROR);
+        }
+
+        MessageContainer oc;
+        oc.setJSONRepresentation(clientResponse->resJSONPayload);
+
+        std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
+        if(it == oc.representations().end())
+        {
+            throw OCException(OC::Exception::INVALID_REPRESENTATION, OC_STACK_ERROR);
+        }
+
+        // first one is considered the root, everything else is considered a child of this one.
+        OCRepresentation root = *it;
+        ++it;
+
+        std::for_each(it, oc.representations().end(),
+                [&root](const OCRepresentation& repItr)
+                {root.addChild(repItr);});
+        return root;
+
+    }
+
     OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle,
         OCClientResponse* clientResponse)
     {
@@ -102,12 +134,21 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
+        auto clientWrapper = context->clientWrapper.lock();
+
+        if(!clientWrapper)
+        {
+            oclog() << "listenCallback(): failed to get a shared_ptr to the client wrapper"
+                    << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
         std::stringstream requestStream;
         requestStream << clientResponse->resJSONPayload;
 
         try
         {
-            ListenOCContainer container(context->clientWrapper, *clientResponse->addr,
+            ListenOCContainer container(clientWrapper, *clientResponse->addr,
                     requestStream);
 
             // loop to ensure valid construction of all resources
@@ -129,7 +170,6 @@ namespace OC
         }
 
         return OC_STACK_KEEP_TRANSACTION;
-
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl,
@@ -167,31 +207,52 @@ namespace OC
         return result;
     }
 
-    OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
+    OCStackApplicationResult listenDeviceCallback(void* ctx, OCDoHandle handle,
+            OCClientResponse* clientResponse)
     {
-        if(clientResponse->resJSONPayload == nullptr || clientResponse->resJSONPayload[0] == '\0')
+        ClientCallbackContext::DeviceListenContext* context =
+            static_cast<ClientCallbackContext::DeviceListenContext*>(ctx);
+
+        OCRepresentation rep = parseGetSetCallback(clientResponse);
+        std::thread exec(context->callback, rep);
+        exec.detach();
+
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OCStackResult InProcClientWrapper::ListenForDevice(const std::string& serviceUrl,
+        const std::string& deviceURI, FindDeviceCallback& callback, QualityOfService QoS)
+    {
+        OCStackResult result;
+
+        OCCallbackData cbdata = {0};
+
+        ClientCallbackContext::DeviceListenContext* context =
+            new ClientCallbackContext::DeviceListenContext();
+        context->callback = callback;
+        context->clientWrapper = shared_from_this();
+
+        cbdata.context =  static_cast<void*>(context);
+        cbdata.cb = listenDeviceCallback;
+        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::DeviceListenContext*>(c);};
+
+        auto cLock = m_csdkLock.lock();
+        if(cLock)
         {
-            return OCRepresentation();
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            OCDoHandle handle;
+            result = OCDoResource(&handle, OC_REST_GET,
+                                  deviceURI.c_str(),
+                                  nullptr, nullptr,
+                                  static_cast<OCQualityOfService>(QoS),
+                                  &cbdata,
+                                  NULL, 0);
         }
-
-        MessageContainer oc;
-        oc.setJSONRepresentation(clientResponse->resJSONPayload);
-
-        std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
-        if(it == oc.representations().end())
+        else
         {
-            return OCRepresentation();
+            result = OC_STACK_ERROR;
         }
-
-        // first one is considered the root, everything else is considered a child of this one.
-        OCRepresentation root = *it;
-        ++it;
-
-        std::for_each(it, oc.representations().end(),
-                [&root](const OCRepresentation& repItr)
-                {root.addChild(repItr);});
-        return root;
-
+        return result;
     }
 
     void parseServerHeaderOptions(OCClientResponse* clientResponse,

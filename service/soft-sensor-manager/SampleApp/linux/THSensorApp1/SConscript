@@ -5,21 +5,26 @@
 Import('env')
 
 # Add third party libraries
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons')
-linux_sample_env = env.Clone()
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+linux_sample_env = lib_env.Clone()
 
 ######################################################################
 # Build flags
 ######################################################################
-linux_sample_env.AppendUnique(CPPPATH = ['include/'])
+linux_sample_env.AppendUnique(CPPPATH = ['include'])
 linux_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 linux_sample_env.AppendUnique(CPPDEFINES = ['LINUX'])
 linux_sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+linux_sample_env.AppendUnique(LIBS = ['oc'])
+linux_sample_env.AppendUnique(LIBS = ['octbstack'])
+linux_sample_env.AppendUnique(LIBS = ['libcoap'])
+linux_sample_env.AppendUnique(LIBS = ['liboc_logger'])
 linux_sample_env.AppendUnique(LIBS = ['pthread'])
 
 ######################################################################
 #build sampleapp
 ######################################################################
-thsensorapp1 = linux_sample_env.Program('THSensorApp', 'src/ThingResourceServer1.cpp')
+thsensorapp1 = linux_sample_env.Program('THSensorApp1', 'src/ThingResourceServer1.cpp')
 Alias("thsensorapp1_sample", thsensorapp1)
 env.AppendTarget('thsensorapp1_sample')
