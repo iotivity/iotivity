@@ -218,8 +218,8 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
         query.append(resourceTypes.at(i));
         OCPlatform::findResource("", query.c_str(),
                 std::function < void(std::shared_ptr < OCResource > resource)
-                        > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
-                                waitsec)));
+                        > (std::bind(&GroupManager::onFoundResource, this,
+                                std::placeholders::_1, waitsec)));
     }
 
     if (waitsec != -1)
@@ -319,8 +319,8 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
                         void(OCStackResult result, const unsigned int nonce,
                                 const std::string& hostAddress) >(
                         std::bind(&GroupManager::collectionPresenceHandler, this,
-                                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                                hostAddress, oit->getUri())));
+                                std::placeholders::_1, std::placeholders::_2,
+                                std::placeholders::_3, hostAddress, oit->getUri())));
 
         if (result == OC_STACK_OK)
         {
@@ -335,8 +335,8 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
     }
 }
 
-void GroupManager::onGetForPresence(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-        const int eCode, CollectionPresenceCallback callback)
+void GroupManager::onGetForPresence(const HeaderOptions& headerOptions,
+        const OCRepresentation& rep, const int eCode, CollectionPresenceCallback callback)
 {
     if (eCode == OC_STACK_OK)
     {
@@ -529,44 +529,72 @@ OCStackResult GroupManager::addActionSet(std::shared_ptr< OCResource > resource,
         const ActionSet* newActionSet, PutCallback cb)
 {
     // BUILD message of ActionSet which it is included delimiter.
-    std::string message = getStringFromActionSet(newActionSet);
-    OCRepresentation rep;
+    if ((resource != NULL) && (newActionSet != NULL))
+    {
+        std::string message = getStringFromActionSet(newActionSet);
+        OCRepresentation rep;
 
-    rep.setValue("ActionSet", message);
+        rep.setValue("ActionSet", message);
 
-    return resource->put(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
-            QueryParamsMap(), cb);
+        return resource->put(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
+                QueryParamsMap(), cb);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
 }
 
 OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resource,
         std::string actionsetName, PostCallback cb)
 {
-    OCRepresentation rep;
+    if (resource != NULL)
+    {
+        OCRepresentation rep;
 
-    rep.setValue("DoAction", actionsetName);
-    return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
-            QueryParamsMap(), cb);
+        rep.setValue("DoAction", actionsetName);
+        return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
+                QueryParamsMap(), cb);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
 }
 
 OCStackResult GroupManager::getActionSet(std::shared_ptr< OCResource > resource,
         std::string actionsetName, PostCallback cb)
 {
-    OCRepresentation rep;
+    if (resource != NULL)
+    {
+        OCRepresentation rep;
 
-    rep.setValue("GetActionSet", actionsetName);
+        rep.setValue("GetActionSet", actionsetName);
 
-    return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
-            QueryParamsMap(), cb);
+        return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
+                QueryParamsMap(), cb);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
 }
 
 OCStackResult GroupManager::deleteActionSet(std::shared_ptr< OCResource > resource,
         std::string actionsetName, PutCallback cb)
 {
-    OCRepresentation rep;
+    if (resource != NULL)
+    {
+        OCRepresentation rep;
 
-    rep.setValue("DelActionSet", actionsetName);
+        rep.setValue("DelActionSet", actionsetName);
 
-    return resource->put(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
-            QueryParamsMap(), cb);
+        return resource->put(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
+                QueryParamsMap(), cb);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
 }
 }
