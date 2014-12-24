@@ -1148,6 +1148,9 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE)
     {
+        // Replacing method type with GET because "presence" is a stack layer only implementation.
+        method = OC_REST_GET;
+
         result = getResourceType(requiredUri, &resourceType, &newUri);
         if(resourceType) {
             OC_LOG_V(DEBUG, TAG, "Got Resource Type: %s", resourceType);
@@ -1290,14 +1293,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
-
-#ifdef WITH_PRESENCE
-    if(method == OC_REST_PRESENCE)
-    {
-        // Replacing method type with GET because "presence" is a stack layer only implementation.
-        method = OC_REST_GET;
-    }
-#endif
 
     // Make call to OCCoAP layer
     result = OCDoCoAPResource(method, qos, &token, newUri, request, options, numOptions);
