@@ -76,8 +76,9 @@ ssmcore_env.AppendUnique(CPPPATH = [
 
 import os.path
 
+SSMINTERFACE_PATH = 'SSMCore/src/SSMInterface/'
+
 if target_os != 'android':
-	SSMINTERFACE_PATH = 'SSMCore/src/SSMInterface/'
 	omit_src = ['SSMCore_JNI.cpp']
 	ssminterface_src = [f for f in env.Glob(SSMINTERFACE_PATH + '*.cpp') if os.path.basename(f.path) not in omit_src]
 else :
