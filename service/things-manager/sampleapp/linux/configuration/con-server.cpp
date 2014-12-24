@@ -325,8 +325,10 @@ int main()
                 break;
             else if (g_Steps == 1)
             {
-                g_thingsmanager->doBootstrap(&onBootstrap);
-                isWaiting = 1;
+                if( g_thingsmanager->doBootstrap(&onBootstrap) == OC_STACK_OK)
+                    isWaiting = 1;
+                else
+                    std::cout << "A callback pointer of the function is NULL." << std::endl;
             }
             else if (g_Steps == 2)
             {

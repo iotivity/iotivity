@@ -597,7 +597,10 @@ namespace OIC
 
     OCStackResult ThingsConfiguration::doBootstrap(ConfigurationCallback callback)
     {
-        g_bootstrapCallback = callback;
+        if(callback == NULL)
+            return OC_STACK_ERROR;
+        else
+          g_bootstrapCallback = callback;
 
         // Find bootstrap server.
         std::vector < std::string > type;
