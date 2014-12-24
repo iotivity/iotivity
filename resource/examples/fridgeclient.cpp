@@ -44,9 +44,14 @@ class ClientFridge
     {
         std::cout << "Fridge Client has started " <<std::endl;
         FindCallback f (std::bind(&ClientFridge::foundDevice, this, PH::_1));
-
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+        OCStackResult result = OCPlatform::findResource(
+                "", "coap://224.0.1.187/oc/core?rt=intel.fridge", connectivityType, f);
+#else
         OCStackResult result = OCPlatform::findResource(
                 "", "coap://224.0.1.187/oc/core?rt=intel.fridge", f);
+#endif
 
         if(OC_STACK_OK != result)
         {
@@ -79,8 +84,14 @@ class ClientFridge
         // server, and query them.
         std::vector<std::string> lightTypes = {"intel.fridge.light"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+        OCResource::Ptr light = constructResourceObject(resource->host(),
+                                "/light", connectivityType, false, lightTypes, ifaces);
+#else
         OCResource::Ptr light = constructResourceObject(resource->host(),
                                 "/light", false, lightTypes, ifaces);
+#endif
 
         if(!light)
         {
@@ -89,25 +100,41 @@ class ClientFridge
         }
 
         std::vector<std::string> doorTypes = {"intel.fridge.door"};
-
+#ifdef CA_INT
+        OCResource::Ptr leftdoor = constructResourceObject(resource->host(),
+                                "/door/left", connectivityType, false, doorTypes, ifaces);
+#else
         OCResource::Ptr leftdoor = constructResourceObject(resource->host(),
                                 "/door/left", false, doorTypes, ifaces);
+#endif
+
         if(!leftdoor)
         {
             std::cout << "Error: Left Door Resource Object construction returned null\n";
             return;
         }
 
+#ifdef CA_INT
+        OCResource::Ptr rightdoor = constructResourceObject(resource->host(),
+                                "/door/right", connectivityType, false, doorTypes, ifaces);
+#else
         OCResource::Ptr rightdoor = constructResourceObject(resource->host(),
                                 "/door/right", false, doorTypes, ifaces);
+#endif
+
         if(!rightdoor)
         {
             std::cout << "Error: Right Door Resource Object construction returned null\n";
             return;
         }
 
+#ifdef CA_INT
+        OCResource::Ptr randomdoor = constructResourceObject(resource->host(),
+                                "/door/random", connectivityType, false, doorTypes, ifaces);
+#else
         OCResource::Ptr randomdoor = constructResourceObject(resource->host(),
                                 "/door/random", false, doorTypes, ifaces);
+#endif
         if(!randomdoor)
         {
             std::cout << "Error: Random Door Resource Object construction returned null\n";

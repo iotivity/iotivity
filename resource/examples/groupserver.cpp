@@ -101,7 +101,14 @@ int main()
 
         cout << "registerResource is called." << endl;
 
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
+                                 connectivityType, &foundResource);
+#else
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+#endif
+
         OCPlatform::bindInterfaceToResource(resourceHandle, GROUP_INTERFACE);
         OCPlatform::bindInterfaceToResource(resourceHandle, DEFAULT_INTERFACE);
 

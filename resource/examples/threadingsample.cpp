@@ -280,9 +280,14 @@ void foundResource1(std::shared_ptr<OCResource> resource)
 void client1()
 {
     std::cout << "in client1\n";
-
+#ifdef CA_INT
+    OCConnectivityType connectivityType = OC_WIFI;
+    std::cout<<"result1:" << OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo",
+            connectivityType, foundResource1)<< std::endl;
+#else
     std::cout<<"result1:" << OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo",
             foundResource1)<< std::endl;
+#endif
 
     // A condition variable will free the mutex it is given, then do a non-
     // intensive block until 'notify' is called on it.  In this case, since we
@@ -297,10 +302,16 @@ void client1()
 void client2()
 {
     std::cout << "in client2\n";
-
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+    std::cout<<"result2:" << OCPlatform::findResource("",
+                "coap://224.0.1.187/oc/core?rt=core.foo",
+                connectivityType, foundResource2)<< std::endl;
+#else
     std::cout<<"result2:" << OCPlatform::findResource("",
                 "coap://224.0.1.187/oc/core?rt=core.foo",
                 foundResource2)<< std::endl;
+#endif
 
     // A condition variable will free the mutex it is given, then do a non-
     // intensive block until 'notify' is called on it.  In this case, since we

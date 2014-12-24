@@ -384,8 +384,14 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
+                connectivityType, &foundResource, OC::QualityOfService::LowQos);
+#else
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource,
                 OC::QualityOfService::LowQos);
+#endif
         std::cout<< "Finding Resource... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

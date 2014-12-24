@@ -140,11 +140,17 @@ namespace OC
         * as BTH etc.
         * NOTE: OCStackResult is defined in ocstack.h.
         */
+#ifdef CA_INT
+        OCStackResult findResource(const std::string& host, const std::string& resourceURI,
+                    uint8_t connectivityType, FindCallback resourceHandler);
+        OCStackResult findResource(const std::string& host, const std::string& resourceURI,
+                    uint8_t connectivityType, FindCallback resourceHandler, QualityOfService QoS);
+#else
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler);
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler, QualityOfService QoS);
-
+#endif
         /**
          * API for Device Discovery
          *
@@ -155,11 +161,18 @@ namespace OC
          * @param QualityOfService the quality of communication
          *
          */
+#ifdef CA_INT
+        OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
+                    uint8_t connectivityType, FindDeviceCallback deviceInfoHandler);
+        OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
+                    uint8_t connectivityType, FindDeviceCallback deviceInfoHandler,
+                    QualityOfService QoS);
+#else
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler);
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler, QualityOfService QoS);
-
+#endif
         /**
         * This API registers a resource with the server
         * NOTE: This API applies to server side only.
@@ -403,11 +416,18 @@ namespace OC
         *
         * @return OCStackResult - return value of the API.  Returns OCSTACK_OK if success <br>
         */
+#ifdef CA_INT
+        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
+                        uint8_t connectivityType, SubscribeCallback presenceHandler);
+        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
+                        const std::string& resourceType, uint8_t connectivityType,
+                        SubscribeCallback presenceHandler);
+#else
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         SubscribeCallback presenceHandler);
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         const std::string& resourceType, SubscribeCallback presenceHandler);
-
+#endif
         /**
         * unsubscribes from a previously subscribed server's presence events. Note that
         * you may for a short time still receive events from the server since it may take time
@@ -445,10 +465,16 @@ namespace OC
         * @param interfaces - a collection of interfaces that the resource supports/implements
         * @return OCResource::Ptr - a shared pointer to the new resource object
         */
+#ifdef CA_INT
+        OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
+                        uint8_t connectivityType, bool isObservable,
+                        const std::vector<std::string>& resourceTypes,
+                        const std::vector<std::string>& interfaces);
+#else
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
-
+#endif
         /**
         * Allows application entity handler to send response to an incoming request.
         *

@@ -146,9 +146,17 @@ public:
     {
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
         std::cout<<"result:" <<
-            OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo", f)
-            << std::endl;
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo", connectivityType, f)
+        << std::endl;
+#else
+        std::cout<<"result:" <<
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo", f)
+        << std::endl;
+#endif
+
         std::cout<<"Finding Resource..."<<std::endl;
 
         {

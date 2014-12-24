@@ -125,7 +125,13 @@ int main() {
     OCPlatform::Configure(cfg);
     try
     {
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+        OCPlatform::getDeviceInfo("", "coap://224.0.1.187/oc/core/d", connectivityType,
+                                  &receivedDeviceInfo);
+#else
         OCPlatform::getDeviceInfo("", "coap://224.0.1.187/oc/core/d", &receivedDeviceInfo);
+#endif
         std::cout<< "Querying for device information... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-
