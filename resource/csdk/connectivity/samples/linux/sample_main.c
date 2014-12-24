@@ -626,6 +626,7 @@ void send_request_all()
     memset(&requestData, 0, sizeof(CAInfo_t));
     requestData.token = token;
     requestData.payload = "Temp Json Payload";
+	requestData.type = CA_MSG_NONCONFIRM;
 
     CARequestInfo_t requestInfo;
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));

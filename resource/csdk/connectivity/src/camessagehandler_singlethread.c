@@ -128,6 +128,7 @@ static void CAProcessData(CAData_t *data)
         info.options = data->options;
         info.numOptions = data->numOptions;
         info.token = data->requestInfo->info.token;
+        info.type = data->requestInfo->info.type;
 
         pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri, CA_GET, info);
 
@@ -441,6 +442,7 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
     memset(ReqInfo, 0, sizeof(CARequestInfo_t));
     ReqInfo->method = CA_GET;
     ReqInfo->info.token = token;
+    ReqInfo->info.type = CA_MSG_NONCONFIRM;
     data->requestInfo = ReqInfo;
 
     data->responseInfo = NULL;
