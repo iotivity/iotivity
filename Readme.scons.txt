@@ -117,6 +117,13 @@ processor, to specify the processor, add 'CPU=zzz' in the command line. If no
 'CPU' option exists, that means the board only support one kind of processor,
 it's unnecessary to specify it)
 
+4. Build Iotivity project for Tizen
+      $ cd <top directory of the project>
+      $ gbs build -A xxx --packaging-dir tools/tizen/
+(xxx can be i586 or armv7l, we provide the spec file required by gbs tool at
+toools/tizen directory. gbs is default build tool for Tizen platfrom, we can
+refer the following wiki to setup Tizen development environment:
+https://source.tizen.org/documentation/developer-guide/getting-started-guide)
 
 === Build Iotivity project on Windows ===
 
