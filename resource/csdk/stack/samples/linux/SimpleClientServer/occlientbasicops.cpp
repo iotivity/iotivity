@@ -7,7 +7,6 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-//
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
@@ -23,21 +22,37 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
-#include <iostream>
+
+#include <set>
+#include <string>
 #include <sstream>
+#include <iostream>
+#include <algorithm>
+
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
+
 static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
+
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
+
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/led";
 
 int gQuitFlag = 0;
+
+namespace {
+    typedef std::pair<bool, std::string>    extract_result_t;
+    typedef std::string                     sid_t;
+    typedef std::set<std::string>           SID_set_t;
+} // namespace
+
+void collateSIDs(const OCClientResponse * clientResponse, const std::string& server_ip);
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
 void handleSigInt(int signum)
@@ -115,21 +130,18 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
 
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-    if(clientResponse == NULL)
-    {
-        OC_LOG(INFO, TAG, "The clientResponse is NULL");
-        return   OC_STACK_DELETE_TRANSACTION;
-    }
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
     }
 
-    OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-    OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response",
-            clientResponse->resJSONPayload);
-
+    if(clientResponse)
+    {
+        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response",
+                clientResponse->resJSONPayload);
+    }
     if(clientResponse->rcvdVendorSpecificHeaderOptions &&
             clientResponse->numRcvdVendorSpecificHeaderOptions)
     {
@@ -157,7 +169,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
 
-    if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
+    if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
     }
@@ -176,6 +188,8 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
 
         parseClientResponse(clientResponse);
+
+        collateSIDs(clientResponse, getIPAddrTBServer(clientResponse));
 
         switch(TEST_CASE)
         {
@@ -196,7 +210,6 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     }
 
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
-
 }
 
 int InitPutRequest()
@@ -326,8 +339,8 @@ int main(int argc, char* argv[])
     InitDiscovery();
 
     // Break from loop with Ctrl+C
-    OC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
+
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
@@ -378,9 +391,69 @@ std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
     return "/a/led";
 }
 
+
+/* You could do this with the JSON parser of your choice, a regular expression, PEG
+grammar, etc.. This "sample" version does not handle cases like escaping strings,
+but shows a simple way you might approach the task with just the C++98 library: */
+extract_result_t extract_value(const std::string& search_key, const std::string& input)
+{
+    const std::string key('\"' + search_key + "\":\"");
+
+    const size_t key_mark = input.find(key);
+    const size_t key_edge = key_mark + key.length();
+    const size_t val_mark = input.find_first_of("\"", key_edge);
+
+    if(std::string::npos == key_mark || std::string::npos == val_mark) {
+       std::ostringstream os;
+
+       os << "extract_value(): \"" << search_key << "\" not found in input";
+       OC_LOG(ERROR, TAG, os.str().c_str());
+
+       return std::make_pair(false, "");
+     }
+
+    return std::make_pair(true, input.substr(key_edge, val_mark - key_edge));
+}
+
+extract_result_t parseSID(const OCClientResponse * const clientResponse)
+{
+    const char* const& pl_in = reinterpret_cast<const char *>(clientResponse->resJSONPayload);
+
+    const std::string pl(pl_in, strlen(pl_in));
+
+    const extract_result_t sid = extract_value("sid", pl);
+    const extract_result_t uri = extract_value("href", pl);
+    //TODO-CA: It should be just enough to send the SID alone and not the combination
+    // of it.
+    return std::make_pair(sid.first and uri.first, sid.second + ':' + uri.second);
+}
+
 void parseClientResponse(OCClientResponse * clientResponse)
 {
     coapServerIP = getIPAddrTBServer(clientResponse);
     coapServerPort = getPortTBServer(clientResponse);
     coapServerResource = getQueryStrForGetPut(clientResponse);
+}
+
+void collateSIDs(const OCClientResponse * clientResponse, const std::string& server_ip)
+{
+    static SID_set_t sids;
+
+    const extract_result_t sid_result = parseSID(clientResponse);
+
+    if(false == sid_result.first)
+     return;
+
+    const sid_t& sid = sid_result.second;
+
+    /* ...there's no need for an application to take any special action, but we can tell
+    if we've seen a resource before, regardless of the transport it arrive on: */
+    std::ostringstream msg;
+
+    if(not sids.insert(sid).second)
+     msg << "SID " << sid << " has been seen before.\n";
+    else
+     msg << "SID " << sid << " is new.\n";
+
+    OC_LOG(INFO, TAG, msg.str().c_str());
 }
