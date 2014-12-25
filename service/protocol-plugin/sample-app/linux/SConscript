@@ -9,6 +9,7 @@ lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 
 sample_env = lib_env.Clone()
+
 target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
@@ -21,7 +22,12 @@ if target_os not in ['windows', 'winrt']:
 	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread', '-std=c++0x'])
 
 sample_env.AppendUnique(LIBS = ['pthread'])
-sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'ppm', 'pmimpl', 'dl'])
+sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'coap_csdk',
+								'connectivity_abstraction',
+								'ppm', 'pmimpl', 'dl'])
+
+sample_env.ParseConfig('pkg-config --libs glib-2.0')
+
 ######################################################################
 # Source files and Targets
 ######################################################################
