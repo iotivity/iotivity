@@ -148,10 +148,21 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 unsigned char presenceResBuf[MAX_RESPONSE_LENGTH] = {0};
                 //This is effectively the implementation for the presence entity handler.
                 OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
+#ifdef CA_INT
+                result = AddServerCARequest(&request, 0, 0, 0, 1, OC_REST_GET,
+                        0, resPtr->sequenceNum, qos, resourceObserver->query,
+                        NULL, NULL,
+                        &resourceObserver->token, resourceObserver->addr,
+                        resourceObserver->resUri, 0,
+                        &(resourceObserver->addressInfo), resourceObserver->connectivityType,
+                        resourceObserver->CAToken);
+
+#else
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, OC_OBSERVE_NO_OPTION, OC_LOW_QOS,
                         NULL, NULL, NULL, &resourceObserver->token,
                         resourceObserver->addr, resourceObserver->resUri, 0);
+#endif
                 if(result == OC_STACK_OK)
                 {
                     // we create the payload here

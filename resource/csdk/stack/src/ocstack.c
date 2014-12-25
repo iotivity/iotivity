@@ -238,13 +238,86 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
     return ret;
 }
 
+void HandlePresenceResponse(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
+{
+    OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
+    ClientCB * cbNode = NULL;
+    char *resourceTypeName = NULL;
+    char * tok = NULL;
+    char * bufRes = responseInfo->info.payload;
+    OCClientResponse *response = (OCClientResponse *) OCMalloc(sizeof(OCClientResponse));
+
+    if(!bufRes)
+    {
+        goto exit;
+    }
+
+    tok = strtok(bufRes, "[:]}");
+    bufRes[strlen(bufRes)] = ':';
+    tok = strtok(NULL, "[:]}");
+    bufRes[strlen((char *)bufRes)] = ':';
+    response->sequenceNumber = (uint32_t )atoi(tok);
+    tok = strtok(NULL, "[:]}");
+    tok = strtok(NULL, "[:]}");
+    if(tok)
+    {
+        resourceTypeName = (char *)OCMalloc(strlen(tok));
+        if(!resourceTypeName)
+        {
+            goto exit;
+        }
+        bufRes[strlen((char *)bufRes)] = ':';
+        strcpy(resourceTypeName, tok);
+        OC_LOG_V(DEBUG, TAG, "----------------resourceTypeName %s",
+                resourceTypeName);
+    }
+    bufRes[strlen((char *)bufRes)] = ']';
+
+    response->resJSONPayload = responseInfo->info.payload;
+    response->result = OC_STACK_OK;
+
+    char *fullUri = (char *) OCMalloc(MAX_URI_LENGTH );
+    char *ipAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
+
+    strncpy(ipAddress, endPoint->addressInfo.IP.ipAddress, strlen(endPoint->addressInfo.IP.ipAddress));
+    ipAddress[strlen(endPoint->addressInfo.IP.ipAddress)] = '\0';
+
+    snprintf(fullUri, MAX_URI_LENGTH, "coap://%s:%u%s", ipAddress, endPoint->addressInfo.IP.port,
+                OC_PRESENCE_URI);
+
+    cbNode = GetClientCB(NULL, NULL, fullUri);
+
+    if(cbNode)
+    {
+        cbResult = cbNode->callBack(cbNode->context, cbNode->handle, response);
+    }
+
+    if (cbResult == OC_STACK_DELETE_TRANSACTION)
+    {
+        FindAndDeleteClientCB(cbNode);
+    }
+
+exit:
+
+OCFree(fullUri);
+OCFree(ipAddress);
+OCFree(resourceTypeName);
+}
+
+
 //This function will be called back by CA layer when a response is received
 void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
     printf ("Received payload: %s\n", (char *)responseInfo->info.payload);
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
+    if(strcmp(endPoint->resourceUri, OC_PRESENCE_URI) == 0)
+    {
+        HandlePresenceResponse(endPoint, responseInfo);
+        return 0;
+    }
     ClientCB *cbNode = GetClientCB((CAToken_t *)&responseInfo->info.token, NULL, NULL);
+
     if (cbNode)
     {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
@@ -432,7 +505,6 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 {
     OC_LOG(INFO, TAG, PCF("Entering HandleStackRequests (OCStack Layer)"));
-
     OCStackResult result = OC_STACK_ERROR;
     ResourceHandling resHandling;
     OCResource *resource;
@@ -1616,9 +1688,22 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         presenceState = OC_PRESENCE_INITIALIZED;
         OCGenerateCoAPToken(&token);
         OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
+#ifdef CA_INT
+        CAAddress_t addressInfo;
+        strncpy(addressInfo.IP.ipAddress, "224.0.1.187", CA_IPADDR_SIZE);
+        addressInfo.IP.port = 5298;
+
+        CAToken_t caToken = NULL;
+       CAGenerateToken(&caToken);
+
+        AddCAObserver(OC_PRESENCE_URI, NULL, 0, &token,
+                &multiCastAddr, (OCResource *)presenceResource.handle, OC_LOW_QOS,
+                &addressInfo, CA_WIFI, caToken);
+#else
         //add the presence observer
         AddObserver(OC_PRESENCE_URI, NULL, 0, &token, &multiCastAddr,
             (OCResource *)presenceResource.handle, OC_LOW_QOS);
+#endif
     }
 
     // Each time OCStartPresence is called
@@ -2628,7 +2713,6 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *ehResponse)
     else
     {
         // Normal response
-
         // Get pointer to request info
         serverRequest = GetServerRequestUsingHandle((OCServerRequest *)ehResponse->requestHandle);
         if(serverRequest)
