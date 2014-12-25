@@ -46,29 +46,31 @@ if target_os == 'android':
 if target_os in ['darwin', 'ios']:
 	examples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
+examples_env.AppendUnique(CPPDEFINES = ['CA_INT'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
 simpleserver = examples_env.Program('simpleserver', 'simpleserver.cpp')
-simpleserverHQ = examples_env.Program('simpleserverHQ', 'simpleserverHQ.cpp')
 simpleclient = examples_env.Program('simpleclient', 'simpleclient.cpp')
-simpleclientHQ = examples_env.Program('simpleclientHQ', 'simpleclientHQ.cpp')
-fridgeserver = examples_env.Program('fridgeserver', 'fridgeserver.cpp')
-fridgeclient = examples_env.Program('fridgeclient', 'fridgeclient.cpp')
-presenceserver = examples_env.Program('presenceserver', 'presenceserver.cpp')
-presenceclient = examples_env.Program('presenceclient', 'presenceclient.cpp')
-simpleclientserver = examples_env.Program('simpleclientserver', 'simpleclientserver.cpp')
-roomserver = examples_env.Program('roomserver', 'roomserver.cpp')
-roomclient = examples_env.Program('roomclient', 'roomclient.cpp')
-garageserver = examples_env.Program('garageserver', 'garageserver.cpp')
-garageclient = examples_env.Program('garageclient', 'garageclient.cpp')
-devicediscoveryserver = examples_env.Program('devicediscoveryserver', 'devicediscoveryserver.cpp')
-devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicediscoveryclient.cpp')
+#simpleserverHQ = examples_env.Program('simpleserverHQ', 'simpleserverHQ.cpp')
+#simpleclientHQ = examples_env.Program('simpleclientHQ', 'simpleclientHQ.cpp')
+#fridgeserver = examples_env.Program('fridgeserver', 'fridgeserver.cpp')
+#fridgeclient = examples_env.Program('fridgeclient', 'fridgeclient.cpp')
+#presenceserver = examples_env.Program('presenceserver', 'presenceserver.cpp')
+#presenceclient = examples_env.Program('presenceclient', 'presenceclient.cpp')
+#simpleclientserver = examples_env.Program('simpleclientserver', 'simpleclientserver.cpp')
+#roomserver = examples_env.Program('roomserver', 'roomserver.cpp')
+#roomclient = examples_env.Program('roomclient', 'roomclient.cpp')
+#garageserver = examples_env.Program('garageserver', 'garageserver.cpp')
+#garageclient = examples_env.Program('garageclient', 'garageclient.cpp')
 
-Alias("examples", [simpleserver, simpleserverHQ, simpleclient, simpleclientHQ,
-		fridgeserver, fridgeclient, presenceserver, presenceclient,
-		simpleclientserver, roomserver, roomclient, garageserver,
-		garageclient, devicediscoveryserver, devicediscoveryclient])
+Alias("examples", [simpleserver, simpleclient,
+		#simpleserverHQ, simpleclientHQ,
+		#fridgeserver, fridgeclient, presenceserver, presenceclient,
+		#simpleclientserver, roomserver, roomclient, garageserver,
+		#garageclient
+     ])
 env.AppendTarget('examples')
 
 #ios doesn't allow run application from terminal, so won't build these examples

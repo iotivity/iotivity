@@ -387,9 +387,8 @@ int main(int argc, char* argv[]) {
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
-                    connectivityType, &foundResource);
+        OCPlatform::findResource("", "coap://224.0.1.187:5298/oc/core?rt=core.light",
+                    OC_WIFI, &foundResource);
 #else
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
 #endif
@@ -399,9 +398,8 @@ int main(int argc, char* argv[]) {
         // These resources will have the same uniqueidentifier (yet be different objects), so that
         // we can verify/show the duplicate-checking code in foundResource(above);
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
-                    connectivityType, &foundResource);
+        OCPlatform::findResource("", "coap://224.0.1.187:5298/oc/core?rt=core.light",
+                    OC_ETHERNET, &foundResource);
 #else
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
 #endif
