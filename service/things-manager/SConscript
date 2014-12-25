@@ -22,7 +22,6 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
 	things_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	things_manager_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 
 ######################################################################
 # Source files and Targets

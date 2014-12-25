@@ -40,7 +40,6 @@ examples_env.ParseConfig('pkg-config --libs glib-2.0');
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	examples_env.AppendUnique(LIBS = ['gnustl_static'])
-	examples_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 
 	if not env.get('RELEASE'):
 		examples_env.AppendUnique(LIBS = ['log'])

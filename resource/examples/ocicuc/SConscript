@@ -30,7 +30,6 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
 	ocicuc_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	ocicuc_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 	ocicuc_env.AppendUnique(LIBS = ['boost_program_options-gcc-mt-1_49', 'boost_thread-gcc-mt-1_49', 'gnustl_static'])
 
 	if not env.get('RELEASE'):
