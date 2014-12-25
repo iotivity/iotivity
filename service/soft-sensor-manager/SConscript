@@ -24,6 +24,13 @@ if target_os not in ['windows', 'winrt']:
 	if target_os != 'android':
 		soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
+if target_os == 'android':
+	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_static'])
+
+	if not env.get('RELEASE'):
+		soft_sensor_manager_env.AppendUnique(LIBS = ['log'])
+
 #######################################################################
 ## build SSM SDK
 #######################################################################
@@ -111,7 +118,8 @@ SConscript('SampleApp/SConscript')
 ######################################################################
 # Copy description xml and deliverables
 ######################################################################
-Command("SSMTesterApp","SampleApp/linux/SSMTesterApp/SSMTesterApp", Copy("$TARGET", "$SOURCE"))
-Command("SoftSensorDescription.xml", "SoftSensorPlugin/SoftSensorDescription.xml", Copy("$TARGET", "$SOURCE"))
-Command("THSensorApp","SampleApp/linux/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
-Command("THSensorApp1","SampleApp/linux/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
+if target_os == 'linux':
+	Command("SSMTesterApp","SampleApp/linux/SSMTesterApp/SSMTesterApp", Copy("$TARGET", "$SOURCE"))
+	Command("SoftSensorDescription.xml", "SoftSensorPlugin/SoftSensorDescription.xml", Copy("$TARGET", "$SOURCE"))
+	Command("THSensorApp","SampleApp/linux/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
+	Command("THSensorApp1","SampleApp/linux/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
