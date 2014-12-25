@@ -309,7 +309,6 @@ OCFree(resourceTypeName);
 void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
-    printf ("Received payload: %s\n", (char *)responseInfo->info.payload);
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
     if(strcmp(endPoint->resourceUri, OC_PRESENCE_URI) == 0)
     {
@@ -1334,6 +1333,11 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     // create token
     caResult = CAGenerateToken(&caToken);
+
+    //TODO-CA Remove this temporary fix (for some reason same token is being generated)
+    static count = 0;
+    count++;
+    caToken[0] += count;
 
     if (caResult != CA_STATUS_OK)
     {

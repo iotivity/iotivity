@@ -35,6 +35,8 @@ if target_os in ['darwin', 'ios']:
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger'])
 
+oclib_env.AppendUnique(CPPDEFINES = ['CA_INT'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################

@@ -119,12 +119,11 @@ namespace OC
                     uint8_t connectivityType, FindCallback resourceHandler);
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     uint8_t connectivityType, FindCallback resourceHandler, QualityOfService QoS);
-#else
+#endif
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler);
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler, QualityOfService QoS);
-#endif
         /**
          * API for Device Discovery
          *
@@ -400,12 +399,11 @@ namespace OC
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         const std::string& resourceType, uint8_t connectivityType,
                         SubscribeCallback presenceHandler);
-#else
+#endif
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         SubscribeCallback presenceHandler);
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         const std::string& resourceType, SubscribeCallback presenceHandler);
-#endif
         /**
         * unsubscribes from a previously subscribed server's presence events. Note that
         * you may for a short time still receive events from the server since it may take time
@@ -448,11 +446,10 @@ namespace OC
                         uint8_t connectivityType, bool isObservable,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
-#else
+#endif
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
-#endif
         /**
         * Allows application entity handler to send response to an incoming request.
         *

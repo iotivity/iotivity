@@ -77,7 +77,7 @@ namespace OC
                                                 const std::vector<std::string>& resourceTypes,
                                                 const std::vector<std::string>& interfaces)
         {
-            return OCPlatform_impl::Instance().constructResourceObject(host, uri, connectivityType, 
+            return OCPlatform_impl::Instance().constructResourceObject(host, uri, connectivityType,
                                                 isObservable,
                                                 resourceTypes, interfaces);
         }
@@ -119,31 +119,6 @@ namespace OC
                     deviceInfoHandler, QoS);
         }
 #else
-        OCResource::Ptr constructResourceObject(const std::string& host,
-                                                const std::string& uri,
-                                                bool isObservable,
-                                                const std::vector<std::string>& resourceTypes,
-                                                const std::vector<std::string>& interfaces)
-        {
-            return OCPlatform_impl::Instance().constructResourceObject(host, uri, isObservable,
-                                                resourceTypes, interfaces);
-        }
-
-        OCStackResult findResource(const std::string& host,
-                                                const std::string& resourceName,
-                                                FindCallback resourceHandler)
-        {
-            return OCPlatform_impl::Instance().findResource(host, resourceName, resourceHandler);
-        }
-
-        OCStackResult findResource(const std::string& host,
-                                                const std::string& resourceName,
-                                                FindCallback resourceHandler, QualityOfService QoS)
-        {
-            return OCPlatform_impl::Instance().findResource(host, resourceName,
-                                                resourceHandler, QoS);
-        }
-
         OCStackResult getDeviceInfo(const std::string& host,
                                                 const std::string& deviceURI,
                                                 FindDeviceCallback deviceInfoHandler)
@@ -160,6 +135,50 @@ namespace OC
                     deviceInfoHandler, QoS);
         }
 #endif
+
+        OCStackResult findResource(const std::string& host,
+                                                const std::string& resourceName,
+                                                FindCallback resourceHandler)
+        {
+//TODO-CA Revisit this API
+#ifdef CA_INT
+            return OCPlatform_impl::Instance().findResource(host, resourceName,
+                                                    OC_WIFI | OC_ETHERNET, resourceHandler);
+#else
+            return OCPlatform_impl::Instance().findResource(host, resourceName, resourceHandler);
+#endif
+        }
+
+        OCStackResult findResource(const std::string& host,
+                                                const std::string& resourceName,
+                                                FindCallback resourceHandler, QualityOfService QoS)
+        {
+//TODO-CA Revisit this API
+#ifdef CA_INT
+            return OCPlatform_impl::Instance().findResource(host, resourceName,
+                                                OC_WIFI | OC_ETHERNET, resourceHandler, QoS);
+#else
+            return OCPlatform_impl::Instance().findResource(host, resourceName,
+                                                resourceHandler, QoS);
+#endif
+        }
+
+        OCResource::Ptr constructResourceObject(const std::string& host,
+                                                const std::string& uri,
+                                                bool isObservable,
+                                                const std::vector<std::string>& resourceTypes,
+                                                const std::vector<std::string>& interfaces)
+        {
+//TODO-CA Revisit this API
+#ifdef CA_INT
+            return OCPlatform_impl::Instance().constructResourceObject(host, uri, isObservable,
+                                                OC_WIFI | OC_ETHERNET, resourceTypes, interfaces);
+#else
+            return OCPlatform_impl::Instance().constructResourceObject(host, uri, isObservable,
+                                                resourceTypes, interfaces);
+#endif
+        }
+
 
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
                                                 std::string& resourceURI,
@@ -257,13 +276,19 @@ namespace OC
             return OCPlatform_impl::Instance().subscribePresence(presenceHandle, host,
                                                 resourceType, connectivityType, presenceHandler);
         }
-#else
+#endif
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle,
                                                 const std::string& host,
                                                 SubscribeCallback presenceHandler)
         {
+//TODO-CA Revisit this API
+#ifdef CA_INT
+            return OCPlatform_impl::Instance().subscribePresence(presenceHandle, host,
+                                                OC_WIFI | OC_ETHERNET, presenceHandler);
+#else
             return OCPlatform_impl::Instance().subscribePresence(presenceHandle, host,
                                                 presenceHandler);
+#endif
         }
 
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle,
@@ -271,10 +296,17 @@ namespace OC
                                                 const std::string& resourceType,
                                                 SubscribeCallback presenceHandler)
         {
+//TODO-CA Revisit this API
+#ifdef CA_INT
+            return OCPlatform_impl::Instance().subscribePresence(presenceHandle, host,
+                                                resourceType, OC_WIFI | OC_ETHERNET,
+                                                presenceHandler);
+#else
             return OCPlatform_impl::Instance().subscribePresence(presenceHandle, host,
                                                 resourceType, presenceHandler);
-        }
 #endif
+        }
+
         OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle)
         {
             return OCPlatform_impl::Instance().unsubscribePresence(presenceHandle);
