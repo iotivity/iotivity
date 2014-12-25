@@ -958,10 +958,12 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     {
         OC_LOG_V(INFO, TAG, "IP Address = %s", ipAddr);
     }
+
+    OCSeedRandom();
 #ifdef CA_INT
     CAInitialize();
     //It is ok to select network to CA_WIFI for now
-    CAResult_t caResult = CASelectNetwork(CA_WIFI);
+    CAResult_t caResult = CASelectNetwork(CA_WIFI|CA_ETHERNET);
     if(caResult == CA_STATUS_OK)
     {
         OC_LOG(INFO, TAG, PCF("CASelectNetwork to WIFI"));
@@ -1190,6 +1192,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     CAToken_t caToken = NULL;
     CAInfo_t requestData;
     CARequestInfo_t requestInfo;
+    CAGroupEndpoint_t grpEnd;
+
     // To track if memory is allocated for additional header options
     uint8_t hdrOptionMemAlloc = 0;
 #endif // CA_INT
@@ -1286,6 +1290,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 #ifdef CA_INT
     memset(&requestData, 0, sizeof(CAInfo_t));
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
+    memset(&grpEnd, 0, sizeof(CAGroupEndpoint_t));
     switch (method)
     {
         case OC_REST_GET:
@@ -1321,11 +1326,18 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             goto exit;
     }
 
+    //High QoS is not supported
+    if(qos == OC_HIGH_QOS)
+    {
+        result = OC_STACK_INVALID_PARAM;
+        goto exit;
+    }
     // TODO-CA: Handle multi-cast scenario
     // Create remote end point
-    caResult = CACreateRemoteEndpoint(newUri, CA_WIFI, &endpoint);
+    caResult = CACreateRemoteEndpoint(newUri, conType, &endpoint);
     // TODO-CA: Connectivity type should be passed to API
-    endpoint->connectivityType = CA_WIFI;
+    endpoint->connectivityType = conType;
+
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
@@ -1366,7 +1378,20 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     requestInfo.info = requestData;
 
     // send request
-    caResult = CASendRequest(endpoint, &requestInfo);
+    //TODO-CA Change This logic. Currently hardcoded to WIFI & ETHERNET
+    //Need to support other adapter types.
+    if(conType == (CA_WIFI | CA_ETHERNET))
+    {
+        //TODO-CA remove hardcoded resource uri. Instead, extract it from newUri
+        grpEnd.connectivityType = conType;
+        grpEnd.resourceUri = "/oc/core";
+
+        caResult = CASendRequestToAll(&grpEnd, &requestInfo);
+    }
+    else
+    {
+        caResult = CASendRequest(endpoint, &requestInfo);
+    }
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CASendRequest"));
