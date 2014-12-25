@@ -152,7 +152,7 @@ namespace OC
 
         return std::shared_ptr<OCResource>(new OCResource(m_client,
                                             host,
-                                            uri, connectivityType,
+                                            uri, "", connectivityType,
                                             isObservable,
                                             resourceTypes,
                                             interfaces));
@@ -210,6 +210,8 @@ namespace OC
         return std::shared_ptr<OCResource>(new OCResource(m_client,
                                             host,
                                             uri,
+                                            "", // 'created' Resources have no way of knowing their
+                                                // server ID, so this has to be blank initially.
                                             isObservable,
                                             resourceTypes,
                                             interfaces));

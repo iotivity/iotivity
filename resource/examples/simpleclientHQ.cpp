@@ -20,17 +20,27 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#include <set>
 #include <string>
 #include <cstdlib>
 #include <pthread.h>
 #include <mutex>
 #include <condition_variable>
-
 #include "OCPlatform.h"
 #include "OCApi.h"
 
 using namespace OC;
 
+struct dereference_compare
+{
+    bool operator()(std::shared_ptr<OCResource> lhs, std::shared_ptr<OCResource> rhs )const
+    {
+        return *lhs < *rhs;
+    }
+};
+typedef std::set<std::shared_ptr<OCResource>, dereference_compare> DiscoveredResourceSet;
+
+DiscoveredResourceSet discoveredResources;
 const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
@@ -285,15 +295,27 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-    if(curResource)
-    {
-        std::cout << "Found another resource, ignoring"<<std::endl;
-    }
-
     std::string resourceURI;
     std::string hostAddress;
     try
     {
+        if(discoveredResources.find(resource) == discoveredResources.end())
+        {
+            std::cout << "Found resource " << resource->uniqueIdentifier() <<
+                " for the first time on server with ID: "<< resource->sid()<<std::endl;
+            discoveredResources.insert(resource);
+        }
+        else
+        {
+            std::cout<<"Found resource "<< resource->uniqueIdentifier() << " again!"<<std::endl;
+        }
+
+        if(curResource)
+        {
+            std::cout << "Found another resource, ignoring"<<std::endl;
+            return;
+        }
+
         // Do some operations with resource object.
         if(resource)
         {
@@ -393,6 +415,23 @@ int main(int argc, char* argv[]) {
                 OC::QualityOfService::LowQos);
 #endif
         std::cout<< "Finding Resource... " <<std::endl;
+
+        // Find resource is done twice so that we discover the original resources a second time.
+        // These resources will have the same uniqueidentifier (yet be different objects), so that
+        // we can verify/show the duplicate-checking code in foundResource(above);
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
+                connectivityType, &foundResource, OC::QualityOfService::LowQos);
+#else
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource,
+                OC::QualityOfService::LowQos);
+#endif
+        std::cout<< "Finding Resource for second time... " <<std::endl;
+        while(true)
+        {
+            // some operations
+        }
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

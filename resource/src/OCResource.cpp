@@ -21,6 +21,8 @@
 #include "OCResource.h"
 #include "OCUtilities.h"
 
+#include <boost/lexical_cast.hpp>
+
 namespace OC {
 
 using OC::nil_guard;
@@ -29,10 +31,12 @@ using OC::checked_guard;
 
 #ifdef CA_INT
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-                       const std::string& uri, uint8_t connectivityType, bool observable,
+                       const std::string& uri, const std::string& serverId,
+                       uint8_t connectivityType, bool observable,
                        const std::vector<std::string>& resourceTypes,
                        const std::vector<std::string>& interfaces)
- :  m_clientWrapper(clientWrapper), m_uri(uri), m_connectivityType(connectivityType),
+ :  m_clientWrapper(clientWrapper), m_uri(uri), m_resourceId(serverId, m_uri),
+    m_connectivityType(connectivityType),
     m_host(host), m_isObservable(observable),
     m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -51,11 +55,12 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::s
 }
 #else
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-                       const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes,
+                       const std::string& uri, const std::string& serverId, bool observable,
+                       const std::vector<std::string>& resourceTypes,
                        const std::vector<std::string>& interfaces)
- :  m_clientWrapper(clientWrapper), m_uri(uri), m_host(host), m_isObservable(observable),
-    m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces),
-    m_observeHandle(nullptr)
+ :  m_clientWrapper(clientWrapper), m_uri(uri), m_resourceId(serverId, m_uri), m_host(host),
+    m_isObservable(observable), m_isCollection(false), m_resourceTypes(resourceTypes),
+    m_interfaces(interfaces), m_observeHandle(nullptr)
 {
     m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
                         != m_interfaces.end();
@@ -329,6 +334,101 @@ uint8_t OCResource::connectivityType() const
 bool OCResource::isObservable() const
 {
     return m_isObservable;
+}
+
+
+OCResourceIdentifier OCResource::uniqueIdentifier() const
+{
+    return m_resourceId;
+}
+
+std::string OCResource::sid() const
+{
+    std::ostringstream os;
+    os << this->uniqueIdentifier().m_representation;
+    return os.str();
+}
+
+bool OCResource::operator==(const OCResource &other) const
+{
+    return m_resourceId == other.m_resourceId;
+}
+
+bool OCResource::operator!=(const OCResource &other) const
+{
+    return m_resourceId != other.m_resourceId;
+}
+
+bool OCResource::operator<(const OCResource &other) const
+{
+    return m_resourceId < other.m_resourceId;
+}
+
+bool OCResource::operator>(const OCResource &other) const
+{
+    return m_resourceId > other.m_resourceId;
+}
+
+bool OCResource::operator<=(const OCResource &other) const
+{
+    return m_resourceId <= other.m_resourceId;
+}
+
+bool OCResource::operator>=(const OCResource &other) const
+{
+    return m_resourceId >= other.m_resourceId;
+}
+
+OCResourceIdentifier::OCResourceIdentifier(const std::string& wireServerIdentifier,
+        const std::string& resourceUri)
+    :m_representation(0), m_resourceUri(resourceUri)
+{
+    // test required so we can create Resources without a server. Will leave as default.
+    if(!wireServerIdentifier.empty())
+    {
+        m_representation = boost::lexical_cast<unsigned int>(wireServerIdentifier);
+    }
+}
+
+ostream& operator <<(ostream& os, const OCResourceIdentifier& ri)
+{
+
+    os << ri.m_representation<<ri.m_resourceUri;
+
+    return os;
+}
+
+bool OCResourceIdentifier::operator==(const OCResourceIdentifier &other) const
+{
+    return m_representation == other.m_representation
+        && m_resourceUri == other.m_resourceUri;
+}
+
+bool OCResourceIdentifier::operator!=(const OCResourceIdentifier &other) const
+{
+    return !(*this == other);
+}
+
+bool OCResourceIdentifier::operator<(const OCResourceIdentifier &other) const
+{
+    return m_resourceUri < other.m_resourceUri
+        || (m_resourceUri == other.m_resourceUri &&
+                m_representation < other.m_representation);
+}
+
+bool OCResourceIdentifier::operator>(const OCResourceIdentifier &other) const
+{
+    return *this != other && !(*this<other);
+}
+
+bool OCResourceIdentifier::operator<=(const OCResourceIdentifier &other) const
+{
+    return !(*this > other);
+}
+
+bool OCResourceIdentifier::operator>=(const OCResourceIdentifier &other) const
+{
+    return !(*this < other);
 }
 
 } // namespace OC

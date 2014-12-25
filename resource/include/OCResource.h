@@ -38,6 +38,44 @@
 
 namespace OC
 {
+    class OCResource;
+    class OCResourceIdentifier;
+    ostream& operator <<(ostream& os, const OCResourceIdentifier& ri);
+    /**
+    *  @brief  OCResourceIdentifier represents the identity information for a server. This
+    *          object combined with the OCResource's URI property uniquely identify an
+    *          OCResource on or across networks.
+    *          Equality operators are implemented.  However, internal representation is subject
+    *          to change and thus should not be accessed or depended on.
+    */
+    class OCResourceIdentifier
+    {
+        friend class OCResource;
+        friend ostream& operator <<(ostream& os, const OCResourceIdentifier& ri);
+
+        public:
+            bool operator==(const OCResourceIdentifier &other) const;
+
+            bool operator!=(const OCResourceIdentifier &other) const;
+
+            bool operator<(const OCResourceIdentifier &other) const;
+
+            bool operator>(const OCResourceIdentifier &other) const;
+
+            bool operator<=(const OCResourceIdentifier &other) const;
+
+            bool operator>=(const OCResourceIdentifier &other) const;
+
+        private:
+
+            OCResourceIdentifier(const std::string& wireServerIdentifier,
+                    const std::string& resourceUri );
+
+        private:
+            uint32_t m_representation;
+            const std::string& m_resourceUri;
+    };
+
     /**
     *   @brief  OCResource represents an OC resource. A resource could be a light controller,
     *           temperature sensor, smoke detector, etc. A resource comes with a well-defined
@@ -307,9 +345,43 @@ namespace OC
             return m_interfaces;
         }
 
+        // TODO-CA Revisit this since we are exposing two identifiers
+        /**
+        * Function to get a unqiue identifier for this
+        * resource across network interfaces.  This will
+        * be guaranteed unique for every resource-per-server
+        * independent of how this was discovered.
+        * @return OCResourceIdentifier object, which can
+        * be used for all comparison and hashing.
+        */
+        OCResourceIdentifier uniqueIdentifier() const;
+
+        /**
+        * Function to get a string representation of the resource's server ID.
+        * This is unique per- server independent on how it was discovered.
+        * Note: The format of the return value is subject to change and will
+        * likely change both in size and contents in the future.
+        */
+        std::string sid() const;
+
+        // overloaded operators allow for putting into a 'set'
+        // the uniqueidentifier allows for putting into a hash
+        bool operator==(const OCResource &other) const;
+
+        bool operator!=(const OCResource &other) const;
+
+        bool operator<(const OCResource &other) const;
+
+        bool operator>(const OCResource &other) const;
+
+        bool operator<=(const OCResource &other) const;
+
+        bool operator>=(const OCResource &other) const;
+
     private:
         std::weak_ptr<IClientWrapper> m_clientWrapper;
         std::string m_uri;
+        OCResourceIdentifier m_resourceId;
         std::string m_host;
 #ifdef CA_INT
         uint8_t m_connectivityType;
@@ -325,12 +397,12 @@ namespace OC
     private:
 #ifdef CA_INT
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-            const std::string& uri, uint8_t m_connectivityType, bool observable,
-            const std::vector<std::string>& resourceTypes,
+            const std::string& uri, const std::string& serverId, uint8_t m_connectivityType,
+            bool observable, const std::vector<std::string>& resourceTypes,
             const std::vector<std::string>& interfaces);
 #else
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-            const std::string& uri, bool observable,
+            const std::string& uri, const std::string& serverId, bool observable,
             const std::vector<std::string>& resourceTypes,
             const std::vector<std::string>& interfaces);
 #endif

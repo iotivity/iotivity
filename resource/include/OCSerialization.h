@@ -122,6 +122,15 @@ namespace OC
                 }
                 try
                 {
+                    ar(cereal::make_nvp(OC::Key::SERVERIDKEY, m_serverId));
+                    m_loaded=true;
+                }
+                catch(cereal::Exception&)
+                {
+                    ar.setNextName(nullptr);
+                }
+                try
+                {
                     ar(cereal::make_nvp(OC::Key::PROPERTYKEY, m_props));
                     m_loaded=true;
                 }
@@ -133,6 +142,7 @@ namespace OC
 
 
             std::string m_uri;
+            std::string m_serverId;
             bool m_loaded;
             ListenResourcePropertiesContainer m_props;
 
@@ -217,7 +227,7 @@ namespace OC
                 else
                 {
                     oclog() << "ConvertOCAddrToString(): Invalid Ip"
-                        << std::flush;
+                            << std::flush;
                     throw ResourceInitException(false, false, false, false, false, true);
                 }
 
@@ -234,7 +244,7 @@ namespace OC
                 else
                 {
                     oclog() << "ConvertOCAddrToString() : Invalid Port"
-                        <<std::flush;
+                            <<std::flush;
                     throw ResourceInitException(false, false, false, false, true, false);
                 }
 
@@ -264,14 +274,14 @@ namespace OC
                             m_resources.push_back(std::shared_ptr<OCResource>(
                                 new OCResource(m_clientWrapper,
                                     ConvertOCAddrToString(res.secureType(),res.port()),
-                                    res.m_uri, connectivityType, res.observable(), res.resourceTypes(),
-                                    res.interfaces())));
+                                    res.m_uri, res.m_serverId, connectivityType, res.observable(),
+                                    res.resourceTypes(), res.interfaces())));
 #else
                             m_resources.push_back(std::shared_ptr<OCResource>(
                                 new OCResource(m_clientWrapper,
                                     ConvertOCAddrToString(res.secureType(),res.port()),
-                                    res.m_uri, res.observable(), res.resourceTypes(),
-                                    res.interfaces())));
+                                    res.m_uri, res.m_serverId, res.observable(),
+                                    res.resourceTypes(), res.interfaces())));
 #endif
                         }
 

@@ -163,7 +163,9 @@ namespace OC
         {
             oclog() << "listenCallback failed to parse a malformed message: "
                     << e.what()
-                    << std::endl <<std::endl
+                    << std::endl
+                    << clientResponse->resJSONPayload
+                    << std::endl
                     << clientResponse->result
                     << std::flush;
             return OC_STACK_KEEP_TRANSACTION;
