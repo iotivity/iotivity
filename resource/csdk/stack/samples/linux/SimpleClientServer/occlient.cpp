@@ -296,16 +296,13 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
 
 #ifdef CA_INT
-        OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
-                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
-#else
-        OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
-                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+        std::string connectionType = getConnectivityType (clientResponse->connType);
+        OC_LOG_V(INFO, TAG, "Discovered on %s", connectionType.c_str());
 #endif
+        OC_LOG_V(INFO, TAG,
+                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
+                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
+                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
 
         parseClientResponse(clientResponse);
 
@@ -720,6 +717,27 @@ std::string getPortTBServer(OCClientResponse * clientResponse){
     std::ostringstream ss;
     ss << p;
     return ss.str();
+}
+
+std::string getConnectivityType (OCConnectivityType connType)
+{
+    switch (connType)
+    {
+        case OC_ETHERNET:
+            return "Ethernet";
+
+        case OC_WIFI:
+            return "WiFi";
+
+        case OC_LE:
+            return "BLE";
+
+        case OC_EDR:
+            return "BT";
+
+        default:
+            return "Incorrect connectivity";
+    }
 }
 
 std::string getQueryStrForGetPut(OCClientResponse * clientResponse){

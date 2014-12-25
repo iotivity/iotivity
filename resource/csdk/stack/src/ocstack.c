@@ -328,6 +328,9 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         static OCDevAddr address;
         memcpy((void*)&address.addr, &(sa), sizeof(sa));
         response.addr = &address;
+        #ifdef CA_INT
+        response.connType = endPoint->connectivityType;
+        #endif
         response.result = CAToOCStackResult(responseInfo->result);
         response.resJSONPayload = (unsigned char*)responseInfo->info.payload;
         response.numRcvdVendorSpecificHeaderOptions = 0;

@@ -133,6 +133,18 @@ typedef enum {
     OC_COAP_ID      = (1 << 1)
 } OCTransportProtocolID;
 
+#ifdef CA_INT
+/**
+ * Adaptor types
+ */
+typedef enum {
+    OC_ETHERNET = (1 << 0),
+    OC_WIFI = (1 << 1),
+    OC_EDR = (1 << 2),
+    OC_LE = (1 << 3)
+} OCConnectivityType;
+#endif
+
 /**
  * Declares Stack Results & Errors
  */
@@ -266,6 +278,10 @@ typedef struct {
 typedef struct {
     // Address of remote server
     OCDevAddr * addr;
+    #ifdef CA_INT
+    // Indicates adaptor type on which the response was received
+    OCConnectivityType connType;
+    #endif
     // the is the result of our stack, OCStackResult should contain coap/other error codes;
     OCStackResult result;
     // If associated with observe, this will represent the sequence of notifications from server.
@@ -332,15 +348,6 @@ typedef enum {
     OC_STACK_DELETE_TRANSACTION = 0,
     OC_STACK_KEEP_TRANSACTION
 } OCStackApplicationResult;
-
-#ifdef CA_INT
-typedef enum {
-    OC_ETHERNET = (1 << 0),
-    OC_WIFI = (1 << 1),
-    OC_EDR = (1 << 2),
-    OC_LE = (1 << 3)
-} OCConnectivityType;
-#endif
 
 //-----------------------------------------------------------------------------
 // Callback function definitions

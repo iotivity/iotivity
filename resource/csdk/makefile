@@ -125,9 +125,10 @@ INC_DIRS	+= -I$(CONNECTIVITY_INC)
 INC_DIRS	+= -I$(CONNECTIVITY_DIR)/api
 
 # TODO-CA Remove -fstack-protector-all before merging to master
-CC_FLAGS.debug		:= -O0 -g3 -Wall -fstack-protector-all -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
+# TODO-CA Remove CA_INT flag after CA merging is finalized
+CC_FLAGS.debug		:= -O0 -g3 -Wall -fstack-protector-all -c -fmessage-length=0 -pedantic -fpic -DTB_LOG -DCA_INT
 # TODO-CA Remove -fstack-protector-all before merging to master
-CC_FLAGS.release	:= -Os -Wall -fstack-protector-all -c -fmessage-length=0 -fpic
+CC_FLAGS.release	:= -Os -Wall -fstack-protector-all -c -fmessage-length=0 -fpic -DCA_INT
 
 CFLAGS		+= $(CC_FLAGS.$(BUILD)) $(INC_DIRS) $(CFLAGS_PLATFORM) $(INC_DIR_PLATFORM)
 LDLIBS		+= -lcoap

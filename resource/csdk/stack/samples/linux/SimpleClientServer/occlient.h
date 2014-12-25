@@ -70,6 +70,9 @@ int InitPresence();
 //----------------------------------------------------------------------------
 // Function prototype
 //----------------------------------------------------------------------------
+#ifdef CA_INT
+std::string getConnectivityType (OCConnectivityType connType);
+#endif
 
 /* call getResult in common.cpp to get the result in string format. */
 const char *getResult(OCStackResult result);
