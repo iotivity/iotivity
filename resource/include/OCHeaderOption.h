@@ -58,14 +58,10 @@ namespace OC
                 m_optionID(optionID),
                 m_optionData(optionData)
             {
-
-// TODO-CA Remove this (for some reason optionID is coming to be zero)
-#ifndef CA_INT
                 if(!(optionID >= MIN_HEADER_OPTIONID && optionID <= MAX_HEADER_OPTIONID))
                 {
                     throw OCException(OC::Exception::OPTION_ID_RANGE_INVALID);
                 }
-#endif
             }
 
             /**

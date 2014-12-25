@@ -343,23 +343,31 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         response.numRcvdVendorSpecificHeaderOptions = 0;
         if(responseInfo->info.numOptions > 0)
         {
+            int start = 0;
             //First option alwas with option ID COAP_OPTION_OBSERVE if it is availbale
             if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
             {
                 memcpy (&(response.sequenceNumber),
-                &(responseInfo->info.options[0].optionData), 4);
+                            &(responseInfo->info.options[0].optionData), 4);
+                response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
+                start = 1;
             }
             else
             {
-               memcpy (&(response.rcvdVendorSpecificHeaderOptions[0]),
-                 &(responseInfo->info.options[0]), sizeof(OCHeaderOption));
+               response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions;
             }
-            for (uint8_t i = 1; i < responseInfo->info.numOptions; i++)
+
+            if(response.numRcvdVendorSpecificHeaderOptions > MAX_HEADER_OPTIONS)
             {
-                memcpy (&(response.rcvdVendorSpecificHeaderOptions[i]),
+                OC_LOG(ERROR, TAG, PCF("#header options are more than MAX_HEADER_OPTIONS"));
+                return;
+            }
+
+            for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
+            {
+                memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
                  &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
             }
-            response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions;
         }
         result = cbNode->callBack(cbNode->context,
                 cbNode->handle, &response);
