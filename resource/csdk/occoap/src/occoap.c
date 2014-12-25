@@ -338,6 +338,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
             (OCDevAddr *) &(rcvdResponse->remote), sequenceNumber, NULL);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
+
     result = FormOCResponse(&response, NULL, maxAge, fullUri, rcvdUri,
             &rcvdToken, clientResponse, bufRes);
     VERIFY_SUCCESS(result, OC_STACK_OK);

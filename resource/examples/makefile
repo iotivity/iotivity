@@ -119,8 +119,6 @@ devicediscoveryserver: devicediscoveryserver.cpp
 devicediscoveryclient: devicediscoveryclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ devicediscoveryclient.cpp $(CXX_INC) $(CXX_LIBS)
 
-
-
 ocicuc_target:
 	cd ocicuc && $(MAKE) apps
 

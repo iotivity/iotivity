@@ -416,6 +416,7 @@ int InitPresence()
     return result;
 }
 #endif
+
 int InitGetRequestToUnavailableResource()
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
