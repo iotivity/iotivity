@@ -148,6 +148,7 @@ namespace OC
 
         try
         {
+
 #ifdef CA_INT
             ListenOCContainer container(clientWrapper, *clientResponse->addr,
                     clientResponse->connType, requestStream);
@@ -253,12 +254,10 @@ namespace OC
         OCStackResult result;
 
         OCCallbackData cbdata = {0};
-
         ClientCallbackContext::DeviceListenContext* context =
             new ClientCallbackContext::DeviceListenContext();
         context->callback = callback;
         context->clientWrapper = shared_from_this();
-
         cbdata.context =  static_cast<void*>(context);
         cbdata.cb = listenDeviceCallback;
         cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::DeviceListenContext*>(c);};

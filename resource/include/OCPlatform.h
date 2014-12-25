@@ -140,12 +140,12 @@ namespace OC
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     uint8_t connectivityType, FindDeviceCallback deviceInfoHandler,
                     QualityOfService QoS);
-#else
+#endif
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler);
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler, QualityOfService QoS);
-#endif
+
         /**
         * This API registers a resource with the server
         * NOTE: This API applies to server side only.

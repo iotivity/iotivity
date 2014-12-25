@@ -118,22 +118,6 @@ namespace OC
             return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, connectivityType,
                     deviceInfoHandler, QoS);
         }
-#else
-        OCStackResult getDeviceInfo(const std::string& host,
-                                                const std::string& deviceURI,
-                                                FindDeviceCallback deviceInfoHandler)
-        {
-            return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, deviceInfoHandler);
-        }
-
-        OCStackResult getDeviceInfo(const std::string& host,
-                                                const std::string& deviceURI,
-                                                FindDeviceCallback deviceInfoHandler,
-                                                QualityOfService QoS)
-        {
-            return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI,
-                    deviceInfoHandler, QoS);
-        }
 #endif
 
         OCStackResult findResource(const std::string& host,
@@ -176,6 +160,31 @@ namespace OC
 #else
             return OCPlatform_impl::Instance().constructResourceObject(host, uri, isObservable,
                                                 resourceTypes, interfaces);
+#endif
+        }
+
+        OCStackResult getDeviceInfo(const std::string& host,
+                                                const std::string& deviceURI,
+                                                FindDeviceCallback deviceInfoHandler)
+        {
+#ifdef CA_INT
+            return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, OC_WIFI | OC_ETHERNET,
+                                                            deviceInfoHandler);
+#else
+            return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, deviceInfoHandler);
+#endif
+        }
+
+        OCStackResult getDeviceInfo(const std::string& host,
+                                                const std::string& deviceURI,
+                                                FindDeviceCallback deviceInfoHandler,
+                                                QualityOfService QoS)
+        {
+#ifdef CA_INT
+            return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, OC_WIFI | OC_ETHERNET,
+                                                            deviceInfoHandler, QoS);
+#else
+            return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, deviceInfoHandler, QoS);
 #endif
         }
 
