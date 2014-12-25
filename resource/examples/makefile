@@ -26,9 +26,10 @@ CXX	      := g++
 #CXX	  := clang
 OUT_DIR	  := $(BUILD)
 
-CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
+#TODO-CA Remove the CA Flag later
+CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread -DCA_INT
 
-CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
+CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread -DCA_INT
 
 CXX_INC	  := -I../include/
 CXX_INC   += -I../oc_logger/include
@@ -117,8 +118,8 @@ devicediscoveryserver: devicediscoveryserver.cpp
 
 devicediscoveryclient: devicediscoveryclient.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ devicediscoveryclient.cpp $(CXX_INC) $(CXX_LIBS)
-	
-	
+
+
 
 ocicuc_target:
 	cd ocicuc && $(MAKE) apps
