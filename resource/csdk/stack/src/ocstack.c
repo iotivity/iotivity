@@ -238,6 +238,17 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
     return ret;
 }
 
+// update response.addr appropriately from endPoint.addressInfo
+void UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpoint_t* endPoint)
+{
+    struct sockaddr_in sa;
+    inet_pton(AF_INET, endPoint->addressInfo.IP.ipAddress, &(sa.sin_addr));
+    sa.sin_port = htons(endPoint->addressInfo.IP.port);
+    static OCDevAddr address;
+    memcpy((void*)&address.addr, &(sa), sizeof(sa));
+    response->addr = &address;
+}
+
 void HandlePresenceResponse(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
@@ -246,6 +257,8 @@ void HandlePresenceResponse(const CARemoteEndpoint_t* endPoint, const CAResponse
     char * tok = NULL;
     char * bufRes = responseInfo->info.payload;
     OCClientResponse *response = (OCClientResponse *) OCMalloc(sizeof(OCClientResponse));
+
+    UpdateResponseAddr(response, endPoint);
 
     if(!bufRes)
     {
@@ -321,16 +334,10 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
     {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
         OCClientResponse response;
-        struct sockaddr_in sa;
 
-        inet_pton(AF_INET, endPoint->addressInfo.IP.ipAddress, &(sa.sin_addr));
-        sa.sin_port = htons(endPoint->addressInfo.IP.port);
-        static OCDevAddr address;
-        memcpy((void*)&address.addr, &(sa), sizeof(sa));
-        response.addr = &address;
-        #ifdef CA_INT
+        UpdateResponseAddr(&response, endPoint);
         response.connType = endPoint->connectivityType;
-        #endif
+
         response.result = CAToOCStackResult(responseInfo->result);
         response.resJSONPayload = (unsigned char*)responseInfo->info.payload;
         response.numRcvdVendorSpecificHeaderOptions = 0;
