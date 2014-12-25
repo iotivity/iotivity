@@ -148,9 +148,13 @@ namespace OC
 
         try
         {
+#ifdef CA_INT
+            ListenOCContainer container(clientWrapper, *clientResponse->addr,
+                    clientResponse->connType, requestStream);
+#else
             ListenOCContainer container(clientWrapper, *clientResponse->addr,
                     requestStream);
-
+#endif
             // loop to ensure valid construction of all resources
             for(auto resource : container.Resources())
             {

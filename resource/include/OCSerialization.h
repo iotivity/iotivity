@@ -186,9 +186,15 @@ namespace OC
                 ar(resources);
             }
         public:
+#ifdef CA_INT
+            ListenOCContainer(std::weak_ptr<IClientWrapper> cw, const OCDevAddr& address,
+                    uint8_t connectivityType, std::stringstream& json):
+                m_clientWrapper(cw), m_address(address), m_connectivityType(connectivityType)
+#else
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw, const OCDevAddr& address,
                     std::stringstream& json):
                 m_clientWrapper(cw), m_address(address)
+#endif
             {
                 LoadFromJson(json);
             }
@@ -269,12 +275,10 @@ namespace OC
                         if(res.loaded())
                         {
 #ifdef CA_INT
-                            //CA_TODO: To get the connectivity type correctly.
-                            uint8_t connectivityType;
                             m_resources.push_back(std::shared_ptr<OCResource>(
                                 new OCResource(m_clientWrapper,
                                     ConvertOCAddrToString(res.secureType(),res.port()),
-                                    res.m_uri, res.m_serverId, connectivityType, res.observable(),
+                                    res.m_uri, res.m_serverId, m_connectivityType, res.observable(),
                                     res.resourceTypes(), res.interfaces())));
 #else
                             m_resources.push_back(std::shared_ptr<OCResource>(
@@ -296,5 +300,6 @@ namespace OC
             std::vector<std::shared_ptr<OC::OCResource>> m_resources;
             std::weak_ptr<IClientWrapper> m_clientWrapper;
             OCDevAddr m_address;
+            uint8_t m_connectivityType;
     };
 }
