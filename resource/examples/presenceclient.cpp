@@ -330,7 +330,7 @@ int main(int argc, char* argv[]) {
             // Find all resources
 #ifdef CA_INT
             OCConnectivityType connectivityType = OC_WIFI;
-            result = OCPlatform::findResource("", "coap://224.0.1.187/oc/core",
+            result = OCPlatform::findResource("", "coap://224.0.1.187:5298/oc/core",
                      connectivityType, &foundResource);
 #else
             result = OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
