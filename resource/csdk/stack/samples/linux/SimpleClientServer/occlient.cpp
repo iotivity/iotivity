@@ -104,9 +104,15 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
+#ifdef CA_INT
+    ret = OCDoResource(&handle, method, query.str().c_str(), 0,
+                       (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
+                       (OC_WIFI), qos, &cbData, options, numOptions);
+#else
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
                        (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
                        qos, &cbData, options, numOptions);
+#endif
 
     if (ret != OC_STACK_OK)
     {
@@ -289,10 +295,17 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
         OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
 
+#ifdef CA_INT
         OC_LOG_V(INFO, TAG,
                 "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
                 remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+#else
+        OC_LOG_V(INFO, TAG,
+                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
+                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
+                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+#endif
 
         parseClientResponse(clientResponse);
 
@@ -568,7 +581,12 @@ int InitDeviceDiscovery()
                 (strlen(TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY) + 1));
     }
 
+#ifdef CA_INT
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI | OC_LE),
+                        OC_LOW_QOS, &cbData, NULL, 0);
+#else
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+#endif
 
     if (ret != OC_STACK_OK)
     {
@@ -601,7 +619,12 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
+#ifdef CA_INT
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI | OC_LE),
+                        OC_LOW_QOS, &cbData, NULL, 0);
+#else
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+#endif
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");

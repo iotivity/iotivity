@@ -85,9 +85,16 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
+#ifdef CA_INT
+    // TODO-CA: The adapter type is set to WiFi but should be configurable - add as API param
+    ret = OCDoResource(&handle, method, query.str().c_str(), 0,
+            (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
+            OC_WIFI, qos, &cbData, options, numOptions);
+#else
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
             (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
             qos, &cbData, options, numOptions);
+#endif
 
     if (ret != OC_STACK_OK)
     {
@@ -280,7 +287,13 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
+#ifdef CA_INT
+    // TODO-CA: The adapter type is set to all but should be configurable - add as API param
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI | OC_LE),
+                        OC_LOW_QOS, &cbData, NULL, 0);
+#else
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+#endif
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
