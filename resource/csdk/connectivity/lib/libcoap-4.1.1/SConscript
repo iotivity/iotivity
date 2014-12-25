@@ -55,31 +55,23 @@ libcoap_src = [
 	'encode.c',
 	'uri.c',
 	'coap_list.c',
-#	'resource.c',
+	'resource.c',
 	'hashkey.c',
     'str.c',
 	'option.c',
 	'async.c',
 	'subscribe.c',
 	'block.c',
-	'../logger/src/logger.c',
-	'../ocrandom/src/ocrandom.c',
-	'../ocmalloc/src/ocmalloc.c',
-	'../../oc_logger/c/oc_logger.c',
-	'../../oc_logger/c/oc_console_logger.c'
+#	'../logger/src/logger.c',
+#	'../ocrandom/src/ocrandom.c',
+#	'../ocmalloc/src/ocmalloc.c',
+#	'../../oc_logger/c/oc_logger.c',
+#	'../../oc_logger/c/oc_console_logger.c'
 	]
 
 if target_os == 'arduino':
-	if env.get('NET') == 'Wifi':
-		libcoap_src.append(['../ocsocket/src/ocsocket_arduino_wifi.cpp'])
-	else:
-		libcoap_src.append(['../ocsocket/src/ocsocket_arduino.cpp'])
+	libcoap = libcoap_env.StaticLibrary('libcoap', libcoap_src, OBJPREFIX='libcoap_')
 else:
-	libcoap_src.append(['../ocsocket/src/ocsocket.c'])
+	libcoap = libcoap_env.SharedLibrary('libcoap', libcoap_src, OBJPREFIX='libcoap_')
 
-if target_os == 'arduino':
-	libcoap = libcoap_env.StaticLibrary('libcoap_csdk', libcoap_src, OBJPREFIX='libcoap_')
-else:
-	libcoap = libcoap_env.SharedLibrary('libcoap_csdk', libcoap_src, OBJPREFIX='libcoap_')
-
-libcoap_env.InstallTarget(libcoap, 'libcoap_csdk')
+libcoap_env.InstallTarget(libcoap, 'libcoap')

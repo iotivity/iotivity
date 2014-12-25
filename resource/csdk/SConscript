@@ -29,7 +29,9 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'occoap/include',
 		'stack/include',
 		'stack/include/internal',
-		'../oc_logger/include'
+		'../oc_logger/include',
+		'connectivity/inc',
+		'connectivity/api',
 		])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
@@ -55,6 +57,8 @@ if target_os in ['darwin', 'ios']:
 
 if not env.get('RELEASE'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+liboctbstack_env.AppendUnique(CPPDEFINES = ['CA_INT'])
 
 ######################################################################
 # Source files and Targets

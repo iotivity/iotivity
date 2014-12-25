@@ -20,7 +20,9 @@ ocicuc_env.AppendUnique(CPPPATH = [
 		])
 
 ocicuc_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-ocicuc_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
+ocicuc_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap_csdk', 'coap', 'oc_logger', 'connectivity_abstraction'])
+
+ocicuc_env.ParseConfig('pkg-config --libs glib-2.0');
 
 target_os = env.get('TARGET_OS')
 if target_os not in ['windows', 'winrt']:

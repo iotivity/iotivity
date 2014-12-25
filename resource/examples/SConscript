@@ -31,7 +31,9 @@ if target_os not in ['windows', 'winrt']:
 		examples_env.AppendUnique(LIBS = ['-lpthread'])
 
 examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
+examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'coap_csdk', 'oc_logger', 'connectivity_abstraction'])
+
+examples_env.ParseConfig('pkg-config --libs glib-2.0');
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -70,5 +72,5 @@ Alias("examples", [simpleserver, simpleserverHQ, simpleclient, simpleclientHQ,
 env.AppendTarget('examples')
 
 #ios doesn't allow run application from terminal, so won't build these examples
-if target_os != 'ios':
-	SConscript('ocicuc/SConscript')
+#if target_os != 'ios':
+#	SConscript('ocicuc/SConscript')

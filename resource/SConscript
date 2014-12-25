@@ -8,7 +8,11 @@ Import('env')
 target_os = env.get('TARGET_OS')
 
 # Build libcoap
+SConscript('csdk/connectivity/lib/libcoap-4.1.1/SConscript')
 SConscript('csdk/libcoap/SConscript')
+
+# Build connectivity
+SConscript('csdk/connectivity/SConscript')
 
 # Build liboctbstack
 SConscript('csdk/SConscript')
@@ -22,5 +26,7 @@ if target_os != 'arduino':
 
 	# Build examples
 	SConscript('examples/SConscript')
+
+	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
 else:
 	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')
