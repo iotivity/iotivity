@@ -198,7 +198,7 @@ int InitDiscovery()
     cbData.cd = NULL;
 #ifdef CA_INT
     // TODO-CA: The adapter type is set to all but should be configurable - add as API param
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI | OC_LE),
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI),
                         OC_LOW_QOS, &cbData, NULL, 0);
 #else
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);

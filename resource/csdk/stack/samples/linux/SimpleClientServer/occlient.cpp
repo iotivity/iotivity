@@ -357,8 +357,11 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 break;
         }
     }
-
+#ifdef CA_INT
+    return OC_STACK_KEEP_TRANSACTION;
+#else
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
+#endif
 
 }
 
@@ -579,7 +582,7 @@ int InitDeviceDiscovery()
     }
 
 #ifdef CA_INT
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI | OC_LE),
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI),
                         OC_LOW_QOS, &cbData, NULL, 0);
 #else
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
@@ -617,7 +620,7 @@ int InitDiscovery()
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 #ifdef CA_INT
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI | OC_LE),
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI),
                         OC_LOW_QOS, &cbData, NULL, 0);
 #else
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
