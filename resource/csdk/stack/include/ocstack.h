@@ -333,6 +333,15 @@ typedef enum {
     OC_STACK_KEEP_TRANSACTION
 } OCStackApplicationResult;
 
+#ifdef CA_INT
+typedef enum {
+    OC_ETHERNET = (1 << 0),
+    OC_WIFI = (1 << 1),
+    OC_EDR = (1 << 2),
+    OC_LE = (1 << 3)
+} OCConnectivityType;
+#endif
+
 //-----------------------------------------------------------------------------
 // Callback function definitions
 //-----------------------------------------------------------------------------
@@ -447,9 +456,16 @@ OCStackResult OCProcess();
  *     OC_STACK_INVALID_QUERY    - number of resource types specified for filtering presence
  *                                 notifications exceeds @ref MAX_PRESENCE_FILTERS.
  */
-OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *requiredUri, const char  *referenceUri,
-                const char *request, OCQualityOfService qos, OCCallbackData *cbData, OCHeaderOption * options,
+#ifdef CA_INT
+OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *requiredUri,
+                const char  *referenceUri, const char *request, uint8_t conType,
+                OCQualityOfService qos, OCCallbackData *cbData, OCHeaderOption * options,
                 uint8_t numOptions);
+#else
+OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *requiredUri,
+                const char  *referenceUri, const char *request, OCQualityOfService qos,
+                OCCallbackData *cbData, OCHeaderOption * options, uint8_t numOptions);
+#endif
 
 /**
  * Cancel a request associated with a specific @ref OCDoResource invocation.

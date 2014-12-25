@@ -258,11 +258,21 @@ namespace OC
                     {
                         if(res.loaded())
                         {
+#ifdef CA_INT
+                            //CA_TODO: To get the connectivity type correctly.
+                            uint8_t connectivityType;
+                            m_resources.push_back(std::shared_ptr<OCResource>(
+                                new OCResource(m_clientWrapper,
+                                    ConvertOCAddrToString(res.secureType(),res.port()),
+                                    res.m_uri, connectivityType, res.observable(), res.resourceTypes(),
+                                    res.interfaces())));
+#else
                             m_resources.push_back(std::shared_ptr<OCResource>(
                                 new OCResource(m_clientWrapper,
                                     ConvertOCAddrToString(res.secureType(),res.port()),
                                     res.m_uri, res.observable(), res.resourceTypes(),
                                     res.interfaces())));
+#endif
                         }
 
                     }

@@ -371,7 +371,13 @@ int main(int argc, char* argv[]) {
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
+                    connectivityType, &foundResource);
+#else
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+#endif
         std::cout<< "Finding Resource... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

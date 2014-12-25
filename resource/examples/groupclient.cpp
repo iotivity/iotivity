@@ -133,7 +133,13 @@ int main()
         OCPlatform::Configure(config);
 
         string resourceTypeName = "a.collection";
+#ifdef CA_INT
+        OCConnectivityType connectivityType = OC_WIFI;
+        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=a.collection",
+                                 connectivityType, &foundResource);
+#else
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=a.collection", &foundResource);
+#endif
 
         isReady = false;
 

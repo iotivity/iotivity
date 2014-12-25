@@ -274,6 +274,14 @@ namespace OC
         */
         std::string uri() const;
 
+#ifdef CA_INT
+        /**
+        * Function to get the connectivity type of this resource
+        * @return uint8_t connectivity type
+        */
+        uint8_t connectivityType() const;
+#endif
+
         /**
         * Function to provide ability to check if this resource is observable or not
         * @return bool true indicates resource is observable; false indicates resource is
@@ -303,6 +311,9 @@ namespace OC
         std::weak_ptr<IClientWrapper> m_clientWrapper;
         std::string m_uri;
         std::string m_host;
+#ifdef CA_INT
+        uint8_t m_connectivityType;
+#endif
         bool m_isObservable;
         bool m_isCollection;
         std::vector<std::string> m_resourceTypes;
@@ -312,9 +323,17 @@ namespace OC
         HeaderOptions m_headerOptions;
 
     private:
+#ifdef CA_INT
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-            const std::string& uri, bool observable, const std::vector<std::string>& resourceTypes,
+            const std::string& uri, uint8_t m_connectivityType, bool observable,
+            const std::vector<std::string>& resourceTypes,
             const std::vector<std::string>& interfaces);
+#else
+        OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
+            const std::string& uri, bool observable,
+            const std::vector<std::string>& resourceTypes,
+            const std::vector<std::string>& interfaces);
+#endif
     };
 
 } // namespace OC

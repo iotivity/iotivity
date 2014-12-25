@@ -1092,11 +1092,17 @@ OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
  *     OC_STACK_INVALID_METHOD   - invalid resource method
  *     OC_STACK_INVALID_URI      - invalid required or reference URI
  */
-
+#ifdef CA_INT
+OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
+                           const char *referenceUri, const char *request, uint8_t conType,
+                           OCQualityOfService qos, OCCallbackData *cbData,
+                           OCHeaderOption * options, uint8_t numOptions)
+#else
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
                            const char *referenceUri, const char *request,
                            OCQualityOfService qos, OCCallbackData *cbData,
                            OCHeaderOption * options, uint8_t numOptions)
+#endif
 {
     OCStackResult result = OC_STACK_ERROR;
     OCCoAPToken token;

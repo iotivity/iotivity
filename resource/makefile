@@ -37,8 +37,9 @@ CEREAL_DIR:= $(DEPEND_DIR)/cereal
 OUT_DIR	  := $(ROOT_DIR)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
-CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0
-CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3
+#TODO-CA Need to remove flag later
+CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0 -DCA_INT
+CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3 -DCA_INT
 
 CXX_INC	  := -I./include/
 CXX_INC	  += -I./oc_logger/include
