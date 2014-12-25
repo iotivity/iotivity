@@ -38,13 +38,13 @@ if target_os == 'android':
 if target_os in ['darwin', 'ios']:
 	samples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
-samples_env.AppendUnique(CPPDEFINES = ['CA_INT'])
+samples_env.AppendUnique(CPPDEFINES = ['CA_INT', 'TB_LOG'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-ocserver         = samples_env.Program('ocserver', 'ocserver.cpp')
-occlient         = samples_env.Program('occlient', 'occlient.cpp')
+ocserver         = samples_env.Program('ocserver', ['ocserver.cpp', 'common.cpp'])
+occlient         = samples_env.Program('occlient', ['occlient.cpp', 'common.cpp'])
 #ocserverslow     = samples_env.Program('ocserverslow', 'ocserverslow.cpp')
 #occlientslow     = samples_env.Program('occlientslow', 'occlientslow.cpp')
 #ocservercoll     = samples_env.Program('ocservercoll', 'ocservercoll.cpp')
