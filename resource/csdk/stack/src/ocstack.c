@@ -462,8 +462,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // TODO-CA: For CA integration currently copying CAToken to OCCoapToken:
     // Need to remove OCCoapToken
     memcpy (&(serverRequest.requestToken.token), requestInfo->info.token,
-            strlen(requestInfo->info.token));
-    serverRequest.requestToken.tokenLength = strlen(requestInfo->info.token);
+            MAX_TOKEN_LENGTH);
+    serverRequest.requestToken.tokenLength = MAX_TOKEN_LENGTH;
 
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {

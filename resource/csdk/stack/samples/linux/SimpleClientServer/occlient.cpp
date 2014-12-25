@@ -582,7 +582,7 @@ int InitDeviceDiscovery()
     }
 
 #ifdef CA_INT
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI),
+    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_WIFI),
                         OC_LOW_QOS, &cbData, NULL, 0);
 #else
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
