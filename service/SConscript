@@ -14,7 +14,9 @@ if target_os != 'arduino':
 	SConscript('soft-sensor-manager/SConscript')
 
 	# Build protocol plugin project
-	SConscript('protocol-plugin/SConscript')
+	# protocol-plugin use 'inotify', this feature isn't support by MAC OSX
+	if target_os not in ['darwin', 'ios']:
+		SConscript('protocol-plugin/SConscript')
 
 	# Build notification manager project
 #	SConscript('notification-manager/SConscript')

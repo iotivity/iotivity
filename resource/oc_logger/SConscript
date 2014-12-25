@@ -16,7 +16,6 @@ liboc_logger_env.PrependUnique(CPPPATH = ['include'])
 target_os = env.get('TARGET_OS')
 if target_os == 'android':
 	liboc_logger_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	liboc_logger_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 	liboc_logger_env.AppendUnique(LIBS = ['gnustl_static', 'log'])
 
 if target_os not in ['arduino', 'windows', 'winrt']:

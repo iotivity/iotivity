@@ -18,7 +18,6 @@ examples_env.AppendUnique(LIBS = ['oc_logger', 'stdc++'])
 target_os = env.get('TARGET_OS')
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	examples_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 	examples_env.AppendUnique(LIBS = ['gnustl_static'])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
