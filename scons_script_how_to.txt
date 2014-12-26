@@ -1,6 +1,6 @@
-== How to write iotivity build script ==
+== How to write IoTivity build script ==
 
-Iotivity projects are built with Scons. Scons is a cross-platform build tool,
+IoTivity projects are built with Scons. Scons is a cross-platform build tool,
 it's quite similar to 'make'. 'SConstruct' is the entrance of scons build, it's
 equivalent to 'Makefile' to 'make'.
 
@@ -80,13 +80,13 @@ cc -o H hello.o
 
 In above example, 'target_os' is used. How to get it?
 
-User can build iotivity project on linux / windows / MAC OSX for various
+User can build IoTivity project on Linux / Windows / MAC OSX for various
 targets(Linux, Tizen, Android, Arduino, Windows, MAC OSX, IOS ...). Most
-platform specific configures have been done in the common scripts whitch are in
+platform specific configures have been done in the common scripts which are in
 build_common. The common scripts prepare an environment named 'env' with
 target platform specific configuration.
 
-When write iotivity project build script, you can get this environment as
+When write IoTivity project build script, you can get this environment as
 following:
 	Import('env')
 
@@ -101,25 +101,27 @@ and update its keys.
 The 'env' environment contains platform specific configuration, besides, there is
 some common information. You can get the information with following line:
 	env.get('XXX')
+or
+	env['XXX']
 
-XXX is the information name, below are the extra information added by iotivity
+XXX is the information name, below are the extra information added by IoTivity
 common scrirpts:
-BUILD_DIR: the path of the build directory
+BUILD_DIR: the path of the build directory, all output are in this directory
 SRC_DIR: the path of the top directory of the source code
 OIC_UTILS: the path of oic-utilities project
-RELEASE: boolean. True - release build, False - debug build
+RELEASE: build type, boolean. True - release build, False - debug build
 TARGET_OS: the name of the target OS. The possible value depends on the host
 	platform. Bellow is the list of host and possible target OS. (darwin means
 	MAC OSX)
-		linux: linux / android / arduino
-(the line means on linux, you can build the project for linux/android/arduino)
+		linux: linux / android / arduino / tizen
+(the line means on Linux, you can build the project for Linux/Android/Arduino/Tizen)
 		windows: windows / winrt / android / arduino
 		darwin: darwin / ios / android / arduino
 
-TARGET_ARCH: the target CPU arch. Its possible value depend on the target OS
+TARGET_ARCH: the target CPU arch. Its possible value depend on the target OS.
 	Bellow list the target OS and allowed CPU architecture.
 		linux: x86 / x86_64 / arm / arm64
-(above line means if the target OS is linux, the CPU arch can be x86/x86_64/arm/arm64)
+(above line means if the target OS is Linux, the CPU arch can be x86/x86_64/arm/arm64)
 		android: x86 / x86_64 / armeabi / armeabi-v7a / armeabi-v7a-hard / arm64-v8a
 		windows: x86 / amd64 / arm
 		winrt: arm
@@ -138,11 +140,11 @@ InstallTarget(files, name): it takes the same action as AppendTarget, besides,
 	it installs the 'files' to BUILD_DIR.
 
 Following functions are only for Arduino:
-ImportLib(lib): Arduino IDE includes many libraries. To control the binary size,
-by default, no library is used. If your project use some libraries, you can
-import the lib with this function. 'lib' is the name of the lib to import.
-The include path will be auto added to the environment and the library will be
-built and linked into the final binary.
+ImportLib(lib): Arduino IDE includes many libraries. By default, no library is
+compiled. If your project use some libraries, you can import the library by
+this function. 'lib' is the name of the library to import. The 'include' path
+will be auto added to the environment and the library will be built and linked
+into the final binary.
 
 CreateBin('bin', src): For Arduino, after build the program, it's required to
 be converted into specific format (e.g .hex). This function will genearate the
@@ -150,7 +152,8 @@ required .hex (and .eep if target arch is avr) file.
 
 UploadHelp(): For different board, the upload command line is different, this
 function print the recommended upload command line. You can see the recommended
-upload command line in the help information.
+upload command line in the help information(the output of command "scons
+[options] -h")
 
 ==== Scripts Hierarchy ====
 
@@ -191,8 +194,8 @@ SConscript('sub_prj_1n/SConscript')
 The path is relevant to 'prj_1/SConscript'. You can also use the full path
 build_dir + 'prj_1/sub_prj_1x/SConscript', but it's not recommended.
 
-Above just to show a usual way to manage subsidiary scripts. You don't need
-restrictly follow it.
+Above just to show a recommended way to manage subsidiary scripts. You don't
+need restrictly follow it.
 
 ==== The content of a typical script ====
 
@@ -219,8 +222,10 @@ Below is an example:
 	ts = new_env.Program('progam_name', [source_list])
 
 	# Install the target (optional)
+	# If it's an important library or daemon to be published
 	new_env.InstallTarget(ts, 'target_name')
 or
+	# If is't examples or test program or others will not be published
 	new_env.Alias('target_name', ts)
 	new_env.AppendTarget('target_name')
 
