@@ -45,8 +45,7 @@ elif platform.system().lower() == 'darwin':
 
 # Android build system default cofig
 env.AppendUnique(CPPDEFINES = ['ANDROID'])
-env.AppendUnique(CFLAGS = ['-Wa,--noexecstack'])
-env.AppendUnique(CXXFLAGS = ['-Wa,--noexecstack', '-fstack-protector'])
+env.AppendUnique(SHCFLAGS = ['-Wa,--noexecstack'])
 env.AppendUnique(LINKFLAGS = ['-Wl,--gc-sections', '-Wl,-z,nocopyreloc'])
 
 ######################################################################
@@ -80,19 +79,11 @@ if ANDROID_HOME is None or not os.path.exists(ANDROID_HOME):
 
 target_arch = env.get('TARGET_ARCH')
 
-# Android ndk early version doesn't support C++11. Detect the toolchain
-# and platform version to make sure the newest version is used.
-
-# Detect toolchain version
-for tc_ver in ['4.9', '4.8', '4.7', '']:
-	if os.path.exists(android_ndk + '/sources/cxx-stl/gnu-libstdc++/' + tc_ver):
+# Android ndk early version doesn't support C++11. Detect the toolchain version
+# to make sure proper toolchain is used
+for tc_ver in ['4.7', '4.8', '4.9', '']:
+	if os.path.exists(android_ndk + '/toolchains/x86-' + tc_ver):
 		break
-
-# Detect platform version.
-platform_ver = ''
-for pf_ver in range(0, 100): # 100 should be big enough :)
-	if os.path.exists(android_ndk + '/platforms/android-%d' % pf_ver):
-		platform_ver = "%d" % pf_ver
 
 cmd = [ndk_build_cmd]
 cmd.append('APP_ABI=' + target_arch)
@@ -111,8 +102,6 @@ else:
 *******************************************************************************
 '''
 
-if platform_ver != '':
-	cmd.append('APP_PLATFORM=android-' + platform_ver)
 cmd.append('-n')
 
 p = subprocess.Popen(cmd, stdout = subprocess.PIPE)
@@ -138,12 +127,6 @@ for flags in p.stdout.readlines():
 		sysroot = flags[8:].strip()
 		env.AppendUnique(LINKFLAGS = ['--sysroot=' + sysroot])
 		env.AppendUnique(LIBPATH = [sysroot + '/usr/lib'])
-		# To fix android NDK issue
-		# Some functions, e.g. rand, srand. strtof ... are static in static inline
-		# prior to android-L. so libc.so before android-L doesn't have them. If build
-		# build on android-L and the function(s) is used, should link libc.a
-		if platform_ver == '' or int(platform_ver) > 20:
-			env.AppendUnique(LIBS = File(sysroot + '/usr/lib/libc.a'))
 
 	elif cmp(flags[0:8], 'LDFLAGS=') == 0:
 		env.AppendUnique(LINKFLAGS = Split(flags[8:]))
@@ -152,6 +135,11 @@ for flags in p.stdout.readlines():
 		ver = flags[7:].strip()
 		env.AppendUnique(LIBPATH = [android_ndk + '/sources/cxx-stl/gnu-libstdc++/'
 				+ ver + '/libs/' + target_arch])
+
+	elif cmp(flags[0:9], 'PLATFORM=') == 0:  # get target platform: android-x
+		platform_ver = flags[9+8:].strip()
+		if not platform_ver.isdigit():
+			platform_ver = ''
 
 ######################################################################
 # Set release/debug flags
@@ -162,3 +150,16 @@ if env.get('RELEASE'):
 	env.AppendUnique(LINKFLAGS = ['-s'])
 else:
 	env.AppendUnique(CCFLAGS = ['-g'])
+
+# From android-5 (API > 20), all application must be built with flags '-fPIE' '-pie'.
+# Due to the limitation of Scons, it's required to added it into the command line
+# directly (otherwise, it will also be added when build share library)
+env.Replace(CCCOM = '$CC -o $TARGET -c $CFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SOURCES')
+env.Replace(CXXCOM = '$CXX -o $TARGET -c $CXXFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SOURCES')
+env.Replace(LINKCOM = '$LINK -o $TARGET -pie $LINKFLAGS $__RPATH $SOURCES $_LIBDIRFLAGS $_LIBFLAGS')
+
+# Fix android-ndk compatibility issue, make applications build on new NDK can run on old platform
+if platform_ver == '' or int(platform_ver) > 20:
+	SConscript('compatibility/c_compat.scons')
+
+SConscript('compatibility/cpp11_compat.scons')
