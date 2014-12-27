@@ -30,6 +30,10 @@
 #include "DiscomfortIndexSensor.h"
 #include "SysTimer.h"
 
+#ifdef __ANDROID__
+#include "android_cpp11_compat.h"
+#endif
+
 using namespace DiscomfortIndexSensorName;
 
 #define SENSOR_NAME "DiscomfortIndexSensor"
