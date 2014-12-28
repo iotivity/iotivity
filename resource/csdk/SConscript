@@ -74,8 +74,11 @@ liboctbstack_src = [
     OCTBSTACK_SRC + 'oicgroup.c'
 	]
 if target_os == 'arduino':
-	liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
+	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
+	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')
 else:
-	liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
+	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
+	shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
+	liboctbstack_env.InstallTarget([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
 
-liboctbstack_env.InstallTarget(liboctbstack, 'liboctbstack')
+

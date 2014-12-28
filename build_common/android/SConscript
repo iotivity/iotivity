@@ -81,7 +81,7 @@ target_arch = env.get('TARGET_ARCH')
 
 # Android ndk early version doesn't support C++11. Detect the toolchain version
 # to make sure proper toolchain is used
-for tc_ver in ['4.7', '4.8', '4.9', '']:
+for tc_ver in ['4.9', '4.8', '4.7', '']:
 	if os.path.exists(android_ndk + '/toolchains/x86-' + tc_ver):
 		break
 
@@ -141,6 +141,13 @@ for flags in p.stdout.readlines():
 		if not platform_ver.isdigit():
 			platform_ver = ''
 
+# Add external libraries including boost
+env.AppendUnique(CPPPATH = [env.get('SRC_DIR') + '/out/android/include' ])
+if target_arch == 'x86':
+	env.AppendUnique(LIBPATH = [env.get('SRC_DIR') + '/out/android/lib/x86'])
+else:
+	env.AppendUnique(LIBPATH = [env.get('SRC_DIR') + '/out/android/lib/arm-linux-androideabi'])
+
 ######################################################################
 # Set release/debug flags
 ######################################################################
@@ -159,7 +166,7 @@ env.Replace(CXXCOM = '$CXX -o $TARGET -c $CXXFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SO
 env.Replace(LINKCOM = '$LINK -o $TARGET -pie $LINKFLAGS $__RPATH $SOURCES $_LIBDIRFLAGS $_LIBFLAGS')
 
 # Fix android-ndk compatibility issue, make applications build on new NDK can run on old platform
-if platform_ver == '' or int(platform_ver) > 20:
-	SConscript('compatibility/c_compat.scons')
-
-SConscript('compatibility/cpp11_compat.scons')
+#if platform_ver == '' or int(platform_ver) > 20:
+#	SConscript('compatibility/c_compat.scons')
+#
+#SConscript('compatibility/cpp11_compat.scons')

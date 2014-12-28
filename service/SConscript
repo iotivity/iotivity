@@ -15,7 +15,7 @@ if target_os != 'arduino':
 
 	# Build protocol plugin project
 	# protocol-plugin use 'inotify', this feature isn't support by MAC OSX
-	if target_os not in ['darwin', 'ios']:
+	if target_os not in ['darwin', 'ios', 'android']:
 		SConscript('protocol-plugin/SConscript')
 
 	# Build notification manager project

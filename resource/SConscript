@@ -13,6 +13,9 @@ SConscript('csdk/libcoap/SConscript')
 # Build liboctbstack
 SConscript('csdk/SConscript')
 
+if target_os == 'android':
+	SConscript('android/SConscript')
+
 if target_os != 'arduino':
 	# Build liboc_logger
 	SConscript('oc_logger/SConscript')

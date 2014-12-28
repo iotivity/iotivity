@@ -26,7 +26,7 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
 	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_static'])
+	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_static', 'compatibility'])
 
 	if not env.get('RELEASE'):
 		soft_sensor_manager_env.AppendUnique(LIBS = ['log'])

@@ -25,11 +25,11 @@ if target_os not in ['arduino', 'windows', 'winrt']:
 ######################################################################
 # Source files and Targets
 ######################################################################
-liboc_logger_core = liboc_logger_env.SharedLibrary('oc_logger_core', 'c/oc_logger.c',  OBJPREFIX='core_')
-liboc_logger = liboc_logger_env.SharedLibrary('oc_logger',
-		['c/oc_logger.c', 'c/oc_console_logger.c', 'cpp/oc_ostream_logger.cpp'])
+shared_liboc_logger_core = liboc_logger_env.SharedLibrary('oc_logger_core', 'c/oc_logger.c',  OBJPREFIX='core_')
+shared_liboc_logger      = liboc_logger_env.SharedLibrary('oc_logger', ['c/oc_logger.c', 'c/oc_console_logger.c', 'cpp/oc_ostream_logger.cpp'])
+static_liboc_logger      = liboc_logger_env.StaticLibrary('oc_logger', ['c/oc_logger.c', 'c/oc_console_logger.c', 'cpp/oc_ostream_logger.cpp'])
 
-liboc_logger_env.InstallTarget([liboc_logger_core, liboc_logger], 'liboc_logger')
+liboc_logger_env.InstallTarget([shared_liboc_logger_core, shared_liboc_logger, static_liboc_logger ], 'liboc_logger')
 
 if target_os not in ['ios']:
 	SConscript('examples/SConscript')
