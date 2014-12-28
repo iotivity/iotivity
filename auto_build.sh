@@ -25,6 +25,10 @@ function build()
 
 	if [ "$BUILD_FOR_ANDROID" = "true" ]
 		then
+		echo "*********** Build Boost for android ***********"
+		pushd extlibs
+		.//buildDependencies.sh
+		popd
 
 		echo "*********** Build for android x86 *************"
 		scons TARGET_OS=android TARGET_ARCH=x86 ANDROID_NDK=$1 RELEASE=$3
