@@ -1,0 +1,81 @@
+#For Yocto builds, set OS=yocto as a command-line argument to scons once
+#the Yocto toolchain is installed and configured.
+
+#For Linux builds, set the following two variables:
+#Set OIC_RESOURCE_PATH to the root of oic-resource on Ubuntu.
+
+OIC_RESOURCE_PATH = '../..'
+
+#Set OIC_LIBS_PATH to path on Ubuntu that contains liboc.so, liboctbstack.so,
+#liboc_logger.so and libcoap.so.
+
+OIC_LIBS_PATH = '../../out/linux/x86_64/release'
+
+env = DefaultEnvironment()
+target_os = ARGUMENTS.get("OS", "linux").lower()
+output_dir = env.GetLaunchDir() + "/out/" + target_os
+env.VariantDir(output_dir, env.GetLaunchDir(), duplicate=0)
+env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+env.AppendUnique(LINKFLAGS = ['-pthread'])
+env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap'])
+env.Program(output_dir + '/OICMiddle', [output_dir + '/OICMiddle.cpp',
+                          output_dir + '/Client.cpp',
+                          output_dir + '/Server.cpp',
+                          output_dir + '/WrapResource.cpp',
+                          output_dir + '/LineInput.cpp',
+                          output_dir + '/RestInput.cpp'])
+
+if target_os == "yocto":
+    '''
+    This code injects Yocto cross-compilation flags into scons' default environment
+    in order to invoke the relevant tools while performing a build.
+    '''
+    import os.path, re
+    sdk_root = ''
+    try:
+        CC = os.environ['CC']
+        sdk_root = re.search(r'--sysroot=\S+', CC).group().split('=')[1]
+        target_prefix = CC.split()[0]
+        target_prefix = target_prefix[:len(target_prefix)-3]
+        tools = {"CC" : target_prefix+"gcc",
+                 "CXX" : target_prefix+"g++",
+                 "AS" : target_prefix+"as",
+                 "LD" : target_prefix+"ld",
+                 "GDB" : target_prefix+"gdb",
+                 "STRIP" : target_prefix+"strip",
+                 "RANLIB" : target_prefix+"ranlib",
+                 "OBJCOPY" : target_prefix+"objcopy",
+                 "OBJDUMP" : target_prefix+"objdump",
+                 "AR" : target_prefix+"ar",
+                 "NM" : target_prefix+"nm",
+                 "M4" : "m4",
+                 "STRINGS": target_prefix+"strings"}
+        PATH = os.environ['PATH'].split(os.pathsep)
+        for tool in tools:
+            if tool in os.environ:
+                for path in PATH:
+    	            if os.path.isfile(os.path.join(path, tools[tool])):
+    	                env[tool] = os.path.join(path, os.environ[tool])
+        env.AppendUnique(CPPPATH = [
+                sdk_root + '/usr/include/oic/',
+                sdk_root + '/usr/include/oic/stack/',
+                sdk_root + '/usr/include/oic/ocsocket/',
+                sdk_root + '/usr/include/oic/oc_logger/',
+                ])
+    except:
+        print "ERROR configuring Yocto cross-toolchain environment."
+        Exit(1)
+elif target_os == "linux":
+    if OIC_RESOURCE_PATH == '' or OIC_LIBS_PATH == '':
+        print "ERROR Please set both OIC_RESOURCE_PATH and OIC_LIBS_PATH in SConstruct"
+        Exit(1)
+    env.AppendUnique(CPPPATH = [
+                OIC_RESOURCE_PATH + '/resource/include',
+                OIC_RESOURCE_PATH + '/resource/csdk/stack/include',
+                OIC_RESOURCE_PATH + '/resource/csdk/ocsocket/include',
+                OIC_RESOURCE_PATH + '/resource/oc_logger/include',
+                ])
+    env.AppendUnique(LIBPATH = [OIC_LIBS_PATH])
+else:
+    print "ERROR ", target_os, " is an unsupported target"
+    Exit(1)
