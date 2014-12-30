@@ -35,11 +35,11 @@
 #include <AttributeValue.h>
 #include <StringConstants.h>
 
-#include <OCException.h>
-
 #ifdef __ANDROID__
-#include "android_cpp11_compat.h"
+#include "OCAndroid.h"
 #endif
+
+#include <OCException.h>
 
 namespace cereal
 {
