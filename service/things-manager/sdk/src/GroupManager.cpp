@@ -197,12 +197,16 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
     {
         return OC_STACK_ERROR;
     }
+    if(callback == NULL)
+    {
+        return OC_STACK_ERROR;
+    }
 
     std::sort(resourceTypes.begin(), resourceTypes.end());
     resourceTypes.erase(std::unique(resourceTypes.begin(), resourceTypes.end()),
             resourceTypes.end());
 
-    if (waitsec != -1)
+    if (waitsec >= 0)
     {
         candidateRequestForTimer.insert(std::make_pair(resourceTypes, callback));
     }
@@ -222,7 +226,7 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
                                 std::placeholders::_1, waitsec)));
     }
 
-    if (waitsec != -1)
+    if (waitsec >= 0)
     {
         std::thread exec(
                 std::function< void(int second) >(
@@ -284,6 +288,12 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
      }
      */
     std::vector< OCRepresentation > children = rep.getChildren();
+    
+    if(children.size() == 0 )
+    {
+        callback("", OC_STACK_ERROR);
+        return;
+    }
 
     for (auto oit = children.begin(); oit != children.end(); ++oit)
     {
@@ -357,6 +367,11 @@ void GroupManager::onGetForPresence(const HeaderOptions& headerOptions,
 OCStackResult GroupManager::subscribeCollectionPresence(
         std::shared_ptr< OCResource > collectionResource, CollectionPresenceCallback callback)
 {
+    if(callback == NULL || collectionResource == NULL)
+    {
+        return OC_STACK_ERROR;
+    }
+    
     OCStackResult result = OC_STACK_OK;
     //callback("core.room",OC_STACK_OK);
 
