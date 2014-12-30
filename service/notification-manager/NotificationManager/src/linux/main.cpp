@@ -31,30 +31,30 @@ int main(void)
     std::cout << "Start Notification Manager : Hosting v0.5\n";
 
 
-	HostingConfig cfg;
-	cfg.hostingMode		= HostingMode::ManualMode;
-	cfg.automaticMethod	= AutomaticMethod::None;
-	cfg.notifyMethod		= NotifyMethod::Frequence;
-	cfg.frequency			= NotifyFrequency::OnTime;
+    HostingConfig cfg;
+    cfg.hostingMode     = HostingMode::ManualMode;
+    cfg.automaticMethod = AutomaticMethod::None;
+    cfg.notifyMethod        = NotifyMethod::Frequence;
+    cfg.frequency           = NotifyFrequency::OnTime;
 
-	NotificationManager::initialize(cfg);
+    NotificationManager::initialize(cfg);
 
-    while(true)
+    while (true)
     {
-    	char signal;
-    	cin >> signal;
+        char signal;
+        cin >> signal;
 
-    	switch(signal)
-    	{
-    	case 'q':
-    	case 'Q':
-    		std::cout << endl;
-			std::cout << "========================================================" << endl;
-			std::cout << "End Notification Manager : Hosting v0.5\n";
-    		return true;
-    	default:
-    		break;
-    	}
+        switch (signal)
+        {
+            case 'q':
+            case 'Q':
+                std::cout << endl;
+                std::cout << "========================================================" << endl;
+                std::cout << "End Notification Manager : Hosting v0.5\n";
+                return true;
+            default:
+                break;
+        }
 
     }
 

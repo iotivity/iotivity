@@ -18,22 +18,22 @@ extern "C"
 {
 #endif
 
-    void oicapp_fail_popup(oicappData *ad , char *title , char *text , int timeout);
-    void oicapp_util_update(oicappData *ad);
-    char* oicapp_util_wifi();
+void oicapp_fail_popup(oicappData *ad , char *title , char *text , int timeout);
+void oicapp_util_update(oicappData *ad);
+char *oicapp_util_wifi();
 
-    int oicapp_client_start(oicappData *ad);
-    void oicapp_client_stop();
-    int oicapp_client_put(int power , int level);
+int oicapp_client_start(oicappData *ad);
+void oicapp_client_stop();
+int oicapp_client_put(int power , int level);
 
-    int oicapp_server_start(oicappData *ad);
-    void oicapp_server_stop();
-    void oicapp_server_put(int power , int level);
+int oicapp_server_start(oicappData *ad);
+void oicapp_server_stop();
+void oicapp_server_put(int power , int level);
 
-    extern void *ChangeLightRepresentation(void *param);
+extern void *ChangeLightRepresentation(void *param);
 
-    void findResourceCandidate(oicappData *ad);
-    void startObserve(oicappData *ad);
+void findResourceCandidate(oicappData *ad);
+void startObserve(oicappData *ad);
 
 #ifdef __cplusplus
 }

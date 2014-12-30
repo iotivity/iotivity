@@ -35,65 +35,65 @@ extern "C"
 
 #define GRP_MAIN "main"
 
-    enum
-    {
-        OICAPP_GENLIST_GRP_NONE = 0,
-        OICAPP_GENLIST_GRP_TOP,
-        OICAPP_GENLIST_GRP_CENTER,
-        OICAPP_GENLIST_GRP_BOTTOM
-    };
+enum
+{
+    OICAPP_GENLIST_GRP_NONE = 0,
+    OICAPP_GENLIST_GRP_TOP,
+    OICAPP_GENLIST_GRP_CENTER,
+    OICAPP_GENLIST_GRP_BOTTOM
+};
 
-    typedef struct
-    {
-        Evas_Object *win;
-        Evas_Object *base;
-        Evas_Object *bg;
-        Evas_Object *navi;
-        Evas_Object *genlist;
-        Evas_Object *popup;
-        Evas_Object *conform;
+typedef struct
+{
+    Evas_Object *win;
+    Evas_Object *base;
+    Evas_Object *bg;
+    Evas_Object *navi;
+    Evas_Object *genlist;
+    Evas_Object *popup;
+    Evas_Object *conform;
 
-        Elm_Object_Item *itemConsumer;
-        Elm_Object_Item *itemConsumerUri;
-        Elm_Object_Item *itemConsumerHost;
-        Elm_Object_Item *itemConsumerTemp;
-        Elm_Object_Item *itemConsumerHumid;
-        Elm_Object_Item *itemFindResource;
-        Elm_Object_Item *itemObserve;
-        Elm_Object_Item *itemServer;
-        Elm_Object_Item *itemServerTemp;
-        Elm_Object_Item *itemServerHumid;
+    Elm_Object_Item *itemConsumer;
+    Elm_Object_Item *itemConsumerUri;
+    Elm_Object_Item *itemConsumerHost;
+    Elm_Object_Item *itemConsumerTemp;
+    Elm_Object_Item *itemConsumerHumid;
+    Elm_Object_Item *itemFindResource;
+    Elm_Object_Item *itemObserve;
+    Elm_Object_Item *itemServer;
+    Elm_Object_Item *itemServerTemp;
+    Elm_Object_Item *itemServerHumid;
 
-        Elm_Genlist_Item_Class itcSeperator;
-        Elm_Genlist_Item_Class itcTitle;
-        Elm_Genlist_Item_Class itcText;
-        Elm_Genlist_Item_Class itcBtnFindResoruce;
-        Elm_Genlist_Item_Class itcBtnObserve;
+    Elm_Genlist_Item_Class itcSeperator;
+    Elm_Genlist_Item_Class itcTitle;
+    Elm_Genlist_Item_Class itcText;
+    Elm_Genlist_Item_Class itcBtnFindResoruce;
+    Elm_Genlist_Item_Class itcBtnObserve;
 
-        char *ipAddr;
-        //oicapp_mode mode;
-        int clientOn;
-        int serverOn;
-        int power;
-        int level;
+    char *ipAddr;
+    //oicapp_mode mode;
+    int clientOn;
+    int serverOn;
+    int power;
+    int level;
 
-        int temp;
-        int humid;
+    int temp;
+    int humid;
 
-        char *uri;
-        char *host;
+    char *uri;
+    char *host;
 
-    } oicappData;
+} oicappData;
 
-    extern void _gl_update_item(oicappData *ad , const char *title , Elm_Object_Item *item);
+extern void _gl_update_item(oicappData *ad , const char *title , Elm_Object_Item *item);
 
-    typedef struct
-    {
-        oicappData *ad;
-        const char *title;
-        int group_style;
+typedef struct
+{
+    oicappData *ad;
+    const char *title;
+    int group_style;
 
-    } oicappItemData;
+} oicappItemData;
 
 #ifdef __cplusplus
 }

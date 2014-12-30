@@ -28,9 +28,9 @@ std::string ResourceManager::s_extraStr;
 
 ResourceManager::ResourceManager()
 {
-	m_onFoundforHosting	= NULL;
-	m_onObserve			= NULL;
-	m_notify				= NULL;
+    m_onFoundforHosting = NULL;
+    m_onObserve         = NULL;
+    m_notify                = NULL;
 }
 
 ResourceManager::~ResourceManager()
@@ -39,12 +39,12 @@ ResourceManager::~ResourceManager()
 
 ResourceManager *ResourceManager::getInstance()
 {
-    if(!s_instance)
+    if (!s_instance)
     {
         s_mutexForCreation.lock();
-        if(!s_instance)
+        if (!s_instance)
         {
-        	s_instance = new ResourceManager();
+            s_instance = new ResourceManager();
         }
         s_mutexForCreation.unlock();
     }
@@ -56,9 +56,9 @@ VirtualRepresentation ResourceManager::findVirtualRepresentation(std::string uri
 
     VirtualRepresentation retObject;
 
-    for(auto it = s_resourceList.begin() ; it != s_resourceList.end() ; it++)
+    for (auto it = s_resourceList.begin() ; it != s_resourceList.end() ; it++)
     {
-        if(it->getUri().compare(uri) == 0)
+        if (it->getUri().compare(uri) == 0)
         {
             retObject = *it;
             return retObject;
@@ -70,33 +70,33 @@ VirtualRepresentation ResourceManager::findVirtualRepresentation(std::string uri
 
 void ResourceManager::findNMResource(bool isHosting)
 {
-	if(isHosting)
-	{
-		findResource("" , "coap://224.0.1.187/oc/core",
-				std::function< void(std::shared_ptr< OCResource > resource) >(
-									std::bind(&ResourceManager::foundResourceforhosting , ResourceManager::getInstance() ,
-											std::placeholders::_1)));
-	}
+    if (isHosting)
+    {
+        findResource("" , "coap://224.0.1.187/oc/core",
+                     std::function< void(std::shared_ptr< OCResource > resource) >(
+                         std::bind(&ResourceManager::foundResourceforhosting , ResourceManager::getInstance() ,
+                                   std::placeholders::_1)));
+    }
 }
 
 void ResourceManager::foundResourceforhosting(std::shared_ptr< OCResource > resource)
 {
     try
     {
-        if(resource)
+        if (resource)
         {
-            if(resource->uri().find("/a/NM") != std::string::npos)
+            if (resource->uri().find("/a/NM") != std::string::npos)
             {
                 ResourceManager::getInstance()->m_onFoundforHosting(resource);
             }
         }
         else
         {
-        	// TODO
+            // TODO
         }
 
     }
-    catch(std::exception &e)
+    catch (std::exception &e)
     {
     }
 }
@@ -104,10 +104,10 @@ void ResourceManager::foundResourceforhosting(std::shared_ptr< OCResource > reso
 void ResourceManager::startHosting(std::shared_ptr< OCResource > resource)
 {
 
-	cout << "start hosting" << endl;
+    cout << "start hosting" << endl;
     VirtualRepresentation tmp = findVirtualRepresentation( resource->uri() );
 
-    if( !tmp.getUri().empty() )
+    if ( !tmp.getUri().empty() )
     {
         return;
     }
@@ -140,15 +140,15 @@ void ResourceManager::startHosting(std::shared_ptr< OCResource > resource)
 
 void ResourceManager::notifyObservers(OCResourceHandle resourceHandle)
 {
-	OCStackResult result = OC_STACK_OK;
+    OCStackResult result = OC_STACK_OK;
 
-	result = notifyAllObservers(resourceHandle);
+    result = notifyAllObservers(resourceHandle);
 
-	if(OC_STACK_NO_OBSERVERS == result)
-	{
-		// No observers.
-		// TODO
-	}
+    if (OC_STACK_NO_OBSERVERS == result)
+    {
+        // No observers.
+        // TODO
+    }
 }
 
 AttributeMap ResourceManager::copyAttributeMap(AttributeMap &inputAttMap)
@@ -177,9 +177,9 @@ AttributeMap ResourceManager::copyAttributeMap(AttributeMap &inputAttMap)
 
 bool ResourceManager::isEmptyAttributeMap(AttributeMap &inputAttMap)
 {
-    for(auto it = inputAttMap.begin() ; it != inputAttMap.end() ; ++it)
+    for (auto it = inputAttMap.begin() ; it != inputAttMap.end() ; ++it)
     {
-        if(inputAttMap.find(it->first) == inputAttMap.end())
+        if (inputAttMap.find(it->first) == inputAttMap.end())
         {
             return true;
         }
@@ -193,16 +193,16 @@ void ResourceManager::onFoundforHostingDefault(std::shared_ptr< OCResource > res
 }
 void ResourceManager::onObserveDefault(AttributeMap &inputAttMap , OCResourceHandle resourceHandle)
 {
-	ResourceManager::getInstance()->notifyObservers(resourceHandle);
+    ResourceManager::getInstance()->notifyObservers(resourceHandle);
 }
 
 void ResourceManager::printAttributeMap(AttributeMap &inputAttMap)
 {
-    for(auto it = inputAttMap.begin() ; it != inputAttMap.end() ; ++it)
+    for (auto it = inputAttMap.begin() ; it != inputAttMap.end() ; ++it)
     {
         std::cout << "\tAttribute name: " << it->first << " value: ";
 
-        for(auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
+        for (auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
         {
             std::cout << "\t" << *valueItr << " ";
         }

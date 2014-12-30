@@ -41,131 +41,133 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
 class TempHumidResource
 {
-public:
+    public:
 
-    int m_temp;
-    int m_humid;
+        int m_temp;
+        int m_humid;
 
-    std::string m_uri;
-    OCResourceHandle m_resourceHandle;
+        std::string m_uri;
+        OCResourceHandle m_resourceHandle;
 
-    OCRepresentation m_Rep;
+        OCRepresentation m_Rep;
 
-public:
-    TempHumidResource() :
+    public:
+        TempHumidResource() :
             m_temp(0), m_humid(0), m_uri("/a/TempHumSensor")
-    {
-    }
-
-    void createResource()
-    {
-        std::string resourceURI = "/a/NM/TempHumSensor";
-        std::string resourceTypeName = "NotificationManager.Hosting";
-        std::string resourceInterface = DEFAULT_INTERFACE;
-
-        m_uri = resourceURI;
-
-        uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
-
-        OCStackResult result = OCPlatform::registerResource(m_resourceHandle , resourceURI ,
-                resourceTypeName , resourceInterface , &entityHandler , resourceProperty);
-
-        if(OC_STACK_OK != result)
         {
-            cout << "Resource creation was unsuccessful\n";
         }
-    }
 
-    OCStackResult createResource1()
-	{
-		std::string resourceURI = "/a/NM/TempHumSensor1"; // URI of the resource
-		std::string resourceTypeName = "NotificationManager.Hosting"; // resource type name. In this case, it is light
-		std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
-
-		// OCResourceProperty is defined ocstack.h
-		uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
-
-		OCResourceHandle resHandle;
-
-		// This will internally create and register the resource.
-		OCStackResult result = OCPlatform::registerResource(
-									resHandle, resourceURI, resourceTypeName,
-									resourceInterface, &entityHandler, resourceProperty);
-
-		if (OC_STACK_OK != result)
-		{
-			cout << "Resource creation was unsuccessful\n";
-		}
-
-		return result;
-	}
-
-    OCResourceHandle getHandle()
-    {
-        return m_resourceHandle;
-    }
-
-    OCRepresentation post(OCRepresentation& rep)
-    {
-        static int first = 1;
-
-        // for the first time it tries to create a resource
-        if(first)
+        void createResource()
         {
-            first = 0;
+            std::string resourceURI = "/a/NM/TempHumSensor";
+            std::string resourceTypeName = "NotificationManager.Hosting";
+            std::string resourceInterface = DEFAULT_INTERFACE;
 
-            if(OC_STACK_OK == createResource1())
+            m_uri = resourceURI;
+
+            uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+
+            OCStackResult result = OCPlatform::registerResource(m_resourceHandle , resourceURI ,
+                                   resourceTypeName , resourceInterface , &entityHandler , resourceProperty);
+
+            if (OC_STACK_OK != result)
             {
-                OCRepresentation rep1;
-                rep1.setValue("createduri", std::string("/a/light1"));
-
-                return rep1;
+                cout << "Resource creation was unsuccessful\n";
             }
         }
 
-        // from second time onwards it just puts
-        put(rep);
-        return get();
-    }
+        OCStackResult createResource1()
+        {
+            std::string resourceURI = "/a/NM/TempHumSensor1"; // URI of the resource
+            std::string resourceTypeName =
+                "NotificationManager.Hosting"; // resource type name. In this case, it is light
+            std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
-    void put(OCRepresentation& rep)
-	{
-		try {
-			if (rep.getValue("temperature", m_temp))
-			{
-				cout << "\t\t\t\t" << "temperature: " << m_temp << endl;
-			}
-			else
-			{
-				cout << "\t\t\t\t" << "temperature not found in the representation" << endl;
-			}
+            // OCResourceProperty is defined ocstack.h
+            uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
-			if (rep.getValue("humidity", m_humid))
-			{
-				cout << "\t\t\t\t" << "humidity: " << m_humid << endl;
-			}
-			else
-			{
-				cout << "\t\t\t\t" << "humidity not found in the representation" << endl;
-			}
-		}
-		catch (exception& e)
-		{
-			cout << e.what() << endl;
-		}
+            OCResourceHandle resHandle;
 
-	}
+            // This will internally create and register the resource.
+            OCStackResult result = OCPlatform::registerResource(
+                                       resHandle, resourceURI, resourceTypeName,
+                                       resourceInterface, &entityHandler, resourceProperty);
 
-    OCRepresentation get()
-	{
-    	cout << "resource get\n";
-		m_Rep.setValue("temperature", m_temp);
-		m_Rep.setValue("humidity", m_humid);
+            if (OC_STACK_OK != result)
+            {
+                cout << "Resource creation was unsuccessful\n";
+            }
 
-		cout << "resource get : done\n";
+            return result;
+        }
 
-		return m_Rep;
-	}
+        OCResourceHandle getHandle()
+        {
+            return m_resourceHandle;
+        }
+
+        OCRepresentation post(OCRepresentation &rep)
+        {
+            static int first = 1;
+
+            // for the first time it tries to create a resource
+            if (first)
+            {
+                first = 0;
+
+                if (OC_STACK_OK == createResource1())
+                {
+                    OCRepresentation rep1;
+                    rep1.setValue("createduri", std::string("/a/light1"));
+
+                    return rep1;
+                }
+            }
+
+            // from second time onwards it just puts
+            put(rep);
+            return get();
+        }
+
+        void put(OCRepresentation &rep)
+        {
+            try
+            {
+                if (rep.getValue("temperature", m_temp))
+                {
+                    cout << "\t\t\t\t" << "temperature: " << m_temp << endl;
+                }
+                else
+                {
+                    cout << "\t\t\t\t" << "temperature not found in the representation" << endl;
+                }
+
+                if (rep.getValue("humidity", m_humid))
+                {
+                    cout << "\t\t\t\t" << "humidity: " << m_humid << endl;
+                }
+                else
+                {
+                    cout << "\t\t\t\t" << "humidity not found in the representation" << endl;
+                }
+            }
+            catch (exception &e)
+            {
+                cout << e.what() << endl;
+            }
+
+        }
+
+        OCRepresentation get()
+        {
+            cout << "resource get\n";
+            m_Rep.setValue("temperature", m_temp);
+            m_Rep.setValue("humidity", m_humid);
+
+            cout << "resource get : done\n";
+
+            return m_Rep;
+        }
 
 };
 
@@ -173,102 +175,104 @@ TempHumidResource myResource;
 
 void *ChangeLightRepresentation(void *param)
 {
-	cout << "ChangeLigthRepresentation Enter\n";
-	while(1){
-		cout << "pthread_cond_wait\n";
-		pthread_cond_wait(&m_cond, &m_mutex);
-		cout << "pthread_cond_start\n";
-		if(g_Observation)
-		{
+    cout << "ChangeLigthRepresentation Enter\n";
+    while (1)
+    {
+        cout << "pthread_cond_wait\n";
+        pthread_cond_wait(&m_cond, &m_mutex);
+        cout << "pthread_cond_start\n";
+        if (g_Observation)
+        {
 
-			cout << endl;
-			cout << "========================================================" << endl;
-			cout << "HUMTepm updated to : " << myResource.m_temp << endl;
-			cout << "Notifying observers with resource handle: " << myResource.getHandle() << endl;
+            cout << endl;
+            cout << "========================================================" << endl;
+            cout << "HUMTepm updated to : " << myResource.m_temp << endl;
+            cout << "Notifying observers with resource handle: " << myResource.getHandle() << endl;
 
-			cout << endl;
-			cout << "========================================================" << endl;
-			cout << "Send data : \n";
-			cout << "Attribute Name: Temp\tvalue: " << myResource.m_temp << endl;
-			cout << "Attribute Name: Humid\tvalue: " << myResource.m_humid << endl;
+            cout << endl;
+            cout << "========================================================" << endl;
+            cout << "Send data : \n";
+            cout << "Attribute Name: Temp\tvalue: " << myResource.m_temp << endl;
+            cout << "Attribute Name: Humid\tvalue: " << myResource.m_humid << endl;
 
-			OCStackResult result = OCPlatform::notifyAllObservers(myResource.getHandle());
-			cout << "Notify Success\n";
+            OCStackResult result = OCPlatform::notifyAllObservers(myResource.getHandle());
+            cout << "Notify Success\n";
 
-			if(OC_STACK_NO_OBSERVERS == result)
-			{
-				cout << "No More observers, stopping notifications" << endl;
-				g_Observation = 0;
-			}
-		}
-		cout << "ChangeLigthRepresentation Out\n";
+            if (OC_STACK_NO_OBSERVERS == result)
+            {
+                cout << "No More observers, stopping notifications" << endl;
+                g_Observation = 0;
+            }
+        }
+        cout << "ChangeLigthRepresentation Out\n";
 
-	}
+    }
     return NULL;
 }
 
 OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request ,
-        std::shared_ptr< OCResourceResponse > response)
+                                    std::shared_ptr< OCResourceResponse > response)
 {
-	cout << "Sample Provider entityHandler\n";
-    if(request)
+    cout << "Sample Provider entityHandler\n";
+    if (request)
     {
-    	cout << "flag : request\n";
+        cout << "flag : request\n";
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
-        if(requestFlag == RequestHandlerFlag::InitFlag)
+        if (requestFlag == RequestHandlerFlag::InitFlag)
         {
-        	cout << "\t\trequestFlag : Init\n";
+            cout << "\t\trequestFlag : Init\n";
         }
 
-        if(requestFlag == RequestHandlerFlag::RequestFlag)
+        if (requestFlag == RequestHandlerFlag::RequestFlag)
         {
-        	cout << "\t\trequestFlag : Request\n";
-            if(requestType == "GET")
+            cout << "\t\trequestFlag : Request\n";
+            if (requestType == "GET")
             {
-            	cout << "\t\trequestType : GET\n";
-            	try
-            	{
-					if(response)
-					{
-						OCRepresentation rep = myResource.get();
-						cout << rep.getJSONRepresentation() << endl;
-						response->setErrorCode(200);
-						response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-					}
-					else
-					{
-						cout << "response is null\n";
-					}
-            	} catch(exception& e)
-            	{
-            		cout << e.what() << endl;
-            	}
+                cout << "\t\trequestType : GET\n";
+                try
+                {
+                    if (response)
+                    {
+                        OCRepresentation rep = myResource.get();
+                        cout << rep.getJSONRepresentation() << endl;
+                        response->setErrorCode(200);
+                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                    }
+                    else
+                    {
+                        cout << "response is null\n";
+                    }
+                }
+                catch (exception &e)
+                {
+                    cout << e.what() << endl;
+                }
             }
-            else if(requestType == "PUT")
+            else if (requestType == "PUT")
             {
                 cout << "\t\t\trequestType : PUT\n";
 
                 OCRepresentation rep = request->getResourceRepresentation();
                 myResource.put(rep);
 
-                if(response)
+                if (response)
                 {
                     response->setErrorCode(200);
                     response->setResourceRepresentation(myResource.get());
                 }
             }
-            else if(requestType == "POST")
+            else if (requestType == "POST")
             {
             }
-            else if(requestType == "DELETE")
+            else if (requestType == "DELETE")
             {
             }
         }
-        else if(requestFlag & RequestHandlerFlag::ObserverFlag)
+        else if (requestFlag & RequestHandlerFlag::ObserverFlag)
         {
-        	pthread_t threadId;
+            pthread_t threadId;
 
             cout << request->getResourceUri() << endl;
             cout << request->getResourceRepresentation().getUri() << endl;
@@ -280,9 +284,9 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
             cout << "\t\trequestFlag : Observer\n";
             static int startedThread = 0;
-            if(!startedThread)
+            if (!startedThread)
             {
-            	cout << "\t\tpthrerad_create\n";
+                cout << "\t\tpthrerad_create\n";
                 pthread_create(&threadId , NULL , ChangeLightRepresentation , (void *) NULL);
                 startedThread = 1;
             }
@@ -299,15 +303,16 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 int main()
 {
 
-	PlatformConfig cfg {
-	        OC::ServiceType::InProc,
-	        OC::ModeType::Server,
-	        "0.0.0.0",
-	        0,
-	        OC::QualityOfService::LowQos
-	    };
+    PlatformConfig cfg
+    {
+        OC::ServiceType::InProc,
+        OC::ModeType::Server,
+        "0.0.0.0",
+        0,
+        OC::QualityOfService::LowQos
+    };
 
-	OCPlatform::Configure(cfg);
+    OCPlatform::Configure(cfg);
 
     int number = 0;
 
@@ -316,7 +321,7 @@ int main()
 
         myResource.createResource();
 
-        while(true)
+        while (true)
         {
             bool end = false;
             cout << endl;
@@ -327,44 +332,44 @@ int main()
             cout << "========================================================" << endl;
             cin >> number;
 
-            switch(number)
+            switch (number)
             {
                 case 1:
-                {
-                    cout << "Temp is up!" << endl;
-                    myResource.m_temp += 10;
-                    pthread_cond_signal(&m_cond);
-                    cout << "ChangeLightRepresentation Done!" << endl;
-                    break;
-                }
+                    {
+                        cout << "Temp is up!" << endl;
+                        myResource.m_temp += 10;
+                        pthread_cond_signal(&m_cond);
+                        cout << "ChangeLightRepresentation Done!" << endl;
+                        break;
+                    }
                 case 2:
-                {
-                    cout << "Temp is down!" << endl;
-                    myResource.m_temp -= 10;
-                    pthread_cond_signal(&m_cond);
-                    cout << "ChangeLightRepresentation Done!" << endl;
-                    break;
-                }
+                    {
+                        cout << "Temp is down!" << endl;
+                        myResource.m_temp -= 10;
+                        pthread_cond_signal(&m_cond);
+                        cout << "ChangeLightRepresentation Done!" << endl;
+                        break;
+                    }
                 case 3:
-                {
-                    cout << "Bye!" << endl;
-                    end = true;
-                    break;
-                }
+                    {
+                        cout << "Bye!" << endl;
+                        end = true;
+                        break;
+                    }
                 default:
-                {
-                    cout << "You type wrong number. Try again!" << endl;
-                    break;
-                }
+                    {
+                        cout << "You type wrong number. Try again!" << endl;
+                        break;
+                    }
             }
-            if(end == true)
+            if (end == true)
             {
                 break;
             }
         }
     }
-    catch(exception& e)
+    catch (exception &e)
     {
-    	cout << "main exception  : " << e.what() << endl;
+        cout << "main exception  : " << e.what() << endl;
     }
 }

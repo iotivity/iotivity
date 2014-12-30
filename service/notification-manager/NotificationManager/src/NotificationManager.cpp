@@ -40,7 +40,7 @@ NotificationManager::~NotificationManager()
 
 void NotificationManager::initialize()
 {
-	// find local ip address
+    // find local ip address
     std::string ipAddress;
     NotificationManager::getInstance()->scanAndGetNetworkInterface(ipAddress);
 
@@ -53,7 +53,7 @@ void NotificationManager::initialize()
 
 void NotificationManager::initialize(HostingConfig cfg)
 {
-	// find local ip address
+    // find local ip address
     std::string ipAddress;
     NotificationManager::getInstance()->scanAndGetNetworkInterface(ipAddress);
 
@@ -71,92 +71,92 @@ void NotificationManager::registerHostingEventListener()
 
 NotificationManager *NotificationManager::getInstance()
 {
-	if(!s_instance)
-	{
-		s_mutexForCreation.lock();
-		if(!s_instance)
-		{
-			s_instance = new NotificationManager();
-		}
-		s_mutexForCreation.unlock();
-	}
+    if (!s_instance)
+    {
+        s_mutexForCreation.lock();
+        if (!s_instance)
+        {
+            s_instance = new NotificationManager();
+        }
+        s_mutexForCreation.unlock();
+    }
 
     return s_instance;
 }
 
-int NotificationManager::getNetInfo(IN int& sck, IN struct ifreq* item, OUT std::string& ip_addres)
+int NotificationManager::getNetInfo(IN int &sck, IN struct ifreq *item, OUT std::string &ip_addres)
 {
-	struct ifreq temp_ifr;
-	memset(&temp_ifr, 0, sizeof(temp_ifr));
-	strcpy(temp_ifr.ifr_name, item->ifr_name);
+    struct ifreq temp_ifr;
+    memset(&temp_ifr, 0, sizeof(temp_ifr));
+    strcpy(temp_ifr.ifr_name, item->ifr_name);
 
-	if (ioctl(sck, SIOCGIFFLAGS, &temp_ifr))
-	{
-		return -1;
-	}
+    if (ioctl(sck, SIOCGIFFLAGS, &temp_ifr))
+    {
+        return -1;
+    }
 
-	if (!((temp_ifr.ifr_flags & IFF_UP) && (temp_ifr.ifr_flags & IFF_RUNNING)))
-	{
-		return -1;
-	}
+    if (!((temp_ifr.ifr_flags & IFF_UP) && (temp_ifr.ifr_flags & IFF_RUNNING)))
+    {
+        return -1;
+    }
 
-	std::string ip(inet_ntoa(((struct sockaddr_in *) &item->ifr_addr)->sin_addr));
-	if (ip.empty())
-	{
-		return -1;
-	}
+    std::string ip(inet_ntoa(((struct sockaddr_in *) &item->ifr_addr)->sin_addr));
+    if (ip.empty())
+    {
+        return -1;
+    }
 
-	if (ip.find("127.0.0") == 0)
-	{
-		return -1;
-	}
+    if (ip.find("127.0.0") == 0)
+    {
+        return -1;
+    }
 
-	ip_addres = ip;
-	return 0;
+    ip_addres = ip;
+    return 0;
 }
 
-bool NotificationManager::scanAndGetNetworkInterface(OUT std::string& ip_addres)
+bool NotificationManager::scanAndGetNetworkInterface(OUT std::string &ip_addres)
 {
-	while(1)
-	{
-		char buf[1024] =	{ 0, };
-		struct ifconf ifc;
-		struct ifreq *ifr;
-		int sck;
-		int interfaces;
-		int i;
+    while (1)
+    {
+        char buf[1024] =    { 0, };
+        struct ifconf ifc;
+        struct ifreq *ifr;
+        int sck;
+        int interfaces;
+        int i;
 
-		sck = socket(AF_INET, SOCK_DGRAM, 0);
-		if (sck < 0)
-		{
-			usleep(10);
-			continue;
-		}
+        sck = socket(AF_INET, SOCK_DGRAM, 0);
+        if (sck < 0)
+        {
+            usleep(10);
+            continue;
+        }
 
-		ifc.ifc_len = sizeof(buf);
-		ifc.ifc_buf = buf;
-		if (ioctl(sck, SIOCGIFCONF, &ifc) < 0)
-		{
-			printf( "SIOCGIFCONF Failed ");
-			close(sck);
-			usleep(10);
-			continue;
-		}
+        ifc.ifc_len = sizeof(buf);
+        ifc.ifc_buf = buf;
+        if (ioctl(sck, SIOCGIFCONF, &ifc) < 0)
+        {
+            printf( "SIOCGIFCONF Failed ");
+            close(sck);
+            usleep(10);
+            continue;
+        }
 
-		ifr = ifc.ifc_req;
-		interfaces = ifc.ifc_len / sizeof(struct ifreq);
+        ifr = ifc.ifc_req;
+        interfaces = ifc.ifc_len / sizeof(struct ifreq);
 
-		for (i = 0; i < interfaces; i++)
-		{
-			if(  getNetInfo(sck, &ifr[i], ip_addres) == 0 )
-			{
-				return 0;
-			}
-			continue;
-		}
-		close(sck);
-		usleep(10);
-	}
+        for (i = 0; i < interfaces; i++)
+        {
+            if (  getNetInfo(sck, &ifr[i], ip_addres) == 0 )
+            {
+                return 0;
+            }
+            continue;
+        }
+        close(sck);
+        usleep(10);
+    }
 
-	return 0;
+    return 0;
 }

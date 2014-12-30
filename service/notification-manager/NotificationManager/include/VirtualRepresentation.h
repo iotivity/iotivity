@@ -34,48 +34,48 @@ class ResourceManager;
 class VirtualRepresentation
 {
 
-private:
-    std::string m_virtualUri;
-    std::string m_originHostIP;
-    std::string m_resourceTypeName;
-    std::string m_resourceInterface;
-    uint8_t m_resourceProperty;
+    private:
+        std::string m_virtualUri;
+        std::string m_originHostIP;
+        std::string m_resourceTypeName;
+        std::string m_resourceInterface;
+        uint8_t m_resourceProperty;
 
-    OCResourceHandle m_resourceHandle;
+        OCResourceHandle m_resourceHandle;
 
-    static AttributeMap s_attributeMap;
-    static std::mutex s_mutexAttributeMap;
-    static std::condition_variable s_conditionAttributeMap;
-    static bool m_isReadyAttributeMap;
+        static AttributeMap s_attributeMap;
+        static std::mutex s_mutexAttributeMap;
+        static std::condition_variable s_conditionAttributeMap;
+        static bool m_isReadyAttributeMap;
 
-    int getRepresentation(OCRepresentation& oc);
+        int getRepresentation(OCRepresentation &oc);
 
-public:
+    public:
 
-    std::string getUri();
-    std::string getHostIP();
-    std::string getResourceTypeName();
-    std::string getResourceInterface();
-    uint8_t getResourceProperty();
-    OCResourceHandle getResourceHandle();
+        std::string getUri();
+        std::string getHostIP();
+        std::string getResourceTypeName();
+        std::string getResourceInterface();
+        uint8_t getResourceProperty();
+        OCResourceHandle getResourceHandle();
 
-    int setUri(std::string uri);
-    int setHostIP(std::string ip);
-    int setResourceTypeName(std::string typeName);
-    int setResourceInterface(std::string interface);
-    int setResourceProperty(uint8_t property);
-    int setResourceHandle(OCResourceHandle & handle);
+        int setUri(std::string uri);
+        int setHostIP(std::string ip);
+        int setResourceTypeName(std::string typeName);
+        int setResourceInterface(std::string interface);
+        int setResourceProperty(uint8_t property);
+        int setResourceHandle(OCResourceHandle &handle);
 
-public:
-    VirtualRepresentation();
-    virtual ~VirtualRepresentation();
+    public:
+        VirtualRepresentation();
+        virtual ~VirtualRepresentation();
 
-    std::string addVirtualTag(std::string uri);
+        std::string addVirtualTag(std::string uri);
 
-    OCEntityHandlerResult entityHandler(const std::shared_ptr<OCResourceRequest> request ,
-        		const std::shared_ptr<OCResourceResponse> response);
-    void onObserve(const HeaderOptions &headerOption, const OCRepresentation &rep ,
-                const int eCode , const int sequenceNumber);
+        OCEntityHandlerResult entityHandler(const std::shared_ptr<OCResourceRequest> request ,
+                                            const std::shared_ptr<OCResourceResponse> response);
+        void onObserve(const HeaderOptions &headerOption, const OCRepresentation &rep ,
+                       const int eCode , const int sequenceNumber);
 
 };
 
