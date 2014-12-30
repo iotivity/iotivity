@@ -15,10 +15,10 @@
 #define LOG_TAG "OIC_TEST"
 #include <dlog.h>
 
-#define LOG_COLOR_RED		"\033[0;31m"
-#define LOG_COLOR_BROWN		"\033[0;33m"
-#define LOG_COLOR_BLUE		"\033[0;34m"
-#define LOG_COLOR_END		"\033[0;m"
+#define LOG_COLOR_RED       "\033[0;31m"
+#define LOG_COLOR_BROWN     "\033[0;33m"
+#define LOG_COLOR_BLUE      "\033[0;34m"
+#define LOG_COLOR_END       "\033[0;m"
 
 
 #if 1
@@ -28,13 +28,13 @@
 #define _ERR(fmt, arg...) SLOGE(fmt, ##arg)
 #else
 #define _DBG(fmt, arg...) \
-	printf("[OIC_TEST]%s(%d):" fmt "\n", __FUNCTION__, __LINE__, ##arg)
+    printf("[OIC_TEST]%s(%d):" fmt "\n", __FUNCTION__, __LINE__, ##arg)
 #define _INFO(fmt, arg...) \
-	printf("[OIC_TEST]%s(%d):" fmt "\n", __FUNCTION__, __LINE__, ##arg)
+    printf("[OIC_TEST]%s(%d):" fmt "\n", __FUNCTION__, __LINE__, ##arg)
 #define _WARN(fmt, arg...) \
-	printf("[OIC_TEST]%s(%d):" fmt "\n", __FUNCTION__, __LINE__, ##arg)
+    printf("[OIC_TEST]%s(%d):" fmt "\n", __FUNCTION__, __LINE__, ##arg)
 #define _ERR(fmt, arg...) \
-	printf("[OIC_TEST]%s(%d):" fmt "\n", __FUNCTION__, __LINE__, ##arg)
+    printf("[OIC_TEST]%s(%d):" fmt "\n", __FUNCTION__, __LINE__, ##arg)
 #endif
 
 #define DBG(fmt, arg...) _DBG(fmt, ##arg)
@@ -43,39 +43,39 @@
 #define INFO(fmt, arg...) _INFO(LOG_COLOR_BLUE fmt LOG_COLOR_END, ##arg)
 
 #define ret_if(expr) \
-	do { \
-		if (expr) { \
-			ERR("(%s)", #expr); \
-			return; \
-		}\
-	} while(0)
+    do { \
+        if (expr) { \
+            ERR("(%s)", #expr); \
+            return; \
+        }\
+    } while(0)
 #define retv_if(expr, val) \
-	do {\
-		if (expr) { \
-			ERR("(%s)", #expr); \
-			return (val); \
-		} \
-	} while(0)
+    do {\
+        if (expr) { \
+            ERR("(%s)", #expr); \
+            return (val); \
+        } \
+    } while(0)
 #define retm_if(expr, fmt, arg...) \
-	do {\
-		if (expr) { \
-			ERR(fmt, ##arg); \
-			return; \
-		}\
-	} while(0)
+    do {\
+        if (expr) { \
+            ERR(fmt, ##arg); \
+            return; \
+        }\
+    } while(0)
 #define retvm_if(expr, val, fmt, arg...) \
-	do {\
-		if (expr) { \
-			ERR(fmt, ##arg); \
-			return (val); \
-		} \
-	} while(0)
+    do {\
+        if (expr) { \
+            ERR(fmt, ##arg); \
+            return (val); \
+        } \
+    } while(0)
 #define warn_if(expr) \
-	do { \
-		if (expr) { \
-			WARN("(%s)", #expr); \
-		} \
-	} while (0)
+    do { \
+        if (expr) { \
+            WARN("(%s)", #expr); \
+        } \
+    } while (0)
 
 
 #endif //__OICAPP_LOG_H__

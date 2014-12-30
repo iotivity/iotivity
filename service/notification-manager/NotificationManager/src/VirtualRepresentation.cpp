@@ -104,144 +104,128 @@ int VirtualRepresentation::setResourceProperty(uint8_t property)
     return true;
 }
 
-int VirtualRepresentation::setResourceHandle(OCResourceHandle & handle)
+int VirtualRepresentation::setResourceHandle(OCResourceHandle &handle)
 {
     m_resourceHandle = handle;
     return true;
 }
 
-int VirtualRepresentation::getRepresentation(OCRepresentation& oc)
+int VirtualRepresentation::getRepresentation(OCRepresentation &oc)
 {
     oc.setAttributeMap(s_attributeMap);
     oc.setUri(this->getUri().c_str());
     return true;
 }
 
-OCEntityHandlerResult VirtualRepresentation::entityHandler(const std::shared_ptr<OCResourceRequest> request ,
-		const std::shared_ptr<OCResourceResponse> response)
+OCEntityHandlerResult VirtualRepresentation::entityHandler(const std::shared_ptr<OCResourceRequest>
+        request , const std::shared_ptr<OCResourceResponse> response)
 {
-    if(request)
+    if (request)
     {
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
-        if(requestFlag == RequestHandlerFlag::InitFlag)
-		{
-		}
-
-        else if(requestFlag == RequestHandlerFlag::RequestFlag)
+        if (requestFlag == RequestHandlerFlag::InitFlag)
         {
-            if( (requestType == "GET") && response )
+        }
+
+        else if (requestFlag == RequestHandlerFlag::RequestFlag)
+        {
+            if ( (requestType == "GET") && response )
             {
 
-				std::unique_lock< std::mutex > lck(s_mutexAttributeMap);
-				while(!m_isReadyAttributeMap)
-				{
-					s_conditionAttributeMap.wait(lck);
-				}
-				m_isReadyAttributeMap = false;
+                std::unique_lock< std::mutex > lck(s_mutexAttributeMap);
+                while (!m_isReadyAttributeMap)
+                {
+                    s_conditionAttributeMap.wait(lck);
+                }
+                m_isReadyAttributeMap = false;
 
-				OCRepresentation rep;
-				getRepresentation(rep);
+                OCRepresentation rep;
+                getRepresentation(rep);
 
-				response->setErrorCode(200);
-				response->setResourceRepresentation(rep , DEFAULT_INTERFACE);
+                response->setErrorCode(200);
+                response->setResourceRepresentation(rep , DEFAULT_INTERFACE);
 
-				m_isReadyAttributeMap = true;
-				s_conditionAttributeMap.notify_all();
-			}
-            else if(requestType == "PUT")
-            {
-            	// TODO
+                m_isReadyAttributeMap = true;
+                s_conditionAttributeMap.notify_all();
             }
-            else if(requestType == "POST")
+            else if (requestType == "PUT")
             {
-            	// TODO
+                // TODO
             }
-            else if(requestType == "DELETE")
+            else if (requestType == "POST")
             {
-            	// TODO
+                // TODO
+            }
+            else if (requestType == "DELETE")
+            {
+                // TODO
             }
             else
             {
-            	// TODO
+                // TODO
             }
         }
-        else if(requestFlag == RequestHandlerFlag::InitFlag)
-		{
-			// TODO
-		}
-        else if(requestFlag == RequestHandlerFlag::ObserverFlag)
+        else if (requestFlag == RequestHandlerFlag::InitFlag)
         {
-        	// TODO
-        	cout << "requestFlag == RequestHandlerFlag::ObserverFlag\n";
+            // TODO
+        }
+        else if (requestFlag == RequestHandlerFlag::ObserverFlag)
+        {
+            // TODO
+            cout << "requestFlag == RequestHandlerFlag::ObserverFlag\n";
         }
         else
         {
-        	// requestFlag is not [Request, Init, Observer]
-        	// TODO
+            // requestFlag is not [Request, Init, Observer]
+            // TODO
         }
     }
     else
     {
-    	// Param(request) is empty.
-    	// TODO
+        // Param(request) is empty.
+        // TODO
     }
     return OC_EH_OK;
 }
 
-void VirtualRepresentation::onObserve(const HeaderOptions &headerOption, const OCRepresentation &rep , const int eCode , const int sequenceNumber)
+void VirtualRepresentation::onObserve(const HeaderOptions &headerOption,
+                                      const OCRepresentation &rep , const int eCode , const int sequenceNumber)
 {
-	cout << "VirtualRepresentation::onObserve Enter\n";
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE)
     {
-    	cout << "1\n";
         AttributeMap inputAttributeMap = rep.getAttributeMap();
-
-        if(ResourceManager::getInstance()->isEmptyAttributeMap(inputAttributeMap))
+        if (ResourceManager::getInstance()->isEmptyAttributeMap(inputAttributeMap))
         {
-        	cout << "2\n";
             return;
         }
-        cout << "3\n";
         VirtualRepresentation tmpObj = *this;
-        if(!tmpObj.getUri().empty())
+        if (!tmpObj.getUri().empty())
         {
-        	cout << "4\n";
             AttributeMap tmpAttMap = ResourceManager::getInstance()->copyAttributeMap(inputAttributeMap);
-            cout << "5\n";
             {
-            	cout << "6\n";
                 std::unique_lock< std::mutex > lck(s_mutexAttributeMap);
-                cout << "7\n";
-                while(!m_isReadyAttributeMap)
+                while (!m_isReadyAttributeMap)
                 {
-                	cout << "8\n";
                     s_conditionAttributeMap.wait(lck);
                 }
-                cout << "9\n";
                 m_isReadyAttributeMap = false;
-                cout << "10\n";
                 s_attributeMap = tmpAttMap;
-                cout << "11\n";
                 m_isReadyAttributeMap = true;
-                cout << "12\n";
                 s_conditionAttributeMap.notify_all();
-                cout << "13\n";
             }
 
-            if(ResourceManager::getInstance()->m_onObserve)
-			{
-            	cout << "14\n";
-				ResourceManager::getInstance()->m_onObserve(inputAttributeMap, tmpObj.getResourceHandle());
-				cout << "15\n";
-			}
+            if (ResourceManager::getInstance()->m_onObserve)
+            {
+                ResourceManager::getInstance()->m_onObserve(inputAttributeMap, tmpObj.getResourceHandle());
+            }
         }
     }
     else
     {
-    	// Check the error.
-       // TODO
+        // Check the error.
+        // TODO
     }
     cout << "VirtualRepresentation::onObserve Out\n";
 }

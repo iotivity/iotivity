@@ -36,8 +36,8 @@ using namespace OC;
 const int SUCCESS_RESPONSE = 0;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
-const char* PREFIX_URI = "Uri : ";
-const char* PREFIX_HOST = "Host : ";
+const char *PREFIX_URI = "Uri : ";
+const char *PREFIX_HOST = "Host : ";
 
 OCPlatform *g_platform = nullptr;
 PlatformConfig g_cfg;
@@ -49,8 +49,8 @@ oicappData *g_oicappClientAd;
 oicappData *g_oicFindAd;
 oicappData *g_oicObserveAd;
 
-OCStackResult nmfindResource(const std::string& host , const std::string& resourceName);
-void onObserve(const OCRepresentation& rep , const int& eCode , const int& sequenceNumber);
+OCStackResult nmfindResource(const std::string &host , const std::string &resourceName);
+void onObserve(const OCRepresentation &rep , const int &eCode , const int &sequenceNumber);
 void onfound();
 void onobserve();
 
@@ -62,7 +62,7 @@ void findResourceCandidate(oicappData *ad)
         std::cout << "Finding Resource... " << std::endl;
 
     }
-    catch(OCException& e)
+    catch (OCException &e)
     {
     }
     g_oicFindAd = ad;
@@ -70,7 +70,7 @@ void findResourceCandidate(oicappData *ad)
 
 void startObserve(oicappData *ad)
 {
-    if(g_curResource != nullptr)
+    if (g_curResource != nullptr)
     {
         g_oicObserveAd = ad;
         QueryParamsMap test;
@@ -80,10 +80,10 @@ void startObserve(oicappData *ad)
 
 void printAttributeMap(const AttributeMap attributeMap)
 {
-    for(auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
+    for (auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
     {
         DBG("\tAttribute name: %s" , it->first.c_str());
-        for(auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
+        for (auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
         {
             DBG("\t\tAttribute value: %s" , (*valueItr).c_str());
         }
@@ -102,7 +102,7 @@ void cancelObserve()
 
     OCStackResult result = OC_STACK_ERROR;
 
-    if(g_curResource != nullptr)
+    if (g_curResource != nullptr)
     {
         result = g_curResource->cancelObserve();
     }
@@ -110,17 +110,17 @@ void cancelObserve()
     DBG("Cancel result: %d" , result);
 }
 
-void onObserve(const OCRepresentation& rep , const int& eCode , const int& sequenceNumber)
+void onObserve(const OCRepresentation &rep , const int &eCode , const int &sequenceNumber)
 {
 
     AttributeMap attributeMap = rep.getAttributeMap();
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE)
     {
         DBG("OBSERVE RESULT:");
         DBG("\tSequenceNumber: %d" , sequenceNumber);
 
         printAttributeMap(attributeMap);
-//		updateAttribute(attributeMap);
+//      updateAttribute(attributeMap);
         g_curAttributeMap = attributeMap;
         onobserve();
     }
@@ -132,21 +132,21 @@ void onObserve(const OCRepresentation& rep , const int& eCode , const int& seque
 }
 
 // callback handler on PUT request
-void onPut(const OCRepresentation& rep , const int eCode)
+void onPut(const OCRepresentation &rep , const int eCode)
 {
     AttributeMap attributeMap = rep.getAttributeMap();
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE)
     {
         DBG("PUT request was successful");
 
         printAttributeMap(attributeMap);
 
-        if(OBSERVE_TYPE_TO_USE == ObserveType::Observe)
+        if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
             INFO("Observe is used.");
-        else if(OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
+        else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
             INFO("ObserveAll is used.");
 
-        if(g_curResource != nullptr)
+        if (g_curResource != nullptr)
         {
             DBG("Observe Start");
             QueryParamsMap test;
@@ -161,11 +161,11 @@ void onPut(const OCRepresentation& rep , const int eCode)
 }
 
 // callback handler on GET request
-void onGet(const OCRepresentation& rep , const int eCode)
+void onGet(const OCRepresentation &rep , const int eCode)
 {
 
     AttributeMap attributeMap = rep.getAttributeMap();
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE)
     {
         DBG("GET Succeeded:");
 
@@ -182,7 +182,7 @@ void onGet(const OCRepresentation& rep , const int eCode)
 // Local function to get representation of light resource
 void getLightRepresentation(std::shared_ptr< OCResource > resource)
 {
-    if(resource)
+    if (resource)
     {
         DBG("Getting Light Representation...");
         // Invoke resource's get API with the callback parameter
@@ -196,13 +196,13 @@ static void foundResource(std::shared_ptr< OCResource > resource)
 {
     try
     {
-        if(resource)
+        if (resource)
         {
             DBG("DISCOVERED Resource:");
             DBG("\tURI of the resource: %s" , resource->uri().c_str());
             DBG("\tHost address of the resource: %s" , resource->host().c_str());
 
-            if(resource->uri().find("/a/NM") != string::npos)
+            if (resource->uri().find("/a/NM") != string::npos)
             {
 
                 g_curResource = resource;
@@ -215,14 +215,14 @@ static void foundResource(std::shared_ptr< OCResource > resource)
         }
 
     }
-    catch(std::exception& e)
+    catch (std::exception &e)
     {
     }
 }
 
-OCStackResult nmfindResource(const std::string& host , const std::string& resourceName)
+OCStackResult nmfindResource(const std::string &host , const std::string &resourceName)
 {
-    if(g_platform != nullptr)
+    if (g_platform != nullptr)
     {
         return g_platform->findResource(host , resourceName , &foundResource);
     }
@@ -248,13 +248,13 @@ int oicapp_client_start(oicappData *ad)
 
 void oicapp_client_stop()
 {
-    if(g_curResource != nullptr)
+    if (g_curResource != nullptr)
     {
         cancelObserve();
         g_curResource = NULL;
     }
 
-    if(g_platform)
+    if (g_platform)
     {
         delete (g_platform);
         g_platform = NULL;
@@ -297,7 +297,7 @@ int oicapp_client_put(int power , int level)
 void onfound()
 {
 
-    if(g_curResource->uri().find("/a/NM/TempHumSensor/virtual") != string::npos)
+    if (g_curResource->uri().find("/a/NM/TempHumSensor/virtual") != string::npos)
     {
         oicappData *ad = g_oicFindAd;
 
@@ -322,11 +322,11 @@ void onobserve()
 
     std::string tmpStr[2];
     int index = 0;
-    for(auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
+    for (auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
     {
         tmpStr[index] = it->first;
         tmpStr[index].append(" : ");
-        for(auto value = it->second.begin() ; value != it->second.end() ; ++value)
+        for (auto value = it->second.begin() ; value != it->second.end() ; ++value)
         {
             tmpStr[index].append(*value);
         }

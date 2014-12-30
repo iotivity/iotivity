@@ -34,8 +34,9 @@ static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
 std::shared_ptr< OCResource > g_curResource;
 
-OCStackResult nmfindResource(const std::string& host , const std::string& resourceName);
-void onObserve(const HeaderOptions &headerOption , const OCRepresentation& rep , const int& eCode, const int& sequenceNumber);
+OCStackResult nmfindResource(const std::string &host , const std::string &resourceName);
+void onObserve(const HeaderOptions &headerOption , const OCRepresentation &rep , const int &eCode,
+               const int &sequenceNumber);
 
 void findResourceCandidate()
 {
@@ -43,23 +44,23 @@ void findResourceCandidate()
     {
         nmfindResource("" , "coap://224.0.1.187/oc/core?rt=NotificationManager.Hosting");
         std::cout << "Finding Resource... " << std::endl;
-        while(true)
+        while (true)
         {
-        	char signal;
-			cin >> signal;
+            char signal;
+            cin >> signal;
 
-			switch(signal)
-			{
-			case 'q':
-			case 'Q':
-				exit(-1);
-			default:
-				break;
-			}
+            switch (signal)
+            {
+                case 'q':
+                case 'Q':
+                    exit(-1);
+                default:
+                    break;
+            }
         }
 
     }
-    catch(OCException& e)
+    catch (OCException &e)
     {
     }
 }
@@ -78,26 +79,27 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const HeaderOptions &headerOption , const OCRepresentation& rep , const int& eCode, const int& sequenceNumber)
+void onObserve(const HeaderOptions &headerOption , const OCRepresentation &rep , const int &eCode,
+               const int &sequenceNumber)
 {
-	std::cout << "onObserve" << std::endl;
+    std::cout << "onObserve" << std::endl;
 //    if(eCode == SUCCESS_RESPONSE)
-	if(eCode <= OC_STACK_RESOURCE_DELETED)
+    if (eCode <= OC_STACK_RESOURCE_DELETED)
     {
 
         AttributeMap attributeMap = rep.getAttributeMap();
 
-        for(auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
+        for (auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
         {
-            if(attributeMap.find(it->first) == attributeMap.end())
+            if (attributeMap.find(it->first) == attributeMap.end())
             {
                 return;
             }
         }
 
-        if(rep.getUri().empty())
+        if (rep.getUri().empty())
         {
-        	cout << "uri is null\n";
+            cout << "uri is null\n";
             return;
         }
 
@@ -105,10 +107,10 @@ void onObserve(const HeaderOptions &headerOption , const OCRepresentation& rep ,
         std::cout << "========================================================" << std::endl;
         std::cout << "Receive OBSERVE RESULT:" << std::endl;
         std::cout << "\tSequenceNumber: " << sequenceNumber << std::endl;
-        for(auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
+        for (auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
         {
             std::cout << "\tAttribute name: " << it->first << " value: ";
-            for(auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
+            for (auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
             {
                 std::cout << "\t" << *valueItr << " ";
             }
@@ -116,7 +118,7 @@ void onObserve(const HeaderOptions &headerOption , const OCRepresentation& rep ,
             std::cout << std::endl;
         }
 
-        if(observe_count() > 30)
+        if (observe_count() > 30)
         {
             std::cout << "Cancelling Observe..." << std::endl;
             OCStackResult result = g_curResource->cancelObserve();
@@ -140,10 +142,10 @@ void foundResource(std::shared_ptr< OCResource > resource)
     std::string hostAddress;
     try
     {
-        if(resource)
+        if (resource)
         {
 //            if(resource->uri().find("/a/NM/TempHumSensor/virtual") != std::string::npos)
-			if(resource->uri().find("/a/NM/TempHumSensor") != std::string::npos)
+            if (resource->uri().find("/a/NM/TempHumSensor") != std::string::npos)
             {
                 std::cout << std::endl;
                 std::cout << "========================================================" << std::endl;
@@ -164,36 +166,36 @@ void foundResource(std::shared_ptr< OCResource > resource)
         }
 
     }
-    catch(std::exception& e)
+    catch (std::exception &e)
     {
     }
 }
 
-OCStackResult nmfindResource(const std::string& host , const std::string& resourceName)
+OCStackResult nmfindResource(const std::string &host , const std::string &resourceName)
 {
     return OCPlatform::findResource(host , resourceName , &foundResource);
 }
 
 void getRepresentation(std::shared_ptr< OCResource > resource)
 {
-    if(resource)
+    if (resource)
     {
         std::cout << "Getting Light Representation..." << std::endl;
     }
 }
 
-void onPut(const OCRepresentation& rep , const int eCode)
+void onPut(const OCRepresentation &rep , const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE)
     {
         std::cout << "PUT request was successful" << std::endl;
 
         AttributeMap attributeMap = rep.getAttributeMap();
 
-        for(auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
+        for (auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
         {
             std::cout << "\tAttribute name: " << it->first << " value: ";
-            for(auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
+            for (auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
             {
                 std::cout << "\t" << *valueItr << " ";
             }
@@ -203,14 +205,14 @@ void onPut(const OCRepresentation& rep , const int eCode)
 
         std::vector< OCRepresentation > children = rep.getChildren();
 
-        for(auto oit = children.begin() ; oit != children.end() ; ++oit)
+        for (auto oit = children.begin() ; oit != children.end() ; ++oit)
         {
             attributeMap = oit->getAttributeMap();
 
-            for(auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
+            for (auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
             {
                 std::cout << "\tAttribute name: " << it->first << " value: ";
-                for(auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
+                for (auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
                 {
                     std::cout << "\t" << *valueItr << " ";
                 }
@@ -219,9 +221,9 @@ void onPut(const OCRepresentation& rep , const int eCode)
             }
         }
 
-        if(OBSERVE_TYPE_TO_USE == ObserveType::Observe)
+        if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
             std::cout << std::endl << "Observe is used." << std::endl << std::endl;
-        else if(OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
+        else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
             std::cout << std::endl << "ObserveAll is used." << std::endl << std::endl;
 
         QueryParamsMap test;
@@ -237,9 +239,9 @@ void onPut(const OCRepresentation& rep , const int eCode)
 }
 
 // callback handler on GET request
-void onGet(const HeaderOptions &headerOption , const OCRepresentation& rep , const int eCode)
+void onGet(const HeaderOptions &headerOption , const OCRepresentation &rep , const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE)
     {
         std::cout << "GET request was successful" << std::endl;
 
@@ -247,10 +249,10 @@ void onGet(const HeaderOptions &headerOption , const OCRepresentation& rep , con
 
         std::cout << "Resource URI: " << rep.getUri() << std::endl;
 
-        for(auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
+        for (auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
         {
             std::cout << "\tAttribute name: " << it->first << " value: ";
-            for(auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
+            for (auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
             {
                 std::cout << "\t" << *valueItr << " ";
             }
@@ -260,16 +262,16 @@ void onGet(const HeaderOptions &headerOption , const OCRepresentation& rep , con
 
         std::vector< OCRepresentation > children = rep.getChildren();
 
-        for(auto oit = children.begin() ; oit != children.end() ; ++oit)
+        for (auto oit = children.begin() ; oit != children.end() ; ++oit)
         {
             std::cout << "Child Resource URI: " << oit->getUri() << std::endl;
 
             attributeMap = oit->getAttributeMap();
 
-            for(auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
+            for (auto it = attributeMap.begin() ; it != attributeMap.end() ; ++it)
             {
                 std::cout << "\tAttribute name: " << it->first << " value: ";
-                for(auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
+                for (auto valueItr = it->second.begin() ; valueItr != it->second.end() ; ++valueItr)
                 {
                     std::cout << "\t" << *valueItr << " ";
                 }
@@ -287,7 +289,7 @@ void onGet(const HeaderOptions &headerOption , const OCRepresentation& rep , con
 
 void getLightRepresentation(std::shared_ptr< OCResource > resource)
 {
-    if(resource)
+    if (resource)
     {
         std::cout << "Getting Light Representation..." << std::endl;
 
@@ -304,19 +306,19 @@ void PrintUsage()
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
 }
 
-int main(int argc , char* argv[])
+int main(int argc , char *argv[])
 {
 
-    if(argc == 1)
+    if (argc == 1)
     {
         OBSERVE_TYPE_TO_USE = ObserveType::Observe;
     }
-    else if(argc == 2)
+    else if (argc == 2)
     {
         int value = atoi(argv[1]);
-        if(value == 1)
+        if (value == 1)
             OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-        else if(value == 2)
+        else if (value == 2)
             OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
         else
             OBSERVE_TYPE_TO_USE = ObserveType::Observe;
