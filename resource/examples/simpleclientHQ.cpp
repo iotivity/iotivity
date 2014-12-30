@@ -407,9 +407,8 @@ int main(int argc, char* argv[]) {
     {
         // Find all resources
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
-                connectivityType, &foundResource, OC::QualityOfService::LowQos);
+                OC_WIFI, &foundResource, OC::QualityOfService::LowQos);
 #else
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource,
                 OC::QualityOfService::LowQos);
@@ -420,9 +419,8 @@ int main(int argc, char* argv[]) {
         // These resources will have the same uniqueidentifier (yet be different objects), so that
         // we can verify/show the duplicate-checking code in foundResource(above);
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
-                connectivityType, &foundResource, OC::QualityOfService::LowQos);
+                OC_WIFI, &foundResource, OC::QualityOfService::LowQos);
 #else
         OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource,
                 OC::QualityOfService::LowQos);
