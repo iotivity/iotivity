@@ -30,6 +30,10 @@
 #include "DiscomfortIndexSensor.h"
 #include "SysTimer.h"
 
+#ifdef __ANDROID__
+#include "OCAndroid.h"
+#endif
+
 using namespace DiscomfortIndexSensorName;
 
 #define SENSOR_NAME "DiscomfortIndexSensor"

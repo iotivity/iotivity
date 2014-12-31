@@ -87,7 +87,7 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
         return ERR_INVALID_INPUT;
     }
     W5100.getIPAddress(rawIPAddr);
-    sprintf((char *)addr,"%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2], rawIPAddr[3]);
+    snprintf((char *)addr, addrLen, "%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2], rawIPAddr[3]);
 
     OC_LOG_BUFFER(INFO, MOD_NAME, addr, addrLen);
 

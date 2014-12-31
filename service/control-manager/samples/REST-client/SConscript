@@ -44,7 +44,8 @@ env1.PrependUnique(LIBS = ['restfw','boost_system','boost_regex','boost_thread',
 samples = 'REST-client'
 source_files = ['src/rest_client_test.cc']
 
-env1.Program(target = samples, source = source_files)
-i_lc = env1.Install(BUILD_DIR, samples)
+INSTALL_DIR = 	BUILD_DIR + 'service/control-manager/samples/'
+i_lc = env1.Program(target = samples, source = source_files)
+#i_lc = env1.Install(INSTALL_DIR, samples)
 Alias(samples, i_lc)
 

@@ -26,15 +26,8 @@ CXX 	 := g++
 
 ROOT_DIR	= ./
 
-# You must create the file "local.properties" on your local machine which contains any local paths, etc
-# local.properties should NOT be committed to repo
-include $(ROOT_DIR)/../csdk/local.properties
-# GTEST_DIR contains the path to Google Test libs and must be defined in local.properties
-#  Example:
-#  GTEST_DIR := /home/johndoe/utils/gtest-1.7.0
-
-# NOTE:  to run app, make sure that LD_LIBRARY_PATH env variable
-#        contains $(GTEST_DIR)/lib/.libs
+GTEST_DIR= ../../extlibs/gtest-1.7.0
+MOCKS_DIR= ../../extlibs/hippomocks-master
 
 OUT_DIR	  := $(BUILD)
 
@@ -50,11 +43,14 @@ INC_DIRS  += -I../csdk/ocrandom/include
 INC_DIRS  += -I../csdk/logger/include
 INC_DIRS  += -I../csdk/libcoap
 INC_DIRS  += -I$(GTEST_DIR)/include
+INC_DIRS  += -I$(MOCKS_DIR)/HippoMocks
+INC_DIRS  += -I$(MOCKS_DIR)/HippoMocksTest
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
+GTEST_LIBS := $(GTEST_DIR)/lib/.libs/libgtest.a $(GTEST_DIR)/lib/.libs/libgtest_main.a 
 CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
-CXX_LIBS  += $(GTEST_DIR)/lib/.libs/libgtest.a $(GTEST_DIR)/lib/.libs/libgtest_main.a
+CXX_LIBS  += $(GTEST_LIBS)
 
 CC_FLAGS.debug      := -g -O0 -g3 -Wall -ffunction-sections -fdata-sections \
                         -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
@@ -63,13 +59,26 @@ CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s \
 
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(CXX_LIBS) -lpthread
 
-all: prep_dirs tests
+all: prep_dirs $(MOCKS_DIR) unittests 
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
 
-tests: tests.cpp
+unittests: OCPlatformTest.cpp OCResourceTest.cpp ConstructResourceTest.cpp $(GTEST_LIBS)
 	$(CXX) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
+	
+$(GTEST_DIR):		
+	cd ../../extlibs && \
+	wget -q https://googletest.googlecode.com/files/gtest-1.7.0.zip && \
+	unzip gtest-1.7.0.zip
+	
+$(GTEST_LIBS): $(GTEST_DIR)		
+	cd $(GTEST_DIR) && ./configure && make		
+
+$(MOCKS_DIR):
+	cd ../../extlibs && \
+	wget -q https://github.com/dascandy/hippomocks/archive/master.zip && \
+	unzip master.zip	
 
 .PHONY: clean
 

@@ -21,6 +21,8 @@
 
 #include "SSMInterface.h"
 
+using namespace OIC;
+
 static oicapp_data *g_ad = NULL;
 
 int g_CQID = 9999;
@@ -65,7 +67,6 @@ class CQueryEngineEvent : public IQueryEngineEvent
 };
 
 CQueryEngineEvent   *g_SSMClientListener = new CQueryEngineEvent();
-SSMInterface        *g_SSMClient = new SSMInterface();
 
 static Elm_Object_Item *oicapp_append_separator(Evas_Object *genlist,
         oicapp_data *ad)
@@ -288,7 +289,7 @@ static void _btn_clicked(void *data, Evas_Object *obj, void *event_info)
         str.replace(foundLT, strLT.length(), "<");
     }
 
-    g_SSMClient->registerQuery(str, g_SSMClientListener, g_CQID);
+    RegisterQuery(str, g_SSMClientListener, g_CQID);
 
     sstream << "Query executed! cqid = " << g_CQID << std::ends;
 
@@ -427,7 +428,7 @@ static int oicapp_terminate(void *data)
     oicapp_data *ad = (oicapp_data *)data;
 
     if (g_CQID != 9999)
-        g_SSMClient->unregisterQuery(g_CQID);
+        UnregisterQuery(g_CQID);
 
     if (ad->win)
         evas_object_del(ad->win);

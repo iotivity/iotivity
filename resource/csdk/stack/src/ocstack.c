@@ -212,30 +212,32 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
         {
             request->requestComplete = 1;
         }
+
+        if(request->requestComplete)
+        {
+            OC_LOG(INFO, TAG, PCF("This Server Request is complete"));
+            result = DetermineResourceHandling (request, &resHandling, &resource);
+            if (result == OC_STACK_OK)
+            {
+                result = ProcessRequest(resHandling, resource, request);
+            }
+            else
+            {
+                result = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            OC_LOG(INFO, TAG, PCF("This Server Request is incomplete"));
+            result = OC_STACK_CONTINUE;
+        }
     }
     else
     {
         OC_LOG(INFO, TAG, PCF("This is either a repeated Server Request or blocked Server Request"));
+        result = OC_STACK_REPEATED_REQUEST;
     }
 
-    if(request->requestComplete)
-    {
-        OC_LOG(INFO, TAG, PCF("This Server Request is complete"));
-        result = DetermineResourceHandling (request, &resHandling, &resource);
-        if (result == OC_STACK_OK)
-        {
-            result = ProcessRequest(resHandling, resource, request);
-        }
-        else
-        {
-            result = OC_STACK_ERROR;
-        }
-    }
-    else
-    {
-        OC_LOG(INFO, TAG, PCF("This Server Request is incomplete"));
-        result = OC_STACK_CONTINUE;
-    }
     return result;
 }
 
@@ -733,7 +735,6 @@ OCStackResult OCProcessPresence()
     uint8_t ipAddr[4] = { 0 };
     uint16_t port = 0;
 
-    OC_LOG(INFO, TAG, PCF("Entering RequestPresence"));
     ClientCB* cbNode = NULL;
     OCDevAddr dst;
     OCClientResponse clientResponse;
@@ -825,9 +826,8 @@ exit:
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
-OCStackResult OCProcess() {
-
-    OC_LOG(INFO, TAG, PCF("Entering OCProcess"));
+OCStackResult OCProcess()
+{
     #ifdef WITH_PRESENCE
     OCProcessPresence();
     #endif
@@ -2392,6 +2392,7 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
             *resourceType = (unsigned char *) OCMalloc(strlen(leftToken)-3);
             if(!*resourceType)
             {
+                OCFree(tempURI);
                 goto exit;
             }
             strcpy((char *)*resourceType, ((const char *)&leftToken[3]));

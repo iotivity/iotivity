@@ -1,9 +1,22 @@
-/*
- * HostingInterface.cpp
- *
- *  Created on: 2014. 10. 15.
- *      Author: jyong2
- */
+//******************************************************************
+//
+// Copyright 2014 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "HostingInterface.h"
 
@@ -14,84 +27,86 @@ HostingInterface::HostingInterface()
 
 HostingInterface::~HostingInterface()
 {
-	// TODO Auto-generated destructor stub
+    // TODO Auto-generated destructor stub
 }
 
 int HostingInterface::setOnFoundHostingCandidate(
-        std::function< void(std::shared_ptr< OCResource > resource) > func)
+    std::function< void(std::shared_ptr< OCResource > resource) > func)
 {
-    if(func != NULL)
+    if (func != NULL)
     {
         try
         {
-        	ResourceManager::getInstance()->m_onFoundforHosting = func;
+            ResourceManager::getInstance()->m_onFoundforHosting = func;
         }
-        catch(exception &e)
+        catch (exception &e)
         {
             return false;
         }
     }
     else
     {
-        ResourceManager::getInstance()->m_onFoundforHosting = std::function<
-                void(std::shared_ptr< OCResource > resource) >(
-                std::bind(&ResourceManager::onFoundforHostingDefault , ResourceManager::getInstance() ,
-                        std::placeholders::_1));
+        ResourceManager::getInstance()->m_onFoundforHosting = std::function <
+                void(std::shared_ptr< OCResource > resource) > (
+                    std::bind(&ResourceManager::onFoundforHostingDefault , ResourceManager::getInstance() ,
+                              std::placeholders::_1));
     }
 
     return true;
 }
 
-int HostingInterface::setOnObserve(std::function< void(AttributeMap &inputAttMap, OCResourceHandle resourceHandle) > func)
+int HostingInterface::setOnObserve(
+    std::function< void(AttributeMap &inputAttMap, OCResourceHandle resourceHandle) > func)
 {
-    if(func != NULL)
+    if (func != NULL)
     {
         try
         {
-        	ResourceManager::getInstance()->m_onObserve = func;
+            ResourceManager::getInstance()->m_onObserve = func;
         }
-        catch(exception &e)
+        catch (exception &e)
         {
             return false;
         }
     }
     else
     {
-    	ResourceManager::getInstance()->m_onObserve = std::function<
-    	                void(AttributeMap &inputAttMap, OCResourceHandle resourceHandle) >(
-    	                std::bind(&ResourceManager::onObserveDefault , ResourceManager::getInstance() ,
-    	                        std::placeholders::_1, std::placeholders::_2));
+        ResourceManager::getInstance()->m_onObserve = std::function <
+                void(AttributeMap & inputAttMap, OCResourceHandle resourceHandle) > (
+                    std::bind(&ResourceManager::onObserveDefault , ResourceManager::getInstance() ,
+                              std::placeholders::_1, std::placeholders::_2));
     }
 
     return true;
 }
 
-int HostingInterface::setNotifyObservers(std::function< void(OCResourceHandle resourceHandle) > &func)
+int HostingInterface::setNotifyObservers(std::function< void(OCResourceHandle resourceHandle) >
+        &func)
 {
-	try
-	{
-		func = std::function< void(OCResourceHandle resourceHandle) >(
-				std::bind(&ResourceManager::notifyObservers , ResourceManager::getInstance() ,
-						std::placeholders::_1));
-	}
-	catch(exception &e)
-	{
-		return false;
-	}
+    try
+    {
+        func = std::function< void(OCResourceHandle resourceHandle) >(
+                   std::bind(&ResourceManager::notifyObservers , ResourceManager::getInstance() ,
+                             std::placeholders::_1));
+    }
+    catch (exception &e)
+    {
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 int HostingInterface::setStartHosting(
-        std::function< void(std::shared_ptr< OCResource > resource) > &func)
+    std::function< void(std::shared_ptr< OCResource > resource) > &func)
 {
     try
     {
         func = std::function< void(std::shared_ptr< OCResource > resource) >(
-                std::bind(&ResourceManager::startHosting , ResourceManager::getInstance() ,
-                        std::placeholders::_1));
+                   std::bind(&ResourceManager::startHosting , ResourceManager::getInstance() ,
+                             std::placeholders::_1));
     }
-    catch(exception &e)
+    catch (exception &e)
     {
         return false;
     }
@@ -104,11 +119,11 @@ int HostingInterface::setFindHosting(std::function< void(bool isHosting) > &func
     try
     {
         func = std::function< void(bool isHosting) >(
-        		std::bind(&ResourceManager::findNMResource ,
-        				ResourceManager::getInstance() ,
-        					std::placeholders::_1));
+                   std::bind(&ResourceManager::findNMResource ,
+                             ResourceManager::getInstance() ,
+                             std::placeholders::_1));
     }
-    catch(exception &e)
+    catch (exception &e)
     {
         return false;
     }
@@ -121,10 +136,10 @@ int HostingInterface::setAddExtraStr(std::function< void(std::string) > &func)
     try
     {
         func = std::function< void(std::string str) >(
-                std::bind(&ResourceManager::addExtraStr , ResourceManager::getInstance() ,
-                        std::placeholders::_1));
+                   std::bind(&ResourceManager::addExtraStr , ResourceManager::getInstance() ,
+                             std::placeholders::_1));
     }
-    catch(exception &e)
+    catch (exception &e)
     {
         return false;
     }

@@ -55,7 +55,6 @@
 // Private Variables
 //=============================================================================
 
-static uint8_t coapWKIpAddr[] = { 224, 0, 1, 187 };
 static coap_context_t *gCoAPCtx = NULL;
 
 //=============================================================================
@@ -256,7 +255,8 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
         }
         goto exit;
     }
-    else if(requestResult == OC_STACK_SLOW_RESOURCE)
+    else if(requestResult == OC_STACK_SLOW_RESOURCE ||
+            requestResult == OC_STACK_REPEATED_REQUEST)
     {
         if(rcvdPdu->hdr->type == COAP_MESSAGE_CON)
         {
@@ -393,7 +393,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
         OCDevAddrToIPv4Addr((OCDevAddr *) &(rcvdResponse->remote), remoteIpAddr,
                 remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
         OCDevAddrToPort((OCDevAddr *) &(rcvdResponse->remote), &remotePortNu);
-        sprintf((char *)fullUri, "coap://%d.%d.%d.%d:%d%s",
+        snprintf((char *)fullUri, sizeof(fullUri), "coap://%d.%d.%d.%d:%d%s",
                 remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
                 remotePortNu,rcvdUri);
         cbNode = GetClientCB(NULL, NULL, fullUri);
@@ -402,7 +402,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
     // Check if application subscribed for multicast presence
     if(!cbNode)
     {
-        sprintf((char *)fullUri, "%s%s", OC_MULTICAST_IP, rcvdUri);
+        snprintf((char *)fullUri, sizeof(fullUri), "%s%s", OC_MULTICAST_IP, rcvdUri);
         cbNode = GetClientCB(NULL, NULL, fullUri);
         isMulticastPresence = 1;
         isPresenceNotification = 0;
@@ -531,7 +531,7 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
                 // Check if the same nonce for a given host
                 OCMulticastNode* mcNode = NULL;
                 unsigned char senderUri[MAX_URI_LENGTH] = { 0 };
-                sprintf((char *)senderUri, "%d.%d.%d.%d:%d",
+                snprintf((char *)senderUri, sizeof(senderUri), "%d.%d.%d.%d:%d",
                     remoteIpAddr[0],remoteIpAddr[1],remoteIpAddr[2],remoteIpAddr[3],
                     remotePortNu);
                 mcNode = GetMCPresenceNode(senderUri);
@@ -676,8 +676,8 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode) {
 
     // To allow presence notification work we need to init socket gCoAPCtx->sockfd_wellknown
     // for servers as well as clients
-    OCBuildIPv4Address(coapWKIpAddr[0], coapWKIpAddr[1], coapWKIpAddr[2],
-            coapWKIpAddr[3], COAP_DEFAULT_PORT, &mcastAddr);
+    OCBuildIPv4Address(COAP_WK_IPAddr_0, COAP_WK_IPAddr_1, COAP_WK_IPAddr_2,
+            COAP_WK_IPAddr_3, COAP_DEFAULT_PORT, &mcastAddr);
     VERIFY_SUCCESS(
             coap_join_wellknown_group(gCoAPCtx,
                     (coap_address_t* )&mcastAddr), 0);
@@ -754,7 +754,7 @@ OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPTo
         OC_LOG_V(DEBUG, TAG, "secure uri %d", uri.secure);
     }
 
-    coapMsgType = OCToCoAPQoS(qos);
+    coapMsgType = OCToCoAPQoS(qos, ipAddr);
 
     // Decide method type
     switch (method) {
@@ -909,8 +909,6 @@ OCStackResult OCStopCoAP() {
  * @return 0 - success, else - TBD error
  */
 OCStackResult OCProcessCoAP() {
-
-    OC_LOG(INFO, TAG, PCF("Entering OCProcessCoAP"));
     int read = 0;
     read = coap_read(gCoAPCtx, gCoAPCtx->sockfd);
     if(read > 0) {

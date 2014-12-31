@@ -13,16 +13,19 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-sample_env.AppendUnique(CPPPATH = ['../../plugin-manager/src/',
-				'../../lib/cpluff/libcpluff/'])
+sample_env.AppendUnique(CPPPATH = [
+				'../../plugin-manager/src/',
+				'../../lib/cpluff/libcpluff/',
+				'../../lib/rapidxml'])
 if target_os not in ['windows', 'winrt']:
 	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread', '-std=c++0x'])
 
+sample_env.AppendUnique(LIBS = ['pthread'])
 sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'ppm', 'pmimpl', 'dl'])
 ######################################################################
 # Source files and Targets
 ######################################################################
-fanclient = sample_env.Program('fanclient', 'fan-control/fanclient.cpp')
+mqttclient = sample_env.Program('mqtt/mqttclient', 'mqtt/mqttclient.cpp')
 
-Alias('fanclient', fanclient)
-env.AppendTarget('fanclient')
+Alias('mqttclient', mqttclient)
+env.AppendTarget('mqttclient')

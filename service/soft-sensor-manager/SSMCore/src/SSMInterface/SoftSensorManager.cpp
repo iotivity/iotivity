@@ -119,8 +119,9 @@ SSMRESULT CSoftSensorManager::initializeCore(IN std::string xmlDescription)
         }
     }
 
-    SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_IContextRepository, (IBase **)&m_pContextRepository));
     SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ISensingEngine, (IBase **)&m_pSensingEngine));
+    SSM_CLEANUP_ASSERT(m_pSensingEngine->queryInterface(OID_IContextRepository,
+                       (IBase **)&m_pContextRepository));
     SSM_CLEANUP_ASSERT(m_pContextRepository->initRepository(name, type, pathSoftSensors,
                        pathDescription));
 
@@ -137,14 +138,22 @@ CLEANUP:
 
 SSMRESULT CSoftSensorManager::startCore()
 {
-    //m_pSharingLayer->Start();
-    return SSM_S_OK;
+    SSMRESULT res = SSM_E_FAIL;
+
+    SSM_CLEANUP_ASSERT(m_pContextRepository->startResourceFinder());
+
+CLEANUP:
+    return res;
 }
 
 SSMRESULT CSoftSensorManager::stopCore()
 {
-    //m_pSharingLayer->Stop();
-    return SSM_S_OK;
+    SSMRESULT res = SSM_E_FAIL;
+
+    SSM_CLEANUP_ASSERT(m_pContextRepository->stopResourceFinder());
+
+CLEANUP:
+    return res;
 }
 
 SSMRESULT CSoftSensorManager::terminateCore(bool factoryResetFlag)

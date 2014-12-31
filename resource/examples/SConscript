@@ -36,7 +36,6 @@ examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	examples_env.AppendUnique(LIBS = ['gnustl_static'])
-	examples_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 
 	if not env.get('RELEASE'):
 		examples_env.AppendUnique(LIBS = ['log'])
@@ -69,6 +68,3 @@ Alias("examples", [simpleserver, simpleserverHQ, simpleclient, simpleclientHQ,
 		garageclient, devicediscoveryserver, devicediscoveryclient])
 env.AppendTarget('examples')
 
-#ios doesn't allow run application from terminal, so won't build these examples
-if target_os != 'ios':
-	SConscript('ocicuc/SConscript')

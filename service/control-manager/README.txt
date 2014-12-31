@@ -93,7 +93,7 @@ output(Release):
 /control-manager/output/linux/x86/release/REST-client
 
 
-RESTFramework dependencies:
+RESTFramework dependencies: ( Currently DISABLED from build )
 ==========================
 
 Dependency files for librestfw.so:
@@ -112,3 +112,18 @@ Building Control Manager for Android
 Make sure that you have built oic-resource/resource using scons for Android.
 
 control-manager$ scons TARGET_OS=android TARGET_ARCH=armeabi ANDROID_NDK={Android NDK Path}
+
+Building samples for Android 
+====================================
+
+Make sure that you have built /resource using scons for Android.
+Make sure that you have built /service/control-manager/controlmanager using scons for Android.
+
+Steps to follow:
+
+Step 1 : Import android sample project in eclipse( Path = /service/control-manager/samples/android-controller-client/Controller-Client )
+Step 2 : Create CMJNI.jar using eclipse project from /service/control-manager/controlmanager/jni/build and add CMJNI.jar to your android sample project to /Controller-Client/libs
+Step 3 : Add all dependent Libraries (libcmjni.so,libcoap.so,liboc_logger_core.so,liboc_logger.so,liboc.so,liboctbstack.so) from 
+	    '/out/<target_os>/<target_arch>/release/'  to android sample /Controller-Client/libs/armeabi
+Step 4 : Add libgnustl_shared.so from android ndk path <NDK_PATH>/sources/cxx-stl/gnu-libstdc++/<version>/libs/<target_arch> 
+

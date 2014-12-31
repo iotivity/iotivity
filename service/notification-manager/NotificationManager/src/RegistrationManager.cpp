@@ -33,17 +33,17 @@ RegistrationManager::~RegistrationManager()
 
 RegistrationManager *RegistrationManager::getInstance()
 {
-	if(!s_instance)
-	{
-		s_mutexForCreation.lock();
-		if(s_instance)
-		{
-			s_instance = new RegistrationManager();
-		}
-		s_mutexForCreation.unlock();
-	}
+    if (!s_instance)
+    {
+        s_mutexForCreation.lock();
+        if (s_instance)
+        {
+            s_instance = new RegistrationManager();
+        }
+        s_mutexForCreation.unlock();
+    }
 
-	return s_instance;
+    return s_instance;
 }
 
 int RegistrationManager::addResource()
@@ -72,17 +72,17 @@ bool RegistrationManager::registerNMResource(VirtualRepresentation &resourceObje
 
     OCStackResult result;
     result = registerResource(resourceHandle , uri , type ,
-                interface ,
-                std::function<
-                        OCEntityHandlerResult(const std::shared_ptr< OCResourceRequest > request ,
-                                const std::shared_ptr< OCResourceResponse > response) >(
-                        std::bind(&VirtualRepresentation::entityHandler , resourceObject ,
-                        		std::placeholders::_1 , std::placeholders::_2)) ,
-                resourceObject.getResourceProperty());
+                              interface ,
+                              std::function <
+                              OCEntityHandlerResult(const std::shared_ptr< OCResourceRequest > request ,
+                                      const std::shared_ptr< OCResourceResponse > response) > (
+                                  std::bind(&VirtualRepresentation::entityHandler , resourceObject ,
+                                            std::placeholders::_1 , std::placeholders::_2)) ,
+                              resourceObject.getResourceProperty());
 
     resourceObject.setResourceHandle(resourceHandle);
 
-    if(OC_STACK_OK != result)
+    if (OC_STACK_OK != result)
     {
         return false;
     }
@@ -90,13 +90,13 @@ bool RegistrationManager::registerNMResource(VirtualRepresentation &resourceObje
     {
         QueryParamsMap queryParmaMap;
         resource->observe(ObserveType::Observe , queryParmaMap ,
-                std::function<
-                        void(const HeaderOptions headerOption,
-                        		const OCRepresentation& rep , const int& eCode ,
-                                const int& sequenceNumber) >(
-                        std::bind(&VirtualRepresentation::onObserve , resourceObject ,
-                                std::placeholders::_1 , std::placeholders::_2 ,
-                                std::placeholders::_3 , std::placeholders::_4)));
+                          std::function <
+                          void(const HeaderOptions headerOption,
+                               const OCRepresentation & rep , const int &eCode ,
+                               const int &sequenceNumber) > (
+                              std::bind(&VirtualRepresentation::onObserve , resourceObject ,
+                                        std::placeholders::_1 , std::placeholders::_2 ,
+                                        std::placeholders::_3 , std::placeholders::_4)));
     }
 
     return true;

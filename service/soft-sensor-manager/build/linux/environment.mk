@@ -9,7 +9,7 @@ IOT_CSDK_RELEASE=${IOT_BASE}/csdk/linux/release
 IOT_LOG_DIR=${IOT_BASE}/oc_logger
 IOT_LIB=liboc.a
 IOT_CSDK_LIB=liboctbstack.a
-IOT_LOG_LIB=liboc_logger.a
+IOT_LOG_LIB=oc_logger.a
 
 # service folder path.
 FD_SSM=${ROOT_DIR}/service/soft-sensor-manager

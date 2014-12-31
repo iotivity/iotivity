@@ -1,19 +1,49 @@
-== How to build Iotivity projects ==
+== Quick guide: build and run IoTivity projects on Ubuntu ==
 
-Iotivity includes a series of projects. You can find all these projects here:
-    https://oic-review.01.org/gerrit/#/admin/projects/
+1. Build
+	Go to the top directory of 'iotivity' project(Note: should always run 'scons'
+command in this directory)
 
-You can build Iotivity project on Linux / Windows / MAC OSX for various OS(
+    Install external libraries:
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev
+
+    Build release binaries:
+      $ scons
+(Note: C++ sdk requires cereal. Please follow the instruction in the build
+message to install cereal)
+
+    Build debug binaries:
+      $scons RELEASE=false
+
+    Help:
+      $ scons -h
+
+    Clear:
+      $ scons -c
+
+2. Run the samples
+      $ export LD_LIBRARY_PATH=<iotivity>/out/linux/x86_64/release
+      Run the c++ samples in <iotivity>/out/linux/x86_64/release/resource/examples
+      Run the c samples in <iotivity>/out/linux/x86_64/release/resource/csdk/stack/samples/linux/SimpleClientServer
+('<iotivity>' is the path to 'iotivity' project. If your device is x86, arm,
+or arm64, please change 'x86_64' to the proper arch)
+
+== How to build IoTivity projects ==
+
+IoTivity includes a series of projects. You can find all these projects here:
+    https://gerrit.iotivity.org/gerrit/#/admin/projects/
+
+You can build IoTivity project on Linux / Windows / MAC OSX for various OS(
 Linux, Tizen, Android, Arduino, Windows, MAC OSX, IOS ...).
 The output of the build is in:
-  <top directory of the project>/out/<target_os>/<target_arch>/<build version>/
+  <top directory of the project>/out/<target_os>/<target_arch>/<build_type>/
 e.g.
 	oic-resource/out/android/armeabi-v7a/release/.
 
-This document takes oic-resource project as example, the way to build other
+This document takes 'iotivity' project as example, the way to build other
 projects is almost the same.
 
-=== Iotivity project build tool scons ===
+=== IoTivity project build tool scons ===
 
 Scons is a cross-platform build tool, its usage is quite similar to GNU make.
 To build a project, you just require to run following command at the directory
@@ -45,7 +75,7 @@ Android:
 To build for Android, Andorid NDK and SDK are required.
   Android NDK: http://developer.android.com/tools/sdk/ndk/index.html
   Android SDK: http://developer.android.com/sdk/index.html
-(Note: as in some Iotivity projects, C++11 features are used, recommend Android
+(Note: as in some IoTivity projects, C++11 features are used, recommend Android
  NDK >= r10, according to our test result r10c is the best one currently)
 
 Arduino:
@@ -79,7 +109,7 @@ guide you to do that.)
 * 3. External libraries
 For Android and IOS build, most of the external libraries are provided as
 binary in oic-utilities project (https://oic-review.01.org/gerrit/oic-utilities).
-Please download it in the same directory as other Iotivity projects. If it's
+Please download it in the same directory as other IoTivity projects. If it's
 in different directory, an additional option (OIC_UITLS) will be required. The
 build command should be:
       $ scons OIC_UITLS=<path to oic-utilities> [other options] [target]
@@ -90,42 +120,57 @@ don't need to add this option in command line each time.)
       $ export OIC_UITLS=<path to oic-utilities project>
 
 
-=== Build Iotivity project on Linux(Ubuntu) ===
+=== Build IoTivity project on Linux(Ubuntu) ===
 
-1. Build Iotivity project for Linux
+Generally, it's required to specify the target OS and target ARCH, that's to say
+tell Scons which OS and which ARCH you'd like build this project for. By default,
+the target OS and ARCH is the same as the host.
+
+Some more options may be required, please care the 'error' notification when build.
+For help about how to set an option, please run:
+	$ scons TARGET_OS=xxx TARGET_ARCH=yyy [XXX=zzz ...] -h
+
+1. Build IoTivity project for Linux
       $ cd <top directory of the project>
-      $ sudo apt-get install libboost-dev libboost-program-options-dev
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev
       $ scons
 
-2. Build Iotivity project for Android
+2. Build IoTivity project for Android
       $ cd <top directory of the project>
       $ scons TARGET_OS=android TARGET_ARCH=xxx
 (xxx can be x86, armeabi, armeabi-v7a, armeabi-v7a-hard. To see all of its
-allowed value, please execute command 'scons TARGET_OS=android -Q -h'.
+allowed value, please execute command 'scons TARGET_OS=android -Q -h')
 
 Note: Currently as x86_64/arm64_v8a external library binaries aren't provided,
 you may meet link problem if build executable binary which depends on external
 library for x86_64/arm64_v8a.
 
-3. Build Iotivity project for Arduino
+3. Build IoTivity project for Arduino
       $ cd <top directory of the project>
       $ scons TARGET_OS=arduino TARGET_ARCH=xxx BOARD=yyy
 (xxx can be avr, arm; yyy is the name of the board, to get its allowed value
 run: scons TARGET_OS=arduino TARGET_ARCH=xxx -h. You may see a option 'CPU' in
 the output of above command line, that's due to some boards have different
-processor, to specify the processor, add 'CPU=zzz' in the command line. If no
+processors, to specify the processor, add 'CPU=zzz' in the command line. If no
 'CPU' option exists, that means the board only support one kind of processor,
 it's unnecessary to specify it)
 
+4. Build Iotivity project for Tizen
+      $ cd <top directory of the project>
+      $ gbs build -A xxx --packaging-dir tools/tizen/
+(xxx can be i586 or armv7l, we provide the spec file required by gbs tool at
+toools/tizen directory. gbs is default build tool for Tizen platfrom, we can
+refer the following wiki to setup Tizen development environment:
+https://source.tizen.org/documentation/developer-guide/getting-started-guide)
 
-=== Build Iotivity project on Windows ===
+=== Build IoTivity project on Windows ===
 
-1. Build Iotivity project for Android(It's the same as on Ubuntu)
+1. Build IoTivity project for Android(It's the same as on Ubuntu)
       $ cd <top directory of the project>
       $ scons TARGET_OS=android TARGET_ARCH=xxx
 (xxx can be x86, armeabi, armeabi-v7a, armeabi-v7a-hard ...)
 
-2. Build Iotivity project for Arduino(It's the same as on Ubuntu)
+2. Build IoTivity project for Arduino(It's the same as on Ubuntu)
       $ cd <top directory of the project>
       $ scons TARGET_OS=arduino TARGET_ARCH=xxx BOARD=yyy
 (xxx can be avr, arm; yyy is the name of the board, to get its allowed value
@@ -136,7 +181,7 @@ processor, to specify the processor, add 'CPU=zzz' in the command line. If no
 it's unnecessary to specify it)
 
 
-Note: Currently most Iotivity project doesn't support Windows, so you can't set
+Note: Currently most IoTivity project doesn't support Windows, so you can't set
 TARGET_OS to 'windows' except the project support Windows.
 
 That's to say if the project doesn't support Windows, run:
@@ -146,19 +191,19 @@ or run on Windows
 may always fail.
 
 
-=== Build Iotivity project on Mac OSX ===
+=== Build IoTivity project on Mac OSX ===
 
-1. Build Iotivity project for Mac OSX
+1. Build IoTivity project for Mac OSX
       $ cd <top directory of the project>
       $ scons SYS_VERSION=yyy
 (yyy is the OSX version, e.g. 10.9)
 
-2. Build Iotivity project for Android(It's the same as on Ubuntu)
+2. Build IoTivity project for Android(It's the same as on Ubuntu)
       $ cd <top directory of the project>
       $ scons TARGET_OS=android TARGET_ARCH=xxx
 (xxx can be x86, armeabi, armeabi-v7a, armeabi-v7a-hard)
 
-3. Build Iotivity project for IOS
+3. Build IoTivity project for IOS
       $ cd <top directory of the project>
       $ scons TARGET_OS=ios TARGET_ARCH=xxx SYS_VERSION=yyy
 (xxx can be i386, x86_64, armv7, armv7s, arm64, yyy is IOS version, e.g. 7.0)
@@ -172,16 +217,5 @@ To build:
 To clean:
      $ auto_build.sh -c
 
-2) Last sync and test with commit e9403ce6d4d7a1a0ac8d12c5acc876af7f7a8f76
-If you meet build error with newest code, it may due to the scripts are not up
-to date. Please try commit 5f16c38a5380e4b5c0d82e2cfea4af5fdc30c9ac or send mail
-to <OIC-OSD@list.01.org>.
-
-3) The build scripts for services have been provided. As the services code is
-out of date, it must the sync with newest resource code, otherwise, it can't
-pass the build, currently, the build scripts for services aren't enabled. Please
-remove the '#' at line 31 in 'SConstruct' file to enable it after the code is
-updated.
-
-4) For Arduino build, the Time library should >=1.3. The old can only be built
+2) For Arduino build, the Time library should >=1.3. The old can only be built
 with Arduino IDE 1.0.x

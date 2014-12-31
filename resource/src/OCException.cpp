@@ -66,6 +66,10 @@ std::string OC::OCException::reason(const OCStackResult sr)
 #ifdef WITH_PRESENCE
         case OC_STACK_PRESENCE_STOPPED:
             return OC::Exception::PRESENCE_STOPPED;
+        case OC_STACK_PRESENCE_TIMEOUT:
+            return OC::Exception::PRESENCE_TIMEOUT;
+        case OC_STACK_PRESENCE_DO_NOT_HANDLE:
+            return OC::Exception::PRESENCE_NOT_HANDLED;
 #endif
         case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
             return OC::Exception::VIRTUAL_DO_NOT_HANDLE;

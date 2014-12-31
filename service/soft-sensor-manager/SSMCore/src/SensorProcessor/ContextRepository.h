@@ -131,6 +131,7 @@ class CContextRepository :
 
         SSMRESULT registerResourceFinderEvent(IN IResourceEvent *pResourceEvent);
         SSMRESULT startResourceFinder();
+        SSMRESULT stopResourceFinder();
         SSMRESULT onResourceFound(IN ISSMResource *pSensor);
         SSMRESULT onResourceLost(IN ISSMResource *pSensor);
 
@@ -147,6 +148,6 @@ class CContextRepository :
         SSMRESULT loadXMLFromFile(IN std::string descriptionFilePath,
                                   IN std::vector<DictionaryData> *dataList);
         SSMRESULT loadXMLFromString(IN char *xmlData, IN std::vector<DictionaryData> *dataList);
-        SSMRESULT GetCurrentPath(OUT std::string *path);
+        SSMRESULT getCurrentPath(OUT std::string *path);
 };
 #endif

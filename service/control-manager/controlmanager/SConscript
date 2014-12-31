@@ -8,7 +8,7 @@ env1.AppendUnique(CXXFLAGS = "-std=c++0x")
 CM_SRC_DIR             = './'
 OPENSOURCE_DIR      =  SRC_TOP_DIR  + 'opensource/'
 OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
-OIC_UTILS_DIR       =  SRC_TOP_DIR  + '../../../oic-utilities/'
+#OIC_UTILS_DIR       =  SRC_TOP_DIR  + '../../../oic-utilities/'
 
 env1.PrependUnique(CPPPATH = [
 			CM_SRC_DIR + 'platform/include',
@@ -35,8 +35,9 @@ env1.PrependUnique(CPPPATH = [
 		])
 		
 if TARGET_OS == 'android':
-	env1.AppendUnique(CPPPATH = [OIC_UTILS_DIR + 'android/boost/include' , ])
-	env1.PrependUnique(LIBPATH = [OIC_UTILS_DIR + 'android/boost/libs/' + TARGET_ARCH , OIC_RESOURCE_DIR + 'csdk/android/release' , ])
+	Import('OIC_UTILS')
+	env1.AppendUnique(CPPPATH = [OIC_UTILS + '/android/boost/include' , ])
+	env1.PrependUnique(LIBPATH = [OIC_UTILS + '/android/boost/libs/' + TARGET_ARCH , OIC_RESOURCE_DIR + 'csdk/android/release' , ])
 else:
 	env1.AppendUnique(CPPPATH = ['/usr/local/boost/include' , ])
 	env1.PrependUnique(LIBPATH = ['/usr/local/boost/lib/', OIC_RESOURCE_DIR + 'csdk/linux/release', ])

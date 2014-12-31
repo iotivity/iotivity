@@ -83,10 +83,8 @@ SSMRESULT CQueryEngine::processQueryResult(IN int userTriggerId,
     }
 
     m_contextQueries[userTriggerId]->check_result_model();
-    m_contextQueries[userTriggerId]->return_modelID(&modelID);
-
-
     m_contextQueries[userTriggerId]->return_contextName(&contextName);
+    m_contextQueries[userTriggerId]->return_modelID(&modelID);
 
     for (unsigned int i = 0; i < modelID.size(); i++)
     {
@@ -289,12 +287,14 @@ SSMRESULT CQueryEngine::executeContextQuery(IN std::string contextQuery, OUT int
     CCQLParser              cqlParser;
     IContextModel::ActivationType   queryCommandType;
 
-    cqlParser.parse(contextQuery, &token);
+    if (!cqlParser.parse(contextQuery, &token))
+    {
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+    }
 
     if (!cqlParser.check_grammer(&token))
     {
-        res = SSM_E_FAIL;
-        goto CLEANUP;
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
     }
 
     clsContextQuery = new CContextQuery();

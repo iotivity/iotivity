@@ -142,6 +142,7 @@ SSMRESULT CConditionedQuery::registerConditionedModel(IN IConditionedModel *pCon
 
     if (hasAllConditionedModels() == true && m_reservedForActivate)
     {
+        m_reservedForActivate = false;
         SSM_CLEANUP_ASSERT(activateTriggers(m_userTriggerId));
     }
 
@@ -210,6 +211,11 @@ SSMRESULT CConditionedQuery::deactivateTriggers()
                 break;
         }
         SAFE_RELEASE(pBaseContextModel);
+    }
+
+    if (m_reservedForActivate == true)
+    {
+        res = SSM_S_OK;
     }
 
 CLEANUP:

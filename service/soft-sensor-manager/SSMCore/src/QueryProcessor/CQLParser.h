@@ -73,12 +73,12 @@ class CCQLParser
         *
         * @param [in] std::string input - Entered ContetxQuery
         * @param [out] Token* root - parsed result
-        * @return none
+        * @return bool
         * @warning
         * @exception
         * @see
         */
-        void parse(IN std::string input, OUT Token *root);
+        bool parse(IN std::string input, OUT Token *root);
 
         /**
         * @fn tolower
@@ -153,12 +153,12 @@ class CCQLParser
         * @param [in] bool flag - flag to distinguish token
         * @param [in] std::string arg1 - next token, default = ""
         * @param [in] std::string arg2 - next two token, default = ""
-        * @return none
+        * @return bool
         * @warning
         * @exception
         * @see
         */
-        void split(IN std::string input, IN Token *root, IN bool flag, IN std::string arg1 = "",
+        bool split(IN std::string input, IN Token *root, IN bool flag, IN std::string arg1 = "",
                    IN std::string arg2 = "");
 
         /**

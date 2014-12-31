@@ -96,7 +96,7 @@ namespace OC
     {
         if(clientResponse->resJSONPayload == nullptr || clientResponse->resJSONPayload[0] == '\0')
         {
-            throw OCException(OC::Exception::STR_NULL_RESPONSE, OC_STACK_ERROR);
+            return OCRepresentation();
         }
 
         MessageContainer oc;
@@ -105,7 +105,7 @@ namespace OC
         std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
         if(it == oc.representations().end())
         {
-            throw OCException(OC::Exception::INVALID_REPRESENTATION, OC_STACK_ERROR);
+            return OCRepresentation();
         }
 
         // first one is considered the root, everything else is considered a child of this one.
@@ -551,7 +551,6 @@ namespace OC
         OCRepresentation attrs;
         HeaderOptions serverHeaderOptions;
         uint32_t sequenceNumber = clientResponse->sequenceNumber;
-
         if(clientResponse->result == OC_STACK_OK)
         {
             parseServerHeaderOptions(clientResponse, serverHeaderOptions);
@@ -560,6 +559,10 @@ namespace OC
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     clientResponse->result, sequenceNumber);
         exec.detach();
+        if(sequenceNumber == OC_OBSERVE_DEREGISTER)
+        {
+            return OC_STACK_DELETE_TRANSACTION;
+        }
         return OC_STACK_KEEP_TRANSACTION;
     }
 

@@ -57,17 +57,12 @@ CLEANUP:
 IQueryEngine                        *g_pQueryEngineInstance = NULL;
 SSMCoreEventReceiver                *g_pEventReceiver = NULL;
 
-SSMInterface::SSMInterface()
+SSMRESULT OIC::InitializeSSM(std::string xmlDescription)
 {
-    std::string xmlDescription = "<SSMCore>"
-                                 "<Device>"
-                                 "<UDN>abcde123-31f8-11b4-a222-08002b34c003</UDN>"
-                                 "<Name>MyPC</Name>"
-                                 "<Type>PC</Type>"
-                                 "</Device>"
-                                 "</SSMCore>";
-
     SSMRESULT res = SSM_E_FAIL;
+
+    if (g_pQueryEngineInstance != NULL)
+        SSM_CLEANUP_ASSERT(SSM_E_INITIALIZED);
 
     g_pEventReceiver = new SSMCoreEventReceiver();
     SSM_CLEANUP_NULL_ASSERT(g_pEventReceiver);
@@ -75,13 +70,22 @@ SSMInterface::SSMInterface()
     SSM_CLEANUP_ASSERT(StartSSMCore());
     SSM_CLEANUP_ASSERT(CreateQueryEngine(&g_pQueryEngineInstance));
     SSM_CLEANUP_ASSERT(g_pQueryEngineInstance->registerQueryEvent(g_pEventReceiver));
+
 CLEANUP:
-    ;
+    if (res != SSM_S_OK)
+    {
+        SAFE_DELETE(g_pEventReceiver);
+    }
+
+    return res;
 }
 
-SSMInterface::~SSMInterface()
+SSMRESULT OIC::TerminateSSM()
 {
     SSMRESULT res = SSM_E_FAIL;
+
+    if (g_pQueryEngineInstance == NULL)
+        SSM_CLEANUP_ASSERT(SSM_E_NOTINIT);
 
     SSM_CLEANUP_ASSERT(g_pQueryEngineInstance->unregisterQueryEvent(g_pEventReceiver));
     ReleaseQueryEngine(g_pQueryEngineInstance);
@@ -91,31 +95,40 @@ SSMInterface::~SSMInterface()
 
 CLEANUP:
     SAFE_DELETE(g_pEventReceiver);
+    return res;
 }
 
-SSMRESULT SSMInterface::registerQuery(IN std::string queryString, IN IQueryEngineEvent *listener,
-                                      IN int &cqid)
+SSMRESULT OIC::RegisterQuery(IN std::string queryString, IN IQueryEngineEvent *listener,
+                             IN int &cqid)
 {
     SSMRESULT res = SSM_E_FAIL;
+
+    if (g_pQueryEngineInstance == NULL)
+        SSM_CLEANUP_ASSERT(SSM_E_NOTINIT);
 
     g_pEventReceiver->lockListener();
     SSM_CLEANUP_ASSERT(g_pQueryEngineInstance->executeContextQuery(queryString, &cqid));
     g_pEventReceiver->addListener(cqid, listener);
 
 CLEANUP:
-    g_pEventReceiver->unlockListener();
+    if (g_pEventReceiver != NULL)
+        g_pEventReceiver->unlockListener();
     return res;
 }
 
-SSMRESULT SSMInterface::unregisterQuery(IN int cqid)
+SSMRESULT OIC::UnregisterQuery(IN int cqid)
 {
     SSMRESULT res = SSM_E_FAIL;
+
+    if (g_pQueryEngineInstance == NULL)
+        SSM_CLEANUP_ASSERT(SSM_E_NOTINIT);
 
     g_pEventReceiver->lockListener();
     SSM_CLEANUP_ASSERT(g_pQueryEngineInstance->killContextQuery(cqid));
     g_pEventReceiver->removeListener(cqid);
 
 CLEANUP:
-    g_pEventReceiver->unlockListener();
+    if (g_pEventReceiver != NULL)
+        g_pEventReceiver->unlockListener();
     return res;
 }

@@ -27,9 +27,8 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	oclib_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger', 'boost_thread-gcc-mt-1_49', 'gnustl_static', 'log'])
+	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger', 'boost_thread', 'gnustl_static', 'log', 'compatibility'])
 
 if target_os in ['darwin', 'ios']:
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
@@ -49,5 +48,6 @@ oclib_src = [
 		'InProcClientWrapper.cpp'
 	]
 
-oclib = oclib_env.SharedLibrary('oc', oclib_src)
-oclib_env.InstallTarget(oclib, 'liboc')
+shared_oclib = oclib_env.SharedLibrary('oc', oclib_src)
+static_oclib = oclib_env.StaticLibrary('oc', oclib_src)
+oclib_env.InstallTarget([shared_oclib, static_oclib], 'liboc')

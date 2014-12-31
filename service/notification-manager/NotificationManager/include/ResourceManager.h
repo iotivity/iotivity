@@ -33,44 +33,44 @@ class VirtualRepresentation;
 class ResourceManager
 {
 
-private:
-    ResourceManager();
-    ~ResourceManager();
+    private:
+        ResourceManager();
+        ~ResourceManager();
 
-    static ResourceManager *s_instance;
-    static mutex s_mutexForCreation;
-    static std::list< VirtualRepresentation > s_resourceList;
-    static std::string s_extraStr;
+        static ResourceManager *s_instance;
+        static mutex s_mutexForCreation;
+        static std::list< VirtualRepresentation > s_resourceList;
+        static std::string s_extraStr;
 
-    void foundResourceforhosting(std::shared_ptr< OCResource > resource);
+        void foundResourceforhosting(std::shared_ptr< OCResource > resource);
 
-    void checkResourceDBPolicy();
-    void saveResourceDB();
+        void checkResourceDBPolicy();
+        void saveResourceDB();
 
-public:
+    public:
 
-	std::function< void(std::shared_ptr< OCResource > resource) > m_onFoundforHosting;
-	std::function< void(AttributeMap &inputAttMap, OCResourceHandle resourceHandle) > m_onObserve;
-	std::function< void(OCResourceHandle resourceHandle) > m_notify;
+        std::function< void(std::shared_ptr< OCResource > resource) > m_onFoundforHosting;
+        std::function< void(AttributeMap &inputAttMap, OCResourceHandle resourceHandle) > m_onObserve;
+        std::function< void(OCResourceHandle resourceHandle) > m_notify;
 
-    static ResourceManager *getInstance();
+        static ResourceManager *getInstance();
 
-    void findNMResource(bool isHosting);
+        void findNMResource(bool isHosting);
 
-    void onFoundforHostingDefault(std::shared_ptr< OCResource > resource);
-    void onObserveDefault(AttributeMap &inputAttMap, OCResourceHandle resourceHandle);
-    void notifyObserversDefault(OCResourceHandle resourceHandle);
+        void onFoundforHostingDefault(std::shared_ptr< OCResource > resource);
+        void onObserveDefault(AttributeMap &inputAttMap, OCResourceHandle resourceHandle);
+        void notifyObserversDefault(OCResourceHandle resourceHandle);
 
-    void startHosting(std::shared_ptr< OCResource > resource);
-    void notifyObservers(OCResourceHandle resourceHandle);
+        void startHosting(std::shared_ptr< OCResource > resource);
+        void notifyObservers(OCResourceHandle resourceHandle);
 
-    VirtualRepresentation findVirtualRepresentation(std::string uri);
-    AttributeMap copyAttributeMap(AttributeMap &inputAttMap);
-    bool isEmptyAttributeMap(AttributeMap &inputAttMap);
-    void printAttributeMap(AttributeMap &inputAttMap);
+        VirtualRepresentation findVirtualRepresentation(std::string uri);
+        AttributeMap copyAttributeMap(AttributeMap &inputAttMap);
+        bool isEmptyAttributeMap(AttributeMap &inputAttMap);
+        void printAttributeMap(AttributeMap &inputAttMap);
 
-    void addExtraStr(std::string str);
-    std::string getExtraStr();
+        void addExtraStr(std::string str);
+        std::string getExtraStr();
 };
 
 #endif /* RESOURCEMANAGER_H_ */

@@ -25,6 +25,6 @@ linux_sample_env.AppendUnique(LIBS = ['pthread'])
 ######################################################################
 #build sampleapp
 ######################################################################
-thsensorapp1 = linux_sample_env.Program('THSensorApp', 'src/ThingResourceServer1.cpp')
+thsensorapp1 = linux_sample_env.Program('THSensorApp1', 'src/ThingResourceServer1.cpp')
 Alias("thsensorapp1_sample", thsensorapp1)
 env.AppendTarget('thsensorapp1_sample')

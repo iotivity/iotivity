@@ -325,6 +325,10 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                     pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
                     pResponse->setNewResourceUri(rep_post.getValue<std::string>("createduri"));
                 }
+                else
+                {
+                    pResponse->setResponseResult(OC_EH_OK);
+                }
 
                 if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                 {

@@ -1,0 +1,34 @@
+##
+# linux sample app  build script
+##
+
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+linux_sample_env = lib_env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+linux_sample_env.AppendUnique(CPPPATH = ['include'])
+linux_sample_env.AppendUnique(CPPPATH = ['../../../sdk/inc'])
+linux_sample_env.AppendUnique(CPPPATH = ['../../../sdk/src'])
+linux_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+linux_sample_env.AppendUnique(CPPDEFINES = ['LINUX'])
+linux_sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+linux_sample_env.AppendUnique(LIBS = ['libTGMSDKLibrary', 'oc', 'octbstack', 'libcoap', 'liboc_logger', 'dl', 'pthread'])
+
+######################################################################
+#build sampleapp
+######################################################################
+conserver = linux_sample_env.Program('con-server', ['ConfigurationCollection.cpp', 'DiagnosticsCollection.cpp', 'FactorySetCollection.cpp', 'con-server.cpp'])
+conclient = linux_sample_env.Program('con-client', 'con-client.cpp')
+bootstrapserver = linux_sample_env.Program('bootstrapserver', 'bootstrapserver.cpp')
+Alias("ConServerApp", conserver)
+Alias("ConCleintApp", conclient)
+Alias("BootstrapServerApp", bootstrapserver)
+env.AppendTarget('ConServerApp')
+env.AppendTarget('ConClientApp')
+env.AppendTarget('BootstrapServerApp')

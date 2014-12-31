@@ -38,6 +38,8 @@ The Protocol Plug-in directory includes following sub directories;
 /build		Directory for Building and Binary Release
 
 
+If you build by scons skip 2,3.
+
 2. Compiling C-Pluff library 
 Before building Protocol-Plugin Manager, C-Pluff library should be compiled as follows.
 
@@ -60,18 +62,19 @@ NOTE: To build plugins in 64-bit Ubuntu Linux, OCLib.a and libcoap.a library sho
 4. Using Plugins 
 This version of protocol plug-in source code has following functionality.
 
-1) provides plug-in manager which can start and stop plug-in library.
-2) provides plug-in library which can communicate with MQTT protocol Fan and Light.
-3) provides OIC Sample Client which can get info about Fan and Light with configuration file(pluginmanager.xml).
-   before starting sample app need as below command. 
-   $export LD_LIBRARY_PATH={Top_Dir}/out/linux/x86/release/:$LD_LIBRARY_PATH
+1) Provides plug-in manager which can start and stop plug-in library.
+2) Provides plug-in library which can communicate with MQTT protocol Fan and Light.
+3) Locate shared plug-in library and XML file in a specific folder.
 
 So, to test a plug-in, follow below steps.
 
-1) Locate shared plug-in library and XML file in a specific folder.
-2) Register the plug-in with directory path input from plug-in manager sample.
-3) Start the plug-in from plug-in manager sample.
-4) Run OIC sample client.
+1) Copy libpmimple.so from {Top_Dir}/out/linux/x86/release to sample-app folder.
+2) Provides OIC Sample Client which can get info about Fan and Light with configuration file(pluginmanager.xml).
+3) Copy the pluginmanager.xml from ~/service/protocol-plugin/sample-app/linux/mqtt/ to sample-app folder.
+4) Modifty the pluginmanager.xml 
+5) Before starting sample app need as below command. 
+   $export LD_LIBRARY_PATH={Top_Dir}/out/linux/x86/release/:$LD_LIBRARY_PATH
+6) Start the plug-in from plug-in manager sample.
    ex)~service/protocol-plugin/sample-app/linux/mqtt$./mqttclient
-  (mqtt broker is already installed in the local system.)
+   (Need mqtt broker working in the local system(127.0.0.1) for test.)
 

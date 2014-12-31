@@ -32,24 +32,24 @@ class VirtualRepresentation;
 class RegistrationManager
 {
 
-private:
-    RegistrationManager();
-    ~RegistrationManager();
+    private:
+        RegistrationManager();
+        ~RegistrationManager();
 
-    static RegistrationManager *s_instance;
-    static mutex s_mutexForCreation;
+        static RegistrationManager *s_instance;
+        static mutex s_mutexForCreation;
 
-public:
+    public:
 
-    static RegistrationManager *getInstance();
+        static RegistrationManager *getInstance();
 
-    bool registerNMResource(VirtualRepresentation &resourceObject ,
-            std::shared_ptr< OCResource > resource);
+        bool registerNMResource(VirtualRepresentation &resourceObject ,
+                                std::shared_ptr< OCResource > resource);
 
-    int addResource();
-    int removeResource();
-    int updateResource();
-    bool unregisterResource();
+        int addResource();
+        int removeResource();
+        int updateResource();
+        bool unregisterResource();
 
 };
 

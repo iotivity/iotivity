@@ -55,6 +55,7 @@ class CResourceFinder: public CObjectRoot< CObjectMultiThreadModel >,
         void presenceHandler(OCStackResult result, const unsigned int nonce,
                              const std::string &hostAddress);
         SSMRESULT startResourceFinder();
+        SSMRESULT stopResourceFinder();
 
         SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent);
         SSMRESULT stopObserveResource(IN ISSMResource *pSensor);
@@ -201,8 +202,10 @@ CLEANUP: return res;
             RESOURCE_DISCOVER_INSTALL_RESOURCE,
             RESOURCE_DISCOVER_UNINSTALL_RESOURCE
         };
+
         IResourceFinderEvent *m_pResourceFinderEvent;
         CObjectPtr< ITasker > m_pTasker;
+        OC::OCPlatform::OCPresenceHandle m_multicastPresenceHandle;
         std::map< std::string, OICResourceHandler * > m_mapResourceHandler;
         std::map< std::string, std::vector<std::string> >
         m_mapResources;    // <hostaddress, std::vector<resources> >

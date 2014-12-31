@@ -12,7 +12,7 @@ GAR=ar
 TARGET=${SSM_LIB}
 
 CXX=g++
-CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX
+CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -DNDEBUG
 CXX_INC=-I../../ -I${INC_PATH}/ -I${FD_SSMCORE}/include -I${FD_SSMCORE}/src -I${BOOST}
 CXX_LIB= 
 

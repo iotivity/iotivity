@@ -58,25 +58,25 @@ const std::string VIRTURL_TAG = "/virtual";
 class NotificationManager
 {
 
-private:
+    private:
 
-    NotificationManager();
-    NotificationManager(HostingConfig cfg);
-    ~NotificationManager();
+        NotificationManager();
+        NotificationManager(HostingConfig cfg);
+        ~NotificationManager();
 
-    static NotificationManager *s_instance;
-    static mutex s_mutexForCreation;
+        static NotificationManager *s_instance;
+        static mutex s_mutexForCreation;
 
-    int getNetInfo(IN int& sck, IN struct ifreq* item, OUT std::string& ip_addres);
-    bool scanAndGetNetworkInterface(OUT std::string& ip_addres);
+        int getNetInfo(IN int &sck, IN struct ifreq *item, OUT std::string &ip_addres);
+        bool scanAndGetNetworkInterface(OUT std::string &ip_addres);
 
-public:
+    public:
 
-    static void initialize();
-    static void initialize(HostingConfig cfg);
-    static NotificationManager *getInstance();
+        static void initialize();
+        static void initialize(HostingConfig cfg);
+        static NotificationManager *getInstance();
 
-    void registerHostingEventListener();
+        void registerHostingEventListener();
 
 };
 

@@ -144,7 +144,7 @@ typedef enum {
     OC_STACK_CONTINUE,
     /* Success status code - END HERE */
     /* Error status code - START HERE */
-    OC_STACK_INVALID_URI,
+    OC_STACK_INVALID_URI = 20,
     OC_STACK_INVALID_QUERY,
     OC_STACK_INVALID_IP,
     OC_STACK_INVALID_PORT,
@@ -158,20 +158,22 @@ typedef enum {
     OC_STACK_NO_RESOURCE,               /* resource not found */
     OC_STACK_RESOURCE_ERROR,            /* ex: not supported method or interface */
     OC_STACK_SLOW_RESOURCE,
+    OC_STACK_REPEATED_REQUEST,
     OC_STACK_NO_OBSERVERS,              /* resource has no registered observers */
     OC_STACK_OBSERVER_NOT_FOUND,
-    #ifdef WITH_PRESENCE
-    OC_STACK_PRESENCE_STOPPED,
-    OC_STACK_PRESENCE_TIMEOUT,
-    OC_STACK_PRESENCE_DO_NOT_HANDLE,
-    #endif
     OC_STACK_VIRTUAL_DO_NOT_HANDLE,
     OC_STACK_INVALID_OPTION,
     OC_STACK_MALFORMED_RESPONSE,        /* the remote reply contained malformed data */
     OC_STACK_PERSISTENT_BUFFER_REQUIRED,
     OC_STACK_INVALID_REQUEST_HANDLE,
     OC_STACK_INVALID_DEVICE_INFO,
-    OC_STACK_ERROR
+    /* NOTE: Insert all new error codes here!*/
+    #ifdef WITH_PRESENCE
+    OC_STACK_PRESENCE_STOPPED = 128,
+    OC_STACK_PRESENCE_TIMEOUT,
+    OC_STACK_PRESENCE_DO_NOT_HANDLE,
+    #endif
+    OC_STACK_ERROR = 255
     /* Error status code - END HERE */
 } OCStackResult;
 
@@ -425,7 +427,10 @@ OCStackResult OCProcess();
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource
  * @param request            - JSON encoded request
- * @param qos                - quality of service
+ * @param qos                - quality of service. Note that if this API is called on a uri with
+ *                             the well-known multicast IP address, the qos will be forced to
+ *                             OC_LOW_QOS
+ *                             since it is impractical to send other QOS levels on such addresses.
  * @param clientApplicationCB- asynchronous callback function that is invoked
  *                             by the stack when discovery or resource interaction is complete
  * @param options            - The address of an array containing the vendor specific

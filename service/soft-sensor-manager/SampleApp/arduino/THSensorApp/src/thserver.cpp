@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/******************************************************************
+*
+* Copyright 2014 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
 // Do not remove the include below
 #include "Arduino.h"
@@ -57,9 +57,6 @@ typedef struct THRESOURCE
 } THResource;
 
 static THResource TH;
-
-//char* g_responsePayloadPut =    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
-//char* g_responsePayloadGet =    "{\"href\":\"\",\"rep\":{\"0\":\"temperature\",\"1\":\"int\",\"2\":\"0\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\"0\"}}";
 
 /// This is the port which Arduino Server will use for all unicast communication with it's peers
 static uint16_t OC_WELL_KNOWN_PORT = 5683;
@@ -200,14 +197,15 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest *entityHandlerRequest )
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
+    OCEntityHandlerResponse response = {0};
+    char payload[MAX_RESPONSE_LENGTH] = {0};
 
     if (entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            if (JsonGenerator( TH, (char *)entityHandlerRequest->resJSONPayload, \
-                               entityHandlerRequest->resJSONPayloadLen))
+            if (JsonGenerator( TH, payload, MAX_RESPONSE_LENGTH))
             {
             }
             else
@@ -218,8 +216,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         if (OC_REST_PUT == entityHandlerRequest->method)
         {
             //Do something with the 'put' payload
-            if (JsonGenerator( TH, (char *)entityHandlerRequest->resJSONPayload, \
-                               entityHandlerRequest->resJSONPayloadLen))
+            if (JsonGenerator( TH, payload, MAX_RESPONSE_LENGTH))
             {
             }
             else
@@ -227,15 +224,38 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
                 ehRet = OC_EH_ERROR;
             }
         }
+
+        if (ehRet == OC_EH_OK)
+        {
+            // Format the response.  Note this requires some info about the request
+            response.requestHandle = entityHandlerRequest->requestHandle;
+            response.resourceHandle = entityHandlerRequest->resource;
+            response.ehResult = ehRet;
+            response.payload = (unsigned char *)payload;
+            response.payloadSize = strlen(payload);
+            response.numSendVendorSpecificHeaderOptions = 0;
+            memset(response.sendVendorSpecificHeaderOptions, 0,
+                   sizeof response.sendVendorSpecificHeaderOptions);
+            memset(response.resourceUri, 0, sizeof response.resourceUri);
+            // Indicate that response is NOT in a persistent buffer
+            response.persistentBufferFlag = 0;
+
+            // Send the response
+            if (OCDoResponse(&response) != OC_STACK_OK)
+            {
+                OC_LOG(ERROR, TAG, "Error sending response");
+                ehRet = OC_EH_ERROR;
+            }
+        }
     }
     if (entityHandlerRequest && (flag & OC_OBSERVE_FLAG))
     {
-        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
             g_THUnderObservation = 1;
         }
-        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
         }
@@ -344,7 +364,7 @@ void setup()
         OC_LOG(ERROR, TAG, PCF("OCStack init error"));
         return;
     }
-
+    OCStartPresence(60);
     // Declare and create the example resource: TH
     createTHResource();
 
@@ -376,7 +396,7 @@ void createTHResource()
     OCStackResult res = OCCreateResource(&TH.m_handle,
                                          "SoftSensorManager.Sensor",
                                          "oc.mi.def",
-                                         "/Thing_TempHumSensor1",
+                                         "/Thing_TempHumSensor",
                                          OCEntityHandlerCb,
                                          OC_DISCOVERABLE | OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created TH resource with result: %s", getResult(res));

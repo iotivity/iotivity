@@ -131,6 +131,7 @@ class IContextRepository : public IBase
 
         virtual SSMRESULT registerResourceFinderEvent(IN IResourceEvent *pResourceEvent) = 0;
         virtual SSMRESULT startResourceFinder() = 0;
+        virtual SSMRESULT stopResourceFinder() = 0;
         virtual SSMRESULT onResourceFound(IN ISSMResource *pSensor) = 0;
         virtual SSMRESULT onResourceLost(IN ISSMResource *pSensor) = 0;
 
@@ -1195,6 +1196,7 @@ class IResourceFinder : public IBase
     public:
         virtual SSMRESULT registerResourceFinderEvent(IN IResourceFinderEvent *pEvent) = 0;
         virtual SSMRESULT startResourceFinder() = 0;
+        virtual SSMRESULT stopResourceFinder() = 0;
         virtual SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent) = 0;
         virtual SSMRESULT stopObserveResource(IN ISSMResource *pSensor) = 0;
 };

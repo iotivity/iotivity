@@ -146,7 +146,8 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
     int i;
     for (i = 0; i < bufferSize; i++) {
         // Format the buffer data into a line
-        sprintf(&lineBuffer[lineIndex++ * 3], "%02X ", buffer[i]);
+        snprintf(&lineBuffer[lineIndex*3], sizeof(lineBuffer)-lineIndex*3, "%02X ", buffer[i]);
+        lineIndex++;
         // Output 16 values per line
         if (((i+1)%16) == 0) {
             OCLog(level, tag, lineBuffer);
@@ -216,7 +217,8 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         uint8_t lineIndex = 0;
         for (uint8_t i = 0; i < bufferSize; i++) {
             // Format the buffer data into a line
-            sprintf(&lineBuffer[lineIndex++ * 3], "%02X ", buffer[i]);
+            snprintf(&lineBuffer[lineIndex*3], sizeof(lineBuffer)-lineIndex*3, "%02X ", buffer[i]);
+            lineIndex++;
             // Output 16 values per line
             if (((i+1)%16) == 0) {
                 OCLogString(level, tag, lineBuffer);

@@ -1,27 +1,24 @@
-tests.cpp contains unittests for C++ APIs. It uses Google Test for the unit
-tests.  Note that the unit tests are only to test the functionality of OCApi.h.
+//---------------------------------------------------------------------
+// NOTICE - Transition to SCONS
+//---------------------------------------------------------------------
+
+The IoTivity build system is transitioning to SCONS. Although the 
+makefiles are still available (until v1.0) and some developers are 
+still using them, they are currently no longer supported. To learn more 
+about building using SCONS see Readme.scons.txt in the repository root 
+directory. The build steps used in continuous integration can be found
+in auto_build.sh which is also in the the repository root directory.
+
+//---------------------------------------------------------------------
+
+The unittests folder contains unit tests for OCPlatfrom and OCResource APIs. 
+It uses Google Test for the unit tests. Please note that the unit tests are 
+only to test the functionality of public APIs.
 It is not a system or end-to-end test.
 
-Unit Test Requirements:
-
-1. Install Google Test 1.7.0 on a Linux build machine to <gtest-1.7.0> from the
-   following address:
-
-	http://code.google.com/p/googletest/downloads/list
-
-2. Create/Append a file named "local.properties" at <oic-resource>/csdk.
-   "local.properties" is used by the build process to specify the path to the
-   Google Test directory.
-
-   local.properties should contain GTEST_DIR, as follows:
-
-   GTEST_DIR := <gtest-1.7.0>
-
-3. To run the unit test, first build the unit tests with the following command
+1. To run the unit test, first build the unit tests with the following command
    from <oic-resource>:
-
    make -f buildScript.mk linux_ub_unittests
 
-4. Run the unit test by issuing the following command from <oic-resource>:
-
-   ./unittests/tests
+2. Run the unit test by issuing the following command from <oic-resource>:
+   ./unittests/unittests

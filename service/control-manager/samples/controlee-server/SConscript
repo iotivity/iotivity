@@ -9,7 +9,7 @@ OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
 LIB_DIR = os.path.abspath('.') + '/../../' 
 OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
 
-print "\nLIB_DIR: %s \n" % (LIB_DIR)
+#print "\nLIB_DIR: %s \n" % (LIB_DIR)
 
 if 'RELEASE_BUILD':
         OIC_LIB_PATH        =  SRC_TOP_DIR  + '../../../oic-resource/' + 'out/' + TARGET_OS + '/' + TARGET_ARCH + '/release/'
@@ -34,7 +34,7 @@ env1.AppendUnique(CPPPATH = ['.',SRC_TOP_DIR + 'controllee/include',
 env1.AppendUnique(LIBPATH = [BUILD_DIR, 
 							 BUILD_DIR + 'opensource/sqlite3/static/',
 							 BUILD_DIR + 'opensource/jsoncpp/static/',
-							OIC_LIB_PATH,
+							 OIC_LIB_PATH,
 							 OIC_RESOURCE_DIR + 'release/obj/',
 							 OIC_RESOURCE_DIR + 'oc_logger/lib',
 							 OIC_RESOURCE_DIR + 'csdk/linux/release',
@@ -44,10 +44,12 @@ env1.AppendUnique(LIBPATH = [BUILD_DIR,
 env1.PrependUnique(LIBS = ['controllee','boost_system','boost_regex','boost_thread','sqlite3','dl','rt','pthread','jsoncpp','oc','octbstack','oc_logger','coap'])
 samples = 'controllee-server'
 lib_sources = [SRC_DIR+'main.cpp', 
-	       SRC_DIR+'ProgramUtils.cpp', 
+	           SRC_DIR+'ProgramUtils.cpp', 
               ]
-			   
-env1.Program(target = samples,source =lib_sources)
-i_lc = env1.Install(BUILD_DIR, samples)
+
+INSTALL_DIR = 	BUILD_DIR + 'service/control-manager/samples/'
+#print "\nINSTALL_DIR 1: %s \n" % (INSTALL_DIR)	   
+i_lc = env1.Program(target = samples,source =lib_sources)
+#i_lc = env1.Install(INSTALL_DIR, samples)
 Alias(samples, i_lc)
 

@@ -1,5 +1,5 @@
 
-Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR','TARGET_ARCH','RELEASE_BUILD')
+Import('env','BUILD_DIR','TARGET_OS','SRC_TOP_DIR','TARGET_ARCH','RELEASE_BUILD','OIC_UTILS')
 env1 = env.Clone()
 
 env1.AppendUnique(CXXFLAGS = ['-std=c++11', '-Wall'])
@@ -15,7 +15,9 @@ else:
 
 OIC_RESOURCE_DIR    =  SRC_TOP_DIR  + '../../resource/'
 OPENSOURCE_DIR      =  SRC_TOP_DIR  + 'opensource/'
-OIC_UTILS_DIR       =  SRC_TOP_DIR  + '../../../oic-utilities/'
+OIC_UTILS_DIR       =  OIC_UTILS
+
+#print "OIC_UTILS_DIR: %s \n" % (OIC_UTILS_DIR)
 
 
 env1.PrependUnique(CPPPATH = [
@@ -42,13 +44,13 @@ env1.PrependUnique(CPPPATH = [
 			OIC_RESOURCE_DIR + 'csdk/ocsocket/include',
 			OIC_RESOURCE_DIR + 'dependencies/cereal/include',
 			OIC_RESOURCE_DIR + 'oc_logger/include',
-			OIC_UTILS_DIR + 'android/boost/include' ,
+			OIC_UTILS_DIR + '/android/boost/include' ,
 		])
 
 #print "\OIC_RESOURCE_LIB: %s \n" % (OIC_RESOURCE_LIB)
 #print "\BUILD_DIR: %s \n" % (BUILD_DIR)
 
-env1.PrependUnique(LIBPATH = [OIC_UTILS_DIR + 'android/boost/libs/' + TARGET_ARCH + '/',])
+env1.PrependUnique(LIBPATH = [OIC_UTILS_DIR + '/android/boost/libs/' + TARGET_ARCH + '/',])
 env1.AppendUnique(LIBPATH  = [BUILD_DIR + 'opensource/sqlite3/static/',
                               BUILD_DIR + 'opensource/jsoncpp/static/', 
 							  OIC_RESOURCE_LIB,

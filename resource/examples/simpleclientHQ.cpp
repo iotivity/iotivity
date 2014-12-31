@@ -62,11 +62,11 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
     if(eCode == SUCCESS_RESPONSE)
     {
         std::cout << "OBSERVE RESULT:"<<std::endl;
-        if(sequenceNumber == 0)
+        if(sequenceNumber == (int) ObserveAction::ObserveRegister)
         {
             std::cout << "\tObserve Registration Confirmed: "<< endl;
         }
-        else if (sequenceNumber == 1)
+        else if (sequenceNumber == (int) ObserveAction::ObserveUnregister)
         {
             std::cout << "\tObserve Cancel Confirmed: "<< endl;
             sleep(10);

@@ -23,6 +23,9 @@
 /// @brief  This file contains the implementation of classes and its members
 ///         related to OCRepresentation
 
+#ifdef __ANDROID__
+#include "OCAndroid.h"
+#endif
 
 #include <OCRepresentation.h>
 

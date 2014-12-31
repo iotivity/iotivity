@@ -21,10 +21,12 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
+#include <array>
 #include "ocstack.h"
 #include "logger.h"
 #include "cJSON.h"
@@ -50,6 +52,7 @@ Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 
 #ifdef WITH_PRESENCE
 static int stopPresenceCount = 10;
+#define numPresenceResources (2)
 #endif
 
 //TODO: Follow the pattern used in constructJsonResponse() when the payload is decided.
@@ -480,6 +483,14 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     return ehResult;
 }
 
+OCEntityHandlerResult
+OCNOPEntityHandlerCb (OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *entityHandlerRequest)
+{
+    // This is callback is associated with the 2 presence notification
+    // resources. They are non-operational.
+    return OC_EH_OK;
+}
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
@@ -685,6 +696,57 @@ void *ChangeLightRepresentation (void *param)
     return NULL;
 }
 
+void *presenceNotificationGenerator(void *param)
+{
+    sleep(5);
+    (void)param;
+    OCDoHandle presenceNotificationHandles[numPresenceResources];
+    OCStackResult res = OC_STACK_OK;
+
+    std::array<std::string, numPresenceResources> presenceNotificationResources { {
+        std::string("core.fan"),
+        std::string("core.led") } };
+    std::array<std::string, numPresenceResources> presenceNotificationUris { {
+        std::string("/a/fan"),
+        std::string("/a/led") } };
+
+    for(int i=0; i<numPresenceResources; i++)
+    {
+        if(res == OC_STACK_OK)
+        {
+            sleep(1);
+            res = OCCreateResource(&presenceNotificationHandles[i],
+                    presenceNotificationResources.at(i).c_str(),
+                    "oc.mi.def",
+                    presenceNotificationUris.at(i).c_str(),
+                    OCNOPEntityHandlerCb,
+                    OC_DISCOVERABLE|OC_OBSERVABLE);
+        }
+        if(res != OC_STACK_OK)
+        {
+            OC_LOG_V(ERROR, TAG, "\"Presence Notification Generator\" failed to create resource "
+                    "%s with result %s.", presenceNotificationResources.at(i).c_str(),
+                    getResult(res));
+            break;
+        }
+    }
+    sleep(5);
+    for(int i=0; i<numPresenceResources; i++)
+    {
+        if(res == OC_STACK_OK)
+        {
+            res = OCDeleteResource(presenceNotificationHandles[i]);
+        }
+        if(res != OC_STACK_OK)
+        {
+            OC_LOG_V(ERROR, TAG, "\"Presence Notification Generator\" failed to delete "\
+                    "resource %s.", presenceNotificationResources.at(i).c_str());
+            break;
+        }
+    }
+    return NULL;
+}
+
 static void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : ocserver -o <0|1>");
@@ -699,6 +761,7 @@ int main(int argc, char* argv[])
     uint16_t port = OC_WELL_KNOWN_PORT;
     uint8_t ifname[] = "eth0";
     pthread_t threadId;
+    pthread_t threadId_presence;
     int opt;
 
     while ((opt = getopt(argc, argv, "o:")) != -1)
@@ -777,6 +840,12 @@ int main(int argc, char* argv[])
      */
     pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
 
+    /*
+     * Create a thread for generating changes that cause presence notifications
+     * to be sent to clients
+     */
+    pthread_create(&threadId_presence, NULL, presenceNotificationGenerator, (void *)NULL);
+
     // Break from loop with Ctrl-C
     OC_LOG(INFO, TAG, "Entering ocserver main loop...");
     DeleteDeviceInfo();
@@ -795,6 +864,8 @@ int main(int argc, char* argv[])
      */
     pthread_cancel(threadId);
     pthread_join(threadId, NULL);
+    pthread_cancel(threadId_presence);
+    pthread_join(threadId_presence, NULL);
 
     OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 

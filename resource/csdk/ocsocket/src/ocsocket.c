@@ -321,8 +321,6 @@ int32_t OCRecvFrom(int32_t sockfd, uint8_t* buf, uint32_t bufLen, uint32_t flags
     timeout.tv_usec = 5000;
     fd_set reads;
 
-    OC_LOG_V(DEBUG, MOD_NAME, "%s Begin", __func__ );
-
     FD_ZERO(&reads);
     FD_SET(sockfd, &reads);
     ret = select(sockfd + 1, &reads, NULL, NULL, &timeout);
@@ -331,7 +329,6 @@ int32_t OCRecvFrom(int32_t sockfd, uint8_t* buf, uint32_t bufLen, uint32_t flags
         return ret;
     }
     if (!FD_ISSET(sockfd, &reads)) {
-        OC_LOG(DEBUG, MOD_NAME, "No data to read");
         return ERR_SUCCESS;
     }
 
@@ -341,7 +338,7 @@ int32_t OCRecvFrom(int32_t sockfd, uint8_t* buf, uint32_t bufLen, uint32_t flags
     if (ret < 1) {
         OC_LOG(FATAL, MOD_NAME, "OCRecvFrom ERR");
     }
-    OC_LOG_V(DEBUG, MOD_NAME, "%s End", __func__ );
+
     return ret;
 }
 
@@ -367,7 +364,7 @@ int32_t OCDevAddrToString(OCDevAddr* addr, char* stringAddress)
             return ERR_INVALID_INPUT;
         }
 
-        sprintf(stringAddress, "%u.%u.%u.%u",
+        snprintf(stringAddress, DEV_ADDR_SIZE_MAX, "%u.%u.%u.%u",
                 a, b, c, d);
         return ERR_SUCCESS;
     }

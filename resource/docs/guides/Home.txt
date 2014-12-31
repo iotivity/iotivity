@@ -2,14 +2,12 @@
 
 @mainpage Welcome
 
-IoTivity runs as an open source project. This infrastructure can be used by OIC partners to contribute and co-work for the project. This document is for any developer trying to utilize the IoTivity project in building applications. This document includes:
+IoTivity is an open source software framework enabling seamless device-to-device connectivity to address the emerging needs of the Internet of Things. These API references are for any developer trying to utilize the IoTivity project for building applications.
 
-\li \ref OCGuides - High level overview of the API and how to use them
+\li <a href="annotated.html"><strong>API References</strong></a><br />Provides a reference to all public APIs available to utilize the power of IoTivity.
 
-\li \ref OCHowTo - contains guides and tutorials to help developers get started
+\li <a href="https://www.iotivity.org/documentation"><strong>Getting Started Guides and Tutorials</strong></a><br />Detailed getting started guides and tutorials can be found on the iotivity.org website.
 
-\li <a href="annotated.html"> API Reference </a> - provides a reference to all public APIs available to utilize the power of IoTivity.
-
-
+\li <a href="https://wiki.iotivity.org"><strong>Wiki</strong></a><br />Additional documentation can be found on the IoTivity Wiki.
 
 */

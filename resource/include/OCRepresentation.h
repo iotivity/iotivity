@@ -35,8 +35,11 @@
 #include <AttributeValue.h>
 #include <StringConstants.h>
 
-#include <OCException.h>
+#ifdef __ANDROID__
+#include "OCAndroid.h"
+#endif
 
+#include <OCException.h>
 
 namespace cereal
 {

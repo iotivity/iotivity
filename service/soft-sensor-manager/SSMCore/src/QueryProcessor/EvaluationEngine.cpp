@@ -291,8 +291,7 @@ SSMRESULT CEvaluationEngine::createModel(IN int parentModelId, IN const char *ne
                 break;
 
             default:
-                res = SSM_E_FAIL;
-                goto CLEANUP;
+                SSM_CLEANUP_ASSERT(SSM_E_FAIL);
         }
     }
 
@@ -366,8 +365,7 @@ SSMRESULT CEvaluationEngine::addModelData(IN int modelId, IN int parentModelId, 
                 break;
 
             default:
-                res = SSM_E_FAIL;
-                goto CLEANUP;
+                SSM_CLEANUP_ASSERT(SSM_E_FAIL);
         }
 
         i++;
@@ -451,8 +449,7 @@ SSMRESULT CEvaluationEngine::updateModelData(IN int modelId, IN int dataId,
                 break;
 
             default:
-                res = SSM_E_FAIL;
-                goto CLEANUP;
+                SSM_CLEANUP_ASSERT(SSM_E_FAIL);
         }
 
         i++;
@@ -795,8 +792,7 @@ SSMRESULT CEvaluationEngine::getConditionedModelData(IN int modelId,
                 break;
 
             default:
-                res = SSM_E_FAIL;
-                goto CLEANUP;
+                SSM_CLEANUP_ASSERT(SSM_E_FAIL);
         }
 
         switch (itor->modelProperty.propertyType)
@@ -812,8 +808,7 @@ SSMRESULT CEvaluationEngine::getConditionedModelData(IN int modelId,
                 break;
 
             default:
-                res = SSM_E_FAIL;
-                goto CLEANUP;
+                SSM_CLEANUP_ASSERT(SSM_E_FAIL);
         }
 
         if (itor < pModelConditions->end() - 1)
@@ -878,8 +873,7 @@ SSMRESULT CEvaluationEngine::watchModelData(IN int modelId, IN ModelConditionVec
                 break;
 
             default:
-                res = SSM_E_FAIL;
-                goto CLEANUP;
+                SSM_CLEANUP_ASSERT(SSM_E_FAIL);
         }
 
         switch (itor->modelProperty.propertyType)
@@ -895,8 +889,7 @@ SSMRESULT CEvaluationEngine::watchModelData(IN int modelId, IN ModelConditionVec
                 break;
 
             default:
-                res = SSM_E_FAIL;
-                goto CLEANUP;
+                SSM_CLEANUP_ASSERT(SSM_E_FAIL);
         }
 
         if (itor < pModelConditions->end() - 1)

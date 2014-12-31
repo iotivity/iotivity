@@ -20,7 +20,7 @@
 
 /// @file   GroupManager.h
 
-/// @brief  This file contains the declaration of classes and its members related to TGMClient.
+/// @brief  This file contains the declaration of classes and its members related to GroupManager
 
 #ifndef __OC_GROUPMANAGER__
 #define __OC_GROUPMANAGER__
@@ -29,62 +29,26 @@
 #include <vector>
 #include <map>
 #include <cstdlib>
+#include <ActionSet.h>
 #include "OCPlatform.h"
 #include "OCApi.h"
 
 using namespace OC;
 
+namespace OIC
+{
 typedef std::function< void(std::vector< std::shared_ptr< OCResource > >) > CandidateCallback;
 typedef std::function< void(std::string, OCStackResult) > CollectionPresenceCallback;
 
-typedef std::function<void(const HeaderOptions&, const OCRepresentation&, const int)> GetCallback;
-typedef std::function<void(const HeaderOptions&, const OCRepresentation&, const int)> PostCallback;
-typedef std::function<void(const HeaderOptions&, const OCRepresentation&, const int)> PutCallback;
-
-
-class Capability
-{
-public:
-    std::string capability;
-    std::string status;
-};
-
-class Action
-{
-public:
-    Action() : target("")
-    {
-    }
-    ~Action()
-    {
-        listOfCapability.clear();
-    }
-    std::string target;
-
-    std::vector<Capability*> listOfCapability;
-};
-
-class ActionSet
-{
-public:
-    ActionSet() : actionsetName("")
-    {
-    }
-    ~ActionSet()
-    {
-        listOfAction.clear();
-    }
-    std::string actionsetName;
-
-    std::vector<Action*> listOfAction;
-};
-
+typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > GetCallback;
+typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > PostCallback;
+typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > PutCallback;
 
 class GroupManager
 {
 public:
     /**
-     * Constructor for TGMClient. Constructs a new TGMClient
+     * Constructor for GroupManager. Constructs a new GroupManager
      */
     GroupManager(void);
 
@@ -112,7 +76,10 @@ public:
      *
      * NOTE: NOT IMPLEMENT YET
      */
-    OCStackResult subscribeCollectionPresence(std::shared_ptr< OCResource > resource, CollectionPresenceCallback);
+    OCStackResult subscribeCollectionPresence(std::shared_ptr< OCResource > resource,
+            CollectionPresenceCallback);
+
+    OCStackResult bindResourceToGroup(OCResourceHandle& childHandle, std::shared_ptr< OCResource > resource, OCResourceHandle& collectionHandle);
 
 private:
 
@@ -120,30 +87,29 @@ private:
     void findPreparedRequest(std::map< std::vector< std::string >, CandidateCallback > &request);
     void lazyCallback(int second);
 
-    void onGetForPresence(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode,CollectionPresenceCallback callback);
-    void checkCollectionRepresentation(const OCRepresentation& rep, CollectionPresenceCallback callback);
-    void collectionPresenceHandler(OCStackResult result, const unsigned int nonce, const std::string& hostAddress, std::string host, std::string uri);
-
-
-
-
+    void onGetForPresence(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            const int eCode, CollectionPresenceCallback callback);
+    void checkCollectionRepresentation(const OCRepresentation& rep,
+            CollectionPresenceCallback callback);
+    void collectionPresenceHandler(OCStackResult result, const unsigned int nonce,
+            const std::string& hostAddress, std::string host, std::string uri);
 
     /**
-    *   API for Collection(Group) action.
-    */
+     *   API for Collection(Group) action.
+     */
 
 public:
     std::string getStringFromActionSet(const ActionSet *newActionSet);
     ActionSet* getActionSetfromString(std::string desc);
 
-    OCStackResult addActionSet(std::shared_ptr< OCResource > resource, const ActionSet* newActionSet, PutCallback cb);
-    OCStackResult executeActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName, PostCallback cb);
-    OCStackResult getActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName, GetCallback cb);
-    OCStackResult deleteActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName, PostCallback);
+    OCStackResult addActionSet(std::shared_ptr< OCResource > resource,
+            const ActionSet* newActionSet, PutCallback cb);
+    OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
+            std::string actionsetName, PostCallback cb);
+    OCStackResult getActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName,
+            PostCallback cb);
+    OCStackResult deleteActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName,
+            PostCallback);
 };
-
-
-
-
-
+}
 #endif  /* __OC_GROUPMANAGER__*/

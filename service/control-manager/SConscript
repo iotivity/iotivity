@@ -1,3 +1,33 @@
-##
-# Control Manager build script
-##
+import os
+
+Import('env')
+SRC_TOP_DIR = os.path.abspath('.') + '/' 
+
+RELEASE_BUILD = env.get('RELEASE')
+TARGET_OS = env.get('TARGET_OS')
+TARGET_ARCH = env.get('TARGET_ARCH')
+BUILD_DIR = env.get('BUILD_DIR')
+Export('SRC_TOP_DIR','RELEASE_BUILD','TARGET_OS','TARGET_ARCH','BUILD_DIR')
+if TARGET_OS == 'android':
+	OIC_UTILS = env.get('OIC_UTILS')
+	Export('OIC_UTILS')
+	#print "\nOIC_UTILS : %s \n" % (OIC_UTILS)
+	
+print "\nTarget platform: %s \nBuild Mode: %s \nTarget CPU Architecture: %s\n" % (TARGET_OS, RELEASE_BUILD, TARGET_ARCH)
+
+#print "\nBUILD_DIR : %s \n" % (BUILD_DIR)
+
+if TARGET_OS == 'linux' or  TARGET_OS == 'android':
+	SConscript('opensource/jsoncpp/SConscript')
+	SConscript('opensource/sqlite3/SConscript')
+	SConscript('controlmanager/SConscript')
+
+if TARGET_OS == 'linux':
+	SConscript('controllee/SConscript')
+	#SConscript('RESTframework/SConscript')
+	SConscript('samples/controller-client/SConscript')
+	SConscript('samples/controlee-server/SConscript')
+	#SConscript('samples/REST-client/SConscript')
+	
+if TARGET_OS == 'android':
+	SConscript('controlmanager/jni/SConscript')

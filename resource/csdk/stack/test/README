@@ -1,3 +1,16 @@
+//---------------------------------------------------------------------
+//  NOTICE - Transition to SCONS
+//---------------------------------------------------------------------
+
+The IoTivity build system is transitioning to SCONS. Although the 
+makefiles are still available (until v1.0) and some developers are 
+still using them, they are currently no longer supported. To learn more 
+about building using SCONS see Readme.scons.txt in the repository root 
+directory. The build steps used in continuous integration can be found
+in auto_build.sh which is also in the the repository root directory.
+
+//---------------------------------------------------------------------
+
 stacktests.cpp is a unit test of the APIs in ocstack.c.  
 It uses Google Test for the unit tests.  Note that
 the unit tests are only to test the functionality of
@@ -19,8 +32,9 @@ Unit Test Requirements:
 
    GTEST_DIR := /home/johndoe/utils/gtest-1.7.0
 
-3. The unit test assumes that the "eth0" interface is
-   available.  If not, the unit tests will FAIL.
+3. The unit test assumes that a network interface is available
+   (e.g. "eth0", "wlan0", etc.)
+   If no interface is available, the unit tests will FAIL.
 4. To run the unit test, first build the C OCStack.
    At the time of this writing this was done by running
    
