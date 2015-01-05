@@ -396,7 +396,7 @@ void createTHResource()
     OCStackResult res = OCCreateResource(&TH.m_handle,
                                          "SoftSensorManager.Sensor",
                                          "oc.mi.def",
-                                         "/Thing_TempHumSensor",
+                                         "/Thing_TempHumSensor1",
                                          OCEntityHandlerCb,
                                          OC_DISCOVERABLE | OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created TH resource with result: %s", getResult(res));
