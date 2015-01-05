@@ -21,6 +21,12 @@ linux_sample_env.AppendUnique(LIBS = ['octbstack'])
 linux_sample_env.AppendUnique(LIBS = ['libcoap'])
 linux_sample_env.AppendUnique(LIBS = ['liboc_logger'])
 linux_sample_env.AppendUnique(LIBS = ['pthread'])
+linux_sample_env.AppendUnique(LIBS = ['coap'])
+linux_sample_env.AppendUnique(LIBS = ['coap_csdk'])
+linux_sample_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+
+linux_sample_env.ParseConfig('pkg-config --libs glib-2.0')
+
 
 ######################################################################
 #build sampleapp
