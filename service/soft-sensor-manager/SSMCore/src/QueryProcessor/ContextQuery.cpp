@@ -143,9 +143,10 @@ void CContextQuery::check_result_model()
 
         }
 
+        unsigned int cnt = 0;
+
         while (true)
         {
-            unsigned int cnt = 0;
             if ((unsigned int)cnt > min_cnt - 1)
             {
                 break;
@@ -206,18 +207,19 @@ void CContextQuery::return_modelID(OUT std::vector<int> *vector_int)
 {
     int k = m_root.child_token.at(0).child_token.size();
 
+    IContextModel *pContextModel = NULL;
+    int pModel = 0;
+
     for (int i = 0; i < k; i++)
     {
-
         Token *temp = &(m_root.child_token.at(0).child_token.at(i));
-
-        int pModel = 0;
-        IContextModel *contextmodel;
-
-        m_pPropagationEngine->getContextModel(search_last_modelName(temp), &contextmodel);
-        pModel = contextmodel->getModelId();
-        vector_int->push_back(pModel);
-        SAFE_RELEASE(contextmodel);
+        if (m_pPropagationEngine->getContextModel(search_last_modelName(temp),
+                &pContextModel) == SSM_S_OK)
+        {
+            pModel = pContextModel->getModelId();
+            vector_int->push_back(pModel);
+        }
+        SAFE_RELEASE(pContextModel);
     }
 }
 
