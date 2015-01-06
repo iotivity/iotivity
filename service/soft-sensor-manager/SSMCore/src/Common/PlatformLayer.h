@@ -65,12 +65,12 @@ void ReportMessage(const char *tag, const char *msg);
 #elif defined(TIZEN)
 
 #define REPORT_MESSAGE(tag, msg) printf("[%s] %s\n", tag, msg)
-#define PRINT_LOG(strError) printf("[SSM] %s:%d %s\n", __FUNCTION__, __LINE__, strError)
+#define PRINT_LOG(strError) printf("[SSM] %s:%d %s\n", __PRETTY_FUNCTION__, __LINE__, strError)
 
 #else //Default linux
 
 #define REPORT_MESSAGE(tag, msg) printf("[%s] %s\n", tag, msg)
-#define PRINT_LOG(strError) printf("[SSM] %s:%d %s\n", __FUNCTION__, __LINE__, strError)
+#define PRINT_LOG(strError) printf("[SSM] %s:%d %s\n", __PRETTY_FUNCTION__, __LINE__, strError)
 
 #endif
 

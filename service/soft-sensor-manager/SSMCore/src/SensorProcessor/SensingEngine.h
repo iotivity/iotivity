@@ -68,6 +68,13 @@ class CSensingEngine :
                 *ppObject = pBase;
                 return SSM_S_OK;
             }
+            else if (IsEqualOID(objectID, OID_IContextRepository))
+            {
+                IBase *pBase = this;
+                pBase->addRef();
+                *ppObject = m_pContextRepository;
+                return SSM_S_OK;
+            }
 
             return SSM_E_NOINTERFACE;
         }

@@ -77,7 +77,7 @@ SSMRESULT CContextRepository::initRepository(IN std::string name, IN std::string
 
     if (pathSoftSensors.length() == 0)
     {
-        SSM_CLEANUP_ASSERT(GetCurrentPath(&m_pathSoftSensors));
+        SSM_CLEANUP_ASSERT(getCurrentPath(&m_pathSoftSensors));
         m_pathSoftSensors.append("/");
     }
     else
@@ -87,7 +87,7 @@ SSMRESULT CContextRepository::initRepository(IN std::string name, IN std::string
 
     if (pathDescription.length() == 0)
     {
-        SSM_CLEANUP_ASSERT(GetCurrentPath(&m_pathSoftSensorsDescription));
+        SSM_CLEANUP_ASSERT(getCurrentPath(&m_pathSoftSensorsDescription));
         m_pathSoftSensorsDescription.append("/");
         m_pathSoftSensorsDescription.append(DEFAULT_PATH_SOFT_SENSORS);
     }
@@ -384,7 +384,7 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CContextRepository::GetCurrentPath(std::string *path)
+SSMRESULT CContextRepository::getCurrentPath(std::string *path)
 {
     char        buffer[2048];
     SSMRESULT   res = SSM_E_FAIL;
