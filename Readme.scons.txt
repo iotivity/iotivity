@@ -102,7 +102,7 @@ For help about how to set an option, please run:
 
 1. Build IoTivity project for Linux
       $ cd <top directory of the project>
-      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev
       $ scons
 
 2. Build IoTivity project for Android
