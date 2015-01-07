@@ -44,6 +44,7 @@ public:
     std::vector<int> m_lightPowers;
     OCRepresentation m_lightRep;
     std::vector<OCRepresentation> m_reps;
+    std::vector<std::vector<int>> m_hingeStates;
 
     Garage() : m_state(false), m_name("")
     {
@@ -58,7 +59,7 @@ void printRepresentation(const OCRepresentation& rep)
         // Check if attribute "name" exists, and then getValue
         if(rep.hasAttribute("name"))
         {
-            myGarage.m_name = rep.getValue<std::string>("name");
+            myGarage.m_name = rep["name"];
         }
         std::cout << "\tname: " << myGarage.m_name << std::endl;
 
@@ -93,10 +94,10 @@ void printRepresentation(const OCRepresentation& rep)
             std::cout << "\tnullAttribute is not null." << std::endl;
         }
 
-        rep.getValue("light", myGarage.m_lightRep);
+        myGarage.m_lightRep = rep["light"];
 
-        myGarage.m_lightRep.getValue("states", myGarage.m_lightStates);
-        myGarage.m_lightRep.getValue("powers", myGarage.m_lightPowers);
+        myGarage.m_lightStates = myGarage.m_lightRep["states"];
+        myGarage.m_lightPowers = myGarage.m_lightRep["powers"];
 
         std::cout << "\tlightRep: states: ";
 
@@ -132,13 +133,26 @@ void printRepresentation(const OCRepresentation& rep)
         std::cout << std::endl;
 
         // Get vector of representations
-        rep.getValue("reps", myGarage.m_reps);
-        // Client know that server is sending two representations
-        // and has key1 and key2 repsectively
-        std::cout << "\treps[0].key1: " << myGarage.m_reps[0].getValue<int>("key1") << std::endl;
-        std::cout << "\treps[0].key2: " << myGarage.m_reps[1].getValue<int>("key2") << std::endl;
+        myGarage.m_reps = rep["reps"];
 
-        std::cout << "\tjson: " << rep.getValue<std::string>("json") << std::endl;
+        int ct = 0;
+        for(auto& rep : myGarage.m_reps)
+        {
+            for(auto& attribute : rep)
+            {
+                std::cout<< "\treps["<<ct<<"]."<<attribute.attrname()<<":"
+                    << attribute.type()<<" with value " <<attribute.getValueToString() <<std::endl;
+            }
+            ++ct;
+        }
+
+        std::cout << "\tjson: " << rep["json"] << std::endl;
+        myGarage.m_hingeStates = rep["hinges"];
+
+        std::cout<< "\tHinge parameter is type: " << rep["hinges"].type() << " with depth "<<
+            rep["hinges"].depth() << " and a base type of "<< rep["hinges"].base_type()<<std::endl;
+
+
 }
 // callback handler on PUT request
 void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
@@ -167,7 +181,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 
         myGarage.m_state = true;
 
-        rep.setValue("state", myGarage.m_state);
+        rep["state"] = myGarage.m_state;
 
         // Create QueryParameters Map and add query params (if any)
         QueryParamsMap queryParamsMap;

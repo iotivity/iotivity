@@ -64,7 +64,7 @@ all: prep_dirs $(MOCKS_DIR) unittests
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
 
-unittests: OCPlatformTest.cpp OCResourceTest.cpp ConstructResourceTest.cpp $(GTEST_LIBS)
+unittests: OCPlatformTest.cpp OCResourceTest.cpp ConstructResourceTest.cpp OCRepresentationTest.cpp $(GTEST_LIBS)
 	$(CXX) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
 
 $(GTEST_DIR):
