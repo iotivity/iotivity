@@ -44,6 +44,19 @@ namespace OC
     public:
         typedef std::shared_ptr<OCResourceRequest> Ptr;
 
+        OCResourceRequest():
+            m_requestType{},
+            m_resourceUri{},
+            m_queryParameters{},
+            m_requestHandlerFlag{},
+            m_representation{},
+            m_observationInfo{},
+            m_headerOptions{},
+            m_requestHandle{nullptr},
+            m_resourceHandle{nullptr}
+        {
+        }
+
         /**
         *  Virtual destructor
         */
