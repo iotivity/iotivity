@@ -1,3 +1,33 @@
+== Quick guide: build and run IoTivity projects on Ubuntu ==
+
+1. Build
+	Go to the top directory of 'iotivity' project(Note: should always run 'scons'
+command in this directory)
+
+    Install external libraries:
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev
+
+    Build release binaries:
+      $ scons
+(Note: C++ sdk requires cereal. Please follow the instruction in the build
+message to install cereal)
+
+    Build debug binaries:
+      $scons RELEASE=false
+
+    Help:
+      $ scons -h
+
+    Clear:
+      $ scons -c
+
+2. Run the samples
+      $ export LD_LIBRARY_PATH=<iotivity>/out/linux/x86_64/release
+      Run the c++ samples in <iotivity>/out/linux/x86_64/release/resource/examples
+      Run the c samples in <iotivity>/out/linux/x86_64/release/resource/csdk/stack/samples/linux/SimpleClientServer
+('<iotivity>' is the path to 'iotivity' project. If your device is x86, arm,
+or arm64, please change 'x86_64' to the proper arch)
+
 == How to build IoTivity projects ==
 
 IoTivity includes a series of projects. You can find all these projects here:
