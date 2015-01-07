@@ -28,68 +28,76 @@ using namespace OC;
 namespace OIC
 {
 
-GroupSynchronization* GroupSynchronization::groupSyncnstance = NULL;
+    GroupSynchronization* GroupSynchronization::groupSyncnstance = NULL;
 
-GroupSynchronization* GroupSynchronization::getInstance()
-{
-    if (groupSyncnstance == NULL)
+    GroupSynchronization* GroupSynchronization::getInstance()
     {
-        groupSyncnstance = new GroupSynchronization();
-    }
-    return groupSyncnstance;
-}
-
-void GroupSynchronization::deleteInstance()
-{
-    if (groupSyncnstance)
-    {
-        delete groupSyncnstance;
-        groupSyncnstance = NULL;
-    }
-}
-
-OCStackResult GroupSynchronization::findGroup(
-        std::vector< std::string > collectionResourceTypes, FindCallback callback)
-{
-    cout << "GroupSynchronization::findGroup" << endl;
-
-    foundGroupResourceList.clear();
-
-    findCallback = callback;
-
-    for (unsigned int i = 0; i < collectionResourceTypes.size(); ++i)
-    {
-        std::string query = "coap://224.0.1.187/oc/core?rt=";
-        query.append(collectionResourceTypes.at(i));
-        cout << "GroupSynchronization::findGroup - " << query << endl;
-
-        OCPlatform::findResource("", query,
-                std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
+        if (groupSyncnstance == NULL)
+        {
+            groupSyncnstance = new GroupSynchronization();
+        }
+        return groupSyncnstance;
     }
 
-    // thread to check if GroupSynchronization::onFoundGroup is called or not.
-    std::thread t(std::bind(&GroupSynchronization::checkFindGroup, this));
-    t.detach();
-
-    return OC_STACK_OK;
-}
-
-OCStackResult GroupSynchronization::createGroup(std::string collectionResourceType)
-{
-    foundGroupResourceList.clear();
-
-    OCResourceHandle collectionResHandle = NULL;
-    OCResourceHandle groupSyncResHandle = NULL;
-
-    if (0 != collectionResourceType.length())
+    void GroupSynchronization::deleteInstance()
     {
+        if (groupSyncnstance)
+        {
+            delete groupSyncnstance;
+            groupSyncnstance = NULL;
+        }
+    }
+
+    OCStackResult GroupSynchronization::findGroup(
+            std::vector< std::string > collectionResourceTypes, FindCallback callback)
+    {
+        cout << "GroupSynchronization::findGroup" << endl;
+
+        foundGroupResourceList.clear();
+        findCallback = callback;
+
+        if (findCallback == NULL)
+        {
+            return OC_STACK_ERROR;
+        }
+
+        for (unsigned int i = 0; i < collectionResourceTypes.size(); ++i)
+        {
+            std::string query = "coap://224.0.1.187/oc/core?rt=";
+            query.append(collectionResourceTypes.at(i));
+            cout << "GroupSynchronization::findGroup - " << query << endl;
+
+            OCPlatform::findResource("", query,
+                    std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
+        }
+
+        // thread to check if GroupSynchronization::onFoundGroup is called or not.
+        std::thread t(std::bind(&GroupSynchronization::checkFindGroup, this));
+        t.detach();
+
+        return OC_STACK_OK;
+    }
+
+    OCStackResult GroupSynchronization::createGroup(std::string collectionResourceType)
+    {
+        foundGroupResourceList.clear();
+
+        OCResourceHandle collectionResHandle = NULL;
+        OCResourceHandle groupSyncResHandle = NULL;
+
+        if (0 == collectionResourceType.length())
+        {
+            cout << "GroupSynchronization::createGroup : Error! Input params are wrong." << endl;
+            return OC_STACK_INVALID_PARAM;
+        }
+
         cout << "GroupSynchronization::createGroup - The created group is added." << endl;
 
         OCStackResult result;
 
         // creating master collection resource
         std::string collectionUri = "/" + collectionResourceType;
-        int i;
+        std::size_t i;
         while ((i = collectionUri.find(".")) != std::string::npos)
         {
             collectionUri.replace(i, 1, "/");
@@ -100,8 +108,7 @@ OCStackResult GroupSynchronization::createGroup(std::string collectionResourceTy
         std::string resourceInterface = DEFAULT_INTERFACE;
 
         result = OCPlatform::registerResource(collectionResHandle, collectionUri,
-                collectionResourceType, resourceInterface, NULL,
-                OC_DISCOVERABLE | OC_OBSERVABLE);
+                collectionResourceType, resourceInterface, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
         if (result != OC_STACK_OK)
         {
             cout << "To register resource (" << collectionUri << ") was unsuccessful. result - "
@@ -109,75 +116,73 @@ OCStackResult GroupSynchronization::createGroup(std::string collectionResourceTy
             goto Error;
         }
 
-        OCPlatform::bindInterfaceToResource(collectionResHandle, GROUP_INTERFACE);
-        if (result != OC_STACK_OK)
         {
-            cout << "To bind Interface (collection) was unsuccessful. result - " << result
-                    << endl;
-        }
+            OCPlatform::bindInterfaceToResource(collectionResHandle, GROUP_INTERFACE);
+            if (result != OC_STACK_OK)
+            {
+                cout << "To bind Interface (collection) was unsuccessful. result - " << result
+                        << endl;
+            }
 
-        collectionResourceHandleList[collectionResourceType] = collectionResHandle;
+            collectionResourceHandleList[collectionResourceType] = collectionResHandle;
 
-        // creating master group sync resource
-        std::string groupSyncUri = collectionUri + "/groupsync";
-        std::string groupSyncResType = collectionResourceType + ".groupsync";
+            // creating master group sync resource
+            std::string groupSyncUri = collectionUri + "/groupsync";
+            std::string groupSyncResType = collectionResourceType + ".groupsync";
 
 //        cout << "GroupSynchronization::createGroup : groupSync uri - " << groupSyncUri
 //                << ", type - " << collectionResourceType << endl;
 
-        result = OCPlatform::registerResource(groupSyncResHandle, groupSyncUri,
-                groupSyncResType, resourceInterface,
-                std::bind(&GroupSynchronization::groupEntityHandler, this,
-                        std::placeholders::_1), OC_DISCOVERABLE | OC_OBSERVABLE);
-        if (result != OC_STACK_OK)
+            result = OCPlatform::registerResource(groupSyncResHandle, groupSyncUri,
+                    groupSyncResType, resourceInterface,
+                    std::bind(&GroupSynchronization::groupEntityHandler, this,
+                            std::placeholders::_1), OC_DISCOVERABLE | OC_OBSERVABLE);
+            if (result != OC_STACK_OK)
+            {
+                cout << "To register resource (groupsync) was unsuccessful. result - " << result
+                        << endl;
+                goto Error;
+            }
+
+            groupSyncResourceHandleList[collectionResourceType] = groupSyncResHandle;
+
+            return OC_STACK_OK;
+        }
+        Error:
+
+        if (collectionResHandle)
         {
-            cout << "To register resource (groupsync) was unsuccessful. result - " << result
-                    << endl;
-            goto Error;
+            OCPlatform::unregisterResource(collectionResHandle);
+            auto iterator = collectionResourceHandleList.find(collectionResourceType);
+            if (iterator != collectionResourceHandleList.end())
+            {
+                collectionResourceHandleList.erase(iterator);
+            }
         }
 
-        groupSyncResourceHandleList[collectionResourceType] = groupSyncResHandle;
-
-        return OC_STACK_OK;
-    }
-    else
-    {
-        cout << "GroupSynchronization::createGroup : Error! Input params are wrong." << endl;
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    Error:
-
-    if (collectionResHandle)
-    {
-        OCPlatform::unregisterResource(collectionResHandle);
-        auto iterator = collectionResourceHandleList.find(collectionResourceType);
-        if (iterator != collectionResourceHandleList.end())
+        if (groupSyncResHandle)
         {
-            collectionResourceHandleList.erase(iterator);
+            OCPlatform::unregisterResource(groupSyncResHandle);
+            auto iterator = groupSyncResourceHandleList.find(collectionResourceType);
+            if (iterator != groupSyncResourceHandleList.end())
+            {
+                groupSyncResourceHandleList.erase(iterator);
+            }
         }
+
+        return OC_STACK_NO_RESOURCE;
     }
 
-    if (groupSyncResHandle)
+    OCStackResult GroupSynchronization::joinGroup(std::string collectionResourceType,
+            OCResourceHandle resourceHandle)
     {
-        OCPlatform::unregisterResource(groupSyncResHandle);
-        auto iterator = groupSyncResourceHandleList.find(collectionResourceType);
-        if (iterator != groupSyncResourceHandleList.end())
+        if ((0 == collectionResourceType.length()) || (!resourceHandle))
         {
-            groupSyncResourceHandleList.erase(iterator);
+            cout << "GroupSynchronization::joinGroup : Error! input params are wrong." << endl;
+            return OC_STACK_INVALID_PARAM;
         }
-    }
-
-    return OC_STACK_NO_RESOURCE;
-}
-
-OCStackResult GroupSynchronization::joinGroup(std::string collectionResourceType,
-        OCResourceHandle resourceHandle)
-{
-    if ((0 != collectionResourceType.length()) && (resourceHandle))
-    {
         auto resIt = collectionResourceHandleList.find(collectionResourceType);
-        if (resIt == groupSyncResourceHandleList.end())
+        if (resIt == collectionResourceHandleList.end())
         {
             cout << "GroupSynchronization::joinGroup : error! There is no collection to join"
                     << endl;
@@ -210,21 +215,19 @@ OCStackResult GroupSynchronization::joinGroup(std::string collectionResourceType
         deviceResourceHandleList.push_back(resourceHandle);
 
         debugGroupSync();
-    }
-    else
-    {
-        cout << "GroupSynchronization::joinGroup : Error! input params are wrong." << endl;
-        return OC_STACK_INVALID_PARAM;
+
+        return OC_STACK_OK;
     }
 
-    return OC_STACK_OK;
-}
-
-OCStackResult GroupSynchronization::joinGroup(const std::shared_ptr< OCResource > resource,
-        OCResourceHandle resourceHandle)
-{
-    if ((resource) && (resourceHandle))
+    OCStackResult GroupSynchronization::joinGroup(const std::shared_ptr< OCResource > resource,
+            OCResourceHandle resourceHandle)
     {
+        if ((!resource) || (!resourceHandle))
+        {
+            cout << "GroupSynchronization::joinGroup : Error! Input params are wrong." << endl;
+            return OC_STACK_INVALID_PARAM;
+        }
+
         cout << "GroupSynchronization::joinGroup" << endl;
 
         // making representation to join group
@@ -291,23 +294,20 @@ OCStackResult GroupSynchronization::joinGroup(const std::shared_ptr< OCResource 
 
         return OC_STACK_OK;
     }
-    else
-    {
-        cout << "GroupSynchronization::joinGroup : Error! Input params are wrong." << endl;
-        return OC_STACK_INVALID_PARAM;
-    }
-}
 
-OCStackResult GroupSynchronization::leaveGroup(std::string collectionResourceType,
-        OCResourceHandle resourceHandle)
-{
-    if ((0 != collectionResourceType.length()) && (resourceHandle))
+    OCStackResult GroupSynchronization::leaveGroup(std::string collectionResourceType,
+            OCResourceHandle resourceHandle)
     {
+        if ((0 == collectionResourceType.length()) || (!resourceHandle))
+        {
+            cout << "GroupSynchronization::leaveGroup : Error! Input params are wrong." << endl;
+            return OC_STACK_INVALID_PARAM;
+        }
+
         cout << "GroupSynchronization::leaveGroup : collectionResourceType - "
                 << collectionResourceType << endl;
 
         OCResourceHandle collectionResHandle;
-
         auto handleIt = groupSyncResourceHandleList.find(collectionResourceType);
 
         // if groupSyncResourceHandleList has resourceType,
@@ -326,8 +326,7 @@ OCStackResult GroupSynchronization::leaveGroup(std::string collectionResourceTyp
 //            cout << "GroupSynchronization::leaveGroup : collection handle uri - "
 //                    << OCGetResourceUri(collectionResHandle) << endl;
 
-            OCStackResult result = OCPlatform::unbindResource(collectionResHandle,
-                    resourceHandle);
+            OCStackResult result = OCPlatform::unbindResource(collectionResHandle, resourceHandle);
             if (OC_STACK_OK == result)
             {
                 cout << "GroupSynchronization::leaveGroup : "
@@ -339,8 +338,8 @@ OCStackResult GroupSynchronization::leaveGroup(std::string collectionResourceTyp
                         << "To unbind resource was unsuccessful. result - " << result << endl;
             }
 
-            auto It = std::find(deviceResourceHandleList.begin(),
-                    deviceResourceHandleList.end(), resourceHandle);
+            auto It = std::find(deviceResourceHandleList.begin(), deviceResourceHandleList.end(),
+                    resourceHandle);
             if (It == deviceResourceHandleList.end()) // there is no resource handle to find
             {
                 result = OCPlatform::unregisterResource(resourceHandle);
@@ -438,108 +437,30 @@ OCStackResult GroupSynchronization::leaveGroup(std::string collectionResourceTyp
             else
             {
                 cout << "GroupSynchronization::leaveGroup : "
-                        << "groupSyncResource->put was unsuccessful. result - " << result
-                        << endl;
+                        << "groupSyncResource->put was unsuccessful. result - " << result << endl;
             }
 
             // deleting all remote resources. These are copied in onGetJoinedRemoteChild()
             deleteGroup(collectionResourceType);
         }
-    }
-    else
-    {
-        cout << "GroupSynchronization::leaveGroup : Error! Input params are wrong." << endl;
-        return OC_STACK_INVALID_PARAM;
+
+        return OC_STACK_OK;
     }
 
-    return OC_STACK_OK;
-}
-
-void GroupSynchronization::deleteGroup(std::string collectionResourceType)
-{
-    if (0 != collectionResourceType.length())
+    void GroupSynchronization::deleteGroup(std::string collectionResourceType)
     {
+        if (0 == collectionResourceType.length())
+        {
+            cout << "GroupSynchronization::deleteGroup : Error! Input params are wrong." << endl;
+            return;
+        }
+
         cout << "GroupSynchronization::deleteGroup" << endl;
 
         OCStackResult result;
-
-        auto handleIt = collectionResourceHandleList.find(collectionResourceType);
-        if (handleIt == collectionResourceHandleList.end())
-        {
-            cout << "GroupSynchronization::deleteGroup : "
-                    << "Error! There is no collection resource handle to delete." << endl;
-            return;
-        }
-        OCResourceHandle collectionResHandle = handleIt->second;
-
-        collectionResourceHandleList.erase(handleIt);
-
-        auto handleListIt = childResourceHandleList.find(collectionResHandle);
-        if (handleListIt == childResourceHandleList.end())
-        {
-            cout << "GroupSynchronization::deleteGroup : "
-                    << "Error! There is no child resource list to delete." << endl;
-            return;
-        }
-        std::vector< OCResourceHandle > childList = handleListIt->second;
-
-        childResourceHandleList.erase(handleListIt);
-
-        result = OCPlatform::unbindResources(collectionResHandle, childList);
-        if (OC_STACK_OK == result)
-        {
-            cout << "GroupSynchronization::deleteGroup : "
-                    << "To unbind resources was successful." << endl;
-        }
-        else
-        {
-            cout << "GroupSynchronization::deleteGroup : "
-                    << "To unbind resources was unsuccessful. result - " << result << endl;
-        }
-
-        result = OCPlatform::unregisterResource(collectionResHandle);
-        if (result != OC_STACK_OK)
-        {
-            cout << "GroupSynchronization::deleteGroup : "
-                    << "To unregister collection resource handle was successful." << endl;
-        }
-        else
-        {
-            cout << "GroupSynchronization::deleteGroup : "
-                    << " To unregister collection resource handle was unsuccessful. result - "
-                    << result << endl;
-        }
-
         OCResourceHandle resourceHandle;
-        std::vector< OCResourceHandle >::iterator It;
 
-        for (unsigned int i = 0; i < childList.size(); i++)
-        {
-            resourceHandle = childList.at(i);
-
-            It = std::find(deviceResourceHandleList.begin(), deviceResourceHandleList.end(),
-                    resourceHandle);
-            if (It != deviceResourceHandleList.end()) // find !!
-            {
-                deviceResourceHandleList.erase(It);
-            }
-            else
-            {
-                result = OCPlatform::unregisterResource(resourceHandle);
-                if (OC_STACK_OK == result)
-                {
-                    cout << "GroupSynchronization::deleteGroup : UnregisterResource(" << i + 1
-                            << ") was successful." << endl;
-                }
-                else
-                {
-                    cout << "GroupSynchronization::deleteGroup : UnregisterResource(" << i + 1
-                            << ") was unsuccessful. result - " << result << endl;
-                }
-            }
-        }
-
-        handleIt = groupSyncResourceHandleList.find(collectionResourceType);
+        auto handleIt = groupSyncResourceHandleList.find(collectionResourceType);
 
         // if groupSyncResourceHandleList has resourceType,
         // group sync of this app created collection resource.
@@ -568,199 +489,441 @@ void GroupSynchronization::deleteGroup(std::string collectionResourceType)
             groupSyncResourceList.erase(resourceIt);
         }
 
+        handleIt = collectionResourceHandleList.find(collectionResourceType);
+        if (handleIt == collectionResourceHandleList.end())
+        {
+            cout << "GroupSynchronization::deleteGroup : "
+                    << "Error! There is no collection resource handle to delete." << endl;
+            return;
+        }
+        OCResourceHandle collectionResHandle = handleIt->second;
+
+        collectionResourceHandleList.erase(handleIt);
+
+        auto handleListIt = childResourceHandleList.find(collectionResHandle);
+        if (handleListIt == childResourceHandleList.end())
+        {
+            cout << "GroupSynchronization::deleteGroup : "
+                    << "There is no child resource list to delete." << endl;
+
+            result = OCPlatform::unregisterResource(collectionResHandle);
+            if (result == OC_STACK_OK)
+            {
+                cout << "GroupSynchronization::deleteGroup : "
+                        << "To unregister collection resource handle was successful." << endl;
+            }
+            else
+            {
+                cout << "GroupSynchronization::deleteGroup : "
+                        << " To unregister collection resource handle was unsuccessful. result - "
+                        << result << endl;
+            }
+
+            debugGroupSync();
+            return;
+        }
+
+        std::vector< OCResourceHandle > childList = handleListIt->second;
+
+        childResourceHandleList.erase(handleListIt);
+
+        result = OCPlatform::unbindResources(collectionResHandle, childList);
+        if (OC_STACK_OK == result)
+        {
+            cout << "GroupSynchronization::deleteGroup : " << "To unbind resources was successful."
+                    << endl;
+        }
+        else
+        {
+            cout << "GroupSynchronization::deleteGroup : "
+                    << "To unbind resources was unsuccessful. result - " << result << endl;
+        }
+
+        result = OCPlatform::unregisterResource(collectionResHandle);
+        if (result == OC_STACK_OK)
+        {
+            cout << "GroupSynchronization::deleteGroup : "
+                    << "To unregister collection resource handle was successful." << endl;
+        }
+        else
+        {
+            cout << "GroupSynchronization::deleteGroup : "
+                    << " To unregister collection resource handle was unsuccessful. result - "
+                    << result << endl;
+        }
+
+        std::vector< OCResourceHandle >::iterator It;
+
+        for (unsigned int i = 0; i < childList.size(); i++)
+        {
+            resourceHandle = childList.at(i);
+
+            It = std::find(deviceResourceHandleList.begin(), deviceResourceHandleList.end(),
+                    resourceHandle);
+            if (It != deviceResourceHandleList.end()) // find !!
+            {
+                deviceResourceHandleList.erase(It);
+            }
+            else
+            {
+                result = OCPlatform::unregisterResource(resourceHandle);
+                if (OC_STACK_OK == result)
+                {
+                    cout << "GroupSynchronization::deleteGroup : UnregisterResource(" << i + 1
+                            << ") was successful." << endl;
+                }
+                else
+                {
+                    cout << "GroupSynchronization::deleteGroup : UnregisterResource(" << i + 1
+                            << ") was unsuccessful. result - " << result << endl;
+                }
+            }
+        }
+
         debugGroupSync();
     }
-    else
+
+    std::map< std::string, OCResourceHandle > GroupSynchronization::getGroupList()
     {
-        cout << "GroupSynchronization::deleteGroup : Error! Input params are wrong." << endl;
+        return collectionResourceHandleList;
     }
-}
 
-std::map< std::string, OCResourceHandle > GroupSynchronization::getGroupList()
-{
-    return collectionResourceHandleList;
-}
-
-OCEntityHandlerResult GroupSynchronization::groupEntityHandler(
-        const std::shared_ptr< OCResourceRequest > request)
-{
-    cout << "GroupSynchronization::groupEntityHandler\n";
-
-    if (request)
+    OCEntityHandlerResult GroupSynchronization::groupEntityHandler(
+            const std::shared_ptr< OCResourceRequest > request)
     {
-        // Get the request type and request flag
-        std::string requestType = request->getRequestType();
-        int requestFlag = request->getRequestHandlerFlag();
+        cout << "GroupSynchronization::groupEntityHandler\n";
 
-        if (requestFlag == RequestHandlerFlag::InitFlag)
+        if (request)
         {
-            cout << "\trequestFlag : Init\n";
+            // Get the request type and request flag
+            std::string requestType = request->getRequestType();
+            int requestFlag = request->getRequestHandlerFlag();
 
-            // entity handler to perform resource initialization operations
-        }
-        else if (requestFlag == RequestHandlerFlag::RequestFlag)
-        {
-            cout << "\trequestFlag : Request\n";
-
-            // If the request type is GET
-            if (requestType == "GET")
+            if (requestFlag == RequestHandlerFlag::InitFlag)
             {
-                cout << "\t\trequestType : GET\n";
+                cout << "\trequestFlag : Init\n";
+
+                // entity handler to perform resource initialization operations
             }
-            else if (requestType == "PUT")
+            else if (requestFlag == RequestHandlerFlag::RequestFlag)
             {
-                cout << "\t\trequestType : PUT\n";
+                cout << "\trequestFlag : Request\n";
 
-                //get method name, group resource type and resource type to join group
-                OCRepresentation rp = request->getResourceRepresentation();
-                std::string methodType = rp.getValue< std::string >("method");
-                std::string collectionResourceType = rp.getValue< std::string >(
-                        "collectionResourceType");
-                std::string resourceType = rp.getValue< std::string >("resourceType");
-
-                cout << "\t\t\tmethod : " << methodType << endl;
-                cout << "\t\t\tcollection resourceType : " << collectionResourceType << endl;
-                cout << "\t\t\tresourceType : " << resourceType << endl;
-
-                auto handleIt = collectionResourceHandleList.find(collectionResourceType);
-                if (handleIt == collectionResourceHandleList.end())
+                // If the request type is GET
+                if (requestType == "GET")
                 {
-                    cout << "GroupSynchronization::groupEntityHandler : "
-                            << "Error! There is no collection resource handle to delete."
-                            << endl;
-                    return OC_EH_ERROR;
+                    cout << "\t\trequestType : GET\n";
                 }
-                collectionResourceHandle = handleIt->second;
-                // in case of join group it is used in onFindResource()
-
-                if (methodType == "joinGroup")
+                else if (requestType == "PUT")
                 {
-                    std::string resourceName = "coap://224.0.1.187/oc/core?rt=";
-                    resourceName += resourceType;
-                    cout << "\t\t\tresourceName : " << resourceName << endl;
+                    cout << "\t\trequestType : PUT\n";
 
-                    resourceRequest = request;
+                    //get method name, group resource type and resource type to join group
+                    OCRepresentation rp = request->getResourceRepresentation();
+                    std::string methodType = rp.getValue< std::string >("method");
+                    std::string collectionResourceType = rp.getValue< std::string >(
+                            "collectionResourceType");
+                    std::string resourceType = rp.getValue< std::string >("resourceType");
 
-                    OCPlatform::findResource("", resourceName,
-                            std::bind(&GroupSynchronization::onFindResource, this,
-                                    std::placeholders::_1));
-                }
-                else if (methodType == "leaveGroup")
-                {
-                    auto it = childResourceHandleList.find(collectionResourceHandle);
-                    if (it == childResourceHandleList.end())
+                    cout << "\t\t\tmethod : " << methodType << endl;
+                    cout << "\t\t\tcollection resourceType : " << collectionResourceType << endl;
+                    cout << "\t\t\tresourceType : " << resourceType << endl;
+
+                    auto handleIt = collectionResourceHandleList.find(collectionResourceType);
+                    if (handleIt == collectionResourceHandleList.end())
                     {
                         cout << "GroupSynchronization::groupEntityHandler : "
-                                << "Error! There is no child resource list." << endl;
+                                << "Error! There is no collection resource handle to delete."
+                                << endl;
                         return OC_EH_ERROR;
                     }
+                    collectionResourceHandle = handleIt->second;
+                    // in case of join group it is used in onFindResource()
 
-                    std::vector< OCResourceHandle > childList = it->second;
-                    OCResourceHandle resourceHandle;
-                    for (auto childIt = childList.begin(); childIt != childList.end();)
+                    if (methodType == "joinGroup")
                     {
-                        resourceHandle = (*childIt);
-                        char* type = (char*) OCGetResourceTypeName(resourceHandle, 0);
+                        std::string resourceName = "coap://224.0.1.187/oc/core?rt=";
+                        resourceName += resourceType;
+                        cout << "\t\t\tresourceName : " << resourceName << endl;
 
-                        if (0 == resourceType.compare(type))
+                        resourceRequest = request;
+
+                        OCPlatform::findResource("", resourceName,
+                                std::bind(&GroupSynchronization::onFindResource, this,
+                                        std::placeholders::_1));
+                    }
+                    else if (methodType == "leaveGroup")
+                    {
+                        auto it = childResourceHandleList.find(collectionResourceHandle);
+                        if (it == childResourceHandleList.end())
                         {
                             cout << "GroupSynchronization::groupEntityHandler : "
-                                    << "Found! The resource to leave is found. - " << type
-                                    << endl;
+                                    << "Error! There is no child resource list." << endl;
+                            return OC_EH_ERROR;
+                        }
 
-                            childIt = childList.erase(childIt++);
+                        std::vector< OCResourceHandle > childList = it->second;
+                        OCResourceHandle resourceHandle;
+                        for (auto childIt = childList.begin(); childIt != childList.end();)
+                        {
+                            resourceHandle = (*childIt);
+                            char* type = (char*) OCGetResourceTypeName(resourceHandle, 0);
 
-                            OCStackResult result = OCPlatform::unbindResource(
-                                    collectionResourceHandle, resourceHandle);
-                            if (OC_STACK_OK == result)
+                            if (0 == resourceType.compare(type))
                             {
                                 cout << "GroupSynchronization::groupEntityHandler : "
-                                        << "To unbind resource was successful." << endl;
-                            }
-                            else
-                            {
-                                cout << "GroupSynchronization::groupEntityHandler : "
-                                        << "To unbind resource was unsuccessful. result - "
-                                        << result << endl;
-                            }
+                                        << "Found! The resource to leave is found. - " << type
+                                        << endl;
 
-                            result = OCPlatform::unregisterResource(resourceHandle);
-                            if (OC_STACK_OK == result)
-                            {
-                                cout << "GroupSynchronization::groupEntityHandler : "
-                                        << "To unregister resource was successful." << endl;
-                            }
-                            else
-                            {
-                                cout << "GroupSynchronization::groupEntityHandler : "
-                                        << "To unregister resource was unsuccessful. result - "
-                                        << result << endl;
-                            }
+                                childIt = childList.erase(childIt++);
+
+                                OCStackResult result = OCPlatform::unbindResource(
+                                        collectionResourceHandle, resourceHandle);
+                                if (OC_STACK_OK == result)
+                                {
+                                    cout << "GroupSynchronization::groupEntityHandler : "
+                                            << "To unbind resource was successful." << endl;
+                                }
+                                else
+                                {
+                                    cout << "GroupSynchronization::groupEntityHandler : "
+                                            << "To unbind resource was unsuccessful. result - "
+                                            << result << endl;
+                                }
+
+                                result = OCPlatform::unregisterResource(resourceHandle);
+                                if (OC_STACK_OK == result)
+                                {
+                                    cout << "GroupSynchronization::groupEntityHandler : "
+                                            << "To unregister resource was successful." << endl;
+                                }
+                                else
+                                {
+                                    cout << "GroupSynchronization::groupEntityHandler : "
+                                            << "To unregister resource was unsuccessful. result - "
+                                            << result << endl;
+                                }
 
 //                            break;
+                            }
+                            else
+                            {
+                                ++childIt;
+                            }
+
                         }
-                        else
+
+                        childResourceHandleList[collectionResourceHandle] = childList;
+
+                        debugGroupSync();
+
+                        auto pResponse = std::make_shared< OC::OCResourceResponse >();
+                        pResponse->setRequestHandle(request->getRequestHandle());
+                        pResponse->setResourceHandle(request->getResourceHandle());
+                        pResponse->setErrorCode(200);
+                        pResponse->setResponseResult(OC_EH_OK);
+
+                        OCRepresentation rep = request->getResourceRepresentation();
+                        pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                        if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                         {
-                            ++childIt;
+                            cout << "GroupSynchronization::groupEntityHandler : "
+                                    << "sendResponse is successful." << endl;
                         }
-
                     }
 
-                    childResourceHandleList[collectionResourceHandle] = childList;
-
-                    debugGroupSync();
-
-                    auto pResponse = std::make_shared< OC::OCResourceResponse >();
-                    pResponse->setRequestHandle(request->getRequestHandle());
-                    pResponse->setResourceHandle(request->getResourceHandle());
-                    pResponse->setErrorCode(200);
-                    pResponse->setResponseResult(OC_EH_OK);
-
-                    OCRepresentation rep = request->getResourceRepresentation();
-                    pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-                    if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                    if (methodType != "") //TODO: Check groupmethodtype NULL
                     {
-                        cout << "GroupSynchronization::groupEntityHandler : "
-                                << "sendResponse is successful." << endl;
                     }
                 }
-
-                if (methodType != "") //TODO: Check groupmethodtype NULL
+                else if (requestType == "POST")
                 {
+                    // POST request operations
+                }
+                else if (requestType == "DELETE")
+                {
+                    // DELETE request operations
                 }
             }
-            else if (requestType == "POST")
+            else if (requestFlag == RequestHandlerFlag::ObserverFlag)
             {
-                // POST request operations
-            }
-            else if (requestType == "DELETE")
-            {
-                // DELETE request operations
+                cout << "\trequestFlag : Observer\n";
             }
         }
-        else if (requestFlag == RequestHandlerFlag::ObserverFlag)
+        else
         {
-            cout << "\trequestFlag : Observer\n";
+            std::cout << "Request invalid" << std::endl;
+        }
+
+        return OC_EH_OK;
+    }
+
+    void GroupSynchronization::onFindGroup(std::shared_ptr< OCResource > resource)
+    {
+        cout << "GroupSynchronization::onFindGroup" << endl;
+
+        try
+        {
+            if (resource)
+            {
+                // Debugging
+                std::string resourceURI;
+                std::string hostAddress;
+
+                // Get the resource URI
+                resourceURI = resource->uri();
+                cout << "\tURI of the resource: " << resourceURI << endl;
+
+                // Get the resource host address
+                hostAddress = resource->host();
+                cout << "\tHost address of the resource: " << hostAddress << endl;
+
+                hostAddress.append(resourceURI);
+
+                // Get the resource types
+                cout << "\tList of resource types: " << endl;
+
+                for (auto &resourceTypes : resource->getResourceTypes())
+                {
+                    cout << "\t\t" << resourceTypes << endl;
+                }
+
+                // Get the resource interfaces
+                cout << "\tList of resource interfaces: " << endl;
+                for (auto &resourceInterfaces : resource->getResourceInterfaces())
+                {
+                    cout << "\t\t" << resourceInterfaces << endl;
+                }
+
+                if (false == IsSameGroup(resource))
+                {
+                    saveGroup(resource);
+                    findCallback(resource);
+                }
+            }
+            else
+            {
+                // Resource is invalid
+                cout << "Resource is invalid" << endl;
+                findCallback(NULL);
+            }
+
+        }
+        catch (std::exception& e)
+        {
+            //log(e.what());
         }
     }
-    else
+
+    void GroupSynchronization::checkFindGroup(void)
     {
-        std::cout << "Request invalid" << std::endl;
+        cout << "GroupSynchronization::checkFindGroup" << endl;
+
+        for (int i = 0; i < 15; i++)
+        {
+            std::chrono::milliseconds workTime(300);
+            std::this_thread::sleep_for(workTime);
+
+            std::lock_guard < std::mutex > guard(foundGroupMutex);
+
+            if (false == foundGroupResourceList.empty())
+            {
+                cout << "GroupSynchronization::checkFoundGroup : " << "Some group is received."
+                        << endl;
+                return;
+            }
+        }
+
+        cout << "GroupSynchronization::checkFoundGroup : "
+                << "It is failed to find resource within 3s." << endl;
+
+        onFindGroup(NULL);
+        return;
     }
 
-    return OC_EH_OK;
-}
-
-void GroupSynchronization::onFindGroup(std::shared_ptr< OCResource > resource)
-{
-    cout << "GroupSynchronization::onFindGroup" << endl;
-
-    try
+    bool GroupSynchronization::IsSameGroup(std::shared_ptr< OCResource > resource)
     {
+        std::lock_guard < std::mutex > guard(foundGroupMutex);
+
+        if (true == foundGroupResourceList.empty())
+        {
+            cout << "GroupSynchronization::IsSameGroup : There is no found group." << endl;
+            return false;
+        }
+
+        std::string foundHostAddress, savedHostAddress;
+        foundHostAddress = resource->host();
+//    foundHostAddress.append (resource->uri());
+
+        for (unsigned int i = 0; i < foundGroupResourceList.size(); ++i)
+        {
+            savedHostAddress = (foundGroupResourceList.at(i))->host();
+//        savedHostAddress.append ((foundGroupResourceList.at(i))->uri());
+//        cout << "GroupSynchronization::IsSameGroup : foundHostAddress - " << foundHostAddress
+//                << ", savedHostAddress - " << savedHostAddress << endl;
+
+            if (0 == foundHostAddress.compare(savedHostAddress.c_str()))
+            {
+                cout << "GroupSynchronization::IsSameGroup : Found! The same group is found."
+                        << endl;
+                return true;
+            }
+        }
+
+        cout << "GroupSynchronization::IsSameGroup :  There is no same group." << endl;
+        return false;
+    }
+
+    void GroupSynchronization::saveGroup(std::shared_ptr< OCResource > resource)
+    {
+        cout << "GroupSynchronization::saveGroup" << endl;
+
+        std::lock_guard < std::mutex > guard(foundGroupMutex);
+
+        foundGroupResourceList.push_back(resource);
+    }
+
+    void GroupSynchronization::onJoinGroup(const HeaderOptions& headerOptions,
+            const OCRepresentation& rep, const int eCode)
+    {
+        if (eCode != OC_STACK_OK)
+        {
+            cout << "GroupSynchronization::onJoinGroup : error - " << eCode << endl;
+            return;
+        }
+
+        cout << "GroupSynchronization::onJoinGroup : " << endl;
+
+        if (remoteCollectionResource)
+        {
+            std::string resourceInterface = DEFAULT_INTERFACE;
+            QueryParamsMap queryParamsMap;
+
+            OCStackResult result = remoteCollectionResource->get("", resourceInterface,
+                    queryParamsMap,
+                    std::bind(&GroupSynchronization::onGetJoinedRemoteChild, this,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+            if (OC_STACK_OK == result)
+            {
+                cout << "GroupSynchronization::onJoinGroup : "
+                        << "remoteCollectionResource->get was successful." << endl;
+            }
+            else
+            {
+                cout << "GroupSynchronization::onJoinGroup : "
+                        << "remoteCollectionResource->get was unsuccessful. result - " << result
+                        << endl;
+            }
+        }
+    }
+
+    void GroupSynchronization::onFindResource(std::shared_ptr< OCResource > resource)
+    {
+        cout << "GroupSynchronization::onFindResource" << endl;
+
         if (resource)
         {
-//////////////////////////////////////////////////////////////////////////////////////////////////
-////////////debugging
+            // start of debugging
             std::string resourceURI;
             std::string hostAddress;
 
@@ -788,233 +951,76 @@ void GroupSynchronization::onFindGroup(std::shared_ptr< OCResource > resource)
             {
                 cout << "\t\t" << resourceInterfaces << endl;
             }
-//////////////////////////////////////////////////////////////////////////////////////////////////
+            // end of debugging
 
-            if (false == IsSameGroup(resource))
+            OCResourceHandle resourceHandle;
+            OCStackResult result = OCPlatform::registerResource(resourceHandle, resource);
+            if (result != OC_STACK_OK)
             {
-                saveGroup(resource);
-                findCallback(resource);
+                cout << "GroupSynchronization::"
+                        << "onFindResource - Resource to join creation was unsuccessful. result - "
+                        << result << endl;
+                return;
+            }
+//        cout << "GroupSynchronization::onFindResource : creating resourceHandle. resource type - "
+//                << OCGetResourceTypeName(resourceHandle, 0) << endl;
+
+            result = OCPlatform::bindResource(collectionResourceHandle, resourceHandle);
+            if (result != OC_STACK_OK)
+            {
+                cout << "GroupSynchronization::onFindResource : "
+                        << "To bind resource was unsuccessful. result - " << result << endl;
+                return;
+            }
+
+            cout << "GroupSynchronization::onFindResource : "
+                    << "To bind joinGroupHandle and resourceHandle was successful." << endl;
+
+            auto it = childResourceHandleList.find(collectionResourceHandle);
+            std::vector< OCResourceHandle > childHandleList;
+            if (it != childResourceHandleList.end())
+            {
+                childHandleList = it->second;
+            }
+
+            childHandleList.push_back(resourceHandle);
+            childResourceHandleList[collectionResourceHandle] = childHandleList;
+
+            auto pResponse = std::make_shared< OC::OCResourceResponse >();
+            pResponse->setRequestHandle(resourceRequest->getRequestHandle());
+            pResponse->setResourceHandle(resourceRequest->getResourceHandle());
+            pResponse->setErrorCode(200);
+            pResponse->setResponseResult(OC_EH_OK);
+
+            OCRepresentation rep = resourceRequest->getResourceRepresentation();
+            pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+            if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+            {
+                cout << "GroupSynchronization::onFindResource : sendResponse is successful."
+                        << endl;
             }
         }
         else
         {
-            // Resource is invalid
-            cout << "Resource is invalid" << endl;
-            findCallback(NULL);
-        }
-
-    }
-    catch (std::exception& e)
-    {
-        //log(e.what());
-    }
-}
-
-void GroupSynchronization::checkFindGroup(void)
-{
-    cout << "GroupSynchronization::checkFindGroup" << endl;
-
-    for (int i = 0; i < 15; i++)
-    {
-        std::chrono::milliseconds workTime(300);
-        std::this_thread::sleep_for(workTime);
-
-        std::lock_guard < std::mutex > guard(foundGroupMutex);
-
-        if (false == foundGroupResourceList.empty())
-        {
-            cout << "GroupSynchronization::checkFoundGroup : " << "Some group is received."
-                    << endl;
-            return;
-        }
-    }
-
-    cout << "GroupSynchronization::checkFoundGroup : "
-            << "It is failed to find resource within 3s." << endl;
-
-    onFindGroup(NULL);
-    return;
-}
-
-bool GroupSynchronization::IsSameGroup(std::shared_ptr< OCResource > resource)
-{
-    std::lock_guard < std::mutex > guard(foundGroupMutex);
-
-    if (true == foundGroupResourceList.empty())
-    {
-        cout << "GroupSynchronization::IsSameGroup : There is no found group." << endl;
-        return false;
-    }
-
-    std::string foundHostAddress, savedHostAddress;
-    foundHostAddress = resource->host();
-//    foundHostAddress.append (resource->uri());
-
-    for (unsigned int i = 0; i < foundGroupResourceList.size(); ++i)
-    {
-        savedHostAddress = (foundGroupResourceList.at(i))->host();
-//        savedHostAddress.append ((foundGroupResourceList.at(i))->uri());
-//        cout << "GroupSynchronization::IsSameGroup : foundHostAddress - " << foundHostAddress
-//                << ", savedHostAddress - " << savedHostAddress << endl;
-
-        if (0 == foundHostAddress.compare(savedHostAddress.c_str()))
-        {
-            cout << "GroupSynchronization::IsSameGroup : Found! The same group is found."
-                    << endl;
-            return true;
-        }
-    }
-
-    cout << "GroupSynchronization::IsSameGroup :  There is no same group." << endl;
-    return false;
-}
-
-void GroupSynchronization::saveGroup(std::shared_ptr< OCResource > resource)
-{
-    cout << "GroupSynchronization::saveGroup" << endl;
-
-    std::lock_guard < std::mutex > guard(foundGroupMutex);
-
-    foundGroupResourceList.push_back(resource);
-}
-
-void GroupSynchronization::onJoinGroup(const HeaderOptions& headerOptions,
-        const OCRepresentation& rep, const int eCode)
-{
-    if (eCode == OC_STACK_OK)
-    {
-        cout << "GroupSynchronization::onJoinGroup : " << endl;
-
-        if (remoteCollectionResource)
-        {
-            std::string resourceInterface = DEFAULT_INTERFACE;
-            QueryParamsMap queryParamsMap;
-
-            OCStackResult result = remoteCollectionResource->get("", resourceInterface,
-                    queryParamsMap,
-                    std::bind(&GroupSynchronization::onGetJoinedRemoteChild, this,
-                            std::placeholders::_1, std::placeholders::_2,
-                            std::placeholders::_3));
-            if (OC_STACK_OK == result)
-            {
-                cout << "GroupSynchronization::onJoinGroup : "
-                        << "remoteCollectionResource->get was successful." << endl;
-            }
-            else
-            {
-                cout << "GroupSynchronization::onJoinGroup : "
-                        << "remoteCollectionResource->get was unsuccessful. result - " << result
-                        << endl;
-            }
-        }
-    }
-    else
-    {
-        cout << "GroupSynchronization::onJoinGroup : error - " << eCode << endl;
-    }
-}
-
-void GroupSynchronization::onFindResource(std::shared_ptr< OCResource > resource)
-{
-    cout << "GroupSynchronization::onFindResource" << endl;
-
-    if (resource)
-    {
-//////////////////////////////////////////////////////////////////////////////////////////////////
-////////// debugging
-        std::string resourceURI;
-        std::string hostAddress;
-
-        // Get the resource URI
-        resourceURI = resource->uri();
-        cout << "\tURI of the resource: " << resourceURI << endl;
-
-        // Get the resource host address
-        hostAddress = resource->host();
-        cout << "\tHost address of the resource: " << hostAddress << endl;
-
-        hostAddress.append(resourceURI);
-
-        // Get the resource types
-        cout << "\tList of resource types: " << endl;
-
-        for (auto &resourceTypes : resource->getResourceTypes())
-        {
-            cout << "\t\t" << resourceTypes << endl;
-        }
-
-        // Get the resource interfaces
-        cout << "\tList of resource interfaces: " << endl;
-        for (auto &resourceInterfaces : resource->getResourceInterfaces())
-        {
-            cout << "\t\t" << resourceInterfaces << endl;
-        }
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-        OCResourceHandle resourceHandle;
-        OCStackResult result = OCPlatform::registerResource(resourceHandle, resource);
-        if (result != OC_STACK_OK)
-        {
-            cout << "GroupSynchronization::"
-                    << "onFindResource - Resource to join creation was unsuccessful. result - "
-                    << result << endl;
-            return;
-        }
-//        cout << "GroupSynchronization::onFindResource : creating resourceHandle. resource type - "
-//                << OCGetResourceTypeName(resourceHandle, 0) << endl;
-
-        result = OCPlatform::bindResource(collectionResourceHandle, resourceHandle);
-        if (result != OC_STACK_OK)
-        {
             cout << "GroupSynchronization::onFindResource : "
-                    << "To bind resource was unsuccessful. result - " << result << endl;
+                    << "Resource is invalid. So a new Group Resource has to be created." << endl;
+        }
+
+        debugGroupSync();
+    }
+
+    void GroupSynchronization::onGetJoinedRemoteChild(const HeaderOptions& headerOptions,
+            const OCRepresentation& rep, const int eCode)
+    {
+        if (eCode != OC_STACK_OK)
+        {
+            cout << "GroupSynchronization::onGetJoinedRemoteChild : error - " << eCode << endl;
             return;
         }
-        cout << "GroupSynchronization::onFindResource : "
-                << "To bind joinGroupHandle and resourceHandle was successful." << endl;
 
-        auto it = childResourceHandleList.find(collectionResourceHandle);
-        std::vector< OCResourceHandle > childHandleList;
-        if (it != childResourceHandleList.end())
-        {
-            childHandleList = it->second;
-        }
-
-        childHandleList.push_back(resourceHandle);
-        childResourceHandleList[collectionResourceHandle] = childHandleList;
-
-        auto pResponse = std::make_shared< OC::OCResourceResponse >();
-        pResponse->setRequestHandle(resourceRequest->getRequestHandle());
-        pResponse->setResourceHandle(resourceRequest->getResourceHandle());
-        pResponse->setErrorCode(200);
-        pResponse->setResponseResult(OC_EH_OK);
-
-        OCRepresentation rep = resourceRequest->getResourceRepresentation();
-        pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-        if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-        {
-            cout << "GroupSynchronization::onFindResource : sendResponse is successful."
-                    << endl;
-        }
-    }
-    else
-    {
-        cout << "GroupSynchronization::onFindResource : "
-                << "Resource is invalid. So a new Group Resource has to be created." << endl;
-    }
-
-    debugGroupSync();
-}
-
-void GroupSynchronization::onGetJoinedRemoteChild(const HeaderOptions& headerOptions,
-        const OCRepresentation& rep, const int eCode)
-{
-    if (eCode == OC_STACK_OK)
-    {
         cout << "GroupSynchronization::onGetJoinedRemoteChild" << endl;
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-////////// debugging
+        // debugging
         std::string resourceURI;
 
         // Get the resource URI
@@ -1058,14 +1064,12 @@ void GroupSynchronization::onGetJoinedRemoteChild(const HeaderOptions& headerOpt
                 cout << "\t\t\t" << interfaces << endl;
             }
         }
-//////////////////////////////////////////////////////////////////////////////////////////////////
 
         // creating remote collection resource handle
         OCResourceHandle remoteCollectionResourceHandle;
         resourceURI = remoteCollectionResource->uri();
         std::vector< std::string > types = remoteCollectionResource->getResourceTypes();
-        std::vector< std::string > interfaces =
-                remoteCollectionResource->getResourceInterfaces();
+        std::vector< std::string > interfaces = remoteCollectionResource->getResourceInterfaces();
 
         OCStackResult result = OCPlatform::registerResource(remoteCollectionResourceHandle,
                 resourceURI, types[0], interfaces[0], NULL, OC_OBSERVABLE);
@@ -1086,8 +1090,7 @@ void GroupSynchronization::onGetJoinedRemoteChild(const HeaderOptions& headerOpt
         if (OC_STACK_OK == result)
         {
             cout << "GroupSynchronization::onGetJoinedRemoteChild : "
-                    << "binding remoteCollectionResourceHandle and deviceResourceHandle"
-                    << endl;
+                    << "binding remoteCollectionResourceHandle and deviceResourceHandle" << endl;
         }
         else
         {
@@ -1122,8 +1125,7 @@ void GroupSynchronization::onGetJoinedRemoteChild(const HeaderOptions& headerOpt
                     interfaces[0], NULL, OC_OBSERVABLE);
             if (OC_STACK_OK == result)
             {
-                result = OCPlatform::bindResource(remoteCollectionResourceHandle,
-                        resourceHandle);
+                result = OCPlatform::bindResource(remoteCollectionResourceHandle, resourceHandle);
                 if (result != OC_STACK_OK)
                 {
                     cout << "GroupSynchronization::onGetJoinedRemoteChild - "
@@ -1146,132 +1148,126 @@ void GroupSynchronization::onGetJoinedRemoteChild(const HeaderOptions& headerOpt
 
         childResourceHandleList[remoteCollectionResourceHandle] = childHandleList;
         // this handle list is used to leave group
-    }
-    else
-    {
-        cout << "GroupSynchronization::onGetJoinedRemoteChild : error - " << eCode << endl;
+
+        debugGroupSync();
     }
 
-    debugGroupSync();
-}
-
-void GroupSynchronization::onLeaveGroup(const HeaderOptions& headerOptions,
-        const OCRepresentation& rep, const int eCode)
-{
-    if (eCode == OC_STACK_OK)
+    void GroupSynchronization::onLeaveGroup(const HeaderOptions& headerOptions,
+            const OCRepresentation& rep, const int eCode)
     {
+        if (eCode != OC_STACK_OK)
+        {
+            cout << "GroupSynchronization::onLeaveGroup : error - " << eCode << endl;
+            return;
+        }
+
         cout << "GroupSynchronization::onLeaveGroup" << endl;
+        debugGroupSync();
     }
-    else
+
+    void GroupSynchronization::debugGroupSync(void)
     {
-        cout << "GroupSynchronization::onLeaveGroup : error - " << eCode << endl;
-    }
-    debugGroupSync();
-}
+        cout << "GroupSynchronization::debugGroupSync" << endl;
 
-void GroupSynchronization::debugGroupSync(void)
-{
-    cout << "GroupSynchronization::debugGroupSync" << endl;
+        unsigned int i;
+        std::map< std::string, OCResourceHandle >::iterator handleIt;
+        std::map< OCResourceHandle, std::vector< OCResourceHandle > >::iterator childIt;
+        std::string type;
+        OCResourceHandle resourceHandle;
+        std::vector< OCResourceHandle > handleList;
+        std::shared_ptr< OCResource > resource;
 
-    unsigned int i;
-    std::map< std::string, OCResourceHandle >::iterator handleIt;
-    std::map< OCResourceHandle, std::vector< OCResourceHandle > >::iterator childIt;
-    std::string type;
-    OCResourceHandle resourceHandle;
-    std::vector< OCResourceHandle > handleList;
-    std::shared_ptr< OCResource > resource;
+        cout << "Resource Handle Created by App" << endl;
+        for (i = 0; i < deviceResourceHandleList.size(); i++)
+        {
+            resourceHandle = deviceResourceHandleList.at(i);
 
-    cout << "Resource Handle Created by App" << endl;
-    for (i = 0; i < deviceResourceHandleList.size(); i++)
-    {
-        resourceHandle = deviceResourceHandleList.at(i);
+            cout << i + 1 << ". details" << endl;
+            cout << "  uri - " << OCGetResourceUri(resourceHandle) << endl;
+            cout << "  resource type - " << OCGetResourceTypeName(resourceHandle, 0) << endl;
+            cout << "  resource interface - " << OCGetResourceInterfaceName(resourceHandle, 0)
+                    << endl << endl;
+        }
 
-        cout << i + 1 << ". details" << endl;
-        cout << "  uri - " << OCGetResourceUri(resourceHandle) << endl;
-        cout << "  resource type - " << OCGetResourceTypeName(resourceHandle, 0) << endl;
-        cout << "  resource interface - " << OCGetResourceInterfaceName(resourceHandle, 0)
-                << endl << endl;
-    }
+        cout << "\nGroup Sync Resource Handle List. The number is "
+                << groupSyncResourceHandleList.size() << endl;
+        i = 1;
+        for (handleIt = groupSyncResourceHandleList.begin();
+                handleIt != groupSyncResourceHandleList.end(); ++handleIt)
+        {
+            type = handleIt->first;
+            cout << "\t" << i << ". group sync resource type - " << type << endl;
+            cout << "\t  details" << endl;
 
-    cout << "\nGroup Sync Resource Handle List. The number is "
-            << groupSyncResourceHandleList.size() << endl;
-    i = 1;
-    for (handleIt = groupSyncResourceHandleList.begin();
-            handleIt != groupSyncResourceHandleList.end(); ++handleIt)
-    {
-        type = handleIt->first;
-        cout << "\t" << i << ". group sync resource type - " << type << endl;
-        cout << "\t  details" << endl;
+            resourceHandle = handleIt->second;
+            cout << "\t  uri - " << OCGetResourceUri(resourceHandle) << endl;
+            cout << "\t  resource type - " << OCGetResourceTypeName(resourceHandle, 0) << endl;
+            cout << "\t  resource interface - " << OCGetResourceInterfaceName(resourceHandle, 0)
+                    << endl << endl;
+            ;
+            i++;
+        }
 
-        resourceHandle = handleIt->second;
-        cout << "\t  uri - " << OCGetResourceUri(resourceHandle) << endl;
-        cout << "\t  resource type - " << OCGetResourceTypeName(resourceHandle, 0) << endl;
-        cout << "\t  resource interface - " << OCGetResourceInterfaceName(resourceHandle, 0)
-                << endl << endl;
-        ;
-        i++;
-    }
+        cout << "Copied Remote Group Sync Resource List. The number is "
+                << groupSyncResourceList.size() << endl;
+        std::vector< std::string > list;
+        i = 1;
+        for (auto resourceIt = groupSyncResourceList.begin();
+                resourceIt != groupSyncResourceList.end(); ++resourceIt)
+        {
+            type = resourceIt->first;
+            cout << "\t" << i << ". group sync resource type - " << type << endl;
+            cout << "\t details" << endl;
 
-    cout << "Copied Remote Group Sync Resource List. The number is "
-            << groupSyncResourceList.size() << endl;
-    std::vector< std::string > list;
-    i = 1;
-    for (auto resourceIt = groupSyncResourceList.begin();
-            resourceIt != groupSyncResourceList.end(); ++resourceIt)
-    {
-        type = resourceIt->first;
-        cout << "\t" << i << ". group sync resource type - " << type << endl;
-        cout << "\t details" << endl;
-
-        resource = resourceIt->second;
-        cout << "\t  host - " << resource->host() << endl;
-        cout << "\t  uri - " << resource->uri() << endl;
-        list = resource->getResourceTypes();
-        cout << "\t  resource type - " << list[0] << endl;
-        list = resource->getResourceInterfaces();
-        cout << "\t  resource interface - " << list[0] << endl << endl;
-        i++;
-    }
+            resource = resourceIt->second;
+            cout << "\t  host - " << resource->host() << endl;
+            cout << "\t  uri - " << resource->uri() << endl;
+            list = resource->getResourceTypes();
+            cout << "\t  resource type - " << list[0] << endl;
+            list = resource->getResourceInterfaces();
+            cout << "\t  resource interface - " << list[0] << endl << endl;
+            i++;
+        }
 
 //    cout << "The number of collection Resource Handle is " << collectionResourceHandleList.size()
 //            << endl;
 //    cout << "The number of child resource handle list is " << childResourceHandleList.size()
 //            << endl;
 
-    cout << "Collection Resource Handle List" << endl;
-    i = 1;
-    for (handleIt = collectionResourceHandleList.begin();
-            handleIt != collectionResourceHandleList.end(); ++handleIt)
-    {
-        type = handleIt->first;
-        cout << "\t" << i << ". collection resource type - " << type << endl;
-        cout << "\t  details" << endl;
-
-        resourceHandle = handleIt->second;
-        cout << "\t  uri - " << OCGetResourceUri(resourceHandle) << endl;
-        cout << "\t  resource type - " << OCGetResourceTypeName(resourceHandle, 0) << endl;
-        cout << "\t  resource interface - " << OCGetResourceInterfaceName(resourceHandle, 0)
-                << endl << endl;
-
-        childIt = childResourceHandleList.find(resourceHandle);
-        if (childIt != childResourceHandleList.end())
+        cout << "Collection Resource Handle List" << endl;
+        i = 1;
+        for (handleIt = collectionResourceHandleList.begin();
+                handleIt != collectionResourceHandleList.end(); ++handleIt)
         {
-            handleList = childIt->second;
-            for (unsigned int j = 0; j < handleList.size(); j++)
+            type = handleIt->first;
+            cout << "\t" << i << ". collection resource type - " << type << endl;
+            cout << "\t  details" << endl;
+
+            resourceHandle = handleIt->second;
+            cout << "\t  uri - " << OCGetResourceUri(resourceHandle) << endl;
+            cout << "\t  resource type - " << OCGetResourceTypeName(resourceHandle, 0) << endl;
+            cout << "\t  resource interface - " << OCGetResourceInterfaceName(resourceHandle, 0)
+                    << endl << endl;
+
+            childIt = childResourceHandleList.find(resourceHandle);
+            if (childIt != childResourceHandleList.end())
             {
+                handleList = childIt->second;
+                for (unsigned int j = 0; j < handleList.size(); j++)
+                {
 
-                cout << "\t\t" << j + 1 << ". child resource details" << endl;
+                    cout << "\t\t" << j + 1 << ". child resource details" << endl;
 
-                resourceHandle = handleList.at(j);
-                cout << "\t\t  uri - " << OCGetResourceUri(resourceHandle) << endl;
-                cout << "\t\t  resource type - " << OCGetResourceTypeName(resourceHandle, 0)
-                        << endl;
-                cout << "\t\t  resource interface - "
-                        << OCGetResourceInterfaceName(resourceHandle, 0) << endl << endl;
+                    resourceHandle = handleList.at(j);
+                    cout << "\t\t  uri - " << OCGetResourceUri(resourceHandle) << endl;
+                    cout << "\t\t  resource type - " << OCGetResourceTypeName(resourceHandle, 0)
+                            << endl;
+                    cout << "\t\t  resource interface - "
+                            << OCGetResourceInterfaceName(resourceHandle, 0) << endl << endl;
+                }
             }
-        }
 
-        i++;
+            i++;
+        }
     }
-}
 }
