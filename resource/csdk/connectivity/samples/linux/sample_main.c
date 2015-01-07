@@ -90,10 +90,10 @@ void clearDtlsCredentialInfo()
         // Zero out sensitive data before freeing.
         if (pskCredsBlob->num)
         {
-            memset(pskCredsBlob->creds, 0,
-                    sizeof(OCDtlsPskCredsBlob) + (sizeof(OCDtlsPskCreds)*(pskCredsBlob->num - 1)));
+            memset(pskCredsBlob, 0,
+                sizeof(OCDtlsPskCredsBlob) + (sizeof(OCDtlsPskCreds)*(pskCredsBlob->num - 1)));
         }
-        free(pskCredsBlob->creds);
+        free(pskCredsBlob);
         pskCredsBlob = NULL;
     }
     printf("clearDtlsCredentialInfo OUT\n");
@@ -118,7 +118,9 @@ int32_t SetCredentials()
     if (pskCredsBlob)
     {
         memset(pskCredsBlob, 0x0, sizeof(OCDtlsPskCredsBlob));
-        pskCredsBlob->num = DtlsPskCredsBlobVer_CurrentVersion;
+
+        pskCredsBlob->blobVer = DtlsPskCredsBlobVer_CurrentVersion;
+
         memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
 
         pskCredsBlob->num = 1;
@@ -527,12 +529,12 @@ void send_secure_request()
     char uri[MAX_BUF_LEN];
     char ipv4addr[CA_IPADDR_SIZE];
 
+    printf("\n=============================================\n");
     printf("Enter IPv4 address of the source hosting secure resource (Ex: 11.12.13.14)\n");
 
     fgets(ipv4addr, CA_IPADDR_SIZE, stdin);
     snprintf(uri, MAX_BUF_LEN, "coaps://%s:5684/a/light", ipv4addr);
 
-    printf("\n=============================================\n");
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
     if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, CA_ETHERNET, &endpoint))
