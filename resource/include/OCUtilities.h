@@ -27,7 +27,8 @@
 #include <utility>
 #include <exception>
 
-#include "OCException.h"
+#include <OCException.h>
+#include <StringConstants.h>
 
 namespace OC {
     namespace Utilities {
@@ -94,6 +95,25 @@ namespace OC {
         return result_guard(nil_guard(p, fn, std::forward<ParamTs>(params)...));
     }
 
+} // namespace OC
+
+namespace OC
+{
+    template<typename T, typename = void>
+    struct is_vector
+    {
+        constexpr static bool value = false;
+    };
+
+    template<typename T>
+    struct is_vector<T,
+        typename std::enable_if<
+            std::is_same<T, std::vector<typename T::value_type, typename T::allocator_type>>::value
+        >::type
+    >
+    {
+        constexpr static bool value = true;
+    };
 } // namespace OC
 
 #endif

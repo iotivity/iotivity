@@ -53,25 +53,22 @@ public:
     // array of lights representation with in GarageResource
     OCRepresentation m_lightRep;
     std::vector<OCRepresentation> m_reps;
+    std::vector<std::vector<int>> m_hingeStates;
 
 public:
     /// Constructor
-    GarageResource(): m_name("John's Garage"), m_state(false), m_garageUri("/a/garage") {
+    GarageResource(): m_name("John's Garage"), m_state(false), m_garageUri("/a/garage"),
+        m_hingeStates{{1,2,3},{4,5,6}}
+    {
         // Initialize representation
         m_garageRep.setUri(m_garageUri);
 
-        m_garageRep.setValue("state", m_state);
-        m_garageRep.setValue("name", m_name);
+        m_garageRep["state"] = m_state;
+        m_garageRep["name"] = m_name;
 
         // For demonstration purpose we are setting x to nullptr here.
         // In reality it may happen else where.
-        int* x = nullptr;
-
-        // Check for nullptr and set null for that attribute
-        if(x == nullptr)
-        {
-            m_garageRep.setNULL("nullAttribute");
-        }
+        m_garageRep["nullAttribute"] = nullptr;
 
         std::vector<bool> lightStates;
         std::vector<int>  lightPowers;
@@ -82,30 +79,32 @@ public:
             lightPowers.push_back(i);
         }
 
-        m_lightRep.setValue("states", lightStates);
-        m_lightRep.setValue("powers", lightPowers);
+        m_lightRep["states"] = lightStates;
+        m_lightRep["powers"] = lightPowers;
 
         // Storing another representation within a representation
-        m_garageRep.setValue("light", m_lightRep);
+        m_garageRep["light"] = m_lightRep;
 
         OCRepresentation rep1;
         int value1 = 5;
-        rep1.setValue("key1", value1);
+        rep1["key1"] = value1;
         OCRepresentation rep2;
         int value2 = 10;
-        rep2.setValue("key2", value2);
+        rep2["key2"] = value2;
 
         m_reps.push_back(rep1);
         m_reps.push_back(rep2);
 
         // storing array of representations
-        m_garageRep.setValue("reps", m_reps);
+        m_garageRep["reps"] =  m_reps;
 
 
         // setting json string
         std::string json = "{\"num\":10,\"rno\":23.5,\"aoa\":[[1,2],[3]],\"str\":\"john\",\
 \"object\":{\"bl1\":false,\"ar\":[2,3]}, \"objects\":[{\"bl2\":true,\"nl\":null},{\"ar1\":[1,2]}]}";
-        m_garageRep.setValue("json", json);
+        m_garageRep["json"] = json;
+
+        m_garageRep["hinges"] = m_hingeStates;
     }
 
     /* Note that this does not need to be a member function: for classes you do not have
@@ -164,7 +163,7 @@ public:
     // sending out.
     OCRepresentation get()
     {
-        m_garageRep.setValue("state", m_state);
+        m_garageRep["state"] = m_state;
 
         return m_garageRep;
     }
