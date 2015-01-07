@@ -644,7 +644,6 @@ namespace OC
         OCRepresentation attrs;
         HeaderOptions serverHeaderOptions;
         uint32_t sequenceNumber = clientResponse->sequenceNumber;
-
         if(clientResponse->result == OC_STACK_OK)
         {
             parseServerHeaderOptions(clientResponse, serverHeaderOptions);
@@ -653,6 +652,10 @@ namespace OC
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     clientResponse->result, sequenceNumber);
         exec.detach();
+        if(sequenceNumber == OC_OBSERVE_DEREGISTER)
+        {
+            return OC_STACK_DELETE_TRANSACTION;
+        }
         return OC_STACK_KEEP_TRANSACTION;
     }
 
