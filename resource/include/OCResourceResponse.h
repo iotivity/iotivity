@@ -45,8 +45,17 @@ namespace OC
     public:
         typedef std::shared_ptr<OCResourceResponse> Ptr;
 
-        OCResourceResponse()
-        {}
+        OCResourceResponse():
+            m_newResourceUri{},
+            m_errorCode{},
+            m_headerOptions{},
+            m_interface{},
+            m_representation{},
+            m_requestHandle{nullptr},
+            m_resourceHandle{nullptr},
+            m_responseResult{}
+        {
+        }
 
         virtual ~OCResourceResponse(void) {}
 
