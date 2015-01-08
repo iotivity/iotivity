@@ -310,54 +310,74 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
     return ret;
 }
 
-void HandlePresenceResponse(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
+void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType)
+{
+    char * tok = NULL;
+
+    // The format of the payload is {"oc":[%u:%u:%s]}
+    // %u : sequence number,
+    // %u : max age
+    // %s : Resource Type (Optional)
+    tok = strtok(payload, "[:]}");
+    payload[strlen(payload)] = ':';
+    tok = strtok(NULL, "[:]}");
+    payload[strlen((char *)payload)] = ':';
+    *seqNum = (uint32_t) atoi(tok);
+    tok = strtok(NULL, "[:]}");
+    *maxAge = (uint32_t) atoi(tok);
+    tok = strtok(NULL, "[:]}");
+
+    if(tok)
+    {
+        *resType = (char *)OCMalloc(strlen(tok));
+        if(!*resType)
+        {
+            return;
+        }
+        payload[strlen((char *)payload)] = ':';
+        strcpy(*resType, tok);
+        OC_LOG_V(DEBUG, TAG, "----------------resourceTypeName %s", *resType);
+    }
+    payload[strlen((char *)payload)] = ']';
+}
+
+OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
+                            const CAResponseInfo_t* responseInfo)
 {
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
     ClientCB * cbNode = NULL;
     char *resourceTypeName = NULL;
-    char * tok = NULL;
-    char * bufRes = responseInfo->info.payload;
-    OCClientResponse *response = (OCClientResponse *) OCMalloc(sizeof(OCClientResponse));
+    OCClientResponse response;
+    OCStackResult result = OC_STACK_ERROR;
+    uint32_t lowerBound = 0;
+    uint32_t higherBound = 0;
+    uint32_t maxAge = 0;
 
-    OCStackResult result = UpdateResponseAddr(response, endPoint);
-    if(result != OC_STACK_OK)
+    char *fullUri = NULL;
+    char *ipAddress = NULL;
+    int presenceSubscribe = 0;
+    int multicastPresenceSubscribe = 0;
+
+    fullUri = (char *) OCMalloc(MAX_URI_LENGTH );
+
+    if(NULL == fullUri)
     {
+        OC_LOG(INFO, TAG, PCF("Memory could not be abllocated for fullUri"));
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
 
-    if(!bufRes)
+    ipAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
+
+    if(NULL == ipAddress)
     {
+        OC_LOG(INFO, TAG, PCF("Memory could not be abllocated for ipAddress"));
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
 
-    tok = strtok(bufRes, "[:]}");
-    bufRes[strlen(bufRes)] = ':';
-    tok = strtok(NULL, "[:]}");
-    bufRes[strlen((char *)bufRes)] = ':';
-    response->sequenceNumber = (uint32_t )atoi(tok);
-    tok = strtok(NULL, "[:]}");
-    tok = strtok(NULL, "[:]}");
-    if(tok)
-    {
-        resourceTypeName = (char *)OCMalloc(strlen(tok));
-        if(!resourceTypeName)
-        {
-            goto exit;
-        }
-        bufRes[strlen((char *)bufRes)] = ':';
-        strcpy(resourceTypeName, tok);
-        OC_LOG_V(DEBUG, TAG, "----------------resourceTypeName %s",
-                resourceTypeName);
-    }
-    bufRes[strlen((char *)bufRes)] = ']';
-
-    response->resJSONPayload = responseInfo->info.payload;
-    response->result = OC_STACK_OK;
-
-    char *fullUri = (char *) OCMalloc(MAX_URI_LENGTH );
-    char *ipAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
-
-    strncpy(ipAddress, endPoint->addressInfo.IP.ipAddress, strlen(endPoint->addressInfo.IP.ipAddress));
+    strncpy(ipAddress, endPoint->addressInfo.IP.ipAddress,
+                            strlen(endPoint->addressInfo.IP.ipAddress));
     ipAddress[strlen(endPoint->addressInfo.IP.ipAddress)] = '\0';
 
     snprintf(fullUri, MAX_URI_LENGTH, "coap://%s:%u%s", ipAddress, endPoint->addressInfo.IP.port,
@@ -367,8 +387,150 @@ void HandlePresenceResponse(const CARemoteEndpoint_t* endPoint, const CAResponse
 
     if(cbNode)
     {
-        cbResult = cbNode->callBack(cbNode->context, cbNode->handle, response);
+        presenceSubscribe = 1;
     }
+    else
+    {
+        snprintf(fullUri, MAX_URI_LENGTH, "%s%s", OC_MULTICAST_IP, endPoint->resourceUri);
+        cbNode = GetClientCB(NULL, NULL, fullUri);
+        if(cbNode)
+        {
+            multicastPresenceSubscribe = 1;
+        }
+    }
+
+    if(!presenceSubscribe && !multicastPresenceSubscribe)
+    {
+        OC_LOG(INFO, TAG, PCF("Received a presence notification, but I do not have callback \
+                                                ------------ ignoring"));
+        goto exit;
+    }
+
+    // No payload to the application in case of presence
+    response.resJSONPayload = NULL;
+    response.result = OC_STACK_OK;
+
+    UpdateResponseAddr(&response, endPoint);
+
+    if(responseInfo->info.payload)
+    {
+        parsePresencePayload(responseInfo->info.payload,
+                                &(response.sequenceNumber),
+                                &maxAge,
+                                &resourceTypeName);
+    }
+
+    if(maxAge == 0)
+    {
+        OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+        response.result = OC_STACK_PRESENCE_STOPPED;
+        if(cbNode->presence)
+        {
+            OCFree(cbNode->presence->timeOut);
+            OCFree(cbNode->presence);
+            cbNode->presence = NULL;
+        }
+    }
+    else if(presenceSubscribe)
+    {
+        if(!cbNode->presence)
+        {
+            cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
+            VERIFY_NON_NULL_V(cbNode->presence);
+            cbNode->presence->timeOut = NULL;
+            cbNode->presence->timeOut = (uint32_t *)
+                    OCMalloc(PresenceTimeOutSize * sizeof(uint32_t));
+            if(!(cbNode->presence->timeOut)){
+                OCFree(cbNode->presence);
+                result = OC_STACK_NO_MEMORY;
+            }
+        }
+
+        OC_LOG_V(INFO, TAG, "===============Update presence TTL, now time is %u", GetTime(0));
+        cbNode->presence->TTL = maxAge;
+        for(int index = 0; index < PresenceTimeOutSize; index++)
+        {
+            lowerBound = GetTime(((float)(PresenceTimeOut[index])
+                    /(float)100)*(float)cbNode->presence->TTL);
+            higherBound = GetTime(((float)(PresenceTimeOut[index + 1])
+                    /(float)100)*(float)cbNode->presence->TTL);
+            cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
+            OC_LOG_V(DEBUG, TAG, "----------------lowerBound timeout  %d", lowerBound);
+            OC_LOG_V(DEBUG, TAG, "----------------higherBound timeout %d", higherBound);
+            OC_LOG_V(DEBUG, TAG, "----------------timeOut entry  %d",
+                    cbNode->presence->timeOut[index]);
+        }
+        cbNode->presence->TTLlevel = 0;
+        OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
+        if(cbNode->sequenceNumber == response.sequenceNumber)
+        {
+            OC_LOG(INFO, TAG, PCF("===============No presence change"));
+            goto exit;
+        }
+        OC_LOG(INFO, TAG, PCF("===============Presence changed, calling up the stack"));
+        cbNode->sequenceNumber = response.sequenceNumber;
+
+        // Ensure that a filter is actually applied.
+        if(resourceTypeName && cbNode->filterResourceType)
+        {
+            if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+            {
+                goto exit;
+            }
+        }
+    }
+    else
+    {
+        // This is the multicast case
+
+        OCMulticastNode* mcNode = NULL;
+        mcNode = GetMCPresenceNode(fullUri);
+
+        if(mcNode != NULL)
+        {
+            if(mcNode->nonce == response.sequenceNumber)
+            {
+                OC_LOG(INFO, TAG, PCF("===============No presence change (Multicast)"));
+                goto exit;
+            }
+            mcNode->nonce = response.sequenceNumber;
+        }
+        else
+        {
+            uint32_t uriLen = strlen((char*)fullUri);
+            unsigned char* uri = (unsigned char *) OCMalloc(uriLen + 1);
+            if(uri)
+            {
+                memcpy(uri, fullUri, (uriLen + 1));
+            }
+            else
+            {
+                OC_LOG(INFO, TAG,
+                    PCF("===============No Memory for URI to store in the presence node"));
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+            result = AddMCPresenceNode(&mcNode, (unsigned char*) uri, response.sequenceNumber);
+            if(result == OC_STACK_NO_MEMORY)
+            {
+                OC_LOG(INFO, TAG,
+                    PCF("===============No Memory for Multicast Presence Node"));
+                result = OC_STACK_NO_MEMORY;
+                goto exit;
+            }
+        }
+
+        // Ensure that a filter is actually applied.
+        if(resourceTypeName && cbNode->filterResourceType)
+        {
+            if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+            {
+                goto exit;
+            }
+        }
+    }
+
+    cbResult = cbNode->callBack(cbNode->context, cbNode->handle, &response);
 
     if (cbResult == OC_STACK_DELETE_TRANSACTION)
     {
@@ -376,7 +538,6 @@ void HandlePresenceResponse(const CARemoteEndpoint_t* endPoint, const CAResponse
     }
 
 exit:
-
 OCFree(fullUri);
 OCFree(ipAddress);
 OCFree(resourceTypeName);
@@ -387,12 +548,27 @@ OCFree(resourceTypeName);
 void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
+
     OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
+
+    if(NULL == endPoint)
+    {
+        OC_LOG(ERROR, TAG, PCF("endPoint is NULL"));
+        return;
+    }
+
+    if(NULL == responseInfo)
+    {
+        OC_LOG(ERROR, TAG, PCF("responseInfo is NULL"));
+        return;
+    }
+
     if(strcmp(endPoint->resourceUri, OC_PRESENCE_URI) == 0)
     {
         HandlePresenceResponse(endPoint, responseInfo);
-        return 0;
+        return;
     }
+
     ClientCB *cbNode = GetClientCB((CAToken_t *)&responseInfo->info.token, NULL, NULL);
 
     if (cbNode)
@@ -1332,8 +1508,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE)
     {
-        // Replacing method type with GET because "presence" is a stack layer only implementation.
-        method = OC_REST_GET;
         result = getQueryFromUri(requiredUri, &query, &newUri);
         if(query)
         {
@@ -1407,8 +1581,12 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             }
         #ifdef WITH_PRESENCE
         case OC_REST_PRESENCE:
-            //TODO-CA: What should be the CA method?
-            break;
+            {
+                // Replacing method type with GET because "presence"
+                // is a stack layer only implementation.
+                requestInfo.method = CA_GET;
+                break;
+            }
         #endif
         default:
             result = OC_STACK_INVALID_METHOD;
@@ -1600,9 +1778,9 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
                 #ifdef CA_INT
+                //TODO-CA : Why CA_WIFI alone?
                 caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri, CA_WIFI,
                                                   &endpoint);
-                endpoint->connectivityType = CA_WIFI;
                 if (caResult != CA_STATUS_OK)
                 {
                     OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
@@ -1665,7 +1843,134 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 
     return ret;
 }
+
 #ifdef WITH_PRESENCE
+#ifdef CA_INT
+OCStackResult OCProcessPresence()
+{
+    OCStackResult result = OC_STACK_OK;
+    uint8_t ipAddr[4] = { 0 };
+    uint16_t port = 0;
+
+    OC_LOG(INFO, TAG, PCF("Entering RequestPresence"));
+    ClientCB* cbNode = NULL;
+    OCDevAddr dst;
+    OCClientResponse clientResponse;
+    OCResponse * response = NULL;
+    OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
+
+    LL_FOREACH(cbList, cbNode) {
+        if(OC_REST_PRESENCE == cbNode->method)
+        {
+            if(cbNode->presence)
+            {
+                uint32_t now = GetTime(0);
+                OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d",
+                                                        cbNode->presence->TTLlevel);
+                OC_LOG_V(DEBUG, TAG, "----------------current ticks %d", now);
+
+
+                if(cbNode->presence->TTLlevel >= (PresenceTimeOutSize + 1))
+                {
+                    goto exit;
+                }
+
+                if(cbNode->presence->TTLlevel < PresenceTimeOutSize){
+                    OC_LOG_V(DEBUG, TAG, "----------------timeout ticks %d",
+                            cbNode->presence->timeOut[cbNode->presence->TTLlevel]);
+                }
+
+                if(cbNode->presence->TTLlevel >= PresenceTimeOutSize)
+                {
+                    OC_LOG(DEBUG, TAG, PCF("----------------No more timeout ticks"));
+                    if (ParseIPv4Address( cbNode->requestUri, ipAddr, &port))
+                    {
+                        OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
+                                &dst);
+                        result = FormOCClientResponse(&clientResponse, OC_STACK_PRESENCE_TIMEOUT,
+                                (OCDevAddr *) &dst, 0, NULL);
+                        if(result != OC_STACK_OK)
+                        {
+                            goto exit;
+                        }
+                        result = FormOCResponse(&response, cbNode, 0, NULL, NULL,
+                                &cbNode->token, &clientResponse, NULL);
+                        if(result != OC_STACK_OK)
+                        {
+                            goto exit;
+                        }
+
+                        // Increment the TTLLevel (going to a next state), so we don't keep
+                        // sending presence notification to client.
+                        cbNode->presence->TTLlevel++;
+                        OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d",
+                                                cbNode->presence->TTLlevel);
+                    }
+                    else
+                    {
+                        result = OC_STACK_INVALID_IP;
+                        goto exit;
+                    }
+
+                    cbResult = cbNode->callBack(cbNode->context, cbNode->handle, &clientResponse);
+                    if (cbResult == OC_STACK_DELETE_TRANSACTION)
+                    {
+                        FindAndDeleteClientCB(cbNode);
+                    }
+                }
+
+                if(now >= cbNode->presence->timeOut[cbNode->presence->TTLlevel])
+                {
+                    CAResult_t caResult;
+                    CARemoteEndpoint_t* endpoint = NULL;
+                    CAInfo_t requestData;
+                    CARequestInfo_t requestInfo;
+
+                    OC_LOG(DEBUG, TAG, PCF("time to test server presence =========="));
+
+                    //TODO-CA : Why CA_WIFI alone?
+                    caResult = CACreateRemoteEndpoint((char *)cbNode->requestUri, CA_WIFI,
+                                                  &endpoint);
+
+                    if (caResult != CA_STATUS_OK)
+                    {
+                        OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
+                        goto exit;
+                    }
+
+                    memset(&requestData, 0, sizeof(CAInfo_t));
+
+                    // TODO-CA: Map QoS to the right CA msg type
+                    requestData.type = CA_MSG_NONCONFIRM;
+                    requestData.token = cbNode->token;
+
+                    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
+                    requestInfo.method = CA_GET;
+                    requestInfo.info = requestData;
+
+                    caResult = CASendRequest(endpoint, &requestInfo);
+
+                    if (caResult != CA_STATUS_OK)
+                    {
+                        OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
+                        goto exit;
+                    }
+
+                    cbNode->presence->TTLlevel++;
+                    OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d",
+                                                            cbNode->presence->TTLlevel);
+                }
+            }
+        }
+    }
+exit:
+    if (result != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("OCProcessPresence error"));
+    }
+    return result;
+}
+#else
 OCStackResult OCProcessPresence()
 {
     OCStackResult result = OC_STACK_OK;
@@ -1734,10 +2039,12 @@ OCStackResult OCProcessPresence()
                 if(now >= cbNode->presence->timeOut[cbNode->presence->TTLlevel])
                 {
                     OC_LOG(DEBUG, TAG, PCF("time to test server presence =========="));
+
                     OCCoAPToken token;
                     OCGenerateCoAPToken(&token);
                     result = OCDoCoAPResource(OC_REST_GET, OC_LOW_QOS,
                             &token, (const char *)cbNode->requestUri, NULL, NULL, 0);
+
                     if(result != OC_STACK_OK)
                     {
                         goto exit;
@@ -1755,7 +2062,8 @@ exit:
     }
     return result;
 }
-#endif
+#endif // CA_INT
+#endif // WITH_PRESENCE
 
 /**
  * Called in main loop of OC client or server.  Allows low-level processing of
@@ -2709,6 +3017,7 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType)
     }
 
     result = SendAllObserverNotification(method, resPtr, maxAge, resourceType, OC_LOW_QOS);
+
     return result;
 }
 #endif // WITH_PRESENCE
