@@ -255,7 +255,8 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
         }
         goto exit;
     }
-    else if(requestResult == OC_STACK_SLOW_RESOURCE)
+    else if(requestResult == OC_STACK_SLOW_RESOURCE ||
+            requestResult == OC_STACK_REPEATED_REQUEST)
     {
         if(rcvdPdu->hdr->type == COAP_MESSAGE_CON)
         {

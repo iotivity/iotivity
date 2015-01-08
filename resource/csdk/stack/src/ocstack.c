@@ -212,30 +212,32 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
         {
             request->requestComplete = 1;
         }
+
+        if(request->requestComplete)
+        {
+            OC_LOG(INFO, TAG, PCF("This Server Request is complete"));
+            result = DetermineResourceHandling (request, &resHandling, &resource);
+            if (result == OC_STACK_OK)
+            {
+                result = ProcessRequest(resHandling, resource, request);
+            }
+            else
+            {
+                result = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            OC_LOG(INFO, TAG, PCF("This Server Request is incomplete"));
+            result = OC_STACK_CONTINUE;
+        }
     }
     else
     {
         OC_LOG(INFO, TAG, PCF("This is either a repeated Server Request or blocked Server Request"));
+        result = OC_STACK_REPEATED_REQUEST;
     }
 
-    if(request->requestComplete)
-    {
-        OC_LOG(INFO, TAG, PCF("This Server Request is complete"));
-        result = DetermineResourceHandling (request, &resHandling, &resource);
-        if (result == OC_STACK_OK)
-        {
-            result = ProcessRequest(resHandling, resource, request);
-        }
-        else
-        {
-            result = OC_STACK_ERROR;
-        }
-    }
-    else
-    {
-        OC_LOG(INFO, TAG, PCF("This Server Request is incomplete"));
-        result = OC_STACK_CONTINUE;
-    }
     return result;
 }
 
