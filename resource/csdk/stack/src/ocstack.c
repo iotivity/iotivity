@@ -238,15 +238,76 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
     return ret;
 }
 
+OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType, CAConnectivityType_t* caConType)
+{
+    OCStackResult ret = OC_STACK_OK;
+
+    switch(ocConType)
+    {
+        case OC_ETHERNET:
+            *caConType = CA_ETHERNET;
+            break;
+        case OC_WIFI:
+            *caConType = CA_WIFI;
+            break;
+        case OC_EDR:
+            *caConType = CA_EDR;
+            break;
+        case OC_LE:
+            *caConType = CA_LE;
+            break;
+        case OC_ALL:
+            //TODO-CA Add other connectivity types as they are enabled
+            *caConType = (CA_WIFI|CA_ETHERNET);
+            break;
+        default:
+            ret = OC_STACK_INVALID_PARAM;
+            break;
+    }
+    return ret;
+}
+
+OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType, OCConnectivityType *ocConType)
+{
+    OCStackResult ret = OC_STACK_OK;
+
+    switch(caConType)
+    {
+        case CA_ETHERNET:
+            *ocConType = OC_ETHERNET;
+            break;
+        case CA_WIFI:
+            *ocConType = OC_WIFI;
+            break;
+        case CA_EDR:
+            *ocConType = OC_EDR;
+            break;
+        case CA_LE:
+            *ocConType = OC_LE;
+            break;
+        default:
+            ret = OC_STACK_INVALID_PARAM;
+            break;
+    }
+    return ret;
+}
+
 // update response.addr appropriately from endPoint.addressInfo
-void UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpoint_t* endPoint)
+OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpoint_t* endPoint)
 {
     struct sockaddr_in sa;
+    OCStackResult ret = OC_STACK_INVALID_PARAM;
+    //TODO-CA Check validity of the endPoint pointer
     inet_pton(AF_INET, endPoint->addressInfo.IP.ipAddress, &(sa.sin_addr));
     sa.sin_port = htons(endPoint->addressInfo.IP.port);
     static OCDevAddr address;
     memcpy((void*)&address.addr, &(sa), sizeof(sa));
-    response->addr = &address;
+    if(response)
+    {
+        response->addr = &address;
+        ret = CAToOCConnectivityType(endPoint->connectivityType, &(response->connType));
+    }
+    return ret;
 }
 
 void HandlePresenceResponse(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
@@ -258,7 +319,11 @@ void HandlePresenceResponse(const CARemoteEndpoint_t* endPoint, const CAResponse
     char * bufRes = responseInfo->info.payload;
     OCClientResponse *response = (OCClientResponse *) OCMalloc(sizeof(OCClientResponse));
 
-    UpdateResponseAddr(response, endPoint);
+    OCStackResult result = UpdateResponseAddr(response, endPoint);
+    if(result != OC_STACK_OK)
+    {
+        goto exit;
+    }
 
     if(!bufRes)
     {
@@ -335,8 +400,12 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
         OCClientResponse response;
 
-        UpdateResponseAddr(&response, endPoint);
-        response.connType = endPoint->connectivityType;
+        OCStackResult result = UpdateResponseAddr(&response, endPoint);
+        if(result != OC_STACK_OK)
+        {
+            OC_LOG(ERROR, TAG, PCF("Invalid connectivity type in endpoint"));
+            return;
+        }
 
         response.result = CAToOCStackResult(responseInfo->result);
         response.resJSONPayload = (unsigned char*)responseInfo->info.payload;
@@ -1182,6 +1251,9 @@ OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
  *     OC_STACK_INVALID_CALLBACK - invalid callback function pointer
  *     OC_STACK_INVALID_METHOD   - invalid resource method
  *     OC_STACK_INVALID_URI      - invalid required or reference URI
+ *
+ * Note: IN case of CA, when using multicast, the required URI should not contain IP address.
+ *       Instead, it just contains the URI to the resource such as "/oc/core".
  */
 #ifdef CA_INT
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
@@ -1349,17 +1421,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         result = OC_STACK_INVALID_PARAM;
         goto exit;
     }
-    // TODO-CA: Handle multi-cast scenario
-    // Create remote end point
-    caResult = CACreateRemoteEndpoint(newUri, conType, &endpoint);
-    // TODO-CA: Connectivity type should be passed to API
-    endpoint->connectivityType = conType;
-
-    if (caResult != CA_STATUS_OK)
-    {
-        OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
-        goto exit;
-    }
 
     // create token
     caResult = CAGenerateToken(&caToken);
@@ -1399,21 +1460,38 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     requestInfo.info = requestData;
 
-    // send request
-    //TODO-CA Change This logic. Currently hardcoded to WIFI & ETHERNET
-    //Need to support other adapter types.
-    if(conType == (CA_WIFI | CA_ETHERNET))
+    CAConnectivityType_t caConType;
+
+    result = OCToCAConnectivityType(conType, &caConType);
+    if (result != OC_STACK_OK)
     {
-        //TODO-CA remove hardcoded resource uri. Instead, extract it from newUri
-        grpEnd.connectivityType = conType;
-        grpEnd.resourceUri = "/oc/core";
+        OC_LOG(ERROR, TAG, PCF("Invalid Connectivity Type"));
+        goto exit;
+    }
+
+    // send request
+    if(conType == OC_ALL)
+    {
+        grpEnd.connectivityType = caConType;
+
+        grpEnd.resourceUri = (CAURI_t) OICMalloc(uriLen + 1);
+        strncpy(grpEnd.resourceUri, requiredUri, (uriLen + 1));
 
         caResult = CASendRequestToAll(&grpEnd, &requestInfo);
     }
     else
     {
+        caResult = CACreateRemoteEndpoint(newUri, caConType, &endpoint);
+
+        if (caResult != CA_STATUS_OK)
+        {
+            OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
+            goto exit;
+        }
+
         caResult = CASendRequest(endpoint, &requestInfo);
     }
+
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CASendRequest"));
@@ -1456,6 +1534,7 @@ exit:
     }
 #ifdef CA_INT
     CADestroyRemoteEndpoint(endpoint);
+    OCFree(grpEnd.resourceUri);
     if (hdrOptionMemAlloc)
     {
         OCFree(requestData.options);

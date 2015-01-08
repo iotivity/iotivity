@@ -680,7 +680,7 @@ OCStackResult SendAction(OCDoHandle *handle, const char *targetUri, const unsign
 #ifdef CA_INT
     return OCDoResource(handle, OC_REST_PUT, targetUri,
     //temp->rsrcType->resourcetypename,
-            NULL, (char *) action, OC_WIFI | OC_ETHERNET, OC_NA_QOS, &cbdata, NULL, 0);
+            NULL, (char *) action, OC_WIFI, OC_NA_QOS, &cbdata, NULL, 0);
 #else
     return OCDoResource(handle, OC_REST_PUT, targetUri,
     //temp->rsrcType->resourcetypename,

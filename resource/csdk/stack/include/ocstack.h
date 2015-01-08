@@ -138,10 +138,11 @@ typedef enum {
  * Adaptor types
  */
 typedef enum {
-    OC_ETHERNET = (1 << 0),
-    OC_WIFI = (1 << 1),
-    OC_EDR = (1 << 2),
-    OC_LE = (1 << 3)
+    OC_ETHERNET = 0,
+    OC_WIFI,
+    OC_EDR,
+    OC_LE,
+    OC_ALL //Multicast message: send over all the interfaces.
 } OCConnectivityType;
 #endif
 
