@@ -295,7 +295,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
     if (rep->info.token != NULL)
     {
         // allocate token field
-        len = strlen(rep->info.token);
+        len = CA_MAX_TOKEN_LEN;
 
         temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
@@ -307,7 +307,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
             return NULL;
         }
         memset(temp, 0, sizeof(char) * (len + 1));
-        strncpy(temp, rep->info.token, len);
+        memcpy(temp, rep->info.token, len);
 
         // save the token
         clone->info.token = temp;
@@ -375,7 +375,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     if (rep->info.token != NULL)
     {
         // allocate token field
-        len = strlen(rep->info.token);
+        len = CA_MAX_TOKEN_LEN;
 
         temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
@@ -387,7 +387,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
             return NULL;
         }
         memset(temp, 0, sizeof(char) * (len + 1));
-        strncpy(temp, rep->info.token, len);
+        memcpy(temp, rep->info.token, len);
 
         // save the token
         clone->info.token = temp;

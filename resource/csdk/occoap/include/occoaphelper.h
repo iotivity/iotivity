@@ -60,10 +60,17 @@ uint8_t OCToCoAPQoS(OCQualityOfService qos, uint8_t * ipAddr);
 OCStackResult CoAPToOCResponseCode(uint8_t coapCode);
 
 // Internal function to generate a coap pdu based on passed parameters
+#ifdef CA_INT
+coap_pdu_t *
+GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
+        CAToken_t * token, unsigned char * payloadJSON,
+        coap_list_t *options);
+#else
 coap_pdu_t *
 GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
         OCCoAPToken * token, unsigned char * payloadJSON,
         coap_list_t *options);
+#endif
 
 // Internal function to send a coap pdu, it also handles NON and CON
 OCStackResult
@@ -88,13 +95,22 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
         uint16_t * size1, uint16_t * size2,
         unsigned char * payload);
 
-// Internal function to retrieve a Token from received coap pdu
+#ifdef CA_INT
+void RetrieveOCCoAPToken(const coap_pdu_t * pdu, CAToken_t * rcvdToken);
+#else
 void RetrieveOCCoAPToken(const coap_pdu_t * pdu, OCCoAPToken * rcvdToken);
+#endif
 
 // Internal function to create OCResponse struct at the client from a received coap pdu
+#ifdef CA_INT
+OCStackResult FormOCResponse(OCResponse * * responseLoc,  ClientCB * cbNode, uint32_t maxAge,
+        unsigned char * fullUri, unsigned char * rcvdUri, CAToken_t * rcvdToken,
+        OCClientResponse * clientResponse, unsigned char * bufRes);
+#else
 OCStackResult FormOCResponse(OCResponse * * responseLoc,  ClientCB * cbNode, uint32_t maxAge,
         unsigned char * fullUri, unsigned char * rcvdUri, OCCoAPToken * rcvdToken,
         OCClientResponse * clientResponse, unsigned char * bufRes);
+#endif
 
 // Internal function to create OCClientResponse struct at the client from a received coap pdu
 OCStackResult FormOCClientResponse(OCClientResponse * clientResponse,

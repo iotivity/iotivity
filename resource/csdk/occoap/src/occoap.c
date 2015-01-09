@@ -82,7 +82,12 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
     uint32_t observationOption = OC_OBSERVE_NO_OPTION;
     // {{0}} to eliminate warning for known compiler bug 53119
     // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53119
+
+#ifdef CA_INT
+    CAToken_t  sentToken = NULL;
+#else // CA_INT
     OCCoAPToken sentToken = {{0}};
+#endif // CA_INT
 
     result = ParseCoAPPdu(sentPdu, NULL, NULL, &observationOption, NULL, NULL, NULL,
             NULL, NULL, NULL, NULL, NULL);
@@ -98,19 +103,31 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
             result = OCStackFeedBack(&sentToken, OC_OBSERVER_NOT_INTERESTED);
             if(result == OC_STACK_OK)
             {
+#ifdef CA_INT
+                OC_LOG_V(DEBUG, TAG,
+                        "Received RST, removing all queues associated with Token %d bytes",
+                        CA_MAX_TOKEN_LEN);
+                OC_LOG_BUFFER(INFO, TAG, sentToken, CA_MAX_TOKEN_LEN);
+                coap_cancel_all_messages(ctx, &sentQueue->remote, (unsigned char *)sentToken,
+                        CA_MAX_TOKEN_LEN);
+#else
                 OC_LOG_V(DEBUG, TAG,
                         "Received RST, removing all queues associated with Token %d bytes",
                         sentToken.tokenLength);
                 OC_LOG_BUFFER(INFO, TAG, sentToken.token, sentToken.tokenLength);
                 coap_cancel_all_messages(ctx, &sentQueue->remote, sentToken.token,
                         sentToken.tokenLength);
+#endif
             }
         }
     }
     else if(observationOption != OC_OBSERVE_NO_OPTION && msgType == COAP_MESSAGE_ACK)
     {
+#ifdef CA_INT
+#else
         OC_LOG_V(DEBUG, TAG, "Received ACK, for Token %d bytes",sentToken.tokenLength);
         OC_LOG_BUFFER(INFO, TAG, sentToken.token, sentToken.tokenLength);
+#endif
         // now the observer is still interested
         if(myStackMode != OC_CLIENT)
         {
@@ -154,10 +171,13 @@ static void HandleCoAPRequests(struct coap_context_t *ctx,
 
     // fill OCCoAPToken structure
     RetrieveOCCoAPToken(rcvdPdu, &protocolRequest.requestToken);
+#ifdef CA_INT
+#else
     OC_LOG_V(INFO, TAG, " Token received %d bytes",
             protocolRequest.requestToken.tokenLength);
     OC_LOG_BUFFER(INFO, TAG, protocolRequest.requestToken.token,
             protocolRequest.requestToken.tokenLength);
+#endif
 
     // fill OCDevAddr
     memcpy(&protocolRequest.requesterAddr, (OCDevAddr *) &rcvdRequest->remote,
@@ -292,7 +312,11 @@ uint32_t GetTime(float afterSeconds)
 static void HandleCoAPResponses(struct coap_context_t *ctx,
         const coap_queue_t * rcvdResponse) {
     OCStackResult result = OC_STACK_OK;
+#ifdef CA_INT
+    CAToken_t  rcvdToken = NULL;
+#else // CA_INT
     OCCoAPToken rcvdToken = {{0}};
+#endif // CA_INT
     OCResponse * response = NULL;
     OCClientResponse * clientResponse = NULL;
     unsigned char bufRes[MAX_RESPONSE_LENGTH] = {0};
@@ -330,8 +354,11 @@ static void HandleCoAPResponses(struct coap_context_t *ctx,
 
     // fill OCCoAPToken structure
     RetrieveOCCoAPToken(recvPdu, &rcvdToken);
+#ifdef CA_INT
+#else
     OC_LOG_V(INFO, TAG,"Received a pdu with Token", rcvdToken.tokenLength);
     OC_LOG_BUFFER(INFO, TAG, rcvdToken.token, rcvdToken.tokenLength);
+#endif
 
     // fill OCClientResponse structure
     result = FormOCClientResponse(clientResponse, CoAPToOCResponseCode(recvPdu->hdr->code),
@@ -462,8 +489,13 @@ exit:
  *   0   - success
  *   TBD - TBD error
  */
+#ifdef CA_INT
+OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, CAToken_t * token,
+                     const char *Uri, const char *payload, OCHeaderOption * options, uint8_t numOptions)
+#else
 OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * token,
                      const char *Uri, const char *payload, OCHeaderOption * options, uint8_t numOptions)
+#endif
 {
 
     OCStackResult ret = OC_STACK_ERROR;

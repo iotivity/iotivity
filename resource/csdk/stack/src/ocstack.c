@@ -41,6 +41,7 @@
     #include "cainterface.h"
 #endif
 
+
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -96,7 +97,11 @@ extern void DeinitOCSecurityInfo();
 
 // This internal function is called to update the stack with the status of
 // observers and communication failures
+#ifdef CA_INT
+OCStackResult OCStackFeedBack(CAToken_t * token, uint8_t status)
+#else // CA_INT
 OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
+#endif // CA_INT
 {
     OCStackResult result = OC_STACK_ERROR;
     ResourceObserver * observer = NULL;
@@ -106,11 +111,7 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
     {
     case OC_OBSERVER_NOT_INTERESTED:
         OC_LOG(DEBUG, TAG, PCF("observer is not interested in our notifications anymore"));
-        #ifdef CA_INT
-        observer = GetObserverUsingToken (token->token);
-        #else
         observer = GetObserverUsingToken (token);
-        #endif
         if(observer)
         {
             result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) NULL,
@@ -123,11 +124,7 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
             observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
         }
         //observer is not observing anymore
-        #ifdef CA_INT
-        result = DeleteObserverUsingToken (token->token);
-        #else
         result = DeleteObserverUsingToken (token);
-        #endif
         if(result == OC_STACK_OK)
         {
             OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
@@ -142,11 +139,7 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
         //observer is still interested
         OC_LOG(DEBUG, TAG, PCF("observer is interested in our \
                 notifications, reset the failedCount"));
-        #ifdef CA_INT
-        observer = GetObserverUsingToken (token->token);
-        #else
         observer = GetObserverUsingToken (token);
-        #endif
         if(observer)
         {
             observer->forceHighQos = 0;
@@ -161,11 +154,7 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
     case OC_OBSERVER_FAILED_COMM:
         //observer is not reachable
         OC_LOG(DEBUG, TAG, PCF("observer is unreachable"));
-        #ifdef CA_INT
-        observer = GetObserverUsingToken (token->token);
-        #else
         observer = GetObserverUsingToken (token);
-        #endif
         if(observer)
         {
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
@@ -568,7 +557,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         return;
     }
 
-    ClientCB *cbNode = GetClientCB((CAToken_t *)&responseInfo->info.token, NULL, NULL);
+    ClientCB *cbNode = GetClientCB(&(responseInfo->info.token), NULL, NULL);
 
     if (cbNode)
     {
@@ -695,14 +684,18 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
             }
     }
 
-    // copy token
-    OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", strlen(requestInfo->info.token));
-    OC_LOG_BUFFER(INFO, TAG, requestInfo->info.token, strlen(requestInfo->info.token));
-    // TODO-CA: For CA integration currently copying CAToken to OCCoapToken:
-    // Need to remove OCCoapToken
-    memcpy (&(serverRequest.requestToken.token), requestInfo->info.token,
-            MAX_TOKEN_LENGTH);
-    serverRequest.requestToken.tokenLength = MAX_TOKEN_LENGTH;
+    OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", CA_MAX_TOKEN_LEN);
+    OC_LOG_BUFFER(INFO, TAG, requestInfo->info.token, CA_MAX_TOKEN_LEN);
+
+    serverRequest.requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
+    // Module Name
+    if (!serverRequest.requestToken)
+    {
+        OC_LOG(FATAL, TAG, "Server Request Token is NULL");
+        return;
+    }
+    memset(serverRequest.requestToken, 0, CA_MAX_TOKEN_LEN + 1);
+    memcpy(serverRequest.requestToken, requestInfo->info.token, CA_MAX_TOKEN_LEN);
 
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
@@ -728,10 +721,6 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // copy the address
     serverRequest.addressInfo      = endPoint->addressInfo;
     serverRequest.connectivityType = endPoint->connectivityType;
-    if (requestInfo->info.token)
-    {
-        strncpy(serverRequest.token, requestInfo->info.token, sizeof(serverRequest.token) - 1);
-    }
 
     // copy vendor specific header options
     // TODO-CA: CA is including non-vendor header options as well, like observe.
@@ -773,7 +762,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     {
         OC_LOG(INFO, TAG, PCF("This is a new Server Request"));
 #ifdef CA_INT
-        result = AddServerCARequest(&request, protocolRequest->coapID,
+        result = AddServerRequest(&request, protocolRequest->coapID,
                 protocolRequest->delayedResNeeded, protocolRequest->secured, 0,
                 protocolRequest->method, protocolRequest->numRcvdVendorSpecificHeaderOptions,
                 protocolRequest->observationOption, protocolRequest->qos,
@@ -781,7 +770,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->reqJSONPayload, &protocolRequest->requestToken,
                 &protocolRequest->requesterAddr, protocolRequest->resourceUrl,
                 protocolRequest->reqTotalSize,
-                &protocolRequest->addressInfo, protocolRequest->connectivityType, protocolRequest->token);
+                &protocolRequest->addressInfo, protocolRequest->connectivityType);
 #else
         result = AddServerRequest(&request, protocolRequest->coapID,
                 protocolRequest->delayedResNeeded, protocolRequest->secured, 0,
@@ -1467,7 +1456,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 #endif
 {
     OCStackResult result = OC_STACK_ERROR;
-    OCCoAPToken token;
     ClientCB *clientCB = NULL;
     unsigned char * requestUri = NULL;
     unsigned char * resourceType = NULL;
@@ -1477,13 +1465,15 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 #ifdef CA_INT
     CARemoteEndpoint_t* endpoint = NULL;
     CAResult_t caResult;
-    CAToken_t caToken = NULL;
+    CAToken_t token = NULL;
     CAInfo_t requestData;
     CARequestInfo_t requestInfo;
     CAGroupEndpoint_t grpEnd;
 
     // To track if memory is allocated for additional header options
     uint8_t hdrOptionMemAlloc = 0;
+#else
+OCCoAPToken token;
 #endif // CA_INT
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
@@ -1624,17 +1614,17 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
     // create token
-    caResult = CAGenerateToken(&caToken);
 
+    caResult = CAGenerateToken(&token);
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
-        caToken = NULL;
+        CADestroyToken(token);
         goto exit;
     }
 
     requestData.type = qualityOfServiceToMessageType(qos);
-    requestData.token = caToken;
+    requestData.token = token;
     if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
     {
         result = CreateObserveHeaderOption (&(requestData.options), options,
@@ -1693,7 +1683,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    if((result = AddClientCB(&clientCB, cbData, &caToken, handle, method,
+    if((result = AddClientCB(&clientCB, cbData, &token, handle, method,
                              requestUri, resourceType)) != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
@@ -2053,8 +2043,18 @@ OCStackResult OCProcessPresence()
                 {
                     OC_LOG(DEBUG, TAG, PCF("time to test server presence =========="));
 
+#ifdef CA_INT
+                    CAToken_t token = NULL;
+                    CAResult_t caResult = CAGenerateToken(&token);
+                    if (caResult != CA_STATUS_OK)
+                    {
+                        CADestroyToken(token);
+                        goto exit;
+                    }
+#else
                     OCCoAPToken token;
                     OCGenerateCoAPToken(&token);
+
                     result = OCDoCoAPResource(OC_REST_GET, OC_LOW_QOS,
                             &token, (const char *)cbNode->requestUri, NULL, NULL, 0);
 
@@ -2062,6 +2062,7 @@ OCStackResult OCProcessPresence()
                     {
                         goto exit;
                     }
+#endif // CA_INT
                     cbNode->presence->TTLlevel++;
                     OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d", cbNode->presence->TTLlevel);
                 }
@@ -2129,23 +2130,32 @@ OCStackResult OCStartPresence(const uint32_t ttl)
     if(OC_PRESENCE_UNINITIALIZED == presenceState)
     {
         OCDevAddr multiCastAddr;
-        OCCoAPToken token;
-
         presenceState = OC_PRESENCE_INITIALIZED;
-        OCGenerateCoAPToken(&token);
+
         OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
+
 #ifdef CA_INT
         CAAddress_t addressInfo;
         strncpy(addressInfo.IP.ipAddress, "224.0.1.187", CA_IPADDR_SIZE);
         addressInfo.IP.port = 5683;
 
+        //TODO make sure there is no memory leak here since another copy
+        //of token is being created inside AddObserver
         CAToken_t caToken = NULL;
-       CAGenerateToken(&caToken);
+        CAResult_t caResult = CAGenerateToken(&caToken);
+        if (caResult != CA_STATUS_OK)
+        {
+            OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
+            CADestroyToken(caToken);
+            return OC_STACK_ERROR;
+        }
 
-        AddCAObserver(OC_PRESENCE_URI, NULL, 0, &token,
+        AddObserver(OC_PRESENCE_URI, NULL, 0, &caToken,
                 &multiCastAddr, (OCResource *)presenceResource.handle, OC_LOW_QOS,
-                &addressInfo, CA_WIFI, caToken);
+                &addressInfo, CA_WIFI);
 #else
+        OCCoAPToken token;
+        OCGenerateCoAPToken(&token);
         //add the presence observer
         AddObserver(OC_PRESENCE_URI, NULL, 0, &token, &multiCastAddr,
             (OCResource *)presenceResource.handle, OC_LOW_QOS);

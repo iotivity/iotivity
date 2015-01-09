@@ -29,7 +29,6 @@
 
 #define TAG "CA"
 
-#define CA_MAX_TOKEN_LEN   (8)
 #define CA_FLAGS_BLOCK 0x01
 #define CA_BUFSIZE 128
 #define CA_COAP_MESSAGE_CON 0

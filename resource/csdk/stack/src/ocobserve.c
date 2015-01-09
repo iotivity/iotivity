@@ -109,13 +109,12 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 qos = DetermineObserverQoS(method, resourceObserver, qos);
 
 #ifdef CA_INT
-                result = AddServerCARequest(&request, 0, 0, 0, 1, OC_REST_GET,
+                result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         &resourceObserver->token, resourceObserver->addr,
                         resourceObserver->resUri, 0,
-                        &(resourceObserver->addressInfo), resourceObserver->connectivityType,
-                        resourceObserver->CAToken);
+                        &(resourceObserver->addressInfo), resourceObserver->connectivityType);
 #else
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
@@ -149,13 +148,12 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 //This is effectively the implementation for the presence entity handler.
                 OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
 #ifdef CA_INT
-                result = AddServerCARequest(&request, 0, 0, 0, 1, OC_REST_GET,
+                result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         &resourceObserver->token, resourceObserver->addr,
                         resourceObserver->resUri, 0,
-                        &(resourceObserver->addressInfo), resourceObserver->connectivityType,
-                        resourceObserver->CAToken);
+                        &(resourceObserver->addressInfo), resourceObserver->connectivityType);
 
 #else
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
@@ -225,12 +223,11 @@ OCStackResult SendListObserverNotification (OCResource * resource,
 
 
 #ifdef CA_INT
-                result = AddServerCARequest(&request, 0, 0, 0, 1, OC_REST_GET,
+                result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observation->query,
                         NULL, NULL, &observation->token,
                         observation->addr, observation->resUri, 0,
-                        &(observation->addressInfo), observation->connectivityType,
-                        observation->CAToken);
+                        &(observation->addressInfo), observation->connectivityType);
 #else
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observation->query,
@@ -310,74 +307,16 @@ exit:
 }
 
 #ifdef CA_INT
-OCStackResult AddCAObserver (const char         *resUri,
-                           const char           *query,
-                           OCObservationId      obsId,
-                           OCCoAPToken          *token,
-                           OCDevAddr            *addr,
-                           OCResource           *resHandle,
-                           OCQualityOfService   qos,
+OCStackResult AddObserver (const char         *resUri,
+                           const char         *query,
+                           OCObservationId    obsId,
+                           CAToken_t          *token,
+                           OCDevAddr          *addr,
+                           OCResource         *resHandle,
+                           OCQualityOfService qos,
                            CAAddress_t          *addressInfo,
-                           CAConnectivityType_t connectivityType,
-                           char                 *CAtoken)
-{
-    ResourceObserver *obsNode = NULL;
-
-    obsNode = (ResourceObserver *) OCCalloc(1, sizeof(ResourceObserver));
-    if (obsNode)
-    {
-        obsNode->observeId = obsId;
-
-        obsNode->resUri = (unsigned char *)OCMalloc(strlen(resUri)+1);
-        VERIFY_NON_NULL (obsNode->resUri);
-        memcpy (obsNode->resUri, resUri, strlen(resUri)+1);
-
-        obsNode->qos = qos;
-        if(query)
-        {
-            obsNode->query = (unsigned char *)OCMalloc(strlen(query)+1);
-            VERIFY_NON_NULL (obsNode->query);
-            memcpy (obsNode->query, query, strlen(query)+1);
-        }
-
-        if(token)
-        {
-            obsNode->token.tokenLength = token->tokenLength;
-            memcpy (obsNode->token.token, token->token, token->tokenLength);
-        }
-
-        if(addr)
-        {
-            obsNode->addr = (OCDevAddr *)OCMalloc(sizeof(OCDevAddr));
-            VERIFY_NON_NULL (obsNode->addr);
-            memcpy (obsNode->addr, addr, sizeof(OCDevAddr));
-        }
-
-        obsNode->addressInfo = *addressInfo;
-        obsNode->connectivityType = connectivityType;
-        if(CAtoken)
-        {
-            strncpy(obsNode->CAToken, CAtoken, CA_MAX_TOKEN_LEN);
-        }
-
-        obsNode->resource = resHandle;
-
-        LL_APPEND (serverObsList, obsNode);
-        return OC_STACK_OK;
-    }
-
-exit:
-    if (obsNode)
-    {
-        OCFree(obsNode->resUri);
-        OCFree(obsNode->query);
-        OCFree(obsNode->addr);
-        OCFree(obsNode);
-    }
-    return OC_STACK_NO_MEMORY;
-}
-#endif //CA_INT
-
+                           CAConnectivityType_t connectivityType)
+#else
 OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
@@ -385,6 +324,7 @@ OCStackResult AddObserver (const char         *resUri,
                            OCDevAddr          *addr,
                            OCResource         *resHandle,
                            OCQualityOfService qos)
+#endif // CA_INT
 {
     ResourceObserver *obsNode = NULL;
 
@@ -405,15 +345,24 @@ OCStackResult AddObserver (const char         *resUri,
             memcpy (obsNode->query, query, strlen(query)+1);
         }
 
+#ifdef CA_INT
+        obsNode->token = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
+        VERIFY_NON_NULL (obsNode->token);
+        memset(obsNode->token, 0, CA_MAX_TOKEN_LEN + 1);
+        memcpy(obsNode->token, *token, CA_MAX_TOKEN_LEN);
+#else
         obsNode->token.tokenLength = token->tokenLength;
         memcpy (obsNode->token.token, token->token, token->tokenLength);
+#endif // CA_INT
 
         obsNode->addr = (OCDevAddr *)OCMalloc(sizeof(OCDevAddr));
         VERIFY_NON_NULL (obsNode->addr);
         memcpy (obsNode->addr, addr, sizeof(OCDevAddr));
-
+#ifdef CA_INT
+        obsNode->addressInfo = *addressInfo;
+        obsNode->connectivityType = connectivityType;
+#endif
         obsNode->resource = resHandle;
-
         LL_APPEND (serverObsList, obsNode);
         return OC_STACK_OK;
     }
@@ -448,7 +397,7 @@ ResourceObserver* GetObserverUsingId (const OCObservationId observeId)
 }
 
 #ifdef CA_INT
-ResourceObserver* GetObserverUsingToken (const char * token)
+ResourceObserver* GetObserverUsingToken (const CAToken_t * token)
 #else
 ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
 #endif
@@ -459,13 +408,15 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
     {
         LL_FOREACH (serverObsList, out)
         {
-            #ifdef CA_INT
-            if((strlen(token) == strlen(out->CAToken)) &&
-               (memcmp(out->CAToken, token, strlen(token)) == 0))
+#ifdef CA_INT
+            OC_LOG(INFO, TAG,PCF("comparing tokens"));
+            OC_LOG_BUFFER(INFO, TAG, token, CA_MAX_TOKEN_LEN);
+            OC_LOG_BUFFER(INFO, TAG, out->token, CA_MAX_TOKEN_LEN);
+            if((memcmp(out->token, *token, CA_MAX_TOKEN_LEN) == 0))
             {
                 return out;
             }
-            #else
+#else
             OC_LOG(INFO, TAG,PCF("comparing tokens"));
             OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
             OC_LOG_BUFFER(INFO, TAG, out->token.token, out->token.tokenLength);
@@ -474,7 +425,7 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
             {
                 return out;
             }
-            #endif // CA_INT
+#endif // CA_INT
         }
     }
     OC_LOG(INFO, TAG, PCF("Observer node not found!!"));
@@ -482,7 +433,7 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
 }
 
 #ifdef CA_INT
-OCStackResult DeleteObserverUsingToken (char * token)
+OCStackResult DeleteObserverUsingToken (CAToken_t * token)
 #else
 OCStackResult DeleteObserverUsingToken (OCCoAPToken * token)
 #endif
@@ -493,7 +444,11 @@ OCStackResult DeleteObserverUsingToken (OCCoAPToken * token)
     if (obsNode)
     {
         OC_LOG_V(INFO, TAG, PCF("deleting tokens"));
+#ifdef CA_INT
+        OC_LOG_BUFFER(INFO, TAG, obsNode->token, CA_MAX_TOKEN_LEN);
+#else
         OC_LOG_BUFFER(INFO, TAG, obsNode->token.token, obsNode->token.tokenLength);
+#endif
         LL_DELETE (serverObsList, obsNode);
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);
@@ -510,11 +465,7 @@ void DeleteObserverList()
     ResourceObserver *tmp = NULL;
     LL_FOREACH_SAFE (serverObsList, out, tmp)
     {
-        #ifdef CA_INT
-        DeleteObserverUsingToken (out->CAToken);
-        #else
         DeleteObserverUsingToken (&(out->token));
-        #endif
     }
     serverObsList = NULL;
 }

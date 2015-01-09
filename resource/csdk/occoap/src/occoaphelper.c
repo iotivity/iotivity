@@ -27,6 +27,10 @@
 #include "coap_time.h"
 #include "ocmalloc.h"
 
+#ifdef CA_INT
+#include "cacommon.h"
+#endif
+
 //-----------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------
@@ -344,19 +348,33 @@ OCStackResult ParseCoAPPdu(coap_pdu_t * pdu, unsigned char * uriBuf,
 }
 
 // Retrieve the token from the PDU
+#ifdef CA_INT
+void RetrieveOCCoAPToken(const coap_pdu_t * pdu, CAToken_t * rcvdToken)
+#else
 void RetrieveOCCoAPToken(const coap_pdu_t * pdu, OCCoAPToken * rcvdToken)
+#endif
 {
     if (pdu && rcvdToken)
     {
+#ifdef CA_INT
+        memcpy(*rcvdToken, pdu->hdr->token, CA_MAX_TOKEN_LEN);
+#else
         rcvdToken->tokenLength = pdu->hdr->token_length;
         memcpy(rcvdToken->token, pdu->hdr->token,
             rcvdToken->tokenLength);
+#endif
     }
 }
 
+#ifdef CA_INT
+OCStackResult FormOCResponse(OCResponse * * responseLoc,  ClientCB * cbNode, uint32_t maxAge,
+        unsigned char * fullUri, unsigned char * rcvdUri, CAToken_t * rcvdToken,
+        OCClientResponse * clientResponse, unsigned char * bufRes)
+#else
 OCStackResult FormOCResponse(OCResponse * * responseLoc,  ClientCB * cbNode, uint32_t maxAge,
         unsigned char * fullUri, unsigned char * rcvdUri, OCCoAPToken * rcvdToken,
         OCClientResponse * clientResponse, unsigned char * bufRes)
+#endif
 {
     OCResponse * response = (OCResponse *) OCMalloc(sizeof(OCResponse));
     if (!response)
@@ -537,10 +555,17 @@ SendCoAPPdu(coap_context_t * gCoAPCtx, coap_address_t* dst, coap_pdu_t * pdu,
 }
 
 //generate a coap message
+#ifdef CA_INT
+coap_pdu_t *
+GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
+        CAToken_t * token, unsigned char * payloadJSON,
+        coap_list_t *options)
+#else
 coap_pdu_t *
 GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
         OCCoAPToken * token, unsigned char * payloadJSON,
         coap_list_t *options)
+#endif
 {
     coap_pdu_t *pdu;
     coap_list_t *opt;
@@ -549,11 +574,19 @@ GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
     {
         pdu = coap_pdu_init(msgType, code, id, COAP_MAX_PDU_SIZE);
         VERIFY_NON_NULL(pdu);
-        pdu->hdr->token_length = token->tokenLength;
-         if (!coap_add_token(pdu, token->tokenLength, token->token))
-         {
+#ifdef CA_INT
+        pdu->hdr->token_length = CA_MAX_TOKEN_LEN;
+        if (!coap_add_token(pdu, CA_MAX_TOKEN_LEN, *token))
+        {
             OC_LOG(FATAL, TAG, PCF("coap_add_token failed"));
         }
+#else
+        pdu->hdr->token_length = token->tokenLength;
+        if (!coap_add_token(pdu, token->tokenLength, token->token))
+        {
+            OC_LOG(FATAL, TAG, PCF("coap_add_token failed"));
+        }
+#endif
     }
     else
     {
@@ -659,7 +692,15 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
     OCResponse * response = NULL;
     ClientCB * cbNode = NULL;
     OCClientResponse clientResponse;
+
+    #ifdef CA_INT
+    //token for the observe request
+    CAToken_t token;
+    #else // CA_INT
+    // CoAP token for the observe request
     OCCoAPToken token;
+    #endif // CA_INT
+
     OCStackResult result = OC_STACK_OK;
 
     RetrieveOCCoAPToken(queue->pdu, &token);
@@ -684,10 +725,17 @@ OCStackResult HandleFailedCommunication(coap_context_t * ctx, coap_queue_t * que
 
 observation:
     result = OCStackFeedBack(&token, OC_OBSERVER_FAILED_COMM);
+#ifdef CA_INT
+    if(result == OC_STACK_OK)
+    {
+        coap_cancel_all_messages(ctx, &queue->remote, (unsigned char *)token, CA_MAX_TOKEN_LEN);
+    }
+#else
     if(result == OC_STACK_OK)
     {
         coap_cancel_all_messages(ctx, &queue->remote, token.token, token.tokenLength);
     }
+#endif
     OCFree(response);
     return result;
 }

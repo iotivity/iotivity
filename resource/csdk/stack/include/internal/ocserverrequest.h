@@ -55,13 +55,17 @@ typedef struct OCServerRequest {
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
-    char token[32];   // TODO-CA:  What is max CAToken_t length?  Get rid of magic number
 #endif
     //////////////////////////////////////////////////////////
     // IP address & port of client registered for observe   //These
     OCDevAddr requesterAddr;                                //Members
+#ifdef CA_INT
+    // token for the observe request
+    CAToken_t requestToken;
+#else
     // CoAP token for the observe request                   //Might
     OCCoAPToken requestToken;                               //Be
+#endif // CA_INT
     // The ID of CoAP pdu                                   //Kept in
     uint16_t coapID;                                        //CoAP
     uint8_t delayedResNeeded;
@@ -88,12 +92,26 @@ typedef struct OCServerResponse {
     OCRequestHandle requestHandle;
 } OCServerResponse;
 
+#ifdef CA_INT
+OCServerRequest * GetServerRequestUsingToken (const CAToken_t token);
+#else
 OCServerRequest * GetServerRequestUsingToken (const OCCoAPToken token);
+#endif // CA_INT
 
 OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle);
 
 OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle);
 
+#ifdef CA_INT
+OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
+        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
+        uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
+        OCQualityOfService qos, unsigned char * query,
+        OCHeaderOption * rcvdVendorSpecificHeaderOptions,
+        unsigned char * reqJSONPayload, CAToken_t * requestToken,
+        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize,
+        CAAddress_t *addressInfo, CAConnectivityType_t connectivityType);
+#else
 OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
@@ -101,17 +119,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
         OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize);
-
-#ifdef CA_INT
-OCStackResult AddServerCARequest (OCServerRequest ** request, uint16_t coapID,
-        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
-        uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
-        OCQualityOfService qos, unsigned char * query,
-        OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
-        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize,
-        CAAddress_t *addressInfo, CAConnectivityType_t connectivityType, char *token);
-#endif
+#endif // CA_INT
 
 OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle);
 

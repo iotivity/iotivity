@@ -35,8 +35,13 @@ typedef struct ResourceObserver {
     unsigned char *resUri;
     // Query
     unsigned char *query;
+#ifdef CA_INT
+    //token for the observe request
+    CAToken_t token;
+#else // CA_INT
     // CoAP token for the observe request
     OCCoAPToken token;
+#endif // CA_INT
     // Resource handle
     OCResource *resource;
     // IP address & port of client registered for observe
@@ -46,7 +51,6 @@ typedef struct ResourceObserver {
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
-    char CAToken[CA_MAX_TOKEN_LEN+1];
 #endif
     // Quality of service of the request
     OCQualityOfService qos;
@@ -76,6 +80,22 @@ void DeleteObserverList();
 
 OCStackResult GenerateObserverId (OCObservationId *observationId);
 
+
+
+#ifdef CA_INT
+OCStackResult AddObserver (const char         *resUri,
+                           const char         *query,
+                           OCObservationId    obsId,
+                           CAToken_t          *token,
+                           OCDevAddr          *addr,
+                           OCResource         *resHandle,
+                           OCQualityOfService qos,
+                           CAAddress_t          *addressInfo,
+                           CAConnectivityType_t connectivityType);
+
+OCStackResult DeleteObserverUsingToken (CAToken_t * token);
+ResourceObserver* GetObserverUsingToken (const CAToken_t * token);
+#else
 OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
@@ -84,31 +104,13 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos);
 
-#ifdef CA_INT
-OCStackResult DeleteObserverUsingToken (char * token);
-#else
 OCStackResult DeleteObserverUsingToken (OCCoAPToken * token);
-#endif
-
-#ifdef CA_INT
-ResourceObserver* GetObserverUsingToken (const char * token);
-#else
 ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token);
 #endif
 
 ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
 
 #ifdef CA_INT
-OCStackResult AddCAObserver (const char         *resUri,
-                           const char           *query,
-                           OCObservationId      obsId,
-                           OCCoAPToken          *token,
-                           OCDevAddr            *addr,
-                           OCResource           *resHandle,
-                           OCQualityOfService   qos,
-                           CAAddress_t          *addressInfo,
-                           CAConnectivityType_t connectivityType,
-                           char                 *CAtoken);
 
 OCStackResult
 CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,

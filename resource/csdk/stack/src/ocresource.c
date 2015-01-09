@@ -682,12 +682,11 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         result = GenerateObserverId(&ehRequest.obsInfo.obsId);
         VERIFY_SUCCESS(result, OC_STACK_OK);
 #ifdef CA_INT
-        result = AddCAObserver ((const char*)(request->resourceUrl),
+        result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, &request->requestToken,
                 &request->requesterAddr, resource, request->qos,
-                &request->addressInfo, request->connectivityType,
-                request->token);
+                &request->addressInfo, request->connectivityType);
 #else
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
@@ -713,11 +712,9 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
             !collectionResource)
     {
         OC_LOG(INFO, TAG, PCF("Deregistering observation requested"));
-        #ifdef CA_INT
-        resObs = GetObserverUsingToken (request->token);
-        #else
+
         resObs = GetObserverUsingToken (&request->requestToken);
-        #endif
+
         if (NULL == resObs)
         {
             // Stack does not contain this observation request
@@ -728,11 +725,8 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         ehRequest.obsInfo.obsId = resObs->observeId;
         ehFlag = (OCEntityHandlerFlag)(ehFlag | OC_OBSERVE_FLAG);
 
-        #ifdef CA_INT
-        resObs = GetObserverUsingToken (request->token);
-        #else
         result = DeleteObserverUsingToken (&request->requestToken);
-        #endif
+
         if(result == OC_STACK_OK)
         {
             OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));

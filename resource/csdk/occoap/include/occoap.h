@@ -67,8 +67,13 @@ OCStackResult OCInitCoAP(const char *address, uint16_t port, OCMode mode);
  *   0   - success
  *   TBD - TBD error
  */
+#ifdef CA_INT
+OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, CAToken_t * token,
+        const char *Uri, const char *payload, OCHeaderOption * options, uint8_t numOptions);
+#else
 OCStackResult OCDoCoAPResource(OCMethod method, OCQualityOfService qos, OCCoAPToken * token,
         const char *Uri, const char *payload, OCHeaderOption * options, uint8_t numOptions);
+#endif
 
 /**
  * Send a response to a request.

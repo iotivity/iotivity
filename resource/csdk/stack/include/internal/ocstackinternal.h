@@ -31,14 +31,15 @@
 #include <stdbool.h>
 #include "ocstack.h"
 #include "ocstackconfig.h"
-#include "occoaptoken.h"
 #include "occlientcb.h"
 #include <logger.h>
 #include <ocrandom.h>
 
 #ifdef CA_INT
-    #include "cacommon.h"
-    #include "cainterface.h"
+#include "cacommon.h"
+#include "cainterface.h"
+#else
+#include "occoaptoken.h"
 #endif
 
 #ifdef __cplusplus
@@ -57,19 +58,19 @@ extern OCDeviceEntityHandler defaultDeviceHandler;
 #define OC_COAP_SCHEME "coap://"
 #define OC_OFFSET_SEQUENCE_NUMBER (4) // the first outgoing sequence number will be 5
 
-#ifdef CA_INT
-// TODO-CA: This has been defined in CA layer as well, but is not exposed externally.
-// Need to expose it from CA and remove the definition below.
-#define CA_MAX_TOKEN_LEN   (8)
-#endif //CA_INT
-
 typedef struct {
     // Observe option field
     uint32_t option;
     // IP address & port of client registered for observe
     OCDevAddr *subAddr;
-    // CoAP token for the observe request
+
+#ifdef CA_INT
+    CAToken_t *token;
+#else // CA_INT
+    // token for the observe request
     OCCoAPToken *token;
+#endif // CA_INT
+
     // The result of the observe request
     OCStackResult result;
 } OCObserveReq;
@@ -96,14 +97,20 @@ typedef struct {
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
-    char token[CA_MAX_TOKEN_LEN+1];
 #endif
     //////////////////////////////////////////////////////////
     // TODO: Consider moving these member to CoAP
     // IP address & port of client registered for observe
     OCDevAddr requesterAddr;
+
+#ifdef CA_INT
+    //token for the observe request
+    CAToken_t requestToken;
+#else // CA_INT
     // CoAP token for the observe request
     OCCoAPToken requestToken;
+#endif // CA_INT
+
     // The ID of CoAP pdu
     uint16_t coapID;
     uint8_t delayedResNeeded;
@@ -127,8 +134,14 @@ typedef struct
     OCStackResult result;
     // IP address & port of client registered for observe
     OCDevAddr *requesterAddr;
+
+#ifdef CA_INT
+    CAToken_t *requestToken;
+#else // CA_INT
     // CoAP token for the observe request
     OCCoAPToken *requestToken;
+#endif // CA_INT
+
     // The ID of CoAP pdu
     uint16_t coapID;
     // Flag indicating that response is to be delayed before sending
@@ -159,8 +172,15 @@ typedef struct {
     unsigned char * rcvdUri;
     // This is the received payload.
     unsigned char * bufRes;
+
+#ifdef CA_INT
     // This is the token received OTA.
+    CAToken_t * rcvdToken;
+#else // CA_INT
+   // This is the token received OTA.
     OCCoAPToken * rcvdToken;
+#endif // CA_INT
+
     // this structure will be passed to client
     OCClientResponse * clientResponse;
 } OCResponse;
@@ -171,7 +191,13 @@ typedef uint32_t ServerID;
 //-----------------------------------------------------------------------------
 // Internal function prototypes
 //-----------------------------------------------------------------------------
+
+#ifdef CA_INT
+OCStackResult OCStackFeedBack(CAToken_t * token, uint8_t status);
+#else // CA_INT
 OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status);
+#endif // CA_INT
+
 OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 OCStackResult HandleStackResponses(OCResponse * response);
 #ifdef WITH_PRESENCE

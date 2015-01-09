@@ -27,12 +27,14 @@
 #include <string.h>
 
 #ifdef CA_INT
-    #include "cacommon.h"
-    #include "cainterface.h"
+#include "cacommon.h"
+#include "cainterface.h"
 #endif
 
 /// Module Name
 #define TAG PCF("occlientcb")
+
+#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
 struct ClientCB *cbList = NULL;
 OCMulticastNode * mcPresenceNodes = NULL;
@@ -71,12 +73,13 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             cbNode->callBack = cbData->cb;
             cbNode->context = cbData->context;
             cbNode->deleteCallback = cbData->cd;
-            #ifdef CA_INT
-            cbNode->token = (CAToken_t *)OCMalloc(CA_MAX_TOKEN_LEN);
-            memcpy(&(cbNode->token), token, CA_MAX_TOKEN_LEN);
-            #else // CA_INT
+#ifdef CA_INT
+            //Note: token memory is allocated in the caller OCDoResource
+            //but freed in DeleteClientCB
+            cbNode->token = *token;
+#else // CA_INT
             memcpy(&(cbNode->token), token, sizeof(OCCoAPToken));
-            #endif // CA_INT
+#endif // CA_INT
             cbNode->handle = *handle;
             cbNode->method = method;
             cbNode->sequenceNumber = 0;
@@ -116,11 +119,12 @@ void DeleteClientCB(ClientCB * cbNode) {
     if(cbNode) {
         LL_DELETE(cbList, cbNode);
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
-        #ifdef CA_INT
+#ifdef CA_INT
         CADestroyToken (cbNode->token);
-        #else
+        OC_LOG_BUFFER(INFO, TAG, cbNode->token, CA_MAX_TOKEN_LEN);
+#else
         OC_LOG_BUFFER(INFO, TAG, cbNode->token.token, cbNode->token.tokenLength);
-        #endif // CA_INT
+#endif // CA_INT
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
         if(cbNode->deleteCallback)
@@ -161,19 +165,21 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned cha
     if(token) {
         LL_FOREACH(cbList, out) {
             OC_LOG(INFO, TAG, PCF("comparing tokens"));
-            #ifdef CA_INT
+#ifdef CA_INT
+            OC_LOG_BUFFER(INFO, TAG, *token, CA_MAX_TOKEN_LEN);
+            OC_LOG_BUFFER(INFO, TAG, out->token, CA_MAX_TOKEN_LEN);
             if(memcmp(out->token, *token, CA_MAX_TOKEN_LEN) == 0)
             {
                 return out;
             }
-            #else // CA_INT
+#else // CA_INT
             OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
             OC_LOG_BUFFER(INFO, TAG, out->token.token, out->token.tokenLength);
             if((out->token.tokenLength == token->tokenLength) &&
                 (memcmp(out->token.token, token->token, token->tokenLength) == 0) ) {
                 return out;
             }
-            #endif // CA_INT
+#endif // CA_INT
         }
     }
     else if(handle) {

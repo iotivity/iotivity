@@ -57,6 +57,11 @@ extern "C"
 #define CA_MAX_URI_LENGTH 2048
 
 /**
+ * @brief Max token length
+ */
+#define CA_MAX_TOKEN_LEN (8)
+
+/**
  * @brief option types - the highest option number 63
  */
 #define CA_OPTION_IF_MATCH 1

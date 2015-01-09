@@ -23,10 +23,12 @@
 #define OC_CLIENT_CB
 
 #include <ocstack.h>
-#include <occoaptoken.h>
+
 #include <ocresource.h>
 #ifdef CA_INT
 #include "cacommon.h"
+#else
+#include "occoaptoken.h"
 #endif
 
 typedef struct OCPresence {
@@ -52,11 +54,11 @@ typedef struct ClientCB {
     // callback method to delete context data
     OCClientContextDeleter deleteCallback;
     //  when a response is recvd with this token, above callback will be invoked
-    #ifdef CA_INT
+#ifdef CA_INT
     CAToken_t token;
-    #else // CA_INT
+#else // CA_INT
     OCCoAPToken token;
-    #endif // CA_INT
+#endif // CA_INT
     // Invocation handle tied to original call to OCDoResource()
     OCDoHandle handle;
     // This is used to determine if all responses should be consumed or not.
