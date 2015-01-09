@@ -122,6 +122,18 @@ const char *GetSSMError(SSMRESULT res)
             msg = "SSM_E_FAIL";
             break;
 
+        case SSM_E_NOTINIT:
+            msg = "SSM_E_NOTINIT";
+            break;
+
+        case SSM_E_INITIALIZED:
+            msg = "SSM_E_INITIALIZED";
+            break;
+
+        case SSM_E_INVALIDXML:
+            msg = "SSM_E_INVALIDXML";
+            break;
+
         case SSM_E_NOINTERFACE:
             msg = "SSM_E_NOINTERFACE";
             break;
