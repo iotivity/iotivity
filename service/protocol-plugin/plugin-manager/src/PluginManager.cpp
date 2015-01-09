@@ -44,7 +44,7 @@ PluginManager::PluginManager()
 PluginManager::~PluginManager(void)
 {
     destroy(pluginManagerImpl);
-    free(handle);
+    dlclose(handle);
 }
 
 int PluginManager::startPlugins(const std::string key, const std::string value)
