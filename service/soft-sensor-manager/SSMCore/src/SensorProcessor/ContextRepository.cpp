@@ -55,6 +55,16 @@ CLEANUP:
     return res;
 }
 
+SSMRESULT CContextRepository::stopResourceFinder()
+{
+    SSMRESULT res = SSM_E_FAIL;
+
+    SSM_CLEANUP_ASSERT(m_resourceFinder->stopResourceFinder());
+
+CLEANUP:
+    return res;
+}
+
 SSMRESULT CContextRepository::registerResourceFinderEvent(IN IResourceEvent *pResourceEvent)
 {
     m_resourceEvents.push_back(pResourceEvent);
@@ -108,10 +118,9 @@ SSMRESULT CContextRepository::loadXMLFromString(char *xmlData,
         std::vector<DictionaryData> *dataList)
 {
     // use  rapidxml-----------------------
-    SSMRESULT res = SSM_E_FAIL;
+    SSMRESULT res = SSM_E_INVALIDXML;
     rapidxml::xml_document< char > xmlDoc;
     //xmlDoc.parse< 0 >( &xmlData.front() );
-    xmlDoc.parse< 0 >(xmlData);
 
     std::string keyStr;
     std::string valueStr;
@@ -121,73 +130,84 @@ SSMRESULT CContextRepository::loadXMLFromString(char *xmlData,
     rapidxml::xml_node< char > *subItem2;
     rapidxml::xml_node< char > *subItem3;
 
-    // get value
-    rapidxml::xml_node< char > *root = xmlDoc.first_node();
+    rapidxml::xml_node< char > *root;
 
-    if (!root)
+    try
     {
-        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
-    }
+        xmlDoc.parse< 0 >(xmlData);
 
-    for ( item = root->first_node(); item; item = item->next_sibling() )
-    {
-        DictionaryData dictionaryData;
-        for ( subItem = item->first_node(); subItem ; subItem = subItem->next_sibling() )
+        // get value
+        root = xmlDoc.first_node();
+
+        if (!root)
         {
-            //root name
-            keyStr = subItem->name();  // key
-            valueStr = subItem->value();   // value
+            throw rapidxml::parse_error("No Root Element", 0);
+        }
 
-            if (!keyStr.compare("name"))
+        for (item = root->first_node(); item; item = item->next_sibling())
+        {
+            DictionaryData dictionaryData;
+            for (subItem = item->first_node(); subItem; subItem = subItem->next_sibling())
             {
-                dictionaryData.rootName = trim_both(valueStr);
-            }
-            ////std::cout<<keyStr << " : " << subItem->value() <<std::endl<<std::endl; //root_name
-            for (subItem2 = subItem->first_node(); subItem2 ; subItem2 = subItem2->next_sibling())
-            {
-                std::map<std::string, std::string> propertyMap;
-                std::vector<std::string> enterconditionVector;
+                //root name
+                keyStr = subItem->name();  // key
+                valueStr = subItem->value();   // value
 
-                keyStr = subItem2->name();  // key
-                valueStr = subItem2->value();   // value
-
-                if (!keyStr.compare("input"))
+                if (!keyStr.compare("name"))
                 {
-                    dictionaryData.inputs.push_back(trim_both(valueStr));
+                    dictionaryData.rootName = trim_both(valueStr);
                 }
-                ////std::cout<<name << " :: " << subItem2->value() <<std::endl<<std::endl;
-                for (subItem3 = subItem2->first_node(); subItem3 ; subItem3 = subItem3->next_sibling())
+                ////std::cout<<keyStr << " : " << subItem->value() <<std::endl<<std::endl; //root_name
+                for (subItem2 = subItem->first_node(); subItem2; subItem2 = subItem2->next_sibling())
                 {
-                    std::string newKeyStr = subItem3->name();  // key
-                    valueStr = subItem3->value();   // value
+                    std::map<std::string, std::string> propertyMap;
+                    std::vector<std::string> enterconditionVector;
 
-                    if (!keyStr.compare("attribute") || !keyStr.compare("output") )
+                    keyStr = subItem2->name();  // key
+                    valueStr = subItem2->value();   // value
+
+                    if (!keyStr.compare("input"))
                     {
-                        propertyMap.insert(std::make_pair(trim_both(newKeyStr), trim_both(valueStr)));
+                        dictionaryData.inputs.push_back(trim_both(valueStr));
+                    }
+                    ////std::cout<<name << " :: " << subItem2->value() <<std::endl<<std::endl;
+                    for (subItem3 = subItem2->first_node(); subItem3; subItem3 = subItem3->next_sibling())
+                    {
+                        std::string newKeyStr = subItem3->name();  // key
+                        valueStr = subItem3->value();   // value
+
+                        if (!keyStr.compare("attribute") || !keyStr.compare("output"))
+                        {
+                            propertyMap.insert(std::make_pair(trim_both(newKeyStr), trim_both(valueStr)));
+                        }
+                    }
+                    if (!keyStr.compare("attribute"))
+                    {
+                        dictionaryData.attributeProperty.push_back(propertyMap);
+                    }
+                    else if (!keyStr.compare("output"))
+                    {
+                        dictionaryData.outputProperty.push_back(propertyMap);
                     }
                 }
-                if (!keyStr.compare("attribute"))
-                {
-                    dictionaryData.attributeProperty.push_back(propertyMap);
-                }
-                else if (!keyStr.compare("output"))
-                {
-                    dictionaryData.outputProperty.push_back(propertyMap);
-                }
             }
+            //for accurate data.
+            /*
+            dictionaryData.app_input_count = std::to_string((long long)dictionaryData.app_inputs.size());
+            dictionaryData.input_count = std::to_string((long long)dictionaryData.inputs.size());
+            dictionaryData.attribute_property_count = std::to_string((long long)dictionaryData.attribute_property.size());
+            dictionaryData.output_property_count = std::to_string((long long)dictionaryData.output_property.size());
+            */
+
+            dataList->push_back(dictionaryData);
         }
-        //for accurate data.
-        /*
-        dictionaryData.app_input_count = std::to_string((long long)dictionaryData.app_inputs.size());
-        dictionaryData.input_count = std::to_string((long long)dictionaryData.inputs.size());
-        dictionaryData.attribute_property_count = std::to_string((long long)dictionaryData.attribute_property.size());
-        dictionaryData.output_property_count = std::to_string((long long)dictionaryData.output_property.size());
-        */
 
-        dataList->push_back(dictionaryData);
+        res = SSM_S_OK;
     }
-
-    res = SSM_S_OK;
+    catch (rapidxml::parse_error &e)
+    {
+        SSM_CLEANUP_ASSERT(SSM_E_INVALIDXML);
+    }
 
 CLEANUP:
     return res;

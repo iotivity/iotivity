@@ -13,6 +13,9 @@ namespace OIC
         , SSM_E_POINTER
         , SSM_E_OUTOFMEMORY
         , SSM_E_FAIL
+        , SSM_E_NOTINIT
+        , SSM_E_INITIALIZED
+        , SSM_E_INVALIDXML
         , SSM_E_NOINTERFACE
         , SSM_E_NOTIMPL
     };
@@ -183,47 +186,59 @@ namespace OIC
     };
 
     /**
-    * @class    SSMInterface
-    * @brief    This class represents main class for querying Soft Sensors
+    * @fn    InitializeSSM
+    * @brief Initialize Soft sensor manager using given configuration information.
     *
+    * @param [in] std::string xmlDescription - specification described in XML
+    *
+    * @return SSMRESULT
+    * @warning
+    * @exception
     * @see
     */
-    class SSMInterface
-    {
-        public:
-            SSMInterface();
-            ~SSMInterface();
+    SSMRESULT InitializeSSM(std::string xmlDescription);
 
-            /**
-            * @fn     registerQuery
-            * @brief Execute ContextQuery and return ContextQuery ID
-            *
-            * @param [in] std::string queryString - query for requesting data
-            *
-            * @param [in] IQueryEngineEvent listener - listener for receiving data related to query
-            *
-            * @param [in, out] int &cqid - ID of ContextQuery
-            *
-            * @return SSMRESULT
-            * @warning
-            * @exception
-            * @see
-            */
-            SSMRESULT registerQuery(std::string queryString, IQueryEngineEvent *listener, int &cqid);
+    /**
+    * @fn    TerminateSSM
+    * @brief Terminates Soft sensor manager
+    *
+    * @param None
+    *
+    * @return SSMRESULT
+    * @warning
+    * @exception
+    * @see
+    */
+    SSMRESULT TerminateSSM();
 
-            /**
-            * @fn    unregisterQuery
-            * @brief unregister registered ContextQuery according to cqid
-            *
-            * @param [in] int cqid - Context query corresponding to the cqid will be terminated
-            *
-            * @return SSMRESULT
-            * @warning
-            * @exception
-            * @see
-            */
-            SSMRESULT unregisterQuery(int cqid);
-    };
+    /**
+    * @fn     RegisterQuery
+    * @brief Execute ContextQuery and return ContextQuery ID
+    *
+    * @param [in] std::string queryString - query for requesting data
+    *
+    * @param [in] IQueryEngineEvent listener - listener for receiving data related to query
+    *
+    * @param [in, out] int &cqid - ID of ContextQuery
+    *
+    * @return SSMRESULT
+    * @warning
+    * @exception
+    * @see
+    */
+    SSMRESULT RegisterQuery(std::string queryString, IQueryEngineEvent *listener, int &cqid);
 
+    /**
+    * @fn    UnregisterQuery
+    * @brief unregister registered ContextQuery according to cqid
+    *
+    * @param [in] int cqid - Context query corresponding to the cqid will be terminated
+    *
+    * @return SSMRESULT
+    * @warning
+    * @exception
+    * @see
+    */
+    SSMRESULT UnregisterQuery(int cqid);
 }
 #endif

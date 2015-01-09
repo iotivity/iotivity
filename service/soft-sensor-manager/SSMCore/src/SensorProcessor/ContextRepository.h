@@ -131,6 +131,7 @@ class CContextRepository :
 
         SSMRESULT registerResourceFinderEvent(IN IResourceEvent *pResourceEvent);
         SSMRESULT startResourceFinder();
+        SSMRESULT stopResourceFinder();
         SSMRESULT onResourceFound(IN ISSMResource *pSensor);
         SSMRESULT onResourceLost(IN ISSMResource *pSensor);
 

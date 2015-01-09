@@ -32,6 +32,8 @@ SSMRESULT CResourceFinder::finalConstruct()
 
     m_pResourceFinderEvent = NULL;
 
+    m_multicastPresenceHandle = nullptr;
+
 CLEANUP:
     return res;
 }
@@ -58,8 +60,6 @@ void CResourceFinder::onResourceFound(std::shared_ptr< OC::OCResource > resource
         intptr_t      *pMessage = new intptr_t [2];
         pMessage[0] = RESOURCE_DISCOVER_REQUESTPROFILE;
         pMessage[1] = reinterpret_cast<intptr_t> (new  std::shared_ptr<OC::OCResource>(resource));
-
-        std::cout << "Resource Found !! >> " << path << std::endl;
 
         m_pTasker->addTask(this, pMessage);
     }
@@ -117,21 +117,37 @@ SSMRESULT CResourceFinder::startResourceFinder()
     SSMRESULT res = SSM_E_FAIL;
     OCStackResult ret = OC_STACK_ERROR;
 
-    OC::OCPlatform::OCPresenceHandle presenceHandle = nullptr;
-
     ret = OC::OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=SoftSensorManager.Sensor",
                                        std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
 
     if (ret != OC_STACK_OK)
         SSM_CLEANUP_ASSERT(SSM_E_FAIL);
 
-    ret = OC::OCPlatform::subscribePresence(presenceHandle, "coap://224.0.1.187",
+    ret = OC::OCPlatform::subscribePresence(m_multicastPresenceHandle, "coap://224.0.1.187",
                                             "SoftSensorManager.Sensor",
                                             std::bind(&CResourceFinder::presenceHandler, this, std::placeholders::_1,
                                                     std::placeholders::_2, std::placeholders::_3));
 
     if (ret != OC_STACK_OK)
         SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+
+    res = SSM_S_OK;
+
+CLEANUP:
+    return res;
+}
+
+SSMRESULT CResourceFinder::stopResourceFinder()
+{
+    SSMRESULT res = SSM_E_FAIL;
+    OCStackResult ret = OC_STACK_ERROR;
+
+    ret = OC::OCPlatform::unsubscribePresence(m_multicastPresenceHandle);
+
+    if (ret != OC_STACK_OK)
+        SSM_CLEANUP_ASSERT(SSM_E_FAIL);
+
+    m_multicastPresenceHandle = nullptr;
 
     res = SSM_S_OK;
 
