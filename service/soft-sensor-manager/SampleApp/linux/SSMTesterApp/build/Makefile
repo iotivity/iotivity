@@ -10,7 +10,7 @@ RST_NAME=release
 TARGET=SSMTesterApp
 
 CXX=g++
-CXX_FLAGS=-std=c++0x -Wall -DLINUX
+CXX_FLAGS=-std=c++0x -Wall -DLINUX -DNDEBUG
 CXX_INC=-I${SRC_PATH}/ -I${INC_PATH}/ -I${OUTPUTS_DIR} -I${BOOST}
 
 
