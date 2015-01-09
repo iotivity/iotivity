@@ -18,15 +18,16 @@
 *
 ******************************************************************/
 
-#ifndef PROXIMITY_H_
-#define PROXIMITY_H_
+#ifndef PUBLIC_BLE_H_
+#define PUBLIC_BLE_H_
 
 
-#define arraysize   6
-#define RSSI_EA     3
+#define REF_NAME            "reference"
 
-float CalculateExponentialAverage(int numberOfSamples, int *array, int startindex, int flag);
+void ble_init( void (*func)(void *) );
 
-float calculateDistance(float avgRSSI, float txPower);
+void proximity_init( void *(*func)(void *) );
 
-#endif /* PROXIMITY_H_ */
+void proximity_loop( void *param );
+
+#endif /* PUBLIC_BLE_H_ */

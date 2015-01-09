@@ -18,8 +18,9 @@
 *
 ******************************************************************/
 
-#include "Arduino.h"
-#include "proximity.h"
+#include <stdio.h>
+#include "tizen_log.h"
+#include "lib_proximity.h"
 #include <math.h>
 
 // Proximity code start
@@ -32,18 +33,19 @@ float CalculateExponentialAverage(int numberOfSamples, int *array, int startinde
 
     if (flag < arraysize / RSSI_EA)   // first loop buffer full
     {
+
         for (int i = 0; i < startindex; i++)
         {
             average += array[i];
         }
+
         if (startindex == 0) {}
         else
         {
             average = average / startindex;
         }
-        //       Serial.print("exp: ");
-        Serial.print("average1 : ");
-        Serial.println(average);
+        //       DBG("exp: ");
+        DBG("average1 : %f", average);
     }
     else
     {
@@ -56,19 +58,22 @@ float CalculateExponentialAverage(int numberOfSamples, int *array, int startinde
         {
             average -= array[i];
         }
+
         average = average / (arraysize - numberOfSamples);
-        //            Serial.print("exp: ");
-        Serial.print("average2 : ");
-        Serial.println(average);
+
+        //            DBG("exp: ");
+        DBG("average2 : %f", average);
     }
+
     //exponential moving average
     int i = 0;
     //CHANGE THIS FOR DIFFERENT SMOOTHING EFFECT
     float beta = 0.8f;
     for (i = startindex + numberOfSamples - 1; i >= startindex; i--)
     {
-        numerator += array[i] * pow(beta, startindex + numberOfSamples - i - 1);
-        denominator += pow(beta, startindex + numberOfSamples - i - 1);
+        double temp = pow(beta, startindex + numberOfSamples - i - 1);
+        numerator += array[i] * (float)temp;
+        denominator += (float)temp;
     }
 
     int offset = 3;
@@ -77,6 +82,7 @@ float CalculateExponentialAverage(int numberOfSamples, int *array, int startinde
         numerator += average * pow(beta, offset + numberOfSamples);
         denominator += pow(beta, offset + numberOfSamples);
     }
+
     return numerator / denominator;
 }
 
