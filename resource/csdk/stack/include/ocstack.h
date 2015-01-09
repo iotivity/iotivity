@@ -158,6 +158,7 @@ typedef enum {
     OC_STACK_NO_RESOURCE,               /* resource not found */
     OC_STACK_RESOURCE_ERROR,            /* ex: not supported method or interface */
     OC_STACK_SLOW_RESOURCE,
+    OC_STACK_REPEATED_REQUEST,
     OC_STACK_NO_OBSERVERS,              /* resource has no registered observers */
     OC_STACK_OBSERVER_NOT_FOUND,
     #ifdef WITH_PRESENCE

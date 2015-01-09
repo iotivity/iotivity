@@ -814,8 +814,8 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node) {
         coap_retransmittimer_restart(context);
 #endif
 
-        debug("** retransmission #%d of transaction %d\n", node->retransmit_cnt,
-            ntohs(node->pdu->hdr->id));
+        debug("** retransmission #%d of transaction %d for coap pdu\n", node->retransmit_cnt, node->id);
+        coap_show_pdu(node->pdu);
         flag = (coap_send_flags_t)(SEND_RETX | (node->secure ? SEND_SECURE_PORT : 0));
         tid = coap_send(context, (coap_address_t *)&(node->remote),node->pdu, flag, NULL);
         return (tid == COAP_INVALID_TID)? COAP_INVALID_TID : node->id;
@@ -997,7 +997,8 @@ int coap_remove_from_queue(coap_queue_t **queue, coap_tid_t id,
 
     if (!queue || !*queue)
         return 0;
-    debug("*** looking for transaction %u == %u\n", id, (*queue)->id);
+    debug("*** looking for transaction ID %u for pdu:\n", id);
+    coap_show_pdu((*queue)->pdu);
 
     /* replace queue head if PDU's time is less than head's time */
     if (id == (*queue)->id) { /* found transaction */
@@ -1055,7 +1056,8 @@ void coap_cancel_all_messages(coap_context_t *context,
                     context->sendqueue->pdu->hdr->token_length)) {
         q = context->sendqueue;
         context->sendqueue = q->next;
-        debug("**** removed transaction %d\n", ntohs(q->pdu->hdr->id));
+        debug("**** removed transaction %d for coap pdu\n", q->id);
+        coap_show_pdu(q->pdu);
         coap_delete_node(q);
     }
 
@@ -1071,7 +1073,8 @@ void coap_cancel_all_messages(coap_context_t *context,
                 && token_match(token, token_length, q->pdu->hdr->token,
                         q->pdu->hdr->token_length)) {
             p->next = q->next;
-            debug("**** removed transaction %d\n", ntohs(q->pdu->hdr->id));
+            debug("**** removed transaction %d for coap pdu\n", q->id);
+            coap_show_pdu(q->pdu);
             coap_delete_node(q);
             q = p->next;
         } else {
@@ -1380,6 +1383,11 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                 break;
 
             case COAP_MESSAGE_CON: /* check for unknown critical options */
+                // Receiving a response should stop retransmissions
+                if (COAP_MESSAGE_IS_RESPONSE(rcvd->pdu->hdr))
+                {
+                    coap_remove_from_queue(&context->sendqueue, rcvd->id, &sent);
+                }
                 if (coap_option_check_critical(context, rcvd->pdu, opt_filter)
                         == 0) {
                     /* FIXME: send response only if we have received a request. Otherwise,
