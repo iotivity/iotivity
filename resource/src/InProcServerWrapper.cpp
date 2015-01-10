@@ -39,9 +39,16 @@
 using namespace std;
 using namespace OC;
 
-std::map <OCResourceHandle, OC::EntityHandler>  entityHandlerMap;
-std::map <OCResourceHandle, std::string> resourceUriMap;
-EntityHandler defaultDeviceEntityHandler = 0;
+namespace OC
+{
+    namespace details
+    {
+        std::mutex serverWrapperLock;
+        std::map <OCResourceHandle, OC::EntityHandler>  entityHandlerMap;
+        std::map <OCResourceHandle, std::string> resourceUriMap;
+        EntityHandler defaultDeviceEntityHandler = 0;
+    }
+}
 
 void formResourceRequest(OCEntityHandlerFlag flag,
                          OCEntityHandlerRequest * entityHandlerRequest,
@@ -150,9 +157,15 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
     pRequest->setResourceUri(std::string(uri));
 
-    if(defaultDeviceEntityHandler)
+    EntityHandler defHandler;
     {
-        result = defaultDeviceEntityHandler(pRequest);
+        std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+        defHandler = OC::details::defaultDeviceEntityHandler;
+    }
+
+    if(defHandler)
+    {
+        result = defHandler(pRequest);
     }
     else
     {
@@ -181,9 +194,15 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
 
     formResourceRequest(flag, entityHandlerRequest, pRequest);
 
+    std::map <OCResourceHandle, std::string>::iterator resourceUriEntry;
+    std::map <OCResourceHandle, std::string>::iterator resourceUriEnd;
+    {
+        std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+        resourceUriEntry = OC::details::resourceUriMap.find(entityHandlerRequest->resource);
+        resourceUriEnd = OC::details::resourceUriMap.end();
+    }
     // Finding the corresponding URI for a resource handle and set the URI in the request
-    auto resourceUriEntry = resourceUriMap.find(entityHandlerRequest->resource);
-    if(resourceUriEntry != resourceUriMap.end())
+    if(resourceUriEntry != resourceUriEnd)
     {
         pRequest->setResourceUri(resourceUriEntry->second);
     }
@@ -193,10 +212,16 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
         return OC_EH_ERROR;
     }
 
-    // Finding the corresponding CPP Application entityHandler for a given resource
-    auto entityHandlerEntry = entityHandlerMap.find(entityHandlerRequest->resource);
+    std::map <OCResourceHandle, OC::EntityHandler>::iterator entityHandlerEntry;
+    std::map <OCResourceHandle, OC::EntityHandler>::iterator entityHandlerEnd;
+    {
+        // Finding the corresponding CPP Application entityHandler for a given resource
+        std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+        entityHandlerEntry = OC::details::entityHandlerMap.find(entityHandlerRequest->resource);
+        entityHandlerEnd = OC::details::entityHandlerMap.end();
+    }
 
-    if(entityHandlerEntry != entityHandlerMap.end())
+    if(entityHandlerEntry != entityHandlerEnd)
     {
         // Call CPP Application Entity Handler
         if(entityHandlerEntry->second)
@@ -327,8 +352,9 @@ namespace OC
             }
             else
             {
-                entityHandlerMap[resourceHandle] = eHandler;
-                resourceUriMap[resourceHandle] = resourceURI;
+                std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+                OC::details::entityHandlerMap[resourceHandle] = eHandler;
+                OC::details::resourceUriMap[resourceHandle] = resourceURI;
             }
         }
         else
@@ -386,8 +412,9 @@ namespace OC
             }
             else
             {
-                entityHandlerMap[resourceHandle] = eHandler;
-                resourceUriMap[resourceHandle] = resourceURI;
+                std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+                OC::details::entityHandlerMap[resourceHandle] = eHandler;
+                OC::details::resourceUriMap[resourceHandle] = resourceURI;
             }
         }
         else
@@ -403,7 +430,10 @@ namespace OC
     {
         OCStackResult result = OC_STACK_ERROR;
 
-        defaultDeviceEntityHandler = entityHandler;
+        {
+            std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+            OC::details::defaultDeviceEntityHandler = entityHandler;
+        }
 
         if(entityHandler)
         {
@@ -430,7 +460,8 @@ namespace OC
 
             if(result == OC_STACK_OK)
             {
-                resourceUriMap.erase(resourceHandle);
+                std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
+                OC::details::resourceUriMap.erase(resourceHandle);
             }
             else
             {
