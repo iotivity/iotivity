@@ -170,34 +170,7 @@ namespace OC
             m_requestType = requestType;
         }
 
-        void setPayload(const std::string& requestPayload)
-        {
-            if(requestPayload.empty())
-            {
-                return;
-            }
-
-            MessageContainer info;
-            info.setJSONRepresentation(requestPayload);
-
-            const std::vector<OCRepresentation>& reps = info.representations();
-            if(reps.size() >0)
-            {
-                std::vector<OCRepresentation>::const_iterator itr = reps.begin();
-                std::vector<OCRepresentation>::const_iterator back = reps.end();
-                m_representation = *itr;
-                ++itr;
-
-                for(;itr != back; ++itr)
-                {
-                    m_representation.addChild(*itr);
-                }
-            }
-            else
-            {
-                throw OCException(OC::Exception::INVALID_REPRESENTATION);
-            }
-        }
+        void setPayload(const std::string& requestPayload);
 
         void setQueryParams(QueryParamsMap& queryParams)
         {
