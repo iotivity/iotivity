@@ -36,7 +36,7 @@
 #define OC_RSRVD_INTERFACE_DEFAULT      "oc.mi.def"
 #define OC_RSRVD_INTERFACE_LL           "oc.mi.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oc.mi.b"
-#define OC_RSRVD_INTERFACE_GROUP        "oc.mi.c"
+#define OC_RSRVD_INTERFACE_GROUP        "oc.mi.grp"
 
 
 #define OC_RSRVD_OBSERVABLE             "obs"
