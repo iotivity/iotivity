@@ -1348,9 +1348,15 @@ OCStackResult OCStop()
     // Free memory dynamically allocated for resources
     deleteAllResources();
     DeleteDeviceInfo();
+#ifdef CA_INT
+    CATerminate();
+    //CATerminate does not return any error code. It is OK to assign result to OC_STACK_OK.
+    result = OC_STACK_OK;
+#else //CA_INT
+    result = OCStopCoAP();
+#endif //CA_INT
 
-    // Make call to OCCoAP layer
-    if (OCStopCoAP() == OC_STACK_OK)
+    if (result == OC_STACK_OK)
     {
         // Remove all observers
         DeleteObserverList();
