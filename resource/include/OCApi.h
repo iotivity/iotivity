@@ -195,7 +195,7 @@ namespace OC
     const std::string BATCH_INTERFACE = "oc.mi.b";
 
     // Used in GET, PUT, POST methods on links to other remote resources of a group.
-    const std::string GROUP_INTERFACE = "oc.mi.c";
+    const std::string GROUP_INTERFACE = "oc.mi.grp";
 
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
