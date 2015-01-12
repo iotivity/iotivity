@@ -32,8 +32,9 @@ Unit Test Requirements:
 
    GTEST_DIR := /home/johndoe/utils/gtest-1.7.0
 
-3. The unit test assumes that the "eth0" interface is
-   available.  If not, the unit tests will FAIL.
+3. The unit test assumes that a network interface is available
+   (e.g. "eth0", "wlan0", etc.)
+   If no interface is available, the unit tests will FAIL.
 4. To run the unit test, first build the C OCStack.
    At the time of this writing this was done by running
    
