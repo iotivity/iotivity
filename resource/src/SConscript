@@ -47,7 +47,8 @@ oclib_src = [
 		'OCException.cpp',
 		'OCRepresentation.cpp',
 		'InProcServerWrapper.cpp',
-		'InProcClientWrapper.cpp'
+		'InProcClientWrapper.cpp',
+		'OCResourceRequest.cpp'
 	]
 
 oclib = oclib_env.SharedLibrary('oc', oclib_src)
