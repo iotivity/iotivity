@@ -1380,6 +1380,27 @@ OCStackResult OCStop()
 }
 
 /**
+ * Map OCQualityOfService to CAMessageType
+ *
+ * @param OCQualityOfService - Input qos.
+ *
+ * Returns CA message type for a given qos.
+ */
+CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos)
+{
+    switch (qos)
+    {
+        case OC_HIGH_QOS:
+            return CA_MSG_CONFIRM;
+        case OC_LOW_QOS:
+        case OC_MEDIUM_QOS:
+        case OC_NA_QOS:
+        default:
+            return CA_MSG_NONCONFIRM;
+    }
+}
+
+/**
  * Verify the lengths of the URI and the query separately
  *
  * @param inputUri       - Input URI and query.
@@ -1621,8 +1642,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    // TODO-CA: Map QoS to the right CA msg type
-    requestData.type = CA_MSG_NONCONFIRM;
+    requestData.type = qualityOfServiceToMessageType(qos);
     requestData.token = caToken;
     if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
     {
@@ -1794,8 +1814,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 }
 
                 memset(&requestData, 0, sizeof(CAInfo_t));
-                // TODO-CA: Map QoS to the right CA msg type
-                requestData.type = CA_MSG_NONCONFIRM;
+                requestData.type =  qualityOfServiceToMessageType(qos);
                 requestData.token = clientCB->token;
                 if (CreateObserveHeaderOption (&(requestData.options),
                             options, numOptions, OC_OBSERVE_DEREGISTER) != OC_STACK_OK)
@@ -1945,8 +1964,6 @@ OCStackResult OCProcessPresence()
                     }
 
                     memset(&requestData, 0, sizeof(CAInfo_t));
-
-                    // TODO-CA: Map QoS to the right CA msg type
                     requestData.type = CA_MSG_NONCONFIRM;
                     requestData.token = cbNode->token;
 
