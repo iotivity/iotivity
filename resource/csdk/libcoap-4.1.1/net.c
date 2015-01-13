@@ -916,9 +916,13 @@ int coap_read(coap_context_t *ctx, int sockfd) {
         goto error_early;
     }
 
-    if ((size_t) bytes_read < sizeof(coap_hdr_t)) {
-        debug("coap_read: discarded invalid frame\n");
-        goto error_early;
+    if (bytes_read == 0) {
+      goto error_early;
+    }
+
+    else if ((size_t) bytes_read < sizeof(coap_hdr_t)) {
+       debug("coap_read: discard invalid frame\n"); 
+       goto error_early;
     }
 
     if (pdu->version != COAP_DEFAULT_VERSION) {
