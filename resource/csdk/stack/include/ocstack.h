@@ -166,7 +166,7 @@ typedef enum {
     OC_STACK_CONTINUE,
     /* Success status code - END HERE */
     /* Error status code - START HERE */
-    OC_STACK_INVALID_URI,
+    OC_STACK_INVALID_URI = 20,
     OC_STACK_INVALID_QUERY,
     OC_STACK_INVALID_IP,
     OC_STACK_INVALID_PORT,
@@ -182,18 +182,19 @@ typedef enum {
     OC_STACK_SLOW_RESOURCE,
     OC_STACK_NO_OBSERVERS,              /* resource has no registered observers */
     OC_STACK_OBSERVER_NOT_FOUND,
-    #ifdef WITH_PRESENCE
-    OC_STACK_PRESENCE_STOPPED,
-    OC_STACK_PRESENCE_TIMEOUT,
-    OC_STACK_PRESENCE_DO_NOT_HANDLE,
-    #endif
     OC_STACK_VIRTUAL_DO_NOT_HANDLE,
     OC_STACK_INVALID_OPTION,
     OC_STACK_MALFORMED_RESPONSE,        /* the remote reply contained malformed data */
     OC_STACK_PERSISTENT_BUFFER_REQUIRED,
     OC_STACK_INVALID_REQUEST_HANDLE,
     OC_STACK_INVALID_DEVICE_INFO,
-    OC_STACK_ERROR
+    /* NOTE: Insert all new error codes here!*/
+    #ifdef WITH_PRESENCE
+    OC_STACK_PRESENCE_STOPPED = 128,
+    OC_STACK_PRESENCE_TIMEOUT,
+    OC_STACK_PRESENCE_DO_NOT_HANDLE,
+    #endif
+    OC_STACK_ERROR = 255
     /* Error status code - END HERE */
 } OCStackResult;
 
