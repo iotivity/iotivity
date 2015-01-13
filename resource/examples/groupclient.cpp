@@ -27,10 +27,12 @@
 #include <mutex>
 #include <condition_variable>
 #include <iostream>
+#include <mutex>
 
 using namespace std;
 using namespace OC;
 namespace PH = std::placeholders;
+std::mutex resourceLock;
 
 OCResourceHandle resourceHandle;
 shared_ptr< OCResource > g_resource;
@@ -48,6 +50,13 @@ void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, con
 
 void foundResource(std::shared_ptr< OCResource > resource)
 {
+    std::lock_guard<std::mutex> lock(resourceLock);
+    if(g_resource)
+    {
+        std::cout << "Found another resource, ignoring"<<std::endl;
+        return;
+    }
+
     std::string resourceURI;
     std::string hostAddress;
 
@@ -59,13 +68,12 @@ void foundResource(std::shared_ptr< OCResource > resource)
         {
             string resourceURI = resource->uri();
             cout << resourceURI << endl;
+            cout << "HOST :: " << resource->host() << endl;
             if (resourceURI == "/core/a/collection")
             {
                 g_resource = resource;
+                resource->get("", DEFAULT_INTERFACE, QueryParamsMap(), onGet);
             }
-
-            g_resource->get("", DEFAULT_INTERFACE, QueryParamsMap(), onGet);
-            printf("HOST :: %s\n", resource->host().c_str());
         }
     }
     catch (std::exception& e)

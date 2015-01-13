@@ -30,10 +30,11 @@
 #include <condition_variable>
 #include <map>
 #include <vector>
+
 #include "OCPlatform.h"
 #include "OCApi.h"
-using namespace OC;
 
+using namespace OC;
 
 struct FooResource
 {
