@@ -1996,7 +1996,6 @@ OCStackResult OCProcessPresence()
     uint8_t ipAddr[4] = { 0 };
     uint16_t port = 0;
 
-    OC_LOG(INFO, TAG, PCF("Entering RequestPresence"));
     ClientCB* cbNode = NULL;
     OCDevAddr dst;
     OCClientResponse clientResponse;
@@ -2092,9 +2091,8 @@ exit:
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
-OCStackResult OCProcess() {
-
-    OC_LOG(INFO, TAG, PCF("Entering OCProcess"));
+OCStackResult OCProcess()
+{
     #ifdef WITH_PRESENCE
     OCProcessPresence();
     #endif

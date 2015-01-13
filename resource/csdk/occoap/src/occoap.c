@@ -654,8 +654,6 @@ OCStackResult OCStopCoAP() {
  * @return 0 - success, else - TBD error
  */
 OCStackResult OCProcessCoAP() {
-
-    OC_LOG(INFO, TAG, PCF("Entering OCProcessCoAP"));
     int read = 0;
     read = coap_read(gCoAPCtx, gCoAPCtx->sockfd);
     if(read > 0) {
