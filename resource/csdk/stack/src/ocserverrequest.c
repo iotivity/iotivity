@@ -250,7 +250,7 @@ OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle r
 
     serverResponse->payload = (unsigned char *) OCMalloc(MAX_RESPONSE_LENGTH);
     VERIFY_NON_NULL(serverResponse->payload);
-    memset(serverResponse->payload, 0, sizeof(MAX_RESPONSE_LENGTH));
+    memset(serverResponse->payload, 0, MAX_RESPONSE_LENGTH);
 
     serverResponse->remainingPayloadSize = MAX_RESPONSE_LENGTH;
     serverResponse->requestHandle = requestHandle;
