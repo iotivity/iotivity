@@ -2394,6 +2394,7 @@ OCStackResult getResourceType(const char * uri, unsigned char** resourceType, ch
             *resourceType = (unsigned char *) OCMalloc(strlen(leftToken)-3);
             if(!*resourceType)
             {
+                OCFree(tempURI);
                 goto exit;
             }
             strcpy((char *)*resourceType, ((const char *)&leftToken[3]));
