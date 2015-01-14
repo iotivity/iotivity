@@ -70,13 +70,13 @@ void handleSigInt(int signum) {
 static void PrintUsage()
 {
 #ifdef CA_INT
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7> -c <0|1|2|3>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7> -c <0|1>");
 #else
      OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7>");
 #endif
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
 #ifdef CA_INT
-    OC_LOG(INFO, TAG, "-c <0|1|2|3> : Send unicast messages over Ethernet, WIFI, EDR or LE");
+    OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
 #endif
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");

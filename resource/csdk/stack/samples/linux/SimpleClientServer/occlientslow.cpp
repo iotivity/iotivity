@@ -58,8 +58,8 @@ void handleSigInt(int signum)
 static void PrintUsage()
 {
 #ifdef CA_INT
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1|2|3>");
-    OC_LOG(INFO, TAG, "-c <0|1|2|3> : Send unicast messages over Ethernet, WIFI, EDR or LE");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
+    OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
 #else
     OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3>");
 #endif

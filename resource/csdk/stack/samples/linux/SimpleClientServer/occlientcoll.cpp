@@ -107,7 +107,7 @@ void PrintUsage()
 {
 #ifdef CA_INT
     OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case> -c <CA connectivity Type>");
-    OC_LOG(INFO, TAG, "-c <0|1|2|3> : Send messages over Ethernet, WIFI, EDR or LE");
+    OC_LOG(INFO, TAG, "-c <0|1> : Send messages over Ethernet or WIFI");
 #else
     OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case>");
 #endif
