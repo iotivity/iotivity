@@ -8,6 +8,22 @@ lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
 calib_env = lib_env.Clone()
+
+######################################################################
+# Add build options (WITH_DTLS) info for help command
+######################################################################
+help_vars = Variables()
+help_vars.Add(BoolVariable('WITH_DTLS', 'enable security support?', False))
+help_vars.Update(env)
+Help(help_vars.GenerateHelpText(env))
+
+######################################################################
+# Get build options (the options from command line)
+######################################################################
+with_dtls = env.get('WITH_DTLS')
+if (with_dtls):
+	print "Info: Building CA library with DTLS support"
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -22,6 +38,12 @@ calib_env.AppendUnique(CPPPATH = [
 		'./lib/libcoap-4.1.1'
 		])
 
+if (with_dtls):
+	calib_env.AppendUnique(CPPPATH = [
+			'./lib/extlibs/tinydtls',
+			'../stack/include'
+			])
+
 target_os = env.get('TARGET_OS')
 
 if target_os not in ['windows', 'winrt']:
@@ -32,6 +54,13 @@ if target_os not in ['windows', 'winrt']:
 			'WIFI_ADAPTER', 'ETHERNET_ADAPTER',
 			#'TB_LOG'
 			])
+	if (with_dtls):
+		calib_env.AppendUnique(CPPDEFINES = [
+				'__WITH_DTLS__',
+				])
+		calib_env.AppendUnique(LIBPATH = ['./lib/extlibs/tinydtls'])
+		calib_env.PrependUnique(LIBS = ['tinydtls'])
+
 
 calib_env.ParseConfig('pkg-config --cflags glib-2.0')
 
@@ -71,6 +100,9 @@ calib_src = [
 		'./src/ethernet_adapter/linux/caethernetclient.c',
 		'./src/ethernet_adapter/linux/caethernetnwmonitor.c'
 	]
+
+if (with_dtls):
+	calib_src = calib_src + ['./src/adapter_util/caadapternetdtls.c']
 
 calib = calib_env.SharedLibrary('connectivity_abstraction', calib_src)
 calib_env.InstallTarget(calib, 'libconnectivity_abstraction')
