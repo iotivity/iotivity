@@ -238,6 +238,28 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
     return OC_STACK_OK;
 }
 
+
+OCStackResult GroupManager::bindResourceToGroup(OCResourceHandle& childHandle, std::shared_ptr< OCResource > resource, OCResourceHandle& collectionHandle)
+{
+
+    OCStackResult result = OCPlatform::registerResource(childHandle, resource);
+
+    cout << "\tresource registed!" << endl;
+
+    if(result == OC_STACK_OK)
+    {
+        OCPlatform::bindResource(collectionHandle, childHandle);
+    }
+    else
+    {
+        cout << "\tresource Error!" << endl;
+    }
+
+    return result;
+ }
+
+
+
 /*
  Presence Check
  */
