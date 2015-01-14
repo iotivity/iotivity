@@ -117,6 +117,8 @@ public:
     OCStackResult subscribeCollectionPresence(std::shared_ptr< OCResource > resource,
             CollectionPresenceCallback);
 
+    OCStackResult bindResourceToGroup(OCResourceHandle& childHandle, std::shared_ptr< OCResource > resource, OCResourceHandle& collectionHandle);
+
 private:
 
     void onFoundResource(std::shared_ptr< OCResource > resource, int waitsec);

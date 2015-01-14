@@ -76,6 +76,13 @@ namespace OIC
         return result;
     }
 
+    OCStackResult ThingsManager::bindResourceToGroup(OCResourceHandle& childHandle, std::shared_ptr< OCResource > resource, OCResourceHandle& collectionHandle)
+    {
+        OCStackResult result = g_groupManager->bindResourceToGroup(childHandle,resource,collectionHandle);
+
+        return result;
+    }
+
     OCStackResult ThingsManager::findGroup(std::vector< std::string > collectionResourceTypes,
             FindCallback callback)
     {
