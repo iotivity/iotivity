@@ -1658,7 +1658,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     {
         grpEnd.connectivityType = caConType;
 
-        grpEnd.resourceUri = (CAURI_t) OICMalloc(uriLen + 1);
+        grpEnd.resourceUri = (CAURI_t) OCMalloc(uriLen + 1);
         strncpy(grpEnd.resourceUri, requiredUri, (uriLen + 1));
 
         caResult = CASendRequestToAll(&grpEnd, &requestInfo);
