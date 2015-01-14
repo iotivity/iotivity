@@ -37,6 +37,13 @@ static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/led";
 
+#ifdef CA_INT
+//The following variable determines the interface (wifi, ethernet etc.)
+//to be used for sending unicast messages. Default set to WIFI.
+static OCConnectivityType CA_CONNTYPE = OC_WIFI;
+static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
+#endif
+
 int gQuitFlag = 0;
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
@@ -50,7 +57,12 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
+#ifdef CA_INT
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1|2|3>");
+    OC_LOG(INFO, TAG, "-c <0|1|2|3> : Send unicast messages over Ethernet, WIFI, EDR or LE");
+#else
     OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3>");
+#endif
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
@@ -70,9 +82,8 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.cd = NULL;
 
 #ifdef CA_INT
-    // TODO-CA: The adapter type is set to WiFi but should be configurable - add as API param
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
-            NULL, OC_WIFI, qos, &cbData, options, numOptions);
+            NULL, CA_CONNTYPE, qos, &cbData, options, numOptions);
 #else
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
             NULL, qos, &cbData, options, numOptions);
@@ -191,15 +202,26 @@ int InitDiscovery()
     }
     else
     {
+#ifdef CA_INT
+        strcpy(szQueryUri, MULTICAST_RESOURCE_DISCOVERY_QUERY);
+#else
         strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
+#endif
     }
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 #ifdef CA_INT
-    // TODO-CA: The adapter type is set to all but should be configurable - add as API param
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ETHERNET | OC_WIFI),
-                        OC_LOW_QOS, &cbData, NULL, 0);
+    if(UNICAST_DISCOVERY)
+    {
+        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, CA_CONNTYPE,
+                OC_LOW_QOS, &cbData, NULL, 0);
+    }
+    else
+    {
+        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_ALL,
+                OC_LOW_QOS, &cbData, NULL, 0);
+    }
 #else
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
 #endif
@@ -218,7 +240,11 @@ int main(int argc, char* argv[])
     uint8_t ifname[] = "eth0";
     int opt;
 
+#ifdef CA_INT
+    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
+#else
     while ((opt = getopt(argc, argv, "u:t:")) != -1)
+#endif
     {
         switch(opt)
         {
@@ -228,6 +254,11 @@ int main(int argc, char* argv[])
             case 't':
                 TEST_CASE = atoi(optarg);
                 break;
+            #ifdef CA_INT
+            case 'c':
+                CA_CONNTYPE = OCConnectivityType(atoi(optarg));
+                break;
+            #endif
             default:
                 PrintUsage();
                 return -1;
