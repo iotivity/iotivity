@@ -85,34 +85,34 @@ namespace OC
 
 #ifdef CA_INT
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
-            const std::string& resourceType, uint8_t connectivityType, FindCallback& callback,
-            QualityOfService QoS);
+            const std::string& resourceType, OCConnectivityType connectivityType,
+            FindCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
-            const std::string& deviceURI, uint8_t connectivityType, FindDeviceCallback& callback,
-            QualityOfService QoS);
+            const std::string& deviceURI, OCConnectivityType connectivityType,
+            FindDeviceCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
-            const std::string& uri, uint8_t connectivityType, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions,
+            const std::string& uri, OCConnectivityType connectivityType,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             GetCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
-            const std::string& uri, uint8_t connectivityType, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            PutCallback& callback, QualityOfService QoS);
+            const std::string& uri, OCConnectivityType connectivityType,
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions, PutCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
-            const std::string& uri, uint8_t connectivityType, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            PostCallback& callback, QualityOfService QoS);
+            const std::string& uri, OCConnectivityType connectivityType,
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult DeleteResource(const std::string& host, const std::string& uri,
-            uint8_t connectivityType, const HeaderOptions& headerOptions,
+            OCConnectivityType connectivityType, const HeaderOptions& headerOptions,
             DeleteCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
-            const std::string& host, const std::string& uri, uint8_t connectivityType,
+            const std::string& host, const std::string& uri, OCConnectivityType connectivityType,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             ObserveCallback& callback, QualityOfService QoS);
 #else
@@ -151,7 +151,7 @@ namespace OC
 
 #ifdef CA_INT
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
-            const std::string& resourceType, uint8_t connectivityType,
+            const std::string& resourceType, OCConnectivityType connectivityType,
             SubscribeCallback& presenceHandler);
 #else
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,

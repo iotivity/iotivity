@@ -181,7 +181,7 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl,
-        const std::string& resourceType, uint8_t connectivityType,
+        const std::string& resourceType, OCConnectivityType connectivityType,
         FindCallback& callback, QualityOfService QoS)
 #else
     OCStackResult InProcClientWrapper::ListenForResource(const std::string& serviceUrl,
@@ -244,7 +244,7 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult InProcClientWrapper::ListenForDevice(const std::string& serviceUrl,
-        const std::string& deviceURI, uint8_t connectivityType,
+        const std::string& deviceURI, OCConnectivityType connectivityType,
         FindDeviceCallback& callback, QualityOfService QoS)
 #else
     OCStackResult InProcClientWrapper::ListenForDevice(const std::string& serviceUrl,
@@ -337,9 +337,9 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult InProcClientWrapper::GetResourceRepresentation(const std::string& host,
-        const std::string& uri, uint8_t connectivityType, const QueryParamsMap& queryParams,
-        const HeaderOptions& headerOptions, GetCallback& callback,
-        QualityOfService QoS)
+        const std::string& uri, OCConnectivityType connectivityType,
+        const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+        GetCallback& callback, QualityOfService QoS)
 #else
     OCStackResult InProcClientWrapper::GetResourceRepresentation(const std::string& host,
         const std::string& uri, const QueryParamsMap& queryParams,
@@ -450,7 +450,7 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult InProcClientWrapper::PostResourceRepresentation(const std::string& host,
-        const std::string& uri, uint8_t connectivityType, const OCRepresentation& rep,
+        const std::string& uri, OCConnectivityType connectivityType, const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         PostCallback& callback, QualityOfService QoS)
 #else
@@ -508,7 +508,7 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult InProcClientWrapper::PutResourceRepresentation(const std::string& host,
-        const std::string& uri, uint8_t connectivityType, const OCRepresentation& rep,
+        const std::string& uri, OCConnectivityType connectivityType, const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         PutCallback& callback, QualityOfService QoS)
 #else
@@ -584,8 +584,8 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult InProcClientWrapper::DeleteResource(const std::string& host,
-        const std::string& uri, uint8_t connectivityType, const HeaderOptions& headerOptions,
-         DeleteCallback& callback, QualityOfService QoS)
+        const std::string& uri, OCConnectivityType connectivityType,
+        const HeaderOptions& headerOptions, DeleteCallback& callback, QualityOfService QoS)
 #else
     OCStackResult InProcClientWrapper::DeleteResource(const std::string& host,
         const std::string& uri, const HeaderOptions& headerOptions,
@@ -658,7 +658,7 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle,
-        const std::string& host, const std::string& uri, uint8_t connectivityType,
+        const std::string& host, const std::string& uri, OCConnectivityType connectivityType,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         ObserveCallback& callback, QualityOfService QoS)
 #else
@@ -780,8 +780,8 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult InProcClientWrapper::SubscribePresence(OCDoHandle* handle,
-        const std::string& host, const std::string& resourceType, uint8_t connectivityType,
-        SubscribeCallback& presenceHandler)
+        const std::string& host, const std::string& resourceType,
+        OCConnectivityType connectivityType, SubscribeCallback& presenceHandler)
 #else
     OCStackResult InProcClientWrapper::SubscribePresence(OCDoHandle* handle,
         const std::string& host, const std::string& resourceType,

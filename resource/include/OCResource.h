@@ -317,7 +317,7 @@ namespace OC
         * Function to get the connectivity type of this resource
         * @return uint8_t connectivity type
         */
-        uint8_t connectivityType() const;
+        OCConnectivityType connectivityType() const;
 #endif
 
         /**
@@ -384,7 +384,7 @@ namespace OC
         OCResourceIdentifier m_resourceId;
         std::string m_host;
 #ifdef CA_INT
-        uint8_t m_connectivityType;
+        OCConnectivityType m_connectivityType;
 #endif
         bool m_isObservable;
         bool m_isCollection;
@@ -397,8 +397,9 @@ namespace OC
     private:
 #ifdef CA_INT
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-            const std::string& uri, const std::string& serverId, uint8_t m_connectivityType,
-            bool observable, const std::vector<std::string>& resourceTypes,
+            const std::string& uri, const std::string& serverId,
+            OCConnectivityType m_connectivityType, bool observable,
+            const std::vector<std::string>& resourceTypes,
             const std::vector<std::string>& interfaces);
 #else
         OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,

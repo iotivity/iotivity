@@ -116,9 +116,10 @@ namespace OC
         */
 #ifdef CA_INT
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
-                    uint8_t connectivityType, FindCallback resourceHandler);
+                    OCConnectivityType connectivityType, FindCallback resourceHandler);
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
-                    uint8_t connectivityType, FindCallback resourceHandler, QualityOfService QoS);
+                    OCConnectivityType connectivityType, FindCallback resourceHandler,
+                    QualityOfService QoS);
 #endif
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler);
@@ -136,9 +137,9 @@ namespace OC
          */
 #ifdef CA_INT
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
-                    uint8_t connectivityType, FindDeviceCallback deviceInfoHandler);
+                    OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler);
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
-                    uint8_t connectivityType, FindDeviceCallback deviceInfoHandler,
+                    OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler,
                     QualityOfService QoS);
 #endif
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
@@ -395,9 +396,9 @@ namespace OC
         */
 #ifdef CA_INT
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
-                        uint8_t connectivityType, SubscribeCallback presenceHandler);
+                        OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
-                        const std::string& resourceType, uint8_t connectivityType,
+                        const std::string& resourceType, OCConnectivityType connectivityType,
                         SubscribeCallback presenceHandler);
 #endif
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
@@ -443,7 +444,7 @@ namespace OC
         */
 #ifdef CA_INT
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
-                        uint8_t connectivityType, bool isObservable,
+                        OCConnectivityType connectivityType, bool isObservable,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
 #endif
