@@ -30,6 +30,9 @@
 #include "coap.h"
 #include "debug.h"
 
+#define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
+#define ntohs(x) htons(x)
+
 #ifdef __cplusplus
 extern "C"
 {

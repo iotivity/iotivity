@@ -133,7 +133,11 @@ int oic_log_set_module(oic_log_ctx_t *ctx, const char *module_name)
     mn = (char *) malloc(1 + l);
 
     if (0 == mn)
+    {
+        if (0 != ctx->module_name)
+            free(ctx->module_name);
         return 0;
+    }
 
     memcpy(mn, module_name, 1 + l);
 

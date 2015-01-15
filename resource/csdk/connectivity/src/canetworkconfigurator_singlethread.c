@@ -40,6 +40,11 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
     if (gSelectedNetworkList == NULL)
     {
         gSelectedNetworkList = u_arraylist_create();
+
+        if (NULL == gSelectedNetworkList)
+        {
+            return CA_STATUS_FAILED;
+        }
     }
 
     switch (ConnectivityType)
@@ -95,7 +100,7 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
     }
 
     // start selected interface adapter
-    CAStartAdapter(ConnectivityType);
+    CAStartAdapter((CAConnectivityType_t)ConnectivityType);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -104,7 +109,7 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     uint8_t index;
-    uint32_t type;
+    CAConnectivityType_t connType;
     if (gSelectedNetworkList == NULL)
     {
         OIC_LOG_V(DEBUG, TAG, "Selected network not found");
@@ -121,9 +126,9 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
             OIC_LOG(ERROR, TAG, "error");
             return CA_STATUS_FAILED;
         }
-        type = *(uint32_t *) ptrType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        if (ConnectivityType == type)
+        if (ConnectivityType == connType)
         {
             switch (ConnectivityType)
             {
@@ -165,7 +170,7 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
                 case CA_LE:
 
-#ifdef LE_ADAPTER
+#ifndef LE_ADAPTER
                     OIC_LOG_V(DEBUG, TAG, "Remove network type(LE) - Not Supported");
                     return CA_NOT_SUPPORTED;
 #else
@@ -177,7 +182,7 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
             }
 
             // stop selected interface adapter
-            CAStopAdapter(ConnectivityType);
+            CAStopAdapter(connType);
         }
     }
 
@@ -199,7 +204,7 @@ CAResult_t CATerminateNetworkType()
     OIC_LOG_V(DEBUG, TAG, "CATerminateNetworkType()");
     if(gSelectedNetworkList != NULL)
     {
-        u_arraylist_free(gSelectedNetworkList);
+        u_arraylist_free(&gSelectedNetworkList);
     }
     return CA_STATUS_OK;
 }

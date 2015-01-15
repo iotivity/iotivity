@@ -52,6 +52,15 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object,
                                   const CARequestInfo_t *request);
 
 /**
+ * @brief   Detaches control from the caller for sending multicast request
+ * @param   object    [IN]    Group endpoint information where the data has to be sent
+ * @param   request   [IN]    request that needs to be sent
+ * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
+                                       const CARequestInfo_t *request);
+
+/**
  * @brief   Detaches control from the caller for sending response
  * @param   endpoint   [IN]    endpoint information where the data has to be sent
  * @param   response       [IN]    request that needs to be sent

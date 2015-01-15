@@ -51,7 +51,6 @@ static GIOChannel *channel = NULL;
 static guint g_test_io_watch_id = 0;
 static GError *g_err_Sample = NULL;
 
-static CALocalConnectivity_t *localWifiEndpoint = NULL;
 //Hardcoded coap data for Test
 static char coapData[500] =
     "{\"oc:\[{href\":\"/a/light\",\"ref\":{\"power\":\"20\",\"state\":\"true\"}}]}";
@@ -305,6 +304,7 @@ int16_t interfaceMulticastStartServer(CAConnectivityType_t connType, int serverT
         printf("Invoking start server method\n");
         startServer();
     }
+    return 0;
 }
 
 int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
@@ -336,7 +336,7 @@ int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
         if (strlen(remoteIPAddress) == 0)
         {
             printf("Invalid device address\n");
-            return;
+            return -1;
         }
         endpoint.connectivityType = CA_WIFI;
         strncpy(endpoint.addressInfo.IP.ipAddress, remoteIPAddress, CA_IPADDR_SIZE);
@@ -366,7 +366,7 @@ int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
         if (strlen(deviceaddress) == 0)
         {
             printf("Invlaid device address\n");
-            return;
+            return -1;
         }
 
         endpoint.connectivityType = CA_EDR;
@@ -390,7 +390,7 @@ int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
         if (strlen(deviceaddress) == 0)
         {
             printf("Invlaid device address\n");
-            return;
+            return -1;
         }
 
         //Get the service uuid from user
@@ -401,7 +401,7 @@ int16_t interfaceSendUnicastData(CAConnectivityType_t connType)
         if (strlen(uuid) == 0)
         {
             printf("Invlaid service uuid\n");
-            return;
+            return -1;
         }
 
         endpoint.connectivityType = CA_LE;
@@ -446,6 +446,7 @@ int16_t interfaceSendMulticastData(CAConnectivityType_t connType)
     {
         tempConnectivityHandlers->handler.sendDataToAll(coapData, strlen(coapData));
     }
+    return 0;
 }
 
 void interfaceReadData(CAConnectivityType_t connType)
@@ -1051,7 +1052,6 @@ static gboolean testThread(GIOChannel *source, GIOCondition condition , gpointer
 {
     gchar buf[10] = {'\0'};
     gsize read = 0;
-
 
     if (g_io_channel_read(channel, buf, 10, &read) != G_IO_ERROR_NONE)
     {

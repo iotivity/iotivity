@@ -1226,8 +1226,7 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     if(caResult == CA_STATUS_OK)
     {
         OC_LOG(INFO, TAG, PCF("CASelectNetwork to WIFI"));
-        caResult = CARegisterHandler(HandleCARequests, HandleCAResponses);
-        if(caResult == CA_STATUS_OK)
+        CARegisterHandler(HandleCARequests, HandleCAResponses);
         {
             OC_LOG(INFO, TAG, PCF("CARegisterHandler..."));
             stackState = OC_STACK_INITIALIZED;

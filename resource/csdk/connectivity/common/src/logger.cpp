@@ -52,7 +52,7 @@ PROGMEM const char level2[] = "WARNING";
 PROGMEM const char level3[] = "ERROR";
 PROGMEM const char level4[] = "FATAL";
 
-PROGMEM const char LEVEL[] = "DIWEF";
+PROGMEM const char * const LEVEL[]  = {level0, level1, level2, level3, level4};
 
 //    static void OCLogString(LogLevel level, PROGMEM const char * tag, PROGMEM const char * logStr);
 #endif
@@ -234,35 +234,29 @@ void OICLogInit()
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLog(LogLevel level, const char *tag, const int16_t lineNum, const char *logStr)
+void OICLog(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PROGMEM const char *logStr)
 {
     if (!logStr || !tag)
     {
         return;
     }
-
-    //char buffer[LINE_BUFFER_SIZE] = {0};
-    //strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
-    //Serial.print(buffer);
-    Serial.print(LEVEL[level]);
-
-    //char c;
+    char buffer[LINE_BUFFER_SIZE] = {0};
+    strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+    Serial.print(buffer);
+    char c;
     Serial.print(F(": "));
-    /* while ((c = pgm_read_byte(tag))) {
-     Serial.write(c);
-     tag++;
-     } */
-    Serial.print(tag);
+    while ((c = pgm_read_byte(tag)))
+    {
+        Serial.write(c);
+        tag++;
+    }
     Serial.print(F(": "));
     Serial.print(lineNum);
     Serial.print(F(": "));
-    /* while ((c = pgm_read_byte(logStr))) {
+    while ((c = pgm_read_byte(logStr))) {
      Serial.write(c);
      logStr++;
-     } */
-
-    Serial.print(logStr);
-
+     }
     Serial.println();
 }
 

@@ -41,6 +41,11 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
         OIC_LOG_V(DEBUG, TAG, "Create network list");
 
         gSelectedNetworkList = u_arraylist_create();
+
+        if( gSelectedNetworkList == NULL )
+        {
+            return CA_STATUS_FAILED;
+        }
     }
 
     switch (ConnectivityType)
@@ -104,7 +109,7 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
     }
 
     // start selected interface adapter
-    CAStartAdapter(ConnectivityType);
+    CAStartAdapter((CAConnectivityType_t)ConnectivityType);
 
     return CA_STATUS_OK;
 }
@@ -112,7 +117,7 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
 CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 {
     uint8_t index;
-    uint32_t type;
+    CAConnectivityType_t connType;
 
     if (gSelectedNetworkList == NULL)
     {
@@ -123,16 +128,16 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
     for (index = 0; index < u_arraylist_length(gSelectedNetworkList); index++)
     {
-        void* cType = u_arraylist_get(gSelectedNetworkList, index);
+        void* ptrType = u_arraylist_get(gSelectedNetworkList, index);
 
-        if(cType == NULL)
+        if(ptrType == NULL)
         {
             continue;
         }
 
-        type = *(uint32_t *) cType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        if (ConnectivityType == type)
+        if (ConnectivityType == connType)
         {
             switch (ConnectivityType)
             {
@@ -174,7 +179,7 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
                 case CA_LE:
 
-#ifdef LE_ADAPTER
+#ifndef LE_ADAPTER
                     OIC_LOG_V(DEBUG, TAG, "Remove network type(LE) - Not Supported");
                     return CA_NOT_SUPPORTED;
 #else
@@ -186,7 +191,7 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
             }
 
             // stop selected interface adapter
-            CAStopAdapter(ConnectivityType);
+            CAStopAdapter(connType);
         }
     }
 
@@ -210,6 +215,13 @@ CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_
 {
     OIC_LOG_V(DEBUG, TAG, "get network information.");
 
+    if (info == NULL || size == NULL)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Input parameter is invalid value");
+
+        return CA_STATUS_INVALID_PARAM;
+    }
+
     return CAGetNetworkInfo(info, size);
 }
 
@@ -217,8 +229,9 @@ CAResult_t CATerminateNetworkType()
 {
     OIC_LOG_V(DEBUG, TAG, "CATerminateNetworkType()");
 
-    if(gSelectedNetworkList != NULL) {
-        u_arraylist_free(gSelectedNetworkList);
+    if(gSelectedNetworkList != NULL)
+    {
+        u_arraylist_free(&gSelectedNetworkList);
     }
 
     return CA_STATUS_OK;

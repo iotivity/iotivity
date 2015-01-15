@@ -281,6 +281,7 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uin
     OIC_LOG(DEBUG, TAG, "IN");
 
     int8_t index = -1;
+    uint32_t sentDataLen = 0;
     CAResult_t res = CA_STATUS_FAILED;
 
     if (endpoint == NULL)
@@ -301,8 +302,14 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uin
 
     if (gAdapterHandler[index].sendData != NULL)
     {
-        res = gAdapterHandler[index].sendData(endpoint, data, length);
+        sentDataLen = gAdapterHandler[index].sendData(endpoint, data, length);
     }
+
+    if (sentDataLen == length)
+    {
+        res = CA_STATUS_OK;
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return res;
 }
@@ -311,8 +318,10 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    uint8_t i, type;
+    uint8_t i = 0;
+    CAConnectivityType_t connType;
     int8_t index = -1;
+    uint32_t sentDataLen = 0;
     CAResult_t res = CA_STATUS_FAILED;
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
@@ -331,9 +340,9 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
             OIC_LOG(ERROR, TAG, "error");
             return CA_STATUS_FAILED;
         }
-        type = *(uint8_t *) ptrType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        index = CAGetAdapterIndex(type);
+        index = CAGetAdapterIndex(connType);
 
         if (index == -1)
         {
@@ -343,7 +352,12 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
 
         if (gAdapterHandler[index].sendDataToAll != NULL)
         {
-            res = gAdapterHandler[index].sendDataToAll(data, length);
+            sentDataLen = gAdapterHandler[index].sendDataToAll(data, length);
+        }
+
+        if (sentDataLen == length)
+        {
+            res = CA_STATUS_OK;
         }
     }
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -354,7 +368,8 @@ CAResult_t CAStartListeningServerAdapters()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    uint8_t i, type;
+    uint8_t i = 0;
+    CAConnectivityType_t connType;
     int8_t index = -1;
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
@@ -373,9 +388,9 @@ CAResult_t CAStartListeningServerAdapters()
             OIC_LOG(ERROR, TAG, "error");
             return CA_STATUS_FAILED;
         }
-        type = *(uint8_t *) ptrType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        index = CAGetAdapterIndex(type);
+        index = CAGetAdapterIndex(connType);
 
         if (index == -1)
         {
@@ -396,7 +411,8 @@ CAResult_t CAStartDiscoveryServerAdapters()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    uint8_t i, type;
+    uint8_t i = 0;
+    CAConnectivityType_t connType;
     int8_t index = -1;
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
@@ -415,9 +431,9 @@ CAResult_t CAStartDiscoveryServerAdapters()
             OIC_LOG(ERROR, TAG, "error");
             return CA_STATUS_FAILED;
         }
-        type = *(uint8_t *) ptrType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        index = CAGetAdapterIndex(type);
+        index = CAGetAdapterIndex(connType);
 
         if (index == -1)
         {
@@ -453,7 +469,8 @@ void CATerminateAdapters()
 CAResult_t CAReadData()
 {
 
-    uint8_t i, type;
+    uint8_t i = 0;
+    CAConnectivityType_t connType;
     int8_t index = -1;
 
     u_arraylist_t *list = CAGetSelectedNetworkList();
@@ -471,9 +488,9 @@ CAResult_t CAReadData()
             OIC_LOG(ERROR, TAG, "error");
             return CA_STATUS_FAILED;
         }
-        type = *(uint8_t *) ptrType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        index = CAGetAdapterIndex(type);
+        index = CAGetAdapterIndex(connType);
 
         if (-1 == index)
         {

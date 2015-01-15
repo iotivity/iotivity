@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #define CA_ADAPTER_UTILS_TAG "CA_ADAPTER_UTILS"
 
@@ -224,7 +225,13 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
         return true;
     }
 
-    char *ipAdrs1 = strdup(ipAddress1);
+    char *ipAdrs1 = OICStrdup(ipAddress1);
+    if (!ipAdrs1)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
+        return false;
+    }
+
     int16_t index = 0;
     int16_t lastDotIndex = 0;
     int16_t ip1TokenCount = 0;
@@ -241,7 +248,14 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
     // Add last touple
     ipList1[ip1TokenCount] = atoi(ipAdrs1 + lastDotIndex);
 
-    char *ipAdrs2 = strdup(ipAddress2);
+    char *ipAdrs2 = OICStrdup(ipAddress2);
+    if (!ipAdrs2)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
+        OICFree(ipAdrs1);
+        return false;
+    }
+
     index = 0;
     lastDotIndex = 0;
     int16_t ip2TokenCount = 0;
@@ -258,7 +272,15 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
     // Add last touple
     ipList2[ip2TokenCount] = atoi(ipAdrs2 + lastDotIndex);
 
-    char *nMask = strdup(netMask);
+    char *nMask = OICStrdup(netMask);
+    if (!nMask)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
+        OICFree(ipAdrs1);
+        OICFree(ipAdrs2);
+        return false;
+    }
+
     index = 0;
     lastDotIndex = 0;
     int16_t maskTokenCount = 0;
@@ -275,18 +297,15 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
     // Add last touple
     maskList[maskTokenCount] = atoi(nMask + lastDotIndex);
 
-    if (ip1TokenCount < 3 || ip2TokenCount < 3 || maskTokenCount < 3)
-    {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Address or mask is invalid!");
-        OICFree(ipAdrs1);
-        OICFree(ipAdrs2);
-        OICFree(nMask);
-        return false;
-    }
-
     OICFree(ipAdrs1);
     OICFree(ipAdrs2);
     OICFree(nMask);
+
+    if (ip1TokenCount < 3 || ip2TokenCount < 3 || maskTokenCount < 3)
+    {
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Address or mask is invalid!");
+        return false;
+    }
 
     if (((ipList1[0]& maskList[0]) == (ipList2[0]& maskList[0]))
         && ((ipList1[1]& maskList[1]) == (ipList2[1]& maskList[1]))

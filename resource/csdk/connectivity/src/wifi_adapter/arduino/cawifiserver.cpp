@@ -27,7 +27,6 @@
 #include <utility/server_drv.h>
 #include <utility/wifi_drv.h>
 #include <IPAddress.h>
-#include <TimedAction.h>
 
 #include "logger.h"
 #include "cacommon.h"
@@ -41,7 +40,7 @@
 #define MOD_NAME "WS"
 
 char ssid[] = "NETGEAR99";         // your network SSID (name)
-char pass[] = "jollysky325";            // your network password
+const char pass[] = "jollysky325";            // your network password
 int16_t status = WL_IDLE_STATUS;    // the Wifi radio's status
 
 // Length of the IP address decimal notation string
@@ -57,13 +56,12 @@ int16_t status = WL_IDLE_STATUS;    // the Wifi radio's status
 
 static CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
 static void CAArduinoCheckData();
-void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
+static void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
                               const void *data, const uint32_t dataLength);
 
 static CAWiFiPacketReceivedCallback gPacketReceivedCallback = NULL;
 static int32_t gUnicastSocket = 0;
 static bool gServerRunning = false;
-static TimedAction gRcvAction = TimedAction(3000, CAArduinoCheckData);
 static WiFiUDP Udp;
 
 CAResult_t CAWiFiInitializeServer(void)
@@ -121,7 +119,6 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
     // start thread to monitor socket here
     if (!gServerRunning)
     {
-        gRcvAction.enable();
         gServerRunning = true;
     }
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
@@ -143,7 +140,6 @@ CAResult_t CAWiFiStopUnicastServer()
     Udp.stop();
 
     // Terminate server thread
-    gRcvAction.disable();
     gServerRunning = false;
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return CA_STATUS_OK;
@@ -211,7 +207,7 @@ void CAWiFiSetExceptionCallback(CAWiFiExceptionCallback callback)
 
 void CAWiFiPullData()
 {
-    gRcvAction.check();
+    CAArduinoCheckData();
 }
 
 /// Retrieves the IP address assigned to Arduino Ethernet shield

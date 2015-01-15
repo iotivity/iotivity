@@ -59,7 +59,7 @@ static CANetworkPacketReceivedCallback gNetworkPacketCallback = NULL;
  * @brief Network Changed Callback to CA
  */
 
-CANetworkChangeCallback gNetworkChangeCallback = NULL;
+static CANetworkChangeCallback gNetworkChangeCallback = NULL;
 
 /**
  * @var gIsMulticastServerStarted

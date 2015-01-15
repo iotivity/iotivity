@@ -58,7 +58,7 @@ u_arraylist_t *u_arraylist_create();
  * @return CAResult_t
  * CA_STATUS_OK if Success, CA_STATUS_FAILED otherwise
  */
-CAResult_t u_arraylist_free(u_arraylist_t *list);
+CAResult_t u_arraylist_free(u_arraylist_t **list);
 
 /**
  * @brief Returns the data of the index from the array list

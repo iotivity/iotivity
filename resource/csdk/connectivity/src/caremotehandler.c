@@ -136,7 +136,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
     // parse uri
     // #1. check prefix
     int startIndex = 0;
-    CABool_t secured = 0;
+    CABool_t secured = CA_FALSE;
     if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
     {
         OIC_LOG_V(DEBUG, TAG, "uri has '%s' prefix.", COAP_PREFIX);

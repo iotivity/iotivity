@@ -75,13 +75,11 @@ CAResult_t CAStartDiscoveryServer()
     return CAStartDiscoveryServerAdapters();
 }
 
-CAResult_t CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CASetRequestResponseCallbacks(ReqHandler, RespHandler);
     OIC_LOG(DEBUG, TAG, "OUT");
-
-    return CA_STATUS_OK;
 }
 
 CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
@@ -133,6 +131,14 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token)
 CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requestInfo)
 {
     return CADetachRequestMessage(object, requestInfo);
+}
+
+CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
+                              const CARequestInfo_t *requestInfo)
+{
+    OIC_LOG_V(DEBUG, TAG, "CASendRequestToAll");
+
+    return CADetachRequestToAllMessage(object, requestInfo);
 }
 
 CAResult_t CASendNotification(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo)

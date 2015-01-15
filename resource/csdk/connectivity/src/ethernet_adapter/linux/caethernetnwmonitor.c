@@ -132,6 +132,12 @@ void CAEthernetTerminateNetworkMonitor(void)
         gEthernetIPAddress = NULL;
     }
 
+    if (gEthernetSubnetMask)
+    {
+        OICFree(gEthernetSubnetMask);
+        gEthernetSubnetMask = NULL;
+    }
+
     if (gEthernetNetInfoMutex)
     {
         u_mutex_free(gEthernetNetInfoMutex);

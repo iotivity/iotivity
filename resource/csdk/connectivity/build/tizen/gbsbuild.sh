@@ -1,101 +1,95 @@
 #!/bin/sh
 
-spec=`ls tizen/packaging/*.spec`
+spec=`ls build/tizen/packaging/*.spec`
 version=`rpm --query --queryformat '%{version}\n' --specfile $spec`
 
 name=`echo $name|cut -d" " -f 1`
 version=`echo $version|cut -d" " -f 1`
 
-name=cmsample
+name=oicca
+
+echo $1
+export TARGET_TRANSPORT=$1
+
+echo $2
+export BUILD_SAMPLE=$2
+
+echo $TARGET_TRANSPORT
+echo $BUILD_SAMPLE
 
 rm -rf $name-$version
 
 builddir=`pwd`
 sourcedir=`pwd`
 
+echo `pwd`
 
-cd $sourcedir/tizen
 mkdir ./tmp
-mkdir -p ./tmp/dtls
+mkdir ./tmp/con/
+cp -R ./* $sourcedir/tmp/con
+cp -R ./SConscript $sourcedir/tmp/con
+cp -R ./src/wifi_adapter/SConscript $sourcedir/tmp/con/src/wifi_adapter/
+cp -R ./src/bt_le_adapter/SConscript $sourcedir/tmp/con/src/bt_le_adapter/
+cp -R ./src/bt_edr_adapter/SConscript $sourcedir/tmp/con/src/bt_edr_adapter/
+cp -R ./common/SConscript $sourcedir/tmp/con/common/
+cp -R ./lib/libcoap-4.1.1/SConscript $sourcedir/tmp/con/lib/libcoap-4.1.1/
+cp -R ./samples/tizen/ $sourcedir/tmp/con/sample/
+mkdir -p $sourcedir/tmp/con/sample/lib/tizen/ble/libs
+cp -R ./lib/tizen/ble/libs/* $sourcedir/tmp/con/sample/lib/tizen/ble/libs/
 
-cp -R ./* $sourcedir/tizen/tmp/
-rm -rf $sourcedir/tizen/tmp/tmp/
-cp -R ../../inc/* $sourcedir/tizen/tmp/
-cp -R ../../lib/extlibs/tinydtls/* $sourcedir/tizen/tmp/dtls/
-cp -R ../../api/* $sourcedir/tizen/tmp/
-cp ../../src/adapter_util/* $sourcedir/tizen/tmp/
-# Including All CA Adapter code for Tizen Compilation
-cp -R ../../common/src/* $sourcedir/tizen/tmp/
-cp -R ../../common/inc/* $sourcedir/tizen/tmp/
-cp ../../src/* $sourcedir/tizen/tmp/
-cp ../../lib/libcoap-4.1.1/*.h $sourcedir/tizen/tmp/
-cp -R ../../lib/extlibs/tinydtls/*.h $sourcedir/tizen/tmp/tinydtls/
-cp ../../lib $sourcedir/tizen/tmp/ -rf
-adapterMacro=""
+cd $sourcedir/build/tizen
 
-if echo $1 | grep -q -i "ALL"
-then
-echo "Building All the Transports"
-cp ../../src/wifi_adapter/tizen/* $sourcedir/tizen/tmp/
-cp ../../src/wifi_adapter/*.c $sourcedir/tizen/tmp/
-cp ../../src/bt_edr_adapter/* $sourcedir/tizen/tmp/
-cp ../../src/bt_edr_adapter/tizen/* $sourcedir/tizen/tmp/
-cp ../../src/bt_le_adapter/* $sourcedir/tizen/tmp/
-cp ../../src/bt_le_adapter/tizen/* $sourcedir/tizen/tmp/
-adapterMacro=" -DETHERNET_ADAPTER -DWIFI_ADAPTER -DEDR_ADAPTER -DLE_ADAPTER"
+cp -R ./* $sourcedir/tmp/
+cp SConscript $sourcedir/tmp/
+cp SConstruct $sourcedir/tmp/
+cp scons/SConscript $sourcedir/tmp/scons/
+cd $sourcedir/tmp
+
+echo `pwd`
+
+whoami
+# Initialize Git repository
+if [ ! -d .git ]; then
+   git init ./
+   git config user.email "you@example.com"
+   git config user.name "Your Name"
+   git add ./
+   git commit -m "Initial commit"
+fi
+
+echo "Calling core gbs build command"
+gbscommand="gbs build -A armv7l --include-all --define 'TARGET_TRANSPORT $1'"
+echo $gbscommand
+if eval $gbscommand; then
+   echo "Core build is successful"
 else
-if echo $1 | grep -q -i "WIFI"
-then
-echo "Copying WIFI Adapter Source Codes"
-cp ../../src/wifi_adapter/*.c $sourcedir/tizen/tmp/
-cp ../../src/wifi_adapter/tizen/* $sourcedir/tizen/tmp/
-adapterMacro="$adapterMacro -DWIFI_ADAPTER"
+   echo "Core build failed. Try 'sudo find . -type f -exec dos2unix {} \;' in the 'connectivity/' folder"
+   cd $sourcedir
+   rm -rf $sourcedir/tmp
+   exit
 fi
 
-if echo $1 | grep -q -i "BT"
-then
-echo "Copying BT Adapter Source Codes"
-cp ../../src/bt_edr_adapter/* $sourcedir/tizen/tmp/
-cp ../../src/bt_edr_adapter/tizen/* $sourcedir/tizen/tmp/
-adapterMacro="$adapterMacro -DEDR_ADAPTER"
+if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
+   cd con/sample
+   echo `pwd`
+   # Initialize Git repository
+   if [ ! -d .git ]; then
+      git init ./
+      git config user.email "you@example.com"
+      git config user.name "Your Name"
+      git add ./
+      git commit -m "Initial commit"
+   fi
+   echo "Calling sample gbs build command"
+   gbscommand="gbs build -A armv7l --include-all --define 'TARGET_TRANSPORT $1'"
+   echo $gbscommand
+   if eval $gbscommand; then
+      echo "Sample build is successful"
+   else
+      echo "Sample build is failed. Try 'sudo find . -type f -exec dos2unix {} \;' in the 'connectivity/' folder"
+   fi
 fi
 
-if echo $1 | grep -q -i "BLE"
-then
-echo "Copying BLE Adapter Source Codes"
-cp ../../src/bt_le_adapter/* $sourcedir/tizen/tmp/
-cp ../../src/bt_le_adapter/tizen/* $sourcedir/tizen/tmp/
-adapterMacro="$adapterMacro -DLE_ADAPTER"
-fi
-fi
 
-sed "/ADAPTER_MACRO :=/ c ADAPTER_MACRO :=$adapterMacro" Makefile > Makefile_bkp
-cp Makefile_bkp $sourcedir/tizen/tmp/Makefile
-rm Makefile_bkp
-cd $sourcedir/tizen/tmp/
-
-#removing the files which needs for only arduino to avoid
-#multiple definition error.
-rm -rf *_singlethread.*
-
-rm -rf *dtls.*
-
-#cd $builddir
-#cp -R ./* $sourcedir/tmp/
-
-#cd $sourcedir
-#mv ./tmp $builddir/
-
-#cp -R ./* $builddir/tmp
-
-#cd $builddir
-#mv tmp $name-$version
-
-#build
-#cd $name-$version
-git init
-gbs build -A armv7l --include-all -B ~/GBS-ROOT-NEW
-
-rm -rf $sourcedir/tizen/tmp
-#cd $builddir
-#rm -rf $name-$version
+cd $sourcedir
+rm -rf $sourcedir/tmp

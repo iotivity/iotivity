@@ -41,82 +41,75 @@ extern "C"
  */
 typedef enum
 {
-    CA_UNICAST_SERVER = 0,
-    CA_MULTICAST_SERVER,
-    CA_SECURED_UNICAST_SERVER
+    CA_UNICAST_SERVER = 0,      /**< Unicast Server */
+    CA_MULTICAST_SERVER,        /**< Multicast Server */
+    CA_SECURED_UNICAST_SERVER   /**< Secured Unicast Server */
 } CAAdapterServerType_t;
 
 /**
- * @fn  CAEthernetPacketReceivedCallback
- * @brief  Callback to be notified on receival of any data from remote OIC devices.
- *
- * @param[in]  ipAddress  IP address of remote OIC device.
- * @param[in]  port  Port number on which data is received.
- * @param[in]  data  Data received from remote OIC device.
- * @param[in]  dataLength  Length of data in bytes.
- * @param[in]  secure  Indicates the data is secure or not.
- *
+ * @brief Callback to be notified on reception of any data from remote OIC devices.
+ * @param  ipAddress    [IN] IP address of remote OIC device.
+ * @param  port         [IN] Port number on which data is received.
+ * @param  data         [IN] Data received from remote OIC device.
+ * @param  dataLength   [IN] Length of data in bytes.
+ * @return NONE
  * @pre  Callback must be registered using CAEthernetSetPacketReceiveCallback()
  */
 typedef void (*CAEthernetPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-        const void *data, const uint32_t dataLength);
+                                                 const void *data, const uint32_t dataLength);
 
 /**
- * @fn  CAEthernetExceptionCallback
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
- *
- * @param[in]  type  Type of server either #CA_UNICAST_SERVER or $CA_MULTICAST_SERVER
- *
+ * @param  type  [IN] Type of server(#CAAdapterServerType_t)
+ * @return NONE
  * @pre  Callback must be registered using CAEthernetSetExceptionCallback()
  */
 typedef void (*CAEthernetExceptionCallback)(CAAdapterServerType_t type);
 
 /**
- * @fn  CAEthernetInitializeServer
- * @brief  API to initialize Ethernet server
- *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @brief  Initialize Ethernet server
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
 CAResult_t CAEthernetInitializeServer(void);
 
 /**
- * @fn  CAEthernetTerminateServer
- * @brief  API to terminate Ethernet server
+ * @brief  Terminate Ethernet server
+ * @return NONE
  */
 void CAEthernetTerminateServer(void);
 
 /**
- * @fn  CAEthernetStartMulticastServer
- * @brief  API to start multicast server for specified multicast address and port
+ * @brief  Start multicast server for specified multicast address and port
  *
- * @param[in]  localAddress  Local adapter address to which server to be binded.
- * @param[in]  multicastAddress  Multicast group address.
- * @param[in]  multicastPort  Port number on which server to be running.
- * @param[out]  serverFD  Multicast server socket FD.
+ * @param   localAddress        [IN]      Local adapter address to which server to be binded.
+ * @param   multicastAddress    [IN]      Multicast group address.
+ * @param   multicastPort       [IN,OUT]  Port number on which server will be running. If binding
+                                          the port failed, server starts in the next available port.
+ * @param   serverFD            [OUT]     Multicast server socket FD.
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_SERVER_STARTED_ALREADY Multicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *multicastAddress,
-        const int16_t multicastPort, int32_t *serverFD);
+                                          const int16_t multicastPort, int32_t *serverFD);
 
 /**
- * @fn  CAEthernetStartUnicastServer
- * @brief  API to start unicast server for specified local address and port
+ * @brief  Start unicast server for specified local address and port
  *
- * @param[in]  localAddress  Local adapter address to which server to be binded.
- * @param[in][out]  port  Port number on which server to be running.
- * Port number on which server actually started will be returned.
- * @param[in]  forceStart  Indicate whether to start server forcesfully on specified port or not.
- * @param[in]  secured  true if the secure server to be started, otherwise false.
- * @param[out]  serverFD  Unicast server socket FD.
+ * @param  localAddress [IN]      Local adapter address to which server to be binded.
+ * @param  port         [IN,OUT]  Port number on which server will be running. If binding
+                                  the port failed, server starts in the next available port.
+ * @param  forceStart   [IN]      Indicate whether to start server forcesfully on specified port
+ *                                or not.
+ * @param  serverFD     [OUT]     Unicast server socket FD.
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
@@ -126,208 +119,178 @@ CAResult_t CAEthernetStartUnicastServer(const char *localAddress, int16_t *port,
                                         const bool forceStart, int32_t *serverFD);
 
 /**
- * @fn  CAEthernetStopMulticastServer
- * @brief  API to stop multicast server.
+ * @brief  Stop multicast server.
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStopMulticastServer(void);
 
 /**
- * @fn  CAEthernetStopUnicastServer
- * @brief  API to stop unicast server.
+ * @brief  Stop unicast server.
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStopUnicastServer();
 
 /**
- * @fn  CAEthernetStopSecureUnicastServer
- * @brief  API to stop secured unicast server.
+ * @brief  Stop secured unicast server.
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStopSecureUnicastServer();
 
 /**
- * @fn  CAEthernetGetUnicastServerInfo
- * @brief  API to get running unicast server information.
- * @remarks  @ipAddress must be freed using free().
+ * @brief  Get the Unicast Server Information if it is started
+ * @param  ipAddress    [OUT] IP address on which server is binded and running.
+ * @param  port         [OUT]Port number on which server is running
+ * @param  serverFD     [OUT]Server socket fd.
  *
- * @param[in]  secure  true if the secure server information needed, otherwise false.
- * @param[in]  ipAddress  IP address on which server is binded and running.
- * @param[out]  port  Port number on which server is running
- * @param[out]  serverFD  Server socket fd.
- *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
+ * @remarks  ipAddress must be freed using free().
  */
-
 CAResult_t CAEthernetGetUnicastServerInfo(char **ipAddress, int16_t *port, int32_t *serverFD);
 
 /**
- * @fn  CAEthernetSetPacketReceiveCallback
- * @brief  API to set callback for receiving data packets from peer devices.
+ * @brief  Set this callback for receiving data packets from peer devices.
+ * @param  callback   [IN] Callback to be notified on reception of unicast/multicast data packets.
  *
- * @param[in]  callback Callback to be notified on receival of unicast/multicast data packets.
- *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * @return  NONE
  */
 void CAEthernetSetPacketReceiveCallback(CAEthernetPacketReceivedCallback callback);
 
 /**
- * @fn  CAEthernetReadData
- * @brief  API to pull data
+ * @brief  Pull the Received Data
+ * @return NONE
  */
 void CAEthernetPullData();
 
 /**
- * @fn  CAEthernetSetExceptionCallback
- * @brief  API to set callback for receiving exception notifications.
+ * @brief  Set this callback for receiving exception notifications.
  *
- * @param[in]  callback  Callback to be notified on occurance of exception running servers.
+ * @param  callback [IN] Callback to be notified on occurance of exception on running servers.
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * @return  NONE
  */
 void CAEthernetSetExceptionCallback(CAEthernetExceptionCallback callback);
 
 /**
- * @fn  CAEthernetSetUnicastSocket
- * @brief  API to set socket description for sending unicast UDP data
+ * @brief  Set socket description for sending unicast UDP data. Once the Unicast server is started,
+ *         the same socket descriptor is used for sending the Unicast UDP data.
  *
- * @param[in]  socketFD  Socket descriptor used for sending UDP data.
- *
+ * @param  socketFD [IN]  Socket descriptor used for sending UDP data.
+ * @return  NONE
  */
 void CAEthernetSetUnicastSocket(const int32_t socketFD);
 
 /**
- * @fn  CAEthernetSetUnicastPort
- * @brief  API to set port description for sending unicast UDP data
- *
- * @param[in]  port  Port descriptor used for sending UDP data.
- *
+ * @brief  Set the port number for sending unicast UDP data
+ * @param  port [IN] Port number used for sending UDP data.
+ * @return NONE
  */
-void CAEthernetSetUnicastPort(const int32_t port);
+void CAEthernetSetUnicastPort(const int16_t port);
 
 /**
- * @fn  CAEthernetSetSecureUnicastSocket
- * @brief  API to set socket description for sending secured (encrypted) unicast UDP data
+ * @brief  Set socket description for sending secured (encrypted) unicast UDP data
  *
- * @param[in]  socketFD  Socket descriptor used for sending secured (encrypted) UDP data.
- *
+ * @param socketFD [IN] Socket descriptor used for sending secured (encrypted) UDP data.
+ * @return  NONE
  */
 void CAEthernetSetSecureUnicastSocket(const int32_t socketFD);
 
 /**
- * @fn  CAEthernetSendUnicastData
  * @brief  API to send unicast UDP data
  *
- * @param[in]  remoteAddress  IP address to which data needs to be send.
- * @param[in]  port  Port to which data needs to be send.
- * @param[in]  data  Data to be send.
- * @param[in]  dataLength  Length of data in bytes
- * @param[in]  isMulticast  whether data needs to be sent to multicast ip
- * @param[in]  isSecure  Indicate the whether data needs to be send on secure channel.
- * @isSecure will be ignored when @isMulticast is true.
+ * @param  remoteAddress    [IN] IP address to which data needs to be sent.
+ * @param  port             [IN] Port to which data needs to be send.
+ * @param  buf              [IN] Data to be send.
+ * @param  bufLen           [IN] Length of data in bytes
+ * @param  isMulticast      [IN] Whether data needs to be sent to multicast ip
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_STATUS_FAILED Operation failed
+ * @return  The number of bytes sent on the network. Returns 0 on error.
  */
-
 uint32_t CAEthernetSendData(const char *remoteAddress, const int16_t port,
                             const char *buf, const uint32_t bufLen, bool isMulticast);
 
 /**
- * @fn  CAEthernetConnectionStateChangeCallback
  * @brief  Callback to be notified when ethernet adapter connection state changes.
  *
- * @param[in]  ipAddress  IP address of remote OIC device.
- * @param[in]  status  Connection status either #CA_INTERFACE_UP or #CA_INTERFACE_DOWN.
- *
+ * @param  ipAddress    [IN] IP address of remote OIC device.
+ * @param  status       [IN] Connection status either #CA_INTERFACE_UP or #CA_INTERFACE_DOWN.
+ * @return  NONE
  * @pre  Callback must be registered using CAEthernetSetConnectionStateChangeCallback()
  */
 typedef void (*CAEthernetConnectionStateChangeCallback)(const char *ipAddress,
-        const CANetworkStatus_t status);
+                                                        const CANetworkStatus_t status);
 
 /**
-* @fn  CAEthernetInitializeServer
-* @brief  API to initialize Ethernet server
-*
-* @return  #CA_STATUS_OK on success otherwise proper error code.
-* @retval  #CA_STATUS_OK  Successful
-* @retval  #CA_STATUS_FAILED Initialization failed
-*/
+ * @brief Initialize Ethernet network monitor
+ * @return  #CA_STATUS_OK or Appropriate error code
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
+ * @retval  #CA_STATUS_FAILED Initialization failed
+ */
 CAResult_t CAEthernetInitializeNetworkMonitor(void);
 
 /**
- * @fn  CAEthernetTerminateNetworkMonitor
- * @brief  API to terminate Ethernet network monitor
+ * @brief Terminate Ethernet network monitor
+ * @return  NONE
  */
 void CAEthernetTerminateNetworkMonitor(void);
 
 /**
- * @fn  CAEthernetStartNetworkMonitor
- * @brief  API to start network monitoring process.
+ * @brief  Start network monitoring process.
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStartNetworkMonitor(void);
 
 /**
- * @fn  CAEthernetStopNetworkMonitor
- * @brief  API to stop network monitoring process.
+ * @brief  Stop network monitoring process.
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStopNetworkMonitor(void);
 
 /**
- * @fn  CAEthernetGetInterfaceInfo
- * @brief  API to get local adapter network information.
- * @remarks  @interfaceName and @ipAddress must be freed using free().
+ * @brief  Get local adapter network information.
  *
- * @param[out]  interfaceName  Local adapter interface name
- * @param[out]  ipAddress  IP address
+ * @param  interfaceName [OUT] Local adapter interface name
+ * @param  ipAddress     [OUT] IP address
  *
- * @return  #CA_STATUS_OK on success otherwise proper error code.
+ * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Operation failed
+ * @remarks  interfaceName and ipAddress must be freed using free().
  */
 CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress);
 
 /**
- * @fn  CAEthernetIsConnected
- * @brief  API to get ethernet adapter connection state.
+ * @brief  Get Ethernet adapter connection state.
  *
- * @return  true if ethernet adapter is connected, otherwise false
+ * @return  True if Ethernet adapter is connected, otherwise false
  */
 bool CAEthernetIsConnected(void);
 
 /**
- * @fn  CAEthernetSetConnectionStateChangeCallback
- * @brief  API to set callback for receiving local ethernet adapter connection status.
+ * @brief  Set callback for receiving local ethernet adapter connection status.
  *
- * @param[in]  callback  Callback to be notified when local ethernet adapter connection state changes.
- *
+ * @param  callback [IN] Callback to be notified when local Ethernet adapter connection state
+ *                       changes.
+ * @return NONE
  */
 void CAEthernetSetConnectionStateChangeCallback(CAEthernetConnectionStateChangeCallback callback);
 

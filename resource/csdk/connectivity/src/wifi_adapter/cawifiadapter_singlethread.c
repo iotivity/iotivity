@@ -65,7 +65,7 @@ static CANetworkPacketReceivedCallback gNetworkPacketCallback = NULL;
  * @brief Network Changed Callback to CA
  */
 
-CANetworkChangeCallback gNetworkChangeCallback = NULL;
+static CANetworkChangeCallback gNetworkChangeCallback = NULL;
 
 /**
  * @var gIsMulticastServerStarted
@@ -129,7 +129,6 @@ void CAWiFiConnectionStateCB(const char *ipAddr,
       * and start unicast and multicast servers if requested earlier */
     if (CA_INTERFACE_UP == status)
     {
-        char *ipAddress = NULL;
         int16_t port = CA_PORT;
         int32_t serverFd = -1;
         /* Start Unicast server if requested earlier */
@@ -165,8 +164,7 @@ void CAWiFiConnectionStateCB(const char *ipAddr,
         }
 
         /* Notify network change to CA */
-        CAWiFiNotifyNetworkChange(ipAddress, port, status);
-        OICFree(ipAddress);
+        CAWiFiNotifyNetworkChange(ipAddr, port, status);
     }
     else
     {
@@ -212,6 +210,8 @@ void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
     {
         gNetworkPacketCallback(endPoint, buf, dataLength);
     }
+    CAAdapterFreeRemoteEndpoint(endPoint);
+    OICFree(buf);
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
 }
 
@@ -235,6 +235,7 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
     }
     CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateCB);
 
+    // network monitor is yet to be implemented
     ret = CAWiFiInitializeServer();
     if (CA_STATUS_OK != ret)
     {

@@ -33,7 +33,7 @@
 #include <dlog.h>
 #elif defined ARDUINO
 #include "Arduino.h"
-#include <avr/pgmspace.h>
+#include "avr/pgmspace.h"
 #endif
 
 #ifdef __cplusplus
@@ -44,10 +44,16 @@ extern "C"
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
 // Example:  OC_LOG(INFO, TAG, PCF("Entering function"));
 #ifdef ARDUINO
+
+#ifdef __cplusplus
 #define PCF(str)  ((PROGMEM const char *)(F(str)))
 #else
+#define PCF(str)  ((PROGMEM const char *)(PSTR(str)))
+#endif //__cplusplus
+
+#else
 #define PCF(str) str
-#endif
+#endif //ARDUINO
 
 // Max buffer size used in variable argument log function
 #define MAX_LOG_V_BUFFER_SIZE (256)
@@ -133,7 +139,7 @@ void OICLogInit();
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLog(LogLevel level, const char *tag, const int16_t lineNum, const char *logStr);
+void OICLog(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PROGMEM const char *logStr);
 
 /**
  * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -168,7 +174,7 @@ void OICLogv(LogLevel level, const char *tag, const int16_t lineNum, const char 
 #ifdef ARDUINO
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
-#define OIC_LOG(level, tag, logStr)  OICLog((level), (tag), __LINE__, (logStr))
+#define OIC_LOG(level, tag, logStr) OICLog((level), PCF(tag), __LINE__, PCF(logStr))
 #define OIC_LOG_V(level, tag, ...)
 #else
 #define OIC_LOG_CONFIG(ctx)    OICLogConfig((ctx))

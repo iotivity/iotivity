@@ -80,6 +80,34 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         thread->threadTask(data);
 
         // free
+        if (thread->destroy != NULL)
+        {
+            thread->destroy(message->msg, message->size);
+        }
+        else
+        {
+            OICFree(message->msg);
+        }
+
+        OICFree(message);
+    }
+
+    // remove all remained list data.
+    while (u_queue_get_size(thread->dataQueue) > 0)
+    {
+        // get data
+        u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
+
+        // free
+        if (thread->destroy != NULL)
+        {
+            thread->destroy(message->msg, message->size);
+        }
+        else
+        {
+            OICFree(message->msg);
+        }
+
         OICFree(message);
     }
 
@@ -89,7 +117,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
 }
 
 CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_t handle,
-                                      CAThreadTask task)
+                                      CAThreadTask task, CADataDestroyFunction destroy)
 {
     if (thread == NULL)
     {
@@ -117,6 +145,7 @@ CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_
     thread->threadCond = u_cond_new();
     thread->isStop = CA_TRUE;
     thread->threadTask = task;
+    thread->destroy = destroy;
 
     return CA_STATUS_OK;
 }

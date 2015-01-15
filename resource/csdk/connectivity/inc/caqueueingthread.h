@@ -38,6 +38,9 @@ extern "C"
 /**Thread function to be invoked**/
 typedef void (*CAThreadTask)(void *threadData);
 
+/**Data destroy function**/
+typedef void (*CADataDestroyFunction)(void *data, uint32_t size);
+
 typedef struct
 {
     /** Thread pool of the thread started **/
@@ -48,6 +51,8 @@ typedef struct
     u_cond threadCond;
     /**Thread function to be invoked**/
     CAThreadTask threadTask;
+    /**Data destroy function**/
+    CADataDestroyFunction destroy;
     /** Variable to inform the thread to stop **/
     CABool_t isStop;
     /** Que on which the thread is operating. **/
@@ -59,10 +64,11 @@ typedef struct
  * @param   thread       [IN]    thread data for each thread
  * @param   handle              [IN]    thread pool handle created
  * @param   task              [IN]   function to be called for reach data
+ * @param   destroy     [IN] function to data destroy
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_t handle,
-                                      CAThreadTask task);
+                                      CAThreadTask task, CADataDestroyFunction destroy);
 
 /**
  * @brief   Starting the queueing thread

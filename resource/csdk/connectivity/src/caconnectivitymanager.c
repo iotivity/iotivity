@@ -69,7 +69,7 @@ CAResult_t CAStartDiscoveryServer()
     return CAStartDiscoveryServerAdapters();
 }
 
-CAResult_t CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
 {
     OIC_LOG_V(DEBUG, TAG, "CARegisterHandler");
 

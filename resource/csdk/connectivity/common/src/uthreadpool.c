@@ -129,5 +129,4 @@ void run(void *thread_data, void *user_data)
 
     // Free message
     OICFree(message);
-    message = NULL;
 }

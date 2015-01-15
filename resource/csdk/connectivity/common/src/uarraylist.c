@@ -47,12 +47,15 @@ u_arraylist_t *u_arraylist_create()
     return list;
 }
 
-CAResult_t u_arraylist_free(u_arraylist_t *list)
+CAResult_t u_arraylist_free(u_arraylist_t **list)
 {
-    OICFree(list->data);
-    OICFree(list);
+    if (*list == NULL)
+        return CA_STATUS_INVALID_PARAM;
 
-    list = NULL;
+    OICFree((*list)->data);
+    OICFree(*list);
+
+    *list = NULL;
 
     return CA_STATUS_OK;
 }
@@ -82,7 +85,7 @@ CAResult_t u_arraylist_add(u_arraylist_t *list, void *data)
         new_size = list->size + 1;
         if (!(list->data = (void **) realloc(list->data, new_size * sizeof(void *))))
         {
-            return -1;
+            return CA_MEMORY_ALLOC_FAILED;
         }
 
         (void) memset(list->data + list->size, 0, (new_size - list->size) * sizeof(void *));
@@ -92,7 +95,7 @@ CAResult_t u_arraylist_add(u_arraylist_t *list, void *data)
     list->data[list->length] = data;
     list->length++;
 
-    return 0;
+    return CA_STATUS_OK;
 }
 
 void *u_arraylist_remove(u_arraylist_t *list, uint32_t index)
@@ -128,6 +131,11 @@ void *u_arraylist_remove(u_arraylist_t *list, uint32_t index)
 
 uint32_t u_arraylist_length(const u_arraylist_t *list)
 {
+    if (NULL == list)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Invalid Parameter");
+        return 0;
+    }
     return list->length;
 }
 

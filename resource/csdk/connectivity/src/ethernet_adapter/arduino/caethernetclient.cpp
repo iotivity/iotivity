@@ -60,7 +60,7 @@ void CAEthernetSetUnicastSocket(const int32_t socketID)
     return;
 }
 
-void CAEthernetSetUnicastPort(const int32_t port)
+void CAEthernetSetUnicastPort(const int16_t port)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     if (0 < port)

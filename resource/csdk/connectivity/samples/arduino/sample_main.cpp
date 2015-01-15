@@ -19,11 +19,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
  */
 
 #ifdef __ARDUINO_BLE__
+#include <logger.h>
+
 //"services.h/spi.h/boards.h" is needed in every new project
 #include <SPI.h>
 #include <boards.h>
 #include <RBL_nRF8001.h>
-#include <services.h>
 
 #define PCF(str) ((PROGMEM const char *)(F(str)))
 #define printf Serial.println
@@ -36,8 +37,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include "caadapterinterface.h"
 #include "cacommon.h"
 #include "caleadapter_singlethread.h"
-#include <TimedAction.h>
-#include <logger.h>
 
 char localBTAddress[20] = "DB:F7:EB:B5:0F:07"; //BT Address is not used internally by OIC API.
 int number = 0;
@@ -168,19 +167,31 @@ void loop()
         switch (Serial.read())
         {
             case 's':
+            {
+                Serial.println("sending data");
+                if ( ble_connected() )
                 {
-                    Serial.println("sending data");
-                    if ( ble_connected() )
-                    {
-                        Serial.println("Sending Data");
-                        gConnectivityHandlers->sendData(&remoteEndpoint[1], coapData, strlen(coapData));
-                        Serial.println("Sent Data");
-                    }
+                    Serial.println("Sending Data");
+                    gConnectivityHandlers->sendData(&remoteEndpoint[1], coapData, strlen(coapData));
+                    Serial.println("Sent Data");
                 }
-                break;
+            }
+            break;
+            case 'n':
+            {
+                Serial.println("Before get network information");
+                uint32_t size = 0;
+                static CALocalConnectivity_t *localLeEndpoint = NULL;
+                gConnectivityHandlers->GetnetInfo(&localLeEndpoint, &size);
+                Serial.print("LEAddr:");
+                Serial.println(localLeEndpoint->addressInfo.LE.leMacAddress);
+                Serial.println("After get network information");
+            }
+            break;
         }
     }
     gConnectivityHandlers->readData();
+    delay(1000);
 }
 #else
 #include <stdlib.h>
@@ -198,8 +209,6 @@ void loop()
 #include "caadapterinterface.h"
 //#include "cawifiethernetadapter.h"
 #include "cacommon.h"
-#include <TimedAction.h>
-
 #define MOD_NAME "ArduinoSample"
 static CALocalConnectivity_t *localWifiEndpoint = NULL;
 static CARemoteEndpoint_t remoteMulticastEndpoint;

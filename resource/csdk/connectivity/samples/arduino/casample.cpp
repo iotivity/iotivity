@@ -27,13 +27,12 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
-#include <TimedAction.h>
 #include "Arduino.h"
 
 #include "oic_malloc.h"
 
 #define MAX_BUF_LEN 100 //1024
-#define MAX_OPT_LEN 100
+#define MAX_OPT_LEN 16
 
 #define printf Serial.println
 //#define printf
@@ -48,6 +47,7 @@ void start_listening_server();
 void start_discovery_server();
 void find_resource();
 void send_request();
+void send_request_all();
 void send_response(CARemoteEndpoint_t *endpoint, const CAInfo_t* info);
 void advertise_resource();
 void send_notification();
@@ -60,7 +60,7 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
 void send_request_tmp(CARemoteEndpoint_t *endpoint, CAToken_t token);
 void terminate();
 
-void getData(char *readInput, int bufferLength, int *dataLength)
+void getData(char *readInput, int16_t bufferLength, int16_t *dataLength)
 {
     while (!Serial.available());
     int len = 0;
@@ -159,7 +159,9 @@ void loop()
             case 'R': // send request
                 send_request();
                 break;
-
+            case 'E': //send request to all
+                send_request_all();
+                break;
             case 'A': // advertise resource
                 advertise_resource();
                 break;
@@ -267,7 +269,7 @@ void send_request()
     printf("uri: ");
 
     int16_t len = 0;
-    getData(buf, sizeof(buf), &len);
+    getData(buf, (int16_t)sizeof(buf), &len);
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
@@ -285,7 +287,7 @@ void send_request()
     printf("0:CON, 1:NON\n");
     printf("select message type : ");
 
-    getData(buf, sizeof(buf), &len);
+    getData(buf, (int16_t)sizeof(buf), &len);
 
     int32_t msg_type = (CAMessageType_t) (buf[0] == '0' || buf[0] == '1') ? buf[0] - '0' : 0;
     CAMessageType_t msgType; // = (CAMessageType_t) (buf[0] == '0' || buf[0] == '1') ? buf[0] - '0' : 0;
@@ -337,6 +339,82 @@ void send_request()
     printf("============");
 }
 
+void send_request_all()
+{
+    char buf[MAX_BUF_LEN];
+    memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+
+    CAConnectivityType_t selectedNetwork;
+    selectedNetwork = getConnectivityType();
+
+    printf("=========");
+    printf("10.11.12.13:4545/resource_uri ( for IP )");
+    printf("10:11:12:13:45:45/resource_uri ( for BT )");
+    printf("uri : ");
+
+    int16_t len = 0;
+    getData(buf, (int16_t)sizeof(buf), &len);
+
+    // create remote endpoint
+    CARemoteEndpoint_t *endpoint = NULL;
+    CAResult_t res = CACreateRemoteEndpoint(buf, selectedNetwork, &endpoint);
+
+    if (res != CA_STATUS_OK)
+    {
+        printf("create remote endpoint error");
+        CADestroyRemoteEndpoint(endpoint);
+        return;
+    }
+
+
+    CAGroupEndpoint_t *group = NULL;
+    group = (CAGroupEndpoint_t *)OICMalloc(sizeof(CAGroupEndpoint_t));
+    group->connectivityType = endpoint->connectivityType;
+    group->resourceUri = endpoint->resourceUri;
+
+
+    // create token
+    CAToken_t token = NULL;
+    res = CAGenerateToken(&token);
+
+    if (res != CA_STATUS_OK)
+    {
+        printf("token error");
+        token = NULL;
+    }
+
+    printf((token != NULL) ? token : "");
+
+    CAInfo_t requestData;
+    memset(&requestData, 0, sizeof(CAInfo_t));
+    requestData.token = token;
+    requestData.payload = "Temp Json Payload";
+    requestData.type = CA_MSG_NONCONFIRM;
+    CARequestInfo_t requestInfo;
+    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
+
+    // send request
+    // CASendRequest(endpoint, &requestInfo);
+    CASendRequestToAll(group, &requestInfo);
+
+    if (token != NULL)
+    {
+        CADestroyToken(token);
+    }
+
+    // destroy remote endpoint
+    if (endpoint != NULL)
+    {
+        CADestroyRemoteEndpoint(endpoint);
+    }
+
+    OICFree(group);
+
+    printf("==========");
+}
+
 void advertise_resource()
 {
     char buf[MAX_BUF_LEN];
@@ -346,14 +424,14 @@ void advertise_resource()
     printf("uri: ");
 
     int16_t len = 0;
-    getData(buf, sizeof(buf), &len);
+    getData(buf, (int16_t)sizeof(buf), &len);
 
     int16_t optionNum = 0;
     char optionData[MAX_OPT_LEN];
     char optionNumBuf[2];
 
     printf("Option Num: ");
-    getData(optionNumBuf, sizeof(optionNumBuf), &len);
+    getData(optionNumBuf, (int16_t)sizeof(optionNumBuf), &len);
     optionNum = optionNumBuf[0]  - '0';
     printf(optionNum);
 
@@ -375,7 +453,7 @@ void advertise_resource()
     {
         int optionID = 0;
         char getOptionID[2];
-        getData(getOptionID, sizeof(getOptionID), &len);
+        getData(getOptionID, (int16_t)sizeof(getOptionID), &len);
         printf("Option Num: ");
         printf(i + 1);
         optionID = getOptionID[0];
@@ -387,7 +465,7 @@ void advertise_resource()
         printf(i + 1);
 
         int len = 0;
-        getData(optionData, sizeof(optionData), &len);
+        getData(optionData, (int16_t)sizeof(optionData), &len);
         memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
         printf(i + 1);
         printf("data");
@@ -429,8 +507,8 @@ void send_notification()
     printf("10:11:12:13:45:45/res_uri (for BT)");
     printf("uri: ");
 
-    int len = 0;
-    getData(buf, sizeof(buf), &len);
+    int16_t len = 0;
+    getData(buf, (int16_t)sizeof(buf), &len);
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
@@ -474,8 +552,8 @@ void select_network()
     printf("EDR: 2");
     printf("LE: 3\n");
 
-    int len = 0;
-    getData(buf, sizeof(buf), &len);
+    int16_t len = 0;
+    getData(buf, (int16_t)sizeof(buf), &len);
     int number = buf[0] - '0';
     number = (number < 0 || number > 3) ? 1 : number;
     if (number == 3)
@@ -498,8 +576,8 @@ void unselect_network()
     printf("EDR: 2");
     printf("LE: 3\n");
 
-    int len = 0;
-    getData(buf, sizeof(buf), &len);
+    int16_t len = 0;
+    getData(buf, (int16_t)sizeof(buf), &len);
     int number = buf[0] - '0';
     printf(number);
     number = (number < 0 || number > 3) ? 1 : number;
@@ -522,6 +600,7 @@ void print_menu()
     printf("d: start discovery server");
     printf("f: find resource");
     printf("r: send request");
+    printf("e: send request to all");
     printf("a: advertise resource");
     printf("b: send notification");
     printf("n: select network");

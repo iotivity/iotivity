@@ -51,9 +51,9 @@ typedef enum
 typedef struct
 {
     CASendDataType_t type;
-    CARemoteEndpoint_t *remoteEndpoint;
-    CARequestInfo_t *requestInfo;
-    CAResponseInfo_t *responseInfo;
+    const CARemoteEndpoint_t *remoteEndpoint;
+    const CARequestInfo_t *requestInfo;
+    const CAResponseInfo_t *responseInfo;
     CAHeaderOption_t *options;
     uint8_t numOptions;
 } CAData_t;
@@ -380,6 +380,47 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object,
 
     // memory error label.
 memory_error_exit:
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_MEMORY_ALLOC_FAILED;
+}
+
+CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
+                                       const CARequestInfo_t *request)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+
+    if (object == NULL || request == NULL)
+    {
+        return CA_STATUS_FAILED;
+    }
+
+    CAData_t *data = (CAData_t *) OICMalloc(sizeof(CAData_t));
+    MEMORY_ALLOC_CHECK(data);
+
+    // initialize
+    memset(data, 0, sizeof(CAData_t));
+
+    CAAddress_t addr;
+    memset(&addr, 0, sizeof(CAAddress_t));
+    CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(object->resourceUri, addr,
+                                         object->connectivityType);
+
+    // save data
+    data->type = SEND_TYPE_MULTICAST;
+    data->remoteEndpoint = remoteEndpoint;
+    data->requestInfo = request;
+    data->responseInfo = NULL;
+
+    CAProcessData(data);
+    CADestroyRemoteEndpoint(remoteEndpoint);
+    OICFree(data);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+
+    // memory error label.
+memory_error_exit:
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_MEMORY_ALLOC_FAILED;
 }

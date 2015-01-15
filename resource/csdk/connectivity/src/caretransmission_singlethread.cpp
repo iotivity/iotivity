@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <TimedAction.h>
 
 #include "caremotehandler.h"
 #include "caprotocolmessage_singlethread.h"
@@ -47,7 +46,6 @@ typedef struct
     uint32_t size;
 } CARetransmissionData_t;
 
-static TimedAction gRcvAction = TimedAction(2000, CACheckRetransmissionList);
 static CARetransmission_t *gRetransmissionPtr = NULL;
 
 /**
@@ -81,7 +79,6 @@ static CABool_t CACheckTimeout(uint64_t currentTime, uint64_t timeStamp, uint8_t
 
 void CACheckRetransmissionList()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     uint64_t currentTime = 0;
 
     uint32_t i = 0;
@@ -146,7 +143,6 @@ void CACheckRetransmissionList()
             --i;
         }
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CARetransmissionBaseRoutine(void *threadValue)
@@ -383,7 +379,7 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
         return CA_STATUS_FAILED;
     }
 
-    u_arraylist_free(context->dataList);
+    u_arraylist_free(&context->dataList);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

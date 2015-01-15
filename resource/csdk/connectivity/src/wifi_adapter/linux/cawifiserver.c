@@ -262,6 +262,9 @@ static void CAReceiveHandler(void *data)
         }
     }
 
+    // free context
+    OICFree(ctx);
+
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
 }
 
@@ -596,8 +599,9 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
     // Input validation
-    VERIFY_NON_NULL(localAddress, WIFI_SERVER_TAG, "Local address is NULL");
-    VERIFY_NON_NULL(multicastAddress, WIFI_SERVER_TAG, "Multicast address is NULL");
+    VERIFY_NON_NULL(localAddress, WIFI_SERVER_TAG, "localAddress");
+    VERIFY_NON_NULL(multicastAddress, WIFI_SERVER_TAG, "port");
+    VERIFY_NON_NULL(serverFD, WIFI_SERVER_TAG, "server socket FD");
 
     int16_t port = multicastPort;
     if (0 >= port)

@@ -26,7 +26,6 @@
 #include <utility/server_drv.h>
 #include <utility/wifi_drv.h>
 #include <IPAddress.h>
-#include <TimedAction.h>
 
 #include "logger.h"
 #include "cacommon.h"
@@ -57,7 +56,7 @@ uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
     int32_t ret = 1;
     OIC_LOG_V(DEBUG, MOD_NAME, "remoteip: %s", remoteAddress);
     OIC_LOG_V(DEBUG, MOD_NAME, "port: %d", port);
-    Udp.beginPacket(remoteAddress, port);
+    Udp.beginPacket(remoteAddress, (uint16_t)port);
     ret = (int32_t)Udp.write((char *)data);
     Udp.endPacket();
     OIC_LOG(DEBUG, MOD_NAME, "OUT");

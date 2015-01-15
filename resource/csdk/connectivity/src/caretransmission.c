@@ -494,7 +494,7 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
     u_mutex_free(context->threadMutex);
     context->threadMutex = NULL;
     u_cond_free(context->threadCond);
-    u_arraylist_free(context->dataList);
+    u_arraylist_free(&context->dataList);
 
     return CA_STATUS_OK;
 }

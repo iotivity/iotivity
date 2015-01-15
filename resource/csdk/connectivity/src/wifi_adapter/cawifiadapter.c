@@ -147,6 +147,7 @@ static CAWiFiData *CACreateWiFiData(const CARemoteEndpoint_t *remoteEndpoint, vo
                                     uint32_t dataLength);
 void CAFreeWiFiData(CAWiFiData *wifiData);
 
+static void CADataDestroyer(void *data, uint32_t size);
 
 CAResult_t CAWiFiInitializeQueueHandles()
 {
@@ -168,7 +169,7 @@ CAResult_t CAWiFiInitializeQueueHandles()
     }
 
     if (CA_STATUS_OK != CAQueueingThreadInitialize(gSendQueueHandle, gThreadPool,
-            CAWiFiSendDataThread))
+            CAWiFiSendDataThread, CADataDestroyer))
     {
         OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Failed to Initialize send queue thread");
         OICFree(gSendQueueHandle);
@@ -360,6 +361,11 @@ void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
     if (gNetworkPacketCallback)
     {
         gNetworkPacketCallback(endPoint, buf, dataLength);
+    }
+    else
+    {
+        OICFree(buf);
+        CAAdapterFreeRemoteEndpoint(endPoint);
     }
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
 }
@@ -846,9 +852,6 @@ void CAWiFiSendDataThread(void *threadData)
                        wifiData->dataLen, true, false);
     }
 
-    //Free wifi data
-    CAFreeWiFiData(wifiData);
-
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return;
 }
@@ -885,4 +888,11 @@ void CAFreeWiFiData(CAWiFiData *wifiData)
     CAAdapterFreeRemoteEndpoint(wifiData->remoteEndpoint);
     OICFree(wifiData->data);
     OICFree(wifiData);
+}
+
+void CADataDestroyer(void *data, uint32_t size)
+{
+    CAWiFiData *wfdata = (CAWiFiData *) data;
+
+    CAFreeWiFiData(wfdata);
 }

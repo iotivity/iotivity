@@ -338,17 +338,20 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
 
     int ret = WIFI_ERROR_NONE;
 
-    u_mutex_lock(gWifiNetInfoMutex);
-    if (interfaceName)
+    if (!interfaceName || !ipAddress || !subnetMask)
     {
-        // Get wifi interface name
-        if (WIFI_ERROR_NONE != (ret = wifi_get_network_interface_name(interfaceName)))
-        {
-            OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface name! error num [%d]", ret);
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "Invalid input: interface/ipaddress holder is NULL!");
+        return;
+    }
 
-            u_mutex_unlock(gWifiNetInfoMutex);
-            return;
-        }
+    u_mutex_lock(gWifiNetInfoMutex);
+    // Get wifi interface name
+    if (WIFI_ERROR_NONE != (ret = wifi_get_network_interface_name(interfaceName)))
+    {
+        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface name! error num [%d]", ret);
+
+        u_mutex_unlock(gWifiNetInfoMutex);
+        return;
     }
 
     // Get wifi connected IP address
@@ -364,34 +367,28 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
         return;
     }
 
-    if (ipAddress)
+    if (WIFI_ERROR_NONE != (ret = wifi_ap_get_ip_address(accessPoint, WIFI_ADDRESS_FAMILY_IPV4,
+                                  ipAddress)))
     {
-        if (WIFI_ERROR_NONE != (ret = wifi_ap_get_ip_address(accessPoint, WIFI_ADDRESS_FAMILY_IPV4,
-                                      ipAddress)))
-        {
-            OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface address! error num [%d]",
-                      ret);
-            OICFree(*interfaceName);
-            *interfaceName = NULL;
-            u_mutex_unlock(gWifiNetInfoMutex);
-            return;
-        }
+        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface address! error num [%d]",
+                  ret);
+        OICFree(*interfaceName);
+        *interfaceName = NULL;
+        u_mutex_unlock(gWifiNetInfoMutex);
+        return;
     }
 
-    if (subnetMask)
+    if (WIFI_ERROR_NONE != (ret = wifi_ap_get_subnet_mask(accessPoint, WIFI_ADDRESS_FAMILY_IPV4,
+                                  subnetMask)))
     {
-        if (WIFI_ERROR_NONE != (ret = wifi_ap_get_subnet_mask(accessPoint, WIFI_ADDRESS_FAMILY_IPV4,
-                                      subnetMask)))
-        {
-            OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface address! error num [%d]",
-                      ret);
-            OICFree(*ipAddress);
-            OICFree(*interfaceName);
-            *ipAddress = NULL;
-            *interfaceName = NULL;
-            u_mutex_unlock(gWifiNetInfoMutex);
-            return;
-        }
+        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface address! error num [%d]",
+                  ret);
+        OICFree(*ipAddress);
+        OICFree(*interfaceName);
+        *ipAddress = NULL;
+        *interfaceName = NULL;
+        u_mutex_unlock(gWifiNetInfoMutex);
+        return;
     }
 
     u_mutex_unlock(gWifiNetInfoMutex);

@@ -35,7 +35,7 @@
  * @def TAG
  * @brief Logging tag for module name
  */
-#define TAG PCF("UQUEUE")
+#define TAG "UQUEUE"
 
 u_queue_t *u_queue_create()
 {

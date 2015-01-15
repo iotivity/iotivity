@@ -31,8 +31,8 @@
 #include "uarraylist.h"
 #include "cacommon.h"
 
-/** CA_ETHERNET, CA_WIFI **/
-#define DEFAULT_RETRANSMISSION_TYPE     ((1<<0)|(1<<1))
+/** CA_ETHERNET, CA_WIFI, CA_EDR, CA_LE **/
+#define DEFAULT_RETRANSMISSION_TYPE     ((1<<0)|(1<<1)|(1<<2)|(1<<3))
 
 /** default ACK time is 2 sec.(CoAP) **/
 #define DEFAULT_ACK_TIMEOUT         2
@@ -105,7 +105,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool
 CAResult_t CARetransmissionStart(CARetransmission_t *context);
 
 /**
- * @brief   Pass the sent pdu data. if retransmission process need, internal thread will wake up and 
+ * @brief   Pass the sent pdu data. if retransmission process need, internal thread will wake up and
  *             process the retransmission data.
  * @param   context     [IN]context for retransmission
  * @param   endpoint    [IN]endpoint information
@@ -113,11 +113,11 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context);
  * @param   size        [IN]sent pdu binary data size
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CARetransmissionSentData(CARetransmission_t* context, 
+CAResult_t CARetransmissionSentData(CARetransmission_t* context,
                         const CARemoteEndpoint_t* endpoint,const void* pdu, uint32_t size);
 
 /**
- * @brief   Paas the received pdu data. if received pdu is ACK data for the retransmission CON data, 
+ * @brief   Paas the received pdu data. if received pdu is ACK data for the retransmission CON data,
  *             the specified CON data will remove on retransmission list.
  * @param   context     [IN]context for retransmission
  * @param   endpoint    [IN]endpoint information

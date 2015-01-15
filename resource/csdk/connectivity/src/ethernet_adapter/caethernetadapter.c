@@ -147,6 +147,7 @@ static CAEthernetData *CACreateEthernetData(const CARemoteEndpoint_t *remoteEndp
         uint32_t dataLength);
 void CAFreeEthernetData(CAEthernetData *EthernetData);
 
+static void CADataDestroyer(void *data, uint32_t size);
 
 CAResult_t CAEthernetInitializeQueueHandles()
 {
@@ -168,7 +169,7 @@ CAResult_t CAEthernetInitializeQueueHandles()
     }
 
     if (CA_STATUS_OK != CAQueueingThreadInitialize(gSendQueueHandle, gThreadPool,
-            CAEthernetSendDataThread))
+            CAEthernetSendDataThread, CADataDestroyer))
     {
         OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Failed to Initialize send queue thread");
         OICFree(gSendQueueHandle);
@@ -347,6 +348,11 @@ void CAEthernetPacketReceivedCB(const char *ipAddress, const uint32_t port,
     if (gNetworkPacketCallback)
     {
         gNetworkPacketCallback(endPoint, buf, dataLength);
+    }
+    else
+    {
+        OICFree(buf);
+        CAAdapterFreeRemoteEndpoint(endPoint);
     }
 
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
@@ -807,9 +813,6 @@ void CAEthernetSendDataThread(void *threadData)
                            ethernetData->dataLen, true, false);
     }
 
-    //Free ethernet data
-    CAFreeEthernetData(ethernetData);
-
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
 }
 
@@ -849,3 +852,11 @@ void CAFreeEthernetData(CAEthernetData *ethernetData)
     OICFree(ethernetData->data);
     OICFree(ethernetData);
 }
+
+void CADataDestroyer(void *data, uint32_t size)
+{
+    CAEthernetData *etdata = (CAEthernetData *) data;
+
+    CAFreeEthernetData(etdata);
+}
+

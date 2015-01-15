@@ -173,14 +173,15 @@ int main()
 #endif
 
     // set handler.
-    res = CARegisterHandler(request_handler, response_handler);
-    if (res != CA_STATUS_OK)
-    {
-        printf("CARegisterHandler fail\n");
-        return 0;
-    }
+    CARegisterHandler(request_handler, response_handler);
 
     process();
+
+    if (gLastRequestToken != NULL)
+    {
+        CADestroyToken(gLastRequestToken);
+    }
+
 
     CATerminate();
     clearDtlsCredentialInfo();

@@ -280,6 +280,7 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uin
 
     int8_t index = -1;
     CAResult_t res = CA_STATUS_FAILED;
+    uint32_t sentDataLen = 0;
 
     if (endpoint == NULL)
     {
@@ -299,9 +300,13 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uin
 
     if (gAdapterHandler[index].sendData != NULL)
     {
-        res = gAdapterHandler[index].sendData(endpoint, data, length);
+        sentDataLen = gAdapterHandler[index].sendData(endpoint, data, length);
     }
 
+    if (sentDataLen == length)
+    {
+        res = CA_STATUS_OK;
+    }
     return res;
 }
 
@@ -309,8 +314,10 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "Send multicast data to enabled interface..");
 
-    uint8_t i, type;
+    uint8_t i = 0;
+    CAConnectivityType_t connType;
     int8_t index = -1;
+    uint32_t sentDataLen = 0;
     CAResult_t res = CA_STATUS_FAILED;
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
@@ -322,16 +329,16 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        void* cType = u_arraylist_get(list, i);
+        void* ptrType = u_arraylist_get(list, i);
 
-        if(cType == NULL)
+        if(ptrType == NULL)
         {
             continue;
         }
 
-        type = *(uint8_t *) cType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        index = CAGetAdapterIndex(type);
+        index = CAGetAdapterIndex(connType);
 
         if (index == -1)
         {
@@ -348,7 +355,12 @@ CAResult_t CASendMulticastData(void *data, uint32_t length)
                 return CA_MEMORY_ALLOC_FAILED;
             }
             memcpy(payload, data, length);
-            res = gAdapterHandler[index].sendDataToAll(payload, length);
+            sentDataLen = gAdapterHandler[index].sendDataToAll(payload, length);
+            OICFree(payload);
+        }
+        if (sentDataLen == length)
+        {
+           res = CA_STATUS_OK;
         }
     }
     return res;
@@ -358,7 +370,8 @@ CAResult_t CAStartListeningServerAdapters()
 {
     OIC_LOG(DEBUG, TAG, "Start listening server from adapters..");
 
-    uint8_t i, type;
+    uint8_t i = 0;
+    CAConnectivityType_t connType;
     int8_t index = -1;
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
@@ -370,17 +383,16 @@ CAResult_t CAStartListeningServerAdapters()
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        void* cType = u_arraylist_get(list, i);
+        void* ptrType = u_arraylist_get(list, i);
 
-        if(cType == NULL)
+        if(ptrType == NULL)
         {
             continue;
         }
 
-        type = *(uint8_t *) cType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        index = CAGetAdapterIndex(type);
-
+        index = CAGetAdapterIndex(connType);
         if (index == -1)
         {
             OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
@@ -400,7 +412,8 @@ CAResult_t CAStartDiscoveryServerAdapters()
 {
     OIC_LOG(DEBUG, TAG, "Start discovery server from adapters..");
 
-    uint8_t i, type;
+    uint8_t i = 0;
+    CAConnectivityType_t connType;
     int8_t index = -1;
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
@@ -412,16 +425,16 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
     for (i = 0; i < u_arraylist_length(list); i++)
     {
-        void* cType = u_arraylist_get(list, i);
+        void* ptrType = u_arraylist_get(list, i);
 
-        if(cType == NULL)
+        if(ptrType == NULL)
         {
             continue;
         }
 
-        type = *(uint8_t *) cType;
+        connType = *(CAConnectivityType_t *) ptrType;
 
-        index = CAGetAdapterIndex(type);
+        index = CAGetAdapterIndex(connType);
 
         if (index == -1)
         {
@@ -446,9 +459,12 @@ void CATerminateAdapters()
 
     for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
     {
-        if (gAdapterHandler[index].terminate != NULL)
+        if (gAdapterHandler[index].stopAdapter != NULL)
         {
             gAdapterHandler[index].stopAdapter();
+        }
+        if (gAdapterHandler[index].terminate != NULL)
+        {
             gAdapterHandler[index].terminate();
         }
     }

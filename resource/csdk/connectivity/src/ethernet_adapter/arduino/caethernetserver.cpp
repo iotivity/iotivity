@@ -48,7 +48,7 @@ static int32_t CAArduinoRecvData(int32_t sockFd, uint8_t **buf, uint32_t bufLen,
                                  uint8_t *senderAddr, uint16_t *senderPort);
 static CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
 static void CAArduinoCheckData();
-void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
+static void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
                               const void *data, const uint32_t dataLength);
 
 static CAEthernetPacketReceivedCallback gPacketReceivedCallback = NULL;
