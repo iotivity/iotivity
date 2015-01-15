@@ -224,12 +224,10 @@ linux_ub_examples_debug: linux_ub_stack_debug
 
 ###############################################################################
 ####      TB Stack, TB Unit Tests, TB Examples, UB Stack, UB Examples,     ####
-####      UB Unit Tests, & OCICUC - Linux Only                             ####
+####      UB Unit Tests - Linux Only                                       ####
 ###############################################################################
 
 linux_ub_dev: linux_ub_stack_all linux_ub_unittests_all linux_ub_examples_all linux_tb_examples_all
-	@echo "=====BUILD UB OCICUC - <oic-resource>/examples/ocicuc/====="
-	$(MAKE) -C examples/ocicuc/
 
 ###############################################################################
 #TB Stack, TB Unit Tests, & TB Examples - Arduino Mega Only - Ethernet & WiFi #

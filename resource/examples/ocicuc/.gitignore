@@ -1,5 +1,0 @@
-# Ignore our example executables
-client
-monoprocess
-server
-small_example
