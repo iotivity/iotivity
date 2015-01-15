@@ -1,109 +1,88 @@
 ##
-# CA library (share library) build script
+# CA build script
 ##
+
 Import('env')
 
-# Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+ca_os = env.get('TARGET_OS')
+ca_transport = env.get('TARGET_TRANSPORT')
+secured = env.get('SECURED')
+root_dir = './'
+ca_path = './src/'
+build_dir = env.get('BUILD_DIR')
 
-calib_env = lib_env.Clone()
-
+#####################################################################
+# Source files and Target(s)
 ######################################################################
-# Add build options (WITH_DTLS) info for help command
-######################################################################
-help_vars = Variables()
-help_vars.Add(BoolVariable('WITH_DTLS', 'enable security support?', False))
-help_vars.Update(env)
-Help(help_vars.GenerateHelpText(env))
 
-######################################################################
-# Get build options (the options from command line)
-######################################################################
-with_dtls = env.get('WITH_DTLS')
-if (with_dtls):
-	print "Info: Building CA library with DTLS support"
+print"Reading ca script %s"%ca_transport
 
-######################################################################
-# Build flags
-######################################################################
-calib_env.AppendUnique(CPPPATH = [
-		'./common/inc',
-		'./api',
-		'./inc',
-		'./src/ethernet_adapter/linux',
-		'./src/wifi_adapter/linux',
-		'./src/bt_edr_adapter/linux',
-		'./src/bt_le_adapter/linux',
-		'./lib/libcoap-4.1.1'
-		])
+env.PrependUnique(CPPPATH = [root_dir + '/api/'])
+env.AppendUnique(CPPPATH = [root_dir + '/inc/'])
+env.AppendUnique(CPPPATH = [root_dir + '/lib/libcoap-4.1.1/'])
+env.AppendUnique(CPPPATH = [root_dir + '/common/inc/'])
 
-if (with_dtls):
-	calib_env.AppendUnique(CPPPATH = [
-			'./lib/extlibs/tinydtls',
-			'../stack/include'
-			])
-
-target_os = env.get('TARGET_OS')
-
-if target_os not in ['windows', 'winrt']:
-	calib_env.AppendUnique(CFLAGS = ['-Wall', '-fPIC', '-fstack-protector-all']);
-	calib_env.AppendUnique(CPPDEFINES = [
-			'__LINUX__', 'WITH_POSIX',
-			'NO_EDR_ADAPTER', 'NO_LE_ADAPTER',
-			'WIFI_ADAPTER', 'ETHERNET_ADAPTER',
-			#'TB_LOG'
-			])
-	if (with_dtls):
-		calib_env.AppendUnique(CPPDEFINES = [
-				'__WITH_DTLS__',
-				])
-		calib_env.AppendUnique(LIBPATH = ['./lib/extlibs/tinydtls'])
-		calib_env.PrependUnique(LIBS = ['tinydtls'])
+#Getting common source files
+env.SConscript('./common/SConscript')
 
 
-calib_env.ParseConfig('pkg-config --cflags glib-2.0')
+env.AppendUnique(CA_SRC=[ca_path+'adapter_util/caadapterutils.c'])
+env.AppendUnique(CA_SRC=[ca_path+'adapter_util/camsgparser.c'])
+if env.get('SECURED') == '1':
+	env.AppendUnique(CA_SRC=[ca_path+'adapter_util/caadapternetdtls.c'])
+	env.AppendUnique(CPPPATH = [root_dir + '/external/inc/'])
 
-#TODO add SConscript for libcoap
-#`/home/tester/iotivity/resource/csdk/connectivity/lib/libcoap-4.1.1'
+if ca_os == 'arduino':
+	ca_common_src = [
+		ca_path + 'caconnectivitymanager_singlethread.c',
+		ca_path + 'cainterfacecontroller_singlethread.c',
+		ca_path + 'camessagehandler_singlethread.c',
+		ca_path + 'canetworkconfigurator_singlethread.c',
+		ca_path + 'caprotocolmessage_singlethread.c',
+		ca_path + 'caremotehandler.c',
+		ca_path + 'caretransmission_singlethread.cpp',
+		]
+else:
+	ca_common_src = [
+		ca_path + 'caconnectivitymanager.c',
+		ca_path + 'cainterfacecontroller.c',
+		ca_path + 'camessagehandler.c',
+		ca_path + 'canetworkconfigurator.c',
+		ca_path + 'caprotocolmessage.c',
+		ca_path + 'caqueueingthread.c',
+		ca_path + 'caremotehandler.c',
+		ca_path + 'caretransmission.c',
+		]
+	if secured == '1':
+		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
+		env.AppendUnique(CPPPATH = [root_dir + '/lib/tinydtls'])
+env.AppendUnique(CA_SRC = ca_common_src)
 
-######################################################################
-# Source files and Targets
-######################################################################
-calib_src = [
-		'./common/src/logger.c',
-		'./common/src/oic_logger.c',
-		'./common/src/oic_console_logger.c',
-		'./common/src/oic_malloc.c',
-		'./common/src/oic_string.c',
-		'./common/src/uqueue.c',
-		'./common/src/uarraylist.c',
-		'./common/src/umutex.c',
-		'./common/src/uthreadpool.c',
-		'./src/caretransmission.c',
-		'./src/caconnectivitymanager.c',
-		'./src/caremotehandler.c',
-		'./src/cainterfacecontroller.c',
-		'./src/camessagehandler.c',
-		'./src/caqueueingthread.c',
-		'./src/canetworkconfigurator.c',
-		'./src/caprotocolmessage.c',
-		'./src/adapter_util/caadapterutils.c',
-		'./src/ethernet_adapter/caethernetadapter.c',
-		'./src/wifi_adapter/cawifiadapter.c',
-		'./src/bt_edr_adapter/linux/caedradapter.c',
-		'./src/bt_le_adapter/linux/caleadapter.c',
-		'./src/wifi_adapter/linux/cawifiserver.c',
-		'./src/wifi_adapter/linux/cawificlient.c',
-		'./src/wifi_adapter/linux/cawifinwmonitor.c',
-		'./src/ethernet_adapter/linux/caethernetserver.c',
-		'./src/ethernet_adapter/linux/caethernetclient.c',
-		'./src/ethernet_adapter/linux/caethernetnwmonitor.c'
-	]
 
-if (with_dtls):
-	calib_src = calib_src + ['./src/adapter_util/caadapternetdtls.c']
 
-calib = calib_env.SharedLibrary('connectivity_abstraction', calib_src)
-calib_env.InstallTarget(calib, 'libconnectivity_abstraction')
+if 'ALL' in ca_transport:
+	env.SConscript(ca_path + 'ethernet_adapter/SConscript')
+	env.SConscript(ca_path + 'wifi_adapter/SConscript')
+	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')
+	env.SConscript(ca_path + 'bt_le_adapter/SConscript')
+
+if 'WIFI' in ca_transport:
+	env.SConscript(ca_path + 'wifi_adapter/SConscript')
+
+if 'ETHERNET' in ca_transport:
+	env.SConscript(ca_path + 'ethernet_adapter/SConscript')
+
+if 'BT' in ca_transport:
+	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')
+
+if 'BLE' in ca_transport:
+	env.SConscript(ca_path + 'bt_le_adapter/SConscript')
+
+print "Include path is %s" %env.get('CPPPATH')
+print "Files path is %s" %env.get('CA_SRC')
+
+calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
+env.InstallTarget(calib, 'libconnectivity_abstraction')
+if env.get('SECURED') == '1':
+	env.Install(build_dir, './lib/tinydtls/libtinydtls.a')
 

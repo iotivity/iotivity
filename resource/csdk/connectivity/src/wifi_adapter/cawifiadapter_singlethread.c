@@ -266,7 +266,8 @@ CAResult_t CAStartWIFI()
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
-    /* Start monitoring wifi network */
+    // Start monitoring wifi network
+    // network monitor is yet to be implemented
     CAResult_t ret = CAWiFiStartNetworkMonitor();
     if (CA_STATUS_OK != ret)
     {
@@ -310,6 +311,7 @@ CAResult_t CAStartWIFIListeningServer()
     }
 
     gStartMulticastServerRequested = true;
+    // network monitor is yet to be implemented
     bool retVal = CAWiFiIsConnected();
     if (false == retVal)
     {
@@ -321,6 +323,7 @@ CAResult_t CAStartWIFIListeningServer()
     if (CA_STATUS_OK == ret)
     {
         OIC_LOG(INFO, WIFI_ADAPTER_TAG, "Multicast Server Started Successfully");
+        // iff wifi shield firmware upgrade allows multicast
         gIsMulticastServerStarted = true;
     }
 
@@ -331,7 +334,7 @@ CAResult_t CAStartWIFIListeningServer()
 CAResult_t CAStartWIFIDiscoveryServer()
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
-    /* Both listening and discovery server are same */
+    // Both listening and discovery server are same
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return CAStartWIFIListeningServer();
 }

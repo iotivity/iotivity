@@ -24,7 +24,8 @@ linux_sample_env.AppendUnique(LIBS = ['pthread'])
 linux_sample_env.AppendUnique(LIBS = ['coap'])
 linux_sample_env.AppendUnique(LIBS = ['coap_csdk'])
 linux_sample_env.AppendUnique(LIBS = ['connectivity_abstraction'])
-
+if env.get('SECURED') == '1': 
+    linux_sample_env.AppendUnique(LIBS = ['tinydtls'])
 linux_sample_env.ParseConfig('pkg-config --libs glib-2.0')
 
 ######################################################################

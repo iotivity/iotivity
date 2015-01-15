@@ -1,0 +1,33 @@
+#######################################################
+#	Building Ethernet adapter
+#######################################################
+
+Import('env')
+
+print "Reading ethernet adapter script"
+
+target_os = env.get('TARGET_OS')
+inc_files = env.get('CPPPATH')
+src_dir = './src/ethernet_adapter/'
+
+#Source files to build common for all platforms
+if target_os == 'arduino':
+	env.AppendUnique(CA_SRC=[src_dir+'caethernetadapter_singlethread.c'])
+else:
+        env.AppendUnique(CPPPATH=[src_dir+'arduino/'])
+        env.AppendUnique(CA_SRC=[src_dir+'caethernetadapter.c'])
+
+#Source files to build in Linux platform
+if target_os == 'linux':
+	env.AppendUnique(CA_SRC=[src_dir+'linux/caethernetclient.c',
+			src_dir+'linux/caethernetserver.c',
+			src_dir+'linux/caethernetnwmonitor.c',
+			])
+
+#Source files to build in Arduino platform
+if target_os == 'arduino':
+	env.AppendUnique(CA_SRC=[src_dir+'arduino/caethernetadapterutils.cpp',
+			src_dir+'arduino/caethernetclient.cpp',
+			src_dir+'arduino/caethernetserver.cpp',
+			src_dir+'arduino/caethernetnwmonitor.cpp',
+			])

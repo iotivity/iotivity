@@ -1,6 +1,6 @@
-diff -rupN /Ethernet/src/Ethernet.cpp /Ethernet/src/Ethernet.cpp
---- /Ethernet/src/Ethernet.cpp	2014-10-01 20:45:35.000000000 +0530
-+++ /Ethernet/src/Ethernet.cpp	2014-12-12 16:39:26.000000000 +0530
+diff -rupN ./Ethernet/src/Ethernet.cpp ../../arduino-1.5.8/libraries/Ethernet/src/Ethernet.cpp
+--- ./Ethernet/src/Ethernet.cpp	2014-10-01 20:45:35.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Ethernet/src/Ethernet.cpp	2014-12-12 16:39:26.000000000 +0530
 @@ -7,10 +7,11 @@ uint8_t EthernetClass::_state[MAX_SOCK_N
    0, 0, 0, 0 };
  uint16_t EthernetClass::_server_port[MAX_SOCK_NUM] = { 
@@ -14,9 +14,9 @@ diff -rupN /Ethernet/src/Ethernet.cpp /Ethernet/src/Ethernet.cpp
    _dhcp = &s_dhcp;
  
  
-diff -rupN /Ethernet/src/utility/socket.cpp /Ethernet/src/utility/socket.cpp
---- /Ethernet/src/utility/socket.cpp	2014-10-01 20:45:35.000000000 +0530
-+++ /Ethernet/src/utility/socket.cpp	2014-12-17 17:02:20.000000000 +0530
+diff -rupN ./Ethernet/src/utility/socket.cpp ../../arduino-1.5.8/libraries/Ethernet/src/utility/socket.cpp
+--- ./Ethernet/src/utility/socket.cpp	2014-10-01 20:45:35.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Ethernet/src/utility/socket.cpp	2014-12-17 17:02:20.000000000 +0530
 @@ -295,6 +295,7 @@ uint16_t recvfrom(SOCKET s, uint8_t *buf
  {
    uint8_t head[8];
@@ -84,9 +84,9 @@ diff -rupN /Ethernet/src/utility/socket.cpp /Ethernet/src/utility/socket.cpp
  }
  
  /**
-diff -rupN /Time/Time/DateStrings.cpp /Time/Time/DateStrings.cpp
---- /Time/Time/DateStrings.cpp	2010-03-06 11:09:22.000000000 +0530
-+++ /Time/Time/DateStrings.cpp	2013-03-24 00:28:08.000000000 +0530
+diff -rupN ./Time/Time/DateStrings.cpp ../../arduino-1.5.8/libraries/Time/Time/DateStrings.cpp
+--- ./Time/Time/DateStrings.cpp	2010-03-06 11:09:22.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/DateStrings.cpp	2013-03-24 00:28:08.000000000 +0530
 @@ -1,80 +1,90 @@
 -/* DateStrings.cpp
 - * Definitions for date strings for use with the Time library
@@ -258,9 +258,9 @@ diff -rupN /Time/Time/DateStrings.cpp /Time/Time/DateStrings.cpp
 +   buffer[dt_SHORT_STR_LEN] = 0; 
 +   return buffer;
 +}
-diff -rupN /Time/Time/examples/Processing/SyncArduinoClock/readme.txt /Time/Time/examples/Processing/SyncArduinoClock/readme.txt
---- /Time/Time/examples/Processing/SyncArduinoClock/readme.txt	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/Processing/SyncArduinoClock/readme.txt	2013-03-28 07:20:13.000000000 +0530
+diff -rupN ./Time/Time/examples/Processing/SyncArduinoClock/readme.txt ../../arduino-1.5.8/libraries/Time/Time/examples/Processing/SyncArduinoClock/readme.txt
+--- ./Time/Time/examples/Processing/SyncArduinoClock/readme.txt	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/Processing/SyncArduinoClock/readme.txt	2013-03-28 07:20:13.000000000 +0530
 @@ -0,0 +1,9 @@
 +SyncArduinoClock is a Processing sketch that responds to Arduino requests for 
 +time synchronization messages.
@@ -271,9 +271,9 @@ diff -rupN /Time/Time/examples/Processing/SyncArduinoClock/readme.txt /Time/Time
 +message displayed when you run SyncArduinoClock in Processing.
 +The Arduino time is set from the time on your computer through the 
 +Processing sketch. 
-diff -rupN /Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde /Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde
---- /Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde	2013-03-28 08:26:26.000000000 +0530
+diff -rupN ./Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde ../../arduino-1.5.8/libraries/Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde
+--- ./Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde	2013-03-28 08:26:26.000000000 +0530
 @@ -0,0 +1,78 @@
 +/**
 + * SyncArduinoClock. 
@@ -353,9 +353,9 @@ diff -rupN /Time/Time/examples/Processing/SyncArduinoClock/SyncArduinoClock.pde 
 +  long daylight = cal.get(cal.DST_OFFSET)/1000;
 +  return current + timezone + daylight; 
 +}
-diff -rupN /Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino /Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino
---- /Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino	2013-03-28 06:08:18.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino ../../arduino-1.5.8/libraries/Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino
+--- ./Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino	2013-03-28 06:08:18.000000000 +0530
 @@ -0,0 +1,69 @@
 +/*
 + * TimeRTC.pde
@@ -426,9 +426,9 @@ diff -rupN /Time/Time/examples/TimeArduinoDue/TimeArduinoDue.ino /Time/Time/exam
 +  Serial.print(digits);
 +}
 +
-diff -rupN /Time/Time/examples/TimeGPS/TimeGPS.ino /Time/Time/examples/TimeGPS/TimeGPS.ino
---- /Time/Time/examples/TimeGPS/TimeGPS.ino	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeGPS/TimeGPS.ino	2013-03-31 01:18:40.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeGPS/TimeGPS.ino ../../arduino-1.5.8/libraries/Time/Time/examples/TimeGPS/TimeGPS.ino
+--- ./Time/Time/examples/TimeGPS/TimeGPS.ino	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeGPS/TimeGPS.ino	2013-03-31 01:18:40.000000000 +0530
 @@ -0,0 +1,87 @@
 +/*
 + * TimeGPS.pde
@@ -517,9 +517,9 @@ diff -rupN /Time/Time/examples/TimeGPS/TimeGPS.ino /Time/Time/examples/TimeGPS/T
 +  Serial.print(digits);
 +}
 +
-diff -rupN /Time/Time/examples/TimeNTP/TimeNTP.ino /Time/Time/examples/TimeNTP/TimeNTP.ino
---- /Time/Time/examples/TimeNTP/TimeNTP.ino	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeNTP/TimeNTP.ino	2013-03-31 01:19:07.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeNTP/TimeNTP.ino ../../arduino-1.5.8/libraries/Time/Time/examples/TimeNTP/TimeNTP.ino
+--- ./Time/Time/examples/TimeNTP/TimeNTP.ino	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeNTP/TimeNTP.ino	2013-03-31 01:19:07.000000000 +0530
 @@ -0,0 +1,135 @@
 +/*
 + * Time_NTP.pde
@@ -656,9 +656,9 @@ diff -rupN /Time/Time/examples/TimeNTP/TimeNTP.ino /Time/Time/examples/TimeNTP/T
 +  Udp.endPacket();
 +}
 +
-diff -rupN /Time/Time/examples/TimeRTC/TimeRTC.pde /Time/Time/examples/TimeRTC/TimeRTC.pde
---- /Time/Time/examples/TimeRTC/TimeRTC.pde	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeRTC/TimeRTC.pde	2013-03-24 10:27:58.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeRTC/TimeRTC.pde ../../arduino-1.5.8/libraries/Time/Time/examples/TimeRTC/TimeRTC.pde
+--- ./Time/Time/examples/TimeRTC/TimeRTC.pde	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeRTC/TimeRTC.pde	2013-03-24 10:27:58.000000000 +0530
 @@ -0,0 +1,55 @@
 +/*
 + * TimeRTC.pde
@@ -715,9 +715,9 @@ diff -rupN /Time/Time/examples/TimeRTC/TimeRTC.pde /Time/Time/examples/TimeRTC/T
 +  Serial.print(digits);
 +}
 +
-diff -rupN /Time/Time/examples/TimeRTCLog/TimeRTCLog.pde /Time/Time/examples/TimeRTCLog/TimeRTCLog.pde
---- /Time/Time/examples/TimeRTCLog/TimeRTCLog.pde	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeRTCLog/TimeRTCLog.pde	2013-03-24 14:52:52.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeRTCLog/TimeRTCLog.pde ../../arduino-1.5.8/libraries/Time/Time/examples/TimeRTCLog/TimeRTCLog.pde
+--- ./Time/Time/examples/TimeRTCLog/TimeRTCLog.pde	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeRTCLog/TimeRTCLog.pde	2013-03-24 14:52:52.000000000 +0530
 @@ -0,0 +1,107 @@
 +/*
 + * TimeRTCLogger.pde
@@ -826,9 +826,9 @@ diff -rupN /Time/Time/examples/TimeRTCLog/TimeRTCLog.pde /Time/Time/examples/Tim
 +  Serial.print(" second(s) ");   
 +}
 +
-diff -rupN /Time/Time/examples/TimeRTCSet/TimeRTCSet.ino /Time/Time/examples/TimeRTCSet/TimeRTCSet.ino
---- /Time/Time/examples/TimeRTCSet/TimeRTCSet.ino	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeRTCSet/TimeRTCSet.ino	2013-03-31 01:19:58.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeRTCSet/TimeRTCSet.ino ../../arduino-1.5.8/libraries/Time/Time/examples/TimeRTCSet/TimeRTCSet.ino
+--- ./Time/Time/examples/TimeRTCSet/TimeRTCSet.ino	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeRTCSet/TimeRTCSet.ino	2013-03-31 01:19:58.000000000 +0530
 @@ -0,0 +1,80 @@
 +/*
 + * TimeRTCSet.pde
@@ -910,9 +910,9 @@ diff -rupN /Time/Time/examples/TimeRTCSet/TimeRTCSet.ino /Time/Time/examples/Tim
 +
 +
 +
-diff -rupN /Time/Time/examples/TimeSerial/TimeSerial.ino /Time/Time/examples/TimeSerial/TimeSerial.ino
---- /Time/Time/examples/TimeSerial/TimeSerial.ino	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeSerial/TimeSerial.ino	2013-03-31 01:20:31.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeSerial/TimeSerial.ino ../../arduino-1.5.8/libraries/Time/Time/examples/TimeSerial/TimeSerial.ino
+--- ./Time/Time/examples/TimeSerial/TimeSerial.ino	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeSerial/TimeSerial.ino	2013-03-31 01:20:31.000000000 +0530
 @@ -0,0 +1,81 @@
 +/* 
 + * TimeSerial.pde
@@ -995,9 +995,9 @@ diff -rupN /Time/Time/examples/TimeSerial/TimeSerial.ino /Time/Time/examples/Tim
 +  return 0; // the time will be sent later in response to serial mesg
 +}
 +
-diff -rupN /Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino /Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino
---- /Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino	2013-03-31 01:21:31.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino ../../arduino-1.5.8/libraries/Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino
+--- ./Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino	2013-03-31 01:21:31.000000000 +0530
 @@ -0,0 +1,110 @@
 +/* 
 + * TimeSerialDateStrings.pde
@@ -1109,9 +1109,9 @@ diff -rupN /Time/Time/examples/TimeSerialDateStrings/TimeSerialDateStrings.ino /
 +  return 0; // the time will be sent later in response to serial mesg
 +}
 +
-diff -rupN /Time/Time/examples/TimeTeensy3/TimeTeensy3.ino /Time/Time/examples/TimeTeensy3/TimeTeensy3.ino
---- /Time/Time/examples/TimeTeensy3/TimeTeensy3.ino	1970-01-01 05:30:00.000000000 +0530
-+++ /Time/Time/examples/TimeTeensy3/TimeTeensy3.ino	2013-03-28 13:53:21.000000000 +0530
+diff -rupN ./Time/Time/examples/TimeTeensy3/TimeTeensy3.ino ../../arduino-1.5.8/libraries/Time/Time/examples/TimeTeensy3/TimeTeensy3.ino
+--- ./Time/Time/examples/TimeTeensy3/TimeTeensy3.ino	1970-01-01 05:30:00.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/examples/TimeTeensy3/TimeTeensy3.ino	2013-03-28 13:53:21.000000000 +0530
 @@ -0,0 +1,78 @@
 +/*
 + * TimeRTC.pde
@@ -1191,9 +1191,9 @@ diff -rupN /Time/Time/examples/TimeTeensy3/TimeTeensy3.ino /Time/Time/examples/T
 +  Serial.print(digits);
 +}
 +
-diff -rupN /Time/Time/Examples/Processing/SyncArduinoClock/readme.txt /Time/Time/Examples/Processing/SyncArduinoClock/readme.txt
---- /Time/Time/Examples/Processing/SyncArduinoClock/readme.txt	2009-12-29 17:24:28.000000000 +0530
-+++ /Time/Time/Examples/Processing/SyncArduinoClock/readme.txt	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/Processing/SyncArduinoClock/readme.txt ../../arduino-1.5.8/libraries/Time/Time/Examples/Processing/SyncArduinoClock/readme.txt
+--- ./Time/Time/Examples/Processing/SyncArduinoClock/readme.txt	2009-12-29 17:24:28.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/Processing/SyncArduinoClock/readme.txt	1970-01-01 05:30:00.000000000 +0530
 @@ -1,9 +0,0 @@
 -SyncArduinoClock is a Processing sketch that responds to Arduino requests for 
 -time synchronization messages.
@@ -1205,9 +1205,9 @@ diff -rupN /Time/Time/Examples/Processing/SyncArduinoClock/readme.txt /Time/Time
 -The Arduino time is set from the time on your computer through the 
 -Processing sketch. 
 \ No newline at end of file
-diff -rupN /Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde /Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde
---- /Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde	2009-12-30 18:02:06.000000000 +0530
-+++ /Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde ../../arduino-1.5.8/libraries/Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde
+--- ./Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde	2009-12-30 18:02:06.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde	1970-01-01 05:30:00.000000000 +0530
 @@ -1,70 +0,0 @@
 -/**
 - * SyncArduinoClock. 
@@ -1279,9 +1279,9 @@ diff -rupN /Time/Time/Examples/Processing/SyncArduinoClock/SyncArduinoClock.pde 
 -  now = now + (tzo/1000) + (dst/1000); 
 -  return now;
 -}
-diff -rupN /Time/Time/Examples/TimeGPS/TimeGPS.pde /Time/Time/Examples/TimeGPS/TimeGPS.pde
---- /Time/Time/Examples/TimeGPS/TimeGPS.pde	2010-01-06 09:45:10.000000000 +0530
-+++ /Time/Time/Examples/TimeGPS/TimeGPS.pde	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/TimeGPS/TimeGPS.pde ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeGPS/TimeGPS.pde
+--- ./Time/Time/Examples/TimeGPS/TimeGPS.pde	2010-01-06 09:45:10.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeGPS/TimeGPS.pde	1970-01-01 05:30:00.000000000 +0530
 @@ -1,82 +0,0 @@
 -/*
 - * TimeGPS.pde
@@ -1365,9 +1365,9 @@ diff -rupN /Time/Time/Examples/TimeGPS/TimeGPS.pde /Time/Time/Examples/TimeGPS/T
 -  time_t time = makeTime(tm);
 -  return time + (offset * SECS_PER_HOUR);
 -}
-diff -rupN /Time/Time/Examples/TimeNTP/TimeNTP.pde /Time/Time/Examples/TimeNTP/TimeNTP.pde
---- /Time/Time/Examples/TimeNTP/TimeNTP.pde	2010-03-06 19:20:14.000000000 +0530
-+++ /Time/Time/Examples/TimeNTP/TimeNTP.pde	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/TimeNTP/TimeNTP.pde ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeNTP/TimeNTP.pde
+--- ./Time/Time/Examples/TimeNTP/TimeNTP.pde	2010-03-06 19:20:14.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeNTP/TimeNTP.pde	1970-01-01 05:30:00.000000000 +0530
 @@ -1,120 +0,0 @@
 -/*
 - * Time_NTP.pde
@@ -1489,9 +1489,9 @@ diff -rupN /Time/Time/Examples/TimeNTP/TimeNTP.pde /Time/Time/Examples/TimeNTP/T
 -  for( int i = 0; i < how_many; i++ )
 -    UdpBytewise.write(what);
 -}
-diff -rupN /Time/Time/Examples/TimeRTC/TimeRTC.pde /Time/Time/Examples/TimeRTC/TimeRTC.pde
---- /Time/Time/Examples/TimeRTC/TimeRTC.pde	2010-01-05 14:13:46.000000000 +0530
-+++ /Time/Time/Examples/TimeRTC/TimeRTC.pde	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/TimeRTC/TimeRTC.pde ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeRTC/TimeRTC.pde
+--- ./Time/Time/Examples/TimeRTC/TimeRTC.pde	2010-01-05 14:13:46.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeRTC/TimeRTC.pde	1970-01-01 05:30:00.000000000 +0530
 @@ -1,47 +0,0 @@
 -/*
 - * TimeRTC.pde
@@ -1540,9 +1540,9 @@ diff -rupN /Time/Time/Examples/TimeRTC/TimeRTC.pde /Time/Time/Examples/TimeRTC/T
 -  Serial.print(digits);
 -}
 -
-diff -rupN /Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde /Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde
---- /Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde	2010-01-06 10:30:36.000000000 +0530
-+++ /Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde
+--- ./Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde	2010-01-06 10:30:36.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde	1970-01-01 05:30:00.000000000 +0530
 @@ -1,106 +0,0 @@
 -/*
 - * TimeRTCLogger.pde
@@ -1650,9 +1650,9 @@ diff -rupN /Time/Time/Examples/TimeRTCLog/TimeRTCLog.pde /Time/Time/Examples/Tim
 -  Serial.print(" second(s) ");   
 -}
 -
-diff -rupN /Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde /Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde
---- /Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde	2010-01-06 09:53:08.000000000 +0530
-+++ /Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde
+--- ./Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde	2010-01-06 09:53:08.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde	1970-01-01 05:30:00.000000000 +0530
 @@ -1,82 +0,0 @@
 -/*
 - * TimeRTCSet.pde
@@ -1736,9 +1736,9 @@ diff -rupN /Time/Time/Examples/TimeRTCSet/TimeRTCSet.pde /Time/Time/Examples/Tim
 -  return 0;
 -}
 -
-diff -rupN /Time/Time/Examples/TimeSerial/TimeSerial.pde /Time/Time/Examples/TimeSerial/TimeSerial.pde
---- /Time/Time/Examples/TimeSerial/TimeSerial.pde	2010-01-06 10:55:18.000000000 +0530
-+++ /Time/Time/Examples/TimeSerial/TimeSerial.pde	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/TimeSerial/TimeSerial.pde ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeSerial/TimeSerial.pde
+--- ./Time/Time/Examples/TimeSerial/TimeSerial.pde	2010-01-06 10:55:18.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeSerial/TimeSerial.pde	1970-01-01 05:30:00.000000000 +0530
 @@ -1,82 +0,0 @@
 -/* 
 - * TimeSerial.pde
@@ -1822,9 +1822,9 @@ diff -rupN /Time/Time/Examples/TimeSerial/TimeSerial.pde /Time/Time/Examples/Tim
 -  return 0; // the time will be sent later in response to serial mesg
 -}
 -
-diff -rupN /Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde /Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde
---- /Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde	2010-01-06 10:55:48.000000000 +0530
-+++ /Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde	1970-01-01 05:30:00.000000000 +0530
+diff -rupN ./Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde
+--- ./Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde	2010-01-06 10:55:48.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde	1970-01-01 05:30:00.000000000 +0530
 @@ -1,80 +0,0 @@
 -/* 
 - * TimeSerialDateStrings.pde
@@ -1906,9 +1906,9 @@ diff -rupN /Time/Time/Examples/TimeSerialDateStrings/TimeSerialDateStrings.pde /
 -  return 0; // the time will be sent later in response to serial mesg
 -}
 -
-diff -rupN /Time/Time/keywords.txt /Time/Time/keywords.txt
---- /Time/Time/keywords.txt	2010-01-05 12:02:50.000000000 +0530
-+++ /Time/Time/keywords.txt	2013-03-23 22:36:10.000000000 +0530
+diff -rupN ./Time/Time/keywords.txt ../../arduino-1.5.8/libraries/Time/Time/keywords.txt
+--- ./Time/Time/keywords.txt	2010-01-05 12:02:50.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/keywords.txt	2013-03-23 22:36:10.000000000 +0530
 @@ -5,25 +5,25 @@
  #######################################
  # Datatypes (KEYWORD1)
@@ -1949,9 +1949,9 @@ diff -rupN /Time/Time/keywords.txt /Time/Time/keywords.txt
  #######################################
  # Instances (KEYWORD2)
  #######################################
-diff -rupN /Time/Time/Readme.txt /Time/Time/Readme.txt
---- /Time/Time/Readme.txt	2010-01-11 21:36:24.000000000 +0530
-+++ /Time/Time/Readme.txt	2013-03-23 21:37:54.000000000 +0530
+diff -rupN ./Time/Time/Readme.txt ../../arduino-1.5.8/libraries/Time/Time/Readme.txt
+--- ./Time/Time/Readme.txt	2010-01-11 21:36:24.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Readme.txt	2013-03-23 21:37:54.000000000 +0530
 @@ -1,131 +1,131 @@
 -Readme file for Arduino Time Library
 -
@@ -2216,9 +2216,9 @@ diff -rupN /Time/Time/Readme.txt /Time/Time/Readme.txt
 +
 +The DS1307RTC library included in the download provides an example of how a time provider
 +can use the low level functions to interface with the Time library.
-diff -rupN /Time/Time/Time.cpp /Time/Time/Time.cpp
---- /Time/Time/Time.cpp	2010-11-01 18:02:50.000000000 +0530
-+++ /Time/Time/Time.cpp	2013-03-28 03:19:40.000000000 +0530
+diff -rupN ./Time/Time/Time.cpp ../../arduino-1.5.8/libraries/Time/Time/Time.cpp
+--- ./Time/Time/Time.cpp	2010-11-01 18:02:50.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Time.cpp	2013-03-28 03:19:40.000000000 +0530
 @@ -19,6 +19,11 @@
    6  Jan 2010 - initial release 
    12 Feb 2010 - fixed leap year calculation error
@@ -2379,9 +2379,9 @@ diff -rupN /Time/Time/Time.cpp /Time/Time/Time.cpp
 +  syncInterval = (uint32_t)interval;
 +  nextSyncTime = sysTime + syncInterval;
 +}
-diff -rupN /Time/Time/Time.h /Time/Time/Time.h
---- /Time/Time/Time.h	2011-07-22 17:30:06.000000000 +0530
-+++ /Time/Time/Time.h	2014-11-25 18:48:37.000000000 +0530
+diff -rupN ./Time/Time/Time.h ../../arduino-1.5.8/libraries/Time/Time/Time.h
+--- ./Time/Time/Time.h	2011-07-22 17:30:06.000000000 +0530
++++ ../../arduino-1.5.8/libraries/Time/Time/Time.h	2014-11-25 18:48:37.000000000 +0530
 @@ -8,12 +8,29 @@
  */     
  
@@ -2421,23 +2421,4 @@ diff -rupN /Time/Time/Time.h /Time/Time/Time.h
 +#endif // __cplusplus
  #endif /* _Time_h */
  
-Binary files /Time/Time/.Time.h.swp and /Time/Time/.Time.h.swp differ
-diff -rupN /TimedAction/TimedAction.h /TimedAction/TimedAction.h
---- /TimedAction/TimedAction.h	2010-10-08 02:57:26.000000000 +0530
-+++ /TimedAction/TimedAction.h	2014-12-16 19:55:41.427804271 +0530
-@@ -30,7 +30,7 @@
- #ifndef TIMEDACTION_H
- #define TIMEDACTION_H
- 
--#include "WProgram.h"
-+#include "Arduino.h"
- 
- #define NO_PREDELAY 0
- 
-@@ -67,4 +67,4 @@ class TimedAction {
- || | 1.1 2009-04-08 - Alexander Brevig : Added an example that demonstrates three arduino examples at once
- || | 1.0 2009-03-23 - Alexander Brevig : Initial Release
- || #
--*/
-\ No newline at end of file
-+*/
+Binary files ./Time/Time/.Time.h.swp and ../../arduino-1.5.8/libraries/Time/Time/.Time.h.swp differ

@@ -25,8 +25,9 @@
 #include <unistd.h>
 #include "cacommon.h"
 #include "cainterface.h"
+#ifdef __WITH_DTLS__
 #include "ocsecurityconfig.h"
-
+#endif
 
 #define MAX_BUF_LEN 1024
 #define MAX_OPT_LEN 16
@@ -48,6 +49,7 @@ int gReceived;
 CABool_t gLocalUnicastPort;
 CABool_t gLocalSecurePort;
 CAConnectivityType_t gSelectedNwType = CA_ETHERNET;
+const char* gMessageType[] = {"CON", "NON", "ACK", "RESET"};
 
 char get_menu();
 void process();
@@ -80,6 +82,7 @@ static const char *gSecureInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\"
 static const char *gNormalInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
 
+#ifdef __WITH_DTLS__
 static OCDtlsPskCredsBlob *pskCredsBlob = NULL;
 
 void clearDtlsCredentialInfo()
@@ -108,32 +111,34 @@ void OCGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
 
     printf("OCGetDtlsPskCredentials OUT\n");
 }
+// Internal API. Invoked by OC stack to retrieve credentials from this module
+void CAGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
+{
+    printf("CAGetDtlsPskCredentials IN\n");
 
+    *credInfo = pskCredsBlob;
+
+    printf("CAGetDtlsPskCredentials OUT\n");
+}
 int32_t SetCredentials()
 {
-    int32_t ret = 0;
     printf("SetCredentials IN\n");
     pskCredsBlob = (OCDtlsPskCredsBlob *)malloc(sizeof(OCDtlsPskCredsBlob));
 
-    if (pskCredsBlob)
-    {
-        memset(pskCredsBlob, 0x0, sizeof(OCDtlsPskCredsBlob));
+    memset(pskCredsBlob, 0x0, sizeof(OCDtlsPskCredsBlob));
+    memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
 
-        pskCredsBlob->blobVer = DtlsPskCredsBlobVer_CurrentVersion;
+    pskCredsBlob->num = 1;
 
-        memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
+    pskCredsBlob->creds = (OCDtlsPskCreds *)malloc(sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
 
-        pskCredsBlob->num = 1;
-
-        memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
-        memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
-
-        ret = 1;
-    }
+    memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
+    memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
 
     printf("SetCredentials OUT\n");
-    return ret;
+    return 1;
 }
+#endif
 
 int main()
 {
@@ -143,17 +148,26 @@ int main()
     printf("\t\tsample main\n");
     printf("=============================================\n");
 
+    CAResult_t res;
     /*
     * Read DTLS PSK credentials from persistent storage and
     * set in the OC stack.
     */
+#ifdef __WITH_DTLS__
     if (SetCredentials() == 0)
     {
         printf("SetCredentials failed\n");
         return 0;
     }
 
-    CAResult_t res = CAInitialize();
+    res = CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials);
+    if(res != CA_STATUS_OK)
+    {
+        printf("Set credential handler fail\n");
+        return 0;
+    }
+#endif
+    res = CAInitialize();
     if (res != CA_STATUS_OK)
     {
         printf("CAInitialize fail\n");
@@ -181,11 +195,12 @@ int main()
     {
         CADestroyToken(gLastRequestToken);
     }
-
+    gLastRequestToken = NULL;
 
     CATerminate();
+#ifdef __WITH_DTLS__
     clearDtlsCredentialInfo();
-
+#endif
     return 0;
 }
 
@@ -408,6 +423,11 @@ void find_resource()
     {
         printf("find resource to %s URI\n", buf);
 
+        if (gLastRequestToken != NULL)
+        {
+            CADestroyToken(gLastRequestToken);
+        }
+
         gLastRequestToken = token;
     }
 
@@ -495,7 +515,7 @@ void send_request()
     requestData.token = token;
     if ('1' == secureRequest[0])
     {
-        int length = strlen(resourceURI) + 1;
+        int length = strlen(gSecureInfoData) + strlen(resourceURI) + 1;
         requestData.payload = (CAPayload_t) malloc(length);
         sprintf(requestData.payload, gSecureInfoData, resourceURI, gLocalSecurePort);
     }
@@ -519,7 +539,10 @@ void send_request()
     {
         CADestroyToken(token);
     }
-
+    if (requestData.payload != NULL)
+    {
+        free(requestData.payload);
+    }
     // destroy remote endpoint
     CADestroyRemoteEndpoint(endpoint);
     printf("=============================================\n");
@@ -713,12 +736,10 @@ void advertise_resource()
     CAAdvertiseResource(buf, token, headerOpt, (uint8_t) optionNum);
 
     // delete token
-    /*
-     if (token != NULL)
-     {
-     CADestroyToken(token);
-     }
-     */
+    if (token != NULL)
+    {
+        CADestroyToken(token);
+    }
 
     free(headerOpt);
 
@@ -903,8 +924,8 @@ void get_network_info()
     CALocalConnectivity_t *tempInfo = NULL;
     uint32_t tempSize = 0;
 
-    if((CAGetNetworkInformation(&tempInfo, &tempSize) != CA_STATUS_OK) ||
-        !tempInfo || !tempSize)
+    CAGetNetworkInformation(&tempInfo, &tempSize);
+    if (tempInfo == NULL || tempSize <= 0)
     {
         printf("network not connected\n");
         return;
@@ -912,6 +933,7 @@ void get_network_info()
 
     printf("################## Network Information #######################\n");
     printf("network info total size is %d\n\n", tempSize);
+
     for (index = 0; index < tempSize; index++)
     {
         printf("Type: %d\n", tempInfo[index].type);
@@ -953,7 +975,7 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
            object->addressInfo.IP.port, object->isSecured);
 
     printf("Data: %s\n", requestInfo->info.payload);
-
+    printf("Message type: %s\n", gMessageType[requestInfo->info.type]);
     if (gLastRequestToken != NULL && requestInfo->info.token != NULL
         && (strcmp((char *)gLastRequestToken, requestInfo->info.token) == 0))
     {
@@ -1007,11 +1029,13 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
             //endpoint->connectivityType = object->connectivityType;
             endpoint->isSecured = CA_TRUE;
             object = endpoint;
+
+            free(uri);
         }
     }
 
     printf("send response with URI\n");
-    send_response(object, (requestInfo != NULL) ? &requestInfo->info : NULL);
+    send_response(object, &requestInfo->info);
 
     gReceived = 1;
 }
@@ -1024,7 +1048,7 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
            object->addressInfo.IP.port, object->isSecured);
     printf("response result : %d\n", responseInfo->result);
     printf("Data: %s\n", responseInfo->info.payload);
-
+    printf("Message type: %s\n", gMessageType[responseInfo->info.type]);
     if (responseInfo->info.options)
     {
         uint32_t len = responseInfo->info.numOptions;
@@ -1237,4 +1261,6 @@ CAResult_t get_network_type()
     }
 
     printf("\n=============================================\n");
+
+    return CA_STATUS_FAILED;
 }

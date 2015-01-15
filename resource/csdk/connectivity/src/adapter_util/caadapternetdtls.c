@@ -47,6 +47,12 @@ static u_mutex gDtlsContextMutex = NULL;
  */
 static u_mutex gDtlsListMutex = NULL;
 
+/**
+ * @var gGetCredentialsCallback
+ * @brief callback to get DTLS credentials
+ */
+static CAGetDTLSCredentialsHandler gGetCredentialsCallback = NULL;
+
 static eDtlsRet_t CAAdapterNetDtlsEncryptInternal(const stCADtlsAddrInfo_t *dstSession,
         uint8_t *data, uint32_t dataLen)
 {
@@ -69,7 +75,7 @@ static eDtlsRet_t CAAdapterNetDtlsEncryptInternal(const stCADtlsAddrInfo_t *dstS
         return DTLS_FAIL;
     }
 
-    int32_t retLen = dtls_write(gCaDtlsContext->dtlsContext, (session_t *)dstSession, data, 
+    int32_t retLen = dtls_write(gCaDtlsContext->dtlsContext, (session_t *)dstSession, data,
                                 dataLen);
     OIC_LOG_V(DEBUG, NET_DTLS_TAG, "dtls_write retun len [%d]", retLen);
     if (0 == retLen)
@@ -149,7 +155,7 @@ static void CAClearCacheList()
         }
         CAFreeCacheMsg(msg);
     }
-    u_arraylist_free(gCaDtlsContext->cacheList);
+    u_arraylist_free(&gCaDtlsContext->cacheList);
     gCaDtlsContext->cacheList = NULL;
     u_mutex_unlock(gDtlsListMutex);
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
@@ -205,7 +211,7 @@ static void CASendCachedMsg(const stCADtlsAddrInfo_t *dstSession)
     uint32_t list_length = 0;
     u_mutex_lock(gDtlsListMutex);
     list_length = u_arraylist_length(gCaDtlsContext->cacheList);
-    for (list_index = 0; list_index < list_length; )
+    for (list_index = 0; list_index < list_length;)
     {
         stCACacheMessage_t *msg = (stCACacheMessage_t *)u_arraylist_get(gCaDtlsContext->cacheList,
                                   list_index);
@@ -230,7 +236,7 @@ static void CASendCachedMsg(const stCADtlsAddrInfo_t *dstSession)
             }
             else
             {
-                OIC_LOG(ERROR, NET_DTLS_TAG, "CAAdapterNetDtlsEncryptInternal failed.");
+                OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_remove failed.");
                 break;
             }
         }
@@ -359,12 +365,16 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
 
     int32_t ret  = -1;
+
+    VERIFY_NON_NULL_RET(gGetCredentialsCallback, NET_DTLS_TAG, "GetCredential callback", 0);
+
     OCDtlsPskCredsBlob *credInfo = NULL;
 
     //Retrieve the credentials blob from security module
-    OCGetDtlsPskCredentials(&credInfo);
+  // OCGetDtlsPskCredentials(&credInfo);
+    gGetCredentialsCallback(&credInfo);
 
-    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "OCGetDtlsPskCredentials credInfo is NULL", ret);
+    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "CAGetDtlsPskCredentials credInfo is NULL", 0);    
 
     if ((type == DTLS_PSK_HINT) || (type == DTLS_PSK_IDENTITY))
     {
@@ -380,7 +390,7 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
         //Check if we have the credentials for the device with which we
         //are trying to perform a handshake
         int index = 0;
-        for (; index < credInfo->num; index++)
+        for (index = 0; index < credInfo->num; index++)
         {
             if (memcmp(desc, credInfo->creds[index].id, DTLS_PSK_ID_LEN) == 0)
             {
@@ -413,6 +423,13 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
 
     u_mutex_unlock(gDtlsContextMutex);
 
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+}
+
+void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+    gGetCredentialsCallback = credCallback;
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
 

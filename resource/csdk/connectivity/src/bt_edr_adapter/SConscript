@@ -1,0 +1,35 @@
+#######################################################
+#	Building BT adapter
+#######################################################
+
+Import('env')
+
+print"Reading bt adapter script"
+
+target_os = env.get('TARGET_OS')
+src_dir = './src/bt_edr_adapter/'
+
+#Source files to build common for all platforms
+if target_os != 'arduino':
+	env.AppendUnique(CA_SRC=[src_dir+'caedradapter.c'])
+
+#Source files to build in Linux platform
+if target_os == 'linux':
+	env.AppendUnique(CA_SRC=[src_dir+'linux/caedradapter.c',
+			])
+
+#Source files to build in Tizen platform
+if target_os == 'tizen':
+	env.PrependUnique(CPPPATH = [src_dir + 'tizen'])
+	env.AppendUnique(CA_SRC=[src_dir+'tizen/caedrclient.c',
+			src_dir+'tizen/caedrdevicelist.c',
+			src_dir+'tizen/caedrendpoint.c',
+			src_dir+'tizen/caedrnwmonitor.c',
+			src_dir+'tizen/caedrserver.c',
+			src_dir+'tizen/caedrutils.c',
+			])
+
+#Source files to build in Android platform
+if target_os == 'android':
+	env.AppendUnique(CA_SRC=[src_dir+'android/caedradapter.c',
+			])

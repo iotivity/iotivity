@@ -300,7 +300,7 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
 }
 
 CAResult_t CARetransmissionSentData(CARetransmission_t *context,
-    const CARemoteEndpoint_t* endpoint,const void* pdu, uint32_t size)
+    const CARemoteEndpoint_t* endpoint, const void* pdu, uint32_t size)
 {
     if (context == NULL || endpoint == NULL || pdu == NULL)
     {

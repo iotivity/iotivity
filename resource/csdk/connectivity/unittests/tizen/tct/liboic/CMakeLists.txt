@@ -14,16 +14,20 @@ SET(TC_SOURCES
 #    ${CAPI_LIB}
 #)
 PKG_CHECK_MODULES(pkgs REQUIRED
-    capi-network-bluetooth capi-network-wifi com.samsung.oicca dlog
+    capi-network-bluetooth capi-network-wifi com.samsung.oicca dlog gobject-2.0 glib-2.0
 )
 
 INCLUDE_DIRECTORIES(
     ${${CAPI_LIB}_INCLUDE_DIRS}
+    /usr/include/glib-2.0
+    /usr/lib/glib-2.0/include
+    /usr/lib/
+    /usr/include/network
 )
 ADD_DEFINITIONS("-D__TIZEN__")
 ADD_EXECUTABLE(${EXEC_NAME} ${EXEC_NAME}.c ${TC_SOURCES})
 TARGET_LINK_LIBRARIES(${EXEC_NAME}
-    ${${CAPI_LIB}_LIBRARIES} /usr/lib/liboicinterface.a -lm -lpthread -lrt -ldl -lcapi-network-wifi -lcapi-network-bluetooth -ldlog
+    ${${CAPI_LIB}_LIBRARIES} -loicinterface -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lcapi-network-bluetooth
 )
 
 INSTALL(PROGRAMS ${EXEC_NAME}

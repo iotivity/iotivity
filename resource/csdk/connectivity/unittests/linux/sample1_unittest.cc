@@ -71,7 +71,7 @@ TEST(StartDiscoveryServerTest, TC_04_Positive_01)
 // check return value
 TEST(RegisterHandlerTest, TC_05_Positive_01)
 {
-    EXPECT_EQ(CA_STATUS_OK, CARegisterHandler(request_handler, response_handler));
+    CARegisterHandler(request_handler, response_handler);
 }
 
 // CACreateRemoteEndpoint TC

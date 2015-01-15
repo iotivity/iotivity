@@ -32,6 +32,12 @@
 
 #define TAG PCF("CA")
 
+#ifdef __WITH_DTLS__
+// CAAdapterNetDTLS will register the callback.
+// Taking callback all the way through adapters not the right approach, hence calling here.
+extern void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
+#endif
+
 CAResult_t CAInitialize()
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitialize");
@@ -74,11 +80,19 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
     OIC_LOG_V(DEBUG, TAG, "CARegisterHandler");
 
     CASetRequestResponseCallbacks(ReqHandler, RespHandler);
-
-    return CA_STATUS_OK;
 }
 
-CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, 
+#ifdef __WITH_DTLS__
+CAResult_t CARegisterDTLSCredentialsHandler(
+                                             CAGetDTLSCredentialsHandler GetDTLSCredentialsHandler)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
+    CADTLSSetCredentialsCallback(GetDTLSCredentialsHandler);
+    return CA_STATUS_OK;
+}
+#endif //__WITH_DTLS__
+
+CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
     const CAConnectivityType_t connectivityType,CARemoteEndpoint_t **remoteEndpoint)
 {
     OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpoint");

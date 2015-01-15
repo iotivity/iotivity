@@ -31,6 +31,10 @@
  */
 #include "cacommon.h"
 
+#ifdef __WITH_DTLS__
+#include "ocsecurityconfig.h"
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -54,6 +58,15 @@ typedef void (*CARequestCallback)(const CARemoteEndpoint_t *object,
  */
 typedef void (*CAResponseCallback)(const CARemoteEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo);
+								   
+#ifdef __WITH_DTLS__
+/**
+ * @brief   Callback function type for getting DTLS credentials.
+ * @param   credInfo          [OUT] DTLS credentials info
+ * @return  NONE
+ */
+typedef void (*CAGetDTLSCredentialsHandler)(OCDtlsPskCredsBlob **credInfo);
+#endif //__WITH_DTLS__
 
 /**
  * @brief   Initialize the connectivity abstraction module.
@@ -96,6 +109,16 @@ CAResult_t CAStartDiscoveryServer();
  * @see     CAResponseCallback
  */
 void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+
+#ifdef __WITH_DTLS__
+/**
+ * @brief   Register callback to get DTLS PSK credentials.
+ * @param   GetDTLSCredentials   [IN] GetDTLS Credetials callback
+ * @return  #CA_STATUS_OK or Appropriate error code
+ */
+CAResult_t CARegisterDTLSCredentialsHandler(
+                                                   CAGetDTLSCredentialsHandler GetDTLSCredentials);
+#endif //__WITH_DTLS__
 
 /**
  * @brief   Create a Remote endpoint if the URI is available already.

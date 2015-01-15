@@ -1,0 +1,17 @@
+##
+# This script includes arduino specific config for oic-resource
+##
+Import('env')
+
+env.ImportLib('SPI')
+if 'ETHERNET' in env.get('TARGET_TRANSPORT'):
+	env.ImportLib('Ethernet')
+if 'WIFI' in env.get('TARGET_TRANSPORT'):
+	env.ImportLib('WiFi')
+if 'BLE' in env.get('TARGET_TRANSPORT'):
+	env.ImportLib('BLE')
+	env.ImportLib('RBL_nRF8001')	
+
+env.ImportLib('Time/Time')
+# we have variety of macros for arduino!!
+env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO', '__ARDUINO__', 'TB_LOG'])

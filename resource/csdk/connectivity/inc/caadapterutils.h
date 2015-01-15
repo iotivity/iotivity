@@ -47,7 +47,7 @@ extern "C"
         OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
         return CA_STATUS_INVALID_PARAM; \
     } \
- 
+
 /**
  * @def VERIFY_NON_NULL_RET
  * @brief Macro to verify the validity of input argument
@@ -57,7 +57,7 @@ extern "C"
         OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
         return ret; \
     } \
- 
+
 /**
  * @def VERIFY_NON_NULL_VOID
  * @brief Macro to verify the validity of input argument
@@ -67,7 +67,7 @@ extern "C"
         OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
         return; \
     } \
- 
+
 /**
  * @fn CAAdapterCreateLocalEndpoint
  * @brief Create CALocalConnectivity_t instance.

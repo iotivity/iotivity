@@ -1,0 +1,24 @@
+Import('env')
+
+sample_env= env.Clone()
+root_dir = './../../'
+
+sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+sample_env.PrependUnique(LIBS = ['connectivity_abstraction', 'coap'])
+
+sample_env.PrependUnique(CPPPATH = [root_dir + '/api/'])
+sample_env.AppendUnique(CPPPATH = [root_dir + '/inc/'])
+sample_env.AppendUnique(CPPPATH = [root_dir + '/lib/libcoap-4.1.1/'])
+sample_env.AppendUnique(CPPPATH = [root_dir + 'common/inc/'])
+
+sample_dir = './samples/arduino/'
+arduino_simplecs = sample_env.Program('CASample', 'casample.cpp')
+env.CreateBin('CASample')
+
+i_arduino_simplecs = sample_env.Install(env.get('BUILD_DIR'), arduino_simplecs)
+
+Alias('arduino_simplecs', i_arduino_simplecs)
+sample_env.Default('CASample.hex')
+
+if(sample_env['UPLOAD'] == True): 
+	sample_env.Upload(env.get('BUILD_DIR') + '/samples/arduino/' + 'CASample.hex')

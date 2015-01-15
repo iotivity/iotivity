@@ -64,7 +64,7 @@ help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_va
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
-targets_support_cc = ['linux', 'arduino', 'tizen']
+targets_support_cc = ['linux', 'arduino', 'tizen', 'android']
 
 if target_os in targets_support_cc:
 	# Set cross compile toolchain
@@ -81,6 +81,11 @@ else:
 	env = Environment(variables = help_vars, TARGET_ARCH = target_arch, TARGET_OS = target_os)
 
 Help(help_vars.GenerateHelpText(env))
+
+# Get the device name and set it to __OIC_DEVICE_NAME__
+device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
+print device_name
+env.AppendUnique(CPPDEFINES = ['-D__OIC_DEVICE_NAME__=' + "\'\"" + device_name + "\"\'"])
 
 tc_set_msg = '''
 ************************************ Warning **********************************
@@ -221,7 +226,7 @@ if target_os == "yocto":
     env['TARGET_OS'] = 'linux'
     '''
     We want to preserve debug symbols to allow BitBake to generate both DEBUG and
-    RELEASE packages for OIC. 
+    RELEASE packages for OIC.
     '''
     env['CCFLAGS'].append('-g')
     Export('env')

@@ -25,6 +25,7 @@
 #include "umutex.h"
 #include "caadapterutils.h"
 #include "ocsecurityconfig.h"
+#include "cainterface.h"
 
 #define MAX_SUPPORTED_ADAPTERS 2
 
@@ -140,9 +141,15 @@ typedef enum
  * @retval  void
  *
  */
-
 void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
                                CAPacketSendCallback sendCallback, eDtlsAdapterType_t type);
+
+/**
+ * @brief   Register callback to get DTLS PSK credentials.
+ * @param   credCallback   [IN] callback to get DTLS credentials
+ * @retval  void
+ */
+void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
 
 /**
  * @fn  CAAdapterNetDtlsInit
