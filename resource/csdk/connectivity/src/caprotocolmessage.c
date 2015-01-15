@@ -86,13 +86,15 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
         return NULL;
     }
 
-    coapUri = (char *) OICMalloc(length + coapHeaderLength + 1);
+    uint32_t uriLength = length + coapHeaderLength + 1;
+    coapUri = (char *) OICMalloc(uriLength);
+
     if (coapUri == NULL)
     {
         OIC_LOG(DEBUG, TAG, "CAGeneratePdu, Memory allocation failed !");
         return NULL;
     }
-    memset(coapUri, 0, length + coapHeaderLength + 1);
+    memset(coapUri, 0, uriLength);
 
     if (NULL != coapUri)
     {
@@ -106,6 +108,7 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
         CAParseHeadOption(code, info, &optlist);
 
         OICFree(coapUri);
+        coapUri = NULL;
     }
 
     if (NULL != info.payload) // payload is include in request / response
@@ -118,6 +121,9 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
         if (!(pdu = CACreatePDUforRequest((code_t) code, optlist, info)))
             return NULL;
     }
+
+    // free option list
+    coap_delete_list(optlist);
 
     // pdu print method : coap_show_pdu(pdu);
     OIC_LOG(DEBUG, TAG, "CAGeneratePdu OUT");
@@ -347,13 +353,13 @@ coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length,
     coap_option *option;
     coap_list_t *node;
 
-    option = coap_malloc(sizeof(coap_option) + length);
+    option = coap_malloc(sizeof(coap_option) + length + 1);
     if (!option)
     {
         OIC_LOG(DEBUG, TAG, "Out of memory");
         return NULL;
     }
-    memset(option, 0, sizeof(coap_option) + length);
+    memset(option, 0, sizeof(coap_option) + length + 1);
 
     COAP_OPTION_KEY(*option) = key;
     COAP_OPTION_LENGTH(*option) = length;
@@ -510,13 +516,14 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
     if (pdu->hdr->token_length > 0)
     {
         OIC_LOG(DEBUG, TAG, "inside pdu->hdr->token_length");
-        outInfo->token = (char *) OICMalloc(CA_MAX_TOKEN_LEN);
+        outInfo->token = (char *) OICMalloc(CA_MAX_TOKEN_LEN + 1);
         if (outInfo->token == NULL)
         {
             OIC_LOG(DEBUG, TAG, "CAGetRequestPDUInfo, Memory allocation failed !");
             OICFree(outInfo->options);
             return;
         }
+        memset(outInfo->token, 0, CA_MAX_TOKEN_LEN + 1);
         memcpy(outInfo->token, pdu->hdr->token, CA_MAX_TOKEN_LEN);
     }
 

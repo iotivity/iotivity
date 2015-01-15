@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "cableclientutil.h"
+#include "cableutil.h"
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -325,7 +325,33 @@ void CAFreeBLEServiceInfo(BLEServiceInfo *bleServiceInfo)
 }
 
 
-CAResult_t CAVerifyOICService(bt_gatt_attribute_h serviceHandle)
+CAResult_t CAVerifyOICServiceByUUID(const char* serviceUUID)
+{
+    OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
+
+    VERIFY_NON_NULL(serviceUUID, NULL, "Param serviceHandle is NULL");
+/*
+    int32_t ret = 0;
+    char *uuid = NULL;
+
+    ret = bt_gatt_get_service_uuid(serviceHandle, &uuid);
+
+    if (0 != ret)
+    {
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "bt_gatt_get_service_uuid failed !");
+        return CA_STATUS_FAILED;
+    }
+*/
+    if (strcasecmp(serviceUUID, OIC_BLE_SERVICE_ID) != 0)
+    {
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "It is not OIC service!");
+        return CA_STATUS_FAILED;
+    }
+    OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAVerifyOICServiceByServiceHandle(bt_gatt_attribute_h serviceHandle)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 

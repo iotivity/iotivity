@@ -210,6 +210,7 @@ static void CAReceiveHandler(void *data)
                 gExceptionCallback(ctx->type);
             }
             OICFree(ctx);
+            ctx = NULL;
             return;
         }
 
@@ -263,9 +264,13 @@ static void CAReceiveHandler(void *data)
                 // Should never occur
                 OIC_LOG_V(DEBUG, ETHERNET_SERVER_TAG, "Invalid server type");
                 OICFree(ctx);
+                ctx = NULL;
                 return;
         }
     }
+    OICFree(ctx);
+    ctx = NULL;
+
 
     OIC_LOG(DEBUG, ETHERNET_SERVER_TAG, "OUT");
 }
@@ -601,8 +606,9 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
     OIC_LOG(DEBUG, ETHERNET_SERVER_TAG, "IN");
 
     // Input validation
-    VERIFY_NON_NULL(localAddress, ETHERNET_SERVER_TAG, "Local address is NULL");
-    VERIFY_NON_NULL(multicastAddress, ETHERNET_SERVER_TAG, "Multicast address is NULL");
+    VERIFY_NON_NULL(localAddress, ETHERNET_SERVER_TAG, "localAddress");
+    VERIFY_NON_NULL(multicastAddress, ETHERNET_SERVER_TAG, "port");
+    VERIFY_NON_NULL(serverFD, ETHERNET_SERVER_TAG, "server socket FD");
 
     int16_t port = multicastPort;
     if (0 >= port)

@@ -22,11 +22,12 @@
 char *OICStrdup(const char *str)
 {
     // Allocate memory for original string length and 1 extra byte for '\0'
-    size_t length = strlen(str) + 1;
-    char *dup = OICMalloc(length);
+    size_t length = strlen(str);
+    char *dup = (char *)OICMalloc(length + 1);
     if (NULL != dup)
     {
         memcpy(dup, str, length);
+        dup[length] = '\0';
     }
     return dup;
 }

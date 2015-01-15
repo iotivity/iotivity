@@ -34,7 +34,6 @@
 #define CA_BUFSIZE 128
 #define CA_COAP_MESSAGE_CON 0
 
-#include "util.h"
 
 uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
                                  char *outUri)
@@ -364,7 +363,7 @@ coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length,
         coap_free(option);
         return NULL;
     }
-    coap_free(option);
+   
     OIC_LOG(DEBUG, TAG, "OUT");
     return node;
 }
@@ -506,13 +505,14 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
     if (pdu->hdr->token_length > 0)
     {
         OIC_LOG(DEBUG, TAG, "pdu->hdr->token_length>0");
-        outInfo->token = (char *) OICMalloc(CA_MAX_TOKEN_LEN);
+        outInfo->token = (char *) OICMalloc(CA_MAX_TOKEN_LEN + 1);
         if (outInfo->token == NULL)
         {
             OIC_LOG(DEBUG, TAG, "error");
             OICFree(outInfo->options);
             return;
         }
+        memset(outInfo->token, 0, CA_MAX_TOKEN_LEN + 1);
         memcpy(outInfo->token, pdu->hdr->token, CA_MAX_TOKEN_LEN);
     }
 

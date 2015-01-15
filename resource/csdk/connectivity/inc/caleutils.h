@@ -39,9 +39,15 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid);
 
 jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid);
 
-jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
+jstring CALEGetLocalDeviceAddress(JNIEnv *env);
 
-jstring CALEGetLocalDeviceAddress(JNIEnv* env);
+jobjectArray CALEGetBondedDevices(JNIEnv *env);
+
+jint CALEGetBTStateOnInfo(JNIEnv *env);
+
+jboolean CALEIsEnableBTAdapter(JNIEnv *env);
+
+jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 
 #ifdef __cplusplus
 } /* extern "C" */

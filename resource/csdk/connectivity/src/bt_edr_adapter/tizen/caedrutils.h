@@ -20,11 +20,11 @@
 
 /**
  * @file  cabtutils.h
- * @brief  This file provides helper functions for EDR adapter.
+ * @brief This file provides helper functions for EDR adapter.
  */
 
-#ifndef __CA_BT_UTILS_H_
-#define __CA_BT_UTILS_H_
+#ifndef __CA_EDR_UTILS_H_
+#define __CA_EDR_UTILS_H_
 
 #include <stdbool.h>
 #include <string.h>
@@ -32,13 +32,13 @@
 #include "cacommon.h"
 #include "oic_malloc.h"
 
-#ifndef BLUETOOTH_ADAPTER_TAG
-#define BLUETOOTH_ADAPTER_TAG "CA_BLUETOOTH"
-#endif //BLUETOOTH_ADAPTER_TAG
-
-#ifndef OIC_BT_SERVICE_ID
-#define OIC_BT_SERVICE_ID "12341234-1C25-481F-9DFB-59193D238280"
-#endif //OIC_BT_SERVICE_ID
+/**
+ * @var EDR_ADAPTER_TAG
+ * @brief Logging tag for module name.
+ */
+#ifndef EDR_ADAPTER_TAG
+#define EDR_ADAPTER_TAG "CA_EDR_ADAPTER"
+#endif //EDR_ADAPTER_TAG
 
 #ifdef __cplusplus
 extern "C"
@@ -46,22 +46,21 @@ extern "C"
 #endif
 
 /**
- * @fn  CABTIsServiceSupported
  * @brief  Checks if the specified list of service UUIDs contains OIC service UUID.
  *
- * @param[in]  serviceUUID  Array of service UUIDs
- * @param[in]  serviceCount  Size of the service UUIDs array.
- * @param[in]  matchService  Service UUID to be checked in the given array of service UUIDs
+ * @param  serviceUUID  [IN] Array of service UUIDs
+ * @param  serviceCount [IN] Size of the service UUIDs array.
+ * @param  matchService [IN] Service UUID to be checked in the given array of service UUIDs
  *
- * @return  true if match service UUID found otherwise false.
+ * @return  CA_TRUE if match service UUID found otherwise CA_FALSE.
  *
  */
-bool CABTIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
+CABool_t CAEDRIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
                             const char *matchService);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif //__CA_BT_UTILS_H_
+#endif //__CA_EDR_UTILS_H_
 

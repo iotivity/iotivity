@@ -1,6 +1,6 @@
 <manifest>
 	<define>
-	  <domain name="interfacesample" />
+	  <domain name="casample" />
 	  <permit>
          	<smack permit="system::use_internet" type="rwx"/>
 	  </permit>
@@ -17,9 +17,9 @@
          </request>
 	</define>
 	<assign>
-		<filesystem path="/opt/apps/com.samsung.interfacesample/bin/sample" exec_label="sample" />
+		<filesystem path="/opt/apps/com.oic.ca.sample/bin/sample" exec_label="sample" />
 	</assign>
 	<request>
-		<domain name="interfacesample" />
+		<domain name="casample" />
 	</request>
 </manifest>

@@ -23,33 +23,33 @@
  * @brief  This file provides helper functions for EDR adapter.
  */
 
-#include "cabtutils.h"
+#include "caedrutils.h"
 #include "logger.h"
 
 #include <bluetooth.h>
 
-bool CABTIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
-                            const char *matchService)
+CABool_t CAEDRIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
+                                 const char *matchService)
 {
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     if (NULL == serviceUUID || 0 == serviceCount || NULL == matchService)
     {
-        OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Invalid input");
-        return false;
+        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Invalid input");
+        return CA_FALSE;
     }
 
     for (int i = 0; i < serviceCount; i++)
     {
         if (!strcasecmp(serviceUUID[i], matchService))
         {
-            OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "Service found !");
-            return true;
+            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Service found !");
+            return CA_TRUE;
         }
     }
 
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
-    return false;
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    return CA_FALSE;
 }
 
 

@@ -19,6 +19,14 @@
 *
 ******************************************************************/
 
+/**
+ * @file cableserver.h
+ * @brief This file contains the APIs related to the GATT Server functionalities.
+ *        Creation of the GattServer with the characteristics. Enabling the advertisement
+ *        and updating the characteristics for the response and notifying the change of
+ *        characteristcs for the request will be done here
+ */
+
 #ifndef _BLE_ADAPTER_ARDUINO_H_
 #define _BLE_ADAPTER_ARDUINO_H_
 
@@ -32,105 +40,98 @@ extern "C"
 
 /**
  * @brief API to initialize Arduino BLE module and advertise the service
- * @return - int
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAInitializeBle();
 
 /**
- * @brief API to send received data to upper layer
- * @param[in] data - data received from BLE characteristics
- * @param[in] dataLen - received data Length
- * @param[in] senderAdrs - sender Address.
- * @param[in] senderPort - sender port
- * @return - Error Code
+ * @brief API to Terminate Arduino BLE module and advertise the service
+ * @return #CA_STATUS_OK or Appropriate error code
+ */
+CAResult_t CATerminateBle();
+
+/**
+ * @brief Send the received data to Connectivity Abstraction layer.
+ * @param data       [IN] Data received from BLE characteristics
+ * @param dataLen    [IN] Received data Length
+ * @param senderAdrs [IN] Sender Address.
+ * @param senderPort [IN] Sender port
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 void CANotifyCallback(void *data, int32_t dataLen, char *senderAdrs, int32_t senderPort);
 
 /**
- * @brief API to add new service in Gatt Server
- * @param[in] service_uuid - unique identifier for each service.
- * @return - Error Code
+ * @brief Adds a new service in Gatt Server
+ * @param service_uuid [IN] Unique identifier for each service.
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAAddNewBleServiceInGattServer(const char *service_uuid);
 
 /**
- * @brief API to remove the added service from  Ble Gatt server.
- * @param[in] svc_path - unique identifier for each service.
- * @return - Error Code
+ * @brief Remove the added service from  Ble Gatt server.
+ * @param svc_path [IN] Unique identifier for each service.
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CARemoveBleServiceFromGattServer(const char *svc_path);
 
 /**
- * @brief API to remove all the services from Ble Gatt server.
- * @return - Error Code
+ * @brief Remove all the services from Ble Gatt server.
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CARemoveAllBleServicesFromGattServer();
 
 /**
- * @brief API to register service with GattService after adding the service.
- * @param[in] svc_path - unique identifier for each service.
- * @return - Error Code
+ * @brief Register service with GattService after adding the service.
+ * @param svc_path [IN] Unique identifier for each service.
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CARegisterBleServicewithGattServer(const char *svc_path);
 
 /**
- * @brief API to add new characteristics to the service
- * @param[in]  svc_path service path to which this characteristic belongs to.
- * @param[in]  char_uuid    Gatt characteristic uuid.
- * @param[in]  char_value   Gatt characteristic value.
- * @param[in]  value_len    Caracteristic value length.
- * @param[in]  char_flags   Characteristic flags.
- * @param[in]  flags_length Caracteristic flags length.
- * @param[out] char_path    characteristic path registered on the interface.
- * @return - Error Code
+ * @brief Add new characteristics to the service
+ * @param svc_path        [IN] Service path to which this characteristic belongs to.
+ * @param char_uuid       [IN] Gatt characteristic uuid.
+ * @param char_value      [IN] Gatt characteristic value.
+ * @param char_value_len  [IN] Characteristic value length.
+ * @param read            [IN] Boolean variable for checking whether read characteristics or
+ *                             write characteristics.
+ * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAAddNewCharacteristicsToGattServer(const char *svc_path,
-        const char *char_uuid,
-        const char *char_value,
-        int char_value_len,
-        int read);
+CAResult_t CAAddNewCharacteristicsToGattServer(const char *svc_path, const char *char_uuid,
+                                               const char *char_value, int char_value_len,
+                                               int read);
 
 /**
- * @brief API to remove the characteristics.
- * @param[in]  char_path    characteristic path registered on the interface and unique
- * identifier for added characteristics.
- * @return - Error Code
+ * @brief Remove the characteristics from BLE GATT server
+ * @param  char_path  [IN] characteristic path registered on the interface and unique
+ *                         identifier for added characteristics.
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CARemoveCharacteristicsFromGattServer(const char *char_path);
 
 /**
  * @brief API to check whether data is available in BLE shield
- * @return - unsigned char
+ * @return - Received buffer length
  */
 unsigned char CAIsBleDataAvailable();
 
 /**
  * @brief API to check whether client is connected with BLE Shield
- * @return - unsigned char
+ * @return - Connection state
  */
 unsigned char CAIsBleConnected();
 
 /**
  * @brief API to read data from BLE shield
- * @return - char
+ * @return - Data read
  */
 char CAReadBleData();
 
 /**
  * @brief API to perform BLE events
- * @return - Error Code
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CABleDoEvents();
-
-/**
- * @brief  API used to send data to connected ble client
- *
- * @param[in]  data  -  data to be sent
- * @param[in]  len  -  data length
- *
- * @return  Error Code
- */
-CAResult_t CAWriteBleData(unsigned char *data, uint8_t len);
 
 #ifdef __cplusplus
 } /* extern "C" */

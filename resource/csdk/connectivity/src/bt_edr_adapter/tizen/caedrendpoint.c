@@ -23,22 +23,22 @@
  * @brief  This file provides the APIs to send data on established RFCOMM connections.
  */
 
-#include "cabtendpoint.h"
+#include "caedrendpoint.h"
 #include "caadapterutils.h"
-#include "cabtutils.h"
+#include "caedrutils.h"
 #include "logger.h"
 
-CAResult_t CABTSendData(const int32_t serverFD, const void *data, const uint32_t dataLength,
-                        uint32_t *sentDataLen)
+CAResult_t CAEDRSendData(const int32_t serverFD, const void *data, const uint32_t dataLength,
+                         uint32_t *sentDataLen)
 {
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "IN");
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    VERIFY_NON_NULL(data, BLUETOOTH_ADAPTER_TAG, "Data is null");
-    VERIFY_NON_NULL(sentDataLen, BLUETOOTH_ADAPTER_TAG, "Sent data length holder is null");
+    VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
+    VERIFY_NON_NULL(sentDataLen, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
     if (0 > serverFD)
     {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "Invalid input: Negative socket id");
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative socket id");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -46,12 +46,12 @@ CAResult_t CABTSendData(const int32_t serverFD, const void *data, const uint32_t
     dataLen = bt_socket_send_data(serverFD, (const char *)data, dataLength);
     if (dataLen == -1)
     {
-        OIC_LOG_V(ERROR, BLUETOOTH_ADAPTER_TAG, "sending data failed!, soketid [%d]", serverFD);
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "sending data failed!, soketid [%d]", serverFD);
         *sentDataLen = 0;
         return CA_STATUS_FAILED;
     }
 
     *sentDataLen = dataLen;
-    OIC_LOG_V(DEBUG, BLUETOOTH_ADAPTER_TAG, "OUT");
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }

@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,8 +22,10 @@ public class MainActivity extends Activity {
 
 	static RMInterface RM = new RMInterface();
 
+	private final static String TAG = "MainActivity";
+
 	private final CharSequence[] mCheckBoxItems = { Network.WIFI.name(),
-			Network.LE.name() };
+			Network.EDR.name(), Network.LE.name() };
 
 	private final CharSequence[] mDTLSCheckBoxItems = { DTLS.SECURED.name(),
 			DTLS.UNSECURED.name() };
@@ -35,7 +38,7 @@ public class MainActivity extends Activity {
 	};
 
 	private enum Network {
-		WIFI, LE
+		WIFI, EDR, LE
 	};
 
 	private enum DTLS {
@@ -50,21 +53,35 @@ public class MainActivity extends Activity {
 
 	private ArrayList<Integer> mSelectedItems = new ArrayList<Integer>();
 
-	private ArrayList<Integer> mSRSelectedItems = new ArrayList<Integer>();
-
-	private boolean mCheckedItems[] = { false, false };
-
 	private RelativeLayout mFindResourceLayout = null;
 
 	private RelativeLayout mSendNotificationLayout = null;
 
 	private RelativeLayout mSendRequestLayout = null;
-	
+
 	private RelativeLayout mSendRequestSettingLayout = null;
 
-	private RelativeLayout mSendResponseLayout = null;
+	private RelativeLayout mSendResponseNotiSettingLayout = null;
 
 	private RelativeLayout mReceiveLayout = null;
+
+	private RelativeLayout mFindTitleLayout = null;
+
+	private RelativeLayout mRequestTitleLayout = null;
+
+	private RelativeLayout mResponseNotificationTitleLayout = null;
+
+	private RelativeLayout mAdvertiseTitleLayout = null;
+
+	private RelativeLayout mHandleTitleLayout = null;
+
+	private RelativeLayout mPayLoadClientEditLayout = null;
+
+	private RelativeLayout mPayLoadServerEditLayout = null;
+
+	private RelativeLayout mAdvertiseResourceLayout = null;
+
+	private RelativeLayout mServerButtonLayout = null;
 
 	private TextView mMode_tv = null;
 
@@ -76,19 +93,25 @@ public class MainActivity extends Activity {
 
 	private EditText mReqData_ed = null;
 
-	private EditText mRespData_ed = null;
+	private EditText mPayload_ed = null;
 
 	private Button mFind_btn = null;
 
 	private Button mNotify_btn = null;
 
+	private Button mAdvertiseResource_btn = null;
+
 	private Button mReqeust_btn = null;
-	
+
 	private Button mReqeust_setting_btn = null;
+
+	private Button mResponse_Notify_setting_btn = null;
 
 	private Button mResponse_btn = null;
 
 	private Button mRecv_btn = null;
+
+	private Handler mLogHandler = null;
 
 	/**
 	 * Defined ConnectivityType in cacommon.c
@@ -97,9 +120,11 @@ public class MainActivity extends Activity {
 	 * 3)
 	 */
 	private int CA_WIFI = (1 << 1);
+	private int CA_EDR = (1 << 2);
 	private int CA_LE = (1 << 3);
 	private int isSecured = 0;
 	private int msgType = 0;
+	private int selectedItem = 0;
 	int selectedNetwork = 0;
 
 	@Override
@@ -107,13 +132,33 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		RM.setResponseListener(this);
+
+		mLogHandler = new Handler();
+		TextView logView = (TextView) findViewById(R.id.tv_result);
+		DLog.setTextView(mLogHandler, logView);
+
 		// Initialize UI
-		mFindResourceLayout = (RelativeLayout) findViewById(R.id.layout_find);
-		mSendNotificationLayout = (RelativeLayout) findViewById(R.id.layout_notify);
-		mSendRequestLayout = (RelativeLayout) findViewById(R.id.layout_request);
-		mSendRequestSettingLayout = (RelativeLayout) findViewById(R.id.layout_request_setting);
-		mSendResponseLayout = (RelativeLayout) findViewById(R.id.layout_response);
+		// common
 		mReceiveLayout = (RelativeLayout) findViewById(R.id.layout_receive);
+
+		// client
+		mSendRequestLayout = (RelativeLayout) findViewById(R.id.layout_request);
+		mSendRequestSettingLayout = (RelativeLayout) findViewById(R.id.layout_request_setting_for_client);
+		mFindResourceLayout = (RelativeLayout) findViewById(R.id.layout_find);
+		mFindTitleLayout = (RelativeLayout) findViewById(R.id.layout_find_title);
+		mRequestTitleLayout = (RelativeLayout) findViewById(R.id.layout_request_title);
+		mHandleTitleLayout = (RelativeLayout) findViewById(R.id.layout_handle_title);
+		mPayLoadClientEditLayout = (RelativeLayout) findViewById(R.id.layout_payload_client_ed);
+
+		// server
+		mSendNotificationLayout = (RelativeLayout) findViewById(R.id.layout_notify);
+		mPayLoadServerEditLayout = (RelativeLayout) findViewById(R.id.layout_payload_server_ed);
+		mSendResponseNotiSettingLayout = (RelativeLayout) findViewById(R.id.layout_request_setting_for_server);
+		mServerButtonLayout = (RelativeLayout) findViewById(R.id.layout_server_bt);
+		mResponseNotificationTitleLayout = (RelativeLayout) findViewById(R.id.layout_Response_Noti_title);
+		mAdvertiseTitleLayout = (RelativeLayout) findViewById(R.id.layout_advertise_title);
+		mAdvertiseResourceLayout = (RelativeLayout) findViewById(R.id.layout_advertise_resource);
 
 		mMode_tv = (TextView) findViewById(R.id.tv_mode);
 		mNetwork_tv = (TextView) findViewById(R.id.tv_network);
@@ -121,20 +166,25 @@ public class MainActivity extends Activity {
 		mUri_ed = (EditText) findViewById(R.id.et_uri);
 		mNotification_ed = (EditText) findViewById(R.id.et_notification);
 		mReqData_ed = (EditText) findViewById(R.id.et_req_data);
-		mRespData_ed = (EditText) findViewById(R.id.et_resp_data);
+		mPayload_ed = (EditText) findViewById(R.id.et_payload_data_for_server);
 
 		mFind_btn = (Button) findViewById(R.id.btn_find_resource);
+		mResponse_btn = (Button) findViewById(R.id.btn_sendresponse);
 		mNotify_btn = (Button) findViewById(R.id.btn_notify);
+		mAdvertiseResource_btn = (Button) findViewById(R.id.btn_advertise);
 		mReqeust_btn = (Button) findViewById(R.id.btn_Request);
-		mReqeust_setting_btn  = (Button) findViewById(R.id.btn_Request_setting);
-		mResponse_btn = (Button) findViewById(R.id.btn_Response);
+		mReqeust_setting_btn = (Button) findViewById(R.id.btn_Request_setting_for_client);
+		mResponse_Notify_setting_btn = (Button) findViewById(R.id.btn_Request_setting_for_server);
 		mRecv_btn = (Button) findViewById(R.id.btn_receive);
 
 		mFind_btn.setOnClickListener(mFindResourceHandler);
+		mResponse_btn.setOnClickListener(mSendResponseHandler);
 		mNotify_btn.setOnClickListener(mNotifyHandler);
+		mAdvertiseResource_btn.setOnClickListener(mAdvertiseResourceHandler);
 		mReqeust_btn.setOnClickListener(mSendRequestHandler);
 		mReqeust_setting_btn.setOnClickListener(mSendRequestSettingHandler);
-		mResponse_btn.setOnClickListener(mSendResponseHandler);
+		mResponse_Notify_setting_btn
+				.setOnClickListener(mSendResponseNotiSettingHandler);
 		mRecv_btn.setOnClickListener(mResponseHandler);
 
 		showSelectModeView();
@@ -153,8 +203,17 @@ public class MainActivity extends Activity {
 		mSendNotificationLayout.setVisibility(View.INVISIBLE);
 		mSendRequestLayout.setVisibility(View.INVISIBLE);
 		mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
-		mSendResponseLayout.setVisibility(View.INVISIBLE);
 		mReceiveLayout.setVisibility(View.INVISIBLE);
+		mFindTitleLayout.setVisibility(View.INVISIBLE);
+		mRequestTitleLayout.setVisibility(View.INVISIBLE);
+		mHandleTitleLayout.setVisibility(View.INVISIBLE);
+		mPayLoadClientEditLayout.setVisibility(View.INVISIBLE);
+		mPayLoadServerEditLayout.setVisibility(View.INVISIBLE);
+		mServerButtonLayout.setVisibility(View.INVISIBLE);
+		mResponseNotificationTitleLayout.setVisibility(View.INVISIBLE);
+		mAdvertiseTitleLayout.setVisibility(View.INVISIBLE);
+		mAdvertiseResourceLayout.setVisibility(View.INVISIBLE);
+		mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
 
 		mMode_tv.setText("Select Mode (Server or Client)");
 	}
@@ -172,8 +231,21 @@ public class MainActivity extends Activity {
 			mSendNotificationLayout.setVisibility(View.VISIBLE);
 			mSendRequestLayout.setVisibility(View.INVISIBLE);
 			mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
-			mSendResponseLayout.setVisibility(View.INVISIBLE);
 			mReceiveLayout.setVisibility(View.VISIBLE);
+
+			mFindTitleLayout.setVisibility(View.INVISIBLE);
+			mRequestTitleLayout.setVisibility(View.INVISIBLE);
+			mHandleTitleLayout.setVisibility(View.VISIBLE);
+			mPayLoadClientEditLayout.setVisibility(View.INVISIBLE);
+
+			mPayLoadServerEditLayout.setVisibility(View.VISIBLE);
+			mServerButtonLayout.setVisibility(View.VISIBLE);
+
+			mResponseNotificationTitleLayout.setVisibility(View.VISIBLE);
+			mAdvertiseTitleLayout.setVisibility(View.VISIBLE);
+			mAdvertiseResourceLayout.setVisibility(View.VISIBLE);
+
+			mSendResponseNotiSettingLayout.setVisibility(View.VISIBLE);
 
 			mNetwork_tv.setText("");
 
@@ -183,8 +255,21 @@ public class MainActivity extends Activity {
 			mSendNotificationLayout.setVisibility(View.INVISIBLE);
 			mSendRequestLayout.setVisibility(View.VISIBLE);
 			mSendRequestSettingLayout.setVisibility(View.VISIBLE);
-			mSendResponseLayout.setVisibility(View.INVISIBLE);
 			mReceiveLayout.setVisibility(View.VISIBLE);
+
+			mFindTitleLayout.setVisibility(View.VISIBLE);
+			mRequestTitleLayout.setVisibility(View.VISIBLE);
+			mHandleTitleLayout.setVisibility(View.VISIBLE);
+			mPayLoadClientEditLayout.setVisibility(View.VISIBLE);
+
+			mPayLoadServerEditLayout.setVisibility(View.INVISIBLE);
+			mServerButtonLayout.setVisibility(View.INVISIBLE);
+
+			mResponseNotificationTitleLayout.setVisibility(View.INVISIBLE);
+			mAdvertiseTitleLayout.setVisibility(View.INVISIBLE);
+			mAdvertiseResourceLayout.setVisibility(View.INVISIBLE);
+
+			mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
 
 			mNetwork_tv.setText("");
 		}
@@ -196,6 +281,7 @@ public class MainActivity extends Activity {
 
 		// Terminate Connectivity Abstraction
 		RM.RMTerminate();
+		android.os.Process.killProcess(android.os.Process.myPid());
 	}
 
 	@Override
@@ -217,7 +303,7 @@ public class MainActivity extends Activity {
 
 			RM.RMStartListeningServer();
 
-			if (mCurrentMode == Mode.UNKNOWN || mSelectedItems.size() == 0) {
+			if (mSelectedItems.size() == 0) {
 				mCurrentMode = Mode.SERVER;
 				mMode_tv.setText("MODE: " + mCurrentMode.toString());
 				showNetworkView();
@@ -234,7 +320,7 @@ public class MainActivity extends Activity {
 
 			RM.RMStartDiscoveryServer();
 
-			if (mCurrentMode == Mode.UNKNOWN || mSelectedItems.size() == 0) {
+			if (mSelectedItems.size() == 0) {
 				mCurrentMode = Mode.CLIENT;
 				mMode_tv.setText("MODE: " + mCurrentMode.toString());
 				showNetworkView();
@@ -262,8 +348,21 @@ public class MainActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 
+			DLog.v(TAG, "FindResource click");
 			RM.RMFindResource(mUri_ed.getText().toString());
 
+		}
+	};
+
+	private OnClickListener mSendResponseHandler = new OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+
+			DLog.v(TAG, "SendResponse click");
+			RM.RMSendResponse(mNotification_ed.getText().toString(),
+					mPayload_ed.getText().toString(), selectedNetwork,
+					isSecured);
 		}
 	};
 
@@ -272,8 +371,21 @@ public class MainActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 
-			RM.RMSendNotification(mNotification_ed.getText().toString(), selectedNetwork);
+			DLog.v(TAG, "SendNotification click");
+			RM.RMSendNotification(mNotification_ed.getText().toString(),
+					mPayload_ed.getText().toString(), selectedNetwork,
+					isSecured);
+		}
+	};
 
+	private OnClickListener mAdvertiseResourceHandler = new OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+
+			DLog.v(TAG, "AdvertiseResource click");
+			RM.RMAdvertiseResource(mNotification_ed.getText().toString(),
+					selectedNetwork);
 		}
 	};
 
@@ -282,11 +394,12 @@ public class MainActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 
-			RM.RMSendRequest(mReqData_ed.getText().toString(), selectedNetwork, isSecured, msgType);
-
+			DLog.v(TAG, "SendRequest click");
+			RM.RMSendRequest(mReqData_ed.getText().toString(), mPayload_ed
+					.getText().toString(), selectedNetwork, isSecured, msgType);
 		}
 	};
-	
+
 	private OnClickListener mSendRequestSettingHandler = new OnClickListener() {
 
 		@Override
@@ -297,13 +410,12 @@ public class MainActivity extends Activity {
 		}
 	};
 
-	private OnClickListener mSendResponseHandler = new OnClickListener() {
+	private OnClickListener mSendResponseNotiSettingHandler = new OnClickListener() {
 
 		@Override
 		public void onClick(View v) {
 
-		//RM.RMSendResponse(mRespData_ed.getText().toString(), selectedNetwork);
-
+			checkMsgSecured("Select DTLS Type");
 		}
 	};
 
@@ -320,7 +432,7 @@ public class MainActivity extends Activity {
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(title)
-				.setMultiChoiceItems(mCheckBoxItems, mCheckedItems,
+				.setMultiChoiceItems(mCheckBoxItems, null,
 						new DialogInterface.OnMultiChoiceClickListener() {
 
 							@Override
@@ -349,7 +461,9 @@ public class MainActivity extends Activity {
 
 							if (mSelectedItems.get(i) == Network.WIFI.ordinal()) {
 								interestedNetwork |= CA_WIFI;
-
+							} else if (mSelectedItems.get(i) == Network.EDR
+									.ordinal()) {
+								interestedNetwork |= CA_EDR;
 							} else if (mSelectedItems.get(i) == Network.LE
 									.ordinal()) {
 								interestedNetwork |= CA_LE;
@@ -358,35 +472,24 @@ public class MainActivity extends Activity {
 
 						RM.RMSelectNetwork(interestedNetwork);
 						selectedNetwork = interestedNetwork;
-
-						if (interestedNetwork != 0
-								&& mCurrentMode != Mode.UNKNOWN) {
-							showModeView();
-						}
 					}
 				}).show();
+
+		mSelectedItems.clear();
 	}
 
 	private void checkMsgSecured(String title) {
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
 		builder.setTitle(title)
-				.setMultiChoiceItems(mDTLSCheckBoxItems, mCheckedItems,
-						new DialogInterface.OnMultiChoiceClickListener() {
+				.setSingleChoiceItems(mDTLSCheckBoxItems, -1,
+						new DialogInterface.OnClickListener() {
 
 							@Override
 							public void onClick(DialogInterface dialog,
-									int which, boolean isChecked) {
-
-								if (isChecked) {
-
-									mSRSelectedItems.add(which);
-
-								} else if (mSRSelectedItems.contains(which)) {
-
-									mSRSelectedItems.remove(Integer
-											.valueOf(which));
-								}
+									int which) {
+								selectedItem = which;
 							}
 						})
 				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -394,43 +497,44 @@ public class MainActivity extends Activity {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 
-						for (int i = 0; i < mSRSelectedItems.size(); i++) {
+						if (selectedItem == DTLS.SECURED.ordinal()) {
+							isSecured = 1;
+							DLog.v(TAG, "Send secured message");
 
-							if (mSRSelectedItems.get(i) == DTLS.SECURED
-									.ordinal()) {
-								isSecured = 1;
+							mPayLoadClientEditLayout
+									.setVisibility(View.INVISIBLE);
 
-							} else if (mSRSelectedItems.get(i) == DTLS.UNSECURED
-									.ordinal()) {
-								isSecured = 0;
+							mPayLoadServerEditLayout
+									.setVisibility(View.INVISIBLE);
+
+						} else if (selectedItem == DTLS.UNSECURED.ordinal()) {
+							isSecured = 0;
+							DLog.v(TAG, "Send unsecured message");
+
+							if (mCurrentMode == Mode.SERVER) {
+								mPayLoadServerEditLayout
+										.setVisibility(View.VISIBLE);
+							} else if (mCurrentMode == Mode.CLIENT) {
+								mPayLoadClientEditLayout
+										.setVisibility(View.VISIBLE);
 							}
 						}
 					}
-				}).show();
 
-		mSRSelectedItems.clear();
+				}).show();
 	}
 
 	private void checkMsgType(String title) {
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(title)
-				.setMultiChoiceItems(mMsgTyleCheckBoxItems, mCheckedItems,
-						new DialogInterface.OnMultiChoiceClickListener() {
+				.setSingleChoiceItems(mMsgTyleCheckBoxItems, -1,
+						new DialogInterface.OnClickListener() {
 
 							@Override
 							public void onClick(DialogInterface dialog,
-									int which, boolean isChecked) {
-
-								if (isChecked) {
-
-									mSRSelectedItems.add(which);
-
-								} else if (mSRSelectedItems.contains(which)) {
-
-									mSRSelectedItems.remove(Integer
-											.valueOf(which));
-								}
+									int which) {
+								selectedItem = which;
 							}
 						})
 				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -438,21 +542,22 @@ public class MainActivity extends Activity {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 
-						for (int i = 0; i < mSRSelectedItems.size(); i++) {
+						if (selectedItem == MsgType.CON.ordinal()) {
+							msgType = 0;
+							DLog.v(TAG, "Message Type is CON");
 
-							if (mSRSelectedItems.get(i) == MsgType.CON
-									.ordinal()) {
-								msgType = 0;
-
-							} else if (mSRSelectedItems.get(i) == MsgType.NON
-									.ordinal()) {
-								msgType = 1;
-							}
+						} else if (selectedItem == MsgType.NON.ordinal()) {
+							msgType = 1;
+							DLog.v(TAG, "Message Type is NON");
 						}
-						
+
 					}
 				}).show();
+	}
 
-		mSRSelectedItems.clear();
+	public void OnResponseReceived(String subject, String receivedData) {
+		String callbackData = subject + receivedData;
+		DLog.v(TAG, callbackData);
+
 	}
 }

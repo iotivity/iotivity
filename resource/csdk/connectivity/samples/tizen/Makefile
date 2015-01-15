@@ -19,8 +19,7 @@ INC_DIRS	  := -I$(ROOT_DIR)/
 #CFLAGS=-std=c99
 #CFLAGS=$(INC_DIRS) -std=c99 -DWITH_POSIX -g
 CFLAGS=$(INC_DIRS) -DWITH_POSIX -D__TIZEN__ $(ADAPTER_MACRO)
-#COMPILEFLAG = `pkg-config --cflags --libs com.samsung.oicca com.samsung.oicca-devel`
-COMPILEFLAG = `pkg-config --cflags --libs com.samsung.oicca capi-network-wifi gobject-2.0 glib-2.0 dlog capi-network-bluetooth`
+COMPILEFLAG = `pkg-config --cflags --libs com.oic.ca capi-network-wifi gobject-2.0 glib-2.0 dlog capi-network-bluetooth`
 
 OBJECTS	:= interfacesample.o casample.o
 

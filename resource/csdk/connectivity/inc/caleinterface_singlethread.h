@@ -29,7 +29,7 @@
 #include <stdbool.h>
 
 #include "cacommon.h"
-
+#include "caleadapter_singlethread.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -37,131 +37,169 @@ extern "C"
 #endif
 
 /**
- * @ENUM TRANSFER_TYPE
- * @brief Provide info about different mode of data transfer
- *
- * This enum is used to differentiate between unicast and multicast data transfer.
+ * @enum TRANSFER_TYPE
+ * @brief Provide information about different mode of data transfer
+ *        This enum is used to differentiate between unicast and multicast data transfer.
  */
 typedef enum
 {
     MULTICAST,    /**< When this enum is selected, data will be updated to all OIC servers. */
-    UNICAST    /**< When this enum is selected, data will be updated to desired OIC Server. */
+    UNICAST       /**< When this enum is selected, data will be updated to desired OIC Server. */
 } TRANSFER_TYPE;
 
+
 /**
-* @fn  CAStartBleGattServer
-* @brief  Used to start Gatt Server thread for service creation and advertise ble service.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*/
+ * @brief  Used to get the current state of the LE adapter.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_ADAPTER_NOT_ENABLED  adapter not enabled
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAGetLEAdapterState();
+
+/**
+ * @brief  Used to initialize the network monitor layer of the LE adapter.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CALEInitializeNetworkMonitor();
+
+/**
+ * @brief  Used to terminate the network monitor layer of the LE adapter.
+ * @return NONE
+ */
+void CALETerminateNetworkMonitor();
+
+/**
+ * @brief  This function is used to set the callback for the Device state changes in the adapter.
+ *
+ * @param  callback  [IN]  Callback to notify the Device state change to the CA Layer
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback);
+
+/**
+ * @brief  Provides the BD address of the local adapter.
+ * @param  local_address [IN] pointer to the location where bd address needs to be stored.
+ *
+ * @return NONE
+ */
+void CAGetLEAddress(char **local_address);
+
+/**
+ * @brief  Used to start Gatt Server thread for service creation and advertise ble service.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
 CAResult_t CAStartBleGattServer();
 
 /**
-* @fn  CAStopBleGattServer
-* @brief  Used to terminate BLE Gatt Service.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*/
+ * @brief  Used to stop BLE Gatt Service.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
 CAResult_t CAStopBleGattServer();
 
 /**
-* @fn  CASetBLEReqRespServerCallback
-* @brief  used to store upper layer callback locally which will be used to send the data
-* to application
-* @param[in]  CANetworkPacketReceivedCallback  -  upper layer callback function
-* to pass the data to CA layer.
-* @return  void
-*/
+ * @brief  Used to store upper layer callback locally which will be used to send the data to
+ *         application
+ * @param  callback [IN] Callback function to pass the data to CA layer.
+ * @return NONE
+ */
 void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback);
 
 /**
-* @fn  CAUpdateCharacteristicsInGattServer
-* @brief  Used to update characteristics(Read/Write) value that we want to send to particular client.
-*              Both unicast and multicast will use the same api. In mulicast, we will be sending in loop to all clients.
-*
-* @param[in]  charValue  - data that we want to send to client(unicast)/clients(multicast)
-* @param[in]  charValueLen  - length of the data.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*/
-CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue, const uint32_t charValueLen);
+ * @brief  Used to update characteristics(Read/Write) value that we want to send to particular
+ *         client. Both unicast and multicast will use the same api. In mulicast, we will be
+ *         sending in loop to all clients.
+ *
+ * @param  charValue     [IN] Data that we want to send to client(unicast)/clients(multicast)
+ * @param  charValueLen  [IN] Length of the data.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue,
+                                                            const uint32_t charValueLen);
 
 /**
-* @fn  CAStartBLEGattClient
-* @brief  Used to start CAStartBleGattClientThread for initializing Gatt Client
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*/
+ * @brief  Used to start CAStartBleGattClientThread for initializing Gatt Client
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
 CAResult_t CAStartBLEGattClient();
 
 /**
-* @fn  CAStopBLEGattClient
-* @brief  Used to stop Gatt Client gracefully in turn it will call CATerminateBLEGattClient function.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*/
+ * @brief  Used to stop Gatt Client gracefully in turn it will call CATerminateBLEGattClient
+ *         function.
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
 void CAStopBLEGattClient();
 
 /**
-* @fn  CATerminateBLEGattClient
-* @brief  Used to unset all the callbacks and stop service discovery
-*
-* @return  void
-*/
+ * @brief  Used to unset all the callbacks and stop service discovery
+ * @return NONE
+ */
 void CATerminateBLEGattClient();
 
 /**
-* @fn  CAUpdateCharacteristicsToGattServer
-* @brief  Sets the value of characteristic and update the value to GATTServer(unicast).
-*
-* @param[in]  remoteAddress  The address of the remote device
-* @param[in]  data  The value of characteristic (byte array)
-* @param[in]  dataLen  The length of value
-* @param[in]  TRANSFER_TYPE (UNICAST/MULTICAST)
-* @param[in]  position  The unique index of each ble server. Used for multicast feature.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
-*/
-CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
-        const int32_t dataLen, TRANSFER_TYPE type, const int32_t position);
-
-/**
- * @fn  CAUpdateCharacteristicsToAllGattServers
- * @brief  Sets the value of characteristic and update the value to All registered GATTServer -> Multicast
+ * @brief  Sets the value of characteristic and update the value to GATTServer(unicast).
  *
- * @param[in]  data  The value of characteristic (byte array)
- * @param[in]  dataLen  The length of value
+ * @param  remoteAddress [IN] The address of the remote device
+ * @param  data          [IN] The value of characteristic (byte array)
+ * @param  dataLen       [IN] The length of value
+ * @param  type          [IN] Type of the transfer(#TRANSFER_TYPE)
+ * @param  position      [IN] The unique index of each ble server. Used for multicast feature.
  *
- * @return  0 on success otherwise a positive error value.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, const int32_t dataLen);
+CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
+                                                const int32_t dataLen, TRANSFER_TYPE type,
+                                                const int32_t position);
 
 /**
- * @fn  CASetBLEReqRespClientCallback
- * @brief  used to store upper layer callback locally which will be used to send the data to application
+ * @brief  Sets the value of characteristic and update the value to all registered
+ *         GATTServer -> Multicast
+ * @param  data     [IN] The value of characteristic (byte array)
+ * @param  dataLen  [IN] The length of value
  *
- * @param[in]  CANetworkPacketReceivedCallback  -  upper layer callback function to pass the data to CA layer.
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
+                                                            const int32_t dataLen);
+
+/**
+ * @brief  Used to store upper layer callback locally which will be used to send the data to
+ *         application
+ * @param  callback  [IN] Callback function to pass the data to CA layer.
  *
  * @return  void
  */

@@ -33,7 +33,7 @@
  * @def WIFI_ETHERNET_ADAPTER_TAG
  * @brief Logging tag for module name
  */
-#define WIFI_ADAPTER_TAG "WA"
+#define WIFI_ADAPTER_TAG "WAST"
 
 /**
  * @def CA_PORT

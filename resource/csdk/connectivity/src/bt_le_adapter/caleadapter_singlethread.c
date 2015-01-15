@@ -27,15 +27,14 @@
 
 static CANetworkChangeCallback networkCallback = NULL;
 static bool gServerRunning = false;
-#define BLE_ADDRESS "DB:F7:EB:B5:0F:07"
 #define TAG "LAD"
 
 #define COAP_MAX_PDU_SIZE 320
 
 static CANetworkPacketReceivedCallback gRespCallback;
 static char *gCoapBuffer = NULL;
-static int32_t dataLen = 0;
-static uint16_t packetDataLen = 0;
+static uint32_t dataLen = 0;
+static uint32_t packetDataLen = 0;
 
 /**
  * @brief API to store the networkcallback passed from top layer, register BLE network notification
@@ -71,6 +70,13 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         return CA_STATUS_INVALID_PARAM;
     }
 
+    CAResult_t result = CALEInitializeNetworkMonitor();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "error");
+        return CA_STATUS_FAILED;
+    }
+
     gRespCallback = reqRespCallback;
     LERegisterNetworkNotifications(netCallback);
     CAConnectivityHandler_t connHandler;
@@ -89,8 +95,10 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAReadLEData()
 {
-    CABleDoEvents();
-    CACheckData();
+    if (true == gServerRunning)
+    {
+        CACheckData();
+    }
     return CA_STATUS_OK;
 }
 
@@ -100,15 +108,32 @@ void CATerminateLE()
     gRespCallback = NULL;
     LERegisterNetworkNotifications(NULL);
     CAStopBleGattServer();
+    CALETerminateNetworkMonitor();
+    gServerRunning = false;
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }
 CAResult_t CAStartLEListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CAInitializeBle();
-    CABleDoEvents();
-    CACheckData();
+    uint32_t iter = 0;
+    CAResult_t result = CAInitializeBle();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "error");
+        return CA_STATUS_FAILED;
+    }
+
+    /**
+     * Below for loop is to process the BLE Events received from BLE Shield.
+     * BLE Events includes BLE Shield Address Added as a patch to RBL Library.
+     */
+    for (iter = 0; iter < 20; iter++)
+    {
+        CACheckData();
+    }
+
+    gServerRunning = true;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -132,49 +157,7 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, void *data,
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAUpdateCharacteristicsInGattServer(const char *char_value,
-        const uint32_t value_length)
-{
-    // Only 1 characteristic will be used for sending data from server
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    char header[CA_HEADER_LENGTH] = "";
-    memset(header, 0, sizeof(char) * CA_HEADER_LENGTH);
-
-    CAResult_t result = CAGenerateHeader(header, value_length);
-
-    if (CA_STATUS_OK != result)
-    {
-        return CA_STATUS_FAILED;
-    }
-
-    int32_t index = 0;
-
-    if (!CAIsBleConnected())
-    {
-        OIC_LOG(DEBUG, TAG, "le not conn");
-        return CA_STATUS_FAILED;
-    }
-
-    CAWriteBleData((unsigned char *)header, CA_HEADER_LENGTH);
-    int32_t iter = value_length / CA_SUPPORTED_BLE_MTU_SIZE;
-
-    for (index = 0; index < iter; index++)
-    {
-        CAWriteBleData((unsigned char *)(char_value + (index * CA_SUPPORTED_BLE_MTU_SIZE)),
-                       (unsigned char) CA_SUPPORTED_BLE_MTU_SIZE);
-        CABleDoEvents();
-    }
-
-    CAWriteBleData((unsigned char *)(char_value + (index * CA_SUPPORTED_BLE_MTU_SIZE)),
-                   (unsigned char) value_length % CA_SUPPORTED_BLE_MTU_SIZE);
-    CABleDoEvents();
-    OIC_LOG(DEBUG, TAG, "writebytes done");
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return 1;
 }
 
 uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
@@ -184,11 +167,51 @@ uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *dat
     if (NULL == remoteEndpoint)
     {
         OIC_LOG(ERROR, TAG, "error");
-        return CA_STATUS_INVALID_PARAM;
+        return 0;
     }
-    CAUpdateCharacteristicsInGattServer((char *)data, dataLen);
+
+    char *char_value = (char *)data;
+    if (NULL == char_value || dataLen == 0)
+    {
+        OIC_LOG(ERROR, TAG, "error");
+        return 0;
+    }
+
+    char header[CA_HEADER_LENGTH] = "";
+    memset(header, 0, sizeof(char) * CA_HEADER_LENGTH);
+
+    CAResult_t result = CAGenerateHeader(header, dataLen);
+
+    if (CA_STATUS_OK != result)
+    {
+        return 0;
+    }
+
+    int32_t index = 0;
+
+    if (!CAIsBleConnected())
+    {
+        OIC_LOG(DEBUG, TAG, "le not conn");
+        return 0;
+    }
+
+    CAUpdateCharacteristicsInGattServer(header, CA_HEADER_LENGTH);
+    int32_t iter = dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
+
+    for (index = 0; index < iter; index++)
+    {
+        CAUpdateCharacteristicsInGattServer((char_value + (index * CA_SUPPORTED_BLE_MTU_SIZE)),
+                                                CA_SUPPORTED_BLE_MTU_SIZE);
+        CABleDoEvents();
+    }
+
+    CAUpdateCharacteristicsInGattServer((char_value + (index * CA_SUPPORTED_BLE_MTU_SIZE)),
+                                            dataLen % CA_SUPPORTED_BLE_MTU_SIZE);
+    CABleDoEvents();
+    OIC_LOG(DEBUG, TAG, "writebytes done");
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    // Arduino BLEWrite doesnot return value. So, Return the received DataLength
+    return dataLen;
 }
 
 uint32_t CASendLEMulticastData(void *data, uint32_t dataLen)
@@ -197,11 +220,52 @@ uint32_t CASendLEMulticastData(void *data, uint32_t dataLen)
     if (NULL == data || 0 == dataLen)
     {
         OIC_LOG(ERROR, TAG, "error");
-        return CA_STATUS_INVALID_PARAM;
+        return 0;
     }
-    CAUpdateCharacteristicsInGattServer((char *)data, dataLen);
+
+    char *char_value = (char *)data;
+    if (NULL == char_value || dataLen == 0)
+    {
+        OIC_LOG(ERROR, TAG, "error");
+        return 0;
+    }
+
+    char header[CA_HEADER_LENGTH] = "";
+    memset(header, 0, sizeof(char) * CA_HEADER_LENGTH);
+
+    CAResult_t result = CAGenerateHeader(header, dataLen);
+
+    if (CA_STATUS_OK != result)
+    {
+        return 0;
+    }
+
+    int32_t index = 0;
+
+    if (!CAIsBleConnected())
+    {
+        OIC_LOG(DEBUG, TAG, "le not conn");
+        return 0;
+    }
+
+    CAUpdateCharacteristicsInGattServer(header, CA_HEADER_LENGTH);
+    int32_t iter = dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
+
+    for (index = 0; index < iter; index++)
+    {
+        CAUpdateCharacteristicsInGattServer((char_value + (index * CA_SUPPORTED_BLE_MTU_SIZE)),
+                                                CA_SUPPORTED_BLE_MTU_SIZE);
+        CABleDoEvents();
+    }
+
+    CAUpdateCharacteristicsInGattServer((char_value + (index * CA_SUPPORTED_BLE_MTU_SIZE)),
+                                            dataLen % CA_SUPPORTED_BLE_MTU_SIZE);
+    CABleDoEvents();
+    OIC_LOG(DEBUG, TAG, "writebytes done");
+
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    // Arduino BLEWrite doesnot return value. So, Return the received DataLength
+    return dataLen;
 }
 
 CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
@@ -214,10 +278,14 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
         return CA_STATUS_INVALID_PARAM;
     }
 
+    char *leAddress = NULL;
+    CAGetLEAddress(&leAddress);
+    OIC_LOG_V(DEBUG, TAG, "leAddress = %s", leAddress);
+
     /**
      * Create local endpoint using util function
      */
-    (*info) = CAAdapterCreateLocalEndpoint(CA_LE, BLE_ADDRESS);
+    (*info) = CAAdapterCreateLocalEndpoint(CA_LE, leAddress);
     if (NULL == (*info))
     {
         OIC_LOG(DEBUG, TAG, "error");
@@ -225,6 +293,10 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     }
 
     (*size) = 1;
+    if (*leAddress)
+    {
+        OICFree(leAddress);
+    }
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -241,7 +313,6 @@ CAResult_t CAStartBleGattServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
     // Done at time of setup i.e. in initializeBle api
-    gServerRunning = true;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -249,6 +320,12 @@ CAResult_t CAStartBleGattServer()
 CAResult_t CAStopBleGattServer()
 {
     // Not Supported
+    CAResult_t result = CATerminateBle();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "error");
+        return CA_STATUS_FAILED;
+    }
     return CA_STATUS_OK;
 }
 
@@ -270,7 +347,6 @@ void CANotifyCallback(void *data, int32_t dataLen, char *senderAdrs, int32_t sen
 
 void CACheckData()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     CABleDoEvents();
 
     if (CAIsBleDataAvailable())

@@ -52,7 +52,7 @@ static void CALEPacketReceiveCallback(const char* address, const char* data)
         if (endpoint == NULL)
         {
             OIC_LOG(DEBUG, TAG, "CALEPacketReceiveCallback, Memory allocation failed !");
-            OICFree(address);
+            OICFree((char*)address);
             return;
         }
 
@@ -62,7 +62,7 @@ static void CALEPacketReceiveCallback(const char* address, const char* data)
         {
             strcpy((char*) endpoint->addressInfo.BT.btMacAddress, address);
         }
-        OICFree(address);
+        OICFree((char*)address);
 
         // set connectivity type
         endpoint->connectivityType = CA_LE;
@@ -79,27 +79,6 @@ static void CALENetStateChangeCallback(const char* address, const uint32_t statu
     // call the callback
     if (gLENetworkChangeCallback != NULL)
     {
-        CARemoteEndpoint_t* endpoint = NULL;
-        endpoint = (CARemoteEndpoint_t*) OICMalloc(sizeof(CARemoteEndpoint_t));
-
-        if (endpoint == NULL)
-        {
-            OIC_LOG(DEBUG, TAG, "CALENetworkStateChangedCallback, Memory allocation failed !");
-            OICFree(address);
-            return;
-        }
-
-        // set address
-        memset((void*) endpoint->addressInfo.BT.btMacAddress, 0, CA_MACADDR_SIZE);
-        if (CA_MACADDR_SIZE > strlen(address))
-        {
-            strcpy((char*) endpoint->addressInfo.BT.btMacAddress, address);
-        }
-        OICFree(address);
-
-        // set connectivity type
-        endpoint->connectivityType = CA_LE;
-
         CANetworkStatus_t netStatus = CA_INTERFACE_DOWN;
         if(status == 12)
         {
@@ -110,7 +89,17 @@ static void CALENetStateChangeCallback(const char* address, const uint32_t statu
             netStatus = CA_INTERFACE_DOWN;
         }
 
-        gLENetworkChangeCallback(endpoint, netStatus);
+        CALocalConnectivity_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_LE, address);
+        if (!localEndpoint)
+        {
+            OIC_LOG_V(ERROR, TAG, "Out of memory");
+            return;
+        }
+
+        gLENetworkChangeCallback(localEndpoint, netStatus);
+
+        CAAdapterFreeLocalEndpoint(localEndpoint);
+
     }
 }
 

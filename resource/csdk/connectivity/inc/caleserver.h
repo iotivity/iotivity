@@ -76,31 +76,31 @@ void CALeServerJniInit(JNIEnv *env, JavaVM* jvm);
 
 void CALeServerCreateJniInterfaceObject();
 
-void LEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback);
+void CANativeLEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback);
 
-void LEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback);
+void CANativeLEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback);
 
-jobject CALEServerOpenGattServer(JNIEnv *env);
+jobject CANativeLEServerOpenGattServer(JNIEnv *env);
 
-jobject CALEServerCreateGattService(JNIEnv *env);
+jobject CANativeLEServerCreateGattService(JNIEnv *env);
 
-jboolean CALEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
+jboolean CANativeLEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
         jobject bluetoothGattService);
 
 jboolean CALEStartGattServer(JNIEnv *env, jobject gattServerCallback);
 
 jboolean CALEServerSend(JNIEnv *env, jobject bluetoothDevice, jstring data);
 
-jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData);
+jobject CANativeLEServerSetResponseData(JNIEnv *env, jbyteArray responseData);
 
-jboolean CALEServerSendResponseData(JNIEnv *env, jobject device, jobject responseData);
+jboolean CANativeLEServerSendResponseData(JNIEnv *env, jobject device, jobject responseData);
 
-jboolean CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, jint status,
+jboolean CANativeLEServerSendResponse(JNIEnv *env, jobject device, jint requestId, jint status,
         jint offset, jbyteArray value);
 
-jboolean CALEServerConnect(JNIEnv *env, jobject bluetoothDevice);
+jboolean CANativeLEServerConnect(JNIEnv *env, jobject bluetoothDevice);
 
-void CALEServerDisconnect(JNIEnv *env, jobject bluetoothDevice);
+void CANativeLEServerDisconnect(JNIEnv *env, jobject bluetoothDevice);
 
 /* BLE Server Utils */
 void CALEServerCreateCachedDeviceList();
@@ -113,7 +113,7 @@ void CALEServerRemoveAllDevices(JNIEnv *env);
 
 void CALEServerRemoveDevice(JNIEnv *env, jstring address);
 
-//void CALEServerReorderinglist(uint32_t index);
+void CALEServerReorderinglist(uint32_t index);
 
 #ifdef __cplusplus
 } /* extern "C" */

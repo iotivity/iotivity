@@ -16,8 +16,8 @@ ROOT_DIR = ..
 # Note for Arduino: The CC flag is set to the C++ compiler since Arduino build 
 # includes Time.h header file which has C++ style definitions.
 ifeq ($(PLATFORM),arduinomega)
-    include $(ROOT_DIR)/local.properties
-    include $(ROOT_DIR)/$(PLATFORM).properties
+    include $(ROOT_DIR)/arduino/local.properties
+    include $(ROOT_DIR)/arduino/$(PLATFORM).properties
 	CC=$(ARDUINO_TOOLS_DIR)/avr-gcc
 else ifeq ($(PLATFORM),arduinodue)
     include $(ROOT_DIR)/local.properties

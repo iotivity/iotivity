@@ -4,6 +4,9 @@
 
 #include "calecore.h"
 #include "caleserver.h"
+#include "caleutils.h"
+#include "caedrcore.h"
+
 #include "logger.h"
 #include "oic_malloc.h"
 #include "uthreadpool.h" /* for thread pool */
@@ -12,7 +15,7 @@
 #include "com_iotivity_jar_CALeInterface.h"
 
 //#define DEBUG_MODE
-#define TAG PCF("CA")
+#define TAG PCF("CA_LE_CLIENT")
 
 static const char *METHODID_OBJECTNONPARAM = "()Landroid/bluetooth/BluetoothAdapter;";
 static const char *METHODID_STRINGNONPARAM = "()Ljava/lang/String;";
@@ -28,7 +31,9 @@ static const uint32_t STATE_CONNECTED = 2;
 static const uint32_t STATE_DISCONNECTED = 0;
 static const uint32_t GATT_SUCCESS = 0;
 
-static JavaVM *g_jvm;
+static const uint32_t MAX_PDU_BUFFER = 1400;
+
+JavaVM *g_jvm;
 static u_arraylist_t *gdeviceList = NULL;
 static u_arraylist_t *gGattObjectList = NULL;
 static CAPacketReceiveCallback gPacketReceiveCallback = NULL;
@@ -120,6 +125,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
     //JVM required for WifiCore to work with JNI interface
     CAWiFiJniInit(jvm);
     CALeServerJniInit(env, jvm);
+    CAEDRCoreJniInit(env, jvm);
 
     return JNI_VERSION_1_6;
 }
@@ -178,9 +184,11 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattConnectionSta
     }
     else if (GATT_SUCCESS == status && STATE_DISCONNECTED == newstate)  // le disconnected
     {
+//        CANativeLEStartScan();
+
         if(gatt) {
-            CANativeGattClose(env, gatt);
-            CANativeRemoveGattObj(env, gatt);
+            //CANativeGattClose(env, gatt);  // 20150105
+            //CANativeRemoveGattObj(env, gatt); // 20150105
         }
     }
     else  // other error
@@ -241,16 +249,6 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristi
   (JNIEnv *env, jobject obj, jobject gatt, jobject characteristic, jbyteArray data, jint status)
 {
     OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicReadCallback - status : %d", status);
-
-    jboolean isCopy;
-    char* readData = (char*)(*env)->GetByteArrayElements(env, data, &isCopy);
-
-    jstring jni_address = CANativeGetAddressFromGattObj(env, gatt);
-    const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
-
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicReadCallback - read data : %s", readData);
-
-    gPacketReceiveCallback(address, readData);
 }
 
 /*
@@ -264,18 +262,18 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristi
     OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicWriteCallback - status : %d", status);
 
     jboolean isCopy;
-    char* writeData = (char*)(*env)->GetByteArrayElements(env, data, &isCopy);
+    char* wroteData = (char*)(*env)->GetByteArrayElements(env, data, &isCopy);
 
     jstring jni_address = CANativeGetAddressFromGattObj(env, gatt);
     const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
 
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicWriteCallback - write data : %s", writeData);
+    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicWriteCallback - write data : %s", wroteData);
 
 #ifdef DEBUG_MODE
     CANativeSendFinsih(env, gatt);
 #endif
 
-    if(0 != status)
+    if(0 != status)  // error case
     {
         CANativeSendFinsih(env, gatt);
     }
@@ -291,16 +289,27 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CALeInterface_CALeGattCharacteristi
 {
     OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback");
 
+    // get Byte Array and covert to char*
+    jint length = (*env)->GetArrayLength(env, data);
+
     jboolean isCopy;
-    char* NotificationData = (char*)(*env)->GetByteArrayElements(env, data, &isCopy);
+    jbyte *jni_byte_responseData = (char*)(*env)->GetByteArrayElements(env, data, &isCopy);
+
+    char responseData[MAX_PDU_BUFFER];
+    memset(responseData, 0, MAX_PDU_BUFFER);
+    strncpy(responseData, (char*)jni_byte_responseData, length);
+    responseData[length] = '\0';
+    (*env)->ReleaseByteArrayElements(env, data, (jbyte*)jni_byte_responseData, JNI_ABORT);
 
     jstring jni_address = CANativeGetAddressFromGattObj(env, gatt);
     const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
 
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - data : %s", NotificationData);
+    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - data. : %s, %d", responseData, length);
 
-    gPacketReceiveCallback(address, NotificationData);
+    // callback
+    gPacketReceiveCallback(address, responseData);
 
+    // LE disconnect and finish BLE write routine
     CANativeSendFinsih(env, gatt);
 }
 
@@ -428,6 +437,7 @@ void CALETerminate()
     // delete mutex object
     u_mutex_free(gThreadMutex);
     gThreadMutex = NULL;
+    u_cond_signal(gThreadCond);
     u_cond_free(gThreadCond);
 }
 
@@ -564,7 +574,7 @@ void CALEGetLocalAddress(char** address)
         isAttached = TRUE;
     }
 
-    jstring jni_address = CANativeGetLocalDeviceAddress(env);
+    jstring jni_address = CALEGetLocalDeviceAddress(env);
     if(jni_address)
     {
         const char* localAddress = (*env)->GetStringUTFChars(env, jni_address, NULL);
@@ -626,7 +636,7 @@ int32_t CALESendUnicastMessageImpl(const char* address, const char* data, uint32
                 return 0;
             }
 
-            jstring jni_setAddress = CANativeGetAddressFromBTDevice(env, jarrayObj);
+            jstring jni_setAddress = CALEGetAddressFromBTDevice(env, jarrayObj);
             if(!jni_setAddress)
             {
                 OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_setAddress is null");
@@ -722,194 +732,6 @@ int32_t CALESendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t dat
     return 1;
 }
 
-/**
- * BT common
- */
-jstring CANativeGetLocalDeviceAddress(JNIEnv* env)
-{
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env,  CLASSPATH_BT_ADPATER);
-    if(!jni_cid_BTAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_cid_BTAdapter is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getDefaultAdapter =
-            (*env)->GetStaticMethodID(env, jni_cid_BTAdapter, "getDefaultAdapter", METHODID_OBJECTNONPARAM);
-    if(!jni_mid_getDefaultAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_mid_getDefaultAdapter is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getAddress = (*env)->GetMethodID(env, jni_cid_BTAdapter, "getAddress", METHODID_STRINGNONPARAM);
-    if(!jni_mid_getAddress)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_mid_getAddress is null");
-        return NULL;
-    }
-
-    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter, jni_mid_getDefaultAdapter);
-    if(!jni_obj_BTAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_obj_BTAdapter is null");
-        return NULL;
-    }
-
-    jstring jni_str_address = (jstring)(*env)->CallObjectMethod(env, jni_obj_BTAdapter, jni_mid_getAddress);
-    if(!jni_str_address)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_str_address is null");
-        return NULL;
-    }
-
-    return jni_str_address;
-}
-
-jobjectArray CANativeBondedDevices(JNIEnv *env)
-{
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env,  CLASSPATH_BT_ADPATER);
-    if(!jni_cid_BTAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_cid_BTAdapter is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getDefaultAdapter =
-            (*env)->GetStaticMethodID(env, jni_cid_BTAdapter, "getDefaultAdapter", METHODID_OBJECTNONPARAM);
-
-    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter, jni_mid_getDefaultAdapter);
-    if(!jni_obj_BTAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: bluetooth adapter is null");
-        return NULL;
-    }
-
-    // Get a list of currently paired devices
-    jmethodID jni_mid_getBondedDevices = (*env)->GetMethodID(env, jni_cid_BTAdapter,
-            "getBondedDevices", "()Ljava/util/Set;");
-    if(!jni_mid_getBondedDevices)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_mid_getBondedDevicesr is null");
-        return NULL;
-    }
-
-    jobject jni_obj_setPairedDevices = (*env)->CallObjectMethod(env, jni_obj_BTAdapter, jni_mid_getBondedDevices);
-    if(!jni_obj_setPairedDevices)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_obj_setPairedDevices is null");
-        return NULL;
-    }
-
-    // Convert the set to an object array
-    // object[] array = Set<BluetoothDevice>.toArray();
-    jclass jni_cid_Set = (*env)->FindClass(env,  "java/util/Set");
-    jmethodID jni_mid_toArray = (*env)->GetMethodID(env, jni_cid_Set, "toArray", "()[Ljava/lang/Object;");
-
-    if(!jni_mid_toArray)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_mid_toArray is null");
-        return NULL;
-    }
-
-    jobjectArray jni_arrayPairedDevices = (jobjectArray)((*env)->CallObjectMethod(env,
-            jni_obj_setPairedDevices, jni_mid_toArray));
-    if(!jni_arrayPairedDevices)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_arrayPairedDevices is null");
-        return NULL;
-    }
-
-    return jni_arrayPairedDevices;
-}
-
-jint CANativeGetBTStateOnInfo(JNIEnv *env)
-{
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env,  CLASSPATH_BT_ADPATER);
-    if(!jni_cid_BTAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] getBTStateOnInfo: jni_cid_BTAdapter is null");
-        return -1;
-    }
-
-    jfieldID jni_fid_stateon = (*env)->GetStaticFieldID(env, jni_cid_BTAdapter, "STATE_ON", "I");
-    if (jni_fid_stateon == 0)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] get_field_state is 0");
-        return -1;
-    }
-    jint jni_int_val = (*env)->GetStaticIntField(env, jni_cid_BTAdapter, jni_fid_stateon);
-
-    OIC_LOG_V(DEBUG, TAG, "[BLE][Native] bluetooth STATE_ON state integer value : %d", jni_int_val);
-
-    return jni_int_val;
-}
-
-jboolean CANativeIsEnableBTAdapter(JNIEnv *env)
-{
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env,  CLASSPATH_BT_ADPATER);
-    if(!jni_cid_BTAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_cid_BTAdapter: jni_cid_BTAdapter is null");
-        return FALSE;
-    }
-
-    jmethodID jni_mid_getDefaultAdapter =
-            (*env)->GetStaticMethodID(env, jni_cid_BTAdapter, "getDefaultAdapter", METHODID_OBJECTNONPARAM);
-    if(!jni_mid_getDefaultAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_mid_getDefaultAdapter is null");
-        return FALSE;
-    }
-
-    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter, jni_mid_getDefaultAdapter);
-    if(!jni_obj_BTAdapter)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_obj_BTAdapter is null");
-        return FALSE;
-    }
-
-    // isEnable()
-    jmethodID jni_mid_isEnable = (*env)->GetMethodID(env, jni_cid_BTAdapter, "isEnabled",
-            "()Z");
-    if(!jni_mid_isEnable)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_mid_isEnable is null");
-        return FALSE;
-    }
-
-    jboolean jni_isEnable = (*env)->CallBooleanMethod(env, jni_obj_BTAdapter, jni_mid_isEnable);
-    OIC_LOG_V(DEBUG, TAG, "[BLE][Native] adapter state is %d", jni_isEnable);
-
-    return jni_isEnable;
-}
-
-jstring CANativeGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
-{
-    jclass jni_cid_device_list = (*env)->FindClass(env, "android/bluetooth/BluetoothDevice");
-    if(!jni_cid_device_list)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_cid_device_list is null");
-        return NULL;
-    }
-
-    jmethodID jni_mid_getAddress = (*env)->GetMethodID(env, jni_cid_device_list, "getAddress",
-            "()Ljava/lang/String;");
-    if(!jni_mid_getAddress)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_mid_getAddress is null");
-        return NULL;
-    }
-
-    jstring jni_address = (jstring)(*env)->CallObjectMethod(env, bluetoothDevice, jni_mid_getAddress);
-    if(!jni_address)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_address is null");
-        return NULL;
-    }
-    return jni_address;
-}
-
 jstring CANativeGetAddressFromGattObj(JNIEnv *env, jobject gatt)
 {
     if(!gatt)
@@ -940,7 +762,7 @@ jstring CANativeGetAddressFromGattObj(JNIEnv *env, jobject gatt)
         return NULL;
     }
 
-    jstring jni_address = CANativeGetAddressFromBTDevice(env, jni_obj_device);
+    jstring jni_address = CALEGetAddressFromBTDevice(env, jni_obj_device);
     if(!jni_address)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_address is null");
@@ -1018,7 +840,7 @@ void CANativeLEStartScan()
 
 void CANativeLEStartScanImpl(JNIEnv *env, jobject callback)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return;
@@ -1103,7 +925,7 @@ void CANativeLEStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobject ca
     // get default bt adapter class
     OIC_LOG(DEBUG, TAG, "[BLE][Native] get default bt adapter class");
 
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return;
@@ -1186,7 +1008,7 @@ void CANativeLEStopScanImpl(JNIEnv *env, jobject callback)
 {
     OIC_LOG(DEBUG, TAG, "[BLE][Native] CANativeLEStopScan");
 
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return;
@@ -1233,13 +1055,13 @@ void CANativeLEStopScanImpl(JNIEnv *env, jobject callback)
 int32_t CANativeLEConnect(JNIEnv *env, jobject bluetoothDevice, jobject context,
         jboolean autoconnect, jobject callback)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return 0;
     }
 
-    jstring jni_address = CANativeGetAddressFromBTDevice(env, bluetoothDevice);
+    jstring jni_address = CALEGetAddressFromBTDevice(env, bluetoothDevice);
     const char * addr = (*env)->GetStringUTFChars(env, jni_address, NULL);
     OIC_LOG_V(DEBUG, TAG, "[BLE][Native] request connectGatt to %s", addr);
 
@@ -1284,7 +1106,7 @@ int32_t CANativeLEConnect(JNIEnv *env, jobject bluetoothDevice, jobject context,
 
 void CANativeLEDisconnect(JNIEnv *env, jobject bluetoothGatt)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return;
@@ -1317,9 +1139,36 @@ void CANativeLEDisconnect(JNIEnv *env, jobject bluetoothGatt)
 
 }
 
+void CANativeLEDisconnectAll(JNIEnv *env)
+{
+    OIC_LOG_V(DEBUG, TAG, "CANativeLEDisconnectAll");
+
+    if(!gGattObjectList)
+    {
+        OIC_LOG(DEBUG, TAG, "[BLE][Native] gGattObjectList is null");
+        return;
+    }
+
+    jint index;
+    for (index = 0; index < u_arraylist_length(gGattObjectList); index++)
+    {
+        jobject jarrayObj = (jobject) u_arraylist_get(gGattObjectList, index);
+        if(!jarrayObj)
+        {
+            OIC_LOG(DEBUG, TAG, "[BLE][Native] jarrayObj is null");
+            return;
+        }
+        CANativeLEDisconnect(env, jarrayObj);
+    }
+
+    OICFree(gGattObjectList);
+    gGattObjectList = NULL;
+    return;
+}
+
 void CANativeLEDiscoverServices(JNIEnv *env, jobject bluetoothGatt)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return;
@@ -1352,7 +1201,7 @@ void CANativeLEDiscoverServices(JNIEnv *env, jobject bluetoothGatt)
 
 jboolean CANativeLESendData(JNIEnv *env, jobject bluetoothGatt, jobject gattCharacteristic)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return FALSE;
@@ -1397,7 +1246,7 @@ jboolean CANativeLESendData(JNIEnv *env, jobject bluetoothGatt, jobject gattChar
 void CANativeReadCharacteristic(JNIEnv *env, jobject bluetoothGatt)
 {
 
-   if(!CANativeIsEnableBTAdapter(env))
+   if(!CALEIsEnableBTAdapter(env))
    {
        OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
        return;
@@ -1441,7 +1290,7 @@ void CANativeReadCharacteristic(JNIEnv *env, jobject bluetoothGatt)
 
 jboolean CANativeSetCharacteristicNoti(JNIEnv *env, jobject bluetoothGatt, const char* uuid)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return FALSE;
@@ -1489,7 +1338,7 @@ jboolean CANativeSetCharacteristicNoti(JNIEnv *env, jobject bluetoothGatt, const
 
 jobject CANativeGetGattService(JNIEnv *env, jobject bluetoothGatt, jstring characterUUID)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return NULL;
@@ -1556,7 +1405,7 @@ jobject CANativeGetGattService(JNIEnv *env, jobject bluetoothGatt, jstring chara
 
 jobject CANativeCreateGattCharacteristic(JNIEnv *env, jobject bluetoothGatt, jbyteArray data)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return NULL;
@@ -1602,7 +1451,7 @@ jobject CANativeCreateGattCharacteristic(JNIEnv *env, jobject bluetoothGatt, jby
 
 jbyteArray CANativeGetValueFromCharacteristic(JNIEnv *env, jobject characteristic)
 {
-    if(!CANativeIsEnableBTAdapter(env))
+    if(!CALEIsEnableBTAdapter(env))
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] BT adpater is not enable");
         return NULL;
@@ -1703,7 +1552,7 @@ void CANativeAddScanDeviceToList(JNIEnv *env, jobject device)
         return;
     }
 
-    jstring jni_remoteAddress = CANativeGetAddressFromBTDevice(env, device);
+    jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
     if(!jni_remoteAddress)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_remoteAddress is null");
@@ -1732,7 +1581,7 @@ jboolean CANativeIsDeviceInList(JNIEnv *env, const char* remoteAddress){
             return TRUE;
         }
 
-        jstring jni_setAddress = CANativeGetAddressFromBTDevice(env, jarrayObj);
+        jstring jni_setAddress = CALEGetAddressFromBTDevice(env, jarrayObj);
         if(!jni_setAddress)
         {
             OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_setAddress is null");
@@ -1803,7 +1652,7 @@ void CANativeRemoveDevice(JNIEnv *env, jstring address)
             return;
         }
 
-        jstring jni_setAddress = CANativeGetAddressFromBTDevice(env, jarrayObj);
+        jstring jni_setAddress = CALEGetAddressFromBTDevice(env, jarrayObj);
         if(!jni_setAddress)
         {
             OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_setAddress is null");
@@ -1957,33 +1806,6 @@ void CANativeRemoveAllGattObjsList(JNIEnv *env)
     return;
 }
 
-void CANativeLEDisconnectAll(JNIEnv *env)
-{
-    OIC_LOG_V(DEBUG, TAG, "CANativeLEDisconnectAll");
-
-    if(!gGattObjectList)
-    {
-        OIC_LOG(DEBUG, TAG, "[BLE][Native] gGattObjectList is null");
-        return;
-    }
-
-    jint index;
-    for (index = 0; index < u_arraylist_length(gGattObjectList); index++)
-    {
-        jobject jarrayObj = (jobject) u_arraylist_get(gGattObjectList, index);
-        if(!jarrayObj)
-        {
-            OIC_LOG(DEBUG, TAG, "[BLE][Native] jarrayObj is null");
-            return;
-        }
-        CANativeLEDisconnect(env, jarrayObj);
-    }
-
-    OICFree(gGattObjectList);
-    gGattObjectList = NULL;
-    return;
-}
-
 void CANativeRemoveGattObj(JNIEnv *env, jobject gatt)
 {
     OIC_LOG_V(DEBUG, TAG, "CANativeRemoveGattObj");
@@ -2050,6 +1872,9 @@ void CAReorderingGattList(uint32_t index)
     gGattObjectList->length--;
 }
 
+/**
+ * Check Sent Count for remove gSendBuffer
+ */
 void CANativeupdateSendCnt(JNIEnv *env)
 {
     // mutex lock

@@ -12,6 +12,9 @@ extern "C" {
  * Method:    RMInitialize
  * Signature: (Landroid/content/Context;)I
  */
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_setNativeResponseListener
+  (JNIEnv *, jobject, jobject);
+
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
   (JNIEnv *, jobject, jobject);
 
@@ -58,18 +61,34 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMFindResource
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMSendRequest
- * Signature: (Ljava/lang/String;)V
+ * Signature: (Ljava/lang/String;III)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest
-  (JNIEnv *, jobject, jstring, jint, jint, jint);
+  (JNIEnv *, jobject, jstring, jstring, jint, jint, jint);
+
+/*
+ * Class:     com_iotivity_service_RMInterface
+ * Method:    RMSendResponse
+ * Signature: (Ljava/lang/String;III)V
+ */
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse
+  (JNIEnv *, jobject, jstring, jstring, jint, jint);
+
+/*
+ * Class:     com_iotivity_service_RMInterface
+ * Method:    RMAdvertiseResource
+ * Signature: (Ljava/lang/String;I)V
+ */
+JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMAdvertiseResource
+  (JNIEnv *, jobject, jstring, jint);
 
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMSendNotification
- * Signature: (Ljava/lang/String;)V
+ * Signature: (Ljava/lang/String;I)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification
-  (JNIEnv *, jobject, jstring, jint);
+  (JNIEnv *, jobject, jstring, jstring, jint, jint);
 
 /*
  * Class:     com_iotivity_service_RMInterface

@@ -9,10 +9,11 @@ PROJECT_COMMON_PATH			= $(PROJECT_ROOT_PATH)/common
 PROJECT_COMMON_INC_PATH		= $(PROJECT_COMMON_PATH)/inc
 PROJECT_COMMON_SRC_PATH		= $(PROJECT_COMMON_PATH)/src
 PROJECT_LIB_PATH			= $(PROJECT_ROOT_PATH)/lib
-DTLS_LIB 					= $(PROJECT_LIB_PATH)/extlibs/tinydtls
+PROJECT_EXTERNAL_PATH	= $(PROJECT_ROOT_PATH)/external/inc
+DTLS_LIB 					= $(PROJECT_LIB_PATH)/tinydtls
 
 #Modify below values to enable/disable the Adapter
-#Suffix "NO_" to disable given adapter  
+#Suffix "NO_" to disable given adapter
 EDR			= EDR_ADAPTER
 WIFI		= WIFI_ADAPTER
 LE			= LE_ADAPTER
@@ -122,6 +123,7 @@ LOCAL_C_INCLUDES = $(PROJECT_API_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_COMMON_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_LIB_PATH)/libcoap-4.1.1
+LOCAL_C_INCLUDES += $(PROJECT_EXTERNAL_PATH)
 LOCAL_C_INCLUDES += $(DTLS_LIB)
 
 LOCAL_CFLAGS += $(BUILD_FLAG)
@@ -134,8 +136,9 @@ LOCAL_SRC_FILES	= \
 					$(ADAPTER_UTILS)/camsgparser.c $(EDR_ADAPTER_PATH)/caedradapter.c \
 					$(LE_ADAPTER_PATH)/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c \
 					$(LE_ADAPTER_PATH)/caleserver.c $(LE_ADAPTER_PATH)/caleutils.c \
+					$(LE_ADAPTER_PATH)/calenwmonitor.c \
+					$(EDR_ADAPTER_PATH)/caedrcore.c \
 					wifi_adapter/cawifiadapter.c $(WIFI_ADAPTER_PATH)/cawifiserver.c \
 					$(WIFI_ADAPTER_PATH)/cawificlient.c $(WIFI_ADAPTER_PATH)/cawifinwmonitor.c \
-					$(LE_ADAPTER_PATH)/calenwmonitor.c \
 
 include $(BUILD_STATIC_LIBRARY)

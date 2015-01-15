@@ -13,7 +13,7 @@
 #interfacesample device::video r
 #interfacesample device::camera r
 #interfacesample system::crash wx
-interfacesample system::use_internet rw
+casample system::use_internet rw
 # db
 #interfacesample libaccounts-svc::db rw
 #interfacesample ail::db rw

@@ -19,12 +19,12 @@
  ******************************************************************/
 
 /**
- * @file  cabtendpoint.h
+ * @file   cabtendpoint.h
  * @brief  This file provides the APIs to send data on established RFCOMM connections.
  */
 
-#ifndef __CA_BT_ENDPOINT_H_
-#define __CA_BT_ENDPOINT_H_
+#ifndef __CA_EDR_ENDPOINT_H_
+#define __CA_EDR_ENDPOINT_H_
 
 #include <bluetooth.h>
 
@@ -36,26 +36,24 @@ extern "C"
 #endif
 
 /**
- * @fn  CABTSendData
  * @brief  Send data over RFCOMM connection.
  *
- * @param[in]  serverFD  The RFCOMM connection socket file descriptor.
- * @param[in]  data  The data needs to be sent.
- * @param[in]  dataLength  The length of data.
- * @param[in]  sentDataLength  The length of data which actually sent successful.
+ * @param  serverFD         [IN] The RFCOMM connection socket file descriptor.
+ * @param  data             [IN] The data needs to be sent.
+ * @param  dataLength       [IN] The length of data.
+ * @param  sentDataLength   [IN] The length of data which actually sent successful.
  *
- * @return  CA_STATUS_OK on success otherwise proper error code.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
- *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABTSendData(const int32_t serverFD, const void *data, const uint32_t dataLength,
+CAResult_t CAEDRSendData(const int32_t serverFD, const void *data, const uint32_t dataLength,
                         uint32_t *sentDataLength);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif //__CA_BT_ENDPOINT_H_
+#endif //__CA_EDR_ENDPOINT_H_
 

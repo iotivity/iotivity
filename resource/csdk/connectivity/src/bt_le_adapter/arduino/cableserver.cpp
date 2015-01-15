@@ -18,15 +18,18 @@
 *
 ******************************************************************/
 
+
+//logger.h included first to avoid conflict with RBL library PROGMEM attribute
+#include "logger.h"
+
 #include "cableserver.h"
 
 #include <Arduino.h>
 #include <SPI.h>
 #include <boards.h>
 #include <RBL_nRF8001.h>
-#include <services.h>
 
-#include <logger.h>
+#include "caleinterface_singlethread.h"
 #include "oic_malloc.h"
 #include "caadapterutils.h"
 
@@ -37,12 +40,20 @@ CAResult_t CAInitializeBle()
     OIC_LOG(DEBUG, TAG, "IN");
 
     // Set your BLE Shield name here, max. length 10
-    ble_set_name("SAMSUNG");
+    ble_set_name(__OIC_DEVICE_NAME__);
 
     OIC_LOG(DEBUG, TAG, "LEName Set");
 
     ble_begin();
 
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CATerminateBle()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    ble_disconnect();
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 
@@ -108,9 +119,11 @@ CAResult_t CABleDoEvents()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAWriteBleData(unsigned char *data, uint8_t len)
+CAResult_t CAUpdateCharacteristicsInGattServer(const char *char_value,
+                                                            const uint32_t value_length)
 {
     // Currently ble_write_bytes api returns void.
-    ble_write_bytes(data, len);
+    ble_write_bytes((unsigned char *)char_value, (unsigned char)value_length);
     return CA_STATUS_OK;
 }
+

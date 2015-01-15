@@ -71,16 +71,6 @@ int32_t CALESendMulticastMessageImpl(JNIEnv *env, const char *data, uint32_t dat
 /**
  * BT Common Method : JNI
  */
-jstring CANativeGetLocalDeviceAddress(JNIEnv *env);
-
-jobjectArray CANativeGetBondedDevices(JNIEnv *env);
-
-jint CANativeGetBTStateOnInfo(JNIEnv *env);
-
-jboolean CANativeIsEnableBTAdapter(JNIEnv *env);
-
-jstring CANativeGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
-
 jstring CANativeGetAddressFromGattObj(JNIEnv *env, jobject gatt);
 
 jstring CANativeGetRemoteAddress(JNIEnv *env, jobject bluetoothSocketObj);
@@ -106,6 +96,8 @@ int32_t CANativeLEConnect(JNIEnv *env, jobject bluetoothDevice, jobject context,
                           jboolean autoconnect, jobject callback);
 
 void CANativeLEDisconnect(JNIEnv *env, jobject bluetoothGatt);
+
+void CANativeLEDisconnectAll(JNIEnv *env);
 
 void CANativeLEDiscoverServices(JNIEnv *env, jobject bluetoothGatt);
 
@@ -148,9 +140,7 @@ jboolean CANativeIsGattObjInList(JNIEnv *env, const char *remoteAddress);
 
 void CANativeRemoveAllGattObjsList(JNIEnv *env);
 
-void CANativeLEDisconnectAll(JNIEnv *env);
-
-void CANativeRemoveGattObj(JNIEnv *env, jstring address);
+void CANativeRemoveGattObj(JNIEnv *env, jobject gatt);
 
 void CAReorderingGattList(uint32_t index);
 

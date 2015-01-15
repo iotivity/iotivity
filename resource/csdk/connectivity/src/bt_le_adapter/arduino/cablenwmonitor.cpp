@@ -1,0 +1,111 @@
+/******************************************************************
+*
+* Copyright 2014 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+
+//logger.h included first to avoid conflict with RBL library PROGMEM attribute
+#include "logger.h"
+
+#include "caleinterface_singlethread.h"
+
+#include <Arduino.h>
+#include <SPI.h>
+#include <boards.h>
+#include <RBL_nRF8001.h>
+
+#include "caleadapter_singlethread.h"
+#include "caadapterutils.h"
+
+/**
+ * @def TAG
+ * @brief Logging tag for module name
+ */
+#define TAG "LENW"
+
+/**
+ * @var gCALEDeviceStateChangedCallback
+ * @brief Maintains the callback to be notified on device state changed.
+ */
+static CALEDeviceStateChangedCallback gCALEDeviceStateChangedCallback = NULL;
+
+/**
+ * @var gLeAddress
+ * @brief Maintains the local BLE Shield Address
+ */
+static unsigned char *gLeAddress = NULL;
+
+CAResult_t CALEInitializeNetworkMonitor()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    memcpy(gLeAddress, 0, CA_MACADDR_SIZE);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+void CALETerminateNetworkMonitor()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+CAResult_t CAGetLEAdapterState()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+void CAGetLEAddress(char **leAddress)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    gLeAddress = ble_getAddress();
+    /**
+     *   Below Allocated Memory will be freed by caller API
+     */
+    *leAddress = (char*)OICMalloc(CA_MACADDR_SIZE);
+    if (NULL == leAddress)
+    {
+        OIC_LOG(ERROR, TAG, "error");
+        return;
+    }
+    memset(*leAddress, 0, CA_MACADDR_SIZE);
+    memcpy(*leAddress, gLeAddress, CA_MACADDR_SIZE);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return;
+}
+
+CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    gCALEDeviceStateChangedCallback = callback;
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAUnSetLEAdapterStateChangedCb()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    gCALEDeviceStateChangedCallback = NULL;
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
