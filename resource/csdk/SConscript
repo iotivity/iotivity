@@ -39,9 +39,8 @@ if target_os not in ['arduino', 'windows', 'winrt']:
 if target_os not in ['windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
-if target_os == 'android':
-	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
+liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
 if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
@@ -50,8 +49,6 @@ else:
 
 if target_os in ['darwin', 'ios']:
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	liboctbstack_env.AppendUnique(LIBS = ['coap'])
 
 if not env.get('RELEASE'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
