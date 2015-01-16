@@ -25,5 +25,9 @@ if target_os != 'arduino':
 
 	# Build examples
 	SConscript('examples/SConscript')
-else:
+
+if target_os == 'linux':
+	# Build c samples
+	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
+elif target_os == 'arduino':
 	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')
