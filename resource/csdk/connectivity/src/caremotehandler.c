@@ -313,10 +313,11 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         clone->info.token = temp;
     }
 
-    if (rep->info.options != NULL)
+    if (rep->info.options != NULL && rep->info.numOptions > 0)
     {
         // save the options
-        clone->info.options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t));
+        clone->info.options =
+            (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t) * clone->info.numOptions);
         if (clone->info.options == NULL)
         {
             OIC_LOG(DEBUG, TAG, "CACloneRequestInfo Out of memory");
@@ -324,8 +325,9 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
             OICFree(clone);
             return NULL;
         }
-        memset(clone->info.options, 0, sizeof(CAHeaderOption_t));
-        memcpy(clone->info.options, rep->info.options, sizeof(CAHeaderOption_t));
+        memcpy(clone->info.options,
+                rep->info.options,
+                sizeof(CAHeaderOption_t) * clone->info.numOptions);
     }
 
     if (rep->info.payload != NULL)
