@@ -9,34 +9,16 @@ samples_env.PrependUnique(CPPPATH = [
 		'../../../../ocsocket/include',
 		'../../../../logger/include',
 		'../../../../stack/include',
+		'../../../../ocmalloc/include',
 		'../../../../../../extlibs/cjson',
 		'../../../../../oc_logger/include'
 		])
 
-target_os = env.get('TARGET_OS')
-if target_os not in ['windows', 'winrt']:
-	samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-
-	# Note: 'pthread' is in libc for android. On other platform, if use
-	# new gcc(>4.9?) it isn't required, otherwise, it's required
-	if target_os != 'android':
-		samples_env.AppendUnique(LIBS = ['-lpthread'])
-
+samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 samples_env.PrependUnique(LIBS = ['oc', 'm', 'octbstack', 'coap', 'coap_csdk', 'oc_logger', 'connectivity_abstraction'])
 
 samples_env.ParseConfig('pkg-config --libs glib-2.0');
-
-if target_os == 'android':
-	samples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	samples_env.AppendUnique(LIBS = ['gnustl_static'])
-	samples_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
-
-	if not env.get('RELEASE'):
-		samples_env.AppendUnique(LIBS = ['log'])
-
-if target_os in ['darwin', 'ios']:
-	samples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
 samples_env.AppendUnique(CPPDEFINES = ['CA_INT', 'TB_LOG'])
 
@@ -45,21 +27,18 @@ samples_env.AppendUnique(CPPDEFINES = ['CA_INT', 'TB_LOG'])
 ######################################################################
 ocserver         = samples_env.Program('ocserver', ['ocserver.cpp', 'common.cpp'])
 occlient         = samples_env.Program('occlient', ['occlient.cpp', 'common.cpp'])
-#ocserverslow     = samples_env.Program('ocserverslow', 'ocserverslow.cpp')
-#occlientslow     = samples_env.Program('occlientslow', 'occlientslow.cpp')
-#ocservercoll     = samples_env.Program('ocservercoll', 'ocservercoll.cpp')
-#occlientcoll     = samples_env.Program('occlientcoll', 'occlientcoll.cpp')
-#ocserverbasicops = samples_env.Program('ocserverbasicops', 'ocserverbasicops.cpp')
-#occlientbasicops = samples_env.Program('occlientbasicops', 'occlientbasicops.cpp')
+ocserverslow     = samples_env.Program('ocserverslow', ['ocserverslow.cpp', 'common.cpp'])
+occlientslow     = samples_env.Program('occlientslow', ['occlientslow.cpp', 'common.cpp'])
+ocservercoll     = samples_env.Program('ocservercoll', ['ocservercoll.cpp', 'common.cpp'])
+occlientcoll     = samples_env.Program('occlientcoll', ['occlientcoll.cpp', 'common.cpp'])
+ocserverbasicops = samples_env.Program('ocserverbasicops', ['ocserverbasicops.cpp', 'common.cpp'])
+occlientbasicops = samples_env.Program('occlientbasicops', ['occlientbasicops.cpp', 'common.cpp'])
 
 Alias("samples", [ocserver, occlient,
-				#ocservercoll, occlientcoll,
-				#ocserverbasicops, occlientbasicops,
-				#ocserverslow, occlientslow
+				ocservercoll, occlientcoll,
+				ocserverbasicops, occlientbasicops,
+				ocserverslow, occlientslow
                 ])
 
 env.AppendTarget('samples')
 
-#ios doesn't allow run application from terminal, so won't build these samples
-#if target_os != 'ios':
-#	SConscript('ocicuc/SConscript')
