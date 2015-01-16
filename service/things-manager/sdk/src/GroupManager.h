@@ -29,6 +29,7 @@
 #include <vector>
 #include <map>
 #include <cstdlib>
+#include <ActionSet.h>
 #include "OCPlatform.h"
 #include "OCApi.h"
 
@@ -42,45 +43,6 @@ typedef std::function< void(std::string, OCStackResult) > CollectionPresenceCall
 typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > GetCallback;
 typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > PostCallback;
 typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > PutCallback;
-
-class Capability
-{
-public:
-    std::string capability;
-    std::string status;
-};
-
-class Action
-{
-public:
-    Action() :
-            target("")
-    {
-    }
-    ~Action()
-    {
-        listOfCapability.clear();
-    }
-    std::string target;
-
-    std::vector< Capability* > listOfCapability;
-};
-
-class ActionSet
-{
-public:
-    ActionSet() :
-            actionsetName("")
-    {
-    }
-    ~ActionSet()
-    {
-        listOfAction.clear();
-    }
-    std::string actionsetName;
-
-    std::vector< Action* > listOfAction;
-};
 
 class GroupManager
 {
