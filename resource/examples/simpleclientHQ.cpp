@@ -45,6 +45,9 @@ const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
+//TODO-CA: Since CA CON message support is still in progress, this client uses
+// LowQos messages. This needs to change once Confirmable messages are supported in CA.
+
 class Light
 {
 public:
@@ -99,7 +102,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         if(observe_count() > 30)
         {
             std::cout<<"Cancelling Observe..."<<std::endl;
-            OCStackResult result = curResource->cancelObserve(OC::QualityOfService::HighQos);
+            OCStackResult result = curResource->cancelObserve(OC::QualityOfService::LowQos);
 
             std::cout << "Cancel result: "<< result << " waiting for confirmation ..." <<std::endl;
         }
@@ -139,7 +142,7 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
             std::cout << endl << "ObserveAll is used." << endl << endl;
         sleep(1);
         curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve,
-                OC::QualityOfService::HighQos);
+                OC::QualityOfService::LowQos);
 
     }
     else
@@ -181,7 +184,7 @@ void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, con
         rep2.setValue("state", mylight.m_state);
         rep2.setValue("power", mylight.m_power);
         sleep(1);
-        curResource->post(rep2, QueryParamsMap(), &onPost2, OC::QualityOfService::HighQos);
+        curResource->post(rep2, QueryParamsMap(), &onPost2, OC::QualityOfService::LowQos);
     }
     else
     {
@@ -206,7 +209,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
         rep.setValue("power", mylight.m_power);
 
         // Invoke resource's post API with rep, query map and the callback parameter
-        resource->post(rep, QueryParamsMap(), &onPost, OC::QualityOfService::HighQos);
+        resource->post(rep, QueryParamsMap(), &onPost, OC::QualityOfService::LowQos);
     }
 }
 
@@ -250,7 +253,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
         rep.setValue("power", mylight.m_power);
 
         // Invoke resource's put API with rep, query map and the callback parameter
-        resource->put(rep, QueryParamsMap(), &onPut, OC::QualityOfService::HighQos);
+        resource->put(rep, QueryParamsMap(), &onPut, OC::QualityOfService::LowQos);
     }
 }
 
@@ -288,7 +291,7 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
         // Invoke resource's get API with the callback parameter
 
         QueryParamsMap test;
-        resource->get(test, &onGet,OC::QualityOfService::HighQos);
+        resource->get(test, &onGet,OC::QualityOfService::LowQos);
     }
 }
 
@@ -366,31 +369,88 @@ void foundResource(std::shared_ptr<OCResource> resource)
 void PrintUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
+#ifdef CA_INT
+    std::cout << "Usage : simpleclientHQ <ObserveType> <ConnectivityType>" << std::endl;
+#else
+    std::cout << "Usage : simpleclientHQ <ObserveType>" << std::endl;
+#endif
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
+#ifdef CA_INT
+    std::cout<<"    ConnectivityType: Default WIFI" << std::endl;
+    std::cout << "   ConnectivityType : 0 - ETHERNET"<< std::endl;
+    std::cout << "   ConnectivityType : 1 - WIFI"<< std::endl;
+#endif
 }
 
 int main(int argc, char* argv[]) {
-    if (argc == 1)
+
+    ostringstream requestURI;
+
+#ifdef CA_INT
+    OCConnectivityType connectivityType = OC_WIFI;
+#endif
+    try
     {
-        OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-    }
-    else if (argc == 2)
-    {
-        int value = atoi(argv[1]);
-        if (value == 1)
+        if (argc == 1)
+        {
             OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-        else if (value == 2)
-            OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
+        }
+#ifdef CA_INT
+        else if (argc >= 2)
+#else
+        else if (argc == 2)
+#endif
+        {
+            int value = stoi(argv[1]);
+            if (value == 1)
+                OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+            else if (value == 2)
+                OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
+            else
+                OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+
+#ifdef CA_INT
+            if(argc == 3)
+            {
+                std::size_t inputValLen;
+                int optionSelected = stoi(argv[2], &inputValLen);
+
+                if(inputValLen == strlen(argv[2]))
+                {
+                    if(optionSelected == 0)
+                    {
+                        connectivityType = OC_ETHERNET;
+                    }
+                    else if(optionSelected == 1)
+                    {
+                        connectivityType = OC_WIFI;
+                    }
+                    else
+                    {
+                        std::cout << "Invalid connectivity type selected. Using default WIFI"
+                            << std::endl;
+                    }
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                    << std::endl;
+                }
+            }
+#endif
+        }
         else
-            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+        {
+            PrintUsage();
+            return -1;
+        }
     }
-    else
+    catch(exception& e)
     {
-        PrintUsage();
-        return -1;
+        std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
     }
+
 
     // Create PlatformConfig object
     PlatformConfig cfg {
@@ -406,11 +466,13 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+
 #ifdef CA_INT
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
-                OC_WIFI, &foundResource, OC::QualityOfService::LowQos);
+        OCPlatform::findResource("", requestURI.str(),
+                connectivityType, &foundResource, OC::QualityOfService::LowQos);
 #else
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource,
+        OCPlatform::findResource("", requestURI.str(), &foundResource,
                 OC::QualityOfService::LowQos);
 #endif
         std::cout<< "Finding Resource... " <<std::endl;
@@ -419,10 +481,10 @@ int main(int argc, char* argv[]) {
         // These resources will have the same uniqueidentifier (yet be different objects), so that
         // we can verify/show the duplicate-checking code in foundResource(above);
 #ifdef CA_INT
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
-                OC_WIFI, &foundResource, OC::QualityOfService::LowQos);
+        OCPlatform::findResource("", requestURI.str(),
+                connectivityType, &foundResource, OC::QualityOfService::LowQos);
 #else
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource,
+        OCPlatform::findResource("", requestURI.str(), &foundResource,
                 OC::QualityOfService::LowQos);
 #endif
         std::cout<< "Finding Resource for second time... " <<std::endl;

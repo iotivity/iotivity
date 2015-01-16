@@ -34,10 +34,19 @@ extern "C" {
 
 //TODO: May want to refactor this in upcoming sprints.
 //Don't want to expose to application layer that lower level stack is using CoAP.
+
+#ifdef CA_INT
+#define OC_WELL_KNOWN_QUERY                  "224.0.1.187:5298/oc/core"
+#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5298/oc/core/d?rt=core.led"
+#define OC_MULTICAST_PREFIX                  "224.0.1.187:5298"
+#define OC_MULTICAST_IP                      "224.0.1.187"
+
+#else
 #define OC_WELL_KNOWN_QUERY                  "coap://224.0.1.187:5683/oc/core"
-#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "coap://224.0.1.187:5683/oc/core?rt=core.led"
+#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "coap://224.0.1.187:5683/oc/core/d?rt=core.led"
 #define OC_MULTICAST_PREFIX                  "coap://224.0.1.187:5683"
 #define OC_MULTICAST_IP                      "coap://224.0.1.187"
+#endif
 
 #define USE_RANDOM_PORT (0)
 #ifdef WITH_PRESENCE

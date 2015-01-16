@@ -345,31 +345,88 @@ void foundResource(std::shared_ptr<OCResource> resource)
 void PrintUsage()
 {
     std::cout << std::endl;
+#ifdef CA_INT
+    std::cout << "Usage : simpleclient <ObserveType> <ConnectivityType>" << std::endl;
+#else
     std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
+#endif
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
+#ifdef CA_INT
+    std::cout<<"    connectivityType: Default WIFI" << std::endl;
+    std::cout << "   ConnectivityType : 0 - ETHERNET"<< std::endl;
+    std::cout << "   ConnectivityType : 1 - WIFI"<< std::endl;
+#endif
 }
 
 int main(int argc, char* argv[]) {
-    if (argc == 1)
+
+    ostringstream requestURI;
+
+#ifdef CA_INT
+    OCConnectivityType connectivityType = OC_WIFI;
+#endif
+    try
     {
-        OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-    }
-    else if (argc == 2)
-    {
-        int value = atoi(argv[1]);
-        if (value == 1)
+        if (argc == 1)
+        {
             OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-        else if (value == 2)
-            OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
+        }
+#ifdef CA_INT
+        else if (argc >= 2)
+#else
+        else if (argc == 2)
+#endif
+        {
+            int value = stoi(argv[1]);
+            if (value == 1)
+                OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+            else if (value == 2)
+                OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
+            else
+                OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+
+#ifdef CA_INT
+            if(argc == 3)
+            {
+                std::size_t inputValLen;
+                int optionSelected = stoi(argv[2], &inputValLen);
+
+                if(inputValLen == strlen(argv[2]))
+                {
+                    if(optionSelected == 0)
+                    {
+                        connectivityType = OC_ETHERNET;
+                    }
+                    else if(optionSelected == 1)
+                    {
+                        connectivityType = OC_WIFI;
+                    }
+                    else
+                    {
+                        std::cout << "Invalid connectivity type selected. Using default WIFI"
+                            << std::endl;
+                    }
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                    << std::endl;
+                }
+            }
+        }
+#endif
         else
-            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+        {
+            PrintUsage();
+            return -1;
+        }
     }
-    else
+    catch(exception& e)
     {
-        PrintUsage();
-        return -1;
+        std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
     }
+
 
     // Create PlatformConfig object
     PlatformConfig cfg {
@@ -386,11 +443,13 @@ int main(int argc, char* argv[]) {
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+
 #ifdef CA_INT
-        OCPlatform::findResource("", "coap://224.0.1.187:5298/oc/core?rt=core.light",
-                    OC_WIFI, &foundResource);
+        OCPlatform::findResource("", requestURI.str(),
+                connectivityType, &foundResource);
 #else
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+        OCPlatform::findResource("", requestURI.str(), &foundResource);
 #endif
         std::cout<< "Finding Resource... " <<std::endl;
 
@@ -398,10 +457,10 @@ int main(int argc, char* argv[]) {
         // These resources will have the same uniqueidentifier (yet be different objects), so that
         // we can verify/show the duplicate-checking code in foundResource(above);
 #ifdef CA_INT
-        OCPlatform::findResource("", "coap://224.0.1.187:5298/oc/core?rt=core.light",
-                    OC_ETHERNET, &foundResource);
+        OCPlatform::findResource("", requestURI.str(),
+                connectivityType, &foundResource);
 #else
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+        OCPlatform::findResource("", requestURI.str(), &foundResource);
 #endif
         std::cout<< "Finding Resource for second time... " <<std::endl;
         while(true)

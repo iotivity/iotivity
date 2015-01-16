@@ -79,8 +79,55 @@ void foundResource(std::shared_ptr< OCResource > resource)
 
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    ostringstream requestURI;
+
+#ifdef CA_INT
+    OCConnectivityType connectivityType = OC_WIFI;
+
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<<"Usage: groupclient <ConnectivityType(0|1)>\n";
+        std::cout<<"ConnectivityType: Default WIFI\n";
+        std::cout<<"ConnectivityType 0: ETHERNET\n";
+        std::cout<<"ConnectivityType 1: WIFI\n";
+    }
+#endif
+
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 
@@ -101,12 +148,13 @@ int main()
 
         cout << "registerResource is called." << endl;
 
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light",
+        OCPlatform::findResource("", requestURI.str(),
                                  connectivityType, &foundResource);
 #else
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+        OCPlatform::findResource("", requestURI.str(), &foundResource);
 #endif
 
         OCPlatform::bindInterfaceToResource(resourceHandle, GROUP_INTERFACE);

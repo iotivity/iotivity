@@ -35,6 +35,10 @@ std::shared_ptr<OCResource> curResource;
 
 static int TEST_CASE = 0;
 
+#ifdef CA_INT
+static OCConnectivityType connectivityType = OC_WIFI;
+#endif
+
 /**
  * List of methods that can be inititated from the client
  */
@@ -50,7 +54,11 @@ typedef enum {
 
 void printUsage()
 {
+#ifdef CA_INT
+    std::cout << "Usage : presenceclient -t <1|2> -c <0|1>" << std::endl;
+#else
     std::cout << "Usage : presenceclient -t <1|2>" << std::endl;
+#endif
     std::cout << "-t 1 : Discover Resources and Initiate Unicast Presence" << std::endl;
     std::cout << "-t 2 : Discover Resources and Initiate Unicast Presence with Filter"
               << std::endl;
@@ -61,6 +69,11 @@ void printUsage()
               << std::endl;
     std::cout << "-t 6 : Discover Resources and Initiate Multicast Presence with two Filters"
                   << std::endl;
+#ifdef CA_INT
+    std::cout<<"ConnectivityType: Default WIFI" << std::endl;
+    std::cout << "-c 0 : Send message over ETHERNET interface" << std::endl;
+    std::cout << "-c 1 : Send message over WIFI interface" << std::endl;
+#endif
 }
 
 // Callback to presence
@@ -132,9 +145,6 @@ void foundResource(std::shared_ptr<OCResource> resource)
                 OCStackResult result = OC_STACK_OK;
                 curResource = resource;
                 OCPlatform::OCPresenceHandle presenceHandle = nullptr;
-#ifdef CA_INT
-                OCConnectivityType connectivityType = OC_WIFI;
-#endif
 
                 if(TEST_CASE == TEST_UNICAST_PRESENCE_NORMAL)
                 {
@@ -210,20 +220,68 @@ void foundResource(std::shared_ptr<OCResource> resource)
 }
 
 int main(int argc, char* argv[]) {
+
+    ostringstream requestURI;
+
     int opt;
 
-    while ((opt = getopt(argc, argv, "t:")) != -1)
+#ifdef CA_INT
+    int optionSelected;
+#endif
+
+    try
     {
-        switch(opt)
+#ifdef CA_INT
+        while ((opt = getopt(argc, argv, "t:c:")) != -1)
+        #else
+        while ((opt = getopt(argc, argv, "t:")) != -1)
+        #endif
         {
-            case 't':
-                TEST_CASE = atoi(optarg);
-                break;
-            default:
-                printUsage();
-                return -1;
+            switch(opt)
+            {
+                case 't':
+                    TEST_CASE = stoi(optarg);
+                    break;
+#ifdef CA_INT
+                case 'c':
+                    std::size_t inputValLen;
+                    optionSelected = stoi(optarg, &inputValLen);
+
+                    if(inputValLen == strlen(optarg))
+                    {
+                        if(optionSelected == 0)
+                        {
+                            connectivityType = OC_ETHERNET;
+                        }
+                        else if(optionSelected == 1)
+                        {
+                            connectivityType = OC_WIFI;
+                        }
+                        else
+                        {
+                            std::cout << "Invalid connectivity type selected. Using default WIFI"
+                                << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        std::cout << "Invalid connectivity type selected. Using default WIFI"
+                            << std::endl;
+                    }
+                    break;
+#endif
+                default:
+                    printUsage();
+                    return -1;
+            }
         }
     }
+    catch(exception& e)
+    {
+        std::cout << "Invalid input argument. Using WIFI as connectivity type"
+            << std::endl;
+    }
+
     if(TEST_CASE >= MAX_TESTS || TEST_CASE <= 0)
     {
         printUsage();
@@ -247,9 +305,6 @@ int main(int argc, char* argv[]) {
 
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
         OCStackResult result = OC_STACK_OK;
-#ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
-#endif
 
         if(TEST_CASE == TEST_MULTICAST_PRESENCE_NORMAL)
         {
@@ -328,12 +383,13 @@ int main(int argc, char* argv[]) {
         else
         {
             // Find all resources
+            requestURI << OC_WELL_KNOWN_QUERY;
+
 #ifdef CA_INT
-            OCConnectivityType connectivityType = OC_WIFI;
-            result = OCPlatform::findResource("", "coap://224.0.1.187:5298/oc/core",
-                     connectivityType, &foundResource);
+            result = OCPlatform::findResource("", requestURI.str(),
+                    connectivityType, &foundResource);
 #else
-            result = OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+            result = OCPlatform::findResource("", requestURI.str(), &foundResource);
 #endif
             if(result == OC_STACK_OK)
             {

@@ -34,6 +34,11 @@
 #include "OCApi.h"
 using namespace OC;
 
+#ifdef CA_INT
+static OCConnectivityType connectivityType = OC_WIFI;
+#endif
+
+static std::ostringstream requestURI;
 
 struct FooResource
 {
@@ -281,11 +286,10 @@ void client1()
 {
     std::cout << "in client1\n";
 #ifdef CA_INT
-    OCConnectivityType connectivityType = OC_WIFI;
-    std::cout<<"result1:" << OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo",
+    std::cout<<"result1:" << OCPlatform::findResource("", requestURI.str(),
             connectivityType, foundResource1)<< std::endl;
 #else
-    std::cout<<"result1:" << OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo",
+    std::cout<<"result1:" << OCPlatform::findResource("", requestURI.str(),
             foundResource1)<< std::endl;
 #endif
 
@@ -303,13 +307,12 @@ void client2()
 {
     std::cout << "in client2\n";
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
     std::cout<<"result2:" << OCPlatform::findResource("",
-                "coap://224.0.1.187/oc/core?rt=core.foo",
+                requestURI.str(),
                 connectivityType, foundResource2)<< std::endl;
 #else
     std::cout<<"result2:" << OCPlatform::findResource("",
-                "coap://224.0.1.187/oc/core?rt=core.foo",
+                requestURI.str(),
                 foundResource2)<< std::endl;
 #endif
 
@@ -342,8 +345,54 @@ void server()
     cv.wait(lock);
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+
+#ifdef CA_INT
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<< "Usage threadingsample <ConnectivityType(0|1)>" << std::endl;
+        std::cout<<"ConnectivityType: Default WIFI" << std::endl;
+        std::cout << "   ConnectivityType : 0 - ETHERNET" << std::endl;
+        std::cout << "   ConnectivityType : 1 - WIFI" << std::endl;
+    }
+#endif
+
+    requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.foo";
+
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,

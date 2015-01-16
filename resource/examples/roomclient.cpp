@@ -219,6 +219,52 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
 int main(int argc, char* argv[]) {
 
+    ostringstream requestURI;
+
+#ifdef CA_INT
+    OCConnectivityType connectivityType = OC_WIFI;
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "Usage roomclient <connectivityType(0|1)>" << std::endl;
+        std::cout<<"connectivityType: Default WIFI" << std::endl;
+        std::cout << "connectivityType 0: ETHERNET" << std::endl;
+        std::cout << "connectivityType 1: WIFI" << std::endl;
+    }
+#endif
+
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
@@ -233,11 +279,12 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
+        requestURI << OC_WELL_KNOWN_QUERY;
 
 #ifdef CA_INT
-        OCPlatform::findResource("", "coap://224.0.1.187:5298/oc/core", &foundResource);
+        OCPlatform::findResource("", requestURI.str(), connectivityType, &foundResource);
 #else
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+        OCPlatform::findResource("", requestURI.str(), &foundResource);
 #endif
         std::cout<< "Finding Resource... " <<std::endl;
 

@@ -33,6 +33,10 @@
 #include "OCApi.h"
 using namespace OC;
 
+#ifdef CA_INT
+OCConnectivityType connectivityType = OC_WIFI;
+#endif
+
 class ClientWorker
 {
 private:
@@ -144,16 +148,18 @@ private:
 public:
     void start()
     {
+        ostringstream requestURI;
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.foo";
+
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
         std::cout<<"result:" <<
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo", connectivityType, f)
+        OCPlatform::findResource("", requestURI.str(), connectivityType, f)
         << std::endl;
 #else
         std::cout<<"result:" <<
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo", f)
+        OCPlatform::findResource("", requestURI.str(), f)
         << std::endl;
 #endif
 
@@ -297,8 +303,52 @@ struct FooResource
 
 };
 
-int main()
+int main(int argc, char* argv[])
 {
+
+#ifdef CA_INT
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                    << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<< "Usage simpleclientserver <ConnectivityType(0|1)>" << std::endl;
+        std::cout<<"    ConnectivityType: Default WIFI" << std::endl;
+        std::cout << "   ConnectivityType : 0 - ETHERNET" << std::endl;
+        std::cout << "   ConnectivityType : 1 - WIFI" << std::endl;
+    }
+#endif
+
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,

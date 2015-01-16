@@ -37,20 +37,25 @@ namespace PH = std::placeholders;
 const uint16_t API_VERSION = 2048;
 const uint16_t TOKEN = 3000;
 
+#ifdef CA_INT
+static OCConnectivityType connectivityType = OC_WIFI;
+#endif
+
 class ClientFridge
 {
     public:
     ClientFridge()
     {
+        ostringstream requestURI;
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=intel.fridge";
         std::cout << "Fridge Client has started " <<std::endl;
         FindCallback f (std::bind(&ClientFridge::foundDevice, this, PH::_1));
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
         OCStackResult result = OCPlatform::findResource(
-                "", "coap://224.0.1.187/oc/core?rt=intel.fridge", connectivityType, f);
+                "", requestURI.str(), connectivityType, f);
 #else
         OCStackResult result = OCPlatform::findResource(
-                "", "coap://224.0.1.187/oc/core?rt=intel.fridge", f);
+                "", requestURI.str(), f);
 #endif
 
         if(OC_STACK_OK != result)
@@ -85,7 +90,6 @@ class ClientFridge
         std::vector<std::string> lightTypes = {"intel.fridge.light"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
 #ifdef CA_INT
-        OCConnectivityType connectivityType = OC_WIFI;
         OCResource::Ptr light = constructResourceObject(resource->host(),
                                 "/light", connectivityType, false, lightTypes, ifaces);
 #else
@@ -266,8 +270,52 @@ class ClientFridge
     std::condition_variable m_cv;
 };
 
-int main()
+int main(int argc, char* argv[])
 {
+
+#ifdef CA_INT
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<<"Usage: fridgeclient <ConnectivityType(0|1)>\n";
+        std::cout<<"ConnectivityType: Default WIFI\n";
+        std::cout<<"ConnectivityType 0: ETHERNET\n";
+        std::cout<<"ConnectivityType 1: WIFI\n";
+    }
+#endif
+
     PlatformConfig cfg
     {
         ServiceType::InProc,
