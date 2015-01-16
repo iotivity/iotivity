@@ -53,7 +53,7 @@ CAResult_t CAInitializeBle()
 CAResult_t CATerminateBle()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ble_disconnect();
+    ble_radio_reset();
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 

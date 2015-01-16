@@ -35,11 +35,22 @@
 
 /**
  * @def CA_PORT
- * @brief Port to listen for incoming data. Port 5683 is as per COAP RFC.
+ * @brief Unicast port number (to listen for incoming data on unicast server).
+ * Note :- Actual port number may differ based on result of bind() operation.
  */
-#define CA_PORT   5683
+#define CA_PORT   5298
 
-#define CA_MCAST_PORT   5298
+/**
+ * @def CA_SECURE_PORT
+ * @brief Secured (unicast) port number as defined in COAP Specification, RFC-7252.
+ */
+#define CA_SECURE_PORT   5684
+
+/**
+ * @def CA_MCAST_PORT
+ * @brief Multicast port number as defined in COAP Specification, RFC-7252.
+ */
+#define CA_MCAST_PORT   5683
 
 /**
  * @def CA_MULTICAST_IP
@@ -100,7 +111,7 @@ void CAEthernetNotifyNetworkChange(const char *address, const int16_t port,
     CALocalConnectivity_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_ETHERNET, address);
     if (!localEndpoint)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Out of memory!");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Out of memory!");
         return;
     }
     localEndpoint->addressInfo.IP.port = port;
@@ -293,7 +304,7 @@ CAResult_t CAStartEthernetListeningServer()
     int32_t serverFD = 1;
     if (gIsMulticastServerStarted == true)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Already Started!");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Already Started!");
         return CA_SERVER_STARTED_ALREADY;
     }
 
@@ -301,7 +312,7 @@ CAResult_t CAStartEthernetListeningServer()
     bool retVal = CAEthernetIsConnected();
     if (false == retVal)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG,
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG,
                   "No ethernet");
         return CA_ADAPTER_NOT_ENABLED;
     }
@@ -335,7 +346,7 @@ uint32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *remoteEndpoint, voi
     VERIFY_NON_NULL_RET(data, ETHERNET_ADAPTER_TAG, "data", dataSize);
     if (dataLength == 0)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Invalid length");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Invalid length");
         return dataSize;
     }
 
@@ -353,7 +364,7 @@ uint32_t CASendEthernetMulticastData(void *data, uint32_t dataLength)
     VERIFY_NON_NULL_RET(data, ETHERNET_ADAPTER_TAG, "data", dataSize);
     if (dataLength == 0)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Invalid length");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Invalid length");
         return dataSize;
     }
 

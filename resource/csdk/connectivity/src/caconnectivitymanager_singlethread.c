@@ -136,7 +136,7 @@ CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requ
 CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
                               const CARequestInfo_t *requestInfo)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendRequestToAll");
+    OIC_LOG(DEBUG, TAG, "CASendRequestToAll");
 
     return CADetachRequestToAllMessage(object, requestInfo);
 }

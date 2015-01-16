@@ -158,7 +158,7 @@ void OICLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, uint16
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, const char *tag, const int16_t lineNum, const char *format, ...);
+void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PROGMEM const char *format, ...);
 #endif
 
 #ifdef TB_LOG
@@ -176,6 +176,8 @@ void OICLogv(LogLevel level, const char *tag, const int16_t lineNum, const char 
 #define OIC_LOG_SHUTDOWN()
 #define OIC_LOG(level, tag, logStr) OICLog((level), PCF(tag), __LINE__, PCF(logStr))
 #define OIC_LOG_V(level, tag, ...)
+// To enable OIC_LOG_V, uncomment the below
+//#define OIC_LOG_V(level, tag, format, ...)  OICLogv((level), PCF(tag), __LINE__, PCF(format), __VA_ARGS__)
 #else
 #define OIC_LOG_CONFIG(ctx)    OICLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OICLogShutdown()

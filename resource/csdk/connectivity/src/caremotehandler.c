@@ -36,7 +36,7 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
     CARemoteEndpoint_t *clone = (CARemoteEndpoint_t *) OICMalloc(sizeof(CARemoteEndpoint_t));
     if (clone == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "CACloneRemoteEndpoint Out of memory");
+        OIC_LOG(DEBUG, TAG, "CACloneRemoteEndpoint Out of memory");
         return NULL;
     }
     memset(clone, 0, sizeof(CARemoteEndpoint_t));
@@ -50,7 +50,7 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
         temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "CACloneRemoteEndpoint Out of memory");
+            OIC_LOG(DEBUG, TAG, "CACloneRemoteEndpoint Out of memory");
 
             CADestroyRemoteEndpointInternal(clone);
 
@@ -156,14 +156,14 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
 
     if (len <= 0)
     {
-        OIC_LOG_V(DEBUG, TAG, "uri length is 0!");
+        OIC_LOG(DEBUG, TAG, "uri length is 0!");
         return NULL;
     }
 
     cloneUri = (char *) OICMalloc(sizeof(char) * (len + 1));
     if (cloneUri == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpointUriInternal Out of memory");
+        OIC_LOG(DEBUG, TAG, "CACreateRemoteEndpointUriInternal Out of memory");
         return NULL;
     }
     memset(cloneUri, 0, sizeof(char) * (len + 1));
@@ -200,7 +200,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
     int resType = getCAAddress(pAddress, &address);
     if (resType == -1)
     {
-        OIC_LOG_V(DEBUG, TAG, "address parse error");
+        OIC_LOG(DEBUG, TAG, "address parse error");
 
         OICFree(cloneUri);
         return NULL;
@@ -212,7 +212,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
     CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address, connectivityType);
     if (remoteEndpoint == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "create remote endpoint fail");
+        OIC_LOG(DEBUG, TAG, "create remote endpoint fail");
 
         OICFree(cloneUri);
         return NULL;
@@ -233,7 +233,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
 
     if (resourceUri == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "uri is null value");
+        OIC_LOG(DEBUG, TAG, "uri is null value");
         return NULL;
     }
 
@@ -242,7 +242,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
 
     if (rep == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpointInternal of memory");
+        OIC_LOG(DEBUG, TAG, "CACreateRemoteEndpointInternal of memory");
         return NULL;
     }
     memset(rep, 0, sizeof(CARemoteEndpoint_t));
@@ -253,7 +253,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
     temp = (char *) OICMalloc(sizeof(char) * (len + 1));
     if (temp == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpointInternal Out of memory");
+        OIC_LOG(DEBUG, TAG, "CACreateRemoteEndpointInternal Out of memory");
 
         CADestroyRemoteEndpointInternal(rep);
 
@@ -286,7 +286,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
     CARequestInfo_t *clone = (CARequestInfo_t *) OICMalloc(sizeof(CARequestInfo_t));
     if (clone == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "CACloneRequestInfo Out of memory");
+        OIC_LOG(DEBUG, TAG, "CACloneRequestInfo Out of memory");
         return NULL;
     }
     memset(clone, 0, sizeof(CARequestInfo_t));
@@ -300,7 +300,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "CACloneRequestInfo Out of memory");
+            OIC_LOG(DEBUG, TAG, "CACloneRequestInfo Out of memory");
 
             CADestroyRequestInfoInternal(clone);
 
@@ -319,7 +319,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         clone->info.options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t));
         if (clone->info.options == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "CACloneRequestInfo Out of memory");
+            OIC_LOG(DEBUG, TAG, "CACloneRequestInfo Out of memory");
             OICFree(clone->info.token);
             OICFree(clone);
             return NULL;
@@ -336,7 +336,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "CACloneRequestInfo Out of memory");
+            OIC_LOG(DEBUG, TAG, "CACloneRequestInfo Out of memory");
 
             CADestroyRequestInfoInternal(clone);
 
@@ -364,7 +364,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     CAResponseInfo_t *clone = (CAResponseInfo_t *) OICMalloc(sizeof(CAResponseInfo_t));
     if (clone == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "CACloneResponseInfo Out of memory");
+        OIC_LOG(DEBUG, TAG, "CACloneResponseInfo Out of memory");
         return NULL;
     }
     memset(clone, 0, sizeof(CAResponseInfo_t));
@@ -378,7 +378,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "CACloneResponseInfo Out of memory");
+            OIC_LOG(DEBUG, TAG, "CACloneResponseInfo Out of memory");
 
             CADestroyResponseInfoInternal(clone);
 
@@ -397,7 +397,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         clone->info.options = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t));
         if (clone->info.options == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "CACloneResponseInfo Out of memory");
+            OIC_LOG(DEBUG, TAG, "CACloneResponseInfo Out of memory");
             OICFree(clone->info.token);
             OICFree(clone);
             return NULL;
@@ -414,7 +414,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "CACloneResponseInfo Out of memory");
+            OIC_LOG(DEBUG, TAG, "CACloneResponseInfo Out of memory");
 
             CADestroyResponseInfoInternal(clone);
 

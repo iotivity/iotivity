@@ -99,16 +99,18 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
 
         // free
-        if (thread->destroy != NULL)
-        {
-            thread->destroy(message->msg, message->size);
-        }
-        else
-        {
-            OICFree(message->msg);
-        }
+        if(message != NULL) {
+            if (thread->destroy != NULL)
+            {
+                thread->destroy(message->msg, message->size);
+            }
+            else
+            {
+                OICFree(message->msg);
+            }
 
-        OICFree(message);
+            OICFree(message);
+        }
     }
 
     u_cond_signal(thread->threadCond);

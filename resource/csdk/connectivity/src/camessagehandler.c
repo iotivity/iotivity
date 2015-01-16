@@ -43,7 +43,7 @@
 #define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "memory error"); \
 goto memory_error_exit;} }
 
-#define MAX_THREAD_POOL_SIZE    10
+#define MAX_THREAD_POOL_SIZE    20
 
 typedef enum
 {
@@ -53,9 +53,9 @@ typedef enum
 typedef struct
 {
     CASendDataType_t type;
-    const CARemoteEndpoint_t *remoteEndpoint;
-    const CARequestInfo_t *requestInfo;
-    const CAResponseInfo_t *responseInfo;
+    CARemoteEndpoint_t *remoteEndpoint;
+    CARequestInfo_t *requestInfo;
+    CAResponseInfo_t *responseInfo;
     CAHeaderOption_t *options;
     uint8_t numOptions;
 } CAData_t;
@@ -153,7 +153,7 @@ static void CAReceiveThreadProcess(void *threadData)
 {
     // Currently not supported
 	// This will be enabled when RI supports multi threading
-#if 0 
+#if 0
     CAData_t *data = (CAData_t *) threadData;
 
     if (data == NULL)

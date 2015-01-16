@@ -123,6 +123,12 @@ void CAWiFiTerminateNetworkMonitor(void)
         gWifiIPAddress = NULL;
     }
 
+    if (gWifiSubnetMask)
+    {
+        OICFree(gWifiSubnetMask);
+        gWifiSubnetMask = NULL;
+    }
+
     if (gWifiNetInfoMutex)
     {
         u_mutex_free(gWifiNetInfoMutex);

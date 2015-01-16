@@ -27,8 +27,18 @@ typedef struct ConnectivityHandlerList {
 // Hardcoded values to Test
 char coapData[500] = "{\"oc:\[{href\":\"/a/light\",\"ref\":{\"power\":\"20\",\"state\":\"true\"}}\]}";
 
-#define CA_PORT         5283
-#define CA_MCAST_PORT   5298
+/**
+ * @def CA_PORT
+ * @brief Unicast port number (to listen for incoming data on unicast server).
+ * Note :- Actual port number may differ based on result of bind() operation.
+ */
+#define CA_PORT   5298
+
+/**
+ * @def CA_MCAST_PORT
+ * @brief Multicast port number as defined in COAP Specification, RFC-7252.
+ */
+#define CA_MCAST_PORT   5683
 
 /**
  * @def CA_MULTICAST_IP

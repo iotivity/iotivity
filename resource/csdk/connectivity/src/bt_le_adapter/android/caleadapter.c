@@ -234,7 +234,11 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t** info, uint32_t* s
     int32_t netInfoSize = 1;
 
     netInfo = (CALocalConnectivity_t *) OICMalloc(sizeof(CALocalConnectivity_t) * netInfoSize);
-    VERIFY_NON_NULL_RET(netInfo, TAG, "malloc failed", CA_MEMORY_ALLOC_FAILED);
+    if(NULL == netInfo)
+    {
+        OIC_LOG_V(ERROR, TAG, "Invalid input..");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
     memset(netInfo, 0, sizeof(CALocalConnectivity_t) * netInfoSize);
 
     char *macAddress = NULL;

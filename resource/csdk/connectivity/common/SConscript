@@ -15,6 +15,11 @@ env.AppendUnique(CPPPATH = [
 	ca_common_path + 'inc/',
 	])
 
+temp = env['CPPPATH']
+header = ' '
+for item in temp:
+	header = header + ' -I' + item
+	
 ######################################################################
 # Source files and Target(s)
 ######################################################################
@@ -26,8 +31,9 @@ ca_common_src = [
 	]
 	
 if ca_os == 'arduino':
+	env.Command(env.get('BUILD_DIR') + 'logger.c.o', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c.o' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + header + ' ' + ca_common_src_path + 'logger.c')
 	platform_src = [
-		ca_common_src_path + 'logger.cpp',
+		env.get('BUILD_DIR') + 'logger.c.o',
 	]
 else:
 	platform_src = [

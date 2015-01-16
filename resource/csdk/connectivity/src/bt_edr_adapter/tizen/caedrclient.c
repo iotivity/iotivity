@@ -499,7 +499,7 @@ void CAEDRManagerTerminateMutex(void)
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
-void CAEDRInitializeClient()
+void CAEDRInitializeClient(u_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
     CAEDRManagerInitializeMutex();

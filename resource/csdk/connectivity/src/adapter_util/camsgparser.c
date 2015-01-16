@@ -46,7 +46,7 @@ CAResult_t CAGenerateHeader(char *header, uint32_t length)
 {
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "IN");
 
-    VERIFY_NON_NULL(header, NULL, "header is NULL");
+    VERIFY_NON_NULL(header, CA_MSG_PARSER_TAG, "header is NULL");
 
     memset(header, 0x0, sizeof(char) * 2);
 
@@ -63,7 +63,7 @@ uint32_t CAParseHeader(const char *header)
 {
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "IN");
 
-    VERIFY_NON_NULL(header, NULL, "header is NULL");
+    VERIFY_NON_NULL(header, CA_MSG_PARSER_TAG, "header is NULL");
     uint32_t dataLen = 0;
 
     char localHeader[CA_HEADER_LENGTH];

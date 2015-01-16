@@ -73,7 +73,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     CAResult_t result = CALEInitializeNetworkMonitor();
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, TAG, "error");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_STATUS_FAILED;
     }
 
@@ -120,7 +120,7 @@ CAResult_t CAStartLEListeningServer()
     CAResult_t result = CAInitializeBle();
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, TAG, "error");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_STATUS_FAILED;
     }
 
@@ -323,7 +323,7 @@ CAResult_t CAStopBleGattServer()
     CAResult_t result = CATerminateBle();
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, TAG, "error");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_STATUS_FAILED;
     }
     return CA_STATUS_OK;

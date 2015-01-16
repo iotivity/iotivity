@@ -923,10 +923,6 @@ int32_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, const
             }
             const char* setAddress = (*env)->GetStringUTFChars(env, jni_setAddress, NULL);
 
-            if(jarrayObj == NULL) {
-                OIC_LOG(DEBUG, TAG, "jarrayObj is null");
-            }
-
             if(!strcmp(setAddress, address))
             {
                 OIC_LOG(DEBUG, TAG, "device address matched");
@@ -1288,8 +1284,8 @@ Java_com_iotivity_jar_CALeInterface_CALeGattServerCharacteristicWriteRequestCall
     jbyte *jni_byte_requestData = (char*)(*env)->GetByteArrayElements(env, data, &isCopy);
 
     char* requestData = NULL;
-    requestData = (char*) OICMalloc (sizeof(char) * length);
-    memset(requestData, 0, sizeof(char) * length);
+    requestData = (char*) OICMalloc (length + 1);
+    memset(requestData, 0, length + 1);
     strncpy(requestData, (char*)jni_byte_requestData, length);
     requestData[length] = '\0';
     (*env)->ReleaseByteArrayElements(env, data, jni_byte_requestData, JNI_ABORT);

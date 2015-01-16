@@ -40,7 +40,7 @@ u_arraylist_t *u_arraylist_create()
 
     if (!(list->data = (void *) OICMalloc(list->size * sizeof(void *))))
     {
-        OIC_LOG_V(DEBUG, TAG, "Out of memory");
+        OIC_LOG(DEBUG, TAG, "Out of memory");
         OICFree(list);
         return NULL;
     }
@@ -133,7 +133,7 @@ uint32_t u_arraylist_length(const u_arraylist_t *list)
 {
     if (NULL == list)
     {
-        OIC_LOG_V(DEBUG, TAG, "Invalid Parameter");
+        OIC_LOG(DEBUG, TAG, "Invalid Parameter");
         return 0;
     }
     return list->length;

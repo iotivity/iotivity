@@ -692,6 +692,7 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
 
     u_mutex_unlock(gBleReqRespCbMutex);
 
+    OICFree(data);
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }
 
@@ -814,8 +815,8 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue,
         u_mutex_unlock(gBleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
-    OICFree(data);
 
+    OICFree(data);
     u_mutex_unlock(gBleCharacteristicMutex);
 
     OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "OUT");

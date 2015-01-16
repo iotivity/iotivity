@@ -58,7 +58,7 @@ typedef void (*CARequestCallback)(const CARemoteEndpoint_t *object,
  */
 typedef void (*CAResponseCallback)(const CARemoteEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo);
-								   
+
 #ifdef __WITH_DTLS__
 /**
  * @brief   Callback function type for getting DTLS credentials.
@@ -73,7 +73,7 @@ typedef void (*CAGetDTLSCredentialsHandler)(OCDtlsPskCredsBlob **credInfo);
  *          It will initialize adapters, thread pool and other modules based on the platform
  *          compilation options.
  *
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAInitialize();
 
@@ -88,7 +88,7 @@ void CATerminate();
  * @brief   Starts listening servers.
  *          This API is used by resource hosting server for listening multicast requests.
  *          Based on the adapters configurations, different kinds of servers are started.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED
  */
 CAResult_t CAStartListeningServer();
 
@@ -96,7 +96,7 @@ CAResult_t CAStartListeningServer();
  * @brief   Starts discovery servers.
  *          This API is used by resource required clients for listening multicast requests.
  *          Based on the adapters configurations, different kinds of servers are started.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED
  */
 CAResult_t CAStartDiscoveryServer();
 
@@ -114,7 +114,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 /**
  * @brief   Register callback to get DTLS PSK credentials.
  * @param   GetDTLSCredentials   [IN] GetDTLS Credetials callback
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK
  */
 CAResult_t CARegisterDTLSCredentialsHandler(
                                                    CAGetDTLSCredentialsHandler GetDTLSCredentials);
@@ -130,7 +130,7 @@ CAResult_t CARegisterDTLSCredentialsHandler(
  *                                    \n coap://10:11:12:13:45:45/resource_uri ( for BT)
  * @param   connectivityType    [IN]  Connectivity type of the endpoint
  * @param   object              [OUT] Endpoint object which contains the above parsed data
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED
  * @remark  The created Remote endpoint can be freed using CADestroyRemoteEndpoint() API.
  * @see     CADestroyRemoteEndpoint
  */
@@ -148,7 +148,7 @@ void CADestroyRemoteEndpoint(CARemoteEndpoint_t *object);
 /**
  * @brief   Generating the token for matching the request and response.
  * @param   token   [OUT] Token for the request
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  * @remark  Token memory is destroyed by the caller using CADestroyToken().
  * @see     CADestroyToken
  */
@@ -168,7 +168,7 @@ void CADestroyToken(CAToken_t token);
  * @param   resourceUri [IN] Uri to send multicast search request. Must contain only relative
  *                           path of Uri to be search.
  * @param   token       [IN] Token for the request
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED
  */
 CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token);
 
@@ -177,7 +177,7 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token);
  * @param   object      [IN] Remote Endpoint where the payload need to be sent.
  *                           This Remote endpoint is delivered with Request or response callback.
  * @param   requestInfo [IN] Information for the request.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK #CA_STATUS_FAILED #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requestInfo);
 
@@ -186,7 +186,7 @@ CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requ
  * @param   object      [IN] Group Endpoint where the payload need to be sent.
  *                           This Remote endpoint is delivered with Request or response callback.
  * @param   requestInfo [IN] Information for the request.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
                               const CARequestInfo_t *requestInfo);
@@ -196,7 +196,7 @@ CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
  * @param   object          [IN] Remote Endpoint where the payload need to be sent.
  *                               This Remote endpoint is delivered with Request or response callback
  * @param   responseInfo    [IN] Information for the response
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or  #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo);
 
@@ -205,7 +205,7 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *re
  * @param   object          [IN] Remote Endpoint where the payload need to be sent.
  *                               This Remote endpoint is delivered with Request or response callback.
  * @param   responseInfo    [IN] Information for the response.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
                               CAResponseInfo_t *responseInfo);
@@ -216,7 +216,7 @@ CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
  * @param   token       [IN] Token for the request
  * @param   options     [IN] Header options information
  * @param   numOptions  [IN] Number of options
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token,
                                CAHeaderOption_t *options, uint8_t numOptions);
@@ -224,14 +224,14 @@ CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token,
 /**
  * @brief   Select network to use
  * @param   interestedNetwork   [IN] Connectivity Type enum
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_NOT_SUPPORTED or #CA_STATUS_FAILED or #CA_NOT_SUPPORTED
  */
 CAResult_t CASelectNetwork(const uint32_t interestedNetwork);
 
 /**
  * @brief   Select network to unuse
  * @param   nonInterestedNetwork    [IN] Connectivity Type enum
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_NOT_SUPPORTED or #CA_STATUS_FAILED
  */
 CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork);
 
@@ -240,13 +240,13 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork);
  *          It should be destroyed by the caller as it Get Information.
  * @param   info    [OUT] LocalConnectivity objects
  * @param   size    [OUT] No Of Array objects
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_STATUS_INVALID_PARAM or #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
  * @brief    To Handle the Request or Response
- * @return   #CA_STATUS_OK or Appropriate error code
+ * @return   #CA_STATUS_OK
  */
 CAResult_t CAHandleRequestResponse();
 

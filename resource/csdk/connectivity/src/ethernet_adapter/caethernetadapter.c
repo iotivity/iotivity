@@ -44,26 +44,25 @@
  * @def CA_PORT
  * @brief Port to listen for incoming data
  */
-#define CA_PORT   5683
+#define CA_PORT   5298
 
 /**
- * @def CA_PORT
- * @brief Port to listen for incoming data
+ * @def CA_SECURE_PORT
+ * @brief Secured (unicast) port number as defined in COAP Specification, RFC-7252.
  */
 #define CA_SECURE_PORT   5684
 
 /**
  * @def CA_MCAST_PORT
- * @brief Multicast Port Number
+ * @brief Multicast port number as defined in COAP Specification, RFC-7252.
  */
-#define CA_MCAST_PORT   5298
+#define CA_MCAST_PORT   5683
 
 /**
  * @def CA_MULTICAST_IP
- * @brief Multicast IP Address
+ * @brief Multicast IP Address as defined in COAP Specification, RFC-7252.
  */
 #define CA_MULTICAST_IP "224.0.1.187"
-
 
 typedef struct
 {

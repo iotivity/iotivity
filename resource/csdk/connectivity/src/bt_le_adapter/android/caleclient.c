@@ -5,7 +5,6 @@
 #include "calecore.h"
 #include "caleserver.h"
 #include "caleutils.h"
-#include "caedrcore.h"
 
 #include "logger.h"
 #include "oic_malloc.h"

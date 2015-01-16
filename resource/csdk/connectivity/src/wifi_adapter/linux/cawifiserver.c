@@ -231,6 +231,11 @@ static void CAReceiveHandler(void *data)
         if (!CAAdapterIsSameSubnet(gMulticastServerInterface, srcIPAddress, netMask))
         {
             OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Packet received from different subnet, Ignore!");
+            if (NULL != netMask)
+            {
+                OICFree(netMask);
+            }
+            netMask = NULL;
             continue;
         }
 

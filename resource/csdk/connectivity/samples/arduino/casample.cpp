@@ -638,6 +638,8 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
     printf(object->addressInfo.IP.port);
     printf("data: ");
     printf(requestInfo->info.payload);
+    printf("Type: ");
+    printf(requestInfo->info.type);
 
     if (requestInfo->info.options)
     {
@@ -663,6 +665,8 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
     printf((object != NULL) ? object->resourceUri : "");
     printf("data: ");
     printf((responseInfo != NULL) ? responseInfo->info.payload : "");
+    printf("Type: ");
+    printf(responseInfo->info.type);
     printf("res result=");
     printf(responseInfo->result);
 }

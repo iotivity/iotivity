@@ -36,7 +36,7 @@
 
 #define TAG "CAIFCNT_ST"
 
-#define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "Out of memory");\
+#define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG(DEBUG, TAG, "Out of memory");\
     goto memory_error_exit;} }
 
 #define CA_CONNECTIVITY_TYPE_NUM   4
@@ -82,7 +82,7 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CAConnectivityTy
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, 
+static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
     uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -266,7 +266,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     *info = resInfo;
     *size = resSize;
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 
     return res;
 
@@ -286,7 +286,7 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uin
 
     if (endpoint == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "RemoteEndpoint is NULL");
+        OIC_LOG(DEBUG, TAG, "RemoteEndpoint is NULL");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -437,7 +437,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
         if (index == -1)
         {
-            OIC_LOG_V(DEBUG, TAG, "unknown connectivity type!");
+            OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
             continue;
         }
 
@@ -494,7 +494,7 @@ CAResult_t CAReadData()
 
         if (-1 == index)
         {
-            OIC_LOG_V(DEBUG, TAG, "unknown connectivity type!");
+            OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
             continue;
         }
 

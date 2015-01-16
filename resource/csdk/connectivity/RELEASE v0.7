@@ -1,5 +1,5 @@
 Project Name: IoTivity
-Release Version No: CA_v0.61
+Release Version No: CA_v0.7
 API Version: CA_v0.8
 
 Release Description:
@@ -22,6 +22,7 @@ Preconditions:
 3)libcoap.a library ( do make @lib/libcoap-4.1.1)
 4)tinyDTLS library for DTLS enabled applications( enable DTLS = 1 in makefile @connectivity\build/linux)
 5)Ethernet, BLE, TimedActions, Timer libraries for arduino support.
+6)scons for scon script compilation.
 
 Scope of Release:
 1. Supported APIs ( please check below APIs)
@@ -54,7 +55,6 @@ CAGetNetworkInfo()
 Known and Open Issues:
 1) OIC Log, OIC Malloc will be removed once name changes applied to OIC Bases code.
 2) Tizen platform BLE stack is not stable. So we may see random crashes.
-3) GetDtlsPskCredentials is implemented in sample which will be replace by security call during integration
 
 How to Build for Linux:
 Follow below steps to execute CA Client / server in different systems

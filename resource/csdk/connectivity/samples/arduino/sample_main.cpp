@@ -18,6 +18,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
  *
  */
 
+
+////////////////////////////////////////////////////////////
+//
+// This file can be used internal purpose only
+// Do NOT use this file to test.
+//
+////////////////////////////////////////////////////////////
+
 #ifdef __ARDUINO_BLE__
 #include <logger.h>
 

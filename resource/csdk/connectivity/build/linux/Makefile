@@ -81,8 +81,8 @@ libtiny_lib_dir = $(PROJECT_LIB_PATH)/extlibs/tinydtls
 LDFLAGS := -L$(libcoap_build_dir) -L$(libtiny_lib_dir)
 LDLIBS := -lcoap -ltinydtls
 else
-LDFLAGS := -L$(libcoap_build_dir)
-LDLIBS := -lcoap
+LDFLAGS := -L$(libcoap_build_dir) 
+LDLIBS := -lcoap 
 
 endif
 BUILD_FLAG.debug = $(DEFINE_FLAG) $(DEBUG_FLAG)

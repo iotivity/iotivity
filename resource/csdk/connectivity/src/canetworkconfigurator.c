@@ -51,6 +51,7 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
     switch (ConnectivityType)
     {
         case CA_ETHERNET:
+        {
 
 #ifndef ETHERNET_ADAPTER
             OIC_LOG_V(DEBUG, TAG, "Add network type(ETHERNET) - Not Supported");
@@ -62,9 +63,11 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
             {
                 u_arraylist_add(gSelectedNetworkList, &NETWORK_ETHERNET);
             }
+        }
             break;
 
         case CA_WIFI:
+        {
 
 #ifndef WIFI_ADAPTER
             OIC_LOG_V(DEBUG, TAG, "Add network type(WIFI) - Not Supported");
@@ -76,9 +79,11 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
             {
                 u_arraylist_add(gSelectedNetworkList, &NETWORK_WIFI);
             }
+        }
             break;
 
         case CA_EDR:
+        {
 
 #ifndef EDR_ADAPTER
             OIC_LOG_V(DEBUG, TAG, "Add network type(EDR) - Not Supported");
@@ -90,9 +95,11 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
             {
                 u_arraylist_add(gSelectedNetworkList, &NETWORK_EDR);
             }
+        }
             break;
 
         case CA_LE:
+        {
 
 #ifndef LE_ADAPTER
             OIC_LOG_V(DEBUG, TAG, "Add network type(LE) - Not Supported");
@@ -104,6 +111,7 @@ CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
             {
                 u_arraylist_add(gSelectedNetworkList, &NETWORK_LE);
             }
+        }
             break;
 
     }
@@ -192,10 +200,11 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
             // stop selected interface adapter
             CAStopAdapter(connType);
+            return CA_STATUS_OK;
         }
     }
 
-    return CA_STATUS_OK;
+    return CA_STATUS_FAILED;
 }
 
 u_arraylist_t *CAGetSelectedNetworkList()

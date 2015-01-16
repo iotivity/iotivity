@@ -37,7 +37,7 @@
 
 #define TAG "CAMH_ST"
 
-#define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "Out of memory");\
+#define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG(DEBUG, TAG, "Out of memory");\
     goto memory_error_exit;} }
 
 #define MAX_THREAD_POOL_SIZE    10
@@ -51,9 +51,9 @@ typedef enum
 typedef struct
 {
     CASendDataType_t type;
-    const CARemoteEndpoint_t *remoteEndpoint;
-    const CARequestInfo_t *requestInfo;
-    const CAResponseInfo_t *responseInfo;
+    CARemoteEndpoint_t *remoteEndpoint;
+    CARequestInfo_t *requestInfo;
+    CAResponseInfo_t *responseInfo;
     CAHeaderOption_t *options;
     uint8_t numOptions;
 } CAData_t;
@@ -83,14 +83,14 @@ static void CAProcessData(CAData_t *data)
 
         if (data->requestInfo != NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "reqInfo avlbl");
+            OIC_LOG(DEBUG, TAG, "reqInfo avlbl");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
                                                data->requestInfo->method, data->requestInfo->info);
         }
         else if (data->responseInfo != NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "resInfo avlbl");
+            OIC_LOG(DEBUG, TAG, "resInfo avlbl");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
                                                data->responseInfo->result, data->responseInfo->info);

@@ -38,14 +38,21 @@
 /**
  * @def CA_PORT
  * @brief Port to listen for incoming data. Port 5683 is as per COAP RFC.
+ * Note :- Actual port number may differ based on result of bind() operation.
  */
-#define CA_PORT   5683
+#define CA_PORT   5298
+
+/**
+ * @def CA_SECURE_PORT
+ * @brief Secured (unicast) port number as defined in COAP Specification, RFC-7252.
+ */
+#define CA_SECURE_PORT   5684
 
 /**
  * @def CA_MCAST_PORT
- * @brief Multicast Port Number
+ * @brief Multicast port number as defined in COAP Specification, RFC-7252.
  */
-#define CA_MCAST_PORT   5298
+#define CA_MCAST_PORT   5683
 
 /**
  * @def CA_MULTICAST_IP
@@ -106,7 +113,7 @@ void CAWiFiNotifyNetworkChange(const char *address, const int16_t port,
     CALocalConnectivity_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_WIFI, address);
     if (!localEndpoint)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Out of memory");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Out of memory");
         return;
     }
     localEndpoint->addressInfo.IP.port = port;
@@ -306,7 +313,7 @@ CAResult_t CAStartWIFIListeningServer()
 
     if (gIsMulticastServerStarted == true)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Multicast Server, Already Started!");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Multicast Server, Already Started!");
         return CA_SERVER_STARTED_ALREADY;
     }
 
@@ -315,7 +322,7 @@ CAResult_t CAStartWIFIListeningServer()
     bool retVal = CAWiFiIsConnected();
     if (false == retVal)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed : WIFI not Connected");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Failed : WIFI not Connected");
         return CA_ADAPTER_NOT_ENABLED;
     }
 
@@ -349,7 +356,7 @@ uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *d
     VERIFY_NON_NULL_RET(data, WIFI_ADAPTER_TAG, "data", dataSize);
     if (dataLength == 0)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Invalid Data Length");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Invalid Data Length");
         return dataSize;
     }
 
@@ -367,7 +374,7 @@ uint32_t CASendWIFIMulticastData(void *data, uint32_t dataLength)
     VERIFY_NON_NULL_RET(data, WIFI_ADAPTER_TAG, "data", dataSize);
     if (dataLength == 0)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Invalid Data Length");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Invalid Data Length");
         return dataSize;
     }
 

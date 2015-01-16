@@ -135,6 +135,8 @@ static void CAFreeEDRData(CAEDRData *edrData);
  */
 void CAEDRFreeNetworkEvent(CAEDRNetworkEvent *event);
 
+static void CAEDRDataDestroyer(void *data, uint32_t size);
+
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback packetReceivedCallback,
                            CANetworkChangeCallback networkStateChangeCallback,
@@ -166,7 +168,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
 
     CAEDRSetNetworkChangeCallback(CAEDRNotifyNetworkStatus);
     CAEDRSetPacketReceivedCallback(CAAdapterRecvData);
-    CAEDRInitializeClient();
+    CAEDRInitializeClient(handle);
 
     CAConnectivityHandler_t handler;
     handler.startAdapter = CAStartEDR;
@@ -415,7 +417,7 @@ CAResult_t CAStartServer(void)
         return CA_STATUS_OK;
     }
 
-    if (CA_STATUS_OK != (err = CAEDRServerStart(OIC_EDR_SERVICE_ID, &gServerId)))
+    if (CA_STATUS_OK != (err = CAEDRServerStart(OIC_EDR_SERVICE_ID, &gServerId, gEDRThreadPool)))
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to start RFCOMM server!, error num [%d]",
                   err);
@@ -459,7 +461,7 @@ CAResult_t CAEDRInitializeSendHandler(void)
     }
 
     if (CA_STATUS_OK != CAQueueingThreadInitialize(gSendQueueHandle, gEDRThreadPool,
-            CAAdapterDataSendHandler, NULL))
+            CAAdapterDataSendHandler, CAEDRDataDestroyer))
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to Initialize send queue thread");
         return CA_STATUS_FAILED;
@@ -485,7 +487,7 @@ CAResult_t CAEDRInitializeReceiveHandler(void)
     }
 
     if (CA_STATUS_OK != CAQueueingThreadInitialize(gRecvQueueHandle, gEDRThreadPool,
-            CAAdapterDataReceiverHandler, NULL))
+            CAAdapterDataReceiverHandler, CAEDRDataDestroyer))
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to Initialize send queue thread");
         return CA_STATUS_FAILED;
@@ -615,7 +617,7 @@ void CAAdapterDataSendHandler(void *context)
     }
 
     // Free message
-    CAFreeEDRData(message);
+    //CAFreeEDRData(message);
 
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
@@ -635,7 +637,7 @@ CAResult_t CAEDRClientSendData(const char *remoteAddress, const char *serviceUUI
     }
     else
     {
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "sending multicast data");
+        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "sending multicast data : %s", data);
         if (CA_STATUS_OK != CAEDRClientSendMulticastData(serviceUUID, data,
                 dataLength, sentLength))
         {
@@ -647,7 +649,7 @@ CAResult_t CAEDRClientSendData(const char *remoteAddress, const char *serviceUUI
 }
 void CAAdapterDataReceiverHandler(void *context)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN_CAAdapterDataReceiverHandler");
 
 
     CAEDRData *message = (CAEDRData *) context;
@@ -702,7 +704,7 @@ void CAAdapterDataReceiverHandler(void *context)
         memcpy(defragData + recvDataLen, message->data, message->dataLen);
         recvDataLen += message->dataLen ;
     }
-    CAFreeEDRData(message);
+    //CAFreeEDRData(message);
     if (totalDataLen == recvDataLen)
     {
         OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
@@ -713,7 +715,7 @@ void CAAdapterDataReceiverHandler(void *context)
         isHeaderAvailable = CA_FALSE;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT_CAAdapterDataReceiverHandler");
 }
 
 CAResult_t CAAdapterStartQueue()
@@ -980,3 +982,9 @@ void CAFreeEDRData(CAEDRData *edrData)
     OICFree(edrData);
 }
 
+void CAEDRDataDestroyer(void *data, uint32_t size)
+{
+    CAEDRData *edrdata = (CAEDRData *) data;
+
+    CAFreeEDRData(edrdata);
+}

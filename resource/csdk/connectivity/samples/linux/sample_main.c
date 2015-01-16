@@ -401,7 +401,8 @@ void find_resource()
     printf("ex) /a/light\n");
     printf("reference uri : ");
 
-    gets(buf);
+    if(gets(buf) == NULL)
+        return;
 
     // create token
     CAToken_t token = NULL;
@@ -454,7 +455,8 @@ void send_request()
     }
 
     printf("Do you want to send secure request ?.... enter (0/1): ");
-    gets(secureRequest);
+    if( gets(secureRequest) == NULL)
+        return;
     if ('1' == secureRequest[0])
     {
         printf("Enter the URI like below....\n");
@@ -468,7 +470,8 @@ void send_request()
     }
 
     char uri[MAX_BUF_LEN] = {'\0'};
-    gets(uri);
+    if( gets(uri) == NULL)
+        return ;
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
@@ -489,7 +492,8 @@ void send_request()
     printf("0:CON, 1:NON\n");
     printf("select message type : ");
 
-    gets(buf);
+    if( gets(buf) == NULL)
+        return ;
 
     CAMessageType_t msgType = (buf[0] == '0' || buf[0] == '1') ? buf[0] - '0' : 0;
 
@@ -616,7 +620,8 @@ void send_request_all()
     printf("10:11:12:13:45:45/resource_uri ( for BT )\n");
     printf("uri : ");
 
-    gets(buf);
+    if( gets(buf) == NULL)
+        return ;
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
@@ -763,7 +768,8 @@ void send_notification()
     printf("10:11:12:13:45:45/resource_uri ( for BT )\n");
     printf("uri : ");
 
-    gets(buf);
+    if( gets(buf) == NULL)
+        return ;
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
@@ -819,7 +825,8 @@ void select_network()
     printf("select : ");
 
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
-    gets(buf);
+    if( gets(buf) == NULL)
+        return;
 
     int number = buf[0] - '0';
 
@@ -852,7 +859,8 @@ void unselect_network()
     printf("select : ");
 
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
-    gets(buf);
+    if( gets(buf) == NULL)
+        return ;
 
     int number = buf[0] - '0';
 
@@ -897,7 +905,8 @@ char get_menu()
 
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
 
-    gets(buf);
+    if( gets(buf) == NULL)
+        return 'q';
 
     return buf[0];
 }
@@ -1229,7 +1238,8 @@ CAResult_t get_network_type()
     printf("select : ");
 
     memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
-    gets(buf);
+    if( gets(buf) == NULL)
+        return CA_NOT_SUPPORTED ;
 
     int number = buf[0] - '0';
 

@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <time.h>
 
 #include "caprotocolmessage.h"
 #include "logger.h"
@@ -34,8 +34,7 @@
 #define CA_BUFSIZE 128
 #define CA_COAP_MESSAGE_CON 0
 
-#include <time.h>
-
+static int32_t SEED = 0;
 
 uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
                                  char *outUri)
@@ -88,8 +87,7 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
 
     uint32_t uriLength = length + coapHeaderLength + 1;
     coapUri = (char *) OICMalloc(uriLength);
-
-    if (coapUri == NULL)
+    if (NULL == coapUri)
     {
         OIC_LOG(DEBUG, TAG, "CAGeneratePdu, Memory allocation failed !");
         return NULL;
@@ -98,17 +96,16 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
 
     if (NULL != coapUri)
     {
-        memcpy(coapUri, "coap://[::]/", coapHeaderLength);
-        memcpy(coapUri + coapHeaderLength, uri, length);
+        strcat(coapUri, "coap://[::]/");
+        strcat(coapUri, uri);
 
         // parsing options in URI
         CAParseURI(coapUri, &optlist);
+        OICFree(coapUri);
+        coapUri = NULL;
 
         // parsing options in HeadOption
         CAParseHeadOption(code, info, &optlist);
-
-        OICFree(coapUri);
-        coapUri = NULL;
     }
 
     if (NULL != info.payload) // payload is include in request / response
@@ -566,10 +563,21 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token)
     }
     memset(temp, 0, sizeof(char) * (CA_MAX_TOKEN_LEN + 1));
 
+    if (SEED == 0)
+    {
+        SEED = time(NULL);
+        if (SEED == -1)
+        {
+            OIC_LOG(DEBUG, TAG, "Failed to Create Seed!");
+            SEED = 0;
+            OICFree(temp);
+            return CA_STATUS_FAILED;
+        }
+        srand(SEED);
+    }
+
     // set random byte
     uint32_t index;
-
-    srand(time(NULL));
     for (index = 0; index < CA_MAX_TOKEN_LEN; index++)
     {
         // use valid characters

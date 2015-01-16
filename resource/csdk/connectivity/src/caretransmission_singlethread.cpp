@@ -151,7 +151,7 @@ void CARetransmissionBaseRoutine(void *threadValue)
 
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "error");
+        OIC_LOG(DEBUG, TAG, "error");
         return;
     }
 
@@ -172,7 +172,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
     OIC_LOG(DEBUG, TAG, "IN");
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "error");
+        OIC_LOG(DEBUG, TAG, "error");
         return CA_STATUS_FAILED;
     }
 
@@ -292,7 +292,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     OIC_LOG(DEBUG, TAG, "IN");
     if (context == NULL || endpoint == NULL || pdu == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "error");
+        OIC_LOG(DEBUG, TAG, "error");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -360,7 +360,7 @@ CAResult_t CARetransmissionStop(CARetransmission_t *context)
     OIC_LOG(DEBUG, TAG, "IN");
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "error");
+        OIC_LOG(DEBUG, TAG, "error");
         return CA_STATUS_FAILED;
     }
 
@@ -375,7 +375,7 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
     OIC_LOG(DEBUG, TAG, "IN");
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "error");
+        OIC_LOG(DEBUG, TAG, "error");
         return CA_STATUS_FAILED;
     }
 

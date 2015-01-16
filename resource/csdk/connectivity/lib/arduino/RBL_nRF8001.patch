@@ -1,6 +1,6 @@
-diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001_new/RBL_nRF8001.cpp
---- RBL_nRF8001_old/RBL_nRF8001.cpp	2015-01-06 15:38:21.000000000 +0530
-+++ RBL_nRF8001_new/RBL_nRF8001.cpp	2015-01-06 15:39:20.000000000 +0530
+diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001/RBL_nRF8001.cpp
+--- RBL_nRF8001_old/RBL_nRF8001.cpp	2015-01-13 12:25:32.000000000 +0530
++++ RBL_nRF8001/RBL_nRF8001.cpp	2015-01-13 12:40:41.740244741 +0530
 @@ -22,7 +22,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOU
  #endif
  
@@ -31,6 +31,32 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001_new/RBL_nRF8001.cpp
      aci_state.aci_setup_info.num_setup_msgs     = NB_SETUP_MESSAGES;
  
      /*
+@@ -159,7 +162,7 @@ void ble_begin()
+ static volatile byte ack = 0;
+ 
+ void ble_write(unsigned char data)
+-{	    
++{
+     if(tx_buffer_len == MAX_TX_BUFF)
+     {
+             return;
+@@ -199,13 +202,13 @@ unsigned char ble_connected()
+ }
+ 
+ void ble_set_name(char *name)
+-{       
++{
+     unsigned char len=0;
+-    
++
+     len = strlen(name);
+     if(len > 10)
+     {
+-        Serial.print("the new name is too long");        
++        Serial.print("the new name is too long");
+     }
+     else
+     {
 @@ -236,6 +239,10 @@ void ble_reset(uint8_t reset_pin)
  void ble_disconnect(void)
  {
@@ -83,7 +109,7 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001_new/RBL_nRF8001.cpp
                  break;
  
              case ACI_EVT_CONNECTED:
-@@ -471,3 +505,7 @@ void ble_do_events()
+@@ -471,3 +505,12 @@ void ble_do_events()
  #endif
  }
  
@@ -91,23 +117,20 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001_new/RBL_nRF8001.cpp
 +{
 +    return gLeAddress;
 +}
-diff -rupN RBL_nRF8001_old/RBL_nRF8001.h RBL_nRF8001_new/RBL_nRF8001.h
---- RBL_nRF8001_old/RBL_nRF8001.h	2015-01-06 15:38:21.000000000 +0530
-+++ RBL_nRF8001_new/RBL_nRF8001.h	2015-01-06 14:48:20.000000000 +0530
-@@ -48,6 +48,7 @@ void ble_set_pins(uint8_t reqn, uint8_t
++
++void ble_radio_reset()
++{
++    lib_aci_radio_reset();
++}
+diff -rupN RBL_nRF8001_old/RBL_nRF8001.h RBL_nRF8001/RBL_nRF8001.h
+--- RBL_nRF8001_old/RBL_nRF8001.h	2015-01-13 12:25:32.000000000 +0530
++++ RBL_nRF8001/RBL_nRF8001.h	2015-01-13 12:40:41.740244741 +0530
+@@ -48,6 +48,8 @@ void ble_set_pins(uint8_t reqn, uint8_t
  unsigned char ble_busy();
  void ble_reset(uint8_t reset_pin);
  void ble_disconnect(void);
 +unsigned char* ble_getAddress();
++void ble_radio_reset();
  
  #endif
  
-Binary files RBL_nRF8001_old/SI/Untitled Project.IAB and RBL_nRF8001_new/SI/Untitled Project.IAB differ
-Binary files RBL_nRF8001_old/SI/Untitled Project.IAD and RBL_nRF8001_new/SI/Untitled Project.IAD differ
-Binary files RBL_nRF8001_old/SI/Untitled Project.IMB and RBL_nRF8001_new/SI/Untitled Project.IMB differ
-Binary files RBL_nRF8001_old/SI/Untitled Project.IMD and RBL_nRF8001_new/SI/Untitled Project.IMD differ
-Binary files RBL_nRF8001_old/SI/Untitled Project.PFI and RBL_nRF8001_new/SI/Untitled Project.PFI differ
-Binary files RBL_nRF8001_old/SI/Untitled Project.PO and RBL_nRF8001_new/SI/Untitled Project.PO differ
-Binary files RBL_nRF8001_old/SI/Untitled Project.PR and RBL_nRF8001_new/SI/Untitled Project.PR differ
-Binary files RBL_nRF8001_old/SI/Untitled Project.PRI and RBL_nRF8001_new/SI/Untitled Project.PRI differ
-Binary files RBL_nRF8001_old/SI/Untitled Project.PS and RBL_nRF8001_new/SI/Untitled Project.PS differ

@@ -271,7 +271,6 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
     char buf[1024] =  { 0, };
     struct ifconf ifc;
     struct ifreq* ifr;
-    struct ifreq* item;
     int32_t sck;
     int32_t interfaces;
     int32_t i;
@@ -502,7 +501,6 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CAWiFiInterface_CAWiFiStateEnabled
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] CAWiFiStateEnabled");
 
     CASendNetworkChangeCallback(currNetworkStatus);
-    return;
 }
 
 
@@ -515,6 +513,5 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_CAWiFiInterface_CAWiFiStateDisabled
     OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] CAWiFiStateDisabled");
 
     CASendNetworkChangeCallback(currNetworkStatus);
-    return;
 }
 

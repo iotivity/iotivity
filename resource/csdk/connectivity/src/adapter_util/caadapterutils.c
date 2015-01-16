@@ -34,7 +34,7 @@ CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CAConnectivityType_t type,
                                   OICMalloc(sizeof(CALocalConnectivity_t));
     if (NULL == info)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
         return NULL;
     }
     memset(info, 0, sizeof(CALocalConnectivity_t));
@@ -70,7 +70,7 @@ CALocalConnectivity_t *CAAdapterCopyLocalEndpoint(CALocalConnectivity_t *connect
                                   OICMalloc(sizeof(CALocalConnectivity_t));
     if (NULL == info)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
         return NULL;
     }
     memset(info, 0, sizeof(CALocalConnectivity_t));
@@ -117,7 +117,7 @@ CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type,
                                OICMalloc(sizeof(CARemoteEndpoint_t));
     if (NULL == info)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
         return NULL;
     }
     memset(info, 0, sizeof(CARemoteEndpoint_t));
@@ -158,7 +158,7 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remote
                                OICMalloc(sizeof(CARemoteEndpoint_t));
     if (NULL == info)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
         return NULL;
     }
     memset(info, 0, sizeof(CARemoteEndpoint_t));
@@ -228,7 +228,7 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
     char *ipAdrs1 = OICStrdup(ipAddress1);
     if (!ipAdrs1)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
         return false;
     }
 
@@ -251,7 +251,7 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
     char *ipAdrs2 = OICStrdup(ipAddress2);
     if (!ipAdrs2)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
         OICFree(ipAdrs1);
         return false;
     }
@@ -275,7 +275,7 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
     char *nMask = OICStrdup(netMask);
     if (!nMask)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Failed to get dup string!");
         OICFree(ipAdrs1);
         OICFree(ipAdrs2);
         return false;
@@ -303,7 +303,7 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
 
     if (ip1TokenCount < 3 || ip2TokenCount < 3 || maskTokenCount < 3)
     {
-        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Address or mask is invalid!");
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Address or mask is invalid!");
         return false;
     }
 

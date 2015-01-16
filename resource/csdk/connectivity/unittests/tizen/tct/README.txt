@@ -7,3 +7,6 @@ TCT Unit tests for Tizen:
 5. Build oic test case project with "sudo ./tctbuild build liboic".
 6. Install test framework to device with "sudo ./tctbuild install liboic".
 7. Run tct tool with "tct-mgr".
+
+Note: For BLE, please copy BLE libs and headers from the path /connectivity/lib/tizen/ble/libs to /usr/lib and from /connectivity/lib/tizen/ble/inc 
+to /usr/include/network before building test case project.

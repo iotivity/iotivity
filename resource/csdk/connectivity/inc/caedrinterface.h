@@ -38,6 +38,23 @@ extern "C"
 #define OIC_EDR_SERVICE_ID "12341234-1C25-481F-9DFB-59193D238280"
 #endif //OIC_EDR_SERVICE_ID
 
+
+typedef struct connected_state {
+    char address[CA_MACADDR_SIZE];
+    uint32_t state;
+} state_t;
+
+/**
+ * @enum CAAdapterServerType_t
+ * @brief Enum for defining different server types.
+ */
+typedef enum
+{
+    CA_UNICAST_SERVER = 0,      /**< Unicast Server */
+    CA_MULTICAST_SERVER,        /**< Multicast Server */
+    CA_SECURED_UNICAST_SERVER   /**< Secured Unicast Server */
+} CAAdapterServerType_t;
+
 /**
  * @struct CAEDRData
  * @brief Structure to maintain the information of data in message queue.
@@ -131,7 +148,7 @@ void CAEDRClientUnsetCallbacks(void);
  * @brief Used to initialize the EDR client module where mutex is initialized
  * @return NONE
  */
-void CAEDRInitializeClient();
+void CAEDRInitializeClient(u_thread_pool_t handle);
 
 /**
  * @brief Destroys the Device list and mutex.
@@ -191,7 +208,7 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info);
  * @retval #CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD);
+CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, u_thread_pool_t handle);
 
 /**
  * @brief  Stop RFCOMM server

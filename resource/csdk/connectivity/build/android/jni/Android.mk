@@ -37,9 +37,10 @@ BUILD_FLAG = $(BUILD_FLAG.$(BUILD))
 include $(CLEAR_VARS)
 LOCAL_PATH = $(PROJECT_LIB_PATH)/android
 LOCAL_MODULE = Glib
-LOCAL_SRC_FILES := libglib-2.0.so
-LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-master \
-                          $(PROJECT_LIB_PATH)/android/glib-master/android
+LOCAL_SRC_FILES := libglib-2.40.2.so
+LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-2.40.2 \
+                          $(PROJECT_LIB_PATH)/android/glib-2.40.2/glib
+
 include $(PREBUILT_SHARED_LIBRARY)
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -48,15 +49,15 @@ include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_PATH = $(PROJECT_LIB_PATH)/android
 LOCAL_MODULE = GLibThread
-LOCAL_SRC_FILES := libgthread-2.0.so
-LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-master \
-                          $(PROJECT_LIB_PATH)/android/glib-master/android
+LOCAL_SRC_FILES := libgthread-2.40.2.so
+LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-2.40.2 \
+                          $(PROJECT_LIB_PATH)/android/glib-2.40.2/glib
 
 include $(PREBUILT_SHARED_LIBRARY)
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#include TinyDtls
+#Build TinyDtls
 
 include $(CLEAR_VARS)
 include $(DTLS_LIB)/Android.mk
@@ -72,6 +73,7 @@ LOCAL_MODULE = CACommon
 LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
 
 LOCAL_SHARED_LIBRARIES = Glib GLibThread
+
 LOCAL_CFLAGS = -D__ANDROID__ $(DEBUG_FLAG)
 
 LOCAL_C_INCLUDES = $(PROJECT_COMMON_INC_PATH)
@@ -133,11 +135,13 @@ LOCAL_SRC_FILES	= \
 					camessagehandler.c canetworkconfigurator.c caprotocolmessage.c \
 					caretransmission.c caqueueingthread.c \
 					$(ADAPTER_UTILS)/caadapternetdtls.c $(ADAPTER_UTILS)/caadapterutils.c \
-					$(ADAPTER_UTILS)/camsgparser.c $(EDR_ADAPTER_PATH)/caedradapter.c \
+					$(ADAPTER_UTILS)/camsgparser.c \
 					$(LE_ADAPTER_PATH)/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c \
 					$(LE_ADAPTER_PATH)/caleserver.c $(LE_ADAPTER_PATH)/caleutils.c \
 					$(LE_ADAPTER_PATH)/calenwmonitor.c \
-					$(EDR_ADAPTER_PATH)/caedrcore.c \
+					bt_edr_adapter/caedradapter.c $(EDR_ADAPTER_PATH)/caedrutils.c \
+					$(EDR_ADAPTER_PATH)/caedrclient.c $(EDR_ADAPTER_PATH)/caedrserver.c \
+					$(EDR_ADAPTER_PATH)/caedrnwmonitor.c \
 					wifi_adapter/cawifiadapter.c $(WIFI_ADAPTER_PATH)/cawifiserver.c \
 					$(WIFI_ADAPTER_PATH)/cawificlient.c $(WIFI_ADAPTER_PATH)/cawifinwmonitor.c \
 

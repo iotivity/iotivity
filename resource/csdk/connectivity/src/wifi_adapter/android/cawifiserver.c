@@ -552,6 +552,7 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
                 &gUnicastServerSocketFD))
         {
             OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
+            close(gUnicastServerSocketFD);
             gUnicastServerSocketFD = -1;
             u_mutex_unlock(gMutexUnicastServer);
             return CA_STATUS_FAILED;

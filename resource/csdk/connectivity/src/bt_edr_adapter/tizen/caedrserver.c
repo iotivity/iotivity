@@ -37,7 +37,7 @@
 
 static int32_t gMaxPendingConnections = 10;
 
-CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD)
+CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, u_thread_pool_t handle)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 

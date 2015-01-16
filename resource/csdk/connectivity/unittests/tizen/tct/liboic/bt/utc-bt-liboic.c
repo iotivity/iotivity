@@ -4,19 +4,9 @@
 #include "interfaceHeaders/caedradapter.h"
 #include "interfaceHeaders/uthreadpool.h"
 
-//& set: Liboic
-
-//Bt callbacks
-
 CALocalConnectivity_t *localBtEndpoint = NULL;
-CARemoteEndpoint_t remoteMulticastEndpoint;
-CARemoteEndpoint_t remoteEndpoint[10]; /* 10 RemoteEndpoints are currently kept */
-char remoteIPAddress[CA_IPADDR_SIZE] = "192.168.1.8";  // Change the Corresponding IP address during testing.
-char localIPAddress[CA_IPADDR_SIZE] = {0};
-int32_t serverId;
 // Global bt Addr. Change this before testing.
 char btAddr[CA_MACADDR_SIZE] = "BC:79:AD:E6:BC:F6";
-char *serviceUUID = "12341234-1C25-481F-9DFB-59193D238280";
 
 static u_thread_pool_t gBTThreadPool = NULL;
 

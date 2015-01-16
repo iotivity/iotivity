@@ -17,48 +17,48 @@ Linux Build:
 2) Execute following command(s) to start build based on transport selection required :
 
     -> Building for all transports :
-    scons TARGET_OS=linux TARGET_TRANSPORT=ALL
+    $ scons TARGET_OS=linux TARGET_TRANSPORT=ALL
 
     -> Building for a specific transport :
-    scons TARGET_OS=linux TARGET_TRANSPORT=WIFI
+    $ scons TARGET_OS=linux TARGET_TRANSPORT=WIFI
 
     -> Building for multiple transports :
-    scons TARGET_OS=linux TARGET_TRANSPORT=WIFI,ETHERNET
-	
-	sudo scons TARGET_OS=linux TARGET_TRANSPORT=ALL -c ( for clean)
+    $ scons TARGET_OS=linux TARGET_TRANSPORT=WIFI,ETHERNET
+
+    -> Clean Build (all transports) :
+    scons TARGET_OS=linux TARGET_TRANSPORT=ALL -c (for clean)
 
 
-3)The above command will build sample also.
+3) The above command will build sample also.
 
-For Enabling Secured server, 
-    *Note: tinydtls libray has to copied to "connectivity/lib/tinydtls" for secured build.
+    For Enabling Secured server, 
+    * Note: tinydtls library has to copied to "connectivity/lib/tinydtls" for secured build.
 
     Secured Server will be only used for WIFI and ETHERNET transports.
 
-    Give command "sudo scons TARGET_OS=linux TARGET_TRANSPORT=WIFI SECURED=1
+    Give command "scons TARGET_OS=linux TARGET_TRANSPORT=WIFI SECURED=1
 
-    or(For multiple transports will be mentioned using comma)
+    or (For multiple transports will be mentioned using comma)
 
-    Give command "sudo scons TARGET_OS=linux TARGET_TRANSPORT=WIFI,ETHERNET SECURED=1
-
+    Give command "scons TARGET_OS=linux TARGET_TRANSPORT=WIFI,ETHERNET SECURED=1
 
 Android Build:
 
-1) Go to "connectivity/build" folder.
+1) Go to "connectivity/" folder.
 
 2) Execute following command(s) to start build based on transport selection required :
 
     -> Building for all transports :
-    scons TARGET_OS=android TARGET_TRANSPORT=ALL TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
+    $ scons TARGET_OS=android TARGET_TRANSPORT=ALL TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
 
     -> Building for a specific transport :
-    scons TARGET_OS=android TARGET_TRANSPORT=WIFI TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
+    $ scons TARGET_OS=android TARGET_TRANSPORT=WIFI TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
 
     -> Building for multiple transports :
-    scons TARGET_OS=android TARGET_TRANSPORT=WIFI,BT TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
+    $ scons TARGET_OS=android TARGET_TRANSPORT=WIFI,BT TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
 
 Note :- Upon successful execution of above command(s) CA library will be generated at path
-		"~/connectivity/build/out/android/TARGET_ARCH/release or debug".
+        "~/connectivity/build/out/android/TARGET_ARCH/release or debug".
 
 Tizen Build:
 
@@ -69,13 +69,13 @@ Tizen Build:
 3) Execute following command(s) to start build based on transport selection required :
 
     -> Building for all transports :
-    scons TARGET_OS=tizen TARGET_TRANSPORT=ALL
+    $ scons TARGET_OS=tizen TARGET_TRANSPORT=ALL
 
     -> Building for a specific transport :
-    scons TARGET_OS=tizen TARGET_TRANSPORT=WIFI
+    $ scons TARGET_OS=tizen TARGET_TRANSPORT=WIFI
 
     -> Building for multiple transports :
-    scons TARGET_OS=tizen TARGET_TRANSPORT=WIFI,BT,BLE
+    $ scons TARGET_OS=tizen TARGET_TRANSPORT=WIFI,BT,BLE
 
 4) By default, above command will build sample also.
    To disable building sample, add BUILD_SAMPLE=OFF to the build command.
@@ -89,32 +89,34 @@ Arduino Build:
 
 Note :- Currently only megaADK build is supported.
 
-1) Set up Arduino first before building. Refer to connectivity\build\arduino\Arduino_Setup_README.txt file for help.
+1) Set up Arduino first before building. Refer to "connectivity\build\arduino\Arduino_Setup_README.txt" file for help.
 
 2) Go to "connectivity/" folder.
 
 3) Execute following command to start build :
 
-    scons TARGET_OS=arduino TARGET_TRANSPORT=<transport> TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation>
+    $ scons TARGET_OS=arduino TARGET_TRANSPORT=<transport> TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation>
 
     Possible values for <transport> are:
     -> ETHERNET :
-    scons TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation>
+    $ scons TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation>
     -> WIFI :
-    scons TARGET_OS=arduino TARGET_TRANSPORT=WIFI TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation>
+    $ scons TARGET_OS=arduino TARGET_TRANSPORT=WIFI TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation>
     -> BLE :
-    scons TARGET_OS=arduino TARGET_TRANSPORT=BLE TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation>
+    $ scons TARGET_OS=arduino TARGET_TRANSPORT=BLE TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation>
 
     Note :- Only single transport can be built at a time for Arduino.
 
 4) The above command will build sample also. The "CASample.hex" can be found at "/samples/arduino/"
 
-5) After building sample, script will try to install on "/dev/ttyACM0" port in sudo mode.
+5) After building sample, script will try to install on "/dev/ttyACM0" port in 'sudo' mode.
    To skip installation, set command line argument 'UPLOAD=false'.
    "scons TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation> UPLOAD=false"
 
-6) To set BLE Shield Name, include the option DEVICE_NAME during scon build.
-	"scons TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation> DEVICE_NAME=OIC"
+6) To set BLE Shield Name, include the option DEVICE_NAME during scons build.
+
+   -> $ scons TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=megaADK ARDUINO_HOME=<path_to_arduino_installation> DEVICE_NAME=OIC
+
    Specified Device name length MUST be less than 10 characters. RBL Library has this limitation.
    By Default DEVICE_NAME=OIC-DEVICE, if device name option is not specified
 

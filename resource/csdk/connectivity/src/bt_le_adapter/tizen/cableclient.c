@@ -193,6 +193,8 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
 
     u_mutex_unlock(gBleReqRespClientCbMutex);
 
+    OICFree(data);
+
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
     return;
 }
@@ -1669,7 +1671,8 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
         OICFree(value);
         return CA_STATUS_FAILED;
     }
-    // OICFree(value);
+
+    OICFree(value);
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
     return CA_STATUS_OK;
