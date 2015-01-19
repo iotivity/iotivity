@@ -140,7 +140,8 @@ namespace OC
 
 #ifdef CA_INT
     OCResource::Ptr OCPlatform_impl::constructResourceObject(const std::string& host,
-                                                const std::string& uri, uint8_t connectivityType,
+                                                const std::string& uri,
+                                                OCConnectivityType connectivityType,
                                                 bool isObservable,
                                                 const std::vector<std::string>& resourceTypes,
                                                 const std::vector<std::string>& interfaces)
@@ -160,7 +161,7 @@ namespace OC
 
     OCStackResult OCPlatform_impl::findResource(const std::string& host,
                                             const std::string& resourceName,
-                                            uint8_t connectivityType,
+                                            OCConnectivityType connectivityType,
                                             FindCallback resourceHandler)
     {
         return findResource(host, resourceName, connectivityType, resourceHandler, m_cfg.QoS);
@@ -168,7 +169,7 @@ namespace OC
 
     OCStackResult OCPlatform_impl::findResource(const std::string& host,
                                             const std::string& resourceName,
-                                            uint8_t connectivityType,
+                                            OCConnectivityType connectivityType,
                                             FindCallback resourceHandler, QualityOfService QoS)
     {
 
@@ -178,7 +179,7 @@ namespace OC
 
     OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
                                             const std::string& deviceURI,
-                                            uint8_t connectivityType,
+                                            OCConnectivityType connectivityType,
                                             FindDeviceCallback deviceInfoHandler)
     {
         return result_guard(getDeviceInfo(host, deviceURI, connectivityType,
@@ -187,7 +188,7 @@ namespace OC
 
     OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
                                             const std::string& deviceURI,
-                                            uint8_t connectivityType,
+                                            OCConnectivityType connectivityType,
                                             FindDeviceCallback deviceInfoHandler,
                                             QualityOfService QoS)
     {
@@ -356,7 +357,8 @@ namespace OC
 
 #ifdef CA_INT
     OCStackResult OCPlatform_impl::subscribePresence(OCPresenceHandle& presenceHandle,
-                                            const std::string& host, uint8_t connectivityType,
+                                            const std::string& host,
+                                            OCConnectivityType connectivityType,
                                             SubscribeCallback presenceHandler)
     {
         return subscribePresence(presenceHandle, host, "", connectivityType, presenceHandler);
@@ -366,7 +368,7 @@ namespace OC
     OCStackResult OCPlatform_impl::subscribePresence(OCPresenceHandle& presenceHandle,
                                             const std::string& host,
                                             const std::string& resourceType,
-                                            uint8_t connectivityType,
+                                            OCConnectivityType connectivityType,
                                             SubscribeCallback presenceHandler)
     {
         return checked_guard(m_client, &IClientWrapper::SubscribePresence,

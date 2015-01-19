@@ -32,7 +32,7 @@ using OC::checked_guard;
 #ifdef CA_INT
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
                        const std::string& uri, const std::string& serverId,
-                       uint8_t connectivityType, bool observable,
+                       OCConnectivityType connectivityType, bool observable,
                        const std::vector<std::string>& resourceTypes,
                        const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri), m_resourceId(serverId, m_uri),
@@ -325,7 +325,7 @@ std::string OCResource::uri() const
 }
 
 #ifdef CA_INT
-uint8_t OCResource::connectivityType() const
+OCConnectivityType OCResource::connectivityType() const
 {
     return m_connectivityType;
 }

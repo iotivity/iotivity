@@ -188,7 +188,7 @@ namespace OC
         public:
 #ifdef CA_INT
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw, const OCDevAddr& address,
-                    uint8_t connectivityType, std::stringstream& json):
+                    OCConnectivityType connectivityType, std::stringstream& json):
                 m_clientWrapper(cw), m_address(address), m_connectivityType(connectivityType)
 #else
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw, const OCDevAddr& address,
@@ -300,6 +300,6 @@ namespace OC
             std::vector<std::shared_ptr<OC::OCResource>> m_resources;
             std::weak_ptr<IClientWrapper> m_clientWrapper;
             OCDevAddr m_address;
-            uint8_t m_connectivityType;
+            OCConnectivityType m_connectivityType;
     };
 }
