@@ -484,7 +484,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         // This is the multicast case
 
         OCMulticastNode* mcNode = NULL;
-        mcNode = GetMCPresenceNode(fullUri);
+        mcNode = GetMCPresenceNode((const unsigned char *)fullUri);
 
         if(mcNode != NULL)
         {
@@ -541,6 +541,7 @@ exit:
 OCFree(fullUri);
 OCFree(ipAddress);
 OCFree(resourceTypeName);
+return result;
 }
 
 
@@ -548,8 +549,6 @@ OCFree(resourceTypeName);
 void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
-
-    OCStackApplicationResult result = OC_STACK_DELETE_TRANSACTION;
 
     if(NULL == endPoint)
     {
@@ -628,10 +627,6 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
 //This function will be called back by CA layer when a request is received
 void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
-    CAInfo_t responseData;
-    CAResponseInfo_t responseInfo;
-    OCStackResult requestResult = OC_STACK_ERROR;
-
     OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
 
 #if 1
@@ -648,7 +643,6 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 
     char * newUri = (char *)endPoint->resourceUri;
     unsigned char * query = NULL;
-    unsigned char * resourceType = NULL;
     getQueryFromUri(endPoint->resourceUri, &query, &newUri);
     OC_LOG_V(INFO, TAG, PCF("**********URI without query ****: %s\n"), newUri);
     OC_LOG_V(INFO, TAG, PCF("**********Query ****: %s\n"), query);
@@ -657,7 +651,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     //copy query
     if(query)
     {
-        memcpy (&(serverRequest.query), query, strlen(query));
+        memcpy (&(serverRequest.query), query, strlen((char*)query));
     }
     //copy request payload
     if (requestInfo->info.payload)
@@ -755,7 +749,10 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
             sizeof(CAHeaderOption_t)*requestInfo->info.numOptions);
     }
 
-    requestResult = HandleStackRequests (&serverRequest);
+    if(HandleStackRequests (&serverRequest) != OC_STACK_OK)
+    {
+        OC_LOG(INFO, TAG, PCF("HandleStackRequests failed"));
+    }
 #endif
 
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
@@ -1631,7 +1628,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     caResult = CAGenerateToken(&caToken);
 
     //TODO-CA Remove this temporary fix (for some reason same token is being generated)
-    static count = 0;
+    static int count = 0;
     count++;
     caToken[0] += count;
 
