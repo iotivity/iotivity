@@ -360,7 +360,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
 
     // Copy the address
-    responseEndpoint.resourceUri      = serverRequest->resourceUrl;
+    responseEndpoint.resourceUri      = (CAURI_t)serverRequest->resourceUrl;
     responseEndpoint.addressInfo      = serverRequest->addressInfo;
     responseEndpoint.connectivityType = serverRequest->connectivityType;
     responseEndpoint.isSecured        = serverRequest->secured;
