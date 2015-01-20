@@ -588,11 +588,11 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         if(responseInfo->info.numOptions > 0)
         {
             int start = 0;
-            //First option alwas with option ID COAP_OPTION_OBSERVE if it is availbale
+            //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
             if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
             {
                 memcpy (&(response.sequenceNumber),
-                            &(responseInfo->info.options[0].optionData), 4);
+                            &(responseInfo->info.options[0].optionData), sizeof(uint32_t));
                 response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
                 start = 1;
             }

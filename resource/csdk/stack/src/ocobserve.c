@@ -537,8 +537,7 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
     // TODO-CA: COAP_OPTION_OBSERVE is defined in CoAP header files which will be abstracted
     // from resource model. We have to define a new macro for this in the stack layer.
     tmpHdrOpt[0].optionID = COAP_OPTION_OBSERVE;
-    // Length is one byte
-    tmpHdrOpt[0].optionLength = 1;
+    tmpHdrOpt[0].optionLength = sizeof(uint32_t);
     tmpHdrOpt[0].optionData[0] = observeFlag;
     for (uint8_t i = 0; i < numOptions; i++)
     {

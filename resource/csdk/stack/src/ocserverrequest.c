@@ -440,9 +440,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     {
         responseInfo.info.options[0].protocolID = CA_COAP_ID;
         responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;
-        // TODO-CA Remove the magic number 4
-        responseInfo.info.options[0].optionLength = 4;
-        memcpy(responseInfo.info.options[0].optionData, &(serverRequest->observationOption), 4);
+        responseInfo.info.options[0].optionLength = sizeof(uint32_t);
+        memcpy(responseInfo.info.options[0].optionData,
+                &(serverRequest->observationOption), sizeof(uint32_t));
 
         // Point to the next header option before copying vender specific header options
         optionsPointer += 1;
