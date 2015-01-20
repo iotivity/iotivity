@@ -49,7 +49,6 @@
 typedef enum {
     OC_STACK_UNINITIALIZED = 0, OC_STACK_INITIALIZED, OC_STACK_UNINIT_IN_PROGRESS
 } OCStackState;
-
 #ifdef WITH_PRESENCE
 typedef enum {
     OC_PRESENCE_UNINITIALIZED = 0, OC_PRESENCE_INITIALIZED
@@ -283,7 +282,11 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
 {
     struct sockaddr_in sa;
     OCStackResult ret = OC_STACK_INVALID_PARAM;
-    //TODO-CA Check validity of the endPoint pointer
+    if (!endPoint)
+    {
+        OC_LOG(ERROR, TAG, PCF("CA Remote end-point is NULL!"));
+        return ret;
+    }
     inet_pton(AF_INET, endPoint->addressInfo.IP.ipAddress, &(sa.sin_addr));
     sa.sin_port = htons(endPoint->addressInfo.IP.port);
     static OCDevAddr address;
@@ -292,6 +295,10 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
     {
         response->addr = &address;
         ret = CAToOCConnectivityType(endPoint->connectivityType, &(response->connType));
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("OCClientResponse is NULL!"));
     }
     return ret;
 }
@@ -344,11 +351,17 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     int presenceSubscribe = 0;
     int multicastPresenceSubscribe = 0;
 
+    if (responseInfo->result != CA_SUCCESS)
+    {
+        OC_LOG_V(ERROR, TAG, "HandlePresenceResponse failed %d", responseInfo->result);
+        return OC_STACK_ERROR;
+    }
+
     fullUri = (char *) OCMalloc(MAX_URI_LENGTH );
 
     if(NULL == fullUri)
     {
-        OC_LOG(INFO, TAG, PCF("Memory could not be abllocated for fullUri"));
+        OC_LOG(ERROR, TAG, PCF("Memory could not be allocated for fullUri"));
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
@@ -357,7 +370,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
 
     if(NULL == ipAddress)
     {
-        OC_LOG(INFO, TAG, PCF("Memory could not be abllocated for ipAddress"));
+        OC_LOG(ERROR, TAG, PCF("Memory could not be allocated for ipAddress"));
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
@@ -614,6 +627,17 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
 void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
+    if(!endPoint)
+    {
+        OC_LOG(ERROR, TAG, PCF("endPoint is NULL"));
+        return;
+    }
+
+    if(!requestInfo)
+    {
+        OC_LOG(ERROR, TAG, PCF("requestInfo is NULL"));
+        return;
+    }
 
     if(myStackMode == OC_CLIENT)
     {
@@ -736,11 +760,11 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
             sizeof(CAHeaderOption_t)*requestInfo->info.numOptions);
     }
 
+
     if(HandleStackRequests (&serverRequest) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("HandleStackRequests failed"));
     }
-
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
 
@@ -753,6 +777,11 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     OCStackResult result = OC_STACK_ERROR;
     ResourceHandling resHandling;
     OCResource *resource;
+    if(!protocolRequest)
+    {
+        OC_LOG(ERROR, TAG, PCF("protocolRequest is NULL"));
+        return OC_STACK_INVALID_PARAM;
+    }
 
     OCServerRequest * request = GetServerRequestUsingToken(protocolRequest->requestToken);
     if(!request)
@@ -824,7 +853,12 @@ OCStackResult HandleStackResponses(OCResponse * response)
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
     uint8_t isObserveNotification = 0;
     ClientCB * cbNode = NULL;
-    #ifdef WITH_PRESENCE
+    if(!response)
+    {
+        OC_LOG(ERROR, TAG, PCF("response is NULL"));
+        return OC_STACK_INVALID_PARAM;
+    }
+#ifdef WITH_PRESENCE
     uint8_t isPresenceNotification = 0;
     uint8_t isMulticastPresence = 0;
     char * resourceTypeName = NULL;
@@ -832,7 +866,7 @@ OCStackResult HandleStackResponses(OCResponse * response)
     uint32_t higherBound = 0;
     char * tok = NULL;
     unsigned char * bufRes = response->bufRes;
-    #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
 
     cbNode = response->cbNode;
     if(!cbNode)
