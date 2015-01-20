@@ -30,6 +30,7 @@
 #include <vector>
 #include <map>
 #include <cstdlib>
+#include <ActionSet.h>
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "GroupManager.h"
