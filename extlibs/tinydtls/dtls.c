@@ -2164,6 +2164,7 @@ static int
 dtls_send_client_key_exchange(dtls_context_t *ctx, dtls_peer_t *peer)
 {
   uint8 buf[DTLS_CKXEC_LENGTH];
+  uint8 client_id[DTLS_PSK_MAX_CLIENT_IDENTITY_LEN];
   uint8 *p;
   dtls_handshake_parameters_t *handshake = peer->handshake_params;
 
@@ -2175,28 +2176,24 @@ dtls_send_client_key_exchange(dtls_context_t *ctx, dtls_peer_t *peer)
     int len;
 
     len = CALL(ctx, get_psk_info, &peer->session, DTLS_PSK_IDENTITY,
-	       handshake->keyx.psk.identity, handshake->keyx.psk.id_length,
-	       buf + sizeof(uint16),
-	       min(sizeof(buf) - sizeof(uint16),
-		   sizeof(handshake->keyx.psk.identity)));
+               NULL, 0,
+               client_id,
+               sizeof(client_id));
     if (len < 0) {
       dtls_crit("no psk identity set in kx\n");
       return len;
     }
 
     if (len + sizeof(uint16) > DTLS_CKXEC_LENGTH) {
-      memset(&handshake->keyx.psk, 0, sizeof(dtls_handshake_parameters_psk_t));
       dtls_warn("the psk identity is too long\n");
       return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
     }
-    handshake->keyx.psk.id_length = (unsigned int)len;
-    memcpy(handshake->keyx.psk.identity, p + sizeof(uint16), len);
 
-    dtls_int_to_uint16(p, handshake->keyx.psk.id_length);
+    dtls_int_to_uint16(p, len);
     p += sizeof(uint16);
 
-    memcpy(p, handshake->keyx.psk.identity, handshake->keyx.psk.id_length);
-    p += handshake->keyx.psk.id_length;
+    memcpy(p, client_id, len);
+    p += len;
 
     break;
   }
