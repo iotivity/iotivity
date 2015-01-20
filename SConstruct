@@ -13,6 +13,8 @@ Import('env')
 target_os = env.get('TARGET_OS')
 if target_os == 'arduino':
 	SConscript('arduino.scons')
+if target_os == 'android':
+	SConscript('android/android_api/SConscript')
 # By default, src_dir is current dir, the build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/
 #

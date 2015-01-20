@@ -1,0 +1,8 @@
+
+
+import os
+import platform
+
+jdk_env = Environment(ENV=os.environ)
+jdk_env['BUILDERS']['Gradle'] = Builder(action = 'gradle build -b' + os.getcwd()+'/build.gradle')
+jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")
