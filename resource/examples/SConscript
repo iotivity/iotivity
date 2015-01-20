@@ -59,12 +59,18 @@ roomserver = examples_env.Program('roomserver', 'roomserver.cpp')
 roomclient = examples_env.Program('roomclient', 'roomclient.cpp')
 garageserver = examples_env.Program('garageserver', 'garageserver.cpp')
 garageclient = examples_env.Program('garageclient', 'garageclient.cpp')
+groupserver = examples_env.Program('groupserver', 'groupserver.cpp')
+groupclient = examples_env.Program('groupclient', 'groupclient.cpp')
+lightserver = examples_env.Program('lightserver', 'lightserver.cpp')
+threadingsample = examples_env.Program('threadingsample', 'threadingsample.cpp')
 devicediscoveryserver = examples_env.Program('devicediscoveryserver', 'devicediscoveryserver.cpp')
 devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicediscoveryclient.cpp')
 
 Alias("examples", [simpleserver, simpleserverHQ, simpleclient, simpleclientHQ,
 		fridgeserver, fridgeclient, presenceserver, presenceclient,
 		simpleclientserver, roomserver, roomclient, garageserver,
-		garageclient, devicediscoveryserver, devicediscoveryclient])
+		garageclient, groupserver, groupclient, lightserver, threadingsample,
+		devicediscoveryserver, devicediscoveryclient])
+
 env.AppendTarget('examples')
 
