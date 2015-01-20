@@ -270,8 +270,8 @@ void DeleteServerRequest(OCServerRequest * serverRequest)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    CARemoteEndpoint_t responseEndpoint;
-    CAResponseInfo_t responseInfo;
+    CARemoteEndpoint_t responseEndpoint = {0};
+    CAResponseInfo_t responseInfo = {0};
     CAHeaderOption_t* optionsPointer;
 
     OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);

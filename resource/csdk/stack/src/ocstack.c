@@ -3574,7 +3574,7 @@ OCStackResult getQueryFromUri(const char * uri, unsigned char** query, char ** n
     {
         if(strncmp(leftToken, "rt=", 3) == 0 || strncmp(leftToken, "if=", 3) == 0)
         {
-            *query = (unsigned char *) OCMalloc(strlen(leftToken));
+            *query = (unsigned char *) OCMalloc(strlen(leftToken) + 1);
             if(!*query)
             {
                 OCFree(tempURI);
