@@ -39,7 +39,7 @@ static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to WIFI.
-static OCConnectivityType CA_CONNTYPE = OC_WIFI;
+static OCConnectivityType OC_CONNTYPE = OC_WIFI;
 #endif
 static std::string putPayload = "{\"state\":\"on\",\"power\":5}";
 static std::string coapServerIP = "255.255.255.255";
@@ -121,7 +121,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 #ifdef CA_INT
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
                        (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
-                       (CA_CONNTYPE), qos, &cbData, options, numOptions);
+                       (OC_CONNTYPE), qos, &cbData, options, numOptions);
 #else
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
                        (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
@@ -606,7 +606,7 @@ int InitDeviceDiscovery()
 #ifdef CA_INT
     if(UNICAST_DISCOVERY)
     {
-        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, CA_CONNTYPE,
+        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
@@ -653,7 +653,7 @@ int InitDiscovery()
 #ifdef CA_INT
     if(UNICAST_DISCOVERY)
     {
-        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, CA_CONNTYPE,
+        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
@@ -694,7 +694,7 @@ int main(int argc, char* argv[]) {
                 break;
             #ifdef CA_INT
             case 'c':
-                CA_CONNTYPE = OCConnectivityType(atoi(optarg));
+                OC_CONNTYPE = OCConnectivityType(atoi(optarg));
                 break;
             #endif
             default:

@@ -78,7 +78,7 @@ static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
 #ifdef CA_INT
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to WIFI.
-static OCConnectivityType CA_CONNTYPE = OC_WIFI;
+static OCConnectivityType OC_CONNTYPE = OC_WIFI;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 #endif
 
@@ -223,7 +223,7 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     cbData.cd = NULL;
 
 #ifdef CA_INT
-    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, CA_CONNTYPE, OC_LOW_QOS,
+    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
             &cbData, NULL, 0);
 #else
     ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_LOW_QOS,
@@ -250,7 +250,7 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     OC_LOG_V(INFO, TAG, "OBSERVE payload from client = %s ", putPayload.c_str());
 
 #ifdef CA_INT
-    ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, CA_CONNTYPE,
+    ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_CONNTYPE,
             OC_LOW_QOS, &cbData, NULL, 0);
 #else
     ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_LOW_QOS,
@@ -284,7 +284,7 @@ int InitPutRequest(OCClientResponse * clientResponse)
 
 #ifdef CA_INT
     ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(),
-                        CA_CONNTYPE, OC_LOW_QOS, &cbData, NULL, 0);
+                        OC_CONNTYPE, OC_LOW_QOS, &cbData, NULL, 0);
 #else
     ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(),
             OC_LOW_QOS, &cbData, NULL, 0);
@@ -321,7 +321,7 @@ int InitGetRequest(OCClientResponse * clientResponse)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 #ifdef CA_INT
-    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, CA_CONNTYPE, OC_LOW_QOS,
+    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
             &cbData, NULL, 0);
 #else
     ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_LOW_QOS,
@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
             break;
         #ifdef CA_INT
         case 'c':
-            CA_CONNTYPE = OCConnectivityType(atoi(optarg));
+            OC_CONNTYPE = OCConnectivityType(atoi(optarg));
             break;
         #endif
         default:
