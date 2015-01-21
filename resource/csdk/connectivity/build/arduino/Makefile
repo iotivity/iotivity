@@ -37,6 +37,9 @@ core.a: $(PLATFORM_OBJS)
 prep_dirs:
 	-mkdir $(OBJ_DIR)
 
+logger.c.o: logger.c
+	$(CCPLUS) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIR_PLATFORM) $< -o $@
+
 %.c.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_PLATFORM) $(INC_DIR_PLATFORM) $< -o $@
 
