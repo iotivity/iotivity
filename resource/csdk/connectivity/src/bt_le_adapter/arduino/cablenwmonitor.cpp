@@ -52,7 +52,10 @@ static unsigned char *gLeAddress = NULL;
 CAResult_t CALEInitializeNetworkMonitor()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    memcpy(gLeAddress, 0, CA_MACADDR_SIZE);
+	if(gLeAddress != NULL)
+	{
+        memcpy(gLeAddress, 0, CA_MACADDR_SIZE);
+	}
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -78,7 +81,7 @@ void CAGetLEAddress(char **leAddress)
      *   Below Allocated Memory will be freed by caller API
      */
     *leAddress = (char*)OICMalloc(CA_MACADDR_SIZE);
-    if (NULL == leAddress)
+    if (NULL == *leAddress)
     {
         OIC_LOG(ERROR, TAG, "error");
         return;

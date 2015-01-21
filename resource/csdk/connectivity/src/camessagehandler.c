@@ -39,6 +39,7 @@
 #include "oic_malloc.h"
 
 #define TAG PCF("CA")
+#define SINGLE_HANDLE
 
 #define MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(DEBUG, TAG, "memory error"); \
 goto memory_error_exit;} }
@@ -153,7 +154,7 @@ static void CAReceiveThreadProcess(void *threadData)
 {
     // Currently not supported
 	// This will be enabled when RI supports multi threading
-#if 0
+#ifndef SINGLE_HANDLE
     CAData_t *data = (CAData_t *) threadData;
 
     if (data == NULL)
@@ -351,6 +352,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         }
         OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method);
         OIC_LOG_V(DEBUG, TAG, "Request- token : %s", ReqInfo->info.token);
+        OIC_LOG_V(DEBUG, TAG, "Request- msgID: %d", ReqInfo->info.messageId);
 
         if (NULL != endpoint)
         {
@@ -471,6 +473,7 @@ void CAHandleRequestResponseCallbacks()
 {
     OIC_LOG_V(DEBUG, TAG, "CAHandleRequestResponseCallbacks IN");
 
+#ifdef SINGLE_HANDLE
     // parse the data and call the callbacks.
     // #1 parse the data
     // #2 get endpoint
@@ -551,6 +554,9 @@ void CAHandleRequestResponseCallbacks()
     }
 
     OICFree(rep);
+
+
+#endif
     OIC_LOG_V(DEBUG, TAG, "CAHandleRequestResponseCallbacks OUT");
 }
 
@@ -853,7 +859,7 @@ CAResult_t CAInitializeMessageHandler()
     CAQueueingThreadInitialize(&gReceiveThread, gThreadPoolHandle, CAReceiveThreadProcess,
             CADataDestroyer);
 
-#if 0 // This will be enabled when RI supports multi threading
+#ifndef SINGLE_HANDLE// This will be enabled when RI supports multi threading
     // start receive thread
     res = CAQueueingThreadStart(&gReceiveThread);
 
@@ -904,7 +910,7 @@ void CATerminateMessageHandler()
     // stop thread
     // delete thread data
     if(gReceiveThread.threadMutex != NULL) {
-	#if 0 // This will be enabled when RI supports multi threading
+	#ifndef SINGLE_HANDLE// This will be enabled when RI supports multi threading
         // CAQueueingThreadStop(&gReceiveThread);
 	#endif	
         CAQueueingThreadDestroy(&gReceiveThread);

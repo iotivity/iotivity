@@ -273,6 +273,8 @@ uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *da
         return 0;
     }
 
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "CASendEDRUnicastData : %s", data);
+
     uint32_t sentLength = 0;
     const char *serviceUUID = OIC_EDR_SERVICE_ID;
     const char *address = remoteEndpoint->addressInfo.BT.btMacAddress;
@@ -374,6 +376,9 @@ CAResult_t CAStopEDR(void)
 void CATerminateEDR(void)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+
+    // Stop EDR adapter
+    CAStopEDR();
 
     // Terminate EDR Network Monitor
     CAEDRTerminateNetworkMonitor();
@@ -533,6 +538,7 @@ void CAAdapterDataSendHandler(void *context)
     serviceUUID = message->remoteEndpoint->resourceUri;
 
     char *dataSegment = NULL;
+    uint32_t dataSegmentLength = message->dataLen + CA_HEADER_LENGTH;
     int32_t datalen = message->dataLen;
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "checking for fragmentation and the dataLen is %d",
               datalen);
@@ -541,7 +547,7 @@ void CAAdapterDataSendHandler(void *context)
     char *header = (char *) OICMalloc(sizeof(char) * CA_HEADER_LENGTH);
     VERIFY_NON_NULL_VOID(header, EDR_ADAPTER_TAG, "Malloc failed");
 
-    dataSegment = (char *) OICMalloc(sizeof(char) * message->dataLen + CA_HEADER_LENGTH);
+    dataSegment = (char *) OICMalloc(sizeof(char) * dataSegmentLength);
     if (NULL == dataSegment)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Malloc failed");
@@ -549,8 +555,8 @@ void CAAdapterDataSendHandler(void *context)
         return;
     }
 
-    memset(header, 0x0, sizeof(char) * CA_HEADER_LENGTH );
-    memset(dataSegment, 0x0, sizeof(char) * message->dataLen );
+    memset(header, 0x0, sizeof(char) * CA_HEADER_LENGTH);
+    memset(dataSegment, 0x0, dataSegmentLength);
 
     CAResult_t result = CAGenerateHeader(header, message->dataLen);
     if (CA_STATUS_OK != result )
@@ -705,15 +711,13 @@ void CAAdapterDataReceiverHandler(void *context)
         recvDataLen += message->dataLen ;
     }
     //CAFreeEDRData(message);
-    if (totalDataLen == recvDataLen)
-    {
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
-        gNetworkPacketReceivedCallback(remoteEndpoint, defragData, recvDataLen);
-        recvDataLen = 0;
-        totalDataLen = 0;
-        remoteEndpoint = NULL;
-        isHeaderAvailable = CA_FALSE;
-    }
+
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
+    gNetworkPacketReceivedCallback(remoteEndpoint, defragData, recvDataLen);
+    recvDataLen = 0;
+    totalDataLen = 0;
+    remoteEndpoint = NULL;
+    isHeaderAvailable = CA_FALSE;
 
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT_CAAdapterDataReceiverHandler");
 }
@@ -835,7 +839,7 @@ CAResult_t CAAdapterSendData(const char *remoteAddress, const char *serviceUUID,
 
 void CAEDRNotifyNetworkStatus(CANetworkStatus_t status)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "CAEDRNotifyNetworkStatus, status:%d", status);
 
     // Create localconnectivity
     if (NULL == gLocalConnectivity)

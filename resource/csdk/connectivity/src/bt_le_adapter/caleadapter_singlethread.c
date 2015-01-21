@@ -224,11 +224,6 @@ uint32_t CASendLEMulticastData(void *data, uint32_t dataLen)
     }
 
     char *char_value = (char *)data;
-    if (NULL == char_value || dataLen == 0)
-    {
-        OIC_LOG(ERROR, TAG, "error");
-        return 0;
-    }
 
     char header[CA_HEADER_LENGTH] = "";
     memset(header, 0, sizeof(char) * CA_HEADER_LENGTH);
