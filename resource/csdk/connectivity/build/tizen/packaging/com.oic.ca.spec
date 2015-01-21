@@ -48,7 +48,7 @@ mkdir -p %{buildroot}/usr/lib
 mkdir -p %{DEST_INC_DIR}
 mkdir -p %{DEST_LIB_DIR}/pkgconfig
 
-cp -rf %{ROOTDIR}/con/libconnectivity_abstraction.a %{buildroot}/usr/lib
+cp -rf %{ROOTDIR}/con/src/libconnectivity_abstraction.a %{buildroot}/usr/lib
 cp -rf %{ROOTDIR}/con/lib/libcoap-4.1.1/libcoap.a %{buildroot}/usr/lib
 cp -rf %{ROOTDIR}/con/api/cacommon.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caadapterinterface.h* %{DEST_INC_DIR}/

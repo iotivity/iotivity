@@ -8,7 +8,7 @@ print "Reading ethernet adapter script"
 
 target_os = env.get('TARGET_OS')
 inc_files = env.get('CPPPATH')
-src_dir = './src/ethernet_adapter/'
+src_dir = './ethernet_adapter/'
 
 #Source files to build common for all platforms
 if target_os == 'arduino':

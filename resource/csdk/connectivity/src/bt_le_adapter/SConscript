@@ -7,7 +7,7 @@ Import('env')
 print"Reading ble adapter script"
 
 target_os = env.get('TARGET_OS')
-src_dir = './src/bt_le_adapter/'
+src_dir = './bt_le_adapter/'
 
 #Source files to build common for all platforms
 if target_os != 'arduino':

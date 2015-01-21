@@ -7,12 +7,12 @@ Import('env')
 print "Reading common folder script"
 
 ca_os = env.get('TARGET_OS')
-root_dir = './'
+root_dir = './../'
 ca_common_path = root_dir + '/common/'
 ca_common_src_path = ca_common_path + 'src/'
 
 env.AppendUnique(CPPPATH = [
-	ca_common_path + 'inc/',
+	'common/inc/',
 	])
 
 temp = env['CPPPATH']
@@ -31,7 +31,7 @@ ca_common_src = [
 	]
 	
 if ca_os == 'arduino':
-	env.Command(env.get('BUILD_DIR') + 'logger.c.o', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c.o' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + header + ' ' + ca_common_src_path + 'logger.c')
+	env.Command(env.get('BUILD_DIR') + 'logger.c.o', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c.o' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + header + ' ' + 'common/src/logger.c')
 	platform_src = [
 		env.get('BUILD_DIR') + 'logger.c.o',
 	]

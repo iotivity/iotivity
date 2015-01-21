@@ -83,7 +83,7 @@ elif target_os == 'linux':
 	SConscript(build_dir + 'SConscript')
 
 	# Build 'samples' sub-project
-	sample_env.SConscript(build_dir + 'samples/linux/SConscript')
+	env.SConscript(build_dir + 'samples/linux/SConscript')
 elif target_os == 'android':
 
 	# Build 'libcoap' library

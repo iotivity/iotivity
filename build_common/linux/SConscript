@@ -10,11 +10,11 @@ print "Reading linux configuration script"
 if env.get('RELEASE'):
 	env.AppendUnique(CCFLAGS = ['-Os'])
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
-	env.AppendUnique(LINKFLAGS = ['-s'])
 else:
 	env.AppendUnique(CCFLAGS = ['-g'])
-
-env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__LINUX__','-DTB_LOG'])
+	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+	
+env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC','`pkg-config','--cflags','glib-2.0`'])
 env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread', '-lglib-2.0', '-lgthread-2.0'])
 
