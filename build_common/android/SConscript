@@ -141,12 +141,16 @@ for flags in p.stdout.readlines():
 		if not platform_ver.isdigit():
 			platform_ver = ''
 
+# Determine dependency faux SYS_ROOT
+dep_sys_root = env.get('SRC_DIR') + os.sep +'dep' + os.sep + 'android' + os.sep  + target_arch + os.sep + 'usr'
+dep_src_dir =  dep_sys_root + os.sep + 'include'
+dep_lib_dir =  dep_sys_root + os.sep + 'lib'
+
+env['DEP_SYS_ROOT'] = dep_sys_root
+
 # Add external libraries including boost
-env.AppendUnique(CPPPATH = [env.get('SRC_DIR') + '/out/android/include' ])
-if target_arch == 'x86':
-	env.AppendUnique(LIBPATH = [env.get('SRC_DIR') + '/out/android/lib/x86'])
-else:
-	env.AppendUnique(LIBPATH = [env.get('SRC_DIR') + '/out/android/lib/arm-linux-androideabi'])
+env.AppendUnique(CPPPATH = [ dep_src_dir ])
+env.AppendUnique(LIBPATH = [ dep_lib_dir ])
 
 ######################################################################
 # Set release/debug flags
@@ -170,3 +174,6 @@ env.Replace(LINKCOM = '$LINK -o $TARGET -pie $LINKFLAGS $__RPATH $SOURCES $_LIBD
 #	SConscript('compatibility/c_compat.scons')
 #
 #SConscript('compatibility/cpp11_compat.scons')
+
+# Make sure that boost for android is available
+SConscript(env.get('SRC_DIR') + '/extlibs/boost/SConscript')
