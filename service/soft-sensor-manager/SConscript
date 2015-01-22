@@ -20,7 +20,7 @@ if target_os == 'arduino':
 # Build flags
 ######################################################################
 if target_os not in ['windows', 'winrt']:
-	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-DLINUX', '-DNDEBUG'])
+	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-Wall', '-DLINUX', '-DNDEBUG'])
 	if target_os != 'android':
 		soft_sensor_manager_env.AppendUnique(LIBS = ['pthread'])
 

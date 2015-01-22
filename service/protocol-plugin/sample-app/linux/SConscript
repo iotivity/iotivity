@@ -18,7 +18,7 @@ sample_env.AppendUnique(CPPPATH = [
 				'../../lib/cpluff/libcpluff/',
 				'../../lib/rapidxml'])
 if target_os not in ['windows', 'winrt']:
-	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread', '-std=c++0x'])
+	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread'])
 
 sample_env.AppendUnique(LIBS = ['pthread'])
 sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'ppm', 'pmimpl', 'boost_system', 'boost_thread', 'dl'])

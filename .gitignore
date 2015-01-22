@@ -62,3 +62,10 @@ extlibs/gtest*
 extlibs/hippomocks-master/
 extlibs/master.zip
 extlibs/cereal
+
+# Ignore editor (e.g. Emacs) backup and autosave files
+*~
+*#*#
+
+# Ignore byte-compiled Python scripts
+*.pyc

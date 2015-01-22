@@ -17,7 +17,7 @@ if target_os == 'android':
 
 if target_os not in ['arduino', 'windows', 'winrt']:
 	liboc_logger_env.AppendUnique(CFLAGS = ['-Wall', '-std=c99', '-fPIC'])
-	liboc_logger_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x', '-fPIC'])
+	liboc_logger_env.AppendUnique(CXXFLAGS = ['-Wall', '-fPIC'])
 
 ######################################################################
 # Source files and Targets

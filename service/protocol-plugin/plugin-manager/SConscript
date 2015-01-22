@@ -20,7 +20,7 @@ plugin_manager_env.AppendUnique(CPPPATH = [
 		])
 
 if target_os not in ['windows', 'winrt']:
-	plugin_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall',
+	plugin_manager_env.AppendUnique(CXXFLAGS = ['-Wall',
 		'-fpermissive', '-Wsign-compare'])
 
 if target_os == 'android':

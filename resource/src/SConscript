@@ -19,7 +19,7 @@ oclib_env.AppendUnique(CPPPATH = [
 
 target_os = env.get('TARGET_OS')
 if target_os not in ['windows', 'winrt']:
-	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
+	oclib_env.AppendUnique(CXXFLAGS = ['-Wall', '-fPIC'])
 
 if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])

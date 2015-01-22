@@ -13,7 +13,7 @@ notimgr_env = lib_env.Clone()
 ######################################################################
 notimgr_env.AppendUnique(CPPPATH = ['../../NotificationManager/include'])
 notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap', 'pthread'])
-notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
 
 ######################################################################
 # Source files and Targets

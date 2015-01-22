@@ -16,7 +16,7 @@ target_os = env.get('TARGET_OS')
 things_manager_env.AppendUnique(CPPPATH = ['sdk/inc', 'sdk/src'])
 
 if target_os not in ['windows', 'winrt']:
-	things_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+	things_manager_env.AppendUnique(CXXFLAGS = ['-Wall'])
 	if target_os != 'android':
 		things_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
 

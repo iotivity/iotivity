@@ -225,9 +225,33 @@ else:
     '''
     # Load config of target os
     if target_os in ['linux', 'tizen']:
-		env.SConscript('linux/SConscript')
+            env.SConscript('linux/SConscript')
     else:
-		env.SConscript(target_os + '/SConscript')
+            env.SConscript(target_os + '/SConscript')
+
+# -------------------------------------------------------------------
+# Configure the build as needed, e.g. detecting and setting
+# appropriate build flags, etc.
+#
+# This is done after the platform-specific configuration is loaded to
+# make sure we give the automated build configuration below an
+# opportunity to detect platform-specific anomalies.
+# -------------------------------------------------------------------
+import iotivityconfig
+from iotivityconfig import *
+
+conf = env.Configure(
+        custom_tests = {
+                'CheckCXX11Flags' : iotivityconfig.check_cxx11_flags
+        } )
+
+# IoTivity requires support for C++11.
+if not conf.CheckCXX11Flags():
+        print('C++11 support is required!')
+        Exit(1)
+
+env = conf.Finish()
+# -------------------------------------------------------------------
 
 env.SConscript('external_libs.scons')
 

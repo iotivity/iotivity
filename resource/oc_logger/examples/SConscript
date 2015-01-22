@@ -19,7 +19,7 @@ if target_os == 'android':
 
 if target_os not in ['arduino', 'windows', 'winrt']:
 	examples_env.AppendUnique(CFLAGS = Split('-Wall -std=c99 -Werror'))
-	examples_env.AppendUnique(CXXFLAGS = Split('-Wall -std=c++0x'))
+	examples_env.AppendUnique(CXXFLAGS = '-Wall')
 
 ######################################################################
 # Source files and Targets
