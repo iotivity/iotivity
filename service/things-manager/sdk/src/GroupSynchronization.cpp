@@ -29,6 +29,7 @@ namespace OIC
 {
 
     GroupSynchronization* GroupSynchronization::groupSyncnstance = NULL;
+    bool GroupSynchronization::bIsFinding = false;
 
     GroupSynchronization* GroupSynchronization::getInstance()
     {
@@ -53,6 +54,9 @@ namespace OIC
     {
         cout << "GroupSynchronization::findGroup" << endl;
 
+        if(bIsFinding)
+            return OC_STACK_ERROR;
+
         foundGroupResourceList.clear();
         findCallback = callback;
 
@@ -70,6 +74,8 @@ namespace OIC
             OCPlatform::findResource("", query,
                     std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
         }
+
+        bIsFinding = true;
 
         // thread to check if GroupSynchronization::onFoundGroup is called or not.
         std::thread t(std::bind(&GroupSynchronization::checkFindGroup, this));
@@ -834,6 +840,7 @@ namespace OIC
                 findCallback(NULL);
             }
 
+            bIsFinding = false;
         }
         catch (std::exception& e)
         {

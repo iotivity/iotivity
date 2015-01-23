@@ -66,6 +66,7 @@ private:
     std::shared_ptr< OCResourceRequest > resourceRequest; // this is used for slow response
 
     static GroupSynchronization* groupSyncnstance;
+    static bool bIsFinding;
 
     GroupSynchronization()
     {
