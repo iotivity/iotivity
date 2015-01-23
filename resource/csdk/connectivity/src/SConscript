@@ -61,6 +61,8 @@ env.AppendUnique(CA_SRC = ca_common_src)
 
 
 if 'ALL' in ca_transport:
+	# TODO-CA Temporary fix. IOT-281 filed.
+	env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'ETHERNET_ADAPTER', 'NO_EDR_ADAPTER', 'NO_LE_ADAPTER'])
 	env.SConscript(ca_path + 'ethernet_adapter/SConscript')
 	env.SConscript(ca_path + 'wifi_adapter/SConscript')
 	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')
