@@ -194,12 +194,18 @@ namespace OIC
 
         OCResourceHandle collectionResHandle = resIt->second;
 
-        OCStackResult result = OCPlatform::bindResource(collectionResHandle, resourceHandle);
-        if (result != OC_STACK_OK)
-        {
-            cout << "GroupSynchronization::joinGroup : To bind resource was unsuccessful."
-                    << "result - " << result << endl;
-            return OC_STACK_ERROR;
+        try{
+            OCStackResult result = OCPlatform::bindResource(collectionResHandle, resourceHandle);
+            if (result != OC_STACK_OK)
+            {
+                cout << "GroupSynchronization::joinGroup : To bind resource was unsuccessful."
+                        << "result - " << result << endl;
+                return OC_STACK_ERROR;
+            }
+        } catch(OCException &e) {
+
+            return OC_STACK_INVALID_PARAM;
+            
         }
         cout << "GroupSynchronization::joinGroup : "
                 << "To bind collectionResHandle and resourceHandle" << endl;
@@ -328,34 +334,52 @@ namespace OIC
             collectionResHandle = handleIt->second;
 //            cout << "GroupSynchronization::leaveGroup : collection handle uri - "
 //                    << OCGetResourceUri(collectionResHandle) << endl;
+            if(collectionResHandle == NULL)
+                return OC_STACK_INVALID_PARAM;
 
-            OCStackResult result = OCPlatform::unbindResource(collectionResHandle, resourceHandle);
-            if (OC_STACK_OK == result)
+            OCStackResult result;
+            try
             {
-                cout << "GroupSynchronization::leaveGroup : "
-                        << "To unbind resource was successful." << endl;
-            }
-            else
-            {
-                cout << "GroupSynchronization::leaveGroup : "
-                        << "To unbind resource was unsuccessful. result - " << result << endl;
+                result = OCPlatform::unbindResource(collectionResHandle, resourceHandle);
+                if (OC_STACK_OK == result)
+                {
+                    cout << "GroupSynchronization::leaveGroup : "
+                            << "To unbind resource was successful." << endl;
+                }
+                else
+                {
+                    cout << "GroupSynchronization::leaveGroup : "
+                            << "To unbind resource was unsuccessful. result - " << result << endl;
+                    return result;
+                }
+            } catch(OCException &e) {
+                cout << "ERROR : " << e.reason() << endl;
+                return OC_STACK_NO_RESOURCE;
             }
 
             auto It = std::find(deviceResourceHandleList.begin(), deviceResourceHandleList.end(),
                     resourceHandle);
             if (It == deviceResourceHandleList.end()) // there is no resource handle to find
             {
-                result = OCPlatform::unregisterResource(resourceHandle);
-                if (OC_STACK_OK == result)
+                try
                 {
-                    cout << "GroupSynchronization::leaveGroup : "
-                            << "To unregister resource was successful." << endl;
-                }
-                else
+                    result = OCPlatform::unregisterResource(resourceHandle);
+                    if (OC_STACK_OK == result)
+                    {
+                        cout << "GroupSynchronization::leaveGroup : "
+                                << "To unregister resource was successful." << endl;
+                    }
+                    else
+                    {
+                        cout << "GroupSynchronization::leaveGroup : "
+                                << "To unregister resource was unsuccessful. result - " << result
+                                << endl;
+                        return result;
+                    }
+                } catch(OCException &e) 
                 {
-                    cout << "GroupSynchronization::leaveGroup : "
-                            << "To unregister resource was unsuccessful. result - " << result
-                            << endl;
+                    cout << "ERROR : " << e.reason() << endl;
+                    return OC_STACK_NO_RESOURCE;
                 }
             }
             else
@@ -398,6 +422,8 @@ namespace OIC
             }
 
             std::shared_ptr< OCResource > resource = resourceIt->second;
+            if(resource == NULL)
+                return OC_STACK_NO_RESOURCE;
 //            cout << "GroupSynchronization::leaveGroup : group sync resource uri - "
 //                    << resource->uri() << endl;
 

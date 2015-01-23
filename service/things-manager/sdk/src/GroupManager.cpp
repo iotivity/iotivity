@@ -421,6 +421,9 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
 {
     std::string message = "";
 
+    if(newActionSet == NULL)
+        return message;
+
     message = newActionSet->actionsetName;
     message.append("*");
     for (auto iterAction = newActionSet->listOfAction.begin();
