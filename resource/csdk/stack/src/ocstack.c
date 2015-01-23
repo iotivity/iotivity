@@ -618,7 +618,6 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
 
-#if 1
     if(myStackMode == OC_CLIENT)
     {
         //TODO: should the client be responding to requests?
@@ -725,10 +724,12 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // copy vendor specific header options
     // TODO-CA: CA is including non-vendor header options as well, like observe.
     // Need to filter those out
-    GetObserveHeaderOption(&serverRequest.observationOption, requestInfo->info.options, &(requestInfo->info.numOptions));
+    GetObserveHeaderOption(&serverRequest.observationOption,
+            requestInfo->info.options, &(requestInfo->info.numOptions));
     if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
     {
-        // TODO-CA: Need to send an error indicating the num of options is incorrect
+        OC_LOG(ERROR, TAG,
+                PCF("The request info numOptions is greater than MAX_HEADER_OPTIONS"));
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = requestInfo->info.numOptions;
@@ -740,9 +741,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 
     if(HandleStackRequests (&serverRequest) != OC_STACK_OK)
     {
-        OC_LOG(INFO, TAG, PCF("HandleStackRequests failed"));
+        OC_LOG(ERROR, TAG, PCF("HandleStackRequests failed"));
     }
-#endif
 
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
