@@ -1626,11 +1626,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     // create token
     caResult = CAGenerateToken(&caToken);
 
-    //TODO-CA Remove this temporary fix (for some reason same token is being generated)
-    static int count = 0;
-    count++;
-    caToken[0] += count;
-
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
@@ -2142,7 +2137,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 #ifdef CA_INT
         CAAddress_t addressInfo;
         strncpy(addressInfo.IP.ipAddress, "224.0.1.187", CA_IPADDR_SIZE);
-        addressInfo.IP.port = 5298;
+        addressInfo.IP.port = 5683;
 
         CAToken_t caToken = NULL;
        CAGenerateToken(&caToken);
