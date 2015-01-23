@@ -36,6 +36,7 @@ typedef std::map<OCResourceIdentifier, std::shared_ptr<OCResource>> DiscoveredRe
 DiscoveredResourceMap discoveredResources;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+std::mutex curResourceLock;
 
 class Light
 {
@@ -316,21 +317,24 @@ void foundResource(std::shared_ptr<OCResource> resource)
     std::string hostAddress;
     try
     {
-        if(discoveredResources.find(resource->uniqueIdentifier()) == discoveredResources.end())
         {
-            std::cout << "Found resource " << resource->uniqueIdentifier() <<
-                " for the first time on server with ID: "<< resource->sid()<<std::endl;
-            discoveredResources[resource->uniqueIdentifier()] = resource;
-        }
-        else
-        {
-            std::cout<<"Found resource "<< resource->uniqueIdentifier() << " again!"<<std::endl;
-        }
+            std::lock_guard<std::mutex> lock(curResourceLock);
+            if(discoveredResources.find(resource->uniqueIdentifier()) == discoveredResources.end())
+            {
+                std::cout << "Found resource " << resource->uniqueIdentifier() <<
+                    " for the first time on server with ID: "<< resource->sid()<<std::endl;
+                discoveredResources[resource->uniqueIdentifier()] = resource;
+            }
+            else
+            {
+                std::cout<<"Found resource "<< resource->uniqueIdentifier() << " again!"<<std::endl;
+            }
 
-        if(curResource)
-        {
-            std::cout << "Found another resource, ignoring"<<std::endl;
-            return;
+            if(curResource)
+            {
+                std::cout << "Found another resource, ignoring"<<std::endl;
+                return;
+            }
         }
 
         // Do some operations with resource object.
