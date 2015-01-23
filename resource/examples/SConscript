@@ -85,6 +85,3 @@ Alias("examples", [simpleserver, simpleclient,
      ])
 env.AppendTarget('examples')
 
-#ios doesn't allow run application from terminal, so won't build these examples
-#if target_os != 'ios':
-#	SConscript('ocicuc/SConscript')
