@@ -35,6 +35,8 @@ ifeq ($(ROOT_DIR),)
 	ROOT_DIR:=$(PWD)
 endif
 
+CONNECTIVITY_DIR= $(ROOT_DIR)/../csdk/connectivity
+
 INC_DIRS  := -I../include/
 INC_DIRS  += -I../oc_logger/include
 INC_DIRS  += -I../csdk/stack/include
@@ -50,7 +52,7 @@ LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
 GTEST_LIBS := $(GTEST_DIR)/lib/.libs/libgtest.a $(GTEST_DIR)/lib/.libs/libgtest_main.a 
 CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
-CXX_LIBS  += $(GTEST_LIBS)
+CXX_LIBS  += $(GTEST_LIBS) -L$(CONNECTIVITY_DIR)/build/out -lconnectivity_abstraction
 
 CC_FLAGS.debug      := -g -O0 -g3 -Wall -ffunction-sections -fdata-sections \
                         -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
