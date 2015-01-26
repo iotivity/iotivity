@@ -41,6 +41,8 @@ std::map< std::vector< std::string >, CandidateCallback > candidateRequest;
 std::map< std::vector< std::string >, CandidateCallback > candidateRequestForTimer;
 std::map< std::string, std::map< std::string, std::shared_ptr< OCResource > > > rtForResourceList;
 std::vector< std::string > allFoundResourceTypes;
+std::mutex callbackLock;
+
 
 template< typename T >
 bool IsSubset(std::vector< T > full, std::vector< T > sub)
@@ -150,6 +152,7 @@ GroupManager::~GroupManager(void)
 void GroupManager::findPreparedRequest(
         std::map< std::vector< std::string >, CandidateCallback > &request)
 {
+    std::lock_guard<std::mutex> lock(callbackLock);
     std::vector< std::shared_ptr< OCResource > > resources;
 
     for (auto it = request.begin(); it != request.end();)
@@ -157,14 +160,13 @@ void GroupManager::findPreparedRequest(
 
         if (IsSubset(allFoundResourceTypes, it->first))
         {
-            //std::cout << "IS SUBSET !!! \n";
-
             for (unsigned int i = 0; i < it->first.size(); ++i)
             {
 
                 for (auto secondIt = rtForResourceList[it->first.at(i)].begin();
                         secondIt != rtForResourceList[it->first.at(i)].end(); ++secondIt)
                 {
+                    //insert resource related to request
                     resources.push_back(secondIt->second);
                 }
             }
