@@ -63,7 +63,6 @@ namespace OC
         static const char RESOURCE_UNREG_FAILED[]      = "Unregistering resource failed";
         static const char OPTION_ID_RANGE_INVALID[]    =
                             "Error: OptionID valid only from 2048 to 3000 inclusive.";
-
         static const char NO_ERROR[]                   = "No Error";
         static const char RESOURCE_CREATED[]           = "Resource Created";
         static const char RESOURCE_DELETED[]           = "Resource Deleted";
@@ -103,6 +102,8 @@ namespace OC
         static const char INVALID_JSON_ARRAY_DEPTH[]   = "Max JSON Array Depth exceeded";
         static const char INVALID_JSON_TYPE_TAG[]      = "Invalid JSON Type Tag";
         static const char INVALID_ATTRIBUTE[]          = "Invalid Attribute: ";
+        static const char INVALID_DEVICE_INFO[]        = "Invalid Device Information";
+
     }
 
     namespace Error

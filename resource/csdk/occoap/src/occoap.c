@@ -107,7 +107,7 @@ static void HandleCoAPAckRst(struct coap_context_t * ctx, uint8_t msgType,
                 OC_LOG_V(DEBUG, TAG,
                         "Received RST, removing all queues associated with Token %d bytes",
                         CA_MAX_TOKEN_LEN);
-                OC_LOG_BUFFER(INFO, TAG, sentToken, CA_MAX_TOKEN_LEN);
+                OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)sentToken, CA_MAX_TOKEN_LEN);
                 coap_cancel_all_messages(ctx, &sentQueue->remote, (unsigned char *)sentToken,
                         CA_MAX_TOKEN_LEN);
 #else

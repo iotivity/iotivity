@@ -38,9 +38,7 @@ static std::list<OCEntityHandlerRequest *> gRequestList;
 static constexpr unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
 
 static LEDResource LED;
-// This variable determines instance number of the LED resource.
-// Used by POST method to create a new instance of LED resource.
-static unsigned int gCurrLedInstance = 0;
+
 static constexpr unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
 static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 

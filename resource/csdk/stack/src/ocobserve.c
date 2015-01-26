@@ -410,8 +410,8 @@ ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token)
         {
 #ifdef CA_INT
             OC_LOG(INFO, TAG,PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, token, CA_MAX_TOKEN_LEN);
-            OC_LOG_BUFFER(INFO, TAG, out->token, CA_MAX_TOKEN_LEN);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, CA_MAX_TOKEN_LEN);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, CA_MAX_TOKEN_LEN);
             if((memcmp(out->token, *token, CA_MAX_TOKEN_LEN) == 0))
             {
                 return out;
@@ -445,7 +445,7 @@ OCStackResult DeleteObserverUsingToken (OCCoAPToken * token)
     {
         OC_LOG_V(INFO, TAG, PCF("deleting tokens"));
 #ifdef CA_INT
-        OC_LOG_BUFFER(INFO, TAG, obsNode->token, CA_MAX_TOKEN_LEN);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)obsNode->token, CA_MAX_TOKEN_LEN);
 #else
         OC_LOG_BUFFER(INFO, TAG, obsNode->token.token, obsNode->token.tokenLength);
 #endif

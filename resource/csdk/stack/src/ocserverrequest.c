@@ -47,8 +47,8 @@ OCServerRequest * GetServerRequestUsingToken (const OCCoAPToken token)
     {
 #ifdef CA_INT
         OC_LOG(INFO, TAG,PCF("comparing tokens"));
-        OC_LOG_BUFFER(INFO, TAG, token, CA_MAX_TOKEN_LEN);
-        OC_LOG_BUFFER(INFO, TAG, out->requestToken, CA_MAX_TOKEN_LEN);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, CA_MAX_TOKEN_LEN);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, CA_MAX_TOKEN_LEN);
         if(memcmp(out->requestToken, token, CA_MAX_TOKEN_LEN) == 0)
         {
             return out;

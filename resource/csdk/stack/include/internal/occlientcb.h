@@ -143,7 +143,7 @@ void DeleteClientCB(ClientCB *cbNode);
  */
 //------------------------------------------------------------------------
 #ifdef CA_INT
-ClientCB* GetClientCB(CAToken_t * token, OCDoHandle handle, const unsigned char * requestUri);
+ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const unsigned char * requestUri);
 #else // CA_INT
 ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned char * requestUri);
 #endif // CA_INT

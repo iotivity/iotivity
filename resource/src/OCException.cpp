@@ -85,6 +85,10 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INVALID_REQUEST_HANDLE;
         case OC_STACK_ERROR:
             return OC::Exception::GENERAL_FAULT;
+        case OC_STACK_INVALID_DEVICE_INFO:
+            return OC::Exception::INVALID_DEVICE_INFO;
+        case OC_STACK_INVALID_JSON:
+            return OC::Exception::INVALID_REPRESENTATION;
     }
 
     return OC::Exception::UNKNOWN_ERROR;

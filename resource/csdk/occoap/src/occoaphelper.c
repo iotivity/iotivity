@@ -576,7 +576,7 @@ GenerateCoAPPdu(uint8_t msgType, uint8_t code, unsigned short id,
         VERIFY_NON_NULL(pdu);
 #ifdef CA_INT
         pdu->hdr->token_length = CA_MAX_TOKEN_LEN;
-        if (!coap_add_token(pdu, CA_MAX_TOKEN_LEN, *token))
+        if (!coap_add_token(pdu, CA_MAX_TOKEN_LEN, (const unsigned char *)*token))
         {
             OC_LOG(FATAL, TAG, PCF("coap_add_token failed"));
         }

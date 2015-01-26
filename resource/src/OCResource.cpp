@@ -36,8 +36,9 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::s
                        const std::vector<std::string>& resourceTypes,
                        const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri), m_resourceId(serverId, m_uri),
+    m_host(host),
     m_connectivityType(connectivityType),
-    m_host(host), m_isObservable(observable),
+    m_isObservable(observable),
     m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {

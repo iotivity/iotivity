@@ -40,6 +40,7 @@
 #ifdef CA_INT
     #include "cacommon.h"
     #include "cainterface.h"
+    #include <arpa/inet.h>
 #endif
 
 
@@ -85,7 +86,6 @@ OCStackResult getQueryFromUri(const char * uri, unsigned char** resourceType, ch
 
 //TODO: we should allow the server to define this
 #define MAX_OBSERVE_AGE (0x2FFFFUL)
-
 
 //-----------------------------------------------------------------------------
 // Internal API function
@@ -283,6 +283,7 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
 {
     struct sockaddr_in sa;
     OCStackResult ret = OC_STACK_INVALID_PARAM;
+
     if (!endPoint)
     {
         OC_LOG(ERROR, TAG, PCF("CA Remote end-point is NULL!"));
@@ -383,7 +384,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     snprintf(fullUri, MAX_URI_LENGTH, "coap://%s:%u%s", ipAddress, endPoint->addressInfo.IP.port,
                 OC_PRESENCE_URI);
 
-    cbNode = GetClientCB(NULL, NULL, fullUri);
+    cbNode = GetClientCB(NULL, NULL, (unsigned char *)fullUri);
 
     if(cbNode)
     {
@@ -392,7 +393,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     else
     {
         snprintf(fullUri, MAX_URI_LENGTH, "%s%s", OC_MULTICAST_IP, endPoint->resourceUri);
-        cbNode = GetClientCB(NULL, NULL, fullUri);
+        cbNode = GetClientCB(NULL, NULL, (unsigned char *)fullUri);
         if(cbNode)
         {
             multicastPresenceSubscribe = 1;
@@ -613,9 +614,8 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
                  &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
             }
         }
-        result = cbNode->callBack(cbNode->context,
-                cbNode->handle, &response);
-        if (result == OC_STACK_DELETE_TRANSACTION)
+        if (cbNode->callBack(cbNode->context,
+                cbNode->handle, &response) == OC_STACK_DELETE_TRANSACTION)
         {
             FindAndDeleteClientCB(cbNode);
         }
@@ -706,7 +706,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     }
 
     OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", CA_MAX_TOKEN_LEN);
-    OC_LOG_BUFFER(INFO, TAG, requestInfo->info.token, CA_MAX_TOKEN_LEN);
+    OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token, CA_MAX_TOKEN_LEN);
 
     serverRequest.requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
     // Module Name
@@ -747,7 +747,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // TODO-CA: CA is including non-vendor header options as well, like observe.
     // Need to filter those out
     GetObserveHeaderOption(&serverRequest.observationOption,
-            requestInfo->info.options, &(requestInfo->info.numOptions));
+            requestInfo->info.options, (uint8_t *)&(requestInfo->info.numOptions));
     if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
     {
         OC_LOG(ERROR, TAG,

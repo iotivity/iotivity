@@ -33,9 +33,14 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
 static const char * TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core/d";
-static const char * TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY = "coap://224.0.1.187:5683/oc/core/d";
+
 #ifdef CA_INT
 static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
+#else //CA_INT
+static const char * TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY = "coap://224.0.1.187:5683/oc/core/d";
+#endif //CA_INT
+
+#ifdef CA_INT
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to WIFI.
