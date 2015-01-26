@@ -20,9 +20,12 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "logger.h"
 
 #include <functional>
 #include <pthread.h>
+#include <mutex>
+#include <condition_variable>
 #include <iostream>
 
 using namespace std;
@@ -33,6 +36,9 @@ OCResourceHandle resourceHandle;
 
 shared_ptr< OCResource > g_resource;
 vector< string > lights;
+
+std::mutex blocker;
+std::condition_variable cv;
 
 bool isReady = false;
 
@@ -84,6 +90,7 @@ void onGet(const HeaderOptions& opt, const OCRepresentation &rep, const int eCod
     }
 
     isReady = true;
+    cv.notify_one();
 }
 
 void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
@@ -119,6 +126,30 @@ void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, con
     {
         printf("Not found ActionSet\n");
     }
+}
+
+string buildActionSetDesc()
+{
+    string actionsetDesc = "";
+    actionsetDesc = "allbulboff";
+    actionsetDesc.append("*");
+    for (auto iter = lights.begin(); iter != lights.end(); ++iter)
+    {
+        actionsetDesc.append("uri=").append((*iter));
+        actionsetDesc.append("|");
+        actionsetDesc.append("power=");
+        actionsetDesc.append("off");
+        if ((iter + 1) != lights.end())
+        {
+            actionsetDesc.append("*");
+        }
+    }
+    return actionsetDesc;
+}
+
+bool isResourceReady()
+{
+    return isReady;
 }
 
 int main(int argc, char* argv[])
@@ -188,100 +219,77 @@ int main(int argc, char* argv[])
         OCPlatform::findResource("", requestURI.str(), &foundResource);
 #endif
 
-        isReady = false;
+        //Non-intensive block until foundResource callback is called by OCPlatform
+        //and onGet gets resource.
+        //isResourceReady takes care of spurious wake-up
 
+        std::unique_lock<std::mutex> lock(blocker);
+        cv.wait(lock, isResourceReady);
+
+        isReady = false;
         while (isRun)
         {
-            usleep(100);
-            while (isReady)
+            int selectedMenu;
+
+            cout << endl <<  "0 :: Quit 1 :: CREATE ACTIONSET 2 :: EXECUTE ACTION SET \n";
+            cout << "3 :: GET ACTIONSET 4 :: DELETE ACTIONSET \n" << endl;
+
+            cin >> selectedMenu;
+            OCRepresentation rep;
+            string actionsetDesc;
+
+            switch(selectedMenu)
             {
-                int n;
-
-                cout << endl
-                        << "1 :: CREATE ACTIONSET 2 :: EXECUTE ACTION SET 3 :: GET ACTIONSET\n";
-                cout << "4 :: DELETE ACTIONSET 5 :: Quit\n";
-
-                cin >> n;
-                if (n == 1)
-                {
-                    string actionsetDesc;
-                    //"movieTime*uri=coap://10.251.44.228:49858/a/light|power=10*uri=coap://10.251.44.228:49858/a/light|power=10|";
-
-                    actionsetDesc = "allbulboff";
-                    actionsetDesc.append("*");
-                    for (auto iter = lights.begin(); iter != lights.end(); ++iter)
-                    {
-                        actionsetDesc.append("uri=").append((*iter));
-                        actionsetDesc.append("|");
-                        actionsetDesc.append("power=");
-                        actionsetDesc.append("off");
-                        if ((iter + 1) != lights.end())
-                        {
-                            actionsetDesc.append("*");
-                        }
-                    }
-
-                    cout << "ActionSet :: " << actionsetDesc << endl;
-
-                    OCRepresentation rep;
-                    rep.setValue("ActionSet", actionsetDesc);
-
-                    if (g_resource)
-                    {
-                        g_resource->put("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                                &onPut);
-                    }
-                }
-                else if (n == 2)
-                {
-                    OCRepresentation rep;
-
-                    rep.setValue("DoAction", std::string("allbulboff"));
-
-                    if (g_resource)
-                    {
-                        g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                                &onPost);
-                    }
-                }
-                else if (n == 3)
-                {
-                    OCRepresentation rep;
-
-                    rep.setValue("GetActionSet", std::string("allbulboff"));
-
-                    if (g_resource)
-                    {
-                        g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                                &onPost);
-                    }
-                }
-                else if (n == 4)
-                {
-                    OCRepresentation rep;
-
-                    rep.setValue("DelActionSet", std::string("allbulboff"));
-
-                    if (g_resource)
-                    {
-                        g_resource->put("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                                &onPut);
-                    }
-                }
-                else if (n == 5)
-                {
+                case 0:
                     isRun = false;
                     break;
-                }
-
-                fflush(stdin);
+                case 1:
+                    actionsetDesc = buildActionSetDesc();
+                    if(!actionsetDesc.empty())
+                    {
+                        cout << "ActionSet :: " << actionsetDesc << endl;
+                        rep.setValue("ActionSet", actionsetDesc);
+                    }
+                    if (g_resource)
+                    {
+                        g_resource->put("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
+                        &onPut);
+                    }
+                    break;
+                case 2:
+                    rep.setValue("DoAction", std::string("allbulboff"));
+                    if (g_resource)
+                    {
+                        g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
+                                         &onPost);
+                     }
+                     break;
+                case 3:
+                    rep.setValue("GetActionSet", std::string("allbulboff"));
+                    if (g_resource)
+                    {
+                        g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
+                                &onPost);
+                    }
+                    break;
+                case 4:
+                    rep.setValue("DelActionSet", std::string("allbulboff"));
+                    if (g_resource)
+                    {
+                        g_resource->put("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
+                                &onPut);
+                    }
+                    break;
+                default:
+                    cout << "Invalid option" << endl;
+                    break;
             }
+            fflush(stdin);
         }
     }
     catch (OCException& e)
     {
         cout << e.what() << endl;
     }
-
     return 0;
 }

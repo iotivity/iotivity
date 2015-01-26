@@ -313,6 +313,7 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
+    cout << "In foundResource\n";
     std::string resourceURI;
     std::string hostAddress;
     try
@@ -426,7 +427,6 @@ int main(int argc, char* argv[]) {
                 OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
             else
                 OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-
 #ifdef CA_INT
             if(argc == 3)
             {
@@ -454,12 +454,13 @@ int main(int argc, char* argv[]) {
                     std::cout << "Invalid connectivity type selected. Using default WIFI"
                     << std::endl;
                 }
-            }
-        }
+            }//if arg = 3
 #endif
+        }
         else
         {
             PrintUsage();
+            cout << "Exiting...\n";
             return -1;
         }
     }
@@ -503,11 +504,7 @@ int main(int argc, char* argv[]) {
 #else
         OCPlatform::findResource("", requestURI.str(), &foundResource);
 #endif
-        std::cout<< "Finding Resource for second time... " <<std::endl;
-        while(true)
-        {
-            // some operations
-        }
+        std::cout<< "Finding Resource for second time..." << std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

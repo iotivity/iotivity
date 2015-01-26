@@ -308,6 +308,7 @@ namespace OC
         }
         else
         {
+            delete context;
             result = OC_STACK_ERROR;
         }
         return result;

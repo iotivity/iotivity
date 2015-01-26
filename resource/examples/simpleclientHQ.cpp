@@ -488,10 +488,6 @@ int main(int argc, char* argv[]) {
                 OC::QualityOfService::LowQos);
 #endif
         std::cout<< "Finding Resource for second time... " <<std::endl;
-        while(true)
-        {
-            // some operations
-        }
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we
