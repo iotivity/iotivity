@@ -48,11 +48,12 @@ CXX_INC	  += -I$(OIC_RES)/csdk/logger/include
 CXX_INC	  += -I$(OIC_RES)/csdk/libcoap
 CXX_INC   += -I$(OIC_RES)/../extlibs/cereal/include
 
-CXX_LIBS  := $(OIC_LIB)/liboc.so
-CXX_LIBS  += $(OIC_LIB)/liboctbstack.so
-CXX_LIBS  += $(OIC_LIB)/liboc_logger.so
-CXX_LIBS  += $(OIC_LIB)/liboc_logger_core.so
-CXX_LIBS  += $(OIC_LIB)/libcoap.so
+CXX_LIBS  := -L${OIC_LIB}
+CXX_LIBS  += -loc
+CXX_LIBS  += -loctbstack
+CXX_LIBS  += -loc_logger
+CXX_LIBS  += -loc_logger_core
+CXX_LIBS  += -lcoap
 
 all: prep_dirs OICMiddle
 
