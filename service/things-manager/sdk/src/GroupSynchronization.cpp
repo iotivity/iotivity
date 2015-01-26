@@ -273,8 +273,14 @@ namespace OIC
         std::vector< std::string > resourceInterface;
         resourceInterface.push_back(DEFAULT_INTERFACE);
 
+
+#ifdef CA_INT
+        OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri,
+                OC_ETHERNET | OC_WIFI, 1, resourceTypes, resourceInterface);
+#else
         OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri, 1,
                 resourceTypes, resourceInterface);
+#endif
         groupSyncResourceList[type[0]] = groupSyncResource;
 
         cout << "GroupSynchronization::joinGroup : creating groupSyncResource." << endl;
