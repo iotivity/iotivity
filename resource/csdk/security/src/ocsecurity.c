@@ -41,7 +41,7 @@ void DeinitOCSecurityInfo()
 }
 
 // Internal API. Invoked by OC stack to retrieve credentials from this module
-void OCGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
+void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
 {
     *credInfo = pskCredsBlob;
 }

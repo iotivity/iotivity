@@ -32,6 +32,8 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'../oc_logger/include',
 		'connectivity/inc',
 		'connectivity/api',
+		'security/include',
+		'security/include/internal',
 		])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
@@ -73,8 +75,8 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'ocobserve.c',
     OCTBSTACK_SRC + 'ocserverrequest.c',
 	OCTBSTACK_SRC + 'occollection.c',
-	OCTBSTACK_SRC + 'ocsecurity.c',
-    OCTBSTACK_SRC + 'oicgroup.c'
+	OCTBSTACK_SRC + 'oicgroup.c',
+	'security/src/ocsecurity.c'
 	]
 if target_os == 'arduino':
 	liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)

@@ -35,6 +35,7 @@
 #include "occoap.h"
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
+#include "ocsecurityinternal.h"
 
 #ifdef CA_INT
     #include "cacommon.h"
@@ -86,10 +87,6 @@ OCStackResult getQueryFromUri(const char * uri, unsigned char** resourceType, ch
 //TODO: we should allow the server to define this
 #define MAX_OBSERVE_AGE (0x2FFFFUL)
 
-//-----------------------------------------------------------------------------
-// Externs
-//-----------------------------------------------------------------------------
-extern void DeinitOCSecurityInfo();
 
 //-----------------------------------------------------------------------------
 // Internal API function
@@ -1279,6 +1276,10 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     myStackMode = mode;
     defaultDeviceHandler = NULL;
 
+#if defined(CA_INT) && defined(__WITH_DTLS__)
+    caResult = CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials);
+    result = (caResult == CA_STATUS_OK) ? OC_STACK_OK : OC_STACK_ERROR;
+#endif //(CA_INT) && (__WITH_DTLS__)
 #ifdef WITH_PRESENCE
     PresenceTimeOutSize = sizeof(PresenceTimeOut)/sizeof(PresenceTimeOut[0]) - 1;
 #endif // WITH_PRESENCE
