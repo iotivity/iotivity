@@ -45,27 +45,18 @@ namespace OCResourceTest
     //Helper method
     OCResource::Ptr ConstructResourceObject(std::string uri)
     {
+        OCConnectivityType connectivityType = OC_WIFI;
         std::vector<std::string> types = {"intel.rpost"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
+
         return OCPlatform::constructResourceObject(std::string(""), uri,
-                                false, types, ifaces);
+                connectivityType, false, types, ifaces);
     }
 
     //ConstructResourceTest
     TEST(ConstructResourceTest, ConstructResourceObject)
     {
         EXPECT_ANY_THROW(ConstructResourceObject(std::string("")));
-    }
-
-    //ResourceGetTest
-    TEST(ResourceGetTest, ResourceGetForInvalidUri)
-    {
-        OCResource::Ptr resource = ConstructResourceObject("192.168.1.2:5000");
-        if(resource)
-        {
-            QueryParamsMap test;
-            EXPECT_ANY_THROW(resource->get(test, &onGetPut));
-        }
     }
 
     TEST(ResourceGetTest, ResourceGetForValidUri)
@@ -75,18 +66,6 @@ namespace OCResourceTest
         {
             QueryParamsMap test;
             EXPECT_EQ(OC_STACK_OK, resource->get(OC::QueryParamsMap(), &onGetPut));
-        }
-    }
-
-    //ResourcePutTest
-    TEST(ResourcePutTest, ResourcePutForInvalidUri)
-    {
-        OCResource::Ptr resource = ConstructResourceObject("192.168.1.2:5000");
-        if(resource)
-        {
-            OCRepresentation rep;
-            QueryParamsMap test;
-            EXPECT_ANY_THROW(resource->put(rep, test, &onGetPut));
         }
     }
 
@@ -101,17 +80,6 @@ namespace OCResourceTest
         }
     }
 
-    //ResourcePostTest
-    TEST(ResourcePostTest, ResourcePostForInvalidUri)
-    {
-        OCResource::Ptr resource = ConstructResourceObject("192.168.1.2:5000");
-        if(resource)
-        {
-            OCRepresentation rep;
-            QueryParamsMap test;
-            EXPECT_ANY_THROW(resource->post(rep, test, &onGetPut));
-        }
-    }
 
     TEST(ResourcePostTest, ResourcePostValidConfiguration)
     {
@@ -124,17 +92,6 @@ namespace OCResourceTest
             OCRepresentation rep;
             QueryParamsMap test;
             EXPECT_EQ(OC_STACK_OK, resource->post(rep, test, &onGetPut));
-        }
-    }
-
-    //ResourceObserveTest
-    TEST(ResourceObserveTest, ResourceObserveInValidUri)
-     {
-        OCResource::Ptr resource = ConstructResourceObject("192.168.1.2:5000");
-        if(resource)
-        {
-            QueryParamsMap test;
-            EXPECT_ANY_THROW(resource->observe(ObserveType::ObserveAll, test, &onObserve));
         }
     }
 

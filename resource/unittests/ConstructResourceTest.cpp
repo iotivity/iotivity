@@ -22,7 +22,9 @@
 #include <OCApi.h>
 
 //Uncomment the below line for testing with Mocks
+//TODO enable these tests (unconditionally) after CA code clean up
 //#define WITH_MOCKS
+#ifdef WITH_MOCKS
 
 #include "hippomocks.h"
 #include "Framework.h"
@@ -40,10 +42,11 @@ namespace ConstructResourceTest
     {
         MockRepository mocks;
         OCResource::Ptr rightdoor = std::shared_ptr<OCResource>();
+        OCConnectivityType connectivityType = OC_WIFI;
         mocks.ExpectCallFunc(OCPlatform::constructResourceObject).Return(rightdoor);
         std::vector<std::string> types = {"core.leftdoor"};
         OCResource::Ptr leftdoor = OCPlatform::constructResourceObject("192.168.1.2:5000",
-                                    "a/leftdoor", false, types, ifaces);
+                "a/leftdoor", connectivityType, false, types, ifaces);
         EXPECT_EQ(leftdoor, rightdoor);
 
     }
@@ -52,12 +55,13 @@ namespace ConstructResourceTest
     {
         MockRepository mocks;
         OCResource::Ptr rightdoor = std::shared_ptr<OCResource>();
+        OCConnectivityType connectivityType = OC_WIFI;
         mocks.ExpectCallFunc(OCPlatform::constructResourceObject).Return(NULL);
         std::vector<std::string> types = {"core.rightdoor"};
         OCResource::Ptr leftdoor = OCPlatform::constructResourceObject("192.168.1.2:5000",
-                                    "a/rightdoor", false, types, ifaces);
+                "a/rightdoor", connectivityType, false, types, ifaces);
         bool value = (leftdoor == NULL);
         EXPECT_EQ(true, value);
     }
 }
-
+#endif

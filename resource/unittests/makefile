@@ -55,11 +55,13 @@ CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a
 CXX_LIBS  += $(GTEST_LIBS) -L$(CONNECTIVITY_DIR)/build/out -lconnectivity_abstraction
 
 CC_FLAGS.debug      := -g -O0 -g3 -Wall -ffunction-sections -fdata-sections \
-                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DTB_LOG -DCA_INT
 CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s \
-                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD)
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/$(BUILD) -DCA_INT
 
-CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(CXX_LIBS) -lpthread
+CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(CXX_LIBS) -lpthread -DCA_INT
+
+
 
 all: prep_dirs $(MOCKS_DIR) unittests 
 
