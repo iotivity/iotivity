@@ -33,7 +33,7 @@ void send_response(const CARemoteEndpoint_t* endpoint, CAToken_t request_token);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
 CAResult_t get_network_type(int selectedNetwork);
-void callback(char *subject, char *receicedData);
+void callback(char *subject, char *receivedData);
 
 CAConnectivityType_t gSelectedNwType;
 static CAToken_t gLastRequestToken = NULL;
@@ -44,6 +44,9 @@ static const char *gNormalInfoData = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\"
 
 static jobject gResponseListenerObject = NULL;
 extern JavaVM *g_jvm;
+
+static CARemoteEndpoint_t* clientEndpoint =NULL;
+static CAToken_t clientToken;
 
 // init
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_setNativeResponseListener(JNIEnv *env, jobject obj, jobject listener){
@@ -100,15 +103,42 @@ int32_t SetCredentials()
 }
 #endif
 
+JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
+{
+    printf("JNI_OnLoad");
+
+    JNIEnv* env;
+    if((*jvm)->GetEnv(jvm, (void**)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
+        return -1;
+    }
+    g_jvm = jvm;  /* cache the JavaVM pointer */
+
+    CANativeJNISetJavaVM(g_jvm);
+
+    return JNI_VERSION_1_6;
+}
+
+void JNI_OnUnload(JavaVM *jvm, void *reserved)
+{
+    printf("JNI_OnUnload");
+
+    JNIEnv* env;
+    if((*jvm)->GetEnv(jvm, (void**)&env, JNI_VERSION_1_6) != JNI_OK)
+    {
+        return;
+    }
+    g_jvm = 0;
+    return;
+}
+
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
   (JNIEnv *env, jobject obj, jobject context)
 {
     LOGI("RMInitialize");
-    //Currently set context for WiFiCore
-    CAJniSetContext(context);
-    CALEServerJNISetContext(env, context);
-    CALEClientJNISetContext(env, context);
-    CALENetworkMonitorJNISetContext(env, context);
+
+    //Currently set context for Android Platform
+    CANativeJNISetContext(env, context);
 
     CAResult_t res;
 
@@ -281,12 +311,9 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
 }
 
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse(JNIEnv *env,
-    jobject obj, jstring uri, jstring payload, jint selectedNetwork, jint isSecured)
+    jobject obj, jint selectedNetwork, jint isSecured, jint msgType, jint responseValue)
 {
     LOGI("RMSendResponse");
-
-    const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
-    LOGI("RMSendResponse - %s", strUri);
 
     CAResult_t res;
 
@@ -299,74 +326,54 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse(JNIE
         return;
     }
 
-    //create remote endpoint
-    CARemoteEndpoint_t* endpoint = NULL;
-
-    if(CA_STATUS_OK != CACreateRemoteEndpoint((const CAURI_t)strUri, gSelectedNwType, &endpoint))
+    if (clientEndpoint == NULL)
     {
-        LOGI("Could not create remote end point");
-        CADestroyRemoteEndpoint(endpoint);
+        LOGI("No Request received");
         return;
     }
 
-    CAMessageType_t messageType = CA_MSG_ACKNOWLEDGE;
-
-    // create token
-    CAToken_t token = NULL;
-    res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
-    {
-        LOGI("token generate error!");
-        token = NULL;
-    }
-
-    char resourceURI[15] = {0};
-
-    get_resource_uri((const CAURI_t)strUri, resourceURI, 14);
+    CAMessageType_t messageType = msgType;
 
     CAInfo_t responseData;
     memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.token = token;
+    responseData.token = clientToken;
 
-    const char* strPayload = (*env)->GetStringUTFChars(env, payload, NULL);
     if (isSecured == 1)
     {
-        int length = strlen(gSecureInfoData) + strlen(resourceURI) + 1;
+        int length = strlen(gSecureInfoData) + strlen(clientEndpoint->resourceUri) + 1;
         responseData.payload = (CAPayload_t) malloc(length);
-        sprintf(responseData.payload, gSecureInfoData, resourceURI, gLocalSecurePort);
+        sprintf(responseData.payload, gSecureInfoData, clientEndpoint->resourceUri, gLocalSecurePort);
     }
     else
     {
-        int length = strlen(strPayload) + strlen(resourceURI) + 1;
+        int length = strlen("sendResponse Payload") + strlen(clientEndpoint->resourceUri) + 1;
         responseData.payload = (CAPayload_t) malloc(length);
-        sprintf(responseData.payload, strPayload, resourceURI);
+        sprintf(responseData.payload, gNormalInfoData, clientEndpoint->resourceUri);
     }
 
     responseData.type = messageType;
 
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = responseValue;
     responseInfo.info = responseData;
 
     // send request
-    if(CA_STATUS_OK != CASendResponse(endpoint, &responseInfo))
+    if(CA_STATUS_OK != CASendResponse(clientEndpoint, &responseInfo))
     {
         LOGI("Could not send response");
     }
 
-    LOGI("Send response");
-
     // destroy token
-    if (token != NULL)
+    if (clientToken != NULL)
     {
-        CADestroyToken(token);
+        CADestroyToken(clientToken);
     }
 
     // destroy remote endpoint
-    if (endpoint != NULL)
+    if (clientEndpoint != NULL)
     {
-        CADestroyRemoteEndpoint(endpoint);
+        CADestroyRemoteEndpoint(clientEndpoint);
     }
 
 }
@@ -525,6 +532,13 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMHandleRequestResp
 
 void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* requestInfo)
 {
+
+    char *cloneUri = NULL;
+    char *cloneRemoteAddress = NULL;
+    char *clonePayload = NULL;
+    char *cloneOptionData = NULL;
+    uint32_t len = 0;
+
     if (!object)
     {
         LOGI("Remote endpoint is NULL!");
@@ -540,19 +554,64 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
     LOGI("##########received request from remote device #############\n");
     LOGI("Uri: %s\n", object->resourceUri);
     LOGI("Remote Address: %s\n", object->addressInfo.IP.ipAddress);
-
     LOGI("Data: %s\n", requestInfo->info.payload);
+    LOGI("Token: %s\n", requestInfo->info.token);
+    LOGI("Code: %d\n", requestInfo->method);
 
     if (NULL != gResponseListenerObject)
     {
         callback("received request from remote device", "#######");
-        callback("Uri: ", object->resourceUri);
 
-        callback("Remote Address: ", (char *) object->addressInfo.IP.ipAddress);
-
-        if(requestInfo->info.payload)
+        if (object->resourceUri != NULL)
         {
-            callback("Data: ", requestInfo->info.payload);
+            len = strlen(object->resourceUri);
+            cloneUri = (char *) OICMalloc(sizeof(char) * (len + 1));
+
+            if (cloneUri == NULL)
+            {
+                LOGI("CACloneRemoteEndpoint Out of memory");
+                return;
+            }
+
+            memset(cloneUri, 0, sizeof(char) * (len + 1));
+            strncpy(cloneUri, object->resourceUri, len);
+
+            callback("Uri: ", cloneUri);
+            free(cloneUri);
+        }
+
+        len = strlen(object->addressInfo.IP.ipAddress);
+        cloneRemoteAddress = (char *) OICMalloc(sizeof(char) * (len + 1));
+
+        if (cloneRemoteAddress == NULL)
+        {
+            LOGI("CACloneRemoteEndpoint Out of memory");
+            return;
+        }
+
+        memset(cloneRemoteAddress, 0, sizeof(char) * (len + 1));
+        strncpy(cloneRemoteAddress, object->addressInfo.IP.ipAddress, len);
+
+        callback("Remote Address: ", cloneRemoteAddress);
+        free(cloneRemoteAddress);
+
+
+        if(requestInfo->info.payload != NULL)
+        {
+            len = strlen(requestInfo->info.payload);
+            clonePayload = (char *) OICMalloc(sizeof(char) * (len + 1));
+
+            if (clonePayload == NULL)
+            {
+                LOGI("CACloneRemoteEndpoint Out of memory");
+                return;
+            }
+
+            memset(clonePayload, 0, sizeof(char) * (len + 1));
+            strncpy(clonePayload, requestInfo->info.payload, len);
+
+            callback("Data: ", clonePayload);
+            free(clonePayload);
         }
     }
 
@@ -567,6 +626,9 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
     {
         uint32_t len = requestInfo->info.numOptions;
         uint32_t i;
+
+        LOGI("Option count: %d\n", requestInfo->info.numOptions);
+
         for (i = 0; i < len; i++)
         {
             LOGI("Option %d\n", i + 1);
@@ -576,22 +638,37 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
 
             if (NULL != gResponseListenerObject)
             {
-                char tmpbuf[30];
-                sprintf(tmpbuf, "%d", i + 1);
-                callback("Option: ", tmpbuf);
+                char optionInfo[1024] = {0,};
+                sprintf(optionInfo, "Num[%d] - ID : %d, Option Length : %d", i+1,
+                        requestInfo->info.options[i].optionID, requestInfo->info.options[i].optionLength);
 
-                sprintf(tmpbuf, "%d", requestInfo->info.options[i].optionID);
-                callback("ID: ", tmpbuf);
+                callback("Option info: ", optionInfo);
 
-                sprintf(tmpbuf, "Data:[%d]",  requestInfo->info.options[i].optionLength);
-                callback("tmpbuf: ", requestInfo->info.options[i].optionData);
+                if (requestInfo->info.options[i].optionData != NULL)
+                {
+                    uint32_t optionDataLen = strlen(requestInfo->info.options[i].optionData);
+                    cloneOptionData = (char *) OICMalloc(sizeof(char) * (optionDataLen + 1));
+
+                    if (cloneOptionData == NULL)
+                    {
+                        LOGI("CACloneRemoteEndpoint Out of memory");
+                        return;
+                    }
+
+                    memset(cloneOptionData, 0, sizeof(char) * (optionDataLen + 1));
+                    strncpy(cloneOptionData, requestInfo->info.options[i].optionData, optionDataLen);
+
+                    callback("Option Data: ", cloneOptionData);
+                    free(cloneOptionData);
+                }
             }
         }
     }
+
     printf("############################################################\n");
 
     //Check if this has secure communication information
-    if (requestInfo->info.payload)
+    if (requestInfo->info.payload && object->resourceUri)
     {
         int securePort = get_secure_information(requestInfo->info.payload);
         if (0 < securePort) //Set the remote endpoint secure details and send response
@@ -626,30 +703,79 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
 
     gReceived = 1;
 
-    // response
-//    send_response(object, (requestInfo != NULL) ? requestInfo->info.token : "");
-
+    clientEndpoint = object;
+    clientToken = requestInfo->info.token;
 }
 
 void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo)
 {
+
+    char *cloneUri = NULL;
+    char *cloneRemoteAddress = NULL;
+    char *clonePayload = NULL;
+    char *cloneOptionData = NULL;
+    uint32_t len = 0;
 
     LOGI("##########Received response from remote device #############\n");
     LOGI("Uri: %s\n", object->resourceUri);
     LOGI("Remote Address: %s\n", object->addressInfo.IP.ipAddress);
     LOGI("response result: %d\n", responseInfo->result);
     LOGI("Data: %s\n", responseInfo->info.payload);
+    LOGI("Token: %s\n", responseInfo->info.token);
+    LOGI("Code: %d\n", responseInfo->result);
 
     if (NULL != gResponseListenerObject)
     {
-        callback("received response from remote device", "#######");
-        callback("Uri: ", object->resourceUri);
-
-        callback("Remote Address: ", (char *)object->addressInfo.IP.ipAddress);
-
-        if(responseInfo->info.payload)
+        if (object->resourceUri != NULL)
         {
-            callback("Data: ", responseInfo->info.payload);
+            len = strlen(object->resourceUri);
+            cloneUri = (char *) OICMalloc(sizeof(char) * (len + 1));
+
+            if (cloneUri == NULL)
+            {
+                LOGI("CACloneRemoteEndpoint Out of memory");
+                return;
+            }
+
+            memset(cloneUri, 0, sizeof(char) * (len + 1));
+            strncpy(cloneUri, object->resourceUri, len);
+
+            callback("Uri: ", cloneUri);
+            free(cloneUri);
+        }
+
+        len = strlen(object->addressInfo.IP.ipAddress);
+        cloneRemoteAddress = (char *) OICMalloc(sizeof(char) * (len + 1));
+
+        if (cloneRemoteAddress == NULL)
+        {
+            LOGI("CACloneRemoteEndpoint Out of memory");
+            return;
+        }
+
+        memset(cloneRemoteAddress, 0, sizeof(char) * (len + 1));
+        strncpy(cloneRemoteAddress, object->addressInfo.IP.ipAddress, len);
+
+        callback("Remote Address: ", cloneRemoteAddress);
+        free(cloneRemoteAddress);
+
+
+        if(responseInfo->info.payload != NULL)
+        {
+            len = strlen(responseInfo->info.payload);
+            clonePayload = (char *) OICMalloc(sizeof(char) * (len + 1));
+
+            if (clonePayload == NULL)
+            {
+                LOGI("CACloneRemoteEndpoint Out of memory");
+                return;
+            }
+
+            memset(clonePayload, 0, sizeof(char) * (len + 1));
+            strncpy(clonePayload, responseInfo->info.payload, len);
+
+            callback("Data: ", clonePayload);
+            free(clonePayload);
         }
     }
 
@@ -666,15 +792,28 @@ void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* 
 
             if (NULL != gResponseListenerObject)
             {
-                char tmpbuf[30];
-                sprintf(tmpbuf, "%d", i + 1);
-                callback("Option: ", tmpbuf);
+                char optionInfo[1024] = {0,};
+                sprintf(optionInfo, "Num[%d] - ID : %d, Option Length : %d", i+1,
+                        responseInfo->info.options[i].optionID,
+                        responseInfo->info.options[i].optionLength);
 
-                sprintf(tmpbuf, "%d", responseInfo->info.options[i].optionID);
-                callback("ID: ", tmpbuf);
+                callback("Option info: ", optionInfo);
 
-                sprintf(tmpbuf, "Data:[%d]",  responseInfo->info.options[i].optionLength);
-                callback("tmpbuf: ", responseInfo->info.options[i].optionData);
+                if (responseInfo->info.options[i].optionData != NULL)
+                {
+                    uint32_t optionDataLen = strlen(responseInfo->info.options[i].optionData);
+                    cloneOptionData = (char *) OICMalloc(sizeof(char) * (optionDataLen + 1));
+
+                    if (cloneOptionData == NULL)
+                    {
+                        LOGI("CACloneRemoteEndpoint Out of memory");
+                        return;
+                    }
+                    memset(cloneOptionData, 0, sizeof(char) * (optionDataLen + 1));
+                    strncpy(cloneOptionData, responseInfo->info.options[i].optionData, optionDataLen);
+                    callback("Option Data: ", cloneOptionData);
+                    free(cloneOptionData);
+                }
             }
         }
     }
@@ -690,24 +829,6 @@ void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* 
             LOGI("This is secure resource...\n");
         }
     }
-}
-
-void send_response(const CARemoteEndpoint_t* endpoint, CAToken_t request_token)
-{
-    LOGI("send_response");
-
-    CAInfo_t responseData;
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.token = request_token;
-    responseData.payload = "response payload";
-
-    CAResponseInfo_t responseInfo;
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = 203;
-    responseInfo.info = responseData;
-
-    // send request
-    CASendResponse(endpoint, &responseInfo);
 }
 
 void get_resource_uri(char *URI, char *resourceURI, int length)
@@ -814,7 +935,7 @@ CAResult_t get_network_type(int selectedNetwork)
     return CA_NOT_SUPPORTED;
 }
 
-void callback(char *subject, char *receicedData)
+void callback(char *subject, char *receivedData)
 {
     JNIEnv* env = NULL;
     int status = (*g_jvm)->GetEnv(g_jvm, (void **) &env, JNI_VERSION_1_6);
@@ -824,6 +945,7 @@ void callback(char *subject, char *receicedData)
     jmethodID mid = (*env)->GetMethodID(env, cls, "OnResponseReceived", "(Ljava/lang/String;Ljava/lang/String;)V");
 
     jstring jsubject = (*env)->NewStringUTF(env, (char*)subject);
-    jstring jreceivedData = (*env)->NewStringUTF(env, (char*)receicedData);
+    jstring jreceivedData = (*env)->NewStringUTF(env, (char*)receivedData);
     (*env)->CallVoidMethod(env, gResponseListenerObject, mid, jsubject, jreceivedData);
+
 }

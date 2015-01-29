@@ -33,6 +33,8 @@
 #define CA_BUFSIZE 128
 #define CA_COAP_MESSAGE_CON 0
 
+#define CA_RESPONSE_CLASS(C) (((C) >> 5)*100)
+#define CA_RESPONSE_CODE(C) (CA_RESPONSE_CLASS(C) + (C - COAP_RESPONSE_CODE(CA_RESPONSE_CLASS(C))))
 
 uint32_t CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
                                  char *outUri)
@@ -73,47 +75,60 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
     uint32_t length;
     coap_list_t *optlist = NULL;
 
-    if (NULL == uri)
-        return NULL;
-
-    length = strlen(uri);
-    if (CA_MAX_URI_LENGTH < length)
+    if(CA_EMPTY == code)
     {
-        OIC_LOG(DEBUG, TAG, "URI len err");
-        return NULL;
-    }
-
-    coapUri = (char *) OICMalloc(length + coapHeaderLength + 1);
-    if (coapUri == NULL)
-    {
-        OIC_LOG(ERROR, TAG, "error");
-        return NULL;
-    }
-    memset(coapUri, 0, length + coapHeaderLength + 1);
-
-    if (NULL != coapUri)
-    {
-        memcpy(coapUri, "coap://[::]/", coapHeaderLength);
-        memcpy(coapUri + coapHeaderLength, uri, length);
-
-        // parsing options in URI
-        CAParseURI(coapUri, &optlist);
-
-        // parsing options in HeadOption
-        CAParseHeadOption(code, info, &optlist);
-
-        OICFree(coapUri);
-    }
-
-    if (NULL != info.payload) // payload is include in request / response
-    {
-        if (!(pdu = CACreatePDUforRequestWithPayload((code_t) code, optlist, info.payload, info)))
+        if (!(pdu = CACreatePDUforRSTandACK((code_t) code, info)))
+        {
             return NULL;
+        }
     }
-    else // payload is not include in request / response
+    else
     {
-        if (!(pdu = CACreatePDUforRequest((code_t) code, optlist, info)))
+        if (NULL == uri)
             return NULL;
+
+        length = strlen(uri);
+        if (CA_MAX_URI_LENGTH < length)
+        {
+            OIC_LOG(DEBUG, TAG, "URI len err");
+            return NULL;
+        }
+
+        uint32_t uriLength = length + coapHeaderLength + 1;
+        coapUri = (char *) OICMalloc(uriLength);
+        if (NULL == coapUri)
+        {
+            OIC_LOG(ERROR, TAG, "error");
+            return NULL;
+        }
+        memset(coapUri, 0, uriLength);
+
+        if (NULL != coapUri)
+        {
+            memcpy(coapUri, "coap://[::]/", coapHeaderLength);
+            memcpy(coapUri + coapHeaderLength, uri, length);
+
+            // parsing options in URI
+            CAParseURI(coapUri, &optlist);
+            OICFree(coapUri);
+            coapUri = NULL;
+
+            // parsing options in HeadOption
+            CAParseHeadOption(code, info, &optlist);
+        }
+
+        if (NULL != info.payload) // payload is include in request / response
+        {
+            if (!(pdu = CACreatePDUforRequestWithPayload((code_t) code, optlist, info.payload, info)))
+                return NULL;
+        }
+        else // payload is not include in request / response
+        {
+            if (!(pdu = CACreatePDUforRequest((code_t) code, optlist, info)))
+                return NULL;
+        }
+        // free option list
+        coap_delete_list(optlist);
     }
 
     // pdu print method : coap_show_pdu(pdu);
@@ -127,7 +142,7 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
     coap_pdu_t *outpdu = coap_new_pdu();
 
     coap_pdu_parse((unsigned char *) data, length, outpdu);
-    (*outCode) = (uint32_t) outpdu->hdr->code;
+    (*outCode) = (uint32_t) CA_RESPONSE_CODE(outpdu->hdr->code);
     OIC_LOG(DEBUG, TAG, "OUT");
     return outpdu;
 }
@@ -165,7 +180,7 @@ coap_pdu_t *CACreatePDUforRequestWithPayload(const code_t code, coap_list_t *opt
 
     pdu->hdr->type = info.type;
     pdu->hdr->id = htons(message_id);
-    pdu->hdr->code = code;
+    pdu->hdr->code = COAP_RESPONSE_CODE(code);
 
     if (info.token)
     {
@@ -230,7 +245,7 @@ coap_pdu_t *CACreatePDUforRequest(const code_t code, coap_list_t *options,
 
     pdu->hdr->type = info.type;
     pdu->hdr->id = htons(message_id);
-    pdu->hdr->code = code;
+    pdu->hdr->code = COAP_RESPONSE_CODE(code);
 
     OIC_LOG_V(DEBUG, TAG, "token info : %s, %d", info.token, strlen(info.token));
     pdu->hdr->token_length = CA_MAX_TOKEN_LEN;
@@ -246,6 +261,42 @@ coap_pdu_t *CACreatePDUforRequest(const code_t code, coap_list_t *options,
                         COAP_OPTION_LENGTH(*(coap_option * )opt->data),
                         COAP_OPTION_DATA(*(coap_option * )opt->data));
     }
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return pdu;
+}
+
+coap_pdu_t *CACreatePDUforRSTandACK(const code_t code, const CAInfo_t info)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    coap_pdu_t *pdu;
+
+    if (!(pdu = coap_new_pdu()))
+    {
+        OIC_LOG(DEBUG, TAG, "error");
+        return NULL;
+    }
+
+    unsigned short message_id;
+
+    if (info.messageId == 0)
+    {
+        /* initialize message id */
+        prng((unsigned char * )&message_id, sizeof(unsigned short));
+        ++message_id;
+
+        OIC_LOG_V(DEBUG, TAG, "msg id(%d)", message_id);
+    }
+    else
+    {
+        /* use saved message id */
+        message_id = info.messageId;
+    }
+
+    pdu->hdr->type = info.type;
+    pdu->hdr->id = htons(message_id);
+    pdu->hdr->code = COAP_RESPONSE_CODE(code);
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return pdu;
 }
@@ -362,7 +413,7 @@ coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length,
         coap_free(option);
         return NULL;
     }
-   
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return node;
 }
@@ -423,7 +474,7 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
     memset(optionResult, 0, sizeof(optionResult));
 
     // set code
-    (*outCode) = (uint32_t) pdu->hdr->code;
+    (*outCode) = (uint32_t) CA_RESPONSE_CODE(pdu->hdr->code);
 
     // init HeaderOption list
     count = CAGetOptionCount(opt_iter);
@@ -535,6 +586,32 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
     OIC_LOG_V(DEBUG, TAG, "made URL:%s\n", optionResult);
     OIC_LOG(DEBUG, TAG, "OUT");
 
+}
+
+CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    if(NULL == pdu_hdr)
+    {
+        OIC_LOG(DEBUG, TAG, "error");
+        return CA_STATUS_FAILED;
+    }
+    // set token data
+    if (pdu_hdr->token_length > 0)
+    {
+        OIC_LOG(DEBUG, TAG, "toklen > 0");
+        outInfo->token = (char *) OICMalloc(CA_MAX_TOKEN_LEN + 1);
+        if (outInfo->token == NULL)
+        {
+            OIC_LOG(DEBUG, TAG, "error");
+            return CA_STATUS_FAILED;
+        }
+        memset(outInfo->token, 0, CA_MAX_TOKEN_LEN + 1);
+        memcpy(outInfo->token, pdu_hdr->token, CA_MAX_TOKEN_LEN);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT - CAGetTokenFromPDU");
+
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAGenerateTokenInternal(CAToken_t *token)
@@ -672,4 +749,15 @@ uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size)
     coap_hdr_t *hdr = (coap_hdr_t *) pdu;
 
     return ntohs(hdr->id);
+}
+
+CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size)
+{
+    // pdu minimum size is 4 byte.
+    if (size < 4)
+        return 0;
+
+    coap_hdr_t *hdr = (coap_hdr_t *) pdu;
+
+    return (CAResponseResult_t) CA_RESPONSE_CODE(hdr->code);
 }

@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 #include "caretransmission_singlethread.h"
-
+#include "coap.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -287,7 +287,9 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 }
 
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint, const void *pdu, uint32_t size)
+                                        const CARemoteEndpoint_t *endpoint,
+                                        const void *pdu, uint32_t size,
+                                        void **retransmissionPdu)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     if (context == NULL || endpoint == NULL || pdu == NULL)
@@ -330,7 +332,32 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
         // found index
         if ((retData->endpoint->connectivityType == endpoint->connectivityType)
             && retData->messageId == messageId)
+        {
+            // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
+            // if retransmission was finish..token will be unavailable.
+            if(CA_EMPTY == CAGetCodeFromPduBinaryData(pdu, size))
+            {
+                OIC_LOG(DEBUG, TAG, "CA_EMPTY");
+
+                if(NULL == retData->pdu)
+                {
+                    OIC_LOG(DEBUG, TAG, "retData->pdu is null");
+                }
+
+                // copy PDU data
+                (*retransmissionPdu) = (void *) OICMalloc(sizeof(int8_t) * retData->size);
+                if (NULL == (*retransmissionPdu))
+                {
+                    OICFree(retData);
+                    OIC_LOG(DEBUG, TAG, "error");
+                    return CA_MEMORY_ALLOC_FAILED;
+                }
+                memset((*retransmissionPdu), 0, sizeof(int8_t) * retData->size);
+                memcpy((*retransmissionPdu), retData->pdu, sizeof(int8_t) * retData->size);
+            }
+
             break;
+        }
     }
 
     // #2. remove data from list

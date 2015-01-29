@@ -60,7 +60,6 @@ void start_discovery_server();
 void find_resource();
 void send_request();
 void send_request_all();
-void send_response();
 void advertise_resource();
 void send_notification();
 void select_network();
@@ -73,6 +72,7 @@ void send_secure_request();
 void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
 void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
 void send_request_tmp(CARemoteEndpoint_t *endpoint, CAToken_t token);
+void send_response(CARemoteEndpoint_t *endpoint, CAInfo_t *info);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
 
@@ -1058,6 +1058,7 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
     printf("response result : %d\n", responseInfo->result);
     printf("Data: %s\n", responseInfo->info.payload);
     printf("Message type: %s\n", gMessageType[responseInfo->info.type]);
+    printf("Token: %s\n", responseInfo->info.token);
     if (responseInfo->info.options)
     {
         uint32_t len = responseInfo->info.numOptions;
@@ -1086,21 +1087,51 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
 
 void send_response(CARemoteEndpoint_t *endpoint, CAInfo_t *info)
 {
+    char buf[MAX_BUF_LEN];
+
     printf("entering send_response\n");
 
+    printf("\n=============================================\n");
+    printf("\tselect message type\n");
+    printf("CA_MSG_CONFIRM      : 0\n");
+    printf("CA_MSG_NONCONFIRM   : 1\n");
+    printf("CA_MSG_ACKNOWLEDGE  : 2\n");
+    printf("CA_MSG_RESET        : 3\n");
+    printf("select : ");
+
+    memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
+    gets(buf);
+
+    int messageType = buf[0] - '0';
+    int responseCode = 231 ;
+    if(messageType != 3)
+    {
+
+        printf("\n=============================================\n");
+        printf("\tselect response code\n");
+        printf("CA_SUCCESS              : 200\n");
+        printf("CA_CREATED              : 201\n");
+        printf("CA_DELETED              : 202\n");
+        printf("CA_EMPTY                : 231\n");
+        printf("CA_BAD_REQ              : 400\n");
+        printf("CA_BAD_OPT              : 402\n");
+        printf("CA_NOT_FOUND            : 404\n");
+        printf("CA_RETRANSMIT_TIMEOUT   : 531\n");
+        printf("select : ");
+        scanf("%d", &responseCode);
+    }
     CAInfo_t responseData;
     memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type =
-        (info != NULL) ?
-        ((info->type == CA_MSG_CONFIRM) ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM) :
-            CA_MSG_NONCONFIRM;
+    responseData.type = messageType;
     responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.token = (info != NULL) ? info->token : "";
-    responseData.payload = "response payload";
-
+    if(messageType != 3)
+    {
+        responseData.token = (info != NULL) ? info->token : "";
+        responseData.payload = "response payload";
+    }
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = 203;
+    responseInfo.result = responseCode;
     responseInfo.info = responseData;
 
     if (CA_TRUE == endpoint->isSecured)

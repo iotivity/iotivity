@@ -245,10 +245,11 @@ typedef enum
     CA_SUCCESS = 200,           /**< Success */
     CA_CREATED = 201,           /**< Created */
     CA_DELETED = 202,           /**< Deleted */
+    CA_EMPTY = 231,             /**< Empty */
     CA_BAD_REQ = 400,           /**< Bad Request */
     CA_BAD_OPT = 402,           /**< Bad Option */
     CA_NOT_FOUND = 404,         /**< Not found */
-    CA_RETRANSMIT_TIMEOUT = 500 /**< Retransmit timeout */
+    CA_RETRANSMIT_TIMEOUT = 531 /**< Retransmit timeout */
     /* Response status code - END HERE */
 } CAResponseResult_t;
 

@@ -86,14 +86,15 @@ static void CAProcessData(CAData_t *data)
             OIC_LOG(DEBUG, TAG, "reqInfo avlbl");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
-                                               data->requestInfo->method, data->requestInfo->info);
+                                               data->requestInfo->method,
+                                               data->requestInfo->info);
         }
         else if (data->responseInfo != NULL)
         {
             OIC_LOG(DEBUG, TAG, "resInfo avlbl");
-
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
-                                               data->responseInfo->result, data->responseInfo->info);
+                                               data->responseInfo->result,
+                                               data->responseInfo->info);
         }
         else
         {
@@ -198,7 +199,7 @@ static void CATimeoutCallback(const CARemoteEndpoint_t *endpoint, void *pdu, uin
 }
 
 static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
-    uint32_t dataLen)
+                                     uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
@@ -207,6 +208,12 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
     uint32_t code = CA_NOT_FOUND;
     pdu = (coap_pdu_t *) CAParsePDU((const char *) data, dataLen, &code);
     //OICFree(data);
+
+    if(NULL == pdu)
+    {
+        OIC_LOG(ERROR, TAG, "pdu is null");
+        return;
+    }
 
     char uri[CA_MAX_URI_LENGTH] = { 0, };
 
@@ -241,7 +248,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
 
         OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method);
         OIC_LOG_V(DEBUG, TAG, "Request- token : %s", ReqInfo->info.token);
-
+        OIC_LOG_V(DEBUG, TAG, "Request- msgID : %d", ReqInfo->info.messageId);
         if (NULL != endpoint)
         {
             endpoint->resourceUri = (char *) OICMalloc(strlen(uri) + 1);
@@ -312,14 +319,23 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
             OIC_LOG_V(DEBUG, TAG, "URI : %s", endpoint->resourceUri);
         }
 
+        // for retransmission
+        void *retransmissionPdu = NULL;
+        CARetransmissionReceivedData(&gRetransmissionContext, endpoint, pdu->hdr, pdu->length,
+                                     &retransmissionPdu);
+
+        // get token from saved data in retransmission list
+        if(retransmissionPdu && CA_EMPTY == code)
+        {
+            CAGetTokenFromPDU((const coap_hdr_t *)retransmissionPdu, &(ResInfo->info));
+            OICFree(retransmissionPdu);
+        }
+
         if (ResInfo != NULL)
         {
             if (gResponseHandler)
             {
                 gResponseHandler(endpoint, ResInfo);
-
-                // for retransmission
-                CARetransmissionReceivedData(&gRetransmissionContext, endpoint, pdu->hdr, pdu->length);
             }
             CADestroyResponseInfoInternal(ResInfo);
         }

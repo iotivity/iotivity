@@ -108,10 +108,12 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
  * @param   endpoint    [IN]    endpoint information
  * @param   pdu         [IN]    received pdu binary data
  * @param   size        [IN]    received pdu binary data size
+ * @param   void        [OUT]   pdu data of the request for reset and ack
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint, const void *pdu, uint32_t size);
+                                        const CARemoteEndpoint_t *endpoint, const void *pdu,
+                                        uint32_t size, void **retransmissionPdu);
 
 /**
  * @brief   Stopping the retransmission context

@@ -84,6 +84,14 @@ coap_pdu_t *CACreatePDUforRequest(const code_t code, coap_list_t *options,
                                   const CAInfo_t info);
 
 /**
+ * @brief   creates pdu for ACK or RESET type
+ * @param   code         [IN]    request or response code
+ * @param   info         [IN]    pdu information such as response code
+ * @return  coap_pdu_t
+ */
+coap_pdu_t *CACreatePDUforRSTandACK(const code_t code, const CAInfo_t info);
+
+/**
  * @brief   creates pdu from the request information and paylod
  * @param   code         [IN]    request or response code alloted
  * @param   options      [IN]    options for the request and response backpacked
@@ -170,6 +178,14 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
 coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode);
 
 /**
+ * @brief   get Token fromn received data(pdu)
+ * @param   pdu          [IN]  received pdu
+ * @param   outCode      [IN]  Token received
+ * @return  None
+ */
+CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo);
+
+/**
  * @brief  generates the token
  * @param   token        [OUT]   generated token
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
@@ -206,6 +222,14 @@ CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size
  * @return  message ID
  */
 uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size);
+
+/**
+ * @brief   gets code PDU binary data
+ * @param   pdu        [IN]    pdu data
+ * @param   size       [IN]    size of pdu data
+ * @return  code
+ */
+CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
 
 #ifdef __cplusplus
 } /* extern "C" */

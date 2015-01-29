@@ -69,10 +69,10 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest
 /*
  * Class:     com_iotivity_service_RMInterface
  * Method:    RMSendResponse
- * Signature: (Ljava/lang/String;III)V
+ * Signature: (IIII)V
  */
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse
-  (JNIEnv *, jobject, jstring, jstring, jint, jint);
+  (JNIEnv *, jobject, jint, jint, jint, jint);
 
 /*
  * Class:     com_iotivity_service_RMInterface

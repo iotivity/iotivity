@@ -27,14 +27,14 @@
 #ifdef __ANDROID__
 #include <linux/time.h>
 #endif
-
+#include "coap.h"
 #include "caretransmission.h"
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG PCF("RET")
+#define TAG PCF("CA")
 
 typedef struct
 {
@@ -384,8 +384,11 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 }
 
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint, const void *pdu, uint32_t size)
+                                        const CARemoteEndpoint_t *endpoint,
+                                        const void *pdu, uint32_t size,
+                                        void **retransmissionPdu)
 {
+    OIC_LOG_V(DEBUG, TAG, "IN - CARetransmissionReceivedData");
     if (context == NULL || endpoint == NULL || pdu == NULL)
     {
         OIC_LOG_V(DEBUG, TAG, "invalid parameter..");
@@ -429,7 +432,32 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
         // found index
         if ((retData->endpoint->connectivityType == endpoint->connectivityType)
             && retData->messageId == messageId)
+        {
+            // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
+            // if retransmission was finish..token will be unavailable.
+            if(CA_EMPTY == CAGetCodeFromPduBinaryData(pdu, size))
+            {
+                OIC_LOG_V(DEBUG, TAG, "code is CA_EMPTY..");
+
+                if(NULL == retData->pdu)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "retData->pdu is null");
+                }
+
+                // copy PDU data
+                (*retransmissionPdu) = (void *) OICMalloc(sizeof(int8_t) * retData->size);
+                if ((*retransmissionPdu) == NULL)
+                {
+                    OICFree(retData);
+                    OIC_LOG_V(DEBUG, TAG, "memory error!!");
+                    return CA_MEMORY_ALLOC_FAILED;
+                }
+                memset((*retransmissionPdu), 0, sizeof(int8_t) * retData->size);
+                memcpy((*retransmissionPdu), retData->pdu, sizeof(int8_t) * retData->size);
+            }
+
             break;
+        }
     }
 
     // #2. remove data from list
@@ -451,6 +479,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     // mutex unlock
     u_mutex_unlock(context->threadMutex);
 
+    OIC_LOG_V(DEBUG, TAG, "OUT - CARetransmissionReceivedData");
     return CA_STATUS_OK;
 }
 

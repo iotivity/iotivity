@@ -673,24 +673,50 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
 
 void send_response(CARemoteEndpoint_t *endpoint, const CAInfo_t* info)
 {
+    char buf[MAX_BUF_LEN];
+    memset(buf, 0, sizeof(char) * MAX_BUF_LEN);
 
     printf("============");
+    printf("Select Message Type");
+    printf("CON: 0");
+    printf("NON: 1");
+    printf("ACK: 2");
+    printf("RESET: 3");
+
+
+    int16_t len = 0;
+    getData(buf, (int16_t)sizeof(buf), &len);
+    int32_t messageType = buf[0] - '0';
+    int32_t respCode =231 ;
+
+    if(messageType != 3)
+    {
+        printf("============");
+        printf("Select Resp code:");
+        printf("Success: 200");
+        printf("Created: 201");
+        printf("Deleted: 202");
+        printf("Empty  : 231");
+        printf("BadReq : 400");
+        printf("BadOpt : 402");
+        printf("NotFnd : 404");
+        printf("Timeout: 531");
+       getData(buf, (int16_t)sizeof(buf), &len);
+       respCode = atoi(buf);
+    }
 
     CAInfo_t responseData;
     memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type =
-            (info != NULL) ?
-                    ((info->type == CA_MSG_CONFIRM) ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM) :
-                    CA_MSG_NONCONFIRM;
+    responseData.type = (CAMessageType_t)messageType;
+
     responseData.messageId = (info != NULL) ? info->messageId : 0;
     responseData.token = (info != NULL) ? (CAToken_t)info->token : (CAToken_t)"";
     responseData.payload = (CAPayload_t)"response payload";
 
     CAResponseInfo_t responseInfo;
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = (CAResponseResult_t)203;
+    responseInfo.result = (CAResponseResult_t)respCode;
     responseInfo.info = responseData;
-
     // send request (connectivityType from remoteEndpoint of request Info)
     CAResult_t res = CASendResponse(endpoint, &responseInfo);
     if(res != CA_STATUS_OK)

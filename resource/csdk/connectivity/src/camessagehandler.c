@@ -120,6 +120,7 @@ static void CATimeoutCallback(const CARemoteEndpoint_t *endpoint, void *pdu, uin
 
 static void CADataDestroyer(void *data, uint32_t size)
 {
+    OIC_LOG(DEBUG, TAG, "CADataDestroyer is ran!");
     CAData_t *cadata = (CAData_t *) data;
 
     if (cadata == NULL)
@@ -366,7 +367,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
             }
             memset(endpoint->resourceUri, 0, strlen(uri) + 1);
             memcpy(endpoint->resourceUri, uri, strlen(uri));
-            OIC_LOG_V(DEBUG, TAG, "added resource URI : %s", endpoint->resourceUri);
+            OIC_LOG_V(DEBUG, TAG, "resource URI : %s", endpoint->resourceUri);
         }
         // store the data at queue.
         CAData_t *cadata = NULL;
@@ -410,11 +411,16 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
 
                 OIC_LOG_V(DEBUG, TAG, "Response- list: %s", ResInfo->info.options[i].optionData);
             }
-            if (NULL != ResInfo->info.payload)
-            {
-                OIC_LOG_V(DEBUG, TAG, "Response- payload: %s", ResInfo->info.payload);
-            } OIC_LOG_V(DEBUG, TAG, "Response- code: %d", ResInfo->result);
         }
+
+        if (NULL != ResInfo->info.payload)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Response- payload: %s", ResInfo->info.payload);
+        }
+
+        OIC_LOG_V(DEBUG, TAG, "Response- response code: %d", ResInfo->result);
+        OIC_LOG_V(DEBUG, TAG, "Response- token : %s", ResInfo->info.token);
+        OIC_LOG_V(DEBUG, TAG, "Response- msgID: %d", ResInfo->info.messageId);
 
         if (NULL != endpoint)
         {
@@ -428,7 +434,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
             }
             memset(endpoint->resourceUri, 0, strlen(uri) + 1);
             memcpy(endpoint->resourceUri, uri, strlen(uri));
-            OIC_LOG_V(DEBUG, TAG, "added resource URI : %s", endpoint->resourceUri);
+            OIC_LOG_V(DEBUG, TAG, "resource URI : %s", endpoint->resourceUri);
         }
 
         // store the data at queue.
@@ -448,12 +454,20 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         cadata->type = SEND_TYPE_UNICAST;
         cadata->remoteEndpoint = endpoint;
         cadata->requestInfo = NULL;
+
+        // for retransmission
+        void *retransmissionPdu = NULL;
+        CARetransmissionReceivedData(&gRetransmissionContext, endpoint, pdu->hdr, pdu->length, &retransmissionPdu);
+
+        // get token from saved data in retransmission list
+        if(retransmissionPdu && CA_EMPTY == code)
+        {
+            CAGetTokenFromPDU((const coap_hdr_t *)retransmissionPdu, &(ResInfo->info));
+            OICFree(retransmissionPdu);
+        }
         cadata->responseInfo = ResInfo;
 
         CAQueueingThreadAddData(&gReceiveThread, cadata, sizeof(CAData_t));
-
-        // for retransmission
-        CARetransmissionReceivedData(&gRetransmissionContext, endpoint, pdu->hdr, pdu->length);
     }
 
     if(pdu)
@@ -504,6 +518,7 @@ void CAHandleRequestResponseCallbacks()
     {
         if (gRequestHandler)
         {
+            OIC_LOG_V(DEBUG, TAG, "callback will be sent : %d", td->requestInfo->info.numOptions);
             gRequestHandler(rep, td->requestInfo);
         }
 
@@ -912,7 +927,7 @@ void CATerminateMessageHandler()
     if(gReceiveThread.threadMutex != NULL) {
 	#ifndef SINGLE_HANDLE// This will be enabled when RI supports multi threading
         // CAQueueingThreadStop(&gReceiveThread);
-	#endif	
+	#endif
         CAQueueingThreadDestroy(&gReceiveThread);
     }
 
