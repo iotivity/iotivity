@@ -1,0 +1,60 @@
+##
+# Examples build script
+##
+Import('env')
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+examples_env = lib_env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+examples_env.AppendUnique(CPPPATH = [
+		'../../resource/include/',
+		'../../resource/csdk/stack/include',
+		'../../resource/csdk/ocsocket/include',
+		'../../resource/csdk/ocrandom/include',
+		'../../resource/csdk/logger/include',
+		'../../resource/csdk/libcoap',
+		'../../resource/oc_logger/include'
+		])
+
+target_os = env.get('TARGET_OS')
+if target_os not in ['windows', 'winrt']:
+	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+
+	# Note: 'pthread' is in libc for android. On other platform, if use
+	# new gcc(>4.9?) it isn't required, otherwise, it's required
+	if target_os != 'android':
+		examples_env.AppendUnique(LIBS = ['-lpthread'])
+
+examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'coap_csdk', 'oc_logger', 'connectivity_abstraction'])
+if env.get('SECURED') == '1':
+    examples_env.AppendUnique(LIBS = ['tinydtls'])
+
+examples_env.ParseConfig('pkg-config --libs glib-2.0');
+
+if target_os == 'android':
+	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	examples_env.AppendUnique(LIBS = ['gnustl_static'])
+
+	if not env.get('RELEASE'):
+		examples_env.AppendUnique(LIBS = ['log'])
+
+if target_os in ['darwin', 'ios']:
+	examples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
+examples_env.AppendUnique(CPPDEFINES = ['CA_INT'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+OICMiddle = examples_env.Program('OICMiddle', ['OICMiddle.cpp', 'Client.cpp', 'LineInput.cpp', 'RestInput.cpp', 'Server.cpp', 'WrapResource.cpp'])
+
+Alias("examples", [OICMiddle])
+env.AppendTarget('examples')
+
+
