@@ -36,7 +36,7 @@ SLP oicca application
 echo %{ROOTDIR}
 
 scons TARGET_OS=tizen -c
-scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT}
+scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} RELEASE=%{RELEASE}
 
 %install
 rm -rf %{buildroot}

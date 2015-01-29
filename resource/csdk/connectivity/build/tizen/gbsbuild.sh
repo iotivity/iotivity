@@ -58,7 +58,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --include-all --define 'TARGET_TRANSPORT $1'"
+gbscommand="gbs build -A armv7l --include-all --define 'TARGET_TRANSPORT $1' --define 'RELEASE $3'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"

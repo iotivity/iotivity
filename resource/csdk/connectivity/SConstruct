@@ -15,6 +15,7 @@ sample_env = env.Clone()
 target_os = env.get('TARGET_OS')
 transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
+release_mode = env.get('RELEASE')
 buildsample = env.get('BUILD_SAMPLE')
 
 print "Given Transport is %s" % transport
@@ -24,42 +25,8 @@ print "Build sample is set to %s" % buildsample
 
 build_dir = env.get('BUILD_DIR')
 
-
-if 'ALL' in transport:
-	if target_os == 'linux':
-		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'ETHERNET_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
-	elif target_os == 'tizen':
-		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'NO_ETHERNET_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
-	else:
-		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'ETHERNET_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
-	print "CA Transport is ALL"
-else:
-	if 'BT' in transport:
-		env.AppendUnique(CPPDEFINES = ['EDR_ADAPTER'])
-		print "CA Transport is BT"
-	else:
-		env.AppendUnique(CPPDEFINES = ['NO_EDR_ADAPTER'])
-
-	if 'BLE' in transport:
-		env.AppendUnique(CPPDEFINES = ['LE_ADAPTER'])
-		print "CA Transport is BLE"
-	else:
-		env.AppendUnique(CPPDEFINES = ['NO_LE_ADAPTER'])
-
-	if 'WIFI' in transport:
-		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER'])
-		print "CA Transport is WIFI"
-	else:
-		env.AppendUnique(CPPDEFINES = ['NO_WIFI_ADAPTER'])
-	if 'ETHERNET' in transport:
-		env.AppendUnique(CPPDEFINES = ['ETHERNET_ADAPTER'])
-		print "CA Transport is ETHERNET"
-	else:
-		env.AppendUnique(CPPDEFINES = ['NO_ETHERNET_ADAPTER'])
-
-
 if target_os == 'tizen':
-	command = "sh build/tizen/gbsbuild.sh %s %s" % (transport, buildsample)
+	command = "sh build/tizen/gbsbuild.sh %s %s %s" % (transport, buildsample, release_mode)
 	print "Created Command is %s" % command
 	gbs_script = env.Command('gbs_build', None, command)
 	AlwaysBuild ('gbs_script')
