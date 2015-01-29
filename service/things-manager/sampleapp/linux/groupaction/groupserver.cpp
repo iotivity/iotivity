@@ -357,13 +357,25 @@ int main()
 
                 if (n == 9)
                 {
-                    OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=a.collection",
-                            &foundResource);
+                    std::string requestURI = OC_WELL_KNOWN_QUERY;
+                    requestURI += "?rt=a.collection";
+
+                    #ifdef CA_INT
+                    OCPlatform::findResource("", requestURI, OC_WIFI, &foundResource);
+                    #else
+                    OCPlatform::findResource("", requestURI, &foundResource);
+                    #endif
                 }
                 else if (n == 0)
                 {
-                    OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.bookmark",
-                            &foundResource);
+                    std::string requestURI = OC_WELL_KNOWN_QUERY;
+                    requestURI += "?rt=core.bookmark";
+
+                    #ifdef CA_INT
+                    OCPlatform::findResource("", requestURI, OC_WIFI, &foundResource);
+                    #else
+                    OCPlatform::findResource("", requestURI, &foundResource);
+                    #endif
                 }
                 else if (n == 1)
                 {

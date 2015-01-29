@@ -25,8 +25,12 @@ sample_env.AppendUnique(LIBS = ['pthread'])
 sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'coap_csdk',
 								'connectivity_abstraction',
 								'ppm', 'pmimpl', 'dl'])
+
 if env.get('SECURED') == '1': 
     sample_env.AppendUnique(LIBS = ['tinydtls'])
+
+sample_env.AppendUnique(CPPDEFINES = ['CA_INT'])
+
 sample_env.ParseConfig('pkg-config --libs glib-2.0')
 
 ######################################################################

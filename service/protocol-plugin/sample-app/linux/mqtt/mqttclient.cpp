@@ -289,7 +289,7 @@ void onLightGet(const HeaderOptions &headerOptions, const OCRepresentation &rep,
 
         std::cout << "\tstate: " << mylight.m_state << std::endl;
         std::cout << "\tpower: " << mylight.m_power << std::endl;
-        std::cout << "\tname: " << mylight.m_name << std::endl; 
+        std::cout << "\tname: " << mylight.m_name << std::endl;
     }
     else
     {
@@ -454,9 +454,18 @@ void client1()
 
     // OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo",
     //                                 foundResource1);
+
+    std::string requestURI = OC_WELL_KNOWN_QUERY;
+    requestURI += "?rt=core.fan";
+
     std::cout << "starting findResource = core.fan" << std::endl;
     // Find all resources
-    OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.fan", &foundResourceFan);
+#ifdef CA_INT
+    OCPlatform::findResource("", requestURI, OC_WIFI,
+            &foundResourceFan);
+#else
+    OCPlatform::findResource("", requestURI, &foundResourceFan);
+#endif
     // Get time of day
     timer = time(NULL);
     // Converts date/time to a structure
@@ -477,9 +486,17 @@ void client2()
     // OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.foo",
     //             foundResource2);
 
+    std::string requestURI = OC_WELL_KNOWN_QUERY;
+    requestURI += "?rt=core.light";
+
     std::cout << "starting findResource = core.light" << std::endl;
     // Find all resources
-    OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResourceLight);
+#ifdef CA_INT
+    OCPlatform::findResource("", requestURI, OC_WIFI,
+            &foundResourceLight);
+#else
+    OCPlatform::findResource("", requestURI, &foundResourceLight);
+#endif
     // Get time of day
     timer = time(NULL);
     // Converts date/time to a structure

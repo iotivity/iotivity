@@ -113,8 +113,14 @@ int main(int argc, char* argv[])
             }
             else if (selectedMenu == 11)
             {
-                result = OCPlatform::findResource("",
-                        "coap://224.0.1.187/oc/core?rt=core.musicplayer", onFindResource);
+                std::string requestURI = OC_WELL_KNOWN_QUERY;
+                requestURI += "?rt=core.musicplayer";
+
+                #ifdef CA_INT
+                result = OCPlatform::findResource("", requestURI, OC_WIFI, onFindResource);
+                #else
+                result = OCPlatform::findResource("", requestURI, onFindResource);
+                #endif
                 if (OC_STACK_OK == result)
                 {
                     cout << "Finding music player was successful\n";
@@ -126,8 +132,14 @@ int main(int argc, char* argv[])
             }
             else if (selectedMenu == 12)
             {
-                result = OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.speaker",
-                        onFindResource);
+                std::string requestURI = OC_WELL_KNOWN_QUERY;
+                requestURI += "?rt=core.speaker";
+
+                #ifdef CA_INT
+                result = OCPlatform::findResource("", requestURI, OC_WIFI, onFindResource);
+                #else
+                result = OCPlatform::findResource("", requestURI, onFindResource);
+                #endif
                 if (OC_STACK_OK == result)
                 {
                     cout << "Finding speaker was successful\n";

@@ -21,8 +21,12 @@ linux_sample_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 linux_sample_env.AppendUnique(LIBS = ['libTGMSDKLibrary', 'oc', 'octbstack',
 										'coap_csdk', 'connectivity_abstraction',
 										'libcoap', 'liboc_logger', 'dl', 'pthread'])
+
 if env.get('SECURED') == '1': 
     linux_sample_env.AppendUnique(LIBS = ['tinydtls'])
+
+linux_sample_env.AppendUnique(CPPDEFINES = ['CA_INT'])
+
 linux_sample_env.ParseConfig('pkg-config --libs glib-2.0')
 
 ######################################################################

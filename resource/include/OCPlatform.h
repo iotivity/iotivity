@@ -120,11 +120,13 @@ namespace OC
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler,
                     QualityOfService QoS);
-#endif
+#else
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler);
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler, QualityOfService QoS);
+#endif
+
         /**
          * API for Device Discovery
          *
@@ -141,11 +143,12 @@ namespace OC
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler,
                     QualityOfService QoS);
-#endif
+#else
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler);
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler, QualityOfService QoS);
+#endif
 
         /**
         * This API registers a resource with the server
@@ -400,11 +403,13 @@ namespace OC
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         const std::string& resourceType, OCConnectivityType connectivityType,
                         SubscribeCallback presenceHandler);
-#endif
+#else
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         SubscribeCallback presenceHandler);
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         const std::string& resourceType, SubscribeCallback presenceHandler);
+#endif
+
         /**
         * unsubscribes from a previously subscribed server's presence events. Note that
         * you may for a short time still receive events from the server since it may take time
@@ -447,10 +452,12 @@ namespace OC
                         OCConnectivityType connectivityType, bool isObservable,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
-#endif
+#else
         OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
                         bool isObservable, const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
+#endif
+
         /**
         * Allows application entity handler to send response to an incoming request.
         *

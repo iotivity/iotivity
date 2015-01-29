@@ -16,6 +16,8 @@ if target_os == 'arduino':
 	soft_sensor_manager_env.Replace(CC = env.get('CXX'))
 	soft_sensor_manager_env.Replace(CFLAGS = env.get('CXXFLAGS'))
 
+soft_sensor_manager_env.AppendUnique(CPPDEFINES = ['CA_INT'])
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -118,8 +120,10 @@ SConscript('SampleApp/SConscript')
 ######################################################################
 # Copy description xml and deliverables
 ######################################################################
+
 if target_os == 'linux':
 	Command("SSMTesterApp","SampleApp/linux/SSMTesterApp/SSMTesterApp", Copy("$TARGET", "$SOURCE"))
 	Command("SoftSensorDescription.xml", "SoftSensorPlugin/SoftSensorDescription.xml", Copy("$TARGET", "$SOURCE"))
 	Command("THSensorApp","SampleApp/linux/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
 	Command("THSensorApp1","SampleApp/linux/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
+

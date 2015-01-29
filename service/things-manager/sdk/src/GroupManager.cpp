@@ -218,12 +218,21 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
     for (unsigned int i = 0; i < resourceTypes.size(); ++i)
     {
         std::cout << "resourceTypes : " << resourceTypes.at(i) << std::endl;
-        std::string query = "coap://224.0.1.187/oc/core?rt=";
-        query.append(resourceTypes.at(i));
-        OCPlatform::findResource("", query.c_str(),
+        std::string query = OC_WELL_KNOWN_QUERY;
+        query += "?rt=";
+        query += resourceTypes.at(i);
+
+        #ifdef CA_INT
+        OCPlatform::findResource("", query, OC_WIFI,
+                std::function < void(std::shared_ptr < OCResource > resource)
+                > (std::bind(&GroupManager::onFoundResource, this,
+                        std::placeholders::_1, waitsec)));
+        #else
+        OCPlatform::findResource("", query,
                 std::function < void(std::shared_ptr < OCResource > resource)
                         > (std::bind(&GroupManager::onFoundResource, this,
                                 std::placeholders::_1, waitsec)));
+        #endif
     }
 
     if (waitsec >= 0)
@@ -310,7 +319,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
      }
      */
     std::vector< OCRepresentation > children = rep.getChildren();
-    
+
     if(children.size() == 0 )
     {
         callback("", OC_STACK_ERROR);
@@ -345,6 +354,17 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
         std::cout << "\t\tconvertRT : " << resourceType << std::endl;
         std::cout << "\t\thost : " << hostAddress << std::endl;
         OCPlatform::OCPresenceHandle presenceHandle;
+
+        #ifdef CA_INT
+        OCStackResult result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                resourceType, OC_WIFI,
+                std::function<
+                        void(OCStackResult result, const unsigned int nonce,
+                                const std::string& hostAddress) >(
+                        std::bind(&GroupManager::collectionPresenceHandler, this,
+                                std::placeholders::_1, std::placeholders::_2,
+                                std::placeholders::_3, hostAddress, oit->getUri())));
+        #else
         OCStackResult result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                 resourceType,
                 std::function<
@@ -353,6 +373,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
                         std::bind(&GroupManager::collectionPresenceHandler, this,
                                 std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3, hostAddress, oit->getUri())));
+        #endif
 
         if (result == OC_STACK_OK)
         {
@@ -393,7 +414,7 @@ OCStackResult GroupManager::subscribeCollectionPresence(
     {
         return OC_STACK_ERROR;
     }
-    
+
     OCStackResult result = OC_STACK_OK;
     //callback("core.room",OC_STACK_OK);
 
