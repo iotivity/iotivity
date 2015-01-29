@@ -117,7 +117,9 @@ namespace OIC
          * @return OCStackResult - return value of this API.
          *                         It returns OC_STACK_OK if success.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * NOTE: It return OC_STACK ERROR when It was finding a group.
+         *       You should call this api when the group finding process has stopped.
+         *       OCStackResult is defined in ocstack.h.
          */
         OCStackResult findGroup(std::vector< std::string > collectionResourceTypes,
                 FindCallback callback);
@@ -144,7 +146,10 @@ namespace OIC
          * @return OCStackResult - return value of this API.
          *                         It returns OC_STACK_OK if success.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * NOTE: If you want to join the resource in the remote(other) process,
+         *       use joinGroup(const std::shared_ptr< OCResource >, OCResourceHandle)
+         *       instead of this.
+         *       OCStackResult is defined in ocstack.h.
          */
         OCStackResult joinGroup(std::string collectionResourceType,
                 OCResourceHandle resourceHandle);
@@ -160,7 +165,10 @@ namespace OIC
          * @return OCStackResult - return value of this API.
          *                         It returns OC_STACK_OK if success.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * NOTE: NOTE: If you want to join the resource in the same process,
+         *       use joinGroup(std::string, OCResourceHandle)
+         *       instead of this.
+         *       OCStackResult is defined in ocstack.h.
          */
         OCStackResult joinGroup(const std::shared_ptr< OCResource > resource,
                 OCResourceHandle resourceHandle);
