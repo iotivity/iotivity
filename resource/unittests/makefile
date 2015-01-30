@@ -48,7 +48,7 @@ INC_DIRS  += -I$(MOCKS_DIR)/HippoMocksTest
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
-GTEST_LIBS := $(GTEST_DIR)/lib/.libs/libgtest.a $(GTEST_DIR)/lib/.libs/libgtest_main.a 
+GTEST_LIBS := $(GTEST_DIR)/lib/.libs/libgtest.a $(GTEST_DIR)/lib/.libs/libgtest_main.a
 CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
 CXX_LIBS  += $(GTEST_LIBS)
 
@@ -59,26 +59,26 @@ CC_FLAGS.release    := -Os -Wall -fdata-sections -Wl,--gc-sections -Wl,-s \
 
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(CXX_LIBS) -lpthread
 
-all: prep_dirs $(MOCKS_DIR) unittests 
+all: prep_dirs $(MOCKS_DIR) unittests
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
 
 unittests: OCPlatformTest.cpp OCResourceTest.cpp ConstructResourceTest.cpp $(GTEST_LIBS)
 	$(CXX) $^ $(CPPFLAGS) -o $(OUT_DIR)/$@
-	
-$(GTEST_DIR):		
+
+$(GTEST_DIR):
 	cd ../../extlibs && \
 	wget -q https://googletest.googlecode.com/files/gtest-1.7.0.zip && \
 	unzip gtest-1.7.0.zip
-	
-$(GTEST_LIBS): $(GTEST_DIR)		
-	cd $(GTEST_DIR) && ./configure && make		
+
+$(GTEST_LIBS): $(GTEST_DIR)
+	cd $(GTEST_DIR) && ./configure && make
 
 $(MOCKS_DIR):
 	cd ../../extlibs && \
 	wget -q https://github.com/dascandy/hippomocks/archive/master.zip && \
-	unzip master.zip	
+	unzip master.zip
 
 .PHONY: clean
 

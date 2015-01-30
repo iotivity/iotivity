@@ -22,6 +22,9 @@ resource/oc_logger/lib/
 resource/oc_logger/samples/linux/release/
 resource/oc_logger/samples/linux/debug
 
+resource/unittests/release/
+resource/unittests/debug/
+
 service/things-manager/build/linux/release
 service/things-manager/build/linux/debug
 service/things-manager/sdk/build/linux/
@@ -35,6 +38,8 @@ service/things-manager/sdk/build/linux/
 *.cproject
 *.project
 
+# Ignore CTags default data
+tags
 # Ignore dependencies folder, which should be generated
 dependencies/
 
@@ -54,4 +59,6 @@ platform
 
 # Ignore downloaded dependencies
 extlibs/gtest*
+extlibs/hippomocks-master/
+extlibs/master.zip
 extlibs/cereal
