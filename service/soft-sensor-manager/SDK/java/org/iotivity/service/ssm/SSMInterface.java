@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SSMInterface {
-	private class QueryEngineEventReceiver implements IQueryEngineEvent
+	private class QueryEngineEventReceiver extends IQueryEngineEvent
 	{
         private Lock								mMtxListener = new ReentrantLock();
 		private Map<Integer, IQueryEngineEvent>   	mMapListener = new HashMap<Integer, IQueryEngineEvent>();

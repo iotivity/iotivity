@@ -2,8 +2,6 @@ package org.iotivity.service.ssm;
 
 import java.util.List;
 
-import android.util.Log;
-
 public class CoreController 
 {
 	static
@@ -12,22 +10,21 @@ public class CoreController
 		{
 			String workingPath = System.getProperty( "user.dir" );
 			
-			Log.i("SSMTester", "loading ssm lib");
-			
 			// for android: not complete method
 			if(System.getProperty("os.name").toLowerCase().equals("linux"))
 			{
 				//System.out.println("System load Android library");
-				System.loadLibrary("SSMCore_Android");
+			    System.loadLibrary("oc_logger");
+			    System.loadLibrary("coap");
+			    System.loadLibrary("octbstack");
+			    System.loadLibrary("oc");
+			    System.loadLibrary("SSMCore");
 			}
 			else
 			{
-				//System.out.println("System load 32bit library");
-				workingPath += "/../Outputs/";
+				//System.out.println("System load 32bit library");				
 				System.load( workingPath + "SSMCore_Windows.dll");
 			}
-			
-			Log.i("SSMTester", "loading done");
 		}
 		catch(UnsatisfiedLinkError e)
 		{

@@ -22,14 +22,11 @@ if target_os == 'arduino':
 if target_os not in ['windows', 'winrt']:
 	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-DLINUX'])
 	if target_os != 'android':
-		soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
+		soft_sensor_manager_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
 	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_static', 'compatibility'])
-
-	if not env.get('RELEASE'):
-		soft_sensor_manager_env.AppendUnique(LIBS = ['log'])
+	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_static', 'compatibility', 'log'])
 
 #######################################################################
 ## build SSM SDK
@@ -102,12 +99,21 @@ ssm_core_c_src = [
 		'SSMCore/src/Common/sqlite3.c'
 ]
 
-libssmcore = ssmcore_env.StaticLibrary(
+
+static_libssmcore = ssmcore_env.StaticLibrary(
 		target = 'SSMCore',
 		source = [ssm_core_cpp_src, ssm_core_c_src]
 		)
 
-ssmcore_env.InstallTarget(libssmcore, 'libSSMCORE')
+ssmcore_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
+
+shared_libssmcore = ssmcore_env.SharedLibrary(
+		target = 'SSMCore',
+		source = [ssm_core_cpp_src, ssm_core_c_src]
+		)
+
+ssmcore_env.InstallTarget([shared_libssmcore, static_libssmcore], 'libSSMCORE')
 
 #######################################################################
 ## build SampleApp

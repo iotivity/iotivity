@@ -1,5 +1,5 @@
 package org.iotivity.service.ssm;
 
-public interface IQueryEngineEvent {
-	public void OnQueryEngineEvent(int cqid, DataReader result);
+public abstract class IQueryEngineEvent {
+	public abstract void OnQueryEngineEvent(int cqid, DataReader result);
 }

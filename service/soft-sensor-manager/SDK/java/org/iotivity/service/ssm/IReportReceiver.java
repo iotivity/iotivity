@@ -1,5 +1,5 @@
 package org.iotivity.service.ssm;
 
-public interface IReportReceiver {
-	public void OnMessageReceived(String tag, String msg);
+public abstract class IReportReceiver {
+	public abstract void OnMessageReceived(String tag, String msg);
 }
