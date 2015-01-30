@@ -242,7 +242,8 @@ OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType, CAConnectivit
             *caConType = CA_LE;
             break;
         case OC_ALL:
-            //TODO-CA Add other connectivity types as they are enabled
+            // Currently OC_ALL represents WIFI and ETHERNET
+            // Add other connectivity types as they are enabled in future
             *caConType = (CA_WIFI|CA_ETHERNET);
             break;
         default:
