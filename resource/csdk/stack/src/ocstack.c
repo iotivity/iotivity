@@ -1481,9 +1481,9 @@ OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
  */
 #ifdef CA_INT
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
-                           const char *referenceUri, const char *request, uint8_t conType,
-                           OCQualityOfService qos, OCCallbackData *cbData,
-                           OCHeaderOption * options, uint8_t numOptions)
+            const char *referenceUri, const char *request, OCConnectivityType conType,
+            OCQualityOfService qos, OCCallbackData *cbData,
+            OCHeaderOption * options, uint8_t numOptions)
 #else
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
                            const char *referenceUri, const char *request,
