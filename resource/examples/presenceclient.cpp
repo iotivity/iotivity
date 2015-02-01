@@ -35,9 +35,7 @@ std::shared_ptr<OCResource> curResource;
 
 static int TEST_CASE = 0;
 
-#ifdef CA_INT
 static OCConnectivityType connectivityType = OC_WIFI;
-#endif
 
 /**
  * List of methods that can be inititated from the client
@@ -54,11 +52,7 @@ typedef enum {
 
 void printUsage()
 {
-#ifdef CA_INT
     std::cout << "Usage : presenceclient -t <1|2> -c <0|1>" << std::endl;
-#else
-    std::cout << "Usage : presenceclient -t <1|2>" << std::endl;
-#endif
     std::cout << "-t 1 : Discover Resources and Initiate Unicast Presence" << std::endl;
     std::cout << "-t 2 : Discover Resources and Initiate Unicast Presence with Filter"
               << std::endl;
@@ -69,11 +63,9 @@ void printUsage()
               << std::endl;
     std::cout << "-t 6 : Discover Resources and Initiate Multicast Presence with two Filters"
                   << std::endl;
-#ifdef CA_INT
     std::cout<<"ConnectivityType: Default WIFI" << std::endl;
     std::cout << "-c 0 : Send message over ETHERNET interface" << std::endl;
     std::cout << "-c 1 : Send message over WIFI interface" << std::endl;
-#endif
 }
 
 // Callback to presence
@@ -148,13 +140,8 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
                 if(TEST_CASE == TEST_UNICAST_PRESENCE_NORMAL)
                 {
-#ifdef CA_INT
                     result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                             connectivityType, &presenceHandler);
-#else
-                    result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                            &presenceHandler);
-#endif
                     if(result == OC_STACK_OK)
                     {
                         std::cout<< "Subscribed to unicast address: " << hostAddress << std::endl;
@@ -168,13 +155,8 @@ void foundResource(std::shared_ptr<OCResource> resource)
                 if(TEST_CASE == TEST_UNICAST_PRESENCE_WITH_FILTER ||
                         TEST_CASE == TEST_UNICAST_PRESENCE_WITH_FILTERS)
                 {
-#ifdef CA_INT
                     result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                             "core.light", connectivityType, &presenceHandler);
-#else
-                    result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                            "core.light", &presenceHandler);
-#endif
                     if(result == OC_STACK_OK)
                     {
                         std::cout<< "Subscribed to unicast address: " << hostAddress;
@@ -187,13 +169,8 @@ void foundResource(std::shared_ptr<OCResource> resource)
                 }
                 if(TEST_CASE == TEST_UNICAST_PRESENCE_WITH_FILTERS)
                 {
-#ifdef CA_INT
                     result = OCPlatform::subscribePresence(presenceHandle, hostAddress, "core.fan",
                             connectivityType, &presenceHandler);
-#else
-                    result = OCPlatform::subscribePresence(presenceHandle, hostAddress, "core.fan",
-                            &presenceHandler);
-#endif
                     if(result == OC_STACK_OK)
                     {
                         std::cout<< "Subscribed to unicast address: " << hostAddress;
@@ -225,24 +202,17 @@ int main(int argc, char* argv[]) {
 
     int opt;
 
-#ifdef CA_INT
     int optionSelected;
-#endif
 
     try
     {
-#ifdef CA_INT
         while ((opt = getopt(argc, argv, "t:c:")) != -1)
-        #else
-        while ((opt = getopt(argc, argv, "t:")) != -1)
-        #endif
         {
             switch(opt)
             {
                 case 't':
                     TEST_CASE = stoi(optarg);
                     break;
-#ifdef CA_INT
                 case 'c':
                     std::size_t inputValLen;
                     optionSelected = stoi(optarg, &inputValLen);
@@ -269,7 +239,6 @@ int main(int argc, char* argv[]) {
                             << std::endl;
                     }
                     break;
-#endif
                 default:
                     printUsage();
                     return -1;
@@ -308,13 +277,8 @@ int main(int argc, char* argv[]) {
 
         if(TEST_CASE == TEST_MULTICAST_PRESENCE_NORMAL)
         {
-#ifdef CA_INT
             result = OCPlatform::subscribePresence(presenceHandle,
                     OC_MULTICAST_IP, connectivityType, presenceHandler);
-#else
-            result = OCPlatform::subscribePresence(presenceHandle,
-                    OC_MULTICAST_IP, presenceHandler);
-#endif
 
             if(result == OC_STACK_OK)
             {
@@ -327,13 +291,8 @@ int main(int argc, char* argv[]) {
         }
         else if(TEST_CASE == TEST_MULTICAST_PRESENCE_WITH_FILTER)
         {
-#ifdef CA_INT
             result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
                     connectivityType, &presenceHandler);
-#else
-            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
-                    &presenceHandler);
-#endif
             if(result == OC_STACK_OK)
             {
                 std::cout << "Subscribed to multicast presence with resource type";
@@ -346,13 +305,8 @@ int main(int argc, char* argv[]) {
         }
         else if(TEST_CASE == TEST_MULTICAST_PRESENCE_WITH_FILTERS)
         {
-#ifdef CA_INT
             result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
                     connectivityType, &presenceHandler);
-#else
-            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
-                    &presenceHandler);
-#endif
             if(result == OC_STACK_OK)
             {
                 std::cout << "Subscribed to multicast presence with resource type";
@@ -363,13 +317,8 @@ int main(int argc, char* argv[]) {
             }
             std::cout << "\"core.light\"." << std::endl;
 
-#ifdef CA_INT
             result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.fan",
                     connectivityType, &presenceHandler);
-#else
-            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.fan",
-                    &presenceHandler);
-#endif
             if(result == OC_STACK_OK)
             {
                 std::cout<< "Subscribed to multicast presence with resource type";
@@ -385,12 +334,8 @@ int main(int argc, char* argv[]) {
             // Find all resources
             requestURI << OC_WELL_KNOWN_QUERY;
 
-#ifdef CA_INT
             result = OCPlatform::findResource("", requestURI.str(),
                     connectivityType, &foundResource);
-#else
-            result = OCPlatform::findResource("", requestURI.str(), &foundResource);
-#endif
             if(result == OC_STACK_OK)
             {
                 std::cout << "Finding Resource... " << std::endl;

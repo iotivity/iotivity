@@ -36,11 +36,9 @@
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
 
-#ifdef CA_INT
-    #include "cacommon.h"
-    #include "cainterface.h"
-    #include <arpa/inet.h>
-#endif
+#include "cacommon.h"
+#include "cainterface.h"
+#include <arpa/inet.h>
 
 
 //-----------------------------------------------------------------------------
@@ -92,11 +90,7 @@ OCStackResult getQueryFromUri(const char * uri, unsigned char** resourceType, ch
 
 // This internal function is called to update the stack with the status of
 // observers and communication failures
-#ifdef CA_INT
 OCStackResult OCStackFeedBack(CAToken_t * token, uint8_t status)
-#else // CA_INT
-OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
-#endif // CA_INT
 {
     OCStackResult result = OC_STACK_ERROR;
     ResourceObserver * observer = NULL;
@@ -191,7 +185,6 @@ OCStackResult OCStackFeedBack(OCCoAPToken * token, uint8_t status)
     return result;
 }
 
-#ifdef CA_INT
 OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -768,8 +761,6 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
 
-#endif // CA_INT
-
 //This function will be called back by occoap layer when a request is received
 OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 {
@@ -787,7 +778,6 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     if(!request)
     {
         OC_LOG(INFO, TAG, PCF("This is a new Server Request"));
-#ifdef CA_INT
         result = AddServerRequest(&request, protocolRequest->coapID,
                 protocolRequest->delayedResNeeded, protocolRequest->secured, 0,
                 protocolRequest->method, protocolRequest->numRcvdVendorSpecificHeaderOptions,
@@ -797,16 +787,6 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 &protocolRequest->requesterAddr, protocolRequest->resourceUrl,
                 protocolRequest->reqTotalSize,
                 &protocolRequest->addressInfo, protocolRequest->connectivityType);
-#else
-        result = AddServerRequest(&request, protocolRequest->coapID,
-                protocolRequest->delayedResNeeded, protocolRequest->secured, 0,
-                protocolRequest->method, protocolRequest->numRcvdVendorSpecificHeaderOptions,
-                protocolRequest->observationOption, protocolRequest->qos,
-                protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
-                protocolRequest->reqJSONPayload, &protocolRequest->requestToken,
-                &protocolRequest->requesterAddr, protocolRequest->resourceUrl,
-                protocolRequest->reqTotalSize);
-#endif
         if (OC_STACK_OK != result)
         {
             OC_LOG(ERROR, TAG, PCF("Error adding server request"));
@@ -1239,7 +1219,6 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     }
 
     OCSeedRandom();
-#ifdef CA_INT
     CAInitialize();
     //It is ok to select network to CA_WIFI for now
     CAResult_t caResult = CASelectNetwork(CA_WIFI|CA_ETHERNET);
@@ -1285,35 +1264,15 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
             result = OC_STACK_ERROR;
         }
     }
-#else
-    switch (mode)
-    {
-    case OC_CLIENT:
-        OC_LOG(INFO, TAG, PCF("Client mode"));
-        break;
-    case OC_SERVER:
-        OC_LOG(INFO, TAG, PCF("Server mode"));
-        break;
-    case OC_CLIENT_SERVER:
-        OC_LOG(INFO, TAG, PCF("Client-server mode"));
-        break;
-    default:
-        OC_LOG(ERROR, TAG, PCF("Invalid mode"));
-        return OC_STACK_ERROR;
-        break;
-    }
-
-    // Make call to OCCoAP layer
-    result = OCInitCoAP(ipAddr, (uint16_t) port, myStackMode);
-#endif //CA_INT
 
     myStackMode = mode;
     defaultDeviceHandler = NULL;
 
-#if defined(CA_INT) && defined(__WITH_DTLS__)
+#if defined(__WITH_DTLS__)
     caResult = CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials);
     result = (caResult == CA_STATUS_OK) ? OC_STACK_OK : OC_STACK_ERROR;
-#endif //(CA_INT) && (__WITH_DTLS__)
+#endif // (__WITH_DTLS__)
+
 #ifdef WITH_PRESENCE
     PresenceTimeOutSize = sizeof(PresenceTimeOut)/sizeof(PresenceTimeOut[0]) - 1;
 #endif // WITH_PRESENCE
@@ -1368,13 +1327,9 @@ OCStackResult OCStop()
     // Free memory dynamically allocated for resources
     deleteAllResources();
     DeleteDeviceInfo();
-#ifdef CA_INT
     CATerminate();
     //CATerminate does not return any error code. It is OK to assign result to OC_STACK_OK.
     result = OC_STACK_OK;
-#else //CA_INT
-    result = OCStopCoAP();
-#endif //CA_INT
 
     if (result == OC_STACK_OK)
     {
@@ -1478,17 +1433,10 @@ OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
  * Note: IN case of CA, when using multicast, the required URI should not contain IP address.
  *       Instead, it just contains the URI to the resource such as "/oc/core".
  */
-#ifdef CA_INT
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
             const char *referenceUri, const char *request, OCConnectivityType conType,
             OCQualityOfService qos, OCCallbackData *cbData,
             OCHeaderOption * options, uint8_t numOptions)
-#else
-OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
-                           const char *referenceUri, const char *request,
-                           OCQualityOfService qos, OCCallbackData *cbData,
-                           OCHeaderOption * options, uint8_t numOptions)
-#endif
 {
     OCStackResult result = OC_STACK_ERROR;
     ClientCB *clientCB = NULL;
@@ -1497,7 +1445,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     unsigned char * query = NULL;
     char * newUri = (char *)requiredUri;
     (void) referenceUri;
-#ifdef CA_INT
     CARemoteEndpoint_t* endpoint = NULL;
     CAResult_t caResult;
     CAToken_t token = NULL;
@@ -1507,9 +1454,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     // To track if memory is allocated for additional header options
     uint8_t hdrOptionMemAlloc = 0;
-#else
-OCCoAPToken token;
-#endif // CA_INT
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
 
@@ -1598,7 +1542,6 @@ OCCoAPToken token;
         goto exit;
     }
 
-#ifdef CA_INT
     memset(&requestData, 0, sizeof(CAInfo_t));
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
     memset(&grpEnd, 0, sizeof(CAGroupEndpoint_t));
@@ -1725,23 +1668,6 @@ OCCoAPToken token;
         goto exit;
     }
 
-#else // CA_INT
-
-    // Generate token which will be used by OCStack to match responses received
-    // with the request
-    OCGenerateCoAPToken(&token);
-
-    if((result = AddClientCB(&clientCB, cbData, &token, handle, method, requestUri, resourceType))
-            != OC_STACK_OK)
-    {
-        result = OC_STACK_NO_MEMORY;
-        goto exit;
-    }
-
-    // Make call to OCCoAP layer
-    result = OCDoCoAPResource(method, qos, &token, newUri, request, options, numOptions);
-#endif // CA_INT
-
 exit:
     if(newUri != requiredUri)
     {
@@ -1752,14 +1678,12 @@ exit:
         OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
         FindAndDeleteClientCB(clientCB);
     }
-#ifdef CA_INT
     CADestroyRemoteEndpoint(endpoint);
     OCFree(grpEnd.resourceUri);
     if (hdrOptionMemAlloc)
     {
         OCFree(requestData.options);
     }
-#endif // CA_INT
     return result;
 }
 
@@ -1797,14 +1721,12 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      *      Remove the callback associated on client side.
      */
     OCStackResult ret = OC_STACK_OK;
-#ifdef CA_INT
     CARemoteEndpoint_t* endpoint = NULL;
     CAResult_t caResult;
     CAInfo_t requestData;
     CARequestInfo_t requestInfo;
     // Track if memory is allocated for additional header options
     uint8_t hdrOptionMemAlloc = 0;
-#endif // CA_INT
 
     if(!handle) {
         return OC_STACK_INVALID_PARAM;
@@ -1819,7 +1741,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         {
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
-                #ifdef CA_INT
                 //TODO-CA : Why CA_WIFI alone?
                 caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri, CA_WIFI,
                                                   &endpoint);
@@ -1852,19 +1773,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 {
                     ret = OC_STACK_OK;
                 }
-                #else // CA_INT
-                if(qos == OC_HIGH_QOS)
-                {
-                    ret = OCDoCoAPResource(OC_REST_CANCEL_OBSERVE, qos,
-                            &(clientCB->token), (const char *) clientCB->requestUri, NULL, options,
-                            numOptions);
-                }
-                else
-                {
-                    FindAndDeleteClientCB(clientCB);
-                }
-                break;
-                #endif // CA_INT
             #ifdef WITH_PRESENCE
             case OC_REST_PRESENCE:
                 FindAndDeleteClientCB(clientCB);
@@ -1874,19 +1782,16 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 return OC_STACK_INVALID_METHOD;
         }
     }
-#ifdef CA_INT
     CADestroyRemoteEndpoint(endpoint);
     if (hdrOptionMemAlloc)
     {
         OCFree(requestData.options);
     }
-#endif // CA_INT
 
     return ret;
 }
 
 #ifdef WITH_PRESENCE
-#ifdef CA_INT
 OCStackResult OCProcessPresence()
 {
     OCStackResult result = OC_STACK_OK;
@@ -2009,109 +1914,6 @@ exit:
     }
     return result;
 }
-#else
-OCStackResult OCProcessPresence()
-{
-    OCStackResult result = OC_STACK_OK;
-    uint8_t ipAddr[4] = { 0 };
-    uint16_t port = 0;
-
-    ClientCB* cbNode = NULL;
-    OCDevAddr dst;
-    OCClientResponse clientResponse;
-    OCResponse * response = NULL;
-
-    LL_FOREACH(cbList, cbNode) {
-        if(OC_REST_PRESENCE == cbNode->method)
-        {
-            if(cbNode->presence)
-            {
-                uint32_t now = GetTime(0);
-                OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
-                OC_LOG_V(DEBUG, TAG, "----------------current ticks %d", now);
-
-
-                if(cbNode->presence->TTLlevel >= (PresenceTimeOutSize + 1))
-                {
-                    goto exit;
-                }
-
-                if(cbNode->presence->TTLlevel < PresenceTimeOutSize){
-                    OC_LOG_V(DEBUG, TAG, "----------------timeout ticks %d",
-                            cbNode->presence->timeOut[cbNode->presence->TTLlevel]);
-                }
-
-                if(cbNode->presence->TTLlevel >= PresenceTimeOutSize)
-                {
-                    OC_LOG(DEBUG, TAG, PCF("----------------No more timeout ticks"));
-                    if (ParseIPv4Address( cbNode->requestUri, ipAddr, &port))
-                    {
-                        OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
-                                &dst);
-                        result = FormOCClientResponse(&clientResponse, OC_STACK_PRESENCE_TIMEOUT,
-                                (OCDevAddr *) &dst, 0, NULL);
-                        if(result != OC_STACK_OK)
-                        {
-                            goto exit;
-                        }
-                        result = FormOCResponse(&response, cbNode, 0, NULL, NULL,
-                                &cbNode->token, &clientResponse, NULL);
-                        if(result != OC_STACK_OK)
-                        {
-                            goto exit;
-                        }
-
-                        // Increment the TTLLevel (going to a next state), so we don't keep
-                        // sending presence notification to client.
-                        cbNode->presence->TTLlevel++;
-                        OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d",
-                                                cbNode->presence->TTLlevel);
-                    }
-                    else
-                    {
-                        result = OC_STACK_INVALID_IP;
-                        goto exit;
-                    }
-                    HandleStackResponses(response);
-                }
-                if(now >= cbNode->presence->timeOut[cbNode->presence->TTLlevel])
-                {
-                    OC_LOG(DEBUG, TAG, PCF("time to test server presence =========="));
-
-#ifdef CA_INT
-                    CAToken_t token = NULL;
-                    CAResult_t caResult = CAGenerateToken(&token);
-                    if (caResult != CA_STATUS_OK)
-                    {
-                        CADestroyToken(token);
-                        goto exit;
-                    }
-#else
-                    OCCoAPToken token;
-                    OCGenerateCoAPToken(&token);
-
-                    result = OCDoCoAPResource(OC_REST_GET, OC_LOW_QOS,
-                            &token, (const char *)cbNode->requestUri, NULL, NULL, 0);
-
-                    if(result != OC_STACK_OK)
-                    {
-                        goto exit;
-                    }
-#endif // CA_INT
-                    cbNode->presence->TTLlevel++;
-                    OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d", cbNode->presence->TTLlevel);
-                }
-            }
-        }
-    }
-exit:
-    if (result != OC_STACK_OK)
-    {
-        OC_LOG(ERROR, TAG, PCF("OCProcessPresence error"));
-    }
-    return result;
-}
-#endif // CA_INT
 #endif // WITH_PRESENCE
 
 /**
@@ -2127,11 +1929,7 @@ OCStackResult OCProcess()
     #ifdef WITH_PRESENCE
     OCProcessPresence();
     #endif
-#ifdef CA_INT
     CAHandleRequestResponse();
-#else
-    OCProcessCoAP();
-#endif // CA_INT
 
     return OC_STACK_OK;
 }
@@ -2169,7 +1967,6 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 
         OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
 
-#ifdef CA_INT
         CAAddress_t addressInfo;
         strncpy(addressInfo.IP.ipAddress, "224.0.1.187", CA_IPADDR_SIZE);
         addressInfo.IP.port = 5683;
@@ -2188,13 +1985,6 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         AddObserver(OC_PRESENCE_URI, NULL, 0, &caToken,
                 &multiCastAddr, (OCResource *)presenceResource.handle, OC_LOW_QOS,
                 &addressInfo, CA_WIFI);
-#else
-        OCCoAPToken token;
-        OCGenerateCoAPToken(&token);
-        //add the presence observer
-        AddObserver(OC_PRESENCE_URI, NULL, 0, &token, &multiCastAddr,
-            (OCResource *)presenceResource.handle, OC_LOW_QOS);
-#endif
     }
 
     // Each time OCStartPresence is called

@@ -29,7 +29,6 @@ using OC::nil_guard;
 using OC::result_guard;
 using OC::checked_guard;
 
-#ifdef CA_INT
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
                        const std::string& uri, const std::string& serverId,
                        OCConnectivityType connectivityType, bool observable,
@@ -54,28 +53,6 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::s
                 interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 }
-#else
-OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-                       const std::string& uri, const std::string& serverId, bool observable,
-                       const std::vector<std::string>& resourceTypes,
-                       const std::vector<std::string>& interfaces)
- :  m_clientWrapper(clientWrapper), m_uri(uri), m_resourceId(serverId, m_uri), m_host(host),
-    m_isObservable(observable), m_isCollection(false), m_resourceTypes(resourceTypes),
-    m_interfaces(interfaces), m_observeHandle(nullptr)
-{
-    m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
-                        != m_interfaces.end();
-
-    if (m_uri.empty() ||
-        resourceTypes.empty() ||
-        interfaces.empty()||
-        m_clientWrapper.expired())
-    {
-        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
-                interfaces.empty(), m_clientWrapper.expired(), false, false);
-    }
-}
-#endif
 
 OCResource::~OCResource()
 {
@@ -84,14 +61,9 @@ OCResource::~OCResource()
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
                               GetCallback attributeHandler, QualityOfService QoS)
 {
-#ifdef CA_INT
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetResourceRepresentation,
                          m_host, m_uri, m_connectivityType, queryParametersMap, m_headerOptions,
                          attributeHandler, QoS);
-#else
-    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetResourceRepresentation,
-                         m_host, m_uri, queryParametersMap, m_headerOptions, attributeHandler, QoS);
-#endif
 }
 
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
@@ -134,14 +106,9 @@ OCStackResult OCResource::put(const OCRepresentation& rep,
                               const QueryParamsMap& queryParametersMap, PutCallback attributeHandler,
                               QualityOfService QoS)
 {
-#ifdef CA_INT
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutResourceRepresentation,
                          m_host, m_uri, m_connectivityType, rep, queryParametersMap,
                          m_headerOptions, attributeHandler, QoS);
-#else
-    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutResourceRepresentation,
-                         m_host, m_uri, rep, queryParametersMap, m_headerOptions, attributeHandler, QoS);
-#endif
 }
 
 OCStackResult OCResource::put(const OCRepresentation& rep,
@@ -189,14 +156,9 @@ OCStackResult OCResource::post(const OCRepresentation& rep,
                                const QueryParamsMap& queryParametersMap, PostCallback attributeHandler,
                                QualityOfService QoS)
 {
-#ifdef CA_INT
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
                          m_host, m_uri, m_connectivityType, rep, queryParametersMap,
                          m_headerOptions, attributeHandler, QoS);
-#else
-    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
-                         m_host, m_uri, rep, queryParametersMap, m_headerOptions, attributeHandler, QoS);
-#endif
 }
 
 OCStackResult OCResource::post(const OCRepresentation& rep,
@@ -242,13 +204,8 @@ OCStackResult OCResource::post(const std::string& resourceType,
 
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler, QualityOfService QoS)
 {
-#ifdef CA_INT
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
                          m_host, m_uri, m_connectivityType, m_headerOptions, deleteHandler, QoS);
-#else
-    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
-                         m_host, m_uri, m_headerOptions, deleteHandler, QoS);
-#endif
 }
 
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler)
@@ -268,16 +225,10 @@ OCStackResult OCResource::observe(ObserveType observeType,
         return result_guard(OC_STACK_INVALID_PARAM);
     }
 
-#ifdef CA_INT
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::ObserveResource,
                          observeType, &m_observeHandle, m_host,
                          m_uri, m_connectivityType, queryParametersMap, m_headerOptions,
                          observeHandler, QoS);
-#else
-    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::ObserveResource,
-                         observeType, &m_observeHandle, m_host,
-                         m_uri, queryParametersMap, m_headerOptions, observeHandler, QoS);
-#endif
 }
 
 OCStackResult OCResource::observe(ObserveType observeType,
@@ -325,12 +276,10 @@ std::string OCResource::uri() const
     return m_uri;
 }
 
-#ifdef CA_INT
 OCConnectivityType OCResource::connectivityType() const
 {
     return m_connectivityType;
 }
-#endif
 
 bool OCResource::isObservable() const
 {

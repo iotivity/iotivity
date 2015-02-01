@@ -16,8 +16,6 @@ if target_os == 'arduino':
 	soft_sensor_manager_env.Replace(CC = env.get('CXX'))
 	soft_sensor_manager_env.Replace(CFLAGS = env.get('CXXFLAGS'))
 
-soft_sensor_manager_env.AppendUnique(CPPDEFINES = ['CA_INT'])
-
 ######################################################################
 # Build flags
 ######################################################################

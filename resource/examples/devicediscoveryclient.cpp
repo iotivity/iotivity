@@ -116,7 +116,6 @@ int main(int argc, char* argv[]) {
     ostringstream requestURI;
     std::string deviceDiscoveryURI = "/oc/core/d";
 
-#ifdef CA_INT
     OCConnectivityType connectivityType = OC_WIFI;
 
     if(argc == 2)
@@ -159,7 +158,6 @@ int main(int argc, char* argv[]) {
         std::cout << "connectivityType 0: ETHERNET" << std::endl;
         std::cout << "connectivityType 1: WIFI" << std::endl;
     }
-#endif
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
@@ -174,12 +172,8 @@ int main(int argc, char* argv[]) {
     {
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
 
-#ifdef CA_INT
         OCPlatform::getDeviceInfo("", requestURI.str(), connectivityType,
                 &receivedDeviceInfo);
-#else
-        OCPlatform::getDeviceInfo("",  requestURI.str(), &receivedDeviceInfo);
-#endif
         std::cout<< "Querying for device information... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

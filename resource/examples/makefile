@@ -27,9 +27,9 @@ CXX	      := g++
 OUT_DIR	  := $(BUILD)
 
 #TODO-CA Remove the CA Flag later
-CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread -DCA_INT
+CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
 
-CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread -DCA_INT
+CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
 
 CXX_INC	  := -I../include/
 CXX_INC   += -I../oc_logger/include

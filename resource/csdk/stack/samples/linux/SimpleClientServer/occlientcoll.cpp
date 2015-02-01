@@ -75,12 +75,10 @@ testToTextMap queryInterface[] = {
 
 static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
 
-#ifdef CA_INT
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to WIFI.
 static OCConnectivityType OC_CONNTYPE = OC_WIFI;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
-#endif
 
 // The handle for the observe registration
 OCDoHandle gObserveDoHandle;
@@ -105,12 +103,8 @@ int InitDiscovery();
 
 void PrintUsage()
 {
-#ifdef CA_INT
     OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case> -c <CA connectivity Type>");
     OC_LOG(INFO, TAG, "-c <0|1> : Send messages over Ethernet or WIFI");
-#else
-    OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case>");
-#endif
     OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an"\
             "available resource using default interface.");
     OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an"\
@@ -222,13 +216,8 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-#ifdef CA_INT
     ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
             &cbData, NULL, 0);
-#else
-    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_LOW_QOS,
-            &cbData, NULL, 0);
-#endif
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -249,13 +238,8 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "OBSERVE payload from client = %s ", putPayload.c_str());
 
-#ifdef CA_INT
     ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_CONNTYPE,
             OC_LOW_QOS, &cbData, NULL, 0);
-#else
-    ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_LOW_QOS,
-            &cbData, NULL, 0);
-#endif
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -282,13 +266,8 @@ int InitPutRequest(OCClientResponse * clientResponse)
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
 
-#ifdef CA_INT
     ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(),
                         OC_CONNTYPE, OC_LOW_QOS, &cbData, NULL, 0);
-#else
-    ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(),
-            OC_LOW_QOS, &cbData, NULL, 0);
-#endif
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -320,13 +299,8 @@ int InitGetRequest(OCClientResponse * clientResponse)
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-#ifdef CA_INT
     ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
             &cbData, NULL, 0);
-#else
-    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_LOW_QOS,
-            &cbData, NULL, 0);
-#endif
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -342,23 +316,14 @@ int InitDiscovery()
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
 
-#ifdef CA_INT
     strcpy(szQueryUri, MULTICAST_RESOURCE_DISCOVERY_QUERY);
-#else
-    strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
-#endif
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-#ifdef CA_INT
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_ALL,
                         OC_LOW_QOS,
             &cbData, NULL, 0);
-#else
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS,
-            &cbData, NULL, 0);
-#endif
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -373,22 +338,16 @@ int main(int argc, char* argv[]) {
     uint8_t ifname[] = "eth0";
     int opt;
 
-#ifdef CA_INT
     while ((opt = getopt(argc, argv, "t:c:")) != -1)
-#else
-    while ((opt = getopt(argc, argv, "t:")) != -1)
-#endif
     {
         switch(opt)
         {
         case 't':
             TEST = atoi(optarg);
             break;
-        #ifdef CA_INT
         case 'c':
             OC_CONNTYPE = OCConnectivityType(atoi(optarg));
             break;
-        #endif
         default:
             PrintUsage();
             return -1;

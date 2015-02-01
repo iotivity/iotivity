@@ -221,7 +221,6 @@ int main(int argc, char* argv[]) {
 
     ostringstream requestURI;
 
-#ifdef CA_INT
     OCConnectivityType connectivityType = OC_WIFI;
     if(argc == 2)
     {
@@ -263,7 +262,6 @@ int main(int argc, char* argv[]) {
         std::cout << "connectivityType 0: ETHERNET" << std::endl;
         std::cout << "connectivityType 1: WIFI" << std::endl;
     }
-#endif
 
     // Create PlatformConfig object
     PlatformConfig cfg {
@@ -281,11 +279,7 @@ int main(int argc, char* argv[]) {
         // Find all resources
         requestURI << OC_WELL_KNOWN_QUERY;
 
-#ifdef CA_INT
         OCPlatform::findResource("", requestURI.str(), connectivityType, &foundResource);
-#else
-        OCPlatform::findResource("", requestURI.str(), &foundResource);
-#endif
         std::cout<< "Finding Resource... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

@@ -138,7 +138,6 @@ namespace OC
                             static_cast<OCQualityOfService>(QoS)));
     }
 
-#ifdef CA_INT
     OCResource::Ptr OCPlatform_impl::constructResourceObject(const std::string& host,
                                                 const std::string& uri,
                                                 OCConnectivityType connectivityType,
@@ -195,62 +194,6 @@ namespace OC
         return checked_guard(m_client, &IClientWrapper::ListenForDevice,
                              host, deviceURI, connectivityType, deviceInfoHandler, QoS);
     }
-
-#else
-    OCResource::Ptr OCPlatform_impl::constructResourceObject(const std::string& host,
-                                                const std::string& uri,
-                                                bool isObservable,
-                                                const std::vector<std::string>& resourceTypes,
-                                                const std::vector<std::string>& interfaces)
-    {
-        if(!m_client)
-        {
-            return std::shared_ptr<OCResource>();
-        }
-
-        return std::shared_ptr<OCResource>(new OCResource(m_client,
-                                            host,
-                                            uri,
-                                            "", // 'created' Resources have no way of knowing their
-                                                // server ID, so this has to be blank initially.
-                                            isObservable,
-                                            resourceTypes,
-                                            interfaces));
-    }
-
-    OCStackResult OCPlatform_impl::findResource(const std::string& host,
-                                            const std::string& resourceName,
-                                            FindCallback resourceHandler)
-    {
-        return findResource(host, resourceName, resourceHandler, m_cfg.QoS);
-    }
-
-    OCStackResult OCPlatform_impl::findResource(const std::string& host,
-                                            const std::string& resourceName,
-                                            FindCallback resourceHandler, QualityOfService QoS)
-    {
-
-        return checked_guard(m_client, &IClientWrapper::ListenForResource,
-                             host, resourceName, resourceHandler, QoS);
-    }
-
-    OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
-                                            const std::string& deviceURI,
-                                            FindDeviceCallback deviceInfoHandler)
-    {
-        return result_guard(getDeviceInfo(host, deviceURI, deviceInfoHandler, m_cfg.QoS));
-    }
-
-    OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
-                                            const std::string& deviceURI,
-                                            FindDeviceCallback deviceInfoHandler,
-                                            QualityOfService QoS)
-    {
-        return checked_guard(m_client, &IClientWrapper::ListenForDevice,
-                             host, deviceURI, deviceInfoHandler, QoS);
-    }
-
-#endif
 
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
                                             std::string& resourceURI,
@@ -355,7 +298,6 @@ namespace OC
         return checked_guard(m_server, &IServerWrapper::stopPresence);
     }
 
-#ifdef CA_INT
     OCStackResult OCPlatform_impl::subscribePresence(OCPresenceHandle& presenceHandle,
                                             const std::string& host,
                                             OCConnectivityType connectivityType,
@@ -375,24 +317,6 @@ namespace OC
                              &presenceHandle, host, resourceType, connectivityType,
                              presenceHandler);
     }
-#else
-    OCStackResult OCPlatform_impl::subscribePresence(OCPresenceHandle& presenceHandle,
-                                            const std::string& host,
-                                            SubscribeCallback presenceHandler)
-    {
-        return subscribePresence(presenceHandle, host, "", presenceHandler);
-    }
-
-    OCStackResult OCPlatform_impl::subscribePresence(OCPresenceHandle& presenceHandle,
-                                            const std::string& host,
-                                            const std::string& resourceType,
-                                            SubscribeCallback presenceHandler)
-    {
-        return checked_guard(m_client, &IClientWrapper::SubscribePresence,
-                             &presenceHandle, host, resourceType,
-                             presenceHandler);
-    }
-#endif
 
     OCStackResult OCPlatform_impl::unsubscribePresence(OCPresenceHandle presenceHandle)
     {

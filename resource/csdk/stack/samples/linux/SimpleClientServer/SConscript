@@ -22,7 +22,7 @@ if env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS = ['tinydtls'])
 samples_env.ParseConfig('pkg-config --libs glib-2.0');
 
-samples_env.AppendUnique(CPPDEFINES = ['CA_INT', 'TB_LOG'])
+samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################
 # Source files and Targets

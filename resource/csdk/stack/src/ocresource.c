@@ -31,10 +31,8 @@
 #include "debug.h"
 #include "cJSON.h"
 
-#ifdef CA_INT
-    #include "cacommon.h"
-    #include "cainterface.h"
-#endif
+#include "cacommon.h"
+#include "cainterface.h"
 
 
 /// Module Name
@@ -69,7 +67,6 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
     return  OC_EH_OK; // Making sure that the Default EH and the Vendor EH have matching signatures
 }
 
-#ifdef CA_INT
 /* This method  will return the port at which the secure resource is hosted */
 static OCStackResult GetSecurePortInfo(CAConnectivityType_t connType, uint32_t *port)
 {
@@ -98,7 +95,6 @@ static OCStackResult GetSecurePortInfo(CAConnectivityType_t connType, uint32_t *
     free(info);
     return ret;
 }
-#endif
 
 static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
                                 uint8_t *filterOn, char **filterValue)
@@ -152,16 +148,10 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
 }
 
 
-#ifdef CA_INT
 OCStackResult
 BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
                         char *filterValue, char * out, uint16_t *remaining,
                         CAConnectivityType_t connType )
-#else
-OCStackResult
-BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
-                        char *filterValue, char * out, uint16_t *remaining)
-#endif
 {
     OCResourceType *resourceTypePtr;
     OCResourceInterface *interfacePtr;
@@ -239,13 +229,8 @@ BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
             if (resourcePtr->resourceProperties & OC_SECURE) {
                 cJSON_AddNumberToObject (propObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
                 //Set the IP port also as secure resources are hosted on a different port
-#ifdef CA_INT
                 uint32_t port;
                 if (GetSecurePortInfo (connType, &port) == OC_STACK_OK) {
-#else
-                uint16_t port;
-                if (OCGetResourceEndPointInfo (resourcePtr, &port) == OC_STACK_OK) {
-#endif
                     cJSON_AddNumberToObject (propObj, OC_RSRVD_HOSTING_PORT, port);
                 }
             }
@@ -540,13 +525,8 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                         remaining--;
                     }
                     firstLoopDone = 1;
-#ifdef CA_INT
                     result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
                             (char*)ptr, &remaining, request->connectivityType );
-#else
-                    result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
-                            (char*)ptr, &remaining);
-#endif
 
                     if (result != OC_STACK_OK)
                     {
@@ -681,18 +661,11 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         OC_LOG(INFO, TAG, PCF("Registering observation requested"));
         result = GenerateObserverId(&ehRequest.obsInfo.obsId);
         VERIFY_SUCCESS(result, OC_STACK_OK);
-#ifdef CA_INT
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, &request->requestToken,
                 &request->requesterAddr, resource, request->qos,
                 &request->addressInfo, request->connectivityType);
-#else
-        result = AddObserver ((const char*)(request->resourceUrl),
-                (const char *)(request->query),
-                ehRequest.obsInfo.obsId, &request->requestToken,
-                &request->requesterAddr, resource, request->qos);
-#endif //CA_INT
         if(result == OC_STACK_OK)
         {
             OC_LOG(DEBUG, TAG, PCF("Added observer successfully"));

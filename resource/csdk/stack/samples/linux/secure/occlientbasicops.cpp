@@ -87,9 +87,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
             (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
-#ifdef CA_INT
             (OC_WIFI),
-#endif
             qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
@@ -264,9 +262,7 @@ int InitDiscovery()
     cbData.context = NULL;
     cbData.cd = NULL;
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0,
-#ifdef CA_INT
             (OC_WIFI),
-#endif
             OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {

@@ -83,7 +83,6 @@ int main(int argc, char* argv[])
 {
     ostringstream requestURI;
 
-#ifdef CA_INT
     OCConnectivityType connectivityType = OC_WIFI;
 
     if(argc == 2)
@@ -126,7 +125,6 @@ int main(int argc, char* argv[])
         std::cout<<"ConnectivityType 0: ETHERNET\n";
         std::cout<<"ConnectivityType 1: WIFI\n";
     }
-#endif
 
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
@@ -150,12 +148,8 @@ int main(int argc, char* argv[])
 
         requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
 
-#ifdef CA_INT
         OCPlatform::findResource("", requestURI.str(),
                                  connectivityType, &foundResource);
-#else
-        OCPlatform::findResource("", requestURI.str(), &foundResource);
-#endif
 
         OCPlatform::bindInterfaceToResource(resourceHandle, GROUP_INTERFACE);
         OCPlatform::bindInterfaceToResource(resourceHandle, DEFAULT_INTERFACE);

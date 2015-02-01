@@ -35,23 +35,16 @@ typedef struct ResourceObserver {
     unsigned char *resUri;
     // Query
     unsigned char *query;
-#ifdef CA_INT
     //token for the observe request
     CAToken_t token;
-#else // CA_INT
-    // CoAP token for the observe request
-    OCCoAPToken token;
-#endif // CA_INT
     // Resource handle
     OCResource *resource;
     // IP address & port of client registered for observe
     OCDevAddr *addr;
-#ifdef CA_INT
     /** Remote Endpoint address **/
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
-#endif
     // Quality of service of the request
     OCQualityOfService qos;
     // number of times the server failed to reach the observer
@@ -80,9 +73,6 @@ void DeleteObserverList();
 
 OCStackResult GenerateObserverId (OCObservationId *observationId);
 
-
-
-#ifdef CA_INT
 OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
@@ -95,22 +85,8 @@ OCStackResult AddObserver (const char         *resUri,
 
 OCStackResult DeleteObserverUsingToken (CAToken_t * token);
 ResourceObserver* GetObserverUsingToken (const CAToken_t * token);
-#else
-OCStackResult AddObserver (const char         *resUri,
-                           const char         *query,
-                           OCObservationId    obsId,
-                           OCCoAPToken        *token,
-                           OCDevAddr          *addr,
-                           OCResource         *resHandle,
-                           OCQualityOfService qos);
-
-OCStackResult DeleteObserverUsingToken (OCCoAPToken * token);
-ResourceObserver* GetObserverUsingToken (const OCCoAPToken * token);
-#endif
 
 ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
-
-#ifdef CA_INT
 
 OCStackResult
 CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
@@ -121,6 +97,5 @@ OCStackResult
 GetObserveHeaderOption (uint32_t * observationOption,
                         CAHeaderOption_t *options,
                         uint8_t * numOptions);
-#endif // CA_INT
 
 #endif //OC_OBSERVE_H

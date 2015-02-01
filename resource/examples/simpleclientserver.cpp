@@ -33,9 +33,7 @@
 #include "OCApi.h"
 using namespace OC;
 
-#ifdef CA_INT
 OCConnectivityType connectivityType = OC_WIFI;
-#endif
 
 class ClientWorker
 {
@@ -153,15 +151,9 @@ public:
 
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
-#ifdef CA_INT
         std::cout<<"result:" <<
         OCPlatform::findResource("", requestURI.str(), connectivityType, f)
         << std::endl;
-#else
-        std::cout<<"result:" <<
-        OCPlatform::findResource("", requestURI.str(), f)
-        << std::endl;
-#endif
 
         std::cout<<"Finding Resource..."<<std::endl;
 
@@ -306,7 +298,6 @@ struct FooResource
 int main(int argc, char* argv[])
 {
 
-#ifdef CA_INT
     if(argc == 2)
     {
         try
@@ -347,7 +338,6 @@ int main(int argc, char* argv[])
         std::cout << "   ConnectivityType : 0 - ETHERNET" << std::endl;
         std::cout << "   ConnectivityType : 1 - WIFI" << std::endl;
     }
-#endif
 
     PlatformConfig cfg {
         OC::ServiceType::InProc,

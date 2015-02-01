@@ -252,15 +252,10 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
             OCResource* temp = collResource->rsrcResources[i];
             if (temp)
             {
-#ifdef CA_INT
                 //TODO : Update needed here to get correct connectivity type
                 //from ServerRequest data structure
                 ret = BuildVirtualResourceResponse(temp, filterOn, filterValue,
                          (char*)ptr, &remaining, CA_WIFI );
-#else
-                ret = BuildVirtualResourceResponse(temp, filterOn, filterValue,
-                         (char*)ptr, &remaining);
-#endif
                 if (ret != OC_STACK_OK)
                 {
                     break;

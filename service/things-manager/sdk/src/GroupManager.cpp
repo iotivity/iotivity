@@ -222,17 +222,10 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
         query += "?rt=";
         query += resourceTypes.at(i);
 
-        #ifdef CA_INT
         OCPlatform::findResource("", query, OC_WIFI,
                 std::function < void(std::shared_ptr < OCResource > resource)
                 > (std::bind(&GroupManager::onFoundResource, this,
                         std::placeholders::_1, waitsec)));
-        #else
-        OCPlatform::findResource("", query,
-                std::function < void(std::shared_ptr < OCResource > resource)
-                        > (std::bind(&GroupManager::onFoundResource, this,
-                                std::placeholders::_1, waitsec)));
-        #endif
     }
 
     if (waitsec >= 0)
@@ -355,7 +348,6 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
         std::cout << "\t\thost : " << hostAddress << std::endl;
         OCPlatform::OCPresenceHandle presenceHandle;
 
-        #ifdef CA_INT
         OCStackResult result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                 resourceType, OC_WIFI,
                 std::function<
@@ -364,16 +356,6 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
                         std::bind(&GroupManager::collectionPresenceHandler, this,
                                 std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3, hostAddress, oit->getUri())));
-        #else
-        OCStackResult result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                resourceType,
-                std::function<
-                        void(OCStackResult result, const unsigned int nonce,
-                                const std::string& hostAddress) >(
-                        std::bind(&GroupManager::collectionPresenceHandler, this,
-                                std::placeholders::_1, std::placeholders::_2,
-                                std::placeholders::_3, hostAddress, oit->getUri())));
-        #endif
 
         if (result == OC_STACK_OK)
         {

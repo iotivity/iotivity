@@ -23,10 +23,8 @@
 #include "ocresourcehandler.h"
 
 
-#ifdef CA_INT
 #include "cacommon.h"
 #include "cainterface.h"
-#endif
 
 // Module Name
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
@@ -36,16 +34,11 @@
 static struct OCServerRequest * serverRequestList = NULL;
 static struct OCServerResponse * serverResponseList = NULL;
 
-#ifdef CA_INT
 OCServerRequest * GetServerRequestUsingToken (const CAToken_t token)
-#else // CA_INT
-OCServerRequest * GetServerRequestUsingToken (const OCCoAPToken token)
-#endif // CA_INT
 {
     OCServerRequest * out = NULL;
     LL_FOREACH (serverRequestList, out)
     {
-#ifdef CA_INT
         OC_LOG(INFO, TAG,PCF("comparing tokens"));
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, CA_MAX_TOKEN_LEN);
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, CA_MAX_TOKEN_LEN);
@@ -53,16 +46,6 @@ OCServerRequest * GetServerRequestUsingToken (const OCCoAPToken token)
         {
             return out;
         }
-#else // CA_INT
-        OC_LOG(INFO, TAG,PCF("comparing tokens"));
-        OC_LOG_BUFFER(INFO, TAG, token.token, token.tokenLength);
-        OC_LOG_BUFFER(INFO, TAG, out->requestToken.token, out->requestToken.tokenLength);
-        if((out->requestToken.tokenLength == token.tokenLength) &&
-                (memcmp(out->requestToken.token, token.token, token.tokenLength) == 0))
-        {
-            return out;
-        }
-#endif // CA_INT
     }
     OC_LOG(INFO, TAG, PCF("Server Request not found!!"));
     return NULL;
@@ -96,7 +79,6 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
     return NULL;
 }
 
-#ifdef CA_INT
 OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
@@ -105,15 +87,6 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         unsigned char * reqJSONPayload, CAToken_t * requestToken,
         OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType)
-#else // CA_INT
-OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
-        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
-        uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
-        OCQualityOfService qos, unsigned char * query,
-        OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        unsigned char * reqJSONPayload, OCCoAPToken * requestToken,
-        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize)
-#endif // CA_INT
 {
     OCServerRequest * serverRequest = NULL;
 
@@ -154,14 +127,10 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->requestComplete = 0;
     if(requestToken)
     {
-#ifdef CA_INT
         serverRequest->requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
         VERIFY_NON_NULL (serverRequest->requestToken);
         memset(serverRequest->requestToken, 0, CA_MAX_TOKEN_LEN + 1);
         memcpy(serverRequest->requestToken, *requestToken, CA_MAX_TOKEN_LEN);
-#else // CA_INT
-        memcpy(&serverRequest->requestToken, requestToken, sizeof(OCCoAPToken));
-#endif // CA_INT
     }
     if(requesterAddr)
     {
@@ -171,13 +140,11 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     {
         memcpy(serverRequest->resourceUrl, resourceUrl, strlen((const char *)resourceUrl) + 1);
     }
-#ifdef CA_INT
     if (addressInfo)
     {
         serverRequest->addressInfo = *addressInfo;
     }
     serverRequest->connectivityType = connectivityType;
-#endif
 
     *request = serverRequest;
     OC_LOG(INFO, TAG, PCF("Server Request Added!!"));
@@ -302,7 +269,6 @@ void DeleteServerRequest(OCServerRequest * serverRequest)
 
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
-#ifdef CA_INT
     OCStackResult result = OC_STACK_ERROR;
     CARemoteEndpoint_t responseEndpoint;
     CAResponseInfo_t responseInfo;
@@ -441,64 +407,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     //Delete the request
     FindAndDeleteServerRequest(serverRequest);
     return result;
-#else
-    OCStackResult result = OC_STACK_ERROR;
-    OCServerProtocolResponse protocolResponse;
-    memset(&protocolResponse, 0, sizeof(OCServerProtocolResponse));
-
-    OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
-
-    OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
-    // Format protocol response structure with data needed for
-    // sending the response
-    protocolResponse.qos = serverRequest->qos;
-
-    if((OCResource *)ehResponse->resourceHandle &&
-            ((OCResource *)ehResponse->resourceHandle)->resourceProperties == (OCResourceProperty) 0)
-    {
-        ehResponse->ehResult = OC_EH_RESOURCE_DELETED;
-    }
-    protocolResponse.result = EntityHandlerCodeToOCStackCode(ehResponse->ehResult);
-    protocolResponse.requesterAddr = &serverRequest->requesterAddr;
-    protocolResponse.requestToken = &serverRequest->requestToken;
-    protocolResponse.numSendVendorSpecificHeaderOptions = ehResponse->numSendVendorSpecificHeaderOptions;
-    protocolResponse.sendVendorSpecificHeaderOptions = ehResponse->sendVendorSpecificHeaderOptions;
-    protocolResponse.resourceUri = ehResponse->resourceUri;
-    protocolResponse.delayedResNeeded = serverRequest->delayedResNeeded;
-    protocolResponse.secured = serverRequest->secured;
-    protocolResponse.slowFlag = serverRequest->slowFlag;
-    protocolResponse.notificationFlag = serverRequest->notificationFlag;
-
-    //should we put the prefix and suffix here?
-    protocolResponse.payload = (unsigned char *) OCMalloc(MAX_RESPONSE_LENGTH);
-    if(!protocolResponse.payload)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
-    strcpy((char *)protocolResponse.payload, (const char *)OC_JSON_PREFIX);
-    strcat((char *)protocolResponse.payload, (const char *)ehResponse->payload);
-    strcat((char *)protocolResponse.payload, (const char *)OC_JSON_SUFFIX);
-    protocolResponse.payloadSize = strlen((const char *)protocolResponse.payload) + 1;
-    protocolResponse.resourceUri = ehResponse->resourceUri;
-
-    //revise the following
-    protocolResponse.coapID = serverRequest->coapID;
-    if(serverRequest->observeResult == OC_STACK_OK)
-    {
-        protocolResponse.observationOption = serverRequest->observationOption;
-    }
-    else
-    {
-        protocolResponse.observationOption = OC_OBSERVE_NO_OPTION;
-    }
-    // Make call to OCCoAP layer
-    result = OCDoCoAPResponse(&protocolResponse);
-
-    OCFree(protocolResponse.payload);
-    //Delete the request
-    FindAndDeleteServerRequest(serverRequest);
-    return result;
-#endif
 }
 
 OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)

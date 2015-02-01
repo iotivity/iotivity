@@ -157,7 +157,6 @@ int main(int argc, char* argv[])
     ostringstream requestURI;
     requestURI << OC_WELL_KNOWN_QUERY << "?rt=a.collection";
 
-#ifdef CA_INT
     OCConnectivityType connectivityType = OC_WIFI;
 
     if(argc == 2)
@@ -200,7 +199,6 @@ int main(int argc, char* argv[])
         std::cout<<"ConnectivityType 0: ETHERNET\n";
         std::cout<<"ConnectivityType 1: WIFI\n";
     }
-#endif
 
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos };
@@ -212,12 +210,9 @@ int main(int argc, char* argv[])
         OCPlatform::Configure(config);
 
         string resourceTypeName = "a.collection";
-#ifdef CA_INT
+
         OCPlatform::findResource("", requestURI.str(),
                                  connectivityType, &foundResource);
-#else
-        OCPlatform::findResource("", requestURI.str(), &foundResource);
-#endif
 
         //Non-intensive block until foundResource callback is called by OCPlatform
         //and onGet gets resource.

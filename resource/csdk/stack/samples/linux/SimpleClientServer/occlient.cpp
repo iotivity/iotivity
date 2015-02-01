@@ -34,18 +34,12 @@ static int TEST_CASE = 0;
 static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
 static const char * TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core/d";
 
-#ifdef CA_INT
 static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
-#else //CA_INT
-static const char * TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY = "coap://224.0.1.187:5683/oc/core/d";
-#endif //CA_INT
 
-#ifdef CA_INT
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to WIFI.
 static OCConnectivityType OC_CONNTYPE = OC_WIFI;
-#endif
 static std::string putPayload = "{\"state\":\"on\",\"power\":5}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
@@ -74,15 +68,9 @@ void handleSigInt(int signum) {
 
 static void PrintUsage()
 {
-#ifdef CA_INT
     OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7> -c <0|1>");
-#else
-     OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7>");
-#endif
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-#ifdef CA_INT
     OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
-#endif
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
     OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Put Requests");
@@ -123,15 +111,9 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-#ifdef CA_INT
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
                        (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
                        (OC_CONNTYPE), qos, &cbData, options, numOptions);
-#else
-    ret = OCDoResource(&handle, method, query.str().c_str(), 0,
-                       (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
-                       qos, &cbData, options, numOptions);
-#endif
 
     if (ret != OC_STACK_OK)
     {
@@ -314,10 +296,8 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
         OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
 
-#ifdef CA_INT
         std::string connectionType = getConnectivityType (clientResponse->connType);
         OC_LOG_V(INFO, TAG, "Discovered on %s", connectionType.c_str());
-#endif
         OC_LOG_V(INFO, TAG,
                 "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
@@ -376,12 +356,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 break;
         }
     }
-#ifdef CA_INT
     return OC_STACK_KEEP_TRANSACTION;
-#else
-    return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
-#endif
-
 }
 
 OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
@@ -598,17 +573,10 @@ int InitDeviceDiscovery()
 
     else
     {
-#ifdef CA_INT
         strncpy(szQueryUri, MULTICAST_DEVICE_DISCOVERY_QUERY,
                 (strlen(MULTICAST_DEVICE_DISCOVERY_QUERY) + 1));
-
-#else
-        strncpy(szQueryUri, TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY,
-                (strlen(TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY) + 1));
-#endif
     }
 
-#ifdef CA_INT
     if(UNICAST_DISCOVERY)
     {
         ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
@@ -619,9 +587,6 @@ int InitDeviceDiscovery()
         ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
-#else
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
-#endif
 
     if (ret != OC_STACK_OK)
     {
@@ -645,17 +610,12 @@ int InitDiscovery()
     }
     else
     {
-#ifdef CA_INT
         strcpy(szQueryUri, MULTICAST_RESOURCE_DISCOVERY_QUERY);
-#else
-        strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
-#endif
     }
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-#ifdef CA_INT
     if(UNICAST_DISCOVERY)
     {
         ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
@@ -666,9 +626,6 @@ int InitDiscovery()
         ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
-#else
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
-#endif
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -683,11 +640,7 @@ int main(int argc, char* argv[]) {
     uint8_t ifname[] = "eth0";
     int opt;
 
-#ifdef CA_INT
     while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
-#else
-    while ((opt = getopt(argc, argv, "u:t:")) != -1)
-#endif
     {
         switch(opt)
         {
@@ -697,11 +650,9 @@ int main(int argc, char* argv[]) {
             case 't':
                 TEST_CASE = atoi(optarg);
                 break;
-            #ifdef CA_INT
             case 'c':
                 OC_CONNTYPE = OCConnectivityType(atoi(optarg));
                 break;
-            #endif
             default:
                 PrintUsage();
                 return -1;

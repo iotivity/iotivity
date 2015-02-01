@@ -42,7 +42,7 @@ if target_os == 'android':
 if target_os in ['darwin', 'ios']:
 	samples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
-samples_env.AppendUnique(CPPDEFINES = ['CA_INT', 'CA_INT_DTLS', 'TB_LOG'])
+samples_env.AppendUnique(CPPDEFINES = ['CA_INT_DTLS', 'TB_LOG'])
 
 ######################################################################
 # Source files and Targets

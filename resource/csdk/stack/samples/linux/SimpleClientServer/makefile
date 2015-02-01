@@ -67,10 +67,10 @@ INC_DIRS	+= -I$(CJSON_INC)
 
 # TODO-CA Remove -fstack-protector-all before merging to master
 CC_FLAGS.debug   := -O0 -g3 -Wall -fstack-protector-all -ffunction-sections -fdata-sections -fno-exceptions \
-                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG -DCA_INT
+                        -std=c++0x -pedantic $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG 
 # TODO-CA Remove -fstack-protector-all before merging to master
 CC_FLAGS.release := -Os -Wall -fstack-protector-all -fdata-sections -Wl,--gc-sections -Wl,-s -fno-exceptions \
-                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG -DCA_INT
+                        -std=c++0x $(INC_DIRS) -L$(ROOT_DIR)/linux/$(BUILD) -DTB_LOG 
 
 LDLIBS		+= -loctbstack -lpthread -L$(CONNECTIVITY_DIR)/build/out -lconnectivity_abstraction
 CPPFLAGS	+= $(CC_FLAGS.$(BUILD)) $(LDLIBS)

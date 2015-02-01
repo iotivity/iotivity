@@ -59,8 +59,6 @@ if target_os in ['darwin', 'ios']:
 if not env.get('RELEASE'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-liboctbstack_env.AppendUnique(CPPDEFINES = ['CA_INT'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################

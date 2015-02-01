@@ -360,22 +360,14 @@ int main()
                     std::string requestURI = OC_WELL_KNOWN_QUERY;
                     requestURI += "?rt=a.collection";
 
-                    #ifdef CA_INT
                     OCPlatform::findResource("", requestURI, OC_WIFI, &foundResource);
-                    #else
-                    OCPlatform::findResource("", requestURI, &foundResource);
-                    #endif
                 }
                 else if (n == 0)
                 {
                     std::string requestURI = OC_WELL_KNOWN_QUERY;
                     requestURI += "?rt=core.bookmark";
 
-                    #ifdef CA_INT
                     OCPlatform::findResource("", requestURI, OC_WIFI, &foundResource);
-                    #else
-                    OCPlatform::findResource("", requestURI, &foundResource);
-                    #endif
                 }
                 else if (n == 1)
                 {

@@ -677,15 +677,9 @@ OCStackResult SendAction(OCDoHandle *handle, const char *targetUri, const unsign
     cbdata.cd = &ActionSetCD;
     cbdata.context = (void *) 0x99;
 
-#ifdef CA_INT
     return OCDoResource(handle, OC_REST_PUT, targetUri,
     //temp->rsrcType->resourcetypename,
             NULL, (char *) action, OC_WIFI, OC_NA_QOS, &cbdata, NULL, 0);
-#else
-    return OCDoResource(handle, OC_REST_PUT, targetUri,
-    //temp->rsrcType->resourcetypename,
-            NULL, (char *) action, OC_NA_QOS, &cbdata, NULL, 0);
-#endif
 }
 
 OCStackResult BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHandlerFlag flag*/,

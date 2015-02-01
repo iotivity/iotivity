@@ -35,18 +35,10 @@ extern "C" {
 //TODO: May want to refactor this in upcoming sprints.
 //Don't want to expose to application layer that lower level stack is using CoAP.
 
-#ifdef CA_INT
 #define OC_WELL_KNOWN_QUERY                  "224.0.1.187:5683/oc/core"
 #define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5683/oc/core/d?rt=core.led"
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
 #define OC_MULTICAST_IP                      "224.0.1.187"
-
-#else
-#define OC_WELL_KNOWN_QUERY                  "coap://224.0.1.187:5683/oc/core"
-#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "coap://224.0.1.187:5683/oc/core/d?rt=core.led"
-#define OC_MULTICAST_PREFIX                  "coap://224.0.1.187:5683"
-#define OC_MULTICAST_IP                      "coap://224.0.1.187"
-#endif
 
 #define USE_RANDOM_PORT (0)
 #ifdef WITH_PRESENCE
@@ -142,7 +134,6 @@ typedef enum {
     OC_COAP_ID      = (1 << 1)
 } OCTransportProtocolID;
 
-#ifdef CA_INT
 /**
  * Adaptor types
  */
@@ -153,7 +144,6 @@ typedef enum {
     OC_LE,
     OC_ALL //Multicast message: send over all the interfaces.
 } OCConnectivityType;
-#endif
 
 /**
  * Declares Stack Results & Errors
@@ -290,10 +280,8 @@ typedef struct {
 typedef struct {
     // Address of remote server
     OCDevAddr * addr;
-    #ifdef CA_INT
     // Indicates adaptor type on which the response was received
     OCConnectivityType connType;
-    #endif
     // the is the result of our stack, OCStackResult should contain coap/other error codes;
     OCStackResult result;
     // If associated with observe, this will represent the sequence of notifications from server.
@@ -475,16 +463,10 @@ OCStackResult OCProcess();
  *     OC_STACK_INVALID_QUERY    - number of resource types specified for filtering presence
  *                                 notifications exceeds @ref MAX_PRESENCE_FILTERS.
  */
-#ifdef CA_INT
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
             const char *referenceUri, const char *request, OCConnectivityType conType,
             OCQualityOfService qos, OCCallbackData *cbData,
             OCHeaderOption * options, uint8_t numOptions);
-#else
-    OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char  *requiredUri,
-            const char  *referenceUri, const char *request, OCQualityOfService qos,
-            OCCallbackData *cbData, OCHeaderOption * options, uint8_t numOptions);
-#endif
 
 /**
  * Cancel a request associated with a specific @ref OCDoResource invocation.

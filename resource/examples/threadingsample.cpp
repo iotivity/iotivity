@@ -34,9 +34,7 @@
 #include "OCApi.h"
 using namespace OC;
 
-#ifdef CA_INT
 static OCConnectivityType connectivityType = OC_WIFI;
-#endif
 
 static std::ostringstream requestURI;
 
@@ -285,13 +283,8 @@ void foundResource1(std::shared_ptr<OCResource> resource)
 void client1()
 {
     std::cout << "in client1\n";
-#ifdef CA_INT
     std::cout<<"result1:" << OCPlatform::findResource("", requestURI.str(),
             connectivityType, foundResource1)<< std::endl;
-#else
-    std::cout<<"result1:" << OCPlatform::findResource("", requestURI.str(),
-            foundResource1)<< std::endl;
-#endif
 
     // A condition variable will free the mutex it is given, then do a non-
     // intensive block until 'notify' is called on it.  In this case, since we
@@ -306,15 +299,9 @@ void client1()
 void client2()
 {
     std::cout << "in client2\n";
-#ifdef CA_INT
     std::cout<<"result2:" << OCPlatform::findResource("",
                 requestURI.str(),
                 connectivityType, foundResource2)<< std::endl;
-#else
-    std::cout<<"result2:" << OCPlatform::findResource("",
-                requestURI.str(),
-                foundResource2)<< std::endl;
-#endif
 
     // A condition variable will free the mutex it is given, then do a non-
     // intensive block until 'notify' is called on it.  In this case, since we
@@ -348,7 +335,6 @@ void server()
 int main(int argc, char* argv[])
 {
 
-#ifdef CA_INT
     if(argc == 2)
     {
         try
@@ -389,7 +375,6 @@ int main(int argc, char* argv[])
         std::cout << "   ConnectivityType : 0 - ETHERNET" << std::endl;
         std::cout << "   ConnectivityType : 1 - WIFI" << std::endl;
     }
-#endif
 
     requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.foo";
 

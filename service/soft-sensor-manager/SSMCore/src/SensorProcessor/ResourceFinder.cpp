@@ -75,15 +75,9 @@ void CResourceFinder::presenceHandler(OCStackResult result, const unsigned int n
     switch (result)
     {
         case OC_STACK_OK:
-#ifdef CA_INT
             ret = OC::OCPlatform::findResource("",
                                                "coap://" + hostAddress + ":5298" + "/oc/core?rt=SoftSensorManager.Sensor", OC_ALL,
                                                std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
-#else
-            ret = OC::OCPlatform::findResource("",
-                                               "coap://" + hostAddress + "/oc/core?rt=SoftSensorManager.Sensor",
-                                               std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
-#endif
 
             if (ret != OC_STACK_OK)
                 SSM_CLEANUP_ASSERT(SSM_E_FAIL);
@@ -123,29 +117,17 @@ SSMRESULT CResourceFinder::startResourceFinder()
     SSMRESULT res = SSM_E_FAIL;
     OCStackResult ret = OC_STACK_ERROR;
 
-#ifdef CA_INT
     ret = OC::OCPlatform::findResource("",
                                        "coap://224.0.1.187:5298/oc/core?rt=SoftSensorManager.Sensor", OC_ALL,
                                        std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
-#else
-    ret = OC::OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=SoftSensorManager.Sensor",
-                                       std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
-#endif
 
     if (ret != OC_STACK_OK)
         SSM_CLEANUP_ASSERT(SSM_E_FAIL);
 
-#ifdef CA_INT
     ret = OC::OCPlatform::subscribePresence(m_multicastPresenceHandle, "coap://224.0.1.187",
                                             "SoftSensorManager.Sensor", OC_ALL,
                                             std::bind(&CResourceFinder::presenceHandler, this, std::placeholders::_1,
                                                     std::placeholders::_2, std::placeholders::_3));
-#else
-    ret = OC::OCPlatform::subscribePresence(m_multicastPresenceHandle, "coap://224.0.1.187",
-                                            "SoftSensorManager.Sensor",
-                                            std::bind(&CResourceFinder::presenceHandler, this, std::placeholders::_1,
-                                                    std::placeholders::_2, std::placeholders::_3));
-#endif
 
     if (ret != OC_STACK_OK)
         SSM_CLEANUP_ASSERT(SSM_E_FAIL);
@@ -226,17 +208,10 @@ void CResourceFinder::onExecute(IN void *pArg)
             if (m_mapResourcePresenceHandles.find(((ISSMResource *)pMessage[1])->ip) ==
                 m_mapResourcePresenceHandles.end())
             {
-#ifdef CA_INT
                 ret = OC::OCPlatform::subscribePresence(presenceHandle, ((ISSMResource *)pMessage[1])->ip,
                                                         "SoftSensorManager.Sensor", OC_ALL,
                                                         std::bind(&CResourceFinder::presenceHandler, this, std::placeholders::_1,
                                                                 std::placeholders::_2, std::placeholders::_3));
-#else
-                ret = OC::OCPlatform::subscribePresence(presenceHandle, ((ISSMResource *)pMessage[1])->ip,
-                                                        "SoftSensorManager.Sensor",
-                                                        std::bind(&CResourceFinder::presenceHandler, this, std::placeholders::_1,
-                                                                std::placeholders::_2, std::placeholders::_3));
-#endif
 
                 if (ret != OC_STACK_OK)
                     SSM_CLEANUP_ASSERT(SSM_E_FAIL);

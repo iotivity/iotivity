@@ -25,11 +25,7 @@
 #include <ocstack.h>
 
 #include <ocresource.h>
-#ifdef CA_INT
 #include "cacommon.h"
-#else
-#include "occoaptoken.h"
-#endif
 
 typedef struct OCPresence {
     // This is the TTL associated with presence
@@ -54,11 +50,7 @@ typedef struct ClientCB {
     // callback method to delete context data
     OCClientContextDeleter deleteCallback;
     //  when a response is recvd with this token, above callback will be invoked
-#ifdef CA_INT
     CAToken_t token;
-#else // CA_INT
-    OCCoAPToken token;
-#endif // CA_INT
     // Invocation handle tied to original call to OCDoResource()
     OCDoHandle handle;
     // This is used to determine if all responses should be consumed or not.
@@ -103,15 +95,9 @@ extern struct ClientCB *cbList;
  */
 //------------------------------------------------------------------------
 OCStackResult
-#ifdef CA_INT
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
              CAToken_t * token, OCDoHandle *handle, OCMethod method,
              unsigned char * requestUri, unsigned char * resourceTypeName);
-#else // CA_INT
-AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
-             OCCoAPToken * token, OCDoHandle *handle, OCMethod method,
-             unsigned char * requestUri, unsigned char * resourceTypeName);
-#endif // CA_INT
 
 //-- DeleteClientCB -----------------------------------------------------------
 /** @ingroup ocstack
@@ -142,12 +128,7 @@ void DeleteClientCB(ClientCB *cbNode);
  * @retval address of the node if found, otherwise NULL
  */
 //------------------------------------------------------------------------
-#ifdef CA_INT
 ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const unsigned char * requestUri);
-#else // CA_INT
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, const unsigned char * requestUri);
-#endif // CA_INT
-
 
 /**
  * Inserts a new resource type filter into this clientCB node.

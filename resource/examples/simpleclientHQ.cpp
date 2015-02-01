@@ -369,38 +369,26 @@ void foundResource(std::shared_ptr<OCResource> resource)
 void PrintUsage()
 {
     std::cout << std::endl;
-#ifdef CA_INT
     std::cout << "Usage : simpleclientHQ <ObserveType> <ConnectivityType>" << std::endl;
-#else
-    std::cout << "Usage : simpleclientHQ <ObserveType>" << std::endl;
-#endif
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
-#ifdef CA_INT
     std::cout<<"    ConnectivityType: Default WIFI" << std::endl;
     std::cout << "   ConnectivityType : 0 - ETHERNET"<< std::endl;
     std::cout << "   ConnectivityType : 1 - WIFI"<< std::endl;
-#endif
 }
 
 int main(int argc, char* argv[]) {
 
     ostringstream requestURI;
 
-#ifdef CA_INT
     OCConnectivityType connectivityType = OC_WIFI;
-#endif
     try
     {
         if (argc == 1)
         {
             OBSERVE_TYPE_TO_USE = ObserveType::Observe;
         }
-#ifdef CA_INT
         else if (argc >= 2)
-#else
-        else if (argc == 2)
-#endif
         {
             int value = stoi(argv[1]);
             if (value == 1)
@@ -410,7 +398,6 @@ int main(int argc, char* argv[]) {
             else
                 OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
-#ifdef CA_INT
             if(argc == 3)
             {
                 std::size_t inputValLen;
@@ -438,7 +425,6 @@ int main(int argc, char* argv[]) {
                     << std::endl;
                 }
             }
-#endif
         }
         else
         {
@@ -468,25 +454,15 @@ int main(int argc, char* argv[]) {
         // Find all resources
         requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
 
-#ifdef CA_INT
         OCPlatform::findResource("", requestURI.str(),
                 connectivityType, &foundResource, OC::QualityOfService::LowQos);
-#else
-        OCPlatform::findResource("", requestURI.str(), &foundResource,
-                OC::QualityOfService::LowQos);
-#endif
         std::cout<< "Finding Resource... " <<std::endl;
 
         // Find resource is done twice so that we discover the original resources a second time.
         // These resources will have the same uniqueidentifier (yet be different objects), so that
         // we can verify/show the duplicate-checking code in foundResource(above);
-#ifdef CA_INT
         OCPlatform::findResource("", requestURI.str(),
                 connectivityType, &foundResource, OC::QualityOfService::LowQos);
-#else
-        OCPlatform::findResource("", requestURI.str(), &foundResource,
-                OC::QualityOfService::LowQos);
-#endif
         std::cout<< "Finding Resource for second time... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

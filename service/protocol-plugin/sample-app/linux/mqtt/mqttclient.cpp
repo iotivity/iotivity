@@ -460,12 +460,8 @@ void client1()
 
     std::cout << "starting findResource = core.fan" << std::endl;
     // Find all resources
-#ifdef CA_INT
     OCPlatform::findResource("", requestURI, OC_WIFI,
             &foundResourceFan);
-#else
-    OCPlatform::findResource("", requestURI, &foundResourceFan);
-#endif
     // Get time of day
     timer = time(NULL);
     // Converts date/time to a structure
@@ -491,12 +487,8 @@ void client2()
 
     std::cout << "starting findResource = core.light" << std::endl;
     // Find all resources
-#ifdef CA_INT
     OCPlatform::findResource("", requestURI, OC_WIFI,
             &foundResourceLight);
-#else
-    OCPlatform::findResource("", requestURI, &foundResourceLight);
-#endif
     // Get time of day
     timer = time(NULL);
     // Converts date/time to a structure
