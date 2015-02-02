@@ -35,6 +35,7 @@
 #include "occoap.h"
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
+#include "ocsecurityinternal.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
