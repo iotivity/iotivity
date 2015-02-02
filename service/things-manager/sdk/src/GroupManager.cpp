@@ -217,17 +217,20 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
 
     for (unsigned int i = 0; i < resourceTypes.size(); ++i)
     {
-        std::string query = "coap://224.0.1.187:5298/oc/core?rt=";
         // std::cout << "resourceTypes : " << resourceTypes.at(i) << std::endl;
-        query.append(resourceTypes.at(i));
 
 #ifdef CA_INT
+        std::string query = "coap://224.0.1.187:5298/oc/core?rt=";
+        query.append(resourceTypes.at(i));
+
         OCPlatform::findResource("", query.c_str(),
                 OC_ETHERNET | OC_WIFI,
                 std::function < void(std::shared_ptr < OCResource > resource)
                         > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
                                 waitsec)));
 #else
+        std::string query = "coap://224.0.1.187/oc/core?rt=";
+        query.append(resourceTypes.at(i));
         OCPlatform::findResource("", query.c_str(),
                 std::function < void(std::shared_ptr < OCResource > resource)
                         > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
@@ -319,7 +322,6 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
      }
      */
     std::vector< OCRepresentation > children = rep.getChildren();
-    
     if(children.size() == 0 )
     {
         callback("", OC_STACK_ERROR);
@@ -328,7 +330,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
 
     for (auto oit = children.begin(); oit != children.end(); ++oit)
     {
-        std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+        // std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
         std::vector< std::string > hostAddressVector = str_split(oit->getUri(), '/');
         std::string hostAddress = "";
         for (unsigned int i = 0; i < hostAddressVector.size(); ++i)
@@ -344,20 +346,23 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
         }
 
         std::vector< std::string > resourceTypes = oit->getResourceTypes();
-        for (unsigned int i = 0; i < resourceTypes.size(); ++i)
-        {
-            std::cout << "\t\t\tresourcetype :" << resourceTypes.at(i) << std::endl;
-        }
+        // for (unsigned int i = 0; i < resourceTypes.size(); ++i)
+        // {
+        //     std::cout << "\t\t\tresourcetype :" << resourceTypes.at(i) << std::endl;
+        // }
 
-        std::string resourceType = "core.";
-        resourceType.append(str_split(oit->getUri(), '/').at(4));
-        std::cout << "\t\tconvertRT : " << resourceType << std::endl;
-        std::cout << "\t\thost : " << hostAddress << std::endl;
+        // std::string resourceType = "core.";
+        // resourceType.append(str_split(oit->getUri(), '/').at(4));
+        // std::cout << "\t\tconvertRT : " << resourceType << std::endl;
+        // std::cout << "\t\tresource type front : " << resourceTypes.front() << endl;
+        // std::cout << "\t\thost : " << hostAddress << std::endl;
         OCPlatform::OCPresenceHandle presenceHandle;
+        OCStackResult result = OC_STACK_ERROR;
 
 #ifdef CA_INT
-        OCStackResult result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                resourceType,
+        result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                // resourceType,
+                resourceTypes.front(),
                 OC_ETHERNET | OC_WIFI,
                 std::function<
                         void(OCStackResult result, const unsigned int nonce,
@@ -366,8 +371,9 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
                                 std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3, hostAddress, oit->getUri())));
 #else
-        OCStackResult result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                resourceType,
+        result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                // resourceType,
+                resourceTypes.front(),
                 std::function<
                         void(OCStackResult result, const unsigned int nonce,
                                 const std::string& hostAddress) >(
@@ -378,14 +384,13 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
 
         if (result == OC_STACK_OK)
         {
-            std::cout << "\t\tOK!" << std::endl;
+            // std::cout << "\t\tOK!" << std::endl;
             presenceCallbacks.insert(std::make_pair(oit->getUri(), callback));
         }
         else
         {
             callback("", OC_STACK_ERROR);
         }
-
     }
 }
 
