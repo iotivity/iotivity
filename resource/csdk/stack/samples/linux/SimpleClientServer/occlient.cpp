@@ -31,11 +31,9 @@
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
-static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
-static const char * TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core/d";
-
+static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:5298/oc/core";
+static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:5298/oc/core/d";
 static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
-
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to WIFI.
@@ -44,6 +42,10 @@ static std::string putPayload = "{\"state\":\"on\",\"power\":5}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/light";
+static const int IPV4_ADDR_SIZE = 16;
+//Use ipv4addr for both InitDiscovery and InitDeviceDiscovery
+char ipv4addr[IPV4_ADDR_SIZE];
+void StripNewLineChar(char* str);
 
 // The handle for the observe registration
 OCDoHandle gObserveDoHandle;
@@ -567,10 +569,8 @@ int InitDeviceDiscovery()
 
     if(UNICAST_DISCOVERY)
     {
-        strncpy(szQueryUri, TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY,
-                        (strlen(TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY) + 1));
+        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DEVICE_DISCOVERY_QUERY, ipv4addr);
     }
-
     else
     {
         strncpy(szQueryUri, MULTICAST_DEVICE_DISCOVERY_QUERY,
@@ -606,7 +606,7 @@ int InitDiscovery()
 
     if (UNICAST_DISCOVERY)
     {
-        strcpy(szQueryUri, TEST_APP_UNICAST_DISCOVERY_QUERY);
+        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DISCOVERY_QUERY, ipv4addr);
     }
     else
     {
@@ -634,10 +634,6 @@ int InitDiscovery()
 }
 
 int main(int argc, char* argv[]) {
-    uint8_t addr[20] = {0};
-    uint8_t* paddr = NULL;
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
     int opt;
 
     while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
@@ -666,21 +662,25 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-
-    /*Get Ip address on defined interface and initialize coap on it with random port number
-     * this port number will be used as a source port in all coap communications*/
-    if ( OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr,
-                sizeof(addr)) == ERR_SUCCESS)
-    {
-        OC_LOG_V(INFO, TAG, "Starting occlient on address %s",addr);
-        paddr = addr;
-    }
-
     /* Initialize OCStack*/
-    if (OCInit((char *) paddr, port, OC_CLIENT) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+    if (UNICAST_DISCOVERY)
+    {
+        printf("Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)\n");
+        if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
+        {
+           //Strip newline char from ipv4addr
+            StripNewLineChar(ipv4addr);
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
+            return OC_STACK_INVALID_PARAM;
+        }
+     }
 
     if(UNICAST_DISCOVERY  == 0  && TEST_CASE == TEST_DISCOVER_DEV_REQ)
     {

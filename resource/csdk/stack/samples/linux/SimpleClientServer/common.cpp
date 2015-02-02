@@ -72,3 +72,16 @@ const char *getResult(OCStackResult result) {
         return "UNKNOWN";
     }
 }
+
+void StripNewLineChar(char* str) {
+    int i = 0;
+    if (str)
+    {
+        while( str[i])
+        {
+            if (str[i] == '\n')
+                str[i] = '\0';
+            i++;
+        }
+    }
+}
