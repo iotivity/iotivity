@@ -22,8 +22,10 @@
 # override with `make PLATFORM=arduinomega` or `make PLATFORM=arduinodue`
 # default to release build
 # default to build for linux
+# default to ETHERNET for transport
 BUILD	 := release
 PLATFORM := linux
+TRANSPORT := ETHERNET
 
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
 ARDUINOWIFI := 0
@@ -89,6 +91,7 @@ LCOAP_DIR		= libcoap-4.1.1
 OCCOAP_DIR		= occoap
 OCTBSTACK_DIR		= stack
 OCMALLOC_DIR 		= ocmalloc
+OCSECURITY_DIR  = security
 EXTLIBS_DIR		= ../../extlibs
 CJSON_DIR		= $(EXTLIBS_DIR)/cjson
 TINYDTLS_DIR	= $(EXTLIBS_DIR)/tinydtls
@@ -97,8 +100,12 @@ CONNECTIVITY_DIR	= connectivity
 OCCOAP_SRC		= $(OCCOAP_DIR)/src
 OCTBSTACK_SRC		= $(OCTBSTACK_DIR)/src
 OCMALLOC_SRC 		= $(OCMALLOC_DIR)/src
+OCSECURITY_SRC    = $(OCSECURITY_DIR)/src
 CJSON_SRC		= $(CJSON_DIR)
 CONNECTIVITY_SRC	= $(CONNECTIVITY_DIR)
+OCLOGGER_SRC		= $(OCLOGGER_DIR)/src
+OCSOCKET_SRC		= $(OCSOCKET_DIR)/src
+OCRANDOM_SRC		= $(OCRANDOM_DIR)/src
 
 OCLOGGER_INC		= $(OCLOGGER_DIR)/include
 OC_LOG_INC		= $(OC_LOG_DIR)/include
@@ -108,6 +115,7 @@ LCOAP_INC		= $(LCOAP_DIR)
 OCCOAP_INC		= $(OCCOAP_DIR)/include
 OCTBSTACK_INC		= $(OCTBSTACK_DIR)/include
 OCMALLOC_INC		= $(OCMALLOC_DIR)/include
+OCSECURITY_INC	= $(OCSECURITY_DIR)/include
 CJSON_INC		= $(CJSON_DIR)
 CONNECTIVITY_INC	= $(CONNECTIVITY_DIR)/inc
 
@@ -118,6 +126,8 @@ INC_DIRS	+= -I$(OCSOCKET_INC)
 INC_DIRS	+= -I$(LCOAP_INC)
 INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCMALLOC_INC)
+INC_DIRS	+= -I$(OCSECURITY_INC)
+INC_DIRS	+= -I$(OCSECURITY_INC)/internal
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
@@ -125,9 +135,9 @@ INC_DIRS	+= -I$(CONNECTIVITY_INC)
 INC_DIRS	+= -I$(CONNECTIVITY_DIR)/api
 
 # TODO-CA Remove -fstack-protector-all before merging to master
-CC_FLAGS.debug		:= -O0 -g3 -Wall -fstack-protector-all -c -fmessage-length=0 -pedantic -fpic -DTB_LOG 
+CC_FLAGS.debug		:= -O0 -g3 -Wall -fstack-protector-all -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
 # TODO-CA Remove -fstack-protector-all before merging to master
-CC_FLAGS.release	:= -Os -Wall -fstack-protector-all -c -fmessage-length=0 -fpic 
+CC_FLAGS.release	:= -Os -Wall -fstack-protector-all -c -fmessage-length=0 -fpic
 
 CFLAGS		+= $(CC_FLAGS.$(BUILD)) $(INC_DIRS) $(CFLAGS_PLATFORM) $(INC_DIR_PLATFORM)
 LDLIBS		+= -lcoap
@@ -144,18 +154,28 @@ OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocobserve.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocserverrequest.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/occollection.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/oicgroup.c
+OCTBSTACK_SOURCES	+= $(OCSECURITY_SRC)/ocsecurity.c
+OCTBSTACK_SOURCES	+= $(OCMALLOC_SRC)/ocmalloc.c
+OCTBSTACK_SOURCES	+= $(OCLOGGER_SRC)/logger.c
+OCTBSTACK_SOURCES	+= $(OCRANDOM_SRC)/ocrandom.c
+
+ifeq ($(PLATFORM_TYPE),arduino)
+    ifeq ($(ARDUINOWIFI),1)
+        OCTBSTACK_SOURCES += $(OCSOCKET_SRC)/ocsocket_arduino_wifi.c
+    else
+        OCTBSTACK_SOURCES += $(OCSOCKET_SRC)/ocsocket_arduino.c
+    endif
+else
+    OCTBSTACK_SOURCES += $(OCSOCKET_SRC)/ocsocket.c
+endif
 
 SOURCES			:= $(CJSON_SOURCES)
 SOURCES			+= $(OCCOAP_SOURCES)
 SOURCES			+= $(OCTBSTACK_SOURCES)
 
-all:	make_lcoap objdirs obj_build ca liboctbstack.a
+all:	objdirs obj_build ca liboctbstack.a
 
 buildScript_all: objdirs obj_build ca liboctbstack.a
-
-make_lcoap:
-	@echo "Building $@"
-	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)" "CA_INT_DTLS=$(CA_INT_DTLS)"
 
 objdirs:
 	mkdir -p $(PLATFORM)
@@ -170,15 +190,15 @@ obj_build:
 
 ca:
 	@echo "Building $@"
-	@cd $(CONNECTIVITY_SRC)/lib/libcoap-4.1.1 && $(MAKE)
-	@cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE)
-	@cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE)
-
+        ifeq ($(PLATFORM),linux)
+	    @cd $(CONNECTIVITY_SRC)/lib/libcoap-4.1.1 && $(MAKE)
+	    @cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE) "BUILD=$(BUILD)" "PLATFORM=linux"
+	    @cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE)
+        else
+	    @cd $(CONNECTIVITY_SRC)/build/ && $(MAKE) "PLATFORM=$(PLATFORM)" "ARDUINO_DIR=$(ARDUINO_DIR)" "TRANSPORT=$(TRANSPORT)"
+        endif
 liboctbstack.a:
 	@echo "Building $@"
-	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	@cd $(OBJ_DIR) && $(AR) -x $(PLATFORM_SPECIFIC_BACKOUT)$(LCOAP_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/libcoap.a
-	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
 	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
 
     ifeq ($(CA_INT_DTLS),0)
@@ -198,6 +218,8 @@ clean: legacy_clean
 	-rm -rf linux
 	-rm -rf arduinomega
 	-rm -rf arduinodue
+	@cd $(CONNECTIVITY_SRC)/build/ && $(MAKE) clean "PLATFORM=arduinomega"
+	@cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE) "clean"
 
 deepclean: legacy_deepclean
 	-rm -rf linux
@@ -223,6 +245,5 @@ legacy_deepclean:
 	cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE) clean
 	cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE) clean
 	rm -rf $(OBJ_DIR)
-	$(MAKE) clean -C $(LCOAP_DIR)
 	rm -rf release
 	rm -rf debug

@@ -119,7 +119,7 @@ int match(const str *text, const str *pattern, int match_prefix, int match_subst
         {
             size_t token_length;
             unsigned char *token = next_token;
-            next_token = memchr(token, ' ', remaining_length);
+            next_token = (unsigned char *) memchr(token, ' ', remaining_length);
 
             if (next_token)
             {
@@ -637,7 +637,8 @@ coap_find_observer(coap_resource_t *resource, const coap_address_t *peer, const 
     assert(resource);
     assert(peer);
 
-    for (s = list_head(resource->subscribers); s; s = list_item_next(s))
+    for (s = (coap_subscription_t *) list_head(resource->subscribers);
+            s; s = (coap_subscription_t *) list_item_next((void *) s))
     {
         if (coap_address_equals(&s->subscriber, peer)
                 && (!token
@@ -752,7 +753,8 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
         assert(h); /* we do not allow subscriptions if no
          * GET handler is defined */
 
-        for (obs = list_head(r->subscribers); obs; obs = list_item_next(obs))
+        for (obs = (coap_subscription_t *) list_head(r->subscribers);
+                obs; obs = (coap_subscription_t *) list_item_next((void *) obs))
         {
             if (r->dirty == 0 && obs->dirty == 0)
                 /* running this resource due to partiallydirty, but this observation's notification was already enqueued */
@@ -866,7 +868,8 @@ static void coap_remove_failed_observers(coap_context_t *context, coap_resource_
 {
     coap_subscription_t *obs;
 
-    for (obs = list_head(resource->subscribers); obs; obs = list_item_next(obs))
+    for (obs = (coap_subscription_t *) list_head(resource->subscribers);
+            obs; obs = (coap_subscription_t *) list_item_next((void *) obs))
     {
         if (coap_address_equals(peer, &obs->subscriber) && token->length == obs->token_length
                 && memcmp(token->s, obs->token, token->length) == 0)

@@ -45,8 +45,8 @@ LOGGER_DIR = $(ROOT_DIR)/logger
 STACK_DIR  = $(ROOT_DIR)/stack
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(OC_LOG_DIR)/include -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
 
-CC_FLAGS.debug		:= -O1 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic
-CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic
+CC_FLAGS.debug		:= -O1 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic -DCA_INT
+CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic -DCA_INT
 
 CFLAGS := $(CC_FLAGS.$(BUILD)) -DTB_LOG
 
@@ -67,6 +67,7 @@ all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
 
 core.a: $(PLATFORM_OBJS)
 	@cd $(OBJ_DIR) && $(AR) -x ../../../../$(ROOT_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/liboctbstack.a
+	@cd $(OBJ_DIR) && $(AR) -x ../../../../$(ROOT_DIR)/connectivity/build/arduino/core.a
 	$(AR) rcs $(OBJ_DIR)/$@ $(foreach obj, $^, $(OBJ_DIR)/$(obj)) $(OBJ_DIR)/*.o
 	@cd $(OBJ_DIR) && $(RANLIB) $@
 
@@ -103,7 +104,7 @@ endif
 
 install: all
 ifeq ($(PLATFORM),arduinomega)
-	$(AVR_PROGRAMMER) -C$(ARDUINO_DIR)/hardware/tools/avrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/$(ARDUINO_PORT) -b115200 -D -Uflash:w:$(OUT_DIR)/$(APP_NAME).hex:i
+	$(AVR_PROGRAMMER) -C$(ARDUINO_DIR)/hardware/tools/avr/etc/avrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/$(ARDUINO_PORT) -b115200 -D -Uflash:w:$(OUT_DIR)/$(APP_NAME).hex:i
 else ifeq ($(PLATFORM),arduinodue)
 	stty -F /dev/$(ARDUINO_PORT) speed 1200 cs8 -cstopb -parenb
 	$(ARDUINO_DIR)/hardware/tools/bossac -i -d --port=$(ARDUINO_PORT) -U false -e -w -v -b $(OUT_DIR)/$(APP_NAME).hex -R

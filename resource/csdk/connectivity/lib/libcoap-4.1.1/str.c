@@ -16,7 +16,7 @@
 
 str *coap_new_string(size_t size)
 {
-    str *s = coap_malloc(sizeof(str) + size + 1);
+    str *s = (str *) coap_malloc(sizeof(str) + size + 1);
     if (!s)
     {
 #ifndef NDEBUG

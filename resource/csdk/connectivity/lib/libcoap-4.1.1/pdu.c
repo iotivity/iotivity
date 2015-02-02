@@ -98,7 +98,7 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id, size_t 
 
     /* size must be large enough for hdr */
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
-    pdu = coap_malloc(sizeof(coap_pdu_t) + size);
+    pdu = (coap_pdu_t *) coap_malloc(sizeof(coap_pdu_t) + size);
 #endif
 #ifdef WITH_CONTIKI
     pdu = (coap_pdu_t *)memb_alloc(&pdu_storage);

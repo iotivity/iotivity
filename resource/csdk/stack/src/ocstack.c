@@ -39,8 +39,10 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
-#include <arpa/inet.h>
 
+#ifndef ARDUINO
+#include <arpa/inet.h>
+#endif
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -237,7 +239,7 @@ OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType, CAConnectivit
         case OC_ALL:
             // Currently OC_ALL represents WIFI and ETHERNET
             // Add other connectivity types as they are enabled in future
-            *caConType = (CA_WIFI|CA_ETHERNET);
+            *caConType = (CAConnectivityType_t) (CA_WIFI|CA_ETHERNET);
             break;
         default:
             ret = OC_STACK_INVALID_PARAM;
@@ -274,18 +276,48 @@ OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType, OCConnectiv
 // update response.addr appropriately from endPoint.addressInfo
 OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpoint_t* endPoint)
 {
-    struct sockaddr_in sa;
-    OCStackResult ret = OC_STACK_INVALID_PARAM;
-
-    if (!endPoint)
+    OCStackResult ret = OC_STACK_ERROR;
+    static OCDevAddr address = {0};
+    char * tok = NULL;
+    char * cpAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
+    if(!cpAddress)
     {
-        OC_LOG(ERROR, TAG, PCF("CA Remote end-point is NULL!"));
-        return ret;
+        ret = OC_STACK_NO_MEMORY;
+        goto exit;
     }
-    inet_pton(AF_INET, endPoint->addressInfo.IP.ipAddress, &(sa.sin_addr));
-    sa.sin_port = htons(endPoint->addressInfo.IP.port);
-    static OCDevAddr address;
-    memcpy((void*)&address.addr, &(sa), sizeof(sa));
+    memcpy(cpAddress, endPoint->addressInfo.IP.ipAddress,
+            strlen(endPoint->addressInfo.IP.ipAddress) + 1);
+
+    // Grabs the first three numbers from the IPv4 address and replaces dots
+    for(int i=0; i<3; i++)
+    {
+        if(i==0)
+        {
+            tok = strtok(cpAddress, ".");
+        }
+        else
+        {
+            tok = strtok(NULL, ".");
+        }
+        if(!tok)
+        {
+            ret = OC_STACK_ERROR;
+            goto exit;
+        }
+        address.addr[i] = atoi(tok);
+        cpAddress[strlen(cpAddress)]='.'; // Replaces the dot here.
+    }
+
+    // Grabs the last number from the IPv4 address - has no dot to replace
+    tok = strtok(NULL, ".");
+    if(!tok)
+    {
+        ret = OC_STACK_ERROR;
+        goto exit;
+    }
+    address.addr[3] = atoi(tok);
+    memcpy(&address.addr[4], &endPoint->addressInfo.IP.port, sizeof(uint32_t));
+
     if(response)
     {
         response->addr = &address;
@@ -295,6 +327,8 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
     {
         OC_LOG(ERROR, TAG, PCF("OCClientResponse is NULL!"));
     }
+exit:
+    OCFree(cpAddress);
     return ret;
 }
 
@@ -377,7 +411,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     snprintf(fullUri, MAX_URI_LENGTH, "coap://%s:%u%s", ipAddress, endPoint->addressInfo.IP.port,
                 OC_PRESENCE_URI);
 
-    cbNode = GetClientCB(NULL, NULL, (unsigned char *)fullUri);
+    cbNode = GetClientCB(NULL, NULL, (unsigned char *) fullUri);
 
     if(cbNode)
     {
@@ -386,7 +420,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     else
     {
         snprintf(fullUri, MAX_URI_LENGTH, "%s%s", OC_MULTICAST_IP, endPoint->resourceUri);
-        cbNode = GetClientCB(NULL, NULL, (unsigned char *)fullUri);
+        cbNode = GetClientCB(NULL, NULL, (unsigned char *) fullUri);
         if(cbNode)
         {
             multicastPresenceSubscribe = 1;
@@ -404,7 +438,11 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     response.resJSONPayload = NULL;
     response.result = OC_STACK_OK;
 
-    UpdateResponseAddr(&response, endPoint);
+    result = UpdateResponseAddr(&response, endPoint);
+    if(result != OC_STACK_OK)
+    {
+        goto exit;
+    }
 
     if(responseInfo->info.payload)
     {
@@ -544,6 +582,8 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
 
+    OCStackApplicationResult appResult = OC_STACK_DELETE_TRANSACTION;
+
     if(NULL == endPoint)
     {
         OC_LOG(ERROR, TAG, PCF("endPoint is NULL"));
@@ -562,7 +602,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         return;
     }
 
-    ClientCB *cbNode = GetClientCB(&(responseInfo->info.token), NULL, NULL);
+    ClientCB *cbNode = GetClientCB((CAToken_t *)&(responseInfo->info.token), NULL, NULL);
 
     if (cbNode)
     {
@@ -607,8 +647,9 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
                  &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
             }
         }
-        if (cbNode->callBack(cbNode->context,
-                cbNode->handle, &response) == OC_STACK_DELETE_TRANSACTION)
+        appResult = cbNode->callBack(cbNode->context,
+                cbNode->handle, &response);
+        if (appResult == OC_STACK_DELETE_TRANSACTION)
         {
             FindAndDeleteClientCB(cbNode);
         }
@@ -632,6 +673,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
         OC_LOG(ERROR, TAG, PCF("requestInfo is NULL"));
         return;
     }
+
+    OCStackResult requestResult = OC_STACK_ERROR;
 
     if(myStackMode == OC_CLIENT)
     {
@@ -699,7 +742,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     }
 
     OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", CA_MAX_TOKEN_LEN);
-    OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token, CA_MAX_TOKEN_LEN);
+    OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)requestInfo->info.token, CA_MAX_TOKEN_LEN);
 
     serverRequest.requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
     // Module Name
@@ -739,23 +782,23 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // copy vendor specific header options
     // TODO-CA: CA is including non-vendor header options as well, like observe.
     // Need to filter those out
-    GetObserveHeaderOption(&serverRequest.observationOption,
-            requestInfo->info.options, (uint8_t *)&(requestInfo->info.numOptions));
+    uint8_t tempNum = (requestInfo->info.numOptions);
+    GetObserveHeaderOption(&serverRequest.observationOption, requestInfo->info.options, &tempNum);
     if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
     {
         OC_LOG(ERROR, TAG,
                 PCF("The request info numOptions is greater than MAX_HEADER_OPTIONS"));
         return;
     }
-    serverRequest.numRcvdVendorSpecificHeaderOptions = requestInfo->info.numOptions;
+    serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
     if (serverRequest.numRcvdVendorSpecificHeaderOptions)
     {
         memcpy (&(serverRequest.rcvdVendorSpecificHeaderOptions), requestInfo->info.options,
-            sizeof(CAHeaderOption_t)*requestInfo->info.numOptions);
+            sizeof(CAHeaderOption_t)*tempNum);
     }
 
-
-    if(HandleStackRequests (&serverRequest) != OC_STACK_OK)
+    requestResult = HandleStackRequests (&serverRequest);
+    if(requestResult != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("HandleStackRequests failed"));
     }
@@ -1222,7 +1265,11 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     OCSeedRandom();
     CAInitialize();
     //It is ok to select network to CA_WIFI for now
+#ifdef WITH_ARDUINO
+    CAResult_t caResult = CASelectNetwork(CA_ETHERNET);
+#else
     CAResult_t caResult = CASelectNetwork(CA_WIFI|CA_ETHERNET);
+#endif
     if(caResult == CA_STATUS_OK)
     {
         OC_LOG(INFO, TAG, PCF("CASelectNetwork to WIFI"));
@@ -1593,7 +1640,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
     // create token
-
     caResult = CAGenerateToken(&token);
     if (caResult != CA_STATUS_OK)
     {
@@ -1626,7 +1672,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     CAConnectivityType_t caConType;
 
-    result = OCToCAConnectivityType(conType, &caConType);
+    result = OCToCAConnectivityType((OCConnectivityType) conType, &caConType);
     if (result != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("Invalid Connectivity Type"));
@@ -1639,6 +1685,11 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         grpEnd.connectivityType = caConType;
 
         grpEnd.resourceUri = (CAURI_t) OCMalloc(uriLen + 1);
+        if(!grpEnd.resourceUri)
+        {
+            result = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
         strncpy(grpEnd.resourceUri, requiredUri, (uriLen + 1));
 
         caResult = CASendRequestToAll(&grpEnd, &requestInfo);

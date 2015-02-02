@@ -378,20 +378,16 @@ int32_t OCDevAddrToString(OCDevAddr* addr, char* stringAddress)
 int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
             uint8_t *c, uint8_t *d )
 {
-    struct sockaddr_in *sa;
-    uint32_t ip;
 
     if ( !ipAddr || !a || !b || !c || !d ) {
         OC_LOG(FATAL, MOD_NAME, "Invalid argument");
         return ERR_INVALID_INPUT;
     }
 
-    sa = (struct sockaddr_in*)ipAddr->addr;
-    ip = ntohl(sa->sin_addr.s_addr);
-    *d = *((uint8_t*)&ip + 0);
-    *c = *((uint8_t*)&ip + 1);
-    *b = *((uint8_t*)&ip + 2);
-    *a = *((uint8_t*)&ip + 3);
+    *a = ipAddr->addr[0];
+    *b = ipAddr->addr[1];
+    *c = ipAddr->addr[2];
+    *d = ipAddr->addr[3];
 
     return ERR_SUCCESS;
 }
@@ -400,14 +396,12 @@ int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
 /// Retrieve the IPv4 address embedded inside OCDev address data structure
 int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
 {
-    struct sockaddr_in *sa;
     if ( !ipAddr || !port ) {
         OC_LOG(FATAL, MOD_NAME, "Invalid argument");
         return ERR_INVALID_INPUT;
     }
 
-    sa = (struct sockaddr_in*)ipAddr->addr;
-    *port = ntohs(sa->sin_port);
+    *port = *((uint16_t*)&ipAddr->addr[4]);
 
     return ERR_SUCCESS;
 }

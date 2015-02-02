@@ -30,7 +30,7 @@ all: prep_dirs core.a $(APP_NAME).o $(APP_NAME).elf $(APP_NAME).hex
 
 $(info *********PLATFORM_OBJS!!**********)
 core.a: $(PLATFORM_OBJS)
-	@cd $(OBJ_DIR) && $(AR) -x ../../../lib/libcoap-4.1.1/release/libcoap.a
+	@cd $(OBJ_DIR) && $(AR) -x ../../../lib/libcoap-4.1.1/$(BUILD)/libcoap.a
 	$(AR) rcs $@ $(CORE_COBJ) $(CORE_CPPOBJ) $(PLATFORM_OBJS) $(OBJ_DIR)/*.o
 	$(RANLIB) $@
 
