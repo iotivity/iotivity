@@ -30,16 +30,16 @@ extern "C" {
 #endif // __cplusplus
 
 /**
- * Provides the DTLS PSK credetials blob to OC stack.
+ * Provides the Security Configuration data to OC stack.
  *
- * @param credInfo
- *     binary blob containing credentials
+ * @param cfgData
+ *     binary blob containing config data
  * @param len
  *     length of binary blob
  *
  * @retval OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult OCSetDtlsPskCredentials(const OCDtlsPskCredsBlob *credInfo,
+OCStackResult OCSecSetConfigData(const OCSecConfigData *cfgData,
                 size_t len);
 
 #ifdef __cplusplus

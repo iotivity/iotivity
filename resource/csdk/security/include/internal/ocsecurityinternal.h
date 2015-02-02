@@ -27,6 +27,9 @@
  * This callback is used by lower stack (i.e. CA layer) to retrieve PSK
  * credentials from RI security layer.
  *
+ * Note: When finished, caller should initialize memory to zeroes and
+ * invoke OCFree to delete @p credInfo.
+ *
  * @param credInfo
  *     binary blob containing PSK credentials
  *

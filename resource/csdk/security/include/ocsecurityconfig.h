@@ -26,16 +26,21 @@
 #define DTLS_PSK_ID_LEN 16
 #define DTLS_PSK_PSK_LEN 16
 
-#define DtlsPskCredsBlobVer_1 1 /**< Credentials stored in plaintext */
-#define DtlsPskCredsBlobVer_CurrentVersion DtlsPskCredsBlobVer_1
+#define OCSecConfigVer_1 1 /**< Initial version supporting PSK Credentials */
+#define OCSecConfigVer_CurrentVersion OCSecConfigVer_1
+
+typedef enum{
+    OC_BLOB_TYPE_PSK = 1,   /**< Security blob holding PSK data */
+} OCBlobType;
+
 
 /**
- * Credentials for a device. Includes identity and the associated PSK.
+ * Credentials of a peer device. Includes identity and the associated PSK.
  */
 typedef struct
 {
-   unsigned char id[DTLS_PSK_ID_LEN];
-   unsigned char psk[DTLS_PSK_PSK_LEN];
+    unsigned char id[DTLS_PSK_ID_LEN];      /**< identity of the peer device */
+    unsigned char psk[DTLS_PSK_PSK_LEN];    /**< psk of the peer device */
 } OCDtlsPskCreds;
 
 
@@ -45,14 +50,52 @@ typedef struct
  */
 typedef struct
 {
-   uint16_t blobVer;                        /**< version of the blob */
-   uint16_t reserved;                       /**< reserved for future use */
-   unsigned char identity[DTLS_PSK_ID_LEN]; /**< identity of self */
-   uint32_t num;                            /**< number of credentials in this blob */
-   OCDtlsPskCreds creds[1];                 /**< list of credentials. Size of this
+    unsigned char identity[DTLS_PSK_ID_LEN]; /**< identity of self */
+    uint32_t num;                            /**< number of credentials in this blob */
+    OCDtlsPskCreds creds[1];                 /**< list of credentials. Size of this
                                                  array is determined by 'num' variable. */
 } OCDtlsPskCredsBlob;
 
+
+/**
+ * Generic definition of a security blob. A security blob can contain
+ * info of various types, such as : PSK info, certificates,
+ * access control lists(ACL) etc.
+ */
+typedef struct
+{
+    uint16_t  type;     /**< Type of blob */
+    uint16_t  len;   /**< length of blob data */
+    uint8_t   val[1];   /**< A variable size array holding blob data */
+} OCSecBlob;
+
+
+/**
+ * This structure defines the security related configuration data for
+ * Iotivity applications.
+ */
+typedef struct
+{
+   uint16_t    version;  /**< version of the config data */
+   uint16_t    numBlob;  /**< number of security blobs in this config data */
+   uint8_t     blob[1];  /**< A variable size array holding a blob */
+} OCSecConfigData;
+
+/**
+ * Interprets @p blob as pointer to a OCSecBlob and advances to
+ * the next blob in the OCSecConfigData
+ */
+#define config_data_next_blob(blob) \
+            ((OCSecBlob*)((blob)->val + (blob)->len));
+
+/**
+ * Configuration data for security will be stored in below fashion in a
+ * flat file on persistent storage.
+ *
+ *  --------------------------------------------------------------
+ *  | OCSecConfigData| OCSecBlob #1 | OCSecBlob #2 | OCSecBlob #3|
+ *  --------------------------------------------------------------
+ */
 
 #endif //OC_SECURITY_CONFIG_H
 

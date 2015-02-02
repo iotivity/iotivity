@@ -46,7 +46,7 @@ OCStackResult SetCredentials(const char* filename) {
                 if (fread(data, 1, st.st_size, fp) == (size_t)st.st_size)
                 {
                     // Provide credentials to OC Stack
-                    ret = OCSetDtlsPskCredentials((OCDtlsPskCredsBlob *)data,
+                    ret = OCSecSetConfigData((OCSecConfigData *)data,
                             st.st_size);
                 }
                 else

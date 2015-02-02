@@ -24,56 +24,180 @@
 #include "ocsecurityconfig.h"
 #include <string.h>
 
-static OCDtlsPskCredsBlob* pskCredsBlob;
-static int pskCredsBlobLen;
+static OCSecConfigData* secConfigData;
+static int secConfigDataLen;
 
-// Internal API. Invoked by OC stack to cleanup memory
+/**
+ * This internal API removes/clears the global variable holding the security
+ * config data. This needs to be invoked when OIC stack is shutting down.
+ *
+ * @retval none
+ */
 void DeinitOCSecurityInfo()
 {
-    if (pskCredsBlob)
+    if (secConfigData)
     {
         // Initialize sensitive data to zeroes before freeing.
-        memset(pskCredsBlob, 0, pskCredsBlobLen);
+        memset(secConfigData, 0, secConfigDataLen);
 
-        OCFree(pskCredsBlob);
-        pskCredsBlob = NULL;
+        OCFree(secConfigData);
+        secConfigData = NULL;
     }
 }
 
-// Internal API. Invoked by OC stack to retrieve credentials from this module
-void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
-{
-    *credInfo = pskCredsBlob;
-}
-
 /**
- * Provides the DTLS PSK credetials blob to OC stack.
+ * This internal callback is used by lower stack (i.e. CA layer) to
+ * retrieve PSK credentials from RI security layer.
+ *
+ * Note: When finished, caller should initialize memory to zeroes and
+ * invoke OCFree to delete @p credInfo.
  *
  * @param credInfo
- *     binary blob containing credentials
+ *     binary blob containing PSK credentials
+ *
+ * @retval none
+ */
+void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
+{
+    if(secConfigData && credInfo)
+    {
+        unsigned int i = 0;
+        OCSecBlob * osb = (OCSecBlob*)secConfigData->blob;
+        for ( ;(i<secConfigData->numBlob) && osb; i++)
+        {
+            if (osb->type == OC_BLOB_TYPE_PSK)
+            {
+                OCDtlsPskCredsBlob * blob;
+                blob = (OCDtlsPskCredsBlob *)OCMalloc(osb->len);
+                if (blob)
+                {
+                    memcpy(blob, osb->val, osb->len);
+                    *credInfo = blob;
+                    break;
+                }
+            }
+            osb = config_data_next_blob(osb);
+        }
+    }
+}
+
+
+/**
+ * This method validates the sanctity of OCDtlsPskCredsBlob.
+ *
+ * @param secBlob
+ *     binary blob containing PSK credentials
+ *
+ * @retval OC_STACK_OK for Success, otherwise some error value
+ */
+static
+OCStackResult ValidateBlobTypePSK(const OCSecBlob *secBlob)
+{
+    OCDtlsPskCredsBlob *pskCredsBlob;
+    uint16_t validLen;
+
+    if(secBlob->len == 0)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    pskCredsBlob = (OCDtlsPskCredsBlob *)secBlob->val;
+
+    //calculate the expected length of PSKCredsBlob
+    if(pskCredsBlob->num >= 1)
+    {
+        validLen = sizeof(OCDtlsPskCredsBlob) +
+            (pskCredsBlob->num - 1) * sizeof(OCDtlsPskCredsBlob);
+    }
+    else
+    {
+        validLen = sizeof(OCDtlsPskCredsBlob);
+    }
+
+    if(secBlob->len != validLen)
+        return OC_STACK_INVALID_PARAM;
+
+    return OC_STACK_OK;
+}
+
+
+/**
+ * This method validates the sanctity of configuration data provided
+ * by application to OC stack.
+ *
+ * @param cfgdata
+ *     binary blob containing credentials and other config data
  * @param len
  *     length of binary blob
  *
  * @retval OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult OCSetDtlsPskCredentials(const OCDtlsPskCredsBlob *credInfo,
+static
+OCStackResult ValidateSecConfigData(const OCSecConfigData *cfgData,
                 size_t len)
 {
-    if(credInfo && len > 0)
+    OCStackResult ret = OC_STACK_OK;
+    unsigned int i = 0;
+    OCSecBlob * osb = NULL;
+
+    if (!cfgData || (len == 0))
     {
-        if (credInfo->blobVer != DtlsPskCredsBlobVer_CurrentVersion)
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (cfgData->version != OCSecConfigVer_CurrentVersion)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    osb = (OCSecBlob*)cfgData->blob;
+    for ( ;(i<cfgData->numBlob) && osb; i++)
+    {
+        if (osb->type == OC_BLOB_TYPE_PSK)
+        {
+            ret = ValidateBlobTypePSK(osb);
+        }
+        else
         {
             return OC_STACK_INVALID_PARAM;
         }
 
+        if (ret != OC_STACK_OK)
+        {
+            return ret;
+        }
+        osb = config_data_next_blob(osb);
+    }
+
+    return ret;
+}
+
+
+
+/**
+ * Provides the Security configuration data to OC stack.
+ *
+ * @param cfgdata
+ *     binary blob containing credentials and other config data
+ * @param len
+ *     length of binary blob
+ *
+ * @retval OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult OCSecSetConfigData(const OCSecConfigData *cfgData,
+                size_t len)
+{
+    // Validate the data inside blob before consuming
+    if (cfgData && ValidateSecConfigData(cfgData, len) == OC_STACK_OK)
+    {
         // Remove existing blob
         DeinitOCSecurityInfo();
         // Allocate storage for new blob
-        pskCredsBlob = (OCDtlsPskCredsBlob*)OCMalloc(len);
-        if (pskCredsBlob)
+        secConfigData = (OCSecConfigData*)OCMalloc(len);
+        if (secConfigData)
         {
-            memcpy(pskCredsBlob, credInfo, len);
-            pskCredsBlobLen = len;
+            memcpy(secConfigData, cfgData, len);
+            secConfigDataLen = len;
             return OC_STACK_OK;
         }
 
