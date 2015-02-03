@@ -34,7 +34,7 @@ OBJS	  := OICMiddle.o \
 				WrapResource.o \
 				LineInput.o \
 				RestInput.o
-				
+
 CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
 
 CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
@@ -46,7 +46,6 @@ CXX_INC	  += -I$(OIC_RES)/csdk/ocsocket/include
 CXX_INC	  += -I$(OIC_RES)/csdk/ocrandom/include
 CXX_INC	  += -I$(OIC_RES)/csdk/logger/include
 CXX_INC	  += -I$(OIC_RES)/csdk/libcoap
-CXX_INC   += -I$(OIC_RES)/../extlibs/cereal/include
 
 CXX_LIBS  := -L${OIC_LIB}
 CXX_LIBS  += -loc
@@ -59,7 +58,7 @@ all: prep_dirs OICMiddle
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
-	
+
 OICMiddle: $(OBJS)
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ $(OBJS) $(CXX_LIBS)
 
@@ -74,13 +73,13 @@ Server.o: Server.cpp Server.h OICMiddle.h
 
 WrapResource.o: WrapResource.cpp WrapResource.h OICMiddle.h
 	$(CXX) -c $(CXX_FLAGS.$(BUILD)) WrapResource.cpp $(CXX_INC)
-	
+
 LineInput.o: LineInput.cpp LineInput.h OICMiddle.h
 	$(CXX) -c $(CXX_FLAGS.$(BUILD)) LineInput.cpp $(CXX_INC)
-	
+
 RestInput.o: RestInput.cpp RestInput.h OICMiddle.h
 	$(CXX) -c $(CXX_FLAGS.$(BUILD)) RestInput.cpp $(CXX_INC)
-	
+
 clean:
 	rm $(OBJS)
 	rm -rf debug

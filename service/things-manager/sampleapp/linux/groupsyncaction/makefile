@@ -19,7 +19,6 @@ CXX_INC	+= -I${IOT_BASE}/csdk/stack/include
 CXX_INC	+= -I${IOT_BASE}/csdk/ocsocket/include
 CXX_INC	+= -I${IOT_BASE}/csdk/ocrandom/include
 CXX_INC	+= -I${IOT_BASE}/csdk/logger/include
-CXX_INC	+= -I${IOT_BASE}/dependencies/cereal/include
 
 CXX_LIB=-L""
 

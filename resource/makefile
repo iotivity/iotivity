@@ -38,7 +38,7 @@ OUT_DIR	  := $(ROOT_DIR)/$(BUILD)
 OBJ_DIR	  := $(OUT_DIR)/obj
 
 #TODO-CA Need to remove flag later
-CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0 
+CXX_FLAGS.debug     := -g3 -std=c++0x -Wall -pthread -O0
 CXX_FLAGS.release   := -std=c++0x -Wall -pthread -O3
 
 CXX_INC	  := -I./include/
@@ -49,7 +49,7 @@ CXX_INC	  += -I./csdk/ocsocket/include
 CXX_INC	  += -I./csdk/ocrandom/include
 CXX_INC	  += -I./csdk/logger/include
 CXX_INC	  += -I./csdk/libcoap
-CXX_INC   += -I$(CEREAL_DIR)/include
+
 # Force metatargets to build:
 all.PHONY: applyDepPatches prep_dirs c_sdk oc_logger_target liboc.a examples
 
@@ -98,7 +98,7 @@ OCPlatform.o: src/OCPlatform.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform.cpp $(CXX_INC)
 
 OCRepresentation.o: src/OCRepresentation.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCRepresentation.cpp $(CXX_INC)
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCRepresentation.cpp $(CXX_INC) -I$(CEREAL_DIR)/include
 
 OCResource.o: src/OCResource.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCResource.cpp $(CXX_INC)
@@ -113,10 +113,10 @@ InProcServerWrapper.o: src/InProcServerWrapper.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/InProcServerWrapper.cpp $(CXX_INC)
 
 InProcClientWrapper.o: src/InProcClientWrapper.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/InProcClientWrapper.cpp $(CXX_INC)
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/InProcClientWrapper.cpp $(CXX_INC) -I$(CEREAL_DIR)/include
 
 OCResourceRequest.o: src/OCResourceRequest.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCResourceRequest.cpp $(CXX_INC)
+	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCResourceRequest.cpp $(CXX_INC) -I$(CEREAL_DIR)/include
 
 clean: clean_legacy
 	-rm -rf release

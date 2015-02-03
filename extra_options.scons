@@ -31,5 +31,3 @@ if not os.path.exists(src_dir + '/extlibs/cereal'):
 *********************************************************************************
 '''
 	Exit(1)
-else:
-	env.AppendUnique(CPPPATH = [src_dir + '/extlibs/cereal/include'])
