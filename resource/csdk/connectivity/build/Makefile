@@ -38,21 +38,21 @@ $(info *******************tizen Build !!******************)
 all:
 	sh tizen/gbsbuild.sh $(TRANSPORT)
 
+clean:
+	sh tizen/gbsbuild.sh clean
+
 else ifeq ($(PLATFORM),arduinomega)
 $(info *********ArduinoMega Build!!**********)
 all:
 	sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
 	sh arduino/build.sh make $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
 
-clean:	
-	sh arduino/build.sh clean $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
-
 install:
 	sh arduino/build.sh install $(PLATFORM) $(TRANSPORT) $(ARDUINO_DIR) $(APPNAME)
-	
+
+clean:
+	sh arduino/build.sh clean
 else
    $(info *********error**********)
    $(error Wrong value for PLATFORM !!)
 endif
-
-

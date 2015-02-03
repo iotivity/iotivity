@@ -42,7 +42,7 @@ ifeq ($(PLATFORM),linux)
     CC=gcc
     AR=ar
     RANLIB=ranlib
-    CFLAGS_PLATFORM = -DWITH_POSIX -std=c99
+    CFLAGS_PLATFORM = -DWITH_POSIX -std=gnu99
     PLATFORM_TYPE=linux
 else ifeq ($(PLATFORM),arduinomega)
     include local.properties
