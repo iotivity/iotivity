@@ -45,8 +45,8 @@ LOGGER_DIR = $(ROOT_DIR)/logger
 STACK_DIR  = $(ROOT_DIR)/stack
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(OC_LOG_DIR)/include -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include
 
-CC_FLAGS.debug		:= -O1 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic -DCA_INT
-CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic -DCA_INT
+CC_FLAGS.debug		:= -O1 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic
+CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic
 
 CFLAGS := $(CC_FLAGS.$(BUILD)) -DTB_LOG
 
