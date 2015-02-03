@@ -44,7 +44,7 @@ oc_log_ctx_t *oc_log_make_ctx(
     0 == set_module)
   return 0;
 
- if(__OC_LOG_MIN__ > level || __OC_LOG_MAX__ < level)
+ if(OC_LOG_MIN_VAL__ >= level || OC_LOG_MAX_VAL__ <= level)
   return 0;
 
  log_ctx = (oc_log_ctx_t *)malloc(sizeof(oc_log_ctx_t));

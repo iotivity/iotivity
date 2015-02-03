@@ -28,7 +28,7 @@
 #endif
 
  typedef enum {
-     __OC_LOG_MIN__     = -1,
+     OC_LOG_MIN_VAL__   = -1,
      OC_LOG_ALL         = 0,
      OC_LOG_FATAL,
      OC_LOG_ERROR,
@@ -36,7 +36,7 @@
      OC_LOG_INFO,
      OC_LOG_DEBUG,
      OC_LOG_DISABLED,
-     __OC_LOG_MAX__
+     OC_LOG_MAX_VAL__
  } oc_log_level;
 
 typedef struct _oc_log_ctx
