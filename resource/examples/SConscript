@@ -2,12 +2,8 @@
 # Examples build script
 ##
 Import('env')
-# Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
-examples_env = lib_env.Clone()
-
+examples_env = env.Clone()
 ######################################################################
 # Build flags
 ######################################################################

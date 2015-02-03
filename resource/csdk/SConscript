@@ -1,13 +1,9 @@
 ##
 # liboctbstack (share library) build script
 ##
-
 Import('env')
 
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
-
-liboctbstack_env = lib_env.Clone()
+liboctbstack_env = env.Clone()
 
 target_os = env.get('TARGET_OS')
 # As in the source code, it includes arduino Time library (C++)

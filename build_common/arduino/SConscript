@@ -392,9 +392,7 @@ else:
 		env.AppendUnique(LIBS = 'm')
 	env.Replace(ARCOM = '$AR ' + platform_info.get('compiler.ar.flags') + ' $TARGET $SOURCES')
 
-__build_core(env)
-
 env.AddMethod(__import_lib, "ImportLib") #import arduino library
-#env.AddMethod(__build_core, "BuildCore") #build arduino core
+env.AddMethod(__build_core, "BuildCore") #build arduino core
 env.AddMethod(__create_bin, "CreateBin") #create binary files(.eep and .hex)
 env.AddMethod(__upload_help, "UploadHelp") #print the command line that to upload binary to the boardf

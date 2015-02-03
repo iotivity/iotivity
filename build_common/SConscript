@@ -144,8 +144,10 @@ def __install(ienv, targets, name):
 	Alias(name, i_n)
 	env.AppendUnique(TS = [name])
 
-def __append_target(ienv, target):
-	env.AppendUnique(TS = [target])
+def __append_target(ienv, name, targets = None):
+	if targets:
+		env.Alias(name, targets)
+	env.AppendUnique(TS = [name])
 
 def __print_targets(env):
 	Help('''
@@ -226,6 +228,8 @@ else:
 		env.SConscript('linux/SConscript')
     else:
 		env.SConscript(target_os + '/SConscript')
+
+env.SConscript('external_libs.scons')
 
 # Delete the temp files of configuration
 if env.GetOption('clean'):

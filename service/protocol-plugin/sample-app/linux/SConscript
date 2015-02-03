@@ -21,11 +21,10 @@ if target_os not in ['windows', 'winrt']:
 	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread', '-std=c++0x'])
 
 sample_env.AppendUnique(LIBS = ['pthread'])
-sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'ppm', 'pmimpl', 'dl'])
+sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'ppm', 'pmimpl', 'boost_system', 'boost_thread', 'dl'])
 ######################################################################
 # Source files and Targets
 ######################################################################
 mqttclient = sample_env.Program('mqtt/mqttclient', 'mqtt/mqttclient.cpp')
 
-Alias('mqttclient', mqttclient)
-env.AppendTarget('mqttclient')
+env.AppendTarget('mqttclient', mqttclient)

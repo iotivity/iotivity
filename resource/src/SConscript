@@ -3,11 +3,7 @@
 ##
 Import('env')
 
-# Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
-
-oclib_env = lib_env.Clone()
+oclib_env = env.Clone()
 ######################################################################
 # Build flags
 ######################################################################

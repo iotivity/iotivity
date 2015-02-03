@@ -6,13 +6,18 @@
 # Load common build config
 SConscript('build_common/SConscript')
 
-# Load extra options
-SConscript('extra_options.scons')
 Import('env')
 
 target_os = env.get('TARGET_OS')
 if target_os == 'arduino':
 	SConscript('arduino.scons')
+else:
+	# Prepare libraries
+	env.PrepareLib('cereal')
+	env.PrepareLib('expat')
+	env.PrepareLib('boost', 'boost_thread', env.get('SRC_DIR') + '/extlibs/boost/')
+	env.PrepareLib('boost', 'boost_system', env.get('SRC_DIR') + '/extlibs/boost/')
+
 # By default, src_dir is current dir, the build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/
 #
