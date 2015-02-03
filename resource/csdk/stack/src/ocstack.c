@@ -742,7 +742,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     }
 
     OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", CA_MAX_TOKEN_LEN);
-    OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)requestInfo->info.token, CA_MAX_TOKEN_LEN);
+    OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token, CA_MAX_TOKEN_LEN);
 
     serverRequest.requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
     // Module Name

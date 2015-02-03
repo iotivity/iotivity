@@ -108,7 +108,7 @@ void DeleteClientCB(ClientCB * cbNode) {
         LL_DELETE(cbList, cbNode);
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
         CADestroyToken (cbNode->token);
-        OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)cbNode->token, CA_MAX_TOKEN_LEN);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, CA_MAX_TOKEN_LEN);
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
         if(cbNode->deleteCallback)
@@ -145,8 +145,8 @@ ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const unsigned
     if(token) {
         LL_FOREACH(cbList, out) {
             OC_LOG(INFO, TAG, PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)*token, CA_MAX_TOKEN_LEN);
-            OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)out->token, CA_MAX_TOKEN_LEN);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)*token, CA_MAX_TOKEN_LEN);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, CA_MAX_TOKEN_LEN);
             if(memcmp(out->token, *token, CA_MAX_TOKEN_LEN) == 0)
             {
                 return out;

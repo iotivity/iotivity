@@ -366,8 +366,8 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t * token)
         LL_FOREACH (serverObsList, out)
         {
             OC_LOG(INFO, TAG,PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)token, CA_MAX_TOKEN_LEN);
-            OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)out->token, CA_MAX_TOKEN_LEN);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, CA_MAX_TOKEN_LEN);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, CA_MAX_TOKEN_LEN);
             if((memcmp(out->token, *token, CA_MAX_TOKEN_LEN) == 0))
             {
                 return out;
@@ -386,7 +386,7 @@ OCStackResult DeleteObserverUsingToken (CAToken_t * token)
     if (obsNode)
     {
         OC_LOG_V(INFO, TAG, PCF("deleting tokens"));
-        OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)obsNode->token, CA_MAX_TOKEN_LEN);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)obsNode->token, CA_MAX_TOKEN_LEN);
         LL_DELETE (serverObsList, obsNode);
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);

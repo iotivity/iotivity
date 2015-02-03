@@ -40,8 +40,8 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token)
     LL_FOREACH (serverRequestList, out)
     {
         OC_LOG(INFO, TAG,PCF("comparing tokens"));
-        OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)token, CA_MAX_TOKEN_LEN);
-        OC_LOG_BUFFER(INFO, TAG, (const unsigned char *)out->requestToken, CA_MAX_TOKEN_LEN);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, CA_MAX_TOKEN_LEN);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, CA_MAX_TOKEN_LEN);
         if(memcmp(out->requestToken, token, CA_MAX_TOKEN_LEN) == 0)
         {
             return out;
