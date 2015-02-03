@@ -35,6 +35,8 @@ using namespace OIC;
 int g_Steps = 0;
 int isWaiting = 0; //0: none to wait, 1: wait for the response of "getConfigurationValue"
 
+const int SUCCESS_RESPONSE = 0;
+
 static ThingsManager* g_thingsmanager;
 
 OCResourceHandle configurationCollectionHandle;
@@ -62,35 +64,61 @@ typedef std::function<
 typedef std::string ConfigurationName;
 typedef std::string ConfigurationValue;
 
+void timeCheck(int timeSec)
+{
+    sleep(timeSec);
+    isWaiting = 0;
+}
+
 void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
-    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
-
-    std::cout << "\t\tReboot:" << rep.getValue< std::string >("value") << std::endl;
-
     isWaiting = 0;
+
+    if (eCode != SUCCESS_RESPONSE)
+    {
+        return ;
+    }
+
+    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+    std::cout << "\t\tReboot:" << rep.getValue< std::string >("value") << std::endl;
 }
 
 void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& rep,
         const int eCode)
 {
-    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
-
-    std::cout << "\t\tFactoryReset:" << rep.getValue< std::string >("value") << std::endl;
     isWaiting = 0;
+
+    if (eCode != SUCCESS_RESPONSE)
+    {
+       return ;
+    }
+
+    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+    std::cout << "\t\tFactoryReset:" << rep.getValue< std::string >("value") << std::endl;
 }
 
 void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
-    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
-
-    std::cout << "\t\tvalue:" << rep.getValue< std::string >("value") << std::endl;
-
     isWaiting = 0;
+
+    if (eCode != SUCCESS_RESPONSE)
+    {
+        return ;
+    }
+
+    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+    std::cout << "\t\tvalue:" << rep.getValue< std::string >("value") << std::endl;
 }
 
 void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
+    isWaiting = 0;
+
+    if (eCode != SUCCESS_RESPONSE)
+    {
+        return ;
+    }
+
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
     if (rep.hasAttribute("value"))
@@ -109,8 +137,6 @@ void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
         else if (oit->hasAttribute("link"))
             std::cout << "\t\tlink:" << oit->getValue< std::string >("link") << std::endl;
     }
-
-    isWaiting = 0;
 }
 
 // Callback to found collection resource
@@ -153,9 +179,7 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
         //log(e.what());
     }
 
-    if (g_configurationCollection != NULL && g_diagnosticsCollection != NULL
-            && g_setCollection != NULL)
-        isWaiting = 0;
+    isWaiting = 0;
 }
 
 // Callback to found resources
@@ -164,8 +188,6 @@ void onFoundCandidateCollection(std::vector< std::shared_ptr< OCResource > > res
 
     std::string resourceURI;
     std::string hostAddress;
-
-    static bool flagForCon = false, flagForDiag = false, flagForSet = false;
 
     try
     {
@@ -194,7 +216,6 @@ void onFoundCandidateCollection(std::vector< std::shared_ptr< OCResource > > res
                     {
                         if (resource->uri() == "/oic/con")
                         {
-                            flagForCon = true;
                             OCPlatform::bindResource(configurationCollectionHandle,
                                     foundResourceHandle);
                             if (g_configurationResource == NULL)
@@ -202,7 +223,6 @@ void onFoundCandidateCollection(std::vector< std::shared_ptr< OCResource > > res
                         }
                         else if (resource->uri() == "/oic/diag")
                         {
-                            flagForDiag = true;
                             OCPlatform::bindResource(diagnosticsCollectionHandle,
                                     foundResourceHandle);
                             if (g_diagnosticsResource == NULL)
@@ -210,7 +230,6 @@ void onFoundCandidateCollection(std::vector< std::shared_ptr< OCResource > > res
                         }
                         else if (resource->uri() == "/factorySet")
                         {
-                            flagForSet = true;
                             OCPlatform::bindResource(setCollectionHandle, foundResourceHandle);
                             if (g_setResource == NULL)
                                 g_setResource = resource;
@@ -239,8 +258,7 @@ void onFoundCandidateCollection(std::vector< std::shared_ptr< OCResource > > res
         //log(e.what());
     }
 
-    if (flagForCon && flagForDiag && flagForSet)
-        isWaiting = 0;
+    isWaiting = 0;
 }
 
 int main(int argc, char* argv[])
@@ -361,6 +379,10 @@ int main(int argc, char* argv[])
             g_thingsmanager->findCandidateResources(types, &onFoundCandidateCollection, 5);
 
             isWaiting = 1;
+
+            thread t(&timeCheck, 5);
+            t.join();       // After 5 seconds, isWaiting value will be 0.
+            t.~thread();
         }
         else if (g_Steps == 2) // make a group with found things
         {
@@ -372,8 +394,12 @@ int main(int argc, char* argv[])
             g_thingsmanager->findCandidateResources(types, &onFoundCollectionResource, 5);
 
             std::cout << "Finding Collection resource... " << std::endl;
+
             isWaiting = 1;
 
+            thread t(&timeCheck, 5);
+            t.join();       // After 5 seconds, isWaiting value will be 0.
+            t.~thread();
         }
         else if (g_Steps == 3)
         {
@@ -396,6 +422,12 @@ int main(int argc, char* argv[])
             ConfigurationName name = "region";
             ConfigurationValue value = "U.S.A (new region)";
 
+            if(g_configurationCollection == NULL)
+            {
+                std::cout<<"Note that you first create a group to use this command." << std::endl;
+                continue;
+            }
+
             std::cout << "For example, change region resource's value" << std::endl;
             std::cout << g_configurationCollection->uri() << std::endl;
 
@@ -413,6 +445,12 @@ int main(int argc, char* argv[])
 
             ConfigurationName name = "region";
 
+            if(g_configurationCollection == NULL)
+            {
+                std::cout<<"Note that you first create a group to use this command." << std::endl;
+                continue;
+            }
+
             std::cout << "For example, get region resource's value" << std::endl;
 
             std::vector< ConfigurationName > configurations;
@@ -426,6 +464,12 @@ int main(int argc, char* argv[])
         else if (g_Steps == 6)
         {
             // factory reset
+            if(g_diagnosticsCollection == NULL)
+            {
+                std::cout<<"Note that you first create a group to use this command." << std::endl;
+                continue;
+            }
+
             if (g_thingsmanager->factoryReset(g_diagnosticsCollection, &onFactoryReset)
                     != OC_STACK_ERROR)
                 isWaiting = 1;
@@ -433,6 +477,12 @@ int main(int argc, char* argv[])
         else if (g_Steps == 7)
         {
             // reboot
+            if(g_diagnosticsCollection == NULL)
+            {
+                std::cout<<"Note that you first create a group to use this command." << std::endl;
+                continue;
+            }
+
             if (g_thingsmanager->reboot(g_diagnosticsCollection, &onReboot) != OC_STACK_ERROR)
                 isWaiting = 1;
         }
@@ -446,4 +496,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-

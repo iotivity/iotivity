@@ -252,38 +252,36 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
 // callback handler on GET request
 void onBootstrap(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE)
-    {
-        std::cout << "\n\nGET request was successful" << std::endl;
-        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+    isWaiting = 0;
 
-        defaultRegionValue = rep.getValue< std::string >("regionValue");
-        defaultTimeValue = rep.getValue< std::string >("timeValue");
-        defaultCurrentTimeValue = rep.getValue< std::string >("currentTimeValue");
-        defaultNetworkValue = rep.getValue< std::string >("networkValue");
-        defaultIPAddressValue = rep.getValue< std::string >("IPAddressValue");
-        defaultSecurityValue = rep.getValue< std::string >("securityValue");
-        defaultModeValue = rep.getValue< std::string >("modeValue");
-        defaultConfigurationValue = rep.getValue< std::string >("configurationValue");
-        defaultFactorySetValue = rep.getValue< std::string >("factorySetValue");
-
-        std::cout << "\tregionValue : " << defaultRegionValue << std::endl;
-        std::cout << "\ttimeValue : " << defaultTimeValue << std::endl;
-        std::cout << "\tcurrentTimeValue : " << defaultCurrentTimeValue << std::endl;
-        std::cout << "\tnetworkValue : " << defaultNetworkValue << std::endl;
-        std::cout << "\tIPAddressValue : " << defaultIPAddressValue << std::endl;
-        std::cout << "\tsecurityValue : " << defaultSecurityValue << std::endl;
-        std::cout << "\tmodeValue : " << defaultModeValue << std::endl;
-        std::cout << "\tconfigurationValue : " << defaultConfigurationValue << std::endl;
-        std::cout << "\tfactorySetValue : " << defaultFactorySetValue << std::endl;
-
-    }
-    else
+    if (eCode != SUCCESS_RESPONSE)
     {
         std::cout << "onGET Response error: " << eCode << std::endl;
-        std::exit(-1);
+        return ;
     }
-    isWaiting = 0;
+
+    std::cout << "\n\nGET request was successful" << std::endl;
+    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+
+    defaultRegionValue = rep.getValue< std::string >("regionValue");
+    defaultTimeValue = rep.getValue< std::string >("timeValue");
+    defaultCurrentTimeValue = rep.getValue< std::string >("currentTimeValue");
+    defaultNetworkValue = rep.getValue< std::string >("networkValue");
+    defaultIPAddressValue = rep.getValue< std::string >("IPAddressValue");
+    defaultSecurityValue = rep.getValue< std::string >("securityValue");
+    defaultModeValue = rep.getValue< std::string >("modeValue");
+    defaultConfigurationValue = rep.getValue< std::string >("configurationValue");
+    defaultFactorySetValue = rep.getValue< std::string >("factorySetValue");
+
+    std::cout << "\tregionValue : " << defaultRegionValue << std::endl;
+    std::cout << "\ttimeValue : " << defaultTimeValue << std::endl;
+    std::cout << "\tcurrentTimeValue : " << defaultCurrentTimeValue << std::endl;
+    std::cout << "\tnetworkValue : " << defaultNetworkValue << std::endl;
+    std::cout << "\tIPAddressValue : " << defaultIPAddressValue << std::endl;
+    std::cout << "\tsecurityValue : " << defaultSecurityValue << std::endl;
+    std::cout << "\tmodeValue : " << defaultModeValue << std::endl;
+    std::cout << "\tconfigurationValue : " << defaultConfigurationValue << std::endl;
+    std::cout << "\tfactorySetValue : " << defaultFactorySetValue << std::endl;
 }
 
 int main()

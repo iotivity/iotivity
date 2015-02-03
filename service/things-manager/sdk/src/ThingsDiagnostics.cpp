@@ -31,8 +31,6 @@ using namespace OC;
 
 namespace OIC
 {
-    const int SUCCESS_RESPONSE = 0;
-
     std::map< std::string, DiagnosticsRequestEntry > diagnosticsRequestTable;
 
     ThingsDiagnostics* ThingsDiagnostics::thingsDiagnosticsInstance = NULL;
@@ -149,131 +147,127 @@ namespace OIC
     void ThingsDiagnostics::onGetChildInfoForUpdate(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode, std::string diag)
     {
-        if (eCode == SUCCESS_RESPONSE)
+        if (eCode != OC_STACK_OK)
         {
-            std::cout << "GET request was successful" << std::endl;
+            std::cout << "onGet Response error: " << eCode << std::endl;
+            getCallback(diag)(headerOptions, rep, eCode);
+            return ;
+        }
 
-            std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+        std::cout << "GET request was successful" << std::endl;
 
-            std::vector < OCRepresentation > children = rep.getChildren();
+        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+
+        std::vector < OCRepresentation > children = rep.getChildren();
+        for (auto oit = children.begin(); oit != children.end(); ++oit)
+        {
+            std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+        }
+
+        // Get information by using diagnostics name(diag)
+        std::shared_ptr < OCResource > resource = getResource(diag);
+        std::string actionstring = diag;
+        std::string uri = getUriByDiagnosticsName(diag);
+        std::string attr = getAttributeByDiagnosticsName(diag);
+
+        if (uri == "")
+            return;
+
+        if (resource)
+        {
+            // In this nest, we create a new action set of which name is the dignostics name.
+            // Required information consists of a host address, URI, attribute key, and
+            // attribute value.
+            ActionSet *newActionSet = new ActionSet();
+            newActionSet->actionsetName = diag;
+
             for (auto oit = children.begin(); oit != children.end(); ++oit)
             {
-                std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+                Action *newAction = new Action();
+
+                // oit->getUri() includes a host address as well as URI.
+                // We should split these to each other and only use the host address to create
+                // a child resource's URI. Note that the collection resource and its child
+                // resource are located in same host.
+                newAction->target = getHostFromURI(oit->getUri()) + uri;
+
+                Capability *newCapability = new Capability();
+                newCapability->capability = attr;
+                newCapability->status = getUpdateVal(diag);
+
+                newAction->listOfCapability.push_back(newCapability);
+                newActionSet->listOfAction.push_back(newAction);
             }
 
-            // Get information by using diagnostics name(diag)
-            std::shared_ptr < OCResource > resource = getResource(diag);
-            std::string actionstring = diag;
-            std::string uri = getUriByDiagnosticsName(diag);
-            std::string attr = getAttributeByDiagnosticsName(diag);
+            // Request to create a new action set by using the above actionSet
+            g_groupmanager->addActionSet(resource, newActionSet,
+                    std::function<
+                            void(const HeaderOptions& headerOptions,
+                                    const OCRepresentation& rep, const int eCode) >(
+                            std::bind(&ThingsDiagnostics::onCreateActionSet, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, diag)));
 
-            if (uri == "")
-                return;
+            free(newActionSet);
 
-            if (resource)
-            {
-                // In this nest, we create a new action set of which name is the dignostics name.
-                // Required information consists of a host address, URI, attribute key, and
-                // attribute value.
-                ActionSet *newActionSet = new ActionSet();
-                newActionSet->actionsetName = diag;
-
-                for (auto oit = children.begin(); oit != children.end(); ++oit)
-                {
-                    Action *newAction = new Action();
-
-                    // oit->getUri() includes a host address as well as URI.
-                    // We should split these to each other and only use the host address to create
-                    // a child resource's URI. Note that the collection resource and its child
-                    // resource are located in same host.
-                    newAction->target = getHostFromURI(oit->getUri()) + uri;
-
-                    Capability *newCapability = new Capability();
-                    newCapability->capability = attr;
-                    newCapability->status = getUpdateVal(diag);
-
-                    newAction->listOfCapability.push_back(newCapability);
-                    newActionSet->listOfAction.push_back(newAction);
-                }
-
-                // Request to create a new action set by using the above actionSet
-                g_groupmanager->addActionSet(resource, newActionSet,
-                        std::function<
-                                void(const HeaderOptions& headerOptions,
-                                        const OCRepresentation& rep, const int eCode) >(
-                                std::bind(&ThingsDiagnostics::onCreateActionSet, this,
-                                        std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3, diag)));
-
-                free(newActionSet);
-
-            }
-
-        }
-        else
-        {
-            std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
         }
     }
 
     void ThingsDiagnostics::onCreateActionSet(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode, std::string diag)
     {
-        if (eCode == SUCCESS_RESPONSE)
-        {
-            std::cout << "PUT request was successful" << std::endl;
-
-            std::shared_ptr < OCResource > resource = getResource(diag);
-            if (resource)
-            {
-                // Now, it is time to execute the action set.
-                g_groupmanager->executeActionSet(resource, diag,
-                        std::function<
-                                void(const HeaderOptions& headerOptions,
-                                        const OCRepresentation& rep, const int eCode) >(
-                                std::bind(&ThingsDiagnostics::onExecuteForGroupAction, this,
-                                        std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3, diag)));
-            }
-        }
-        else
+        if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
+            getCallback(diag)(headerOptions, rep, eCode);
+            return ;
+        }
+
+        std::cout << "PUT request was successful" << std::endl;
+
+        std::shared_ptr < OCResource > resource = getResource(diag);
+        if (resource)
+        {
+            // Now, it is time to execute the action set.
+            g_groupmanager->executeActionSet(resource, diag,
+                    std::function<
+                            void(const HeaderOptions& headerOptions,
+                                    const OCRepresentation& rep, const int eCode) >(
+                            std::bind(&ThingsDiagnostics::onExecuteForGroupAction, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, diag)));
         }
     }
 
     void ThingsDiagnostics::onExecuteForGroupAction(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode, std::string diag)
     {
-        if (eCode == SUCCESS_RESPONSE)
-        {
-            std::cout << "PUT request was successful" << std::endl;
-
-            getCallback(diag)(headerOptions, rep, eCode);
-        }
-        else
+        if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
+            getCallback(diag)(headerOptions, rep, eCode);
+            return ;
         }
+
+        std::cout << "PUT request was successful" << std::endl;
+
+        getCallback(diag)(headerOptions, rep, eCode);
     }
 
     void ThingsDiagnostics::onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
             const int eCode, std::string diag)
     {
-        if (eCode == SUCCESS_RESPONSE)
-        {
-            std::cout << "PUT request was successful" << std::endl;
-
-            getCallback(diag)(headerOptions, rep, eCode);
-        }
-        else
+        if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
+            getCallback(diag)(headerOptions, rep, eCode);
+            return ;
         }
+
+        std::cout << "PUT request was successful" << std::endl;
+
+        getCallback(diag)(headerOptions, rep, eCode);
+
     }
 
     bool ThingsDiagnostics::isSimpleResource(std::shared_ptr< OCResource > resource)
