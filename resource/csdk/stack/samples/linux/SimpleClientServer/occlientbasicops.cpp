@@ -22,28 +22,24 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
-
-#include <set>
-#include <string>
+#include <stdint.h>
 #include <sstream>
-#include <iostream>
-#include <algorithm>
 
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"
+#include "cJSON.h"
+#include "ocmalloc.h"
+
+#define MAX_IP_ADDR_ST_SZ  16 //string size of "155.255.255.255" (15 + 1)
+#define MAX_PORT_ST_SZ  6     //string size of "65535" (5 + 1)
 
 static int IPV4_ADDR_SIZE = 16;
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 
-static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:5298/oc/core";
-
+static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:5298/oc/core";
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
-
-static std::string coapServerIP = "255.255.255.255";
-static std::string coapServerPort = "5683";
-static std::string coapServerResource = "/a/led";
 
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to WIFI.
@@ -52,16 +48,10 @@ static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 
 int gQuitFlag = 0;
 
-namespace
-{
-    typedef std::pair<bool, std::string>    extract_result_t;
-    typedef std::string                     sid_t;
-    typedef std::set<std::string>           SID_set_t;
-} // namespace
-
-void collateSIDs(const OCClientResponse * clientResponse, const std::string& server_ip);
-
-/* SIGINT handler: set gQuitFlag to 1 for graceful termination */
+struct ResourceNode *resourceList;
+/*
+ * SIGINT handler: set gQuitFlag to 1 for graceful termination
+ * */
 void handleSigInt(int signum)
 {
     if (signum == SIGINT)
@@ -74,15 +64,25 @@ static void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
             " Initiate Nonconfirmable Get/Put/Post Requests");
-    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
+    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate "
+            "Confirmable Get/Put/Post Requests");
+    OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI.");
+    OC_LOG(INFO, TAG, "Default connectivityType WIFI");
 }
 
-OCStackResult InvokeOCDoResource(std::ostringstream &query,
-        OCMethod method, OCQualityOfService qos,
+/*
+ * Returns the first resource in the list
+ */
+const ResourceNode * getResource()
+{
+    return resourceList;
+}
+
+OCStackResult InvokeOCDoResource(std::ostringstream &query, OCMethod method,
+                                 OCConnectivityType connType, OCQualityOfService qos,
         OCClientResponseHandler cb, OCHeaderOption * options, uint8_t numOptions)
 {
     OCStackResult ret;
@@ -94,181 +94,249 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.cd = NULL;
 
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
-            (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
-            OC_CONNTYPE, qos, &cbData, options, numOptions);
+        (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
+         connType, qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
+        OC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d",
+                 ret, method);
     }
 
     return ret;
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
+                                OCClientResponse * clientResponse)
 {
+    uint8_t remoteIpAddr[4];
+    uint16_t remotePortNu;
+
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
+        OC_LOG(INFO, TAG, "<====Callback Context for PUT received successfully====>");
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "<====Callback Context for PUT fail====>");
     }
 
     if(clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response",
-                clientResponse->resJSONPayload);
+        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
+                            remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
+        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
+
+        OC_LOG_V(INFO, TAG,"PUT Response: %s \nFrom %d.%d.%d.%d:%d\n",
+                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
+                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "<====PUT Callback fail to receive clientResponse====>\n");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle,
+                          OCClientResponse *clientResponse)
 {
+    uint8_t remoteIpAddr[4];
+    uint16_t remotePortNu;
+
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
+        OC_LOG(INFO, TAG, "<====Callback Context for POST received successfully====>");
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "<====Callback Context for POST fail====>");
     }
 
     if(clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Post Response",
-                clientResponse->resJSONPayload);
+        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
+                            remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
+        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
+
+        OC_LOG_V(INFO, TAG,"POST Response: %s \nFrom %d.%d.%d.%d:%d\n",
+                    clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
+                    remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
     }
+    else
+    {
+        OC_LOG(ERROR, TAG, "<====POST Callback fail to receive clientResponse====>\n");
+    }
+
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
+                           OCClientResponse * clientResponse)
 {
+    uint8_t remoteIpAddr[4];
+    uint16_t remotePortNu;
+
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
+        OC_LOG(INFO, TAG, "<====Callback Context for GET received successfully====>");
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "<====Callback Context for GET fail====>");
     }
 
     if(clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response",
-                clientResponse->resJSONPayload);
-    }
-    if(clientResponse->rcvdVendorSpecificHeaderOptions &&
+
+        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
+                        remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
+        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
+
+        OC_LOG_V(INFO, TAG,"Get Response: %s \nFrom %d.%d.%d.%d:%d\n",
+                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
+                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+
+        if(clientResponse->rcvdVendorSpecificHeaderOptions &&
             clientResponse->numRcvdVendorSpecificHeaderOptions)
-    {
-        OC_LOG (INFO, TAG, "Received vendor specific options");
-        uint8_t i = 0;
-        OCHeaderOption * rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
-        for( i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
         {
-            if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
+            OC_LOG (INFO, TAG, "Received vendor specific options");
+            uint8_t i = 0;
+            OCHeaderOption * rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
+            for( i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
             {
-                OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
+                {
+                    OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
                         ((OCHeaderOption)rcvdOptions[i]).optionID );
-                OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                    OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
                         ((OCHeaderOption)rcvdOptions[i]).optionLength);
+                }
             }
         }
     }
+    else
+    {
+        OC_LOG(ERROR, TAG, "<====GET Callback fail to receive clientResponse====>\n");
+    }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-// This is a function called back when a device is discovered
+/*
+ * This is a function called back when a device is discovered
+ */
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
-
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
+        OC_LOG(INFO, TAG, "\n<====Callback Context for DISCOVERY query "
+               "received successfully====>");
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "\n<====Callback Context for DISCOVERY fail====>");
     }
 
     if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-
         OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
                 remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
         OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
 
         OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
+                "Device Discovered %s \n @ %d.%d.%d.%d:%d\n",
                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
                 remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
 
-        parseClientResponse(clientResponse);
-
-        collateSIDs(clientResponse, getIPAddrTBServer(clientResponse));
-
-        switch(TEST_CASE)
-        {
-            case TEST_NON_CON_OP:
-                InitGetRequest(OC_LOW_QOS);
-                InitPutRequest();
-                InitPostRequest(OC_LOW_QOS);
-                break;
-            case TEST_CON_OP:
-                InitGetRequest(OC_HIGH_QOS);
-                InitPutRequest();
-                InitPostRequest(OC_HIGH_QOS);
-                break;
-            default:
-                PrintUsage();
-                break;
-        }
+        collectUniqueResource(clientResponse);
     }
-
-    return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
+    else
+    {
+        OC_LOG(ERROR, TAG, "<====DISCOVERY Callback fail to receive clientResponse====>\n");
+    }
+    return (UNICAST_DISCOVERY) ?
+           OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 }
 
-int InitPutRequest()
+int InitPutRequest(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
+    //Get most recently inserted resource
+    const ResourceNode * resource  = getResource();
+
+    if(!resource)
+    {
+        OC_LOG_V(ERROR, TAG, "Resource null, can't do PUT request\n");
+        return -1;
+    }
+    query << "coap://" << resource->ip << ":" << resource->port << resource->uri ;
+    OC_LOG_V(INFO, TAG,"Executing InitPutRequest, Query: %s", query.str().c_str());
+
+    return (InvokeOCDoResource(query, OC_REST_PUT, resource->connType,
+           ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
+            putReqCB, NULL, 0));
 }
 
 int InitPostRequest(OCQualityOfService qos)
 {
     OCStackResult result;
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+    //Get most recently inserted resource
+    const ResourceNode * resource  = getResource();
+
+    if(!resource)
+    {
+        OC_LOG_V(ERROR, TAG, "Resource null, can't do POST request\n");
+        return -1;
+    }
+
+    query << "coap://" << resource->ip << ":" << resource->port << resource->uri ;
+    OC_LOG_V(INFO, TAG,"Executing InitPostRequest, Query: %s", query.str().c_str());
 
     // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST,
+    result = InvokeOCDoResource(query, OC_REST_POST, resource->connType,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
             postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
-        OC_LOG(INFO, TAG, "First POST call did not succeed");
+        OC_LOG(ERROR, TAG, "First POST call did not succeed");
     }
 
     // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST,
+    result = InvokeOCDoResource(query, OC_REST_POST, resource->connType,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
             postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
-        OC_LOG(INFO, TAG, "Second POST call did not succeed");
+        OC_LOG(ERROR, TAG, "Second POST call did not succeed");
     }
 
     // This POST operation will update the original resourced /a/led
-    return (InvokeOCDoResource(query, OC_REST_POST,
+    return (InvokeOCDoResource(query, OC_REST_POST,resource->connType,
                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                 postReqCB, NULL, 0));
 }
 
 int InitGetRequest(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+    //Get most recently inserted resource
+    const ResourceNode * resource  = getResource();
 
-    return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)?
-            OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
+    if(!resource)
+    {
+        OC_LOG_V(ERROR, TAG, "Resource null, can't do GET request\n");
+        return -1;
+    }
+    query << "coap://" << resource->ip << ":" << resource->port << resource->uri ;
+    OC_LOG_V(INFO, TAG,"Executing InitGetRequest, Query: %s", query.str().c_str());
+
+    return (InvokeOCDoResource(query, OC_REST_GET, resource->connType,
+            (qos == OC_HIGH_QOS)?OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
 }
 
 int InitDiscovery()
@@ -281,7 +349,8 @@ int InitDiscovery()
     if (UNICAST_DISCOVERY)
     {
         char ipv4addr[IPV4_ADDR_SIZE];
-        printf("Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)\n");
+        printf("Enter IPv4 address of the Server hosting "
+               "resource (Ex: 192.168.0.15)\n");
         if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
         {
             //Strip newline char from ipv4addr
@@ -311,6 +380,7 @@ int InitDiscovery()
         ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
+
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -318,10 +388,303 @@ int InitDiscovery()
     return ret;
 }
 
+
+
+const char * getIPAddr(const OCClientResponse * clientResponse)
+{
+    uint8_t a, b, c, d;
+   if(!clientResponse || 0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d))
+    {
+        return "";
+    }
+
+    char * ipaddr = NULL;
+    if((ipaddr = (char *) OCCalloc(1, MAX_IP_ADDR_ST_SZ)))
+    {
+        snprintf(ipaddr, MAX_IP_ADDR_ST_SZ, "%d.%d.%d.%d", a,b,c,d);
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "Memory not allocated to ipaddr");
+    }
+    return ipaddr;
+}
+
+const char * getPort(const OCClientResponse * clientResponse)
+{
+    uint16_t p = 0;
+    if(!clientResponse || 0 != OCDevAddrToPort(clientResponse->addr, &p) )
+    {
+        return "";
+    }
+
+    char * port = NULL;
+    if((port = (char *) OCCalloc(1, MAX_PORT_ST_SZ)))
+    {
+        snprintf(port, MAX_PORT_ST_SZ, "%d", p);
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "Memory not allocated to port");
+    }
+    return port;
+}
+
+int parseJSON(unsigned  const char * resJSONPayload, char ** sid_c,
+              char *** uri_c, int * totalRes)
+{
+    cJSON * root = NULL;
+    cJSON * oc = NULL;
+
+    root = cJSON_Parse((char *)(resJSONPayload));
+
+    if (!root)
+    {
+        OC_LOG(ERROR, TAG, "JSON Parsing Error");
+        return OC_STACK_INVALID_JSON;
+    }
+
+    oc = cJSON_GetObjectItem(root,"oc");
+    if (!oc)
+    {
+        OC_LOG(ERROR, TAG, "Invalid JSON : Missing oc object");
+        return OC_STACK_INVALID_JSON;
+    }
+
+    * totalRes = cJSON_GetArraySize(oc);
+
+    if(oc->type == cJSON_Array)
+    {
+        cJSON * resource = cJSON_GetArrayItem(oc, 0);
+
+        if(!resource)
+        {
+            return OC_STACK_INVALID_JSON;
+        }
+
+        if (cJSON_GetObjectItem(resource, "sid"))
+        {
+            char * sid = cJSON_GetObjectItem(resource, "sid")->valuestring;
+            if((* sid_c = (char *)OCCalloc(1, strlen (sid) + 1)))
+            {
+                memcpy(* sid_c, sid, strlen(sid) + 1);
+            }
+            else
+            {
+                OC_LOG(ERROR, TAG, "Memory not allocated to sid");
+                return OC_STACK_NO_MEMORY;
+            }
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "Invalid JSON : Missing sid object");
+            return OC_STACK_INVALID_JSON;
+        }
+
+        if(!(* uri_c =  (char ** )OCMalloc ((* totalRes) * sizeof(char **))))
+        {
+            OC_LOG(ERROR, TAG, "Memory not allocated to sid_c array");
+            return OC_STACK_NO_MEMORY;
+        }
+
+        int i = 0;
+
+        while(true)
+        {
+            if (cJSON_GetObjectItem(resource, "href"))
+            {
+                char *uri= cJSON_GetObjectItem(resource, "href")->valuestring;
+                if(((*uri_c)[i] = (char *)OCCalloc(1, strlen (uri) + 1)))
+                {
+                    memcpy((*uri_c)[i], uri, strlen(uri) + 1);
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, "Memory not allocated to uri");
+                    return OC_STACK_NO_MEMORY;
+                }
+                i++;
+                if(i >= (* totalRes))
+                    break;
+                resource = cJSON_GetArrayItem(oc, i);
+            }
+            else
+            {
+               OC_LOG(ERROR, TAG, "Invalid JSON : Missing uri object");
+               return OC_STACK_INVALID_JSON;
+           }
+        }
+    }
+    else
+    {
+        return OC_STACK_INVALID_JSON;
+        OC_LOG(ERROR, TAG, "Invalid JSON : oc object type is not an array");
+    }
+    return OC_STACK_OK;
+}
+
+void queryResource()
+{
+    printf("\n");
+    switch(TEST_CASE)
+    {
+        case TEST_DISCOVER_REQ:
+            break;
+        case TEST_NON_CON_OP:
+            InitGetRequest(OC_LOW_QOS);
+            InitPutRequest(OC_LOW_QOS);
+            InitPostRequest(OC_LOW_QOS);
+            break;
+        case TEST_CON_OP:
+            InitGetRequest(OC_HIGH_QOS);
+            InitPutRequest(OC_HIGH_QOS);
+            InitPostRequest(OC_HIGH_QOS);
+            break;
+        default:
+            PrintUsage();
+            break;
+    }
+    printf("\n");
+}
+
+
+void collectUniqueResource(const OCClientResponse * clientResponse)
+{
+    char * sid = NULL;
+    char ** uri = NULL;
+    int totalRes = 0;
+
+    if(parseJSON(clientResponse->resJSONPayload, & sid, & uri, &totalRes)
+            != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "Error while parsing JSON payload in OCClientResponse");
+    }
+
+    int i;
+    for(i = 0; i < totalRes; i++)
+    {
+        if(insertResource(sid, uri[i], clientResponse) == 1)
+        {
+            printf("%s%s%s%s\n",sid, ":", uri[i], " is new");
+            printResourceList();
+            queryResource();
+        }
+        else
+        {
+            printf("%s%s%s%s\n\n",sid, ":", uri[i], " has been seen before");
+        }
+    }
+
+    OCFree(uri);
+ }
+
+/* This function searches for the resource(sid:uri) in the ResourceList.
+ * If the Resource is found in the list then it returns 0 else insert
+ * the resource to front of the list and returns 1.
+ */
+int insertResource(const char * sid, char const * uri,
+            const OCClientResponse * clientResponse)
+{
+    ResourceNode * iter = resourceList;
+
+    //Checking if the resource(sid:uri) is new
+    while(iter)
+    {
+        if((strcmp(iter->sid, sid) == 0) && (strcmp(iter->uri, uri) == 0))
+        {
+            return 0;
+        }
+        else
+        {
+            iter = iter->next;
+        }
+    }
+
+    //Creating new ResourceNode
+    if((iter = (ResourceNode *) OCMalloc(sizeof(ResourceNode))))
+    {
+        iter->sid = sid;
+        iter->uri = uri;
+        iter->ip = getIPAddr(clientResponse);
+        iter->port = getPort(clientResponse);
+        iter->connType = clientResponse->connType;
+        iter->next = NULL;
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "Memory not allocated to ResourceNode");
+        return -1;
+    }
+
+    //Adding new ResourceNode to front of the ResourceList
+    if(!resourceList)
+    {
+        resourceList = iter;
+    }
+    else
+    {
+        iter->next = resourceList;
+        resourceList = iter;
+    }
+    return 1;
+}
+
+void printResourceList()
+{
+    ResourceNode * iter;
+    iter = resourceList;
+    printf("\nResource List\n");
+    while(iter)
+    {
+        printf("*****************************************************\n");
+        printf("sid = %s \n",iter->sid);
+        printf("uri = %s\n", iter->uri);
+        printf("ip = %s\n", iter->ip);
+        printf("port = %s\n", iter->port);
+        switch (iter->connType)
+        {
+            case OC_ETHERNET:
+                printf("connType = %s\n","Ethernet");
+                break;
+            case OC_WIFI:
+                printf("connType = %s\n","WiFi");
+                break;
+            case OC_LE:
+                printf("connType = %s\n","BLE");
+                break;
+            case OC_EDR:
+                printf("connType = %s\n","BT");
+                break;
+            case OC_ALL:
+            default:
+                printf("connType = %s\n","Invalid connType");
+                break;
+        }
+        printf("*****************************************************\n");
+        iter = iter->next;
+    }
+}
+
+void freeResourceList()
+{
+    OC_LOG(INFO, TAG, "Freeing ResourceNode List");
+    ResourceNode * temp;
+    while(resourceList)
+    {
+        temp = resourceList;
+        resourceList = resourceList->next;
+        OCFree((void *)temp->sid);
+        OCFree((void *)temp->uri);
+        OCFree((void *)temp->ip);
+        OCFree((void *)temp->port);
+        OCFree(temp);
+    }
+}
+
 int main(int argc, char* argv[])
 {
     int opt;
-
+    resourceList = NULL;
     while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
     {
         switch(opt)
@@ -367,134 +730,15 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-
         sleep(2);
     }
-    OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
+    freeResourceList();
+    OC_LOG(INFO, TAG, "Exiting occlient main loop...");
     if (OCStop() != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack stop error");
     }
-
     return 0;
 }
 
-std::string getIPAddrTBServer(OCClientResponse * clientResponse)
-{
-    if (!clientResponse)
-    {
-        return "";
-    }
-    if (!clientResponse->addr)
-    {
-        return "";
-    }
-    uint8_t a, b, c, d = 0;
-    if(0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) ) return "";
-
-    char ipaddr[16] = {'\0'};
-    // ostringstream not working correctly here, hence snprintf
-    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d);
-    return std::string (ipaddr);
-}
-
-
-std::string getPortTBServer(OCClientResponse * clientResponse)
-{
-    if (!clientResponse)
-    {
-        return "";
-    }
-    if (!clientResponse->addr)
-    {
-        return "";
-    }
-    uint16_t p = 0;
-    if (0 != OCDevAddrToPort(clientResponse->addr, &p))
-    {
-        return "";
-    }
-    std::ostringstream ss;
-    ss << p;
-    return ss.str();
-}
-
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
-{
-    return "/a/led";
-}
-
-
-/* You could do this with the JSON parser of your choice, a regular expression, PEG
-grammar, etc.. This "sample" version does not handle cases like escaping strings,
-but shows a simple way you might approach the task with just the C++98 library: */
-extract_result_t extract_value(const std::string& search_key, const std::string& input)
-{
-    const std::string key('\"' + search_key + "\":\"");
-
-    const size_t key_mark = input.find(key);
-    const size_t key_edge = key_mark + key.length();
-    const size_t val_mark = input.find_first_of("\"", key_edge);
-
-    if(std::string::npos == key_mark || std::string::npos == val_mark)
-    {
-       std::ostringstream os;
-
-       os << "extract_value(): \"" << search_key << "\" not found in input";
-       OC_LOG(ERROR, TAG, os.str().c_str());
-
-       return std::make_pair(false, "");
-     }
-
-    return std::make_pair(true, input.substr(key_edge, val_mark - key_edge));
-}
-
-extract_result_t parseSID(const OCClientResponse * const clientResponse)
-{
-    const char* const& pl_in = reinterpret_cast<const char *>(clientResponse->resJSONPayload);
-
-    const std::string pl(pl_in, strlen(pl_in));
-
-    const extract_result_t sid = extract_value("sid", pl);
-    const extract_result_t uri = extract_value("href", pl);
-    //TODO-CA: It should be just enough to send the SID alone and not the combination
-    // of it.
-    return std::make_pair(sid.first and uri.first, sid.second + ':' + uri.second);
-}
-
-void parseClientResponse(OCClientResponse * clientResponse)
-{
-    coapServerIP = getIPAddrTBServer(clientResponse);
-    coapServerPort = getPortTBServer(clientResponse);
-    coapServerResource = getQueryStrForGetPut(clientResponse);
-}
-
-void collateSIDs(const OCClientResponse * clientResponse, const std::string& server_ip)
-{
-    static SID_set_t sids;
-
-    const extract_result_t sid_result = parseSID(clientResponse);
-
-    if (false == sid_result.first)
-    {
-        return;
-    }
-
-    const sid_t& sid = sid_result.second;
-
-    /* ...there's no need for an application to take any special action, but we can tell
-     if we've seen a resource before, regardless of the transport it arrive on: */
-    std::ostringstream msg;
-
-    if (not sids.insert(sid).second)
-    {
-        msg << "SID " << sid << " has been seen before.\n";
-    }
-    else
-    {
-        msg << "SID " << sid << " is new.\n";
-    }
-
-    OC_LOG(INFO, TAG, msg.str().c_str());
-}

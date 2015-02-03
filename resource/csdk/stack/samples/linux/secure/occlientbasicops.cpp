@@ -46,6 +46,7 @@ static std::string coapServerResource;
 static int coapSecureResource;
 static OCConnectivityType ocConnType;
 
+
 //File containing Client's Identity and the PSK credentials
 //of other devices which the client trusts
 //This can be generated using 'gen_sec_bin' application
@@ -258,7 +259,6 @@ int InitDiscovery()
             OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-
         printf("Select Connectivity type on which discovery request needs to be send : ");
         printf("0:ETH, 1:WIFI\n");
         discoveryReqConnType = ((getchar() - '0') == 0) ? OC_ETHERNET : OC_WIFI;
