@@ -26,6 +26,7 @@
 #include "oicgroup.h"
 #include "ocresource.h"
 #include "occollection.h"
+#include "logger.h"
 
 #define TAG PCF("OICGROUP")
 
@@ -217,10 +218,8 @@ void DeleteActionSet(OCActionSet** actionset)
 
 OCStackResult FindAndDeleteActionSet(OCResource **resource, const char * actionsetName)
 {
-
     if (*resource != NULL)
     {
-
         OCActionSet *pointer = NULL;
         OCActionSet *pDel = NULL;
 
@@ -238,9 +237,7 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource, const char * actions
                     (*resource)->actionsetHead = pointer->next;
                 else
                     (*resource)->actionsetHead = NULL;
-
                 DeleteActionSet(&pointer);
-
             }
             else if (pointer->next != NULL)
             {
@@ -256,6 +253,7 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource, const char * actions
                             DeleteActionSet(&pDel);
                         }
                     }
+                    pointer = pointer->next;
                 }
             }
 
@@ -263,7 +261,6 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource, const char * actions
         }
 
     }
-
     return OC_STACK_ERROR;
 }
 
@@ -340,9 +337,13 @@ OCStackResult GetActionSetFromString(OCResource **resource, unsigned char *reque
 
                 //GetActionName(iterToken, &actionsetName);
                 // printf("%s\n", iterToken, &iterTokenPtr);
-                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr); // it is mean ':'.
+                // it is mean ':'.
+                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr);
+
                 // printf("%s\n", iterToken);
-                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr); // it is body of action description.
+                // it is body of action description.
+                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr);
+
                 // printf("%s\n", iterToken);
 
                 // printf("DESC :: %s\n", iterToken);
@@ -412,7 +413,6 @@ OCStackResult GetActionSetFromString(OCResource **resource, unsigned char *reque
                             if (strcmp(iterToken, "uri") == 0)
                             {
                                 iterToken = (char *) strtok_r(NULL, "=", &iterAttrPtr);
-                                //printf("uri :: %s\n", iterToken);
                                 action->resourceUri = (char *) OCMalloc(strlen(iterToken) + 1);
                                 strncpy(action->resourceUri, iterToken, strlen(iterToken) + 1);
                             }
@@ -452,9 +452,11 @@ OCStackResult GetActionSetFromString(OCResource **resource, unsigned char *reque
                 *method = (char *) OCMalloc(strlen(iterToken) + 1);
                 strncpy(*method, iterToken, strlen(iterToken) + 1);
 
-                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr); // it is mean ':'.
+                // it is mean ':'.
+                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr);
                 // printf("%s\n", iterToken);
-                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr); // it is body of action description.
+                // it is body of action description.
+                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr);
                 // printf("%s\n", iterToken);
 
                 description = (char *) OCMalloc(strlen(iterToken) + 1);
