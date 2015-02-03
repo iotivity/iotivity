@@ -28,10 +28,6 @@ if target_os in ['linux', 'tizen']:
 
 		conf = Configure(lib_env)
 
-		if not conf.CheckLib('boost_program_options'):
-			print 'Did not find boost_program_options, exiting!'
-			Exit(1)
-
 		if not conf.CheckLib('glib-2.0'):
 			print 'Install glib-2 on ubuntu with the following command'
 			print 'sudo apt-get install libglib2.0-dev'

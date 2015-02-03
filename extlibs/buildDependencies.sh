@@ -43,7 +43,7 @@ function buildBoost {
     if [ ! -d "${BOOST_NAME}" ]; then
         unpackBoost
     fi
-    
+
     TOOLCHAIN=${ANDROID_NDK}/toolchains/${TOOLSET}-${VERSION}/prebuilt/linux-x86/bin
     echo "Copying user configs to boost"
     cp ../resource/patches/user-config-${TOOLSET}.jam ${BOOST_NAME}/tools/build/v2/user-config.jam
@@ -62,7 +62,6 @@ function buildBoost {
         -s PLATFORM=android-${PLATFORM} \
         -s VERSION=${VERSION} \
         --with-thread \
-        --with-program_options \
         install
     popd
 
