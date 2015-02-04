@@ -64,6 +64,16 @@ namespace OC
                 }
             }
 
+            virtual ~OCHeaderOption(){}
+
+            OCHeaderOption(const OCHeaderOption&) = default;
+
+            OCHeaderOption(OCHeaderOption&&) = default;
+
+            OCHeaderOption& operator=(const OCHeaderOption&) = default;
+
+            OCHeaderOption& operator=(OCHeaderOption&&) = default;
+
             /**
             * API to get Option ID
             * @return unsigned integer option ID

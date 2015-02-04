@@ -90,6 +90,10 @@ namespace OC
     friend class ListenOCContainer;
     public:
         typedef std::shared_ptr<OCResource> Ptr;
+
+        OCResource(OCResource&&) = default;
+        OCResource& operator=(OCResource&&) = default;
+
         /**
         * Virtual destructor
         */

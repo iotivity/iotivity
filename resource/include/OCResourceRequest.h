@@ -57,6 +57,8 @@ namespace OC
         {
         }
 
+        OCResourceRequest(OCResourceRequest&&) = default;
+        OCResourceRequest& operator=(OCResourceRequest&&) = default;
         /**
         *  Virtual destructor
         */

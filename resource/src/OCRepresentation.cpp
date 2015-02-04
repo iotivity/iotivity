@@ -161,9 +161,6 @@ namespace OC
 
 namespace OC
 {
-    OCRepresentation::OCRepresentation()
-    :m_interfaceType(InterfaceType::None)
-    { }
     std::string OCRepresentation::getJSONRepresentation() const
     {
         if(emptyData())

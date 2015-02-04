@@ -98,7 +98,18 @@ namespace OC
     class OCRepresentation
     {
         public:
-            OCRepresentation();
+            OCRepresentation(): m_interfaceType(InterfaceType::None){}
+
+            OCRepresentation(OCRepresentation&&) = default;
+
+            OCRepresentation(const OCRepresentation&) = default;
+
+            OCRepresentation& operator=(const OCRepresentation&) = default;
+
+            OCRepresentation& operator=(OCRepresentation&&) = default;
+
+            virtual ~OCRepresentation(){}
+
             std::string getJSONRepresentation() const;
 
             void addChild(const OCRepresentation&);
