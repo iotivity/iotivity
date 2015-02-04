@@ -349,7 +349,7 @@ namespace OC
 
         // TODO-CA Revisit this since we are exposing two identifiers
         /**
-        * Function to get a unqiue identifier for this
+        * Function to get a unique identifier for this
         * resource across network interfaces.  This will
         * be guaranteed unique for every resource-per-server
         * independent of how this was discovered.

@@ -164,7 +164,7 @@ namespace OC
         *   //192.168.1.1/oc/a/light"
         * First parameter can take a relative URI and core will take care of preparing the fully
         * qualified URI OR
-        * first paramter can take fully qualified URI and core will take that as is for further
+        * first parameter can take fully qualified URI and core will take that as is for further
         * operations
         * NOTE: OCStackResult is defined in ocstack.h.
         */

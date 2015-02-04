@@ -110,9 +110,9 @@ namespace OC
     *  ServiceType: indicate InProc or OutOfProc
     *  ModeType   : indicate whether we want to do server, client or both
     *  ipAddress  : ip address of server.
-    *               if you speecifiy 0.0.0.0 : it listens on any interface.
+    *               if you specify 0.0.0.0 : it listens on any interface.
     *  port       : port of server.
-    *             : if you specifiy 0 : next available random port is used.
+    *             : if you specify 0 : next available random port is used.
     *             : if you specify 5683 : client discovery can work even if they don't specify port.
     *  QoS        : Quality of Service : CONFIRMABLE or NON CONFIRMABLE.
     */
