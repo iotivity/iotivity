@@ -57,6 +57,8 @@ namespace OC
         {
         }
 
+        OCResourceResponse(OCResourceResponse&&) = default;
+        OCResourceResponse& operator=(OCResourceResponse&&) = default;
         virtual ~OCResourceResponse(void) {}
 
         /**
