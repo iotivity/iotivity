@@ -44,7 +44,7 @@
  * @def CA_PORT
  * @brief Port to listen for incoming data
  */
-#define CA_PORT   5298
+#define CA_PORT   6298
 
 /**
  * @def CA_SECURE_PORT
@@ -72,77 +72,77 @@ typedef struct
 } CAEthernetData;
 
 /**
- * @var gNetworkPacketCallback
+ * @var g_networkPacketCallback
  * @brief Network Packet Received Callback to CA
  */
-static CANetworkPacketReceivedCallback gNetworkPacketCallback = NULL;
+static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 
 /**
- * @var gNetworkChangeCb
+ * @var g_networkChangeCallback
  * @brief Network Changed Callback to CA
  */
-static CANetworkChangeCallback gNetworkChangeCallback = NULL;
+static CANetworkChangeCallback g_networkChangeCallback = NULL;
 
 /**
- * @var gIsMulticastServerStarted
+ * @var g_isMulticastServerStarted
  * @brief Flag to check if multicast server is started
  */
-static bool gIsMulticastServerStarted = false;
+static bool g_isMulticastServerStarted = false;
 
 /**
  * @var gIsStartServerCalled
  * @brief Flag to check if server start requested by CA.
  */
-static bool gStartUnicastServerRequested = false;
+static bool g_startUnicastServerRequested = false;
 
 /**
- * @var gUnicastServerport
+ * @var g_unicastServerport
  * @brief port number on which unicast server is running.
  */
-static int16_t gUnicastServerport = 0;
+static uint16_t g_unicastServerport = 0;
 
 #ifdef __WITH_DTLS__
 /**
- * @var gSecureUnicastServerport
+ * @var g_secureUnicastServerport
  * @brief port number on which secure unicast server is running.
  */
-static int16_t gSecureUnicastServerport = 0;
+static uint16_t g_secureUnicastServerport = 0;
 #endif
 
 /**
- * @var gIsStartServerCalled
+ * @var g_startMulticastServerRequested
  * @brief Flag to check if server start requested by CA.
  */
-static bool gStartMulticastServerRequested = false;
+static bool g_startMulticastServerRequested = false;
 
 /**
- * @var gSendQueueHandle
+ * @var g_sendQueueHandle
  * @brief Queue handle for Send Data
  */
-static CAQueueingThread_t *gSendQueueHandle = NULL;
+static CAQueueingThread_t *g_sendQueueHandle = NULL;
 
 /**
- * @var gThreadPool
+ * @var g_threadPool
  * @brief ThreadPool for storing u_thread_pool_t handle passed from CA
  */
-static u_thread_pool_t gThreadPool = NULL;
+static u_thread_pool_t g_threadPool = NULL;
 
 static CAResult_t CAEthernetInitializeQueueHandles();
 static void CAEthernetDeinitializeQueueHandles();
-static void CAEthernetNotifyNetworkChange(const char *address, const int16_t port,
+static void CAEthernetNotifyNetworkChange(const char *address, const uint16_t port,
         const CANetworkStatus_t status);
 static void CAEthernetConnectionStateCB(const char *ipAddress,
                                     const CANetworkStatus_t status);
-static void CAEthernetPacketReceivedCB(const char *ipAddress, const uint32_t port,
-                                       const void *data, const uint32_t dataLength, const CABool_t isSecured);
+static void CAEthernetPacketReceivedCB(const char *ipAddress, const uint16_t port,
+                                       const void *data, const uint32_t dataLength, const bool isSecured);
 #ifdef __WITH_DTLS__
-static uint32_t CAEthernetPacketSendCB(const char *ipAddress, const uint32_t port,
+static uint32_t CAEthernetPacketSendCB(const char *ipAddress, const uint16_t port,
                                        const void *data, const uint32_t dataLength);
 #endif
 
 static CAResult_t CAEthernetStopServers();
 static void CAEthernetSendDataThread(void *threadData);
-static CAEthernetData *CACreateEthernetData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+static CAEthernetData *CACreateEthernetData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
         uint32_t dataLength);
 void CAFreeEthernetData(CAEthernetData *EthernetData);
 
@@ -153,26 +153,26 @@ CAResult_t CAEthernetInitializeQueueHandles()
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
 
     // Check if the message queue is already initialized
-    if (gSendQueueHandle)
+    if (g_sendQueueHandle)
     {
-        OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "Already queue is initialized!");
+        OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "send queue handle is already initialized!");
         return CA_STATUS_OK;
     }
 
     // Create send message queue
-    gSendQueueHandle = OICMalloc(sizeof(CAQueueingThread_t));
-    if (!gSendQueueHandle)
+    g_sendQueueHandle = OICMalloc(sizeof(CAQueueingThread_t));
+    if (!g_sendQueueHandle)
     {
         OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Memory allocation failed!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    if (CA_STATUS_OK != CAQueueingThreadInitialize(gSendQueueHandle, gThreadPool,
+    if (CA_STATUS_OK != CAQueueingThreadInitialize(g_sendQueueHandle, g_threadPool,
             CAEthernetSendDataThread, CADataDestroyer))
     {
         OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Failed to Initialize send queue thread");
-        OICFree(gSendQueueHandle);
-        gSendQueueHandle = NULL;
+        OICFree(g_sendQueueHandle);
+        g_sendQueueHandle = NULL;
         return CA_STATUS_FAILED;
     }
 
@@ -184,14 +184,14 @@ void CAEthernetDeinitializeQueueHandles()
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
 
-    CAQueueingThreadDestroy(gSendQueueHandle);
-    OICFree(gSendQueueHandle);
-    gSendQueueHandle = NULL;
+    CAQueueingThreadDestroy(g_sendQueueHandle);
+    OICFree(g_sendQueueHandle);
+    g_sendQueueHandle = NULL;
 
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
 }
 
-void CAEthernetNotifyNetworkChange(const char *address, const int16_t port,
+void CAEthernetNotifyNetworkChange(const char *address, const uint16_t port,
                                const CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
@@ -203,9 +203,9 @@ void CAEthernetNotifyNetworkChange(const char *address, const int16_t port,
         return;
     }
 
-    if (NULL != gNetworkChangeCallback)
+    if (NULL != g_networkChangeCallback)
     {
-        gNetworkChangeCallback(localEndpoint, status);
+        g_networkChangeCallback(localEndpoint, status);
     }
 
     CAAdapterFreeLocalEndpoint(localEndpoint);
@@ -224,18 +224,18 @@ void CAEthernetConnectionStateCB(const char *ipAddress,
      */
     if (CA_INTERFACE_UP == status)
     {
-        int16_t port = CA_PORT;
+        uint16_t port = CA_PORT;
         int32_t serverFd = -1;
 
         // Start Unicast server if requested earlier
-        if (gStartUnicastServerRequested)
+        if (g_startUnicastServerRequested)
         {
             ret = CAEthernetStartUnicastServer("0.0.0.0", &port, false, false, &serverFd);
             if (CA_STATUS_OK == ret)
             {
                 OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Unicast server started on %d port", port);
                 CAEthernetSetUnicastSocket(serverFd);
-                gUnicastServerport = port;
+                g_unicastServerport = port;
             }
             else
             {
@@ -249,7 +249,7 @@ void CAEthernetConnectionStateCB(const char *ipAddress,
             {
                 OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Secure Unicast server started on %d", port);
                 CAEthernetSetSecureUnicastSocket(serverFd);
-                gSecureUnicastServerport = port;
+                g_secureUnicastServerport = port;
             }
             else
             {
@@ -260,9 +260,9 @@ void CAEthernetConnectionStateCB(const char *ipAddress,
         }
 
         // Start Multicast server if requested earlier
-        if (gStartMulticastServerRequested)
+        if (g_startMulticastServerRequested)
         {
-            int16_t multicastPort = CA_MCAST_PORT;
+            uint16_t multicastPort = CA_MCAST_PORT;
             int32_t multicastFd = 0;
             ret = CAEthernetStartMulticastServer("0.0.0.0", CA_MULTICAST_IP, multicastPort,
                                              &multicastFd);
@@ -270,7 +270,7 @@ void CAEthernetConnectionStateCB(const char *ipAddress,
             {
                 OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Multicast server started on %d port",
                           multicastPort);
-                gIsMulticastServerStarted = true;
+                g_isMulticastServerStarted = true;
             }
             else
             {
@@ -306,21 +306,21 @@ void CAEthernetConnectionStateCB(const char *ipAddress,
 }
 
 #ifdef __WITH_DTLS__
-uint32_t CAEthernetPacketSendCB(const char *ipAddress, const uint32_t port,
+uint32_t CAEthernetPacketSendCB(const char *ipAddress, const uint16_t port,
                                 const void *data, const uint32_t dataLength)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
 
-    uint32_t sentLength = CAEthernetSendData(ipAddress, port, data, dataLength, CA_FALSE, CA_TRUE);
+    uint32_t sentLength = CAEthernetSendData(ipAddress, port, data, dataLength, false, true);
 
-    OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Successfully sent %d of encripted data!", sentLength);
+    OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Successfully sent %d of encrypted data!", sentLength);
 
     return sentLength;
 }
 #endif
 
-void CAEthernetPacketReceivedCB(const char *ipAddress, const uint32_t port,
-                                const void *data, const uint32_t dataLength, const CABool_t isSecured)
+void CAEthernetPacketReceivedCB(const char *ipAddress, const uint16_t port,
+                                const void *data, const uint32_t dataLength, const bool isSecured)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
     OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Address: %s, port:%d, data:%s", ipAddress, port, data);
@@ -344,9 +344,9 @@ void CAEthernetPacketReceivedCB(const char *ipAddress, const uint32_t port,
     }
     memcpy(buf, data, dataLength);
     memset(buf + dataLength, 0, 1);
-    if (gNetworkPacketCallback)
+    if (g_networkPacketCallback)
     {
-        gNetworkPacketCallback(endPoint, buf, dataLength);
+        g_networkPacketCallback(endPoint, buf, dataLength);
     }
     else
     {
@@ -367,11 +367,11 @@ CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(netCallback, ETHERNET_ADAPTER_TAG, "netCallback");
     VERIFY_NON_NULL(handle, ETHERNET_ADAPTER_TAG, "thread pool handle");
 
-    gThreadPool  = handle;
-    gNetworkChangeCallback = netCallback;
-    gNetworkPacketCallback = networkPacketCallback;
+    g_threadPool  = handle;
+    g_networkChangeCallback = netCallback;
+    g_networkPacketCallback = networkPacketCallback;
 
-    CAResult_t ret = CAEthernetInitializeNetworkMonitor(gThreadPool);
+    CAResult_t ret = CAEthernetInitializeNetworkMonitor(g_threadPool);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Failed to initialize n/w monitor![%d]", ret);
@@ -379,7 +379,7 @@ CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
     }
     CAEthernetSetConnectionStateChangeCallback(CAEthernetConnectionStateCB);
 
-    ret = CAEthernetInitializeServer(gThreadPool);
+    ret = CAEthernetInitializeServer(g_threadPool);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Failed to initialize server![%d]", ret);
@@ -397,7 +397,7 @@ CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
     CAConnectivityHandler_t ethernetHandler;
     ethernetHandler.startAdapter = CAStartEthernet;
     ethernetHandler.startListenServer = CAStartEthernetListeningServer;
-    ethernetHandler.startDiscoverServer = CAStartEthernetDiscoveryServer;
+    ethernetHandler.startDiscoveryServer = CAStartEthernetDiscoveryServer;
     ethernetHandler.sendData = CASendEthernetUnicastData;
     ethernetHandler.sendDataToAll = CASendEthernetMulticastData;
     ethernetHandler.GetnetInfo = CAGetEthernetInterfaceInformation;
@@ -430,21 +430,14 @@ CAResult_t CAStartEthernet()
     }
 
     // Start send queue thread
-    if (CA_STATUS_OK != CAQueueingThreadStart(gSendQueueHandle))
+    if (CA_STATUS_OK != CAQueueingThreadStart(g_sendQueueHandle))
     {
         OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Failed to Start Send Data Thread");
         CAStopEthernet();
         return CA_STATUS_FAILED;
     }
 
-    // Start send queue thread
-    if (CA_STATUS_OK != CAQueueingThreadStart(gSendQueueHandle))
-    {
-        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Failed to Start Send Data Thread");
-        return CA_STATUS_FAILED;
-    }
-
-    gStartUnicastServerRequested = true;
+    g_startUnicastServerRequested = true;
     bool retVal = CAEthernetIsConnected();
     if (false == retVal)
     {
@@ -452,15 +445,15 @@ CAResult_t CAStartEthernet()
         return CA_STATUS_OK;
     }
 
-    char *ifcName;
-    char *ifcAdrs;
+    char *ifcName = NULL;
+    char *ifcAdrs = NULL;
     ret = CAEthernetGetInterfaceInfo(&ifcName, &ifcAdrs);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Failed to get ethernet interface info [%d]", ret);
         return ret;
     }
-    int16_t unicastPort = CA_PORT;
+    uint16_t unicastPort = CA_PORT;
     int32_t serverFd = 0;
     // Address is hardcoded as we are using Single Interface
     ret = CAEthernetStartUnicastServer(ifcAdrs, &unicastPort, false, false, &serverFd);
@@ -468,7 +461,7 @@ CAResult_t CAStartEthernet()
     {
         OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Unicast server started on %d port", unicastPort);
         CAEthernetSetUnicastSocket(serverFd);
-        gUnicastServerport = unicastPort;
+        g_unicastServerport = unicastPort;
     }
 
 #ifdef __WITH_DTLS__
@@ -480,7 +473,7 @@ CAResult_t CAStartEthernet()
     {
         OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Secure Unicast server started on %d port", unicastPort);
         CAEthernetSetSecureUnicastSocket(serverFd);
-        gSecureUnicastServerport = unicastPort;
+        g_secureUnicastServerport = unicastPort;
     }
 #endif
 
@@ -488,7 +481,7 @@ CAResult_t CAStartEthernet()
     OICFree(ifcAdrs);
 
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
-    return ret;;
+    return ret;
 }
 
 CAResult_t CAStartEthernetListeningServer()
@@ -496,16 +489,16 @@ CAResult_t CAStartEthernetListeningServer()
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
 
     CAResult_t ret = CA_STATUS_OK;
-    int16_t multicastPort = CA_MCAST_PORT;
+    uint16_t multicastPort = CA_MCAST_PORT;
 
-    if (gIsMulticastServerStarted == true)
+    if (g_isMulticastServerStarted == true)
     {
         OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG,
                   "Failed to Start Multicast Server, Already Started!");
         return CA_SERVER_STARTED_ALREADY;
     }
 
-    gStartMulticastServerRequested = true;
+    g_startMulticastServerRequested = true;
     bool retVal = CAEthernetIsConnected();
     if (false == retVal)
     {
@@ -514,8 +507,8 @@ CAResult_t CAStartEthernetListeningServer()
         return CA_STATUS_OK;
     }
 
-    char *ifcName;
-    char *ifcAdrs;
+    char *ifcName = NULL;
+    char *ifcAdrs = NULL;
     ret = CAEthernetGetInterfaceInfo(&ifcName, &ifcAdrs);
     if (CA_STATUS_OK != ret)
     {
@@ -527,11 +520,12 @@ CAResult_t CAStartEthernetListeningServer()
     if (CA_STATUS_OK == ret)
     {
         OIC_LOG(INFO, ETHERNET_ADAPTER_TAG, "Multicast Server is Started Successfully");
-        gIsMulticastServerStarted = true;
+        g_isMulticastServerStarted = true;
     }
 
     OICFree(ifcName);
     OICFree(ifcAdrs);
+
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
     return ret;
 }
@@ -542,20 +536,19 @@ CAResult_t CAStartEthernetDiscoveryServer()
     return CAStartEthernetListeningServer();
 }
 
-uint32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+int32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
                                uint32_t dataLength)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
 
-    uint32_t dataSize = 0;
-    VERIFY_NON_NULL_RET(remoteEndpoint, ETHERNET_ADAPTER_TAG, "remoteEndpoint", dataSize);
-    VERIFY_NON_NULL_RET(data, ETHERNET_ADAPTER_TAG, "data", dataSize);
-    VERIFY_NON_NULL_RET(gSendQueueHandle, ETHERNET_ADAPTER_TAG, "sendQueueHandle", dataSize);
+    VERIFY_NON_NULL_RET(remoteEndpoint, ETHERNET_ADAPTER_TAG, "remoteEndpoint", -1);
+    VERIFY_NON_NULL_RET(data, ETHERNET_ADAPTER_TAG, "data", -1);
+    VERIFY_NON_NULL_RET(g_sendQueueHandle, ETHERNET_ADAPTER_TAG, "sendQueueHandle", -1);
 
     if (0 == dataLength)
     {
         OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Invalid Data Length");
-        return dataSize;
+        return -1;
     }
 
     // Create EthernetData to add to queue
@@ -563,28 +556,29 @@ uint32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *remoteEndpoint, voi
     if (!ethernetData)
     {
         OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Failed to create ethernetData!");
-        return CA_MEMORY_ALLOC_FAILED;
+        return -1;
     }
+    else
+    {
+        // Add message to send queue
+        CAQueueingThreadAddData(g_sendQueueHandle, ethernetData, sizeof(CAEthernetData));
 
-    // Add message to send queue
-    CAQueueingThreadAddData(gSendQueueHandle, ethernetData, sizeof(CAEthernetData));
-
-    OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
-    return dataLength;
+        OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
+        return dataLength;
+    }
 }
 
-uint32_t CASendEthernetMulticastData(void *data, uint32_t dataLength)
+int32_t CASendEthernetMulticastData(const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
 
-    uint32_t dataSize = 0;
-    VERIFY_NON_NULL_RET(data, ETHERNET_ADAPTER_TAG, "data", dataSize);
-    VERIFY_NON_NULL_RET(gSendQueueHandle, ETHERNET_ADAPTER_TAG, "sendQueueHandle", dataSize);
+    VERIFY_NON_NULL_RET(data, ETHERNET_ADAPTER_TAG, "data", -1);
+    VERIFY_NON_NULL_RET(g_sendQueueHandle, ETHERNET_ADAPTER_TAG, "sendQueueHandle", -1);
 
     if (0 == dataLength)
     {
         OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Invalid Data Length");
-        return dataSize;
+        return -1;
     }
 
     // Create EthernetData to add to queue
@@ -592,41 +586,49 @@ uint32_t CASendEthernetMulticastData(void *data, uint32_t dataLength)
     if (!EthernetData)
     {
         OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Failed to create ethernetData!");
-        return CA_MEMORY_ALLOC_FAILED;
+        return -1;
     }
+    else
+    {
+        // Add message to send queue
+        CAQueueingThreadAddData(g_sendQueueHandle, EthernetData, sizeof(CAEthernetData));
 
-    // Add message to send queue
-    CAQueueingThreadAddData(gSendQueueHandle, EthernetData, sizeof(CAEthernetData));
-
-    OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
-    return dataLength;
+        OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
+        return dataLength;
+    }
 }
 
 CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
+
     VERIFY_NON_NULL(info, ETHERNET_ADAPTER_TAG, "info");
     VERIFY_NON_NULL(size, ETHERNET_ADAPTER_TAG, "size");
+
+    if (info == NULL || size == NULL)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
 
     CALocalConnectivity_t *netInfo = NULL;
     bool retVal = CAEthernetIsConnected();
     if (false == retVal)
     {
         OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG,
-                  "Failed to get interface address, Ethernet not Connected", CA_ADAPTER_NOT_ENABLED);
+                  "Failed to get interface address, Ethernet not Connected",
+                  CA_ADAPTER_NOT_ENABLED);
         return CA_ADAPTER_NOT_ENABLED;
     }
 
     int32_t netInfoSize = 1;
 #ifdef __WITH_DTLS__
-    if (gSecureUnicastServerport)
+    if (g_secureUnicastServerport)
     {
-        netInfoSize = 2;
+        netInfoSize++;
     }
 #endif
-    netInfo = (CALocalConnectivity_t *) OICMalloc(sizeof(CALocalConnectivity_t) * netInfoSize);
+    netInfo = (CALocalConnectivity_t *) OICCalloc(netInfoSize, sizeof(CALocalConnectivity_t));
     VERIFY_NON_NULL_RET(netInfo, ETHERNET_ADAPTER_TAG, "malloc failed", CA_MEMORY_ALLOC_FAILED);
-    memset(netInfo, 0, sizeof(CALocalConnectivity_t) * netInfoSize);
 
     char *ipAddress = NULL;
     char *ifcName = NULL;
@@ -653,19 +655,19 @@ CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t **info, uint3
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    // copy unciast server information
-    endpoint->isSecured = CA_FALSE;
-    endpoint->addressInfo.IP.port = gUnicastServerport;
+    // copy unicast server information
+    endpoint->isSecured = false;
+    endpoint->addressInfo.IP.port = g_unicastServerport;
     memcpy(&netInfo[0], endpoint, sizeof(CALocalConnectivity_t));
     *size = 1;
 #ifdef __WITH_DTLS__
-    // copy sevure unicast server information
-    if (gSecureUnicastServerport)
+    // copy secure unicast server information
+    if (g_secureUnicastServerport)
     {
-        endpoint->isSecured = CA_TRUE;
-        endpoint->addressInfo.IP.port = gSecureUnicastServerport;
+        endpoint->isSecured = true;
+        endpoint->addressInfo.IP.port = g_secureUnicastServerport;
         memcpy(&netInfo[1], endpoint, sizeof(CALocalConnectivity_t));
-        *size = 2;
+        (*size)++;
     }
 #endif
     *info = netInfo;
@@ -681,6 +683,7 @@ CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t **info, uint3
 CAResult_t CAReadEthernetData()
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -692,7 +695,7 @@ CAResult_t CAEthernetStopServers()
     if (CA_STATUS_OK == CAEthernetStopUnicastServer())
     {
         CAEthernetSetUnicastSocket(-1);
-        gUnicastServerport = -1;
+        g_unicastServerport = -1;
     }
 
 #ifdef __WITH_DTLS__
@@ -700,14 +703,14 @@ CAResult_t CAEthernetStopServers()
     if (CA_STATUS_OK == CAEthernetStopSecureUnicastServer())
     {
         CAEthernetSetSecureUnicastSocket(-1);
-        gSecureUnicastServerport = -1;
+        g_secureUnicastServerport = -1;
     }
 #endif
 
     //Stop multicast server and set the state accordingly
     if (CA_STATUS_OK == CAEthernetStopMulticastServer())
     {
-        gIsMulticastServerStarted = false;
+        g_isMulticastServerStarted = false;
     }
 
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
@@ -718,16 +721,16 @@ CAResult_t CAStopEthernet()
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
 
-    gStartUnicastServerRequested = false;
-    gStartMulticastServerRequested = false;
+    g_startUnicastServerRequested = false;
+    g_startMulticastServerRequested = false;
 
     // Stop ethernet network monitor
     CAEthernetStopNetworkMonitor();
 
     // Stop send queue thread
-    if (gSendQueueHandle && CA_FALSE == gSendQueueHandle->isStop)
+    if (g_sendQueueHandle && false == g_sendQueueHandle->isStop)
     {
-        CAQueueingThreadStop(gSendQueueHandle);
+        CAQueueingThreadStop(g_sendQueueHandle);
     }
 
     // Stop Unicast, Secured unicast and Multicast servers running
@@ -778,7 +781,7 @@ void CAEthernetSendDataThread(void *threadData)
     if (NULL != ethernetData->remoteEndpoint)
     {
         char *address = ethernetData->remoteEndpoint->addressInfo.IP.ipAddress;
-        uint32_t port = ethernetData->remoteEndpoint->addressInfo.IP.port;
+        uint16_t port = ethernetData->remoteEndpoint->addressInfo.IP.port;
 
 #ifdef __WITH_DTLS__
         if (!ethernetData->remoteEndpoint->isSecured)
@@ -788,17 +791,17 @@ void CAEthernetSendDataThread(void *threadData)
         }
         else
         {
-            OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt called!");
-            uint8_t cacheFalg = 0;
+            OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt called!");
+            uint8_t cacheFlag = 0;
             CAResult_t  result = CAAdapterNetDtlsEncrypt(address, port, ethernetData->data,
-                                 ethernetData->dataLen, &cacheFalg, DTLS_ETHERNET);
+                                 ethernetData->dataLen, &cacheFlag, DTLS_ETHERNET);
 
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt failed!");
             }
-            OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt returned with cache[%d]",
-                      cacheFalg);
+            OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG,
+                "CAAdapterNetDtlsEncrypt returned with cache[%d]",cacheFlag);
         }
 #else
         CAEthernetSendData(address, port, ethernetData->data, ethernetData->dataLen, false,
@@ -815,7 +818,7 @@ void CAEthernetSendDataThread(void *threadData)
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "OUT");
 }
 
-CAEthernetData *CACreateEthernetData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+CAEthernetData *CACreateEthernetData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
                              uint32_t dataLength)
 {
     CAEthernetData *ethernetData = (CAEthernetData *) OICMalloc(sizeof(CAEthernetData));
@@ -858,4 +861,5 @@ void CADataDestroyer(void *data, uint32_t size)
 
     CAFreeEthernetData(etdata);
 }
+
 

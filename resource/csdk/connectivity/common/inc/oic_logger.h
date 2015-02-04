@@ -30,8 +30,9 @@ extern "C"
 
 /* Basic interface: */
 oic_log_ctx_t *oic_log_make_ctx(void *world, const oic_log_level level, oic_log_init_t init,
-                                oic_log_destroy_t destroy, oic_log_flush_t flush, oic_log_set_level_t set_level,
-                                oic_log_write_level_t write_level, oic_log_set_module_t set_module);
+                                    oic_log_destroy_t destroy, oic_log_flush_t flush,
+                                    oic_log_set_level_t set_level,oic_log_write_level_t write_level,
+                                    oic_log_set_module_t set_module);
 
 void oic_log_destroy(oic_log_ctx_t *ctx);
 
@@ -46,3 +47,4 @@ int oic_log_set_module(oic_log_ctx_t *ctx, const char *module_name);
 #endif
 
 #endif
+

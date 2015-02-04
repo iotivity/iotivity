@@ -59,7 +59,7 @@ COMPONENT_OBJS			= $(COMPONENT_SRCS:%.c=$(COMPONENT_OBJ_PATH)/%.o)
 ##
 ##	compiler flags
 ##
-LIBS				= -lconnectivity_abstraction -L$(PROJECT_OUT_PATH)
+LIBS				= -L$(PROJECT_OUT_PATH) -lconnectivity_abstraction
 
 CFLAGS				= -g -c -Wall -fPIC
 
@@ -89,7 +89,7 @@ $(TARGET) : $(COMPONENT_OBJS)
 	$(CC) -o $@ $(COMPONENT_OBJS) $(LIBS) $(LFLAGS)
 	@$(MV) $(TARGET) $(COMPONENT_OUT_PATH)/.
 
-clean :
+clean :	
 	@$(RM) $(COMPONENT_OBJ_PATH) \
 			$(COMPONENT_OUT_PATH)
 
@@ -117,5 +117,6 @@ define	MAKE_COMPONENT_OUT_PATH
 endef
 
 .PHONY:	all clean install
+
 
 

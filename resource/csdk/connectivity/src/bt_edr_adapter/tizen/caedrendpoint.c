@@ -19,7 +19,7 @@
  ******************************************************************/
 
 /**
- * @file  cabtendpoint.c
+ * @file  caedrendpoint.c
  * @brief  This file provides the APIs to send data on established RFCOMM connections.
  */
 
@@ -28,7 +28,7 @@
 #include "caedrutils.h"
 #include "logger.h"
 
-CAResult_t CAEDRSendData(const int32_t serverFD, const void *data, const uint32_t dataLength,
+CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength,
                          uint32_t *sentDataLen)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
@@ -42,8 +42,7 @@ CAResult_t CAEDRSendData(const int32_t serverFD, const void *data, const uint32_
         return CA_STATUS_INVALID_PARAM;
     }
 
-    int32_t dataLen = 0;
-    dataLen = bt_socket_send_data(serverFD, (const char *)data, dataLength);
+    int dataLen = bt_socket_send_data(serverFD, (const char *)data, dataLength);
     if (dataLen == -1)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "sending data failed!, soketid [%d]", serverFD);
@@ -55,3 +54,4 @@ CAResult_t CAEDRSendData(const int32_t serverFD, const void *data, const uint32_
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
+

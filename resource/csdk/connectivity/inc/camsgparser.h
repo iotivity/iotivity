@@ -94,26 +94,12 @@ extern "C"
 #endif
 
 /*****************************************************************
- * @file The CA Header format                                                                      *
- * @brief CA Header will be difined by 2 bytes of Header.                                *
- *           First two bits : Header version                                                         *
- *           Third bit nad fourth bit: Reserved and will be set as Zero.                  *
- *           5th to 16th bit : 12 bits to provide the length of the data in bits.          *
- *                                                                                                               *
+ * @file The CA Header format
+ * @brief CA Header will be difined by 2 bytes of Header.
+ * First two bits : Header version(Currently Its not being used)
+ * Third bit and fourth bit: Reserved bits for future use.
+ * 5th to 16th bit : 12 bits to provide the length of the data.
  *****************************************************************/
-
-
-/**
-* @fn printBinaryFormat
-* @brief This function prints the binary format of one byte of data
-*            This functoin is added as debug utility and can be used to check the
-*            bits set in header while framing/parsing.
-*
-* @param[in]  data Pointer to the charcter data which needs to be printed.
-*
-* @return  0 on failure and 1 on success.
-*/
-void printBinaryFormat(char *data);
 
 /**
 * @fn CAGenerateHeader
@@ -121,10 +107,10 @@ void printBinaryFormat(char *data);
 *           logic. The header sturcture explained above will be formed and returned to the caller.
 *
 * @param[in]  data    Pointer to the charcter data which needs to be printed.
-* @param[in]  length The total legth of the data which ll be represed from 5th -16th bits
+* @param[in]  length The total legth of the data which will be represented from 5th -16th bits
 *                              in the header.
 *
-* @return  0 on success otherwise a positive error value.
+* @return  CA_STATUS_OK on success. One of theCA_STATUS_FAILED or other error values on error.
 * @retval  CA_STATUS_OK  Successful
 * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
 * @retval  CA_STATUS_FAILED Operation failed
@@ -148,3 +134,4 @@ uint32_t CAParseHeader(const char *header);
 #endif
 
 #endif  // _CA_MSG_PARSER_H_
+

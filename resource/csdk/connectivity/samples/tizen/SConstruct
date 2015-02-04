@@ -20,3 +20,4 @@ if target_os == 'tizen':
         SConscript('scons/SConscript')
 else:
 	print "Given platform is not supported"
+

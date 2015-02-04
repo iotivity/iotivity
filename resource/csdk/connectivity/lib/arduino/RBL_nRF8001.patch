@@ -102,7 +102,7 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001/RBL_nRF8001.cpp
 +                        tempAddr += 3;
 +                    }
 +                    gLeAddress[BLE_ADDRESS_SIZE - 1] = '\0';
-+					Serial.println("LEAddress :");
++                    Serial.println("LEAddress :");
 +                    Serial.println((char *)gLeAddress);
 +                    return;
 +                }
@@ -134,3 +134,4 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.h RBL_nRF8001/RBL_nRF8001.h
  
  #endif
  
+

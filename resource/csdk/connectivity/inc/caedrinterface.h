@@ -26,7 +26,6 @@
 #ifndef __CA_EDR_INTERFACE_H_
 #define __CA_EDR_INTERFACE_H_
 
-#include <string.h>
 #include "caedradapter.h"
 
 #ifdef __cplusplus
@@ -38,10 +37,15 @@ extern "C"
 #define OIC_EDR_SERVICE_ID "12341234-1C25-481F-9DFB-59193D238280"
 #endif //OIC_EDR_SERVICE_ID
 
+typedef enum
+{
+    STATE_DISCONNECTED,    /**< State is Disconnected */
+    STATE_CONNECTED        /**< State is Connected */
+} CAConnectedState_t;
 
 typedef struct connected_state {
-    char address[CA_MACADDR_SIZE];
-    uint32_t state;
+    uint8_t address[CA_MACADDR_SIZE];
+    CAConnectedState_t state;
 } state_t;
 
 /**
@@ -78,15 +82,15 @@ typedef struct
 
 /**
  * @brief This will be used during the recive of network requests and response.
- * @param remoteAddress [IN] EDR address of remote OIC device
+ * @param remoteAddress [IN] EDR address of remote OIC device from which data received.
  * @param data          [IN] Data received
  * @param dataLength    [IN] Length of the Data received
- * @param sentLength    [IN] Length of the sent data
+ * @param sentLength    [OUT] Length of the sent data
  * @return NONE
  * @pre Callback must be registered using CAEDRSetPacketReceivedCallback()
  */
-typedef void (*CAEDRDataReceivedCallback)(const char *remoteAddress, void *data, uint32_t dataLength,
-                                         uint32_t *sentLength);
+typedef void (*CAEDRDataReceivedCallback)(const char *remoteAddress,
+                                    const void *data, uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @brief This will be used during change in network status.
@@ -154,7 +158,7 @@ void CAEDRInitializeClient(u_thread_pool_t handle);
  * @brief Destroys the Device list and mutex.
  * @return NONE
  */
-void CAEDRTerminateClient();
+void CAEDRClientTerminate();
 
 /**
  * @brief Closes all the client connection to peer bluetooth devices.
@@ -208,7 +212,7 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info);
  * @retval #CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, u_thread_pool_t handle);
+CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, u_thread_pool_t handle);
 
 /**
  * @brief  Stop RFCOMM server
@@ -219,7 +223,13 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, u_thread
  * @retval #CA_STATUS_OK  Successful
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAEDRServerStop(const int32_t serverFD);
+CAResult_t CAEDRServerStop(int serverFD);
+
+/**
+ * @brief   Terminate server for EDR
+ * @return  None
+ */
+void CAEDRServerTerminate();
 
 /**
  * @brief  All received data will be notified to upper layer.
@@ -236,7 +246,7 @@ CAResult_t CAEDRManagerReadData(void);
  * @param state    [OUT] State of the Adapter.
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAEDRGetAdapterEnableState(CABool_t *state);
+CAResult_t CAEDRGetAdapterEnableState(bool *state);
 
 /**
  * @brief This function sends data to specified remote bluetooth device.
@@ -244,21 +254,21 @@ CAResult_t CAEDRGetAdapterEnableState(CABool_t *state);
  * @param serviceUUID     [IN] Service UUID of the device
  * @param data            [IN] Data to be sent
  * @param dataLength      [IN] Length of the data to be sent
- * @param sentLength      [IN] Length of the actual sent data
+ * @param sentLength      [OUT] Length of the actual sent data
  * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      void *data, uint32_t dataLength, uint32_t *sentLength);
+                                      const void *data, uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @brief This function sends data to all bluetooth devices running OIC service.
  * @param serviceUUID     [IN] Service UUID of the device
  * @param data            [IN] Data to be sent
  * @param dataLength      [IN] Length of the data to be sent
- * @param sentLength      [IN] Length of the actual sent data
+ * @param sentLength      [OUT] Length of the actual sent data
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, void *data,
+CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
                                         uint32_t dataLength, uint32_t *sentLength);
 
 #ifdef __cplusplus
@@ -266,4 +276,5 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, void *data,
 #endif
 
 #endif //__CA_EDR_INTERFACE_H_
+
 

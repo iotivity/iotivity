@@ -48,7 +48,7 @@ extern "C"
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAEDRSendData(const int32_t serverFD, const void *data, const uint32_t dataLength,
+CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength,
                         uint32_t *sentDataLength);
 
 #ifdef __cplusplus
@@ -56,4 +56,5 @@ CAResult_t CAEDRSendData(const int32_t serverFD, const void *data, const uint32_
 #endif
 
 #endif //__CA_EDR_ENDPOINT_H_
+
 

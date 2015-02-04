@@ -27,18 +27,11 @@ public class MainActivity extends Activity {
     private final CharSequence[] mCheckBoxItems = { Network.WIFI.name(),
             Network.EDR.name(), Network.LE.name() };
 
-    private final CharSequence[] mDTLSCheckBoxItems = { DTLS.UNSECURED.name(),
-            DTLS.SECURED.name() };
+    private final CharSequence[] mDTLSCheckBoxItems = { DTLS.SECURED.name(),
+            DTLS.UNSECURED.name() };
 
     private final CharSequence[] mMsgTyleCheckBoxItems = { MsgType.CON.name(),
-            MsgType.NON.name(), MsgType.ACK.name(), MsgType.RESET.name() };
-
-    private final CharSequence[] mResponseResultCheckBoxItems = {
-            ResponseResult.CA_SUCCESS.name(), ResponseResult.CA_CREATED.name(),
-            ResponseResult.CA_DELETED.name(), ResponseResult.CA_EMPTY.name(),
-            ResponseResult.CA_BAD_REQ.name(), ResponseResult.CA_BAD_OPT.name(),
-            ResponseResult.CA_NOT_FOUND.name(),
-            ResponseResult.CA_RETRANSMIT_TIMEOUT.name() };
+            MsgType.NON.name() };
 
     private enum Mode {
         SERVER, CLIENT, BOTH, UNKNOWN
@@ -49,17 +42,12 @@ public class MainActivity extends Activity {
     };
 
     private enum DTLS {
-        UNSECURED, SECURED
+        SECURED, UNSECURED
     };
 
     private enum MsgType {
-        CON, NON, ACK, RESET
+        CON, NON
     };
-
-    private enum ResponseResult {
-        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_EMPTY, CA_BAD_REQ, CA_BAD_OPT,
-        CA_NOT_FOUND, CA_RETRANSMIT_TIMEOUT
-    }
 
     private Mode mCurrentMode = Mode.UNKNOWN;
 
@@ -107,8 +95,6 @@ public class MainActivity extends Activity {
 
     private EditText mPayload_ed = null;
 
-    private EditText mAdvertise_ed = null;
-
     private Button mFind_btn = null;
 
     private Button mNotify_btn = null;
@@ -129,18 +115,16 @@ public class MainActivity extends Activity {
 
     /**
      * Defined ConnectivityType in cacommon.c
-     * 
+     *
      * CA_ETHERNET = (1 << 0) CA_WIFI = (1 << 1) CA_EDR = (1 << 2) CA_LE = (1 <<
      * 3)
      */
     private int CA_WIFI = (1 << 1);
     private int CA_EDR = (1 << 2);
     private int CA_LE = (1 << 3);
-    private int isSecured = -1;
-    private int msgType = -1;
-    private int responseValue = -1;
+    private int isSecured = 0;
+    private int msgType = 0;
     private int selectedItem = 0;
-    private int selectedResponseValue = -1;
     int selectedNetwork = 0;
 
     @Override
@@ -160,7 +144,7 @@ public class MainActivity extends Activity {
 
         // client
         mSendRequestLayout = (RelativeLayout) findViewById(R.id.layout_request);
-        mSendRequestSettingLayout = (RelativeLayout) 
+        mSendRequestSettingLayout = (RelativeLayout)
                 findViewById(R.id.layout_request_setting_for_client);
         mFindResourceLayout = (RelativeLayout) findViewById(R.id.layout_find);
         mFindTitleLayout = (RelativeLayout) findViewById(R.id.layout_find_title);
@@ -170,12 +154,11 @@ public class MainActivity extends Activity {
 
         // server
         mSendNotificationLayout = (RelativeLayout) findViewById(R.id.layout_notify);
-        mPayLoadServerEditLayout = (RelativeLayout) 
-                findViewById(R.id.layout_payload_server_ed);
-        mSendResponseNotiSettingLayout = (RelativeLayout) 
+        mPayLoadServerEditLayout = (RelativeLayout) findViewById(R.id.layout_payload_server_ed);
+        mSendResponseNotiSettingLayout = (RelativeLayout)
                 findViewById(R.id.layout_request_setting_for_server);
         mServerButtonLayout = (RelativeLayout) findViewById(R.id.layout_server_bt);
-        mResponseNotificationTitleLayout = (RelativeLayout) 
+        mResponseNotificationTitleLayout = (RelativeLayout)
                 findViewById(R.id.layout_Response_Noti_title);
         mAdvertiseTitleLayout = (RelativeLayout) findViewById(R.id.layout_advertise_title);
         mAdvertiseResourceLayout = (RelativeLayout) findViewById(R.id.layout_advertise_resource);
@@ -187,15 +170,15 @@ public class MainActivity extends Activity {
         mNotification_ed = (EditText) findViewById(R.id.et_notification);
         mReqData_ed = (EditText) findViewById(R.id.et_req_data);
         mPayload_ed = (EditText) findViewById(R.id.et_payload_data_for_server);
-        mAdvertise_ed = (EditText) findViewById(R.id.et_uri_advertise);
- 
+
         mFind_btn = (Button) findViewById(R.id.btn_find_resource);
         mResponse_btn = (Button) findViewById(R.id.btn_sendresponse);
         mNotify_btn = (Button) findViewById(R.id.btn_notify);
         mAdvertiseResource_btn = (Button) findViewById(R.id.btn_advertise);
         mReqeust_btn = (Button) findViewById(R.id.btn_Request);
         mReqeust_setting_btn = (Button) findViewById(R.id.btn_Request_setting_for_client);
-        mResponse_Notify_setting_btn = (Button) findViewById(R.id.btn_Request_setting_for_server);
+        mResponse_Notify_setting_btn = (Button)
+                findViewById(R.id.btn_Request_setting_for_server);
         mRecv_btn = (Button) findViewById(R.id.btn_receive);
 
         mFind_btn.setOnClickListener(mFindResourceHandler);
@@ -213,7 +196,7 @@ public class MainActivity extends Activity {
         // Initialize Connectivity Abstraction
         RM.RMInitialize(getApplicationContext());
         // Select default network(WIFI)
-//        RM.RMSelectNetwork(CA_WIFI);
+        RM.RMSelectNetwork(CA_WIFI);
         // set handler
         RM.RMRegisterHandler();
     }
@@ -381,7 +364,9 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
 
             DLog.v(TAG, "SendResponse click");
-            RM.RMSendResponse(selectedNetwork, isSecured, msgType, responseValue);
+            RM.RMSendResponse(mNotification_ed.getText().toString(),
+                    mPayload_ed.getText().toString(), selectedNetwork,
+                    isSecured);
         }
     };
 
@@ -403,7 +388,7 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
 
             DLog.v(TAG, "AdvertiseResource click");
-            RM.RMAdvertiseResource(mAdvertise_ed.getText().toString(),
+            RM.RMAdvertiseResource(mNotification_ed.getText().toString(),
                     selectedNetwork);
         }
     };
@@ -435,8 +420,6 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
 
             checkMsgSecured("Select DTLS Type");
-            checkMsgType("Select Msg Type");
-            checkResponseResult("Select Value of Response Result");
         }
     };
 
@@ -504,7 +487,7 @@ public class MainActivity extends Activity {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 
         builder.setTitle(title)
-                .setSingleChoiceItems(mDTLSCheckBoxItems, isSecured,
+                .setSingleChoiceItems(mDTLSCheckBoxItems, -1,
                         new DialogInterface.OnClickListener() {
 
                             @Override
@@ -549,7 +532,7 @@ public class MainActivity extends Activity {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(title)
-                .setSingleChoiceItems(mMsgTyleCheckBoxItems, msgType,
+                .setSingleChoiceItems(mMsgTyleCheckBoxItems, -1,
                         new DialogInterface.OnClickListener() {
 
                             @Override
@@ -570,67 +553,8 @@ public class MainActivity extends Activity {
                         } else if (selectedItem == MsgType.NON.ordinal()) {
                             msgType = 1;
                             DLog.v(TAG, "Message Type is NON");
-                        } else if (selectedItem == MsgType.ACK.ordinal()) {
-                            msgType = 2;
-                            DLog.v(TAG, "Message Type is ACK");
-                        } else if (selectedItem == MsgType.RESET.ordinal()) {
-                            msgType = 3;
-                            DLog.v(TAG, "Message Type is RESET");
                         }
-                    }
-                }).show();
-    }
 
-    private void checkResponseResult(String title) {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle(title)
-                .setSingleChoiceItems(mResponseResultCheckBoxItems, selectedResponseValue,
-                        new DialogInterface.OnClickListener() {
-
-                            @Override
-                            public void onClick(DialogInterface dialog,
-                                    int which) {
-                                selectedResponseValue = which;
-                            }
-                        })
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        if (selectedResponseValue == ResponseResult.CA_SUCCESS.ordinal()) {
-                            responseValue = 200;
-                            DLog.v(TAG, "Response Value is CA_SUCCESS");
-                        } else if (selectedResponseValue == ResponseResult.CA_CREATED
-                                .ordinal()) {
-                            responseValue = 201;
-                            DLog.v(TAG, "Response Value is CA_CREATED");
-                        } else if (selectedResponseValue == ResponseResult.CA_DELETED
-                                .ordinal()) {
-                            responseValue = 202;
-                            DLog.v(TAG, "Response Value is CA_DELETED");
-                        } else if (selectedResponseValue == ResponseResult.CA_EMPTY
-                                .ordinal()) {
-                            responseValue = 231;
-                            DLog.v(TAG, "Response Value is CA_EMPTY");
-                        } else if (selectedResponseValue == ResponseResult.CA_BAD_REQ
-                                .ordinal()) {
-                            responseValue = 400;
-                            DLog.v(TAG, "Response Value is CA_BAD_REQ");
-                        } else if (selectedResponseValue == ResponseResult.CA_BAD_OPT
-                                .ordinal()) {
-                            responseValue = 402;
-                            DLog.v(TAG, "Response Value is CA_BAD_OPT");
-                        } else if (selectedResponseValue == ResponseResult.CA_NOT_FOUND
-                                .ordinal()) {
-                            responseValue = 404;
-                            DLog.v(TAG, "Response Value is CA_NOT_FOUND");
-                        } else if (selectedResponseValue == ResponseResult.CA_RETRANSMIT_TIMEOUT
-                                .ordinal()) {
-                            responseValue = 531;
-                            DLog.v(TAG, "Response Value is CA_RETRANSMIT_TIMEOUT");
-                        }
                     }
                 }).show();
     }

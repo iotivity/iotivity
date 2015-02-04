@@ -295,7 +295,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     responseEndpoint.resourceUri      = (CAURI_t) serverRequest->resourceUrl;
     responseEndpoint.addressInfo      = serverRequest->addressInfo;
     responseEndpoint.connectivityType = serverRequest->connectivityType;
-    responseEndpoint.isSecured        = (CABool_t) serverRequest->secured;
+    responseEndpoint.isSecured        =  serverRequest->secured;
 
     // Copy the info
     switch (ehResponse->ehResult)

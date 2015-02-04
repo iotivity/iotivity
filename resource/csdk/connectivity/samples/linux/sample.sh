@@ -33,3 +33,4 @@ make
 
 cd out
 LD_LIBRARY_PATH=../../../build/out ./sample_main
+

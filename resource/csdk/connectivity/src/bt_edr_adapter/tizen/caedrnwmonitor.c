@@ -32,10 +32,10 @@
 #include "caqueueingthread.h"
 
 /**
- * @var gEDRNetworkChangeCallback
+ * @var g_edrNetworkChangeCallback
  * @brief Maintains the callback to be notified on local bluetooth adapter status change.
  */
-static CAEDRNetworkStatusCallback gEDRNetworkChangeCallback = NULL;
+static CAEDRNetworkStatusCallback g_edrNetworkChangeCallback = NULL;
 
 /**
  * @fn CAEDRAdapterStateChangeCallback
@@ -49,8 +49,7 @@ CAResult_t CAEDRInitializeNetworkMonitor()
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Initialize Bluetooth service
-    int32_t err = bt_initialize();
-
+    int err = bt_initialize();
     if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth initialization failed!, error num [%x]",
@@ -66,7 +65,7 @@ void CAEDRTerminateNetworkMonitor(void)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    gEDRNetworkChangeCallback = NULL;
+    g_edrNetworkChangeCallback = NULL;
 
     // Terminate Bluetooth service
     bt_deinitialize();
@@ -78,7 +77,7 @@ CAResult_t CAEDRStartNetworkMonitor()
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    int32_t ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
+    int ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
     if(BT_ERROR_NONE != ret)
     {
        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
@@ -93,7 +92,7 @@ CAResult_t CAEDRStopNetworkMonitor()
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
     // Unset bluetooth adapter callbacks
-    int32_t ret = bt_adapter_unset_state_changed_cb();
+    int ret = bt_adapter_unset_state_changed_cb();
     if(BT_ERROR_NONE != ret)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
@@ -106,21 +105,20 @@ CAResult_t CAEDRStopNetworkMonitor()
 void CAEDRSetNetworkChangeCallback(
     CAEDRNetworkStatusCallback networkChangeCallback)
 {
-    gEDRNetworkChangeCallback = networkChangeCallback;
+    g_edrNetworkChangeCallback = networkChangeCallback;
 }
 
 CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    int32_t err = BT_ERROR_NONE;
-    char *localAddress = NULL;
-
     // Input validation
     VERIFY_NON_NULL(info, EDR_ADAPTER_TAG, "LocalConnectivity info is null");
 
     // Get the bluetooth adapter local address
-    if (BT_ERROR_NONE != (err = bt_adapter_get_address(&localAddress)))
+    char *localAddress = NULL;
+    int err = bt_adapter_get_address(&localAddress);
+    if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG,
                   "Getting local adapter address failed!, error num [%x]",
@@ -144,18 +142,18 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRGetAdapterEnableState(CABool_t *state)
+CAResult_t CAEDRGetAdapterEnableState(bool *state)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
     VERIFY_NON_NULL(state, EDR_ADAPTER_TAG, "state holder is NULL!");
 
-    bt_error_e err = BT_ERROR_NONE;
-    bt_adapter_state_e adapterState;
 
+    bt_adapter_state_e adapterState;
+    int err = bt_adapter_get_state(&adapterState);
     // Get Bluetooth adapter state
-    if (BT_ERROR_NONE != (err = bt_adapter_get_state(&adapterState)))
+    if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth get state failed!, error num [%x]",
                   err);
@@ -163,10 +161,10 @@ CAResult_t CAEDRGetAdapterEnableState(CABool_t *state)
         return CA_STATUS_FAILED;
     }
 
-    *state = CA_FALSE;
+    *state = false;
     if (BT_ADAPTER_ENABLED == adapterState)
     {
-        *state = CA_TRUE;
+        *state = true;
     }
 
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -181,17 +179,17 @@ void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState
     if (BT_ADAPTER_ENABLED == adapterState)
     {
         // Notity to upper layer
-        if (gEDRNetworkChangeCallback)
+        if (g_edrNetworkChangeCallback)
         {
-            gEDRNetworkChangeCallback(CA_INTERFACE_UP);
+            g_edrNetworkChangeCallback(CA_INTERFACE_UP);
         }
     }
     else if (BT_ADAPTER_DISABLED == adapterState)
     {
         // Notity to upper layer
-        if (gEDRNetworkChangeCallback)
+        if (g_edrNetworkChangeCallback)
         {
-            gEDRNetworkChangeCallback(CA_INTERFACE_DOWN);
+            g_edrNetworkChangeCallback(CA_INTERFACE_DOWN);
         }
     }
 

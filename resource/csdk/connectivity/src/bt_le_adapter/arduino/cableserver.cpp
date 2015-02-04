@@ -59,46 +59,6 @@ CAResult_t CATerminateBle()
 
 }
 
-CAResult_t CAAddNewBleServiceInGattServer(const char *service_uuid)
-{
-    // Not Supported - Done at compile time
-    return CA_STATUS_OK;
-}
-
-CAResult_t CARemoveBleServiceFromGattServer(const char *svc_path)
-{
-    // Not Supported - Done at compile time
-    return CA_STATUS_OK;
-}
-
-CAResult_t CARemoveAllBleServicesFromGattServer()
-{
-    // Not Supported
-    return CA_STATUS_OK;
-}
-
-CAResult_t CARegisterBleServicewithGattServer(const char *svc_path)
-{
-    // Not Supported - Done at compile time
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAAddNewCharacteristicsToGattServer(const char *svc_path,
-        const char *char_uuid,
-        const char *char_value,
-        int char_value_len,
-        int read)
-{
-    // Not Supported - Done at compile time
-    return CA_STATUS_OK;
-}
-
-CAResult_t CARemoveCharacteristicsFromGattServer(const char *char_path)
-{
-    // Not Supported
-    return CA_STATUS_OK;
-}
-
 unsigned char CAIsBleDataAvailable()
 {
     return ble_available();
@@ -120,10 +80,18 @@ CAResult_t CABleDoEvents()
 }
 
 CAResult_t CAUpdateCharacteristicsInGattServer(const char *char_value,
-                                                            const uint32_t value_length)
+                                               uint32_t valueLength)
 {
+    // ble_write_bytes() api can send only max of 255 bytes at a time
+    // This function shall never be called to send more than 255 bytes by the fragmentation logic.
+    if(valueLength > 255)
+    {
+        OIC_LOG_V(ERROR, TAG, "Error:Max 255");
+        return CA_STATUS_INVALID_PARAM;
+    }
     // Currently ble_write_bytes api returns void.
-    ble_write_bytes((unsigned char *)char_value, (unsigned char)value_length);
+    ble_write_bytes((unsigned char *)char_value, (unsigned char)valueLength);
     return CA_STATUS_OK;
 }
+
 

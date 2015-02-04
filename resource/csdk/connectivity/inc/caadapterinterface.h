@@ -39,7 +39,8 @@ extern "C"
  * port number as per specification.
  * EDR will not start any specific servers.
  * LE will not start any specific servers.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @return CA_STATUS_OK or CA_STATUS_FAILED
+ *  ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 typedef CAResult_t (*CAAdapterStart)();
 
@@ -50,7 +51,8 @@ typedef CAResult_t (*CAAdapterStart)();
  * port number and as per specification.
  * EDR  Starts RFCOMM Server with prefixed UUID as per specification.
  * LE Start GATT Server with prefixed UUID and Characteristics as per OIC Specification.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @return CA_STATUS_OK or CA_STATUS_FAILED
+ * ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 typedef CAResult_t (*CAAdapterStartListeningServer)();
 
@@ -61,7 +63,8 @@ typedef CAResult_t (*CAAdapterStartListeningServer)();
  * number as per OIC Specification.
  * EDR Starts RFCOMM Server with prefixed UUID as per OIC Specification.
  * LE Starts GATT Server with prefixed UUID and Characteristics as per OIC Specification.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @return CA_STATUS_OK or CA_STATUS_FAILED
+ * ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 typedef CAResult_t (*CAAdapterStartDiscoveryServer)();
 
@@ -72,19 +75,19 @@ typedef CAResult_t (*CAAdapterStartDiscoveryServer)();
  * reference uri and connectivity type) to which the unicast data has to be sent.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
+ * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  */
-typedef uint32_t (*CAAdapterSendUnitcastData)(const CARemoteEndpoint_t *endpoint, void *data,
-        uint32_t dataLen);
+typedef int32_t (*CAAdapterSendUnitcastData)(const CARemoteEndpoint_t *endpoint,
+        const void *data, uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the adapter connectivity.
  * Note: length must be > 0.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
+ * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  */
-typedef uint32_t (*CAAdapterSendMulticastData)(void *data, uint32_t dataLen);
+typedef int32_t (*CAAdapterSendMulticastData)(const void *data, uint32_t dataLen);
 
 /**
  * @brief Get Network Information
@@ -112,7 +115,7 @@ typedef CAResult_t (*CAAdapterStop)();
 
 /**
  * @brief Terminate the connectivity adapter.Configuration information will be deleted from
- * further use
+ * further use. Freeing Memory of threadpool and mutexs and cleanup will be done.
  */
 typedef void (*CAAdapterTerminate)();
 
@@ -123,20 +126,28 @@ typedef struct
 {
     /** Start Transport specific functions*/
     CAAdapterStart startAdapter;
+
     /** Listening Server function address*/
     CAAdapterStartListeningServer startListenServer;
+
     /** Discovery Server function address **/
-    CAAdapterStartDiscoveryServer startDiscoverServer;
+    CAAdapterStartDiscoveryServer startDiscoveryServer;
+
     /** Unicast data function address**/
     CAAdapterSendUnitcastData sendData;
+
     /** Multicast data function address**/
     CAAdapterSendMulticastData sendDataToAll;
+
     /** Get Networking information  **/
     CAAdapterGetNetworkInfo GetnetInfo;
+
     /** Read Data function address**/
     CAAdapterReadData readData;
+
     /** Stop Transport specific functions*/
     CAAdapterStop stopAdapter;
+
     /** Terminate function address stored in this pointer**/
     CAAdapterTerminate terminate;
 
@@ -157,7 +168,7 @@ typedef void (*CANetworkPacketReceivedCallback)(CARemoteEndpoint_t *endPoint, vo
         uint32_t dataLen);
 
 /**
- * @brief This will be used to intimate network changes to the connectivity common logic layer
+ * @brief This will be used to notify network changes to the connectivity common logic layer
  * @see SendUnitcastData(), SendMulticastData()
  */
 typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkStatus_t status);
@@ -167,3 +178,4 @@ typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkSt
 #endif
 
 #endif  // __CA_ADAPTER_INTERFACE_H_
+

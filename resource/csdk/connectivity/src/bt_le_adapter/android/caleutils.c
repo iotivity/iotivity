@@ -1,3 +1,23 @@
+/******************************************************************
+ *
+ * Copyright 2014 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
 #include <jni.h>
 #include <stdio.h>
 #include <android/log.h>
@@ -8,9 +28,6 @@
 #include "uarraylist.h"
 
 #define TAG PCF("CA_LE_UTILS")
-
-#define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define  LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 #define METHODID_OBJECTNONPARAM   "()Landroid/bluetooth/BluetoothAdapter;"
 #define METHODID_STRINGNONPARAM   "()Ljava/lang/String;"
@@ -23,13 +40,13 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
 
     jclass jni_cid_UUID = (*env)->FindClass(env, "java/util/UUID");
 
-    jmethodID jni_mid_fromString = (*env)->GetStaticMethodID(env, jni_cid_UUID,
-            "fromString", "(Ljava/lang/String;)Ljava/util/UUID;");
+    jmethodID jni_mid_fromString = (*env)->GetStaticMethodID(
+            env, jni_cid_UUID, "fromString", "(Ljava/lang/String;)Ljava/util/UUID;");
 
     jstring str_uuid = (*env)->NewStringUTF(env, uuid);
 
-    jobject jni_obj_uuid = (*env)->CallStaticObjectMethod(env, jni_cid_UUID,
-            jni_mid_fromString, str_uuid);
+    jobject jni_obj_uuid = (*env)->CallStaticObjectMethod(env, jni_cid_UUID, jni_mid_fromString,
+                                                          str_uuid);
     if (!jni_obj_uuid)
     {
         OIC_LOG_V(DEBUG, TAG, "Fail to get jni uuid object");
@@ -45,11 +62,10 @@ jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
 
     jclass jni_cid_ParcelUuid = (*env)->FindClass(env, "android/os/ParcelUuid");
 
-    jmethodID jni_mid_ParcelUuid = (*env)->GetMethodID(env, jni_cid_ParcelUuid,
-            "<init>", "(Ljava/util/UUID;)V");
+    jmethodID jni_mid_ParcelUuid = (*env)->GetMethodID(env, jni_cid_ParcelUuid, "<init>",
+                                                       "(Ljava/util/UUID;)V");
 
-    jobject jni_ParcelUuid = (*env)->NewObject(env, jni_cid_ParcelUuid,
-            jni_mid_ParcelUuid, uuid);
+    jobject jni_ParcelUuid = (*env)->NewObject(env, jni_cid_ParcelUuid, jni_mid_ParcelUuid, uuid);
     if (!jni_ParcelUuid)
     {
         OIC_LOG_V(DEBUG, TAG, "Fail to get jni ParcelUuid");
@@ -61,37 +77,41 @@ jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
 
 jstring CALEGetLocalDeviceAddress(JNIEnv* env)
 {
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env,  CLASSPATH_BT_ADPATER);
-    if(!jni_cid_BTAdapter)
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADPATER);
+    if (!jni_cid_BTAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_cid_BTAdapter is null");
         return NULL;
     }
 
-    jmethodID jni_mid_getDefaultAdapter =
-            (*env)->GetStaticMethodID(env, jni_cid_BTAdapter, "getDefaultAdapter", METHODID_OBJECTNONPARAM);
-    if(!jni_mid_getDefaultAdapter)
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    METHODID_OBJECTNONPARAM);
+    if (!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_mid_getDefaultAdapter is null");
         return NULL;
     }
 
-    jmethodID jni_mid_getAddress = (*env)->GetMethodID(env, jni_cid_BTAdapter, "getAddress", METHODID_STRINGNONPARAM);
-    if(!jni_mid_getAddress)
+    jmethodID jni_mid_getAddress = (*env)->GetMethodID(env, jni_cid_BTAdapter, "getAddress",
+    METHODID_STRINGNONPARAM);
+    if (!jni_mid_getAddress)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_mid_getAddress is null");
         return NULL;
     }
 
-    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter, jni_mid_getDefaultAdapter);
-    if(!jni_obj_BTAdapter)
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_obj_BTAdapter is null");
         return NULL;
     }
 
-    jstring jni_str_address = (jstring)(*env)->CallObjectMethod(env, jni_obj_BTAdapter, jni_mid_getAddress);
-    if(!jni_str_address)
+    jstring jni_str_address = (jstring)(*env)->CallObjectMethod(env, jni_obj_BTAdapter,
+                                                                jni_mid_getAddress);
+    if (!jni_str_address)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getAddress: jni_str_address is null");
         return NULL;
@@ -102,18 +122,20 @@ jstring CALEGetLocalDeviceAddress(JNIEnv* env)
 
 jobjectArray CALEBondedDevices(JNIEnv *env)
 {
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env,  CLASSPATH_BT_ADPATER);
-    if(!jni_cid_BTAdapter)
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADPATER);
+    if (!jni_cid_BTAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_cid_BTAdapter is null");
         return NULL;
     }
 
-    jmethodID jni_mid_getDefaultAdapter =
-            (*env)->GetStaticMethodID(env, jni_cid_BTAdapter, "getDefaultAdapter", METHODID_OBJECTNONPARAM);
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    METHODID_OBJECTNONPARAM);
 
-    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter, jni_mid_getDefaultAdapter);
-    if(!jni_obj_BTAdapter)
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: bluetooth adapter is null");
         return NULL;
@@ -121,15 +143,17 @@ jobjectArray CALEBondedDevices(JNIEnv *env)
 
     // Get a list of currently paired devices
     jmethodID jni_mid_getBondedDevices = (*env)->GetMethodID(env, jni_cid_BTAdapter,
-            "getBondedDevices", "()Ljava/util/Set;");
-    if(!jni_mid_getBondedDevices)
+                                                             "getBondedDevices",
+                                                             "()Ljava/util/Set;");
+    if (!jni_mid_getBondedDevices)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_mid_getBondedDevicesr is null");
         return NULL;
     }
 
-    jobject jni_obj_setPairedDevices = (*env)->CallObjectMethod(env, jni_obj_BTAdapter, jni_mid_getBondedDevices);
-    if(!jni_obj_setPairedDevices)
+    jobject jni_obj_setPairedDevices = (*env)->CallObjectMethod(env, jni_obj_BTAdapter,
+                                                                jni_mid_getBondedDevices);
+    if (!jni_obj_setPairedDevices)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_obj_setPairedDevices is null");
         return NULL;
@@ -137,18 +161,19 @@ jobjectArray CALEBondedDevices(JNIEnv *env)
 
     // Convert the set to an object array
     // object[] array = Set<BluetoothDevice>.toArray();
-    jclass jni_cid_Set = (*env)->FindClass(env,  "java/util/Set");
-    jmethodID jni_mid_toArray = (*env)->GetMethodID(env, jni_cid_Set, "toArray", "()[Ljava/lang/Object;");
+    jclass jni_cid_Set = (*env)->FindClass(env, "java/util/Set");
+    jmethodID jni_mid_toArray = (*env)->GetMethodID(env, jni_cid_Set, "toArray",
+                                                    "()[Ljava/lang/Object;");
 
-    if(!jni_mid_toArray)
+    if (!jni_mid_toArray)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_mid_toArray is null");
         return NULL;
     }
 
-    jobjectArray jni_arrayPairedDevices = (jobjectArray)((*env)->CallObjectMethod(env,
-            jni_obj_setPairedDevices, jni_mid_toArray));
-    if(!jni_arrayPairedDevices)
+    jobjectArray jni_arrayPairedDevices = (jobjectArray)(
+            (*env)->CallObjectMethod(env, jni_obj_setPairedDevices, jni_mid_toArray));
+    if (!jni_arrayPairedDevices)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getBondedDevices: jni_arrayPairedDevices is null");
         return NULL;
@@ -159,8 +184,8 @@ jobjectArray CALEBondedDevices(JNIEnv *env)
 
 jint CALEGetBTStateOnInfo(JNIEnv *env)
 {
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env,  CLASSPATH_BT_ADPATER);
-    if(!jni_cid_BTAdapter)
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADPATER);
+    if (!jni_cid_BTAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] getBTStateOnInfo: jni_cid_BTAdapter is null");
         return -1;
@@ -181,32 +206,33 @@ jint CALEGetBTStateOnInfo(JNIEnv *env)
 
 jboolean CALEIsEnableBTAdapter(JNIEnv *env)
 {
-    jclass jni_cid_BTAdapter = (*env)->FindClass(env,  CLASSPATH_BT_ADPATER);
-    if(!jni_cid_BTAdapter)
+    jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADPATER);
+    if (!jni_cid_BTAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_cid_BTAdapter: jni_cid_BTAdapter is null");
         return FALSE;
     }
 
-    jmethodID jni_mid_getDefaultAdapter =
-            (*env)->GetStaticMethodID(env, jni_cid_BTAdapter, "getDefaultAdapter", METHODID_OBJECTNONPARAM);
-    if(!jni_mid_getDefaultAdapter)
+    jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
+                                                                    "getDefaultAdapter",
+                                                                    METHODID_OBJECTNONPARAM);
+    if (!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_mid_getDefaultAdapter is null");
         return FALSE;
     }
 
-    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter, jni_mid_getDefaultAdapter);
-    if(!jni_obj_BTAdapter)
+    jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env, jni_cid_BTAdapter,
+                                                               jni_mid_getDefaultAdapter);
+    if (!jni_obj_BTAdapter)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_obj_BTAdapter is null");
         return FALSE;
     }
 
     // isEnable()
-    jmethodID jni_mid_isEnable = (*env)->GetMethodID(env, jni_cid_BTAdapter, "isEnabled",
-            "()Z");
-    if(!jni_mid_isEnable)
+    jmethodID jni_mid_isEnable = (*env)->GetMethodID(env, jni_cid_BTAdapter, "isEnabled", "()Z");
+    if (!jni_mid_isEnable)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_mid_isEnable is null");
         return FALSE;
@@ -221,25 +247,27 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
 jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 {
     jclass jni_cid_device_list = (*env)->FindClass(env, "android/bluetooth/BluetoothDevice");
-    if(!jni_cid_device_list)
+    if (!jni_cid_device_list)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_cid_device_list is null");
         return NULL;
     }
 
     jmethodID jni_mid_getAddress = (*env)->GetMethodID(env, jni_cid_device_list, "getAddress",
-            "()Ljava/lang/String;");
-    if(!jni_mid_getAddress)
+                                                       "()Ljava/lang/String;");
+    if (!jni_mid_getAddress)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_mid_getAddress is null");
         return NULL;
     }
 
-    jstring jni_address = (jstring)(*env)->CallObjectMethod(env, bluetoothDevice, jni_mid_getAddress);
-    if(!jni_address)
+    jstring jni_address = (jstring)(*env)->CallObjectMethod(env, bluetoothDevice,
+                                                            jni_mid_getAddress);
+    if (!jni_address)
     {
         OIC_LOG(DEBUG, TAG, "[BLE][Native] jni_address is null");
         return NULL;
     }
     return jni_address;
 }
+

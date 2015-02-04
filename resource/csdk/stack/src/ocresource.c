@@ -77,7 +77,7 @@ static OCStackResult GetSecurePortInfo(CAConnectivityType_t connType, uint32_t *
     {
         while (size--)
         {
-            if (info[size].isSecured == CA_TRUE && info[size].type == connType)
+            if (info[size].isSecured == true && info[size].type == connType)
             {
                 if (info[size].type == CA_ETHERNET ||
                     info[size].type == CA_WIFI)

@@ -19,7 +19,7 @@ temp = env['CPPPATH']
 header = ' '
 for item in temp:
 	header = header + ' -I' + item
-	
+
 ######################################################################
 # Source files and Target(s)
 ######################################################################
@@ -29,9 +29,9 @@ ca_common_src = [
 		ca_common_src_path + 'uarraylist.c',
 		ca_common_src_path + 'uqueue.c',
 	]
-	
+
 if ca_os == 'arduino':
-	env.Command(env.get('BUILD_DIR') + 'logger.c', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + header + ' ' + 'common/src/logger.c')
+	env.Command(env.get('BUILD_DIR') + 'logger.c.o', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c.o' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + header + ' ' + 'common/src/logger.c')
 	platform_src = [
 		env.get('BUILD_DIR') + 'logger.c.o',
 	]

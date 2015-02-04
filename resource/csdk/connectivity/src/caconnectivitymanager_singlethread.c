@@ -33,27 +33,11 @@
 
 #define TAG "CM_ST"
 
-static void CAMessageHandler(CAToken_t token, CAResult_t res)
-{
-    // TODO
-    // it will notify the result for the each action.
-
-}
-
 CAResult_t CAInitialize()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CASetMessageHandlerCallback(CAMessageHandler);
-
-    CAResult_t res = CAInitializeMessageHandler();
-
-    if (res != CA_STATUS_OK)
-    {
-        return res;
-    }
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return CAInitializeMessageHandler();
 }
 
 void CATerminate()
@@ -89,10 +73,13 @@ CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
 
     CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri,connectivityType);
 
-    *remoteEndpoint = remote;
-
     if (remote == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "remote endpoint is NULL");
         return CA_STATUS_FAILED;
+    }
+
+    *remoteEndpoint = remote;
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -123,12 +110,12 @@ CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
 CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CAResult_t res = CADetachMessageResourceUri(resourceUri, token, NULL, 0);
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return res;
+
+    return CADetachMessageResourceUri(resourceUri, token, NULL, 0);
+
 }
 
-CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requestInfo)
+CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t *requestInfo)
 {
     return CADetachRequestMessage(object, requestInfo);
 }
@@ -141,19 +128,21 @@ CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
     return CADetachRequestToAllMessage(object, requestInfo);
 }
 
-CAResult_t CASendNotification(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo)
+CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
+    const CAResponseInfo_t *responseInfo)
 {
     return CADetachResponseMessage(object, responseInfo);
 }
 
-CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo)
+CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
+    const CAResponseInfo_t *responseInfo)
 {
     return CADetachResponseMessage(object, responseInfo);
 }
 
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token,
-                               CAHeaderOption_t *options,
-                               uint8_t numOptions)
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
+                               const CAHeaderOption_t *options,
+                               const uint8_t numOptions)
 {
     return CADetachMessageResourceUri(resourceUri, token, options, numOptions);
 }
@@ -164,15 +153,17 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
 
     if (!(interestedNetwork & 0xf))
     {
+        OIC_LOG(ERROR, TAG, "not supported");
         return CA_NOT_SUPPORTED;
     }
-    CAResult_t res;
+    CAResult_t res = CA_STATUS_OK;
 
     if (interestedNetwork & CA_ETHERNET)
     {
         res = CAAddNetworkType(CA_ETHERNET);
         if (res != CA_STATUS_OK)
         {
+            OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
             return res;
         }
     }
@@ -182,6 +173,7 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         res = CAAddNetworkType(CA_WIFI);
         if (res != CA_STATUS_OK)
         {
+            OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
             return res;
         }
     }
@@ -191,6 +183,7 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         res = CAAddNetworkType(CA_EDR);
         if (res != CA_STATUS_OK)
         {
+            OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
             return res;
         }
     }
@@ -200,11 +193,12 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         res = CAAddNetworkType(CA_LE);
         if (res != CA_STATUS_OK)
         {
+            OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
             return res;
         }
     }
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return res;
 }
 
 CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
@@ -213,16 +207,18 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 
     if (!(nonInterestedNetwork & 0xf))
     {
+        OIC_LOG(ERROR, TAG, "not supported");
         return CA_NOT_SUPPORTED;
     }
 
-    CAResult_t res;
+    CAResult_t res = CA_STATUS_OK;
 
     if (nonInterestedNetwork & CA_ETHERNET)
     {
         res = CARemoveNetworkType(CA_ETHERNET);
         if (res != CA_STATUS_OK)
         {
+            OIC_LOG(ERROR, TAG, "Failed to remove n/w type");
             return res;
         }
     }
@@ -232,6 +228,7 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         res = CARemoveNetworkType(CA_WIFI);
         if (res != CA_STATUS_OK)
         {
+            OIC_LOG(ERROR, TAG, "Failed to remove n/w type");
             return res;
         }
     }
@@ -241,6 +238,7 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         res = CARemoveNetworkType(CA_EDR);
         if (res != CA_STATUS_OK)
         {
+            OIC_LOG(ERROR, TAG, "Failed to remove n/w type");
             return res;
         }
     }
@@ -250,11 +248,12 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         res = CARemoveNetworkType(CA_LE);
         if (res != CA_STATUS_OK)
         {
+            OIC_LOG(ERROR, TAG, "Failed to remove n/w type");
             return res;
         }
     }
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return res;
 }
 
 CAResult_t CAHandleRequestResponse()
@@ -262,4 +261,5 @@ CAResult_t CAHandleRequestResponse()
     CAHandleRequestResponseCallbacks();
     return CA_STATUS_OK;
 }
+
 

@@ -61,9 +61,9 @@ typedef struct
 {
     char *remoteAddress;        /**< Address of peer Bluetooth device. */
     char *serviceUUID;          /**< OIC service UUID running in peer Bluetooth device. */
-    int32_t socketFD;           /**< RfComm connection socket FD. */
+    int socketFD;           /**< RfComm connection socket FD. */
     EDRDataList *pendingDataList;/**< List of data needs to send to peer Bluetooth device. */
-    uint32_t serviceSearched;   /**< Flag to indicate the status of service search. */
+    bool serviceSearched;   /**< Flag to indicate the status of service search. */
 } EDRDevice;
 
 /**
@@ -117,7 +117,8 @@ CAResult_t CAAddEDRDeviceToList(EDRDeviceList **deviceList, EDRDevice *device);
  * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
  * @retval #CA_STATUS_FAILED Device is not found in the list
  */
-CAResult_t CAGetEDRDevice(EDRDeviceList *deviceList, const char *deviceAddress, EDRDevice **device);
+CAResult_t CAGetEDRDevice(EDRDeviceList *deviceList,
+                           const char *deviceAddress, EDRDevice **device);
 
 /**
  * @brief  Get the device from list which matches specified RFCOMM socket id.
@@ -145,7 +146,8 @@ CAResult_t CAGetEDRDeviceBySocketId(EDRDeviceList *deviceList, int32_t socketID,
  * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
  * @retval #CA_STATUS_FAILED Device is not found in the list
  */
-CAResult_t CARemoveEDRDeviceFromList(EDRDeviceList **deviceList, const char *deviceAddress);
+CAResult_t CARemoveEDRDeviceFromList(EDRDeviceList **deviceList,
+                                    const char *deviceAddress);
 
 /**
  * @brief  Destroy the specified device list. Removes and delete all the devices in the list.
@@ -166,7 +168,7 @@ void CADestroyEDRDeviceList(EDRDeviceList **deviceList);
  * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
  * @retval #CA_MEMORY_ALLOC_FAILED Memory allocation failed
  */
-CAResult_t CAAddEDRDataToList(EDRDataList **dataList, void *data, uint32_t dataLength);
+CAResult_t CAAddEDRDataToList(EDRDataList **dataList, const void *data, uint32_t dataLength);
 
 /**
  * @brief  Remove and delete data from front end of list.
@@ -189,9 +191,6 @@ void CADestroyEDRDataList(EDRDataList **dataList);
 } /* extern "C" */
 #endif
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
 #endif //__CA_EDR_DEVICE_LIST_H_
+
 

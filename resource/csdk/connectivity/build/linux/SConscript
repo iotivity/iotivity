@@ -13,7 +13,7 @@ if env.get('RELEASE'):
 else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
-	
+
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
 env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])

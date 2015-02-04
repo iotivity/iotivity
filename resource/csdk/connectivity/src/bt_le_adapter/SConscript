@@ -24,6 +24,7 @@ if target_os == 'linux':
 if target_os == 'tizen':
 	env.PrependUnique(CPPPATH = [src_dir + 'tizen'])
 	env.PrependUnique(CFLAGS = ['-I'+ './con/lib/tizen/ble/inc'])
+	env.PrependUnique(CFLAGS = ['-I'+ './con/lib/tizen/ble/inc/mobile'])
 	env.AppendUnique(CA_SRC=[src_dir+'tizen/cableclient.c',
 			src_dir+'tizen/cableserver.c',
 			src_dir+'tizen/cableutil.c',

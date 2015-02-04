@@ -27,7 +27,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "uthreadpool.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -40,7 +40,7 @@ extern "C"
  *                                   Abstraction Layer
  * @param networkPacketCallback [IN] Callback to notify request and response messages from server(s)
  *                                   started at Connectivity Abstraction Layer.
- * @param netCallback           [IN] Callback to intimate the network additions to Connectivity
+ * @param netCallback           [IN] Callback to notify the network additions to Connectivity
  *                                   Abstraction Layer.
  * @param handle                [IN] Threadpool Handle
  * @return  #CA_STATUS_OK or Appropriate error code
@@ -79,20 +79,20 @@ CAResult_t CAStartEthernetDiscoveryServer();
  * reference uri and connectivity type) to which the unicast data has to be sent.
  * @param   data        [IN]    Data which is required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to zero indicates error.
+ * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  * @remarks dataLen must be > 0.
  */
-uint32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *endpoint, void *data,
+int32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
                                    uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the Ethernet connectivity.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to zero indicates error.
+ * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  * @remarks dataLen must be > 0.
  */
-uint32_t CASendEthernetMulticastData(void *data, uint32_t dataLen);
+int32_t CASendEthernetMulticastData(const void *data, uint32_t dataLen);
 
 /**
  * @brief Get Ethernet Connectivity network information
@@ -127,3 +127,4 @@ void CATerminateEthernet();
 #endif
 
 #endif  // #ifndef __CA_ETHERNET_ADAPTER_H__
+

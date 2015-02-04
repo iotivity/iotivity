@@ -52,10 +52,10 @@ extern "C"
  * @param  serviceCount [IN] Size of the service UUIDs array.
  * @param  matchService [IN] Service UUID to be checked in the given array of service UUIDs
  *
- * @return  CA_TRUE if match service UUID found otherwise CA_FALSE.
+ * @return  true if match service UUID found otherwise false.
  *
  */
-CABool_t CAEDRIsServiceSupported(const char **serviceUUID, const int32_t serviceCount,
+bool CAEDRIsServiceSupported(const char **serviceUUID, int32_t serviceCount,
                             const char *matchService);
 
 #ifdef __cplusplus
@@ -63,4 +63,5 @@ CABool_t CAEDRIsServiceSupported(const char **serviceUUID, const int32_t service
 #endif
 
 #endif //__CA_EDR_UTILS_H_
+
 

@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file    cabtserver.c
- * @brief   This    file provides the APIs to start and stop RFCOMM server.
+ * @file    caedrserver.c
+ * @brief   This file provides the APIs to start and stop RFCOMM server.
  */
 
 
@@ -35,40 +35,40 @@
 #include "cacommon.h"
 #include "caedrdevicelist.h"
 
-static int32_t gMaxPendingConnections = 10;
+static int32_t g_maxPendingConnections = 10;
 
-CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, u_thread_pool_t handle)
+CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, u_thread_pool_t handle)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
-
-    bt_error_e err = BT_ERROR_NONE;
-    bool isRunning = false;
-    int32_t socketFD;
 
     VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "Service UUID is null");
     VERIFY_NON_NULL(serverFD, EDR_ADAPTER_TAG, "Server fd holder is null");
 
-    if (0 >= strlen(serviceUUID))
+    if (!serviceUUID[0])
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: Empty service uuid!");
         return CA_STATUS_INVALID_PARAM;
     }
 
-    if (BT_ERROR_NONE != bt_adapter_is_service_used(serviceUUID, &isRunning))
+    bool isRunning = false;
+    bt_error_e err = bt_adapter_is_service_used(serviceUUID, &isRunning);
+    if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG,
-                  "Unable to find whether service is already running or not!");
+                  "Unable to find whether service is already running or not! erorr num[%x]", err);
         return CA_STATUS_FAILED;
     }
 
-    if (true == isRunning)
+    if (isRunning)
     {
         OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Service is already running with this UUID!");
         return CA_SERVER_STARTED_ALREADY;
     }
 
-    // Registers a rfcomm socket with a specific service_uuid .
-    if (BT_ERROR_NONE != (err = bt_socket_create_rfcomm(serviceUUID, &socketFD)))
+    int socketFD = 0;
+    // Registers a rfcomm socket with a specific service_uuid.
+    err = bt_socket_create_rfcomm(serviceUUID, &socketFD);
+    if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to create rfcomm socket!, error num [%x]",
                   err);
@@ -76,8 +76,9 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, u_thread
     }
 
     // Start listening and accepting
-    if (BT_ERROR_NONE != (err = bt_socket_listen_and_accept_rfcomm(socketFD,
-                                gMaxPendingConnections)))
+    err = bt_socket_listen_and_accept_rfcomm(socketFD,
+                                g_maxPendingConnections);
+    if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed in listen rfcomm socket!, error num [%x]",
                   err);
@@ -92,12 +93,12 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, u_thread
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRServerStop(const int32_t serverFD)
+CAResult_t CAEDRServerStop(int serverFD)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    bt_error_e err = BT_ERROR_NONE;
-    if (BT_ERROR_NONE != (err = bt_socket_destroy_rfcomm(serverFD)))
+    bt_error_e err = bt_socket_destroy_rfcomm(serverFD);
+    if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed close server socket!, error num [%x]",
                   err);
@@ -108,9 +109,16 @@ CAResult_t CAEDRServerStop(const int32_t serverFD)
     return CA_STATUS_OK;
 }
 
+void CAEDRServerTerminate()
+{
+    // This is just a dummy
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "CAEDRServerTerminate");
+}
+
 CAResult_t CAEDRManagerReadData(void)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_NOT_SUPPORTED;
 }
+

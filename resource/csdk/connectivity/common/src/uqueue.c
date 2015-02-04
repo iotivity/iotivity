@@ -107,8 +107,6 @@ CAResult_t u_queue_add_element(u_queue_t *queue, u_queue_message_t *message)
         queue->element = element;
         queue->count++;
         OIC_LOG_V(DEBUG, TAG, "Queue Count : %d", queue->count);
-
-        return CA_STATUS_OK;
     }
 
     return CA_STATUS_OK;
@@ -116,7 +114,6 @@ CAResult_t u_queue_add_element(u_queue_t *queue, u_queue_message_t *message)
 
 u_queue_message_t *u_queue_get_element(u_queue_t *queue)
 {
-    u_queue_element *next = NULL;
     u_queue_element *element = NULL;
     u_queue_message_t *message = NULL;
 
@@ -134,8 +131,7 @@ u_queue_message_t *u_queue_get_element(u_queue_t *queue)
         return NULL;
     }
 
-    next = element->next;
-    queue->element = next;
+    queue->element = element->next;;
     queue->count--;
 
     message = element->message;
@@ -186,8 +182,6 @@ uint32_t u_queue_get_size(u_queue_t *queue)
 
 CAResult_t u_queue_reset(u_queue_t *queue)
 {
-    CAResult_t error = CA_STATUS_FAILED;
-
     if (NULL == queue)
     {
         OIC_LOG(DEBUG, TAG, "QueueReset FAIL, Invalid Queue");
@@ -202,9 +196,7 @@ CAResult_t u_queue_reset(u_queue_t *queue)
 
     while (NULL != queue->element)
     {
-        error = u_queue_remove_element(queue);
-        if (error == CA_STATUS_FAILED)
-            break;
+       u_queue_remove_element(queue);
     }
 
     if (NO_MESSAGES != queue->count)
@@ -253,3 +245,4 @@ u_queue_message_t *u_queue_get_head(u_queue_t *queue)
     }
     return queue->element->message;
 }
+

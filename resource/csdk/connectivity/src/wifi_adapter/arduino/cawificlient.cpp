@@ -40,25 +40,41 @@
 
 static WiFiUDP Udp;
 
-void CAWiFiSetUnicastSocket(const int32_t socketID)
+void CAWiFiSetUnicastSocket(int socketID)
 {
 
 }
 
-uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
-                        const void *data, const uint32_t dataLength, bool isMulticast)
+uint32_t CAWiFiSendData(const char *remoteAddress, uint32_t port,
+                        const void *data, uint32_t dataLength, bool isMulticast)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
 
-    VERIFY_NON_NULL(data, MOD_NAME, "data");
-    VERIFY_NON_NULL(remoteAddress, MOD_NAME, "address");
+    VERIFY_NON_NULL_RET(data, MOD_NAME, "data", 0);
+    VERIFY_NON_NULL_RET(remoteAddress, MOD_NAME, "address", 0);
 
-    int32_t ret = 1;
     OIC_LOG_V(DEBUG, MOD_NAME, "remoteip: %s", remoteAddress);
     OIC_LOG_V(DEBUG, MOD_NAME, "port: %d", port);
-    Udp.beginPacket(remoteAddress, (uint16_t)port);
-    ret = (int32_t)Udp.write((char *)data);
-    Udp.endPacket();
+
+    uint8_t ip[4] = {0};
+    uint16_t parsedPort = 0;
+    CAResult_t res = CAParseIPv4AddressInternal(remoteAddress, ip, sizeof(ip),
+                                                &parsedPort);
+    if (res != CA_STATUS_OK)
+    {
+        OIC_LOG_V(ERROR, MOD_NAME, "Remote adrs parse fail %d", res);
+        return 0;
+    }
+
+    IPAddress remoteIp(ip);
+    Udp.beginPacket(remoteIp, (uint16_t)port);
+    int32_t ret = (int32_t)Udp.write((char *)data, dataLength);
+    if (Udp.endPacket() == 0)
+    {
+        OIC_LOG(ERROR, MOD_NAME, "Failed to send");
+        return 0;
+    }
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return ret;
 }
+

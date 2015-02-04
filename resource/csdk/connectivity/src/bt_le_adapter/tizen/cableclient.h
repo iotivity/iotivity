@@ -40,6 +40,7 @@
 #include "logger.h"
 #include "uthreadpool.h"
 #include "caleinterface.h"
+#include "oic_malloc.h"
 
 
 /**
@@ -51,8 +52,8 @@
  * @param  userData       [IN] The user data passed from the request function
  * @return  NONE
  */
-void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic, unsigned char *value,
-                                      int32_t valueLen, void *userData);
+void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
+                            unsigned char *value, int valueLen, void *userData);
 /**
  * @brief  This is the callback which will be called after the characteristics changed.
  *
@@ -61,7 +62,7 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic, unsign
  *
  * @return  NONE
  */
-void CABleGattCharacteristicWriteCb(int32_t result, void *userData);
+void CABleGattCharacteristicWriteCb(int result, void *userData);
 
 /**
  * @brief  This is the callback which will be called when descriptor of characteristics is found.
@@ -74,7 +75,7 @@ void CABleGattCharacteristicWriteCb(int32_t result, void *userData);
  * @param  userData       [IN] The user data passed from the request function
  * @return  NONE
  */
-void CABleGattDescriptorDiscoveredCb(int32_t result, unsigned char format, int32_t total,
+void CABleGattDescriptorDiscoveredCb(int result, unsigned char format, int total,
                                      bt_gatt_attribute_h descriptor,
                                      bt_gatt_attribute_h characteristic, void *userData);
 
@@ -90,7 +91,7 @@ void CABleGattDescriptorDiscoveredCb(int32_t result, unsigned char format, int32
  *
  * @return  0 on failure and 1 on success.
  */
-bool CABleGattCharacteristicsDiscoveredCb(int32_t result, int32_t inputIndex, int32_t total,
+bool CABleGattCharacteristicsDiscoveredCb(int result, int inputIndex, int total,
                                           bt_gatt_attribute_h characteristic, void *userData);
 
 /**
@@ -101,7 +102,7 @@ bool CABleGattCharacteristicsDiscoveredCb(int32_t result, int32_t inputIndex, in
  * @param  userData    [IN] The user data passed from the request function
  * @return  NONE
  */
-void CABtGattBondCreatedCb(int32_t result, bt_device_info_s *device_info, void *user_data);
+void CABtGattBondCreatedCb(int result, bt_device_info_s *device_info, void *user_data);
 
 /**
  * @brief  This is the callback which will be called when we get the primary services repeatedly.
@@ -113,7 +114,7 @@ void CABtGattBondCreatedCb(int32_t result, bt_device_info_s *device_info, void *
  *
  * @return  0 on failure and 1 on success.
  */
-bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int32_t index, int32_t count,
+bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int index, int count,
                                    void *userData);
 
 /**
@@ -127,8 +128,8 @@ bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int32_t index, int32
  *
  * @return  NONE
  */
-void CABleGattConnectionStateChangedCb(int32_t result, bool connected, const char *remoteAddress,
-                                       void *userData);
+void CABleGattConnectionStateChangedCb(int result, bool connected,
+                const char *remoteAddress,void *userData);
 
 /**
  * @brief  This is the callback which will be called when the device discovery state changes.
@@ -140,7 +141,7 @@ void CABleGattConnectionStateChangedCb(int32_t result, bool connected, const cha
  *
  * @return  NONE
  */
-void CABtAdapterLeDeviceDiscoveryStateChangedCb(int32_t result,
+void CABtAdapterLeDeviceDiscoveryStateChangedCb(int result,
         bt_adapter_le_device_discovery_state_e discoveryState,
         bt_adapter_le_device_discovery_info_s *discoveryInfo,
         void *userData);
@@ -150,7 +151,7 @@ void CABtAdapterLeDeviceDiscoveryStateChangedCb(int32_t result,
  * @param discoveryInfo [IN] Device information structure.
  * @return  NONE
  */
-void CAPrintDiscoveryInformation(bt_adapter_le_device_discovery_info_s *discoveryInfo);
+void CAPrintDiscoveryInformation(const bt_adapter_le_device_discovery_info_s *discoveryInfo);
 
 /**
  * @brief This thread will be used to initialize the Gatt Client and start device discovery.
@@ -164,7 +165,7 @@ void CAPrintDiscoveryInformation(bt_adapter_le_device_discovery_info_s *discover
  * @return NONE
  *
  */
-void *CAStartBleGattClientThread(void *data);
+void CAStartBleGattClientThread(void *data);
 
 /**
  * @brief  Used to initialize all required mutex variable for Gatt Client implementation.
@@ -174,7 +175,7 @@ void *CAStartBleGattClientThread(void *data);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitGattClientMutexVaraibles();
+CAResult_t CAInitGattClientMutexVariables();
 
 /**
  * @brief  Used to terminate all required mutex variable for Gatt Client implementation.
@@ -253,7 +254,7 @@ void CABleGattStopDeviceDiscovery();
  * @param remoteAddress [IN] MAC address of remote device to connect
  * @return NONE
  */
-void *CAGattConnectThread (void *remoteAddress);
+void CAGattConnectThread (void *remoteAddress);
 
 /**
  * @brief  Used to do connection with remote device
@@ -284,7 +285,7 @@ CAResult_t CABleGattDisConnect(const char *remoteAddress);
  * @param remoteAddress [IN] Mac address of the remote device in which we want to search services.
  * @return  NONE
  */
-void *CADiscoverBLEServicesThread (void *remoteAddress);
+void CADiscoverBLEServicesThread (void *remoteAddress);
 
 /**
  * @brief Used to discover the services that is advertised by Gatt Server asynchrounously.
@@ -305,7 +306,7 @@ CAResult_t CABleGattDiscoverServices(const char *remoteAddress);
  *                            handle and characteristic handle.
  * @return  NONE
  */
-void *CADiscoverCharThread(void *stServiceInfo);
+void CADiscoverCharThread(void *stServiceInfo);
 
 /**
  * @brief  Used to discover characteristics of service using  bt_gatt_discover_characteristics api.
@@ -318,7 +319,8 @@ void *CADiscoverCharThread(void *stServiceInfo);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABleGattDiscoverCharacteristics(bt_gatt_attribute_h service, const char *remoteAddress);
+CAResult_t CABleGattDiscoverCharacteristics(bt_gatt_attribute_h service,
+                    const char *remoteAddress);
 
 /**
  * @brief  This is the thread which will be used for finding descriptor of characteristic.
@@ -327,7 +329,7 @@ CAResult_t CABleGattDiscoverCharacteristics(bt_gatt_attribute_h service, const c
  *                            handle and characteristic handle.
  * @return  NONE
  */
-void *CADiscoverDescriptorThread(void *stServiceInfo);
+void CADiscoverDescriptorThread(void *stServiceInfo);
 
 /**
  * @brief  This is thread which will be used for calling CASetCharacteristicDescriptorValue api.
@@ -340,7 +342,8 @@ void *CADiscoverDescriptorThread(void *stServiceInfo);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABleGattDiscoverDescriptor(bt_gatt_attribute_h service, const char *remoteAddress);
+CAResult_t CABleGattDiscoverDescriptor(bt_gatt_attribute_h service,
+                const char *remoteAddress);
 
 /**
  * @brief  This is thread which will be used for calling CASetCharacteristicDescriptorValue api.
@@ -349,7 +352,7 @@ CAResult_t CABleGattDiscoverDescriptor(bt_gatt_attribute_h service, const char *
  *                            handle and characteristic handle.
  * @return NONE
  */
-void *CASetCharacteristicDescriptorValueThread(void *stServiceInfo);
+void CASetCharacteristicDescriptorValueThread(void *stServiceInfo);
 
 /**
  * @brief  Used to set characteristic descriptor value using
@@ -361,7 +364,8 @@ void *CASetCharacteristicDescriptorValueThread(void *stServiceInfo);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CASetCharacteristicDescriptorValue(stGattCharDescriptor_t *stGattCharDescriptorInfo);
+CAResult_t CASetCharacteristicDescriptorValue
+            (stGattCharDescriptor_t *stGattCharDescriptorInfo);
 
 /**
  * @brief  This is the thread  which will be used for creating bond with remote device.
@@ -370,7 +374,7 @@ CAResult_t CASetCharacteristicDescriptorValue(stGattCharDescriptor_t *stGattChar
  *                            handle, characteristic handle.
  * @return  NONE
  */
-void *CAGATTCreateBondThread(void *stServiceInfo);
+void CAGATTCreateBondThread(void *stServiceInfo);
 
 /**
  * @brief  Used to make LE bond with remote device(pairng the device) using bt_device_create_bond
@@ -397,15 +401,16 @@ CAResult_t CABleGATTCreateBond(const char *remoteAddress);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABleClientSenderQueueEnqueueMessage(const CARemoteEndpoint_t *remoteEndpoint,
-                                                void *data, uint32_t dataLen);
+CAResult_t CABleClientSenderQueueEnqueueMessage
+                            (const CARemoteEndpoint_t *remoteEndpoint,
+                                                const void *data, uint32_t dataLen);
 
 /**
  * @brief  This is the thread which will be used for processing sender queue.
  *
  * @return  NONE
  */
-void *CABleClientSenderQueueProcessor();
+void CABleClientSenderQueueProcessor();
 
 /**
  * @brief Synchronous function for reading characteristic value.
@@ -418,3 +423,4 @@ void *CABleClientSenderQueueProcessor();
 CAResult_t CALEReadDataFromLEClient();
 
 #endif //#ifndef _BLE_CLIENT_
+

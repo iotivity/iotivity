@@ -38,7 +38,7 @@ extern "C"
 #endif
 
 /**
- * @struct CABLEData
+ * @struct CALEData_t
  * @brief Stores the information of the Data to be sent from the queues.
  *        This structure will be pushed to the sender/receiver queue for processing.
  */
@@ -48,7 +48,7 @@ typedef struct
     *remoteEndpoint;   /**< Remote endpoint contains the inforamtion of remote device */
     void *data;        /**< Data to be transmitted over LE tranport */
     uint32_t dataLen;  /**< Length of the data being transmitted */
-} CABLEData;
+} CALEData_t;
 
 /**
  * @brief  Initialize LE connectivity interface.
@@ -56,7 +56,7 @@ typedef struct
  *                               Abstraction Layer
  * @param  reqRespCallback  [IN] Callback to notify request and response messages from server(s)
  *                               started at Connectivity Abstraction Layer.
- * @param  netCallback      [IN] Callback to intimate the network additions to Connectivity
+ * @param  netCallback      [IN] Callback to notify the network additions to Connectivity
  *                               Abstraction Layer.
  * @param  handle           [IN] Threadpool Handle
  * @return #CA_STATUS_OK or Appropriate error code
@@ -95,20 +95,20 @@ CAResult_t CAStartLEDiscoveryServer();
  *                          and connectivity type) to which the unicast data has to be sent.
  * @param   data      [IN]  Data which required to be sent.
  * @param   dataLen   [IN]  Size of data to be sent.
- * @return  The number of bytes sent on the network. Returns 0 on error.
+ * @return  The number of bytes sent on the network. Returns -1 on error.
  * @remarks  dataLen must be > 0.
  */
-uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, void *data,
+int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
                              uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the LE connectivity.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
- * @return  The number of bytes sent on the network. Returns 0 on error.
+ * @return  The number of bytes sent on the network. Returns -1 on error.
  * @remarks  dataLen must be > 0.
  */
-uint32_t CASendLEMulticastData(void *data, uint32_t dataLen);
+int32_t CASendLEMulticastData(const void *data, uint32_t dataLen);
 
 /**
  * @brief Starts notification server on EDR adapters.
@@ -125,7 +125,7 @@ CAResult_t CAStartLENotifyServer();
  * @return  The number of bytes sent on the network. Returns 0 on error.
  * @remarks dataLen must be > 0.
  */
-uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, void *data,
+uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, const void *data,
                               uint32_t dataLen);
 
 /**
@@ -170,7 +170,7 @@ void CATerminateLE();
  *
  */
 CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *serviceUUID,
-                                   void *data, uint32_t dataLength, uint32_t *sentLength);
+                                   const void *data, uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @brief  This function will receive the data from the GattClient and add the data into the
@@ -186,7 +186,7 @@ CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *servic
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *serviceUUID,
-                                   void *data, uint32_t dataLength, uint32_t *sentLength);
+                                   const void *data, uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @brief  This function is used to set the NetworkPacket received callback to CA layer from
@@ -209,7 +209,7 @@ void CASetBLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
-                               void *data, uint32_t dataLen);
+                               const void *data, uint32_t dataLen);
 
 /**
  * @brief  This function will push the data from CA layer to the Sender processor queue.
@@ -224,7 +224,7 @@ CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CABLEClientSendData(const CARemoteEndpoint_t *remoteEndpoint,
-                               void *data,  uint32_t dataLen);
+                               const void *data,  uint32_t dataLen);
 
 /**
  * @brief  This function will be associated with the sender queue for GattServer.This function will
@@ -321,7 +321,7 @@ CAResult_t CAInitBleServerQueues();
 CAResult_t CAInitBleClientQueues();
 
 /**
- * @brief  This function will initalize the Receiver queue for GattServer. This will initlialize
+ * @brief  This function will initalize the Receiver queue for GattServer. This will initialize
  *         the queue to process the function CABLEServerSendDataThread() when ever the task is
  *         added to this queue.
  *
@@ -333,7 +333,7 @@ CAResult_t CAInitBleClientQueues();
 CAResult_t CAInitBleServerSenderQueue();
 
 /**
- * @brief  This function will initalize the Receiver queue for GattClient. This will initlialize
+ * @brief  This function will initalize the Receiver queue for GattClient. This will initialize
  *         the queue to process the function CABLEClientSendDataThread() when ever the task is
  *         added to this queue.
  *
@@ -345,7 +345,7 @@ CAResult_t CAInitBleServerSenderQueue();
 CAResult_t CAInitBleClientSenderQueue();
 
 /**
- * @brief  This function will initalize the Receiver queue for GattServer. This will initlialize
+ * @brief  This function will initalize the Receiver queue for GattServer. This will initialize
  *         the queue to process the function CABLEServerDataReceiverHandler() when ever the task
  *         is added to this queue.
  *
@@ -358,7 +358,7 @@ CAResult_t CAInitBleClientSenderQueue();
 CAResult_t CAInitBleServerReceiverQueue();
 
 /**
- * @brief  This function will initalize the Receiver queue for GattClient. This will initlialize
+ * @brief  This function will initalize the Receiver queue for GattClient. This will initialize
  *         the queue to process the function CABLEClientDataReceiverHandler() when ever the task
  *         is added to this queue.
  *
@@ -381,7 +381,7 @@ CAResult_t CAInitBleClientReceiverQueue();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CABLEData *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+CALEData_t *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
                            uint32_t dataLength);
 
 /**
@@ -389,17 +389,17 @@ CABLEData *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
  * @param bleData [IN] Structure contains the information of a particular data segment.
  * @return NONE
  */
-void CAFreeBLEData(CABLEData *bleData);
+void CAFreeBLEData(CALEData_t *bleData);
 
 /**
- * @brief This will be used to intimate device status changes to the LE adapter layer
+ * @brief This will be used to notify device status changes to the LE adapter layer
  * @param  adapter_state [IN] State of the adapter
  * @return NONE
  */
 typedef void (*CALEDeviceStateChangedCallback)(CAAdapterState_t adapter_state);
 
 /**
- * @brief This will be used to intimate network packet recieved from GATTClient to adapter layer.
+ * @brief This will be used to notify that network packet recieved from GATTClient to adapter layer.
  * @param  remoteAddress  [IN] Remote endpoint Address
  * @param  serviceUUID    [IN] Service UUID
  * @param  data           [IN] Data received
@@ -411,11 +411,11 @@ typedef void (*CALEDeviceStateChangedCallback)(CAAdapterState_t adapter_state);
  * @retval #CA_STATUS_FAILED Operation failed
  */
 typedef CAResult_t (*CABLEClientDataReceivedCallback)(const char *remoteAddress,
-                                                      const char *serviceUUID, void *data,
+                                                      const char *serviceUUID, const void *data,
                                                       uint32_t dataLength, uint32_t *sentLength);
 
 /**
- * @brief This will be used to intimate network packet recieved from GATTServer to adapter layer.
+ * @brief This will be used to notify that network packet recieved from GATTServer to adapter layer.
  * @param  remoteAddress  [IN] Remote endpoint Address
  * @param  serviceUUID    [IN] Service UUID
  * @param  data           [IN] Data received
@@ -427,7 +427,7 @@ typedef CAResult_t (*CABLEClientDataReceivedCallback)(const char *remoteAddress,
  * @retval #CA_STATUS_FAILED Operation failed
  */
 typedef CAResult_t (*CABLEServerDataReceivedCallback)(const char *remoteAddress,
-                                                      const char *serviceUUID, void *data,
+                                                      const char *serviceUUID, const void *data,
                                                       uint32_t dataLength, uint32_t *sentLength);
 
 #ifdef __cplusplus
@@ -435,3 +435,4 @@ typedef CAResult_t (*CABLEServerDataReceivedCallback)(const char *remoteAddress,
 #endif
 
 #endif //#ifndef _CA_LEADAPTER_H_
+

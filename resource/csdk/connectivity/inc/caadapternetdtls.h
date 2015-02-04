@@ -27,6 +27,9 @@
 #include "ocsecurityconfig.h"
 #include "cainterface.h"
 
+/**
+ *   Currently DTLS supported adapters(2) WIFI and ETHENET for linux platform.
+ */
 #define MAX_SUPPORTED_ADAPTERS 2
 
 /**
@@ -34,10 +37,10 @@
  */
 extern void OCGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
 
-typedef void (*CAPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-        const void *data, const uint32_t dataLength, const CABool_t isSecured);
+typedef void (*CAPacketReceivedCallback)(const char *ipAddress, const uint16_t port,
+         const void *data, const uint32_t dataLength, const bool isSecured);
 
-typedef uint32_t (*CAPacketSendCallback)(const char *ipAddress, const uint32_t port,
+typedef uint32_t (*CAPacketSendCallback)(const char *ipAddress, const uint16_t port,
         const void *data, const uint32_t dataLength);
 
 /**
@@ -121,7 +124,9 @@ typedef struct CACacheMessage
 
 /**
  * @enum eDtlsAdapterType_t
- * @brief adapter types
+ * @brief This enum is used as array index for storing adapter level callbacks.
+ *        So Keeping 0 instead of "1 << 0". It is not going to be used as addition
+ *        and removal of adapter.
  *
  */
 typedef enum
@@ -197,8 +202,8 @@ void CAAdapterNetDtlsDeInit();
  */
 
 CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
-                                   const uint32_t port,
-                                   const void *data,
+                                   const uint16_t port,
+                                   void *data,
                                    uint32_t dataLen,
                                    uint8_t *cacheFlag,
                                    eDtlsAdapterType_t type);
@@ -219,10 +224,11 @@ CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
  *
  */
 CAResult_t CAAdapterNetDtlsDecrypt(const char *remoteAddress,
-                                   const uint32_t port,
+                                   const uint16_t port,
                                    uint8_t *data,
                                    uint32_t dataLen,
                                    eDtlsAdapterType_t type);
 
 #endif //_CA_ADAPTER_NET_DTLS_H
+
 

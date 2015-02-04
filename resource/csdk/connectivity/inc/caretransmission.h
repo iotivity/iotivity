@@ -32,23 +32,23 @@
 #include "cacommon.h"
 
 /** CA_ETHERNET, CA_WIFI, CA_EDR, CA_LE **/
-#define DEFAULT_RETRANSMISSION_TYPE     ((1<<0)|(1<<1)|(1<<2)|(1<<3))
+#define DEFAULT_RETRANSMISSION_TYPE     (CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE)
 
 /** default ACK time is 2 sec.(CoAP) **/
-#define DEFAULT_ACK_TIMEOUT         2
+#define DEFAULT_ACK_TIMEOUT_SEC     2
 
 /** default max retransmission trying count is 4.(CoAP) **/
 #define DEFAULT_MAX_RETRANSMIT      4
 
 /** check period is 1 sec. **/
-#define RETRANSMISSION_CHECK_PERIOD     1000000
+#define RETRANSMISSION_CHECK_PERIOD_SEC     1
 
 /** retransmission data send method type**/
-typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, void *pdu,
+typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, const void *pdu,
         uint32_t size);
 
 /** retransmission timeout callback type**/
-typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, void *pdu, uint32_t size);
+typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, const void *pdu, uint32_t size);
 
 typedef struct
 {
@@ -74,7 +74,7 @@ typedef struct
     /** retransmission configure data **/
     CARetransmissionConfig_t config;
     /** Variable to inform the thread to stop **/
-    CABool_t isStop;
+    bool isStop;
     /** array list on which the thread is operating. **/
     u_arraylist_t *dataList;
 } CARetransmission_t;
@@ -86,60 +86,62 @@ extern "C"
 
 /**
  * @brief   Initializes the retransmission context
- * @param   context [IN]context for retransmission
- * @param   handle  [IN]thread pool handle
- * @param   retransmissionSendMethod    [IN]function to be called for retransmission
- * @param   timeoutCallback [IN]callback for retransmit timeout
- * @param   config  [IN]configuration for retransmission. if NULL is coming, it will set default values.
+ * @param   context     [IN] context for retransmission
+ * @param   handle      [IN] thread pool handle
+ * @param   retransmissionSendMethod    [IN] function to be called for retransmission
+ * @param   timeoutCallback [IN] callback for retransmit timeout
+ * @param   config      [IN] configuration for retransmission.
+ *                           if NULL is coming, it will set default values.
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool_t handle,
-        CADataSendMethod_t retransmissionSendMethod, CATimeoutCallback_t timeoutCallback,
-        CARetransmissionConfig_t* config);
+                                    CADataSendMethod_t retransmissionSendMethod,
+                                    CATimeoutCallback_t timeoutCallback,
+                                    CARetransmissionConfig_t* config);
 
 /**
  * @brief   Starting the retransmission context
- * @param   context [IN]context for retransmission
+ * @param   context     [IN] context for retransmission
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionStart(CARetransmission_t *context);
 
 /**
  * @brief   Pass the sent pdu data. if retransmission process need, internal thread will wake up and
- *             process the retransmission data.
- * @param   context     [IN]context for retransmission
- * @param   endpoint    [IN]endpoint information
- * @param   pdu         [IN]sent pdu binary data
- * @param   size        [IN]sent pdu binary data size
+ *          process the retransmission data.
+ * @param   context     [IN] context for retransmission
+ * @param   endpoint    [IN] endpoint information
+ * @param   pdu         [IN] sent pdu binary data
+ * @param   size        [IN] sent pdu binary data size
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionSentData(CARetransmission_t* context,
-                        const CARemoteEndpoint_t* endpoint,const void* pdu, uint32_t size);
+                                    const CARemoteEndpoint_t* endpoint,const void* pdu,
+                                    uint32_t size);
 
 /**
- * @brief   Paas the received pdu data. if received pdu is ACK data for the retransmission CON data,
- *             the specified CON data will remove on retransmission list.
- * @param   context     [IN]context for retransmission
- * @param   endpoint    [IN]endpoint information
- * @param   pdu         [IN]received pdu binary data
- * @param   size        [IN]received pdu binary data size
- * @param   void        [OUT] pdu data of the request for reset and ack
+ * @brief   Pass the received pdu data. if received pdu is ACK data for the retransmission CON data,
+ *          the specified CON data will remove on retransmission list.
+ * @param   context     [IN] context for retransmission
+ * @param   endpoint    [IN] endpoint information
+ * @param   pdu         [IN] received pdu binary data
+ * @param   size        [IN] received pdu binary data size
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
                                         const CARemoteEndpoint_t *endpoint, const void *pdu,
-                                        uint32_t size, void **retransmissionPdu);
+                                        uint32_t size);
 
 /**
  * @brief   Stopping the retransmission context
- * @param   context [IN]context for retransmission
+ * @param   context     [IN] context for retransmission
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionStop(CARetransmission_t *context);
 
 /**
  * @brief   Terminating the retransmission context
- * @param   context [IN]context for retransmission
+ * @param   context     [IN] context for retransmission
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionDestroy(CARetransmission_t *context);
@@ -149,3 +151,4 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context);
 #endif
 
 #endif  // __CA_RETRANSMISSION_H_
+

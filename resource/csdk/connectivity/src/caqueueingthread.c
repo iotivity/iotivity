@@ -39,7 +39,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
 
     if (thread == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "thread data passing error!!");
+        OIC_LOG_V(ERROR, TAG, "thread data passing error!!");
 
         return;
     }
@@ -65,7 +65,9 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
 
         // check stop flag
         if (thread->isStop)
+        {
             continue;
+        }
 
         // get data
         u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
@@ -74,10 +76,8 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
             continue;
         }
 
-        void *data = message->msg;
-
         // process data
-        thread->threadTask(data);
+        thread->threadTask(message->msg);
 
         // free
         if (thread->destroy != NULL)
@@ -135,17 +135,12 @@ CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_
 
     OIC_LOG_V(DEBUG, TAG, "thread initialize..");
 
-    memset(thread, 0, sizeof(CAQueueingThread_t));
-
-    // mutex init
-    u_mutex_init();
-
     // set send thread data
     thread->threadPool = handle;
     thread->dataQueue = u_queue_create();
     thread->threadMutex = u_mutex_new();
     thread->threadCond = u_cond_new();
-    thread->isStop = CA_TRUE;
+    thread->isStop = true;
     thread->threadTask = task;
     thread->destroy = destroy;
 
@@ -166,20 +161,23 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
         return CA_STATUS_FAILED;
     }
 
-    if (CA_FALSE == thread->isStop) //Queueing thread already running
+    if (false == thread->isStop) //Queueing thread already running
     {
         OIC_LOG_V(DEBUG, TAG, "queueing thread already running..");
         return CA_STATUS_OK;
     }
 
-    thread->isStop = CA_FALSE;
+    // mutex lock
+    u_mutex_lock(thread->threadMutex);
+    thread->isStop = false;
+    // mutex unlock
+    u_mutex_unlock(thread->threadMutex);
+
     CAResult_t res = u_thread_pool_add_task(thread->threadPool, CAQueueingThreadBaseRoutine,
                                             thread);
     if (res != CA_STATUS_OK)
     {
         OIC_LOG_V(DEBUG, TAG, "thread pool add task error(send thread).");
-        thread->isStop = CA_TRUE;
-        return res;
     }
 
     return res;
@@ -189,13 +187,13 @@ CAResult_t CAQueueingThreadAddData(CAQueueingThread_t *thread, void *data, uint3
 {
     if (thread == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "thread instance is empty..");
+        OIC_LOG_V(ERROR, TAG, "thread instance is empty..");
         return CA_STATUS_FAILED;
     }
 
     if (data == NULL || size == 0)
     {
-        OIC_LOG_V(DEBUG, TAG, "data is empty..");
+        OIC_LOG_V(ERROR, TAG, "data is empty..");
 
         return CA_STATUS_FAILED;
     }
@@ -205,13 +203,12 @@ CAResult_t CAQueueingThreadAddData(CAQueueingThread_t *thread, void *data, uint3
 
     if (message == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "memory error!!");
+        OIC_LOG_V(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
     }
-    memset(message, 0, sizeof(u_queue_message_t));
 
     message->msg = data;
-    message->size = sizeof(size);
+    message->size = size;
 
     // mutex lock
     u_mutex_lock(thread->threadMutex);
@@ -262,9 +259,9 @@ CAResult_t CAQueueingThreadStop(CAQueueingThread_t *thread)
         u_mutex_lock(thread->threadMutex);
 
         // set stop flag
-        thread->isStop = CA_TRUE;
+        thread->isStop = true;
 
-        // notity the thread
+        // notify the thread
         u_cond_signal(thread->threadCond);
 
         u_cond_wait(thread->threadCond, thread->threadMutex);
@@ -275,4 +272,3 @@ CAResult_t CAQueueingThreadStop(CAQueueingThread_t *thread)
 
     return CA_STATUS_OK;
 }
-

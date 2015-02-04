@@ -41,7 +41,7 @@ extern "C"
  *                                Abstraction Layer
  * @param  reqRespCallback   [IN] Callback to notify request and response messages from server(s)
  *                                started at Connectivity Abstraction Layer.
- * @param  netCallback       [IN] Callback to intimate the network additions to Connectivity
+ * @param  netCallback       [IN] Callback to notify the network additions to Connectivity
  *                                Abstraction Layer.
  * @return #CA_STATUS_OK or Appropriate error code
  * @retval #CA_STATUS_OK Successful
@@ -92,9 +92,9 @@ CAResult_t CAStartEDRDiscoveryServer();
  *                              connectivity type) to which the unicast data has to be sent.
  * @param  data            [IN] Data to be sent.
  * @param  dataLength      [IN] Size of data to be sent.
- * @return Number of bytes sent on the network. Returns 0 on error.
+ * @return Number of bytes sent on the network. Returns -1 on error.
  */
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
                               uint32_t dataLength);
 
 /**
@@ -102,9 +102,9 @@ uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *da
  *         connectivity.
  * @param  data         [IN]  Data which needs to be sent to all discovered bluetooth OIC device.
  * @param  dataLength   [IN]  Length of data in bytes.
- * @return Number of bytes sent on the network. Returns 0 on error.
+ * @return Number of bytes sent on the network. Returns -1 on error.
  */
-uint32_t CASendEDRMulticastData(void *data, uint32_t dataLength);
+int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength);
 
 /**
  * @brief  Get EDR Connectivity network information.
@@ -147,3 +147,4 @@ void CATerminateEDR();
 #endif
 
 #endif  //__CA_EDRADAPTER_SINGLETHREAD_H_
+

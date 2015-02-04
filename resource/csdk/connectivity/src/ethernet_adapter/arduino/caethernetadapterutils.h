@@ -45,36 +45,36 @@ extern "C"
 #endif
 
 /**
- * @brief Initialize Unicast UDP socket
- * @param   port        [IN]   Port to start the unicast server
- * @param   socketID    [IN]   Unicast socket ID
+ * @brief Get available UDP socket
+ * @param   sockID      [OUT]   Available UDP socket ID
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAArduinoInitUdpSocket(int16_t *port, int32_t *socketID);
+CAResult_t CAArduinoGetAvailableSocket(int *sockID);
+
+/**
+ * @brief Initialize Unicast UDP socket
+ * @param   port        [INOUT] Port to start the unicast server
+ * @param   socketID    [OUT    Unicast socket ID
+ * @return  #CA_STATUS_OK or Appropriate error code
+ */
+CAResult_t CAArduinoInitUdpSocket(uint16_t *port, int *socketID);
 
 /**
  * @brief Initialize Multicast UDP socket
- * @param   mcastAddress    [IN] Port to start the unicast server
- * @param   mport           [IN] Multicast port
- * @param   lport           [IN] Local port on which the server is started
- * @param   socketID        [IN] Multicast socket ID
+ * @param   mcastAddress    [IN]  Port to start the unicast server
+ * @param   mport           [IN]  Multicast port
+ * @param   lport           [IN]  Local port on which the server is started
+ * @param   socketID        [OUT] Multicast socket ID
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress, const int16_t *mport,
-                                           const int16_t *lport, int32_t *socketID);
-
-/**
- * @brief   To parse the IP address
- * @param   ipAddrStr   [IN]   IP address to be parsed
- * @param   ipAddr      [OUT]  Parsed IP address
- * @param   port        [OUT]  Parsed Port number
- * @return  1 on Success otherwise failed to parse the address
- */
-int16_t CAParseIPv4AddressLocal(unsigned char *ipAddrStr, uint8_t *ipAddr, uint16_t *port);
+CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress,
+                                           uint16_t mport, uint16_t lport,
+                                           int *socketID);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //_CA_ETHERNET_ADAPTER_UTILS_
+
 

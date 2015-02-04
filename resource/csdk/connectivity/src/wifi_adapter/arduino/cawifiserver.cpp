@@ -36,12 +36,7 @@
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 
-#define COAP_MAX_PDU_SIZE 320
 #define MOD_NAME "WS"
-
-char ssid[] = "NETGEAR99";         // your network SSID (name)
-const char pass[] = "jollysky325";            // your network password
-int16_t status = WL_IDLE_STATUS;    // the Wifi radio's status
 
 // Length of the IP address decimal notation string
 #define IPNAMESIZE (16)
@@ -66,45 +61,35 @@ static WiFiUDP Udp;
 
 CAResult_t CAWiFiInitializeServer(void)
 {
+    /**
+     * This API is to keep design in sync with other platforms.
+     * The required implementation is done in Start() api's.
+     */
     return CA_STATUS_OK;
 }
 
 void CAWiFiTerminateServer(void)
 {
-
+    /**
+     * This API is to keep design in sync with other platforms.
+     * The required implementation is done in Stop() api's.
+     */
 }
 
-CAResult_t CAWiFiGetUnicastServerInfo(char **ipAddress, int *port, int32_t *serverID)
+CAResult_t CAWiFiGetUnicastServerInfo(char **ipAddress, int *port, int *serverID)
 {
+    /*
+     * This API is to keep design in sync with other platforms.
+     * Will be implemented as and when CA layer wants this info.
+     */
     return CA_STATUS_OK;
 }
 
 CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
-                                    const bool forceStart, int32_t *serverFD)
+                                    bool forceStart, int *serverFD)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     VERIFY_NON_NULL(port, MOD_NAME, "port");
-
-    // WiFiClass WiFi;
-    if (WiFi.status() == WL_NO_SHIELD)
-    {
-        OIC_LOG(DEBUG, MOD_NAME, "Error");
-        return CA_STATUS_FAILED;
-    }
-
-    while (status != WL_CONNECTED)
-    {
-        OIC_LOG_V(ERROR, MOD_NAME, "connecting: %s", ssid);
-        status = WiFi.begin(ssid, pass);  // Connect to WPA/WPA2 network:
-
-        // wait 10 seconds for connection:
-        delay(10000);
-    }
-
-    char localIpAddress[CA_IPADDR_SIZE];
-    int32_t localIpAddressLen = sizeof(localIpAddress);
-    CAArduinoGetInterfaceAddress(localIpAddress, localIpAddressLen);
-    OIC_LOG_V(DEBUG, MOD_NAME, "address: %s", localIpAddress);
 
     if (gServerRunning)
     {
@@ -113,20 +98,27 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, MOD_NAME, "port: %d", *port);
-    Udp.begin((uint16_t ) *port);
-
-    // start thread to monitor socket here
-    if (!gServerRunning)
+    if (WiFi.status() != WL_CONNECTED)
     {
-        gServerRunning = true;
+        OIC_LOG(ERROR, MOD_NAME, "ERROR:No WIFI");
+        return CA_STATUS_FAILED;
     }
+
+    char localIpAddress[CA_IPADDR_SIZE];
+    int32_t localIpAddressLen = sizeof(localIpAddress);
+    CAArduinoGetInterfaceAddress(localIpAddress, localIpAddressLen);
+    OIC_LOG_V(DEBUG, MOD_NAME, "address: %s", localIpAddress);
+    OIC_LOG_V(DEBUG, MOD_NAME, "port: %d", *port);
+
+    Udp.begin((uint16_t ) *port);
+    gServerRunning = true;
+
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                      const int16_t multicastPort, int32_t *serverFD)
+                                      int16_t multicastPort, int *serverFD)
 {
     // wifi shield does not support multicast
     OIC_LOG(DEBUG, MOD_NAME, "IN");
@@ -139,7 +131,6 @@ CAResult_t CAWiFiStopUnicastServer()
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     Udp.stop();
 
-    // Terminate server thread
     gServerRunning = false;
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return CA_STATUS_OK;
@@ -210,25 +201,14 @@ void CAWiFiPullData()
     CAArduinoCheckData();
 }
 
-/// Retrieves the IP address assigned to Arduino Ethernet shield
+/// Retrieves the IP address assigned to Arduino WiFi shield
 CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
-    // WiFiClass WiFi;
-    if (WiFi.status() == WL_NO_SHIELD)
+    if (WiFi.status() != WL_CONNECTED)
     {
-        OIC_LOG(DEBUG, MOD_NAME, "WIFI SHIELD NOT PRESENT");
+        OIC_LOG(DEBUG, MOD_NAME, "No WIFI");
         return CA_STATUS_FAILED;
-    }
-
-    while ( status != WL_CONNECTED)
-    {
-        OIC_LOG_V(ERROR, MOD_NAME, "Connecting to WPA SSID: %s", ssid);
-        status = WiFi.begin(ssid, pass);  // Connect to WPA/WPA2 network:
-
-        // wait 10 seconds for connection:
-        delay(10000);
-        OIC_LOG(DEBUG, MOD_NAME, "Attempting connection again");
     }
 
     VERIFY_NON_NULL(address, MOD_NAME, "Invalid address");
@@ -245,5 +225,6 @@ CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return CA_STATUS_OK;
 }
+
 
 

@@ -10,7 +10,7 @@ if 'WIFI' in env.get('TARGET_TRANSPORT'):
 	env.ImportLib('WiFi')
 if 'BLE' in env.get('TARGET_TRANSPORT'):
 	env.ImportLib('BLE')
-	env.ImportLib('RBL_nRF8001')	
+	env.ImportLib('RBL_nRF8001')
 
 env.ImportLib('Time/Time')
 # we have variety of macros for arduino!!

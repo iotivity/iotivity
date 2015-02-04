@@ -14,6 +14,7 @@ LOCAL_MODULE := RMInterface
 LOCAL_SRC_FILES := ResourceModel.c
 LOCAL_STATIC_LIBRARIES := CA
 LOCAL_LDLIBS := -llog
+LOCAL_C_INCLUDES := ../../../api
 include $(BUILD_SHARED_LIBRARY)
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -23,3 +24,4 @@ PROJECT_ROOT_PATH			= ../../..
 CA_LIB_PATH 				= $(PROJECT_ROOT_PATH)/build/android
 include $(CA_LIB_PATH)/jni/Android.mk
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+

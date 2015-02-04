@@ -13,14 +13,13 @@ root_dir = env.get('ROOT_DIR')
 build_dir = env.get('BUILD_DIR')
 sample_dir = build_dir
 
-env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DTB_LOG'])
+env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DTB_LOG','`pkg-config', '--cflags', '--libs','dlog', 'com.oic.ca', 'capi-network-wifi',
+				'gobject-2.0','glib-2.0`'])
 
 env.Append(LIBPATH=[root_dir +'/lib/tizen/ble/libs/',])
 env.Append(LIBS=[
-  '-lm', '-lpthread', '-lrt', '-ldl', '-lstdc++', '-lconnectivity_abstraction', 'coap',
+  '-lm', '-lpthread', '-lrt', '-ldl', '-lstdc++', '-lgobject-2.0', '-lgio-2.0', '-lglib-2.0', '-lcapi-network-wifi', '-ldlog', '-lcapi-network-bluetooth', '-lconnectivity_abstraction', 'coap',
 ])
-
-env.ParseConfig("pkg-config --cflags --libs dlog com.oic.ca capi-network-wifi capi-network-bluetooth gobject-2.0 glib-2.0 gio-2.0")
 
 env.Prepend(RPATH=[root_dir +'/lib/tizen/ble/libs/',])
 if 'ALL' in transport:
@@ -46,16 +45,11 @@ else:
 		env.AppendUnique(CPPDEFINES = ['NO_WIFI_ADAPTER'])
 
 
-
-
-in_sample_src = [sample_dir + '/interfacesample.c']
 ca_sample_src = [sample_dir + '/casample.c']
 
-	
-print " interface sample src %s" % in_sample_src
 print " ca sample src %s" % ca_sample_src
 
-env.Program('interface_sample', [in_sample_src,])
 env.Program('ca_sample', [ca_sample_src,])
+
 
 

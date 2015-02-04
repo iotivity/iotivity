@@ -45,7 +45,7 @@
  * @brief Unicast port number (to listen for incoming data on unicast server).
  * Note :- Actual port number may differ based on result of bind() operation.
  */
-#define CA_PORT   5298
+#define CA_PORT   6298
 
 /**
  * @def CA_SECURE_PORT
@@ -73,77 +73,78 @@ typedef struct
 } CAWiFiData;
 
 /**
- * @var gNetworkPacketCallback
+ * @var g_networkPacketCallback
  * @brief Network Packet Received Callback to CA
  */
-static CANetworkPacketReceivedCallback gNetworkPacketCallback = NULL;
+static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 
 /**
  * @var gNetworkChangeCb
  * @brief Network Changed Callback to CA
  */
-static CANetworkChangeCallback gNetworkChangeCallback = NULL;
+static CANetworkChangeCallback g_networkChangeCallback = NULL;
 
 /**
- * @var gIsMulticastServerStarted
+ * @var g_isMulticastServerStarted
  * @brief Flag to check if multicast server is started
  */
-static bool gIsMulticastServerStarted = false;
+static bool g_isMulticastServerStarted = false;
 
 /**
  * @var gIsStartServerCalled
  * @brief Flag to check if server start requested by CA.
  */
-static bool gStartUnicastServerRequested = false;
+static bool g_startUnicastServerRequested = false;
 
 /**
- * @var gUnicastServerport
+ * @var g_unicastServerport
  * @brief port number on which unicast server is running.
  */
-static int16_t gUnicastServerport = 0;
+static int16_t g_unicastServerport = 0;
 
 #ifdef __WITH_DTLS__
 /**
- * @var gSecureUnicastServerport
+ * @var g_secureUnicastServerport
  * @brief port number on which secure unicast server is running.
  */
-static int16_t gSecureUnicastServerport = 0;
+static int16_t g_secureUnicastServerport = 0;
 #endif
 
 /**
  * @var gIsStartServerCalled
  * @brief Flag to check if server start requested by CA.
  */
-static bool gStartMulticastServerRequested = false;
+static bool g_startMulticastServerRequested = false;
 
 /**
- * @var gSendQueueHandle
+ * @var g_sendQueueHandle
  * @brief Queue handle for Send Data
  */
-static CAQueueingThread_t *gSendQueueHandle = NULL;
+static CAQueueingThread_t *g_sendQueueHandle = NULL;
 
 /**
- * @var gThreadPool
+ * @var g_threadPool
  * @brief ThreadPool for storing u_thread_pool_t handle passed from CA
  */
-static u_thread_pool_t gThreadPool = NULL;
+static u_thread_pool_t g_threadPool = NULL;
 
 static CAResult_t CAWiFiInitializeQueueHandles();
 static void CAWiFiDeinitializeQueueHandles();
-static void CAWiFiNotifyNetworkChange(const char *address, const int16_t port,
-                                      const CANetworkStatus_t status);
+static void CAWiFiNotifyNetworkChange(const char *address, uint16_t port,
+                                      CANetworkStatus_t status);
 static void CAWiFiConnectionStateCB(const char *ipAddress,
-                                    const CANetworkStatus_t status);
-static void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
-                                   const void *data, const uint32_t dataLength,
-                                   const CABool_t isSecured);
+                                    CANetworkStatus_t status);
+static void CAWiFiPacketReceivedCB(const char *ipAddress, uint16_t port,
+                                   const void *data, uint32_t dataLength,
+                                   bool isSecured);
+
 #ifdef __WITH_DTLS__
-static uint32_t CAWiFiPacketSendCB(const char *ipAddress, const uint32_t port,
-                                   const void *data, const uint32_t dataLength);
+static uint32_t CAWiFiPacketSendCB(const char *ipAddress, uint16_t port,
+                                   const void *data, uint32_t dataLength);
 #endif
 static CAResult_t CAWiFiStopServers();
 static void CAWiFiSendDataThread(void *threadData);
-static CAWiFiData *CACreateWiFiData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+static CAWiFiData *CACreateWiFiData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
                                     uint32_t dataLength);
 void CAFreeWiFiData(CAWiFiData *wifiData);
 
@@ -154,26 +155,26 @@ CAResult_t CAWiFiInitializeQueueHandles()
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
     // Check if the message queue is already initialized
-    if (gSendQueueHandle)
+    if (g_sendQueueHandle)
     {
-        OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "Already queue is initialized!");
+        OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "send queue handle is already initialized!");
         return CA_STATUS_OK;
     }
 
     // Create send message queue
-    gSendQueueHandle = OICMalloc(sizeof(CAQueueingThread_t));
-    if (!gSendQueueHandle)
+    g_sendQueueHandle = OICMalloc(sizeof(CAQueueingThread_t));
+    if (!g_sendQueueHandle)
     {
         OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Memory allocation failed!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    if (CA_STATUS_OK != CAQueueingThreadInitialize(gSendQueueHandle, gThreadPool,
+    if (CA_STATUS_OK != CAQueueingThreadInitialize(g_sendQueueHandle, g_threadPool,
             CAWiFiSendDataThread, CADataDestroyer))
     {
         OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Failed to Initialize send queue thread");
-        OICFree(gSendQueueHandle);
-        gSendQueueHandle = NULL;
+        OICFree(g_sendQueueHandle);
+        g_sendQueueHandle = NULL;
         return CA_STATUS_FAILED;
     }
 
@@ -185,15 +186,15 @@ void CAWiFiDeinitializeQueueHandles()
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
-    CAQueueingThreadDestroy(gSendQueueHandle);
-    OICFree(gSendQueueHandle);
-    gSendQueueHandle = NULL;
+    CAQueueingThreadDestroy(g_sendQueueHandle);
+    OICFree(g_sendQueueHandle);
+    g_sendQueueHandle = NULL;
 
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
 }
 
-void CAWiFiNotifyNetworkChange(const char *address, const int16_t port,
-                               const CANetworkStatus_t status)
+void CAWiFiNotifyNetworkChange(const char *address, uint16_t port,
+                               CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
@@ -205,16 +206,16 @@ void CAWiFiNotifyNetworkChange(const char *address, const int16_t port,
     }
 
     localEndpoint->addressInfo.IP.port = port;
-    if (NULL != gNetworkChangeCallback)
+    if (NULL != g_networkChangeCallback)
     {
-        gNetworkChangeCallback(localEndpoint, status);
+        g_networkChangeCallback(localEndpoint, status);
     }
 
     CAAdapterFreeLocalEndpoint(localEndpoint);
 }
 
 void CAWiFiConnectionStateCB(const char *ipAddress,
-                             const CANetworkStatus_t status)
+                             CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
@@ -226,18 +227,18 @@ void CAWiFiConnectionStateCB(const char *ipAddress,
      */
     if (CA_INTERFACE_UP == status)
     {
-        int16_t port = CA_PORT;
+        uint16_t port = CA_PORT;
         int32_t serverFd = -1;
 
         // Start Unicast server if requested earlier
-        if (gStartUnicastServerRequested)
+        if (g_startUnicastServerRequested)
         {
             ret = CAWiFiStartUnicastServer("0.0.0.0", &port, false, false, &serverFd);
             if (CA_STATUS_OK == ret)
             {
                 OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Unicast server started on %d port", port);
                 CAWiFiSetUnicastSocket(serverFd);
-                gUnicastServerport = port;
+                g_unicastServerport = port;
             }
             else
             {
@@ -251,7 +252,7 @@ void CAWiFiConnectionStateCB(const char *ipAddress,
             {
                 OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Secure Unicast server started on %d", port);
                 CAWiFiSetSecureUnicastSocket(serverFd);
-                gSecureUnicastServerport = port;
+                g_secureUnicastServerport = port;
             }
             else
             {
@@ -262,9 +263,9 @@ void CAWiFiConnectionStateCB(const char *ipAddress,
         }
 
         // Start Multicast server if requested earlier
-        if (gStartMulticastServerRequested)
+        if (g_startMulticastServerRequested)
         {
-            int16_t multicastPort = CA_MCAST_PORT;
+            uint16_t multicastPort = CA_MCAST_PORT;
             int32_t multicastFd = 0;
             ret = CAWiFiStartMulticastServer("0.0.0.0", CA_MULTICAST_IP, multicastPort,
                                              &multicastFd);
@@ -272,7 +273,7 @@ void CAWiFiConnectionStateCB(const char *ipAddress,
             {
                 OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Multicast server started on %d port",
                           multicastPort);
-                gIsMulticastServerStarted = true;
+                g_isMulticastServerStarted = true;
             }
             else
             {
@@ -320,21 +321,21 @@ void CAWiFiConnectionStateCB(const char *ipAddress,
 }
 
 #ifdef __WITH_DTLS__
-uint32_t CAWiFiPacketSendCB(const char *ipAddress, const uint32_t port,
-                            const void *data, const uint32_t dataLength)
+uint32_t CAWiFiPacketSendCB(const char *ipAddress, uint16_t port,
+                            const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
-    uint32_t sentLength = CAWiFiSendData(ipAddress, port, data, dataLength, CA_FALSE, CA_TRUE);
+    uint32_t sentLength = CAWiFiSendData(ipAddress, port, data, dataLength, false, true);
 
-    OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Successfully sent %d of encripted data!", sentLength);
+    OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Successfully sent %d of encrypted data!", sentLength);
 
     return sentLength;
 }
 #endif
 
-void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
-                            const void *data, const uint32_t dataLength, const CABool_t isSecured)
+void CAWiFiPacketReceivedCB(const char *ipAddress, uint16_t port,
+                            const void *data, uint32_t dataLength, bool isSecured)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
     OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Address: %s, port:%d, data:%s", ipAddress, port, data);
@@ -349,18 +350,19 @@ void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
     endPoint->addressInfo.IP.port = port;
     endPoint->isSecured = isSecured;
 
-    void *buf = OICMalloc(dataLength + 1);
+    void *buf = OICMalloc(dataLength);
     if (NULL == buf)
     {
         OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Out of memory");
         CAAdapterFreeRemoteEndpoint(endPoint);
         return;
     }
+
     memcpy(buf, data, dataLength);
-    memset(buf + dataLength, 0, 1);
-    if (gNetworkPacketCallback)
+
+    if (g_networkPacketCallback)
     {
-        gNetworkPacketCallback(endPoint, buf, dataLength);
+        g_networkPacketCallback(endPoint, buf, dataLength);
     }
     else
     {
@@ -380,11 +382,11 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(netCallback, WIFI_ADAPTER_TAG, "netCallback");
     VERIFY_NON_NULL(handle, WIFI_ADAPTER_TAG, "thread pool handle");
 
-    gThreadPool  = handle;
-    gNetworkChangeCallback = netCallback;
-    gNetworkPacketCallback = networkPacketCallback;
+    g_threadPool  = handle;
+    g_networkChangeCallback = netCallback;
+    g_networkPacketCallback = networkPacketCallback;
 
-    CAResult_t ret = CAWiFiInitializeNetworkMonitor(gThreadPool);
+    CAResult_t ret = CAWiFiInitializeNetworkMonitor(g_threadPool);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to initialize n/w monitor![%d]", ret);
@@ -392,11 +394,11 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
     }
     CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateCB);
 
-    ret = CAWiFiInitializeServer(gThreadPool);
+    ret = CAWiFiInitializeServer(g_threadPool);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to initialize server![%d]", ret);
-        CATerminateWIfI();
+        CATerminateWIFI();
         return ret;
     }
 
@@ -409,19 +411,19 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
     CAConnectivityHandler_t wifiHandler;
     wifiHandler.startAdapter = CAStartWIFI;
     wifiHandler.startListenServer = CAStartWIFIListeningServer;
-    wifiHandler.startDiscoverServer = CAStartWIFIDiscoveryServer;
+    wifiHandler.startDiscoveryServer = CAStartWIFIDiscoveryServer;
     wifiHandler.sendData = CASendWIFIUnicastData;
     wifiHandler.sendDataToAll = CASendWIFIMulticastData;
     wifiHandler.GetnetInfo = CAGetWIFIInterfaceInformation;
     wifiHandler.readData = CAReadWIFIData;
     wifiHandler.stopAdapter = CAStopWIFI;
-    wifiHandler.terminate = CATerminateWIfI;
+    wifiHandler.terminate = CATerminateWIFI;
     registerCallback(wifiHandler, CA_WIFI);
 
     if (CA_STATUS_OK != CAWiFiInitializeQueueHandles())
     {
         OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Failed to Initialize Queue Handle");
-        CATerminateWIfI();
+        CATerminateWIFI();
         return CA_STATUS_FAILED;
     }
 
@@ -438,16 +440,18 @@ CAResult_t CAStartWIFI()
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Failed to Start n/w monitor");
+        return ret;
     }
 
     // Start send queue thread
-    if (CA_STATUS_OK != CAQueueingThreadStart(gSendQueueHandle))
+    if (CA_STATUS_OK != CAQueueingThreadStart(g_sendQueueHandle))
     {
         OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Failed to Start Send Data Thread");
+        CAStopWIFI();
         return CA_STATUS_FAILED;
     }
 
-    gStartUnicastServerRequested = true;
+    g_startUnicastServerRequested = true;
     bool retVal = CAWiFiIsConnected();
     if (false == retVal)
     {
@@ -464,7 +468,7 @@ CAResult_t CAStartWIFI()
         return ret;
     }
 
-    int16_t unicastPort = CA_PORT;
+    uint16_t unicastPort = CA_PORT;
     int32_t serverFd = 0;
     // Address is hardcoded as we are using Single Interface
     ret = CAWiFiStartUnicastServer(ifcAdrs, &unicastPort, false, false, &serverFd);
@@ -472,7 +476,7 @@ CAResult_t CAStartWIFI()
     {
         OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Unicast server started on %d port", unicastPort);
         CAWiFiSetUnicastSocket(serverFd);
-        gUnicastServerport = unicastPort;
+        g_unicastServerport = unicastPort;
     }
 
 #ifdef __WITH_DTLS__
@@ -483,17 +487,13 @@ CAResult_t CAStartWIFI()
     {
         OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Secure Unicast server started on %d port", unicastPort);
         CAWiFiSetSecureUnicastSocket(serverFd);
-        gSecureUnicastServerport = unicastPort;
+        g_secureUnicastServerport = unicastPort;
     }
 #endif
-    if(ifcName)
-    {
-         OICFree(ifcName);
-    }
-    if(ifcAdrs)
-    {
-         OICFree(ifcAdrs);
-    }
+
+    OICFree(ifcName);
+    OICFree(ifcAdrs);
+
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return ret;
 }
@@ -505,14 +505,14 @@ CAResult_t CAStartWIFIListeningServer()
     CAResult_t ret = CA_STATUS_OK;
     int16_t multicastPort = CA_MCAST_PORT;
 
-    if (gIsMulticastServerStarted == true)
+    if (g_isMulticastServerStarted == true)
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG,
                   "Failed to Start Multicast Server, Already Started!");
         return CA_SERVER_STARTED_ALREADY;
     }
 
-    gStartMulticastServerRequested = true;
+    g_startMulticastServerRequested = true;
     bool retVal = CAWiFiIsConnected();
     if (false == retVal)
     {
@@ -535,17 +535,12 @@ CAResult_t CAStartWIFIListeningServer()
     if (CA_STATUS_OK == ret)
     {
         OIC_LOG(INFO, WIFI_ADAPTER_TAG, "Multicast Server is Started Successfully");
-        gIsMulticastServerStarted = true;
+        g_isMulticastServerStarted = true;
     }
 
-    if(ifcName)
-    {
-         OICFree(ifcName);
-    }
-    if(ifcAdrs)
-    {
-        OICFree(ifcAdrs);
-    }
+    OICFree(ifcName);
+    OICFree(ifcAdrs);
+
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
     return ret;
 }
@@ -554,17 +549,16 @@ CAResult_t CAStartWIFIDiscoveryServer()
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
     return CAStartWIFIListeningServer();
+    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
 }
 
-uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
-                               uint32_t dataLength)
+int32_t CASendWIFIData(const CARemoteEndpoint_t *remoteEndpoint, const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
-    uint32_t dataSize = 0;
-    VERIFY_NON_NULL_RET(remoteEndpoint, WIFI_ADAPTER_TAG, "remoteEndpoint", dataSize);
+    int32_t dataSize = -1;
     VERIFY_NON_NULL_RET(data, WIFI_ADAPTER_TAG, "data", dataSize);
-    VERIFY_NON_NULL_RET(gSendQueueHandle, WIFI_ADAPTER_TAG, "sendQueueHandle", dataSize);
+    VERIFY_NON_NULL_RET(g_sendQueueHandle, WIFI_ADAPTER_TAG, "sendQueueHandle", dataSize);
 
     if (0 == dataLength)
     {
@@ -577,43 +571,38 @@ uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *remoteEndpoint, void *d
     if (!wifiData)
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to create wifidata!");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-
-    // Add message to send queue
-    CAQueueingThreadAddData(gSendQueueHandle, wifiData, sizeof(CAWiFiData));
-
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
-    return dataLength;
-}
-
-uint32_t CASendWIFIMulticastData(void *data, uint32_t dataLength)
-{
-    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
-
-    uint32_t dataSize = 0;
-    VERIFY_NON_NULL_RET(data, WIFI_ADAPTER_TAG, "data", dataSize);
-    VERIFY_NON_NULL_RET(gSendQueueHandle, WIFI_ADAPTER_TAG, "sendQueueHandle", dataSize);
-
-    if (0 == dataLength)
-    {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Invalid Data Length");
         return dataSize;
     }
 
-    // Create WifiData to add to queue
-    CAWiFiData *wifiData = CACreateWiFiData(NULL, data, dataLength);
-    if (!wifiData)
-    {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to create wifidata!");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-
     // Add message to send queue
-    CAQueueingThreadAddData(gSendQueueHandle, wifiData, sizeof(CAWiFiData));
+    CAQueueingThreadAddData(g_sendQueueHandle, wifiData, sizeof(CAWiFiData));
 
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
-    return dataLength;
+    return 0;
+}
+
+int32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+                               uint32_t dataLength)
+{
+    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
+
+    int32_t dataSize = -1;
+    VERIFY_NON_NULL_RET(remoteEndpoint, WIFI_ADAPTER_TAG, "remoteEndpoint", dataSize);
+
+    dataSize = CASendWIFIData(remoteEndpoint, data, dataLength);
+
+    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
+    return dataSize;
+}
+
+int32_t CASendWIFIMulticastData(const void *data, uint32_t dataLength)
+{
+    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
+
+    int32_t dataSize = CASendWIFIData(NULL, data, dataLength);
+
+    OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
+    return dataSize;
 }
 
 CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
@@ -633,34 +622,27 @@ CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t 
 
     int32_t netInfoSize = 1;
 #ifdef __WITH_DTLS__
-    if (gSecureUnicastServerport)
+    if (g_secureUnicastServerport)
     {
         netInfoSize = 2;
     }
 #endif
-    netInfo = (CALocalConnectivity_t *) OICMalloc(sizeof(CALocalConnectivity_t) * netInfoSize);
+    netInfo = (CALocalConnectivity_t *) OICCalloc(netInfoSize, sizeof(CALocalConnectivity_t));
+
     VERIFY_NON_NULL_RET(netInfo, WIFI_ADAPTER_TAG, "malloc failed", CA_MEMORY_ALLOC_FAILED);
-    memset(netInfo, 0, sizeof(CALocalConnectivity_t) * netInfoSize);
 
     char *ipAddress = NULL;
     char *ifcName = NULL;
+
     CAResult_t ret = CAWiFiGetInterfaceInfo(&ifcName, &ipAddress);
     if (CA_STATUS_OK != ret || NULL == ipAddress)
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to get interface info [%d]", ret);
 
-        if(netInfo)
-        {
-            OICFree(netInfo);
-        }
-        if(ipAddress)
-        {
-            OICFree(ipAddress);
-        }
-        if(ifcName)
-        {
-            OICFree(ifcName);
-        }
+        OICFree(netInfo);
+        OICFree(ipAddress);
+        OICFree(ifcName);
+
         return ret;
     }
 
@@ -670,46 +652,33 @@ CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t 
     {
         OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to create Local Endpoint!",
                   CA_MEMORY_ALLOC_FAILED);
-        if(netInfo)
-        {
-            OICFree(netInfo);
-        }
-        if(ipAddress)
-        {
-            OICFree(ipAddress);
-        }
-        if(ifcName)
-        {
-            OICFree(ifcName);
-        }
+        OICFree(netInfo);
+        OICFree(ipAddress);
+        OICFree(ifcName);
+
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    // copy unciast server information
-    endpoint->isSecured = CA_FALSE;
-    endpoint->addressInfo.IP.port = gUnicastServerport;
+    // copy unicast server information
+    endpoint->isSecured = false;
+    endpoint->addressInfo.IP.port = g_unicastServerport;
     memcpy(&netInfo[0], endpoint, sizeof(CALocalConnectivity_t));
     *size = 1;
 #ifdef __WITH_DTLS__
-    // copy sevure unicast server information
-    if (gSecureUnicastServerport)
+    // copy secure unicast server information
+    if (g_secureUnicastServerport)
     {
-        endpoint->isSecured = CA_TRUE;
-        endpoint->addressInfo.IP.port = gSecureUnicastServerport;
+        endpoint->isSecured = true;
+        endpoint->addressInfo.IP.port = g_secureUnicastServerport;
         memcpy(&netInfo[1], endpoint, sizeof(CALocalConnectivity_t));
         *size = 2;
     }
 #endif
     *info = netInfo;
 
-    if(ipAddress)
-    {
-        OICFree(ipAddress);
-    }
-    if(ifcName)
-    {
-        OICFree(ifcName);
-    }
+    OICFree(ipAddress);
+    OICFree(ifcName);
+
     CAAdapterFreeLocalEndpoint(endpoint);
 
     OIC_LOG(INFO, WIFI_ADAPTER_TAG, "GetWIFIInterfaceInformation success");
@@ -732,21 +701,21 @@ CAResult_t CAWiFiStopServers()
     if (CA_STATUS_OK == CAWiFiStopUnicastServer())
     {
         CAWiFiSetUnicastSocket(-1);
-        gUnicastServerport = -1;
+        g_unicastServerport = -1;
     }
 #ifdef __WITH_DTLS__
     // Stop secure unicast server and set client socket accordingly
     if (CA_STATUS_OK == CAWiFiStopSecureUnicastServer())
     {
         CAWiFiSetSecureUnicastSocket(-1);
-        gSecureUnicastServerport = -1;
+        g_secureUnicastServerport = -1;
     }
 #endif
 
     //Stop multicast server and set the state accordingly
     if (CA_STATUS_OK != CAWiFiStopMulticastServer())
     {
-        gIsMulticastServerStarted = false;
+        g_isMulticastServerStarted = false;
     }
 
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
@@ -757,16 +726,16 @@ CAResult_t CAStopWIFI()
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
-    gStartUnicastServerRequested = false;
-    gStartMulticastServerRequested = false;
+    g_startUnicastServerRequested = false;
+    g_startMulticastServerRequested = false;
 
     // Stop wifi network monitor
     CAWiFiStopNetworkMonitor();
 
     // Stop send queue thread
-    if (gSendQueueHandle && CA_FALSE == gSendQueueHandle->isStop)
+    if (g_sendQueueHandle && false == g_sendQueueHandle->isStop)
     {
-        CAQueueingThreadStop(gSendQueueHandle);
+        CAQueueingThreadStop(g_sendQueueHandle);
     }
 
     // Stop Unicast, Secured unicast and Multicast servers running
@@ -776,7 +745,7 @@ CAResult_t CAStopWIFI()
     return CA_STATUS_OK;
 }
 
-void CATerminateWIfI()
+void CATerminateWIFI()
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
 
@@ -818,7 +787,7 @@ void CAWiFiSendDataThread(void *threadData)
     if (NULL != wifiData->remoteEndpoint)
     {
         char *address = wifiData->remoteEndpoint->addressInfo.IP.ipAddress;
-        uint32_t port = wifiData->remoteEndpoint->addressInfo.IP.port;
+        uint16_t port = wifiData->remoteEndpoint->addressInfo.IP.port;
 
 #ifdef __WITH_DTLS__
         if (!wifiData->remoteEndpoint->isSecured)
@@ -828,7 +797,7 @@ void CAWiFiSendDataThread(void *threadData)
         }
         else
         {
-            OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt called!");
+            OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt called!");
             uint8_t cacheFalg = 0;
             CAResult_t  result = CAAdapterNetDtlsEncrypt(address, port, wifiData->data,
                                  wifiData->dataLen, &cacheFalg, DTLS_WIFI);
@@ -837,7 +806,8 @@ void CAWiFiSendDataThread(void *threadData)
             {
                 OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt failed!");
             }
-            OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt returned with cache[%d]",
+
+            OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt returned with cache[%d]",
                       cacheFalg);
         }
 #else
@@ -856,7 +826,7 @@ void CAWiFiSendDataThread(void *threadData)
     return;
 }
 
-CAWiFiData *CACreateWiFiData(const CARemoteEndpoint_t *remoteEndpoint, void *data,
+CAWiFiData *CACreateWiFiData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
                              uint32_t dataLength)
 {
     CAWiFiData *wifiData = (CAWiFiData *) OICMalloc(sizeof(CAWiFiData));
@@ -867,10 +837,11 @@ CAWiFiData *CACreateWiFiData(const CARemoteEndpoint_t *remoteEndpoint, void *dat
     }
 
     wifiData->remoteEndpoint = CAAdapterCopyRemoteEndpoint(remoteEndpoint);
-    wifiData->data = (void *)OICMalloc(dataLength);
+    wifiData->data = OICMalloc(dataLength);
     if (NULL == wifiData->data)
     {
         OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Memory allocation failed!");
+        CAAdapterFreeRemoteEndpoint(wifiData->remoteEndpoint);
         CAFreeWiFiData(wifiData);
         return NULL;
     }
@@ -883,7 +854,9 @@ CAWiFiData *CACreateWiFiData(const CARemoteEndpoint_t *remoteEndpoint, void *dat
 void CAFreeWiFiData(CAWiFiData *wifiData)
 {
     if (!wifiData)
+    {
         return;
+    }
 
     CAAdapterFreeRemoteEndpoint(wifiData->remoteEndpoint);
     OICFree(wifiData->data);
@@ -896,3 +869,4 @@ void CADataDestroyer(void *data, uint32_t size)
 
     CAFreeWiFiData(wfdata);
 }
+

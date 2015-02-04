@@ -52,7 +52,11 @@ install:
 
 clean:
 	sh arduino/build.sh clean
+
 else
    $(info *********error**********)
    $(error Wrong value for PLATFORM !!)
 endif
+
+
+

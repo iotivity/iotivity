@@ -30,29 +30,39 @@
 
 
 #include "caadapterutils.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
 
+/**
+ * @def TZ_BLE_CLIENT_UTIL_TAG
+ * @brief Logging tag for module name
+ */
 #define TZ_BLE_CLIENT_UTIL_TAG "TZ_BLE_GATT_CLIENT_UTIL"
 
-static int32_t gNumberOfServiceConnected = 0;
+/**
+ * @var g_numberOfServiceConnected
+ * @brief Number of services connected.
+ */
+static int32_t g_numberOfServiceConnected = 0;
 
 void CAIncrementRegisteredServiceCount()
 {
-    gNumberOfServiceConnected++;
+    g_numberOfServiceConnected++;
 }
 
 void CADecrementRegisteredServiceCount()
 {
-    gNumberOfServiceConnected--;
+    g_numberOfServiceConnected--;
 }
 
 void CAResetRegisteredServiceCount()
 {
-    gNumberOfServiceConnected = 0;
+    g_numberOfServiceConnected = 0;
 }
 
 int32_t  CAGetRegisteredServiceCount()
 {
-    return gNumberOfServiceConnected ;
+    return g_numberOfServiceConnected ;
 }
 
 CAResult_t CACreateBLEServiceInfo(const char *bdAddress, bt_gatt_attribute_h service,
@@ -60,39 +70,36 @@ CAResult_t CACreateBLEServiceInfo(const char *bdAddress, bt_gatt_attribute_h ser
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(bdAddress, NULL, " Param bdAddress is NULL");
-    VERIFY_NON_NULL(service, NULL, " Param service is NULL");
+    VERIFY_NON_NULL(bdAddress, NULL, "Param bdAddress is NULL");
+    VERIFY_NON_NULL(service, NULL, "Param service is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, NULL, "Param bleServiceInfo is NULL");
 
-    *bleServiceInfo = (BLEServiceInfo *) OICMalloc(sizeof(BLEServiceInfo));
+    *bleServiceInfo = (BLEServiceInfo *) OICCalloc(1, sizeof(BLEServiceInfo));
     if (NULL == *bleServiceInfo)
     {
-        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, " Malloc failed!");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "Malloc failed!");
         return CA_STATUS_FAILED;
     }
-    memset(*bleServiceInfo, 0x0, sizeof(BLEServiceInfo));
 
-    int32_t len = strlen(bdAddress);
-    (*bleServiceInfo)->bdAddress = (char *) OICMalloc(sizeof(char) * len + 1);
+    size_t len = strlen(bdAddress);
+    (*bleServiceInfo)->bdAddress = (char *) OICMalloc(sizeof(char) * (len + 1));
 
     if (NULL == (*bleServiceInfo)->bdAddress)
     {
-        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, " Malloc failed!");
-
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "Malloc failed!");
         OICFree(*bleServiceInfo);
         return CA_STATUS_FAILED;
     }
-    memset((*bleServiceInfo)->bdAddress, 0x0, len + 1);
 
-    strncpy((*bleServiceInfo)->bdAddress, bdAddress, len);
+    strncpy((*bleServiceInfo)->bdAddress, bdAddress, len + 1);
 
     if (service)
     {
-
         int32_t ret = bt_gatt_clone_attribute_handle(&((*bleServiceInfo)->service_clone), service);
 
         if (BT_ERROR_NONE != ret)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_UTIL_TAG, " service handle clone failed with ret [%d]",
+            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "service handle clone failed with ret [%d]",
                       ret);
             OICFree((*bleServiceInfo)->bdAddress);
             OICFree(*bleServiceInfo);
@@ -110,25 +117,27 @@ CAResult_t CAAppendBLECharInfo( bt_gatt_attribute_h characteristic, CHAR_TYPE ty
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(characteristic, NULL, " Param characteristic is NULL");
-    VERIFY_NON_NULL(bleServiceInfo, NULL, " Param bleServiceInfo is NULL");
+    VERIFY_NON_NULL(characteristic, NULL, "Param characteristic is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, NULL, "Param bleServiceInfo is NULL");
 
-    if (READ_CHAR == type )
+    if (BLE_GATT_READ_CHAR == type )
     {
-        int32_t ret = bt_gatt_clone_attribute_handle(&((bleServiceInfo)->read_char), characteristic);
+        int ret = bt_gatt_clone_attribute_handle(&((bleServiceInfo)->read_char),
+            characteristic);
         if (BT_ERROR_NONE != ret)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_UTIL_TAG, " read_char clone failed with ret [%d]",
+            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "read_char clone failed with ret [%d]",
                       ret);
             return CA_STATUS_FAILED;
         }
     }
-    else  if (WRITE_CHAR == type)
+    else  if (BLE_GATT_WRITE_CHAR == type)
     {
-        int32_t ret = bt_gatt_clone_attribute_handle(&((bleServiceInfo)->write_char), characteristic);
+        int ret = bt_gatt_clone_attribute_handle(&((bleServiceInfo)->write_char),
+            characteristic);
         if (BT_ERROR_NONE != ret)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_UTIL_TAG, " write_char clone failed with ret [%d]",
+            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "write_char clone failed with ret [%d]",
                       ret);
             return CA_STATUS_FAILED;
         }
@@ -139,32 +148,32 @@ CAResult_t CAAppendBLECharInfo( bt_gatt_attribute_h characteristic, CHAR_TYPE ty
     return CA_STATUS_OK;
 }
 
-CAResult_t CAAddBLEServiceInfoToList(BLEServiceList **serviceList, BLEServiceInfo *bleServiceInfo)
+CAResult_t CAAddBLEServiceInfoToList(BLEServiceList **serviceList,
+    BLEServiceInfo *bleServiceInfo)
 {
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceList, NULL, " Param serviceList is NULL");
-    VERIFY_NON_NULL(bleServiceInfo, NULL, " Param bleServiceInfo is NULL");
+    VERIFY_NON_NULL(serviceList, NULL, "Param serviceList is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, NULL, "Param bleServiceInfo is NULL");
 
-    BLEServiceList *node = (BLEServiceList *) OICMalloc(sizeof(BLEServiceList));
+    BLEServiceList *node = (BLEServiceList *) OICCalloc(1, sizeof(BLEServiceList));
     if (NULL == node)
     {
-        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "[ERROR]Malloc failed!");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "Malloc failed!");
         OICFree(bleServiceInfo->bdAddress);
         OICFree(bleServiceInfo);
         return CA_STATUS_FAILED;
     }
-    memset(node, 0x0, sizeof(BLEServiceList));
 
     node->serviceInfo = bleServiceInfo;
     node->next = NULL;
 
-    if (*serviceList == NULL)   //Empty list
+    if (*serviceList == NULL)   // Empty list
     {
         *serviceList = node;
     }
-    else     //Add at front end
+    else     // Add at front end
     {
         node->next = *serviceList;
         *serviceList = node;
@@ -172,7 +181,8 @@ CAResult_t CAAddBLEServiceInfoToList(BLEServiceList **serviceList, BLEServiceInf
 
     CAIncrementRegisteredServiceCount();
 
-    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "Device [%s] added to list", bleServiceInfo->bdAddress);
+    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "Device [%s] added to list",
+        bleServiceInfo->bdAddress);
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "OUT");
 
@@ -190,10 +200,8 @@ CAResult_t CARemoveBLEServiceInfoToList(BLEServiceList **serviceList,
     VERIFY_NON_NULL(*serviceList, NULL, "Param *serviceList is NULL");
     VERIFY_NON_NULL(bdAddress, NULL, "Param bdAddress is NULL");
 
-    BLEServiceList *cur = NULL;
     BLEServiceList *prev = NULL;
-
-    cur = *serviceList;
+    BLEServiceList *cur = *serviceList;
     while (cur != NULL)
     {
         if (!strcasecmp(cur->serviceInfo->bdAddress, bdAddress))
@@ -227,7 +235,6 @@ CAResult_t CARemoveBLEServiceInfoToList(BLEServiceList **serviceList,
     }
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, " OUT");
     return CA_STATUS_FAILED;
-
 }
 
 CAResult_t CAGetBLEServiceInfo(BLEServiceList *serviceList, const char *bdAddress,
@@ -272,10 +279,10 @@ CAResult_t CAGetBLEServiceInfoByPosition(BLEServiceList *serviceList, int32_t po
         OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "Position Invalid input !");
         return CA_STATUS_INVALID_PARAM;
     }
-    BLEServiceList *cur = serviceList;
+
     *bleServiceInfo = NULL;
     int32_t count = 0;
-
+    BLEServiceList *cur = serviceList;
     while (cur != NULL)
     {
         if (position == count)
@@ -301,7 +308,6 @@ void CAFreeBLEServiceList(BLEServiceList *serviceList)
         OICFree(temp);
     }
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "OUT");
-    return ;
 }
 
 void CAFreeBLEServiceInfo(BLEServiceInfo *bleServiceInfo)
@@ -321,27 +327,14 @@ void CAFreeBLEServiceInfo(BLEServiceInfo *bleServiceInfo)
         OICFree(bleServiceInfo);
     }
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "OUT");
-    return ;
 }
-
 
 CAResult_t CAVerifyOICServiceByUUID(const char* serviceUUID)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
     VERIFY_NON_NULL(serviceUUID, NULL, "Param serviceHandle is NULL");
-/*
-    int32_t ret = 0;
-    char *uuid = NULL;
 
-    ret = bt_gatt_get_service_uuid(serviceHandle, &uuid);
-
-    if (0 != ret)
-    {
-        OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "bt_gatt_get_service_uuid failed !");
-        return CA_STATUS_FAILED;
-    }
-*/
     if (strcasecmp(serviceUUID, OIC_BLE_SERVICE_ID) != 0)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "It is not OIC service!");
@@ -357,10 +350,8 @@ CAResult_t CAVerifyOICServiceByServiceHandle(bt_gatt_attribute_h serviceHandle)
 
     VERIFY_NON_NULL(serviceHandle, NULL, "Param serviceHandle is NULL");
 
-    int32_t ret = 0;
     char *uuid = NULL;
-
-    ret = bt_gatt_get_service_uuid(serviceHandle, &uuid);
+    int ret = bt_gatt_get_service_uuid(serviceHandle, &uuid);
 
     if (0 != ret)
     {
@@ -453,4 +444,5 @@ const char *CABTGetErrorMsg(bt_error_e err)
 
     return errStr;
 }
+
 

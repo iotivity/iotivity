@@ -238,3 +238,4 @@ if env.GetOption('clean'):
 		Execute(Delete(dir + '/.sconf_temp'))
 
 Return('env')
+

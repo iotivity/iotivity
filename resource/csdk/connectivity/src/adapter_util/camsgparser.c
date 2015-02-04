@@ -28,32 +28,23 @@
 
 #define CA_MSG_PARSER_TAG "CA_MSG_PARSER"
 
-
-void printBinaryFormat(char *data)
-{
-    OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "IN");
-    int i;
-    for (i = 0; i < 8; i++)
-    {
-        OIC_LOG_V(DEBUG, CA_MSG_PARSER_TAG, "c[%d]: %d", i, !!((*data << i) & 0x80));
-    }
-
-    OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "OUT");
-
-}
+#define MAX_PARSE_DATA_LENGTH 4095
 
 CAResult_t CAGenerateHeader(char *header, uint32_t length)
 {
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "IN");
 
     VERIFY_NON_NULL(header, CA_MSG_PARSER_TAG, "header is NULL");
-
     memset(header, 0x0, sizeof(char) * 2);
 
-    *(header + 1) = length & 0xFF;
-    length = length >> 8;
-    *header = length & 0xFF;
-    *header |= 0x40; // 0100 being set as first four bits.
+    if(length > MAX_PARSE_DATA_LENGTH)
+    {
+        OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "Given length is more than 4095.It will be truncated");
+    }
+    //if length is more than 4095 then it will be truncated.
+    header[1] = length & 0xFF;
+    length >>= 8;
+    header[0] = length & 0x0F;
 
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -64,16 +55,11 @@ uint32_t CAParseHeader(const char *header)
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "IN");
 
     VERIFY_NON_NULL(header, CA_MSG_PARSER_TAG, "header is NULL");
-    uint32_t dataLen = 0;
 
-    char localHeader[CA_HEADER_LENGTH];
-    memcpy(localHeader, header, CA_HEADER_LENGTH);
-    *localHeader &= 0x0F;
-    dataLen = *localHeader & 0xFF;
-    dataLen = dataLen << 8;
-    dataLen += *(localHeader + 1) & 0xFF;
+    uint32_t dataLen = ((header[0] & 0x0F) << 8) | (header[1] & 0xFF);
 
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "OUT");
     return dataLen;
 }
+
 

@@ -26,11 +26,11 @@ sample_env.AppendUnique(CPPPATH = [root_dir + 'common/inc/'])
 print "Reading sample application build script"
 
 build_dir = sample_env.get('BUILD_DIR')
-sample_dir = './samples/linux/' 
+sample_dir = './samples/linux/'
 
 secured = sample_env.get('SECURED')
 
-print "Sample secured flag is %s" % secured 
+print "Sample secured flag is %s" % secured
 
 sample_src = ['./sample_main.c',]
 print " sample src %s" % sample_src
@@ -49,6 +49,7 @@ if secured == '1':
 else:
 	casample =sample_env.Program('casample', [sample_src])
 env.InstallTarget(casample, 'casample')
+
 
 
 

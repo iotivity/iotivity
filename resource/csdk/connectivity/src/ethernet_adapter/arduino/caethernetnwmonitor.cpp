@@ -49,10 +49,11 @@ CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
 bool CAEthernetIsConnected(void)
 {
-    return CA_TRUE;
+    return true;
 }
 
-void CAEthernetSetConnectionStateChangeCallback(CAEthernetConnectionStateChangeCallback callback)
+void CAEthernetSetConnectionStateChangeCallback
+    (CAEthernetConnectionStateChangeCallback callback)
 {
     return;
 }

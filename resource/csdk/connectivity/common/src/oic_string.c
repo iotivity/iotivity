@@ -19,6 +19,9 @@
  ******************************************************************/
 #include "oic_string.h"
 
+#include <string.h>
+#include "oic_malloc.h"
+
 char *OICStrdup(const char *str)
 {
     // Allocate memory for original string length and 1 extra byte for '\0'
@@ -26,8 +29,8 @@ char *OICStrdup(const char *str)
     char *dup = (char *)OICMalloc(length + 1);
     if (NULL != dup)
     {
-        memcpy(dup, str, length);
-        dup[length] = '\0';
+        memcpy(dup, str, length + 1);
     }
     return dup;
 }
+

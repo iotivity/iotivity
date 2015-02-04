@@ -31,5 +31,6 @@ if target_os == 'tizen':
 
 #Source files to build in Android platform
 if target_os == 'android':
-	env.AppendUnique(CA_SRC=[src_dir+'android/caedradapter.c',
+	env.AppendUnique(CA_SRC=[src_dir+'caedradapter.c',
 			])
+

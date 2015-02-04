@@ -55,8 +55,8 @@ typedef enum
  * @return NONE
  * @pre  Callback must be registered using CAEthernetSetPacketReceiveCallback()
  */
-typedef void (*CAEthernetPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-                                                 const void *data, const uint32_t dataLength);
+typedef void (*CAEthernetPacketReceivedCallback)(const char *ipAddress, uint32_t port,
+                                                 const void *data, uint32_t dataLength);
 
 /**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
@@ -97,7 +97,7 @@ void CAEthernetTerminateServer(void);
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                          const int16_t multicastPort, int32_t *serverFD);
+                                          uint16_t multicastPort, int *serverFD);
 
 /**
  * @brief  Start unicast server for specified local address and port
@@ -115,8 +115,8 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress, const char *
  * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAEthernetStartUnicastServer(const char *localAddress, int16_t *port,
-                                        const bool forceStart, int32_t *serverFD);
+CAResult_t CAEthernetStartUnicastServer(const char *localAddress, uint16_t *port,
+                                        bool forceStart, int *serverFD);
 
 /**
  * @brief  Stop multicast server.
@@ -157,7 +157,7 @@ CAResult_t CAEthernetStopSecureUnicastServer();
  * @retval  #CA_STATUS_FAILED Operation failed
  * @remarks  ipAddress must be freed using free().
  */
-CAResult_t CAEthernetGetUnicastServerInfo(char **ipAddress, int16_t *port, int32_t *serverFD);
+CAResult_t CAEthernetGetUnicastServerInfo(char **ipAddress, int16_t *port, int *serverFD);
 
 /**
  * @brief  Set this callback for receiving data packets from peer devices.
@@ -189,14 +189,14 @@ void CAEthernetSetExceptionCallback(CAEthernetExceptionCallback callback);
  * @param  socketFD [IN]  Socket descriptor used for sending UDP data.
  * @return  NONE
  */
-void CAEthernetSetUnicastSocket(const int32_t socketFD);
+void CAEthernetSetUnicastSocket(int socketFD);
 
 /**
  * @brief  Set the port number for sending unicast UDP data
  * @param  port [IN] Port number used for sending UDP data.
  * @return NONE
  */
-void CAEthernetSetUnicastPort(const int16_t port);
+void CAEthernetSetUnicastPort(uint16_t port);
 
 /**
  * @brief  Set socket description for sending secured (encrypted) unicast UDP data
@@ -204,7 +204,7 @@ void CAEthernetSetUnicastPort(const int16_t port);
  * @param socketFD [IN] Socket descriptor used for sending secured (encrypted) UDP data.
  * @return  NONE
  */
-void CAEthernetSetSecureUnicastSocket(const int32_t socketFD);
+void CAEthernetSetSecureUnicastSocket(int socketFD);
 
 /**
  * @brief  API to send unicast UDP data
@@ -217,8 +217,8 @@ void CAEthernetSetSecureUnicastSocket(const int32_t socketFD);
  *
  * @return  The number of bytes sent on the network. Returns 0 on error.
  */
-uint32_t CAEthernetSendData(const char *remoteAddress, const int16_t port,
-                            const char *buf, const uint32_t bufLen, bool isMulticast);
+uint32_t CAEthernetSendData(const char *remoteAddress, uint16_t port,
+                            const char *buf, uint32_t bufLen, bool isMulticast);
 
 /**
  * @brief  Callback to be notified when ethernet adapter connection state changes.
@@ -229,7 +229,7 @@ uint32_t CAEthernetSendData(const char *remoteAddress, const int16_t port,
  * @pre  Callback must be registered using CAEthernetSetConnectionStateChangeCallback()
  */
 typedef void (*CAEthernetConnectionStateChangeCallback)(const char *ipAddress,
-                                                        const CANetworkStatus_t status);
+                                                        CANetworkStatus_t status);
 
 /**
  * @brief Initialize Ethernet network monitor
@@ -292,10 +292,12 @@ bool CAEthernetIsConnected(void);
  *                       changes.
  * @return NONE
  */
-void CAEthernetSetConnectionStateChangeCallback(CAEthernetConnectionStateChangeCallback callback);
+void CAEthernetSetConnectionStateChangeCallback
+                (CAEthernetConnectionStateChangeCallback callback);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //_CA_ETHERNET_INTERFACE_SINGLETHREAD_H_
+

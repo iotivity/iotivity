@@ -35,18 +35,56 @@ extern "C"
 {
 #endif
 
+/**
+ * @brief   get uuid(jni object) from uuid(character)
+ * @param   env              [IN] JNI interface pointer
+ * @param   uuid             [IN] uuid(character)
+ * @return  uuid(jni object)
+ */
 jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid);
 
+/**
+ * @brief   get parcel uuid object
+ * @param   env              [IN] JNI interface pointer
+ * @param   uuid             [IN] uuid (jni object)
+ * @return  parcel uuid object
+ */
 jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid);
 
+/**
+ * @brief   get address from a local device
+ * @param   env              [IN] JNI interface pointer
+ * @return  local address
+ */
 jstring CALEGetLocalDeviceAddress(JNIEnv *env);
 
+/**
+ * @brief   get bonded list
+ * @param   env              [IN] JNI interface pointer
+ * @return  bonded list
+ */
 jobjectArray CALEGetBondedDevices(JNIEnv *env);
 
+/**
+ * @brief   get constants information of bluetooth state-on
+ * @param   env              [IN] JNI interface pointer
+ * @return  constants information of bluetooth state-on
+ */
 jint CALEGetBTStateOnInfo(JNIEnv *env);
 
+/**
+ * @brief   get bluetooth adapter state information
+ * @param   env              [IN] JNI interface pointer
+ * @return  true if the local adapter is turned on
+ */
 jboolean CALEIsEnableBTAdapter(JNIEnv *env);
 
+/**
+ * @brief   get address from remote device
+ * @param   env              [IN] JNI interface pointer
+ * @param   bluetoothDevice  [IN] bluetooth device object
+ * @return  remote address
+ */
 jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 
 #ifdef __cplusplus
@@ -54,3 +92,4 @@ jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 #endif
 
 #endif
+

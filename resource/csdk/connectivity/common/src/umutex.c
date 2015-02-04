@@ -32,23 +32,10 @@
  */
 #define TAG PCF("UMUTEX")
 
-void u_mutex_init(void)
-{
-    /*Initialize the glib thread system if it is not. GMutex works only if the threadsystem is initialized*/
-    if (!g_thread_supported())
-    {
-        g_thread_init(NULL);
-    }
-}
-
 u_mutex u_mutex_new(void)
 {
-    if (!g_thread_supported())
-    {
-        return NULL;
-    }
-
-    GMutex *mutexLock = g_mutex_new();
+    GMutex *mutexLock = g_new(GMutex, 1);
+    g_mutex_init(mutexLock);
     return (u_mutex) mutexLock;
 }
 
@@ -64,22 +51,17 @@ void u_mutex_lock(u_mutex mutex)
     g_mutex_lock(mutexLock);
 }
 
-CABool_t u_mutex_trylock(u_mutex mutex)
+bool u_mutex_trylock(u_mutex mutex)
 {
     if (NULL == mutex)
     {
         OIC_LOG_V(ERROR, TAG, "u_mutex_trylock, Invalid mutex !");
-        return CA_FALSE;
+        return false;
     }
 
     GMutex *mutexLock = (GMutex *) mutex;
-    gboolean ret = g_mutex_trylock(mutexLock);
-    if (TRUE == ret)
-    {
-        return CA_TRUE;
-    }
 
-    return CA_FALSE;
+    return(g_mutex_trylock(mutexLock));
 }
 
 void u_mutex_unlock(u_mutex mutex)
@@ -103,17 +85,14 @@ void u_mutex_free(u_mutex mutex)
     }
 
     GMutex *mutexLock = (GMutex *) mutex;
-    g_mutex_free(mutexLock);
+    g_mutex_clear(mutexLock);
+    g_free(mutexLock);
 }
 
 u_cond u_cond_new(void)
 {
-    if (!g_thread_supported())
-    {
-        return NULL;
-    }
-
-    GCond *condition = g_cond_new();
+    GCond *condition = g_new(GCond, 1);
+    g_cond_init(condition);
     return (u_cond) condition;
 }
 
@@ -160,7 +139,7 @@ void u_cond_wait(u_cond cond, u_mutex mutex)
     g_cond_wait(condition, mutexLock);
 }
 
-void u_cond_timed_wait(u_cond cond, u_mutex mutex, int32_t microseconds)
+void u_cond_wait_until(u_cond cond, u_mutex mutex, int32_t microseconds)
 {
     if (NULL == mutex)
     {
@@ -183,13 +162,10 @@ void u_cond_timed_wait(u_cond cond, u_mutex mutex, int32_t microseconds)
         return;
     }
 
-    GTimeVal abs_time;
-    memset(&abs_time, 0, sizeof(GTimeVal));
+    gint64 end_time;
+    end_time = g_get_monotonic_time() + microseconds;
 
-    g_get_current_time(&abs_time);
-    g_time_val_add(&abs_time, microseconds);
-
-    g_cond_timed_wait(condition, mutexLock, &abs_time);
+    g_cond_wait_until(condition, mutexLock, end_time);
 }
 
 void u_cond_free(u_cond cond)
@@ -201,6 +177,8 @@ void u_cond_free(u_cond cond)
     }
 
     GCond *condition = (GCond *) cond;
-    g_cond_free(condition);
+    g_cond_clear(condition);
+    g_free(condition);
 }
+
 

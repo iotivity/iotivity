@@ -84,3 +84,4 @@ typedef int (*oic_log_try_lock_t)(oic_log_ctx_t *);
 #endif
 
 #endif
+

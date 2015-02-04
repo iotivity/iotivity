@@ -273,7 +273,8 @@ void OICLogInit()
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLog(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PROGMEM const char *logStr)
+void OICLog(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
+              PROGMEM const char *logStr)
 {
     if (!logStr || !tag)
     {
@@ -308,7 +309,8 @@ void OICLog(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PROG
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PROGMEM const char *format, ...)
+void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
+                PROGMEM const char *format, ...)
 {
     char buffer[LINE_BUFFER_SIZE];
     va_list ap;
@@ -387,3 +389,4 @@ void OICLogv(LogLevel level, const char *tag, const __FlashStringHelper *format,
 }
 
 #endif //ARDUINO
+

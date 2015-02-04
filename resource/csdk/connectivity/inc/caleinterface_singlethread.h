@@ -37,15 +37,15 @@ extern "C"
 #endif
 
 /**
- * @enum TRANSFER_TYPE
+ * @enum CALETransferType_t
  * @brief Provide information about different mode of data transfer
  *        This enum is used to differentiate between unicast and multicast data transfer.
  */
 typedef enum
 {
-    MULTICAST,    /**< When this enum is selected, data will be updated to all OIC servers. */
-    UNICAST       /**< When this enum is selected, data will be updated to desired OIC Server. */
-} TRANSFER_TYPE;
+    LE_MULTICAST,    /**< When this enum is selected, data will be updated to all OIC servers. */
+    LE_UNICAST       /**< When this enum is selected, data will be updated to desired OIC Server. */
+} CALETransferType_t;
 
 
 /**
@@ -136,7 +136,7 @@ void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback);
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue,
-                                                            const uint32_t charValueLen);
+                                               uint32_t charValueLen);
 
 /**
  * @brief  Used to start CAStartBleGattClientThread for initializing Gatt Client
@@ -170,7 +170,7 @@ void CATerminateBLEGattClient();
  * @param  remoteAddress [IN] The address of the remote device
  * @param  data          [IN] The value of characteristic (byte array)
  * @param  dataLen       [IN] The length of value
- * @param  type          [IN] Type of the transfer(#TRANSFER_TYPE)
+ * @param  type          [IN] Type of the transfer(#CALETransferType_t)
  * @param  position      [IN] The unique index of each ble server. Used for multicast feature.
  *
  * @return #CA_STATUS_OK or Appropriate error code
@@ -179,7 +179,7 @@ void CATerminateBLEGattClient();
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
-                                                const int32_t dataLen, TRANSFER_TYPE type,
+                                                const int32_t dataLen, CALETransferType_t type,
                                                 const int32_t position);
 
 /**
@@ -193,8 +193,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
-                                                            const int32_t dataLen);
+CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, int32_t dataLen);
 
 /**
  * @brief  Used to store upper layer callback locally which will be used to send the data to
@@ -210,3 +209,4 @@ void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback);
 #endif
 
 #endif //_CA_LE_INTERFACE_SINGLETHREAD_H_
+

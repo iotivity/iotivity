@@ -62,3 +62,4 @@ clean:
 	rm -f *.o *.d *.elf *.eep core.a *.hex *.bin *.map *-
 	rm -rf $(OBJ_DIR)
 	rm -rf $(LIBCOAP_OBJ_DIR)
+

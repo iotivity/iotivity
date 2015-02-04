@@ -21,13 +21,10 @@ INC_DIRS	  := -I$(ROOT_DIR)/
 CFLAGS=$(INC_DIRS) -DWITH_POSIX -D__TIZEN__ $(ADAPTER_MACRO)
 COMPILEFLAG = `pkg-config --cflags --libs com.oic.ca capi-network-wifi gobject-2.0 glib-2.0 dlog capi-network-bluetooth`
 
-OBJECTS	:= interfacesample.o casample.o
+OBJECTS	:= casample.o
 
 all: $(OBJECTS)
-	$(CC) interfacesample.o -o interface_sample /usr/lib/liboicinterface.a -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lcapi-network-bluetooth
 	$(CC) casample.o -o ca_sample /usr/lib/liboicinterface.a -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog -lcapi-network-bluetooth
-interfacesample.o: interfacesample.c
-	$(CC) $(CFLAGS) $(COMPILEFLAG) -c interfacesample.c -o interfacesample.o
 casample.o: casample.c
 	$(CC) $(CFLAGS) $(COMPILEFLAG) -c casample.c -o casample.o
 pack:
@@ -37,7 +34,6 @@ install:
 #cp -rf sample ./usr/apps/com.samsung.oicca/bin/sample
 
 clean:
-	rm -rf *.o interface_sample
 	rm -rf *.o ca_sample
 	
 else ifeq ($(PLATFORM),arduinodue)
@@ -50,3 +46,4 @@ else
    $(info *********error**********)
    $(error Wrong value for PLATFORM !!)
 endif
+

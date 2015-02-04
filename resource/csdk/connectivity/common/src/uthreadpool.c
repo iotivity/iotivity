@@ -29,12 +29,6 @@
 #define TAG PCF("UTHREADPOOL")
 
 /**
- * @var gThreadpool
- * @brief Glib thread pool.
- */
-static GThreadPool *gThreadpool = NULL;
-
-/**
  * @fn run
  * @brief function which is registed to glib thread pool.
  */
@@ -46,13 +40,9 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
 
     GError *error = NULL;
 
-#ifdef __ANDROID__
-    //If not intialized, gthreadpool intialize check fails
-    g_thread_init(NULL);
-#endif //__ANDROID__
+    GThreadPool *threadPool = g_thread_pool_new(run, NULL, num_of_threads, TRUE, &error);
 
-    gThreadpool = g_thread_pool_new(run, NULL, num_of_threads, TRUE, &error);
-    if (NULL == gThreadpool)
+    if (NULL == threadPool)
     {
         OIC_LOG(ERROR, TAG, "g_thread_pool_new failed!");
         if (NULL != error)
@@ -63,18 +53,18 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
         return CA_STATUS_FAILED;
     }
 
-    *thread_pool = (u_thread_pool_t) gThreadpool;
+    *thread_pool = (u_thread_pool_t) threadPool;
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(void *), 
+CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, u_thread_func method,
                                     void *data)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    if (NULL == routine)
+    if (NULL == method)
     {
         OIC_LOG(ERROR, TAG, "routine is NULL!");
         return CA_STATUS_FAILED;
@@ -88,7 +78,7 @@ CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(v
     }
 
     message->data = data;
-    message->func = routine;
+    message->func = method;
 
     g_thread_pool_push((GThreadPool *) thread_pool, (void *) message, NULL);
 
@@ -130,3 +120,4 @@ void run(void *thread_data, void *user_data)
     // Free message
     OICFree(message);
 }
+

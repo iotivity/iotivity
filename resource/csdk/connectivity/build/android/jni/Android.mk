@@ -14,20 +14,20 @@ DTLS_LIB 					= $(PROJECT_LIB_PATH)/tinydtls
 
 #Modify below values to enable/disable the Adapter
 #Suffix "NO_" to disable given adapter
-EDR			= EDR_ADAPTER
+EDR		= EDR_ADAPTER
 WIFI		= WIFI_ADAPTER
-LE			= LE_ADAPTER
+LE		= LE_ADAPTER
 ETHERNET	= NO_ETHERNET_ADAPTER
 
 #Add Pre processor definitions
 DEFINE_FLAG =  -DWITH_POSIX -D__ANDROID__ -D__WITH_DTLS__
-DEFINE_FLAG += -D$(EDR) -D$(LE) -D$(WIFI) -D$(ETHERNET) 
+DEFINE_FLAG += -D$(EDR) -D$(LE) -D$(WIFI) -D$(ETHERNET)
 
 #Add Debug flags here
 DEBUG_FLAG 	= -DTB_LOG
 #DEBUG_FLAG 	+= -DADB_SHELL
 
-BUILD_FLAG.debug	= $(DEFINE_FLAG) $(DEBUG_FLAG) 
+BUILD_FLAG.debug	= $(DEFINE_FLAG) $(DEBUG_FLAG)
 BUILD_FLAG.release	=	$(DEFINE_FLAG)
 BUILD_FLAG = $(BUILD_FLAG.$(BUILD))
 
@@ -146,3 +146,4 @@ LOCAL_SRC_FILES	= \
 					$(WIFI_ADAPTER_PATH)/cawificlient.c $(WIFI_ADAPTER_PATH)/cawifinwmonitor.c \
 
 include $(BUILD_STATIC_LIBRARY)
+

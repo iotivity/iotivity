@@ -30,6 +30,7 @@
 
 #include "caleadapter_singlethread.h"
 #include "caadapterutils.h"
+#include "oic_malloc.h"
 
 /**
  * @def TAG
@@ -38,24 +39,20 @@
 #define TAG "LENW"
 
 /**
- * @var gCALEDeviceStateChangedCallback
+ * @var g_caLEDeviceStateChangedCallback
  * @brief Maintains the callback to be notified on device state changed.
  */
-static CALEDeviceStateChangedCallback gCALEDeviceStateChangedCallback = NULL;
+static CALEDeviceStateChangedCallback g_caLEDeviceStateChangedCallback = NULL;
 
 /**
- * @var gLeAddress
+ * @var g_leAddress
  * @brief Maintains the local BLE Shield Address
  */
-static unsigned char *gLeAddress = NULL;
+static unsigned char *g_leAddress = NULL;
 
 CAResult_t CALEInitializeNetworkMonitor()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-	if(gLeAddress != NULL)
-	{
-        memcpy(gLeAddress, 0, CA_MACADDR_SIZE);
-	}
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -76,18 +73,19 @@ CAResult_t CAGetLEAdapterState()
 void CAGetLEAddress(char **leAddress)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    gLeAddress = ble_getAddress();
+    VERIFY_NON_NULL_VOID(leAddress, TAG, "leAddress");
+
+    g_leAddress = ble_getAddress();
     /**
      *   Below Allocated Memory will be freed by caller API
      */
     *leAddress = (char*)OICMalloc(CA_MACADDR_SIZE);
     if (NULL == *leAddress)
     {
-        OIC_LOG(ERROR, TAG, "error");
+        OIC_LOG(ERROR, TAG, "malloc fail");
         return;
     }
-    memset(*leAddress, 0, CA_MACADDR_SIZE);
-    memcpy(*leAddress, gLeAddress, CA_MACADDR_SIZE);
+    memcpy(*leAddress, g_leAddress, CA_MACADDR_SIZE);
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }
@@ -96,7 +94,7 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    gCALEDeviceStateChangedCallback = callback;
+    g_caLEDeviceStateChangedCallback = callback;
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -106,9 +104,10 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    gCALEDeviceStateChangedCallback = NULL;
+    g_caLEDeviceStateChangedCallback = NULL;
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
+
 

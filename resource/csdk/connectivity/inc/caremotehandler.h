@@ -26,10 +26,6 @@
 #ifndef __CA_REMOTE_HANDLER_H_
 #define __CA_REMOTE_HANDLER_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "cacommon.h"
 
 #ifdef __cplusplus
@@ -46,8 +42,8 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *endpoint);
 
 /**
  * @brief   Creates a new remote endpoint from the input uri
- * @param   uri       [IN]    absolute uri information to  create remote endpoint
- * @param   type      [IN]    connectivity type of the endpoint
+ * @param   uri               [IN]    absolute uri information to  create remote endpoint
+ * @param   connectivityType  [IN]    connectivity type of the endpoint
  * @return  remote endpoint created
  */
 CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
@@ -55,9 +51,9 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
 
 /**
  * @brief   Creates a new remote endpoint from the input and other information
- * @param   resourceUri       [IN]    absolute uri information to  create remote endpoint
- * @param   addr       [IN]    address of the ednpoint
- * @param   type       [IN]    connectivity type of the endpoint
+ * @param   resourceUri  [IN]    absolute uri information to  create remote endpoint
+ * @param   addr         [IN]    address of the endpoint
+ * @param   type         [IN]    connectivity type of the endpoint
  * @return  remote endpoint created
  */
 CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
@@ -72,28 +68,28 @@ void CADestroyRemoteEndpointInternal(CARemoteEndpoint_t *rep);
 
 /**
  * @brief   Creates a new request information
- * @param   rep       [IN]    request information that needs to be duplicated
+ * @param   request       [IN]    request information that needs to be duplicated
  * @return  remote endpoint created
  */
 CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *request);
 
 /**
  * @brief   Destroy the request information
- * @param   rep       [IN]    request information that needs to be destroyed
+ * @param   request       [IN]    request information that needs to be destroyed
  * @return none
  */
 void CADestroyRequestInfoInternal(CARequestInfo_t *request);
 
 /**
  * @brief   Creates a new response information
- * @param   rep       [IN]    response information that needs to be duplicated
+ * @param   response       [IN]    response information that needs to be duplicated
  * @return  remote endpoint created
  */
 CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *response);
 
 /**
  * @brief   Destroy the response information
- * @param   rep       [IN]    response information that needs to be destroyed
+ * @param   response       [IN]    response information that needs to be destroyed
  * @return
  */
 void CADestroyResponseInfoInternal(CAResponseInfo_t *response);
@@ -103,3 +99,4 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t *response);
 #endif
 
 #endif //#ifndef __CA_REMOTE_HANDLER_H_
+

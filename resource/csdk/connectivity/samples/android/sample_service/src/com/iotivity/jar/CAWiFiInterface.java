@@ -37,11 +37,12 @@ public class CAWiFiInterface {
                 WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_DISABLED) {
                 CAWiFiStateDisabled();
             } else if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-            	ConnectivityManager manager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-            	NetworkInfo nwInfo = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                ConnectivityManager manager = (ConnectivityManager)
+                        mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo nwInfo = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 
-            	if(nwInfo.isConnected()) {
-            		CAWiFiStateEnabled();
+                if(nwInfo.isConnected()) {
+                    CAWiFiStateEnabled();
                 }
             }
         }
@@ -51,3 +52,4 @@ public class CAWiFiInterface {
 
     public native static void CAWiFiStateDisabled();
 }
+

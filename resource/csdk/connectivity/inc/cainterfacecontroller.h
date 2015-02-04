@@ -36,7 +36,7 @@ extern "C"
 
 /**
  * @brief   Initializes different adapters based on the compilation flags.
- * @param   handle       [IN]    thread pool handle created by message handler for different adapters.
+ * @param   handle         [IN]    thread pool handle created by message handler for different adapters.
  * @return  none
  */
 void CAInitializeAdapters(u_thread_pool_t handle);
@@ -57,22 +57,22 @@ void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
 
 /**
  * @brief   Starting different connectivity adapters based on the network selection.
- * @param   connectivity       [IN]    interested network for starting
+ * @param   connectivity   [IN]    network type that want to start
  * @return  none
  */
-void CAStartAdapter(CAConnectivityType_t connectivity);
+CAResult_t CAStartAdapter(CAConnectivityType_t connectivity);
 
 /**
  * @brief   Stopping different connectivity adapters based on the network un-selection.
- * @param   callback       [IN]    un selected network for stopping the packets transfer
+ * @param   connectivity   [IN]    network type that want to stop
  * @return  none
  */
 void CAStopAdapter(CAConnectivityType_t connectivity);
 
 /**
  * @brief   Get network information such as ipaddress and mac information
- * @param   info       [OUT]    connectivity information such as ipaddress and mac information
- * @param   size       [OUT]    number of connectivity information structures
+ * @param   info           [OUT]    connectivity information such as ipaddress and mac information
+ * @param   size           [OUT]    number of connectivity information structures
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size);
@@ -80,20 +80,20 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size);
 /**
  * @brief   Sends unicast data to the remote endpoint
  * @param   endpoint       [IN]    endpoint information where the data has to be sent
- * @param   data              [IN]    data that needs to be sent
- * @param   length              [IN]    length of the data that needs to be sent
+ * @param   data           [IN]    data that needs to be sent
+ * @param   length         [IN]    length of the data that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t length);
+CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, const void *data, uint32_t length);
 
 /**
  * @brief   Sends multicast data to all endpoints in the network.
- * @param   data              [IN]    data that needs to be sent
- * @param   length              [IN]    length of the data that needs to be sent
+ * @param   data           [IN]    data that needs to be sent
+ * @param   length         [IN]    length of the data that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 
-CAResult_t CASendMulticastData(void *data, uint32_t length);
+CAResult_t CASendMulticastData(const void *data, uint32_t length);
 
 /**
  * @brief   Start listening servers to receive search requests from clients
@@ -118,3 +118,4 @@ void CATerminateAdapters();
 #endif
 
 #endif //#ifndef __CA_INTERFACE_CONTROLLER_H_
+

@@ -31,8 +31,8 @@ public class RMInterface {
     public native void RMSendRequest(String uri, String payload,
             int selectedNetwork, int isSecured, int msgType);
 
-    public native void RMSendResponse(int selectedNetwork, int isSecured,
-            int msgType, int responseValue);
+    public native void RMSendResponse(String uri, String payload,
+            int selectedNetwork, int isSecured);
 
     public native void RMAdvertiseResource(String advertiseResource,
             int selectedNetwork);

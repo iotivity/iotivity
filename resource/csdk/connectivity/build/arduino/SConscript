@@ -71,7 +71,7 @@ def __search_files(path, pattern, ondisk=True, source=True, strings=False, recur
 	matches = []
 	for root, dirnames, filenames in os.walk(path):
 		#BLE library examples throw lot of errors. We dont need examples.
-		if 'examples' not in root: 
+		if 'examples' not in root:
 			matches.extend(Glob(root + '/' + pattern, ondisk, source, strings))
 	return matches
 
@@ -413,3 +413,4 @@ env.AddMethod(__import_lib, "ImportLib") #import arduino library
 env.AddMethod(__create_bin, "CreateBin") #create binary files(.eep and .hex)
 env.AddMethod(__upload, "Upload") #Upload binary to board
 env.AddMethod(__upload_help, "UploadHelp") #print the command line that to upload binary to the boardf
+

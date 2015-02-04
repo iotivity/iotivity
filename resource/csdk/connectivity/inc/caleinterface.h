@@ -37,15 +37,15 @@ extern "C"
 #endif
 
 /**
- * @enum TRANSFER_TYPE
+ * @enum CALETransferType_t
  * @brief Provide info about different mode of data transfer
  *        This enum is used to differentiate between unicast and multicast data transfer.
  */
 typedef enum
 {
-    MULTICAST,    /**< When this enum is selected, data will be updated to all OIC servers. */
-    UNICAST       /**< When this enum is selected, data will be updated to desired OIC Server. */
-} TRANSFER_TYPE;
+    LE_MULTICAST,    /**< When this enum is selected, data will be updated to all OIC servers. */
+    LE_UNICAST       /**< When this enum is selected, data will be updated to desired OIC Server. */
+} CALETransferType_t;
 
 
 /**
@@ -77,14 +77,14 @@ CAResult_t CAGetLEAdapterState();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitializeLENwkMonitor();
+CAResult_t CAInitializeLENetworkMonitor();
 
 /**
  * @brief  Used to terminate the network monitor layer of the LE adapter. The variables intialized
  *         in CAInitializeLEAdapterController() must be cleared in this function.
  * @return NONE
  */
-void CATerminateLENwkMonitor();
+void CATerminateLENetworkMonitor();
 
 /**
  * @brief  This function is used to set the callback for the Device state changes in the adapter.
@@ -106,14 +106,14 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitLENwkMonitorMutexVaraibles();
+CAResult_t CAInitLENetworkMonitorMutexVariables();
 
 /**
  * @brief  Used to terminate all the mutex variables required to operate the LE network monitor
  *         layer.
  * @return NONE
  */
-void CATerminateLENwkMonitorMutexVaraibles();
+void CATerminateLENetworkMonitorMutexVariables();
 
 /**
  * @brief  Provides the BD address of the local adapter.
@@ -204,7 +204,7 @@ void CATerminateBLEGattClient();
  * @param  remoteAddress [IN] The address of the remote device
  * @param  data          [IN] The value of characteristic (byte array)
  * @param  dataLen       [IN] The length of value
- * @param  type          [IN] Type of the transfer(#TRANSFER_TYPE)
+ * @param  type          [IN] Type of the transfer(#CALETransferType_t)
  * @param  position      [IN] The unique index of each ble server. Used for multicast feature.
  *
  * @return #CA_STATUS_OK or Appropriate error code
@@ -213,7 +213,7 @@ void CATerminateBLEGattClient();
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
-                                                const int32_t dataLen, TRANSFER_TYPE type,
+                                                const int32_t dataLen, CALETransferType_t type,
                                                 const int32_t position);
 
 /**
@@ -227,7 +227,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, const int32_t dataLen);
+CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, int32_t dataLen);
 
 /**
  * @brief  Used to store upper layer callback locally which will be used to send the data to
@@ -272,3 +272,4 @@ CAResult_t CAUnSetLEAdapterStateChangedCb();
 #endif
 
 #endif //_CA_LE_INTERFACE_H_
+

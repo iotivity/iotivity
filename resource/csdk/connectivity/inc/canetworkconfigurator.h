@@ -19,7 +19,7 @@
  ******************************************************************/
 /**
  * @file canetworkconfigurator.h
- * @brief This file contains  utility function for network configurations.
+ * @brief This file contains  utility functions for network configurations.
  */
 
 #ifndef _NETWORK_CONFIGURATOR_H_
@@ -35,17 +35,17 @@ extern "C"
 
 /**
  * @brief   Add network type to the selected networks for network packets reception
- * @param   CAConnectivityType       [IN]    connectivity type that needs to be added
+ * @param   connectivityType       [IN]    connectivity type that needs to be added
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAAddNetworkType(uint32_t CAConnectivityType);
+CAResult_t CAAddNetworkType(CAConnectivityType_t connectivityType);
 
 /**
- * @brief   Add network type to the un selected for network packets reception
- * @param   CAConnectivityType       [IN]    connectivity type that needs to be removed
+ * @brief   Remove network type from the selected configuration
+ * @param   connectivityType       [IN]    connectivity type that needs to be removed
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CARemoveNetworkType(uint32_t CAConnectivityType);
+CAResult_t CARemoveNetworkType(CAConnectivityType_t connectivityType);
 
 /**
  * @brief   Get selected network information
@@ -61,6 +61,10 @@ u_arraylist_t *CAGetSelectedNetworkList();
  */
 CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t *size);
 
+/**
+ * @brief   Terminate network type from selected configuration
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
 CAResult_t CATerminateNetworkType();
 
 
@@ -69,3 +73,4 @@ CAResult_t CATerminateNetworkType();
 #endif
 
 #endif //#ifndef _NETWORK_CONFIGURATOR_H_
+

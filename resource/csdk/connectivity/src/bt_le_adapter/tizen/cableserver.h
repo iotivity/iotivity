@@ -42,7 +42,7 @@
  * @param data [IN] Currently it will be NULL.
  * @return  NONE
  */
-void *CAStartBleGattServerThread(void *data);
+void CAStartBleGattServerThread(void *data);
 
 /**
  * @brief  Used to initialize gatt service using _bt_gatt_init_service api.
@@ -65,21 +65,21 @@ CAResult_t CAInitBleGattService();
 CAResult_t CADeInitBleGattService();
 
 /**
- * @brief  Used to initialize all required mutex varaibles for GATT server implementation.
+ * @brief  Used to initialize all required mutex variables for GATT server implementation.
  *
  * @return #CA_STATUS_OK or Appropriate error code
  * @retval #CA_STATUS_OK  Successful
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitGattServerMutexVaraibles();
+CAResult_t CAInitGattServerMutexVariables();
 
 
 /**
- * @brief  Used to terminate all required mutex varaibles for GATT server implementation.
+ * @brief  Used to terminate all required mutex variables for GATT server implementation.
  * @return NONE
  */
-void CATerminateGattServerMutexVaraibles();
+void CATerminateGattServerMutexVariables();
 
 /**
  * @brief  Used to add new OIC service in GATT server using bt_gatt_add_service api and
@@ -139,9 +139,9 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath);
  *                            write characteristics.
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, char *charUUID,
-                                               char *charValue, int32_t charValueLen,
-                                               int32_t read);
+CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *charUUID,
+                                               const char *charValue, int charValueLen,
+                                               bool read);
 
 /**
  * @brief  Used to remove characteristics(Read/Write) from the service in Gatt Server.
@@ -168,7 +168,7 @@ CAResult_t CARemoveCharacteristicsFromGattServer(const char *charPath);
  * @return NONE
  */
 void CABleGattRemoteCharacteristicWriteCb(char *charPath, unsigned char *charValue,
-                                          int32_t charValueLen, void *userData);
+                                          int charValueLen, void *userData);
 
 /**
  * @brief  This is the callback which will be called whenever there is change in gatt connection
@@ -181,7 +181,7 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath, unsigned char *charVal
  *
  * @return  NONE
  */
-void CABleGattServerConnectionStateChangedCb(int32_t result, bool connected,
+void CABleGattServerConnectionStateChangedCb(int result, bool connected,
                                              const char *remoteAddress, void *userData);
 
 /**
@@ -207,8 +207,8 @@ CAResult_t CALEReadDataFromLEServer();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABleServerSenderQueueEnqueueMessage(const CARemoteEndpoint_t *remoteEndpoint,
-                                                void *data, uint32_t dataLen);
+CAResult_t CABleServerSenderQueueEnqueueMessage
+                (const CARemoteEndpoint_t *remoteEndpoint, const void *data, uint32_t dataLen);
 
 /**
  * @brief  This is the thread which will be used for processing receiver queue.
@@ -217,3 +217,4 @@ CAResult_t CABleServerSenderQueueEnqueueMessage(const CARemoteEndpoint_t *remote
 void *CABleServerSenderQueueProcessor();
 
 #endif //#ifndef __TZ_BLE_SERVER_H_
+

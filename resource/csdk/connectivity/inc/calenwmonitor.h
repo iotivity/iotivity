@@ -35,12 +35,33 @@ extern "C"
 {
 #endif
 
+/**
+ * @var CALENetStateChantedCallback
+ * @brief  Maintains network connection state change callback.
+ */
 typedef void (*CALENetStateChantedCallback)(const char* address, const uint32_t status);
 
+/**
+ * @brief   set context of application
+ * @param   env              [IN] JNI interface pointer
+ * @param   context          [IN] context of application
+ * @return  None
+ */
 void CALENetworkMonitorJNISetContext(JNIEnv *env, jobject context);
 
+/**
+ * @brief   initialize JNI object
+ * @param   env              [IN] JNI interface pointer
+ * @param   jvm              [IN] java virtual machine pointer
+ * @return  None
+ */
 void CALeNetworkMonitorJniInit(JNIEnv *env, JavaVM *jvm);
 
+/**
+ * @brief  Set this callback for receiving network information from BT stack.
+ * @param  callback   [IN] Callback to be notified on reception of BT state information
+ * @return  NONE
+ */
 void CALESetNetStateCallback(CALENetStateChantedCallback callback);
 
 #ifdef __cplusplus
@@ -48,5 +69,6 @@ void CALESetNetStateCallback(CALENetStateChantedCallback callback);
 #endif
 
 #endif
+
 
 

@@ -27,37 +27,29 @@
 #ifdef __ANDROID__
 #include <linux/time.h>
 #endif
-#include "coap.h"
+
 #include "caretransmission.h"
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG PCF("CA")
+#define TAG PCF("RET")
 
 typedef struct
 {
-    /** last sent time. microseconds **/
-    uint64_t timeStamp;
-    /** timeout value. milliseconds **/
-    uint32_t timeout;
-    /** retransmission count **/
-    uint8_t triedCount;
-    /** coap PDU message id **/
-    uint16_t messageId;
-    /** remote endpoint **/
-    CARemoteEndpoint_t *endpoint;
-    /** coap PDU **/
-    void *pdu;
-    /** coap PDU size**/
-    uint32_t size;
+    uint64_t timeStamp;                 /**< last sent time. microseconds */
+    uint64_t timeout;                   /**< timeout value. microseconds */
+    uint8_t triedCount;                 /**< retransmission count */
+    uint16_t messageId;                 /**< coap PDU message id */
+    CARemoteEndpoint_t *endpoint;       /**< remote endpoint */
+    void *pdu;                          /**< coap PDU */
+    uint32_t size;                      /**< coap PDU size */
 } CARetransmissionData_t;
 
 /**
- * getCurrent monotonic time
- *
- * microseconds
+ * @brief   getCurrent monotonic time
+ * @return  current time in microseconds
  */
 uint64_t getCurrentTimeInMicroSeconds();
 
@@ -65,46 +57,45 @@ uint64_t getCurrentTimeInMicroSeconds();
  * @brief   check timeout routine
  * @param   currentTime     [IN]microseconds
  * @param   timeStamp       [IN]microseconds
- * @param   timeoutValue    [IN]milliseconds
+ * @param   timeoutValue    [IN]microseconds
  * @param   triedCount      [IN]
- * @return  CA_TRUE(timeout) or CA_FALSE
- *
- * microseconds
+ * @return  true if the timeout period has elapsed, false otherwise
  */
-static CABool_t CACheckTimeout(uint64_t currentTime, uint64_t timeStamp, uint32_t timeoutValue,
+static bool CACheckTimeout(uint64_t currentTime, uint64_t timeStamp, uint64_t timeoutValue,
         uint8_t triedCount)
 {
     // #1. calculate timeout
-    uint64_t timeout = (timeoutValue << triedCount) * (uint64_t) 1000;
+    uint32_t milliTimeoutValue = timeoutValue * 0.001;
+    uint64_t timeout = (milliTimeoutValue << triedCount) * (uint64_t) 1000;
 
     if (currentTime >= timeStamp + timeout)
     {
-        OIC_LOG_V(DEBUG, TAG, "%d milliseconds time out!!, tried count(%d)",
-            (timeoutValue << triedCount), triedCount);
-        return CA_TRUE;
+        OIC_LOG_V(DEBUG, TAG, "%d microseconds time out!!, tried count(%d)", timeout, triedCount);
+        return true;
     }
 
-    return CA_FALSE;
+    return false;
 }
 
 /**
  * @brief   timeout value is
- *          between DEFAULT_ACK_TIMEOUT and (DEFAULT_ACK_TIMEOUT * DEFAULT_RANDOM_FACTOR) second.
+ *          between DEFAULT_ACK_TIMEOUT_SEC and
+ *          (DEFAULT_ACK_TIMEOUT_SEC * DEFAULT_RANDOM_FACTOR) second.
  *          DEFAULT_RANDOM_FACTOR       1.5 (CoAP)
- * @return  milliseconds.
+ * @return  microseconds.
  */
-static uint32_t CAGetTimeoutValue()
+static uint64_t CAGetTimeoutValue()
 {
-    return (DEFAULT_ACK_TIMEOUT * 1000) + ((1000 * (rand() & 0xFF)) >> 8);
+    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * (random() & 0xFF)) >> 8)) *
+            (uint64_t) 1000;
 }
 
 static void CACheckRetransmissionList(CARetransmission_t *context)
 {
     // mutex lock
     u_mutex_lock(context->threadMutex);
-    uint64_t currentTime = 0;
 
-    uint32_t i = 0;
+    int32_t i = 0;
     uint32_t len = u_arraylist_length(context->dataList);
 
     for (i = 0; i < len; i++)
@@ -112,9 +103,11 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
         CARetransmissionData_t *retData = u_arraylist_get(context->dataList, i);
 
         if (retData == NULL)
+        {
             continue;
+        }
 
-        currentTime = getCurrentTimeInMicroSeconds();
+        uint64_t currentTime = getCurrentTimeInMicroSeconds();
 
         if (CACheckTimeout(currentTime, retData->timeStamp, retData->timeout, retData->triedCount))
         {
@@ -155,11 +148,12 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
 
                 // modify loop value.
                 len = u_arraylist_length(context->dataList);
+
                 --i;
             }
             else
             {
-                OIC_LOG_V(DEBUG, TAG, "arraylist remove error");
+                OIC_LOG_V(ERROR, TAG, "arraylist remove error");
             }
 
         }
@@ -177,7 +171,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
 
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "thread data passing error!!");
+        OIC_LOG_V(ERROR, TAG, "thread data passing error!!");
 
         return;
     }
@@ -199,12 +193,13 @@ static void CARetransmissionBaseRoutine(void *threadValue)
         }
         else
         {
-            // check each RETRANSMISSION_CHECK_PERIOD time.
-            OIC_LOG_V(DEBUG, TAG, "wait..(%d)microseconds", RETRANSMISSION_CHECK_PERIOD);
+            // check each RETRANSMISSION_CHECK_PERIOD_SEC time.
+            OIC_LOG_V(DEBUG, TAG, "wait..(%d)microseconds",
+                        RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) 1000000);
 
             // wait
-            u_cond_timed_wait(context->threadCond, context->threadMutex,
-                              RETRANSMISSION_CHECK_PERIOD);
+            u_cond_wait_until(context->threadCond, context->threadMutex,
+                              RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) 1000000);
         }
 
         // mutex unlock
@@ -212,7 +207,9 @@ static void CARetransmissionBaseRoutine(void *threadValue)
 
         // check stop flag
         if (context->isStop)
+        {
             continue;
+        }
 
         CACheckRetransmissionList(context);
     }
@@ -243,8 +240,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool
 
     memset(context, 0, sizeof(CARetransmission_t));
 
-    CARetransmissionConfig_t cfg;
-    memset(&cfg, 0, sizeof(CARetransmissionConfig_t));
+    CARetransmissionConfig_t cfg = { 0 };
 
     if (config == NULL)
     {
@@ -257,9 +253,6 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool
         cfg = *config;
     }
 
-    // mutex init
-    u_mutex_init();
-
     // set send thread data
     context->threadPool = handle;
     context->threadMutex = u_mutex_new();
@@ -267,7 +260,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool
     context->dataSendMethod = retransmissionSendMethod;
     context->timeoutCallback = timeoutCallback;
     context->config = cfg;
-    context->isStop = CA_FALSE;
+    context->isStop = false;
     context->dataList = u_arraylist_create();
 
     return CA_STATUS_OK;
@@ -292,7 +285,7 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
 
     if (res != CA_STATUS_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "thread pool add task error(send thread).");
+        OIC_LOG_V(ERROR, TAG, "thread pool add task error(send thread).");
         return res;
     }
 
@@ -328,25 +321,23 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     }
 
     // create retransmission data
-    CARetransmissionData_t *retData = (CARetransmissionData_t *) OICMalloc(
-                                          sizeof(CARetransmissionData_t));
+    CARetransmissionData_t *retData = (CARetransmissionData_t *) OICCalloc(
+                                          1, sizeof(CARetransmissionData_t));
 
     if (retData == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "memory error!!");
+        OIC_LOG_V(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
     }
-    memset(retData, 0, sizeof(CARetransmissionData_t));
 
     // copy PDU data
     void *pduData = (void *) OICMalloc(sizeof(int8_t) * size);
     if (pduData == NULL)
     {
         OICFree(retData);
-        OIC_LOG_V(DEBUG, TAG, "memory error!!");
+        OIC_LOG_V(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
     }
-    memset(pduData, 0, sizeof(int8_t) * size);
     memcpy(pduData, pdu, sizeof(int8_t) * size);
 
     // clone remote endpoint
@@ -355,7 +346,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     {
         OICFree(retData);
         OICFree(pduData);
-        OIC_LOG_V(DEBUG, TAG, "memory error!!");
+        OIC_LOG_V(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -371,7 +362,35 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     // mutex lock
     u_mutex_lock(context->threadMutex);
 
+    uint32_t i = 0;
+    uint32_t len = u_arraylist_length(context->dataList);
+
     // #3. add data into list
+    for (i = 0; i < len; i++)
+    {
+        CARetransmissionData_t *currData = u_arraylist_get(context->dataList, i);
+
+        if (currData == NULL)
+        {
+            continue;
+        }
+
+        // found index
+        if (retData != NULL && (currData->endpoint->connectivityType == endpoint->connectivityType)
+            && currData->messageId == messageId)
+        {
+            OIC_LOG_V(ERROR, TAG, "Duplicate message ID");
+
+            // mutex unlock
+            u_mutex_unlock(context->threadMutex);
+
+            OICFree(retData);
+            OICFree(pduData);
+            OICFree(remoteEndpoint);
+            return CA_STATUS_FAILED;
+        }
+    }
+
     u_arraylist_add(context->dataList, (void *) retData);
 
     // notity the thread
@@ -384,11 +403,9 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 }
 
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint,
-                                        const void *pdu, uint32_t size,
-                                        void **retransmissionPdu)
+                                        const CARemoteEndpoint_t *endpoint, const void *pdu,
+                                        uint32_t size)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN - CARetransmissionReceivedData");
     if (context == NULL || endpoint == NULL || pdu == NULL)
     {
         OIC_LOG_V(DEBUG, TAG, "invalid parameter..");
@@ -426,60 +443,30 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     {
         CARetransmissionData_t *retData = u_arraylist_get(context->dataList, i);
 
-        if (retData == NULL)
-            continue;
-
         // found index
-        if ((retData->endpoint->connectivityType == endpoint->connectivityType)
+        if (retData != NULL && (retData->endpoint->connectivityType == endpoint->connectivityType)
             && retData->messageId == messageId)
         {
-            // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
-            // if retransmission was finish..token will be unavailable.
-            if(CA_EMPTY == CAGetCodeFromPduBinaryData(pdu, size))
+            // #2. remove data from list
+            CARetransmissionData_t *removedData = u_arraylist_remove(context->dataList, i);
+
+            if (removedData != NULL)
             {
-                OIC_LOG_V(DEBUG, TAG, "code is CA_EMPTY..");
+                OIC_LOG_V(DEBUG, TAG, "remove retransmission CON data!!, message id(%d)",
+                        messageId);
 
-                if(NULL == retData->pdu)
-                {
-                    OIC_LOG_V(DEBUG, TAG, "retData->pdu is null");
-                }
+                CADestroyRemoteEndpointInternal(removedData->endpoint);
+                OICFree(removedData->pdu);
 
-                // copy PDU data
-                (*retransmissionPdu) = (void *) OICMalloc(sizeof(int8_t) * retData->size);
-                if ((*retransmissionPdu) == NULL)
-                {
-                    OICFree(retData);
-                    OIC_LOG_V(DEBUG, TAG, "memory error!!");
-                    return CA_MEMORY_ALLOC_FAILED;
-                }
-                memset((*retransmissionPdu), 0, sizeof(int8_t) * retData->size);
-                memcpy((*retransmissionPdu), retData->pdu, sizeof(int8_t) * retData->size);
+                OICFree(removedData);
             }
-
             break;
-        }
-    }
-
-    // #2. remove data from list
-    if (i < len)
-    {
-        CARetransmissionData_t *removedData = u_arraylist_remove(context->dataList, i);
-
-        if (removedData != NULL)
-        {
-            OIC_LOG_V(DEBUG, TAG, "remove retransmission CON data!!, message id(%d)", messageId);
-
-            CADestroyRemoteEndpointInternal(removedData->endpoint);
-            OICFree(removedData->pdu);
-
-            OICFree(removedData);
         }
     }
 
     // mutex unlock
     u_mutex_unlock(context->threadMutex);
 
-    OIC_LOG_V(DEBUG, TAG, "OUT - CARetransmissionReceivedData");
     return CA_STATUS_OK;
 }
 
@@ -497,7 +484,7 @@ CAResult_t CARetransmissionStop(CARetransmission_t *context)
     u_mutex_lock(context->threadMutex);
 
     // set stop flag
-    context->isStop = CA_TRUE;
+    context->isStop = true;
 
     // notity the thread
     u_cond_signal(context->threadCond);
@@ -535,7 +522,6 @@ uint64_t getCurrentTimeInMicroSeconds()
 #ifdef __ANDROID__
     struct timespec getTs;
 
-    memset(&getTs, 0, sizeof(getTs));
     clock_gettime(CLOCK_MONOTONIC, &getTs);
 
     currentTime = (getTs.tv_sec * (uint64_t)1000000000 + getTs.tv_nsec)/1000;
@@ -545,3 +531,4 @@ uint64_t getCurrentTimeInMicroSeconds()
 #endif
     return currentTime;
 }
+

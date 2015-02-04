@@ -27,7 +27,7 @@
 #define __CA_INTERFACE_H_
 
 /**
- * Connectivity Abstraction Interface Description APIs.
+ * Connectivity Abstraction Interface APIs.
  */
 #include "cacommon.h"
 
@@ -107,6 +107,7 @@ CAResult_t CAStartDiscoveryServer();
  * @param   RespHandler  [IN] Response Handler Callback
  * @see     CARequestCallback
  * @see     CAResponseCallback
+ * @return  NONE
  */
 void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
 
@@ -179,7 +180,7 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token);
  * @param   requestInfo [IN] Information for the request.
  * @return  #CA_STATUS_OK #CA_STATUS_FAILED #CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requestInfo);
+CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t *requestInfo);
 
 /**
  * @brief   Send control Request on a resource to multicast group
@@ -198,7 +199,8 @@ CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
  * @param   responseInfo    [IN] Information for the response
  * @return  #CA_STATUS_OK or  #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo);
+CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
+                const CAResponseInfo_t *responseInfo);
 
 /**
  * @brief   Send notification to the remote object
@@ -208,18 +210,18 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *re
  * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
-                              CAResponseInfo_t *responseInfo);
+                      const  CAResponseInfo_t *responseInfo);
 
 /**
  * @brief   To advertise the resource
- * @param   resourceUri [IN] URI to be advertised
- * @param   token       [IN] Token for the request
- * @param   options     [IN] Header options information
- * @param   numOptions  [IN] Number of options
+ * @param   resourceUri       [IN] URI to be advertised
+ * @param   token               [IN] Token for the request
+ * @param   options             [IN] Header options information
+ * @param   numOptions      [IN] Number of options
  * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token,
-                               CAHeaderOption_t *options, uint8_t numOptions);
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
+                               const CAHeaderOption_t *options,const uint8_t numOptions);
 
 /**
  * @brief   Select network to use
@@ -240,7 +242,8 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork);
  *          It should be destroyed by the caller as it Get Information.
  * @param   info    [OUT] LocalConnectivity objects
  * @param   size    [OUT] No Of Array objects
- * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_STATUS_INVALID_PARAM or #CA_MEMORY_ALLOC_FAILED
+ * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_STATUS_INVALID_PARAM or
+*                #CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size);
 
@@ -255,3 +258,4 @@ CAResult_t CAHandleRequestResponse();
 #endif
 
 #endif
+

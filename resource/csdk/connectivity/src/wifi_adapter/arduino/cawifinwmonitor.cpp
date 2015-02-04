@@ -17,19 +17,13 @@
 * limitations under the License.
 *
 ******************************************************************/
+/**
+ * @file cawifinwmonitor.cpp
+ * @brief This file is to keep design in sync with other platforms.  Right now there is no
+ *        api for network monitioring in arduino.
+ */
 
 #include "cawifiinterface_singlethread.h"
-
-#include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiUdp.h>
-#include <SPI.h>
-#include <utility/server_drv.h>
-#include <utility/wifi_drv.h>
-#include <IPAddress.h>
-#include "logger.h"
-#include "caadapterutils.h"
-#include "cawifiadapter_singlethread.h"
 
 #define WIFI_MONITOR_TAG "WIFI_MONITOR"
 
@@ -50,7 +44,7 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
 bool CAWiFiIsConnected(void)
 {
-    return CA_TRUE;
+    return true;
 }
 
 void CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateChangeCallback callback)

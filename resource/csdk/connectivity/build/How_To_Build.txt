@@ -1,4 +1,4 @@
-=== Pre requites ===
+=== Prerequisites ===
 
 * 1. Scons
 
@@ -31,7 +31,7 @@ Linux Build:
 
 3) The above command will build sample also.
 
-    For Enabling Secured server, 
+    For Enabling Secured server,
     * Note: tinydtls library has to copied to "connectivity/lib/tinydtls" for secured build.
 
     Secured Server will be only used for WIFI and ETHERNET transports.
@@ -121,3 +121,4 @@ Note :- Currently only megaADK build is supported.
    By Default DEVICE_NAME=OIC-DEVICE, if device name option is not specified
 
    To change the port number, please modify  "port" variable in __upload() function in: "/build/arduino/SConscript".
+

@@ -33,8 +33,6 @@
 #include <bluetooth.h>
 
 #include "cacommon.h"
-#include "logger.h"
-
 
 /**
  * @struct BLEServiceInfo
@@ -45,12 +43,12 @@
  */
 typedef struct
 {
-    bt_gatt_attribute_h service_clone; /**< gatt_attribute handler for the OIC service. */
-    bt_gatt_attribute_h
-    read_char;          /**<gatt_attribute handler for OIC read characteristic. Server will read.*/
-    bt_gatt_attribute_h
-    write_char;         /**<gatt_attribute handler for OIC write characteristic. server will write*/
-    char *bdAddress;    /**< BD address where OIC service is running. */
+    bt_gatt_attribute_h service_clone; /**< GATT attribute handler for the OIC service. */
+    bt_gatt_attribute_h read_char;     /**< GATT attribute handler for OIC read characteristic.
+                                            Server will read.*/
+    bt_gatt_attribute_h write_char;    /**< GATT attribute handler for OIC write characteristic.
+                                            server will write*/
+    char *bdAddress;                   /**< BD address where OIC service is running. */
 } BLEServiceInfo;
 
 /**
@@ -75,9 +73,9 @@ typedef struct _BLEServiceList
  */
 typedef enum
 {
-    WRITE_CHAR,     /**< write_char This will be used to get the unicast response */
-    READ_CHAR,      /**< read_char This will be used update value to OIC server */
-    NOTIFY_CHAR     /**< Reserved char for the time being. */
+    BLE_GATT_WRITE_CHAR = 0, /**< write_char This will be used to get the unicast response */
+    BLE_GATT_READ_CHAR,      /**< read_char This will be used update value to OIC server */
+    BLE_GATT_NOTIFY_CHAR     /**< Reserved char for the time being. */
 } CHAR_TYPE;
 
 /**
@@ -89,9 +87,9 @@ typedef enum
  */
 typedef enum
 {
-    READ_CHAR_INDEX = 1,      /**< read_char index  */
-    WRITE_CHAR_INDEX = 2,     /**< write_char index  */
-    NOTIFY_CHAR_INDEX = 3     /**< Reserved char index for the time being. */
+    BLE_GATT_READ_CHAR_INDEX = 1,      /**< read_char index  */
+    BLE_GATT_WRITE_CHAR_INDEX = 2,     /**< write_char index  */
+    BLE_GATT_NOTIFY_CHAR_INDEX = 3     /**< Reserved char index for the time being. */
 } CHAR_INDEX;
 
 
@@ -153,7 +151,7 @@ CAResult_t CACreateBLEServiceInfo(const char *bdAddress, bt_gatt_attribute_h ser
  * @brief  Used to append the characteristic info to the already created serviceInfo structure.
  *
  * @param characteristic [IN] Charecteristic attribute handler.
- * @param type           [IN] Specifies whether its READ_CHAR or WRITE_CHAR
+ * @param type           [IN] Specifies whether its BLE_GATT_READ_CHAR or BLE_GATT_WRITE_CHAR
  * @param bleServiceInfo [IN] Pointer where serviceInfo structure needs to be appended with
  *                            char info.
  * @return #CA_STATUS_OK or Appropriate error code
@@ -176,7 +174,8 @@ CAResult_t CAAppendBLECharInfo(bt_gatt_attribute_h characteristic, CHAR_TYPE typ
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAAddBLEServiceInfoToList(BLEServiceList **serviceList, BLEServiceInfo *bleServiceInfo);
+CAResult_t CAAddBLEServiceInfoToList(BLEServiceList **serviceList,
+                BLEServiceInfo *bleServiceInfo);
 
 /**
  * @brief  Used to remove the ServiceInfo structure from the Service List.

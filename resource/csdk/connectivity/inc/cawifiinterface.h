@@ -57,8 +57,8 @@ typedef enum
  * @return NONE
  * @pre  Callback must be registered using CAWiFiSetPacketReceiveCallback()
  */
-typedef void (*CAWiFiPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-        const void *data, const uint32_t dataLength, const CABool_t isSecure);
+typedef void (*CAWiFiPacketReceivedCallback)(const char *ipAddress, uint16_t port,
+        const void *data, uint32_t dataLength, bool isSecure);
 
 /**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
@@ -101,7 +101,7 @@ void CAWiFiTerminateServer(void);
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                      const int16_t multicastPort, int32_t *serverFD);
+                                       uint16_t multicastPort, int *serverFD);
 
 /**
  * @brief  Start unicast server for specified local address and port
@@ -120,9 +120,9 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
  * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
-                                    const bool forceStart, const CABool_t isSecured,
-                                    int32_t *serverFD);
+CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port,
+                                    bool forceStart, bool isSecured,
+                                    int *serverFD);
 
 /**
  * @brief  Stop multicast server.
@@ -167,8 +167,8 @@ CAResult_t CAWiFiStopSecureUnicastServer();
  * @retval  #CA_STATUS_FAILED Operation failed
  * @remarks  ipAddress must be freed using free().
  */
-CAResult_t CAWiFiGetUnicastServerInfo(const CABool_t isSecured, char **ipAddress, int16_t *port,
-                                      int32_t *serverFD);
+CAResult_t CAWiFiGetUnicastServerInfo(bool isSecured, char **ipAddress, uint16_t *port,
+                                      int *serverFD);
 
 /**
  * @brief  Set this callback for receiving data packets from peer devices.
@@ -195,7 +195,7 @@ void CAWiFiSetExceptionCallback(CAWiFiExceptionCallback callback);
  * @param  socketFD [IN]  Socket descriptor used for sending UDP data.
  * @return  NONE
  */
-void CAWiFiSetUnicastSocket(const int32_t socketFD);
+void CAWiFiSetUnicastSocket(int socketFD);
 
 #ifdef __WITH_DTLS__
 /**
@@ -204,7 +204,7 @@ void CAWiFiSetUnicastSocket(const int32_t socketFD);
  * @param socketFD [IN] Socket descriptor used for sending secured (encrypted) UDP data.
  * @return  NONE
  */
-void CAWiFiSetSecureUnicastSocket(const int32_t socketFD);
+void CAWiFiSetSecureUnicastSocket(int socketFD);
 #endif
 
 /**
@@ -220,9 +220,9 @@ void CAWiFiSetSecureUnicastSocket(const int32_t socketFD);
  * @return  The number of bytes sent on the network. Returns 0 on error.
  * @remarks isSecure will be ignored when isMulticast is true.
  */
-uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
-                        const void *data, const uint32_t dataLength,
-                        CABool_t isMulticast, CABool_t isSecured);
+uint32_t CAWiFiSendData(const char *remoteAddress, uint16_t port,
+                        const void *data, uint32_t dataLength,
+                        bool isMulticast, bool isSecured);
 
 /**
  * @brief  Callback to be notified when wifi adapter connection state changes.
@@ -233,7 +233,7 @@ uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
  * @pre  Callback must be registered using CAWiFiSetConnectionStateChangeCallback()
  */
 typedef void (*CAWiFiConnectionStateChangeCallback)(const char *ipAddress,
-        const CANetworkStatus_t status);
+        CANetworkStatus_t status);
 
 /**
  * @brief Initialize Wifi network monitor
@@ -318,3 +318,4 @@ void CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateChangeCallback 
 #endif
 
 #endif //_CA_WIFI_INTERFACE_H_
+

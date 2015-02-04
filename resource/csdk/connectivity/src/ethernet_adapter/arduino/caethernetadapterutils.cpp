@@ -34,159 +34,99 @@
 
 #define MOD_NAME "EU"
 
-CAResult_t CAArduinoInitUdpSocket(int16_t *port, int32_t *socketID)
+CAResult_t CAArduinoGetAvailableSocket(int *sockID)
+{
+    VERIFY_NON_NULL(sockID, MOD_NAME, "sockID");
+    uint8_t state;
+    //Is any socket available to work with ?
+    *sockID = 0;
+    for (int i = 1; i < MAX_SOCK_NUM; i++)
+    {
+        state = W5100.readSnSR(i);
+        if (state == SnSR::CLOSED || state == SnSR::FIN_WAIT)
+        {
+            *sockID = i;
+            break;
+        }
+    }
+
+    if (*sockID == 0)
+    {
+        OIC_LOG(ERROR, MOD_NAME, "sockID 0");
+        return CA_SOCKET_OPERATION_FAILED;
+    }
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAArduinoInitUdpSocket(uint16_t *port, int *socketID)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     VERIFY_NON_NULL(port, MOD_NAME, "port");
     VERIFY_NON_NULL(socketID, MOD_NAME, "socketID");
 
-    uint8_t state;
-    //Is any socket available to work with ?
-    int32_t sockID = 0;
-    for (int i = 1; i < MAX_SOCK_NUM; i++)
+    CAResult_t ret = CAArduinoGetAvailableSocket(socketID);
+    if (ret != CA_STATUS_OK)
     {
-        state = W5100.readSnSR(i);
-        if (state == SnSR::CLOSED || state == SnSR::FIN_WAIT)
-        {
-            sockID = i;
-            break;
-        }
-    }
-
-    if (sockID == 0)
-    {
-        OIC_LOG(ERROR, MOD_NAME, "failed");
-        return CA_STATUS_FAILED;
+        OIC_LOG(ERROR, MOD_NAME, "get sock fail");
+        return ret;
     }
 
     //Create a datagram socket on which to recv/send.
-    if (!socket(sockID, SnMR::UDP, *port, 0))
+    if (!socket(*socketID, SnMR::UDP, *port, 0))
     {
-        OIC_LOG(ERROR, MOD_NAME, "failed");
+        OIC_LOG(ERROR, MOD_NAME, "sock fail");
         return CA_STATUS_FAILED;
     }
 
-    *socketID = sockID;
-    OIC_LOG_V(DEBUG, MOD_NAME, "socketId:%d", sockID);
+    OIC_LOG_V(DEBUG, MOD_NAME, "socketId:%d", *socketID);
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress, const int16_t *mport,
-        const int16_t *lport, int32_t *socketID)
+CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress,
+                                           uint16_t mport,
+                                           uint16_t lport, int *socketID)
 {
     OIC_LOG(DEBUG, MOD_NAME, "IN");
     VERIFY_NON_NULL(mcastAddress, MOD_NAME, "address");
     VERIFY_NON_NULL(socketID, MOD_NAME, "socket");
-    VERIFY_NON_NULL(lport, MOD_NAME, "port");
-    VERIFY_NON_NULL(mport, MOD_NAME, "port");
-    uint8_t state;
+
     uint8_t mcastMacAddr[] = { 0x01, 0x00, 0x5E, 0x00, 0x00, 0x00};
     uint8_t ipAddr[4] = { 0 };
     uint16_t parsedPort = 0;
-    if (!CAParseIPv4AddressLocal((unsigned char *) mcastAddress, ipAddr, &parsedPort))
+    if (CAParseIPv4AddressInternal(mcastAddress, ipAddr, sizeof(ipAddr),
+                                   &parsedPort) != CA_STATUS_OK)
     {
-        OIC_LOG(ERROR, MOD_NAME, "failed");
+        OIC_LOG(ERROR, MOD_NAME, "parse fail");
         return CA_STATUS_FAILED;
     }
 
-    int32_t sockID = 0;
-    //Is any socket available to work with ?
-    for (int i = 1; i < MAX_SOCK_NUM; i++)
+    *socketID = 0;
+    CAResult_t ret = CAArduinoGetAvailableSocket(socketID);
+    if (ret != CA_STATUS_OK)
     {
-        state = W5100.readSnSR(i);
-        if (state == SnSR::CLOSED || state == SnSR::FIN_WAIT)
-        {
-            sockID = i;
-            break;
-        }
+        OIC_LOG(ERROR, MOD_NAME, "sock fail");
+        return ret;
     }
-
-    if (sockID == 0)
-    {
-        OIC_LOG(ERROR, MOD_NAME, "failed");
-        return CA_STATUS_FAILED;
-    }
-
 
     //Calculate Multicast MAC address
     mcastMacAddr[3] = ipAddr[1] & 0x7F;
     mcastMacAddr[4] = ipAddr[2];
     mcastMacAddr[5] = ipAddr[3];
-    W5100.writeSnDIPR(sockID, (uint8_t *)ipAddr);
-    W5100.writeSnDHAR(sockID, mcastMacAddr);
-    W5100.writeSnDPORT(sockID, *mport);
+    W5100.writeSnDIPR(*socketID, (uint8_t *)ipAddr);
+    W5100.writeSnDHAR(*socketID, mcastMacAddr);
+    W5100.writeSnDPORT(*socketID, mport);
 
     //Create a datagram socket on which to recv/send.
-    if (!socket(sockID, SnMR::UDP, *lport, SnMR::MULTI))
+    if (!socket(*socketID, SnMR::UDP, lport, SnMR::MULTI))
     {
-        OIC_LOG(ERROR, MOD_NAME, "failed");
-        return CA_STATUS_FAILED;
+        OIC_LOG(ERROR, MOD_NAME, "sock fail");
+        return CA_SOCKET_OPERATION_FAILED;
     }
 
-    *socketID = sockID;
-    OIC_LOG_V(DEBUG, MOD_NAME, "socketId:%d", sockID);
+    OIC_LOG_V(DEBUG, MOD_NAME, "socketId:%d", *socketID);
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
     return CA_STATUS_OK;
 }
-
-int16_t CAParseIPv4AddressLocal(unsigned char *ipAddrStr, uint8_t *ipAddr, uint16_t *port)
-{
-    size_t index = 0;
-    unsigned char *itr;
-    uint8_t dotCount = 0;
-
-    ipAddr[index] = 0;
-    *port = 0;
-    itr = ipAddrStr;
-    if (!isdigit((unsigned char) *ipAddrStr))
-    {
-        return -1;
-    }
-    ipAddrStr = itr;
-
-    while (*ipAddrStr)
-    {
-        if (isdigit((unsigned char) *ipAddrStr))
-        {
-            ipAddr[index] *= 10;
-            ipAddr[index] += *ipAddrStr - '0';
-        }
-        else if ((unsigned char) *ipAddrStr == '.')
-        {
-            index++;
-            dotCount++;
-            ipAddr[index] = 0;
-        }
-        else
-        {
-            break;
-        }
-        ipAddrStr++;
-    }
-    if (*ipAddrStr == ':')
-    {
-        ipAddrStr++;
-        while (*ipAddrStr)
-        {
-            if (isdigit((unsigned char) *ipAddrStr))
-            {
-                *port *= 10;
-                *port += *ipAddrStr - '0';
-            }
-            else
-            {
-                break;
-            }
-            ipAddrStr++;
-        }
-    }
-    if (ipAddr[0] < 255 && ipAddr[1] < 255 && ipAddr[2] < 255 && ipAddr[3] < 255
-        && dotCount == 3)
-    {
-        return 1;
-    }
-    return 0;
-}
-
 

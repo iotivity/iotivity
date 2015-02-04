@@ -8,7 +8,8 @@ LDFLAGS = `pkg-config --libs glib-2.0`
 
 OUT = threadpool
 
-all: 
+all:
 	$(CC) $(CFLAGS) $(INC_DIR) $(COMPILEFLAGS) $(SRC_DIR)uthreadpool.c $(SRC_DIR)umutex.c $(SRC_DIR)/logger.c $(SRC_DIR)/oic_malloc.c main.c -o $(OUT) $(LDFLAGS)
 clean:
 	rm -f $(OUT)
+

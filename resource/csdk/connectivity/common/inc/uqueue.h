@@ -116,9 +116,8 @@ CAResult_t u_queue_remove_element(u_queue_t *queue);
 
 /**
  * @fn u_queue_get_size
- * Returns number of elements in queue
- * Input : queue - pointer to queue
- * Return : number of elements in queue
+ * @param queue - pointer to queue
+ * @return number of elements in queue
  */
 uint32_t u_queue_get_size(u_queue_t *queue);
 
@@ -145,3 +144,4 @@ u_queue_message_t *u_queue_get_head(u_queue_t *queue);
 #endif /* __cplusplus */
 
 #endif /* _U_QUEUE_H_ */
+

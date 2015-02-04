@@ -16,7 +16,6 @@ else:
 	env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DTB_LOG'])
 
 env.ParseConfig("pkg-config --cflags --libs capi-network-wifi dlog glib-2.0")
-
 if 'ALL' in transport:
 		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'NO_ETHERNET_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 		print "CA Transport is ALL"

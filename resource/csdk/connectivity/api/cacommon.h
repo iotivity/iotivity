@@ -28,7 +28,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-
+#include <stdbool.h>
 
 
 #ifdef __cplusplus
@@ -52,14 +52,27 @@ extern "C"
 #define CA_MAX_HEADER_OPTION_DATA_LENGTH 16
 
 /**
- * @brief Max URI length
- */
-#define CA_MAX_URI_LENGTH 2048
+* @brief Max token length
+*/
+#define CA_MAX_TOKEN_LEN (8)
 
 /**
- * @brief Max token length
+ * @brief Max URI length
  */
-#define CA_MAX_TOKEN_LEN (8)
+#ifdef ARDUINO
+#define CA_MAX_URI_LENGTH 128  /* maximum size of URI for embedded platforms*/
+#else
+#define CA_MAX_URI_LENGTH 512 /* maximum size of URI for other platforms*/
+#endif
+
+/**
+ * @brief Max PDU length supported
+ */
+#ifdef ARDUINO
+#define COAP_MAX_PDU_SIZE           320  /* maximum size of a CoAP PDU for embedded platforms*/
+#else
+#define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU for big platforms*/
+#endif
 
 /**
  * @brief option types - the highest option number 63
@@ -67,6 +80,7 @@ extern "C"
 #define CA_OPTION_IF_MATCH 1
 #define CA_OPTION_ETAG 4
 #define CA_OPTION_IF_NONE_MATCH 5
+#define CA_OPTION_OBSERVE 6
 #define CA_OPTION_LOCATION_PATH 8
 #define CA_OPTION_URI_PATH 11
 #define CA_OPTION_CONTENT_FORMAT 12
@@ -75,7 +89,6 @@ extern "C"
 #define CA_OPTION_URI_QUERY 15
 #define CA_OPTION_ACCEPT 17
 #define CA_OPTION_LOCATION_QUERY 20
-#define CA_OPTION_OBSERVE 6
 
 /**
  * @brief Payload information from resource model
@@ -91,16 +104,6 @@ typedef char *CAURI_t;
  * @brief Token information for mapping the request and responses by resource model
  */
 typedef char *CAToken_t;
-
-/**
- * @enum CABool_t
- * @brief Boolean value used for specifying the success or failure
- */
-typedef enum
-{
-    CA_FALSE = 0,   /**< False */
-    CA_TRUE         /**< True */
-} CABool_t;
 
 /**
  * @enum CAConnectivityType_t
@@ -120,8 +123,8 @@ typedef enum
  */
 typedef enum
 {
-    CA_INTERFACE_UP,    /**< Connection is Available */
-    CA_INTERFACE_DOWN   /**< Connection is not available */
+    CA_INTERFACE_DOWN,   /**< Connection is not available */
+    CA_INTERFACE_UP    /**< Connection is Available */
 } CANetworkStatus_t;
 
 /**
@@ -151,7 +154,7 @@ typedef union
     struct
     {
         char ipAddress[CA_IPADDR_SIZE]; /**< Ip address of the interface**/
-        uint32_t port;                  /**< port information**/
+        uint16_t port;                  /**< port information**/
     } IP;
 } CAAddress_t;
 
@@ -164,7 +167,8 @@ typedef enum
     CA_MSG_CONFIRM = 0,  /**< confirmable message (requires ACK/RST) */
     CA_MSG_NONCONFIRM,   /**< non-confirmable message (one-shot message) */
     CA_MSG_ACKNOWLEDGE,  /**< used to acknowledge confirmable messages */
-    CA_MSG_RESET         /**< indicates error in received messages */
+    CA_MSG_RESET         /**< used to indicates not-interested or error (lack of context)in
+                                                  received messages */
 } CAMessageType_t;
 
 /**
@@ -188,7 +192,7 @@ typedef struct
     CAURI_t resourceUri;                    /**< Resource URI information **/
     CAAddress_t addressInfo;                /**< Remote Endpoint address **/
     CAConnectivityType_t connectivityType;  /**< Connectivity of the endpoint**/
-    CABool_t isSecured;                     /**< Secure connection**/
+    bool isSecured;                     /**< Secure connection**/
 } CARemoteEndpoint_t;
 
 
@@ -207,8 +211,8 @@ typedef struct
 typedef struct
 {
     CAAddress_t addressInfo;    /**< Address of the interface  **/
-    CAConnectivityType_t type;  /**< Connectivity type that localconnectivity avaialble **/
-    CABool_t isSecured;         /**< Secure connection**/
+    CAConnectivityType_t type;  /**< Connectivity of local device **/
+    bool isSecured;         /**< Secure connection**/
 } CALocalConnectivity_t;
 
 /**
@@ -230,8 +234,8 @@ typedef enum
     CA_MEMORY_ALLOC_FAILED,         /**< Memory allocation failed */
     CA_REQUEST_TIMEOUT,             /**< Request is Timeout */
     CA_DESTINATION_DISCONNECTED,    /**< Destination is disconnected */
-    CA_STATUS_FAILED,               /**< Failure */
-    CA_NOT_SUPPORTED                /**< Not supported */
+    CA_NOT_SUPPORTED,               /**< Not supported */
+    CA_STATUS_FAILED =255           /**< Failure */
     /* Result code - END HERE */
 } CAResult_t;
 
@@ -245,11 +249,10 @@ typedef enum
     CA_SUCCESS = 200,           /**< Success */
     CA_CREATED = 201,           /**< Created */
     CA_DELETED = 202,           /**< Deleted */
-    CA_EMPTY = 231,             /**< Empty */
     CA_BAD_REQ = 400,           /**< Bad Request */
     CA_BAD_OPT = 402,           /**< Bad Option */
     CA_NOT_FOUND = 404,         /**< Not found */
-    CA_RETRANSMIT_TIMEOUT = 531 /**< Retransmit timeout */
+    CA_RETRANSMIT_TIMEOUT = 500 /**< Retransmit timeout */
     /* Response status code - END HERE */
 } CAResponseResult_t;
 
@@ -269,8 +272,8 @@ typedef enum
  */
 typedef enum
 {
-    CA_ADAPTER_ENABLED,     /**< Adapter is Enabled */
-    CA_ADAPTER_DISABLED     /**< Adapter is Disabled */
+    CA_ADAPTER_DISABLED,   /**< Adapter is Disabled */
+    CA_ADAPTER_ENABLED     /**< Adapter is Enabled */
 } CAAdapterState_t;
 
 /**
@@ -294,10 +297,11 @@ typedef struct
  */
 typedef struct
 {
+
+    CAMessageType_t type;       /**< Qos for the request */
     uint16_t messageId;         /**< Message id.
                                  * if message id is zero, it will generated by CA inside.
                                  * otherwise, you can use it */
-    CAMessageType_t type;       /**< Qos for the request */
     CAToken_t token;            /**< Token for CA */
     CAHeaderOption_t *options;  /** Header Options for the request */
     uint8_t numOptions;         /**< Number of Header options */
@@ -322,8 +326,8 @@ typedef struct
  */
 typedef struct
 {
-    CAInfo_t info;              /**< Information of the response */
     CAResponseResult_t result;  /**< Result for response by resource model */
+    CAInfo_t info;              /**< Information of the response */
 } CAResponseInfo_t;
 
 #ifdef __cplusplus
@@ -331,3 +335,4 @@ typedef struct
 #endif
 
 #endif //#ifndef __CA_COMMON_H_
+

@@ -80,6 +80,24 @@ void *OICMalloc(size_t size)
 #endif
 }
 
+void *OICCalloc(size_t num, size_t size)
+{
+    if(0 == size || 0 == num)
+    {
+        return NULL;
+    }
+
+#ifdef ENABLE_MALLOC_DEBUG
+    void *ptr = 0;
+
+    ptr = calloc(num, size);
+    OIC_LOG_V(INFO, TAG, "calloc: ptr=%p, num=%u, size=%u", ptr, num, size);
+    return ptr;
+#else
+    return calloc(num, size);
+#endif
+}
+
 void OICFree(void *ptr)
 {
 #ifdef ENABLE_MALLOC_DEBUG
@@ -88,4 +106,5 @@ void OICFree(void *ptr)
 
     free(ptr);
 }
+
 

@@ -52,3 +52,4 @@ jstring CAEDRNativeGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 #endif
 
 #endif
+

@@ -68,6 +68,19 @@ extern "C"
 void *OICMalloc(size_t size);
 
 /**
+ * Allocates a block of memory for an array of num elements, each of them
+ * size bytes long and initializes all its bits to zero.
+ *
+ * @param num - The number of elements
+ * @param size - Size of the element type in bytes, where size > 0
+ *
+ * @return
+ *     on success, a pointer to the allocated memory block
+ *     on failure, a null pointer is returned
+ */
+void *OICCalloc(size_t num, size_t size);
+
+/**
  * Deallocate a block of memory previously allocated by a call to OCMalloc
  *
  * NOTE: This function is intended to be used internally by the TB Stack.
@@ -82,3 +95,4 @@ void OICFree(void *ptr);
 }
 #endif // __cplusplus
 #endif /* _OIC_MALLOC_H_ */
+

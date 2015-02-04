@@ -34,20 +34,20 @@
 #define ETHERNET_CLIENT_TAG "ETHERNET_CLIENT"
 
 /**
- * @var gUnicastServerSocketDescClient
+ * @var g_unicastServerSocketDescClient
  * @brief socket descriptor for unicast server
  */
-static int32_t gUnicastServerSocketDescClient = -1;
+static int32_t g_unicastServerSocketDescClient = -1;
 
 #ifdef __WITH_DTLS__
 /**
- * @var gUnicastServerSocketDescClient
+ * @var g_unicastServerSecureSocketDescClient
  * @brief socket descriptor for secure unicast server
  */
-static int32_t gUnicastServerSecureSocketDescClient = -1;
+static int32_t g_unicastServerSecureSocketDescClient = -1;
 #endif
 
-static uint32_t CASendData(const char *remoteAddress, const uint32_t port,
+static uint32_t CASendData(const char *remoteAddress, const uint16_t port,
                            const void *data, const uint32_t dataLength, int32_t sockfd)
 {
     OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
@@ -83,11 +83,13 @@ static uint32_t CASendData(const char *remoteAddress, const uint32_t port,
                                     (struct sockaddr *)&destAddr, sizeof(destAddr));
     if (-1 == sendDataLength)
     {
-        OIC_LOG_V(ERROR, ETHERNET_CLIENT_TAG, "Failed to Send Data, Error code: %s", strerror(errno));
+        OIC_LOG_V(ERROR, ETHERNET_CLIENT_TAG, "Failed to Send Data, Error code: %s",
+            strerror(errno));
         return 0;
     }
 
-    OIC_LOG_V(INFO, ETHERNET_CLIENT_TAG, "Sending data is successful, sent bytes[%d]", sendDataLength);
+    OIC_LOG_V(INFO, ETHERNET_CLIENT_TAG, "Sending data is successful, sent bytes[%d]",
+        sendDataLength);
     return sendDataLength;
 }
 
@@ -95,7 +97,7 @@ void CAEthernetSetUnicastSocket(const int32_t socketFD)
 {
     OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
 
-    gUnicastServerSocketDescClient = socketFD;
+    g_unicastServerSocketDescClient = socketFD;
 }
 
 #ifdef __WITH_DTLS__
@@ -103,29 +105,29 @@ void CAEthernetSetSecureUnicastSocket(const int32_t socketFD)
 {
     OIC_LOG(DEBUG, ETHERNET_CLIENT_TAG, "IN");
 
-    gUnicastServerSecureSocketDescClient = socketFD;
+    g_unicastServerSecureSocketDescClient = socketFD;
 }
 #endif
 
-uint32_t CAEthernetSendData(const char *remoteAddress, const uint32_t port,
+uint32_t CAEthernetSendData(const char *remoteAddress, const uint16_t port,
                             const void *data, const uint32_t dataLength,
-                            CABool_t isMulticast, CABool_t isSecured)
+                            bool isMulticast, bool isSecured)
 {
     uint32_t len = 0;
 
 #ifdef __WITH_DTLS__
-    if (CA_TRUE == isSecured)
+    if (true == isSecured)
     {
         len  = CASendData(remoteAddress, port,
-                          data, dataLength, gUnicastServerSecureSocketDescClient);
+                          data, dataLength, g_unicastServerSecureSocketDescClient);
     }
     else
+#endif
     {
-#endif
         len =  CASendData(remoteAddress, port,
-                          data, dataLength, gUnicastServerSocketDescClient);
-#ifdef __WITH_DTLS__
+                          data, dataLength, g_unicastServerSocketDescClient);
     }
-#endif
+
     return len;
 }
+

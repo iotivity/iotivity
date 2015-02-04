@@ -27,116 +27,122 @@
 
 #define TAG PCF("CA")
 
-static u_arraylist_t *gSelectedNetworkList = NULL;
+static u_arraylist_t *g_selectedNetworkList = NULL;
 static uint32_t NETWORK_ETHERNET = CA_ETHERNET;
 static uint32_t NETWORK_WIFI = CA_WIFI;
 static uint32_t NETWORK_EDR = CA_EDR;
 static uint32_t NETWORK_LE = CA_LE;
 
 
-CAResult_t CAAddNetworkType(uint32_t ConnectivityType)
+CAResult_t CAAddNetworkType(CAConnectivityType_t connectivityType)
 {
-    if (gSelectedNetworkList == NULL)
+    if (g_selectedNetworkList == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Create network list");
+        OIC_LOG(DEBUG, TAG, "Create network list");
 
-        gSelectedNetworkList = u_arraylist_create();
+        g_selectedNetworkList = u_arraylist_create();
 
-        if( gSelectedNetworkList == NULL )
+        if( g_selectedNetworkList == NULL )
         {
-            return CA_STATUS_FAILED;
+            return CA_MEMORY_ALLOC_FAILED;
         }
     }
 
-    switch (ConnectivityType)
+    CAResult_t res = CA_STATUS_OK;
+    switch (connectivityType)
     {
         case CA_ETHERNET:
         {
 
 #ifndef ETHERNET_ADAPTER
-            OIC_LOG_V(DEBUG, TAG, "Add network type(ETHERNET) - Not Supported");
+            OIC_LOG(DEBUG, TAG, "Add network type(ETHERNET) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* ETHERNET_ADAPTER */
 
-            OIC_LOG_V(DEBUG, TAG, "Add network type(ETHERNET)");
-            if (!u_arraylist_contains(gSelectedNetworkList, &NETWORK_ETHERNET))
+            OIC_LOG(DEBUG, TAG, "Add network type(ETHERNET)");
+            if (!u_arraylist_contains(g_selectedNetworkList, &NETWORK_ETHERNET))
             {
-                u_arraylist_add(gSelectedNetworkList, &NETWORK_ETHERNET);
+                res = u_arraylist_add(g_selectedNetworkList, &NETWORK_ETHERNET);
             }
         }
-            break;
+        break;
 
         case CA_WIFI:
         {
 
 #ifndef WIFI_ADAPTER
-            OIC_LOG_V(DEBUG, TAG, "Add network type(WIFI) - Not Supported");
+            OIC_LOG(DEBUG, TAG, "Add network type(WIFI) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* WIFI_ADAPTER */
 
-            OIC_LOG_V(DEBUG, TAG, "Add network type(WIFI)");
-            if (!u_arraylist_contains(gSelectedNetworkList, &NETWORK_WIFI))
+            OIC_LOG(DEBUG, TAG, "Add network type(WIFI)");
+            if (!u_arraylist_contains(g_selectedNetworkList, &NETWORK_WIFI))
             {
-                u_arraylist_add(gSelectedNetworkList, &NETWORK_WIFI);
+                res = u_arraylist_add(g_selectedNetworkList, &NETWORK_WIFI);
             }
         }
-            break;
+        break;
 
         case CA_EDR:
         {
 
 #ifndef EDR_ADAPTER
-            OIC_LOG_V(DEBUG, TAG, "Add network type(EDR) - Not Supported");
+            OIC_LOG(DEBUG, TAG, "Add network type(EDR) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* EDR_ADAPTER */
 
-            OIC_LOG_V(DEBUG, TAG, "Add network type(EDR)");
-            if (!u_arraylist_contains(gSelectedNetworkList, &NETWORK_EDR))
+            OIC_LOG(DEBUG, TAG, "Add network type(EDR)");
+            if (!u_arraylist_contains(g_selectedNetworkList, &NETWORK_EDR))
             {
-                u_arraylist_add(gSelectedNetworkList, &NETWORK_EDR);
+                res = u_arraylist_add(g_selectedNetworkList, &NETWORK_EDR);
             }
         }
-            break;
+        break;
 
         case CA_LE:
         {
 
 #ifndef LE_ADAPTER
-            OIC_LOG_V(DEBUG, TAG, "Add network type(LE) - Not Supported");
+            OIC_LOG(DEBUG, TAG, "Add network type(LE) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* LE_ADAPTER */
 
-            OIC_LOG_V(DEBUG, TAG, "Add network type(LE)");
-            if (!u_arraylist_contains(gSelectedNetworkList, &NETWORK_LE))
+            OIC_LOG(DEBUG, TAG, "Add network type(LE)");
+            if (!u_arraylist_contains(g_selectedNetworkList, &NETWORK_LE))
             {
-                u_arraylist_add(gSelectedNetworkList, &NETWORK_LE);
+                res = u_arraylist_add(g_selectedNetworkList, &NETWORK_LE);
             }
         }
-            break;
+        break;
 
     }
 
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Add arraylist failed[Err code: %d]", res);
+        return res;
+    }
     // start selected interface adapter
-    CAStartAdapter((CAConnectivityType_t)ConnectivityType);
+    res = CAStartAdapter((CAConnectivityType_t)connectivityType);
 
-    return CA_STATUS_OK;
+    return res;
 }
 
-CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
+CAResult_t CARemoveNetworkType(CAConnectivityType_t connectivityType)
 {
     uint8_t index;
     CAConnectivityType_t connType;
 
-    if (gSelectedNetworkList == NULL)
+    if (g_selectedNetworkList == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Selected network not found");
+        OIC_LOG(DEBUG, TAG, "SelectedNetwork list is NULL");
 
         return CA_STATUS_FAILED;
     }
 
-    for (index = 0; index < u_arraylist_length(gSelectedNetworkList); index++)
+    for (index = 0; index < u_arraylist_length(g_selectedNetworkList); index++)
     {
-        void* ptrType = u_arraylist_get(gSelectedNetworkList, index);
+        void* ptrType = u_arraylist_get(g_selectedNetworkList, index);
 
         if(ptrType == NULL)
         {
@@ -145,30 +151,30 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 
         connType = *(CAConnectivityType_t *) ptrType;
 
-        if (ConnectivityType == connType)
+        if (connectivityType == connType)
         {
-            switch (ConnectivityType)
+            switch (connectivityType)
             {
                 case CA_ETHERNET:
 
 #ifndef ETHERNET_ADAPTER
-                    OIC_LOG_V(DEBUG, TAG, "Remove network type(ETHERNET) - Not Supported");
+                    OIC_LOG(DEBUG, TAG, "Remove network type(ETHERNET) - Not Supported");
                     return CA_NOT_SUPPORTED;
 #else
 
-                    OIC_LOG_V(DEBUG, TAG, "Remove network type(ETHERNET)");
-                    u_arraylist_remove(gSelectedNetworkList, index);
+                    OIC_LOG(DEBUG, TAG, "Remove network type(ETHERNET)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
 #endif /* ETHERNET_ADAPTER */
                     break;
 
                 case CA_WIFI:
 
 #ifndef WIFI_ADAPTER
-                    OIC_LOG_V(DEBUG, TAG, "Remove network type(WIFI) - Not Supported");
+                    OIC_LOG(DEBUG, TAG, "Remove network type(WIFI) - Not Supported");
                     return CA_NOT_SUPPORTED;
 #else
-                    OIC_LOG_V(DEBUG, TAG, "Remove network type(WIFI)");
-                    u_arraylist_remove(gSelectedNetworkList, index);
+                    OIC_LOG(DEBUG, TAG, "Remove network type(WIFI)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
 #endif /* WIFI_ADAPTER */
 
                     break;
@@ -176,11 +182,11 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
                 case CA_EDR:
 
 #ifndef EDR_ADAPTER
-                    OIC_LOG_V(DEBUG, TAG, "Remove network type(EDR) - Not Supported");
+                    OIC_LOG(DEBUG, TAG, "Remove network type(EDR) - Not Supported");
                     return CA_NOT_SUPPORTED;
 #else
-                    OIC_LOG_V(DEBUG, TAG, "Remove network type(EDR)");
-                    u_arraylist_remove(gSelectedNetworkList, index);
+                    OIC_LOG(DEBUG, TAG, "Remove network type(EDR)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
 #endif /* EDR_ADAPTER */
 
                     break;
@@ -188,11 +194,11 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
                 case CA_LE:
 
 #ifndef LE_ADAPTER
-                    OIC_LOG_V(DEBUG, TAG, "Remove network type(LE) - Not Supported");
+                    OIC_LOG(DEBUG, TAG, "Remove network type(LE) - Not Supported");
                     return CA_NOT_SUPPORTED;
 #else
-                    OIC_LOG_V(DEBUG, TAG, "Remove network type(LE)");
-                    u_arraylist_remove(gSelectedNetworkList, index);
+                    OIC_LOG(DEBUG, TAG, "Remove network type(LE)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
 #endif /* LE_ADAPTER */
 
                     break;
@@ -210,23 +216,22 @@ CAResult_t CARemoveNetworkType(uint32_t ConnectivityType)
 u_arraylist_t *CAGetSelectedNetworkList()
 {
     OIC_LOG(DEBUG, TAG, "CAGetSelectedNetworkList IN");
-    if (gSelectedNetworkList == NULL)
+    if (g_selectedNetworkList == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Selected network not found");
-
+        OIC_LOG(DEBUG, TAG, "SelectedNetwork list is NULL");
         return NULL;
     }
     OIC_LOG(DEBUG, TAG, "CAGetSelectedNetworkList OUT");
-    return gSelectedNetworkList;
+    return g_selectedNetworkList;
 }
 
 CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t *size)
 {
-    OIC_LOG_V(DEBUG, TAG, "get network information.");
+    OIC_LOG(DEBUG, TAG, "get network information.");
 
     if (info == NULL || size == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Input parameter is invalid value");
+        OIC_LOG(DEBUG, TAG, "Input parameter is invalid value");
 
         return CA_STATUS_INVALID_PARAM;
     }
@@ -236,11 +241,11 @@ CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_
 
 CAResult_t CATerminateNetworkType()
 {
-    OIC_LOG_V(DEBUG, TAG, "CATerminateNetworkType()");
+    OIC_LOG(DEBUG, TAG, "CATerminateNetworkType()");
 
-    if(gSelectedNetworkList != NULL)
+    if(g_selectedNetworkList != NULL)
     {
-        u_arraylist_free(&gSelectedNetworkList);
+        u_arraylist_free(&g_selectedNetworkList);
     }
 
     return CA_STATUS_OK;

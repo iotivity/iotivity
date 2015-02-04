@@ -39,7 +39,7 @@ extern "C"
  *                                   Abstraction Layer
  * @param networkPacketCallback [IN] Callback to notify request and response messages from server(s)
  *                                   started at Connectivity Abstraction Layer.
- * @param netCallback           [IN] Callback to intimate the network additions to Connectivity
+ * @param netCallback           [IN] Callback to notify the network additions to Connectivity
  *                                   Abstraction Layer.
  * @return  #CA_STATUS_OK or Appropriate error code
  */
@@ -77,20 +77,20 @@ CAResult_t CAStartWIFIDiscoveryServer();
  *                       connectivity type) to which the unicast data has to be sent.
  * @param data      [IN] Data to be sent.
  * @param dataLen   [IN] Size of data to be sent.
- * @return The number of bytes sent on the network. Returns 0 on error.
+ * @return The number of bytes sent on the network. Returns -1 on error.
  * @remarks  dataLen must be > 0.
  */
-uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *endpoint, void *data,
-                               uint32_t dataLen);
+int32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
+                              uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the WIFI connectivity.
  * @param   data        [IN] Data which required to be sent.
  * @param   dataLen     [IN] Size of data to be sent.
- * @return - The number of bytes sent on the network. Returns 0 on error.
+ * @return - The number of bytes sent on the network. Returns -1 on error.
  * @remarks  dataLen must be > 0.
  */
-uint32_t CASendWIFIMulticastData(void *data, uint32_t dataLen);
+int32_t CASendWIFIMulticastData(const void *data, uint32_t dataLen);
 
 /**
  * @brief Get WIFI Connectivity network information
@@ -118,10 +118,11 @@ CAResult_t CAStopWIFI();
  * Configuration information will be deleted from further use
  * @return  NONE
  */
-void CATerminateWIfI();
+void CATerminateWIFI();
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 #endif  // #ifndef __CA_WIFI_ADAPTER_SINGLETHREAD_H__
+

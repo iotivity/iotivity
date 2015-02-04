@@ -58,56 +58,8 @@ CAResult_t CATerminateBle();
  * @param senderPort [IN] Sender port
  * @return #CA_STATUS_OK or Appropriate error code
  */
-void CANotifyCallback(void *data, int32_t dataLen, char *senderAdrs, int32_t senderPort);
-
-/**
- * @brief Adds a new service in Gatt Server
- * @param service_uuid [IN] Unique identifier for each service.
- * @return #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CAAddNewBleServiceInGattServer(const char *service_uuid);
-
-/**
- * @brief Remove the added service from  Ble Gatt server.
- * @param svc_path [IN] Unique identifier for each service.
- * @return #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CARemoveBleServiceFromGattServer(const char *svc_path);
-
-/**
- * @brief Remove all the services from Ble Gatt server.
- * @return #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CARemoveAllBleServicesFromGattServer();
-
-/**
- * @brief Register service with GattService after adding the service.
- * @param svc_path [IN] Unique identifier for each service.
- * @return #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CARegisterBleServicewithGattServer(const char *svc_path);
-
-/**
- * @brief Add new characteristics to the service
- * @param svc_path        [IN] Service path to which this characteristic belongs to.
- * @param char_uuid       [IN] Gatt characteristic uuid.
- * @param char_value      [IN] Gatt characteristic value.
- * @param char_value_len  [IN] Characteristic value length.
- * @param read            [IN] Boolean variable for checking whether read characteristics or
- *                             write characteristics.
- * @return #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CAAddNewCharacteristicsToGattServer(const char *svc_path, const char *char_uuid,
-                                               const char *char_value, int char_value_len,
-                                               int read);
-
-/**
- * @brief Remove the characteristics from BLE GATT server
- * @param  char_path  [IN] characteristic path registered on the interface and unique
- *                         identifier for added characteristics.
- * @return #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CARemoveCharacteristicsFromGattServer(const char *char_path);
+void CANotifyCallback(const void *data, int32_t dataLen, const char *senderAdrs,
+                      int32_t senderPort);
 
 /**
  * @brief API to check whether data is available in BLE shield
@@ -138,3 +90,4 @@ CAResult_t CABleDoEvents();
 #endif
 
 #endif //#ifndef _BLE_ADAPTER_ARDUINO_H_
+

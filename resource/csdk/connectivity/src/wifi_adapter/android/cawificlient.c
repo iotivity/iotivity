@@ -34,21 +34,21 @@
 #define WIFI_CLIENT_TAG "WIFI_CLIENT"
 
 /**
- * @var gUnicastServerSocketDescClient
+ * @var g_unicastServerSocket
  * @brief socket descriptor for unicast server
  */
-static int32_t gUnicastServerSocketDescClient = -1;
+static int32_t g_unicastServerSocket = -1;
 
 #ifdef __WITH_DTLS__
 /**
- * @var gUnicastServerSocketDescClient
+ * @var g_unicastServerSecureSocket
  * @brief socket descriptor for secure unicast server
  */
-static int32_t gUnicastServerSecureSocketDescClient = -1;
+static int32_t g_unicastServerSecureSocket = -1;
 #endif
 
-static uint32_t CASendData(const char *remoteAddress, const uint32_t port,
-                           const void *data, const uint32_t dataLength, int32_t sockfd)
+static uint32_t CASendData(const char *remoteAddress, uint16_t port,
+                           const void *data, uint32_t dataLength, int sockfd)
 {
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "IN");
 
@@ -67,8 +67,7 @@ static uint32_t CASendData(const char *remoteAddress, const uint32_t port,
         return 0;
     }
 
-    struct sockaddr_in destAddr;
-    memset((char *)&destAddr, 0, sizeof(destAddr));
+    struct sockaddr_in destAddr = {};
     destAddr.sin_family = AF_INET;
     destAddr.sin_port = htons(port);
 
@@ -93,46 +92,47 @@ static uint32_t CASendData(const char *remoteAddress, const uint32_t port,
     return sendDataLength;
 }
 
-void CAWiFiSetUnicastSocket(const int32_t socketFD)
+void CAWiFiSetUnicastSocket(int socketFD)
 {
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "IN");
 
-    gUnicastServerSocketDescClient = socketFD;
+    g_unicastServerSocket = socketFD;
 
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "OUT");
 }
 
 #ifdef __WITH_DTLS__
-void CAWiFiSetSecureUnicastSocket(const int32_t socketFD)
+void CAWiFiSetSecureUnicastSocket(int socketFD)
 {
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "IN");
 
-    gUnicastServerSecureSocketDescClient = socketFD;
+    g_unicastServerSecureSocket = socketFD;
 
     OIC_LOG(DEBUG, WIFI_CLIENT_TAG, "OUT");
 }
 #endif
-uint32_t CAWiFiSendData(const char *remoteAddress, const uint32_t port,
-                        const void *data, const uint32_t dataLength,
-                        CABool_t isMulticast, CABool_t isSecured)
+uint32_t CAWiFiSendData(const char *remoteAddress, uint16_t port,
+                        const void *data, uint32_t dataLength,
+                        bool isMulticast, bool isSecured)
 {
     uint32_t len = 0;
 
 #ifdef __WITH_DTLS__
-    if (CA_TRUE == isSecured)
+    if (true == isSecured)
     {
         len  = CASendData(remoteAddress, port,
-                          data, dataLength, gUnicastServerSecureSocketDescClient);
+                          data, dataLength, g_unicastServerSecureSocket);
     }
     else
     {
 #endif
         len =  CASendData(remoteAddress, port,
-                          data, dataLength, gUnicastServerSocketDescClient);
+                          data, dataLength, g_unicastServerSocket);
 #ifdef __WITH_DTLS__
     }
 #endif
     return len;
 }
+
 
 

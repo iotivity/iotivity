@@ -42,9 +42,7 @@ CAResult_t CAInitialize()
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitialize");
 
-    CAResult_t res = CAInitializeMessageHandler();
-
-    return res;
+    return CAInitializeMessageHandler();;
 }
 
 void CATerminate()
@@ -94,10 +92,13 @@ CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
 
     CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri, connectivityType);
 
-    *remoteEndpoint = remote;
-
     if (remote == NULL)
+    {
+        OIC_LOG_V(DEBUG, TAG, "remote is NULL!");
         return CA_STATUS_FAILED;
+    }
+
+    *remoteEndpoint = remote;
 
     return CA_STATUS_OK;
 }
@@ -138,7 +139,7 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token)
 
 }
 
-CAResult_t CASendRequest(const CARemoteEndpoint_t *object, CARequestInfo_t *requestInfo)
+CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t *requestInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendGetRequest");
 
@@ -153,7 +154,8 @@ CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
     return CADetachRequestToAllMessage(object, requestInfo);
 }
 
-CAResult_t CASendNotification(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo)
+CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
+    const CAResponseInfo_t *responseInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendNotification");
 
@@ -161,7 +163,8 @@ CAResult_t CASendNotification(const CARemoteEndpoint_t *object, CAResponseInfo_t
 
 }
 
-CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *responseInfo)
+CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
+    const CAResponseInfo_t *responseInfo)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendResponse");
 
@@ -169,8 +172,8 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t *object, CAResponseInfo_t *re
 
 }
 
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri, CAToken_t token,
-                               CAHeaderOption_t *options, uint8_t numOptions)
+CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
+                              const CAHeaderOption_t *options,const uint8_t numOptions)
 {
     OIC_LOG_V(DEBUG, TAG, "CAAdvertiseResource");
 
@@ -186,45 +189,33 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
     {
         return CA_NOT_SUPPORTED;
     }
-    CAResult_t res;
 
+    CAResult_t res =CA_STATUS_OK;
     if (interestedNetwork & CA_ETHERNET)
     {
         res = CAAddNetworkType(CA_ETHERNET);
-        if (res != CA_STATUS_OK)
-        {
-            return res;
-        }
+        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_ETHERNET) function returns error : %d", res);
     }
 
     if (interestedNetwork & CA_WIFI)
     {
         res = CAAddNetworkType(CA_WIFI);
-        if (res != CA_STATUS_OK)
-        {
-            return res;
-        }
+        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_WIFI) function returns error : %d", res);
     }
 
     if (interestedNetwork & CA_EDR)
     {
         res = CAAddNetworkType(CA_EDR);
-        if (res != CA_STATUS_OK)
-        {
-            return res;
-        }
+        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_EDR) function returns error : %d", res);
     }
 
     if (interestedNetwork & CA_LE)
     {
         res = CAAddNetworkType(CA_LE);
-        if (res != CA_STATUS_OK)
-        {
-            return res;
-        }
+        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_LE) function returns error : %d", res);
     }
 
-    return CA_STATUS_OK;
+    return res;
 }
 
 CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
@@ -236,45 +227,32 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         return CA_NOT_SUPPORTED;
     }
 
-    CAResult_t res;
-
+    CAResult_t res = CA_STATUS_OK;
     if (nonInterestedNetwork & CA_ETHERNET)
     {
         res = CARemoveNetworkType(CA_ETHERNET);
-        if (res != CA_STATUS_OK)
-        {
-            return res;
-        }
+        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_ETHERNET) function returns error : %d", res);
     }
 
     if (nonInterestedNetwork & CA_WIFI)
     {
         res = CARemoveNetworkType(CA_WIFI);
-        if (res != CA_STATUS_OK)
-        {
-            return res;
-        }
+        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_WIFI) function returns error : %d", res);
     }
 
     if (nonInterestedNetwork & CA_EDR)
     {
         res = CARemoveNetworkType(CA_EDR);
-        if (res != CA_STATUS_OK)
-        {
-            return res;
-        }
+        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_EDR) function returns error : %d", res);
     }
 
     if (nonInterestedNetwork & CA_LE)
     {
         res = CARemoveNetworkType(CA_LE);
-        if (res != CA_STATUS_OK)
-        {
-            return res;
-        }
+        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_LE) function returns error : %d", res);
     }
 
-    return CA_STATUS_OK;
+    return res;
 }
 
 CAResult_t CAHandleRequestResponse()
@@ -285,4 +263,5 @@ CAResult_t CAHandleRequestResponse()
 
     return CA_STATUS_OK;
 }
+
 

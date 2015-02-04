@@ -20,14 +20,11 @@
 #ifndef _OIC_STRING_H_
 #define _OIC_STRING_H_
 
-#include <stdio.h>
-#include <string.h>
-#include "oic_malloc.h"
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif // __cplusplus
+
 /**
  * Duplicates the source string and returns it.
  *
@@ -44,4 +41,6 @@ char *OICStrdup(const char *str);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif /* _OIC_STRING_H_ */
+#endif
+/* _OIC_STRING_H_ */
+

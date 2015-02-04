@@ -37,18 +37,12 @@ extern "C"
 #endif
 
 /**
- * @brief Function pointer for message handler callback
- */
-typedef void (*CAMessageHandlerCallback)(CAToken_t token, CAResult_t res);
-
-
-/**
  * @brief   Detaches control from the caller for sending unicast request
  * @param   endpoint   [IN]    endpoint information where the data has to be sent
- * @param   request   [IN]    request that needs to be sent
+ * @param   request    [IN]    request that needs to be sent
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object,
+CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *endpoint,
                                   const CARequestInfo_t *request);
 
 /**
@@ -62,8 +56,8 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
 
 /**
  * @brief   Detaches control from the caller for sending response
- * @param   endpoint   [IN]    endpoint information where the data has to be sent
- * @param   response       [IN]    request that needs to be sent
+ * @param   object     [IN]    endpoint information where the data has to be sent
+ * @param   response   [IN]    request that needs to be sent
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
@@ -71,22 +65,14 @@ CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
 
 /**
  * @brief   Detaches control from the caller for sending request
- * @param   resourceUri   [IN]   resource uri that needs to  be sent in the request
- * @param   token   [IN]    token information of the request
- * @param   options   [IN]    header options that need to be append in the request
- * @param   numOptions   [IN]    number of options be appended
+ * @param   resourceUri   [IN]    resource uri that needs to  be sent in the request
+ * @param   token         [IN]    token information of the request
+ * @param   options       [IN]    header options that need to be append in the request
+ * @param   numOptions    [IN]    number of options be appended
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
                                       const CAHeaderOption_t *options, uint8_t numOptions);
-
-
-/**
- * @brief   Setting the message callback
- * @param   callback   [IN]   callback will be called after data is processed
- * @return   void
- */
-void CASetMessageHandlerCallback(CAMessageHandlerCallback callback);
 
 /**
  * @brief   Setting the request and response callbacks for network packets
@@ -94,12 +80,12 @@ void CASetMessageHandlerCallback(CAMessageHandlerCallback callback);
  * @param   RespHandler  [IN]    callback for receiving the response
  * @return   void
  */
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, 
-                                                   CAResponseCallback RespHandler);
+void CASetRequestResponseCallbacks(CARequestCallback ReqHandler,
+                                   CAResponseCallback RespHandler);
 
 /**
- * @brief  Initialize the message handler by starting thread pool and initializing the 
- *  send and reive queue
+ * @brief  Initialize the message handler by starting thread pool and initializing the
+ *         send and receive queue
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAInitializeMessageHandler();
@@ -120,3 +106,4 @@ void CAHandleRequestResponseCallbacks();
 #endif
 
 #endif //#ifndef __CA_MESSAGE_HANDLER_SINGLETHREAD_H_
+

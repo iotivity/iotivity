@@ -48,3 +48,4 @@ Install Dependent RPMS(Only for BLE Adapter Testing)
 			(v)   Turn on the Bluetooth.
 	5) Run the sample as given in Step 8 of "Procedure to Execute Sample App"
         
+

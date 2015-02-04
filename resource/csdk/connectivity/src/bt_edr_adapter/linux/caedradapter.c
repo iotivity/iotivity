@@ -27,17 +27,17 @@
 
 #define TAG PCF("CA")
 
-static CANetworkPacketReceivedCallback gEDRReceivedCallback = NULL;
-static u_thread_pool_t gThreadPoolHandle = NULL;
+static CANetworkPacketReceivedCallback g_edrReceivedCallback = NULL;
+static u_thread_pool_t g_threadPoolHandle = NULL;
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-                           CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
-                           u_thread_pool_t handle)
+        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+        u_thread_pool_t handle)
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitializeEDR");
 
-    gEDRReceivedCallback = reqRespCallback;
-    gThreadPoolHandle = handle;
+    g_edrReceivedCallback = reqRespCallback;
+    g_threadPoolHandle = handle;
 
     // register handlers
     CAConnectivityHandler_t handler;
@@ -45,7 +45,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
 
     handler.startAdapter = CAStartEDR;
     handler.startListenServer = CAStartEDRListeningServer;
-    handler.startDiscoverServer = CAStartEDRDiscoveryServer;
+    handler.startDiscoveryServer = CAStartEDRDiscoveryServer;
     handler.sendData = CASendEDRUnicastData;
     handler.sendDataToAll = CASendEDRMulticastData;
     handler.GetnetInfo = CAGetEDRInterfaceInformation;
@@ -79,18 +79,19 @@ CAResult_t CAStartEDRDiscoveryServer()
     return CA_STATUS_OK;
 }
 
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
+int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
+    uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendEDRUnicastData");
 
-    return 0;
+    return -1;
 }
 
-uint32_t CASendEDRMulticastData(void *data, uint32_t dataLen)
+int32_t CASendEDRMulticastData(const void *data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendEDRMulticastData");
 
-    return 0;
+    return -1;
 }
 
 CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
@@ -118,3 +119,4 @@ void CATerminateEDR()
 {
     OIC_LOG_V(DEBUG, TAG, "CATerminateEDR");
 }
+

@@ -139,7 +139,8 @@ void OICLogInit();
  * @param tag    - Module name
  * @param logStr - log string
  */
-void OICLog(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PROGMEM const char *logStr);
+void OICLog(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
+              PROGMEM const char *logStr);
 
 /**
  * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -158,7 +159,8 @@ void OICLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, uint16
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PROGMEM const char *format, ...);
+void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
+               PROGMEM const char *format, ...);
 #endif
 
 #ifdef TB_LOG
@@ -210,3 +212,4 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum, PRO
 }
 #endif // __cplusplus
 #endif /* _U_LOGGER_H_ */
+

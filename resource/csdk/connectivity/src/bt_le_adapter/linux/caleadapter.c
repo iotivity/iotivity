@@ -27,8 +27,8 @@
 
 #define TAG PCF("CA")
 
-static CANetworkPacketReceivedCallback gLEReceivedCallback = NULL;
-static u_thread_pool_t gThreadPoolHandle = NULL;
+static CANetworkPacketReceivedCallback g_leReceivedCallback = NULL;
+static u_thread_pool_t g_threadPoolHandle = NULL;
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
@@ -36,8 +36,8 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 {
     OIC_LOG_V(DEBUG, TAG, "CAInitializeLE");
 
-    gLEReceivedCallback = reqRespCallback;
-    gThreadPoolHandle = handle;
+    g_leReceivedCallback = reqRespCallback;
+    g_threadPoolHandle = handle;
 
     // register handlers
     CAConnectivityHandler_t handler;
@@ -45,7 +45,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
     handler.startAdapter = CAStartLE;
     handler.startListenServer = CAStartLEListeningServer;
-    handler.startDiscoverServer = CAStartLEDiscoveryServer;
+    handler.startDiscoveryServer = CAStartLEDiscoveryServer;
     handler.sendData = CASendLEUnicastData;
     handler.sendDataToAll = CASendLEMulticastData;
     handler.GetnetInfo = CAGetLEInterfaceInformation;
@@ -79,18 +79,18 @@ CAResult_t CAStartLEDiscoveryServer()
     return CA_STATUS_OK;
 }
 
-uint32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, void *data, uint32_t dataLen)
+int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendLEUnicastData");
 
-    return 0;
+    return -1;
 }
 
-uint32_t CASendLEMulticastData(void *data, uint32_t dataLen)
+int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendLEMulticastData");
 
-    return 0;
+    return -1;
 }
 
 CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
@@ -118,3 +118,4 @@ void CATerminateLE()
 {
     OIC_LOG_V(DEBUG, TAG, "TerminatLE");
 }
+

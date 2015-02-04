@@ -36,20 +36,21 @@
 #define DEFAULT_RETRANSMISSION_COUNT    4
 
 /** check period is 1 sec. **/
-#define RETRANSMISSION_CHECK_PERIOD     1000000
+#define RETRANSMISSION_CHECK_PERIOD_SEC     1
 
 /** retransmission data send method type**/
-typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, void *pdu,
-        uint32_t size);
+typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, const void *pdu,
+                                         uint32_t size);
 
 /** retransmission timeout callback type**/
-typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, void *pdu,
+typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, const void *pdu,
                                     uint32_t size);
 
 typedef struct
 {
     /** retransmission support connectivity type **/
     CAConnectivityType_t supportType;
+
     /** retransmission trying count **/
     uint8_t tryingCount;
 
@@ -59,14 +60,19 @@ typedef struct
 {
     /** send method for retransmission data **/
     CADataSendMethod_t dataSendMethod;
+
     /** callback function for retransmit timeout **/
     CATimeoutCallback_t timeoutCallback;
+
     /** retransmission configure data **/
     CARetransmissionConfig_t config;
+
     /** Variable to inform the thread to stop **/
-    CABool_t isStop;
+    bool isStop;
+
     /** array list on which the thread is operating. **/
     u_arraylist_t *dataList;
+
 } CARetransmission_t;
 
 #ifdef __cplusplus
@@ -76,11 +82,10 @@ extern "C"
 
 /**
  * @brief   Initializes the retransmission context
- * @param   context [IN]    context for retransmission
- * @param   handle  [IN]    thread pool handle
- * @param   retransmissionSendMethod    [IN]    function to be called for retransmission
- * @param   timeoutCallback [IN]    callback for retransmit timeout
- * @param   config  [IN]    configuration for retransmission.
+ * @param   context                   [IN]    context for retransmission
+ * @param   retransmissionSendMethod  [IN]    function to be called for retransmission
+ * @param   timeoutCallback           [IN]    callback for retransmit timeout
+ * @param   config                    [IN]    configuration for retransmission.
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
@@ -89,8 +94,8 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
                                       CARetransmissionConfig_t *config);
 
 /**
- * @brief   Pass the sent pdu data. if retransmission process need, internal thread will wake up and
- *             process the retransmission data.
+ * @brief   Pass the sent pdu data. if retransmission process need, internal thread will wake up
+ *          and process the retransmission data.
  * @param   context     [IN]    context for retransmission
  * @param   endpoint    [IN]    endpoint information
  * @param   pdu         [IN]    sent pdu binary data
@@ -103,17 +108,16 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
 /**
  * @brief   Paas the received pdu data. if received pdu is ACK data for the retransmission CON data,
- *             the specified CON data will remove on retransmission list.
+ *          the specified CON data will remove on retransmission list.
  * @param   context     [IN]    context for retransmission
  * @param   endpoint    [IN]    endpoint information
  * @param   pdu         [IN]    received pdu binary data
  * @param   size        [IN]    received pdu binary data size
- * @param   void        [OUT]   pdu data of the request for reset and ack
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
                                         const CARemoteEndpoint_t *endpoint, const void *pdu,
-                                        uint32_t size, void **retransmissionPdu);
+                                        uint32_t size);
 
 /**
  * @brief   Stopping the retransmission context
@@ -145,3 +149,4 @@ void CARetransmissionBaseRoutine(void *threadValue);
 #endif
 
 #endif  // __CA_RETRANSMISSION_SINGLETHREAD_H_
+

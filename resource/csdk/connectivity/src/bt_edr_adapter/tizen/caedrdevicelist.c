@@ -19,7 +19,7 @@
  ******************************************************************/
 
 /**
- * @file  cabtdevicelist.c
+ * @file  caedrdevicelist.c
  * @brief  This file provides APIs to access the discovered bluetooth device list
  */
 
@@ -34,7 +34,8 @@
  * @brief  Creates #EDRDevice for specified remote address and uuid.
  *
  */
-static CAResult_t CACreateEDRDevice(const char *deviceAddress, const char *uuid, EDRDevice **device);
+static CAResult_t CACreateEDRDevice(const char *deviceAddress,
+                                const char *uuid,EDRDevice **device);
 
 
 /**
@@ -56,21 +57,21 @@ static void CADestroyEDRData(EDRData *data);
 CAResult_t CACreateAndAddToDeviceList(EDRDeviceList **deviceList, const char *deviceAddress,
                                       const char *uuid, EDRDevice **device)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(deviceList, EDR_ADAPTER_TAG, "Device list is null");
     VERIFY_NON_NULL(deviceAddress, EDR_ADAPTER_TAG, "Remote address is null");
     VERIFY_NON_NULL(device, EDR_ADAPTER_TAG, "Device is null");
-
-    if (CA_STATUS_OK != CACreateEDRDevice(deviceAddress, uuid, device) || NULL == *device)
+    CAResult_t result = CACreateEDRDevice(deviceAddress, uuid, device);
+    if (CA_STATUS_OK != result || NULL == *device)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid or Not bonded device!");
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid or Not bonded device ret[%d]", result);
         return CA_STATUS_FAILED;
     }
-
-    if (CA_STATUS_OK != CAAddEDRDeviceToList(deviceList, *device))
+    result = CAAddEDRDeviceToList(deviceList, *device);
+    if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to add in list!");
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to add in list ret[%d]", result);
 
         //Remove created EDRDevice
         CADestroyEDRDevice(*device);
@@ -79,13 +80,13 @@ CAResult_t CACreateAndAddToDeviceList(EDRDeviceList **deviceList, const char *de
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CACreateEDRDevice(const char *deviceAddress, const char *uuid, EDRDevice **device)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(deviceAddress, EDR_ADAPTER_TAG, "Remote address is null");
     VERIFY_NON_NULL(uuid, EDR_ADAPTER_TAG, "uuid is null");
@@ -99,12 +100,12 @@ CAResult_t CACreateEDRDevice(const char *deviceAddress, const char *uuid, EDRDev
     }
 
     //Copy bluetooth address
-    if (strlen(deviceAddress))
+    if (deviceAddress[0])
     {
         (*device)->remoteAddress = strndup(deviceAddress, strlen(deviceAddress));
         if (NULL == (*device)->remoteAddress)
         {
-            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Out of memory (remote address)!");
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Out of memory (remote address)!");
 
             OICFree(*device);
             *device = NULL;
@@ -130,15 +131,15 @@ CAResult_t CACreateEDRDevice(const char *deviceAddress, const char *uuid, EDRDev
 
     (*device)->socketFD = -1;
     (*device)->pendingDataList = NULL;
-    (*device)->serviceSearched = 0;
+    (*device)->serviceSearched = false;
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAAddEDRDeviceToList(EDRDeviceList **deviceList, EDRDevice *device)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(deviceList, EDR_ADAPTER_TAG, "Device list is null");
     VERIFY_NON_NULL(device, EDR_ADAPTER_TAG, "Device is null");
@@ -163,13 +164,14 @@ CAResult_t CAAddEDRDeviceToList(EDRDeviceList **deviceList, EDRDevice *device)
         *deviceList = node;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAGetEDRDevice(EDRDeviceList *deviceList, const char *deviceAddress, EDRDevice **device)
+CAResult_t CAGetEDRDevice(EDRDeviceList *deviceList,
+                            const char *deviceAddress, EDRDevice **device)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(deviceList, EDR_ADAPTER_TAG, "Device list is null");
     VERIFY_NON_NULL(deviceAddress, EDR_ADAPTER_TAG, "Remote address is null");
@@ -188,13 +190,14 @@ CAResult_t CAGetEDRDevice(EDRDeviceList *deviceList, const char *deviceAddress, 
         curNode = curNode->next;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT [Device not found!]");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT [Device not found!]");
     return CA_STATUS_FAILED;
 }
 
-CAResult_t CAGetEDRDeviceBySocketId(EDRDeviceList *deviceList, int32_t socketID, EDRDevice **device)
+CAResult_t CAGetEDRDeviceBySocketId(EDRDeviceList *deviceList,
+                                    int32_t socketID, EDRDevice **device)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(deviceList, EDR_ADAPTER_TAG, "Device list is null");
     VERIFY_NON_NULL(device, EDR_ADAPTER_TAG, "Device is null");
@@ -211,13 +214,14 @@ CAResult_t CAGetEDRDeviceBySocketId(EDRDeviceList *deviceList, int32_t socketID,
         curNode = curNode->next;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_FAILED;
 }
 
-CAResult_t CARemoveEDRDeviceFromList(EDRDeviceList **deviceList, const char *deviceAddress)
+CAResult_t CARemoveEDRDeviceFromList(EDRDeviceList **deviceList,
+    const char *deviceAddress)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(deviceList, EDR_ADAPTER_TAG, "Device list is null");
     VERIFY_NON_NULL(deviceAddress, EDR_ADAPTER_TAG, "Remote address is null");
@@ -254,12 +258,16 @@ CAResult_t CARemoveEDRDeviceFromList(EDRDeviceList **deviceList, const char *dev
         }
     }
 
-    OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Device not in the list !");
+    OIC_LOG(ERROR, EDR_ADAPTER_TAG, "OUT Device not in the list !");
     return CA_STATUS_FAILED;
 }
 
 void CADestroyEDRDeviceList(EDRDeviceList **deviceList)
 {
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+
+    VERIFY_NON_NULL_VOID(deviceList, EDR_ADAPTER_TAG, "deviceList is null");
+
     while (*deviceList)
     {
         EDRDeviceList *curNode = *deviceList;
@@ -268,10 +276,13 @@ void CADestroyEDRDeviceList(EDRDeviceList **deviceList)
         CADestroyEDRDevice(curNode->device);
         OICFree(curNode);
     }
+
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 void CADestroyEDRDevice(EDRDevice *device)
 {
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
     if (device)
     {
         OICFree(device->remoteAddress);
@@ -279,32 +290,33 @@ void CADestroyEDRDevice(EDRDevice *device)
         CADestroyEDRDataList(&device->pendingDataList);
         OICFree(device);
     }
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
-CAResult_t CAAddEDRDataToList(EDRDataList **dataList, void *data, uint32_t dataLength)
+CAResult_t CAAddEDRDataToList(EDRDataList **dataList, const void *data, uint32_t dataLength)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(dataList, EDR_ADAPTER_TAG, "Data list is null");
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
 
     if (0 == dataLength)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: data length is zero!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: data length is zero!");
         return CA_STATUS_INVALID_PARAM;
     }
 
     EDRDataList *pending_data = (EDRDataList *) OICMalloc(sizeof(EDRDataList));
     if (NULL == pending_data)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "OICMalloc failed (data list)!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "OICMalloc failed (data list)!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
     pending_data->data = (EDRData *) OICMalloc(sizeof(EDRData));
     if (NULL == pending_data->data)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "OICMalloc failed (data node)!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "OICMalloc failed (data node)!");
 
         OICFree(pending_data);
         return CA_MEMORY_ALLOC_FAILED;
@@ -314,7 +326,7 @@ CAResult_t CAAddEDRDataToList(EDRDataList **dataList, void *data, uint32_t dataL
     pending_data->data->data = (void *) OICMalloc(dataLength); //data
     if (NULL == pending_data->data->data)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "OICMalloc failed (data)!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "OICMalloc failed (data)!");
 
         OICFree(pending_data->data);
         OICFree(pending_data);
@@ -339,7 +351,7 @@ CAResult_t CAAddEDRDataToList(EDRDataList **dataList, void *data, uint32_t dataL
         curNode->next = pending_data;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -366,6 +378,8 @@ CAResult_t CARemoveEDRDataFromList(EDRDataList **dataList)
 void CADestroyEDRDataList(EDRDataList **dataList)
 {
     OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+
+    VERIFY_NON_NULL_VOID(dataList, EDR_ADAPTER_TAG, "Data list is null");
 
     while (*dataList)
     {
