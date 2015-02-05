@@ -44,12 +44,7 @@ CAResult_t CAInitialize()
 
     CAResult_t res = CAInitializeMessageHandler();
 
-    if (res != CA_STATUS_OK)
-    {
-        return res;
-    }
-
-    return CA_STATUS_OK;
+    return res;
 }
 
 void CATerminate()
