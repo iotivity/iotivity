@@ -109,8 +109,6 @@ class QueryEngineEventReceiver
                 env->GetMethodID(g_ClassQueryEngineEvent, "OnQueryEngineEvent",
                                  "(ILorg/iotivity/service/ssm/DataReader;)V");
 
-            jclass callbackObject = env->GetObjectClass(m_objQueryEngineEvent);
-
             jmethodID cid_DataReader = env->GetMethodID(g_ClassDataReader, "<init>", "(I)V");
 
             if (cid_DataReader == NULL)
