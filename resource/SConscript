@@ -9,7 +9,6 @@ target_os = env.get('TARGET_OS')
 
 # Build libcoap
 SConscript('csdk/connectivity/lib/libcoap-4.1.1/SConscript')
-SConscript('csdk/libcoap/SConscript')
 
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')

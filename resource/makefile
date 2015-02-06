@@ -48,7 +48,7 @@ CXX_INC	  += -I./csdk/stack/include
 CXX_INC	  += -I./csdk/ocsocket/include
 CXX_INC	  += -I./csdk/ocrandom/include
 CXX_INC	  += -I./csdk/logger/include
-CXX_INC	  += -I./csdk/libcoap
+CXX_INC   += -I./csdk/connectivity/lib/libcoap-4.1.1
 
 # Force metatargets to build:
 all.PHONY: applyDepPatches prep_dirs c_sdk oc_logger_target liboc.a examples

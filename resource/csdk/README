@@ -55,7 +55,7 @@ To clean only stack modules:
 
 	make clean
 
-To clean stack modules and libcoap (i.e. networking) modules & its
+To clean stack modules(i.e. networking) modules & its
 dependencies:
 
 	make deepclean

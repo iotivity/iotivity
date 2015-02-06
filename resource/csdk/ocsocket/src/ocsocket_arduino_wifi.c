@@ -109,14 +109,6 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd, OC_SOCKET_OPTION sockoptio
 }
 
 
-
-/// Currently WiFi shield does NOT support multicast.
-int32_t OCInitUDPMulticast(OCDevAddr* ipMcastMacAddr, int32_t* sockfd)
-{
-    return OCInitUDP(ipMcastMacAddr, sockfd, OC_SOCKET_REUSEADDR);
-}
-
-
 /// Send data to requested end-point using UDP socket
 int32_t OCSendTo(int32_t sockfd, const uint8_t* buf, uint32_t bufLen, uint32_t flags,
             OCDevAddr * ipAddr)

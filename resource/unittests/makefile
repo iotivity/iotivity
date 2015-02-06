@@ -43,7 +43,6 @@ INC_DIRS  += -I../csdk/stack/include
 INC_DIRS  += -I../csdk/ocsocket/include
 INC_DIRS  += -I../csdk/ocrandom/include
 INC_DIRS  += -I../csdk/logger/include
-INC_DIRS  += -I../csdk/libcoap
 INC_DIRS  += -I$(GTEST_DIR)/include
 INC_DIRS  += -I$(MOCKS_DIR)/HippoMocks
 INC_DIRS  += -I$(MOCKS_DIR)/HippoMocksTest

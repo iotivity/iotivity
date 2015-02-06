@@ -11,13 +11,14 @@ samples_env.PrependUnique(CPPPATH = [
 		'../../../../stack/include',
 		'../../../../ocmalloc/include',
 		'../../../../../../extlibs/cjson',
-		'../../../../../oc_logger/include'
+		'../../../../../oc_logger/include',
+		'../../../../../connectivity/lib/libcoap-4.1.1'
 		])
 
 samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 samples_env.AppendUnique(LIBS = ['-lpthread'])
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'coap', 'coap_csdk', 'oc_logger', 'connectivity_abstraction'])
+samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 if env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS = ['tinydtls'])
 samples_env.ParseConfig('pkg-config --libs glib-2.0');

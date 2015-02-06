@@ -24,12 +24,12 @@
 #include "ocstackinternal.h"
 #include "ocobserve.h"
 #include "ocresourcehandler.h"
-#include "occoap.h"
-#include "utlist.h"
-#include "debug.h"
 #include "ocrandom.h"
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
+
+#include "utlist.h"
+#include "pdu.h"
 
 // Module Name
 #define MOD_NAME PCF("ocobserve")
@@ -422,8 +422,6 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
         return OC_STACK_NO_MEMORY;
     }
     tmpHdrOpt[0].protocolID = CA_COAP_ID;
-    // TODO-CA: COAP_OPTION_OBSERVE is defined in CoAP header files which will be abstracted
-    // from resource model. We have to define a new macro for this in the stack layer.
     tmpHdrOpt[0].optionID = COAP_OPTION_OBSERVE;
     tmpHdrOpt[0].optionLength = sizeof(uint32_t);
     tmpHdrOpt[0].optionData[0] = observeFlag;

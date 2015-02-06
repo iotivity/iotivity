@@ -87,8 +87,6 @@ OCLOGGER_DIR		= logger
 OC_LOG_DIR      	= ../oc_logger
 OCRANDOM_DIR		= ocrandom
 OCSOCKET_DIR		= ocsocket
-LCOAP_DIR		= libcoap-4.1.1
-OCCOAP_DIR		= occoap
 OCTBSTACK_DIR		= stack
 OCMALLOC_DIR 		= ocmalloc
 OCSECURITY_DIR  = security
@@ -97,7 +95,6 @@ CJSON_DIR		= $(EXTLIBS_DIR)/cjson
 TINYDTLS_DIR	= $(EXTLIBS_DIR)/tinydtls
 CONNECTIVITY_DIR	= connectivity
 
-OCCOAP_SRC		= $(OCCOAP_DIR)/src
 OCTBSTACK_SRC		= $(OCTBSTACK_DIR)/src
 OCMALLOC_SRC 		= $(OCMALLOC_DIR)/src
 OCSECURITY_SRC    = $(OCSECURITY_DIR)/src
@@ -111,20 +108,17 @@ OCLOGGER_INC		= $(OCLOGGER_DIR)/include
 OC_LOG_INC		= $(OC_LOG_DIR)/include
 OCRANDOM_INC		= $(OCRANDOM_DIR)/include
 OCSOCKET_INC		= $(OCSOCKET_DIR)/include
-LCOAP_INC		= $(LCOAP_DIR)
-OCCOAP_INC		= $(OCCOAP_DIR)/include
 OCTBSTACK_INC		= $(OCTBSTACK_DIR)/include
 OCMALLOC_INC		= $(OCMALLOC_DIR)/include
 OCSECURITY_INC	= $(OCSECURITY_DIR)/include
 CJSON_INC		= $(CJSON_DIR)
 CONNECTIVITY_INC	= $(CONNECTIVITY_DIR)/inc
+LIBCOAP_INC         = $(CONNECTIVITY_DIR)/lib/libcoap-4.1.1
 
 INC_DIRS	:= -I$(OCLOGGER_INC)
 INC_DIRS	+= -I$(OC_LOG_INC)
 INC_DIRS	+= -I$(OCRANDOM_INC)
 INC_DIRS	+= -I$(OCSOCKET_INC)
-INC_DIRS	+= -I$(LCOAP_INC)
-INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCMALLOC_INC)
 INC_DIRS	+= -I$(OCSECURITY_INC)
 INC_DIRS	+= -I$(OCSECURITY_INC)/internal
@@ -133,6 +127,7 @@ INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
 INC_DIRS	+= -I$(CONNECTIVITY_INC)
 INC_DIRS	+= -I$(CONNECTIVITY_DIR)/api
+INC_DIRS    += -I$(LIBCOAP_INC)
 
 # TODO-CA Remove -fstack-protector-all before merging to master
 CC_FLAGS.debug		:= -O0 -g3 -Wall -fstack-protector-all -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
@@ -140,12 +135,8 @@ CC_FLAGS.debug		:= -O0 -g3 -Wall -fstack-protector-all -c -fmessage-length=0 -pe
 CC_FLAGS.release	:= -Os -Wall -fstack-protector-all -c -fmessage-length=0 -fpic
 
 CFLAGS		+= $(CC_FLAGS.$(BUILD)) $(INC_DIRS) $(CFLAGS_PLATFORM) $(INC_DIR_PLATFORM)
-LDLIBS		+= -lcoap
 
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
-
-OCCOAP_SOURCES		:= $(OCCOAP_SRC)/occoap.c
-OCCOAP_SOURCES		+= $(OCCOAP_SRC)/occoaphelper.c
 
 OCTBSTACK_SOURCES	:= $(OCTBSTACK_SRC)/ocstack.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/occlientcb.c
@@ -170,7 +161,6 @@ else
 endif
 
 SOURCES			:= $(CJSON_SOURCES)
-SOURCES			+= $(OCCOAP_SOURCES)
 SOURCES			+= $(OCTBSTACK_SOURCES)
 
 all:	objdirs obj_build ca liboctbstack.a

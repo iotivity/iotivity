@@ -103,51 +103,6 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd, OC_SOCKET_OPTION sockoptio
     return ERR_SUCCESS;
 }
 
-
-
-/// Retrieves a empty socket and bind it for UDP with the input multicast ip address/port
-int32_t OCInitUDPMulticast(OCDevAddr* ipMcastMacAddr, int32_t* sockfd)
-{
-    uint8_t state;
-    uint8_t mcastMacAddr[] = { 0x01, 0x00, 0x5E, 0x00, 0x00, 0x00};
-    ArduinoAddr* ardAddr = (ArduinoAddr*)ipMcastMacAddr;
-
-    VERIFY_NON_NULL(ardAddr);
-    VERIFY_NON_NULL(sockfd);
-
-    OC_LOG(DEBUG, MOD_NAME, PCF("OCInitUDPMulticast Begin"));
-    //Is any socket available to work with ?
-    *sockfd = -1;
-    for (int i = 0; i < MAX_SOCK_NUM; i++) {
-        state = W5100.readSnSR(i);
-        if (state == SnSR::CLOSED || state == SnSR::FIN_WAIT) {
-            *sockfd = i;
-            break;
-        }
-    }
-
-    if ( *sockfd == -1) {
-        return ERR_UNKNOWN;
-    }
-
-    //Calculate Multicast MAC address
-    mcastMacAddr[3] = ardAddr->b & 0x7F;
-    mcastMacAddr[4] = ardAddr->c;
-    mcastMacAddr[5] = ardAddr->d;
-    W5100.writeSnDIPR(*sockfd, (uint8_t*)&(ardAddr->a));
-    W5100.writeSnDHAR(*sockfd, mcastMacAddr);
-    W5100.writeSnDPORT(*sockfd, ardAddr->port);
-
-    //Create a datagram socket on which to recv/send.
-    if (!socket(*sockfd, SnMR::UDP, ardAddr->port, SnMR::MULTI)) {
-        return ERR_UNKNOWN;
-    }
-
-    OC_LOG(DEBUG, MOD_NAME, PCF("OCInitUDPMulticast End"));
-    return ERR_SUCCESS;
-}
-
-
 /// Send data to requested end-point using UDP socket
 int32_t OCSendTo(int32_t sockfd, const uint8_t* buf, uint32_t bufLen, uint32_t flags,
             OCDevAddr * ipAddr)

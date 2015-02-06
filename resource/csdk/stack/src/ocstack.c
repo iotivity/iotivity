@@ -24,6 +24,7 @@
 //-----------------------------------------------------------------------------
 #define _POSIX_C_SOURCE 200112L
 #include <string.h>
+#include <ctype.h>
 
 #include "ocstack.h"
 #include "ocstackinternal.h"
@@ -31,14 +32,21 @@
 #include "occlientcb.h"
 #include "ocobserve.h"
 #include "ocrandom.h"
-#include "debug.h"
-#include "occoap.h"
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
 #include "ocsecurityinternal.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
+
+#ifdef WITH_ARDUINO
+#include "Time.h"
+#else
+#include <sys/time.h>
+#endif
+#include "coap_time.h"
+#include "utlist.h"
+#include "pdu.h"
 
 #ifndef ARDUINO
 #include <arpa/inet.h>
@@ -86,6 +94,37 @@ OCStackResult getQueryFromUri(const char * uri, unsigned char** resourceType, ch
 
 //TODO: we should allow the server to define this
 #define MAX_OBSERVE_AGE (0x2FFFFUL)
+
+//=============================================================================
+// Helper Functions
+//=============================================================================
+static uint32_t GetTime(float afterSeconds)
+{
+    coap_tick_t now;
+    coap_ticks(&now);
+    return now + (uint32_t)(afterSeconds * COAP_TICKS_PER_SECOND);
+}
+
+static OCStackResult FormOCResponse(OCResponse * * responseLoc,  ClientCB * cbNode, uint32_t maxAge,
+        unsigned char * fullUri, unsigned char * rcvdUri, CAToken_t * rcvdToken,
+        OCClientResponse * clientResponse, unsigned char * bufRes)
+{
+    OCResponse * response = (OCResponse *) OCMalloc(sizeof(OCResponse));
+    if (!response)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+    response->cbNode = cbNode;
+    response->maxAge = maxAge;
+    response->fullUri = fullUri;
+    response->rcvdUri = rcvdUri;
+    response->rcvdToken = rcvdToken;
+    response->clientResponse = clientResponse;
+    response->bufRes = bufRes;
+
+    *responseLoc = response;
+    return OC_STACK_OK;
+}
 
 //-----------------------------------------------------------------------------
 // Internal API function
@@ -622,7 +661,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         if(responseInfo->info.numOptions > 0)
         {
             int start = 0;
-            //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
+            //First option always with option ID is OC_COAP_OPTION_OBSERVE if it is available.
             if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
             {
                 memcpy (&(response.sequenceNumber),
@@ -1509,7 +1548,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     VERIFY_NON_NULL(cbData, FATAL, OC_STACK_INVALID_CALLBACK);
     VERIFY_NON_NULL(cbData->cb, FATAL, OC_STACK_INVALID_CALLBACK);
 
-    TODO ("Need to form the final query by concatenating require and reference URI's");
+    //TODO ("Need to form the final query by concatenating require and reference URI's");
     VERIFY_NON_NULL(requiredUri, FATAL, OC_STACK_INVALID_URI);
 
     uint16_t uriLen = strlen(requiredUri);
@@ -1885,12 +1924,12 @@ OCStackResult OCProcessPresence()
                     {
                         OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
                                 &dst);
-                        result = FormOCClientResponse(&clientResponse, OC_STACK_PRESENCE_TIMEOUT,
-                                (OCDevAddr *) &dst, 0, NULL);
-                        if(result != OC_STACK_OK)
-                        {
-                            goto exit;
-                        }
+
+                        clientResponse.sequenceNumber = 0;
+                        clientResponse.result = OC_STACK_PRESENCE_TIMEOUT;
+                        clientResponse.addr = (OCDevAddr *) &dst;
+                        clientResponse.resJSONPayload = NULL;
+
                         result = FormOCResponse(&response, cbNode, 0, NULL, NULL,
                                 &cbNode->token, &clientResponse, NULL);
                         if(result != OC_STACK_OK)
@@ -2406,7 +2445,7 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     // TODO:  Does resource attribute resentation really have to be maintained in stack?
     // Is it presented during resource discovery?
 
-    TODO ("Make sure that the resourcetypename doesn't already exist in the resource");
+    //TODO ("Make sure that the resourcetypename doesn't already exist in the resource");
 
     // Create the resourcetype and insert it into the resource list
     pointer = (OCResourceType *) OCCalloc(1, sizeof(OCResourceType));
@@ -2447,7 +2486,7 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
     // Validate parameters
     VERIFY_NON_NULL(resourceInterfaceName, ERROR, OC_STACK_INVALID_PARAM);
 
-    TODO ("Make sure that the resourceinterface name doesn't already exist in the resource");
+    //TODO ("Make sure that the resourceinterface name doesn't already exist in the resource");
 
     // Create the resourceinterface and insert it into the resource list
     pointer = (OCResourceInterface *) OCCalloc(1, sizeof(OCResourceInterface));
@@ -3088,10 +3127,10 @@ static OCDoHandle GenerateInvocationHandle()
 {
     OCDoHandle handle = NULL;
     // Generate token here, it will be deleted when the transaction is deleted
-    handle = (OCDoHandle) OCMalloc(sizeof(uint8_t[MAX_TOKEN_LENGTH]));
+    handle = (OCDoHandle) OCMalloc(sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
     if (handle)
     {
-        OCFillRandomMem((uint8_t*)handle, sizeof(uint8_t[MAX_TOKEN_LENGTH]));
+        OCFillRandomMem((uint8_t*)handle, sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
     }
 
     return handle;

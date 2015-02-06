@@ -150,25 +150,6 @@ void test40() {
     OC_LOG(DEBUG, MOD_NAME, PCF("test40 - Completed"));
 }
 
-
-//OCInitUDPMulticast tests
-void test50() {
-    OCDevAddr ipAddr;
-    int32_t sfd1, sfd2;
-
-    VERIFY_SUCCESS(OCBuildIPv4Address( MULTICAST_IP_ADDR[0], MULTICAST_IP_ADDR[1],
-                MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddr, &sfd1), ERR_SUCCESS);
-
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 1, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd2), ERR_SUCCESS);
-
-    VERIFY_SUCCESS(OCClose( sfd1), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCClose( sfd2), ERR_SUCCESS);
-    OC_LOG(DEBUG, MOD_NAME, PCF("test50 - Completed"));
-}
-
-
 //OCSendTo -- Unicast tests
 void test60() {
     OCDevAddr ipAddr, peerAddr;
@@ -188,27 +169,6 @@ void test60() {
     VERIFY_SUCCESS(OCClose( sfd), ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("test60 - Completed"));
 }
-
-
-//OCSendTo -- Multicast tests
-void test70() {
-    OCDevAddr ipAddrMcast;
-    int32_t sfd;
-
-    VERIFY_SUCCESS(OCBuildIPv4Address( MULTICAST_IP_ADDR[0], MULTICAST_IP_ADDR[1],
-                MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddrMcast), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddrMcast, &sfd), ERR_SUCCESS);
-    for (int i = 2; i < 300; ) {
-        VERIFY_SUCCESS(OCSendTo(sfd, TEST_BUF, i, 0, &ipAddrMcast), i);
-        i = i + 12;
-
-        delay(100);
-    }
-    VERIFY_SUCCESS(OCClose( sfd), ERR_SUCCESS);
-    OC_LOG(DEBUG, MOD_NAME, PCF("test70 - Completed"));
-}
-
-
 
 //End to End - Unicast Send/Recv test
 //Start sample app 'sendrecv' on different Linux box.
@@ -256,7 +216,6 @@ void test90() {
     //Multicast
     VERIFY_SUCCESS(OCBuildIPv4Address( MULTICAST_IP_ADDR[0], MULTICAST_IP_ADDR[1],
                 MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddrMcast), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddrMcast, &sfd), ERR_SUCCESS);
 
     do {
 

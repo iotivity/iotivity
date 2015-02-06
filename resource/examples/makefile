@@ -37,7 +37,6 @@ CXX_INC	  += -I../csdk/stack/include
 CXX_INC	  += -I../csdk/ocsocket/include
 CXX_INC	  += -I../csdk/ocrandom/include
 CXX_INC	  += -I../csdk/logger/include
-CXX_INC	  += -I../csdk/libcoap
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 

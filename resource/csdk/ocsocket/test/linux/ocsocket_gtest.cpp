@@ -149,28 +149,6 @@ TEST(InitUDP, Negative) {
     EXPECT_EQ(ERR_INVALID_INPUT, OCInitUDP(&ipaddr, NULL));
 }
 
-
-
-TEST(InitUDPMulticast, Positive) {
-    OCDevAddr ipaddr1;
-    int32_t sfd;
-
-    OCBuildIPv4Address(224, 0, 0, 251, 5353, &ipaddr1); //address to which MEMBERSHIP needs to be added
-    EXPECT_EQ(ERR_SUCCESS, OCInitUDPMulticast(&ipaddr1, &sfd));
-    OCClose(sfd);
-}
-
-
-TEST(InitUDPMulticast, Negative) {
-    OCDevAddr ipaddr1;
-    int32_t sfd;
-
-    OCBuildIPv4Address(224, 0, 0, 251, 5353, &ipaddr1); //address to which MEMBERSHIP needs to be added
-    EXPECT_EQ(ERR_INVALID_INPUT, OCInitUDPMulticast(NULL, &sfd));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCInitUDPMulticast(&ipaddr1, NULL));
-}
-
-
 TEST(SendToRecvfromUnicast, Positive) {
     OCDevAddr ipaddr1, ipaddr2, ipaddr3;
     int32_t  ssfd, rsfd;
@@ -231,7 +209,6 @@ TEST(SendToRecvfromMulticast, Positive) {
     //Create sending socket
     OCBuildIPv4Address(0,0,0,0, 5353, &ipaddr1);
     OCBuildIPv4Address(224, 0, 0, 251, 5353, &ipaddr2); //address to which MEMBERSHIP needs to be added
-    OCInitUDPMulticast(&ipaddr2, &ssfd);
 
     //build the multicast address to which we need to send the datagram
     OCBuildIPv4Address(224, 0, 0, 251, 5353, &ipaddr3);

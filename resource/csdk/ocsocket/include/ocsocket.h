@@ -112,25 +112,6 @@ typedef enum
 int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd, OC_SOCKET_OPTION sockoption);
 
 
-
-//-- OCInitUDPMulticast --------------------------------------------------
-/** @ingroup ocsocket
- *
- * This method is used to create a new platform specific UDP socket for
- * multicast and and binds it to the address provided.
- *
- * @param[in] ipmcastaddr
- *              multicast address to which IGMP membership be added.
- * @param[out] sockfd
- *              reference to the new socket.
- *
- * @retval 0 for Success, otherwise some error value
- */
-//------------------------------------------------------------------------
-int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd);
-
-
-
 //-- OCSendTo -------------------------------------------------------------
 /** @ingroup ocsocket
  *

@@ -17,14 +17,18 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include <string.h>
 
 #include "ocstack.h"
 #include "ocserverrequest.h"
 #include "ocresourcehandler.h"
-
+#include "ocmalloc.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
+
+#include "utlist.h"
+#include "pdu.h"
 
 // Module Name
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }

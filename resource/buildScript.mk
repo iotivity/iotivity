@@ -129,14 +129,10 @@ linux_tb_stack: linux_tb_stack_release
 linux_tb_stack_all: linux_tb_stack_release linux_tb_stack_debug
 
 linux_tb_stack_debug:
-	@echo "=====BUILD LIBCOAP FOR LINUX - DEBUG - <oic-resource>/csdk/libcoap/linux/debug/====="
-	$(MAKE) -C csdk/libcoap "BUILD=debug" "PLATFORM=linux"
 	@echo "=====BUILD TB STACK FOR LINUX - DEBUG - <oic-resource>/csdk/linux/debug/====="
 	$(MAKE) -C csdk/ "buildScript_all" "BUILD=debug" "PLATFORM=linux"
 
 linux_tb_stack_release:
-	@echo "=====BUILD LIBCOAP FOR LINUX - RELEASE - <oic-resource>/csdk/libcoap/linux/release/====="
-	$(MAKE) -C csdk/libcoap "BUILD=release" "PLATFORM=linux"
 	@echo "=====BUILD TB STACK FOR LINUX - RELEASE - <oic-resource>/csdk/linux/release/====="
 	$(MAKE) -C csdk/ "buildScript_all" "BUILD=release" "PLATFORM=linux"
 
@@ -281,15 +277,11 @@ arduinomega_stack_ethernet_all: arduinomega_stack_ethernet_release arduinomega_s
 
 arduinomega_stack_ethernet_release:
 	@echo "=====BUILD C STACK FOR ARDUINO ATMEGA 2560 - RELEASE - ETHERNET SHIELD======"
-	@echo "=====BUILD LIBCOAP - RELEASE - <oic-resource>/csdk/libcoap/arduinomega/ethernet_shield/release/====="
-	$(MAKE) -C csdk/libcoap "BUILD=release" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
 	@echo "=====BUILD TB STACK - RELEASE - <oic-resource>/csdk/arduinomega/ethernet_shield/release/====="
 	$(MAKE) -C csdk "buildScript_all" "BUILD=release" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
 
 arduinomega_stack_ethernet_debug:
 	@echo "=====BUILD C STACK FOR ARDUINO ATMEGA 2560 - DEBUG - ETHERNET SHIELD======"
-	@echo "=====BUILD LIBCOAP - DEBUG - <oic-resource>/csdk/libcoap/arduinomega/ethernet_shield/debug/====="
-	$(MAKE) -C csdk/libcoap "BUILD=debug" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
 	@echo "=====BUILD TB STACK - DEBUG - <oic-resource>/csdk/arduinomega/ethernet_shield/debug/====="
 	$(MAKE) -C csdk "buildScript_all" "BUILD=debug" "PLATFORM=arduinomega" "ARDUINOWIFI=0"
 
@@ -303,15 +295,11 @@ arduinomega_stack_wifi_all: arduinomega_stack_wifi_release arduinomega_stack_wif
 
 arduinomega_stack_wifi_release:
 	@echo "=====BUILD C STACK FOR ARDUINO ATMEGA 2560 - RELEASE - WiFi SHIELD======"
-	@echo "=====BUILD LIBCOAP - RELEASE - <oic-resource>/csdk/libcoap/arduinomega/wifi_shield/release/====="
-	$(MAKE) -C csdk/libcoap "BUILD=release" "PLATFORM=arduinomega" "ARDUINOWIFI=1"
 	@echo "=====BUILD TB STACK - RELEASE - <oic-resource>/csdk/arduinomega/wifi_shield/release/====="
 	$(MAKE) -C csdk "buildScript_all" "BUILD=release" "PLATFORM=arduinomega" "ARDUINOWIFI=1"
 
 arduinomega_stack_wifi_debug:
 	@echo "=====BUILD C STACK FOR ARDUINO ATMEGA 2560 - DEBUG - WiFi SHIELD======"
-	@echo "=====BUILD LIBCOAP - DEBUG - <oic-resource>/csdk/libcoap/arduinomega/wifi_shield/debug/====="
-	$(MAKE) -C csdk/libcoap "BUILD=debug" "PLATFORM=arduinomega" "ARDUINOWIFI=1"
 	@echo "=====BUILD TB STACK - DEBUG - <oic-resource>/csdk/arduinomega/wifi_shield/debug/====="
 	$(MAKE) -C csdk "buildScript_all" "BUILD=debug" "PLATFORM=arduinomega" "ARDUINOWIFI=1"
 
@@ -404,15 +392,10 @@ arduinodue_stack_ethernet_all: arduinodue_stack_ethernet_release arduinodue_stac
 
 arduinodue_stack_ethernet_release:
 	@echo "=====BUILD C STACK FOR ARDUINO DUE - RELEASE - ETHERNET SHIELD======"
-	@echo "=====BUILD LIBCOAP - RELEASE - <oic-resource>/csdk/libcoap/arduinodue/ethernet_shield/release/====="
-	$(MAKE) -C csdk/libcoap "BUILD=release" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
 	@echo "=====BUILD TB STACK - RELEASE - <oic-resource>/csdk/arduinodue/ethernet_shield/release/====="
 	$(MAKE) -C csdk "buildScript_all" "BUILD=release" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
 
 arduinodue_stack_ethernet_debug:
-	@echo "=====BUILD C STACK FOR ARDUINO DUE - DEBUG - ETHERNET SHIELD======"
-	@echo "=====BUILD LIBCOAP - DEBUG - <oic-resource>/csdk/libcoap/arduinodue/ethernet_shield/debug/====="
-	$(MAKE) -C csdk/libcoap "BUILD=debug" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
 	@echo "=====BUILD TB STACK - DEBUG - <oic-resource>/csdk/arduinodue/ethernet_shield/debug/====="
 	$(MAKE) -C csdk "buildScript_all" "BUILD=debug" "PLATFORM=arduinodue" "ARDUINOWIFI=0"
 
@@ -426,15 +409,11 @@ arduinodue_stack_wifi_all: arduinodue_stack_wifi_release arduinodue_stack_wifi_d
 
 arduinodue_stack_wifi_release:
 	@echo "=====BUILD C STACK FOR ARDUINO DUE - RELEASE - WiFi SHIELD======"
-	@echo "=====BUILD LIBCOAP - RELEASE - <oic-resource>/csdk/libcoap/arduinodue/wifi_shield/release/====="
-	$(MAKE) -C csdk/libcoap "BUILD=release" "PLATFORM=arduinodue" "ARDUINOWIFI=1"
 	@echo "=====BUILD TB STACK - RELEASE - <oic-resource>/csdk/arduinodue/wifi_shield/release/====="
 	$(MAKE) -C csdk "buildScript_all" "BUILD=release" "PLATFORM=arduinodue" "ARDUINOWIFI=1"
 
 arduinodue_stack_wifi_debug:
 	@echo "=====BUILD C STACK FOR ARDUINO DUE - DEBUG - WiFi SHIELD======"
-	@echo "=====BUILD LIBCOAP - DEBUG - <oic-resource>/csdk/libcoap/arduinodue/wifi_shield/debug/====="
-	$(MAKE) -C csdk/libcoap "BUILD=debug" "PLATFORM=arduinodue" "ARDUINOWIFI=1"
 	@echo "=====BUILD TB STACK - DEBUG - <oic-resource>/csdk/arduinodue/wifi_shield/debug/====="
 	$(MAKE) -C csdk "buildScript_all" "BUILD=debug" "PLATFORM=arduinodue" "ARDUINOWIFI=1"
 
@@ -479,7 +458,6 @@ arduinodue_samples_wifi_debug: arduinodue_stack_wifi_debug
 ###############################################################################
 
 linux_clean:
-	-rm -rf -C csdk/libcoap/linux
 	-rm -rf -C csdk/linux
 	$(MAKE) -C csdk/stack/test/linux "clean"
 	$(MAKE) -C csdk/stack/samples/linux/SimpleClientServer "clean"
@@ -491,7 +469,6 @@ linux_clean:
 ###############################################################################
 
 arduinomega_clean:
-	-rm -rf csdk/libcoap/arduinomega
 	-rm -rf csdk/arduinomega
 	-rm -rf csdk/stack/test/arduino/arduinomega
 	-rm -rf csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinomega
@@ -501,7 +478,6 @@ arduinomega_clean:
 ###############################################################################
 
 arduinodue_clean:
-	-rm -rf csdk/libcoap/arduinodue
 	-rm -rf csdk/arduinodue
 	-rm -rf csdk/stack/test/arduino/arduinodue
 	-rm -rf csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue

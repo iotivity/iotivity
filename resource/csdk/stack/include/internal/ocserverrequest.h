@@ -21,8 +21,6 @@
 #ifndef OC_SERVER_REQUEST_H
 #define OC_SERVER_REQUEST_H
 
-#include "occoap.h"
-
 #include "cacommon.h"
 #include "cainterface.h"
 /**

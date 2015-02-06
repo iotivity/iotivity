@@ -26,9 +26,7 @@
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
-#include "occoap.h"
 #include "logger.h"
-#include "debug.h"
 #include "cJSON.h"
 
 #include "cacommon.h"
@@ -60,7 +58,7 @@ static const char * VIRTUAL_RSRCS[] = {
 //-----------------------------------------------------------------------------
 OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest * request) {
-    TODO ("Implement me!!!!");
+    //TODO ("Implement me!!!!");
     // TODO:  remove silence unused param warnings
     (void) flag;
     (void) request;
@@ -335,7 +333,7 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
     return ret;
 }
 
-TODO ("Does it make sense to make this method as inline")
+//TODO ("Does it make sense to make this method as inline")
 const char * GetVirtualResourceUri( OCVirtualResources resource)
 {
     if (resource < OC_MAX_VIRTUAL_RESOURCES)

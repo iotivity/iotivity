@@ -25,11 +25,10 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'logger/include',
 		'ocrandom/include',
 		'ocmalloc/include',
-		'libcoap',
-		'occoap/include',
 		'stack/include',
 		'stack/include/internal',
 		'../oc_logger/include',
+		'connectivity/lib/libcoap-4.1.1',
 		'connectivity/inc',
 		'connectivity/api',
 		'security/include',
@@ -65,8 +64,6 @@ if not env.get('RELEASE'):
 OCTBSTACK_SRC = 'stack/src/'
 liboctbstack_src = [
 	'../../extlibs/cjson/cJSON.c',
-	'occoap/src/occoap.c',
-	'occoap/src/occoaphelper.c',
 	OCTBSTACK_SRC + 'ocstack.c',
 	OCTBSTACK_SRC + 'occlientcb.c',
 	OCTBSTACK_SRC + 'ocresource.c',
@@ -74,7 +71,11 @@ liboctbstack_src = [
     OCTBSTACK_SRC + 'ocserverrequest.c',
 	OCTBSTACK_SRC + 'occollection.c',
 	OCTBSTACK_SRC + 'oicgroup.c',
-	'security/src/ocsecurity.c'
+	'security/src/ocsecurity.c',
+	'ocsocket/src/ocsocket.c',
+	'logger/src/logger.c',
+	'ocrandom/src/ocrandom.c',
+	'ocmalloc/src/ocmalloc.c'
 	]
 if target_os == 'arduino':
 	liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)

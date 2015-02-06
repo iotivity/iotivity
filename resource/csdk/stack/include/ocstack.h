@@ -47,6 +47,7 @@ extern "C" {
 extern uint8_t PresenceTimeOutSize; // length of PresenceTimeOut - 1
 extern uint32_t PresenceTimeOut[];
 #endif
+
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------

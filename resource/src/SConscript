@@ -17,8 +17,8 @@ oclib_env.AppendUnique(CPPPATH = [
 		'../csdk/ocsocket/include',
 		'../csdk/ocrandom/include',
 		'../csdk/logger/include',
-		'../csdk/libcoap',
-		'../oc_logger/include'
+		'../oc_logger/include',
+		'../csdk/connectivity/lib/libcoap-4.1.1'
 		])
 
 target_os = env.get('TARGET_OS')
@@ -28,11 +28,11 @@ if target_os not in ['windows', 'winrt']:
 if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger', 'boost_thread-gcc-mt-1_49', 'gnustl_static', 'log'])
+	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'boost_thread-gcc-mt-1_49', 'gnustl_static', 'log'])
 
 if target_os in ['darwin', 'ios']:
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger'])
+	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
 
 ######################################################################
 # Source files and Targets
