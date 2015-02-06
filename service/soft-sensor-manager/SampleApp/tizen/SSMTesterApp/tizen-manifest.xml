@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" api-version="2.3" package="org.iotivity.service.ssm.ssmtesterapp" version="1.0.0">
+    <profile name="mobile" />
+    <ui-application appid="org.iotivity.service.ssm.ssmtesterapp" exec="ssmtesterapp" type="capp" multiple="false" taskmanage="true" nodisplay="false">
+        <icon>ssmtesterapp.png</icon>
+        <label>ssmtesterapp</label>
+	</ui-application>
+	<privileges>
+        <privilege>http://tizen.org/privilege/internet</privilege>
+    </privileges>
+    <feature name="http://tizen.org/feature/network.wifi">true</feature>
+</manifest>

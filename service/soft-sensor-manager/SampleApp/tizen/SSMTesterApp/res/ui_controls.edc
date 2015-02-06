@@ -1,0 +1,251 @@
+/*
+ * Copyright (c) 2014 Samsung Electronics Co., Ltd All Rights Reserved
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+collections {
+   base_scale: 1.8;
+   group { name: "mainpage_layout";
+   parts{
+	   part { name: "query_text_bg";
+	         type: RECT;
+	         scale: 1;
+	         description { state: "default" 0.0;
+	            color: 220 220 220 255;
+	            	            
+		      align: 0.0 0.02;
+		      // set the size to 200x200
+		      min: 200 200;
+		      max: 350 250;	
+	         }
+	      }
+	   
+        part { name: "query_text";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;		      
+		      rel1.to: "query_text_bg";
+              rel2.to: "query_text_bg";	     
+   			}
+      	}
+      	part { name: "register";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.2 0.01;
+
+		      min: 100 100;
+		      max: 275 100;		  
+
+		      rel1.relative: 1.0 0.1;
+		      rel1.to: "query_text";
+		      //rel2.relative: 1.0 1.0;		     		         
+   			}
+      	}
+      	part { name: "clear";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.0 0.02;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 275 100;		  		     
+		      rel1.relative: 0.0 1.0;
+		      rel1.to: "register";
+		     // rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "example_queries";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.0 0.02;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 500 100;		  		     
+		      rel1.relative: 0.0 1.0;
+		      rel1.to: "query_text";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "search_devices";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.0 0.0;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 360 100;		  		     
+		      rel1.relative: 0.0 0.7;
+		      rel1.to: "example_queries";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "discomfort_index";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.1 0.0;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 360 100;		  		     
+		      rel1.relative: 1.0 0.0;
+		      rel1.to: "search_devices";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "unregister_query_label";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.0 0.02;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 500 100;		  		     
+		      rel1.relative: 0.0 1.0;
+		      rel1.to: "search_devices";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "minus";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.0 0.02;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 100 100;		  		     
+		      rel1.relative: 0.0 0.7;
+		      rel1.to: "unregister_query_label";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "unregister_query_id_bg";
+	         type: RECT;
+	         scale: 1;
+	         description { state: "default" 0.0;
+	            color: 220 220 220 255;
+	            	            
+		      align: 0.02 0.0;
+		      // set the size to 200x200
+		      min: 100 75;
+		      max: 175 75;	
+		      
+		      rel1.relative: 1.0 0.0;
+		      rel1.to: "minus";
+		      rel2.relative: 1.0 1.0;  
+	         }
+	      }
+      	
+      	
+      	part { name: "unregister_query_id";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+ 			  rel1.to: "unregister_query_id_bg";
+              rel2.to: "unregister_query_id_bg";			      		  		     		      
+   			}
+      	}
+      	
+      	part { name: "plus";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.02 0.0;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 100 100;		  		     
+		      rel1.relative: 1.0 0.0;
+		      rel1.to: "unregister_query_id";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "unregister_button";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.2 0.0;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 250 100;		  		     
+		      rel1.relative: 1.0 0.0;
+		      rel1.to: "plus";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "log_button";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.0 0.05;
+		      // set the size to 200x200
+		      min: 100 100;
+		      max: 720 100;		  		     
+		      rel1.relative: 0.0 1.0;
+		      rel1.to: "minus";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	
+      	part { name: "log_text_bg";
+		   type: RECT;
+		   scale: 1;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		      align: 0.02 0.02;
+		       color: 220 220 220 255;
+		      // set the size to 200x200
+		      min: 100 400;
+		      max: 720 200;		  		     
+		      rel1.relative: 0.0 1.0;
+		      rel1.to: "log_button";
+		      rel2.relative: 1.0 1.0;   
+   			}
+      	}
+      	      	
+      	part { name: "log_text";
+		   type: SWALLOW;
+		   description 
+		   { 
+		      state: "default" 0.0;
+		        rel1.to: "log_text_bg";
+              rel2.to: "log_text_bg";
+   			}
+      	}
+   }
+}
+}
+
