@@ -211,6 +211,7 @@ int main()
     printf("searching SSMResource\n");
     SSMTestApp *SSMApp = new SSMTestApp();
     APPMenu::APPMenu menu = APPMenu::NONE;
+    std::string strMenu;
 
     std::string xmlDescription = "<SSMCore>"
                                  "<Device>"
@@ -227,9 +228,8 @@ int main()
     {
         SSMApp->displayMenu();
 
-        menu = (APPMenu::APPMenu) (getchar() - '0');
-        if ((APPMenu::APPMenu) 0 > menu || menu > APPMenu::EXIT)
-            menu = (APPMenu::APPMenu) (getchar() - '0');
+        getline(cin, strMenu);
+        menu = (APPMenu::APPMenu) (atoi(strMenu.c_str()));
 
         switch (menu)
         {
