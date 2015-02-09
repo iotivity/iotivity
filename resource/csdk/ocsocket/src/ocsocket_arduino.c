@@ -70,30 +70,6 @@ int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t 
     return ERR_SUCCESS;
 }
 
-
-/// Retrieves the IP address assigned to Arduino Ethernet shield
-int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addrType,
-             uint8_t *addr,  uint32_t addrLen)
-{
-    //TODO : Fix this for scenarios when this API is invoked when device is not connected
-    uint8_t rawIPAddr[4];
-    VERIFY_NON_NULL(addr);
-    if (addrLen < IPNAMESIZE) {
-        OC_LOG(FATAL, MOD_NAME, PCF("OCGetInterfaceAddress: addrLen MUST be atleast 16"));
-        return ERR_INVALID_INPUT;
-    }
-
-    if (addrType != AF_INET) {
-        return ERR_INVALID_INPUT;
-    }
-    W5100.getIPAddress(rawIPAddr);
-    snprintf((char *)addr, addrLen, "%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2], rawIPAddr[3]);
-
-    OC_LOG_BUFFER(INFO, MOD_NAME, addr, addrLen);
-
-    return ERR_SUCCESS;
-}
-
 /// Retrieves a empty socket and bind it for UDP with the input port
 int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd, OC_SOCKET_OPTION sockoption)
 {

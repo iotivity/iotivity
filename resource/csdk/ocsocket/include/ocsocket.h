@@ -214,34 +214,6 @@ int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
             uint16_t port, OCDevAddr *ipAddr);
 
 
-//-- OCGetInterfaceAddress ------------------------------------------------------
-/** @ingroup ocsocket
- *
- * This method is used to retrieved the IPv4/IPv6 address of the local interface.
- * If no interface name is provided, this API retrieves the IP address of
- * the default interface.
- *
- * @note currently, only IPv4(AF_INET) is supported for addrType argument.
- *
- * @param[in]  ifName
- *              interface whose address needs to be retrieved.
- * @param[in]  ifNameLen
- *              length of the interface name
- * @param[in]  addrType
- *              IPv4 or IPv6
- * @param[out] addrv4
- *              IPv4 address in a.b.c.d format
- * @param[in]  addrLen
- *              size of the buffer at addrv4. Should be at least 16 bytes for an
- *              IPv4 address.
- *
- * @retval 0 for Success, otherwise some error value
- */
-//-------------------------------------------------------------------------------
-int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addrType,
-             uint8_t *addrv4,  uint32_t addrLen);
-
-
 //-- OCDevAddrToString ----------------------------------------------------
 /** @ingroup ocsocket
  *

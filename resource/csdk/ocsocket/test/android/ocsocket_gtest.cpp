@@ -119,26 +119,6 @@ TEST(DevAddrToIPv4Addr, InvalidInput) {
     EXPECT_EQ(ERR_INVALID_INPUT, OCDevAddrToPort(NULL, NULL ));
 }
 
-
-TEST(GetInterfaceAddress, Positive) {
-    uint8_t addr[20];
-    uint8_t ifname[] = "wlan0";
-    EXPECT_EQ(ERR_SUCCESS, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr)));
-    OC_LOG_V(INFO, MOD_NAME, "IPv4 Address: %s\n", addr);
-    //On Android, it is MUST to provide interface name
-    //EXPECT_EQ(0, get_ipv4addr( NULL, 0, addr, sizeof(addr)));
-}
-
-TEST(GetInterfaceAddress, Negative) {
-    uint8_t addr[20];
-    uint8_t ifname[] = "ethxx";
-    EXPECT_EQ(ERR_INVALID_INPUT, OCGetInterfaceAddress( NULL, 0, AF_INET, addr, sizeof(addr)));
-    EXPECT_EQ(ERR_UNKNOWN, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr)));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, NULL, sizeof(addr)));
-    EXPECT_EQ(ERR_UNKNOWN, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, 0));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCGetInterfaceAddress( ifname, sizeof(ifname),  AF_INET6, addr, sizeof(addr)));
-}
-
 TEST(InitUDP, Positive) {
     OCDevAddr ipaddr;
     int32_t  sockfd;
@@ -154,7 +134,6 @@ TEST(InitUDP, Positive) {
     EXPECT_EQ(ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
     OCClose(sockfd);
 
-    OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr));
     sscanf((const char*)addr, "%d.%d.%d.%d", (int*)&a, (int*)&b, (int*)&c, (int*)&d);
     OCBuildIPv4Address(a,b,c,d, TEST_PORT_NUM, &ipaddr);
     EXPECT_EQ(ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
@@ -202,8 +181,6 @@ TEST(SendToRecvfromUnicast, Positive) {
     uint8_t a,b,c,d;
     //uint8_t tmp1[512];
 
-
-    OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr));
     sscanf((const char*)addr, "%d.%d.%d.%d", (int*)&a, (int*)&b, (int*)&c, (int*)&d);
 
     //Create sending socket

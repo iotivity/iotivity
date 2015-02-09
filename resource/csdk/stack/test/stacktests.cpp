@@ -83,13 +83,9 @@ OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
 void InitStack(OCMode mode)
 {
     OC_LOG(INFO, TAG, "Entering InitStack");
-    uint8_t addr[20];
-    uint16_t port = USE_RANDOM_PORT;
-
-    OCGetInterfaceAddress(NULL, 0, AF_INET, addr, sizeof(addr));
     OC_LOG_V(INFO, TAG, "InitStack on address %s",addr);
 
-    EXPECT_EQ(OC_STACK_OK, OCInit((char *) addr, port, mode));
+    EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, mode));
     OC_LOG(INFO, TAG, "Leaving InitStack");
 }
 

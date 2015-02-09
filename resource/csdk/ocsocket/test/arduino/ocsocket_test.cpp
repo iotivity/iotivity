@@ -87,19 +87,6 @@ unsigned int TEST_BUF_LEN = sizeof(TEST_BUF);
 #define VERIFY_SUCCESS(op, res) { if (op == res) {OC_LOG(DEBUG, MOD_NAME, PCF(#op " SUCCEEDED"));} \
      else {OC_LOG(FATAL, MOD_NAME, PCF(#op "!!!!  FAILED FAILED FAILED !!!!"));} }
 
-
-//OCGetInterfaceAddress tests
-void test10() {
-    char strAddr[16] = "";
-    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, (uint8_t*)strAddr, 16), ERR_SUCCESS);
-    OC_LOG(DEBUG, MOD_NAME, PCF("My IP address :"));
-    OC_LOG_BUFFER(INFO, MOD_NAME, (uint8_t*)strAddr, sizeof(strAddr));
-    delay(15000);
-    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, NULL, 16), ERR_INVALID_INPUT);
-    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, (uint8_t*)strAddr, 10), ERR_INVALID_INPUT);
-    OC_LOG(DEBUG, MOD_NAME, PCF("test10 - Completed"));
-}
-
 //OCBuildIPv4Address tests
 void test20() {
     OCDevAddr ipAddr;

@@ -756,10 +756,6 @@ static void PrintUsage()
 
 int main(int argc, char* argv[])
 {
-    uint8_t addr[20] = {0};
-    uint8_t* paddr = NULL;
-    uint16_t port = OC_WELL_KNOWN_PORT;
-    uint8_t ifname[] = "eth0";
     pthread_t threadId;
     pthread_t threadId_presence;
     int opt;
@@ -784,16 +780,8 @@ int main(int argc, char* argv[])
     }
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
-    /*Get Ip address on defined interface and initialize coap on it with random port number
-     * this port number will be used as a source port in all coap communications*/
-    if ( OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr,
-                sizeof(addr)) == ERR_SUCCESS)
-    {
-        OC_LOG_V(INFO, TAG, "Starting ocserver on address %s:%d",addr,port);
-        paddr = addr;
-    }
 
-    if (OCInit((char *) paddr, port, OC_SERVER) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }

@@ -9,12 +9,10 @@ static uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0F, 0x2B, 0x72 };
 #define TAG PCF("ocserver")
 
 void ocInitialize () {
-    char ipAddr[16] = "";
-    OCGetInterfaceAddress (NULL, 0, AF_INET, (uint8_t *)ipAddr, 16);
     OC_LOG(DEBUG, TAG, PCF("IP addr is:"));
     OC_LOG_BUFFER(INFO, TAG, (uint8_t*)ipAddr, sizeof(ipAddr));
     delay(2000);
-    OCInit (ipAddr, 8001, OC_SERVER);
+    OCInit (NULL, 0, OC_SERVER);
 }
 
 void setup() {
