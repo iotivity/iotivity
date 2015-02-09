@@ -98,6 +98,13 @@ namespace OC
     class OCRepresentation
     {
         public:
+            // Note: Implementation of all constructors and destructors
+            // are all placed in the same location due to a crash that
+            // was observed in Android, where merely constructing/destructing
+            // an OCRepresentation object was enough to cause an invalid 'free'.
+            // It is believed that this is a result of incompatible compiler
+            // options between the gradle JNI and armeabi scons build, however
+            // this fix will work in the meantime.
             OCRepresentation(): m_interfaceType(InterfaceType::None){}
 
             OCRepresentation(OCRepresentation&&) = default;
