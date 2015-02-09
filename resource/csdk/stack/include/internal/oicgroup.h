@@ -40,15 +40,17 @@ OCStackResult DeleteActionSets(OCResource** resource);
 
 OCStackResult FindAndDeleteActionSet(OCResource **resource, const char * actionsetName);
 
-OCStackResult GetActionSetFromString(OCResource **resource, unsigned char *request, char** method,
-        char **actionsetName);
+OCStackResult ExtractKeyValueFromRequest(char *request, char **key, char **value);
 
-OCStackResult GetStringFromActionSet(OCActionSet* actionset, char** desc);
+OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc);
+
+OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc);
 
 OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         OCClientResponse* clientResponse);
 
 void ActionSetCD(void *context);
+
 
 OCStackResult
 BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHandlerFlag flag*/,
