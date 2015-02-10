@@ -264,4 +264,28 @@ if env.GetOption('clean'):
 		Execute(Delete(dir + '/.sconsign.dblite'))
 		Execute(Delete(dir + '/.sconf_temp'))
 
+# Check if C/C++ compiler is installed
+cc = env.get('CC', '')
+cxx = env.get('CXX', '')
+
+if not cc:
+	print '''
+*************************************** Error *********************************
+*                                                                             *
+* Didn't find C compiler, please install C compiler (e.g. gcc >= 4.6).        *
+*                                                                             *
+*******************************************************************************
+'''
+	Exit(1)
+
+if not cxx:
+        print '''
+*************************************** Error *********************************
+*                                                                             *
+* Didn't find C++ compiler, please install C++ compiler (e.g. g++ >= 4.6)     *
+*                                                                             *
+*******************************************************************************
+'''
+	Exit(1)
+
 Return('env')
