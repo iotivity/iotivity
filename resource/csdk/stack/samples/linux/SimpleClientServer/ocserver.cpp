@@ -56,9 +56,12 @@ static int stopPresenceCount = 10;
 #endif
 
 //TODO: Follow the pattern used in constructJsonResponse() when the payload is decided.
-const char responsePayloadDeleteOk[] = "{App determines payload: Delete Resource operation succeeded.}";
-const char responsePayloadDeleteNotOK[] = "{App determines payload: Delete Resource operation failed.}";
-const char responsePayloadResourceDoesNotExist[] = "{App determines payload: The resource does not exist.}";
+const char responsePayloadDeleteOk[] =
+        "{App determines payload: Delete Resource operation succeeded.}";
+const char responsePayloadDeleteNotOK[] =
+        "{App determines payload: Delete Resource operation failed.}";
+const char responsePayloadResourceDoesNotExist[] =
+        "{App determines payload: The resource does not exist.}";
 const char responsePayloadDeleteResourceNotSupported[] =
         "{App determines payload: The request is received for a non-support resource.}";
 
@@ -119,7 +122,8 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     return jsonResponse;
 }
 
-OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
+OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
+        char *payload, uint16_t maxPayloadSize)
 {
     OCEntityHandlerResult ehResult;
     char *getResp = constructJsonResponse(ehRequest);
@@ -141,7 +145,8 @@ OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest, char
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
+OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
+        char *payload, uint16_t maxPayloadSize)
 {
     OCEntityHandlerResult ehResult;
     char *putResp = constructJsonResponse(ehRequest);
@@ -163,7 +168,8 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest, char
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, OCEntityHandlerResponse *response, char *payload, uint16_t maxPayloadSize)
+OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
+        OCEntityHandlerResponse *response, char *payload, uint16_t maxPayloadSize)
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
     char *respPLPost_light = NULL;
@@ -251,7 +257,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, OCE
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
+OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest,
+        char *payload, uint16_t maxPayloadSize)
 {
     if(ehRequest == NULL)
     {
@@ -331,7 +338,8 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest, c
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *ehRequest, char *payload, uint16_t maxPayloadSize)
+OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *ehRequest,
+        char *payload, uint16_t maxPayloadSize)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s ", __func__);
 
@@ -409,7 +417,8 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
 
     // Initialize certain response fields
     response.numSendVendorSpecificHeaderOptions = 0;
-    memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.sendVendorSpecificHeaderOptions, 0,
+            sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof response.resourceUri);
 
     if (flag & OC_INIT_FLAG)
@@ -419,9 +428,11 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
-        if (entityHandlerRequest->resource == NULL) {
+        if (entityHandlerRequest->resource == NULL)
+        {
             OC_LOG (INFO, TAG, "Received request from client to a non-existing resource");
-            ehResult = ProcessNonExistingResourceRequest(entityHandlerRequest, payload, sizeof(payload) - 1);
+            ehResult = ProcessNonExistingResourceRequest(entityHandlerRequest,
+                    payload, sizeof(payload) - 1);
         }
         else if (OC_REST_GET == entityHandlerRequest->method)
         {
@@ -509,7 +520,8 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
 
     // Initialize certain response fields
     response.numSendVendorSpecificHeaderOptions = 0;
-    memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.sendVendorSpecificHeaderOptions,
+            0, sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof response.resourceUri);
 
     if (flag & OC_INIT_FLAG)
@@ -532,7 +544,8 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
-            ehResult = ProcessPostRequest (entityHandlerRequest, &response, payload, sizeof(payload) - 1);
+            ehResult = ProcessPostRequest (entityHandlerRequest,
+                    &response, payload, sizeof(payload) - 1);
         }
         else if (OC_REST_DELETE == entityHandlerRequest->method)
         {
@@ -563,7 +576,8 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             {
                 OC_LOG (INFO, TAG, "Received vendor specific options");
                 uint8_t i = 0;
-                OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
+                OCHeaderOption * rcvdOptions =
+                        entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
                 for( i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
                 {
                     if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
@@ -616,8 +630,10 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
 }
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
-void handleSigInt(int signum) {
-    if (signum == SIGINT) {
+void handleSigInt(int signum)
+{
+    if (signum == SIGINT)
+    {
         gQuitFlag = 1;
     }
 }
@@ -779,12 +795,14 @@ int main(int argc, char* argv[])
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 
-    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 #ifdef WITH_PRESENCE
-    if (OCStartPresence(0) != OC_STACK_OK) {
+    if (OCStartPresence(0) != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, "OCStack presence/discovery error");
         return 0;
     }
@@ -836,8 +854,10 @@ int main(int argc, char* argv[])
     OC_LOG(INFO, TAG, "Entering ocserver main loop...");
     DeleteDeviceInfo();
     signal(SIGINT, handleSigInt);
-    while (!gQuitFlag) {
-        if (OCProcess() != OC_STACK_OK) {
+    while (!gQuitFlag)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
@@ -855,7 +875,8 @@ int main(int argc, char* argv[])
 
     OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
-    if (OCStop() != OC_STACK_OK) {
+    if (OCStop() != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, "OCStack process error");
     }
 
@@ -908,7 +929,6 @@ bool DuplicateString(char** targetString, const char* sourceString)
     else
     {
         *targetString = (char *) malloc(strlen(sourceString) + 1);
-
         if(targetString)
         {
             strncpy(*targetString, sourceString, (strlen(sourceString) + 1));

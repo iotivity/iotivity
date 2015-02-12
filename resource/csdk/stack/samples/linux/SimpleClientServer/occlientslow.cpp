@@ -302,7 +302,6 @@ std::string getIPAddrTBServer(OCClientResponse * clientResponse)
     return std::string (ipaddr);
 }
 
-
 std::string getPortTBServer(OCClientResponse * clientResponse)
 {
     if(!clientResponse) return "";

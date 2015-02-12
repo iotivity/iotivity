@@ -39,7 +39,8 @@
 /**
  * List of methods that can be inititated from the client
  */
-typedef enum {
+typedef enum
+{
     TEST_DISCOVER_REQ = 1,
     TEST_NON_CON_OP,
     TEST_CON_OP,

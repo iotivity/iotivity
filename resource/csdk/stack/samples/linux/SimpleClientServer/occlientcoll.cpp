@@ -38,7 +38,8 @@ std::string getQueryStrForGetPut(unsigned  const char * responsePayload);
 #define MAX_LENGTH_IPv4_ADDR 16
 #endif
 
-typedef enum {
+typedef enum
+{
     TEST_INVALID = 0,
     TEST_GET_DEFAULT,
     TEST_GET_BATCH,
@@ -87,8 +88,10 @@ int gNumObserveNotifies = 1;
 
 int gQuitFlag = 0;
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
-void handleSigInt(int signum) {
-    if (signum == SIGINT) {
+void handleSigInt(int signum)
+{
+    if (signum == SIGINT)
+    {
         gQuitFlag = 1;
     }
 }
@@ -125,13 +128,15 @@ void PrintUsage()
                  "unavailable resource using link list interface.");
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
+OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+{
     if(clientResponse == NULL)
     {
         OC_LOG(INFO, TAG, "The clientResponse is NULL");
         return   OC_STACK_DELETE_TRANSACTION;
     }
-    if(ctx == (void*)DEFAULT_CONTEXT_VALUE) {
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
         OC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Discovered", clientResponse->resJSONPayload);
     }
@@ -139,22 +144,28 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+{
     OC_LOG_V(INFO, TAG, "StackResult: %s",
             getResult(clientResponse->result));
-    if(ctx == (void*)DEFAULT_CONTEXT_VALUE) {
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        if(clientResponse->sequenceNumber == 0) {
+        if(clientResponse->sequenceNumber == 0)
+        {
             OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
             OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
         }
-        else {
-            OC_LOG_V(INFO, TAG, "Callback Context for Get recvd successfully %d", gNumObserveNotifies);
+        else
+        {
+            OC_LOG_V(INFO, TAG, "Callback Context for Get recvd successfully %d",
+                    gNumObserveNotifies);
             OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
             gNumObserveNotifies++;
             if (gNumObserveNotifies == 3)
             {
-                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
+                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                {
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
             }
@@ -170,7 +181,8 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 
 // This is a function called back when a device is discovered
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
-        OCClientResponse * clientResponse) {
+        OCClientResponse * clientResponse)
+{
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
 
@@ -179,7 +191,8 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     OC_LOG_V(INFO, TAG, "StackResult: %s",
             getResult(clientResponse->result));
 
-    if (ctx == (void*) DEFAULT_CONTEXT_VALUE) {
+    if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
+    {
         OC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
     }
 
@@ -211,7 +224,8 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     OCCallbackData cbData;
     OCDoHandle handle;
     std::ostringstream getQuery;
-    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << "/SomeUnknownResource";
+    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" <<
+            getPortTBServer(clientResponse) << "/SomeUnknownResource";
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
@@ -232,7 +246,9 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     OCCallbackData cbData;
     OCDoHandle handle;
     std::ostringstream obsReg;
-    obsReg << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) << getQueryStrForGetPut(clientResponse->resJSONPayload);
+    obsReg << "coap://" << getIPAddrTBServer(clientResponse) << ":" <<
+            getPortTBServer(clientResponse) <<
+            getQueryStrForGetPut(clientResponse->resJSONPayload);
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
@@ -259,8 +275,9 @@ int InitPutRequest(OCClientResponse * clientResponse)
     OCDoHandle handle;
     //* Make a PUT query*/
     std::ostringstream getQuery;
-    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) <<
-    "/a/room" << queryInterface[TEST].text;
+    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" <<
+            getPortTBServer(clientResponse) <<
+            "/a/room" << queryInterface[TEST].text;
     cbData.cb = putReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
@@ -291,15 +308,17 @@ int InitGetRequest(OCClientResponse * clientResponse)
 
     //* Make a GET query*/
     std::ostringstream getQuery;
-    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" << getPortTBServer(clientResponse) <<
-    "/a/room" << queryInterface[TEST].text;
+    getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" <<
+            getPortTBServer(clientResponse) <<
+            "/a/room" << queryInterface[TEST].text;
 
     std::cout << "Get Query: " << getQuery.str() << std::endl;
 
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
+    ret = OCDoResource(&handle, OC_REST_GET,
+            getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
@@ -331,32 +350,34 @@ int InitDiscovery()
     return ret;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
     int opt;
 
     while ((opt = getopt(argc, argv, "t:c:")) != -1)
     {
-        switch(opt)
+        switch (opt)
         {
-        case 't':
-            TEST = atoi(optarg);
-            break;
-        case 'c':
-            OC_CONNTYPE = OCConnectivityType(atoi(optarg));
-            break;
-        default:
-            PrintUsage();
-            return -1;
+            case 't':
+                TEST = atoi(optarg);
+                break;
+            case 'c':
+                OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                break;
+            default:
+                PrintUsage();
+                return -1;
         }
     }
-    if(TEST <= TEST_INVALID || TEST >= MAX_TESTS){
+    if (TEST <= TEST_INVALID || TEST >= MAX_TESTS)
+    {
         PrintUsage();
         return -1;
     }
 
-
     /* Initialize OCStack*/
-    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
@@ -366,48 +387,70 @@ int main(int argc, char* argv[]) {
     // Break from loop with Ctrl+C
     OC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
-    while (!gQuitFlag) {
+    while (!gQuitFlag)
+    {
 
-        if (OCProcess() != OC_STACK_OK) {
+        if (OCProcess() != OC_STACK_OK)
+        {
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
 
         sleep(2);
-    }
-    OC_LOG(INFO, TAG, "Exiting occlient main loop...");
+    } OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
-    if (OCStop() != OC_STACK_OK) {
+    if (OCStop() != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, "OCStack stop error");
     }
 
     return 0;
 }
 
-std::string getIPAddrTBServer(OCClientResponse * clientResponse) {
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
+std::string getIPAddrTBServer(OCClientResponse * clientResponse)
+{
+    if (!clientResponse)
+    {
+        return "";
+    }
+    if (!clientResponse->addr)
+    {
+        return "";
+    }
     uint8_t a, b, c, d = 0;
-    if(0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) ) return "";
+    if (0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d))
+    {
+        return "";
+    }
 
     char ipaddr[16] = {'\0'};
-    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d); // ostringstream not working correctly here, hence snprintf
-    //printf("IP address string of the TB server = %s\n", *out_ipaddr);
+    // ostringstream not working correctly here, hence snprintf
+    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d);
     return std::string (ipaddr);
 }
 
-
-std::string getPortTBServer(OCClientResponse * clientResponse){
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
+std::string getPortTBServer(OCClientResponse * clientResponse)
+{
+    if (!clientResponse)
+    {
+        return "";
+    }
+    if (!clientResponse->addr)
+    {
+        return "";
+    }
     uint16_t p = 0;
-    if(0 != OCDevAddrToPort(clientResponse->addr, &p) ) return "";
+    if (0 != OCDevAddrToPort(clientResponse->addr, &p))
+    {
+        return "";
+    }
     std::ostringstream ss;
     ss << p;
     return ss.str();
 }
 
-std::string getQueryStrForGetPut(unsigned  const char * responsePayload){
+std::string getQueryStrForGetPut(unsigned  const char * responsePayload)
+{
 
     std::string jsonPayload(reinterpret_cast<char*>(const_cast<unsigned char*>(responsePayload)));
 

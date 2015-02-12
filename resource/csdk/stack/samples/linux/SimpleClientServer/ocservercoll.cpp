@@ -53,10 +53,12 @@ const char rspPutRoomCollection[] = "{\"href\":\"/a/room\"}";
 const char rspFailureRoom[] = "{\"href\":\"/a/room\",\"rep\":{\"error\":\"ROOM_OP_FAIL\"}}";
 
 // TODO : hard coded for now, change after Sprint4
-const char rspGetLightDefault[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"false\",\"color\":\"0\"}}";
+const char rspGetLightDefault[] =
+        "{\"href\":\"/a/light\",\"rep\":{\"state\":\"false\",\"color\":\"0\"}}";
 const char rspGetLightCollection[] = "{\"href\":\"/a/light\"}";
 // TODO : Needs to be changed to retrieve current status of light and return that in response
-const char rspPutLightDefault[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"true\",\"color\":\"0\"}}";
+const char rspPutLightDefault[] =
+        "{\"href\":\"/a/light\",\"rep\":{\"state\":\"true\",\"color\":\"0\"}}";
 const char rspPutLightCollection[] = "{\"href\":\"/a/light\"}";
 const char rspFailureLight[] = "{\"href\":\"/a/light\",\"rep\":{\"error\":\"LIGHT_OP_FAIL\"}}";
 
@@ -69,7 +71,8 @@ const char rspPutFanDefault[] = "{\"href\":\"/a/fan\",\"rep\":{\"state\":\"false
 const char rspPutFanCollection[] = "{\"href\":\"/a/fan\"}";
 const char rspFailureFan[] = "{\"href\":\"/a/fan\",\"rep\":{\"error\":\"FAN_OP_FAIL\"}}";
 
-typedef enum {
+typedef enum
+{
     TEST_INVALID = 0,
     TEST_DEFAULT_COLL_EH,
     TEST_APP_COLL_EH,
@@ -79,8 +82,10 @@ typedef enum {
 void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : ocservercoll -t <Test Case>");
-    OC_LOG(INFO, TAG, "Test Case 1 : Create room resource with default collection entity handler.");
-    OC_LOG(INFO, TAG, "Test Case 2 : Create room resource with application collection entity handler.");
+    OC_LOG(INFO, TAG,
+            "Test Case 1 : Create room resource with default collection entity handler.");
+    OC_LOG(INFO, TAG,
+            "Test Case 2 : Create room resource with application collection entity handler.");
 }
 
 unsigned static int TEST = TEST_INVALID;
@@ -118,7 +123,8 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
 {
     const char* typeOfMessage;
 
-    switch (flag) {
+    switch (flag)
+    {
         case OC_INIT_FLAG:
             typeOfMessage = "OC_INIT_FLAG";
             break;
@@ -133,8 +139,8 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
     }
 
     OC_LOG_V(INFO, TAG, "Receiving message type: %s, method %s",
-             typeOfMessage,
-             (ehRequest->method == OC_REST_GET) ? "OC_REST_GET" : "OC_REST_PUT" );
+            typeOfMessage,
+            (ehRequest->method == OC_REST_GET) ? "OC_REST_GET" : "OC_REST_PUT" );
 }
 
 OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
@@ -155,44 +161,53 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
         {
             if(query.find("oc.mi.def") != std::string::npos)
             {
-                ret = HandleCallback(ehRequest, rspGetRoomDefault, rspFailureRoom, payload, sizeof(payload));
+                ret = HandleCallback(ehRequest,
+                        rspGetRoomDefault, rspFailureRoom, payload, sizeof(payload));
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspGetLightCollection, rspFailureLight, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspGetLightCollection, rspFailureLight, payload, sizeof(payload));
                 }
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspGetFanCollection, rspFailureFan, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspGetFanCollection, rspFailureFan, payload, sizeof(payload));
                 }
             }
             else if(query.find("oc.mi.ll") != std::string::npos)
             {
-                ret = HandleCallback(ehRequest, rspGetRoomCollection, rspFailureRoom, payload, sizeof(payload));
+                ret = HandleCallback(ehRequest,
+                        rspGetRoomCollection, rspFailureRoom, payload, sizeof(payload));
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspGetLightCollection, rspFailureLight, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspGetLightCollection, rspFailureLight, payload, sizeof(payload));
                 }
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspGetFanCollection, rspFailureFan, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspGetFanCollection, rspFailureFan, payload, sizeof(payload));
                 }
             }
             else if(query.find("oc.mi.b") != std::string::npos)
             {
-                ret = HandleCallback(ehRequest, rspGetRoomCollection, rspFailureRoom, payload, sizeof(payload));
+                ret = HandleCallback(ehRequest,
+                        rspGetRoomCollection, rspFailureRoom, payload, sizeof(payload));
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspGetLightDefault, rspFailureLight, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspGetLightDefault, rspFailureLight, payload, sizeof(payload));
                 }
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspGetFanDefault, rspFailureFan, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspGetFanDefault, rspFailureFan, payload, sizeof(payload));
                 }
             }
             if (ret == OC_EH_OK)
@@ -204,7 +219,8 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 response.payload = (unsigned char *)payload;
                 response.payloadSize = strlen(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
-                memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+                memset(response.sendVendorSpecificHeaderOptions,
+                        0, sizeof response.sendVendorSpecificHeaderOptions);
                 memset(response.resourceUri, 0, sizeof response.resourceUri);
                 // Indicate that response is NOT in a persistent buffer
                 response.persistentBufferFlag = 0;
@@ -222,41 +238,48 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
             {
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest, rspPutRoomDefault, rspFailureRoom, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspPutRoomDefault, rspFailureRoom, payload, sizeof(payload));
                 }
             }
             if(query.find("oc.mi.ll") != std::string::npos)
             {
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest, rspPutRoomCollection, rspFailureRoom, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspPutRoomCollection, rspFailureRoom, payload, sizeof(payload));
                 }
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspPutLightCollection, rspFailureLight, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspPutLightCollection, rspFailureLight, payload, sizeof(payload));
                 }
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspPutFanCollection, rspFailureFan, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspPutFanCollection, rspFailureFan, payload, sizeof(payload));
                 }
             }
             if(query.find("oc.mi.b") != std::string::npos)
             {
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest, rspPutRoomCollection, rspFailureRoom, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspPutRoomCollection, rspFailureRoom, payload, sizeof(payload));
                 }
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspPutLightDefault, rspFailureLight, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspPutLightDefault, rspFailureLight, payload, sizeof(payload));
                 }
                 if(ret != OC_EH_ERROR)
                 {
                     ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest, rspPutFanDefault, rspFailureFan, payload, sizeof(payload));
+                    ret = HandleCallback(ehRequest,
+                            rspPutFanDefault, rspFailureFan, payload, sizeof(payload));
                 }
             }
             if (ret == OC_EH_OK)
@@ -268,7 +291,8 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 response.payload = (unsigned char *)payload;
                 response.payloadSize = strlen(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
-                memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+                memset(response.sendVendorSpecificHeaderOptions,
+                        0, sizeof response.sendVendorSpecificHeaderOptions);
                 memset(response.resourceUri, 0, sizeof response.resourceUri);
                 // Indicate that response is NOT in a persistent buffer
                 response.persistentBufferFlag = 0;
@@ -294,7 +318,8 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
     return ret;
 }
 
-OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehRequest)
+OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
@@ -307,11 +332,13 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag, OCEntityH
     {
         if(OC_REST_GET == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspGetLightDefault, rspFailureLight, payload, sizeof(payload));
+            ret = HandleCallback(ehRequest,
+                    rspGetLightDefault, rspFailureLight, payload, sizeof(payload));
         }
         else if(OC_REST_PUT == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspPutLightDefault, rspFailureLight, payload, sizeof(payload));
+            ret = HandleCallback(ehRequest,
+                    rspPutLightDefault, rspFailureLight, payload, sizeof(payload));
         }
         else
         {
@@ -329,7 +356,8 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag, OCEntityH
             response.payload = (unsigned char *)payload;
             response.payloadSize = strlen(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
-            memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+            memset(response.sendVendorSpecificHeaderOptions,
+                    0, sizeof response.sendVendorSpecificHeaderOptions);
             memset(response.resourceUri, 0, sizeof response.resourceUri);
             // Indicate that response is NOT in a persistent buffer
             response.persistentBufferFlag = 0;
@@ -350,7 +378,8 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag, OCEntityH
     return ret;
 }
 
-OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehRequest)
+OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
@@ -363,11 +392,13 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag, OCEntityHan
     {
         if(OC_REST_GET == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspGetFanDefault, rspFailureFan, payload, sizeof(payload));
+            ret = HandleCallback(ehRequest, rspGetFanDefault,
+                    rspFailureFan, payload, sizeof(payload));
         }
         else if(OC_REST_PUT == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspPutFanDefault, rspFailureFan, payload, sizeof(payload));
+            ret = HandleCallback(ehRequest, rspPutFanDefault,
+                    rspFailureFan, payload, sizeof(payload));
         }
         else
         {
@@ -385,7 +416,8 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag, OCEntityHan
             response.payload = (unsigned char *)payload;
             response.payloadSize = strlen(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
-            memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+            memset(response.sendVendorSpecificHeaderOptions,
+                    0, sizeof response.sendVendorSpecificHeaderOptions);
             memset(response.resourceUri, 0, sizeof response.resourceUri);
             // Indicate that response is NOT in a persistent buffer
             response.persistentBufferFlag = 0;
@@ -456,13 +488,15 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
-    if(TEST <= TEST_INVALID || TEST >= MAX_TESTS){
+    if(TEST <= TEST_INVALID || TEST >= MAX_TESTS)
+    {
         PrintUsage();
         return -1;
     }
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
-    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }

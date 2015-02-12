@@ -52,7 +52,8 @@ static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 
 int gQuitFlag = 0;
 
-namespace {
+namespace
+{
     typedef std::pair<bool, std::string>    extract_result_t;
     typedef std::string                     sid_t;
     typedef std::set<std::string>           SID_set_t;
@@ -114,7 +115,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response", clientResponse->resJSONPayload);
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response",
+                clientResponse->resJSONPayload);
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -380,8 +382,14 @@ int main(int argc, char* argv[])
 
 std::string getIPAddrTBServer(OCClientResponse * clientResponse)
 {
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
+    if (!clientResponse)
+    {
+        return "";
+    }
+    if (!clientResponse->addr)
+    {
+        return "";
+    }
     uint8_t a, b, c, d = 0;
     if(0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) ) return "";
 
@@ -394,10 +402,19 @@ std::string getIPAddrTBServer(OCClientResponse * clientResponse)
 
 std::string getPortTBServer(OCClientResponse * clientResponse)
 {
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
+    if (!clientResponse)
+    {
+        return "";
+    }
+    if (!clientResponse->addr)
+    {
+        return "";
+    }
     uint16_t p = 0;
-    if(0 != OCDevAddrToPort(clientResponse->addr, &p) ) return "";
+    if (0 != OCDevAddrToPort(clientResponse->addr, &p))
+    {
+        return "";
+    }
     std::ostringstream ss;
     ss << p;
     return ss.str();
@@ -420,7 +437,8 @@ extract_result_t extract_value(const std::string& search_key, const std::string&
     const size_t key_edge = key_mark + key.length();
     const size_t val_mark = input.find_first_of("\"", key_edge);
 
-    if(std::string::npos == key_mark || std::string::npos == val_mark) {
+    if(std::string::npos == key_mark || std::string::npos == val_mark)
+    {
        std::ostringstream os;
 
        os << "extract_value(): \"" << search_key << "\" not found in input";
@@ -458,19 +476,25 @@ void collateSIDs(const OCClientResponse * clientResponse, const std::string& ser
 
     const extract_result_t sid_result = parseSID(clientResponse);
 
-    if(false == sid_result.first)
-     return;
+    if (false == sid_result.first)
+    {
+        return;
+    }
 
     const sid_t& sid = sid_result.second;
 
     /* ...there's no need for an application to take any special action, but we can tell
-    if we've seen a resource before, regardless of the transport it arrive on: */
+     if we've seen a resource before, regardless of the transport it arrive on: */
     std::ostringstream msg;
 
-    if(not sids.insert(sid).second)
-     msg << "SID " << sid << " has been seen before.\n";
+    if (not sids.insert(sid).second)
+    {
+        msg << "SID " << sid << " has been seen before.\n";
+    }
     else
-     msg << "SID " << sid << " is new.\n";
+    {
+        msg << "SID " << sid << " is new.\n";
+    }
 
     OC_LOG(INFO, TAG, msg.str().c_str());
 }

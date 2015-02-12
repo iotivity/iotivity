@@ -108,7 +108,8 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
     response.payload = (unsigned char *)getResp;
     response.payloadSize = strlen(getResp) + 1;
     response.numSendVendorSpecificHeaderOptions = 0;
-    memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.sendVendorSpecificHeaderOptions,
+            0, sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof(response.resourceUri));
     // Indicate that response is NOT in a persistent buffer
     response.persistentBufferFlag = 0;
@@ -125,22 +126,26 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
 OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest)
 {
     OC_LOG(INFO, TAG, "Copying received request for slow response");
-    OCEntityHandlerRequest *request = (OCEntityHandlerRequest *)OCMalloc(sizeof(OCEntityHandlerRequest));
+    OCEntityHandlerRequest *request =
+            (OCEntityHandlerRequest *)OCMalloc(sizeof(OCEntityHandlerRequest));
     if (request)
     {
         // Do shallow copy
         memcpy(request, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
         // Do deep copy of query
-        request->query = (unsigned char * )OCMalloc(strlen((const char *)entityHandlerRequest->query) + 1);
+        request->query =
+                (unsigned char * )OCMalloc(strlen((const char *)entityHandlerRequest->query) + 1);
         if (request->query)
         {
             strcpy((char *)request->query, (const char *)entityHandlerRequest->query);
 
             // Copy the request payload
-            request->reqJSONPayload = (unsigned char * )OCMalloc(strlen((const char *)entityHandlerRequest->reqJSONPayload) + 1);
+            request->reqJSONPayload = (unsigned char * )OCMalloc(
+                            strlen((const char *)entityHandlerRequest->reqJSONPayload) + 1);
             if (request->reqJSONPayload)
             {
-                strcpy((char *)request->reqJSONPayload, (const char *)entityHandlerRequest->reqJSONPayload);
+                strcpy((char *)request->reqJSONPayload,
+                        (const char *)entityHandlerRequest->reqJSONPayload);
 
                 // Ignore vendor specific header options for example
                 request->numRcvdVendorSpecificHeaderOptions = 0;
