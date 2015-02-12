@@ -195,9 +195,16 @@ exit:
 }
 
 // Form the OCEntityHandlerRequest struct
-OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequest, OCRequestHandle request,
-        OCMethod method, OCResourceHandle resource, unsigned char * queryBuf, unsigned char * bufReqPayload,
-        uint8_t numVendorOptions, OCHeaderOption * vendorOptions, OCObserveAction observeAction,
+OCStackResult FormOCEntityHandlerRequest(
+        OCEntityHandlerRequest * entityHandlerRequest,
+        OCRequestHandle request,
+        OCMethod method,
+        OCResourceHandle resource,
+        unsigned char * queryBuf,
+        unsigned char * bufReqPayload,
+        uint8_t numVendorOptions,
+        OCHeaderOption * vendorOptions,
+        OCObserveAction observeAction,
         OCObservationId observeID)
 {
     if (entityHandlerRequest)
@@ -274,8 +281,8 @@ void DeleteServerRequest(OCServerRequest * serverRequest)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    CARemoteEndpoint_t responseEndpoint = {0};
-    CAResponseInfo_t responseInfo = {0};
+    CARemoteEndpoint_t responseEndpoint = {};
+    CAResponseInfo_t responseInfo = {};
     CAHeaderOption_t* optionsPointer;
 
     OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
@@ -314,10 +321,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             break;
     }
 
-    // TODO-CA: Need to do something with a slow response if a confirmed request was sent
-    // from client
-
-    // TODO-CA:  Need to handle CA_MSG_RESET and CA_MSG_ACKNOWLEDGE
     switch (serverRequest->qos)
     {
         case OC_LOW_QOS:
@@ -365,7 +368,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions + 1;
     }
 
-    // TODO-CA Revisit this logic
+    // TODO: This exposes CoAP specific details.  At some point, this should be
+    // re-factored and handled in the CA layer.
     if(serverRequest->observeResult == OC_STACK_OK)
     {
         responseInfo.info.options[0].protocolID = CA_COAP_ID;
@@ -418,6 +422,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
     OCStackResult stackRet = OC_STACK_ERROR;
     OCServerRequest * serverRequest = NULL;
     OCServerResponse * serverResponse = NULL;
+    uint16_t bufferNeeded = 0;
 
     OC_LOG_V(INFO, TAG, "Inside HandleAggregateResponse: %s", ehResponse->payload);
 
@@ -439,16 +444,22 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             VERIFY_NON_NULL(serverResponse->payload);
         }
 
-        if((serverResponse->remainingPayloadSize >= ehResponse->payloadSize + 1 &&
-                serverRequest->numResponses == 1) ||
-                (serverResponse->remainingPayloadSize >= ehResponse->payloadSize + 2 &&
-                        serverRequest->numResponses > 1))
+        // If there is more than 1 response, then we need to allow for a null-termination
+        // in the server response payload buffer AND the JSON response separator
+        bufferNeeded = ehResponse->payloadSize + 1;
+        if (serverRequest->numResponses > 1)
+        {
+            bufferNeeded += strlen(OC_JSON_SEPARATOR_STR);
+        }
+        if(serverResponse->remainingPayloadSize >= bufferNeeded)
         {
             OC_LOG(INFO, TAG, PCF("There is room in response buffer"));
             // append
-            snprintf((char *)serverResponse->payload, serverResponse->remainingPayloadSize, "%s%s", (char *)serverResponse->payload, (char *)ehResponse->payload);
+            strncat((char *)serverResponse->payload,
+                    (char *)ehResponse->payload,
+                    serverResponse->remainingPayloadSize);
             OC_LOG_V(INFO, TAG, "Current aggregated response  ...%s", serverResponse->payload);
-            serverResponse->remainingPayloadSize -= ehResponse->payloadSize;
+            serverResponse->remainingPayloadSize -= strlen((char *)ehResponse->payload);
             (serverRequest->numResponses)--;
             if(serverRequest->numResponses == 0)
             {
@@ -462,11 +473,12 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             }
             else
             {
-                OC_LOG(INFO, TAG, PCF("More response fragment to come"));
-                // TODO: we should consider using strcat rather than setting a char by char here!
-                snprintf((char *)serverResponse->payload, serverResponse->remainingPayloadSize, "%s%c", (char *)serverResponse->payload,OC_JSON_SEPARATOR);
+                OC_LOG(INFO, TAG, PCF("More response fragments to come"));
+                strncat((char *)serverResponse->payload,
+                        OC_JSON_SEPARATOR_STR,
+                        serverResponse->remainingPayloadSize);
                 OC_LOG_V(INFO, TAG, "Current aggregated response  ...%s", serverResponse->payload);
-                (serverResponse->remainingPayloadSize)--;
+                serverResponse->remainingPayloadSize -= strlen(OC_JSON_SEPARATOR_STR);
                 stackRet = OC_STACK_OK;
             }
         }

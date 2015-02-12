@@ -49,6 +49,7 @@
 #define OC_JSON_SUFFIX                     "]}"
 #define OC_JSON_SUFFIX_LEN                 (sizeof(OC_JSON_SUFFIX) - 1)
 #define OC_JSON_SEPARATOR                  ','
+#define OC_JSON_SEPARATOR_STR              ","
 
 #define OC_RESOURCE_OBSERVABLE   1
 #define OC_RESOURCE_SECURE       1
