@@ -411,7 +411,6 @@ void GroupManager::onGetForPresence(const HeaderOptions& headerOptions,
     {
         std::cout << "onGET Response error: " << eCode << std::endl;
         callback("", OC_STACK_ERROR);
-        std::exit(-1);
     }
 }
 
@@ -479,35 +478,49 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
     return message;
 }
 
-ActionSet* GroupManager::getActionSetfromString(std::string desc)
+#define DELETE(p) { \
+    delete p; \
+    p = NULL; \
+}
+
+#define DELETEARRAY(p) { \
+    delete[] p; \
+    p = NULL; \
+}
+
+ActionSet* GroupManager::getActionSetfromString(std::string description)
 {
 
     char *token = NULL;
     char *plainText = NULL;
     char *plainPtr = NULL;
+    char *attr = NULL, *desc = NULL;
 
+    Capability *capa = NULL;
     ActionSet *actionset = new ActionSet();
-    plainText = new char[(desc.length() + 1)];
-    strcpy(plainText, desc.c_str());
+    plainText = new char[(description.length() + 1)];
+    strcpy(plainText, description.c_str());
 
     token = strtok_r(plainText, ACTION_DELIMITER, &plainPtr);
 
     if (token != NULL)
     {
         actionset->actionsetName = std::string(token);
+
+        if((actionset->actionsetName).empty())
+            goto exit;
+
         token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
     }
     else
     {
-        delete actionset;
-        delete[] plainText;
-        return NULL;
+        goto exit;
     }
 
     while (token)
     {
         char *descPtr = NULL;
-        char *desc = new char[(strlen(token) + 1)];
+        desc = new char[(strlen(token) + 1)];
 
         if (desc != NULL)
         {
@@ -519,7 +532,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string desc)
             while (token != NULL)
             {
                 char *attrPtr = NULL;
-                char *attr = new char[(strlen(token) + 1)];
+                attr = new char[(strlen(token) + 1)];
 
                 strcpy(attr, token);
 
@@ -531,67 +544,71 @@ ActionSet* GroupManager::getActionSetfromString(std::string desc)
                     if (strcmp(token, "uri") == 0)
                     {
                         token = strtok_r(NULL, ATTR_DELIMITER, &attrPtr);
-                        action = new Action();
+                        if(token == NULL)
+                        {
+                            goto exit;
+                        }
 
+                        action = new Action();
                         if (action != NULL)
                         {
                             action->target = std::string(token);
                         }
                         else
                         {
-                            delete actionset;
-                            delete[] attr;
-                            delete desc;
-                            delete[] plainText;
-                            return NULL;
+                            goto exit;
                         }
                     }
                     else
                     {
-                        Capability *capa = new Capability();
+                        capa = new Capability();
                         capa->capability = std::string(token);
                         token = strtok_r(NULL, ATTR_DELIMITER, &attrPtr);
+
+                        if( token == NULL )
+                            goto exit;
+
                         capa->status = std::string(token);
 
                         if (action != NULL)
-                        {
                             action->listOfCapability.push_back(capa);
-                        }
                         else
-                        {
-                            delete capa;
-                            delete actionset;
-                            delete[] attr;
-                            delete[] plainText;
-                            delete desc;
-                            return NULL;
-                        }
+                            goto exit;
                     }
 
                     token = strtok_r(NULL, ATTR_DELIMITER, &attrPtr);
                 }
-
-                delete[] attr;
+                DELETEARRAY(attr);
                 token = strtok_r(NULL, DESC_DELIMITER, &descPtr);
             }
 
-            actionset->listOfAction.push_back(action);
+            if( actionset != NULL )
+                actionset->listOfAction.push_back(action);
+            else
+                goto exit;
             //delete action;
         }
         else
         {
-            delete actionset;
-            delete[] plainText;
-            return NULL;
+            goto exit;
+
         }
 
-        delete[] desc;
+        DELETEARRAY(desc);
 
         token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
     }
 
-    delete plainText;
+    DELETE(plainText);
     return actionset;
+
+exit:
+    DELETE(capa)
+    DELETE(actionset)
+    DELETEARRAY(attr);
+    DELETEARRAY(plainText);
+    DELETEARRAY(desc);
+    return NULL;
 }
 
 OCStackResult GroupManager::addActionSet(std::shared_ptr< OCResource > resource,
