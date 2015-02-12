@@ -161,8 +161,15 @@ def __message( s, target, source, env ) :
 # @param source extracted files
 # @param env environment object
 def __action( target, source, env ) :
+    cwd = os.path.realpath('.')
     extractor = __getExtractor([File(source)], env)
     if not extractor :
+        print '''******************************* Error *****************************************
+*
+* Doesn't support auto extracting [%s], please extract it to [%s].
+*                                                                             *
+*******************************************************************************
+''' % (source, cwd)
         raise SCons.Errors.StopError( "can not find any extractor value for the source file [%s]" % (source) )
 
     extractor_cmd = extractor["EXTRACTCMD"]
@@ -175,7 +182,6 @@ def __action( target, source, env ) :
     handle = None
 
     cmd = env.subst(extractor_cmd, source=source, target=target)
-    cwd = os.path.realpath('.')
 
     if env["UNPACK"]["VIWEXTRACTOUTPUT"] :
         handle  = subprocess.Popen( cmd, shell=True )
@@ -186,12 +192,12 @@ def __action( target, source, env ) :
     if handle.wait() <> 0 :
         print '''******************************* Error *****************************************
 *
-* Fail to unpack (%s). It should be due to it isn't downloaded completely.
-* Please download it manually or delete it and let the script auto
-* download again.
-*
+* Fail to unpack [%s]. It should be due to it isn't downloaded completely.
+* Please download it manually or delete it and let the script auto download it*
+* again.                                                                      *
+*                                                                             *
 *******************************************************************************
-'''
+''' % (source)
         raise SCons.Errors.BuildError( "error running extractor [%s] on the source [%s]" % (cmd, source) )
 
 # emitter function for getting the files
