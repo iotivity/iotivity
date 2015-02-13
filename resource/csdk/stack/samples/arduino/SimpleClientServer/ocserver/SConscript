@@ -17,6 +17,9 @@ arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'coap'])
 if not env.get('RELEASE'):
 	arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if env.get('NET') == 'Wifi':
+	arduino_simplecs_env.AppendUnique(CPPDEFINES = ['ARDUINOWIFI'])
+
 arduino_simplecs = arduino_simplecs_env.Program('SimpleClientServer', 'ocserver.cpp')
 env.CreateBin('SimpleClientServer')
 
