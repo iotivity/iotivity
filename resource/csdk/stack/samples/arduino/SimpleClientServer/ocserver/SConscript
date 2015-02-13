@@ -13,6 +13,7 @@ arduino_simplecs_env.PrependUnique(CPPPATH = [
 
 arduino_simplecs_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'coap'])
+arduino_simplecs_env.PrependUnique(LINKFLAGS = ['-Wl,-cref', '-Wl,-Map='+Dir('.').path+'/SimpleClientServer.map'])
 
 if not env.get('RELEASE'):
 	arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
