@@ -38,7 +38,7 @@ static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to WIFI.
 static OCConnectivityType OC_CONNTYPE = OC_WIFI;
-static std::string putPayload = "{\"state\":\"on\",\"power\":5}";
+static std::string putPayload = "{\"oc\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/light";

@@ -69,7 +69,6 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         {
             std::cout << "OBSERVE RESULT:"<<std::endl;
             std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
-
             rep.getValue("state", mylight.m_state);
             rep.getValue("power", mylight.m_power);
             rep.getValue("name", mylight.m_name);

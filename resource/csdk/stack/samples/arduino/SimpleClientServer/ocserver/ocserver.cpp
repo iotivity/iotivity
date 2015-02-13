@@ -57,8 +57,8 @@ typedef struct LIGHTRESOURCE{
 
 static LightResource Light;
 
-static char responsePayloadGet[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"on\",\"power\":10}}";
-static char responsePayloadPut[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"off\",\"power\":0}}";
+static char responsePayloadGet[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":true,\"power\":10}}";
+static char responsePayloadPut[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":false,\"power\":0}}";
 
 #ifdef ARDUINOWIFI
 // Arduino WiFi Shield

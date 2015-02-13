@@ -104,16 +104,23 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
     if(OC_REST_PUT == ehRequest->method)
     {
+        // Get cJSON pointer to query
         cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
-        currLightResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring,
-                "on") ? true:false);
-        currLightResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
+
+        // Get root of JSON payload, then the 1st resource.
+        cJSON* carrier = cJSON_GetObjectItem(putJson, "oc");
+        carrier = cJSON_GetArrayItem(carrier, 0);
+        carrier = cJSON_GetObjectItem(carrier, "rep");
+
+        currLightResource->power = cJSON_GetObjectItem(carrier,"power")->valueint;
+        currLightResource->state = cJSON_GetObjectItem(carrier,"state")->valueint;
+
         cJSON_Delete(putJson);
     }
 
     cJSON_AddStringToObject(json,"href",gResourceUri);
     cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
-    cJSON_AddStringToObject(format, "state", (char *) (currLightResource->state ? "on":"off"));
+    cJSON_AddBoolToObject(format, "state", currLightResource->state);
     cJSON_AddNumberToObject(format, "power", currLightResource->power);
 
     jsonResponse = cJSON_Print(json);
@@ -671,7 +678,7 @@ void *ChangeLightRepresentation (void *param)
                 cJSON *format;
                 cJSON_AddStringToObject(json,"href",gResourceUri);
                 cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
-                cJSON_AddStringToObject(format, "state", (char *) (Light.state ? "on":"off"));
+                cJSON_AddBoolToObject(format, "state", Light.state);
                 cJSON_AddNumberToObject(format, "power", Light.power);
                 char * obsResp = cJSON_Print(json);
                 cJSON_Delete(json);
