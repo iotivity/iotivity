@@ -442,6 +442,8 @@ OCStackResult OCProcess();
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource
  * @param request            - JSON encoded request
+ * @param conType            - @ref OCConnectivityType type of connectivity indicating the
+ *                             interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
  * @param qos                - quality of service. Note that if this API is called on a uri with
  *                             the well-known multicast IP address, the qos will be forced to
  *                             OC_LOW_QOS
