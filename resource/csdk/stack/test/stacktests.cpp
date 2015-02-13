@@ -22,7 +22,6 @@
 extern "C"
 {
     #include "ocstack.h"
-    #include "ocstackinternal.h"
     #include "logger.h"
 }
 
@@ -83,7 +82,6 @@ OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
 void InitStack(OCMode mode)
 {
     OC_LOG(INFO, TAG, "Entering InitStack");
-    OC_LOG_V(INFO, TAG, "InitStack on address %s",addr);
 
     EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, mode));
     OC_LOG(INFO, TAG, "Leaving InitStack");
@@ -179,8 +177,16 @@ TEST(StackDiscovery, DoResourceDeviceDiscovery)
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle,
+                                        OC_REST_GET,
+                                        szQueryUri,
+                                        0,
+                                        0,
+                                        OC_WIFI,
+                                        OC_LOW_QOS,
+                                        &cbData,
+                                        NULL,
+                                        0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
@@ -205,7 +211,16 @@ TEST(StackResource, UpdateResourceNullURI)
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle,
+                                        OC_REST_GET,
+                                        szQueryUri,
+                                        0,
+                                        0,
+                                        OC_WIFI,
+                                        OC_LOW_QOS,
+                                        &cbData,
+                                        NULL,
+                                        0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 

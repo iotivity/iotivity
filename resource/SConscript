@@ -3,9 +3,12 @@
 #
 ##
 
+import os
+
 Import('env')
 
 target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
 
 # Build libcoap
 SConscript('csdk/connectivity/lib/libcoap-4.1.1/SConscript')
@@ -32,6 +35,9 @@ if target_os == 'linux':
 
 	# Build secure samples
 	SConscript('csdk/stack/samples/linux/secure/SConscript')
+
+	# Build C/C++ unit tests
+	SConscript('unit_tests.scons')
 
 elif target_os == 'arduino':
 	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')

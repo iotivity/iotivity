@@ -1,0 +1,41 @@
+##
+# 'googletest' script to check if Google Unit Test library is installed.  If not,
+# get it and install it
+#
+##
+
+import os
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
+
+
+if target_os == 'linux':
+	print '*** Checking for installation of google unit test 1.7.0 ***'	
+
+	gtest_dir      = src_dir + '/extlibs/gtest/gtest-1.7.0'
+	gtest_zip_file = src_dir + '/extlibs/gtest/gtest-1.7.0.zip'
+	gtest_url      = 'https://googletest.googlecode.com/files/gtest-1.7.0.zip'
+
+	if not os.path.exists(gtest_dir):
+		# If the gtest zip file is not already present, download it
+		if not os.path.exists(gtest_zip_file):
+			gtest_zip = env.Download(gtest_zip_file, gtest_url)
+		else:
+			gtest_zip = gtest_zip_file
+
+		# Unzip gtest
+		print 'Unzipping google unit test'
+		env.UnpackAll(gtest_dir, gtest_zip)
+
+		# Run configure on gtest
+		print 'Configuring google unit test'
+		env.Configure(gtest_dir, './configure')
+
+		# Run make on gtest
+		print 'Making google unit test'
+		env.Configure(gtest_dir, 'make')
+
+

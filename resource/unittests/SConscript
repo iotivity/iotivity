@@ -1,0 +1,53 @@
+
+Import('env')
+
+unittests_env = env.Clone()
+
+src_dir = unittests_env.get('SRC_DIR')
+######################################################################
+# Build flags
+######################################################################
+unittests_env.PrependUnique(CPPPATH = [
+		'../include',
+		'../oc_logger/include',
+		'../csdk/stack/include',
+		'../csdk/ocsocket/include',
+		'../csdk/ocrandom/include',
+		'../csdk/logger/include',
+		'../../extlibs/gtest/gtest-1.7.0/include',
+		'../../extlibs/hippomocks-master/HippoMocks',
+		'../../extlibs/hippomocks-master/HippoMocksTest'
+		])
+
+unittests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+unittests_env.AppendUnique(LIBS = ['-lpthread'])
+unittests_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+unittests_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
+unittests_env.PrependUnique(LIBS = [
+		'oc',
+		'octbstack',
+		'oc_logger',
+		'connectivity_abstraction',
+		'coap',
+		'gtest',
+		'gtest_main'
+		])
+
+if env.get('SECURED') == '1':
+    stacktest_env.AppendUnique(LIBS = ['tinydtls'])
+unittests_env.ParseConfig('pkg-config --libs glib-2.0');
+
+if not env.get('RELEASE'):
+	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+unittests = unittests_env.Program('unittests', ['ConstructResourceTest.cpp',
+                                                'OCPlatformTest.cpp',
+                                                'OCResourceTest.cpp'])
+
+Alias("unittests", [unittests])
+
+env.AppendTarget('unittests')
+

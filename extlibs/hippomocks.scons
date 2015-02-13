@@ -1,0 +1,33 @@
+##
+# 'hippomocks' script to check if Hippo Mocks Unit Test library is installed.
+# If not, get it and install it
+#
+##
+
+import os, sys
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
+
+# Only verify/install on linux
+if target_os == 'linux':
+	print '*** Checking for installation of hippomocks ***'
+
+	hippomocks_dir      = src_dir + '/extlibs/hippomocks-master'
+	hippomocks_zip_file = src_dir + '/extlibs/master.zip'
+	hippomocks_url      = 'https://github.com/dascandy/hippomocks/archive/master.zip'
+
+	if not os.path.exists(hippomocks_dir):
+		# If the hippomocks zip file is not already present, download it
+		if not os.path.exists(hippomocks_zip_file):
+			hippomocks_zip = env.Download(hippomocks_zip_file, hippomocks_url)
+		else:
+			hippomocks_zip = hippomocks_zip_file
+
+		# Unzip hippomocks
+		print 'Unzipping hippomocks'
+		env.UnpackAll(hippomocks_dir, hippomocks_zip)
+
+

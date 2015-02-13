@@ -105,9 +105,14 @@ static uint32_t GetTime(float afterSeconds)
     return now + (uint32_t)(afterSeconds * COAP_TICKS_PER_SECOND);
 }
 
-static OCStackResult FormOCResponse(OCResponse * * responseLoc,  ClientCB * cbNode, uint32_t maxAge,
-        unsigned char * fullUri, unsigned char * rcvdUri, CAToken_t * rcvdToken,
-        OCClientResponse * clientResponse, unsigned char * bufRes)
+static OCStackResult FormOCResponse(OCResponse * * responseLoc,
+                                    ClientCB * cbNode,
+                                    uint32_t maxAge,
+                                    unsigned char * fullUri,
+                                    unsigned char * rcvdUri,
+                                    CAToken_t * rcvdToken,
+                                    OCClientResponse * clientResponse,
+                                    unsigned char * bufRes)
 {
     OCResponse * response = (OCResponse *) OCMalloc(sizeof(OCResponse));
     if (!response)
@@ -1283,6 +1288,13 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     OCStackResult result = OC_STACK_ERROR;
     OC_LOG(INFO, TAG, PCF("Entering OCInit"));
 
+    // Validate mode
+    if (!((mode == OC_CLIENT) || (mode == OC_SERVER) || (mode == OC_CLIENT_SERVER)))
+    {
+        OC_LOG(ERROR, TAG, PCF("Invalid mode"));
+        return OC_STACK_ERROR;
+    }
+
     if (ipAddr)
     {
         OC_LOG_V(INFO, TAG, "IP Address = %s", ipAddr);
@@ -1484,9 +1496,11 @@ OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
 }
 
 /**
- * Discover or Perform requests on a specified resource (specified by that Resource's respective URI).
+ * Discover or Perform requests on a specified resource
+ * (specified by that Resource's respective URI).
  *
- * @param handle             - @ref OCDoHandle to refer to the request sent out on behalf of calling this API.
+ * @param handle             - @ref OCDoHandle to refer to the request sent out on behalf of
+ *                             calling this API.
  * @param method             - @ref OCMethod to perform on the resource
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource
@@ -1540,7 +1554,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     uint16_t uriLen = strlen(requiredUri);
 
-    // ToDo: We should also check if the requiredUri has a mutlicast address, then qos has to be OC_Low_QOS
+    // ToDo: We should also check if the requiredUri has a mutlicast address,
+    // then qos has to be OC_Low_QOS
     switch (method)
     {
         case OC_REST_GET:
@@ -2119,13 +2134,15 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
 /**
  * Create a resource
  *
- * @param handle - pointer to handle to newly created resource.  Set by ocstack.  Used to refer to resource
+ * @param handle - pointer to handle to newly created resource.  Set by ocstack.
+ *                 Used to refer to resource
  * @param resourceTypeName - name of resource type.  Example: "core.led"
  * @param resourceInterfaceName - name of resource interface.  Example: "core.rw"
  * @param uri - URI of the resource.  Example:  "/a/led"
  * @param entityHandler - entity handler function that is called by ocstack to handle requests, etc
  *                        NULL for default entity handler
- * @param resourceProperties - properties supported by resource.  Example: OC_DISCOVERABLE|OC_OBSERVABLE
+ * @param resourceProperties - properties supported by resource.
+ *                             Example: OC_DISCOVERABLE|OC_OBSERVABLE
  *
  * @return
  *     OC_STACK_OK    - no errors

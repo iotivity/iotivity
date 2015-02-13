@@ -1,0 +1,48 @@
+
+Import('env')
+
+stacktest_env = env.Clone()
+
+src_dir = stacktest_env.get('SRC_DIR')
+
+######################################################################
+# Build flags
+######################################################################
+stacktest_env.PrependUnique(CPPPATH = [
+		'../../ocsocket/include',
+		'../../logger/include',
+		'../../stack/include',
+		'../../ocmalloc/include',
+		'../../extlibs/cjson',
+		'../../../oc_logger/include',
+		'../../../../extlibs/gtest/gtest-1.7.0/include'
+		])
+
+stacktest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+stacktest_env.AppendUnique(LIBS = ['-lpthread'])
+stacktest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+stacktest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
+stacktest_env.PrependUnique(LIBS = ['m',
+                                    'octbstack',
+                                    'oc_logger',
+                                    'connectivity_abstraction',
+                                    'coap',
+                                    'gtest',
+                                    'gtest_main'])
+
+if env.get('SECURED') == '1':
+    stacktest_env.AppendUnique(LIBS = ['tinydtls'])
+stacktest_env.ParseConfig('pkg-config --libs glib-2.0');
+
+if not env.get('RELEASE'):
+	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+stacktests = stacktest_env.Program('stacktests', ['stacktests.cpp'])
+
+Alias("test", [stacktests])
+
+env.AppendTarget('test')
+

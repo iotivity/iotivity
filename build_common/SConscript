@@ -235,6 +235,8 @@ else:
     else:
 		env.SConscript(target_os + '/SConscript')
 
+env.SConscript('external_libs.scons')
+
 # Delete the temp files of configuration
 if env.GetOption('clean'):
 	dir = env.get('SRC_DIR')
