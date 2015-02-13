@@ -385,12 +385,12 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     // Allocate memory for the payload.
-    char *payload = (char *)OCMalloc(MAX_RESPONSE_LENGTH);
+    char *payload = (char *)OCCalloc(1, MAX_RESPONSE_LENGTH);
     if(!payload)
     {
         return OC_STACK_NO_MEMORY;
     }
-    memset(payload, 0, MAX_RESPONSE_LENGTH);
+
     // Put the JSON prefix and suffix around the payload
     strcpy(payload, (const char *)OC_JSON_PREFIX);
     strcat(payload, (const char *)ehResponse->payload);

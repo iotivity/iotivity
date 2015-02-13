@@ -318,6 +318,7 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
     OCStackResult ret = OC_STACK_ERROR;
     static OCDevAddr address = {0};
     char * tok = NULL;
+    char * savePtr = NULL;
     char * cpAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
     if(!cpAddress)
     {
@@ -328,33 +329,18 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
             strlen(endPoint->addressInfo.IP.ipAddress) + 1);
 
     // Grabs the first three numbers from the IPv4 address and replaces dots
-    for(int i=0; i<3; i++)
+    for(int i=0; i<4; i++)
     {
-        if(i==0)
-        {
-            tok = strtok(cpAddress, ".");
-        }
-        else
-        {
-            tok = strtok(NULL, ".");
-        }
+        tok = strtok_r(i==0 ? cpAddress : NULL, ".", &savePtr);
+
         if(!tok)
         {
             ret = OC_STACK_ERROR;
             goto exit;
         }
         address.addr[i] = atoi(tok);
-        cpAddress[strlen(cpAddress)]='.'; // Replaces the dot here.
     }
 
-    // Grabs the last number from the IPv4 address - has no dot to replace
-    tok = strtok(NULL, ".");
-    if(!tok)
-    {
-        ret = OC_STACK_ERROR;
-        goto exit;
-    }
-    address.addr[3] = atoi(tok);
     memcpy(&address.addr[4], &endPoint->addressInfo.IP.port, sizeof(uint32_t));
 
     if(response)
@@ -374,19 +360,19 @@ exit:
 void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType)
 {
     char * tok = NULL;
-
+    char * savePtr;
     // The format of the payload is {"oc":[%u:%u:%s]}
     // %u : sequence number,
     // %u : max age
     // %s : Resource Type (Optional)
-    tok = strtok(payload, "[:]}");
+    tok = strtok_r(payload, "[:]}", &savePtr);
     payload[strlen(payload)] = ':';
-    tok = strtok(NULL, "[:]}");
+    tok = strtok_r(NULL, "[:]}", &savePtr);
     payload[strlen((char *)payload)] = ':';
     *seqNum = (uint32_t) atoi(tok);
-    tok = strtok(NULL, "[:]}");
+    tok = strtok_r(NULL, "[:]}", &savePtr);
     *maxAge = (uint32_t) atoi(tok);
-    tok = strtok(NULL, "[:]}");
+    tok = strtok_r(NULL, "[:]}",&savePtr);
 
     if(tok)
     {
@@ -956,16 +942,17 @@ OCStackResult HandleStackResponses(OCResponse * response)
             result = OC_STACK_INVALID_PARAM;
             goto exit;
         }
-        tok = strtok((char *)bufRes, "[:]}");
+        char * savePtr;
+        tok = strtok_r((char *)bufRes, "[:]}", &savePtr);
         bufRes[strlen((char *)bufRes)] = ':';
-        tok = strtok(NULL, "[:]}");
+        tok = strtok_r(NULL, "[:]}", &savePtr);
         bufRes[strlen((char *)bufRes)] = ':';
         response->clientResponse->sequenceNumber = (uint32_t )atoi(tok);
         OC_LOG_V(DEBUG, TAG, "The received NONCE is %u", response->clientResponse->sequenceNumber);
-        tok = strtok(NULL, "[:]}");
+        tok = strtok_r(NULL, "[:]}", &savePtr);
         response->maxAge = (uint32_t )atoi(tok);
         OC_LOG_V(DEBUG, TAG, "The received TTL is %u", response->maxAge);
-        tok = strtok(NULL, "[:]}");
+        tok = strtok_r(NULL, "[:]}", &savePtr);
         if(tok)
         {
             resourceTypeName = (char *)OCMalloc(strlen(tok));

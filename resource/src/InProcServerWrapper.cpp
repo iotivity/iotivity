@@ -54,8 +54,11 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                          OCEntityHandlerRequest * entityHandlerRequest,
                          std::shared_ptr<OCResourceRequest> pRequest)
 {
-    pRequest->setRequestHandle(entityHandlerRequest->requestHandle);
-    pRequest->setResourceHandle(entityHandlerRequest->resource);
+    if(pRequest && entityHandlerRequest)
+    {
+        pRequest->setRequestHandle(entityHandlerRequest->requestHandle);
+        pRequest->setResourceHandle(entityHandlerRequest->resource);
+    }
 
     if(flag & OC_INIT_FLAG)
     {

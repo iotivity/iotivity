@@ -115,19 +115,22 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         resourceObserver->resUri, 0,
                         &(resourceObserver->addressInfo), resourceObserver->connectivityType);
 
-                request->observeResult = OC_STACK_OK;
-                if(request && result == OC_STACK_OK)
+                if(request)
                 {
-                    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-                                request->method, (OCResourceHandle) resPtr, request->query,
-                                request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
-                                request->rcvdVendorSpecificHeaderOptions, OC_OBSERVE_NO_OPTION, 0);
+                    request->observeResult = OC_STACK_OK;
                     if(result == OC_STACK_OK)
                     {
-                        ehResult = resPtr->entityHandler(OC_REQUEST_FLAG, &ehRequest);
-                        if(ehResult == OC_EH_ERROR)
+                        result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
+                                    request->method, (OCResourceHandle) resPtr, request->query,
+                                    request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
+                                    request->rcvdVendorSpecificHeaderOptions, OC_OBSERVE_NO_OPTION, 0);
+                        if(result == OC_STACK_OK)
                         {
-                            FindAndDeleteServerRequest(request);
+                            ehResult = resPtr->entityHandler(OC_REQUEST_FLAG, &ehRequest);
+                            if(ehResult == OC_EH_ERROR)
+                            {
+                                FindAndDeleteServerRequest(request);
+                            }
                         }
                     }
                 }
@@ -197,7 +200,6 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     while(numIds)
     {
         OC_LOG_V(INFO, TAG, "Need to notify observation id %d", *obsIdList);
-        observation = NULL;
         observation = GetObserverUsingId (*obsIdList);
         if(observation)
         {
@@ -213,32 +215,35 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         observation->addr, observation->resUri, 0,
                         &(observation->addressInfo), observation->connectivityType);
 
-                request->observeResult = OC_STACK_OK;
-                if(request && result == OC_STACK_OK)
+                if(request)
                 {
-                    memset(&ehResponse, 0, sizeof(OCEntityHandlerResponse));
-                    ehResponse.ehResult = OC_EH_OK;
-                    ehResponse.payload = (unsigned char *) OCMalloc(MAX_RESPONSE_LENGTH);
-                    if(!ehResponse.payload)
-                    {
-                        FindAndDeleteServerRequest(request);
-                        continue;
-                    }
-                    strcpy((char *)ehResponse.payload, (const char *)notificationJSONPayload);
-                    ehResponse.payloadSize = strlen((const char *)ehResponse.payload) + 1;
-                    ehResponse.persistentBufferFlag = 0;
-                    ehResponse.requestHandle = (OCRequestHandle) request;
-                    ehResponse.resourceHandle = (OCResourceHandle) resource;
-                    result = OCDoResponse(&ehResponse);
+                    request->observeResult = OC_STACK_OK;
                     if(result == OC_STACK_OK)
                     {
-                        OCFree(ehResponse.payload);
+                        memset(&ehResponse, 0, sizeof(OCEntityHandlerResponse));
+                        ehResponse.ehResult = OC_EH_OK;
+                        ehResponse.payload = (unsigned char *) OCMalloc(MAX_RESPONSE_LENGTH);
+                        if(!ehResponse.payload)
+                        {
+                            FindAndDeleteServerRequest(request);
+                            continue;
+                        }
+                        strcpy((char *)ehResponse.payload, (const char *)notificationJSONPayload);
+                        ehResponse.payloadSize = strlen((const char *)ehResponse.payload) + 1;
+                        ehResponse.persistentBufferFlag = 0;
+                        ehResponse.requestHandle = (OCRequestHandle) request;
+                        ehResponse.resourceHandle = (OCResourceHandle) resource;
+                        result = OCDoResponse(&ehResponse);
+                        if(result == OC_STACK_OK)
+                        {
+                            OCFree(ehResponse.payload);
+                            FindAndDeleteServerRequest(request);
+                        }
+                    }
+                    else
+                    {
                         FindAndDeleteServerRequest(request);
                     }
-                }
-                else
-                {
-                    FindAndDeleteServerRequest(request);
                 }
 
                 numSentNotification++;
