@@ -37,7 +37,7 @@
 extern "C"
 {
 #endif
-void _EXPORT_ InitializeContext(ICtxDelegate *pDelegate);
+INTERFACE_DECLSPEC void InitializeContext(ICtxDelegate *pDelegate);
 #ifdef __cplusplus
 
 };
@@ -114,7 +114,7 @@ namespace ITSName
             Trajectory *makeTrajectory(CurrentService *CService);
             ITSResult setOutput( Trajectory *m_result, ContextData *out );
 
-            friend void _EXPORT_ initializeContext(ICtxDelegate *pDelegate);
+            friend void INTERFACE_DECLSPEC initializeContext(ICtxDelegate *pDelegate);
     };
 }
 ;

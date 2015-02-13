@@ -37,6 +37,8 @@
 
 #elif defined(TIZEN)
 
+#include <dlog.h>
+
 #endif
 
 #endif
@@ -64,8 +66,9 @@ void ReportMessage(const char *tag, const char *msg);
 
 #elif defined(TIZEN)
 
-#define REPORT_MESSAGE(tag, msg) printf("[%s] %s\n", tag, msg)
-#define PRINT_LOG(strError) printf("[SSM] %s:%d %s\n", __PRETTY_FUNCTION__, __LINE__, strError)
+void ReportMessage(const char *tag, const char *msg);
+#define REPORT_MESSAGE(tag, msg) ReportMessage(tag, msg)
+#define PRINT_LOG(strError) dlog_print(DLOG_DEBUG, "SSM", "%s:%d %s", __PRETTY_FUNCTION__, __LINE__, strError)
 
 #else //Default linux
 

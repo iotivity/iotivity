@@ -30,10 +30,15 @@ typedef struct appdata {
 	Evas_Object *unregister_query_label;
 } appdata_s;
 
+typedef struct threadContext{
+	appdata_s *ad;
+	const char *log;
+} threadContext_s;
+
 #define ELM_DEMO_EDJ "opt/usr/apps/org.iotivity.service.ssm.ssmtesterapp/res/ui_controls.edj"
 
 char log_buffer[10000];
-void updateLog(appdata_s *ad , char *newlog)
+void updateLog(appdata_s *ad, const char *newlog)
 {
 	const char *log_text = NULL;
 
@@ -41,17 +46,30 @@ void updateLog(appdata_s *ad , char *newlog)
 	strcpy(log_buffer,log_text);
 	strcat(log_buffer,newlog);
 	elm_entry_entry_set(ad->log,log_buffer);
+	elm_entry_cursor_end_set(ad->log);
+}
+
+void* updateCallbackLog(void *data)
+{
+	threadContext_s  *pThreadContext = (threadContext_s*)data;
+
+	updateLog(pThreadContext->ad, pThreadContext->log);
+
+	return NULL;
 }
 
 class CQueryEngineEvent : public OIC::IQueryEngineEvent
 {
 private:
 	appdata_s *m_pAppData;
+	threadContext_s m_ThreadContext;
 
 public:
 	CQueryEngineEvent(appdata_s *pAppData)
 	{
 		m_pAppData = pAppData;
+		m_ThreadContext.ad = m_pAppData;
+		m_ThreadContext.log = NULL;
 	}
 
 	OIC::SSMRESULT onQueryEngineEvent(int cqid, OIC::IDataReader *pResult)
@@ -85,7 +103,8 @@ public:
 					sprintf(buf,"Type: %s Value: %s<br>", (pModelData->getPropertyName(j)).c_str(), (pModelData->getPropertyValue(j)).c_str());
 					strcat(log,buf);
 				}
-				updateLog(m_pAppData, log);
+				m_ThreadContext.log = log;
+				ecore_main_loop_thread_safe_call_sync((void *(*)(void *))updateCallbackLog, &m_ThreadContext);
 			}
 		}
 
@@ -157,7 +176,7 @@ discomfort_index_cb(void *data , Evas_Object *obj , void *event_info)
 {
 	appdata_s *ad = (appdata_s *)data;
 	elm_entry_entry_set(ad->query_text, "subscribe Device.DiscomfortIndexSensor "\
-			"if Device.DiscomfortIndexSensor.discomfortIndex > 0");
+			"if Device.DiscomfortIndexSensor.discomfortIndex != 0");
 }
 
 static void
@@ -435,6 +454,10 @@ app_create(void *data)
 				"<Name>MyPC</Name>"
 				"<Type>PC</Type>"
 				"</Device>"
+				"<Config>"
+				"<SoftSensorDescription>/opt/usr/apps/org.iotivity.service.ssm.ssmtesterapp/lib/SoftSensorDescription.xml</SoftSensorDescription>"
+				"<SoftSensorRepository>/opt/usr/apps/org.iotivity.service.ssm.ssmtesterapp/lib/</SoftSensorRepository>"
+				"</Config>"
 				"</SSMCore>";
 
 	g_pQueryEngineEvent = new CQueryEngineEvent(ad);
