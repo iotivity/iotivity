@@ -53,7 +53,6 @@ void SSMTestApp::registerQuery(std::string queryString)
     if (queryString.size() == 0)
     {
         printf("   Please Enter query string: ");
-        cin.ignore();
         getline(cin, queryString);
     }
 
@@ -75,7 +74,6 @@ void SSMTestApp::unregisterQuery(void)
     SSMRESULT rtn = SSM_E_FAIL;
 
     printf("   Please Enter query Id: ");
-    cin.ignore();
     getline(cin, qid);
 
     rtn = UnregisterQuery(atoi(qid.c_str()));
