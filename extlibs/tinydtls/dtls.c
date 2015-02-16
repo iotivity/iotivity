@@ -1562,6 +1562,7 @@ static void dtls_destroy_peer(dtls_context_t *ctx, dtls_peer_t *peer, int unlink
  * \param ctx     The DTLS context.
  * \param peer    The remote party we are talking to, if any.
  * \param session Transport address of the remote peer.
+ * \param state   Current state of the connection.
  * \param msg     The received datagram.
  * \param msglen  Length of \p msg.
  * \return \c 1 if msg is a Client Hello with a valid cookie, \c 0 or
@@ -3644,7 +3645,6 @@ dtls_handle_message(dtls_context_t *ctx,
   int data_length;		/* length of decrypted payload 
 				   (without MAC and padding) */
   int err;
-  int bypass_epoch_check = 0;
 
   /* check if we have DTLS state for addr/port/ifindex */
   peer = dtls_get_peer(ctx, session);
@@ -3668,24 +3668,21 @@ dtls_handle_message(dtls_context_t *ctx,
           data = msg + DTLS_RH_LENGTH;
           data_length = rlen - DTLS_RH_LENGTH;
           state = DTLS_STATE_WAIT_CLIENTHELLO;
-          role = DTLS_SERVER;
-          /* Bypass epoch check as the epoch for incoming msg is 0
-             and expected epoch MAY be different */
-          bypass_epoch_check = 1;
+          role = DTLS_SERVER;       
         } else {
-	int err =  dtls_alert_fatal_create(DTLS_ALERT_DECRYPT_ERROR);
-        dtls_info("decrypt_verify() failed\n");
-	if (peer->state < DTLS_STATE_CONNECTED) {
-	  dtls_alert_send_from_err(ctx, peer, &peer->session, err);
-	  peer->state = DTLS_STATE_CLOSED;
-	  /* dtls_stop_retransmission(ctx, peer); */
-	  dtls_destroy_peer(ctx, peer, 1);
-	}
-        return err;
-      }
-    } else {
-      role = peer->role;
-      state = peer->state;
+	  int err =  dtls_alert_fatal_create(DTLS_ALERT_DECRYPT_ERROR);
+          dtls_info("decrypt_verify() failed\n");
+	  if (peer->state < DTLS_STATE_CONNECTED) {
+	    dtls_alert_send_from_err(ctx, peer, &peer->session, err);
+	    peer->state = DTLS_STATE_CLOSED;
+	    /* dtls_stop_retransmission(ctx, peer); */
+	    dtls_destroy_peer(ctx, peer, 1);
+	  }
+          return err;
+        }
+      } else {
+        role = peer->role;
+        state = peer->state;
       }
     } else {
       /* is_record() ensures that msg contains at least a record header */
@@ -3739,7 +3736,7 @@ dtls_handle_message(dtls_context_t *ctx,
       /* Handshake messages other than Finish must use the current
        * epoch, Finish has epoch + 1. */
 
-      if (peer && !bypass_epoch_check) {
+      if (peer) {
 	uint16_t expected_epoch = dtls_security_params(peer)->epoch;
 	uint16_t msg_epoch = 
 	  dtls_uint16_to_int(DTLS_RECORD_HEADER(msg)->epoch);
@@ -3754,9 +3751,14 @@ dtls_handle_message(dtls_context_t *ctx,
 	}
 
 	if (expected_epoch != msg_epoch) {
-	  dtls_warn("Wrong epoch, expected %i, got: %i\n",
+          if (hs_attempt_with_existing_peer(msg, rlen, peer)) {
+            state = DTLS_STATE_WAIT_CLIENTHELLO;
+            role = DTLS_SERVER;
+          } else {
+	    dtls_warn("Wrong epoch, expected %i, got: %i\n",
 		    expected_epoch, msg_epoch);
-	  break;
+	    break;
+	  }
 	}
       }
 
