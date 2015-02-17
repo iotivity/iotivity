@@ -151,6 +151,14 @@ namespace OC
                 m_values[str] = val;
             }
 
+            /**
+             *  Retrieve the attribute value associated with the supplied name
+             *
+             *  @param str Name of the attribute
+             *  @param val Value of the attribute
+             *  @return The getValue method returns true if the attribute was
+             *        found in the representation.  Otherwise it returns false.
+             */
             template <typename T>
             bool getValue(const std::string& str, T& val) const
             {
@@ -168,6 +176,14 @@ namespace OC
                 }
             }
 
+            /**
+             *  Return the attribute value associated with the supplied name
+             *
+             *  @param str Name of the attribute
+             *  @return When the representation contains the attribute, the
+             *       the associated value is returned.  Otherwise, getValue
+             *       returns the default contructed value for the type.
+             */
             template <typename T>
             T getValue(const std::string& str) const
             {
