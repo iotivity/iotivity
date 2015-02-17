@@ -49,6 +49,9 @@ function build()
 	echo "*********** Build for arduino arm *************"
 	scons TARGET_OS=arduino TARGET_ARCH=arm ARDUINO_HOME=$2 RELEASE=$3
 
+	echo "*********** Build for arduino mega w/WiFi *************"
+        scons TARGET_OS=arduino BOARD=mega NET=Wifi ARDUINO_HOME=$2 RELEASE=$3
+
 	if [ $(uname -s) = "Darwin" ]
 	then
 		echo "*********** Build for OSX *************"
