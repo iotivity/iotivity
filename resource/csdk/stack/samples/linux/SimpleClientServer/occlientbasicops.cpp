@@ -177,7 +177,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
 
-    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "<====Callback Context for GET received successfully====>");
     }
@@ -186,31 +186,30 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
         OC_LOG(ERROR, TAG, "<====Callback Context for GET fail====>");
     }
 
-    if(clientResponse)
+    if (clientResponse)
     {
-
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                        remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
+        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr, remoteIpAddr + 1,
+                remoteIpAddr + 2, remoteIpAddr + 3);
         OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
 
         OC_LOG_V(INFO, TAG,"Get Response: %s \nFrom %d.%d.%d.%d:%d\n",
                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
                 remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
 
-        if(clientResponse->rcvdVendorSpecificHeaderOptions &&
-            clientResponse->numRcvdVendorSpecificHeaderOptions)
+        if (clientResponse->rcvdVendorSpecificHeaderOptions
+                && clientResponse->numRcvdVendorSpecificHeaderOptions)
         {
             OC_LOG (INFO, TAG, "Received vendor specific options");
             uint8_t i = 0;
             OCHeaderOption * rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
-            for( i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
+            for (i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
             {
-                if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
+                if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
                 {
                     OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
-                        ((OCHeaderOption)rcvdOptions[i]).optionID );
+                            ((OCHeaderOption)rcvdOptions[i]).optionID );
                     OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
-                        ((OCHeaderOption)rcvdOptions[i]).optionLength);
+                            ((OCHeaderOption)rcvdOptions[i]).optionLength);
                 }
             }
         }

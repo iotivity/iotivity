@@ -936,7 +936,7 @@ bool DuplicateString(char** targetString, const char* sourceString)
     else
     {
         *targetString = (char *) malloc(strlen(sourceString) + 1);
-        if(targetString)
+        if(*targetString)
         {
             strncpy(*targetString, sourceString, (strlen(sourceString) + 1));
             return true;
