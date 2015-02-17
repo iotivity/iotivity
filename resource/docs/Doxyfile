@@ -679,6 +679,7 @@ INPUT                  = . \
                          ../include/OCApi.h \
                          ../include/OCPlatform.h \
                          ../include/OCPlatformHandler.h \
+                         ../include/OCRepresentation.h \
                          ../include/OCResourceRequest.h \
                          ../include/OCResourceResponse.h \
                          ../include/OCResource.h \
