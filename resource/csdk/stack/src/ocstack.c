@@ -1539,7 +1539,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     CAToken_t token = NULL;
     CAInfo_t requestData;
     CARequestInfo_t requestInfo;
-    CAGroupEndpoint_t grpEnd;
+    CAGroupEndpoint_t grpEnd = {0};
 
     // To track if memory is allocated for additional header options
     uint8_t hdrOptionMemAlloc = 0;
@@ -1634,7 +1634,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     memset(&requestData, 0, sizeof(CAInfo_t));
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
-    memset(&grpEnd, 0, sizeof(CAGroupEndpoint_t));
     switch (method)
     {
         case OC_REST_GET:
