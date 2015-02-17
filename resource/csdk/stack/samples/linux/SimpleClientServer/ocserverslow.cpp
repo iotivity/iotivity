@@ -45,8 +45,6 @@ static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 //char *gResourceUri= const_cast<char *>("/a/led");
 char *gResourceUri= (char *)"/a/led";
 
-static constexpr uint16_t OC_WELL_KNOWN_PORT = 5683;
-
 //This function takes the request as an input and returns the response
 //in JSON format.
 char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)

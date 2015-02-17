@@ -30,8 +30,6 @@
 #include "oic_lanLib.h"
 
 #define ARDUINO_AVR_MEGA2560 1
-/// This is the port which Arduino Server will use for all unicast communication with it's peers
-#define OC_WELL_KNOWN_PORT 5683
 
 #define JSON_BASE00 "{\"href\":\"\",\"rep\":{"
 #define JSON_BASE01 "\"0\":\"MAC\",\"1\":\"string\",\"2\":\""
@@ -205,7 +203,7 @@ void setup()
 	}
 
 	// Initialize the OC Stack in Server mode
-	if (OCInit(NULL, OC_WELL_KNOWN_PORT, OC_SERVER) != OC_STACK_OK)
+	if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
 	{
 		OC_LOG(ERROR, TAG, PCF("OCStack init error"));
 		return;

@@ -37,8 +37,6 @@
 #define SLAVER_EA	2
 
 #define ARDUINO_AVR_MEGA2560 1
-/// This is the port which Arduino Server will use for all unicast communication with it's peers
-#define OC_WELL_KNOWN_PORT 5683
 
 PROGMEM const char TAG[] = "TrackeeSensor";
 
@@ -319,7 +317,6 @@ void setup()
 	OC_LOG_INIT();
 
 	OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
-	//    uint16_t port = OC_WELL_KNOWN_PORT;
 
 	// Connect to Ethernet or WiFi network
 	if (ConnectToNetwork() != 0)
@@ -329,7 +326,7 @@ void setup()
 	}
 
 	// Initialize the OC Stack in Server mode
-	if (OCInit(NULL, OC_WELL_KNOWN_PORT, OC_SERVER) != OC_STACK_OK)
+	if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
 	{
 		OC_LOG(ERROR, TAG, PCF("OCStack init error"));
 		return;

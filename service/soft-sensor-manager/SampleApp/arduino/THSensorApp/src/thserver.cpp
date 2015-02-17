@@ -58,9 +58,6 @@ typedef struct THRESOURCE
 
 static THResource TH;
 
-/// This is the port which Arduino Server will use for all unicast communication with it's peers
-static uint16_t OC_WELL_KNOWN_PORT = 5683;
-
 #define JSON_BASE00 "{\"href\":\"\",\"rep\":{"
 #define JSON_BASE01 "\"0\":\"temperature\",\"1\":\"int\",\"2\":\""
 #define JSON_BASE02 "\",\"3\":\"humidity\",\"4\":\"int\",\"5\":\""
@@ -349,7 +346,6 @@ void setup()
     OC_LOG_INIT();
 
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
-    uint16_t port = OC_WELL_KNOWN_PORT;
 
     // Connect to Ethernet or WiFi network
     if (ConnectToNetwork() != 0)
@@ -359,7 +355,7 @@ void setup()
     }
 
     // Initialize the OC Stack in Server mode
-    if (OCInit(NULL, port, OC_SERVER) != OC_STACK_OK)
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("OCStack init error"));
         return;

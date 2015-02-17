@@ -60,9 +60,6 @@ static LightResource Light;
 static char responsePayloadGet[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"on\",\"power\":10}}";
 static char responsePayloadPut[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"off\",\"power\":0}}";
 
-/// This is the port which Arduino Server will use for all unicast communication with it's peers
-static uint16_t OC_WELL_KNOWN_PORT = 5683;
-
 #ifdef ARDUINOWIFI
 // Arduino WiFi Shield
 // Note : Arduino WiFi Shield currently does NOT support multicast and therefore
@@ -254,7 +251,6 @@ void setup()
     // Note : This will initialize Serial port on Arduino at 115200 bauds
     OC_LOG_INIT();
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
-    uint16_t port = OC_WELL_KNOWN_PORT;
 
     // Connect to Ethernet or WiFi network
     if (ConnectToNetwork() != 0)
@@ -264,7 +260,7 @@ void setup()
     }
 
     // Initialize the OC Stack in Server mode
-    if (OCInit(NULL, port, OC_SERVER) != OC_STACK_OK)
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("OCStack init error"));
         return;
