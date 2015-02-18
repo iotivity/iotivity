@@ -260,7 +260,9 @@ static void CAReceiveHandler(void *data)
                     OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "CAAdapterNetDtlsDecrypt returns [%d]", ret);
                 }
                 break;
-#endif //__WITH_DTLS__            default:                // Should never occur
+#endif //__WITH_DTLS__
+            default:
+                // Should never occur
                 OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Invalid server type");
                 OICFree(ctx);
                 return;

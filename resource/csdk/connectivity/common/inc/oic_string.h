@@ -27,7 +27,8 @@
 #ifdef __cplusplus
 extern "C"
 {
-#endif // __cplusplus/**
+#endif // __cplusplus
+/**
  * Duplicates the source string and returns it.
  *
  * NOTE: Caller needs to clear this memory by calling OICFree.
@@ -42,4 +43,5 @@ char *OICStrdup(const char *str);
 
 #ifdef __cplusplus
 }
-#endif // __cplusplus#endif /* _OIC_STRING_H_ */
+#endif // __cplusplus
+#endif /* _OIC_STRING_H_ */
