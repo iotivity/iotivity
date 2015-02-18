@@ -155,12 +155,10 @@ else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__','-DTB_LOG'])
-env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC','`pkg-config','--cflags','glib-2.0`'])
-env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread', '-lglib-2.0', '-lgthread-2.0', '-llog', '-landroid'])
+env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
+env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread', '-llog', '-landroid'])
 
-env.Append(LIBS=[
-  '-lglib-2.0', '-lgthread-2.0'
-])
+env.ParseConfig("pkg-config --cflags --libs glib-2.0 gthread-2.0")
 
 # From android-5 (API > 20), all application must be built with flags '-fPIE' '-pie'.
 # Due to the limitation of Scons, it's required to added it into the command line

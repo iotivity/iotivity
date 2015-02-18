@@ -15,12 +15,10 @@ else:
 	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
 	
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
-env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC','`pkg-config','--cflags','glib-2.0`'])
-env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread', '-lglib-2.0', '-lgthread-2.0'])
+env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
+env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 
-env.Append(LIBS=[
-  '-lglib-2.0', '-lgthread-2.0'
-])
+env.ParseConfig("pkg-config --cflags --libs glib-2.0 gthread-2.0")
 
 # Set arch flags
 target_arch = env.get('TARGET_ARCH')
