@@ -818,6 +818,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         OC_LOG(ERROR, TAG,
                 PCF("The request info numOptions is greater than MAX_HEADER_OPTIONS"));
+        OCFree(serverRequest.requestToken);
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
