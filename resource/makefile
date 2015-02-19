@@ -45,7 +45,6 @@ CXX_INC	  := -I./include/
 CXX_INC	  += -I./oc_logger/include
 
 CXX_INC	  += -I./csdk/stack/include
-CXX_INC	  += -I./csdk/ocsocket/include
 CXX_INC	  += -I./csdk/ocrandom/include
 CXX_INC	  += -I./csdk/logger/include
 CXX_INC   += -I./csdk/connectivity/lib/libcoap-4.1.1

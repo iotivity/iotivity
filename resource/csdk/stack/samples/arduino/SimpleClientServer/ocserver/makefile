@@ -32,7 +32,6 @@ ROOT_DIR = ../../../../..
 LOGGER_DIR = $(ROOT_DIR)/logger
 OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
 TBSTACK_DIR = $(ROOT_DIR)/stack
-TBSOCKET_DIR = $(ROOT_DIR)/ocsocket
 
 include $(ROOT_DIR)/local.properties
 include $(ROOT_DIR)/$(PLATFORM).properties
@@ -40,7 +39,6 @@ include $(ROOT_DIR)/$(PLATFORM).properties
 VPATH := $(SDIR_ARD_PLATFORM)
 
 #include directories
-OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 LOGGER_DIR = $(ROOT_DIR)/logger
 STACK_DIR  = $(ROOT_DIR)/stack
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(OC_LOG_DIR)/include -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include

@@ -42,16 +42,16 @@ CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
 CXX_INC	  := -I$(OIC_RES)/include/
 CXX_INC   += -I$(OIC_RES)/oc_logger/include
 CXX_INC	  += -I$(OIC_RES)/csdk/stack/include
-CXX_INC	  += -I$(OIC_RES)/csdk/ocsocket/include
 CXX_INC	  += -I$(OIC_RES)/csdk/ocrandom/include
 CXX_INC	  += -I$(OIC_RES)/csdk/logger/include
-CXX_INC	  += -I$(OIC_RES)/csdk/libcoap
+CXX_INC   += -I$(OIC_RES)/csdk/connectivity/lib/libcoap-4.1.1
 
 CXX_LIBS  := -L${OIC_LIB}
 CXX_LIBS  += -loc
 CXX_LIBS  += -loctbstack
 CXX_LIBS  += -loc_logger
-CXX_LIBS  += -loc_logger_core
+#CXX_LIBS  += -loc_logger_core
+CXX_LIBS  += -lconnectivity_abstraction
 CXX_LIBS  += -lcoap
 
 all: prep_dirs OICMiddle

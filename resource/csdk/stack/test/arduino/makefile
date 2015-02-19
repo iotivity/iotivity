@@ -23,7 +23,6 @@ PLATFORM := arduinomega
 
 ROOT_DIR = ../../..
 include $(ROOT_DIR)/local.properties
-OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 LOGGER_DIR = $(ROOT_DIR)/logger
 RANDOM_DIR = $(ROOT_DIR)/ocrandom
 JSON_DIR = $(ROOT_DIR)/../../extlibs/cjson

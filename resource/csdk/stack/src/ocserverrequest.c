@@ -89,7 +89,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCQualityOfService qos, unsigned char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         unsigned char * reqJSONPayload, CAToken_t * requestToken,
-        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize,
+        unsigned char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType)
 {
     OCServerRequest * serverRequest = NULL;
@@ -112,10 +112,13 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->qos = qos;
     serverRequest->ehResponseHandler = HandleSingleResponse;
     serverRequest->numResponses = 1;
+
     if(query)
     {
-        memcpy(serverRequest->query, query, strlen((const char *)query) + 1);
+        strncpy((char*)serverRequest->query,
+                (const char*)query, sizeof(serverRequest->query) - 1);
     }
+
     if(rcvdVendorSpecificHeaderOptions)
     {
         memcpy(serverRequest->rcvdVendorSpecificHeaderOptions, rcvdVendorSpecificHeaderOptions,
@@ -136,14 +139,13 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         memset(serverRequest->requestToken, 0, CA_MAX_TOKEN_LEN + 1);
         memcpy(serverRequest->requestToken, *requestToken, CA_MAX_TOKEN_LEN);
     }
-    if(requesterAddr)
-    {
-        memcpy(&serverRequest->requesterAddr, requesterAddr, sizeof(OCDevAddr));
-    }
+
     if(resourceUrl)
     {
-        memcpy(serverRequest->resourceUrl, resourceUrl, strlen((const char *)resourceUrl) + 1);
+        strncpy((char*)serverRequest->resourceUrl,
+                (const char*)resourceUrl, sizeof(serverRequest->resourceUrl) - 1);
     }
+
     if (addressInfo)
     {
         serverRequest->addressInfo = *addressInfo;

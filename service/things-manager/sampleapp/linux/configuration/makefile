@@ -14,10 +14,9 @@ CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -ldl
 
 CXX_INC	:= -I../../ -I../../inc/ -I../../../sdk/inc/ -I../../../sdk/src/
 CXX_INC	+= -I${IOT_BASE}/include/
-CXX_INC 	+= -I${IOT_BASE}/oc_logger/include
+CXX_INC += -I${IOT_BASE}/oc_logger/include
 CXX_INC	+= -I${IOT_BASE}/csdk/stack/include
-CXX_INC	+= -I${IOT_BASE}/csdk/ocsocket/include
-CXX_INC	+= -I${IOT_BASE}/csdk/ocrandom/include
+CXX_INC += -I${IOT_BASE}/csdk/ocrandom/include
 CXX_INC	+= -I${IOT_BASE}/csdk/logger/include
 
 CXX_LIB=-L""

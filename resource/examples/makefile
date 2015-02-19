@@ -34,7 +34,6 @@ CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
 CXX_INC	  := -I../include/
 CXX_INC   += -I../oc_logger/include
 CXX_INC	  += -I../csdk/stack/include
-CXX_INC	  += -I../csdk/ocsocket/include
 CXX_INC	  += -I../csdk/ocrandom/include
 CXX_INC	  += -I../csdk/logger/include
 

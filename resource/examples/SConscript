@@ -14,7 +14,6 @@ examples_env = lib_env.Clone()
 examples_env.AppendUnique(CPPPATH = [
 		'../include/',
 		'../csdk/stack/include',
-		'../csdk/ocsocket/include',
 		'../csdk/ocrandom/include',
 		'../csdk/logger/include',
 		'../oc_logger/include'

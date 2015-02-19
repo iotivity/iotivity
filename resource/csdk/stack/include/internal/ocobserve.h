@@ -39,8 +39,7 @@ typedef struct ResourceObserver {
     CAToken_t token;
     // Resource handle
     OCResource *resource;
-    // IP address & port of client registered for observe
-    OCDevAddr *addr;
+    //TODO bundle it in Endpoint structure(address, uri, type, secured)
     /** Remote Endpoint address **/
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
@@ -77,7 +76,6 @@ OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
                            CAToken_t          *token,
-                           OCDevAddr          *addr,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            CAAddress_t          *addressInfo,

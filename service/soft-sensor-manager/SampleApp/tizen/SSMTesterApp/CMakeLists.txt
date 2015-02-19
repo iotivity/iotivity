@@ -10,7 +10,6 @@ SET(CMAKE_EXE_LINKER_FLAGS " -Wl,--as-needed -Wl,--hash-style=both")
 
 #INCLUDE_DIRECTORIES(include)
 #INCLUDE_DIRECTORIES(csdk/stack/include)
-#INCLUDE_DIRECTORIES(csdk/ocsocket/include)
 #INCLUDE_DIRECTORIES(csdk/ocrandom/include)
 #INCLUDE_DIRECTORIES(csdk/logger/include)
 #INCLUDE_DIRECTORIES(${INCLUDE_INSTALL_DIR}/boost)

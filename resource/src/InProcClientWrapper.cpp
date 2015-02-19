@@ -699,14 +699,18 @@ namespace OC
     OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle,
             OCClientResponse* clientResponse)
     {
-        char stringAddress[DEV_ADDR_SIZE_MAX];
         ostringstream os;
         uint16_t port;
+        uint8_t a;
+        uint8_t b;
+        uint8_t c;
+        uint8_t d;
 
-        if(OCDevAddrToString(clientResponse->addr, stringAddress) == 0 &&
+        if(OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) == 0 &&
                 OCDevAddrToPort(clientResponse->addr, &port) == 0)
         {
-            os<<stringAddress<<":"<<port;
+            os<<static_cast<int>(a)<<"."<<static_cast<int>(b)<<"."<<static_cast<int>(c)
+                    <<"."<<static_cast<int>(d)<<":"<<static_cast<int>(port);
 
             ClientCallbackContext::SubscribePresenceContext* context =
                 static_cast<ClientCallbackContext::SubscribePresenceContext*>(ctx);
@@ -718,7 +722,7 @@ namespace OC
         }
         else
         {
-            oclog() << "subscribePresenceCallback(): OCDevAddrToString() or OCDevAddrToPort() "
+            oclog() << "subscribePresenceCallback(): OCDevAddrToIPv4Addr() or OCDevAddrToPort() "
                     <<"failed"<< std::flush;
         }
         return OC_STACK_KEEP_TRANSACTION;

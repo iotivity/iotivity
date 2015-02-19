@@ -40,7 +40,6 @@ CONNECTIVITY_DIR= $(ROOT_DIR)/../csdk/connectivity
 INC_DIRS  := -I../include/
 INC_DIRS  += -I../oc_logger/include
 INC_DIRS  += -I../csdk/stack/include
-INC_DIRS  += -I../csdk/ocsocket/include
 INC_DIRS  += -I../csdk/ocrandom/include
 INC_DIRS  += -I../csdk/logger/include
 INC_DIRS  += -I$(GTEST_DIR)/include

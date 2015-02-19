@@ -15,7 +15,6 @@ envClient = env.Clone()
 envClient.AppendUnique(CPPPATH = [
                 IOTIVITY_ROOT + '/resource/include', 
                 IOTIVITY_ROOT + '/resource/csdk/stack/include',
-                IOTIVITY_ROOT + '/resource/csdk/ocsocket/include',
                 IOTIVITY_ROOT + '/resource/oc_logger/include',
                 ])
 envClient.AppendUnique(LIBPATH = [IOTIVITY_LIBS_PATH])
@@ -58,7 +57,6 @@ try:
     envServer.AppendUnique(CPPPATH = [
                 sdk_root + '/usr/include/iotivity/',
                 sdk_root + '/usr/include/iotivity/stack/',
-                sdk_root + '/usr/include/iotivity/ocsocket/',
                 sdk_root + '/usr/include/iotivity/oc_logger/',
                 ])	                
 except:

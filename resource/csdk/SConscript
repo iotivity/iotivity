@@ -21,7 +21,6 @@ if target_os == 'arduino':
 ######################################################################
 liboctbstack_env.PrependUnique(CPPPATH = [
 		'../../extlibs/cjson/',
-		'ocsocket/include',
 		'logger/include',
 		'ocrandom/include',
 		'ocmalloc/include',
@@ -72,7 +71,6 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'occollection.c',
 	OCTBSTACK_SRC + 'oicgroup.c',
 	'security/src/ocsecurity.c',
-	'ocsocket/src/ocsocket.c',
 	'logger/src/logger.c',
 	'ocrandom/src/ocrandom.c',
 	'ocmalloc/src/ocmalloc.c'

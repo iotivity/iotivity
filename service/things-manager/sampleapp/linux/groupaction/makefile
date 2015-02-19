@@ -15,7 +15,6 @@ CXX_INC	:= -I../../ -I../../inc/
 CXX_INC	+= -I${IOT_BASE}/include/
 CXX_INC	+= -I${IOT_BASE}/oc_logger/include
 CXX_INC	+= -I${IOT_BASE}/csdk/stack/include
-CXX_INC	+= -I${IOT_BASE}/csdk/ocsocket/include
 CXX_INC	+= -I${IOT_BASE}/csdk/ocrandom/include
 CXX_INC	+= -I${IOT_BASE}/csdk/logger/include
 CXX_INC	+= -I../../../sdk/inc

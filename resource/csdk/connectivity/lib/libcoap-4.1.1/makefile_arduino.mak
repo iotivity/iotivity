@@ -38,8 +38,6 @@ ifeq (arduino, $(findstring arduino,$(PLATFORM)))
 	SOURCESCPP:= Time.cpp
 	OBJECTSCPP:= $(patsubst %.cpp, %.o, $(SOURCESCPP))
 	VPATH += $(SDIR_ARD_TIME)
-else
-	#SOURCES += ocsocket.c
 endif
 
 OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))

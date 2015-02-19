@@ -111,8 +111,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
-                        &resourceObserver->token, resourceObserver->addr,
-                        resourceObserver->resUri, 0,
+                        &resourceObserver->token, resourceObserver->resUri, 0,
                         &(resourceObserver->addressInfo), resourceObserver->connectivityType);
 
                 if(request)
@@ -145,8 +144,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
-                        &resourceObserver->token, resourceObserver->addr,
-                        resourceObserver->resUri, 0,
+                        &resourceObserver->token, resourceObserver->resUri, 0,
                         &(resourceObserver->addressInfo), resourceObserver->connectivityType);
 
                 if(result == OC_STACK_OK)
@@ -212,7 +210,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observation->query,
                         NULL, NULL, &observation->token,
-                        observation->addr, observation->resUri, 0,
+                        observation->resUri, 0,
                         &(observation->addressInfo), observation->connectivityType);
 
                 if(request)
@@ -293,7 +291,6 @@ OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
                            CAToken_t          *token,
-                           OCDevAddr          *addr,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            CAAddress_t          *addressInfo,
@@ -323,9 +320,6 @@ OCStackResult AddObserver (const char         *resUri,
         memset(obsNode->token, 0, CA_MAX_TOKEN_LEN + 1);
         memcpy(obsNode->token, *token, CA_MAX_TOKEN_LEN);
 
-        obsNode->addr = (OCDevAddr *)OCMalloc(sizeof(OCDevAddr));
-        VERIFY_NON_NULL (obsNode->addr);
-        memcpy (obsNode->addr, addr, sizeof(OCDevAddr));
         obsNode->addressInfo = *addressInfo;
         obsNode->connectivityType = connectivityType;
         obsNode->resource = resHandle;
@@ -338,7 +332,6 @@ exit:
     {
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);
-        OCFree(obsNode->addr);
         OCFree(obsNode);
     }
     return OC_STACK_NO_MEMORY;
@@ -395,7 +388,6 @@ OCStackResult DeleteObserverUsingToken (CAToken_t * token)
         LL_DELETE (serverObsList, obsNode);
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);
-        OCFree(obsNode->addr);
         OCFree(obsNode);
     }
     // it is ok if we did not find the observer...

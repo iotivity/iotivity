@@ -52,6 +52,7 @@
 #include <arpa/inet.h>
 #endif
 
+
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -129,6 +130,26 @@ static OCStackResult FormOCResponse(OCResponse * * responseLoc,
 
     *responseLoc = response;
     return OC_STACK_OK;
+}
+
+/// This method is used to create the IPv4 dev_addr structure.
+/// TODO: Remove in future. Temporary helper function.
+/// Builds a socket interface address using IP address and port number
+static int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
+        uint16_t port, OCDevAddr *ipAddr)
+{
+    if ( !ipAddr ) {
+        OC_LOG(FATAL, TAG, "Invalid argument");
+        return 1;
+    }
+
+    ipAddr->addr[0] = a;
+    ipAddr->addr[1] = b;
+    ipAddr->addr[2] = c;
+    ipAddr->addr[3] = d;
+    *((uint16_t*)&(ipAddr->addr[4])) = port;
+
+    return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -873,8 +894,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->observationOption, protocolRequest->qos,
                 protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
                 protocolRequest->reqJSONPayload, &protocolRequest->requestToken,
-                &protocolRequest->requesterAddr, protocolRequest->resourceUrl,
-                protocolRequest->reqTotalSize,
+                protocolRequest->resourceUrl,protocolRequest->reqTotalSize,
                 &protocolRequest->addressInfo, protocolRequest->connectivityType);
         if (OC_STACK_OK != result)
         {
@@ -2069,10 +2089,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 
     if(OC_PRESENCE_UNINITIALIZED == presenceState)
     {
-        OCDevAddr multiCastAddr;
         presenceState = OC_PRESENCE_INITIALIZED;
-
-        OCBuildIPv4Address(224, 0, 1, 187, 5683, &multiCastAddr);
 
         CAAddress_t addressInfo;
         strncpy(addressInfo.IP.ipAddress, "224.0.1.187", CA_IPADDR_SIZE);
@@ -2090,7 +2107,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         }
 
         AddObserver(OC_PRESENCE_URI, NULL, 0, &caToken,
-                &multiCastAddr, (OCResource *)presenceResource.handle, OC_LOW_QOS,
+                (OCResource *)presenceResource.handle, OC_LOW_QOS,
                 &addressInfo, CA_WIFI);
     }
 
@@ -3681,3 +3698,35 @@ const char* OCGetServerInstanceIDString(void)
 
     return buffer;
 }
+
+/// Retrieve the IPv4 address embedded inside OCDev address data structure
+int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
+        uint8_t *c, uint8_t *d )
+{
+    if ( !ipAddr || !a || !b || !c || !d ) {
+        OC_LOG(FATAL, TAG, "Invalid argument");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    *a = ipAddr->addr[0];
+    *b = ipAddr->addr[1];
+    *c = ipAddr->addr[2];
+    *d = ipAddr->addr[3];
+
+    return OC_STACK_OK;
+}
+
+
+/// Retrieve the IPv4 address embedded inside OCDev address data structure
+int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
+{
+    if ( !ipAddr || !port ) {
+        OC_LOG(FATAL, TAG, "Invalid argument");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    *port = *((uint16_t*)&ipAddr->addr[4]);
+
+    return OC_STACK_OK;
+}
+

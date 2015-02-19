@@ -10,7 +10,6 @@ DEPEND_DIR:= $(LIB_DIR)/dependencies
 CXX_INC := -I$(LIB_DIR)/include/
 CXX_INC += -I$(LIB_DIR)/oc_logger/include/
 CXX_INC += -I$(LIB_DIR)/csdk/stack/include/
-CXX_INC += -I$(LIB_DIR)/csdk/ocsocket/include/
 CXX_INC += -I$(LIB_DIR)/csdk/ocrandom/include/
 CXX_INC += -I$(LIB_DIR)/csdk/logger/include/
 CXX_INC += -I$(BOOST_DIR)

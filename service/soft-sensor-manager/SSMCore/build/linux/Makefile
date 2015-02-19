@@ -13,7 +13,7 @@ EXCLUDE_LIST=SSMCore_JNI.cpp
 # C++ type Compile Flag define.
 CXX=g++
 CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -ldl -DNDEBUG
-CXX_INC=-I${INC_PATH}/ -I${SRC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
+CXX_INC=-I${INC_PATH}/ -I${SRC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include/ -I${IOT_BASE}/csdk/stack/include  -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
 CXX_LIB=-L""
 
 CXX_SRCPATH=${wildcard ${SRC_PATH}/**/*.cpp}
@@ -25,7 +25,7 @@ CXX_OBJLIST=${CXX_USESRCS:.cpp=.o}
 # C type Compile Flag define.
 GCC=gcc
 GCC_FLAGS=-Wall -pthread -DLINUX -ldl -DNDEBUG
-GCC_INC=-I../../ -I${INC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST} -I${SRC_PATH} -I${SRC_PATH}/Common -I${SRC_PATH}/QueryProcessor -I${SRC_PATH}/SensorProcessor -I${SRC_PATH}/SSMInterface
+GCC_INC=-I../../ -I${INC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST} -I${SRC_PATH} -I${SRC_PATH}/Common -I${SRC_PATH}/QueryProcessor -I${SRC_PATH}/SensorProcessor -I${SRC_PATH}/SSMInterface
 
 GCC_SRCPATH=${wildcard ${SRC_PATH}/**/*.c}
 GCC_SRCLIST=${notdir ${GCC_SRCPATH}}

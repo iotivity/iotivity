@@ -662,7 +662,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, &request->requestToken,
-                &request->requesterAddr, resource, request->qos,
+                resource, request->qos,
                 &request->addressInfo, request->connectivityType);
         if(result == OC_STACK_OK)
         {

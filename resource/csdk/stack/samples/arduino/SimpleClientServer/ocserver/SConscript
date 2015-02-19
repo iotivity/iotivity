@@ -5,7 +5,6 @@ arduino_simplecs_env = env.Clone()
 # Build flags
 ######################################################################
 arduino_simplecs_env.PrependUnique(CPPPATH = [
-		'../../../../../ocsocket/include',
 		'../../../../../logger/include',
 		'../../../../../stack/include',
 		'../../../../../../oc_logger/include'

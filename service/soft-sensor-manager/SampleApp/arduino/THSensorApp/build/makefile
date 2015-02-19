@@ -15,7 +15,6 @@ TB_DIR = ../../../../../../resource/csdk
 LOGGER_DIR = $(TB_DIR)/logger
 OC_LOG_DIR = $(TB_DIR)/../oc_logger
 TBSTACK_DIR = $(TB_DIR)/stack
-TBSOCKET_DIR = $(TB_DIR)/ocsocket
 
 include $(TB_DIR)/local.properties
 include $(TB_DIR)/$(PLATFORM).properties
@@ -23,7 +22,6 @@ include $(TB_DIR)/$(PLATFORM).properties
 VPATH := $(SDIR_ARD_PLATFORM)
 
 #include directories
-OCSOCK_DIR = $(TB_DIR)/ocsocket
 LOGGER_DIR = $(TB_DIR)/logger
 STACK_DIR  = $(TB_DIR)/stack
 INC_DIRS = -I$(OCSOCK_DIR)/include/ -I$(OC_LOG_DIR)/include -I$(LOGGER_DIR)/include -I$(STACK_DIR)/include

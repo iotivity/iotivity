@@ -21,7 +21,7 @@
 #ifndef OCSTACK_H_
 #define OCSTACK_H_
 
-#include "ocsocket.h"
+#include <stdint.h>
 #include "ocstackconfig.h"
 
 #ifdef __cplusplus
@@ -52,10 +52,26 @@ extern uint32_t PresenceTimeOut[];
 // Typedefs
 //-----------------------------------------------------------------------------
 
+/** This would need to be modified for specific platforms and specific
+ *  technologies
+ */
+#define DEV_ADDR_SIZE_MAX (16)
+
+/**
+ * Data structure to encapsulate IPv4/IPv6/Contiki/lwIP device addresses
+ *
+*/
+typedef struct OCDevAddr
+{
+    uint32_t     size;                    /**< length of the address stored in addr field. */
+    uint8_t      addr[DEV_ADDR_SIZE_MAX]; /**< device address. */
+}OCDevAddr;
+
 /**
  * OC Virtual resources supported by every OC device
  */
-typedef enum {
+typedef enum
+{
     OC_WELL_KNOWN_URI= 0,       // "/oc/core"
     OC_DEVICE_URI,              // "/oc/core/d"
     OC_RESOURCE_TYPES_URI,      // "/oc/core/d/type"
@@ -865,6 +881,41 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
  */
 OCStackResult OCCancelResponse(OCResponseHandle responseHandle);
 
+//Utility methods
+
+//-- OCDevAddrToIPv4Addr -------------------------------------------------
+/**
+ * This method is used to retrieved the IPv4 address from OCDev address
+ * data structure.
+ *
+ * @param[in]  ipAddr
+ *              OCDevAddr address.
+ * @param[out]  a first byte of IPv4 address.
+ * @param[out]  b second byte of IPv4 address.
+ * @param[out]  c third byte of IPv4 address.
+ * @param[out]  d fourth byte of IPv4 address.
+ *
+ * @retval 0 for Success, otherwise some error value
+ */
+//------------------------------------------------------------------------
+int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
+            uint8_t *c, uint8_t *d );
+
+
+//-- OCDevAddrToPort -------------------------------------------------
+/**
+ * This method is used to retrieve the port number from OCDev address
+ * data structure.
+ *
+ * @param[in]  ipAddr
+ *              OCDevAddr address.
+ * @param[out] port
+ *              port number
+ *
+ * @retval 0 for Success, otherwise some error value
+ */
+//------------------------------------------------------------------------
+int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port);
 
 #ifdef __cplusplus
 }

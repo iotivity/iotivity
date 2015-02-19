@@ -50,9 +50,6 @@ typedef struct OCServerRequest {
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
-    //////////////////////////////////////////////////////////
-    // IP address & port of client registered for observe   //These
-    OCDevAddr requesterAddr;                                //Members
     // token for the observe request
     CAToken_t requestToken;
     // The ID of CoAP pdu                                   //Kept in
@@ -93,7 +90,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCQualityOfService qos, unsigned char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         unsigned char * reqJSONPayload, CAToken_t * requestToken,
-        OCDevAddr * requesterAddr, unsigned char * resourceUrl, size_t reqTotalSize,
+        unsigned char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType);
 
 OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle);

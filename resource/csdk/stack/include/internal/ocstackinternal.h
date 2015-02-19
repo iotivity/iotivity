@@ -83,14 +83,15 @@ typedef struct {
     // An array of the received vendor specific header options
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
+
     /** Remote Endpoint address **/
-    CAAddress_t addressInfo;
-    /** Connectivity of the endpoint**/
-    CAConnectivityType_t connectivityType;
     //////////////////////////////////////////////////////////
     // TODO: Consider moving these member to CoAP
     // IP address & port of client registered for observe
-    OCDevAddr requesterAddr;
+    // TODO: YK bundle this up as endpoint
+    CAAddress_t addressInfo;
+    /** Connectivity of the endpoint**/
+    CAConnectivityType_t connectivityType;
 
     //token for the observe request
     CAToken_t requestToken;

@@ -5,7 +5,6 @@ SET(SS_SAMPLE_THSEN1_PATH, "${SS_SAMPLE_PATH}/THSensorApp1");
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/resource/include)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/resource/csdk/stack/include)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/resource/csdk/ocsocket/include)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/resource/csdk/ocrandom/include)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/resource/csdk/logger/include)
 INCLUDE_DIRECTORIES(${INCLUDE_INSTALL_DIR}/boost)

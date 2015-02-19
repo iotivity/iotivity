@@ -6,7 +6,6 @@ samples_env = env.Clone()
 # Build flags
 ######################################################################
 samples_env.PrependUnique(CPPPATH = [
-		'../../../../ocsocket/include',
 		'../../../../logger/include',
 		'../../../../stack/include',
 		'../../../../ocmalloc/include',

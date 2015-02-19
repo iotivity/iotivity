@@ -201,9 +201,7 @@ namespace OC
         private:
             std::string ConvertOCAddrToString(OCSecureType sec, int secureport)
             {
-                char stringAddress[DEV_ADDR_SIZE_MAX];
                 uint16_t port;
-
                 ostringstream os;
 
                 if(sec== OCSecureType::IPv4)
@@ -220,18 +218,19 @@ namespace OC
                     throw ResourceInitException(false, false, false, false, false, true);
                 }
 
-                if(0== OCDevAddrToString(&m_address, stringAddress))
-                {
-                    // nothing to do, successful case.
-                }
-                else
+                uint8_t a;
+                uint8_t b;
+                uint8_t c;
+                uint8_t d;
+                if(OCDevAddrToIPv4Addr(&m_address, &a, &b, &c, &d) != 0)
                 {
                     oclog() << "ConvertOCAddrToString(): Invalid Ip"
                             << std::flush;
                     throw ResourceInitException(false, false, false, false, false, true);
                 }
 
-                os<<stringAddress;
+                os<<static_cast<int>(a)<<"."<<static_cast<int>(b)
+                        <<"."<<static_cast<int>(c)<<"."<<static_cast<int>(d);
 
                 if(sec == OCSecureType::IPv4Secure && secureport>0 && secureport<=65535)
                 {

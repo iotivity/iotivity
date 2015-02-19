@@ -495,6 +495,7 @@ int main(int argc, char* argv[])
     }
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
+
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack init error");

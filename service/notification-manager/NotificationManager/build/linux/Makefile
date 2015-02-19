@@ -3,7 +3,6 @@ VPATH = ../../src:../../src/linux:../../../SampleApp/linux/sampleConsumer:../../
 OCPATH = ../../../../../resource
 OCINCLUDE = $(OCPATH)/include
 STACKINCLUDE = $(OCPATH)/csdk/stack/include
-SOCKETINCLUDE = $(OCPATH)/csdk/ocsocket/include
 OCLOGGERINCLUDE = $(OCPATH)/oc_logger/include
 NOTIFICATIONINCLUDE = ../../include
 BOOSTPATH = ../../../../../boost_1_51_0
