@@ -712,9 +712,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
         return;
     }
 
-    OCServerProtocolRequest serverRequest;
+    OCServerProtocolRequest serverRequest = {};
 
-    memset (&serverRequest, 0, sizeof(OCServerProtocolRequest));
     OC_LOG_V(INFO, TAG, PCF("***** Endpoint URI ***** : %s\n"), (char*)endPoint->resourceUri);
 
     char * newUri = (char *)endPoint->resourceUri;
@@ -722,12 +721,28 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     getQueryFromUri(endPoint->resourceUri, &query, &newUri);
     OC_LOG_V(INFO, TAG, PCF("**********URI without query ****: %s\n"), newUri);
     OC_LOG_V(INFO, TAG, PCF("**********Query ****: %s\n"), query);
-    //copy URI
-    memcpy (&(serverRequest.resourceUrl), newUri, strlen(newUri));
+    if(strlen(newUri) < MAX_URI_LENGTH)
+    {
+        //copy URI
+        memcpy (&(serverRequest.resourceUrl), newUri, strlen(newUri));
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("URI length exceeds MAX_URI_LENGTH."));
+        return;
+    }
     //copy query
     if(query)
     {
-        memcpy (&(serverRequest.query), query, strlen((char*)query));
+        if(strlen((char*)query) < MAX_QUERY_LENGTH)
+        {
+            memcpy (&(serverRequest.query), query, strlen((char*)query));
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, PCF("Query length exceeds MAX_QUERY_LENGTH."));
+            return;
+        }
     }
     //copy request payload
     if (requestInfo->info.payload)
@@ -774,14 +789,13 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", CA_MAX_TOKEN_LEN);
     OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token, CA_MAX_TOKEN_LEN);
 
-    serverRequest.requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
+    serverRequest.requestToken = (CAToken_t)OCCalloc(1, CA_MAX_TOKEN_LEN+1);
     // Module Name
     if (!serverRequest.requestToken)
     {
         OC_LOG(FATAL, TAG, "Server Request Token is NULL");
         return;
     }
-    memset(serverRequest.requestToken, 0, CA_MAX_TOKEN_LEN + 1);
     memcpy(serverRequest.requestToken, requestInfo->info.token, CA_MAX_TOKEN_LEN);
 
     if (requestInfo->info.type == CA_MSG_CONFIRM)
