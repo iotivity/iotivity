@@ -225,7 +225,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
 
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCEntityHandlerResponse response;
-    char payload[MAX_RESPONSE_LENGTH];
+    char payload[MAX_RESPONSE_LENGTH] = {0};
 
     if (flag & OC_INIT_FLAG)
     {
@@ -256,6 +256,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             {
                 OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                         entityHandlerRequest->method);
+                ehResult = OC_EH_ERROR;
             }
 
             if (ehResult == OC_EH_OK)

@@ -129,7 +129,7 @@ int main()
 
     if ((fpc = (FILE*) fopen("client_cred.bin", "wb")) != NULL)
     {
-        fwrite(oscd_c, SizeOfOCConfigData(oscd_c), 1, fps);
+        fwrite(oscd_c, SizeOfOCConfigData(oscd_c), 1, fpc);
         fclose(fpc);
     }
 
@@ -165,5 +165,6 @@ int main()
     printStruct("Server", (OCSecConfigData*)buf_s);
     printStruct("Client", (OCSecConfigData*)buf_c);
 
+    return 1;
 }
 
