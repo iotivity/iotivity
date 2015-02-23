@@ -52,7 +52,6 @@
 #include <arpa/inet.h>
 #endif
 
-
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -1299,6 +1298,7 @@ static OCStackResult verifyUriQueryLength(const char * inputUri,
         uint16_t uriLen);
 static uint8_t OCIsPacketTransferRequired(const char *request, const char *response, uint16_t size);
 OCStackResult getResourceType(const char * query, unsigned char** resourceType);
+static CAResult_t OCSelectNetwork();
 
 //-----------------------------------------------------------------------------
 // Public APIs
@@ -1321,6 +1321,7 @@ OCStackResult getResourceType(const char * query, unsigned char** resourceType);
 OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
 {
     OCStackResult result = OC_STACK_ERROR;
+    CAResult_t caResult = CA_STATUS_OK;
     OC_LOG(INFO, TAG, PCF("Entering OCInit"));
 
     // Validate mode
@@ -1336,16 +1337,19 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     }
 
     OCSeedRandom();
-    CAInitialize();
-    //It is ok to select network to CA_WIFI for now
-#ifdef WITH_ARDUINO
-    CAResult_t caResult = CASelectNetwork(CA_ETHERNET);
-#else
-    CAResult_t caResult = CASelectNetwork(CA_WIFI|CA_ETHERNET);
-#endif
+    caResult = CAInitialize();
     if(caResult == CA_STATUS_OK)
     {
-        OC_LOG(INFO, TAG, PCF("CASelectNetwork to WIFI"));
+        caResult = OCSelectNetwork();
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("Failed to initialize the CA Layer."));
+        return CAResultToOCResult(caResult);
+    }
+
+    if(caResult == CA_STATUS_OK)
+    {
         CARegisterHandler(HandleCARequests, HandleCAResponses);
         {
             OC_LOG(INFO, TAG, PCF("CARegisterHandler..."));
@@ -1376,14 +1380,13 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
             }
 
         }
-        if (caResult == CA_STATUS_OK)
-        {
-            result = OC_STACK_OK;
-        }
-        else
-        {
-            result = OC_STACK_ERROR;
-        }
+
+        result = CAResultToOCResult(caResult);
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("Failed to initialize any transports."));
+        return CAResultToOCResult(caResult);
     }
 
     myStackMode = mode;
@@ -3728,6 +3731,49 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
     *port = *((uint16_t*)&ipAddr->addr[4]);
 
     return OC_STACK_OK;
+}
+
+/*
+ * Attempts to initialize every network interface that the CA Layer might have compiled in.
+ *
+ * Note: At least one interface must succeed to initialize. If all calls to @ref CASelectNetwork
+ * return something other than @ref CA_STATUS_OK, then this function fails.
+ *
+ * @return
+ * CA_STATUS_OK - Success
+ * CA_NOT_SUPPORTED or CA_STATUS_FAILED - None of the transports successfully initialized.
+ */
+CAResult_t OCSelectNetwork()
+{
+    CAResult_t retResult = CA_STATUS_FAILED;
+    CAResult_t caResult = CA_STATUS_OK;
+
+    CAConnectivityType_t connTypes[] = {
+            CA_ETHERNET,
+            CA_WIFI,
+            CA_EDR,
+            CA_LE};
+    int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
+
+    for(int i = 0; i<numConnTypes; i++)
+    {
+        // Ignore CA_NOT_SUPPORTED error. The CA Layer may have not compiled in the interface.
+        if(caResult == CA_STATUS_OK || caResult == CA_NOT_SUPPORTED)
+        {
+           caResult = CASelectNetwork(connTypes[i]);
+           if(caResult == CA_STATUS_OK)
+           {
+               retResult = CA_STATUS_OK;
+           }
+        }
+    }
+
+    if(retResult != CA_STATUS_OK)
+    {
+        return caResult; // Returns error of appropriate transport that failed fatally.
+    }
+
+    return retResult;
 }
 
 /**
