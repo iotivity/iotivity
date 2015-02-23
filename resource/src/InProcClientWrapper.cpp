@@ -265,8 +265,7 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            OCDoHandle handle;
-            result = OCDoResource(&handle, OC_REST_GET,
+            result = OCDoResource(nullptr, OC_REST_GET,
                                   deviceURI.c_str(),
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
@@ -565,13 +564,12 @@ namespace OC
         if(cLock)
         {
             OCHeaderOption options[MAX_HEADER_OPTIONS];
-            OCDoHandle handle;
 
             assembleHeaderOptions(options, headerOptions);
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
 
-            result = OCDoResource(&handle, OC_REST_DELETE,
+            result = OCDoResource(nullptr, OC_REST_DELETE,
                                   os.str().c_str(), nullptr,
                                   nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),

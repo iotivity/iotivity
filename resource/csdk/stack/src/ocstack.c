@@ -1577,6 +1577,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     CAInfo_t requestData;
     CARequestInfo_t requestInfo;
     CAGroupEndpoint_t grpEnd = {0};
+    OCDoHandle resHandle = NULL;
 
     // To track if memory is allocated for additional header options
     uint8_t hdrOptionMemAlloc = 0;
@@ -1662,8 +1663,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    *handle = GenerateInvocationHandle();
-    if(!*handle)
+    resHandle = GenerateInvocationHandle();
+    if(!resHandle)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
@@ -1791,11 +1792,16 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    if((result = AddClientCB(&clientCB, cbData, &token, handle, method,
+    if((result = AddClientCB(&clientCB, cbData, &token, &resHandle, method,
                              requestUri, resourceType)) != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
+    }
+
+    if(handle)
+    {
+        *handle = resHandle;
     }
 
 exit:
@@ -1807,9 +1813,11 @@ exit:
     {
         OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
         FindAndDeleteClientCB(clientCB);
+        OCFree(resHandle);
     }
     CADestroyRemoteEndpoint(endpoint);
     OCFree(grpEnd.resourceUri);
+
     if (hdrOptionMemAlloc)
     {
         OCFree(requestData.options);

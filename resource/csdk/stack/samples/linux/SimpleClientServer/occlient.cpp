@@ -595,7 +595,6 @@ int InitDeviceDiscovery()
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
     char szQueryUri[64] = { 0 };
 
     cbData.cb = DeviceDiscoveryReqCB;
@@ -614,12 +613,12 @@ int InitDeviceDiscovery()
 
     if(UNICAST_DISCOVERY)
     {
-        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
     {
-        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
 
@@ -635,7 +634,6 @@ int InitDiscovery()
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
 
@@ -653,12 +651,12 @@ int InitDiscovery()
     cbData.cd = NULL;
     if(UNICAST_DISCOVERY)
     {
-        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
     {
-        ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
     if (ret != OC_STACK_OK)

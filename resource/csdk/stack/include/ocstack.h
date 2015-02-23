@@ -455,7 +455,11 @@ OCStackResult OCProcess();
  * URI).
  *
  * @param handle             - @ref OCDoHandle to refer to the request sent out on behalf of
- *                             calling this API.
+ *                             calling this API. This handle can be used to cancel this operation
+ *                             via the OCCancel API.
+ *                             Note: This reference is handled internally, and
+ *                             should not be free'd by the consumer.  A NULL handle is permitted
+ *                             in the event where the caller has no use for the return value.
  * @param method             - @ref OCMethod to perform on the resource
  * @param requiredUri        - URI of the resource to interact with
  * @param referenceUri       - URI of the reference resource

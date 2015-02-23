@@ -222,7 +222,6 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
     std::ostringstream getQuery;
     getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" <<
             getPortTBServer(clientResponse) << "/SomeUnknownResource";
@@ -230,7 +229,7 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(&handle, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
+    ret = OCDoResource(NULL, OC_REST_GET, getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
@@ -272,7 +271,6 @@ int InitPutRequest(OCClientResponse * clientResponse)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
     //* Make a PUT query*/
     std::ostringstream getQuery;
     getQuery << "coap://" << getIPAddrTBServer(clientResponse) << ":" <<
@@ -283,7 +281,7 @@ int InitPutRequest(OCClientResponse * clientResponse)
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
 
-    ret = OCDoResource(&handle, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(),
+    ret = OCDoResource(NULL, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(),
                         OC_CONNTYPE, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
@@ -297,7 +295,6 @@ int InitGetRequest(OCClientResponse * clientResponse)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
 
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
@@ -317,7 +314,7 @@ int InitGetRequest(OCClientResponse * clientResponse)
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET,
+    ret = OCDoResource(NULL, OC_REST_GET,
             getQuery.str().c_str(), 0, 0, OC_CONNTYPE, OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
@@ -331,7 +328,6 @@ int InitDiscovery()
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
 
@@ -340,7 +336,7 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_ALL,
+    ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_ALL,
                         OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
