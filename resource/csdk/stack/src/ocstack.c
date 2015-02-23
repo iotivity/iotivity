@@ -3730,3 +3730,44 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
     return OC_STACK_OK;
 }
 
+/**
+ * Takes a @ref CAResult_t and converts it to a similar or equivalent @ref OCStackResult value.
+ *
+ * @return @ref OCStackResult - The equivalent or similar result code to the in-param caResult.
+ */
+OCStackResult CAResultToOCResult(CAResult_t caResult)
+{
+    switch (caResult)
+    {
+        case CA_STATUS_OK:
+            return OC_STACK_OK;
+        case CA_STATUS_INVALID_PARAM:
+            return OC_STACK_INVALID_PARAM;
+        case CA_ADAPTER_NOT_ENABLED:
+            return OC_STACK_ADAPTER_NOT_ENABLED;
+        case CA_SERVER_STARTED_ALREADY:
+            return OC_STACK_OK;
+        case CA_SERVER_NOT_STARTED:
+            return OC_STACK_ERROR;
+        case CA_DESTINATION_NOT_REACHABLE:
+            return OC_STACK_COMM_ERROR;
+        case CA_SOCKET_OPERATION_FAILED:
+            return OC_STACK_COMM_ERROR;
+        case CA_SEND_FAILED:
+            return OC_STACK_COMM_ERROR;
+        case CA_RECEVIE_FAILED:
+            return OC_STACK_COMM_ERROR;
+        case CA_MEMORY_ALLOC_FAILED:
+            return OC_STACK_NO_MEMORY;
+        case CA_REQUEST_TIMEOUT:
+            return OC_STACK_TIMEOUT;
+        case CA_DESTINATION_DISCONNECTED:
+            return OC_STACK_COMM_ERROR;
+        case CA_STATUS_FAILED:
+            return OC_STACK_ERROR;
+        case CA_NOT_SUPPORTED:
+            return OC_STACK_NOTIMPL;
+        default:
+            return OC_STACK_ERROR;
+    }
+}
