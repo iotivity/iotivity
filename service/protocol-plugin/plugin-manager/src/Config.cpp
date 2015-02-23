@@ -51,7 +51,7 @@ PMRESULT Config::loadConfigFile(const std::string configfilepath)
 {
     // Read the xml file
     std::ifstream xmlFile(configfilepath.c_str());
-    if(!xmlFile.good())
+    if (!xmlFile.good())
     {
         return PM_S_FALSE;
     }

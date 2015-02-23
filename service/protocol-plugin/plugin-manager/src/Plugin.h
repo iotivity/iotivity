@@ -128,7 +128,7 @@ namespace OIC
         private:
             friend class CpluffAdapter;
             friend class FelixAdapter;
-              /**
+            /**
             * Set key, value. key is attribute name.
             *
             * @param key is atrribute name.
