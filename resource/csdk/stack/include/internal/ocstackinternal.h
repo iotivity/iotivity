@@ -173,6 +173,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 OCStackResult HandleStackResponses(OCResponse * response);
 #ifdef WITH_PRESENCE
 OCStackResult SendPresenceNotification(OCResourceType *resourceType);
+OCStackResult SendStopNotification();
 #endif // WITH_PRESENCE
 int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
 

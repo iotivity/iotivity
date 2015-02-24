@@ -395,6 +395,7 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, cha
     tok = strtok_r(NULL, "[:]}", &savePtr);
     payload[strlen((char *)payload)] = ':';
     *seqNum = (uint32_t) atoi(tok);
+
     tok = strtok_r(NULL, "[:]}", &savePtr);
     *maxAge = (uint32_t) atoi(tok);
     tok = strtok_r(NULL, "[:]}",&savePtr);
@@ -502,62 +503,79 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
                                 &resourceTypeName);
     }
 
-    if(maxAge == 0)
+    if(presenceSubscribe)
     {
-        OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
-        response.result = OC_STACK_PRESENCE_STOPPED;
-        if(cbNode->presence)
-        {
-            OCFree(cbNode->presence->timeOut);
-            OCFree(cbNode->presence);
-            cbNode->presence = NULL;
-        }
-    }
-    else if(presenceSubscribe)
-    {
-        if(!cbNode->presence)
-        {
-            cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
-            VERIFY_NON_NULL_V(cbNode->presence);
-            cbNode->presence->timeOut = NULL;
-            cbNode->presence->timeOut = (uint32_t *)
-                    OCMalloc(PresenceTimeOutSize * sizeof(uint32_t));
-            if(!(cbNode->presence->timeOut)){
-                OCFree(cbNode->presence);
-                result = OC_STACK_NO_MEMORY;
-            }
-        }
-
-        OC_LOG_V(INFO, TAG, "===============Update presence TTL, now time is %u", GetTime(0));
-        cbNode->presence->TTL = maxAge;
-        for(int index = 0; index < PresenceTimeOutSize; index++)
-        {
-            lowerBound = GetTime(((float)(PresenceTimeOut[index])
-                    /(float)100)*(float)cbNode->presence->TTL);
-            higherBound = GetTime(((float)(PresenceTimeOut[index + 1])
-                    /(float)100)*(float)cbNode->presence->TTL);
-            cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
-            OC_LOG_V(DEBUG, TAG, "----------------lowerBound timeout  %d", lowerBound);
-            OC_LOG_V(DEBUG, TAG, "----------------higherBound timeout %d", higherBound);
-            OC_LOG_V(DEBUG, TAG, "----------------timeOut entry  %d",
-                    cbNode->presence->timeOut[index]);
-        }
-        cbNode->presence->TTLlevel = 0;
-        OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
         if(cbNode->sequenceNumber == response.sequenceNumber)
         {
             OC_LOG(INFO, TAG, PCF("===============No presence change"));
             goto exit;
         }
-        OC_LOG(INFO, TAG, PCF("===============Presence changed, calling up the stack"));
-        cbNode->sequenceNumber = response.sequenceNumber;
 
-        // Ensure that a filter is actually applied.
-        if(resourceTypeName && cbNode->filterResourceType)
+        if(maxAge == 0)
         {
-            if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+            OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+            response.result = OC_STACK_PRESENCE_STOPPED;
+            if(cbNode->presence)
             {
-                goto exit;
+                OCFree(cbNode->presence->timeOut);
+                OCFree(cbNode->presence);
+                cbNode->presence = NULL;
+            }
+        }
+        else
+        {
+            if(!cbNode->presence)
+            {
+                cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
+
+                if(!(cbNode->presence))
+                {
+                    OC_LOG(ERROR, TAG, PCF("Could not allocate memory for cbNode->presence"));
+                    result = OC_STACK_NO_MEMORY;
+                    goto exit;
+                }
+
+                VERIFY_NON_NULL_V(cbNode->presence);
+                cbNode->presence->timeOut = NULL;
+                cbNode->presence->timeOut = (uint32_t *)
+                        OCMalloc(PresenceTimeOutSize * sizeof(uint32_t));
+                if(!(cbNode->presence->timeOut)){
+                    OC_LOG(ERROR, TAG,
+                                  PCF("Could not allocate memory for cbNode->presence->timeOut"));
+                    OCFree(cbNode->presence);
+                    result = OC_STACK_NO_MEMORY;
+                    goto exit;
+                }
+            }
+
+            OC_LOG_V(INFO, TAG, "===============Update presence TTL, now time is %u", GetTime(0));
+            cbNode->presence->TTL = maxAge;
+            for(int index = 0; index < PresenceTimeOutSize; index++)
+            {
+                lowerBound = GetTime(((float)(PresenceTimeOut[index])
+                        /(float)100)*(float)cbNode->presence->TTL);
+                higherBound = GetTime(((float)(PresenceTimeOut[index + 1])
+                        /(float)100)*(float)cbNode->presence->TTL);
+                cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
+                OC_LOG_V(DEBUG, TAG, "----------------lowerBound timeout  %d", lowerBound);
+                OC_LOG_V(DEBUG, TAG, "----------------higherBound timeout %d", higherBound);
+                OC_LOG_V(DEBUG, TAG, "----------------timeOut entry  %d",
+                        cbNode->presence->timeOut[index]);
+            }
+            cbNode->presence->TTLlevel = 0;
+            OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
+
+
+            OC_LOG(INFO, TAG, PCF("===============Presence changed, calling up the stack"));
+            cbNode->sequenceNumber = response.sequenceNumber;
+
+            // Ensure that a filter is actually applied.
+            if(resourceTypeName && cbNode->filterResourceType)
+            {
+                if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+                {
+                    goto exit;
+                }
             }
         }
     }
@@ -576,6 +594,12 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
                 goto exit;
             }
             mcNode->nonce = response.sequenceNumber;
+
+            if(maxAge == 0)
+            {
+                OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+                response.result = OC_STACK_PRESENCE_STOPPED;
+            }
         }
         else
         {
@@ -598,6 +622,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
                 OC_LOG(INFO, TAG,
                     PCF("===============No Memory for Multicast Presence Node"));
                 result = OC_STACK_NO_MEMORY;
+                OCFree(uri);
                 goto exit;
             }
         }
@@ -2143,13 +2168,25 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 OCStackResult OCStopPresence()
 {
     OCStackResult result = OC_STACK_ERROR;
-    //make resource inactive
+
+    if(presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+    }
+
+    // make resource inactive
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
-    result = SendPresenceNotification(NULL);
 
-    return result;
+    if(result != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG,
+                      PCF("Changing the presence resource properties to ACTIVE not successful"));
+        return result;
+    }
+
+    return SendStopNotification();
 }
 #endif
 
@@ -2458,19 +2495,21 @@ OCStackResult OCUnBindResource(
         if (resourceHandle == resource->rsrcResources[i]) {
             resource->rsrcResources[i] = (OCResource *) NULL;
             OC_LOG(INFO, TAG, PCF("resource unbound"));
+
+            // Send notification when resource is unbounded successfully.
+            #ifdef WITH_PRESENCE
+            if(presenceResource.handle)
+            {
+                ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
+            }
+            #endif
+
             return OC_STACK_OK;
         }
     }
 
     OC_LOG(INFO, TAG, PCF("resource not found in collection"));
-
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
-    {
-        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
-    }
-    #endif
 
     // Unable to add resourceHandle, so return error
     return OC_STACK_ERROR;
@@ -2978,12 +3017,17 @@ void incrementSequenceNumber(OCResource * resPtr)
  *                       that was modified.
  * @param qos          - Quality Of Service
  *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
  */
 #ifdef WITH_PRESENCE
+
+
 OCStackResult SendPresenceNotification(OCResourceType *resourceType)
 {
     OCResource *resPtr = NULL;
-    OCStackResult result;
+    OCStackResult result = OC_STACK_ERROR;
     OCMethod method = OC_REST_PRESENCE;
     uint32_t maxAge = 0;
     resPtr = findResource((OCResource *) presenceResource.handle);
@@ -2991,19 +3035,43 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType)
     {
         return OC_STACK_NO_RESOURCE;
     }
+
     if((((OCResource *) presenceResource.handle)->resourceProperties) & OC_ACTIVE)
     {
         maxAge = presenceResource.presenceTTL;
-    }
-    else
-    {
-        maxAge = 0;
-    }
 
-    result = SendAllObserverNotification(method, resPtr, maxAge, resourceType, OC_LOW_QOS);
+        result = SendAllObserverNotification(method, resPtr, maxAge, resourceType, OC_LOW_QOS);
+    }
 
     return result;
 }
+
+/**
+ * Send Stop Notification to Presence subscribers
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
+ *
+ */
+
+OCStackResult SendStopNotification()
+{
+    OCResource *resPtr = NULL;
+    OCStackResult result = OC_STACK_ERROR;
+    OCMethod method = OC_REST_PRESENCE;
+    resPtr = findResource((OCResource *) presenceResource.handle);
+    if(NULL == resPtr)
+    {
+        return OC_STACK_NO_RESOURCE;
+    }
+
+    // maxAge is 0. ResourceType is NULL.
+    result = SendAllObserverNotification(method, resPtr, 0, NULL, OC_LOW_QOS);
+
+    return result;
+}
+
 #endif // WITH_PRESENCE
 /**
  * Notify observers that an observed value has changed.
