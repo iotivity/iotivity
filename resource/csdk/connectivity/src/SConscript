@@ -55,7 +55,7 @@ else:
 		]
 	if secured == '1':
 		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
-		env.AppendUnique(CPPPATH = [root_dir + '/lib/tinydtls'])
+		env.AppendUnique(CPPPATH = ['../../../../extlibs/tinydtls'])
 env.AppendUnique(CA_SRC = ca_common_src)
 
 
@@ -84,5 +84,5 @@ print "Files path is %s" %env.get('CA_SRC')
 calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 env.InstallTarget(calib, 'libconnectivity_abstraction')
 if env.get('SECURED') == '1':
-	env.Install(build_dir, './../lib/tinydtls/libtinydtls.a')
+	env.Install(build_dir, '../../../../extlibs/tinydtls/libtinydtls.a')
 
