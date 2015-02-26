@@ -1871,9 +1871,11 @@ OCStackResult OCStartPresence(const uint32_t ttl)
             return OC_STACK_ERROR;
         }
 
+        CAConnectivityType_t connType;
+        OCToCAConnectivityType(OC_ALL, &connType );
         AddObserver(OC_PRESENCE_URI, NULL, 0, &caToken,
                 (OCResource *)presenceResource.handle, OC_LOW_QOS,
-                &addressInfo, CA_WIFI);
+                &addressInfo, connType);
     }
 
     // Each time OCStartPresence is called

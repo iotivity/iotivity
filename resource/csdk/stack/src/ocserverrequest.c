@@ -403,15 +403,46 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     strcat(payload, (const char *)OC_JSON_SUFFIX);
     responseInfo.info.payload = (CAPayload_t)payload;
 
+    #ifdef WITH_PRESENCE
+    //TODO: Add other connectivity types to CAConnTypes[] when enabled
+    CAConnectivityType_t CAConnTypes[] = {CA_ETHERNET, CA_WIFI};
+    const char * connTypes[] = {"ethernet", "wifi"};
+    int size = sizeof(CAConnTypes)/ sizeof(CAConnectivityType_t);
+    CAConnectivityType_t connType = responseEndpoint.connectivityType;
+    CAResult_t caResult = CA_STATUS_FAILED;
+    result = OC_STACK_OK;
+
+    //Sending response on all n/w interfaces
+    for(int i = 0; i < size; i++ )
+    {
+        responseEndpoint.connectivityType = connType & CAConnTypes[i];
+        if(responseEndpoint.connectivityType)
+        {
+            //The result is set to OC_STACK_OK only if CASendResponse succeeds in sending the
+            //response on all the n/w interfaces else it is set to OC_STACK_ERROR
+            caResult = CASendResponse(&responseEndpoint, &responseInfo);
+            if(caResult != CA_STATUS_OK)
+            {
+                OC_LOG_V(ERROR, TAG, "CASendResponse failed on %s", connTypes[i]);
+                result = OC_STACK_ERROR;
+            }
+            else
+            {
+                OC_LOG_V(INFO, TAG, "CASendResponse succeeded on %s", connTypes[i]);
+            }
+        }
+    }
+    #else
     CAResult_t caResult = CASendResponse(&responseEndpoint, &responseInfo);
     if(caResult != CA_STATUS_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
+        OC_LOG(ERROR, TAG, PCF("CASendResponse failed"));
     }
     else
     {
         result = OC_STACK_OK;
     }
+    #endif
 
     OCFree(payload);
     //Delete the request
