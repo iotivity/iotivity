@@ -485,7 +485,7 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t *rep)
     }
 
     // free options field
-    if (rep->info.options != NULL)
+    if (rep->info.options != NULL && rep->info.numOptions)
     {
         OICFree((CAHeaderOption_t *) rep->info.options);
     }
