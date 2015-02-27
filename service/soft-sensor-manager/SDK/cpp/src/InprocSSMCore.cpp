@@ -72,7 +72,8 @@ SSMRESULT OIC::InitializeSSM(std::string xmlDescription)
     SSM_CLEANUP_ASSERT(g_pQueryEngineInstance->registerQueryEvent(g_pEventReceiver));
 
 CLEANUP:
-    if (res != SSM_S_OK)
+    if (res != SSM_S_OK &&
+        res != SSM_E_INITIALIZED)
     {
         SAFE_DELETE(g_pEventReceiver);
     }

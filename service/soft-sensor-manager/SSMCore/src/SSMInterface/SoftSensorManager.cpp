@@ -58,9 +58,11 @@ SSMRESULT CSoftSensorManager::initializeCore(IN std::string xmlDescription)
     std::string                 pathSoftSensors;
     std::string                 pathDescription;
 
+    std::string                 copyDescription = xmlDescription.c_str();
+
     try
     {
-        xmlDoc.parse<0>((char *)xmlDescription.c_str());
+        xmlDoc.parse<0>((char *)copyDescription.c_str());
 
         root = xmlDoc.first_node();
 
