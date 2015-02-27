@@ -80,13 +80,12 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
 
     cbData.cb = cb;
     cbData.context = NULL;
     cbData.cd = NULL;
 
-    ret = OCDoResource(&handle, method, query.str().c_str(), 0,
+    ret = OCDoResource(NULL, method, query.str().c_str(), 0,
             (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
             ocConnType, qos, &cbData, options, numOptions);
 
@@ -240,7 +239,6 @@ int InitDiscovery()
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
     char szQueryUri[MAX_URI_LENGTH] = { 0 };
     OCConnectivityType discoveryReqConnType;
 
@@ -279,7 +277,7 @@ int InitDiscovery()
         (UNICAST_DISCOVERY) ? "Unicast" : "Multicast",
         szQueryUri);
 
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0,
+    ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0,
             discoveryReqConnType, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
