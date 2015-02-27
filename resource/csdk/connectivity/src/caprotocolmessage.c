@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <time.h>
 
@@ -470,6 +471,7 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
     uint32_t count = 0, idx = 0;
     uint32_t optionLength = 0;
     uint32_t isfirstsetflag = 0;
+    bool isQueryBeingProcessed = false;
 
     coap_option_iterator_init((coap_pdu_t *) pdu, &opt_iter, COAP_OPT_ALL);
 
@@ -526,7 +528,17 @@ void CAGetRequestPDUInfo(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *out
                     }
                     else if (COAP_OPTION_URI_QUERY == opt_iter.type)
                     {
-                        memcpy(optionResult + optionLength, "?", 1);
+                        // Delimiter between uri and query is '?'
+                        if (false == isQueryBeingProcessed)
+                        {
+                            memcpy(optionResult + optionLength, "?", 1);
+                            isQueryBeingProcessed = true;
+                        }
+                        else
+                        {
+                            // Delimeter for query params is '&'
+                            memcpy(optionResult + optionLength, "&", 1);
+                        }
                         optionLength++;
                     }
                     memcpy(optionResult + optionLength, buf, strlen((const char *) buf));
