@@ -108,7 +108,6 @@ XXX is the information name, below are the extra information added by IoTivity
 common scrirpts:
 BUILD_DIR: the path of the build directory, all output are in this directory
 SRC_DIR: the path of the top directory of the source code
-OIC_UTILS: the path of oic-utilities project
 RELEASE: build type, boolean. True - release build, False - debug build
 TARGET_OS: the name of the target OS. The possible value depends on the host
 	platform. Bellow is the list of host and possible target OS. (darwin means
