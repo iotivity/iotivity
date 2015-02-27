@@ -5,24 +5,24 @@ import java.util.List;
 public class DataReader {
 
 	private int pDataReaderInstance;
-	
-	public DataReader(int dataReaderInstance)
-	{
+
+	public DataReader(int dataReaderInstance) {
 		pDataReaderInstance = dataReaderInstance;
 	}
-	
-	public List<String> GetAffectedModels()
-	{
-		return CoreController.getInstance().GetAffectedModels(pDataReaderInstance);
+
+	public List<String> GetAffectedModels() {
+		return CoreController.getInstance().GetAffectedModels(
+				pDataReaderInstance);
 	}
-	
-	public int GetModelDataCount(String modelName)
-	{
-		return CoreController.getInstance().GetModelDataCount(pDataReaderInstance, modelName);
+
+	public int GetModelDataCount(String modelName) throws Exception {
+		return CoreController.getInstance().GetModelDataCount(
+				pDataReaderInstance, modelName);
 	}
-	
+
 	public ModelData GetModelData(String modelName, int dataIndex)
-	{
-		return CoreController.getInstance().GetModelData(pDataReaderInstance, modelName, dataIndex);
+			throws Exception {
+		return CoreController.getInstance().GetModelData(pDataReaderInstance,
+				modelName, dataIndex);
 	}
 }

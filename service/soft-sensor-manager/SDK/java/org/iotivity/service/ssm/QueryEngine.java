@@ -1,31 +1,28 @@
 package org.iotivity.service.ssm;
 
-public class QueryEngine
-{
+public class QueryEngine {
 	private int pQueryEngineInstance;
-	
-	public QueryEngine(int queryEngineInstance)
-	{
+
+	public QueryEngine(int queryEngineInstance) {
 		pQueryEngineInstance = queryEngineInstance;
 	}
-	
-	public int GetQueryEngineInstance()
-	{
+
+	public int GetQueryEngineInstance() {
 		return pQueryEngineInstance;
 	}
-	
-	public int ExecuteContextQuery(String contextQuery)
-	{
-		return CoreController.getInstance().ExecuteContextQuery(pQueryEngineInstance, contextQuery);
+
+	public int ExecuteContextQuery(String contextQuery) throws Exception {
+		return CoreController.getInstance().ExecuteContextQuery(
+				pQueryEngineInstance, contextQuery);
 	}
-	
-	public void RegisterQueryEvent(IQueryEngineEvent queryEngineEvent)
-	{
-		CoreController.getInstance().RegisterQueryEvent(pQueryEngineInstance, queryEngineEvent);
+
+	public void RegisterQueryEvent(IQueryEngineEvent queryEngineEvent) {
+		CoreController.getInstance().RegisterQueryEvent(pQueryEngineInstance,
+				queryEngineEvent);
 	}
-	
-	public void KillContextQuery(int cqid)
-	{
-		CoreController.getInstance().KillContextQuery(pQueryEngineInstance, cqid);
+
+	public void KillContextQuery(int cqid) throws Exception {
+		CoreController.getInstance().KillContextQuery(pQueryEngineInstance,
+				cqid);
 	}
 }
