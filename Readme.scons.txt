@@ -106,20 +106,6 @@ Java codes, this isn't required)
 so you don't need to add it in command line each time. The build script will
 guide you to do that.)
 
-* 3. External libraries
-For Android and IOS build, most of the external libraries are provided as
-binary in oic-utilities project (https://oic-review.01.org/gerrit/oic-utilities).
-Please download it in the same directory as other IoTivity projects. If it's
-in different directory, an additional option (OIC_UITLS) will be required. The
-build command should be:
-      $ scons OIC_UITLS=<path to oic-utilities> [other options] [target]
-
-(Note: for convenience, you can also add it in environment variable. So you
-don't need to add this option in command line each time.)
-  e.g.:
-      $ export OIC_UITLS=<path to oic-utilities project>
-
-
 === Build IoTivity project on Linux(Ubuntu) ===
 
 Generally, it's required to specify the target OS and target ARCH, that's to say
