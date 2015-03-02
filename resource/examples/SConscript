@@ -31,7 +31,7 @@ examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	examples_env.AppendUnique(LIBS = ['gnustl_static'])
+	examples_env.AppendUnique(LIBS = ['gnustl_shared'])
 
 	if not env.get('RELEASE'):
 		examples_env.AppendUnique(LIBS = ['log'])

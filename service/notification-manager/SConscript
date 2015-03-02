@@ -23,7 +23,7 @@ if target_os == 'linux':
 
 if target_os == 'android':
 	notimgr_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	notimgr_env.AppendUnique(LIBS = ['gnustl_static'])
+	notimgr_env.AppendUnique(LIBS = ['gnustl_shared'])
 
 	if not env.get('RELEASE'):
 		notimgr_env.AppendUnique(LIBS = ['log'])

@@ -87,7 +87,7 @@ for tc_ver in ['4.7', '4.8', '4.9', '']:
 
 cmd = [ndk_build_cmd]
 cmd.append('APP_ABI=' + target_arch)
-cmd.append('APP_STL=gnustl_static')
+cmd.append('APP_STL=gnustl_shared')
 if env.get('RELEASE'):
 	cmd.append('APP_OPTIM=release')
 else:
@@ -133,8 +133,12 @@ for flags in p.stdout.readlines():
 
 	elif cmp(flags[0:7], 'TC_VER=') == 0:  # set gnustl library path
 		ver = flags[7:].strip()
-		env.AppendUnique(LIBPATH = [android_ndk + '/sources/cxx-stl/gnu-libstdc++/'
-				+ ver + '/libs/' + target_arch])
+		stl_path = android_ndk + '/sources/cxx-stl/gnu-libstdc++/' + ver + '/libs/' + target_arch
+		if target_arch in ['armeabi', 'armeabi-v7a', 'armeabi-v7a-hard']:
+			stl_path = stl_path + '/thumb/'
+
+		env.AppendUnique(LIBPATH = [stl_path])
+		env.Install(env.get('BUILD_DIR'), stl_path + '/libgnustl_shared.so')
 
 	elif cmp(flags[0:9], 'PLATFORM=') == 0:  # get target platform: android-x
 		platform_ver = flags[9+8:].strip()

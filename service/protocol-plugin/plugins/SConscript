@@ -26,7 +26,7 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
 	plugins_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	plugins_env.AppendUnique(LIBS = ['gnustl_static'])
+	plugins_env.AppendUnique(LIBS = ['gnustl_shared'])
 
 plugins_env.AppendUnique(LIBS = [File(env.get('BUILD_DIR') + '/libmosquitto.a'),
 		'mosquitto', 'ssl', 'rt'])

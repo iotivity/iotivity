@@ -13,7 +13,7 @@ target_os = env.get('TARGET_OS')
 
 if target_os == 'android':
 	compatibilitylib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	compatibilitylib_env.AppendUnique(LIBS = ['gnustl_static'])
+	compatibilitylib_env.AppendUnique(LIBS = ['gnustl_shared'])
 
 ######################################################################
 # Source files and Targets
