@@ -209,8 +209,7 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            OCDoHandle handle;
-            result = OCDoResource(&handle, OC_REST_GET,
+            result = OCDoResource(nullptr, OC_REST_GET,
                                   resourceType.c_str(),
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
@@ -355,12 +354,11 @@ namespace OC
             os << host << assembleSetResourceUri(uri, queryParams).c_str();
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            OCDoHandle handle;
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
             assembleHeaderOptions(options, headerOptions);
 
-            result = OCDoResource(&handle, OC_REST_GET, os.str().c_str(),
+            result = OCDoResource(nullptr, OC_REST_GET, os.str().c_str(),
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
@@ -465,10 +463,9 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
-            OCDoHandle handle;
 
             assembleHeaderOptions(options, headerOptions);
-            result = OCDoResource(&handle, OC_REST_POST,
+            result = OCDoResource(nullptr, OC_REST_POST,
                                   os.str().c_str(), nullptr,
                                   assembleSetResourcePayload(rep).c_str(), connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
