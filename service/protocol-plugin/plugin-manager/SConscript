@@ -1,7 +1,7 @@
 ##
 # plugin-manager project build script
 ##
-
+import os
 Import('env')
 
 # Add third party libraries
@@ -24,8 +24,8 @@ if target_os not in ['windows', 'winrt']:
 		'-fpermissive', '-Wsign-compare'])
 
 if target_os == 'android':
-	plugin_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	plugin_manager_env.AppendUnique(LIBS = ['boost_thread-gcc-mt-1_49', 'gnustl_static'])
+	plugin_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions', '-DANDROID'])
+	plugin_manager_env.AppendUnique(LIBS = ['boost_thread', 'boost_system', 'gnustl_shared', 'log'])
 
 plugin_manager_env.AppendUnique(CPPDEFINES = ['CP_C_API=CP_EXPORT',
 					'CP_HOST=\"\\"'+env.get('TARGET_OS')+'\\"\"',
@@ -48,10 +48,12 @@ ppm = plugin_manager_env.StaticLibrary('ppm', ppm_src)
 
 pmimpl_src = [
 		'src/CpluffAdapter.cpp',
-		'src/FelixAdapter.cpp',
 		'src/Plugin.cpp',
 		'src/PluginManagerImpl.cpp',
 		'src/Config.cpp']
+
+if target_os == 'android':
+	pmimpl_src += ['src/FelixAdapter.cpp']
 
 pmimpl_env = plugin_manager_env.Clone()
 pmimpl_env.PrependUnique(CCFLAGS = ['-fPIC'])

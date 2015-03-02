@@ -1,7 +1,7 @@
 ##
 #sample-app build script
 ##
-
+import os
 Import('env')
 
 # Add third party libraries
@@ -16,7 +16,8 @@ target_os = env.get('TARGET_OS')
 sample_env.AppendUnique(CPPPATH = [
 				'../../plugin-manager/src/',
 				'../../lib/cpluff/libcpluff/',
-				'../../lib/rapidxml'])
+				'../../lib/rapidxml'
+                        ])
 if target_os not in ['windows', 'winrt']:
 	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread'])
 

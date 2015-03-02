@@ -34,7 +34,7 @@ Config *Config::s_configinstance = NULL;
 
 Config::Config()
 {
-    if (loadConfigFile("./pluginmanager.xml") != PM_S_OK)
+    if (loadConfigFile("/storage/emulated/0/Download/pluginmanager.xml") != PM_S_OK)
     {
         fprintf(stderr, "PM Configuration file is not exist current Folder.\n" );
         exit(EXIT_FAILURE);

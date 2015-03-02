@@ -35,6 +35,7 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <internal.h>
+#include <jni.h>
 
 #include "Plugin.h"
 #include "Config.h"
@@ -166,11 +167,11 @@ namespace OIC
             *
             * @return OICPluginManager pointer Address.
             */
-            static FelixAdapter *Getinstance()
+            static FelixAdapter *Getinstance(void *args=NULL)
             {
                 if (NULL == s_pinstance)
                 {
-                    s_pinstance = new FelixAdapter();
+                    s_pinstance = new FelixAdapter((JavaVM *)args);
                 }
 
                 return s_pinstance;
@@ -179,6 +180,7 @@ namespace OIC
 
 
         private:
+			JavaVM *jvm;
             Config *config;
             typedef std::map<std::string, bool> File_list;
             std::vector<Plugin> m_plugins;
@@ -198,7 +200,7 @@ namespace OIC
             * During construction time, all plugins under the root plugin path will be loaded.
             *
             */
-            FelixAdapter();
+            FelixAdapter(JavaVM *);
 
             /**
             * Virtual destructor
