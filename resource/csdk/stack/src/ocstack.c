@@ -35,7 +35,7 @@
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
 #include "ocsecurityinternal.h"
-
+#include "securityresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
 
@@ -1346,35 +1346,33 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     if(caResult == CA_STATUS_OK)
     {
         OC_LOG(INFO, TAG, PCF("CASelectNetwork to WIFI"));
-        CARegisterHandler(HandleCARequests, HandleCAResponses);
+        stackState = OC_STACK_INITIALIZED;
+        result = OC_STACK_OK;
+        switch (mode)
         {
-            OC_LOG(INFO, TAG, PCF("CARegisterHandler..."));
-            stackState = OC_STACK_INITIALIZED;
-            result = OC_STACK_OK;
-            switch (mode)
-            {
-                case OC_CLIENT:
+            case OC_CLIENT:
+                CARegisterHandler(HandleCARequests, HandleCAResponses);
+                caResult = CAStartDiscoveryServer();
+                OC_LOG(INFO, TAG, PCF("Client mode: CAStartDiscoveryServer"));
+                break;
+            case OC_SERVER:
+                SRMRegisterHandler(HandleCARequests, HandleCAResponses);
+                caResult = CAStartListeningServer();
+                OC_LOG(INFO, TAG, PCF("Server mode: CAStartListeningServer"));
+                break;
+            case OC_CLIENT_SERVER:
+                SRMRegisterHandler(HandleCARequests, HandleCAResponses);
+                caResult = CAStartListeningServer();
+                if (caResult == CA_STATUS_OK)
+                {
                     caResult = CAStartDiscoveryServer();
-                    OC_LOG(INFO, TAG, PCF("Client mode: CAStartDiscoveryServer"));
-                    break;
-                case OC_SERVER:
-                    caResult = CAStartListeningServer();
-                    OC_LOG(INFO, TAG, PCF("Server mode: CAStartListeningServer"));
-                    break;
-                case OC_CLIENT_SERVER:
-                    caResult = CAStartListeningServer();
-                    if(caResult == CA_STATUS_OK)
-                    {
-                        caResult = CAStartDiscoveryServer();
-                    }
-                    OC_LOG(INFO, TAG, PCF("Client-server mode"));
-                    break;
-                default:
-                    OC_LOG(ERROR, TAG, PCF("Invalid mode"));
-                    return OC_STACK_ERROR;
-                    break;
-            }
-
+                }
+                OC_LOG(INFO, TAG, PCF("Client-server mode"));
+                break;
+            default:
+                OC_LOG(ERROR, TAG, PCF("Invalid mode"));
+                return OC_STACK_ERROR;
+                break;
         }
         if (caResult == CA_STATUS_OK)
         {

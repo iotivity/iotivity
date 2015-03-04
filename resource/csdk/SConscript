@@ -34,6 +34,8 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'security/include/internal',
 		])
 
+liboctbstack_env.AppendUnique(LIBS = ['ocsrm'])
+
 if target_os not in ['arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
@@ -72,7 +74,6 @@ liboctbstack_src = [
     OCTBSTACK_SRC + 'ocserverrequest.c',
 	OCTBSTACK_SRC + 'occollection.c',
 	OCTBSTACK_SRC + 'oicgroup.c',
-	'security/src/ocsecurity.c',
 	'logger/src/logger.c',
 	'ocrandom/src/ocrandom.c',
 	'ocmalloc/src/ocmalloc.c'

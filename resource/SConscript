@@ -16,6 +16,9 @@ SConscript('csdk/connectivity/lib/libcoap-4.1.1/SConscript')
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')
 
+# Build libocsrm
+SConscript('csdk/security/SConscript')
+
 # Build liboctbstack
 SConscript('csdk/SConscript')
 
