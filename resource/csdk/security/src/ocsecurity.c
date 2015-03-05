@@ -22,10 +22,24 @@
 #include "ocmalloc.h"
 #include "ocsecurity.h"
 #include "ocsecurityconfig.h"
+#ifdef CA_SEC_MERGE_WORKAROUND
+#include "ocsecurityinternal.h"
+#endif //CA_SEC_MERGE_WORKAROUND
 #include <string.h>
 
 static OCSecConfigData* secConfigData;
 static int secConfigDataLen;
+
+/**
+ * Currently, there is a disconnect in the data structure used between RI layer
+ * and CA layer to convey DTLS PSK credentials. We cannot update this data
+ * structure until all reviews of CA layer is completed. To enable security
+ * feature in CA branch this workaround is added as a temporary stop-gap.
+ *
+ */
+#ifdef CA_SEC_MERGE_WORKAROUND
+static CADtlsPskCredsBlob *caBlob;
+#endif //CA_SEC_MERGE_WORKAROUND
 
 /**
  * This internal API removes/clears the global variable holding the security
@@ -43,6 +57,15 @@ void DeinitOCSecurityInfo()
         OCFree(secConfigData);
         secConfigData = NULL;
     }
+
+#ifdef CA_SEC_MERGE_WORKAROUND
+    if (caBlob)
+    {
+        OCFree(caBlob->creds);
+    }
+    OCFree(caBlob);
+#endif
+
 }
 
 /**
@@ -67,6 +90,27 @@ void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
         {
             if (osb->type == OC_BLOB_TYPE_PSK)
             {
+#ifdef CA_SEC_MERGE_WORKAROUND
+                OCDtlsPskCredsBlob * ocBlob = (OCDtlsPskCredsBlob *)osb->val;
+                if (!caBlob)
+                {
+                    caBlob = (CADtlsPskCredsBlob *)OCCalloc(sizeof(CADtlsPskCredsBlob), 1);
+                    if (caBlob)
+                    {
+                        memcpy(caBlob->identity, ocBlob->identity, sizeof(caBlob->identity));
+                        caBlob->num = ocBlob->num;
+                        caBlob->creds =
+                            (OCDtlsPskCreds*) OCMalloc(caBlob->num * sizeof(OCDtlsPskCreds));
+                        if (caBlob->creds)
+                        {
+                            memcpy(caBlob->creds, ocBlob->creds,
+                                    caBlob->num * sizeof(OCDtlsPskCreds));
+                        }
+                    }
+                }
+                *credInfo = caBlob;
+                break;
+#else
                 OCDtlsPskCredsBlob * blob;
                 blob = (OCDtlsPskCredsBlob *)OCMalloc(osb->len);
                 if (blob)
@@ -75,6 +119,7 @@ void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
                     *credInfo = blob;
                     break;
                 }
+#endif //CA_SEC_MERGE_WORKAROUND
             }
             osb = config_data_next_blob(osb);
         }
