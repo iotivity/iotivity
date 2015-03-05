@@ -552,10 +552,8 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
             cbNode->presence->TTL = maxAge;
             for(int index = 0; index < PresenceTimeOutSize; index++)
             {
-                lowerBound = GetTime(((float)(PresenceTimeOut[index])
-                        /(float)100)*(float)cbNode->presence->TTL);
-                higherBound = GetTime(((float)(PresenceTimeOut[index + 1])
-                        /(float)100)*(float)cbNode->presence->TTL);
+                lowerBound = GetTime(PresenceTimeOut[index]/ 100.0f*cbNode->presence->TTL);
+                higherBound = GetTime(PresenceTimeOut[index + 1]/100.0f*cbNode->presence->TTL);
                 cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
                 OC_LOG_V(DEBUG, TAG, "----------------lowerBound timeout  %d", lowerBound);
                 OC_LOG_V(DEBUG, TAG, "----------------higherBound timeout %d", higherBound);
