@@ -70,11 +70,12 @@ typedef enum {
 static OCStackState stackState = OC_STACK_UNINITIALIZED;
 
 OCResource *headResource = NULL;
+static OCResource *tailResource = NULL;
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
 static PresenceResource presenceResource;
-uint8_t PresenceTimeOutSize = 0;
-uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
+static uint8_t PresenceTimeOutSize = 0;
+static uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
 
 OCMode myStackMode;
@@ -1960,7 +1961,8 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         const char *resourceTypeName,
         const char *resourceInterfaceName,
         const char *uri, OCEntityHandler entityHandler,
-        uint8_t resourceProperties) {
+        uint8_t resourceProperties)
+{
 
     OCResource *pointer = NULL;
     char *str = NULL;
@@ -1980,7 +1982,8 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         return OC_STACK_INVALID_URI;
     }
     // Is it presented during resource discovery?
-    if (!handle || !resourceTypeName) {
+    if (!handle || !resourceTypeName)
+    {
         OC_LOG(ERROR, TAG, PCF("Input parameter is NULL"));
         return OC_STACK_INVALID_PARAM;
     }
@@ -1998,11 +2001,14 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     // If the headResource is NULL, then no resources have been created...
     pointer = headResource;
-    if (pointer) {
+    if (pointer)
+    {
         // At least one resources is in the resource list, so we need to search for
         // repeated URLs, which are not allowed.  If a repeat is found, exit with an error
-        while (pointer) {
-            if (strcmp(uri, pointer->uri) == 0) {
+        while (pointer)
+        {
+            if (strcmp(uri, pointer->uri) == 0)
+            {
                 OC_LOG(ERROR, TAG, PCF("URI already in use"));
                 return OC_STACK_INVALID_PARAM;
             }
@@ -2011,7 +2017,8 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     }
     // Create the pointer and insert it into the resource list
     pointer = (OCResource *) OCCalloc(1, sizeof(OCResource));
-    if (!pointer) {
+    if (!pointer)
+    {
         goto exit;
     }
     pointer->sequenceNum = OC_OFFSET_SEQUENCE_NUMBER;
@@ -2021,7 +2028,8 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     // Set the uri
     size = strlen(uri) + 1;
     str = (char *) OCMalloc(size);
-    if (!str) {
+    if (!str)
+    {
         goto exit;
     }
     strncpy(str, uri, size);
@@ -2033,14 +2041,16 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     // Add the resourcetype to the resource
     result = BindResourceTypeToResource(pointer, resourceTypeName);
-    if (result != OC_STACK_OK) {
+    if (result != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, PCF("Error adding resourcetype"));
         goto exit;
     }
 
     // Add the resourceinterface to the resource
     result = BindResourceInterfaceToResource(pointer, resourceInterfaceName);
-    if (result != OC_STACK_OK) {
+    if (result != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
         goto exit;
     }
@@ -2140,7 +2150,8 @@ OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
  *     OC_STACK_INVALID_PARAM - invalid collectionhandle
  */
 OCStackResult OCBindResource(
-        OCResourceHandle collectionHandle, OCResourceHandle resourceHandle) {
+        OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
+{
     OCResource *resource;
     uint8_t i;
 
@@ -2150,22 +2161,26 @@ OCStackResult OCBindResource(
     VERIFY_NON_NULL(collectionHandle, ERROR, OC_STACK_ERROR);
     VERIFY_NON_NULL(resourceHandle, ERROR, OC_STACK_ERROR);
     // Container cannot contain itself
-    if (collectionHandle == resourceHandle) {
+    if (collectionHandle == resourceHandle)
+    {
         OC_LOG(ERROR, TAG, PCF("Added handle equals collection handle"));
         return OC_STACK_INVALID_PARAM;
     }
 
     // Use the handle to find the resource in the resource linked list
     resource = findResource((OCResource *) collectionHandle);
-    if (!resource) {
+    if (!resource)
+    {
         OC_LOG(ERROR, TAG, PCF("Collection handle not found"));
         return OC_STACK_INVALID_PARAM;
     }
 
     // Look for an open slot to add add the child resource.
     // If found, add it and return success
-    for (i = 0; i < MAX_CONTAINED_RESOURCES; i++) {
-        if (!resource->rsrcResources[i]) {
+    for (i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+    {
+        if (!resource->rsrcResources[i])
+        {
             resource->rsrcResources[i] = (OCResource *) resourceHandle;
             OC_LOG(INFO, TAG, PCF("resource bound"));
             return OC_STACK_OK;
@@ -3006,6 +3021,7 @@ OCStackResult initResources() {
     OCStackResult result = OC_STACK_OK;
     // Init application resource vars
     headResource = NULL;
+    tailResource = NULL;
     // Init Virtual Resources
     #ifdef WITH_PRESENCE
     presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL;
@@ -3029,18 +3045,18 @@ OCStackResult initResources() {
  *
  * @param resource - resource to be added
  */
-void insertResource(OCResource *resource) {
-    OCResource *pointer;
-
-    if (!headResource) {
+void insertResource(OCResource *resource)
+{
+    if (!headResource)
+    {
+        // First resource. Head and tail are the same.
         headResource = resource;
-    } else {
-        pointer = headResource;
-
-        while (pointer->next) {
-            pointer = pointer->next;
-        }
-        pointer->next = resource;
+        tailResource = resource;
+    }
+    else
+    {
+        tailResource->next = resource;
+        tailResource = resource;
     }
     resource->next = NULL;
 }
@@ -3053,11 +3069,14 @@ void insertResource(OCResource *resource) {
  *     NULL                - resource not found
  *     pointer to resource - pointer to resource that was found in the linked list
  */
-OCResource *findResource(OCResource *resource) {
+OCResource *findResource(OCResource *resource)
+{
     OCResource *pointer = headResource;
 
-    while (pointer) {
-        if (pointer == resource) {
+    while (pointer)
+    {
+        if (pointer == resource)
+        {
             return resource;
         }
         pointer = pointer->next;
@@ -3076,9 +3095,9 @@ void deleteAllResources()
         #ifdef WITH_PRESENCE
         if(pointer != (OCResource *) presenceResource.handle)
         {
-            #endif // WITH_PRESENCE
+        #endif // WITH_PRESENCE
             deleteResource(pointer);
-            #ifdef WITH_PRESENCE
+        #ifdef WITH_PRESENCE
         }
         #endif // WITH_PRESENCE
         pointer = temp;
@@ -3099,13 +3118,16 @@ void deleteAllResources()
  *    0 - error
  *    1 - success
  */
-int deleteResource(OCResource *resource) {
+int deleteResource(OCResource *resource)
+{
     OCResource *prev = NULL;
     OCResource *temp;
 
     temp = headResource;
-    while (temp) {
-        if (temp == resource) {
+    while (temp)
+    {
+        if (temp == resource)
+        {
             // Invalidate all Resource Properties.
             resource->resourceProperties = (OCResourceProperty) 0;
             #ifdef WITH_PRESENCE
@@ -3128,18 +3150,36 @@ int deleteResource(OCResource *resource) {
                     SendPresenceNotification(NULL);
                 }
             }
-        #endif
+            #endif
 
-            if (temp == headResource) {
+            // Only resource in list.
+            if (temp == headResource && temp == tailResource)
+            {
+                headResource = NULL;
+                tailResource = NULL;
+            }
+            // Deleting head.
+            else if (temp == headResource)
+            {
                 headResource = temp->next;
-            } else {
+            }
+            // Deleting tail.
+            else if (temp == tailResource)
+            {
+                tailResource = prev;
+                tailResource->next = NULL;
+            }
+            else
+            {
                 prev->next = temp->next;
             }
 
             deleteResourceElements(temp);
             OCFree(temp);
             return 1;
-        } else {
+        }
+        else
+        {
             prev = temp;
             temp = temp->next;
         }
@@ -3153,7 +3193,8 @@ int deleteResource(OCResource *resource) {
  *
  * @param resource - specified resource
  */
-void deleteResourceElements(OCResource *resource) {
+void deleteResourceElements(OCResource *resource)
+{
     if (!resource) {
         return;
     }
@@ -3173,11 +3214,13 @@ void deleteResourceElements(OCResource *resource) {
  *
  * @param resourceType - specified resource type
  */
-void deleteResourceType(OCResourceType *resourceType) {
+void deleteResourceType(OCResourceType *resourceType)
+{
     OCResourceType *pointer = resourceType;
     OCResourceType *next;
 
-    while (pointer) {
+    while (pointer)
+    {
         next = pointer->next;
         OCFree(pointer->resourcetypename);
         OCFree(pointer);
@@ -3194,7 +3237,8 @@ void deleteResourceInterface(OCResourceInterface *resourceInterface) {
     OCResourceInterface *pointer = resourceInterface;
     OCResourceInterface *next;
 
-    while (pointer) {
+    while (pointer)
+    {
         next = pointer->next;
         OCFree(pointer->name);
         OCFree(pointer);
@@ -3211,9 +3255,12 @@ void deleteResourceInterface(OCResourceInterface *resourceInterface) {
 void insertResourceType(OCResource *resource, OCResourceType *resourceType) {
     OCResourceType *pointer;
 
-    if (resource && !resource->rsrcType) {
+    if (resource && !resource->rsrcType)
+    {
         resource->rsrcType = resourceType;
-    } else {
+    }
+    else
+    {
         if(resource)
         {
             pointer = resource->rsrcType;
@@ -3247,19 +3294,22 @@ OCResourceType *findResourceTypeAtIndex(OCResourceHandle handle, uint8_t index) 
 
     // Find the specified resource
     resource = findResource((OCResource *) handle);
-    if (!resource) {
+    if (!resource)
+    {
         return NULL;
     }
 
     // Make sure a resource has a resourcetype
-    if (!resource->rsrcType) {
+    if (!resource->rsrcType)
+    {
         return NULL;
     }
 
     // Iterate through the list
     pointer = resource->rsrcType;
     i = 0;
-    while ((i < index) && pointer) {
+    while ((i < index) && pointer)
+    {
         i++;
         pointer = pointer->next;
     }
@@ -3302,14 +3352,19 @@ OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char *
  * @param resourceInterface - resource interface to be inserted
  */
 void insertResourceInterface(OCResource *resource,
-        OCResourceInterface *resourceInterface) {
+        OCResourceInterface *resourceInterface)
+{
     OCResourceInterface *pointer;
 
-    if (!resource->rsrcInterface) {
+    if (!resource->rsrcInterface)
+    {
         resource->rsrcInterface = resourceInterface;
-    } else {
+    }
+    else
+    {
         pointer = resource->rsrcInterface;
-        while (pointer->next) {
+        while (pointer->next)
+        {
             pointer = pointer->next;
         }
         pointer->next = resourceInterface;

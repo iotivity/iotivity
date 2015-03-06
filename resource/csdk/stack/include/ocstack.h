@@ -44,8 +44,6 @@ extern "C" {
 #ifdef WITH_PRESENCE
 #define OC_DEFAULT_PRESENCE_TTL (60)
 #define OC_PRESENCE_URI                      "/oc/presence"
-extern uint8_t PresenceTimeOutSize; // length of PresenceTimeOut - 1
-extern uint32_t PresenceTimeOut[];
 #endif
 
 //-----------------------------------------------------------------------------
