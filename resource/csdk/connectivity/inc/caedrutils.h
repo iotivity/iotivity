@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -19,9 +19,11 @@
 ******************************************************************/
 
 /**
-* @file caedrutils.h
-* @brief This file contains the APIs for BT communications.
-*/
+ * @file
+ *
+ * This file contains the APIs for BT communications.
+ */
+
 #ifndef __CA_EDRUTILES_H_
 #define __CA_EDRUTILES_H_
 

@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file  caedrdevicelist.c
- * @brief  This file provides APIs to access the discovered bluetooth device list
+ * @file
+ *
+ * This file provides APIs to access the discovered bluetooth device list.
  */
 
 #include "caedrdevicelist.h"

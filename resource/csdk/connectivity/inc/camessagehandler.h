@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -17,8 +17,10 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file camessagehandler.h
+ * @file
+ *
  * @brief This file contains message functionality.
  */
 

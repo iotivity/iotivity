@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,10 +19,11 @@
  ******************************************************************/
 
 /**
- * @file camsgparser.h
- * @brief This file contains common utility functions to manage the CA msg ragmentation and reassemebly.
+ * @file
+ *
+ * This file contains common utility functions to manage the CA msg
+ * fragmentation and reassemebly.
  */
-
 
 #ifndef _CA_MSG_PARSER_H_
 #define _CA_MSG_PARSER_H_

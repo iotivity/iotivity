@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -19,9 +19,11 @@
 ******************************************************************/
 
 /**
-* @file caleutils.h
-* @brief This file contains the APIs for BT LE communications.
-*/
+ * @file
+ *
+ * This file contains the APIs for BT LE communications.
+ */
+
 #ifndef __CA_LEUTILES_H_
 #define __CA_LEUTILES_H_
 

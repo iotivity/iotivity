@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -17,10 +17,13 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file caqueueingthread.h
- * @brief This file contains common utility function for handling message ques
+ * @file
+ *
+ * This file contains common utility function for handling message ques.
  */
+
 #ifndef __CA_THREAD_H_
 #define __CA_THREAD_H_
 

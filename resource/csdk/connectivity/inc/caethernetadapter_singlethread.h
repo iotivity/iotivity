@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,9 +19,11 @@
  ******************************************************************/
 
 /**
- * @file caethernetadapter_singlethread.h
- * @brief This file contains the APIs for Ethernet Adapter.
+ * @file
+ *
+ * This file contains the APIs for Ethernet Adapter.
  */
+
 #ifndef __CA_ETHERNET_ADAPTER_SINGLETHREAD_H__
 #define __CA_ETHERNET_ADAPTER_SINGLETHREAD_H__
 

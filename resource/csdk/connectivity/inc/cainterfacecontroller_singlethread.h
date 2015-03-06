@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -17,9 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file cainterfacecontroller_singlethread.h
- * @brief This file contains the APIs for the interface controller
+ * @file
+ *
+ * This file contains the APIs for the interface controller.
  */
 
 #ifndef __CA_INTERFACE_CONTROLLER_SINGLETHREAD_H_

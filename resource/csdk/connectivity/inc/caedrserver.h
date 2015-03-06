@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,9 +19,11 @@
  ******************************************************************/
 
 /**
- * @file caedrcore.h
- * @brief This file contains the APIs for BT EDR communications.
+ * @file
+ *
+ * This file contains the APIs for BT EDR communications.
  */
+
 #ifndef __CA_EDRCORE_H_
 #define __CA_EDRCORE_H_
 

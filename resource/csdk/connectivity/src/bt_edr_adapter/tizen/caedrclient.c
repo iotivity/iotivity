@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,9 +19,12 @@
  ******************************************************************/
 
 /**
- * @file  cabtclient.c
- * @brief  This file provides the APIs to establish RFCOMM connection with remote bluetooth device
+ * @file
+ *
+ * This file provides the APIs to establish RFCOMM connection with remote
+ * bluetooth device.
  */
+
 #include <string.h>
 #include <bluetooth.h>
 

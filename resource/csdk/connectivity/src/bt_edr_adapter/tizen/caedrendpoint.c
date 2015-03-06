@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file  caedrendpoint.c
- * @brief  This file provides the APIs to send data on established RFCOMM connections.
+ * @file
+ *
+ * This file provides the APIs to send data on established RFCOMM connections.
  */
 
 #include "caedrendpoint.h"

@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -19,11 +19,13 @@
 ******************************************************************/
 
 /**
- * @file cableclient.h
- * @brief This file contains the functionalities of GATT Client. Functionalities like LE device
- *        discovery, connecting to the LE device with OIC service, registering to the service and
- *        there characteristics, registering to the change in the charateristics, setting the
- *        value of the characteristcs for the request and response will be done here.
+ * @file
+ *
+ * This file contains the functionalities of GATT Client. Functionalities
+ * like LE device discovery, connecting to the LE device with OIC service,
+ * registering to the service and there characteristics, registering to the
+ * change in the charateristics, setting the value of the characteristcs
+ * for the request and response will be done here.
  */
 
 #ifndef _BLE_CLIENT_

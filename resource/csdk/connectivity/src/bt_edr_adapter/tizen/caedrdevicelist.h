@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file   cabtdevicelist.h
- * @brief  This file provides APIs to manage discovered bluetooth device list.
+ * @file
+ *
+ * This file provides APIs to manage discovered bluetooth device list.
  */
 
 #ifndef __CA_EDR_DEVICE_LIST_H_

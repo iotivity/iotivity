@@ -18,8 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file    ThingsDiagnostics.cpp
-///  @brief
+/**
+ * @file
+ *
+ */
 
 #include <OCApi.h>
 #include <OCPlatform.h>

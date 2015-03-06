@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,9 +19,11 @@
  ******************************************************************/
 
 /**
- * @file caleadapter_singlethread.h
- * @brief This file contains the APIs for LE adapters to be implemented
+ * @file
+ *
+ * This file contains the APIs for LE adapters to be implemented.
  */
+
 #ifndef _CA_LEADAPTER_SINGLETHREAD_H_
 #define _CA_LEADAPTER_SINGLETHREAD_H_
 

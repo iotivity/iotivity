@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -19,8 +19,9 @@
 ******************************************************************/
 
 /**
- * @file caethernetadapterutils.h
- * @brief This file provides APIs ethernet client/server/network monitor modules
+ * @file
+ *
+ * This file provides APIs ethernet client/server/network monitor modules.
  */
 
 #ifndef _CA_ETHERNET_ADAPTER_UTILS_

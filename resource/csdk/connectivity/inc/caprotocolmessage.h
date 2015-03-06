@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -17,9 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file caprotocolmessage.h
- * @brief This file contains common function for handling protocol messages.
+ * @file
+ *
+ * This file contains common function for handling protocol messages.
  */
 
 #ifndef __CA_PROTOCOL_MESSAGE_H_

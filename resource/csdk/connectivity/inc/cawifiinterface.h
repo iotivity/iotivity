@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,10 @@
  ******************************************************************/
 
 /**
- * @file cawifiinterface.h
- * @brief This file provides APIs for WIFI adapter - client, server, network monitor modules
+ * @file
+ *
+ * This file provides APIs for WIFI adapter - client, server, network
+ * monitor modules.
  */
 
 #ifndef _CA_WIFI_INTERFACE_H_

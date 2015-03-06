@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -17,10 +17,13 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file caretransmission.h
- * @brief
+ * @file
+ *
+ *
  */
+
 #ifndef __CA_RETRANSMISSION_H_
 #define __CA_RETRANSMISSION_H_
 

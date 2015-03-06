@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/**
+ * @file
+ *
+ *
+ */
 
 #ifndef __TIZEN_NETWORK_BLUETOOTH_PRODUCT_H__
 #define __TIZEN_NETWORK_BLUETOOTH_PRODUCT_H__
@@ -25,10 +30,6 @@
 extern "C"
 {
 #endif /* __cplusplus */
-
-/**
- * @file        bluetooth_product.h
- */
 
 /**
  * @internal

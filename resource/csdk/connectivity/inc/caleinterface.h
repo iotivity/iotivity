@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -19,8 +19,9 @@
 ******************************************************************/
 
 /**
- * @file caleinterface.h
- * @brief This file provides APIs for BLE modules
+ * @file
+ *
+ * This file provides APIs for BLE modules.
  */
 
 #ifndef _CA_LE_INTERFACE_H_

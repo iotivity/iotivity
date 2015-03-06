@@ -1,5 +1,4 @@
-
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -20,11 +19,12 @@
 ******************************************************************/
 
 /**
- * @file cableserver.h
- * @brief This file contains the APIs related to the GATT Server functionalities.
- *        Creation of the GattServer with the characteristics. Enabling the advertisement
- *        and updating the characteristics for the response and notifying the change of
- *        characteristcs for the request will be done here
+ * @file
+ *
+ * This file contains the APIs related to the GATT Server functionalities.
+ * Creation of the GattServer with the characteristics. Enabling the
+ * advertisement and updating the characteristics for the response and
+ * notifying the change of characteristcs for the request will be done here.
  */
 
 #ifndef _BLE_ADAPTER_ARDUINO_H_

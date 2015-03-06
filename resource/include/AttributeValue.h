@@ -1,4 +1,3 @@
-
 //******************************************************************
 //
 // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
@@ -19,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file AttributeValue.h
-
-/// @brief  This file contains the definition of the internally used
-// type AttributeValue
+/**
+ * @file
+ *
+ * This file contains the definition of the internally used type
+ * AttributeValue.
+ */
 
 #ifndef __ATTRIBUTEVALUE_H
 #define __ATTRIBUTEVALUE_H

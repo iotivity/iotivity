@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -19,12 +19,14 @@
 ******************************************************************/
 
 /**
- * @file cableutil.h
- * @brief This file contains the util function for LE adapter. This maintains the list of services
- *        an individual GATT Client connected to and operations on that list, such as getting the
- *        service info with BD address or with position etc. This is mainly useful for the
- *        multicast transmission of data where client needs to have the info of all the services
- *        to which it is connected.
+ * @file
+ *
+ * This file contains the util function for LE adapter. This maintains the
+ * list of services an individual GATT Client connected to and operations on
+ * that list, such as getting the service info with BD address or with
+ * position etc. This is mainly useful for the multicast transmission of
+ * data where client needs to have the info of all the services to which it
+ * is connected.
  */
 
 #ifndef _BLE_UTIL_H_

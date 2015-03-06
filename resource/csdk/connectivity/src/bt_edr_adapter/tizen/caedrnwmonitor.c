@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file  cabtnwmonitor.c
- * @brief  This file provides the APIs for EDR Network Monitor
+ * @file
+ *
+ * This file provides the APIs for EDR Network Monitor.
  */
 
 #include <string.h>

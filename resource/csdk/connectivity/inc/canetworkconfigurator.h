@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -17,9 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file canetworkconfigurator.h
- * @brief This file contains  utility functions for network configurations.
+ * @file
+ *
+ * This file contains  utility function for network configurations.
  */
 
 #ifndef _NETWORK_CONFIGURATOR_H_

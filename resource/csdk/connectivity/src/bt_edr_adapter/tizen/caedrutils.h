@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file  cabtutils.h
- * @brief This file provides helper functions for EDR adapter.
+ * @file
+ *
+ * This file provides helper functions for EDR adapter.
  */
 
 #ifndef __CA_EDR_UTILS_H_

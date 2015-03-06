@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file    caedrserver.c
- * @brief   This file provides the APIs to start and stop RFCOMM server.
+ * @file
+ *
+ * This file provides the APIs to start and stop RFCOMM server.
  */
 
 

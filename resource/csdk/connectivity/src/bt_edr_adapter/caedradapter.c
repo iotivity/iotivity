@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file caedradapter.c
- * @brief This file contains the APIs for EDR adapter.
+ * @file
+ *
+ * This file contains the APIs for EDR adapter.
  */
 
 #include "caedradapter.h"

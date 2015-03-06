@@ -1,6 +1,7 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
+ *
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file    uthreadpool.h
- * @brief   This file provides APIs related to thread pool
+ * @file
+ *
+ * This file provides APIs related to thread pool.
  */
 
 #ifndef __UTHREAD_POOL_H_

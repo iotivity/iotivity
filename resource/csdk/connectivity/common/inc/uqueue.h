@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,9 +19,11 @@
  ******************************************************************/
 
 /**
- * @file uqueue.h
- * @brief This file contains the APIs for queue to be implemented
+ * @file
+ *
+ * This file contains the APIs for queue to be implemented.
  */
+
 #ifndef __U_QUEUE_H_
 #define __U_QUEUE_H_
 

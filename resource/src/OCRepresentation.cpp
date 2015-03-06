@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCRepresentation.cpp
-
-/// @brief  This file contains the implementation of classes and its members
-///         related to OCRepresentation
+/**
+ * @file
+ *
+ * This file contains the implementation of classes and its members related
+ * to OCRepresentation.
+ */
 
 
 #include <OCRepresentation.h>

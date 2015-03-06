@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCRepresentation.h
-
-/// @brief  This file contains the declaration of classes and its members
-///         related to OCRepresentation
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related 
+ * to OCRepresentation.
+ */
 
 #ifndef __OCREPRESENTATION_H
 #define __OCREPRESENTATION_H

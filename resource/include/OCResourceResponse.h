@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResourceResponse.h
-
-/// @brief  This file contains the declaration of classes and its members related to
-///         ResourceResponse.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * ResourceResponse.
+ */
 
 #ifndef __OCRESOURCERESPONSE_H
 #define __OCRESOURCERESPONSE_H

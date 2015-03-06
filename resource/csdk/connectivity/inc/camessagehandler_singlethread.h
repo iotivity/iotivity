@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file camessagehandler_singlethread.h
- * @brief This file contains message functionality.
+ * @file
+ *
+ * This file contains message functionality.
  */
 
 #ifndef __CA_MESSAGE_HANDLER_SINGLETHREAD_H_

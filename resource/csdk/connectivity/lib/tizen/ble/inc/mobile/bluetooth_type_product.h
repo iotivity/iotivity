@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/**
+ * @file
+ *
+ *
+ */
 
 #ifndef __TIZEN_NETWORK_BLUETOOTH_TYPE_PRODUCT_H__
 #define __TIZEN_NETWORK_BLUETOOTH_TYPE_PRODUCT_H__
@@ -22,10 +27,6 @@
 extern "C"
 {
 #endif /* __cplusplus */
-
-/**
- * @file bluetooth_type_product.h
- */
 
 /**
  * @ingroup CAPI_NETWORK_BLUETOOTH_ADAPTER_LE_MODULE

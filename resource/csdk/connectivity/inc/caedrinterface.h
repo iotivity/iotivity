@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,10 @@
  ******************************************************************/
 
 /**
- * @file   caedrinterface.h
- * @brief  This file provides APIs for EDR adapter - client, server, network monitor modules
+ * @file
+ *
+ * This file provides APIs for EDR adapter - client, server, network monitor
+ * modules.
  */
 
 #ifndef __CA_EDR_INTERFACE_H_

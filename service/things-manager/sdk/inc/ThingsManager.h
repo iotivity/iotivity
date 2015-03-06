@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file   ThingsManager.h
-///
-/// @brief  This file contains the declaration of  ThingsManager class
-///         and its members related to ThingsManager.
+/**
+ * @file
+ *
+ * This file contains the declaration of  ThingsManager class and its
+ * members related to ThingsManager.
+ */
 
 #ifndef __OC_THINGSMANAGER__
 #define __OC_THINGSMANAGER__

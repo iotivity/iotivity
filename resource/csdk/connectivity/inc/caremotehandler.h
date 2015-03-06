@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file caremotehandler.h
- * @brief This file contains common utility function for remote endpoints
+ * @file
+ *
+ * This file contains common utility function for remote endpoints.
  */
 
 #ifndef __CA_REMOTE_HANDLER_H_

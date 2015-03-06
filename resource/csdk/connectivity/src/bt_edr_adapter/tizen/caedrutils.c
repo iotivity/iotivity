@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file  caedrutils.c
- * @brief  This file provides helper functions for EDR adapter.
+ * @file
+ *
+ * This file provides helper functions for EDR adapter.
  */
 
 #include "caedrutils.h"

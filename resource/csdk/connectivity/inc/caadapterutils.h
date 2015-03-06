@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,9 @@
  ******************************************************************/
 
 /**
- * @file caadapterutils.h
- * @brief This file contains common utility function for CA transport adaptors.
+ * @file
+ *
+ * This file contains common utility function for CA transport adaptors.
  */
 
 #ifndef _CA_ADAPTER_UTILS_H_

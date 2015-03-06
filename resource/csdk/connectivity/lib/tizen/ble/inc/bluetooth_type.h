@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+/**
+ * @file
+ *
+ * API to control the Bluetooth adapter, devices and communications.
+ *
+ * @ingroup CAPI_NETWORK_BLUETOOTH_TYPE_MODULE
+ */
 
 #ifndef __TIZEN_NETWORK_BLUETOOTH_TYPE_H__
 #define __TIZEN_NETWORK_BLUETOOTH_TYPE_H__
@@ -22,13 +29,6 @@
 extern "C"
 {
 #endif /* __cplusplus */
-
-/**
- * @file bluetooth_type.h
- * @brief API to control the Bluetooth adapter, devices and communications.
- * @ingroup     CAPI_NETWORK_BLUETOOTH_TYPE_MODULE
- */
-
 
 /**
  * @ingroup CAPI_NETWORK_BLUETOOTH_MODULE

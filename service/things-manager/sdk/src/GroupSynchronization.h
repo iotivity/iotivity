@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file   GroupSynchronization.h
-
-/// @brief  This file contains the declaration of classes and
-///its members related to GroupSynchronization.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * GroupSynchronization.
+ */
 
 #ifndef __OC_GROUPSYNCHRONIZATION__
 #define __OC_GROUPSYNCHRONIZATION__

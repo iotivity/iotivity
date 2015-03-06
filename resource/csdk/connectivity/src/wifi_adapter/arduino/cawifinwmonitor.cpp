@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -17,10 +17,12 @@
 * limitations under the License.
 *
 ******************************************************************/
+
 /**
- * @file cawifinwmonitor.cpp
- * @brief This file is to keep design in sync with other platforms.  Right now there is no
- *        api for network monitioring in arduino.
+ * @file
+ *
+ * This file is to keep design in sync with other platforms.  Right now
+ * there is no api for network monitioring in arduino.
  */
 
 #include "cawifiinterface_singlethread.h"
