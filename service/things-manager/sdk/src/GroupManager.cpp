@@ -18,8 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file    GroupManager.cpp
-///  @brief
+/**
+ * @file
+ *
+ */
 
 #include "GroupManager.h"
 #include <algorithm>

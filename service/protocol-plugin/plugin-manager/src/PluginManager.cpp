@@ -18,10 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file PluginManager.cpp
-
-/// @brief
-
+/**
+ * @file
+ *
+ */
 
 #include "PluginManager.h"
 

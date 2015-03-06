@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file   ThingsConfiguration.h
-
-/// @brief  This file contains the declaration of classes and its members related to
-///         ThingsConfiguration.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * ThingsConfiguration.
+ */
 
 #ifndef __OC_THINGSCONFIGURATION__
 #define __OC_THINGSCONFIGURATION__

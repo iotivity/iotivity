@@ -18,8 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file    ThingsConfiguration.cpp
-/// @brief
+/**
+ * @file
+ *
+ */
 
 #include <OCApi.h>
 #include <OCPlatform.h>

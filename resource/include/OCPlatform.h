@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCPlatform.h
-
-/// @brief  This file contains the declaration of classes and its members related to
-///         OCPlatform.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * OCPlatform.
+ */
 
 #ifndef __OCPLATFORM_H
 #define __OCPLATFORM_H

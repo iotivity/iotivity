@@ -18,7 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file    ThingsManager.cpp
+/**
+ * @file
+ *
+ */
 
 #include "ThingsManager.h"
 #include "GroupManager.h"

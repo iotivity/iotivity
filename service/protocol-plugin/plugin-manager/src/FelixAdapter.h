@@ -18,9 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file FelixAdapter.h
-
-/// @brief
+/**
+ * @file
+ *
+ */
 
 #ifndef __FELIXADAPTER_H__
 #define __FELIXADAPTER_H__

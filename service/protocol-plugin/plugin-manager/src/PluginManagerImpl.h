@@ -18,9 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file PluginManagerImpl.h
-
-/// @brief
+/**
+ * @file
+ *
+ */
 
 #ifndef __PLUGINMANAGERIMPL_H__
 #define __PLUGINMANAGERIMPL_H__

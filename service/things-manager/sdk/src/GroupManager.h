@@ -18,9 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file   GroupManager.h
-
-/// @brief  This file contains the declaration of classes and its members related to GroupManager
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * GroupManager.
+ */
 
 #ifndef __OC_GROUPMANAGER__
 #define __OC_GROUPMANAGER__

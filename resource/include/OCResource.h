@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResource.h
-
-/// @brief  This file contains the declaration of classes and its members related to
-///         Resource.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * Resource.
+ */
 
 #ifndef __OCRESOURCE_H
 #define __OCRESOURCE_H

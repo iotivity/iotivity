@@ -18,9 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file FelixAdapter.cpp
-
-/// @brief
+/**
+ * @file
+ *
+ */
 
 #include "FelixAdapter.h"
 #include <sstream>

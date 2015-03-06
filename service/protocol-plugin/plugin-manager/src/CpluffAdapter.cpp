@@ -18,9 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file CpluffAdapter.cpp
-
-/// @brief
+/**
+ * @file
+ *
+ */
 
 #include "CpluffAdapter.h"
 

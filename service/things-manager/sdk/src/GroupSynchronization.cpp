@@ -18,8 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file    GroupSynchronization.cpp
-/// @brief
+/**
+ * @file
+ *
+ */
 
 #include "GroupSynchronization.h"
 

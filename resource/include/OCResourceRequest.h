@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResourceRequest.h
-
-/// @brief  This file contains the declaration of classes and its members related to
-///         ResourceRequest.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * ResourceRequest.
+ */
 
 #ifndef __OCRESOURCEREQUEST_H
 #define __OCRESOURCEREQUEST_H

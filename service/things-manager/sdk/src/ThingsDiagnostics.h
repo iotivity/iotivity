@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file   ThingsDiagnostics.h
-
-/// @brief  This file contains the declaration of classes and its members related to
-///         ThingsDiagnostics.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * ThingsDiagnostics.
+ */
 
 #ifndef __OC_THINGSDIAGNOSTICS__
 #define __OC_THINGSDIAGNOSTICS__
