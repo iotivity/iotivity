@@ -759,11 +759,13 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         OC_LOG(INFO, TAG, PCF("Registering observation requested"));
         result = GenerateObserverId(&ehRequest.obsInfo.obsId);
         VERIFY_SUCCESS(result, OC_STACK_OK);
+
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, &request->requestToken,
                 resource, request->qos,
                 &request->addressInfo, request->connectivityType);
+
         if(result == OC_STACK_OK)
         {
             OC_LOG(INFO, TAG, PCF("Added observer successfully"));
@@ -773,6 +775,9 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         else
         {
             result = OC_STACK_OK;
+            // The error in observeResult for the request will be
+            // used when responding to this request by omitting
+            // the observation option/sequence number.
             request->observeResult = OC_STACK_ERROR;
             OC_LOG(ERROR, TAG, PCF("Observer Addition failed"));
             ehFlag = OC_REQUEST_FLAG;

@@ -702,6 +702,12 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         response.result = CAToOCStackResult(responseInfo->result);
         response.resJSONPayload = responseInfo->info.payload;
         response.numRcvdVendorSpecificHeaderOptions = 0;
+
+        // Will be overwritten with seq num if response is OBSERVE
+        // notification. If no sequence number obtained, registration failed
+        // and client app expected to delete the associated callback.
+        response.sequenceNumber = OC_OBSERVE_NO_OPTION;
+
         if(responseInfo->info.options && responseInfo->info.numOptions > 0)
         {
             int start = 0;

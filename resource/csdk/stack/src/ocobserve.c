@@ -313,6 +313,15 @@ OCStackResult AddObserver (const char         *resUri,
                            const CAAddress_t  *addressInfo,
                            CAConnectivityType_t connectivityType)
 {
+    // Check if resource exists and is observable.
+    if (!resHandle)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (!(resHandle->resourceProperties & OC_OBSERVABLE))
+    {
+        return OC_STACK_RESOURCE_ERROR;
+    }
     ResourceObserver *obsNode = NULL;
 
     if(!resUri || !token || !*token)
