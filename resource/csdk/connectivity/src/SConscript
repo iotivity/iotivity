@@ -9,6 +9,8 @@ ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 root_dir = './../'
 ca_path = './'
+extlib_dir_connectivity = '../../../../../../../'
+extlib_dir_iotivity     = '../../../../'
 build_dir = env.get('BUILD_DIR')
 
 #####################################################################
@@ -55,10 +57,12 @@ else:
 		]
 	if secured == '1':
 		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
-		env.AppendUnique(CPPPATH = ['../../../../extlibs/tinydtls'])
+		current_dir=env.get('SRC_DIR')
+		if current_dir.find('connectivity') == -1:
+			env.AppendUnique(CPPPATH = [extlib_dir_iotivity + 'extlibs/tinydtls'])
+		else:
+			env.AppendUnique(CPPPATH = [root_dir + extlib_dir_connectivity + 'extlibs/tinydtls'])
 env.AppendUnique(CA_SRC = ca_common_src)
-
-
 
 if 'ALL' in ca_transport:
 	env.SConscript(ca_path + 'ethernet_adapter/SConscript')
@@ -84,5 +88,8 @@ print "Files path is %s" %env.get('CA_SRC')
 calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 env.InstallTarget(calib, 'libconnectivity_abstraction')
 if env.get('SECURED') == '1':
-	env.Install(build_dir, '../../../../extlibs/tinydtls/libtinydtls.a')
+	if current_dir.find('connectivity') == -1:
+		env.Install(build_dir, extlib_dir_iotivity + 'extlibs/tinydtls/libtinydtls.a')
+	else:
+		env.Install(build_dir, root_dir + extlib_dir_connectivity + 'extlibs/tinydtls/libtinydtls.a')
 

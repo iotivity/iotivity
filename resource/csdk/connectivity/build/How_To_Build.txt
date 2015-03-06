@@ -31,9 +31,6 @@ Linux Build:
 
 3) The above command will build sample also.
 
-    For Enabling Secured server, 
-    * Note: tinydtls library has to copied to "connectivity/lib/tinydtls" for secured build.
-
     Secured Server will be only used for WIFI and ETHERNET transports.
 
     Give command "scons TARGET_OS=linux TARGET_TRANSPORT=WIFI SECURED=1
@@ -41,6 +38,8 @@ Linux Build:
     or (For multiple transports will be mentioned using comma)
 
     Give command "scons TARGET_OS=linux TARGET_TRANSPORT=WIFI,ETHERNET SECURED=1
+
+    Sample's executable would be created in "connectivity/out/[TARGET_OS]/[TARGET_ARCH]/[release/debug]/sample/linux"
 
 Android Build:
 

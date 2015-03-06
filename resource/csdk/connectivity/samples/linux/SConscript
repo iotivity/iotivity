@@ -10,7 +10,7 @@ ca_os = sample_env.get('TARGET_OS')
 ca_transport = sample_env.get('TARGET_TRANSPORT')
 secured = sample_env.get('SECURED')
 root_dir = './../../'
-
+extlibs_dir_path = '../../../../../../../../../'
 
 #####################################################################
 # Source files and Target(s)
@@ -26,11 +26,11 @@ sample_env.AppendUnique(CPPPATH = [root_dir + 'common/inc/'])
 print "Reading sample application build script"
 
 build_dir = sample_env.get('BUILD_DIR')
-sample_dir = './samples/linux/' 
+sample_dir = './samples/linux/'
 
 secured = sample_env.get('SECURED')
 
-print "Sample secured flag is %s" % secured 
+print "Sample secured flag is %s" % secured
 
 sample_src = ['./sample_main.c',]
 print " sample src %s" % sample_src
@@ -43,6 +43,8 @@ sample_env.PrependUnique(LIBS = ['connectivity_abstraction', 'coap',])
 sample_env.ParseConfig('pkg-config --libs glib-2.0');
 
 if secured == '1':
+	current_dir=env.get('SRC_DIR')
+	sample_env.AppendUnique(LIBPATH = [extlibs_dir_path + 'extlibs/tinydtls'])
 	sample_env.AppendUnique(CPPPATH = [root_dir + 'external/inc/'])
 	sample_env.AppendUnique(LIBS = ['tinydtls'])
 	casample =sample_env.Program('casample', [sample_src])
