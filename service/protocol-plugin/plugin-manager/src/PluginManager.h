@@ -25,7 +25,9 @@
 
 #ifndef __PLUGINMANAGER_H
 #define __PLUGINMANAGER_H
+#ifndef DLOPEN_POSIX
 #define DLOPEN_POSIX
+#endif
 
 #include <vector>
 #include <dirent.h>

@@ -25,7 +25,9 @@
 
 #ifndef __FELIXADAPTER_H__
 #define __FELIXADAPTER_H__
+#ifndef DLOPEN_POSIX
 #define DLOPEN_POSIX
+#endif
 
 #include <vector>
 #include <dirent.h>

@@ -25,7 +25,9 @@
 
 #ifndef __CPLUFFADAPTER_H
 #define __CPLUFFADAPTER_H
+#ifndef DLOPEN_POSIX
 #define DLOPEN_POSIX
+#endif
 
 #include <vector>
 #include <dirent.h>
