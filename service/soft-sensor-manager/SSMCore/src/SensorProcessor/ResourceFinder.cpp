@@ -76,7 +76,7 @@ void CResourceFinder::presenceHandler(OCStackResult result, const unsigned int n
     {
         case OC_STACK_OK:
             ret = OC::OCPlatform::findResource("",
-                                               "coap://" + hostAddress + ":5298" + "/oc/core?rt=SoftSensorManager.Sensor", OC_ALL,
+                                               "coap://" + hostAddress + ":6298" + "/oc/core?rt=SoftSensorManager.Sensor", OC_ALL,
                                                std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
 
             if (ret != OC_STACK_OK)
@@ -118,7 +118,7 @@ SSMRESULT CResourceFinder::startResourceFinder()
     OCStackResult ret = OC_STACK_ERROR;
 
     ret = OC::OCPlatform::findResource("",
-                                       "coap://224.0.1.187:5298/oc/core?rt=SoftSensorManager.Sensor", OC_ALL,
+                                       "coap://224.0.1.187:6298/oc/core?rt=SoftSensorManager.Sensor", OC_ALL,
                                        std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
 
     if (ret != OC_STACK_OK)

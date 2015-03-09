@@ -38,7 +38,7 @@ static int IPV4_ADDR_SIZE = 16;
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 
-static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:5298/oc/core";
+static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oc/core";
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 
 //The following variable determines the interface (wifi, ethernet etc.)

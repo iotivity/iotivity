@@ -36,7 +36,7 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 
 static int IPV4_ADDR_SIZE = 16;
-static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:5298/oc/core";
+static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oc/core";
 static char MULTICAST_DISCOVERY_QUERY[] = "/oc/core";
 
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";

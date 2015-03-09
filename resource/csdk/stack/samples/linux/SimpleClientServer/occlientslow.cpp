@@ -31,7 +31,7 @@
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
-static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:5298/oc/core";
+static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oc/core";
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";

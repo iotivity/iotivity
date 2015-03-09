@@ -31,8 +31,8 @@
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
-static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:5298/oc/core";
-static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:5298/oc/core/d";
+static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oc/core";
+static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oc/core/d";
 static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 //The following variable determines the interface (wifi, ethernet etc.)
