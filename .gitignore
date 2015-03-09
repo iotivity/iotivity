@@ -61,7 +61,8 @@ platform
 extlibs/gtest*
 extlibs/hippomocks-master/
 extlibs/master.zip
-extlibs/cereal
+extlibs/cereal/cereal
+extlibs/expat/expat*
 
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~
