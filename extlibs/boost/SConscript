@@ -73,7 +73,7 @@ except ValueError:
 	pass
 
 # Write a user-config for this variant
-user_config_name = cwd+os.sep+'tools'+os.sep+'build'+os.sep+'src'+os.sep+'user-config.jam'
+user_config_name = os.path.join(cwd, 'tools', 'build', 'src', 'user-config.jam')
 user_config_file = open(user_config_name, 'w')
 user_config_file.write('import os ;\n')
 user_config_file.write('using gcc :')
@@ -99,9 +99,9 @@ user_config_file.close();
 
 # Ensure that the toolchain is in the PATH
 penv = os.environ.copy()
-penv["PATH"] = tool_path+":" + penv["PATH"]
+penv["PATH"] = tool_path + ":" + penv["PATH"]
 
-build_path = 'build' + os.sep + target_os + os.sep + target_arch
+build_path = os.path.join('build', target_os, target_arch)
 
 cmd.append('-q')
 cmd.append('target-os=linux')
@@ -125,8 +125,9 @@ if handle.wait() <> 0 :
 	raise SCons.Errors.BuildError( "Building boost [%s] on the source [%s]" % (cmd, boost_b2_name) )
 
 # Use Copy instead of InstallXXX to make sure boost is installed immediately
-Execute(Copy(env.get('SRC_DIR') + '/deps/' + target_os + '/include',
-	boost_base_name + os.sep + build_path + os.sep + 'install_tmp' + os.sep + 'include'))
+Execute(Copy(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include'),
+	os.path.join(boost_base_name, build_path, 'install_tmp', 'include')))
 
-Execute(Copy(env.get('SRC_DIR') + '/deps/' + target_os + '/lib/' + target_arch,
-	boost_base_name + os.sep + build_path + os.sep + 'install_tmp' + os.sep + 'lib'))
+Execute(Copy(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch),
+	os.path.join(boost_base_name, build_path, 'install_tmp', 'lib')))
+

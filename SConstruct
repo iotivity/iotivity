@@ -3,6 +3,8 @@
 #
 ##
 
+import os
+
 # Load common build config
 SConscript('build_common/SConscript')
 
@@ -15,8 +17,8 @@ else:
 	# Prepare libraries
 	env.PrepareLib('cereal')
 	env.PrepareLib('expat')
-	env.PrepareLib('boost', 'boost_thread', env.get('SRC_DIR') + '/extlibs/boost/')
-	env.PrepareLib('boost', 'boost_system', env.get('SRC_DIR') + '/extlibs/boost/')
+	env.PrepareLib('boost', 'boost_thread', os.path.join(env.get('SRC_DIR'), 'extlibs', 'boost'))
+	env.PrepareLib('boost', 'boost_system', os.path.join(env.get('SRC_DIR'), 'extlibs', 'boost'))
 
 # By default, src_dir is current dir, the build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/
@@ -30,10 +32,10 @@ else:
 build_dir = env.get('BUILD_DIR')
 
 # Build 'resource' sub-project
-SConscript(build_dir + 'resource/SConscript')
+SConscript(os.path.join(build_dir, 'resource', 'SConscript'))
 
 # Build 'service' sub-project
-SConscript(build_dir + 'service/SConscript')
+SConscript(os.path.join(build_dir, 'service', 'SConscript'))
 
 # Append targets information to the help information, to see help info, execute command line:
 #     $ scon [options] -h

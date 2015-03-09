@@ -13,8 +13,8 @@ src_dir = env.get('SRC_DIR')
 # library management rule, cereal should be put in extlibs/cereal/cereal.
 # jenkins of gerrit server, still follow the old, to avoid jenkins fail
 # both places are handled.
-old = src_dir + '/extlibs/cereal/include'
-cur = src_dir + '/extlibs/cereal/cereal/include'
+old = os.path.join(src_dir, 'extlibs', 'cereal', 'include')
+cur = os.path.join(src_dir, 'extlibs', 'cereal', 'cereal', 'include')
 
 # check 'cereal' library, if it doesn't exits, ask user to download it
 if not os.path.exists(old) and not os.path.exists(cur):

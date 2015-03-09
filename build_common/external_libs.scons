@@ -40,8 +40,8 @@ if target_os == 'darwin':
 
 # External library include files are in <src_dir>/deps/<target_os>/include
 # the library binaries are in <src_dir>/deps/<target_os>/lib/<arch>
-env.AppendUnique(CPPPATH = [env.get('SRC_DIR') + '/deps/' + target_os + '/include'])
-env.AppendUnique(LIBPATH = [env.get('SRC_DIR') + '/deps/' + target_os + '/lib/' + target_arch])
+env.AppendUnique(CPPPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include')])
+env.AppendUnique(LIBPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch)])
 
 # Check whether a library exists, if not, notify user to install it or try to
 # download the source code and build it
@@ -65,13 +65,13 @@ def __prepare_lib(ienv, libname, lib = None, path = None, script = None):
 		if path:
 			dir = path
 		else:
-			dir = env.get('SRC_DIR') + '/extlibs/' + libname
+			dir = os.path.join(env.get('SRC_DIR'), 'extlibs', libname)
 
 		# Execute the script to download(if required) and build source code
 		if script:
-			st = dir + '/' + script
+			st = os.path.join(dir, script)
 		else:
-			st = dir + '/SConscript'
+			st = os.path.join(dir, 'SConscript')
 
 		if os.path.exists(st):
 			SConscript(st)
@@ -113,11 +113,11 @@ def __download(ienv, target, url) :
 
 # Install header file(s) to <src_dir>/deps/<target_os>/include
 def __install_head_file(ienv, file):
-		return ienv.Install(env.get('SRC_DIR') + '/deps/' + target_os + '/include', file)
+		return ienv.Install(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include'), file)
 
 # Install library binaries to <src_dir>/deps/<target_os>/lib/<arch>
 def __install_lib(ienv, lib):
-		return ienv.Install(env.get('SRC_DIR') + '/deps/' + target_os + '/lib/' + target_arch, lib)
+		return ienv.Install(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch), lib)
 
 SConscript('tools/UnpackAll.py')
 
