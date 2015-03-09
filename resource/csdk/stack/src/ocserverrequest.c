@@ -415,7 +415,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     //Sending response on all n/w interfaces
     for(int i = 0; i < size; i++ )
     {
-        responseEndpoint.connectivityType = connType & CAConnTypes[i];
+        responseEndpoint.connectivityType = (CAConnectivityType_t)(connType & CAConnTypes[i]);
         if(responseEndpoint.connectivityType)
         {
             //The result is set to OC_STACK_OK only if CASendResponse succeeds in sending the

@@ -108,7 +108,7 @@ void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
                         }
                     }
                 }
-                *credInfo = caBlob;
+                *credInfo = (OCDtlsPskCredsBlob *) caBlob;
                 break;
 #else
                 OCDtlsPskCredsBlob * blob;

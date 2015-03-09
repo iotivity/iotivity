@@ -29,6 +29,7 @@
 #include "caethernetadapter_singlethread.h"
 #include "caedradapter_singlethread.h"
 #include "caleadapter_singlethread.h"
+#include "caadapterutils.h"
 
 #include "canetworkconfigurator.h"
 #include "oic_malloc.h"
