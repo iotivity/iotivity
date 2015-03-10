@@ -2019,6 +2019,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     pointer = (OCResource *) OCCalloc(1, sizeof(OCResource));
     if (!pointer)
     {
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
     pointer->sequenceNum = OC_OFFSET_SEQUENCE_NUMBER;
@@ -2030,6 +2031,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     str = (char *) OCMalloc(size);
     if (!str)
     {
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
     strncpy(str, uri, size);
@@ -2278,14 +2280,18 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 
     // Create the resourcetype and insert it into the resource list
     pointer = (OCResourceType *) OCCalloc(1, sizeof(OCResourceType));
-    if (!pointer) {
+    if (!pointer)
+    {
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
 
     // Set the resourceTypeName
     size = strlen(resourceTypeName) + 1;
     str = (char *) OCMalloc(size);
-    if (!str) {
+    if (!str)
+    {
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
     strncpy(str, resourceTypeName, size);
@@ -2294,7 +2300,9 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     insertResourceType(resource, pointer);
     result = OC_STACK_OK;
 
-    exit: if (result != OC_STACK_OK) {
+    exit:
+    if (result != OC_STACK_OK)
+    {
         OCFree(pointer);
         OCFree(str);
     }
@@ -2319,14 +2327,18 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
 
     // Create the resourceinterface and insert it into the resource list
     pointer = (OCResourceInterface *) OCCalloc(1, sizeof(OCResourceInterface));
-    if (!pointer) {
+    if (!pointer)
+    {
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
 
     // Set the resourceinterface name
     size = strlen(resourceInterfaceName) + 1;
     str = (char *) OCMalloc(size);
-    if (!str) {
+    if (!str)
+    {
+        result = OC_STACK_NO_MEMORY;
         goto exit;
     }
     strncpy(str, resourceInterfaceName, size);
@@ -2337,7 +2349,9 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
 
     result = OC_STACK_OK;
 
-    exit: if (result != OC_STACK_OK) {
+    exit:
+    if (result != OC_STACK_OK)
+    {
         OCFree(pointer);
         OCFree(str);
     }
