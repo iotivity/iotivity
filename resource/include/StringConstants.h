@@ -96,6 +96,7 @@ namespace OC
         static const char STACK_CONTINUE[]             = "Stack continue";
         static const char INVALID_REQUEST_HANDLE[]     = "Invalid request handle";
         static const char INVALID_DEVICE_INFO[]        = "Invalid device info";
+        static const char INVALID_JSON[]               = "Invalid JSON";
         static const char UNKNOWN_ERROR[]              = "Unknown Error";
         static const char INVALID_REPRESENTATION[]     = "Invalid Payload JSON";
         static const char INVALID_JSON_TYPE[]          = "Unrecognized JSON Type ";

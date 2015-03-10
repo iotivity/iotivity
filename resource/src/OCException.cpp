@@ -79,6 +79,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INVALID_REQUEST_HANDLE;
         case OC_STACK_INVALID_DEVICE_INFO:
             return OC::Exception::INVALID_DEVICE_INFO;
+        case OC_STACK_INVALID_JSON:
+            return OC::Exception::INVALID_JSON;
 #ifdef WITH_PRESENCE
         case OC_STACK_PRESENCE_STOPPED:
             return OC::Exception::PRESENCE_STOPPED;
