@@ -153,6 +153,19 @@ def __create_bin(env, source):
 	else:
 		hex = env.Command(name + '.hex', source, 'arm-none-eabi-objcopy -O binary $SOURCE $TARGET')
 
+#Currently supporting only megaADK build
+def __upload(env, binary):
+        if target_arch == 'avr':
+                protocol = __get_board_info(board, '.upload.protocol')
+                speed = __get_board_info(board, '.upload.speed')
+                port = '/dev/ttyACM0'
+                upload_cmd = arduino_home + '/hardware/tools/avr/bin/avrdude -C' + arduino_home +'/hardware/tools/avr/etc/avrdude.conf -p' \
+                + mcu + ' -c' + protocol + ' -P' + port + ' -b' + speed + ' -D -Uflash:w:' + binary + ':i'
+
+                print "Upload command: %s" %upload_cmd
+                install_cmd = env.Command('install_cmd', None, upload_cmd)
+                env.Default('install_cmd')
+
 # Print the command line that to upload binary to the board
 def __upload_help(env):
 	if target_arch == 'avr':
@@ -182,16 +195,12 @@ help_vars.Update(env)
 Help(help_vars.GenerateHelpText(env))
 
 target_arch = env.get('TARGET_ARCH')
+
+# Verify that the arduino, time, red bear, and nordic libraries are
+# installed.  If not, get them and install them.
+SConscript(env.get('SRC_DIR') + '/extlibs/arduino/SConscript')
 arduino_home = env.get('ARDUINO_HOME')
-if not arduino_home:
-	print '''
-************************************* Error ***********************************
-*   Arduino root directory isn't set, you can set enviornment variable        *
-* ARDUINO_HOME or add it in command line as:                                  *
-*      # scons ARDUINO_HOME=<path to arduino root directory> ...              *
-*******************************************************************************
-'''
-	Exit(1)
+print 'ARDUINO_HOME = ' + env.get('ARDUINO_HOME')
 
 # Overwrite suffixes and prefixes
 if env['HOST_OS'] == 'win32':
@@ -397,4 +406,5 @@ __build_core(env)
 env.AddMethod(__import_lib, "ImportLib") #import arduino library
 #env.AddMethod(__build_core, "BuildCore") #build arduino core
 env.AddMethod(__create_bin, "CreateBin") #create binary files(.eep and .hex)
+env.AddMethod(__upload, "Upload") #Upload binary to board
 env.AddMethod(__upload_help, "UploadHelp") #print the command line that to upload binary to the boardf

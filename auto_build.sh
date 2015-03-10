@@ -77,7 +77,7 @@ function  help()
 {
 	echo "Usage:"
         echo "  build:"
-        echo "     `basename $0` <path-to-android-ndk> <path-to-arduino-home>"
+        echo "     `basename $0` <path-to-android-ndk>"
         echo "  clean:"
         echo "     `basename $0` -c"
 }

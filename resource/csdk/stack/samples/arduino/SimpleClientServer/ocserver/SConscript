@@ -11,7 +11,14 @@ arduino_simplecs_env.PrependUnique(CPPPATH = [
 		])
 
 arduino_simplecs_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction','coap'])
+arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if 'Ethernet' == env.get('NET'):
+	transportLib = 'Ethernet'
+elif 'Wifi' == env.get('NET'):
+	transportLib = 'WiFi'
+
+arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction','coap',transportLib])
 
 arduino_simplecs = arduino_simplecs_env.Program('SimpleClientServer', 'ocserver.cpp')
 env.CreateBin('SimpleClientServer')
@@ -20,3 +27,10 @@ i_arduino_simplecs = arduino_simplecs_env.Install(env.get('BUILD_DIR'), arduino_
 
 Alias('arduino_simplecs', i_arduino_simplecs)
 env.AppendTarget('arduino_simplecs')
+
+if(arduino_simplecs_env['UPLOAD'] == True):
+	from sys import platform as _platform
+	if _platform == "linux" or _platform == "linux2":
+		arduino_simplecs_env.Upload(env.get('BUILD_DIR') + '/resource/csdk/stack/samples/arduino/SimpleClientServer/ocserver/SimpleClientServer.hex')
+	else:
+		print 'Please use appropriate install method for your developing machine. Linux is the only supported platform right now.'

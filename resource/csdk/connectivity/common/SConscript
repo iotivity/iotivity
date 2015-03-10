@@ -31,7 +31,7 @@ ca_common_src = [
 	]
 
 if ca_os == 'arduino':
-	env.Command(env.get('BUILD_DIR') + 'logger.c.o', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c.o' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + header + ' ' + 'common/src/logger.c')
+	env.Command(env.get('BUILD_DIR') + 'logger.c.o', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c.o' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + '-I' + Dir('.').srcnode().path + '/inc' + header + ' ' + Dir('.').srcnode().path + '/src/logger.c')
 	platform_src = [
 		env.get('BUILD_DIR') + 'logger.c.o',
 	]
@@ -46,3 +46,4 @@ else:
 
 env.AppendUnique(CA_SRC = ca_common_src)
 env.AppendUnique(CA_SRC = platform_src)
+

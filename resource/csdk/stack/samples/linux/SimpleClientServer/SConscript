@@ -15,6 +15,7 @@ samples_env.PrependUnique(CPPPATH = [
 		])
 
 samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+samples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 samples_env.AppendUnique(LIBS = ['-lpthread'])
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])

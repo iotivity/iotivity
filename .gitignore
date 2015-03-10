@@ -55,3 +55,8 @@ platform
 # Ignore downloaded dependencies
 extlibs/gtest*
 extlibs/cereal
+extlibs/hippomocks-master
+*.tgz
+*.zip
+extlibs/arduino/arduino-1.5.8
+build_common/arduino/extlibs/arduino/arduino-1.5.8
