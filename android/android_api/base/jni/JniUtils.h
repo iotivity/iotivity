@@ -158,8 +158,8 @@ public:
             return "RESOURCE_ERROR";
         case OC_STACK_SLOW_RESOURCE:
             return "SLOW_RESOURCE";
-//        case OC_STACK_DUPLICATE_REQUEST:
-//            return "DUPLICATE_REQUEST";
+        //case OC_STACK_DUPLICATE_REQUEST:
+        //    return "DUPLICATE_REQUEST";
         case OC_STACK_NO_OBSERVERS:
             return "NO_OBSERVERS";
         case OC_STACK_OBSERVER_NOT_FOUND:
@@ -176,8 +176,8 @@ public:
             return "INVALID_REQUEST_HANDLE";
         case OC_STACK_INVALID_DEVICE_INFO:
             return "INVALID_DEVICE_INFO";
-//        case OC_STACK_INVALID_JSON:
-//            return "INVALID_JSON";
+        //case OC_STACK_INVALID_JSON:
+        //    return "INVALID_JSON";
 
         case OC_STACK_PRESENCE_STOPPED:
             return "PRESENCE_STOPPED";

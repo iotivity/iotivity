@@ -221,12 +221,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_dispose
     if (env->ExceptionCheck())
     {
         LOGE("Failed to get native handle from OcRepresentation");
-
     }
 
     if (jNeedsDelete)
     {
-        //TODO uncomment when OCRepresentation destruction issue is fixed
-        //delete rep;
+        delete rep;
     }
 }

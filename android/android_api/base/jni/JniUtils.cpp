@@ -90,7 +90,7 @@ jobject JniUtils::convertHeaderOptionsVectorToJavaList(JNIEnv *env, const OC::He
             env->NewStringUTF(headerOptions[i].getOptionData().c_str())
             );
 
-        env->CallObjectMethod(jHeaderOptionList, g_mid_LinkedList_add_object, jHeaderOption);
+        env->CallBooleanMethod(jHeaderOptionList, g_mid_LinkedList_add_object, jHeaderOption);
         env->DeleteLocalRef(jHeaderOption);
     }
 
