@@ -65,24 +65,28 @@ void SRMResponseHandler(const CARemoteEndpoint_t *endPoint, const CAResponseInfo
  *          Requests and responses are delivered in these callbacks .
  * @param   ReqHandler   [IN] Request callback ( for GET,PUT ..etc)
  * @param   RespHandler  [IN] Response Handler Callback
- * @return  NONE
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_INVALID_PARAM - invalid parameter
  */
 
-void SRMRegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+OCStackResult SRMRegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
 {
     OC_LOG(INFO, TAG, PCF("SRMRegisterHandler !!"));
     if(!ReqHandler)
     {
         OC_LOG(ERROR, TAG, PCF("ReqHandler is invalid"));
-        return;
+        return OC_STACK_INVALID_PARAM;
     }
     if(!RespHandler)
     {
         OC_LOG(ERROR, TAG, PCF("RespHandler is invalid"));
-        return;
+        return OC_STACK_INVALID_PARAM;
     }
     gRequestHandler = ReqHandler;
     gResponseHandler = RespHandler;
 
     CARegisterHandler(SRMRequestHandler, SRMResponseHandler);
+    return OC_STACK_OK;
 }
+

@@ -21,13 +21,23 @@
 #ifndef SECURITYRESOURCEMANAGER_H_
 #define SECURITYRESOURCEMANAGER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief   Register request and response callbacks.
  *          Requests and responses are delivered in these callbacks .
  * @param   ReqHandler   [IN] Request callback ( for GET,PUT ..etc)
  * @param   RespHandler  [IN] Response Handler Callback
- * @return  NONE
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_INVALID_PARAM - invalid parameter
  */
-void SRMRegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+OCStackResult SRMRegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SECURITYRESOURCEMANAGER_H_ */
