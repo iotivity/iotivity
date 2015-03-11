@@ -26,15 +26,31 @@ extern "C" {
 #endif
 
 /**
- * @brief   Register request and response callbacks.
- *          Requests and responses are delivered in these callbacks .
- * @param   ReqHandler   [IN] Request callback ( for GET,PUT ..etc)
- * @param   RespHandler  [IN] Response Handler Callback
+ * @brief   Register Persistent storage callback.
+ * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
  * @return
- *     OC_STACK_OK    - no errors
- *     OC_STACK_INVALID_PARAM - invalid parameter
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
  */
-OCStackResult SRMRegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler);
+
+/**
+ * @brief   Get Persistent storage handler pointer.
+ * @return
+ *     The pointer to Persistent Storage callback handler
+ */
+OCPersistentStorage* SRMGetPersistentStorageHandler();
+
+/**
+ * @brief   Register request and response callbacks.
+ *          Requests and responses are delivered in these callbacks.
+ * @param   reqHandler   [IN] Request handler callback ( for GET,PUT ..etc)
+ * @param   respHandler  [IN] Response handler callback.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
+ */
+OCStackResult SRMRegisterHandler(CARequestCallback reqHandler, CAResponseCallback respHandler);
 
 #ifdef __cplusplus
 }

@@ -32,6 +32,7 @@ src_dir = srmtest_env.get('SRC_DIR')
 srmtest_env.PrependUnique(CPPPATH = [
 		'../../connectivity/inc',
 		'../../connectivity/api',
+		'../include',
 		'../include/internal',
 		'../../logger/include',
 		'../../stack/include',

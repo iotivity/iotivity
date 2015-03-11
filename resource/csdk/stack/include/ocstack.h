@@ -21,6 +21,7 @@
 #ifndef OCSTACK_H_
 #define OCSTACK_H_
 
+#include <stdio.h>
 #include <stdint.h>
 #include "ocstackconfig.h"
 
@@ -235,6 +236,23 @@ typedef enum {
     OC_OBSERVE_DEREGISTER = 1,
     OC_OBSERVE_NO_OPTION = 2
 } OCObserveAction;
+
+/**
+ * Persistent storage handlers. An app must provide OCPersistentStorage handler pointers when it
+ * calls SRMRegisterPersistentStorageHandler.
+ */
+typedef struct {
+    // Persistent storage open handler
+    FILE* (* open)(const char *path, const char *mode, FILE **stream);
+    // Persistent storage read handler
+    size_t (* read)(void *ptr, size_t size, size_t nmemb, FILE *stream);
+    // Persistent storage write handler
+    size_t (* write)(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+    // Persistent storage close handler
+    int (* close)(FILE *fp);
+    // Persistent storage unlink handler
+    int (* unlink)(const char *path);
+} OCPersistentStorage;
 
 typedef struct {
     // Action associated with observation request
@@ -502,6 +520,15 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
  */
 OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
         uint8_t numOptions);
+
+/**
+ * @brief   Register Persistent storage callback.
+ * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
+ */
+OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler);
 
 #ifdef WITH_PRESENCE
 /**

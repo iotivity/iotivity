@@ -19,8 +19,10 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "gtest/gtest.h"
+#include <pwd.h>
+#include <grp.h>
+#include <linux/limits.h>
 #include "ocstack.h"
-#include "logger.h"
 #include "cainterface.h"
 #include "securityresourcemanager.h"
 
@@ -29,10 +31,41 @@ using namespace std;
 // Helper Methods
 void UTRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
 {
+    printf("UTRequestHandler\n");
 }
 
 void UTResponseHandler(const CARemoteEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
 {
+    printf("UTResponseHandler\n");
+}
+
+FILE *utopen(const char *path, const char *mode, FILE **stream)
+{
+    printf("utopen\n");
+    *stream = fopen(path, mode);
+    return *stream;
+
+}
+
+size_t utread(void *ptr, size_t size, size_t nmemb, FILE *stream)
+{
+    return fread(ptr, size, nmemb, stream);
+}
+
+size_t utwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
+{
+    return fwrite(ptr, size, nmemb, stream);
+}
+
+int utclose(FILE *fp)
+{
+    printf("utclose\n");
+    return fclose(fp);
+}
+int utunlink(const char *path)
+{
+    printf("utunlink\n");
+    return unlink(path);
 }
 
 //RegisterHandler Tests
@@ -54,4 +87,64 @@ TEST(RegisterHandlerTest, RegisterNullHandler)
 TEST(RegisterHandlerTest, RegisterValidHandler)
 {
     EXPECT_EQ(OC_STACK_OK, SRMRegisterHandler(UTRequestHandler, UTResponseHandler));
+}
+
+// PersistentStorageHandler Tests
+TEST(PersistentStorageHandlerTest, RegisterNullHandler)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM,
+            SRMRegisterPersistentStorageHandler(NULL));
+}
+TEST(PersistentStorageHandlerTest, GetNullPersistentStorageHandler)
+{
+    OCPersistentStorage *ps = SRMGetPersistentStorageHandler();
+
+    EXPECT_TRUE(ps == NULL);
+}
+TEST(PersistentStorageHandlerTest, RegisterValidHandler)
+{
+    OCPersistentStorage *psi = (OCPersistentStorage*) malloc(sizeof(OCPersistentStorage));
+    psi->open = utopen;
+    psi->read = utread;
+    psi->write = utwrite;
+    psi->close = utclose;
+    psi->unlink = utunlink;
+
+    EXPECT_EQ(OC_STACK_OK,
+            SRMRegisterPersistentStorageHandler(psi));
+    OCPersistentStorage *ps = SRMGetPersistentStorageHandler();
+    EXPECT_TRUE(psi == ps);
+}
+
+TEST(PersistentStorageHandlerTest, PersistentStorageValidHandlers)
+{
+    OCPersistentStorage *psi = SRMGetPersistentStorageHandler();
+    EXPECT_TRUE(psi != NULL);
+
+    unsigned char buf[PATH_MAX];
+    FILE* streamIn;
+    FILE* streamOut;
+    struct passwd *pw = getpwuid(getuid());
+    const char *homeDir = pw->pw_dir;
+    char inFilePath [PATH_MAX];
+    char outFilePath [PATH_MAX];
+    snprintf(inFilePath, PATH_MAX, "%s/iotivity/Readme.scons.txt", homeDir );
+    snprintf(outFilePath, PATH_MAX, "%s/Downloads/Readme.scons.out.txt", homeDir );
+
+    psi->open(inFilePath, "r", &streamIn);
+    EXPECT_TRUE(streamIn != NULL);
+    psi->open(outFilePath, "w", &streamOut);
+    EXPECT_TRUE(streamOut != NULL);
+
+    size_t value = 1;
+    while (value)
+    {
+        value = psi->read(buf, 1, sizeof(buf), streamIn);
+        psi->write(buf, 1, value, streamOut);
+    }
+
+    psi->close(streamIn);
+    psi->close(streamOut);
+    psi->unlink(outFilePath);
+    free(psi);
 }

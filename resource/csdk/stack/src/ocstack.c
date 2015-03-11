@@ -1916,6 +1916,24 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
     return ret;
 }
 
+/**
+ * @brief   Register Persistent storage callback.
+ * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
+ */
+OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
+{
+    OC_LOG(INFO, TAG, PCF("RegisterPersistentStorageHandler !!"));
+    if(!persistentStorageHandler)
+    {
+        OC_LOG(ERROR, TAG, PCF("The persistent storage handler is invalid"));
+        return OC_STACK_INVALID_PARAM;
+    }
+    return SRMRegisterPersistentStorageHandler(persistentStorageHandler);
+}
+
 #ifdef WITH_PRESENCE
 OCStackResult OCProcessPresence()
 {
