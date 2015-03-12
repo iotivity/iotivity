@@ -453,6 +453,8 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
 
     message = newActionSet->actionsetName;
     message.append("*");
+    message.append(newActionSet->toString());
+    message.append("*");
     for (auto iterAction = newActionSet->listOfAction.begin();
             iterAction != newActionSet->listOfAction.end(); iterAction++)
     {
@@ -519,6 +521,17 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
         goto exit;
     }
 
+    if (token != NULL)
+    {
+        sscanf(token, "%ld %d", &actionset->mDelay, (int*)&actionset->type);
+
+        token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
+    }
+    else
+    {
+        goto exit;
+    }
+
     while (token)
     {
         char *descPtr = NULL;
@@ -530,15 +543,12 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
             strcpy(desc, token);
             token = strtok_r(desc, DESC_DELIMITER, &descPtr);
 
-            // cout << "desc :: " << token << endl;
             while (token != NULL)
             {
                 char *attrPtr = NULL;
                 attr = new char[(strlen(token) + 1)];
 
                 strcpy(attr, token);
-
-                // cout << "attr :: " << attr << endl;
 
                 token = strtok_r(attr, ATTR_DELIMITER, &attrPtr);
                 while (token != NULL)
@@ -620,10 +630,9 @@ OCStackResult GroupManager::addActionSet(std::shared_ptr< OCResource > resource,
     if ((resource != NULL) && (newActionSet != NULL))
     {
         std::string message = getStringFromActionSet(newActionSet);
+
         OCRepresentation rep;
-
         rep.setValue("ActionSet", message);
-
         return resource->put(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
                 QueryParamsMap(), cb);
     }
@@ -641,6 +650,47 @@ OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resou
         OCRepresentation rep;
 
         rep.setValue("DoAction", actionsetName);
+        return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
+                QueryParamsMap(), cb);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
+}
+
+OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resource,
+        std::string actionsetName, long int delay, PostCallback cb)
+{
+    if(delay == 0 )
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (resource != NULL)
+    {
+        std::string value = actionsetName;
+        value.append("*");
+        value.append(std::to_string(delay));
+
+        OCRepresentation rep;
+        rep.setValue("DoScheduledAction", value);
+        return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
+                QueryParamsMap(), cb);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
+}
+
+OCStackResult GroupManager::cancelActionSet(std::shared_ptr< OCResource > resource,
+        std::string actionsetName, PostCallback cb)
+{
+    if (resource != NULL)
+    {
+        OCRepresentation rep;
+
+        rep.setValue("CancelAction", actionsetName);
         return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
                 QueryParamsMap(), cb);
     }

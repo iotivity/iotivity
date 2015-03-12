@@ -21,14 +21,19 @@
 #ifndef OIC_GROUP_H
 #define OIC_GROUP_H
 
-#include "ocstack.h"
 #include "ocstackinternal.h"
+#include "ocstack.h"
+#include "ocresource.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 void AddCapability(OCCapability** head, OCCapability* node);
 
 void AddAction(OCAction** head, OCAction* node);
 
-void AddActionSet(OCActionSet **head, OCActionSet* node);
+OCStackResult AddActionSet(OCActionSet **head, OCActionSet* node);
 
 void DeleteCapability(OCCapability *del);
 
@@ -55,5 +60,10 @@ void ActionSetCD(void *context);
 OCStackResult
 BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHandlerFlag flag*/,
         OCResource *resource, OCEntityHandlerRequest *ehRequest);
+
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif // OIC_GROUP_H

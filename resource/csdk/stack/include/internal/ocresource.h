@@ -74,16 +74,16 @@ typedef struct ocaction {
 } OCAction;
 
 // following structure will be created in occollection.
-typedef struct ocactionset {
-
+typedef struct ocactionset
+{
     struct ocactionset *next;
 
     char *actionsetName;
+    long int timesteps;
+    unsigned int type;
 
     OCAction* head;
 } OCActionSet;
-
-
 
 typedef struct resourcetype_t {
     struct resourcetype_t *next; // linked list; for multiple types on resource

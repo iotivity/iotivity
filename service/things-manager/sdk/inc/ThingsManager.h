@@ -383,6 +383,38 @@ namespace OIC
                 std::string actionsetName, PostCallback cb);
 
         /**
+         * API for executing the Action Set.
+         * Callback is called when the response of  POST operation arrives.
+         *
+         * @param resource - resource pointer of the group resource
+         * @param actionsetName - Action Set name for executing the Action set
+         * @param delay - waiting time for until action set run.
+         * @param callback - callback for POST operation.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
+                std::string actionsetName, long int delay, PostCallback cb);
+
+        /**
+         * API for canceling the Action Set.
+         * Callback is called when the response of POST operation arrives.
+         *
+         * @param resource - resource pointer of the group resource
+         * @param actionsetName - Action Set name for executing the Action set
+         * @param callback - callback for POST operation.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult cancelActionSet(std::shared_ptr< OCResource > resource,
+                std::string actionsetName, PostCallback cb);
+        /**
          * API for reading the Action Set.
          * Callback is called when the response of  GET operation arrives.
          *
