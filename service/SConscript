@@ -3,10 +3,11 @@
 #
 ##
 Import('env')
+Import('targets_csdk_only')
 
 target_os = env.get('TARGET_OS')
 
-if target_os != 'arduino':
+if target_os not in targets_csdk_only:
 	# Build things manager project
 	SConscript('things-manager/SConscript')
 

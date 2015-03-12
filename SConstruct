@@ -5,8 +5,11 @@
 
 import os
 
+# List of targets that only support the IoTivity C SDK.
+targets_csdk_only = ['arduino']
+
 # Load common build config
-SConscript('build_common/SConscript')
+SConscript('build_common/SConscript', exports = 'targets_csdk_only')
 
 Import('env')
 
@@ -32,10 +35,12 @@ else:
 build_dir = env.get('BUILD_DIR')
 
 # Build 'resource' sub-project
-SConscript(os.path.join(build_dir, 'resource', 'SConscript'))
+SConscript(os.path.join(build_dir, 'resource', 'SConscript'),
+           exports = 'targets_csdk_only')
 
 # Build 'service' sub-project
-SConscript(os.path.join(build_dir, 'service', 'SConscript'))
+SConscript(os.path.join(build_dir, 'service', 'SConscript'),
+           exports = 'targets_csdk_only')
 
 # Append targets information to the help information, to see help info, execute command line:
 #     $ scon [options] -h

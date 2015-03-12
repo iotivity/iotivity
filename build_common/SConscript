@@ -238,6 +238,7 @@ else:
 # make sure we give the automated build configuration below an
 # opportunity to detect platform-specific anomalies.
 # -------------------------------------------------------------------
+Import('targets_csdk_only')
 import iotivityconfig
 from iotivityconfig import *
 
@@ -246,8 +247,11 @@ conf = env.Configure(
                 'CheckCXX11Flags' : iotivityconfig.check_cxx11_flags
         } )
 
-# IoTivity requires support for C++11.
-if not conf.CheckCXX11Flags():
+# IoTivity requires support for C++11 for the C++ SDK.
+#
+# However, some platforms, such as Arduino, only support the C SDK.
+# Don't bother running the C++11 check in those cases.
+if target_os not in targets_csdk_only and not conf.CheckCXX11Flags():
         print('C++11 support is required!')
         Exit(1)
 
