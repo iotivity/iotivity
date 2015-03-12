@@ -693,7 +693,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         response.result = CAToOCStackResult(responseInfo->result);
         response.resJSONPayload = (unsigned char*)responseInfo->info.payload;
         response.numRcvdVendorSpecificHeaderOptions = 0;
-        if(responseInfo->info.numOptions > 0)
+        if(responseInfo->info.options && responseInfo->info.numOptions > 0)
         {
             int start = 0;
             //First option always with option ID is OC_COAP_OPTION_OBSERVE if it is available.
