@@ -191,7 +191,7 @@ OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char *
 const ServerID OCGetServerInstanceID(void);
 
 // Converts a CAResult_t type to a OCStackResult type.
-static OCStackResult CAResultToOCResult(CAResult_t caResult);
+OCStackResult CAResultToOCResult(CAResult_t caResult);
 
 // returns a string representation  the server instance ID.
 // The memory is managed internal to this function, so freeing externally will result
