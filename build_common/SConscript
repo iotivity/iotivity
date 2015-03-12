@@ -171,13 +171,29 @@ env.SetDir(env.GetLaunchDir())
 
 Export('env')
 
+# Delete the temporary build and configuration files
+if env.GetOption('clean'):
+    # Retrieve the configure log file and test directory nodes from the
+    # appropriate construction variables.
+    config_log = File(env['CONFIGURELOG'])
+    config_dir = Dir(env['CONFIGUREDIR'])
+
+    # The '.sconsign.dblite' file.
+    sconsign_dblite = os.path.join(env.get('SRC_DIR'),
+                                   '.sconsign.dblite')
+
+    if os.path.exists(str(config_log)):
+        Execute(Delete(config_log))
+        Execute(Delete(config_dir))
+        Execute(Delete(sconsign_dblite))
+
 ######################################################################
 # Link scons to Yocto cross-toolchain ONLY when target_os is yocto
 ######################################################################
 if target_os == "yocto":
     '''
-    This code injects Yocto cross-compilation tools+flags into scons' 
-    build environment in order to invoke the relevant tools while 
+    This code injects Yocto cross-compilation tools+flags into scons'
+    build environment in order to invoke the relevant tools while
     performing a build.
     '''
     import os.path
@@ -215,7 +231,7 @@ if target_os == "yocto":
     env['TARGET_OS'] = 'linux'
     '''
     We want to preserve debug symbols to allow BitBake to generate both DEBUG and
-    RELEASE packages for OIC. 
+    RELEASE packages for OIC.
     '''
     env['CCFLAGS'].append('-g')
     Export('env')
@@ -237,42 +253,34 @@ else:
 # make sure we give the automated build configuration below an
 # opportunity to detect platform-specific anomalies.
 # -------------------------------------------------------------------
-Import('targets_csdk_only')
-import iotivityconfig
-from iotivityconfig import *
+if not env.GetOption('clean') and not env.GetOption('help'):
+    Import('targets_csdk_only')
+    import iotivityconfig
+    from iotivityconfig import *
 
-conf = env.Configure(
+    conf = env.Configure(
         custom_tests = {
                 'CheckC99Flags' : iotivityconfig.check_c99_flags,
                 'CheckCXX11Flags' : iotivityconfig.check_cxx11_flags
         } )
 
-# IoTivity requires support for C99 for the C SDK.
-if not conf.CheckC99Flags():
+    # IoTivity requires support for C99 for the C SDK.
+    if not conf.CheckC99Flags():
         print('C99 support is required!')
         Exit(1)
 
-# IoTivity requires support for C++11 for the C++ SDK.
-#
-# However, some platforms, such as Arduino, only support the C SDK.
-# Don't bother running the C++11 check in those cases.
-if target_os not in targets_csdk_only and not conf.CheckCXX11Flags():
+    # IoTivity requires support for C++11 for the C++ SDK.
+    #
+    # However, some platforms, such as Arduino, only support the C
+    # SDK.  Don't bother running the C++11 check in those cases.
+    if target_os not in targets_csdk_only and not conf.CheckCXX11Flags():
         print('C++11 support is required!')
         Exit(1)
 
-env = conf.Finish()
+    env = conf.Finish()
 # -------------------------------------------------------------------
 
 env.SConscript('external_libs.scons')
-
-# Delete the temp files of configuration
-if env.GetOption('clean'):
-	dir = env.get('SRC_DIR')
-
-	if os.path.exists(dir + '/config.log'):
-		Execute(Delete(dir + '/config.log'))
-		Execute(Delete(dir + '/.sconsign.dblite'))
-		Execute(Delete(dir + '/.sconf_temp'))
 
 # Check if C/C++ compiler is installed
 cc = env.get('CC', '')
