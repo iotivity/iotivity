@@ -402,7 +402,7 @@ void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInf
     // set code
     if (outCode)
     {
-        (*outCode) = (uint32_t) pdu->hdr->code;
+        (*outCode) = (uint32_t) CA_RESPONSE_CODE(pdu->hdr->code);
     }
 
     // init HeaderOption list

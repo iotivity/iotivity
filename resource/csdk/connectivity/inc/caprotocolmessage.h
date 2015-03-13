@@ -38,6 +38,8 @@ extern "C"
 #endif
 
 typedef uint32_t code_t;
+#define CA_RESPONSE_CLASS(C) (((C) >> 5)*100)
+#define CA_RESPONSE_CODE(C) (CA_RESPONSE_CLASS(C) + (C - COAP_RESPONSE_CODE(CA_RESPONSE_CLASS(C))))
 
 /**
  * @brief   generates pdu structure from the given information.
