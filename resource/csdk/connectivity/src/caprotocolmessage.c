@@ -35,6 +35,19 @@
 static const char COAP_HEADER[] = "coap://[::]/";
 static uint32_t SEED = 0;
 
+/**
+ * Helper that uses libcoap to parse either the path or the parameters of a URI
+ * and populate the supplied options list.
+ *
+ * @param str the input partial URI string (either path or query).
+ * @param length the length of the supplied partial URI.
+ * @param target the part of the URI to parse (either COAP_OPTION_URI_PATH
+ *        or COAP_OPTION_URI_QUERY).
+ * @param optlist options information.
+ */
+static void CAParseUriPartial(const unsigned char *str, size_t length,
+                              int target, coap_list_t **optlist);
+
 void CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo, char *outUri,
                              uint32_t buflen)
 {
@@ -220,9 +233,9 @@ void CAParseURI(const char *uriInfo, coap_list_t **optlist)
     coap_uri_t uri;
     coap_split_uri((unsigned char *) uriInfo, strlen(uriInfo), &uri);
 
-    unsigned char portbuf[2];
     if (uri.port != COAP_DEFAULT_PORT)
     {
+        unsigned char portbuf[2];
         coap_insert(
                 optlist,
                 CACreateNewOptionNode(COAP_OPTION_URI_PORT,
@@ -230,68 +243,55 @@ void CAParseURI(const char *uriInfo, coap_list_t **optlist)
                 CAOrderOpts);
     }
 
-    unsigned char uriBuffer[CA_BUFSIZE] =
-    { 0 };
-    unsigned char *pBuf = uriBuffer;
-    uint32_t buflen;
-    int32_t res;
 
-    if (uri.path.length)
-    {
-        buflen = CA_BUFSIZE;
-        res = coap_split_path(uri.path.s, uri.path.length, pBuf, &buflen);
+    CAParseUriPartial(uri.path.s, uri.path.length, COAP_OPTION_URI_PATH, optlist);
 
-        if (res > 0)
-        {
-            uint32_t prevIdx = 0;
-            while (res--)
-            {
-                coap_insert(
-                        optlist,
-                        CACreateNewOptionNode(COAP_OPTION_URI_PATH, COAP_OPT_LENGTH(pBuf),
-                                              COAP_OPT_VALUE(pBuf)),
-                        CAOrderOpts);
-
-                uint32_t optSize = COAP_OPT_SIZE(pBuf);
-                uint32_t nextIdx = prevIdx + optSize;
-                if (nextIdx < buflen)
-                {
-                    pBuf += optSize;
-                    prevIdx += nextIdx;
-                }
-            }
-        }
-    }
-
-    if (uri.query.length)
-    {
-        buflen = CA_BUFSIZE;
-        pBuf = uriBuffer;
-        res = coap_split_query(uri.query.s, uri.query.length, pBuf, &buflen);
-
-        if (res > 0)
-        {
-            uint32_t prevIdx = 0;
-            while (res--)
-            {
-                coap_insert(
-                        optlist,
-                        CACreateNewOptionNode(COAP_OPTION_URI_QUERY, COAP_OPT_LENGTH(pBuf),
-                                              COAP_OPT_VALUE(pBuf)),
-                        CAOrderOpts);
-
-                uint32_t optSize = COAP_OPT_SIZE(pBuf);
-                uint32_t nextIdx = prevIdx + optSize;
-                if (nextIdx < buflen)
-                {
-                    pBuf += optSize;
-                    prevIdx += nextIdx;
-                }
-            }
-        }
-    }
+    CAParseUriPartial(uri.query.s, uri.query.length, COAP_OPTION_URI_QUERY, optlist);
 
     OIC_LOG(DEBUG, TAG, "CAParseURI OUT");
+}
+
+void CAParseUriPartial(const unsigned char *str, size_t length,
+                       int target, coap_list_t **optlist)
+{
+    if ((target != COAP_OPTION_URI_PATH) && (target != COAP_OPTION_URI_QUERY))
+    {
+        // should never occur. Log just in case.
+        OIC_LOG(DEBUG, TAG, "Unexpected URI component.");
+    }
+    else if (str && length)
+    {
+        unsigned char uriBuffer[CA_BUFSIZE] = { 0 };
+        unsigned char *pBuf = uriBuffer;
+        size_t buflen = sizeof(uriBuffer);
+        int res = (target == COAP_OPTION_URI_PATH) ?
+            coap_split_path(str, length, pBuf, &buflen) :
+            coap_split_query(str, length, pBuf, &buflen);
+
+        if (res > 0)
+        {
+            size_t prevIdx = 0;
+            while (res--)
+            {
+                coap_insert(
+                        optlist,
+                        CACreateNewOptionNode(target, COAP_OPT_LENGTH(pBuf),
+                                              COAP_OPT_VALUE(pBuf)),
+                        CAOrderOpts);
+
+                size_t optSize = COAP_OPT_SIZE(pBuf);
+                if ((prevIdx + optSize) < buflen)
+                {
+                    pBuf += optSize;
+                    prevIdx += optSize;
+                }
+            }
+        }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "Problem parsing URI : %d for %d", res, target);
+        }
+    }
 }
 
 void CAParseHeadOption(const uint32_t code, const CAInfo_t info, coap_list_t **optlist)
