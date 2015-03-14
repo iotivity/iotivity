@@ -451,8 +451,10 @@ void CADestroyRequestInfoInternal(CARequestInfo_t *rep)
     OICFree((char *) rep->info.token);
 
     // free options field
-    OICFree((CAHeaderOption_t *) rep->info.options);
-
+    if (rep->info.options != NULL && rep->info.numOptions)
+    {
+        OICFree((CAHeaderOption_t *) rep->info.options);
+    }
     // free payload field
     OICFree((char *) rep->info.payload);
 
