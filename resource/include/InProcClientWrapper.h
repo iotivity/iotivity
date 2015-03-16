@@ -128,8 +128,8 @@ namespace OC
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
         std::string assembleSetResourcePayload(const OCRepresentation& attributes);
-        void assembleHeaderOptions(OCHeaderOption options[],
-            const HeaderOptions& headerOptions);
+        OCHeaderOption* assembleHeaderOptions(OCHeaderOption options[],
+           const HeaderOptions& headerOptions);
         std::thread m_listeningThread;
         bool m_threadRun;
         std::weak_ptr<std::recursive_mutex> m_csdkLock;

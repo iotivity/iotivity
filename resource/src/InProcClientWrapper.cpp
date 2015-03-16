@@ -214,7 +214,7 @@ namespace OC
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
-                                  NULL, 0);
+                                  nullptr, 0);
         }
         else
         {
@@ -269,7 +269,7 @@ namespace OC
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
-                                  NULL, 0);
+                                  nullptr, 0);
         }
         else
         {
@@ -356,13 +356,12 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-            assembleHeaderOptions(options, headerOptions);
-
             result = OCDoResource(nullptr, OC_REST_GET, os.str().c_str(),
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
-                                  options, headerOptions.size());
+                                  assembleHeaderOptions(options, headerOptions),
+                                  headerOptions.size());
         }
         else
         {
@@ -464,12 +463,13 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-            assembleHeaderOptions(options, headerOptions);
             result = OCDoResource(nullptr, OC_REST_POST,
                                   os.str().c_str(), nullptr,
                                   assembleSetResourcePayload(rep).c_str(), connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
-                                  &cbdata, options, headerOptions.size());
+                                  &cbdata,
+                                  assembleHeaderOptions(options, headerOptions),
+                                  headerOptions.size());
         }
         else
         {
@@ -507,13 +507,13 @@ namespace OC
             OCDoHandle handle;
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-            assembleHeaderOptions(options, headerOptions);
             result = OCDoResource(&handle, OC_REST_PUT,
                                   os.str().c_str(), nullptr,
                                   assembleSetResourcePayload(rep).c_str(), connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
-                                  options, headerOptions.size());
+                                  assembleHeaderOptions(options, headerOptions),
+                                  headerOptions.size());
         }
         else
         {
@@ -562,15 +562,15 @@ namespace OC
         {
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-            assembleHeaderOptions(options, headerOptions);
-
             std::lock_guard<std::recursive_mutex> lock(*cLock);
 
             result = OCDoResource(nullptr, OC_REST_DELETE,
                                   os.str().c_str(), nullptr,
                                   nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(m_cfg.QoS),
-                                  &cbdata, options, headerOptions.size());
+                                  &cbdata,
+                                  assembleHeaderOptions(options, headerOptions),
+                                  headerOptions.size());
         }
         else
         {
@@ -650,13 +650,13 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-            assembleHeaderOptions(options, headerOptions);
             result = OCDoResource(handle, method,
                                   os.str().c_str(), nullptr,
                                   nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
-                                  options, headerOptions.size());
+                                  assembleHeaderOptions(options, headerOptions),
+                                  headerOptions.size());
         }
         else
         {
@@ -679,8 +679,9 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-            assembleHeaderOptions(options, headerOptions);
-            result = OCCancel(handle, static_cast<OCQualityOfService>(QoS), options,
+            result = OCCancel(handle,
+                    static_cast<OCQualityOfService>(QoS),
+                    assembleHeaderOptions(options, headerOptions),
                     headerOptions.size());
         }
         else
@@ -780,10 +781,15 @@ namespace OC
         return OC_STACK_OK;
     }
 
-    void InProcClientWrapper::assembleHeaderOptions(OCHeaderOption options[],
+    OCHeaderOption* InProcClientWrapper::assembleHeaderOptions(OCHeaderOption options[],
            const HeaderOptions& headerOptions)
     {
         int i = 0;
+
+        if( headerOptions.size() == 0)
+        {
+            return nullptr;
+        }
 
         for (auto it=headerOptions.begin(); it != headerOptions.end(); ++it)
         {
@@ -794,5 +800,7 @@ namespace OC
                     (it->getOptionData()).length() + 1);
             i++;
         }
+
+        return options;
     }
 }
