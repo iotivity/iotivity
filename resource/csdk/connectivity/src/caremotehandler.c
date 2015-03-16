@@ -328,6 +328,11 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
                 rep->info.options,
                 sizeof(CAHeaderOption_t) * rep->info.numOptions);
     }
+    else
+    {
+        clone->info.options = NULL;
+        clone->info.numOptions = 0;
+    }
 
     if (rep->info.payload != NULL)
     {
@@ -406,6 +411,11 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         memcpy(clone->info.options, rep->info.options,
                 sizeof(CAHeaderOption_t) * rep->info.numOptions);
     }
+    else
+    {
+        clone->info.options = NULL;
+        clone->info.numOptions = 0;
+    }
 
     if (rep->info.payload != NULL)
     {
@@ -451,10 +461,8 @@ void CADestroyRequestInfoInternal(CARequestInfo_t *rep)
     OICFree((char *) rep->info.token);
 
     // free options field
-    if (rep->info.options != NULL && rep->info.numOptions)
-    {
-        OICFree((CAHeaderOption_t *) rep->info.options);
-    }
+    OICFree((CAHeaderOption_t *) rep->info.options);
+
     // free payload field
     OICFree((char *) rep->info.payload);
 
