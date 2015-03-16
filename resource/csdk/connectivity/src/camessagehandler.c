@@ -43,7 +43,7 @@
 #define TAG PCF("CA")
 #define SINGLE_HANDLE
 
-#define CA_MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG_V(ERROR, TAG, "Out of memory"); \
+#define CA_MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG(ERROR, TAG, "Out of memory"); \
 goto memory_error_exit;} }
 
 #define MAX_THREAD_POOL_SIZE    20
@@ -159,7 +159,7 @@ static void CAReceiveThreadProcess(void *threadData)
 
     if (data == NULL)
     {
-        OIC_LOG(DEBUG, TAG, "thread data error!!");
+        OIC_LOG(ERROR, TAG, "thread data error!!");
         return;
     }
 
@@ -215,7 +215,7 @@ static void CASendThreadProcess(void *threadData)
 
         if (data->requestInfo != NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "requestInfo is available..");
+            OIC_LOG(DEBUG, TAG, "requestInfo is available..");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
                                                data->requestInfo->method,
@@ -223,7 +223,7 @@ static void CASendThreadProcess(void *threadData)
         }
         else if (data->responseInfo != NULL)
         {
-            OIC_LOG_V(DEBUG, TAG, "responseInfo is available..");
+            OIC_LOG(DEBUG, TAG, "responseInfo is available..");
 
             pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri,
                                                data->responseInfo->result,
@@ -472,7 +472,7 @@ static void CANetworkChangedCallback(CALocalConnectivity_t *info, CANetworkStatu
 
 void CAHandleRequestResponseCallbacks()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAHandleRequestResponseCallbacks IN");
+    OIC_LOG(DEBUG, TAG, "CAHandleRequestResponseCallbacks IN");
 
     // parse the data and call the callbacks.
     // #1 parse the data
@@ -532,13 +532,13 @@ void CAHandleRequestResponseCallbacks()
     }
 
     OICFree(rep);
-    OIC_LOG_V(DEBUG, TAG, "CAHandleRequestResponseCallbacks OUT");
+    OIC_LOG(DEBUG, TAG, "CAHandleRequestResponseCallbacks OUT");
 }
 
 CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object,
                                   const CARequestInfo_t *request)
 {
-    OIC_LOG_V(DEBUG, TAG, "CADetachRequestMessage");
+    OIC_LOG(DEBUG, TAG, "CADetachRequestMessage");
 
     if (object == NULL || request == NULL)
     {
@@ -590,7 +590,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
                                        const CARequestInfo_t *request)
 {
     // ToDo
-    OIC_LOG_V(DEBUG, TAG, "CADetachRequestToAllMessage");
+    OIC_LOG(DEBUG, TAG, "CADetachRequestToAllMessage");
 
 
     if (object == NULL || request == NULL)
@@ -642,7 +642,7 @@ memory_error_exit:
 CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
                                    const CAResponseInfo_t *response)
 {
-    OIC_LOG_V(DEBUG, TAG, "CADetachResponseMessage");
+    OIC_LOG(DEBUG, TAG, "CADetachResponseMessage");
 
     if (object == NULL || response == NULL)
     {
@@ -777,7 +777,7 @@ memory_error_exit:
 void CASetRequestResponseCallbacks(CARequestCallback ReqHandler,
                                    CAResponseCallback RespHandler)
 {
-    OIC_LOG_V(DEBUG, TAG, "set request, response handler callback.");
+    OIC_LOG(DEBUG, TAG, "set request, response handler callback.");
 
     g_requestHandler = ReqHandler;
     g_responseHandler = RespHandler;
@@ -796,7 +796,7 @@ CAResult_t CAInitializeMessageHandler()
 
     if (res != CA_STATUS_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "thread pool initialize error.");
+        OIC_LOG(ERROR, TAG, "thread pool initialize error.");
         return res;
     }
 
@@ -809,7 +809,7 @@ CAResult_t CAInitializeMessageHandler()
 
     if (res != CA_STATUS_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "thread start error(send thread).");
+        OIC_LOG(ERROR, TAG, "thread start error(send thread).");
         u_thread_pool_free(g_threadPoolHandle);
         g_threadPoolHandle = NULL;
         return res;
@@ -825,7 +825,7 @@ CAResult_t CAInitializeMessageHandler()
 
     if (res != CA_STATUS_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "thread start error(receive thread).");
+        OIC_LOG(ERROR, TAG, "thread start error(receive thread).");
         return res;
     }
 #endif
@@ -839,7 +839,7 @@ CAResult_t CAInitializeMessageHandler()
 
     if (res != CA_STATUS_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "thread start error(retransmission thread).");
+        OIC_LOG(ERROR, TAG, "thread start error(retransmission thread).");
         return res;
     }
 
@@ -905,6 +905,6 @@ void CATerminateMessageHandler()
     // terminate interface adapters by controller
     CATerminateAdapters();
 
-    OIC_LOG_V(DEBUG, TAG, "message handler termination is complete!");
+    OIC_LOG(DEBUG, TAG, "message handler termination is complete!");
 }
 

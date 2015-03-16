@@ -37,7 +37,7 @@
 
 #define TAG "CAMH_ST"
 
-#define CA_MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG(DEBUG, TAG, "Out of memory");\
+#define CA_MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG(ERROR, TAG, "Out of memory");\
     goto memory_error_exit;} }
 
 #define CA_MAX_RT_ARRAY_SIZE    3

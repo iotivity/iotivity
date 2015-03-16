@@ -153,7 +153,7 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
             }
             else
             {
-                OIC_LOG_V(ERROR, TAG, "arraylist remove error");
+                OIC_LOG(ERROR, TAG, "arraylist remove error");
             }
 
         }
@@ -165,13 +165,13 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
 
 static void CARetransmissionBaseRoutine(void *threadValue)
 {
-    OIC_LOG_V(DEBUG, TAG, "retransmission main thread start..");
+    OIC_LOG(DEBUG, TAG, "retransmission main thread start..");
 
     CARetransmission_t *context = (CARetransmission_t *) threadValue;
 
     if (context == NULL)
     {
-        OIC_LOG_V(ERROR, TAG, "thread data passing error!!");
+        OIC_LOG(ERROR, TAG, "thread data passing error!!");
 
         return;
     }
@@ -184,12 +184,12 @@ static void CARetransmissionBaseRoutine(void *threadValue)
         if (u_arraylist_length(context->dataList) <= 0)
         {
             // if list is empty, thread will wait
-            OIC_LOG_V(DEBUG, TAG, "wait..there is no retransmission data.");
+            OIC_LOG(DEBUG, TAG, "wait..there is no retransmission data.");
 
             // wait
             u_cond_wait(context->threadCond, context->threadMutex);
 
-            OIC_LOG_V(DEBUG, TAG, "wake up..");
+            OIC_LOG(DEBUG, TAG, "wake up..");
         }
         else
         {
@@ -216,7 +216,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
 
     u_cond_signal(context->threadCond);
 
-    OIC_LOG_V(DEBUG, TAG, "retransmission main thread end..");
+    OIC_LOG(DEBUG, TAG, "retransmission main thread end..");
 
 }
 
@@ -226,17 +226,17 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool
 {
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "thread instance is empty..");
+        OIC_LOG(ERROR, TAG, "thread instance is empty..");
         return CA_STATUS_FAILED;
     }
 
     if (handle == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "thread pool handle is empty..");
+        OIC_LOG(ERROR, TAG, "thread pool handle is empty..");
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "thread initialize..");
+    OIC_LOG(DEBUG, TAG, "thread initialize..");
 
     memset(context, 0, sizeof(CARetransmission_t));
 
@@ -270,13 +270,13 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
 {
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "context is empty..");
+        OIC_LOG(ERROR, TAG, "context is empty..");
         return CA_STATUS_FAILED;
     }
 
     if (context->threadPool == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "thread pool handle is empty..");
+        OIC_LOG(ERROR, TAG, "thread pool handle is empty..");
         return CA_STATUS_FAILED;
     }
 
@@ -285,7 +285,7 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
 
     if (res != CA_STATUS_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "thread pool add task error(send thread).");
+        OIC_LOG(ERROR, TAG, "thread pool add task error(send thread).");
         return res;
     }
 
@@ -297,7 +297,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 {
     if (context == NULL || endpoint == NULL || pdu == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "invalid parameter..");
+        OIC_LOG(ERROR, TAG, "invalid parameter..");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -326,7 +326,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
     if (retData == NULL)
     {
-        OIC_LOG_V(ERROR, TAG, "memory error!!");
+        OIC_LOG(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -335,7 +335,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     if (pduData == NULL)
     {
         OICFree(retData);
-        OIC_LOG_V(ERROR, TAG, "memory error!!");
+        OIC_LOG(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
     }
     memcpy(pduData, pdu, sizeof(int8_t) * size);
@@ -346,7 +346,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     {
         OICFree(retData);
         OICFree(pduData);
-        OIC_LOG_V(ERROR, TAG, "memory error!!");
+        OIC_LOG(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -379,7 +379,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
         if (retData != NULL && (currData->endpoint->connectivityType == endpoint->connectivityType)
             && currData->messageId == messageId)
         {
-            OIC_LOG_V(ERROR, TAG, "Duplicate message ID");
+            OIC_LOG(ERROR, TAG, "Duplicate message ID");
 
             // mutex unlock
             u_mutex_unlock(context->threadMutex);
@@ -408,7 +408,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 {
     if (context == NULL || endpoint == NULL || pdu == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "invalid parameter..");
+        OIC_LOG(ERROR, TAG, "invalid parameter..");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -474,11 +474,11 @@ CAResult_t CARetransmissionStop(CARetransmission_t *context)
 {
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "context is empty..");
+        OIC_LOG(ERROR, TAG, "context is empty..");
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "retransmission stop request!!");
+    OIC_LOG(DEBUG, TAG, "retransmission stop request!!");
 
     // mutex lock
     u_mutex_lock(context->threadMutex);
@@ -501,11 +501,11 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
 {
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "context is empty..");
+        OIC_LOG(ERROR, TAG, "context is empty..");
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "retransmission context destroy..");
+    OIC_LOG(DEBUG, TAG, "retransmission context destroy..");
 
     u_mutex_free(context->threadMutex);
     context->threadMutex = NULL;
