@@ -104,3 +104,4 @@ build $1 $2 true
 build $1 $2 false
 scons resource TEST=1
 echo "===================== done ====================="
+

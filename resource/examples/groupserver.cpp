@@ -67,9 +67,6 @@ void foundResource(std::shared_ptr< OCResource > resource)
                     cout << "\tresource Error!" << endl;
                 }
             }
-
-            // p_platform.bindResource(resourceHandle, foundResourceHandle);
-
         }
     }
     catch (std::exception& e)
@@ -181,8 +178,9 @@ int main(int argc, char* argv[])
     }
     catch (OCException& e)
     {
-
+        oclog() << "Exception in main: "<< e.what();
     }
 
     return 0;
 }
+

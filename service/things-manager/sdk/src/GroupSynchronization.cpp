@@ -30,6 +30,8 @@ using namespace OC;
 namespace OIC
 {
 
+    using std::cout;
+    using std::endl;
     GroupSynchronization* GroupSynchronization::groupSyncnstance = NULL;
 
     GroupSynchronization* GroupSynchronization::getInstance()
@@ -207,7 +209,7 @@ namespace OIC
         } catch(OCException &e) {
 
             return OC_STACK_INVALID_PARAM;
-            
+
         }
         cout << "GroupSynchronization::joinGroup : "
                 << "To bind collectionResHandle and resourceHandle" << endl;
@@ -378,7 +380,7 @@ namespace OIC
                                 << endl;
                         return result;
                     }
-                } catch(OCException &e) 
+                } catch(OCException &e)
                 {
                     cout << "ERROR : " << e.reason() << endl;
                     return OC_STACK_NO_RESOURCE;
@@ -1305,3 +1307,4 @@ namespace OIC
         }
     }
 }
+

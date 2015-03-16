@@ -130,3 +130,4 @@ clean_legacy:
 	-rm -f -v $(OBJ_DIR)/liboc.a $(OBJ_DIR)/*.o
 	cd csdk && $(MAKE) clean
 	cd csdk && $(MAKE) deepclean
+

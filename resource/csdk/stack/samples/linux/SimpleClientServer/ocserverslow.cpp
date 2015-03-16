@@ -50,6 +50,13 @@ char *gResourceUri= (char *)"/a/led";
 char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 {
     cJSON *json = cJSON_CreateObject();
+
+    if(!json)
+    {
+        OC_LOG(ERROR, TAG, "CreateObject result in null for json");
+        return NULL;
+    }
+
     cJSON *format;
     char *jsonResponse;
     LEDResource *currLEDResource = &LED;
@@ -72,6 +79,14 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     if(OC_REST_PUT == ehRequest->method)
     {
         cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
+
+        if(!putJson)
+        {
+            OC_LOG(ERROR, TAG, "CreateObject result in null for putJson");
+            cJSON_Delete(json);
+            return NULL;
+        }
+
         currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring ,
                 "on") ? true:false);
         currLEDResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
@@ -79,7 +94,16 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     }
 
     cJSON_AddStringToObject(json,"href",gResourceUri);
-    cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
+    format = cJSON_CreateObject();
+
+    if(!format)
+    {
+        OC_LOG(ERROR, TAG, "CreateObject result in null for format");
+        cJSON_Delete(json);
+        return NULL;
+    }
+
+    cJSON_AddItemToObject(json, "rep", format);
     cJSON_AddStringToObject(format, "state", (char *) (currLEDResource->state ? "on":"off"));
     cJSON_AddNumberToObject(format, "power", currLEDResource->power);
 
@@ -103,7 +127,7 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
     response.requestHandle = ehRequest->requestHandle;
     response.resourceHandle = ehRequest->resource;
     response.ehResult = OC_EH_OK;
-    response.payload = (unsigned char *)getResp;
+    response.payload = getResp;
     response.payloadSize = strlen(getResp) + 1;
     response.numSendVendorSpecificHeaderOptions = 0;
     memset(response.sendVendorSpecificHeaderOptions,
@@ -132,13 +156,13 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
         memcpy(request, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
         // Do deep copy of query
         request->query =
-                (unsigned char * )OCMalloc(strlen((const char *)entityHandlerRequest->query) + 1);
+                (char * )OCMalloc(strlen((const char *)entityHandlerRequest->query) + 1);
         if (request->query)
         {
             strcpy((char *)request->query, (const char *)entityHandlerRequest->query);
 
             // Copy the request payload
-            request->reqJSONPayload = (unsigned char * )OCMalloc(
+            request->reqJSONPayload = (char * )OCMalloc(
                             strlen((const char *)entityHandlerRequest->reqJSONPayload) + 1);
             if (request->reqJSONPayload)
             {
@@ -347,3 +371,4 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
 
     return 0;
 }
+

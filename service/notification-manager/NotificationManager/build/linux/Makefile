@@ -28,3 +28,4 @@ SampleConsumer:	SampleConsumer.o
 
 clean:
 	rm -f $(OBJS) SampleConsumer.o SampleProvider.o NotificationManager SampleProvider SampleConsumer
+

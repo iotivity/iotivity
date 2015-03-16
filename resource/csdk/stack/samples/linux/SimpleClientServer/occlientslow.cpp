@@ -57,7 +57,7 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
+    OC_LOG(INFO, TAG, "Usage : occlient -c <0|1> -u <0|1> -t <1|2|3>");
     OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
@@ -322,3 +322,4 @@ void parseClientResponse(OCClientResponse * clientResponse)
     coapServerPort = getPortTBServer(clientResponse);
     coapServerResource = getQueryStrForGetPut(clientResponse);
 }
+

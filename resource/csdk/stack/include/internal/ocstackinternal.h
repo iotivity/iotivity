@@ -54,7 +54,8 @@ extern OCDeviceEntityHandler defaultDeviceHandler;
 #define OC_COAP_SCHEME "coap://"
 #define OC_OFFSET_SEQUENCE_NUMBER (4) // the first outgoing sequence number will be 5
 
-typedef struct {
+typedef struct
+{
     // Observe option field
     uint32_t option;
     // IP address & port of client registered for observe
@@ -67,17 +68,18 @@ typedef struct {
 } OCObserveReq;
 
 // following structure will be created in occoap and passed up the stack on the server side
-typedef struct {
+typedef struct
+{
     // Observe option field
     uint32_t observationOption;
     // the REST method retrieved from received request PDU
     OCMethod method;
     // resourceUrl will be filled in occoap using the path options in received request PDU
-    unsigned char resourceUrl[MAX_URI_LENGTH];
+    char resourceUrl[MAX_URI_LENGTH];
     // resource query send by client
-    unsigned char query[MAX_QUERY_LENGTH];
+    char query[MAX_QUERY_LENGTH];
     // reqJSON is retrieved from the payload of the received request PDU
-    unsigned char reqJSONPayload[MAX_REQUEST_LENGTH];
+    char reqJSONPayload[MAX_REQUEST_LENGTH];
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
     // An array of the received vendor specific header options
@@ -130,28 +132,29 @@ typedef struct
     uint8_t slowFlag;
     uint8_t notificationFlag;
     // this is the pointer to server payload data to be transferred
-    unsigned char *payload;
+    char *payload;
     // size of server payload data.  Don't rely on null terminated data for size
     uint16_t payloadSize;
     // An array of the vendor specific header options the entity handler wishes to use in response
     uint8_t numSendVendorSpecificHeaderOptions;
     OCHeaderOption *sendVendorSpecificHeaderOptions;
     // URI of new resource that entity handler might create
-    unsigned char * resourceUri;
+    char * resourceUri;
 } OCServerProtocolResponse;
 
 // following structure will be created in occoap and passed up the stack on the client side
-typedef struct {
+typedef struct
+{
     // handle is retrieved by comparing the token-handle pair in the PDU.
     ClientCB * cbNode;
     // This is how long this response is valid for (in seconds).
     uint32_t maxAge;
     // This is the Uri of the resource. (ex. "coap://192.168.1.1/a/led")
-    unsigned char * fullUri;
+    char * fullUri;
     // This is the relative Uri of the resource. (ex. "/a/led")
-    unsigned char * rcvdUri;
+    char * rcvdUri;
     // This is the received payload.
-    unsigned char * bufRes;
+    char * bufRes;
 
     // This is the token received OTA.
     CAToken_t * rcvdToken;
@@ -175,7 +178,7 @@ OCStackResult HandleStackResponses(OCResponse * response);
 OCStackResult SendPresenceNotification(OCResourceType *resourceType);
 OCStackResult SendStopNotification();
 #endif // WITH_PRESENCE
-int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
+int ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
 
 OCStackResult BindResourceInterfaceToResource(OCResource* resource,
                                             const char *resourceInterfaceName);
@@ -211,3 +214,4 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
 #endif // __cplusplus
 
 #endif /* OCSTACKINTERNAL_H_ */
+

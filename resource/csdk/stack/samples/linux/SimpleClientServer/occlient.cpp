@@ -72,7 +72,7 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7> -c <0|1>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
@@ -153,6 +153,10 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response",
                 clientResponse->resJSONPayload);
     }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "putReqCB received Null clientResponse");
+    }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -168,6 +172,10 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Post Response",
                 clientResponse->resJSONPayload);
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "postReqCB received Null clientResponse");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -186,6 +194,10 @@ OCStackApplicationResult deleteReqCB(void *ctx,
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Delete Response",
                 clientResponse->resJSONPayload);
     }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "deleteReqCB received Null clientResponse");
+    }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -193,9 +205,10 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 {
     if(clientResponse == NULL)
     {
-        OC_LOG(INFO, TAG, "The clientResponse is NULL");
+        OC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
         return   OC_STACK_DELETE_TRANSACTION;
     }
+
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
@@ -274,6 +287,10 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "obsReqCB received Null clientResponse");
+    }
     return OC_STACK_KEEP_TRANSACTION;
 }
 #ifdef WITH_PRESENCE
@@ -301,6 +318,10 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
             }
             return OC_STACK_DELETE_TRANSACTION;
         }
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "presenceCB received Null clientResponse");
     }
     return OC_STACK_KEEP_TRANSACTION;
 }
@@ -341,7 +362,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 InitGetRequest(OC_LOW_QOS, 0);
                 break;
             case TEST_PUT_REQ_NON:
-                InitPutRequest();
+                InitPutRequest(OC_LOW_QOS);
                 break;
             case TEST_POST_REQ_NON:
                 InitPostRequest(OC_LOW_QOS);
@@ -354,7 +375,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 InitObserveRequest(OC_LOW_QOS);
                 break;
             case TEST_GET_UNAVAILABLE_RES_REQ_NON:
-                InitGetRequestToUnavailableResource();
+                InitGetRequestToUnavailableResource(OC_LOW_QOS);
                 break;
             case TEST_GET_REQ_CON:
                 InitGetRequest(OC_HIGH_QOS, 0);
@@ -379,12 +400,16 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 InitGetRequest(OC_LOW_QOS, 1);
                 break;
             case TEST_DISCOVER_DEV_REQ:
-                InitDeviceDiscovery();
+                InitDeviceDiscovery(OC_LOW_QOS);
                 break;
             default:
                 PrintUsage();
                 break;
         }
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "discoveryReqCB received Null clientResponse");
     }
     return OC_STACK_KEEP_TRANSACTION;
 }
@@ -402,6 +427,10 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
         //OC_LOG truncates the response as it is too long.
         fprintf(stderr, "Discovery response: \n %s\n", clientResponse->resJSONPayload);
         fflush(stderr);
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "DeviceDiscoveryReqCB received Null clientResponse");
     }
 
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
@@ -441,12 +470,13 @@ int InitPresence()
 }
 #endif
 
-int InitGetRequestToUnavailableResource()
+int InitGetRequestToUnavailableResource(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << "/SomeUnknownResource";
-    return (InvokeOCDoResource(query, OC_REST_GET, OC_LOW_QOS, getReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS,
+            getReqCB, NULL, 0));
 }
 
 int InitObserveRequest(OCQualityOfService qos)
@@ -458,12 +488,13 @@ int InitObserveRequest(OCQualityOfService qos)
             OC_REST_OBSERVE, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
 }
 
-int InitPutRequest()
+int InitPutRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_PUT, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS,
+            putReqCB, NULL, 0));
 }
 
 int InitPostRequest(OCQualityOfService qos)
@@ -591,7 +622,7 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     }
 }
 
-int InitDeviceDiscovery()
+int InitDeviceDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -614,12 +645,12 @@ int InitDeviceDiscovery()
     if(UNICAST_DISCOVERY)
     {
         ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
-                OC_LOW_QOS, &cbData, NULL, 0);
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
     {
         ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
-                OC_LOW_QOS, &cbData, NULL, 0);
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
     }
 
     if (ret != OC_STACK_OK)
@@ -630,7 +661,7 @@ int InitDeviceDiscovery()
     return ret;
 }
 
-int InitDiscovery()
+int InitDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -652,12 +683,12 @@ int InitDiscovery()
     if(UNICAST_DISCOVERY)
     {
         ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
-                OC_LOW_QOS, &cbData, NULL, 0);
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
     {
         ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
-                OC_LOW_QOS, &cbData, NULL, 0);
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
     }
     if (ret != OC_STACK_OK)
     {
@@ -719,11 +750,11 @@ int main(int argc, char* argv[])
 
     if(UNICAST_DISCOVERY  == 0  && TEST_CASE == TEST_DISCOVER_DEV_REQ)
     {
-        InitDeviceDiscovery();
+        InitDeviceDiscovery(OC_LOW_QOS);
     }
     else
     {
-        InitDiscovery();
+        InitDiscovery(OC_LOW_QOS);
     }
 
     // Break from loop with Ctrl+C
@@ -825,3 +856,4 @@ void parseClientResponse(OCClientResponse * clientResponse)
     coapServerPort = getPortTBServer(clientResponse);
     coapServerResource = getQueryStrForGetPut(clientResponse);
 }
+

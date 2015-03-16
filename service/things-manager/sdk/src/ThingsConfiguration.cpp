@@ -612,3 +612,4 @@ namespace OIC
         return g_groupmanager->findCandidateResources(type, &onFoundBootstrapServer);
     }
 }
+

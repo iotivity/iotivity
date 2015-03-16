@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Intel Corporation.
+// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <map>
+#include <stdexcept>
 
 #include "WrapResource.h"
 #include "Client.h"
@@ -66,14 +67,21 @@ void MiddleClient::foundOCResource(shared_ptr<OCResource> resource)
  */
 string MiddleClient::formatResourceID(std::shared_ptr<OCResource> resource)
 {
-    string host = resource->host();
-    if (host.compare(0, 7, "coap://") == 0)
-        host = host.erase(0, 7);
-    return host + resource->uri();
+    if(!resource)
+    {
+        throw invalid_argument("Invalid resource object in formatResourceID");
+    }
+
+    return resource->sid() + resource->uri();
 }
 
 void MiddleClient::addResource(WrapResource *wres)
 {
+    if(!wres)
+    {
+        throw invalid_argument("Invalid WrapResource object in addResource");
+    }
+
     string resourceID = wres->getResourceID();
     try {
         m_resourceMap[resourceID];
@@ -81,3 +89,4 @@ void MiddleClient::addResource(WrapResource *wres)
         m_resourceMap[resourceID] = wres;
     }
 }
+

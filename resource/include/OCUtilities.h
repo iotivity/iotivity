@@ -34,18 +34,14 @@ namespace OC {
     namespace Utilities {
 
         typedef std::map<std::string, std::string> QueryParamsKeyVal;
+
         /*
-         * @brief Helper function to get query parameter from a URI
-         * @remarks      Its okay to return a copy of the container.\
-         *               The size is not expected to be huge.
-         * @remarks      Temporary: The URI must strictly have\
-         *               coap as the protocol in the fully qualified URI\
-         *               e.g., coap://1.2.3.4:5657/foo?bar=0)
-         * @remarks      If a separate class for URI parser is needed,\
-         *               please talk to Erich Keane.
-         * @todo         If more URI elements need to be parsed,\
-         *               please move the common parsing logic to a
-         *               different function
+         * @brief helper function that parses the query parameters component
+         * of a URI into a key-value map.  This function expects the uri
+         * parameter to contain the query parameters component of a URI
+         * (everything after the '?', excluding anything anchors).
+         *
+         * Note that output will not perform URL decoding
          */
         QueryParamsKeyVal getQueryParams(const std::string& uri);
 
@@ -117,3 +113,4 @@ namespace OC
 } // namespace OC
 
 #endif
+

@@ -94,3 +94,4 @@ namespace DiscomfortIndexSensorName
 ;
 
 #endif /* DISCOMFORTINDEXSENSOR_H_ */
+

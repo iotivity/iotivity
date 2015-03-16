@@ -91,19 +91,26 @@ OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
     OCEntityHandlerResult ehResult;
 
     char *getResp = constructJsonResponse(ehRequest);
-    if (maxPayloadSize > strlen (getResp))
+    if(getResp)
     {
-        strcpy(payload, getResp);
-        ehResult = OC_EH_OK;
+        if (maxPayloadSize > strlen (getResp))
+        {
+            strcpy(payload, getResp);
+            ehResult = OC_EH_OK;
+        }
+        else
+        {
+            OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
+                    maxPayloadSize);
+            ehResult = OC_EH_ERROR;
+        }
+
+        free(getResp);
     }
     else
     {
-        OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                maxPayloadSize);
         ehResult = OC_EH_ERROR;
     }
-
-    free(getResp);
 
     return ehResult;
 }
@@ -114,19 +121,27 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
     OCEntityHandlerResult ehResult;
 
     char *putResp = constructJsonResponse(ehRequest);
-    if (maxPayloadSize > strlen (putResp))
+
+    if(putResp)
     {
-        strcpy(payload, putResp);
-        ehResult = OC_EH_OK;
+        if (maxPayloadSize > strlen (putResp))
+        {
+            strcpy(payload, putResp);
+            ehResult = OC_EH_OK;
+        }
+        else
+        {
+            OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
+                    maxPayloadSize);
+            ehResult = OC_EH_ERROR;
+        }
+
+        free(putResp);
     }
     else
     {
-        OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                maxPayloadSize);
         ehResult = OC_EH_ERROR;
     }
-
-    free(putResp);
 
     return ehResult;
 }
@@ -265,7 +280,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                 response.requestHandle = entityHandlerRequest->requestHandle;
                 response.resourceHandle = entityHandlerRequest->resource;
                 response.ehResult = ehResult;
-                response.payload = (unsigned char *)payload;
+                response.payload = payload;
                 response.payloadSize = strlen(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
                 memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
@@ -366,3 +381,4 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
 
     return 0;
 }
+

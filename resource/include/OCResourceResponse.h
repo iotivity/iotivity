@@ -33,8 +33,6 @@
 #include <ocstack.h>
 #include <OCRepresentation.h>
 
-using namespace std;
-
 namespace OC
 {
     class InProcServerWrapper;
@@ -275,3 +273,4 @@ namespace OC
 } // namespace OC
 
 #endif //__OCRESOURCERESPONSE_H
+

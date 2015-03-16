@@ -125,3 +125,4 @@ clean:
 clean_apps:
 	rm -rf debug
 	rm -rf release
+

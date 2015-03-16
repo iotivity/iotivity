@@ -27,20 +27,20 @@
 #include <ocresource.h>
 #include "cacommon.h"
 
-typedef struct OCPresence {
+typedef struct OCPresence
+{
     // This is the TTL associated with presence
     uint32_t TTL;
     uint32_t * timeOut;
     uint32_t TTLlevel;
-}OCPresence;
+} OCPresence;
 
-typedef struct OCMulticastNode {
-    unsigned char * uri;
+typedef struct OCMulticastNode
+{
+    char * uri;
     uint32_t nonce;
     struct OCMulticastNode * next;
 } OCMulticastNode;
-
-extern OCMulticastNode * mcPresenceNodes;
 
 typedef struct ClientCB {
     // callback method defined in application address space
@@ -59,7 +59,7 @@ typedef struct ClientCB {
     // This is the sequence identifier the server applies to the invocation tied to 'handle'.
     uint32_t sequenceNumber;
     // This is the request uri associated with the call back
-    unsigned char * requestUri;
+    char * requestUri;
     // Struct to hold TTL info for presence
     #ifdef WITH_PRESENCE
     OCPresence * presence;
@@ -71,19 +71,20 @@ typedef struct ClientCB {
 
 extern struct ClientCB *cbList;
 
-//-- AddClientCB -----------------------------------------------------------
 /** @ingroup ocstack
  *
  * This method is used to add a client callback method in cbList.
  *
  * @param[out] clientCB
  *              The resulting node from making this call. Null if out of memory.
- * @param[in] cb
+ * @param[in] cbData
  *              address to client callback function.
  * @param[in] token
  *              identifier for OTA CoAP comms.
  * @param[in] handle
  *              Masked in the public API as an 'invocation handle' - Used for callback management.
+ * @param[in] method
+ *              OCMethod via which this client callback is expected to operate
  * @param[in] requestUri
  *              the resource uri of the request.
  * @param[in] resourceType
@@ -91,15 +92,13 @@ extern struct ClientCB *cbList;
  *
  * @brief If the handle you're looking for does not exist, the stack will reply with a RST message.
  *
- * @retval OC_STACK_OK for Success, otherwise some error value
+ * @return OC_STACK_OK for Success, otherwise some error value
  */
-//------------------------------------------------------------------------
 OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
              CAToken_t * token, OCDoHandle *handle, OCMethod method,
-             unsigned char * requestUri, unsigned char * resourceTypeName);
+             char * requestUri, char * resourceTypeName);
 
-//-- DeleteClientCB -----------------------------------------------------------
 /** @ingroup ocstack
  *
  * This method is used to remove a callback node from cbList.
@@ -107,14 +106,12 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
  * @param[in] cbNode
  *              address to client callback node.
  */
-//------------------------------------------------------------------------
 void DeleteClientCB(ClientCB *cbNode);
 
 
-//-- GetClientCB ---------------------------------------------------------
 /** @ingroup ocstack
  *
- * This method is used to search a cb node in cbList.
+ * This method is used to search and retrieve a cb node in cbList.
  *
  * @param[in] token
  *              token to search for.
@@ -123,18 +120,19 @@ void DeleteClientCB(ClientCB *cbNode);
  * @param[in] requestUri
  *              Uri to search for.
  *
- * @brief You can search by token OR by handle. Not both.
+ * @brief You can search by token OR by handle, but not both.
  *
- * @retval address of the node if found, otherwise NULL
+ * @return address of the node if found, otherwise NULL
  */
-//------------------------------------------------------------------------
-ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const unsigned char * requestUri);
+ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const char * requestUri);
 
 /**
- * Inserts a new resource type filter into this clientCB node.
+ * Inserts a new resource type filter into this cb node.
  *
- * @param cbNode - the node to add the new resourceType filter to
- * @param resourceTypeName - the value to create the new resourceType filter from
+ * @param[in] cbNode
+ *              the node to add the new resourceType filter to
+ * @param[in] resourceTypeName
+ *              the value to create the new resourceType filter from
  *
  * @return
  *      OC_STACK_OK on success
@@ -145,16 +143,13 @@ ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const unsigned
 OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceTypeName);
 #endif // WITH_PRESENCE
 
-//-- DeleteClientCBList --------------------------------------------------
 /** @ingroup ocstack
  *
  * This method is used to clear the cbList.
  *
  */
-//------------------------------------------------------------------------
 void DeleteClientCBList();
 
-//-- FindAndDeleteClientCB -----------------------------------------------
 /** @ingroup ocstack
  *
  * This method is used to verify the presence of a cb node in cbList
@@ -163,7 +158,6 @@ void DeleteClientCBList();
  * @param[in] cbNode
  *              address to client callback node.
  */
-//------------------------------------------------------------------------
 void FindAndDeleteClientCB(ClientCB * cbNode);
 
 /** @ingroup ocstack
@@ -177,7 +171,7 @@ void FindAndDeleteClientCB(ClientCB * cbNode);
  *              The resulting node from making this call. Null if doesn't exist.
  */
 //------------------------------------------------------------------------
-OCMulticastNode* GetMCPresenceNode(const unsigned char * uri);
+OCMulticastNode* GetMCPresenceNode(const char * uri);
 
 /** @ingroup ocstack
  *
@@ -193,6 +187,7 @@ OCMulticastNode* GetMCPresenceNode(const unsigned char * uri);
  * @return OC_STACK_OK for Success, otherwise some error value
  */
 //------------------------------------------------------------------------
-OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, unsigned char* uri, uint32_t nonce);
+OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, char* uri, uint32_t nonce);
 
 #endif //OC_CLIENT_CB
+

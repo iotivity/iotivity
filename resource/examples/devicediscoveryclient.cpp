@@ -113,7 +113,7 @@ void receivedDeviceInfo(const OCRepresentation& rep)
 
 int main(int argc, char* argv[]) {
 
-    ostringstream requestURI;
+    std::ostringstream requestURI;
     std::string deviceDiscoveryURI = "/oc/core/d";
 
     OCConnectivityType connectivityType = OC_WIFI;
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
         try
         {
             std::size_t inputValLen;
-            int optionSelected = stoi(argv[1], &inputValLen);
+            int optionSelected = std::stoi(argv[1], &inputValLen);
 
             if(inputValLen == strlen(argv[1]))
             {
@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
             }
         }
-        catch(exception& e)
+        catch(std::exception& e)
         {
             std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
         }
@@ -195,4 +195,5 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
 

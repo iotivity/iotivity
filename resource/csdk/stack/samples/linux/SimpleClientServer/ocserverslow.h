@@ -70,3 +70,4 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest);
 
 #endif
+

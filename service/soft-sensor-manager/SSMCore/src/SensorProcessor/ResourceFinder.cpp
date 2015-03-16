@@ -266,3 +266,4 @@ void CResourceFinder::onTerminate(IN void *pArg)
 
     delete[] pMessage;
 }
+

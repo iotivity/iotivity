@@ -470,7 +470,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
             response.requestHandle = entityHandlerRequest->requestHandle;
             response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehResult;
-            response.payload = (unsigned char *)payload;
+            response.payload = payload;
             response.payloadSize = strlen(payload);
             // Indicate that response is NOT in a persistent buffer
             response.persistentBufferFlag = 0;
@@ -572,7 +572,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             response.requestHandle = entityHandlerRequest->requestHandle;
             response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehResult;
-            response.payload = (unsigned char *)payload;
+            response.payload = payload;
             response.payloadSize = strlen(payload);
             // Indicate that response is NOT in a persistent buffer
             response.persistentBufferFlag = 0;
@@ -683,7 +683,7 @@ void *ChangeLightRepresentation (void *param)
                 char * obsResp = cJSON_Print(json);
                 cJSON_Delete(json);
                 result = OCNotifyListOfObservers (Light.handle, obsNotify, j,
-                        (unsigned char *)obsResp, OC_NA_QOS);
+                        obsResp, OC_NA_QOS);
                 free(obsResp);
             }
             else if (gObserveNotifyType == 0)
@@ -1032,3 +1032,4 @@ OCStackResult SetDeviceInfo(const char *contentType, const char *dateOfManufactu
     DeleteDeviceInfo();
     return OC_STACK_ERROR;
 }
+

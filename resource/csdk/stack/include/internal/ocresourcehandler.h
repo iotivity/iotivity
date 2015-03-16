@@ -28,6 +28,8 @@
 #define OC_RSRVD_OC                     "oc"
 #define OC_RSRVD_PAYLOAD                "payload"
 #define OC_RSRVD_HREF                   "href"
+#define OC_RSRVD_REPRESENTATION         "rep"
+#define OC_RSRVD_CONTENT_TYPE           "ct"
 #define OC_RSRVD_RESOURCE_TYPE          "rt"
 #define OC_RSRVD_RESOURCE_TYPE_PRESENCE "core.presence"
 #define OC_RSRVD_INTERFACE              "if"
@@ -37,6 +39,16 @@
 #define OC_RSRVD_INTERFACE_LL           "oc.mi.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oc.mi.b"
 #define OC_RSRVD_INTERFACE_GROUP        "oc.mi.grp"
+
+#define OC_RSRVD_MFG_DATE               "mndt"
+#define OC_RSRVD_FW_VERSION             "mnfv"
+#define OC_RSRVD_HOST_NAME              "hn"
+#define OC_RSRVD_MFG_NAME               "mnmn"
+#define OC_RSRVD_MFG_URL                "mnml"
+#define OC_RSRVD_MODEL_NUM              "mnmo"
+#define OC_RSRVD_PLATFORM_VERSION       "mnpv"
+#define OC_RSRVD_SUPPORT_URL            "mnsl"
+#define OC_RSRVD_VERSION                "icv"
 
 
 #define OC_RSRVD_OBSERVABLE             "obs"
@@ -54,7 +66,8 @@
 #define OC_RESOURCE_OBSERVABLE   1
 #define OC_RESOURCE_SECURE       1
 
-typedef enum {
+typedef enum
+{
     STACK_RES_DISCOVERY_NOFILTER = 0,
     STACK_RES_DISCOVERY_IF_FILTER,
     STACK_RES_DISCOVERY_RT_FILTER,
@@ -62,7 +75,8 @@ typedef enum {
     STACK_DEVICE_DISCOVERY_DN_FILTER
 } StackQueryTypes;
 
-typedef enum {
+typedef enum
+{
     OC_RESOURCE_VIRTUAL = 0,
     OC_RESOURCE_NOT_COLLECTION_WITH_ENTITYHANDLER,
     OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER,
@@ -98,3 +112,4 @@ BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
 OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
 
 #endif //OC_RESOURCEHANDLER_H
+

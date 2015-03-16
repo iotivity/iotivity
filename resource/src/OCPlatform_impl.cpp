@@ -85,7 +85,7 @@ namespace OC
     OCPlatform_impl::OCPlatform_impl(const PlatformConfig& config)
      : m_cfg             { config },
        m_WrapperInstance { make_unique<WrapperFactory>() },
-       m_csdkLock        { make_shared<std::recursive_mutex>() }
+       m_csdkLock        { std::make_shared<std::recursive_mutex>() }
     {
         init(m_cfg);
     }
@@ -134,7 +134,7 @@ namespace OC
         return result_guard(
                    OCNotifyListOfObservers(resourceHandle,
                             &observationIds[0], observationIds.size(),
-                            reinterpret_cast<unsigned char *>(const_cast<char *>(payload.c_str())),
+                            payload.c_str(),
                             static_cast<OCQualityOfService>(QoS)));
     }
 
@@ -203,7 +203,7 @@ namespace OC
                                             uint8_t resourceProperty)
     {
         return checked_guard(m_server, &IServerWrapper::registerResource,
-                             ref(resourceHandle), resourceURI, resourceTypeName,
+                             std::ref(resourceHandle), resourceURI, resourceTypeName,
                              resourceInterface, entityHandler, resourceProperty);
     }
 
@@ -219,7 +219,8 @@ namespace OC
         std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
         return checked_guard(m_server, &IServerWrapper::registerResourceWithHost,
-                ref(resourceHandle), resource->host(), resource->uri(), resourceTypes[0]/*"core.remote"*/, "oc.mi.def",
+                std::ref(resourceHandle), resource->host(), resource->uri(),
+                resourceTypes[0]/*"core.remote"*/, "oc.mi.def",
                 (EntityHandler) nullptr, resourceProperty);
     }
 
@@ -232,7 +233,7 @@ namespace OC
     OCStackResult OCPlatform_impl::unbindResource(OCResourceHandle collectionHandle,
                                             OCResourceHandle resourceHandle)
     {
-        return result_guard(OCUnBindResource(ref(collectionHandle), ref(resourceHandle)));
+        return result_guard(OCUnBindResource(std::ref(collectionHandle), std::ref(resourceHandle)));
     }
 
     OCStackResult OCPlatform_impl::unbindResources(const OCResourceHandle collectionHandle,
@@ -321,7 +322,7 @@ namespace OC
     OCStackResult OCPlatform_impl::unsubscribePresence(OCPresenceHandle presenceHandle)
     {
         return checked_guard(m_client, &IClientWrapper::UnsubscribePresence,
-                             ref(presenceHandle));
+                             std::ref(presenceHandle));
     }
 
     OCStackResult OCPlatform_impl::sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
@@ -330,3 +331,4 @@ namespace OC
                              pResponse);
     }
 } //namespace OC
+

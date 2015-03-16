@@ -128,3 +128,4 @@ void StripNewLineChar(char* str) {
         }
     }
 }
+

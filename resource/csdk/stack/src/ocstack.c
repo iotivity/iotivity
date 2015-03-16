@@ -78,9 +78,9 @@ static uint8_t PresenceTimeOutSize = 0;
 static uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
 
-OCMode myStackMode;
+static OCMode myStackMode;
 OCDeviceEntityHandler defaultDeviceHandler;
-OCStackResult getQueryFromUri(const char * uri, unsigned char** resourceType, char ** newURI);
+OCStackResult getQueryFromUri(const char * uri, char** resourceType, char ** newURI);
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -109,11 +109,11 @@ static uint32_t GetTime(float afterSeconds)
 static OCStackResult FormOCResponse(OCResponse * * responseLoc,
                                     ClientCB * cbNode,
                                     uint32_t maxAge,
-                                    unsigned char * fullUri,
-                                    unsigned char * rcvdUri,
+                                    char * fullUri,
+                                    char * rcvdUri,
                                     CAToken_t * rcvdToken,
                                     OCClientResponse * clientResponse,
-                                    unsigned char * bufRes)
+                                    char * bufRes)
 {
     OCResponse * response = (OCResponse *) OCMalloc(sizeof(OCResponse));
     if (!response)
@@ -135,12 +135,12 @@ static OCStackResult FormOCResponse(OCResponse * * responseLoc,
 /// This method is used to create the IPv4 dev_addr structure.
 /// TODO: Remove in future. Temporary helper function.
 /// Builds a socket interface address using IP address and port number
-static int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
+static OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
         uint16_t port, OCDevAddr *ipAddr)
 {
     if ( !ipAddr ) {
-        OC_LOG(FATAL, TAG, "Invalid argument");
-        return 1;
+        OC_LOG(FATAL, TAG, PCF("Invalid argument"));
+        return OC_STACK_INVALID_PARAM;
     }
 
     ipAddr->addr[0] = a;
@@ -149,7 +149,7 @@ static int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
     ipAddr->addr[3] = d;
     *((uint16_t*)&(ipAddr->addr[4])) = port;
 
-    return 0;
+    return OC_STACK_OK;
 }
 
 //-----------------------------------------------------------------------------
@@ -162,7 +162,7 @@ OCStackResult OCStackFeedBack(CAToken_t * token, uint8_t status)
 {
     OCStackResult result = OC_STACK_ERROR;
     ResourceObserver * observer = NULL;
-    OCEntityHandlerRequest ehRequest = {0};
+    OCEntityHandlerRequest ehRequest = {};
 
     switch(status)
     {
@@ -342,7 +342,7 @@ OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType, OCConnectiv
 OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpoint_t* endPoint)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    static OCDevAddr address = {0};
+    static OCDevAddr address = {};
     char * tok = NULL;
     char * savePtr = NULL;
     char * cpAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
@@ -386,7 +386,7 @@ exit:
 void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType)
 {
     char * tok = NULL;
-    char * savePtr;
+    char * savePtr = NULL;
     // The format of the payload is {"oc":[%u:%u:%s]}
     // %u : sequence number,
     // %u : max age
@@ -410,7 +410,7 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, cha
         }
         payload[strlen((char *)payload)] = ':';
         strcpy(*resType, tok);
-        OC_LOG_V(DEBUG, TAG, "----------------resourceTypeName %s", *resType);
+        OC_LOG_V(DEBUG, TAG, "resourceTypeName %s", *resType);
     }
     payload[strlen((char *)payload)] = ']';
 }
@@ -447,7 +447,8 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         goto exit;
     }
 
-    ipAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
+    size_t addressLen = strlen(endPoint->addressInfo.IP.ipAddress);
+    ipAddress = (char *) OCMalloc(addressLen + 1);
 
     if(NULL == ipAddress)
     {
@@ -456,14 +457,13 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         goto exit;
     }
 
-    strncpy(ipAddress, endPoint->addressInfo.IP.ipAddress,
-                            strlen(endPoint->addressInfo.IP.ipAddress));
-    ipAddress[strlen(endPoint->addressInfo.IP.ipAddress)] = '\0';
+    strncpy(ipAddress, endPoint->addressInfo.IP.ipAddress, addressLen);
+    ipAddress[addressLen] = '\0';
 
     snprintf(fullUri, MAX_URI_LENGTH, "coap://%s:%u%s", ipAddress, endPoint->addressInfo.IP.port,
                 OC_PRESENCE_URI);
 
-    cbNode = GetClientCB(NULL, NULL, (unsigned char *) fullUri);
+    cbNode = GetClientCB(NULL, NULL, fullUri);
 
     if(cbNode)
     {
@@ -472,7 +472,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     else
     {
         snprintf(fullUri, MAX_URI_LENGTH, "%s%s", OC_MULTICAST_IP, endPoint->resourceUri);
-        cbNode = GetClientCB(NULL, NULL, (unsigned char *) fullUri);
+        cbNode = GetClientCB(NULL, NULL, fullUri);
         if(cbNode)
         {
             multicastPresenceSubscribe = 1;
@@ -481,8 +481,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
 
     if(!presenceSubscribe && !multicastPresenceSubscribe)
     {
-        OC_LOG(INFO, TAG, PCF("Received a presence notification, but I do not have callback \
-                                                ------------ ignoring"));
+        OC_LOG(ERROR, TAG, PCF("Received a presence notification, but no callback, ignoring"));
         goto exit;
     }
 
@@ -511,7 +510,6 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
             OC_LOG(INFO, TAG, PCF("===============No presence change"));
             goto exit;
         }
-
         if(maxAge == 0)
         {
             OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
@@ -528,7 +526,6 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
             if(!cbNode->presence)
             {
                 cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
-
                 if(!(cbNode->presence))
                 {
                     OC_LOG(ERROR, TAG, PCF("Could not allocate memory for cbNode->presence"));
@@ -583,13 +580,13 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         // This is the multicast case
 
         OCMulticastNode* mcNode = NULL;
-        mcNode = GetMCPresenceNode((const unsigned char *)fullUri);
+        mcNode = GetMCPresenceNode(fullUri);
 
         if(mcNode != NULL)
         {
             if(mcNode->nonce == response.sequenceNumber)
             {
-                OC_LOG(INFO, TAG, PCF("===============No presence change (Multicast)"));
+                OC_LOG(INFO, TAG, PCF("No presence change (Multicast)"));
                 goto exit;
             }
             mcNode->nonce = response.sequenceNumber;
@@ -602,24 +599,24 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         }
         else
         {
-            uint32_t uriLen = strlen((char*)fullUri);
-            unsigned char* uri = (unsigned char *) OCMalloc(uriLen + 1);
+            uint32_t uriLen = strlen(fullUri);
+            char* uri = (char *) OCMalloc(uriLen + 1);
             if(uri)
             {
                 memcpy(uri, fullUri, (uriLen + 1));
             }
             else
             {
-                OC_LOG(INFO, TAG,
-                    PCF("===============No Memory for URI to store in the presence node"));
+                OC_LOG(ERROR, TAG,
+                    PCF("No Memory for URI to store in the presence node"));
                 result = OC_STACK_NO_MEMORY;
                 goto exit;
             }
-            result = AddMCPresenceNode(&mcNode, (unsigned char*) uri, response.sequenceNumber);
+            result = AddMCPresenceNode(&mcNode, uri, response.sequenceNumber);
             if(result == OC_STACK_NO_MEMORY)
             {
-                OC_LOG(INFO, TAG,
-                    PCF("===============No Memory for Multicast Presence Node"));
+                OC_LOG(ERROR, TAG,
+                    PCF("No Memory for Multicast Presence Node"));
                 result = OC_STACK_NO_MEMORY;
                 OCFree(uri);
                 goto exit;
@@ -656,8 +653,6 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
 
-    OCStackApplicationResult appResult = OC_STACK_DELETE_TRANSACTION;
-
     if(NULL == endPoint)
     {
         OC_LOG(ERROR, TAG, PCF("endPoint is NULL"));
@@ -676,7 +671,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         return;
     }
 
-    ClientCB *cbNode = GetClientCB((CAToken_t *)&(responseInfo->info.token), NULL, NULL);
+    ClientCB *cbNode = GetClientCB(&(responseInfo->info.token), NULL, NULL);
 
     if (cbNode)
     {
@@ -691,7 +686,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         }
 
         response.result = CAToOCStackResult(responseInfo->result);
-        response.resJSONPayload = (unsigned char*)responseInfo->info.payload;
+        response.resJSONPayload = responseInfo->info.payload;
         response.numRcvdVendorSpecificHeaderOptions = 0;
         if(responseInfo->info.options && responseInfo->info.numOptions > 0)
         {
@@ -721,9 +716,8 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
                  &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
             }
         }
-        appResult = cbNode->callBack(cbNode->context,
-                cbNode->handle, &response);
-        if (appResult == OC_STACK_DELETE_TRANSACTION)
+        if (cbNode->callBack(cbNode->context,cbNode->handle, &response)
+                == OC_STACK_DELETE_TRANSACTION)
         {
             FindAndDeleteClientCB(cbNode);
         }
@@ -760,8 +754,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 
     OC_LOG_V(INFO, TAG, PCF("***** Endpoint URI ***** : %s\n"), (char*)endPoint->resourceUri);
 
-    char * newUri = (char *)endPoint->resourceUri;
-    unsigned char * query = NULL;
+    char * newUri = NULL;
+    char * query = NULL;
     getQueryFromUri(endPoint->resourceUri, &query, &newUri);
     OC_LOG_V(INFO, TAG, PCF("**********URI without query ****: %s\n"), newUri);
     OC_LOG_V(INFO, TAG, PCF("**********Query ****: %s\n"), query);
@@ -791,14 +785,15 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     //copy request payload
     if (requestInfo->info.payload)
     {
-        serverRequest.reqTotalSize = strlen(requestInfo->info.payload) + 1;
+        size_t payloadLen = strlen(requestInfo->info.payload);
+        serverRequest.reqTotalSize = payloadLen + 1;
         memcpy (&(serverRequest.reqJSONPayload), requestInfo->info.payload,
-                strlen(requestInfo->info.payload));
-        serverRequest.reqTotalSize = strlen((const char *)requestInfo->info.payload) + 1;
+                payloadLen);
     }
     else
     {
         serverRequest.reqTotalSize = 1;
+        serverRequest.reqJSONPayload[0] = '\0';
     }
 
     switch (requestInfo->method)
@@ -833,7 +828,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", CA_MAX_TOKEN_LEN);
     OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token, CA_MAX_TOKEN_LEN);
 
-    serverRequest.requestToken = (CAToken_t)OCCalloc(1, CA_MAX_TOKEN_LEN+1);
+    serverRequest.requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
     // Module Name
     if (!serverRequest.requestToken)
     {
@@ -924,7 +919,12 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
             OC_LOG(ERROR, TAG, PCF("Error adding server request"));
             return result;
         }
-        VERIFY_NON_NULL(request, ERROR, OC_STACK_NO_MEMORY);
+
+        if(!request)
+        {
+            OC_LOG(ERROR, TAG, PCF("Out of Memory"));
+            return OC_STACK_NO_MEMORY;
+        }
 
         if(!protocolRequest->reqMorePacket)
         {
@@ -933,7 +933,8 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     }
     else
     {
-        OC_LOG(INFO, TAG, PCF("This is either a repeated Server Request or blocked Server Request"));
+        OC_LOG(INFO, TAG,
+                PCF("This is either a repeated Server Request or blocked Server Request"));
     }
 
     if(request->requestComplete)
@@ -957,19 +958,19 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     return result;
 }
 
-int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
+int ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
 {
     size_t index = 0;
-    unsigned char *itr, *coap;
+    char *itr, *coap;
     uint8_t dotCount = 0;
 
     ipAddr[index] = 0;
     *port = 0;
     /* search for scheme */
     itr = ipAddrStr;
-    if (!isdigit((unsigned char) *ipAddrStr))
+    if (!isdigit((char) *ipAddrStr))
     {
-        coap = (unsigned char *) OC_COAP_SCHEME;
+        coap = OC_COAP_SCHEME;
         while (*coap && tolower(*itr) == *coap)
         {
             coap++;
@@ -979,12 +980,12 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * por
     ipAddrStr = itr;
 
     while (*ipAddrStr) {
-        if (isdigit((unsigned char) *ipAddrStr))
+        if (isdigit(*ipAddrStr))
         {
             ipAddr[index] *= 10;
             ipAddr[index] += *ipAddrStr - '0';
         }
-        else if ((unsigned char) *ipAddrStr == '.')
+        else if (*ipAddrStr == '.')
         {
             index++;
             dotCount++;
@@ -1000,7 +1001,7 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * por
     {
         ipAddrStr++;
         while (*ipAddrStr){
-            if (isdigit((unsigned char) *ipAddrStr))
+            if (isdigit(*ipAddrStr))
             {
                 *port *= 10;
                 *port += *ipAddrStr - '0';
@@ -1014,8 +1015,7 @@ int ParseIPv4Address(unsigned char * ipAddrStr, uint8_t * ipAddr, uint16_t * por
     }
 
 
-    if (ipAddr[0] < 255 && ipAddr[1] < 255 && ipAddr[2] < 255 && ipAddr[3] < 255
-            && dotCount == 3)
+    if (dotCount == 3)
     {
         return 1;
     }
@@ -1044,13 +1044,13 @@ static OCResourceInterface *findResourceInterfaceAtIndex(
 static void deleteResourceType(OCResourceType *resourceType);
 static void deleteResourceInterface(OCResourceInterface *resourceInterface);
 static void deleteResourceElements(OCResource *resource);
-static int deleteResource(OCResource *resource);
+static OCStackResult deleteResource(OCResource *resource);
 static void deleteAllResources();
 static void incrementSequenceNumber(OCResource * resPtr);
 static OCStackResult verifyUriQueryLength(const char * inputUri,
         uint16_t uriLen);
 static uint8_t OCIsPacketTransferRequired(const char *request, const char *response, uint16_t size);
-OCStackResult getResourceType(const char * query, unsigned char** resourceType);
+OCStackResult getResourceType(const char * query, char** resourceType);
 static CAResult_t OCSelectNetwork();
 
 //-----------------------------------------------------------------------------
@@ -1309,7 +1309,7 @@ OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
  *     OC_STACK_INVALID_METHOD   - invalid resource method
  *     OC_STACK_INVALID_URI      - invalid required or reference URI
  *
- * Note: IN case of CA, when using multicast, the required URI should not contain IP address.
+ * Note: when using multicast, the required URI should not contain IP address.
  *       Instead, it just contains the URI to the resource such as "/oc/core".
  */
 OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
@@ -1319,21 +1319,20 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 {
     OCStackResult result = OC_STACK_ERROR;
     ClientCB *clientCB = NULL;
-    unsigned char * requestUri = NULL;
-    unsigned char * resourceType = NULL;
-    unsigned char * query = NULL;
+    char * requestUri = NULL;
+    char * resourceType = NULL;
+    char * query = NULL;
     char * newUri = (char *)requiredUri;
     (void) referenceUri;
     CARemoteEndpoint_t* endpoint = NULL;
     CAResult_t caResult;
     CAToken_t token = NULL;
-    CAInfo_t requestData;
-    CARequestInfo_t requestInfo;
-    CAGroupEndpoint_t grpEnd = {0};
     OCDoHandle resHandle = NULL;
+    CAInfo_t requestData ={};
+    CARequestInfo_t requestInfo ={};
+    CAGroupEndpoint_t grpEnd = {};
 
     // To track if memory is allocated for additional header options
-    uint8_t hdrOptionMemAlloc = 0;
 
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
 
@@ -1405,7 +1404,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 #endif // WITH_PRESENCE
 
-    requestUri = (unsigned char *) OCMalloc(uriLen + 1);
+    requestUri = (char *) OCMalloc(uriLen + 1);
     if(requestUri)
     {
         memcpy(requestUri, newUri, (uriLen + 1));
@@ -1423,8 +1422,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    memset(&requestData, 0, sizeof(CAInfo_t));
-    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
     switch (method)
     {
         case OC_REST_GET:
@@ -1490,7 +1487,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         {
             goto exit;
         }
-        hdrOptionMemAlloc = 1;
         requestData.numOptions = numOptions + 1;
     }
     else
@@ -1570,10 +1566,12 @@ exit:
     }
     CADestroyRemoteEndpoint(endpoint);
     OCFree(grpEnd.resourceUri);
-
-    if (hdrOptionMemAlloc)
+    if (requestData.options  && requestData.numOptions > 0)
     {
-        OCFree(requestData.options);
+        if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
+        {
+            OCFree(requestData.options);
+        }
     }
     return result;
 }
@@ -1613,13 +1611,12 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      */
     OCStackResult ret = OC_STACK_OK;
     CARemoteEndpoint_t* endpoint = NULL;
-    CAResult_t caResult;
-    CAInfo_t requestData;
-    CARequestInfo_t requestInfo;
-    // Track if memory is allocated for additional header options
-    uint8_t hdrOptionMemAlloc = 0;
+    CAResult_t caResult= CA_STATUS_OK;
+    CAInfo_t requestData = {};
+    CARequestInfo_t requestInfo = {};
 
-    if(!handle) {
+    if(!handle)
+    {
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -1627,7 +1624,8 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 
     ClientCB *clientCB = GetClientCB(NULL, handle, NULL);
 
-    if(clientCB) {
+    if(clientCB)
+    {
         switch (clientCB->method)
         {
             case OC_REST_OBSERVE:
@@ -1649,9 +1647,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 {
                     return OC_STACK_ERROR;
                 }
-                hdrOptionMemAlloc = 1;
                 requestData.numOptions = numOptions + 1;
-                memset(&requestInfo, 0, sizeof(CARequestInfo_t));
                 requestInfo.method = CA_GET;
                 requestInfo.info = requestData;
                 // send request
@@ -1674,7 +1670,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         }
     }
     CADestroyRemoteEndpoint(endpoint);
-    if (hdrOptionMemAlloc)
+    if (requestData.numOptions > 0)
     {
         OCFree(requestData.options);
     }
@@ -1691,20 +1687,21 @@ OCStackResult OCProcessPresence()
 
     OC_LOG(INFO, TAG, PCF("Entering RequestPresence"));
     ClientCB* cbNode = NULL;
-    OCDevAddr dst;
-    OCClientResponse clientResponse;
+    OCDevAddr dst = {};
+    OCClientResponse clientResponse ={};
     OCResponse * response = NULL;
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
 
-    LL_FOREACH(cbList, cbNode) {
+    LL_FOREACH(cbList, cbNode)
+    {
         if(OC_REST_PRESENCE == cbNode->method)
         {
             if(cbNode->presence)
             {
                 uint32_t now = GetTime(0);
-                OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d",
+                OC_LOG_V(DEBUG, TAG, "this TTL level %d",
                                                         cbNode->presence->TTLlevel);
-                OC_LOG_V(DEBUG, TAG, "----------------current ticks %d", now);
+                OC_LOG_V(DEBUG, TAG, "current ticks %d", now);
 
 
                 if(cbNode->presence->TTLlevel >= (PresenceTimeOutSize + 1))
@@ -1712,14 +1709,15 @@ OCStackResult OCProcessPresence()
                     goto exit;
                 }
 
-                if(cbNode->presence->TTLlevel < PresenceTimeOutSize){
-                    OC_LOG_V(DEBUG, TAG, "----------------timeout ticks %d",
+                if(cbNode->presence->TTLlevel < PresenceTimeOutSize)
+                {
+                    OC_LOG_V(DEBUG, TAG, "timeout ticks %d",
                             cbNode->presence->timeOut[cbNode->presence->TTLlevel]);
                 }
 
                 if(cbNode->presence->TTLlevel >= PresenceTimeOutSize)
                 {
-                    OC_LOG(DEBUG, TAG, PCF("----------------No more timeout ticks"));
+                    OC_LOG(DEBUG, TAG, PCF("No more timeout ticks"));
                     if (ParseIPv4Address( cbNode->requestUri, ipAddr, &port))
                     {
                         OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
@@ -1740,7 +1738,7 @@ OCStackResult OCProcessPresence()
                         // Increment the TTLLevel (going to a next state), so we don't keep
                         // sending presence notification to client.
                         cbNode->presence->TTLlevel++;
-                        OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d",
+                        OC_LOG_V(DEBUG, TAG, "moving to TTL level %d",
                                                 cbNode->presence->TTLlevel);
                     }
                     else
@@ -1758,12 +1756,12 @@ OCStackResult OCProcessPresence()
 
                 if(now >= cbNode->presence->timeOut[cbNode->presence->TTLlevel])
                 {
-                    CAResult_t caResult;
+                    CAResult_t caResult = CA_STATUS_OK;
                     CARemoteEndpoint_t* endpoint = NULL;
-                    CAInfo_t requestData;
-                    CARequestInfo_t requestInfo;
+                    CAInfo_t requestData ={};
+                    CARequestInfo_t requestInfo = {};
 
-                    OC_LOG(DEBUG, TAG, PCF("time to test server presence =========="));
+                    OC_LOG(DEBUG, TAG, PCF("time to test server presence"));
 
                     //TODO-CA : Why CA_WIFI alone?
                     caResult = CACreateRemoteEndpoint((char *)cbNode->requestUri, CA_WIFI,
@@ -1775,11 +1773,9 @@ OCStackResult OCProcessPresence()
                         goto exit;
                     }
 
-                    memset(&requestData, 0, sizeof(CAInfo_t));
                     requestData.type = CA_MSG_NONCONFIRM;
                     requestData.token = cbNode->token;
 
-                    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
                     requestInfo.method = CA_GET;
                     requestInfo.info = requestData;
 
@@ -1792,7 +1788,7 @@ OCStackResult OCProcessPresence()
                     }
 
                     cbNode->presence->TTLlevel++;
-                    OC_LOG_V(DEBUG, TAG, "----------------moving to TTL level %d",
+                    OC_LOG_V(DEBUG, TAG, "moving to TTL level %d",
                                                             cbNode->presence->TTLlevel);
                 }
             }
@@ -1856,7 +1852,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         presenceState = OC_PRESENCE_INITIALIZED;
 
         CAAddress_t addressInfo;
-        strncpy(addressInfo.IP.ipAddress, "224.0.1.187", CA_IPADDR_SIZE);
+        strncpy(addressInfo.IP.ipAddress, OC_MULTICAST_IP, CA_IPADDR_SIZE);
         addressInfo.IP.port = 5683;
 
         //TODO make sure there is no memory leak here since another copy
@@ -1932,12 +1928,14 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
 {
     OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
 
-    if(myStackMode == OC_CLIENT)
+    if(myStackMode ==  OC_SERVER || myStackMode == OC_CLIENT_SERVER)
+    {
+        return SaveDeviceInfo(deviceInfo);
+    }
+    else
     {
         return OC_STACK_ERROR;
     }
-
-    return SaveDeviceInfo(deviceInfo);
 }
 
 /**
@@ -1966,17 +1964,17 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     OCResource *pointer = NULL;
     char *str = NULL;
-    size_t size;
+    size_t size = 0;
     OCStackResult result = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Entering OCCreateResource"));
 
     if(myStackMode == OC_CLIENT)
     {
-        return result;
+        return OC_STACK_INVALID_PARAM;
     }
     // Validate parameters
-    if(!uri || (strlen(uri) == 0))
+    if(!uri || uri[0]=='\0' || strlen(uri)>=MAX_URI_LENGTH )
     {
         OC_LOG(ERROR, TAG, PCF("URI is invalid"));
         return OC_STACK_INVALID_URI;
@@ -1988,7 +1986,8 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(!resourceInterfaceName || strlen(resourceInterfaceName) == 0) {
+    if(!resourceInterfaceName || strlen(resourceInterfaceName) == 0)
+    {
         resourceInterfaceName = OC_RSRVD_INTERFACE_DEFAULT;
     }
 
@@ -2118,7 +2117,13 @@ OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
         uint8_t resourceProperties)
 {
     char *str = NULL;
-    size_t size;
+    size_t size = 0;
+
+    if(!host)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult result = OC_STACK_ERROR;
 
     result = OCCreateResource(handle, resourceTypeName, resourceInterfaceName,
@@ -2131,7 +2136,7 @@ OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
         str = (char *) OCMalloc(size);
         if (!str)
         {
-            return OC_STACK_ERROR;
+            return OC_STACK_NO_MEMORY;
         }
         strncpy(str, host, size);
         ((OCResource *) *handle)->host = str;
@@ -2154,8 +2159,8 @@ OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
 OCStackResult OCBindResource(
         OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
 {
-    OCResource *resource;
-    uint8_t i;
+    OCResource *resource = NULL;
+    uint8_t i = 0;
 
     OC_LOG(INFO, TAG, PCF("Entering OCBindResource"));
 
@@ -2185,17 +2190,18 @@ OCStackResult OCBindResource(
         {
             resource->rsrcResources[i] = (OCResource *) resourceHandle;
             OC_LOG(INFO, TAG, PCF("resource bound"));
+
+            #ifdef WITH_PRESENCE
+            if(presenceResource.handle)
+            {
+                ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
+            }
+            #endif
             return OC_STACK_OK;
+
         }
     }
-
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
-    {
-        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
-    }
-    #endif
 
     // Unable to add resourceHandle, so return error
     return OC_STACK_ERROR;
@@ -2213,9 +2219,10 @@ OCStackResult OCBindResource(
  *     OC_STACK_INVALID_PARAM - invalid collectionHandle
  */
 OCStackResult OCUnBindResource(
-        OCResourceHandle collectionHandle, OCResourceHandle resourceHandle) {
-    OCResource *resource;
-    uint8_t i;
+        OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
+{
+    OCResource *resource = NULL;
+    uint8_t i = 0;
 
     OC_LOG(INFO, TAG, PCF("Entering OCUnBindResource"));
 
@@ -2223,22 +2230,26 @@ OCStackResult OCUnBindResource(
     VERIFY_NON_NULL(collectionHandle, ERROR, OC_STACK_ERROR);
     VERIFY_NON_NULL(resourceHandle, ERROR, OC_STACK_ERROR);
     // Container cannot contain itself
-    if (collectionHandle == resourceHandle) {
+    if (collectionHandle == resourceHandle)
+    {
         OC_LOG(ERROR, TAG, PCF("removing handle equals collection handle"));
         return OC_STACK_INVALID_PARAM;
     }
 
     // Use the handle to find the resource in the resource linked list
     resource = findResource((OCResource *) collectionHandle);
-    if (!resource) {
+    if (!resource)
+    {
         OC_LOG(ERROR, TAG, PCF("Collection handle not found"));
         return OC_STACK_INVALID_PARAM;
     }
 
     // Look for an open slot to add add the child resource.
     // If found, add it and return success
-    for (i = 0; i < MAX_CONTAINED_RESOURCES; i++) {
-        if (resourceHandle == resource->rsrcResources[i]) {
+    for (i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+    {
+        if (resourceHandle == resource->rsrcResources[i])
+        {
             resource->rsrcResources[i] = (OCResource *) NULL;
             OC_LOG(INFO, TAG, PCF("resource unbound"));
 
@@ -2250,7 +2261,6 @@ OCStackResult OCUnBindResource(
                 SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
             }
             #endif
-
             return OC_STACK_OK;
         }
     }
@@ -2266,7 +2276,7 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 {
     OCResourceType *pointer = NULL;
     char *str = NULL;
-    size_t size;
+    size_t size = 0;
     OCStackResult result = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Entering BindResourceTypeToResource"));
@@ -2315,7 +2325,7 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
 {
     OCResourceInterface *pointer = NULL;
     char *str = NULL;
-    size_t size;
+    size_t size = 0;
     OCStackResult result = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Entering BindResourceInterfaceToResource"));
@@ -2370,14 +2380,16 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
-        const char *resourceTypeName) {
+        const char *resourceTypeName)
+{
 
     OCStackResult result = OC_STACK_ERROR;
-    OCResource *resource;
+    OCResource *resource = NULL;
 
     // Make sure resource exists
     resource = findResource((OCResource *) handle);
-    if (!resource) {
+    if (!resource)
+    {
         OC_LOG(ERROR, TAG, PCF("Resource not found"));
         return OC_STACK_ERROR;
     }
@@ -2408,14 +2420,16 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
  */
 
 OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
-        const char *resourceInterfaceName) {
+        const char *resourceInterfaceName)
+{
 
     OCStackResult result = OC_STACK_ERROR;
-    OCResource *resource;
+    OCResource *resource = NULL;
 
     // Make sure resource exists
     resource = findResource((OCResource *) handle);
-    if (!resource) {
+    if (!resource)
+    {
         OC_LOG(ERROR, TAG, PCF("Resource not found"));
         return OC_STACK_ERROR;
     }
@@ -2444,13 +2458,15 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
  *     OC_STACK_ERROR - stack process error
 
  */
-OCStackResult OCGetNumberOfResources(uint8_t *numResources) {
+OCStackResult OCGetNumberOfResources(uint8_t *numResources)
+{
     OCResource *pointer = headResource;
 
     OC_LOG(INFO, TAG, PCF("Entering OCGetNumberOfResources"));
     VERIFY_NON_NULL(numResources, ERROR, OC_STACK_INVALID_PARAM);
     *numResources = 0;
-    while (pointer) {
+    while (pointer)
+    {
         *numResources = *numResources + 1;
         pointer = pointer->next;
     }
@@ -2466,15 +2482,15 @@ OCStackResult OCGetNumberOfResources(uint8_t *numResources) {
  *    Resource handle - if found
  *    NULL - if not found
  */
-OCResourceHandle OCGetResourceHandle(uint8_t index) {
+OCResourceHandle OCGetResourceHandle(uint8_t index)
+{
     OCResource *pointer = headResource;
-    uint8_t i = 0;
 
     OC_LOG(INFO, TAG, PCF("Entering OCGetResourceHandle"));
 
     // Iterate through the list
-    while ((i < index) && pointer) {
-        i++;
+    for( uint8_t i = 0; i < index && pointer; ++i)
+    {
         pointer = pointer->next;
     }
     return (OCResourceHandle) pointer;
@@ -2492,21 +2508,25 @@ OCResourceHandle OCGetResourceHandle(uint8_t index) {
  *     OC_STACK_NO_RESOURCE     - resource not found
  *     OC_STACK_INVALID_PARAM   - invalid param
  */
-OCStackResult OCDeleteResource(OCResourceHandle handle) {
+OCStackResult OCDeleteResource(OCResourceHandle handle)
+{
     OC_LOG(INFO, TAG, PCF("Entering OCDeleteResource"));
 
-    if (!handle) {
+    if (!handle)
+    {
         OC_LOG(ERROR, TAG, PCF("Invalid param"));
         return OC_STACK_INVALID_PARAM;
     }
 
     OCResource *resource = findResource((OCResource *) handle);
-    if (resource == NULL) {
+    if (resource == NULL)
+    {
         OC_LOG(ERROR, TAG, PCF("Resource not found"));
         return OC_STACK_NO_RESOURCE;
     }
 
-    if (deleteResource((OCResource *) handle) == 0) {
+    if (deleteResource((OCResource *) handle) != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, PCF("Error deleting resource"));
         return OC_STACK_ERROR;
     }
@@ -2522,12 +2542,14 @@ OCStackResult OCDeleteResource(OCResourceHandle handle) {
  *    URI string - if resource found
  *    NULL - resource not found
  */
-const char *OCGetResourceUri(OCResourceHandle handle) {
-    OCResource *resource;
+const char *OCGetResourceUri(OCResourceHandle handle)
+{
+    OCResource *resource = NULL;
     OC_LOG(INFO, TAG, PCF("Entering OCGetResourceUri"));
 
     resource = findResource((OCResource *) handle);
-    if (resource) {
+    if (resource)
+    {
         return resource->uri;
     }
     return (const char *) NULL;
@@ -2540,18 +2562,20 @@ const char *OCGetResourceUri(OCResourceHandle handle) {
  *
  * @param handle - handle of resource
  * @return
- *    property bitmap - if resource found
- *    NULL - resource not found
+ *    OCResourceProperty Bitmask
+ *    -1 if resource is not found
  */
-uint8_t OCGetResourceProperties(OCResourceHandle handle) {
-    OCResource *resource;
+OCResourceProperty OCGetResourceProperties(OCResourceHandle handle)
+{
+    OCResource *resource = NULL;
     OC_LOG(INFO, TAG, PCF("Entering OCGetResourceProperties"));
 
     resource = findResource((OCResource *) handle);
-    if (resource) {
+    if (resource)
+    {
         return resource->resourceProperties;
     }
-    return 0;
+    return (OCResourceProperty)-1;
 }
 
 /**
@@ -2565,9 +2589,10 @@ uint8_t OCGetResourceProperties(OCResourceHandle handle) {
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCGetNumberOfResourceTypes(OCResourceHandle handle,
-        uint8_t *numResourceTypes) {
-    OCResource *resource;
-    OCResourceType *pointer;
+        uint8_t *numResourceTypes)
+{
+    OCResource *resource = NULL;
+    OCResourceType *pointer = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering OCGetNumberOfResourceTypes"));
     VERIFY_NON_NULL(numResourceTypes, ERROR, OC_STACK_INVALID_PARAM);
@@ -2576,9 +2601,11 @@ OCStackResult OCGetNumberOfResourceTypes(OCResourceHandle handle,
     *numResourceTypes = 0;
 
     resource = findResource((OCResource *) handle);
-    if (resource) {
+    if (resource)
+    {
         pointer = resource->rsrcType;
-        while (pointer) {
+        while (pointer)
+        {
             *numResourceTypes = *numResourceTypes + 1;
             pointer = pointer->next;
         }
@@ -2596,13 +2623,15 @@ OCStackResult OCGetNumberOfResourceTypes(OCResourceHandle handle,
  *    resource type name - if resource found
  *    NULL - resource not found
  */
-const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index) {
-    OCResourceType *resourceType;
+const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index)
+{
+    OCResourceType *resourceType = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering OCGetResourceTypeName"));
 
     resourceType = findResourceTypeAtIndex(handle, index);
-    if (resourceType) {
+    if (resourceType)
+    {
         return resourceType->resourcetypename;
     }
     return (const char *) NULL;
@@ -2621,9 +2650,10 @@ const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index) {
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
-        uint8_t *numResourceInterfaces) {
-    OCResourceInterface *pointer;
-    OCResource *resource;
+        uint8_t *numResourceInterfaces)
+{
+    OCResourceInterface *pointer = NULL;
+    OCResource *resource = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering OCGetNumberOfResourceInterfaces"));
 
@@ -2632,9 +2662,11 @@ OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
 
     *numResourceInterfaces = 0;
     resource = findResource((OCResource *) handle);
-    if (resource) {
+    if (resource)
+    {
         pointer = resource->rsrcInterface;
-        while (pointer) {
+        while (pointer)
+        {
             *numResourceInterfaces = *numResourceInterfaces + 1;
             pointer = pointer->next;
         }
@@ -2652,13 +2684,15 @@ OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
  *    resource interface name - if resource found
  *    NULL - resource not found
  */
-const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index) {
-    OCResourceInterface *resourceInterface;
+const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index)
+{
+    OCResourceInterface *resourceInterface = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering OCGetResourceInterfaceName"));
 
     resourceInterface = findResourceInterfaceAtIndex(handle, index);
-    if (resourceInterface) {
+    if (resourceInterface)
+    {
         return resourceInterface->name;
     }
     return (const char *) NULL;
@@ -2675,17 +2709,20 @@ const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index) {
  *    NULL - resource not found
  */
 OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHandle,
-        uint8_t index) {
-    OCResource *resource;
+        uint8_t index)
+{
+    OCResource *resource = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering OCGetContainedResource"));
 
-    if (index >= MAX_CONTAINED_RESOURCES) {
+    if (index >= MAX_CONTAINED_RESOURCES)
+    {
         return NULL;
     }
 
     resource = findResource((OCResource *) collectionHandle);
-    if (!resource) {
+    if (!resource)
+    {
         return NULL;
     }
 
@@ -2702,18 +2739,19 @@ OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHa
  *     OC_STACK_ERROR - stack process error
  */
 OCStackResult OCBindResourceHandler(OCResourceHandle handle,
-        OCEntityHandler entityHandler) {
-    OCResource *resource;
+        OCEntityHandler entityHandler)
+{
+    OCResource *resource = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering OCBindResourceHandler"));
 
     // Validate parameters
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_INVALID_PARAM);
-    //VERIFY_NON_NULL(entityHandler, ERROR, OC_STACK_INVALID_PARAM);
 
     // Use the handle to find the resource in the resource linked list
     resource = findResource((OCResource *)handle);
-    if (!resource) {
+    if (!resource)
+    {
         OC_LOG(ERROR, TAG, PCF("Resource not found"));
         return OC_STACK_ERROR;
     }
@@ -2741,14 +2779,16 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
  *    entity handler - if resource found
  *    NULL - resource not found
  */
-OCEntityHandler OCGetResourceHandler(OCResourceHandle handle) {
-    OCResource *resource;
+OCEntityHandler OCGetResourceHandler(OCResourceHandle handle)
+{
+    OCResource *resource = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering OCGetResourceHandler"));
 
     // Use the handle to find the resource in the resource linked list
     resource = findResource((OCResource *)handle);
-    if (!resource) {
+    if (!resource)
+    {
         OC_LOG(ERROR, TAG, PCF("Resource not found"));
         return NULL;
     }
@@ -2841,12 +2881,13 @@ OCStackResult SendStopNotification()
  *     OC_STACK_NO_RESOURCE - invalid resource handle
  *     OC_STACK_NO_OBSERVERS - no more observers intrested in resource
  */
-OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService qos) {
+OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService qos)
+{
 
     OC_LOG(INFO, TAG, PCF("Entering OCNotifyAllObservers"));
 
     OCResource *resPtr = NULL;
-    OCStackResult result;
+    OCStackResult result = OC_STACK_ERROR;
     OCMethod method = OC_REST_NOMETHOD;
     uint32_t maxAge = 0;
 
@@ -2884,7 +2925,7 @@ OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
                          OCObservationId  *obsIdList,
                          uint8_t          numberOfIds,
-                         unsigned char    *notificationJSONPayload,
+                         const char       *notificationJSONPayload,
                          OCQualityOfService qos)
 {
     OC_LOG(INFO, TAG, PCF("Entering OCNotifyListOfObservers"));
@@ -3012,7 +3053,8 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable)
 {
     if (resourceProperties
-            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW)) {
+            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW))
+    {
         OC_LOG(ERROR, TAG, PCF("Invalid property"));
         return OC_STACK_INVALID_PARAM;
     }
@@ -3031,7 +3073,8 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
 /**
  * Initialize resource data structures, variables, etc.
  */
-OCStackResult initResources() {
+OCStackResult initResources()
+{
     OCStackResult result = OC_STACK_OK;
     // Init application resource vars
     headResource = NULL;
@@ -3061,9 +3104,9 @@ OCStackResult initResources() {
  */
 void insertResource(OCResource *resource)
 {
-    if (!headResource)
-    {
-        // First resource. Head and tail are the same.
+    OCResource *pointer = NULL;
+
+    if (!headResource) {
         headResource = resource;
         tailResource = resource;
     }
@@ -3101,7 +3144,7 @@ OCResource *findResource(OCResource *resource)
 void deleteAllResources()
 {
     OCResource *pointer = headResource;
-    OCResource *temp;
+    OCResource *temp = NULL;
 
     while (pointer)
     {
@@ -3129,13 +3172,13 @@ void deleteAllResources()
  *
  * @param resource - resource to be deleted
  * @return
- *    0 - error
- *    1 - success
+ *    OC_STACK_ERROR - error
+ *    OC_STACK_OK - success
  */
-int deleteResource(OCResource *resource)
+OCStackResult deleteResource(OCResource *resource)
 {
     OCResource *prev = NULL;
-    OCResource *temp;
+    OCResource *temp = NULL;
 
     temp = headResource;
     while (temp)
@@ -3165,7 +3208,6 @@ int deleteResource(OCResource *resource)
                 }
             }
             #endif
-
             // Only resource in list.
             if (temp == headResource && temp == tailResource)
             {
@@ -3190,7 +3232,7 @@ int deleteResource(OCResource *resource)
 
             deleteResourceElements(temp);
             OCFree(temp);
-            return 1;
+            return OC_STACK_OK;
         }
         else
         {
@@ -3199,7 +3241,7 @@ int deleteResource(OCResource *resource)
         }
     }
 
-    return 0;
+    return OC_STACK_ERROR;
 }
 
 /**
@@ -3209,7 +3251,8 @@ int deleteResource(OCResource *resource)
  */
 void deleteResourceElements(OCResource *resource)
 {
-    if (!resource) {
+    if (!resource)
+    {
         return;
     }
 
@@ -3231,7 +3274,7 @@ void deleteResourceElements(OCResource *resource)
 void deleteResourceType(OCResourceType *resourceType)
 {
     OCResourceType *pointer = resourceType;
-    OCResourceType *next;
+    OCResourceType *next = NULL;
 
     while (pointer)
     {
@@ -3247,9 +3290,10 @@ void deleteResourceType(OCResourceType *resourceType)
  *
  * @param resourceInterface - specified resource interface
  */
-void deleteResourceInterface(OCResourceInterface *resourceInterface) {
+void deleteResourceInterface(OCResourceInterface *resourceInterface)
+{
     OCResourceInterface *pointer = resourceInterface;
-    OCResourceInterface *next;
+    OCResourceInterface *next = NULL;
 
     while (pointer)
     {
@@ -3266,8 +3310,9 @@ void deleteResourceInterface(OCResourceInterface *resourceInterface) {
  * @param resource - resource where resource type is to be inserted
  * @param resourceType - resource type to be inserted
  */
-void insertResourceType(OCResource *resource, OCResourceType *resourceType) {
-    OCResourceType *pointer;
+void insertResourceType(OCResource *resource, OCResourceType *resourceType)
+{
+    OCResourceType *pointer = NULL;
 
     if (resource && !resource->rsrcType)
     {
@@ -3283,7 +3328,8 @@ void insertResourceType(OCResource *resource, OCResourceType *resourceType) {
         {
             pointer = resourceType;
         }
-        while (pointer->next) {
+        while (pointer->next)
+        {
             pointer = pointer->next;
         }
         pointer->next = resourceType;
@@ -3301,10 +3347,10 @@ void insertResourceType(OCResource *resource, OCResourceType *resourceType) {
  *    resourcetype - if found
  *    NULL - not found
  */
-OCResourceType *findResourceTypeAtIndex(OCResourceHandle handle, uint8_t index) {
-    OCResource *resource;
-    OCResourceType *pointer;
-    uint8_t i;
+OCResourceType *findResourceTypeAtIndex(OCResourceHandle handle, uint8_t index)
+{
+    OCResource *resource = NULL;
+    OCResourceType *pointer = NULL;
 
     // Find the specified resource
     resource = findResource((OCResource *) handle);
@@ -3321,10 +3367,8 @@ OCResourceType *findResourceTypeAtIndex(OCResourceHandle handle, uint8_t index) 
 
     // Iterate through the list
     pointer = resource->rsrcType;
-    i = 0;
-    while ((i < index) && pointer)
+    for(uint8_t i = 0; i< index && pointer; ++i)
     {
-        i++;
         pointer = pointer->next;
     }
     return pointer;
@@ -3368,8 +3412,7 @@ OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char *
 void insertResourceInterface(OCResource *resource,
         OCResourceInterface *resourceInterface)
 {
-    OCResourceInterface *pointer;
-
+    OCResourceInterface *pointer = NULL;
     if (!resource->rsrcInterface)
     {
         resource->rsrcInterface = resourceInterface;
@@ -3397,27 +3440,29 @@ void insertResourceInterface(OCResource *resource,
  *    NULL - not found
  */
 OCResourceInterface *findResourceInterfaceAtIndex(OCResourceHandle handle,
-        uint8_t index) {
-    OCResource *resource;
-    OCResourceInterface *pointer;
-    uint8_t i = 0;
+        uint8_t index)
+{
+    OCResource *resource = NULL;
+    OCResourceInterface *pointer = NULL;
 
     // Find the specified resource
     resource = findResource((OCResource *) handle);
-    if (!resource) {
+    if (!resource)
+    {
         return NULL;
     }
 
     // Make sure a resource has a resourceinterface
-    if (!resource->rsrcInterface) {
+    if (!resource->rsrcInterface)
+    {
         return NULL;
     }
 
     // Iterate through the list
     pointer = resource->rsrcInterface;
 
-    while ((i < index) && pointer) {
-        i++;
+    for (uint8_t i = 0; i < index && pointer; ++i)
+    {
         pointer = pointer->next;
     }
     return pointer;
@@ -3463,20 +3508,20 @@ uint8_t OCIsPacketTransferRequired(const char *request, const char *response, ui
 }
 
 /**
- * Retrieves a resource type based upon a query ontains only just one
+ * Retrieves a resource type based upon a query contains only just one
  * resource attribute (and that has to be of type "rt").
  *
  * @remark This API malloc's memory for the resource type. Do not malloc resourceType
  * before passing in.
  *
- * @param query - The quert part of the URI
+ * @param query - The query part of the URI
  * @param resourceType - The resource type to be populated; pass by reference.
  *
  * @return
  *  OC_STACK_INVALID_PARAM - Returns this if the resourceType parameter is invalid/NULL.
  *  OC_STACK_OK            - Success
  */
-OCStackResult getResourceType(const char * query, unsigned char** resourceType)
+OCStackResult getResourceType(const char * query, char** resourceType)
 {
     if(!query)
     {
@@ -3487,7 +3532,7 @@ OCStackResult getResourceType(const char * query, unsigned char** resourceType)
 
     if(strncmp(query, "rt=", 3) == 0)
     {
-        *resourceType = (unsigned char *) OCMalloc(strlen(query)-3);
+        *resourceType = (char *) OCMalloc(strlen(query)-3 + 1);
         if(!*resourceType)
         {
             result = OC_STACK_NO_MEMORY;
@@ -3500,7 +3545,7 @@ OCStackResult getResourceType(const char * query, unsigned char** resourceType)
     return result;
 }
 
-OCStackResult getQueryFromUri(const char * uri, unsigned char** query, char ** newURI)
+OCStackResult getQueryFromUri(const char * uri, char** query, char ** newURI)
 {
     if(!uri)
     {
@@ -3517,21 +3562,21 @@ OCStackResult getQueryFromUri(const char * uri, unsigned char** query, char ** n
         goto exit;
     }
     strcpy(tempURI, uri);
-    char* strTokPtr;
-    leftToken = strtok_r((char *)tempURI, "?", &strTokPtr);
+    char* strTokPtr = NULL;
+    leftToken = strtok_r(tempURI, "?", &strTokPtr);
 
     //TODO-CA: This could be simplified. Clean up required.
     while(leftToken != NULL)
     {
         if(strncmp(leftToken, "rt=", 3) == 0 || strncmp(leftToken, "if=", 3) == 0)
         {
-            *query = (unsigned char *) OCMalloc(strlen(leftToken) + 1);
+            *query = (char *) OCMalloc(strlen(leftToken) + 1);
             if(!*query)
             {
                 OCFree(tempURI);
                 goto exit;
             }
-            strcpy((char *)*query, ((const char *)&leftToken[0]));
+            strcpy(*query, &leftToken[0]);
             break;
         }
         leftToken = strtok_r(NULL, "?", &strTokPtr);
@@ -3549,7 +3594,6 @@ const ServerID OCGetServerInstanceID(void)
 {
     static bool generated = false;
     static ServerID sid;
-
     if(generated)
     {
         return sid;
@@ -3567,8 +3611,8 @@ const char* OCGetServerInstanceIDString(void)
     // This will change as the representation gets switched
     // to another value
     static char buffer[11];
-    int n = sprintf(buffer, "%u", OCGetServerInstanceID());
-    if (n < 0)
+
+    if (snprintf(buffer, sizeof(buffer),"%u", OCGetServerInstanceID()) < 0)
     {
         buffer[0]='\0';
     }
@@ -3580,8 +3624,9 @@ const char* OCGetServerInstanceIDString(void)
 int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
         uint8_t *c, uint8_t *d )
 {
-    if ( !ipAddr || !a || !b || !c || !d ) {
-        OC_LOG(FATAL, TAG, "Invalid argument");
+    if ( !ipAddr || !a || !b || !c || !d )
+    {
+        OC_LOG(FATAL, TAG, PCF("Invalid argument"));
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -3597,8 +3642,9 @@ int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
 /// Retrieve the IPv4 address embedded inside OCDev address data structure
 int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
 {
-    if ( !ipAddr || !port ) {
-        OC_LOG(FATAL, TAG, "Invalid argument");
+    if ( !ipAddr || !port )
+    {
+        OC_LOG(FATAL, TAG, PCF("Invalid argument"));
         return OC_STACK_INVALID_PARAM;
     }
 

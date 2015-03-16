@@ -32,6 +32,7 @@
 using namespace OC;
 
 std::shared_ptr<OCResource> curResource;
+std::mutex resourceLock;
 
 static int TEST_CASE = 0;
 
@@ -52,7 +53,7 @@ typedef enum {
 
 void printUsage()
 {
-    std::cout << "Usage : presenceclient -t <1|2> -c <0|1>" << std::endl;
+    std::cout << "Usage : presenceclient -t <1|2|3|4|5|6> -c <0|1>" << std::endl;
     std::cout << "-t 1 : Discover Resources and Initiate Unicast Presence" << std::endl;
     std::cout << "-t 2 : Discover Resources and Initiate Unicast Presence with Filter"
               << std::endl;
@@ -97,9 +98,11 @@ void presenceHandler(OCStackResult result, const unsigned int nonce, const std::
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
+    std::lock_guard<std::mutex> lock(resourceLock);
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
+        return;
     }
 
     std::string resourceURI;
@@ -198,7 +201,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
 int main(int argc, char* argv[]) {
 
-    ostringstream requestURI;
+    std::ostringstream requestURI;
 
     int opt;
 
@@ -211,11 +214,11 @@ int main(int argc, char* argv[]) {
             switch(opt)
             {
                 case 't':
-                    TEST_CASE = stoi(optarg);
+                    TEST_CASE = std::stoi(optarg);
                     break;
                 case 'c':
                     std::size_t inputValLen;
-                    optionSelected = stoi(optarg, &inputValLen);
+                    optionSelected = std::stoi(optarg, &inputValLen);
 
                     if(inputValLen == strlen(optarg))
                     {
@@ -245,7 +248,7 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    catch(exception& e)
+    catch(std::exception& e)
     {
         std::cout << "Invalid input argument. Using WIFI as connectivity type"
             << std::endl;
@@ -355,11 +358,13 @@ int main(int argc, char* argv[]) {
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
 
-    }catch(OCException& e)
+    }
+    catch(OCException& e)
     {
-        //log(e.what());
+        oclog() << "Exception in main: "<< e.what();
     }
 
     return 0;
 }
+
 

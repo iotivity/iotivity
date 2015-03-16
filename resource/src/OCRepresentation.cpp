@@ -112,9 +112,9 @@ namespace OC
         }
     }
 
-    void MessageContainer::setJSONRepresentation(const unsigned char* payload)
+    void MessageContainer::setJSONRepresentation(const char* payload)
     {
-        setJSONRepresentation(std::string(reinterpret_cast<const char*>(payload)));
+        setJSONRepresentation(std::string(payload));
     }
 
     std::string MessageContainer::getJSONRepresentation(OCInfoFormat f) const
@@ -973,3 +973,4 @@ namespace OC
         return os;
     }
 }
+

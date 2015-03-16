@@ -189,10 +189,11 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             response.requestHandle = entityHandlerRequest->requestHandle;
             response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehRet;
-            response.payload = (unsigned char *)payload;
+            response.payload = payload;
             response.payloadSize = strlen(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
-            memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+            memset(response.sendVendorSpecificHeaderOptions, 0,
+                    sizeof response.sendVendorSpecificHeaderOptions);
             memset(response.resourceUri, 0, sizeof response.resourceUri);
             // Indicate that response is NOT in a persistent buffer
             response.persistentBufferFlag = 0;
@@ -228,7 +229,8 @@ void *ChangeLightRepresentation (void *param)
     (void)param;
     OCStackResult result = OC_STACK_ERROR;
     modCounter += 1;
-    if(modCounter % 10 == 0)  // Matching the timing that the Linux Sample Server App uses for the same functionality.
+    // Matching the timing that the Linux Sample Server App uses for the same functionality.
+    if(modCounter % 10 == 0)
     {
         Light.power += 5;
         if (gLightUnderObservation)
@@ -274,7 +276,7 @@ void setup()
 void loop()
 {
     // This artificial delay is kept here to avoid endless spinning
-    // of Arduino microcontroller. Modify it as per specfic application needs.
+    // of Arduino microcontroller. Modify it as per specific application needs.
     delay(2000);
 
     // This call displays the amount of free SRAM available on Arduino
@@ -339,3 +341,4 @@ const char *getResult(OCStackResult result) {
         return "UNKNOWN";
     }
 }
+

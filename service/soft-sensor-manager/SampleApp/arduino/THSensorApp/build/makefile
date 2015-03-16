@@ -102,3 +102,4 @@ clean: legacy_clean
 legacy_clean:
 	@rm -rf bin
 	@rm -f *.o *.d *.elf *.eep *.a *.hex *.bin *.map *-
+

@@ -94,3 +94,4 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse);
 
 #endif
+

@@ -47,3 +47,4 @@ clean:
 	cd ../../lib && $(MAKE) clean
 	rm -rf ./release/obj
 	cd ./release && rm -f *.so
+

@@ -536,7 +536,7 @@ int main(int argc, char* argv[])
         std::mutex blocker;
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
-        cv.wait(lock);
+        cv.wait(lock, []{return false;});
     }
     catch(OCException &e)
     {
@@ -548,3 +548,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

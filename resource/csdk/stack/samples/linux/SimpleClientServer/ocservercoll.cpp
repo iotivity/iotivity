@@ -216,7 +216,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 response.requestHandle = ehRequest->requestHandle;
                 response.resourceHandle = ehRequest->resource;
                 response.ehResult = ret;
-                response.payload = (unsigned char *)payload;
+                response.payload = payload;
                 response.payloadSize = strlen(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
                 memset(response.sendVendorSpecificHeaderOptions,
@@ -288,7 +288,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 response.requestHandle = ehRequest->requestHandle;
                 response.resourceHandle = ehRequest->resource;
                 response.ehResult = ret;
-                response.payload = (unsigned char *)payload;
+                response.payload = payload;
                 response.payloadSize = strlen(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
                 memset(response.sendVendorSpecificHeaderOptions,
@@ -353,7 +353,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
             response.requestHandle = ehRequest->requestHandle;
             response.resourceHandle = ehRequest->resource;
             response.ehResult = ret;
-            response.payload = (unsigned char *)payload;
+            response.payload = payload;
             response.payloadSize = strlen(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions,
@@ -413,7 +413,7 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
             response.requestHandle = ehRequest->requestHandle;
             response.resourceHandle = ehRequest->resource;
             response.ehResult = ret;
-            response.payload = (unsigned char *)payload;
+            response.payload = payload;
             response.payloadSize = strlen(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions,
@@ -593,3 +593,4 @@ void createResources()
     res = OCBindResource(room, fan);
     OC_LOG_V(INFO, TAG, "OC Bind Contained Resource to resource: %s", getResult(res));
 }
+

@@ -90,3 +90,4 @@ void StripNewLineChar(char* str)
         }
     }
 }
+

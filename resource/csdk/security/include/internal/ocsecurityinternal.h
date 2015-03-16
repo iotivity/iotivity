@@ -63,3 +63,4 @@ void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
 void DeinitOCSecurityInfo();
 
 #endif //OC_SECURITY_INTERNAL_H
+

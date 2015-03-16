@@ -23,8 +23,6 @@
 
 #include <string>
 
-using namespace std;
-
 namespace OC
 {
     namespace InitException
@@ -136,3 +134,4 @@ namespace OC
 }
 
 #endif // _STRING_CONSTANTS_H_
+

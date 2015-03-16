@@ -33,13 +33,10 @@
 #include "OCApi.h"
 using namespace OC;
 
-OCConnectivityType connectivityType = OC_WIFI;
 
 class ClientWorker
 {
 private:
-    bool m_isFoo;
-    int m_barCount;
     void putResourceInfo(const HeaderOptions& headerOptions,
             const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
     {
@@ -144,15 +141,18 @@ private:
     }
 
 public:
+    ClientWorker(OCConnectivityType ct):m_connectivityType{ct}
+    {}
+
     void start()
     {
-        ostringstream requestURI;
+        std::ostringstream requestURI;
         requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.foo";
 
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
         std::cout<<"result:" <<
-        OCPlatform::findResource("", requestURI.str(), connectivityType, f)
+        OCPlatform::findResource("", requestURI.str(), m_connectivityType, f)
         << std::endl;
 
         std::cout<<"Finding Resource..."<<std::endl;
@@ -167,6 +167,9 @@ private:
     std::mutex m_resourceLock;
     std::condition_variable m_cv;
     std::shared_ptr<OCResource> m_resource;
+    OCConnectivityType m_connectivityType;
+    bool m_isFoo;
+    int m_barCount;
 };
 
 struct FooResource
@@ -297,13 +300,14 @@ struct FooResource
 
 int main(int argc, char* argv[])
 {
+    OCConnectivityType connectivityType = OC_WIFI;
 
     if(argc == 2)
     {
         try
         {
             std::size_t inputValLen;
-            int optionSelected = stoi(argv[1], &inputValLen);
+            int optionSelected = std::stoi(argv[1], &inputValLen);
 
             if(inputValLen == strlen(argv[1]))
             {
@@ -326,7 +330,7 @@ int main(int argc, char* argv[])
                 std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
             }
         }
-        catch(exception& e)
+        catch(std::exception& e)
         {
             std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
         }
@@ -358,7 +362,7 @@ int main(int argc, char* argv[])
             return -1;
         }
 
-        ClientWorker cw;
+        ClientWorker cw(connectivityType);
         cw.start();
     }
     catch(OCException& e)
@@ -368,3 +372,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

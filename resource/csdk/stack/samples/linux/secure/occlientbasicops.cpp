@@ -166,12 +166,12 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             {
                 case TEST_NON_CON_OP:
                     InitGetRequest(OC_LOW_QOS);
-                    InitPutRequest();
+                    InitPutRequest(OC_LOW_QOS);
                     //InitPostRequest(OC_LOW_QOS);
                     break;
                 case TEST_CON_OP:
                     InitGetRequest(OC_HIGH_QOS);
-                    InitPutRequest();
+                    InitPutRequest(OC_HIGH_QOS);
                     //InitPostRequest(OC_HIGH_QOS);
                     break;
             }
@@ -182,13 +182,14 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
 }
 
-int InitPutRequest()
+int InitPutRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
         << ":" << coapServerPort  << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_PUT,
+            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS), putReqCB, NULL, 0));
 }
 
 int InitPostRequest(OCQualityOfService qos)
@@ -235,7 +236,7 @@ int InitGetRequest(OCQualityOfService qos)
             OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
 }
 
-int InitDiscovery()
+int InitDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -278,7 +279,8 @@ int InitDiscovery()
         szQueryUri);
 
     ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0,
-            discoveryReqConnType, OC_LOW_QOS, &cbData, NULL, 0);
+            discoveryReqConnType, ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
+            &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -331,7 +333,14 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    InitDiscovery();
+    if(TEST_CASE == TEST_NON_CON_OP)
+    {
+        InitDiscovery(OC_LOW_QOS);
+    }
+    else if(TEST_CASE == TEST_CON_OP)
+    {
+        InitDiscovery(OC_HIGH_QOS);
+    }
 
     timeout.tv_sec  = 0;
     timeout.tv_nsec = 100000000L;
@@ -458,3 +467,4 @@ int parseClientResponse(OCClientResponse * clientResponse)
     }
     return 0;
 }
+

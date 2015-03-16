@@ -95,3 +95,4 @@ clean: legacy_clean
 
 legacy_clean:
 	rm -f *.o $(PROGRAMS)
+

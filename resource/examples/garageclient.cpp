@@ -32,6 +32,7 @@ using namespace OC;
 
 const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
+std::mutex resourceLock;
 
 class Garage
 {
@@ -225,9 +226,11 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
+    std::lock_guard<std::mutex> lock(resourceLock);
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
+        return;
     }
 
     std::string resourceURI;
@@ -283,7 +286,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
 int main(int argc, char* argv[]) {
 
-ostringstream requestURI;
+    std::ostringstream requestURI;
 
     OCConnectivityType connectivityType = OC_WIFI;
 
@@ -292,7 +295,7 @@ ostringstream requestURI;
         try
         {
             std::size_t inputValLen;
-            int optionSelected = stoi(argv[1], &inputValLen);
+            int optionSelected = std::stoi(argv[1], &inputValLen);
 
             if(inputValLen == strlen(argv[1]))
             {
@@ -315,7 +318,7 @@ ostringstream requestURI;
                 std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
             }
         }
-        catch(exception& e)
+        catch(std::exception& e)
         {
             std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
         }
@@ -364,4 +367,5 @@ ostringstream requestURI;
 
     return 0;
 }
+
 

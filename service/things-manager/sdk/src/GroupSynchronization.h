@@ -138,3 +138,4 @@ private:
 };
 }
 #endif    // __OC_GROUPSYNCHRONIZATION__
+

@@ -662,3 +662,4 @@ OCStackResult GroupManager::deleteActionSet(std::shared_ptr< OCResource > resour
     }
 }
 }
+

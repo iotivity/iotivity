@@ -202,7 +202,7 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
 
         if (requestFlag & RequestHandlerFlag::RequestFlag)
         {
-            cout << "\t\trequestFlag : Request\n";
+            std::cout << "\t\trequestFlag : Request\n";
 
             // If the request type is GET
             if (requestType == "GET")

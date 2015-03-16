@@ -94,3 +94,4 @@ std::string OC::OCException::reason(const OCStackResult sr)
     return OC::Exception::UNKNOWN_ERROR;
 }
 
+

@@ -85,3 +85,4 @@ JNIEXPORT void JNICALL Java_com_sec_android_ssmcore_CoreController_RegisterRepor
 #endif
 
 #endif
+

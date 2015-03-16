@@ -342,7 +342,7 @@ int InitDiscovery()
     OCStackResult ret;
     OCCallbackData cbData;
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[64] = {};
     if (UNICAST_DISCOVERY)
     {
         char ipv4addr[IPV4_ADDR_SIZE];
@@ -427,7 +427,7 @@ const char * getPort(const OCClientResponse * clientResponse)
     return port;
 }
 
-int parseJSON(unsigned  const char * resJSONPayload, char ** sid_c,
+int parseJSON(const char * resJSONPayload, char ** sid_c,
               char *** uri_c, int * totalRes)
 {
     cJSON * root = NULL;
@@ -738,4 +738,5 @@ int main(int argc, char* argv[])
     }
     return 0;
 }
+
 

@@ -285,3 +285,4 @@ ContextData DiscomfortIndexSensor::setOutput(int property_count, InValue *data)
     return out;
 }
 
+

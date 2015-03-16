@@ -16,8 +16,8 @@ void ocInitialize () {
 }
 
 void setup() {
-	Serial.begin(115200);
-   
+    Serial.begin(115200);
+
     Serial.println ("Trying to get an IP addr using DHCP");
     if (Ethernet.begin(ETHERNET_MAC) == 0) {
         Serial.println("DHCP failed");
@@ -26,7 +26,8 @@ void setup() {
 }
 
 void loop() {
-	Serial.println ("Processing CoAP messages!\n");
+    Serial.println ("Processing CoAP messages!\n");
     OCProcess ();
-	delay(1000);
+    delay(1000);
 }
+

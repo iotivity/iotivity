@@ -223,3 +223,4 @@ INTERFACE_DECLSPEC SSMRESULT GetInstalledModelList(OUT std::vector<ISSMResource 
 #endif // __cplusplus
 
 #endif
+

@@ -25,3 +25,4 @@ It is not a system or end-to-end test.
 
 2. Run the unit test by issuing the following command from <oic-resource>:
    ./unittests/unittests
+

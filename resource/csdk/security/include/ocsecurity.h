@@ -47,3 +47,4 @@ OCStackResult OCSecSetConfigData(const OCSecConfigData *cfgData,
 #endif // __cplusplus
 
 #endif //OC_SECURITY_H
+

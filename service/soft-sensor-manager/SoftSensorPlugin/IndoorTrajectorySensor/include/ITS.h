@@ -120,3 +120,4 @@ namespace ITSName
 ;
 
 #endif /* INDOORTRAJECTORYSENSOR_H_ */
+

@@ -141,7 +141,7 @@ OCStackResult ValidateBlobTypePSK(const OCSecBlob *secBlob)
     OCDtlsPskCredsBlob *pskCredsBlob;
     uint16_t validLen;
 
-    if(secBlob->len == 0)
+    if(!secBlob || secBlob->len == 0)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -251,5 +251,6 @@ OCStackResult OCSecSetConfigData(const OCSecConfigData *cfgData,
 
     return OC_STACK_INVALID_PARAM;
 }
+
 
 

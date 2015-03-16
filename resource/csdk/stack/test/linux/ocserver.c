@@ -94,3 +94,4 @@ OCStackResult createLightResource() {
                     OC_DISCOVERABLE|OC_OBSERVABLE);
     return res;
 }
+

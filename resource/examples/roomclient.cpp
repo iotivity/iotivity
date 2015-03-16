@@ -33,6 +33,7 @@ using namespace OC;
 
 const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
+std::mutex resourceLock;
 
 int observe_count()
 {
@@ -161,6 +162,7 @@ void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
+    std::lock_guard<std::mutex> lock(resourceLock);
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
@@ -219,7 +221,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
 int main(int argc, char* argv[]) {
 
-    ostringstream requestURI;
+    std::ostringstream requestURI;
 
     OCConnectivityType connectivityType = OC_WIFI;
     if(argc == 2)
@@ -227,7 +229,7 @@ int main(int argc, char* argv[]) {
         try
         {
             std::size_t inputValLen;
-            int optionSelected = stoi(argv[1], &inputValLen);
+            int optionSelected = std::stoi(argv[1], &inputValLen);
 
             if(inputValLen == strlen(argv[1]))
             {
@@ -250,7 +252,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
             }
         }
-        catch(exception& e)
+        catch(std::exception& e)
         {
             std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
         }
@@ -293,9 +295,10 @@ int main(int argc, char* argv[]) {
 
     }catch(OCException& e)
     {
-        //log(e.what());
+        oclog() << "Exception in main: "<< e.what();
     }
 
     return 0;
 }
+
 

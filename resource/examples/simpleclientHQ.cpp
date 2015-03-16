@@ -43,6 +43,7 @@ typedef std::set<std::shared_ptr<OCResource>, dereference_compare> DiscoveredRes
 DiscoveredResourceSet discoveredResources;
 const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
+std::mutex resourceLock;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
 //TODO-CA: Since CA CON message support is still in progress, this client uses
@@ -77,18 +78,18 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         std::cout << "OBSERVE RESULT:"<<std::endl;
         if(sequenceNumber == (int) ObserveAction::ObserveRegister)
         {
-            std::cout << "\tObserve Registration Confirmed: "<< endl;
+            std::cout << "\tObserve Registration Confirmed: "<< std::endl;
         }
         else if (sequenceNumber == (int) ObserveAction::ObserveUnregister)
         {
-            std::cout << "\tObserve Cancel Confirmed: "<< endl;
+            std::cout << "\tObserve Cancel Confirmed: "<< std::endl;
             sleep(10);
             std::cout << "DONE"<<std::endl;
             std::exit(0);
         }
         else
         {
-            std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
+            std::cout << "\tSequenceNumber: "<< sequenceNumber << std::endl;
         }
 
         rep.getValue("state", mylight.m_state);
@@ -137,9 +138,9 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
         }
 
         if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
-            std::cout << endl << "Observe is used." << endl << endl;
+            std::cout << std::endl << "Observe is used." << std::endl << std::endl;
         else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
-            std::cout << endl << "ObserveAll is used." << endl << endl;
+            std::cout << std::endl << "ObserveAll is used." << std::endl << std::endl;
         sleep(1);
         curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve,
                 OC::QualityOfService::LowQos);
@@ -302,26 +303,28 @@ void foundResource(std::shared_ptr<OCResource> resource)
     std::string hostAddress;
     try
     {
-        if(discoveredResources.find(resource) == discoveredResources.end())
-        {
-            std::cout << "Found resource " << resource->uniqueIdentifier() <<
-                " for the first time on server with ID: "<< resource->sid()<<std::endl;
-            discoveredResources.insert(resource);
-        }
-        else
-        {
-            std::cout<<"Found resource "<< resource->uniqueIdentifier() << " again!"<<std::endl;
-        }
-
-        if(curResource)
-        {
-            std::cout << "Found another resource, ignoring"<<std::endl;
-            return;
-        }
-
         // Do some operations with resource object.
         if(resource)
         {
+            std::lock_guard<std::mutex> lk(resourceLock);
+
+            if(discoveredResources.find(resource) == discoveredResources.end())
+            {
+                std::cout << "Found resource " << resource->uniqueIdentifier() <<
+                    " for the first time on server with ID: "<< resource->sid()<<std::endl;
+                discoveredResources.insert(resource);
+            }
+            else
+            {
+                std::cout<<"Found resource "<< resource->uniqueIdentifier() << " again!"<<std::endl;
+            }
+
+            if(curResource)
+            {
+                std::cout << "Found another resource, ignoring"<<std::endl;
+                return;
+            }
+
             std::cout<<"DISCOVERED Resource:"<<std::endl;
             // Get the resource URI
             resourceURI = resource->uri();
@@ -349,7 +352,8 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 curResource = resource;
                 sleep(1);
-                // Call a local function which will internally invoke get API on the resource pointer
+                // Call a local function which will internally invoke get
+                // API on the resource pointer
                 getLightRepresentation(resource);
             }
         }
@@ -379,7 +383,7 @@ void PrintUsage()
 
 int main(int argc, char* argv[]) {
 
-    ostringstream requestURI;
+    std::ostringstream requestURI;
 
     OCConnectivityType connectivityType = OC_WIFI;
     try
@@ -388,9 +392,9 @@ int main(int argc, char* argv[]) {
         {
             OBSERVE_TYPE_TO_USE = ObserveType::Observe;
         }
-        else if (argc >= 2)
+        else if (argc ==2 || argc==3)
         {
-            int value = stoi(argv[1]);
+            int value = std::stoi(argv[1]);
             if (value == 1)
                 OBSERVE_TYPE_TO_USE = ObserveType::Observe;
             else if (value == 2)
@@ -401,7 +405,7 @@ int main(int argc, char* argv[]) {
             if(argc == 3)
             {
                 std::size_t inputValLen;
-                int optionSelected = stoi(argv[2], &inputValLen);
+                int optionSelected = std::stoi(argv[2], &inputValLen);
 
                 if(inputValLen == strlen(argv[2]))
                 {
@@ -432,7 +436,7 @@ int main(int argc, char* argv[]) {
             return -1;
         }
     }
-    catch(exception& e)
+    catch(std::exception& e)
     {
         std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
     }
@@ -474,11 +478,13 @@ int main(int argc, char* argv[]) {
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
 
-    }catch(OCException& e)
+    }
+    catch(OCException& e)
     {
-        //log(e.what());
+        oclog() << "Exception in main: "<<e.what();
     }
 
     return 0;
 }
+
 

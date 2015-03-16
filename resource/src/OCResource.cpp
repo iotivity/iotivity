@@ -340,7 +340,7 @@ OCResourceIdentifier::OCResourceIdentifier(const std::string& wireServerIdentifi
     }
 }
 
-ostream& operator <<(ostream& os, const OCResourceIdentifier& ri)
+std::ostream& operator <<(std::ostream& os, const OCResourceIdentifier& ri)
 {
 
     os << ri.m_representation<<ri.m_resourceUri;
@@ -382,3 +382,4 @@ bool OCResourceIdentifier::operator>=(const OCResourceIdentifier &other) const
 }
 
 } // namespace OC
+

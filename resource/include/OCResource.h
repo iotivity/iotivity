@@ -42,7 +42,7 @@ namespace OC
 {
     class OCResource;
     class OCResourceIdentifier;
-    ostream& operator <<(ostream& os, const OCResourceIdentifier& ri);
+    std::ostream& operator <<(std::ostream& os, const OCResourceIdentifier& ri);
     /**
     *  @brief  OCResourceIdentifier represents the identity information for a server. This
     *          object combined with the OCResource's URI property uniquely identify an
@@ -53,7 +53,7 @@ namespace OC
     class OCResourceIdentifier
     {
         friend class OCResource;
-        friend ostream& operator <<(ostream& os, const OCResourceIdentifier& ri);
+        friend std::ostream& operator <<(std::ostream& os, const OCResourceIdentifier& ri);
 
         public:
             bool operator==(const OCResourceIdentifier &other) const;
@@ -407,3 +407,4 @@ namespace OC
 } // namespace OC
 
 #endif //__OCRESOURCE_H
+

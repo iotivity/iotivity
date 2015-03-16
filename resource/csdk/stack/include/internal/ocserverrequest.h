@@ -31,13 +31,14 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse);
 OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse);
 
 // following structure will be created in occoap and passed up the stack on the server side
-typedef struct OCServerRequest {
+typedef struct OCServerRequest
+{
     // the REST method retrieved from received request PDU
     OCMethod method;
     // resourceUrl will be filled in occoap using the path options in received request PDU
-    unsigned char resourceUrl[MAX_URI_LENGTH];
+    char resourceUrl[MAX_URI_LENGTH];
     // resource query send by client
-    unsigned char query[MAX_QUERY_LENGTH];
+    char query[MAX_QUERY_LENGTH];
 
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
@@ -66,14 +67,14 @@ typedef struct OCServerRequest {
     uint8_t slowFlag;
     uint8_t notificationFlag;
     // reqJSON is retrieved from the payload of the received request PDU
-    unsigned char reqJSONPayload[1];
+    char reqJSONPayload[1];
 } OCServerRequest;
 
 // following structure will be created in ocstack to aggregate responses (in future: for block transfer)
 typedef struct OCServerResponse {
     struct OCServerResponse * next;
     // this is the pointer to server payload data to be transferred
-    unsigned char *payload;
+    char *payload;
     uint16_t remainingPayloadSize;
     OCRequestHandle requestHandle;
 } OCServerResponse;
@@ -87,17 +88,17 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
 OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
-        OCQualityOfService qos, unsigned char * query,
+        OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        unsigned char * reqJSONPayload, CAToken_t * requestToken,
-        unsigned char * resourceUrl, size_t reqTotalSize,
+        char * reqJSONPayload, CAToken_t * requestToken,
+        char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType);
 
 OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle);
 
 // Internal function to create OCEntityHandlerRequest at the server from a received coap pdu
 OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequest, OCRequestHandle request,
-        OCMethod method, OCResourceHandle resource, unsigned char * queryBuf, unsigned char * bufReqPayload,
+        OCMethod method, OCResourceHandle resource, char * queryBuf, char * bufReqPayload,
         uint8_t numVendorOptions, OCHeaderOption * vendorOptions, OCObserveAction observeAction,
         OCObservationId observeID);
 
@@ -110,3 +111,4 @@ void FindAndDeleteServerResponse(OCServerResponse * serverResponse);
 void DeleteServerResponse(OCServerResponse * serverResponse);
 
 #endif //OC_SERVER_REQUEST_H
+

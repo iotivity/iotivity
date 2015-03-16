@@ -503,3 +503,4 @@ clean:
 arduino:
 	$(error "You must specify "arduinomega" or "arduinodue" when trying to\
 	build arduino targets.")
+

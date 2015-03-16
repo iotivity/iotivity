@@ -77,7 +77,7 @@ namespace OC
         public:
             void setJSONRepresentation(const std::string& payload);
 
-            void setJSONRepresentation(const unsigned char* payload);
+            void setJSONRepresentation(const char* payload);
 
             std::string getJSONRepresentation(OCInfoFormat f) const;
 
@@ -403,3 +403,4 @@ namespace OC
 
 
 #endif //__OCREPRESENTATION_H
+

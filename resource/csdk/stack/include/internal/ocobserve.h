@@ -21,20 +21,21 @@
 #ifndef OC_OBSERVE_H
 #define OC_OBSERVE_H
 
-/* In CoAP sequence number is a 24 bit field */
+/* Sequence number is a 24 bit field */
 #define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
 
 #define MAX_OBSERVER_FAILED_COMM         (2)
 #define MAX_OBSERVER_NON_COUNT           (3)
 
 /* This information is stored for each registerd observer */
-typedef struct ResourceObserver {
+typedef struct ResourceObserver
+{
     // Observation Identifier for request
     OCObservationId observeId;
     // URI of observed resource
-    unsigned char *resUri;
+    char *resUri;
     // Query
-    unsigned char *query;
+    char *query;
     //token for the observe request
     CAToken_t token;
     // Resource handle
@@ -65,7 +66,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
 #endif
 OCStackResult SendListObserverNotification (OCResource * resource,
         OCObservationId  *obsIdList, uint8_t numberOfIds,
-        unsigned char *notificationJSONPayload, uint32_t maxAge,
+        const char *notificationJSONPayload, uint32_t maxAge,
         OCQualityOfService qos);
 
 void DeleteObserverList();
@@ -78,10 +79,11 @@ OCStackResult AddObserver (const char         *resUri,
                            CAToken_t          *token,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
-                           CAAddress_t          *addressInfo,
+                           const CAAddress_t  *addressInfo,
                            CAConnectivityType_t connectivityType);
 
 OCStackResult DeleteObserverUsingToken (CAToken_t * token);
+
 ResourceObserver* GetObserverUsingToken (const CAToken_t * token);
 
 ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
@@ -97,3 +99,4 @@ GetObserveHeaderOption (uint32_t * observationOption,
                         uint8_t * numOptions);
 
 #endif //OC_OBSERVE_H
+

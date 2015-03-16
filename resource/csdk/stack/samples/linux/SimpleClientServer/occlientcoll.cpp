@@ -30,7 +30,7 @@
 const char *getResult(OCStackResult result);
 std::string getIPAddrTBServer(OCClientResponse * clientResponse);
 std::string getPortTBServer(OCClientResponse * clientResponse);
-std::string getQueryStrForGetPut(unsigned  const char * responsePayload);
+std::string getQueryStrForGetPut(const char * responsePayload);
 
 #define TAG PCF("occlient")
 #define DEFAULT_CONTEXT_VALUE 0x99
@@ -57,7 +57,7 @@ unsigned static int TEST = TEST_INVALID;
 
 typedef struct
 {
-    unsigned char text[30];
+    char text[30];
     CLIENT_TEST test;
 } testToTextMap;
 
@@ -445,10 +445,11 @@ std::string getPortTBServer(OCClientResponse * clientResponse)
     return ss.str();
 }
 
-std::string getQueryStrForGetPut(unsigned  const char * responsePayload)
+std::string getQueryStrForGetPut(const char * responsePayload)
 {
 
-    std::string jsonPayload(reinterpret_cast<char*>(const_cast<unsigned char*>(responsePayload)));
+    std::string jsonPayload(responsePayload);
 
     return "/a/room";
 }
+

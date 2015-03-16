@@ -32,13 +32,17 @@
 #define TAG PCF("occlientcb")
 
 struct ClientCB *cbList = NULL;
-OCMulticastNode * mcPresenceNodes = NULL;
+static OCMulticastNode * mcPresenceNodes = NULL;
 
 OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
              CAToken_t * token, OCDoHandle *handle, OCMethod method,
-             unsigned char * requestUri, unsigned char * resourceTypeName)
+             char * requestUri, char * resourceTypeName)
 {
+    if(!clientCB || !cbData || !token || !handle || !requestUri)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
 
     ClientCB *cbNode = NULL;
 
@@ -100,7 +104,8 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         return OC_STACK_NO_MEMORY;
 }
 
-void DeleteClientCB(ClientCB * cbNode) {
+void DeleteClientCB(ClientCB * cbNode)
+{
     if(cbNode) {
         LL_DELETE(cbList, cbNode);
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
@@ -136,7 +141,7 @@ void DeleteClientCB(ClientCB * cbNode) {
     }
 }
 
-ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const unsigned char * requestUri)
+ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const char * requestUri)
 {
     ClientCB* out = NULL;
     if(token) {
@@ -159,7 +164,8 @@ ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const unsigned
     }
     else if(requestUri) {
         LL_FOREACH(cbList, out) {
-            if(out->requestUri && strcmp((char *)out->requestUri, (char *)requestUri) == 0) {
+            if(out->requestUri && strcmp(out->requestUri, requestUri ) == 0)
+            {
                 return out;
             }
         }
@@ -215,8 +221,13 @@ void FindAndDeleteClientCB(ClientCB * cbNode) {
     }
 }
 
-OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, unsigned char* uri, uint32_t nonce)
+OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, char* uri, uint32_t nonce)
 {
+    if(!outnode)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCMulticastNode *node;
 
     node = (OCMulticastNode*) OCMalloc(sizeof(OCMulticastNode));
@@ -232,12 +243,12 @@ OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, unsigned char* uri, u
     return OC_STACK_NO_MEMORY;
 }
 
-OCMulticastNode* GetMCPresenceNode(const unsigned char * uri) {
+OCMulticastNode* GetMCPresenceNode(const char * uri) {
     OCMulticastNode* out = NULL;
 
     if(uri) {
         LL_FOREACH(mcPresenceNodes, out) {
-            if(out->uri && strcmp((char *)out->uri, (char *)uri) == 0) {
+            if(out->uri && strcmp(out->uri, uri) == 0) {
                 return out;
             }
         }
@@ -245,3 +256,4 @@ OCMulticastNode* GetMCPresenceNode(const unsigned char * uri) {
     OC_LOG(INFO, TAG, PCF("MulticastNode Not found !!"));
     return NULL;
 }
+

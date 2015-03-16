@@ -17,3 +17,4 @@ float CalculateExponentialAverage(int numberOfSamples, int* array, int startinde
 float calculateDistance(float avgRSSI, float txPower);
 
 #endif /* PROXIMITY_H_ */
+

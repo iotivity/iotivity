@@ -27,7 +27,8 @@
  extern "C" {
 #endif
 
- typedef enum {
+ typedef enum
+ {
      OC_LOG_MIN_VAL__   = -1,
      OC_LOG_ALL         = 0,
      OC_LOG_FATAL,
@@ -82,3 +83,4 @@ typedef int    (*oc_log_try_lock_t)      (oc_log_ctx_t *);
 #endif
 
 #endif
+

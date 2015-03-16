@@ -1,3 +1,23 @@
+#******************************************************************
+#
+# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 ##
 # Examples build script
 ##
@@ -30,7 +50,7 @@ if target_os not in ['windows', 'winrt']:
 
 examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
-if env.get('SECURED') == '1':      
+if env.get('SECURED') == '1':
     examples_env.AppendUnique(LIBS = ['tinydtls'])
 
 examples_env.ParseConfig('pkg-config --libs glib-2.0');
@@ -80,4 +100,5 @@ Alias("examples", [simpleserver, simpleclient,
 		threadingsample
      ])
 env.AppendTarget('examples')
+
 

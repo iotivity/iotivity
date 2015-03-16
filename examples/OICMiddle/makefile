@@ -1,6 +1,6 @@
 #//******************************************************************
 #//
-#// Copyright 2014 Intel Corporation.
+#// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
 #//
 #//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #//
@@ -84,4 +84,5 @@ clean:
 	rm $(OBJS)
 	rm -rf debug
 	rm -rf release
+
 

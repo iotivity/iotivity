@@ -67,3 +67,4 @@ clean: clean_legacy
 	cd csdk && $(MAKE) deepclean
 clean_legacy:
 	-rm -f -v OCLib.a *.o simpleserver simpleclient simpleclientserver
+

@@ -51,3 +51,4 @@ cp -af %{SOURCE2} %{buildroot}/usr/apps/com.samsung.ssmtester/bin/
 /usr/share/*
 /etc/smack/accesses2.d/com.samsung.ssmtester.rule
 #%%license LICENSE.APLv2
+

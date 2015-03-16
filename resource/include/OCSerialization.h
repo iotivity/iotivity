@@ -202,7 +202,7 @@ namespace OC
             std::string ConvertOCAddrToString(OCSecureType sec, int secureport)
             {
                 uint16_t port;
-                ostringstream os;
+                std::ostringstream os;
 
                 if(sec== OCSecureType::IPv4)
                 {
@@ -288,3 +288,4 @@ namespace OC
             OCConnectivityType m_connectivityType;
     };
 }
+

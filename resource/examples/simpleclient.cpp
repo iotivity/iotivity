@@ -68,7 +68,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         if(eCode == OC_STACK_OK)
         {
             std::cout << "OBSERVE RESULT:"<<std::endl;
-            std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
+            std::cout << "\tSequenceNumber: "<< sequenceNumber << std::endl;
             rep.getValue("state", mylight.m_state);
             rep.getValue("power", mylight.m_power);
             rep.getValue("name", mylight.m_name);
@@ -126,9 +126,9 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
             }
 
             if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
-                std::cout << endl << "Observe is used." << endl << endl;
+                std::cout << std::endl << "Observe is used." << std::endl << std::endl;
             else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
-                std::cout << endl << "ObserveAll is used." << endl << endl;
+                std::cout << std::endl << "ObserveAll is used." << std::endl << std::endl;
 
             curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
 
@@ -313,7 +313,7 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-    cout << "In foundResource\n";
+    std::cout << "In foundResource\n";
     std::string resourceURI;
     std::string hostAddress;
     try
@@ -437,7 +437,7 @@ void checkConnectivityValue(int value)
 
 int main(int argc, char* argv[]) {
 
-    ostringstream requestURI;
+    std::ostringstream requestURI;
 
     try
     {
@@ -449,14 +449,14 @@ int main(int argc, char* argv[]) {
         else if (argc == 2)
         {
 
-            checkObserverValue(stoi(argv[1]));
+            checkObserverValue(std::stoi(argv[1]));
             std::cout << "<===No ConnectivtyType selected. "
                       << "Setting ConnectivityType to WIFI===>\n\n";
         }
         else if(argc == 3)
         {
-            checkObserverValue(stoi(argv[1]));
-            checkConnectivityValue(stoi(argv[2]));
+            checkObserverValue(std::stoi(argv[1]));
+            checkConnectivityValue(std::stoi(argv[2]));
         }
         else
         {
@@ -464,7 +464,7 @@ int main(int argc, char* argv[]) {
             return -1;
         }
     }
-    catch(exception& e)
+    catch(std::exception& e)
     {
         std::cout << "<===Invalid input arguments===>\n\n";
         return -1;
@@ -509,9 +509,10 @@ int main(int argc, char* argv[]) {
 
     }catch(OCException& e)
     {
-        //log(e.what());
+        oclog() << "Exception in main: "<<e.what();
     }
 
     return 0;
 }
+
 

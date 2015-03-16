@@ -93,7 +93,7 @@ UB OCICUC:
 	<oic-resource>/examples/ocicuc/client
 	<oic-resource>/examples/ocicuc/monoprocess
 	<oic-resource>/examples/ocicuc/server
-		
+
 
 ===============================================================================
 ====           Arduino ATMega 2560 - Release & Debug - Ethernet Shield     ====
@@ -166,6 +166,7 @@ TB Examples:
 			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue/wifi_shield/release/ocserver.hex
 		debug:
 			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue/wifi_shield/debug/ocserver.hex
+
 
 
 

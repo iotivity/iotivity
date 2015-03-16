@@ -32,3 +32,4 @@ void StripNewLineChar(char* str);
 
 #endif //OCSAMPLE_COMMON_H_
 
+

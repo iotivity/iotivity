@@ -40,7 +40,6 @@ extern "C" {
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
 #define OC_MULTICAST_IP                      "224.0.1.187"
 
-#define USE_RANDOM_PORT (0)
 #ifdef WITH_PRESENCE
 #define OC_DEFAULT_PRESENCE_TTL (60)
 #define OC_PRESENCE_URI                      "/oc/presence"
@@ -63,7 +62,7 @@ typedef struct OCDevAddr
 {
     uint32_t     size;                    /**< length of the address stored in addr field. */
     uint8_t      addr[DEV_ADDR_SIZE_MAX]; /**< device address. */
-}OCDevAddr;
+} OCDevAddr;
 
 /**
  * OC Virtual resources supported by every OC device
@@ -82,7 +81,8 @@ typedef enum
 /**
  * Standard RESTful HTTP Methods
  */
-typedef enum {
+typedef enum
+{
     OC_REST_NOMETHOD    = 0,
     OC_REST_GET         = (1 << 0),     // Read
     OC_REST_PUT         = (1 << 1),     // Write
@@ -103,17 +103,18 @@ typedef enum {
 /**
  * Host Mode of Operation
  */
-typedef enum {
+typedef enum
+{
     OC_CLIENT = 0,
     OC_SERVER,
     OC_CLIENT_SERVER
 } OCMode;
 
-extern OCMode myStackMode;
 /**
  * Quality of Service
  */
-typedef enum {
+typedef enum
+{
     OC_LOW_QOS = 0,
     OC_MEDIUM_QOS,
     OC_HIGH_QOS,
@@ -133,7 +134,8 @@ typedef enum {
  *                   requests from clients.
  * OC_SECURE       - When this bit is set, the resource is a secure resource.
  */
-typedef enum {
+typedef enum
+{
     OC_ACTIVE       = (1 << 0),
     OC_DISCOVERABLE = (1 << 1),
     OC_OBSERVABLE   = (1 << 2),
@@ -144,7 +146,8 @@ typedef enum {
 /**
  * Transport Protocol IDs
  */
-typedef enum {
+typedef enum
+{
     OC_INVALID_ID   = (1 << 0),
     OC_COAP_ID      = (1 << 1)
 } OCTransportProtocolID;
@@ -152,7 +155,8 @@ typedef enum {
 /**
  * Adaptor types
  */
-typedef enum {
+typedef enum
+{
     OC_ETHERNET = 0,
     OC_WIFI,
     OC_EDR,
@@ -163,7 +167,8 @@ typedef enum {
 /**
  * Declares Stack Results & Errors
  */
-typedef enum {
+typedef enum
+{
     /* Success status code - START HERE */
     OC_STACK_OK = 0,
     OC_STACK_RESOURCE_CREATED,
@@ -230,13 +235,15 @@ typedef uint8_t OCObservationId;
 /**
  * Action associated with observation
  */
-typedef enum {
+typedef enum
+{
     OC_OBSERVE_REGISTER = 0,
     OC_OBSERVE_DEREGISTER = 1,
     OC_OBSERVE_NO_OPTION = 2
 } OCObserveAction;
 
-typedef struct {
+typedef struct
+{
     // Action associated with observation request
     OCObserveAction action;
     // Identifier for observation being registered/deregistered
@@ -246,7 +253,8 @@ typedef struct {
 /**
  * Possible returned values from entity handler
  */
-typedef enum {
+typedef enum
+{
     OC_EH_OK = 0,
     OC_EH_ERROR,
     OC_EH_RESOURCE_CREATED,
@@ -258,7 +266,8 @@ typedef enum {
 // following structure will be used to define the vendor specific header options to be included
 // in communication packets
 
-typedef struct OCHeaderOption {
+typedef struct OCHeaderOption
+{
     // The protocol ID this option applies to
     OCTransportProtocolID protocolID;
     // The header option ID which will be added to communication packets
@@ -270,17 +279,20 @@ typedef struct OCHeaderOption {
 } OCHeaderOption;
 
 /**
- * Incoming requests handled by the server. Requests are passed in as a parameter to the @ref OCEntityHandler callback API.
- * @brief The @ref OCEntityHandler callback API must be implemented in the application in order to receive these requests.
+ * Incoming requests handled by the server. Requests are passed in as a parameter to the
+ * @ref OCEntityHandler callback API.
+ * @brief The @ref OCEntityHandler callback API must be implemented in the application in order
+ * to receive these requests.
  */
-typedef struct {
+typedef struct
+{
     // Associated resource
     OCResourceHandle resource;
     OCRequestHandle requestHandle;
     // the REST method retrieved from received request PDU
     OCMethod method;
     // resource query send by client
-    unsigned char * query;
+    char * query;
     // Information associated with observation - valid only when OCEntityHandler
     // flag includes OC_OBSERVE_FLAG
     OCObservationInfo obsInfo;
@@ -288,13 +300,14 @@ typedef struct {
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption * rcvdVendorSpecificHeaderOptions;
     // reqJSON is retrieved from the payload of the received request PDU
-    unsigned char * reqJSONPayload;
-}OCEntityHandlerRequest;
+    char * reqJSONPayload;
+} OCEntityHandlerRequest;
 
 /**
  * Response from queries to remote servers. Queries are made by calling the @ref OCDoResource API.
  */
-typedef struct {
+typedef struct
+{
     // Address of remote server
     OCDevAddr * addr;
     // Indicates adaptor type on which the response was received
@@ -304,11 +317,11 @@ typedef struct {
     // If associated with observe, this will represent the sequence of notifications from server.
     uint32_t sequenceNumber;
     // resJSONPayload is retrieved from the payload of the received request PDU
-    unsigned  const char * resJSONPayload;
+    const char * resJSONPayload;
     // An array of the received vendor specific header options
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
-}OCClientResponse;
+} OCClientResponse;
 
 /**
  * Following structure describes the device properties. All non-Null properties will be included
@@ -342,26 +355,28 @@ typedef struct
     // Allow the entity handler to pass a result with the response
     OCEntityHandlerResult  ehResult;
     // this is the pointer to server payload data to be transferred
-    unsigned char *payload;
+    char *payload;
     // size of server payload data.  I don't think we should rely on null terminated data for size
     uint16_t payloadSize;
     // An array of the vendor specific header options the entity handler wishes to use in response
     uint8_t numSendVendorSpecificHeaderOptions;
     OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
     // URI of new resource that entity handler might create
-    unsigned char resourceUri[MAX_URI_LENGTH];
+    char resourceUri[MAX_URI_LENGTH];
     // Server sets to true for persistent response buffer, false for non-persistent response buffer
     uint8_t persistentBufferFlag;
 } OCEntityHandlerResponse;
 
-typedef enum {
+typedef enum
+{
     OC_INIT_FLAG    = (1 << 0),
     OC_REQUEST_FLAG = (1 << 1),
     OC_OBSERVE_FLAG = (1 << 2)
 } OCEntityHandlerFlag; //entity_handler_flag_t ;
 
 // possible returned values from client application
-typedef enum {
+typedef enum
+{
     OC_STACK_DELETE_TRANSACTION = 0,
     OC_STACK_KEEP_TRANSACTION
 } OCStackApplicationResult;
@@ -385,7 +400,8 @@ typedef void (* OCClientContextDeleter)(void *context);
 /*
  * This info is passed from application to OC Stack when initiating a request to Server
  */
-typedef struct {
+typedef struct
+{
     void *context;
     OCClientResponseHandler cb;
     OCClientContextDeleter cd;
@@ -468,7 +484,7 @@ OCStackResult OCProcess();
  *                             the well-known multicast IP address, the qos will be forced to
  *                             OC_LOW_QOS
  *                             since it is impractical to send other QOS levels on such addresses.
- * @param clientApplicationCB- asynchronous callback function that is invoked
+ * @param cbData             - asynchronous callback function that is invoked
  *                             by the stack when discovery or resource interaction is complete
  * @param options            - The address of an array containing the vendor specific
  *                             header options to be sent with the request
@@ -732,10 +748,10 @@ const char *OCGetResourceUri(OCResourceHandle handle);
  *
  * @param handle - handle of resource
  * @return
- *    property bitmap - if resource found
- *    NULL - resource not found
+ *    OCResourceProperty Bitmask
+ *    -1 if resource is not found
  */
-uint8_t OCGetResourceProperties(OCResourceHandle handle);
+OCResourceProperty OCGetResourceProperties(OCResourceHandle handle);
 
 /**
  * Get the number of resource types of the resource.
@@ -765,14 +781,15 @@ const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index);
  * Get the number of resource interfaces of the resource.
  *
  * @param handle - handle of resource
- * @param numResources - pointer to count variable
+ * @param numResourceInterfaces - pointer to count variable
  *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
 
  */
-OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle, uint8_t *numResourceInterfaces);
+OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
+        uint8_t *numResourceInterfaces);
 
 /**
  * Get name of resource interface of the resource.
@@ -808,7 +825,8 @@ uint8_t OCGetResourceInterfaceAllowedMethods(OCResourceHandle handle, uint8_t in
  *    handle to contained resource - if resource found
  *    NULL - resource not found
  */
-OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHandle, uint8_t index);
+OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHandle,
+        uint8_t index);
 
 /**
  * Get the entity handler for a resource.
@@ -827,6 +845,7 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle);
  * if the query is valid after the resource representation has changed.
  *
  * @param handle - handle of resource
+ * @param qos    - desired quality of service for the observation notifications
  *
  * @return
  *     OC_STACK_OK    - no errors
@@ -857,7 +876,7 @@ OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
                             OCObservationId  *obsIdList,
                             uint8_t          numberOfIds,
-                            unsigned char    *notificationJSONPayload,
+                            const char    *notificationJSONPayload,
                             OCQualityOfService qos);
 
 
@@ -926,3 +945,5 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port);
 #endif // __cplusplus
 
 #endif /* OCSTACK_H_ */
+
+
