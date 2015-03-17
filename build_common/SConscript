@@ -243,8 +243,14 @@ from iotivityconfig import *
 
 conf = env.Configure(
         custom_tests = {
+                'CheckC99Flags' : iotivityconfig.check_c99_flags,
                 'CheckCXX11Flags' : iotivityconfig.check_cxx11_flags
         } )
+
+# IoTivity requires support for C99 for the C SDK.
+if not conf.CheckC99Flags():
+        print('C99 support is required!')
+        Exit(1)
 
 # IoTivity requires support for C++11 for the C++ SDK.
 #

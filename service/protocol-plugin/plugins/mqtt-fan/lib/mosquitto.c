@@ -33,6 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <string.h>
 #ifndef WIN32
+#include <strings.h>  /* for strcasecmp() */
 #include <sys/select.h>
 #include <sys/time.h>
 #include <unistd.h>

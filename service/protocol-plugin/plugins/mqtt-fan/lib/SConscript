@@ -14,6 +14,8 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 mosquitto_env.AppendUnique(CPPPATH = ['./'])
 if target_os not in ['windows', 'winrt']:
+	# strdup() and pselect() require specific extensions to be enabled.
+	mosquitto_env.AppendUnique(CPPDEFINES = [('_XOPEN_SOURCE', 600)])
 	mosquitto_env.AppendUnique(CFLAGS = ['-Wall', '-ggdb', '-fPIC',
 			'-DWITH_TLS', '-DWITH_TLS_PSK', '-DWITH_THREADING'])
 ######################################################################

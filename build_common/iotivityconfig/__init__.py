@@ -59,6 +59,22 @@ def _inform_user_of_broken_gcc_headers(context, flag):
             # handle the issue in that case.
             _check_for_broken_gcc_headers(context, flag)
 
+def check_c99_flags(context):
+    """
+    Check if command line flag is required to enable C99 support.
+
+    Returns 1 if no flag is required, 0 if no flag was found, or the
+    actual flag if one was found.
+    """
+
+    cc = context.env['CC']
+    context.Message('Checking for C99 flag for ' + cc + '... ')
+    config = factory.make_c_compiler_config(context)
+    ret = config.check_c99_flags()
+    context.Result(ret)
+
+    return ret
+
 def check_cxx11_flags(context):
     """
     Check if command line flag is required to enable C++11 support.
@@ -69,7 +85,7 @@ def check_cxx11_flags(context):
 
     cxx = context.env['CXX']
     context.Message('Checking for C++11 flag for ' + cxx + '... ')
-    config = factory.make_compiler_config(context)
+    config = factory.make_cxx_compiler_config(context)
     ret = config.check_cxx11_flags()
     context.Result(ret)
 

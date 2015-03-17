@@ -26,8 +26,7 @@ libcoap_env.PrependUnique(CPPPATH = [
 		])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
-	libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
-	libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99'])
+	libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_BSD_SOURCE'])
 
 if target_os not in ['windows', 'winrt']:
 	libcoap_env.AppendUnique(CFLAGS = ['-Wall', '-ffunction-sections',

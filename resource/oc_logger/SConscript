@@ -16,7 +16,6 @@ if target_os == 'android':
 	liboc_logger_env.AppendUnique(LIBS = ['gnustl_shared', 'log'])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
-	liboc_logger_env.AppendUnique(CFLAGS = ['-std=c99'])
 	liboc_logger_env.AppendUnique(CCFLAGS = ['-Wall'])
 
 ######################################################################

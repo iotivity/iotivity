@@ -31,6 +31,23 @@ class Configuration:
         self._context = context      # scons configure context
         self._env     = context.env  # scons environment
 
+    def check_c99_flags(self):
+        """
+        Check if command line flag is required to enable C99
+        support.
+
+        Returns 1 if no flag is required, 0 if no flag was
+        found, and the actual flag if one was found.
+
+        CFLAGS will be updated with appropriate C99 flag,
+        accordingly.
+        """
+
+        return self._check_flags(self._c99_flags(),
+                                 self._c99_test_program(),
+                                 '.c',
+                                 'CFLAGS')
+
     def check_cxx11_flags(self):
         """
         Check if command line flag is required to enable C++11
@@ -93,12 +110,32 @@ class Configuration:
         return ret
 
     # ------------------------------------------------------------
+    # Return test program to be used when checking for basic C99
+    # support.
+    #
+    # Subclasses should implement this template method or use the
+    # default test program found in the DefaultConfiguration class
+    # through composition.
+    # ------------------------------------------------------------
+    def _c99_test_program(self):
+        raise NotImplementedError('unimplemented method')
+
+    # --------------------------------------------------------------
+    # Get list of flags that could potentially enable C99 support.
+    #
+    # Subclasses should implement this template method if flags are
+    # needed to enable C99 support.
+    # --------------------------------------------------------------
+    def _c99_flags(self):
+        raise NotImplementedError('unimplemented method')
+
+    # ------------------------------------------------------------
     # Return test program to be used when checking for basic C++11
     # support.
     #
     # Subclasses should implement this template method or use the
     # default test program found in the DefaultConfiguration class
-    # through inheritance or composition.
+    # through composition.
     # ------------------------------------------------------------
     def _cxx11_test_program(self):
         raise NotImplementedError('unimplemented method')

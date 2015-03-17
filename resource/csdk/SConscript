@@ -31,7 +31,6 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 
 if target_os not in ['arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
-	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
 
 if target_os not in ['windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])

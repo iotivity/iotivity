@@ -22,6 +22,38 @@ class GccConfiguration(Configuration):
         Configuration.__init__(self, context)
 
     # ------------------------------------------------------------
+    # Return test program to be used when checking for basic C99
+    # support in GCC.
+    # ------------------------------------------------------------
+    def _c99_test_program(self):
+        # Use the default C99 test program but enable pedantic
+        # diagnostics specific to GCC to force errors to occur if a
+        # flag is required to compile C99 code without warning or
+        # error.
+
+        from default_configuration import DefaultConfiguration
+        def_config = DefaultConfiguration(self._context)
+
+        return """
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Werror"
+#pragma GCC diagnostic error "-pedantic"
+""" + def_config._c99_test_program()
+
+    # -------------------------------------------------------------
+    # Get flags known to enable C99 support for GCC C compiler.
+    # -------------------------------------------------------------
+    def _c99_flags(self):
+        # Favor flags that do not enable GNU extensions by default,
+        # e.g. '-std=c99'.
+        return [ '-std=c99',
+                 '-std=iso9899:1999',
+                 '-std=gnu99',
+                 '-std=c9x',
+                 '-std=iso9899:199x',
+                 '-std=gnu9x' ]
+
+    # ------------------------------------------------------------
     # Return test program to be used when checking for basic C++11
     # support in GCC.
     # ------------------------------------------------------------

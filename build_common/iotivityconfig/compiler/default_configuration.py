@@ -25,6 +25,42 @@ class DefaultConfiguration(Configuration):
     # Return test program to be used when checking for basic C++11
     # support.
     # ------------------------------------------------------------
+    def _c99_test_program(self):
+        return """
+// Some headers found in C99.
+#include <stdbool.h>
+#include <stdint.h>
+
+int main()
+{
+    struct foo
+    {
+        bool b;      // C99 type
+        int i;
+        uint64_t q;  // C99 type
+    };
+
+    // Designated initializer.
+    struct foo bar = { .b = false, .q = UINT64_MAX };
+
+    // Implicitly initialized field.
+    return bar.i != 0;
+}
+"""
+
+    # --------------------------------------------------------------
+    # Get list of flags that could potentially enable C99 support.
+    #
+    # The default configuration assumes that no flag is needed to
+    # enable C99 support.
+    # --------------------------------------------------------------
+    def _c99_flags(self):
+        return []
+
+    # ------------------------------------------------------------
+    # Return test program to be used when checking for basic C++11
+    # support.
+    # ------------------------------------------------------------
     def _cxx11_test_program(self):
         return """
 int main()
