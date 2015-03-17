@@ -31,8 +31,6 @@
 /// Module Name
 #define TAG PCF("occlientcb")
 
-#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
-
 struct ClientCB *cbList = NULL;
 OCMulticastNode * mcPresenceNodes = NULL;
 
