@@ -230,8 +230,9 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             {
                 OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
                         ((OCHeaderOption)rcvdOptions[i]).optionID );
+
                 OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
-                        ((OCHeaderOption)rcvdOptions[i]).optionLength);
+                    MAX_HEADER_OPTION_DATA_LENGTH);
             }
         }
     }
