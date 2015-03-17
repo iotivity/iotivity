@@ -74,6 +74,8 @@ namespace OC
         static const char INVALID_OBESERVE[]           = "Invalid Observe Param";
         static const char NO_MEMORY[]                  = "No Memory";
         static const char COMM_ERROR[]                 = "Communication Error";
+        static const char TIMEOUT[]                    = "Timeout";
+        static const char ADAPTER_NOT_ENABLED[]        = "Adapter Not Enabled";
         static const char NOT_IMPL[]                   = "Not Implemented";
         static const char NOT_FOUND[]                  = "Resource Not Found";
         static const char RESOURCE_ERROR[]             = "Resource Error";

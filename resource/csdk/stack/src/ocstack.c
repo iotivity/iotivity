@@ -121,7 +121,8 @@ static OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t
     ipAddr->addr[1] = b;
     ipAddr->addr[2] = c;
     ipAddr->addr[3] = d;
-    *((uint16_t*)&(ipAddr->addr[4])) = port;
+    ipAddr->addr[4] = (uint8_t)port;
+    ipAddr->addr[5] = (uint8_t)(port >> 8);
 
     return OC_STACK_OK;
 }
@@ -3067,8 +3068,6 @@ OCStackResult initResources()
  */
 void insertResource(OCResource *resource)
 {
-    OCResource *pointer = NULL;
-
     if (!headResource) {
         headResource = resource;
         tailResource = resource;
@@ -3612,7 +3611,7 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
         return OC_STACK_INVALID_PARAM;
     }
 
-    *port = *((uint16_t*)&ipAddr->addr[4]);
+    *port = (ipAddr->addr[5]<< 8) | ipAddr->addr[4];
 
     return OC_STACK_OK;
 }

@@ -26,6 +26,8 @@
 #include "logger.h"
 #include "ocmalloc.h"
 #include "cJSON.h"
+#include "ocmalloc.h"
+
 /// Module Name
 #include <stdio.h>
 
