@@ -106,32 +106,6 @@ static uint32_t GetTime(float afterSeconds)
     return now + (uint32_t)(afterSeconds * COAP_TICKS_PER_SECOND);
 }
 
-static OCStackResult FormOCResponse(OCResponse * * responseLoc,
-                                    ClientCB * cbNode,
-                                    uint32_t maxAge,
-                                    char * fullUri,
-                                    char * rcvdUri,
-                                    CAToken_t * rcvdToken,
-                                    OCClientResponse * clientResponse,
-                                    char * bufRes)
-{
-    OCResponse * response = (OCResponse *) OCMalloc(sizeof(OCResponse));
-    if (!response)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
-    response->cbNode = cbNode;
-    response->maxAge = maxAge;
-    response->fullUri = fullUri;
-    response->rcvdUri = rcvdUri;
-    response->rcvdToken = rcvdToken;
-    response->clientResponse = clientResponse;
-    response->bufRes = bufRes;
-
-    *responseLoc = response;
-    return OC_STACK_OK;
-}
-
 /// This method is used to create the IPv4 dev_addr structure.
 /// TODO: Remove in future. Temporary helper function.
 /// Builds a socket interface address using IP address and port number
@@ -1689,7 +1663,6 @@ OCStackResult OCProcessPresence()
     ClientCB* cbNode = NULL;
     OCDevAddr dst = {};
     OCClientResponse clientResponse ={};
-    OCResponse * response = NULL;
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
 
     LL_FOREACH(cbList, cbNode)
@@ -1727,13 +1700,6 @@ OCStackResult OCProcessPresence()
                         clientResponse.result = OC_STACK_PRESENCE_TIMEOUT;
                         clientResponse.addr = (OCDevAddr *) &dst;
                         clientResponse.resJSONPayload = NULL;
-
-                        result = FormOCResponse(&response, cbNode, 0, NULL, NULL,
-                                &cbNode->token, &clientResponse, NULL);
-                        if(result != OC_STACK_OK)
-                        {
-                            goto exit;
-                        }
 
                         // Increment the TTLLevel (going to a next state), so we don't keep
                         // sending presence notification to client.
