@@ -140,7 +140,7 @@ ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const char * r
  *      OC_STACK_NO_MEMORY when out of memory
  */
 #ifdef WITH_PRESENCE
-OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceTypeName);
+OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, char * resourceTypeName);
 #endif // WITH_PRESENCE
 
 /** @ingroup ocstack

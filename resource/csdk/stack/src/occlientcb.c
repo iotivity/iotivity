@@ -86,15 +86,18 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         // Ensure that the handle the SDK hands back up to the application layer for the
         // OCDoResource call matches the found ClientCB Node.
         *clientCB = cbNode;
-        OCFree(requestUri);
+        cbData->cd(cbData->context);
+        OCFree(*token);
         OCFree(*handle);
+        OCFree(requestUri);
+        OCFree(resourceTypeName);
         *handle = cbNode->handle;
     }
 
     #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE && resourceTypeName)
     {   // Amend the found or created node by adding a new resourceType to it.
-        return InsertResourceTypeFilter(cbNode, (const char *)resourceTypeName);
+        return InsertResourceTypeFilter(cbNode, resourceTypeName);
     }
     #endif
 
@@ -175,7 +178,7 @@ ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const char * r
 }
 
 #ifdef WITH_PRESENCE
-OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceTypeName)
+OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, char * resourceTypeName)
 {
     OCResourceType * newResourceType = NULL;
     if(cbNode && resourceTypeName)
@@ -188,7 +191,7 @@ OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceT
         }
 
         newResourceType->next = NULL;
-        newResourceType->resourcetypename = (char *) resourceTypeName;
+        newResourceType->resourcetypename = resourceTypeName;
 
         LL_APPEND(cbNode->filterResourceType, newResourceType);
         return OC_STACK_OK;

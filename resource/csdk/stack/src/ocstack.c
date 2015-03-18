@@ -1446,6 +1446,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     {
         OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
         CADestroyToken(token);
+        result = CAResultToOCResult(caResult);
         goto exit;
     }
 
@@ -1501,6 +1502,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         if (caResult != CA_STATUS_OK)
         {
             OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
+            result = CAResultToOCResult(caResult);
             goto exit;
         }
 
@@ -1510,6 +1512,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CASendRequest"));
+        result = CAResultToOCResult(caResult);
         goto exit;
     }
 
@@ -1535,6 +1538,8 @@ exit:
         OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
         FindAndDeleteClientCB(clientCB);
         OCFree(resHandle);
+        OCFree(requestUri);
+        OCFree(resourceType);
     }
     CADestroyRemoteEndpoint(endpoint);
     OCFree(grpEnd.resourceUri);

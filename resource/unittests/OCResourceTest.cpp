@@ -43,25 +43,25 @@ namespace OCResourceTest
     }
 
     //Helper method
-    OCResource::Ptr ConstructResourceObject(std::string uri)
+    OCResource::Ptr ConstructResourceObject(std::string host, std::string uri)
     {
         OCConnectivityType connectivityType = OC_WIFI;
         std::vector<std::string> types = {"intel.rpost"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
 
-        return OCPlatform::constructResourceObject(std::string(""), uri,
+        return OCPlatform::constructResourceObject(host, uri,
                 connectivityType, false, types, ifaces);
     }
 
     //ConstructResourceTest
     TEST(ConstructResourceTest, ConstructResourceObject)
     {
-        EXPECT_ANY_THROW(ConstructResourceObject(std::string("")));
+        EXPECT_ANY_THROW(ConstructResourceObject(std::string(""), std::string("")));
     }
 
     TEST(ResourceGetTest, ResourceGetForValidUri)
     {
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000");
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         if(resource)
         {
             QueryParamsMap test;
@@ -69,9 +69,19 @@ namespace OCResourceTest
         }
     }
 
+    TEST(ResourceGetTest, ResourceGetForBadUri)
+    {
+        OCResource::Ptr resource = ConstructResourceObject("", "coap://192.168.1.2:5000");
+        if(resource)
+        {
+            QueryParamsMap test;
+            EXPECT_THROW(resource->get(OC::QueryParamsMap(), &onGetPut), OC::OCException);
+        }
+    }
+
     TEST(ResourcePutTest, ResourcePutForValid)
     {
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000");
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         if(resource)
         {
             QueryParamsMap test;
@@ -80,13 +90,12 @@ namespace OCResourceTest
         }
     }
 
-
     TEST(ResourcePostTest, ResourcePostValidConfiguration)
     {
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
 
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000");
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         if(resource)
         {
             OCRepresentation rep;
@@ -97,7 +106,7 @@ namespace OCResourceTest
 
     TEST(ResourceObserveTest, ResourceObserveValidUri)
     {
-        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000");
+        OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         if(resource)
         {
             QueryParamsMap test;
