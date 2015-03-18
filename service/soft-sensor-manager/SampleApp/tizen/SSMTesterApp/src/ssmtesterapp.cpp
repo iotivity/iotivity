@@ -1,5 +1,6 @@
 #include <tizen.h>
 #include <wifi.h>
+#include <net_connection.h>
 #include <algorithm>
 #include "string.h"
 #include "ssmtesterapp.h"
@@ -56,6 +57,84 @@ void* updateCallbackLog(void *data)
 	updateLog(pThreadContext->ad, pThreadContext->log);
 
 	return NULL;
+}
+
+static int s_hc2i(char hexChar)
+{
+    if ((hexChar <= '9') && (hexChar >= '0')) return (int)hexChar-(int)'0';
+    if ((hexChar <= 'F') && (hexChar >= 'A')) return 10+(int)hexChar-(int)'A';
+    if ((hexChar <= 'f') && (hexChar >= 'a')) return 10+(int)hexChar-(int)'a';
+    return -1;
+}
+
+long long s_h2uint64(const char *hex, size_t maxdigit)
+{
+    long long nNumber = 0;
+    int nInt;
+    size_t nLen=0;
+    while (nLen < maxdigit && (nInt = s_hc2i(*hex)) >= 0) {
+        nNumber=(nNumber*(long long)16) + (long long)nInt;
+        hex++;
+        nLen++;
+    }
+    return nNumber;
+}
+
+int s_h2i(char *strHex) {
+    return (int) s_h2uint64(strHex, sizeof(int)*2);
+}
+
+void unescape(char *val)
+{
+    char *tmp = (char *)val;
+    int i,nChar;
+    int len;
+
+    if (!val) return;
+    len=(int)strlen(val);
+
+    // process special chars
+    while (*tmp) {
+        if (!strncmp((char *)tmp,"&amp;",5)) {
+            *tmp='&';
+            memmove(&tmp[1],&tmp[5],strlen((char *)&tmp[5])+1);
+        }
+        else if (!strncmp((char *)tmp,"&nbsp;",6)) {
+            *tmp=' ';
+            memmove(&tmp[1],&tmp[6],strlen((char *)&tmp[6])+1);
+        }
+        else if (!strncmp((char *)tmp,"&lt;",4)) {
+            *tmp='<';
+            memmove(&tmp[1],&tmp[4],strlen((char *)&tmp[4])+1);
+        }
+        else if (!strncmp((char *)tmp,"&gt;",4)) {
+            *tmp='>';
+            memmove(&tmp[1],&tmp[4],strlen((char *)&tmp[4])+1);
+        }
+        else if (!strncmp((char *)tmp,"&apos;",6)) {
+            *tmp='\'';
+            memmove(&tmp[1],&tmp[6],strlen((char *)&tmp[6])+1);
+        }
+        else if (!strncmp((char *)tmp,"&quot;",6)) {
+            *tmp='"';
+            memmove(&tmp[1],&tmp[6],strlen((char *)&tmp[6])+1);
+        }
+        else if (!strncmp((char *)tmp,"&#",2)) { // &#nnn; || &#xnn;
+            for(i=2;i<7;i++) {
+                if (tmp[i] == ';') {
+                    if (tmp[2]=='x') nChar=s_h2i((char *)&tmp[3]);
+                    else nChar=atoi((char *)&tmp[2]);
+                    *tmp=(char)nChar;
+                    memmove(&tmp[1],&tmp[i+1],strlen((char *)&tmp[i+1])+1);
+                    break;
+                }
+            }
+        }
+        tmp++;
+    }
+
+    if (tmp < (char *)(val+len))
+        *tmp='\0';
 }
 
 class CQueryEngineEvent : public OIC::IQueryEngineEvent
@@ -136,6 +215,7 @@ register_cb(void *data , Evas_Object *obj , void *event_info)
 {
 	appdata_s *ad = (appdata_s *)data;
 	const char *main_text = NULL;
+	char *escaped_text = NULL;
 	if (!ad->query_text)
 		return;
 	main_text = elm_entry_entry_get(ad->query_text);
@@ -146,9 +226,12 @@ register_cb(void *data , Evas_Object *obj , void *event_info)
 	int qid = 0;
 	char log[50];
 
-	dlog_print(DLOG_ERROR,LOG_TAG,"registering query");
+	escaped_text = strdup(main_text);
+	unescape(escaped_text);
 
-	OIC::SSMRESULT res = OIC::RegisterQuery(main_text, g_pQueryEngineEvent, qid);
+    dlog_print(DLOG_ERROR,LOG_TAG,"registering query");
+
+	OIC::SSMRESULT res = OIC::RegisterQuery(escaped_text, g_pQueryEngineEvent, qid);
 	if(res == OIC::SSM_S_OK)
 	{
 		updateLog(ad, "The query has been registered!<br>");
@@ -161,6 +244,8 @@ register_cb(void *data , Evas_Object *obj , void *event_info)
 		updateLog(ad, log);
 	}
 
+	free(escaped_text);
+
 	dlog_print(DLOG_ERROR,LOG_TAG,"registering query done");
 }
 
@@ -168,7 +253,7 @@ static void
 search_devices_cb(void *data , Evas_Object *obj , void *event_info)
 {
 	appdata_s *ad = (appdata_s *)data;
-	elm_entry_entry_set(ad->query_text, "subscribe Device if Device.dataId != 0");
+	elm_entry_entry_set(ad->query_text, "subscribe Device if Device.dataId > 0");
 }
 
 static void
@@ -262,34 +347,23 @@ clear_cb(void *data , Evas_Object *obj , void *event_info)
 	elm_entry_entry_set(ad->query_text,"");
 }
 
-char* oicapp_util_wifi()
+bool is_connected()
 {
-	int ret;
-	wifi_ap_h ap;
-	char *ip_addr = NULL;
+	bool isConnected = false;
 
-	ret = wifi_initialize();
-	if (WIFI_ERROR_NONE != ret)
+	static connection_h connection;
+
+	if(connection_create(&connection) == CONNECTION_ERROR_NONE)
 	{
-		dlog_print(DLOG_ERROR,LOG_TAG,"#### wifi_initialize() Fail");
-		return NULL;
+	    char *ip_addr = NULL;
+	    connection_get_ip_address(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &ip_addr);
+	    connection_destroy(connection);
+	    if(strlen(ip_addr) > 0)
+	        isConnected = true;
+	    free(ip_addr);
 	}
 
-	ret = wifi_get_connected_ap(&ap);
-	if (WIFI_ERROR_NONE != ret)
-	{
-		dlog_print(DLOG_ERROR,LOG_TAG,"#### wifi_get_connected_ap() Fail");
-		return NULL;
-	}
-
-	ret = wifi_ap_get_ip_address(ap, WIFI_ADDRESS_FAMILY_IPV4, &ip_addr);
-	if (WIFI_ERROR_NONE != ret)
-	{
-		dlog_print(DLOG_ERROR,LOG_TAG,"#### wifi_ap_get_ip_address() Fail");
-		return NULL;
-	}
-
-	return ip_addr;
+	return isConnected;
 }
 
 static void
@@ -435,8 +509,6 @@ create_base_gui(appdata_s *ad)
 
 	//Show window after base gui is set up
 	evas_object_show(ad->win);
-
-	dlog_print(DLOG_ERROR, LOG_TAG, oicapp_util_wifi());
 }
 
 static bool
@@ -462,14 +534,22 @@ app_create(void *data)
 
 	g_pQueryEngineEvent = new CQueryEngineEvent(ad);
 
-	if (OIC::InitializeSSM(xmlDescription) == OIC::SSM_S_OK){
-		dlog_print(DLOG_DEBUG, LOG_TAG, "#### InitializeSSM() returned SSM_S_OK");
-	}
-	else{
-		dlog_print(DLOG_DEBUG, LOG_TAG, "#### InitializeSSM() failed");
-	}
-
 	create_base_gui(ad);
+
+	if(is_connected())
+	{
+	    if (OIC::InitializeSSM(xmlDescription) == OIC::SSM_S_OK){
+	            dlog_print(DLOG_DEBUG, LOG_TAG, "#### InitializeSSM() returned SSM_S_OK");
+	        }
+	        else{
+	            dlog_print(DLOG_DEBUG, LOG_TAG, "#### InitializeSSM() failed");
+	        }
+	}
+	else
+	{
+	    updateLog(ad, "WiFi not connected, connect first and re-run application");
+
+	}
 
 	return true;
 }
