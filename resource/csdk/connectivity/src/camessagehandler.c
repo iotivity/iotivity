@@ -245,7 +245,9 @@ static void CASendThreadProcess(void *threadData)
 
             OIC_LOG_V(DEBUG, TAG, "PDU Maker - id : %d", ntohs(pdu->hdr->id));
 
-            OIC_LOG_V(DEBUG, TAG, "PDU Maker - token : %s", pdu->hdr->token);
+            OIC_LOG(DEBUG, TAG, "PDU Maker - token :");
+
+            OIC_LOG_BUFFER(DEBUG, TAG, pdu->hdr->token, pdu->hdr->token_length);
 
             res = CASendUnicastData(data->remoteEndpoint, pdu->hdr, pdu->length);
 
@@ -278,7 +280,9 @@ static void CASendThreadProcess(void *threadData)
 
             OIC_LOG_V(DEBUG, TAG, "PDU Maker - id : %d", ntohs(pdu->hdr->id));
 
-            OIC_LOG_V(DEBUG, TAG, "PDU Maker - token : %s", pdu->hdr->token);
+            OIC_LOG(DEBUG, TAG, "PDU Maker - token");
+
+            OIC_LOG_BUFFER(DEBUG, TAG, pdu->hdr->token, pdu->hdr->token_length);
 
             res = CASendMulticastData(pdu->hdr, pdu->length);
             coap_delete_pdu(pdu);
@@ -346,7 +350,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method);
         if (NULL != ReqInfo->info.token)
         {
-            OIC_LOG_V(DEBUG, TAG, "Request- token : %s", ReqInfo->info.token);
+            OIC_LOG(DEBUG, TAG, "Request- token:");
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) ReqInfo->info.token, CA_MAX_TOKEN_LEN);
         }
 
         if (NULL != endpoint)

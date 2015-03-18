@@ -585,7 +585,8 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token)
     // save token
     *token = temp;
 
-    OIC_LOG_V(DEBUG, TAG, "generate the token(%s)!!", *token);
+    OIC_LOG(DEBUG, TAG, "generate the token!!");
+    OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) *token, CA_MAX_TOKEN_LEN);
 
     OIC_LOG(DEBUG, TAG, "CAGenerateTokenInternal OUT");
     return CA_STATUS_OK;
@@ -596,8 +597,8 @@ void CADestroyTokenInternal(CAToken_t token)
     OIC_LOG(DEBUG, TAG, "CADestroyTokenInternal IN");
     if (token != NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "destroy the token(%s)!!", token);
-
+        OIC_LOG(DEBUG, TAG, "destroy the token!!");
+        OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) token, CA_MAX_TOKEN_LEN);
         OICFree(token);
         token = NULL;
     }

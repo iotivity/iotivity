@@ -575,7 +575,8 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token)
     // save token
     *token = temp;
 
-    OIC_LOG_V(DEBUG, TAG, "gen token(%s)", *token);
+    OIC_LOG(DEBUG, TAG, "gen token:");
+    OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) *token, CA_MAX_TOKEN_LEN);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

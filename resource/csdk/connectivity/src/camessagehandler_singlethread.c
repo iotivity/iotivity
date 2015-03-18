@@ -226,7 +226,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         }
 
         OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method);
-        OIC_LOG_V(DEBUG, TAG, "Request- token : %s", ReqInfo->info.token);
+        OIC_LOG(DEBUG, TAG, "Request- token:");
+        OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) ReqInfo->info.token, CA_MAX_TOKEN_LEN);
 
         if (NULL != endpoint)
         {
