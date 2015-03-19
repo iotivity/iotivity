@@ -377,7 +377,7 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, cha
 
     if(tok)
     {
-        *resType = (char *)OCMalloc(strlen(tok));
+        *resType = (char *)OCMalloc(strlen(tok) + 1);
         if(!*resType)
         {
             return;
