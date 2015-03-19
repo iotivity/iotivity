@@ -770,9 +770,17 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 
     char * newUri = NULL;
     char * query = NULL;
-    getQueryFromUri(endPoint->resourceUri, &query, &newUri);
-    OC_LOG_V(INFO, TAG, PCF("URI without query : %s\n"), newUri);
+
+    requestResult = getQueryFromUri(endPoint->resourceUri, &query, &newUri);
+
+    if (requestResult != OC_STACK_OK)
+    {
+        OC_LOG_V(ERROR, TAG, "getQueryFromUri() failed with OC error code %d\n", requestResult);
+        return;
+    }
+    OC_LOG_V(INFO, TAG, PCF("URI without query: %s\n"), newUri);
     OC_LOG_V(INFO, TAG, PCF("Query : %s\n"), query);
+
     if(strlen(newUri) < MAX_URI_LENGTH)
     {
         //copy URI
@@ -3538,8 +3546,11 @@ OCStackResult getResourceType(const char * query, char** resourceType)
         {
             result = OC_STACK_NO_MEMORY;
         }
-        strcpy((char *)*resourceType, ((const char *)&query[3]));
-        result = OC_STACK_OK;
+        else
+        {
+            strcpy((char *)*resourceType, ((const char *)&query[3]));
+            result = OC_STACK_OK;
+        }
     }
 
     return result;

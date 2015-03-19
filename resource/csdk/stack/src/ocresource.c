@@ -126,7 +126,8 @@ static OCStackResult ValidateUrlQuery (char *url, char *query,
             char* strTokPtr = NULL;
             filterParam = strtok_r((char *)query, "=", &strTokPtr);
             *filterValue = strtok_r(NULL, " ", &strTokPtr);
-            if (!(*filterValue))
+
+            if (!(*filterValue) || ! filterParam)
             {
                 return OC_STACK_INVALID_QUERY;
             }

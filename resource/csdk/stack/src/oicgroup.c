@@ -670,7 +670,12 @@ OCStackResult BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHa
 
     char *jsonResponse;
 
-    ExtractKeyValueFromRequest((char *)ehRequest->reqJSONPayload, &doWhat, &details);
+    stackRet = ExtractKeyValueFromRequest((char *)ehRequest->reqJSONPayload, &doWhat, &details);
+
+    if (stackRet != OC_STACK_OK)
+    {
+        return stackRet;
+    }
 
     cJSON *json;
     cJSON *format;
