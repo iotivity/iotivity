@@ -395,21 +395,21 @@ const char * GetVirtualResourceUri( OCVirtualResources resource)
     return NULL;
 }
 
-uint8_t IsVirtualResource(const char* resourceUri)
+bool IsVirtualResource(const char* resourceUri)
 {
     if(!resourceUri)
     {
-        return 0;
+        return false;
     }
 
     for (int i = 0; i < OC_MAX_VIRTUAL_RESOURCES; i++)
     {
         if (strcmp(resourceUri, GetVirtualResourceUri((OCVirtualResources)i)) == 0)
         {
-            return 1;
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 uint8_t IsCollectionResource (OCResource *resource)
