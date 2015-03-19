@@ -342,7 +342,7 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
         address.addr[i] = atoi(tok);
     }
 
-    memcpy(&address.addr[4], &endPoint->addressInfo.IP.port, sizeof(uint32_t));
+    memcpy(&address.addr[4], &endPoint->addressInfo.IP.port, sizeof(endPoint->addressInfo.IP.port));
 
     if(response)
     {
@@ -417,7 +417,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
     ClientCB * cbNode = NULL;
     char *resourceTypeName = NULL;
-    OCClientResponse response;
+    OCClientResponse response = {0};
     OCStackResult result = OC_STACK_ERROR;
     uint32_t lowerBound = 0;
     uint32_t higherBound = 0;
@@ -3504,7 +3504,6 @@ OCStackResult getResourceType(const char * query, char** resourceType)
         {
             result = OC_STACK_NO_MEMORY;
         }
-
         strcpy((char *)*resourceType, ((const char *)&query[3]));
         result = OC_STACK_OK;
     }
