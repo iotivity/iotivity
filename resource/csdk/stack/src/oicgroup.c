@@ -285,6 +285,7 @@ ClientRequstInfo* GetClientRequestInfo(ClientRequstInfo *head,
             tmp = tmp->next;
         }
 
+        return tmp;
     }
     return NULL;
 }

@@ -36,10 +36,58 @@ namespace OIC
     int cnt = 0;
 
     std::map< std::string, ConfigurationRequestEntry > configurationRequestTable;
-
     ThingsConfiguration* ThingsConfiguration::thingsConfigurationInstance = NULL;
-
     ConfigurationCallback g_bootstrapCallback;
+
+    ConfigurationRequestEntry::ConfigurationRequestEntry(std::string ID,
+                                                        ConfigurationCallback callback,
+                                                        std::shared_ptr< OCResource > resource,
+                                                        std::string updateVal)
+    {
+        m_ID = ID;
+        m_callback = callback;
+        m_resource = resource;
+        m_updateVal = updateVal;
+    }
+
+    ConfigurationUnitInfo::ConfigurationUnitInfo(std::string name,
+                                                std::string attribute,
+                                                std::string uri)
+    {
+        m_name = name;
+        m_attribute = attribute;
+        m_uri = uri;
+    }
+
+    std::string ConfigurationUnitInfo::getJSON()
+    {
+        std::string res;
+
+        res = "{\"name\":\"" + m_name + "\",\"property\":\"" + m_attribute + "\"}";
+
+        return res;
+    }
+
+    ThingsConfiguration::ThingsConfiguration(void)
+    {
+        ConfigurationUnitInfo unit[] =
+        {
+        { "all", "All attributes", "/oic/con" },
+        { "r", "Region", "/oic/con" },
+        { "st", "System Time", "/oic/con"},
+        { "loc", "Location", "/oic/con"},
+        { "c","Currency", "/oic/con" } };
+
+        for (int i = 0; i < NUMCONFUNIT; i++)
+            ConfigurationUnitTable.push_back(unit[i]);
+    }
+
+    ThingsConfiguration::~ThingsConfiguration(void){}
+
+    void ThingsConfiguration::setGroupManager(GroupManager *groupmanager)
+    {
+        g_groupmanager = groupmanager;
+    }
 
     ThingsConfiguration* ThingsConfiguration::getInstance()
     {
@@ -153,16 +201,7 @@ namespace OIC
     void ThingsConfiguration::onDeleteActionSet(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode, std::string conf)
     {
-        if (eCode != OC_STACK_OK)
-        {
-            std::cout << "onPut Response error: " << eCode << std::endl;
-            getCallback(conf)(headerOptions, rep, eCode);
-            return ;
-        }
-
         std::shared_ptr < OCResource > resource = getResource(conf);
-
-        std::cout << __func__ << std::endl;
 
         if (resource)
         {
@@ -178,7 +217,6 @@ namespace OIC
                             std::bind(&ThingsConfiguration::onGetChildInfoForUpdate, this,
                                     std::placeholders::_1, std::placeholders::_2,
                                     std::placeholders::_3, conf)));
-
         }
 
     }
@@ -207,7 +245,7 @@ namespace OIC
         std::shared_ptr < OCResource > resource = getResource(conf);
         std::string actionstring = conf;
         std::string uri = getUriByConfigurationName(conf);
-        std::string attr = getAttributeByConfigurationName(conf);
+        std::string attrKey = conf;
 
         if (uri == "")
             return;
@@ -231,7 +269,7 @@ namespace OIC
                 newAction->target = getHostFromURI(oit->getUri()) + uri;
 
                 Capability *newCapability = new Capability();
-                newCapability->capability = attr;
+                newCapability->capability = attrKey;
                 newCapability->status = getUpdateVal(conf);
 
                 newAction->listOfCapability.push_back(newCapability);
@@ -272,7 +310,7 @@ namespace OIC
         if (uri == "")
             return;
 
-        if (uri == "/oic/con" || uri == "/factoryset" || uri == "/factoryset/oic/con")
+        if (uri == "/factoryset" || uri == "/factoryset/oic/con")
             m_if.push_back(BATCH_INTERFACE);
         else
             m_if.push_back(DEFAULT_INTERFACE);
@@ -301,17 +339,8 @@ namespace OIC
             {
                 try
                 {
-                    if (isSimpleResource(resource))
-                    {
-                        QueryParamsMap test;
-                        resource->get(test, getCallback(conf));
-                    }
-                    else
-                    {
-                        QueryParamsMap test;
-                        resource->get(resource->getResourceTypes().at(0), BATCH_INTERFACE, test,
-                                getCallback(conf));
-                    }
+                    QueryParamsMap test;
+                    resource->get(test, getCallback(conf));
                 }
                 catch (OCException& e)
                 {
@@ -453,7 +482,7 @@ namespace OIC
         if (isSimpleResource(resource))
         {
             // This resource does not need to use a group manager. Just send a PUT message
-            rep.setValue(getAttributeByConfigurationName(conf), getUpdateVal(conf));
+            rep.setValue(conf, getUpdateVal(conf));
             return resource->put(resource->getResourceTypes().at(0), DEFAULT_INTERFACE, rep, query,
                     std::function<
                             void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
@@ -608,3 +637,4 @@ namespace OIC
         return g_groupmanager->findCandidateResources(type, &onFoundBootstrapServer);
     }
 }
+

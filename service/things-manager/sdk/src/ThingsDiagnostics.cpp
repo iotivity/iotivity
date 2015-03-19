@@ -34,8 +34,55 @@ using namespace OC;
 namespace OIC
 {
     std::map< std::string, DiagnosticsRequestEntry > diagnosticsRequestTable;
-
     ThingsDiagnostics* ThingsDiagnostics::thingsDiagnosticsInstance = NULL;
+
+    DiagnosticsRequestEntry::DiagnosticsRequestEntry(std::string ID, DiagnosticsCallback callback,
+                std::shared_ptr< OCResource > resource, std::string updateVal)
+    {
+        m_ID = ID;
+        m_callback = callback;
+        m_resource = resource;
+        m_updateVal = updateVal;
+    }
+
+    DiagnosticsUnitInfo::DiagnosticsUnitInfo(std::string name,
+                                            std::string attribute,
+                                            std::string uri)
+    {
+        m_name = name;
+        m_attribute = attribute;
+        m_uri = uri;
+    }
+
+    std::string DiagnosticsUnitInfo::getJSON()
+    {
+        std::string res;
+
+        res = "{\"name\":\"" + m_name + "\",\"attribute\":\"" + m_attribute + "\"}";
+
+        return res;
+    }
+
+    ThingsDiagnostics::ThingsDiagnostics()
+    {
+        DiagnosticsUnitInfo unit[] =
+                {
+                { "rb", "Reboot", "/oic/diag"},
+                { "ssc", "StartStatCollection", "/oic/diag"},
+                { "fr", "Factory Reset", "/oic/diag" } };
+
+        for (int i = 0; i < NUMDIAGUNIT; i++)
+            DiagnosticsUnitTable.push_back(unit[i]);
+    }
+
+    ThingsDiagnostics::~ThingsDiagnostics()
+    {
+    }
+
+    void ThingsDiagnostics::setGroupManager(GroupManager *groupmanager)
+    {
+        g_groupmanager = groupmanager;
+    }
 
     ThingsDiagnostics* ThingsDiagnostics::getInstance()
     {
@@ -170,7 +217,7 @@ namespace OIC
         std::shared_ptr < OCResource > resource = getResource(diag);
         std::string actionstring = diag;
         std::string uri = getUriByDiagnosticsName(diag);
-        std::string attr = getAttributeByDiagnosticsName(diag);
+        std::string attrKey = diag;
 
         if (uri == "")
             return;
@@ -194,7 +241,7 @@ namespace OIC
                 newAction->target = getHostFromURI(oit->getUri()) + uri;
 
                 Capability *newCapability = new Capability();
-                newCapability->capability = attr;
+                newCapability->capability = attrKey;
                 newCapability->status = getUpdateVal(diag);
 
                 newAction->listOfCapability.push_back(newCapability);
@@ -292,7 +339,7 @@ namespace OIC
             return OC_STACK_ERROR;
         }
 
-        std::string diag = "reboot";
+        std::string diag = "rb";
 
         // Check the request queue if a previous request is still left. If so, remove it.
         std::map< std::string, DiagnosticsRequestEntry >::iterator iter =
@@ -345,7 +392,7 @@ namespace OIC
             return OC_STACK_ERROR;
         }
 
-        std::string diag = "factoryreset";
+        std::string diag = "fr";
 
         // Check the request queue if a previous request is still left. If so, remove it.
         std::map< std::string, DiagnosticsRequestEntry >::iterator iter =
@@ -389,3 +436,4 @@ namespace OIC
         }
     }
 }
+

@@ -107,7 +107,15 @@ void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
     }
 
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
-    std::cout << "\t\tvalue:" << rep.getValue< std::string >("value") << std::endl;
+
+    if (rep.hasAttribute("loc"))
+        std::cout << "\t\tLocation:" << rep.getValue< std::string >("loc") << std::endl;
+    if (rep.hasAttribute("st"))
+        std::cout << "\t\tSystemTime:" << rep.getValue< std::string >("st") << std::endl;
+    if (rep.hasAttribute("c"))
+        std::cout << "\t\tCurrency:" << rep.getValue< std::string >("c") << std::endl;
+    if (rep.hasAttribute("r"))
+        std::cout << "\t\tRegion:" << rep.getValue< std::string >("r") << std::endl;
 }
 
 void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
@@ -121,28 +129,19 @@ void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
 
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
-    if (rep.hasAttribute("value"))
-        std::cout << "\t\tvalue:" << rep.getValue< std::string >("value") << std::endl;
-    else if (rep.hasAttribute("link"))
-        std::cout << "\t\tlink:" << rep.getValue< std::string >("link") << std::endl;
-
-    std::vector< OCRepresentation > children = rep.getChildren();
-
-    for (auto oit = children.begin(); oit != children.end(); ++oit)
-    {
-        std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
-
-        if (oit->hasAttribute("value"))
-            std::cout << "\t\tvalue:" << oit->getValue< std::string >("value") << std::endl;
-        else if (oit->hasAttribute("link"))
-            std::cout << "\t\tlink:" << oit->getValue< std::string >("link") << std::endl;
-    }
+    if (rep.hasAttribute("loc"))
+        std::cout << "\t\tLocation:" << rep.getValue< std::string >("loc") << std::endl;
+    if (rep.hasAttribute("st"))
+        std::cout << "\t\tSystemTime:" << rep.getValue< std::string >("st") << std::endl;
+    if (rep.hasAttribute("c"))
+        std::cout << "\t\tCurrency:" << rep.getValue< std::string >("c") << std::endl;
+    if (rep.hasAttribute("r"))
+        std::cout << "\t\tRegion:" << rep.getValue< std::string >("r") << std::endl;
 }
 
 // Callback to found collection resource
 void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > resources)
 {
-
     std::string resourceURI;
     std::string hostAddress;
     try
@@ -183,7 +182,7 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
 }
 
 // Callback to found resources
-void onFoundCandidateCollection(std::vector< std::shared_ptr< OCResource > > resources)
+void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resources)
 {
 
     std::string resourceURI;
@@ -285,11 +284,10 @@ int main(int argc, char* argv[])
         cout << endl << endl << "(0) Quit" << std::endl;
         cout << "(1) Find all resources(URI: /oic/con, /oic/diag, /factoryset)" << std::endl;
         cout << "(2) Find all groups" << std::endl;
-        cout << "(3) Get a new value (of \"Configuration\" Collection)" << std::endl;
-        cout << "(4) Update a value (of \"Region\" Resource)" << std::endl;
-        cout << "(5) Get a value (for \"Region\" Resource)" << std::endl;
-        cout << "(6) FactoryReset (for the group)" << std::endl;
-        cout << "(7) Reboot (for the group)" << std::endl;
+        cout << "(3) Get a Configuration resource" << std::endl;
+        cout << "(4) Update a region attribute value" << std::endl;
+        cout << "(5) FactoryReset (for the group)" << std::endl;
+        cout << "(6) Reboot (for the group)" << std::endl;
         cout << "(10) Show Configuration Units" << std::endl;
 
         cin >> g_Steps;
@@ -299,90 +297,70 @@ int main(int argc, char* argv[])
         else if (g_Steps == 1)
         {
             std::vector< std::string > types;
-            { // For Registering a collection resource for configuration resources
 
+            // For Registering a collection resource for configuration resources
+            if (configurationCollectionHandle == NULL)
+            {
                 string resourceURI = "/core/a/configuration/resourceset";
                 string resourceTypeName = "core.configuration.resourceset";
                 string resourceInterface = BATCH_INTERFACE;
 
-                if (configurationCollectionHandle != NULL)
-                {
-                    std::cout << "already exists" << std::endl;
-                    continue;
-                }
-
                 OCPlatform::registerResource(configurationCollectionHandle, resourceURI,
-                        resourceTypeName, resourceInterface, NULL,
-                        //&entityHandler, // entityHandler
-                        OC_DISCOVERABLE);
+                    resourceTypeName, resourceInterface, NULL,
+                    //&entityHandler, // entityHandler
+                    OC_DISCOVERABLE);
 
                 OCPlatform::bindInterfaceToResource(configurationCollectionHandle, GROUP_INTERFACE);
                 OCPlatform::bindInterfaceToResource(configurationCollectionHandle,
-                        DEFAULT_INTERFACE);
-
-                // instead of registration
-                types.push_back("oic.con");
-                std::cout << "Finding Configuration Resource... " << std::endl;
+                    DEFAULT_INTERFACE);
             }
 
-            { // For Registering a collection resource for diagnostics resources
-
+            // For Registering a collection resource for diagnostics resources
+            if (diagnosticsCollectionHandle == NULL)
+            {
                 string resourceURI = "/core/a/diagnostics/resourceset";
                 string resourceTypeName = "core.diagnostics.resourceset";
                 string resourceInterface = BATCH_INTERFACE;
 
-                if (diagnosticsCollectionHandle != NULL)
-                {
-                    std::cout << "already exists" << std::endl;
-                    continue;
-                }
-
                 OCPlatform::registerResource(diagnosticsCollectionHandle, resourceURI,
-                        resourceTypeName, resourceInterface, NULL,
-                        //&entityHandler, // entityHandler
-                        OC_DISCOVERABLE);
+                    resourceTypeName, resourceInterface, NULL,
+                    //&entityHandler, // entityHandler
+                    OC_DISCOVERABLE);
 
                 OCPlatform::bindInterfaceToResource(diagnosticsCollectionHandle, GROUP_INTERFACE);
                 OCPlatform::bindInterfaceToResource(diagnosticsCollectionHandle, DEFAULT_INTERFACE);
-
-                // instead of registration
-                types.push_back("oic.diag");
-                std::cout << "Finding Diagnostics Resource... " << std::endl;
-
             }
 
-            { // For Registering a collection resource for set resources
-
+            // For Registering a collection resource for set resources
+            if (setCollectionHandle == NULL)
+            {
                 string resourceURI = "/core/a/factoryset/resourceset";
                 string resourceTypeName = "core.factoryset.resourceset";
                 string resourceInterface = BATCH_INTERFACE;
 
-                if (setCollectionHandle != NULL)
-                {
-                    std::cout << "already exists" << std::endl;
-                    continue;
-                }
-
                 OCPlatform::registerResource(setCollectionHandle, resourceURI, resourceTypeName,
-                        resourceInterface, NULL,
-                        //&entityHandler, // entityHandler
-                        OC_DISCOVERABLE);
+                    resourceInterface, NULL,
+                    //&entityHandler, // entityHandler
+                    OC_DISCOVERABLE);
 
                 OCPlatform::bindInterfaceToResource(setCollectionHandle, GROUP_INTERFACE);
                 OCPlatform::bindInterfaceToResource(setCollectionHandle, DEFAULT_INTERFACE);
-
-                // instead of registration
-                types.push_back("factorySet");
-                std::cout << "Finding Set Resource... " << std::endl;
             }
 
-            g_thingsmanager->findCandidateResources(types, &onFoundCandidateCollection, 5);
+            types.push_back("oic.con");
+            types.push_back("oic.diag");
+            types.push_back("factorySet");
+
+            std::cout << "Finding Configuration Resource... " << std::endl;
+            std::cout << "Finding Diagnostics Resource... " << std::endl;
+            std::cout << "Finding Set Resource... " << std::endl;
+
+            g_thingsmanager->findCandidateResources(types, &onFoundCandidateResource, 5);
 
             isWaiting = 1;
 
             thread t(&timeCheck, 5);
             t.join();       // After 5 seconds, isWaiting value will be 0.
-            t.~thread();
         }
         else if (g_Steps == 2) // make a group with found things
         {
@@ -399,27 +377,26 @@ int main(int argc, char* argv[])
 
             thread t(&timeCheck, 5);
             t.join();       // After 5 seconds, isWaiting value will be 0.
-            t.~thread();
         }
         else if (g_Steps == 3)
         {
             // get a value
 
-            ConfigurationName name = "configuration";
+            ConfigurationName name = "all";
 
-            std::cout << "For example, get configuration collection's value" << std::endl;
+            std::cout << "For example, get configuration resources's value" << std::endl;
 
             std::vector< ConfigurationName > configurations;
 
             configurations.push_back(name);
 
-            if (g_thingsmanager->getConfigurations(g_configurationResource, configurations, &onGet)
+            if (g_thingsmanager->getConfigurations(g_configurationCollection, configurations, &onGet)
                     != OC_STACK_ERROR)
                 isWaiting = 1;
         }
         else if (g_Steps == 4)
         {
-            ConfigurationName name = "region";
+            ConfigurationName name = "r";
             ConfigurationValue value = "U.S.A (new region)";
 
             if(g_configurationCollection == NULL)
@@ -441,28 +418,6 @@ int main(int argc, char* argv[])
         }
         else if (g_Steps == 5)
         {
-            // get a value
-
-            ConfigurationName name = "region";
-
-            if(g_configurationCollection == NULL)
-            {
-                std::cout<<"Note that you first create a group to use this command." << std::endl;
-                continue;
-            }
-
-            std::cout << "For example, get region resource's value" << std::endl;
-
-            std::vector< ConfigurationName > configurations;
-
-            configurations.push_back(name);
-
-            if (g_thingsmanager->getConfigurations(g_configurationCollection, configurations,
-                    &onGet) != OC_STACK_ERROR)
-                isWaiting = 1;
-        }
-        else if (g_Steps == 6)
-        {
             // factory reset
             if(g_diagnosticsCollection == NULL)
             {
@@ -474,7 +429,7 @@ int main(int argc, char* argv[])
                     != OC_STACK_ERROR)
                 isWaiting = 1;
         }
-        else if (g_Steps == 7)
+        else if (g_Steps == 6)
         {
             // reboot
             if(g_diagnosticsCollection == NULL)
@@ -496,3 +451,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
