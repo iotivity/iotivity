@@ -36,7 +36,8 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../../logger/include',
 		'../../stack/include',
 		'../../../oc_logger/include',
-		'../../../../extlibs/gtest/gtest-1.7.0/include'
+		'../../../../extlibs/gtest/gtest-1.7.0/include',
+		'../include'
 		])
 srmtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 srmtest_env.AppendUnique(LIBS = ['-lpthread'])
