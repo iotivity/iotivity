@@ -428,9 +428,9 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  * Initialize the OC Stack.  Must be called prior to starting the stack.
  *
  * @param ipAddr
- *     IP Address of host device
+ *     IP Address of host device. Deprecated parameter.
  * @param port
- *     Port of host device
+ *     Port of host device. Deprecated parameter.
  * @param mode
  *     Host device is client, server, or client-server
  *

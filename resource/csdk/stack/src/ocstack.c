@@ -86,7 +86,7 @@ OCStackResult getQueryFromUri(const char * uri, char** resourceType, char ** new
 // Macros
 //-----------------------------------------------------------------------------
 #define TAG  PCF("OCStack")
-#define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
+#define VERIFY_SUCCESS(op, successCode) { if ((op) != (successCode)) \
             {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, PCF(#arg " is NULL")); return (retVal); } }
@@ -588,11 +588,10 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
                 goto exit;
             }
             result = AddMCPresenceNode(&mcNode, uri, response.sequenceNumber);
-            if(result == OC_STACK_NO_MEMORY)
+            if(result != OC_STACK_OK)
             {
                 OC_LOG(ERROR, TAG,
-                    PCF("No Memory for Multicast Presence Node"));
-                result = OC_STACK_NO_MEMORY;
+                    PCF("Unable to add Multicast Presence Node"));
                 OCFree(uri);
                 goto exit;
             }
@@ -1048,8 +1047,9 @@ static CAResult_t OCSelectNetwork();
  */
 OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
 {
+    (void) ipAddr;
+    (void) port;
     OCStackResult result = OC_STACK_ERROR;
-    CAResult_t caResult = CA_STATUS_OK;
     OC_LOG(INFO, TAG, PCF("Entering OCInit"));
 
     // Validate mode
@@ -1058,89 +1058,64 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
         OC_LOG(ERROR, TAG, PCF("Invalid mode"));
         return OC_STACK_ERROR;
     }
-
-    if (ipAddr)
-    {
-        OC_LOG_V(INFO, TAG, "IP Address = %s", ipAddr);
-    }
-
-    OCSeedRandom();
-    caResult = CAInitialize();
-    if(caResult == CA_STATUS_OK)
-    {
-        caResult = OCSelectNetwork();
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, PCF("Failed to initialize the CA Layer."));
-        return CAResultToOCResult(caResult);
-    }
-
-    if(caResult == CA_STATUS_OK)
-    {
-        CARegisterHandler(HandleCARequests, HandleCAResponses);
-        {
-            OC_LOG(INFO, TAG, PCF("CARegisterHandler..."));
-            stackState = OC_STACK_INITIALIZED;
-            result = OC_STACK_OK;
-            switch (mode)
-            {
-                case OC_CLIENT:
-                    caResult = CAStartDiscoveryServer();
-                    OC_LOG(INFO, TAG, PCF("Client mode: CAStartDiscoveryServer"));
-                    break;
-                case OC_SERVER:
-                    caResult = CAStartListeningServer();
-                    OC_LOG(INFO, TAG, PCF("Server mode: CAStartListeningServer"));
-                    break;
-                case OC_CLIENT_SERVER:
-                    caResult = CAStartListeningServer();
-                    if(caResult == CA_STATUS_OK)
-                    {
-                        caResult = CAStartDiscoveryServer();
-                    }
-                    OC_LOG(INFO, TAG, PCF("Client-server mode"));
-                    break;
-                default:
-                    OC_LOG(ERROR, TAG, PCF("Invalid mode"));
-                    return OC_STACK_ERROR;
-                    break;
-            }
-
-        }
-
-        result = CAResultToOCResult(caResult);
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, PCF("Failed to initialize any transports."));
-        return CAResultToOCResult(caResult);
-    }
-
     myStackMode = mode;
+
     defaultDeviceHandler = NULL;
+    OCSeedRandom();
+
+    result = CAResultToOCResult(CAInitialize());
+    VERIFY_SUCCESS(result, OC_STACK_OK);
+
+    result = CAResultToOCResult(OCSelectNetwork());
+    VERIFY_SUCCESS(result, OC_STACK_OK);
+
+    CARegisterHandler(HandleCARequests, HandleCAResponses);
+    switch (myStackMode)
+    {
+        case OC_CLIENT:
+            result = CAResultToOCResult(CAStartDiscoveryServer());
+            OC_LOG(INFO, TAG, PCF("Client mode: CAStartDiscoveryServer"));
+            break;
+        case OC_SERVER:
+            result = CAResultToOCResult(CAStartListeningServer());
+            OC_LOG(INFO, TAG, PCF("Server mode: CAStartListeningServer"));
+            break;
+        case OC_CLIENT_SERVER:
+            result = CAResultToOCResult(CAStartListeningServer());
+            if(result == OC_STACK_OK)
+            {
+                result = CAResultToOCResult(CAStartDiscoveryServer());
+            }
+            break;
+    }
+    VERIFY_SUCCESS(result, OC_STACK_OK);
 
 #if defined(__WITH_DTLS__)
-    caResult = CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials);
-    result = (caResult == CA_STATUS_OK) ? OC_STACK_OK : OC_STACK_ERROR;
+    result = (CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials) == CA_STATUS_OK) ?
+        OC_STACK_OK : OC_STACK_ERROR;
+    VERIFY_SUCCESS(result, OC_STACK_OK);
 #endif // (__WITH_DTLS__)
 
 #ifdef WITH_PRESENCE
     PresenceTimeOutSize = sizeof(PresenceTimeOut)/sizeof(PresenceTimeOut[0]) - 1;
 #endif // WITH_PRESENCE
 
-    if (result == OC_STACK_OK)
-    {
-        stackState = OC_STACK_INITIALIZED;
-    }
+    //Update Stack state to initialized
+    stackState = OC_STACK_INITIALIZED;
+
     // Initialize resource
-    if(result == OC_STACK_OK && myStackMode != OC_CLIENT)
+    if(myStackMode != OC_CLIENT)
     {
         result = initResources();
     }
+
+exit:
     if(result != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("Stack initialization error"));
+        deleteAllResources();
+        CATerminate();
+        stackState = OC_STACK_UNINITIALIZED;
     }
     return result;
 }
