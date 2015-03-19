@@ -767,22 +767,27 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         //copy URI
         memcpy (&(serverRequest.resourceUrl), newUri, strlen(newUri));
+        OCFree(newUri);
     }
     else
     {
         OC_LOG(ERROR, TAG, PCF("URI length exceeds MAX_URI_LENGTH."));
+        OCFree(newUri);
+        OCFree(query);
         return;
     }
     //copy query
     if(query)
     {
-        if(strlen((char*)query) < MAX_QUERY_LENGTH)
+        if(strlen(query) < MAX_QUERY_LENGTH)
         {
-            memcpy (&(serverRequest.query), query, strlen((char*)query));
+            memcpy (&(serverRequest.query), query, strlen(query));
+            OCFree(query);
         }
         else
         {
             OC_LOG(ERROR, TAG, PCF("Query length exceeds MAX_QUERY_LENGTH."));
+            OCFree(query);
             return;
         }
     }
@@ -890,6 +895,9 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         OC_LOG(ERROR, TAG, PCF("HandleStackRequests failed"));
     }
+    // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
+    // The token is copied in there, and is thus still owned by this function.
+    OCFree(serverRequest.requestToken);
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
 
@@ -1346,6 +1354,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         if(query)
         {
             result = getResourceType((char *) query, &resourceType);
+            OCFree(query);
             if(resourceType)
             {
                 OC_LOG_V(DEBUG, TAG, "Got Resource Type: %s", resourceType);
@@ -1435,7 +1444,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
-        CADestroyToken(token);
         result = CAResultToOCResult(caResult);
         goto exit;
     }
@@ -1530,6 +1538,7 @@ exit:
         OCFree(resHandle);
         OCFree(requestUri);
         OCFree(resourceType);
+        CADestroyToken(token);
     }
     CADestroyRemoteEndpoint(endpoint);
     OCFree(grpEnd.resourceUri);
@@ -1612,6 +1621,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 if (CreateObserveHeaderOption (&(requestData.options),
                             options, numOptions, OC_OBSERVE_DEREGISTER) != OC_STACK_OK)
                 {
+                    CADestroyRemoteEndpoint(endpoint);
                     return OC_STACK_ERROR;
                 }
                 requestData.numOptions = numOptions + 1;
@@ -1739,6 +1749,7 @@ OCStackResult OCProcessPresence()
                     requestInfo.info = requestData;
 
                     caResult = CASendRequest(endpoint, &requestInfo);
+                    CADestroyRemoteEndpoint(endpoint);
 
                     if (caResult != CA_STATUS_OK)
                     {
@@ -1814,8 +1825,6 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         strncpy(addressInfo.IP.ipAddress, OC_MULTICAST_IP, CA_IPADDR_SIZE);
         addressInfo.IP.port = OC_MULTICAST_PORT;
 
-        //TODO make sure there is no memory leak here since another copy
-        //of token is being created inside AddObserver
         CAToken_t caToken = NULL;
         CAResult_t caResult = CAGenerateToken(&caToken);
         if (caResult != CA_STATUS_OK)
@@ -1830,6 +1839,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         AddObserver(OC_PRESENCE_URI, NULL, 0, &caToken,
                 (OCResource *)presenceResource.handle, OC_LOW_QOS,
                 &addressInfo, connType);
+        CADestroyToken(caToken);
     }
 
     // Each time OCStartPresence is called
