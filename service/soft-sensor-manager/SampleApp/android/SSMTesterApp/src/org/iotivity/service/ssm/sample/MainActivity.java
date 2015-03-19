@@ -126,15 +126,25 @@ public class MainActivity extends Activity {
 				break;
 
 			case R.id.btPlus:
-				int queryNum = Integer.parseInt(edtUnregisterQuery.getText()
-						.toString()) + 1;
-				edtUnregisterQuery.setText(queryNum + "");
+				int queryNum = 0;
+
+				try {
+					queryNum = Integer.parseInt(edtUnregisterQuery.getText()
+							.toString()) + 1;
+					edtUnregisterQuery.setText(queryNum + "");
+				} catch (NumberFormatException e) {
+					PrintLog("Invalid Query Id");
+				}
 				break;
 
 			case R.id.btMinus:
-				queryNum = Integer.parseInt(edtUnregisterQuery.getText()
-						.toString()) - 1;
-				edtUnregisterQuery.setText(queryNum + "");
+				try {
+					queryNum = Integer.parseInt(edtUnregisterQuery.getText()
+							.toString()) - 1;
+					edtUnregisterQuery.setText(queryNum + "");
+				} catch (NumberFormatException e) {
+					PrintLog("Invalid Query Id");
+				}
 				break;
 			}
 		}
