@@ -24,6 +24,7 @@
 #include "ocstackinternal.h"
 #include "ocresourcehandler.h"
 #include "logger.h"
+#include "ocmalloc.h"
 #include "cJSON.h"
 /// Module Name
 #include <stdio.h>

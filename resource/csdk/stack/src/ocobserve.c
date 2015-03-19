@@ -50,7 +50,7 @@ OCQualityOfService DetermineObserverQoS(OCMethod method, ResourceObserver * reso
     if(!resourceObserver)
     {
         OC_LOG(ERROR, TAG, "DetermineObserverQoS called with invalid resourceObserver");
-        return -1;
+        return OC_NA_QOS;
     }
 
     OCQualityOfService decidedQoS = appQoS;

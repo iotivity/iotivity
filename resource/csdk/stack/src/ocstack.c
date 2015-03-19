@@ -405,6 +405,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     char *ipAddress = NULL;
     int presenceSubscribe = 0;
     int multicastPresenceSubscribe = 0;
+    size_t addressLen = 0;
 
     if (responseInfo->result != CA_SUCCESS)
     {
@@ -421,7 +422,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         goto exit;
     }
 
-    size_t addressLen = strlen(endPoint->addressInfo.IP.ipAddress);
+    addressLen = strlen(endPoint->addressInfo.IP.ipAddress);
     ipAddress = (char *) OCMalloc(addressLen + 1);
 
     if(NULL == ipAddress)
@@ -3521,6 +3522,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** newURI)
     {
         return OC_STACK_INVALID_PARAM;
     }
+    char* strTokPtr = NULL;
     char * leftToken = NULL;
     char * tempURI = (char *) OCMalloc(strlen(uri) + 1);
     if(!tempURI)
@@ -3528,7 +3530,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** newURI)
         goto exit;
     }
     strcpy(tempURI, uri);
-    char* strTokPtr = NULL;
+    strTokPtr = NULL;
     leftToken = strtok_r(tempURI, "?", &strTokPtr);
 
     //TODO-CA: This could be simplified. Clean up required.
