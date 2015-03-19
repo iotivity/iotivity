@@ -47,7 +47,8 @@ build_dir = env.get('BUILD_DIR')
 # Build 'resource' sub-project
 SConscript(build_dir + 'resource/SConscript')
 
-SConscript(build_dir + 'examples/OICMiddle/SConscript')
+if target_os != 'arduino':
+	SConscript(build_dir + 'examples/OICMiddle/SConscript')
 
 # Build 'service' sub-project
 SConscript(build_dir + 'service/SConscript')
