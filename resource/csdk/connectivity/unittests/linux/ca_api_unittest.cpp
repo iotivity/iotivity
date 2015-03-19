@@ -481,14 +481,18 @@ TEST(AdvertiseResourceTest, TC_24_Positive_01)
     headerOpt = (CAHeaderOption_t *) calloc(1, optionNum * sizeof(CAHeaderOption_t));
 
     char* tmpOptionData1 = (char *) "Hello";
+    size_t tmpOptionDataLen = (strlen(tmpOptionData1) < CA_MAX_HEADER_OPTION_DATA_LENGTH) ?
+            strlen(tmpOptionData1) : CA_MAX_HEADER_OPTION_DATA_LENGTH - 1;
     headerOpt[0].optionID = 3000;
-    memcpy(headerOpt[0].optionData, tmpOptionData1, strlen(tmpOptionData1));
-    headerOpt[0].optionLength = (uint16_t) strlen(tmpOptionData1);
+    memcpy(headerOpt[0].optionData, tmpOptionData1, tmpOptionDataLen);
+    headerOpt[0].optionLength = (uint16_t) tmpOptionDataLen;
 
     char* tmpOptionData2 = (char *) "World";
+    tmpOptionDataLen = (strlen(tmpOptionData2) < CA_MAX_HEADER_OPTION_DATA_LENGTH) ?
+                strlen(tmpOptionData2) : CA_MAX_HEADER_OPTION_DATA_LENGTH - 1;
     headerOpt[1].optionID = 3001;
-    memcpy(headerOpt[1].optionData, tmpOptionData2, strlen(tmpOptionData2));
-    headerOpt[1].optionLength = (uint16_t) strlen(tmpOptionData2);
+    memcpy(headerOpt[1].optionData, tmpOptionData2, tmpOptionDataLen);
+    headerOpt[1].optionLength = (uint16_t) tmpOptionDataLen;
 
     CAGenerateToken(&tempToken);
 
@@ -507,14 +511,18 @@ TEST(AdvertiseResourceTest, TC_25_Negative_01)
     headerOpt = (CAHeaderOption_t *) calloc(1, optionNum * sizeof(CAHeaderOption_t));
 
     char* tmpOptionData1 = (char *) "Hello";
+    size_t tmpOptionDataLen = (strlen(tmpOptionData1) < CA_MAX_HEADER_OPTION_DATA_LENGTH) ?
+            strlen(tmpOptionData1) : CA_MAX_HEADER_OPTION_DATA_LENGTH - 1;
     headerOpt[0].optionID = 3000;
-    memcpy(headerOpt[0].optionData, tmpOptionData1, strlen(tmpOptionData1));
-    headerOpt[0].optionLength = (uint16_t) strlen(tmpOptionData1);
+    memcpy(headerOpt[0].optionData, tmpOptionData1, tmpOptionDataLen);
+    headerOpt[0].optionLength = (uint16_t) tmpOptionDataLen;
 
     char* tmpOptionData2 = (char *) "World";
+    tmpOptionDataLen = (strlen(tmpOptionData2) < CA_MAX_HEADER_OPTION_DATA_LENGTH) ?
+                strlen(tmpOptionData2) : CA_MAX_HEADER_OPTION_DATA_LENGTH - 1;
     headerOpt[1].optionID = 3001;
-    memcpy(headerOpt[1].optionData, tmpOptionData2, strlen(tmpOptionData2));
-    headerOpt[1].optionLength = (uint16_t) strlen(tmpOptionData2);
+    memcpy(headerOpt[1].optionData, tmpOptionData2, tmpOptionDataLen);
+    headerOpt[1].optionLength = (uint16_t) tmpOptionDataLen;
 
     CAGenerateToken(&tempToken);
 

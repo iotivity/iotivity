@@ -330,6 +330,13 @@ void CAParseHeadOption(const uint32_t code, const CAInfo_t info, coap_list_t **o
 coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length, const uint8_t *data)
 {
     OIC_LOG(DEBUG, TAG, "CACreateNewOptionNode IN");
+
+    if (!data)
+    {
+        OIC_LOG(ERROR, TAG, "invalid pointer parameter");
+        return NULL;
+    }
+
     coap_option *option = coap_malloc(sizeof(coap_option) + length + 1);
     if (!option)
     {
@@ -396,6 +403,12 @@ void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInf
 {
     OIC_LOG(DEBUG, TAG, "CAGetInfoFromPDU IN");
 
+    if (!pdu || !outCode || !outInfo || !outUri)
+    {
+        OIC_LOG(ERROR, TAG, "NULL pointer param");
+        return;
+    }
+
     coap_opt_iterator_t opt_iter;
     coap_option_iterator_init((coap_pdu_t *) pdu, &opt_iter, COAP_OPT_ALL);
 
@@ -408,11 +421,6 @@ void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInf
     // init HeaderOption list
     uint32_t count = CAGetOptionCount(opt_iter);
 
-    if (!outInfo)
-    {
-        OIC_LOG(ERROR, TAG, "outInfo is null");
-        return;
-    }
     memset(outInfo, 0, sizeof(*outInfo));
     outInfo->numOptions = count;
     // set type
@@ -431,11 +439,9 @@ void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInf
         }
     }
 
-    char buf[COAP_MAX_PDU_SIZE] =
-    { 0 };
+    char buf[COAP_MAX_PDU_SIZE] = { 0 };
     coap_opt_t *option;
-    char optionResult[CA_MAX_URI_LENGTH] =
-    { 0 };
+    char optionResult[CA_MAX_URI_LENGTH] = { 0 };
     uint32_t idx = 0;
     uint32_t optionLength = 0;
     bool isfirstsetflag = false;
@@ -455,32 +461,72 @@ void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInf
                     isfirstsetflag = true;
                     optionResult[optionLength] = '/';
                     optionLength++;
-                    memcpy(optionResult + optionLength, buf, bufLength);
-                    optionLength += bufLength;
+                    // Make sure there is enough room in the optionResult buffer
+                    if ((optionLength + bufLength) < sizeof(optionResult))
+                    {
+                        memcpy(optionResult + optionLength, buf, bufLength);
+                        optionLength += bufLength;
+                    }
+                    else
+                    {
+                        goto exit;
+                    }
                 }
                 else
                 {
                     if (COAP_OPTION_URI_PATH == opt_iter.type)
                     {
-                        optionResult[optionLength] = '/';
-                        optionLength++;
+                        // Make sure there is enough room in the optionResult buffer
+                        if (optionLength < sizeof(optionResult))
+                        {
+                            optionResult[optionLength] = '/';
+                            optionLength++;
+                        }
+                        else
+                        {
+                            goto exit;
+                        }
                     }
                     else if (COAP_OPTION_URI_QUERY == opt_iter.type)
                     {
                         if(false == isQueryBeingProcessed)
                         {
-                            optionResult[optionLength] = '?';
-                            optionLength++;
-                            isQueryBeingProcessed = true;
+                            // Make sure there is enough room in the optionResult buffer
+                            if (optionLength < sizeof(optionResult))
+                            {
+                                optionResult[optionLength] = '?';
+                                optionLength++;
+                                isQueryBeingProcessed = true;
+                            }
+                            else
+                            {
+                                goto exit;
+                            }
                         }
                         else
                         {
-                            optionResult[optionLength] = '&';
-                            optionLength++;
+                            // Make sure there is enough room in the optionResult buffer
+                            if (optionLength < sizeof(optionResult))
+                            {
+                                optionResult[optionLength] = '&';
+                                optionLength++;
+                            }
+                            else
+                            {
+                                goto exit;
+                            }
                         }
                     }
-                    memcpy(optionResult + optionLength, buf, bufLength);
-                    optionLength += bufLength;
+                    // Make sure there is enough room in the optionResult buffer
+                    if ((optionLength + bufLength) < sizeof(optionResult))
+                    {
+                        memcpy(optionResult + optionLength, buf, bufLength);
+                        optionLength += bufLength;
+                    }
+                    else
+                    {
+                        goto exit;
+                    }
                 }
             }
             else
@@ -541,7 +587,14 @@ void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInf
         memcpy(outUri, optionResult, length);
         outUri[length] = '\0';
         OIC_LOG_V(DEBUG, TAG, "made URL : %s, %s\n", optionResult, outUri);
-    }OIC_LOG(DEBUG, TAG, "CAGetInfoFromPDU OUT");
+    }
+    OIC_LOG(DEBUG, TAG, "CAGetInfoFromPDU OUT");
+    return;
+
+exit:
+    OIC_LOG(ERROR, TAG, "buffer too small");
+    OICFree(outInfo->options);
+    return;
 }
 
 CAResult_t CAGenerateTokenInternal(CAToken_t *token)
@@ -656,22 +709,16 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uin
         return 0;
     }
 
-    uint32_t cnt = 0;
-    while (len)
+    if (buflen <= len)
     {
-        if (cnt == buflen - 1)
-        {
-            break;
-        }
-
-        *option++ = *data;
-        ++cnt;
-        ++data;
-        --len;
+        OIC_LOG(ERROR, TAG, "option buffer too small");
+        return 0;
     }
 
-    *option = '\0';
-    return cnt;
+    memcpy(option, data, len);
+    option[len] = '\0';
+
+    return len;
 }
 
 CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size)
