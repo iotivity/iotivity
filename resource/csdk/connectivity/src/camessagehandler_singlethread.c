@@ -28,7 +28,7 @@
 #include "cainterface.h"
 #include "caremotehandler.h"
 #include "cainterfacecontroller_singlethread.h"
-#include "caprotocolmessage_singlethread.h"
+#include "caprotocolmessage.h"
 #include "logger.h"
 #include "config.h" /* for coap protocol */
 #include "coap.h"

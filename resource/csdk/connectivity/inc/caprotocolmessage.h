@@ -45,10 +45,10 @@ typedef uint32_t code_t;
  * @brief   generates pdu structure from the given information.
  * @param   uri               [IN]    uri information of the pdu
  * @param   code              [IN]    code of the pdu packet
- * @param   info              [IN]    pdu information such as request code, response code, payload
+ * @param   info              [IN]    pdu information such as request code, response code and payload
  * @return  coap_pdu_t     created pdu
  */
-coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t info);
+coap_pdu_t *CAGeneratePdu(const char *uri, uint32_t code, const CAInfo_t info);
 
 /**
  * function for generating
@@ -62,8 +62,8 @@ coap_pdu_t *CAGeneratePdu(const char *uri, const uint32_t code, const CAInfo_t i
  * @param   buflen           [IN]     Buffer Length for outUri parameter
  * @return  None
  */
-void CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo, char *outUri,
-                             uint32_t buflen);
+void CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
+                             char *outUri, uint32_t buflen);
 
 /**
  * @brief   extracts response information from received pdu.
@@ -73,24 +73,24 @@ void CAGetRequestInfoFromPdu(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
  * @param   buflen           [IN]     Buffer Length for outUri parameter
  * @return  None
  */
-void CAGetResponseInfoFromPdu(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo, char *outUri,
-                              uint32_t buflen);
+void CAGetResponseInfoFromPdu(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
+                              char *outUri, uint32_t buflen);
 
 /**
  * @brief   creates pdu from the request information
  * @param   code         [IN]    request or response code
- * @param   options      [OUT]    options for the request and response
+ * @param   options      [OUT]   options for the request and response
  * @param   info         [IN]    information to create pdu
  * @param   payload      [IN]    payload for the request or response consumed
  * @return  coap_pdu_t
  */
-coap_pdu_t *CAGeneratePduImpl(const code_t code, coap_list_t *options, const CAInfo_t info,
-                              const char *payload);
+coap_pdu_t *CAGeneratePduImpl(const code_t code, coap_list_t *options,
+                              const CAInfo_t info, const char *payload);
 
 /**
  * @brief   parse the URI and creates the options
  * @param   uriInfo      [IN]   uri information
- * @param   options      [OUT]   options information
+ * @param   options      [OUT]  options information
  * @return  None
  */
 void CAParseURI(const char *uriInfo, coap_list_t **options);
@@ -102,20 +102,22 @@ void CAParseURI(const char *uriInfo, coap_list_t **options);
  * @param   optlist      [OUT]  options information
  * @return  None
  */
-void CAParseHeadOption(const uint32_t code, const CAInfo_t info, coap_list_t **optlist);
+void CAParseHeadOption(uint32_t code, const CAInfo_t info, coap_list_t **optlist);
 
 /**
- * @brief   creates option node from key length and data
+ * Creates option node from key length and data.
+ * Need to replace queue head if new node has to be added before the existing
+ * queue head
  * @param   key          [IN]    key for the that needs to be sent
  * @param   length       [IN]    length of the data that needs to be sent
  * @param   data         [IN]    data that needs to be sent
  * @return  created list
  */
-coap_list_t *CACreateNewOptionNode(const uint16_t key, const uint32_t length, const uint8_t *data);
+coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length,
+                                   const uint8_t *data);
 
 /**
  * @brief   order the inserted options
- *          need to replace queue head if new node has to be added before the existing queue head
  * @param   a            [IN]    option 1 for insertion
  * @param   b            [IN]    option 2 for insertion
  * @return  0 or 1
@@ -133,7 +135,7 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter);
  * @brief   gets option data
  * @param   data             [IN]    data that is received
  * @param   length           [IN]    length of the data
- * @param   option           [OUT]   option
+ * @param   option           [OUT]   result of the operation
  * @param   buflen           [IN]    buffer length of the result
  * @return  option count
  */
@@ -148,8 +150,8 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uin
  * @param   buflen           [IN]     Buffer Length for outUri parameter
  * @return  None
  */
-void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo, char *outUri,
-                      uint32_t buflen);
+void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo,
+                      char *outUri, uint32_t buflen);
 
 /**
  * @brief   create pdu from received data

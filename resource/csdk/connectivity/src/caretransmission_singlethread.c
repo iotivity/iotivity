@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include "caremotehandler.h"
-#include "caprotocolmessage_singlethread.h"
+#include "caprotocolmessage.h"
 #include "oic_malloc.h"
 #include "logger.h"
 
