@@ -324,7 +324,7 @@ core_folder = core_base + 'cores/' + core + '/'
 env.AppendUnique(CPPPATH = [core_folder])
 
 if is_1_0_x:
-	comm_flags = []
+	comm_flags = ['-std=c99']
 	if mcu:
 		comm_flags.extend(['-mmcu=' + mcu])
 	if f_cpu:
@@ -356,7 +356,7 @@ else:
 	else:
 		cpu_flag = '-mcpu=' + mcu
 
-	comm_flag = [cpu_flag, '-DF_CPU=' + f_cpu, '-DARDUINO=' + version, '-DARDUINO_' + __get_board_info(board, '.build.board')]
+	comm_flag = [cpu_flag, '-DF_CPU=' + f_cpu, '-DARDUINO=' + version, '-DARDUINO_' + __get_board_info(board, '.build.board'), '-std=c99']
 	if target_arch == 'arm':
 		comm_flag.extend(['-DARDUINO_ARCH_SAM'])
 	else:
