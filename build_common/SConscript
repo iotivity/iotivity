@@ -48,7 +48,7 @@ target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 
 # True if binary needs to be installed on board. (Might need root permissions)
 # set to 'no', 'false' or 0 for only compilation
-require_upload = ARGUMENTS.get('UPLOAD', True) 
+require_upload = ARGUMENTS.get('UPLOAD', False) 
 
 ######################################################################
 # Common build options (release, target os, target arch)
