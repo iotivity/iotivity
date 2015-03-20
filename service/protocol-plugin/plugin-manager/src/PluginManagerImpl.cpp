@@ -18,10 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- */
+/// @file PluginManagerImpl.cpp
+
+/// @brief
 
 #include "PluginManagerImpl.h"
 
@@ -41,15 +40,15 @@ extern "C" void destroy_object( PluginManagerImpl *object )
     delete object;
 }
 
-PluginManagerImpl::PluginManagerImpl(void* args)
+PluginManagerImpl::PluginManagerImpl(void *args)
 {
     cppm = CpluffAdapter::Getinstance();
-    #ifdef ANDROID
-        if(args)
-            javappm = FelixAdapter::Getinstance(args);
-        else
-            javappm = NULL;
-    #endif
+#ifdef ANDROID
+    if (args)
+        javappm = FelixAdapter::Getinstance(args);
+    else
+        javappm = NULL;
+#endif
     refreshPluginInfo();
 }
 
@@ -62,10 +61,10 @@ int PluginManagerImpl::registerPlugin(std::string path)
 {
     int flag = 0;
     flag = cppm->registerPlugin(path);
-    #ifdef ANDROID
-        if(javappm)
-            flag = javappm->registerPlugin(path);
-    #endif
+#ifdef ANDROID
+    if (javappm)
+        flag = javappm->registerPlugin(path);
+#endif
     refreshPluginInfo();
     return flag;
 }
@@ -75,10 +74,10 @@ int PluginManagerImpl::registerAllPlugin(std::string path)
     int flag = 0;
     flag = cppm->registerAllPlugin(path);
 
-    #ifdef ANDROID
-        if(javappm)
-            flag = javappm->registerAllPlugin(path);
-    #endif
+#ifdef ANDROID
+    if (javappm)
+        flag = javappm->registerAllPlugin(path);
+#endif
 
     refreshPluginInfo();
     return flag;
@@ -101,12 +100,12 @@ int PluginManagerImpl::unregisterPlugin(std::string id)
             }
             else if (!m_plugins[i].getValueByAttribute("Language").compare("JAVA"))
             {
-                #ifdef ANDROID
-                    if ((flag = javappm->unregisterPlugin(&m_plugins[i])))
-                    {
-                        m_plugins.erase(m_plugins.begin() + i);
-                    }
-                #endif
+#ifdef ANDROID
+                if ((flag = javappm->unregisterPlugin(&m_plugins[i])))
+                {
+                    m_plugins.erase(m_plugins.begin() + i);
+                }
+#endif
             }
         }
     }
@@ -118,10 +117,10 @@ int PluginManagerImpl::unregisterAllPlugin()
 {
     int flag = 0;
     flag = cppm->unregisterAllPlugin();
-    #ifdef ANDROID
-        if(javappm)
-            flag = javappm->unregisterAllPlugin();
-    #endif
+#ifdef ANDROID
+    if (javappm)
+        flag = javappm->unregisterAllPlugin();
+#endif
     m_plugins.clear();
     return flag;
 }
@@ -284,10 +283,10 @@ int PluginManagerImpl::startbyPlatform(Plugin *const plugin, void *const arg)
             }
             else if (!m_plugins[i].getValueByAttribute("Language").compare("JAVA"))
             {
-                #ifdef ANDROID
-                    if(javappm)
-                        flag = javappm->start(plugin, arg);
-                #endif
+#ifdef ANDROID
+                if (javappm)
+                    flag = javappm->start(plugin, arg);
+#endif
             }
         }
     }
@@ -313,10 +312,10 @@ int PluginManagerImpl::stopbyPlatform(Plugin *const plugin)
             }
             else if (!m_plugins[i].getValueByAttribute("Language").compare("JAVA"))
             {
-                #ifdef ANDROID
-                    if(javappm)
-                        flag = javappm->stop(plugin);
-                #endif
+#ifdef ANDROID
+                if (javappm)
+                    flag = javappm->stop(plugin);
+#endif
             }
         }
     }
@@ -336,15 +335,16 @@ bool PluginManagerImpl::isStarted(Plugin *plugin)
         flag = TRUE;
         return flag;
     }
-    #ifdef ANDROID
-        if(javappm) {
-            if (javappm->isStarted(plugin))
-            {
-                flag = TRUE;
-                return flag;
-            }
+#ifdef ANDROID
+    if (javappm)
+    {
+        if (javappm->isStarted(plugin))
+        {
+            flag = TRUE;
+            return flag;
         }
-    #endif
+    }
+#endif
     return flag;
 }
 
@@ -362,10 +362,10 @@ std::string PluginManagerImpl::getState(std::string plugID)
             }
             else if (!m_plugins[i].getValueByAttribute("Language").compare("JAVA"))
             {
-                #ifdef ANDROID
-                    if(javappm)
-                        str = javappm->getState(plugID);
-                #endif
+#ifdef ANDROID
+                if (javappm)
+                    str = javappm->getState(plugID);
+#endif
             }
         }
     }
@@ -378,17 +378,18 @@ std::vector<Plugin> PluginManagerImpl::refreshPluginInfo()
     m_plugins.clear();
     m_plugins = cppm->getAllPlugins();
 
-    #ifdef ANDROID
-        if(javappm) {
-            std::vector<Plugin> java_plugins = javappm->getAllPlugins();
-            int size = java_plugins.size();
+#ifdef ANDROID
+    if (javappm)
+    {
+        std::vector<Plugin> java_plugins = javappm->getAllPlugins();
+        int size = java_plugins.size();
 
-            for (int i = 0 ; i < size ; i++)
-            {
-                m_plugins.push_back(java_plugins[i]);
-            }
+        for (int i = 0 ; i < size ; i++)
+        {
+            m_plugins.push_back(java_plugins[i]);
         }
-    #endif
+    }
+#endif
 
     return m_plugins;
 }

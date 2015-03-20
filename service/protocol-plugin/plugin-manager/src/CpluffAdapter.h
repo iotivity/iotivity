@@ -18,10 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- */
+/// @file CpluffAdapter.h
+
+/// @brief
 
 #ifndef __CPLUFFADAPTER_H
 #define __CPLUFFADAPTER_H

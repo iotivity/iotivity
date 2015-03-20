@@ -18,10 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- */
+/// @file Config.cpp
+
+/// @brief
+
 
 #include "Config.h"
 
@@ -34,7 +34,7 @@ Config *Config::s_configinstance = NULL;
 
 Config::Config()
 {
-    if (loadConfigFile("/storage/emulated/0/Download/pluginmanager.xml") != PM_S_OK)
+    if (loadConfigFile("./pluginmanager.xml") != PM_S_OK)
     {
         fprintf(stderr, "PM Configuration file is not exist current Folder.\n" );
         exit(EXIT_FAILURE);
@@ -68,9 +68,6 @@ PMRESULT Config::loadConfigFile(const std::string configfilepath)
     xml_node<> *pluginInfo = root_node->first_node("pluginInfo");
 
     getXmlData(pluginInfo, "pluginPath");
-    getXmlData(pluginInfo, "maxMEM");
-    getXmlData(pluginInfo, "version");
-    getXmlData(pluginInfo, "name");
 
     return PM_S_OK;
 }
@@ -112,10 +109,11 @@ void Config::setValue(const std::string key, const std::string value)
     m_configurationMap.insert( std::pair<std::string, std::string>(key, value));
 }
 
-std::string  Config::getValue(const std::string key)
+std::string Config::getValue(const std::string key)
 {
     std::map<std::string, std::string>::iterator m_iterator;
 
+    // Find the value for key
     m_iterator = m_configurationMap.find(key.c_str());
 
     if (m_iterator != m_configurationMap.end())
@@ -128,10 +126,11 @@ std::string  Config::getValue(const std::string key)
     }
 }
 
-std::string  Config::getVersion()
+std::string Config::getVersion()
 {
     std::map<std::string, std::string>::iterator m_iterator;
 
+    // Find the value for key - version
     m_iterator = m_configurationMap.find("version");
 
     if (m_iterator != m_configurationMap.end())
@@ -144,10 +143,11 @@ std::string  Config::getVersion()
     }
 }
 
-std::string  Config::getPluginPath()
+std::string Config::getPluginPath()
 {
     std::map<std::string, std::string>::iterator m_iterator;
 
+    // Find the value for key - pluginPath
     m_iterator = m_configurationMap.find("pluginPath");
 
     if (m_iterator != m_configurationMap.end())

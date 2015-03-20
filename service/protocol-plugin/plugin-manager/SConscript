@@ -16,7 +16,7 @@ target_os = env.get('TARGET_OS')
 plugin_manager_env.AppendUnique(CPPPATH = [
 		'../lib/cpluff/libcpluff',
 		'src',
-		'../lib/rapidxml'
+		env.get('SRC_DIR')+'/extlibs/rapidxml'
 		])
 
 if target_os not in ['windows', 'winrt']:

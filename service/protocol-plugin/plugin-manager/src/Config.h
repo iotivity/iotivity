@@ -18,10 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- */
+/// @file Config.h
+
+/// @brief
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
@@ -90,6 +89,7 @@ namespace OIC
             static Config *s_configinstance;
             typedef std::map<std::string, std::string> configmap;
             configmap m_configurationMap;
+
             /**
             * Constructor for Config.
             * During construction time, configuration file  will be loaded.

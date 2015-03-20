@@ -18,10 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- */
+/// @file CpluffAdapter.cpp
+
+/// @brief
 
 #include "CpluffAdapter.h"
 
@@ -212,7 +211,6 @@ int CpluffAdapter::loadPluginInfoToManager(const std::string path)
             m_plugins.push_back(*plugin);
             delete(plugin);
         }
-        //printf("plugin size = %d\n",m_plugins.size());
     }
 
     return TRUE;
@@ -220,7 +218,6 @@ int CpluffAdapter::loadPluginInfoToManager(const std::string path)
 
 int CpluffAdapter::registerPlugin(const std::string path)
 {
-    //printf("CpluffAdapter register\n");
     int flag = FALSE;
 
     if (path == "")
@@ -239,7 +236,6 @@ int CpluffAdapter::registerPlugin(const std::string path)
 
 int CpluffAdapter::registerAllPlugin(const std::string path)
 {
-    //printf("CpluffAdapter register\n");
     int flag = FALSE;
     if (path == "")
     {
@@ -325,6 +321,7 @@ std::vector<Plugin> *CpluffAdapter::findPlugins(const std::string key, const std
 
     return re_plugins;
 }
+
 /*
 Plugin *CpluffAdapter::getPlugin(const std::string plugID)
 {
@@ -339,6 +336,7 @@ Plugin *CpluffAdapter::getPlugin(const std::string plugID)
     return nullptr;
 }
 */
+
 bool CpluffAdapter::getFileList(File_list &list, const std::string strDir)
 {
     struct stat statinfo;
@@ -446,21 +444,14 @@ void CpluffAdapter::printPluginList()
 
 int CpluffAdapter::start(Plugin *const plugin, void *const arg)
 {
-    //printf("start\n");
     std::string id;
     cp_status_t status;
-    cp_context_t *ctx;
 
     id = plugin->getID();
     for (unsigned int i = 0 ; i < m_plugins.size(); i++)
     {
         if (*plugin == m_plugins[i])
         {
-            ctx = cpi_new_context((cp_plugin_t *)hnode_get(hash_lookup(m_context->env->plugins, id.c_str())),
-                                  m_context->env, &status);
-            //cp_define_symbol(ctx, "START_ARGUMENT", arg);
-            //printf("start ocplatform address : %x\n", arg);
-
             if ((status = cp_start_plugin(m_context, (char *)id.c_str()) ) != CP_OK)
             {
                 printf("API function CpluffAdapter::start() faild with error code.\n");
@@ -511,18 +502,17 @@ bool CpluffAdapter::isStarted(Plugin *plugin)
     }
     return FALSE;
 }
-//Auto plugin detection is disabled
+
+// Auto plugin detection is disabled
 /*
 void CpluffAdapter::observePluginPath(void *str)
 {
-    //printf("start observePluginPath\n");
     int length;
     int i = 0;
     int fd;
     int wd;
     char *str1 = (char *)str;
     std::string original_path(str1);
-    //printf("Directory is %s\n",(char*)str1));
     char buffer[BUF_LEN];
 
     fd = inotify_init();
@@ -547,7 +537,6 @@ void CpluffAdapter::observePluginPath(void *str)
             printf("observePluginPath read\n");
         }
         std::string filepath = original_path;
-        //printf("filepath = %s\n",filepath.c_str());
         while ( i < length )
         {
             if (i < (signed)(BUF_LEN  - ( sizeof( struct inotify_event) + 16)) && i > -1)
@@ -560,12 +549,8 @@ void CpluffAdapter::observePluginPath(void *str)
                 }
                 else
                 {
-                    //filepath += "/";
-                    //filepath += std::string(event->name);
                     std::vector<Plugin> *resource_plugin = findPlugins("Path", filepath.c_str()); //add foldername
 
-                    //printf("plugin size is %d\n",resource_plugin->size());
-                    //printf("plugin file path is %s\n",resource_plugin->());
                     if (resource_plugin->size() == 1)
                     {
                         unregisterPlugin(&(resource_plugin->at(0)));
@@ -577,8 +562,6 @@ void CpluffAdapter::observePluginPath(void *str)
                     delete(resource_plugin);
                     resource_plugin = nullptr;
                 }
-                //printf("observePluginPath path = %s \n",str1);
-                //printf("observePluginPath directory name = %s \n",event->name);
                 i += EVENT_SIZE + event->len;
             }
         }
@@ -587,9 +570,9 @@ void CpluffAdapter::observePluginPath(void *str)
     }
     ( void ) inotify_rm_watch( fd, wd );
     ( void ) close( fd );
-    //printf("observePluginPath end\n");
 }
 */
+
 const std::string CpluffAdapter::getState(const std::string plugID)
 {
     return state_to_string(cp_get_plugin_state(m_context, plugID.c_str()));

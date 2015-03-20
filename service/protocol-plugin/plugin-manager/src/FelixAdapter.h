@@ -18,10 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- */
+/// @file FelixAdapter.h
+
+/// @brief
 
 #ifndef __FELIXADAPTER_H__
 #define __FELIXADAPTER_H__
@@ -170,7 +169,7 @@ namespace OIC
             *
             * @return OICPluginManager pointer Address.
             */
-            static FelixAdapter *Getinstance(void *args=NULL)
+            static FelixAdapter *Getinstance(void *args = NULL)
             {
                 if (NULL == s_pinstance)
                 {
@@ -183,19 +182,12 @@ namespace OIC
 
 
         private:
-			JavaVM *jvm;
+            JavaVM *jvm;
             Config *config;
             typedef std::map<std::string, bool> File_list;
             std::vector<Plugin> m_plugins;
             boost::thread m_file_detect_thread;
-            /*
-            cp_context_t *m_context;
-            cp_status_t m_status;
-            cp_plugin_info_t **m_cp_plugins;
-            cp_plugin_info_t *m_plugin;
-            boost::thread_group m_thread_g;
-            std::string m_path;
-            */
+
             static FelixAdapter *s_pinstance;
 
             /**

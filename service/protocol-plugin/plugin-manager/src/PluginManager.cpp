@@ -18,10 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- */
+/// @file PluginManager.cpp
+
+/// @brief
+
 
 #include "PluginManager.h"
 
@@ -35,8 +35,8 @@ PluginManager::PluginManager()
         fprintf(stderr, "%s\n", dlerror());
         exit(EXIT_FAILURE);
     }
-    PluginManagerImpl* (*create)(void*);
-    create = (PluginManagerImpl * (*)(void*))dlsym(handle, "create_object");
+    PluginManagerImpl* (*create)(void *);
+    create = (PluginManagerImpl * (*)(void *))dlsym(handle, "create_object");
     destroy = (void (*)(PluginManagerImpl *))dlsym(handle, "destroy_object");
     pluginManagerImpl = (PluginManagerImpl *)create(NULL);
 }
