@@ -43,14 +43,14 @@ function build()
 		scons TARGET_OS=android TARGET_ARCH=armeabi-v7a-hard ANDROID_NDK=$1 RELEASE=$3
 	fi
 
-: '
 	echo "*********** Build for arduino avr *************"
-	scons TARGET_OS=arduino TARGET_ARCH=avr ARDUINO_HOME=$2 RELEASE=$3
+	scons TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=ETHERNET NET=Ethernet RELEASE=$3
+	scons TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=WIFI NET=Wifi RELEASE=$3
 
+: '
 	echo "*********** Build for arduino arm *************"
 	scons TARGET_OS=arduino TARGET_ARCH=arm ARDUINO_HOME=$2 RELEASE=$3
 '
-
 	if [ $(uname -s) = "Darwin" ]
 	then
 		echo "*********** Build for OSX *************"
