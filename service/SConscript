@@ -20,6 +20,6 @@ if target_os not in targets_csdk_only:
 		SConscript('protocol-plugin/SConscript')
 
 	# Build notification manager project
-#	SConscript('notification-manager/SConscript')
+	SConscript('notification-manager/SConscript')
 #else:
 #	SConscript('notification-manager/SampleApp/arduino/SConscript')
