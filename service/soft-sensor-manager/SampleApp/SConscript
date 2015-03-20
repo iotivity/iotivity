@@ -22,3 +22,8 @@ if target_os == 'linux' :
 	SConscript('linux/SSMTesterApp/SConscript')
 	SConscript('linux/THSensorApp/SConscript')
 	SConscript('linux/THSensorApp1/SConscript')
+	SConscript('linux/HeightSensorApp/SConscript')
+	SConscript('linux/WeightSensorApp/SConscript')
+
+
+

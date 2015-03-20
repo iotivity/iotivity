@@ -64,6 +64,28 @@ DiscomfortIndexSensor_src = [ Glob(DISCOMFORTINDEXSENSOR_DIR + 'src/*.cpp')]
 DiscomfortIndexSensor = DiscomfortIndexSensor_env.SharedLibrary('DiscomfortIndexSensor', DiscomfortIndexSensor_src)
 DiscomfortIndexSensor_env.InstallTarget(DiscomfortIndexSensor, 'libDiscomfortIndexSensor')
 
+
+
+
+######################################################################
+# build BMISensor plugin
+######################################################################
+BMISensor_env = soft_sensor_manager_env.Clone()
+
+BMISensor_env.AppendUnique(CCFLAGS = ['-fPIC'])
+BMISENSOR_DIR = 'SoftSensorPlugin/BMISensor/'
+BMISensor_env.AppendUnique(CPPPATH = [
+		BMISENSOR_DIR + 'include',
+		'SSMCore/src/SSMInterface/'
+		])
+
+BMISensor_src = [ Glob(BMISENSOR_DIR + 'src/*.cpp')]
+
+BMISensor = BMISensor_env.SharedLibrary('BMISensor', BMISensor_src)
+BMISensor_env.InstallTarget(BMISensor, 'libBMISensor')
+
+
+
 ######################################################################
 # build SSM CORE
 ######################################################################
@@ -129,3 +151,5 @@ if target_os == 'linux':
 	Command("SoftSensorDescription.xml", "SoftSensorPlugin/SoftSensorDescription.xml", Copy("$TARGET", "$SOURCE"))
 	Command("THSensorApp","SampleApp/linux/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
 	Command("THSensorApp1","SampleApp/linux/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
+	Command("HeightSensorApp","SampleApp/linux/HeightSensorApp/HeightSensorApp", Copy("$TARGET", "$SOURCE"))
+	Command("WeightSensorApp","SampleApp/linux/WeightSensorApp/WeightSensorApp", Copy("$TARGET", "$SOURCE"))

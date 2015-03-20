@@ -39,6 +39,7 @@ void SSMTestApp::displayMenu()
     printf("   2. Unregister Query \n");
     printf("   3. Register DiscomfortIndexSensor sample query \n");
     printf("   4. Register IndoorTrajectorySensor sample query \n");
+    printf("   5. Register BMISensor sample query \n");
     printf("   9. exit \n");
     printf("===============================================\n");
     printf("   Please Enter the NO: ");
@@ -250,6 +251,16 @@ int main()
                 SSMApp->registerQuery("subscribe Device.IndoorTrajectorySensor "\
                                       "if Device.IndoorTrajectorySensor.trackeeID == \"9059AF16FEF7\"");
                 break;
+
+            case APPMenu::BMI_SAMPLE:
+                SSMApp->registerQuery("subscribe Device.BMISensor "\
+                                      "if Device.BMISensor.BMIresult > 0");
+
+                break;
+
+
+
+
 
             case APPMenu::EXIT:
                 std::cout << "program exit." << std::endl;
