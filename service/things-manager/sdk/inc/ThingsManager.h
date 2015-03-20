@@ -190,6 +190,24 @@ namespace OIC
                 OCResourceHandle resourceHandle);
 
         /**
+         * API for leaving a joined group.
+         *
+         * @param resource - group resource pointer to join.
+         *                   It can be the callback result of findGroup().
+         *
+         * @param collectionResourceType - resource type of a group to leave.
+         * @param resourceHandle - resource handle to leave a group.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult leaveGroup(const std::shared_ptr< OCResource > resource,
+                        std::string collectionResourceType,
+                        OCResourceHandle resourceHandle);
+
+        /**
          * API for deleting a group.
          *
          * @param collectionResourceType - resource type of a group to delete.

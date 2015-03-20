@@ -110,6 +110,9 @@ public:
             OCResourceHandle resourceHandle);
     OCStackResult leaveGroup(std::string collectionResourceType,
             OCResourceHandle resourceHandle);
+    OCStackResult leaveGroup(const std::shared_ptr< OCResource > resource,
+                std::string collectionResourceType,
+                OCResourceHandle resourceHandle);
     void deleteGroup(std::string collectionResourceType);
 
     std::map< std::string, OCResourceHandle > getGroupList();

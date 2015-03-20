@@ -125,6 +125,13 @@ namespace OIC
         return result;
     }
 
+    OCStackResult ThingsManager::leaveGroup(const std::shared_ptr< OCResource > resource,
+                            std::string collectionResourceType,
+                            OCResourceHandle resourceHandle)
+    {
+        return g_groupSync->leaveGroup(resource, collectionResourceType, resourceHandle);
+    }
+
     void ThingsManager::deleteGroup(std::string collectionResourceType)
     {
         g_groupSync->deleteGroup(collectionResourceType);
