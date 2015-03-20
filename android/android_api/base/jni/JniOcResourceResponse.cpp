@@ -29,32 +29,30 @@
 using namespace OC;
 
 JniOcResourceResponse::JniOcResourceResponse
-(std::shared_ptr<OCResourceResponse> resourceResponse) 
+(std::shared_ptr<OCResourceResponse> resourceResponse)
     : m_response(resourceResponse){}
 
 JniOcResourceResponse::~JniOcResourceResponse()
-{
-    this->m_response = NULL;
-}
+{}
 
-void JniOcResourceResponse::setErrorCode(const int eCode) 
-{ 
+void JniOcResourceResponse::setErrorCode(const int eCode)
+{
     this->m_response->setErrorCode(eCode);
 }
 
-std::string JniOcResourceResponse::getNewResourceUri(void) 
-{ 
+std::string JniOcResourceResponse::getNewResourceUri(void)
+{
     this->m_response->getNewResourceUri();
 }
 
-void 
+void
 JniOcResourceResponse::setNewResourceUri(const std::string newResourceUri)
-{ 
+{
     this->m_response->setNewResourceUri(newResourceUri);
 }
 
 void JniOcResourceResponse::setHeaderOptions(const HeaderOptions& headerOptions)
-{ 
+{
     this->m_response->setHeaderOptions(headerOptions);
 }
 
@@ -73,13 +71,13 @@ void JniOcResourceResponse::setResponseResult(const OCEntityHandlerResult& respo
     this->m_response->setResponseResult(responseResult);
 }
 
-void JniOcResourceResponse::setResourceRepresentation(OCRepresentation& rep, 
+void JniOcResourceResponse::setResourceRepresentation(OCRepresentation& rep,
     std::string interfaceStr)
 {
     this->m_response->setResourceRepresentation(rep, interfaceStr);
 }
 
-void JniOcResourceResponse::setResourceRepresentation(OCRepresentation& rep) 
+void JniOcResourceResponse::setResourceRepresentation(OCRepresentation& rep)
 {
     this->m_response->setResourceRepresentation(rep);
 }
@@ -294,11 +292,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_create
     if (env->ExceptionCheck())
     {
         LOGE("Failed to create OcResourceResponse");
-        if (jniResourceResponse)
-        {
-            delete jniResourceResponse;
-            jniResourceResponse = NULL;
-        }
+        delete jniResourceResponse;
     }
 }
 
@@ -311,13 +305,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_dispose
 (JNIEnv *env, jobject thiz)
 {
     LOGD("OcResourceResponse_dispose");
-
     JniOcResourceResponse *resp = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-
-    if (resp)
-    {
-    	delete resp;
-    }
+    delete resp;
 }
 
 

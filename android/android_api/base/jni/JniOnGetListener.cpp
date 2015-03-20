@@ -34,11 +34,6 @@ JniOnGetListener::~JniOnGetListener()
 {
     LOGD("~JniOnGetListener()");
 
-    if (m_ownerResource)
-    {
-        m_ownerResource = NULL;
-    }
-
     if (m_jwListener)
     {
         jint ret;
@@ -46,13 +41,12 @@ JniOnGetListener::~JniOnGetListener()
         if (NULL == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
-        m_jwListener = NULL;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
 
-void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions, 
+void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
     const OCRepresentation& ocRepresentation, const int eCode)
 {
     jint envRet;

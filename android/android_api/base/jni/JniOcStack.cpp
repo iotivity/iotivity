@@ -71,7 +71,7 @@ jmethodID g_mid_OcHeaderOption_get_data = NULL;
 jmethodID g_mid_ObservationInfo_N_ctor = NULL;
 jmethodID g_mid_OcPresenceStatus_get = NULL;
 
-void throwOcException(JNIEnv* env, const char* file, const char* functionName, 
+void throwOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
 {
     std::string codeStr = JniUtils::stackResultToStr(code);
@@ -79,15 +79,15 @@ void throwOcException(JNIEnv* env, const char* file, const char* functionName,
     {
         codeStr = JniUtils::stackResultToStr(JNI_INVALID_VALUE);
     }
-    jobject ex = env->NewObject(g_cls_OcException, 
-        g_mid_OcException_ctor, 
-        env->NewStringUTF(codeStr.c_str()), 
+    jobject ex = env->NewObject(g_cls_OcException,
+        g_mid_OcException_ctor,
+        env->NewStringUTF(codeStr.c_str()),
         env->NewStringUTF(message));
 
-    env->CallVoidMethod(ex, 
-        g_mid_OcException_setNativeExceptionLocation, 
-        env->NewStringUTF(file), 
-        env->NewStringUTF(functionName), 
+    env->CallVoidMethod(ex,
+        g_mid_OcException_setNativeExceptionLocation,
+        env->NewStringUTF(file),
+        env->NewStringUTF(functionName),
         line);
 
     env->Throw((jthrowable)ex);
@@ -228,7 +228,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 
     g_mid_OcResourceRequest_N_ctor = env->GetMethodID(g_cls_OcResourceRequest, "<init>", "(J)V");
     if (!g_mid_OcResourceRequest_N_ctor) return JNI_ERR;
-    
+
     //OcResourceResponse
     clazz = env->FindClass("org/iotivity/base/OcResourceResponse");
     if (!clazz) return JNI_ERR;
@@ -267,7 +267,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     if (!clazz) return JNI_ERR;
     g_cls_OcPresenceStatus = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
-    g_mid_OcPresenceStatus_get = env->GetStaticMethodID(g_cls_OcPresenceStatus, "get", 
+    g_mid_OcPresenceStatus_get = env->GetStaticMethodID(g_cls_OcPresenceStatus, "get",
         "(Ljava/lang/String;)Lorg/iotivity/base/OcPresenceStatus;");
     if (!g_mid_OcPresenceStatus_get) return JNI_ERR;
 

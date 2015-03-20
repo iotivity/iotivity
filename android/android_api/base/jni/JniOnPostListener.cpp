@@ -34,11 +34,6 @@ JniOnPostListener::~JniOnPostListener()
 {
     LOGD("~JniOnPostListener()");
 
-    if (m_ownerResource)
-    {
-        m_ownerResource = NULL;
-    }
-
     if (m_jwListener)
     {
         jint ret;
@@ -46,7 +41,6 @@ JniOnPostListener::~JniOnPostListener()
         if (NULL == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
-        m_jwListener = NULL;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
@@ -58,7 +52,7 @@ void JniOnPostListener::onPostCallback(const HeaderOptions& headerOptions,
     jint envRet;
     JNIEnv *env = GetJNIEnv(envRet);
     if (NULL == env) return;
- 
+
     if (OC_STACK_OK != eCode && OC_STACK_RESOURCE_CREATED != eCode)
     {
         ThrowOcException(eCode, "PostCallback has failed");

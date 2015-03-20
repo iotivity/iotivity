@@ -21,20 +21,30 @@
 */
 
 #include "JniOcStack.h"
+#include "OCRepresentation.h"
 using namespace std;
 
 class JniUtils
 {
 public:
-    static void convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap, OC::QueryParamsMap &map);
+    static void convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap, 
+        OC::QueryParamsMap &map);
     static jobject convertQueryParamsMapToJavaMap(JNIEnv *env, const OC::QueryParamsMap &map);
 
     static jobject convertStrVectorToJavaStrList(JNIEnv *env, std::vector<string> &vector);
-    static void convertJavaStrArrToStrVector(JNIEnv *env, jobjectArray jStrArr, std::vector<string> &vector);
+    static void convertJavaStrArrToStrVector(JNIEnv *env, jobjectArray jStrArr, 
+        std::vector<string> &vector);
 
-    static void convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHeaderOptions, OC::HeaderOptions& headerOptions);
-    static jobject convertHeaderOptionsVectorToJavaList(JNIEnv *env, const OC::HeaderOptions& headerOptions);
+    static void convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHeaderOptions, 
+        OC::HeaderOptions& headerOptions);
+    static jobject convertHeaderOptionsVectorToJavaList(JNIEnv *env, 
+        const OC::HeaderOptions& headerOptions);
 
+    static void convertJavaRepresentationArrToVector(JNIEnv *env, 
+        jobjectArray jRepresentationArray, 
+        std::vector<OC::OCRepresentation>& representationVector);
+    static jobjectArray convertRepresentationVectorToJavaArray(JNIEnv *env,
+        const std::vector<OC::OCRepresentation>& representationVector);
 
     static OC::ServiceType getServiceType(JNIEnv *env, int type)
     {

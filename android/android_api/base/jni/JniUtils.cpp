@@ -21,12 +21,13 @@
 */
 
 #include "JniUtils.h"
+#include "JniOcRepresentation.h"
 using namespace std;
 
 jobject JniUtils::convertStrVectorToJavaStrList(JNIEnv *env, std::vector<string> &vector)
 {
     jobject jList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
-    for (int i = 0; i < vector.size(); i++)
+    for (size_t i = 0; i < vector.size(); i++)
     {
         jstring str = env->NewStringUTF(vector[i].c_str());
         env->CallBooleanMethod(jList, g_mid_LinkedList_add_object, str);
@@ -52,7 +53,7 @@ void JniUtils::convertJavaStrArrToStrVector(JNIEnv *env, jobjectArray jStrArr, s
     }
 }
 
-void JniUtils::convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHeaderOptions, 
+void JniUtils::convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHeaderOptions,
     OC::HeaderOptions &headerOptions)
 {
     if (!jHeaderOptions) return;
@@ -81,7 +82,7 @@ void JniUtils::convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHe
 jobject JniUtils::convertHeaderOptionsVectorToJavaList(JNIEnv *env, const OC::HeaderOptions& headerOptions)
 {
     jobject jHeaderOptionList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
-    for (int i = 0; i < headerOptions.size(); i++)
+    for (size_t i = 0; i < headerOptions.size(); i++)
     {
         jobject jHeaderOption = env->NewObject(
             g_cls_OcHeaderOption,
@@ -129,8 +130,8 @@ jobject JniUtils::convertQueryParamsMapToJavaMap(JNIEnv *env, const OC::QueryPar
         string key = it->first;
         string value = it->second;
 
-        env->CallObjectMethod(hashMap, 
-            g_mid_HashMap_put, 
+        env->CallObjectMethod(hashMap,
+            g_mid_HashMap_put,
             env->NewStringUTF(key.c_str()),
             env->NewStringUTF(value.c_str()));
     }
@@ -138,3 +139,37 @@ jobject JniUtils::convertQueryParamsMapToJavaMap(JNIEnv *env, const OC::QueryPar
     return hashMap;
 }
 
+void JniUtils::convertJavaRepresentationArrToVector(JNIEnv *env,
+    jobjectArray jRepresentationArray,
+    std::vector<OC::OCRepresentation>& representationVector)
+{
+    if (!jRepresentationArray) return;
+
+    int len = env->GetArrayLength(jRepresentationArray);
+
+    for (int i = 0; i < len; i++)
+    {
+        jobject jRep = env->GetObjectArrayElement(jRepresentationArray, i);
+        OC::OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, jRep);
+        representationVector.push_back(*rep);
+        env->DeleteLocalRef(jRep);
+    }
+}
+
+jobjectArray JniUtils::convertRepresentationVectorToJavaArray(JNIEnv *env,
+    const std::vector<OC::OCRepresentation>& representationVector)
+{
+    jsize len = static_cast<jsize>(representationVector.size());
+    jobjectArray repArr = env->NewObjectArray(len, g_cls_OcRepresentation, NULL);
+    for (jsize i = 0; i < len; i++)
+    {
+        OCRepresentation* rep = new OCRepresentation(representationVector[i]);
+        jlong handle = reinterpret_cast<jlong>(rep);
+        jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool, handle, true);
+
+        env->SetObjectArrayElement(repArr, i, jRepresentation);
+        env->DeleteLocalRef(jRepresentation);
+    }
+
+    return repArr;
+}

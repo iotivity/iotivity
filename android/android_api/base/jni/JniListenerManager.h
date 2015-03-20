@@ -28,7 +28,7 @@
 
 class JniOcResource;
 
-template <class T> 
+template <class T>
 class JniListenerManager
 {
 public:

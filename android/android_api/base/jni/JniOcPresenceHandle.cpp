@@ -30,16 +30,8 @@ JniOcPresenceHandle::~JniOcPresenceHandle()
 {
     LOGD("~JniOcPresenceHandle()");
 
-    if (m_jniListener)
-    {
-        delete m_jniListener;
-        m_jniListener = NULL;
-    }
-
-    if (m_presenceHandle)
-    {
-        m_presenceHandle = NULL;
-    }
+    delete m_jniListener;
+    m_presenceHandle = nullptr;
 }
 
 JniOcPresenceHandle* JniOcPresenceHandle::getJniOcPresenceHandlePtr
@@ -78,9 +70,5 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPresenceHandle_dispose
 {
     LOGD("OcPresenceHandle_dispose");
     JniOcPresenceHandle *presenceHandle = JniOcPresenceHandle::getJniOcPresenceHandlePtr(env, thiz);
-
-    if (presenceHandle)
-    {
-        delete presenceHandle;
-    }
+    delete presenceHandle;
 }

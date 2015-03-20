@@ -86,6 +86,38 @@ public:
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
+    * Method:    getJSONRepresentation
+    * Signature: ()Ljava/lang/String;
+    */
+    JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getJSONRepresentation
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    addChild
+    * Signature: (Lorg/iotivity/base/OcRepresentation;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_addChild
+        (JNIEnv *, jobject, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    clearChildren
+    * Signature: ()V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_clearChildren
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    getChildrenArray
+    * Signature: ()[Lorg/iotivity/base/OcRepresentation;
+    */
+    JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcRepresentation_getChildrenArray
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
     * Method:    getUri
     * Signature: ()Ljava/lang/String;
     */
@@ -102,10 +134,82 @@ public:
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
+    * Method:    getResourceTypes
+    * Signature: ()Ljava/util/List;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getResourceTypes
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setResourceTypeArray
+    * Signature: ([Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setResourceTypeArray
+        (JNIEnv *, jobject, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    getResourceInterfaces
+    * Signature: ()Ljava/util/List;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getResourceInterfaces
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setResourceInterfaceArray
+    * Signature: ([Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setResourceInterfaceArray
+        (JNIEnv *, jobject, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    isEmpty
+    * Signature: ()Z
+    */
+    JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_isEmpty
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    size
+    * Signature: ()I
+    */
+    JNIEXPORT jint JNICALL Java_org_iotivity_base_OcRepresentation_size
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    remove
+    * Signature: (Ljava/lang/String;)Z
+    */
+    JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_remove
+        (JNIEnv *, jobject, jstring);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
     * Method:    hasAttribute
     * Signature: (Ljava/lang/String;)Z
     */
     JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_hasAttribute
+        (JNIEnv *, jobject, jstring);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setNull
+    * Signature: (Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setNull
+        (JNIEnv *, jobject, jstring);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    isNull
+    * Signature: (Ljava/lang/String;)Z
+    */
+    JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_isNull
         (JNIEnv *, jobject, jstring);
 
     /*

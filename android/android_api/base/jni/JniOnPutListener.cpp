@@ -32,10 +32,6 @@ JniOnPutListener::JniOnPutListener(JNIEnv *env, jobject jListener, JniOcResource
 JniOnPutListener::~JniOnPutListener()
 {
     LOGD("~JniOnPutListener()");
-    if (m_ownerResource)
-    {
-        m_ownerResource = NULL;
-    }
 
     if (m_jwListener)
     {
@@ -44,7 +40,6 @@ JniOnPutListener::~JniOnPutListener()
         if (NULL == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
-        m_jwListener = NULL;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }

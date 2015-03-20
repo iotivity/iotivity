@@ -33,11 +33,6 @@ JniOnDeleteListener::~JniOnDeleteListener()
 {
     LOGD("~JniOnDeleteListener()");
 
-    if (m_ownerResource)
-    {
-        m_ownerResource = NULL;
-    }
-
     if (m_jwListener)
     {
         jint ret;
@@ -45,7 +40,6 @@ JniOnDeleteListener::~JniOnDeleteListener()
         if (NULL == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
-        m_jwListener = NULL;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }

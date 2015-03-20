@@ -40,7 +40,6 @@ JniEntityHandler::~JniEntityHandler()
         if (NULL == env) return;
 
         env->DeleteGlobalRef(m_jListener);
-        m_jListener = NULL;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }

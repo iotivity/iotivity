@@ -553,16 +553,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_get3
     jobject jQueryParamsMap, jobject jListener, jint jQoS)
 {
     LOGD("OcResource_get");
-    string resourceType;
-    if (jResourceType)
-    {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
-    }
-    string resourceInterface;
-    if (jResourceInterface)
-    {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
-    }
     if (!jQueryParamsMap)
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
@@ -572,6 +562,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_get3
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, "onGetListener cannot be null");
         return;
+    }
+    string resourceType;
+    if (jResourceType)
+    {
+        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+    }
+    string resourceInterface;
+    if (jResourceInterface)
+    {
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
 
@@ -624,9 +624,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_put
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
     OCStackResult result = resource->put(
-        env, 
-        *representation, 
-        qpm, 
+        env,
+        *representation,
+        qpm,
         jListener);
 
     if (OC_STACK_OK != result)
@@ -747,16 +747,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_put3
     jobject jQueryParamsMap, jobject jListener, jint jQoS)
 {
     LOGD("OcResource_put");
-    string resourceType;
-    if (jResourceType)
-    {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
-    }
-    string resourceInterface;
-    if (jResourceInterface)
-    {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
-    }
     if (!jRepresentation)
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, "representation cannot be null");
@@ -772,6 +762,17 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_put3
         ThrowOcException(OC_STACK_INVALID_PARAM, "onPutListener cannot be null");
         return;
     }
+    string resourceType;
+    if (jResourceType)
+    {
+        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+    }
+    string resourceInterface;
+    if (jResourceInterface)
+    {
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+    }
+
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
 
@@ -889,16 +890,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post2
     jobject jRepresentation, jobject jQueryParamsMap, jobject jListener)
 {
     LOGD("OcResource_post");
-    string resourceType;
-    if (jResourceType)
-    {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
-    }
-    string resourceInterface;
-    if (jResourceInterface)
-    {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
-    }
     if (!jRepresentation)
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, "representation cannot be null");
@@ -914,6 +905,17 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post2
         ThrowOcException(OC_STACK_INVALID_PARAM, "onPostListener cannot be null");
         return;
     }
+    string resourceType;
+    if (jResourceType)
+    {
+        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+    }
+    string resourceInterface;
+    if (jResourceInterface)
+    {
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+    }
+
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
 
@@ -945,16 +947,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post3
     jobject jRepresentation, jobject jQueryParamsMap, jobject jListener, jint jQoS)
 {
     LOGD("OcResource_post");
-    string resourceType;
-    if (jResourceType)
-    {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
-    }
-    string resourceInterface;
-    if (jResourceInterface)
-    {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
-    }
     if (!jRepresentation)
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, "representation cannot be null");
@@ -970,6 +962,17 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post3
         ThrowOcException(OC_STACK_INVALID_PARAM, "onPostListener cannot be null");
         return;
     }
+    string resourceType;
+    if (jResourceType)
+    {
+        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+    }
+    string resourceInterface;
+    if (jResourceInterface)
+    {
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+    }
+
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
 
@@ -1272,9 +1275,5 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_dispose
 {
     LOGD("OcResource_dispose");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (resource)
-    {
-        delete resource;
-        resource = NULL;
-    }
+    delete resource;
 }

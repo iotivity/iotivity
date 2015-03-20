@@ -38,7 +38,6 @@ JniOnDeviceInfoListener::~JniOnDeviceInfoListener()
         if (NULL == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
-        m_jwListener = NULL;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }

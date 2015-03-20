@@ -33,10 +33,6 @@ JniOnObserveListener::JniOnObserveListener(JNIEnv *env, jobject jListener, JniOc
 JniOnObserveListener::~JniOnObserveListener()
 {
     LOGD("~JniOnObserveListener()");
-    if (m_ownerResource)
-    {
-        m_ownerResource = NULL;
-    }
 
     if (m_jwListener)
     {
@@ -45,13 +41,12 @@ JniOnObserveListener::~JniOnObserveListener()
         if (NULL == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
-        m_jwListener = NULL;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
 
-void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions, 
+void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
     const OCRepresentation& ocRepresentation, const int& eCode, const int& sequenceNumber)
 {
     jint envRet;
@@ -66,7 +61,7 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return;
     }
-    
+
     jobject jHeaderOptionList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
     for (int i = 0; i < headerOptions.size(); i++)
     {

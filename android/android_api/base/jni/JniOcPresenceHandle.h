@@ -34,6 +34,8 @@ public:
 
     JniOcPresenceHandle(JniOnPresenceListener* jniListener, OCPresenceHandle presenceHandle);
     ~JniOcPresenceHandle();
+    JniOcPresenceHandle(const JniOcPresenceHandle &) = delete;
+    void operator=(const JniOcPresenceHandle &) = delete;
 
     static JniOcPresenceHandle* getJniOcPresenceHandlePtr(JNIEnv *env, jobject thiz);
 

@@ -37,7 +37,7 @@
 #define JNI_EXCEPTION 1000
 #define JNI_NO_NATIVE_POINTER 1001
 #define JNI_INVALID_VALUE 1002
- 
+
 void throwOcException(JNIEnv* env, const char* file, const char* functionName, const int line, const int code, const char* message);
 #define ThrowOcException(code, message) throwOcException (env, __FILE__, __func__,__LINE__, code, message)
 

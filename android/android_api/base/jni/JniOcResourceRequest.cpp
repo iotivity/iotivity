@@ -32,65 +32,63 @@ JniOcResourceRequest::JniOcResourceRequest(const std::shared_ptr<OCResourceReque
 {}
 
 JniOcResourceRequest::~JniOcResourceRequest()
-{
-    m_request = NULL;
-}
+{}
 
-std::string 
+std::string
 JniOcResourceRequest::getRequestType()
 {
     return m_request->getRequestType();
 }
 
-const QueryParamsMap& 
-JniOcResourceRequest::getQueryParameters() const 
+const QueryParamsMap&
+JniOcResourceRequest::getQueryParameters() const
 { 
     return m_request->getQueryParameters();
 }
 
-int 
-JniOcResourceRequest::getRequestHandlerFlag() const 
+int
+JniOcResourceRequest::getRequestHandlerFlag() const
 { 
     return m_request->getRequestHandlerFlag();
 }
 
-const OCRepresentation& 
-JniOcResourceRequest::getResourceRepresentation() const 
+const OCRepresentation&
+JniOcResourceRequest::getResourceRepresentation() const
 { 
     return m_request->getResourceRepresentation();
 }
 
-const ObservationInfo& 
-JniOcResourceRequest::getObservationInfo() const 
+const ObservationInfo&
+JniOcResourceRequest::getObservationInfo() const
 { 
     return m_request->getObservationInfo();
 }
 
-void 
+void
 JniOcResourceRequest::setResourceUri(const std::string resourceUri)
 {
     m_request->setResourceUri(resourceUri);
 }
 
-std::string 
+std::string
 JniOcResourceRequest::getResourceUri(void)
 {
     return m_request->getResourceUri();
 }
 
-const HeaderOptions& 
-JniOcResourceRequest::getHeaderOptions() const 
+const HeaderOptions&
+JniOcResourceRequest::getHeaderOptions() const
 { 
     return m_request->getHeaderOptions();
 }
 
-const OCRequestHandle& 
+const OCRequestHandle&
 JniOcResourceRequest::getRequestHandle() const
 {
     return m_request->getRequestHandle();
 }
 
-const OCResourceHandle& 
+const OCResourceHandle&
 JniOcResourceRequest::getResourceHandle() const
 {
     return m_request->getResourceHandle();
@@ -138,7 +136,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResourceRequest_getQueryParam
     LOGD("OcResourceRequest_getQueryParameters");
     JniOcResourceRequest *request = getJniOcResourceRequestPtr(env, thiz);
     return JniUtils::convertQueryParamsMapToJavaMap(
-        env, 
+        env,
         request->getQueryParameters());
 }
 
@@ -190,7 +188,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResourceRequest_getObservatio
     JniOcResourceRequest *request = getJniOcResourceRequestPtr(env, thiz);
     ObservationInfo oInfo = request->getObservationInfo();
 
-    jobject jObservationInfo = env->NewObject(g_cls_ObservationInfo, g_mid_ObservationInfo_N_ctor, 
+    jobject jObservationInfo = env->NewObject(g_cls_ObservationInfo, g_mid_ObservationInfo_N_ctor,
         (jint)oInfo.action, (jbyte)oInfo.obsId);
 
     if (env->ExceptionCheck())
@@ -245,7 +243,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResourceRequest_getHeaderOpti
     LOGD("OcResourceRequest_getHeaderOptions");
     JniOcResourceRequest *request = getJniOcResourceRequestPtr(env, thiz);
     return JniUtils::convertHeaderOptionsVectorToJavaList(
-        env, 
+        env,
         request->getHeaderOptions());
 }
 
@@ -269,7 +267,6 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResourceRequest_getRequestHan
     {
         LOGE("Failed to create OcRequestHandle");
         delete jniHandle;
-        jniHandle = NULL;
         return NULL;
     }
 
@@ -298,7 +295,6 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResourceRequest_getResourceHa
     {
         LOGE("Failed to create OcResourceHandle");
         delete jniHandle;
-        jniHandle = NULL;
         return NULL;
     }
 
@@ -315,9 +311,5 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceRequest_dispose
 {
     LOGD("OcResourceRequest_dispose");
     JniOcResourceRequest *request = getJniOcResourceRequestPtr(env, thiz);
-
-    if (request)
-    {
-        delete request;
-    }
+    delete request;
 }

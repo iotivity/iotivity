@@ -40,13 +40,12 @@ JniOnPresenceListener::~JniOnPresenceListener()
         if (NULL == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
-        m_jwListener = NULL;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
 
-void JniOnPresenceListener::onPresenceCallback(OCStackResult result, const unsigned int nonce, 
+void JniOnPresenceListener::onPresenceCallback(OCStackResult result, const unsigned int nonce,
     const std::string& hostAddress)
 {
     LOGI("JniOnPresenceListener::onPresenceCallback");
@@ -63,7 +62,7 @@ void JniOnPresenceListener::onPresenceCallback(OCStackResult result, const unsig
         return;
     }
 
-    jobject jPresenceStatus = env->CallStaticObjectMethod(g_cls_OcPresenceStatus, 
+    jobject jPresenceStatus = env->CallStaticObjectMethod(g_cls_OcPresenceStatus,
         g_mid_OcPresenceStatus_get, env->NewStringUTF(enumField.c_str()));
 
     jobject jListener = env->NewLocalRef(m_jwListener);
@@ -74,10 +73,10 @@ void JniOnPresenceListener::onPresenceCallback(OCStackResult result, const unsig
     }
 
     jclass clsL = env->GetObjectClass(jListener);
-    jmethodID midL = env->GetMethodID(clsL, "onPresence", 
+    jmethodID midL = env->GetMethodID(clsL, "onPresence",
         "(Lorg/iotivity/base/OcPresenceStatus;ILjava/lang/String;)V");
 
-    env->CallVoidMethod(jListener, midL, jPresenceStatus, 
+    env->CallVoidMethod(jListener, midL, jPresenceStatus,
         (jint)nonce, env->NewStringUTF(hostAddress.c_str()));
 
     env->DeleteLocalRef(jListener);

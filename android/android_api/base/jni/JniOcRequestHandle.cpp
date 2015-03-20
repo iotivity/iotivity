@@ -28,10 +28,7 @@ JniOcRequestHandle::~JniOcRequestHandle()
 {
     LOGD("~JniOcRequestHandle()");
 
-    if (m_requestHandle)
-    {
-        m_requestHandle = NULL;
-    }
+    m_requestHandle = NULL;
 }
 
 JniOcRequestHandle* JniOcRequestHandle::getJniOcRequestHandlePtr
@@ -65,9 +62,5 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRequestHandle_dispose
 {
     LOGD("OcRequestHandle_dispose");
     JniOcRequestHandle *handle = JniOcRequestHandle::getJniOcRequestHandlePtr(env, thiz);
-
-    if (handle)
-    {
-        delete handle;
-    }
+    delete handle;
 }

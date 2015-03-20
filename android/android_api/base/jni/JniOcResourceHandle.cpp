@@ -31,10 +31,7 @@ JniOcResourceHandle::~JniOcResourceHandle()
 {
     LOGD("~JniOcResourceHandle()");
 
-    if (m_resourceHandle)
-    {
-        m_resourceHandle = NULL;
-    }
+    m_resourceHandle = NULL;
 }
 
 JniOcResourceHandle* JniOcResourceHandle::getJniOcResourceHandlePtr
@@ -68,9 +65,5 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceHandle_dispose
 {
     LOGD("OcResourceHandle_dispose");
     JniOcResourceHandle *resourceHandle = JniOcResourceHandle::getJniOcResourceHandlePtr(env, thiz);
-
-    if (resourceHandle)
-    {
-        delete resourceHandle;
-    }
+    delete resourceHandle;
 }

@@ -1079,7 +1079,6 @@ public class SmokeTest extends InstrumentationTestCase {
         }
     }
 
-
     private OcRepresentation getRepresentation(int value) {
         OcRepresentation rep = new OcRepresentation();
         rep.setValueInt("power", value);
