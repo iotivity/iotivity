@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -17,13 +17,6 @@
  * limitations under the License.
  *
  ******************************************************************/
- /**
-  * @file    SSMInterface.h
-  *
-  * @brief    This file provides a set of classes for DataReader, QueryEngine and SSM utility functions
-  *
-  */
-
 #ifndef _SSMInterface_H_
 #define _SSMInterface_H_
 

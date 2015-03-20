@@ -17,7 +17,6 @@
  * limitations under the License.
  *
  ******************************************************************/
-
 #include "SSMResourceServer.h"
 #include "SSMCore.h"
 #include "Common/PlatformLayer.h"
