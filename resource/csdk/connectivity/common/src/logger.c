@@ -211,60 +211,68 @@ void OICLogInit()
  * @param tag    - Module name
  * @param logStr - log string
  */
-/*
- void OCLogString(LogLevel level, PROGMEM const char * tag, const char * logStr) {
- if (!logStr || !tag) {
- return;
+ void OICLogString(LogLevel level, PROGMEM const char * tag,
+         const char * logStr)
+ {
+     if (!logStr || !tag)
+     {
+         return;
+     }
+
+     char buffer[LINE_BUFFER_SIZE] = {0};
+     strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+     Serial.print(buffer);
+
+     char c = NULL;
+     Serial.print(F(": "));
+     while ((c = pgm_read_byte(tag)))
+     {
+         Serial.write(c);
+         tag++;
+     }
+     Serial.print(F(": "));
+
+     Serial.println(logStr);
  }
 
- char buffer[LINE_BUFFER_SIZE] = {0};
- strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
- Serial.print(buffer);
-
- char c;
- Serial.print(F(": "));
- while ((c = pgm_read_byte(tag))) {
- Serial.write(c);
- tag++;
- }
- Serial.print(F(": "));
-
- Serial.println(logStr);
- }
- */
 /**
- * Output the contents of the specified buffer (in hex) with the specified priority level.
+ * Output the contents of the specified buffer (in hex) with the specified
+ * priority level.
  *
  * @param level      - DEBUG, INFO, WARNING, ERROR, FATAL
  * @param tag        - Module name
  * @param buffer     - pointer to buffer of bytes
  * @param bufferSize - max number of byte in buffer
  */
+ void OICLogBuffer(LogLevel level, PROGMEM const char * tag,
+         const uint8_t * buffer, uint16_t bufferSize)
+ {
+     if (!buffer || !tag || (bufferSize == 0))
+     {
+         return;
+     }
 
-/*
- void OCLogBuffer(LogLevel level, PROGMEM const char * tag, const uint8_t * buffer, uint16_t bufferSize) {
- if (!buffer || !tag || (bufferSize == 0)) {
- return;
+     char lineBuffer[LINE_BUFFER_SIZE] = {0};
+     uint8_t lineIndex = 0;
+     for (uint8_t i = 0; i < bufferSize; i++)
+     {
+         // Format the buffer data into a line
+         sprintf(&lineBuffer[lineIndex++ * 3], "%02X ", buffer[i]);
+         // Output 16 values per line
+         if (((i+1)%16) == 0)
+         {
+             OICLogString(level, tag, lineBuffer);
+             memset(lineBuffer, 0, sizeof lineBuffer);
+             lineIndex = 0;
+         }
+     }
+     // Output last values in the line, if any
+     if (bufferSize % 16)
+     {
+         OICLogString(level, tag, lineBuffer);
+     }
  }
 
- char lineBuffer[LINE_BUFFER_SIZE] = {0};
- uint8_t lineIndex = 0;
- for (uint8_t i = 0; i < bufferSize; i++) {
- // Format the buffer data into a line
- sprintf(&lineBuffer[lineIndex++ * 3], "%02X ", buffer[i]);
- // Output 16 values per line
- if (((i+1)%16) == 0) {
- OCLogString(level, tag, lineBuffer);
- memset(lineBuffer, 0, sizeof lineBuffer);
- lineIndex = 0;
- }
- }
- // Output last values in the line, if any
- if (bufferSize % 16) {
- OCLogString(level, tag, lineBuffer);
- }
- }
- */
 /**
  * Output a log string with the specified priority level.
  * Only defined for Arduino.  Uses PROGMEM strings
