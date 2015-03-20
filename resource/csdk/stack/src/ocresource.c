@@ -195,7 +195,7 @@ BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
     if (resourcePtr)
     {
         encodeRes = 0;
-        if (filterOn == STACK_RES_DISCOVERY_RT_FILTER)
+        if ((filterOn == STACK_RES_DISCOVERY_RT_FILTER) && filterValue)
         {
             resourceTypePtr = resourcePtr->rsrcType;
             while (resourceTypePtr)
@@ -208,7 +208,7 @@ BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
                 resourceTypePtr = resourceTypePtr->next;
             }
         }
-        else if (filterOn == STACK_RES_DISCOVERY_IF_FILTER)
+        else if ((filterOn == STACK_RES_DISCOVERY_IF_FILTER) && filterValue)
         {
             interfacePtr = resourcePtr->rsrcInterface;
             while (interfacePtr)
@@ -241,7 +241,7 @@ BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
                                    OC_RSRVD_SERVER_INSTANCE_ID,
                                    cJSON_CreateString(OCGetServerInstanceIDString()));
 
-            cJSON_AddItemToObject (resObj, "prop", propObj = cJSON_CreateObject());
+            cJSON_AddItemToObject (resObj, OC_RSRVD_PROPERTY, propObj = cJSON_CreateObject());
             // Add resource types
             cJSON_AddItemToObject (propObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
             resourceTypePtr = resourcePtr->rsrcType;
@@ -313,11 +313,11 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
     {
         char *jsonStr = NULL;
         uint16_t jsonLen = 0;
-        cJSON *repObj = cJSON_GetObjectItem(savedDeviceInfo, "rep");
+        cJSON *repObj = cJSON_GetObjectItem(savedDeviceInfo, OC_RSRVD_REPRESENTATION);
 
         OC_LOG(INFO, TAG, PCF("Entering BuildVirtualResourceResponseForDevice"));
 
-        if (filterOn == STACK_DEVICE_DISCOVERY_DI_FILTER)
+        if ((filterOn == STACK_DEVICE_DISCOVERY_DI_FILTER) && filterValue)
         {
             if((cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_ID) != NULL) &&
                     strcmp(cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_ID)->valuestring, filterValue)
@@ -326,7 +326,7 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
                 ret = OC_STACK_OK;
             }
         }
-        else if (filterOn == STACK_DEVICE_DISCOVERY_DN_FILTER)
+        else if ((filterOn == STACK_DEVICE_DISCOVERY_DN_FILTER) && filterValue)
         {
             if((cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_NAME) != NULL) &&
                     strcmp(cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_NAME)->valuestring,

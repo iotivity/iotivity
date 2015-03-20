@@ -103,7 +103,8 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     //Note: OCServerRequest includes 1 byte for the JSON Payload.  payloadSize is calculated
     //as the required length of the string, so this will result in enough room for the
     //null terminator as well.
-    serverRequest = (OCServerRequest *) OCCalloc(1, sizeof(OCServerRequest) + reqTotalSize - 1);
+    serverRequest = (OCServerRequest *) OCCalloc(1, sizeof(OCServerRequest) +
+        (reqTotalSize ? reqTotalSize : 1) - 1);
     VERIFY_NON_NULL(serverRequest);
 
     serverRequest->coapID = coapID;
@@ -130,7 +131,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         memcpy(serverRequest->rcvdVendorSpecificHeaderOptions, rcvdVendorSpecificHeaderOptions,
             MAX_HEADER_OPTIONS * sizeof(OCHeaderOption));
     }
-    if(reqJSONPayload)
+    if(reqJSONPayload && reqTotalSize)
     {
         // destination is at least 1 greater than the source, so a NULL always exists in the
         // last character
@@ -300,7 +301,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     responseEndpoint.resourceUri      = (CAURI_t) serverRequest->resourceUrl;
     responseEndpoint.addressInfo      = serverRequest->addressInfo;
     responseEndpoint.connectivityType = serverRequest->connectivityType;
-    responseEndpoint.isSecured        =  serverRequest->secured;
+    responseEndpoint.isSecured        = serverRequest->secured;
 
     // Copy the info
     switch (ehResponse->ehResult)

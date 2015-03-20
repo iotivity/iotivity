@@ -88,9 +88,7 @@ typedef struct
 
     /** Remote Endpoint address **/
     //////////////////////////////////////////////////////////
-    // TODO: Consider moving these member to CoAP
-    // IP address & port of client registered for observe
-    // TODO: YK bundle this up as endpoint
+    // TODO: bundle this up as endpoint
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;

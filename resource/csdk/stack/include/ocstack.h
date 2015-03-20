@@ -49,15 +49,11 @@ extern "C" {
 // Typedefs
 //-----------------------------------------------------------------------------
 
-/** This would need to be modified for specific platforms and specific
- *  technologies
- */
-#define DEV_ADDR_SIZE_MAX (16)
 
 /**
  * Data structure to encapsulate IPv4/IPv6/Contiki/lwIP device addresses
  *
-*/
+ */
 typedef struct OCDevAddr
 {
     uint32_t     size;                    /**< length of the address stored in addr field. */

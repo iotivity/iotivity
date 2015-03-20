@@ -31,6 +31,7 @@
 #define OC_RSRVD_OC                     "oc"
 #define OC_RSRVD_PAYLOAD                "payload"
 #define OC_RSRVD_HREF                   "href"
+#define OC_RSRVD_PROPERTY               "prop"
 #define OC_RSRVD_REPRESENTATION         "rep"
 #define OC_RSRVD_CONTENT_TYPE           "ct"
 #define OC_RSRVD_RESOURCE_TYPE          "rt"

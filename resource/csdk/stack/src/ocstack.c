@@ -1948,7 +1948,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         // repeated URLs, which are not allowed.  If a repeat is found, exit with an error
         while (pointer)
         {
-            if (strcmp(uri, pointer->uri) == 0)
+            if (strncmp(uri, pointer->uri, MAX_URI_LENGTH) == 0)
             {
                 OC_LOG(ERROR, TAG, PCF("URI already in use"));
                 return OC_STACK_INVALID_PARAM;
