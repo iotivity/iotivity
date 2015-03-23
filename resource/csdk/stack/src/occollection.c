@@ -37,7 +37,8 @@
 
 #define TAG PCF("occollection")
 
-#define NUM_PARAM_IN_QUERY  2
+#define NUM_PARAM_IN_QUERY   2 // The expected number of parameters in a query
+#define NUM_FIELDS_IN_QUERY  2 // The expected number of fields in a query
 
 static OCStackResult CheckRTParamSupport(const OCResource* resource, const char* rtPtr)
 {
@@ -142,14 +143,14 @@ ValidateQuery (const char *query, OCResourceHandle resource,
                 innerToken = strtok_r (NULL, "=", &endToken);
             }
         }
-        if (numParam != 2)
+        if (numParam != NUM_PARAM_IN_QUERY)
         {
             // Query parameter should be of the form if=<string>. String should not have & or =
             return OC_STACK_INVALID_QUERY;
         }
         token = strtok_r (NULL, "&", &endStr);
     }
-    if (numFields > NUM_PARAM_IN_QUERY)
+    if (numFields > NUM_FIELDS_IN_QUERY)
     {
         // current release supports one IF value, one RT value and no other params
         return OC_STACK_INVALID_QUERY;
