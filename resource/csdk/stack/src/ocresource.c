@@ -170,9 +170,9 @@ static OCStackResult ValidateUrlQuery (char *url, char *query,
 
 
 OCStackResult
-BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
-                        char *filterValue, char * out, uint16_t *remaining,
-                        CAConnectivityType_t connType )
+BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
+                       const char *filterValue, char *out, uint16_t *remaining,
+                       CAConnectivityType_t connType )
 {
     if(!resourcePtr || !out  || !remaining)
     {
@@ -448,7 +448,7 @@ OCResource *FindResourceByUri(const char* resourceUri)
 }
 
 
-OCStackResult DetermineResourceHandling (OCServerRequest *request,
+OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          ResourceHandling *handling,
                                          OCResource **resource)
 {

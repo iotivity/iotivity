@@ -127,7 +127,7 @@ bool IsVirtualResource(const char* resourceUri);
  * Parameter @ref handling returns by-reference the type of resource handling
  * required by the internal stack based on the specified @ref request.
  */
-OCStackResult DetermineResourceHandling (OCServerRequest *request,
+OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          ResourceHandling *handling,
                                          OCResource **resource);
 
@@ -153,9 +153,9 @@ void DeleteDeviceInfo();
 /**
  * Prepares a JSON string for response.
  */
-OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr,
+OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                            uint8_t filterOn,
-                                           char *filterValue,
+                                           const char *filterValue,
                                            char * out,
                                            uint16_t *remaining,
                                            CAConnectivityType_t connType);
