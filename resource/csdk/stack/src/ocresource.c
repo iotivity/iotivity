@@ -18,6 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Defining _POSIX_C_SOURCE macro with 200112L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1-2001 base
+// specification (excluding the XSI extension).
+// For POSIX.1-2001 base specification,
+// Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
 #include <string.h>
 #include "ocstack.h"
