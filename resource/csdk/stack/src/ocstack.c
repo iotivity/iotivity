@@ -3540,7 +3540,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** newURI)
                 OCFree(tempURI);
                 goto exit;
             }
-            strcpy(*query, &leftToken[0]);
+            strcpy(*query, leftToken);
             break;
         }
         leftToken = strtok_r(NULL, "?", &strTokPtr);
