@@ -27,6 +27,19 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef _POSIX_C_SOURCE
+// Defining _POSIX_C_SOURCE macro with 200809L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1-2008 base
+// specification (excluding the XSI extension).
+// For POSIX.1-2008 base specification,
+// Refer http://pubs.opengroup.org/stage7tc1/
+//
+// For this specific file, see use of strndup,
+// Refer http://man7.org/linux/man-pages/man3/strdup.3.html
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "config.h"
 
 #include <stdlib.h>

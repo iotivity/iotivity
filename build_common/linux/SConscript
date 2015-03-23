@@ -15,6 +15,7 @@ else:
 	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
+env.AppendUnique(CFLAGS = ['-std=c99'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
 env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 

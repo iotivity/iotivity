@@ -29,6 +29,21 @@
 #include "config.h"
 #endif
 
+#ifdef __linux__
+// Defining _POSIX_C_SOURCE macro with 200809L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1-2008 base
+// specification (excluding the XSI extension).
+// For POSIX.1-2008 base specification,
+// Refer http://pubs.opengroup.org/stage7tc1/
+//
+// For this specific file, see use of strndup,
+// Refer http://man7.org/linux/man-pages/man3/strdup.3.html
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

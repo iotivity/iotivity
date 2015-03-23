@@ -45,6 +45,7 @@ elif platform.system().lower() == 'darwin':
 
 # Android build system default cofig
 env.AppendUnique(CPPDEFINES = ['ANDROID'])
+env.AppendUnique(CFLAGS = ['-std=c99'])
 env.AppendUnique(SHCFLAGS = ['-Wa,--noexecstack'])
 env.AppendUnique(LINKFLAGS = ['-Wl,--gc-sections', '-Wl,-z,nocopyreloc'])
 

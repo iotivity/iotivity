@@ -27,11 +27,25 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef _POSIX_C_SOURCE
+// Defining _POSIX_C_SOURCE macro with 200112L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1-2001 base
+// specification (excluding the XSI extension).
+// For POSIX.1-2001 base specification,
+// Refer http://pubs.opengroup.org/onlinepubs/009695399/
+//
+// For this specific file, see use of pselect,
+// Refer http://man7.org/linux/man-pages/man2/select.2.html
+#define _POSIX_C_SOURCE 200112L // Needed for pselect
+#endif
+
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #ifndef WIN32
 #include <sys/select.h>
 #include <sys/time.h>

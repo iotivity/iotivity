@@ -18,6 +18,18 @@
  *
  ******************************************************************/
 
+// Defining _BSD_SOURCE or _DEFAULT_SOURCE causes header files to expose
+// definitions that may otherwise be skipped. Skipping can cause implicit
+// declaration warnings and/or bugs and subtle problems in code execution.
+// For glibc information on feature test macros,
+// Refer http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
+//
+// This file requires #define use due to random() and srandom()
+// For details on compatibility and glibc support,
+// Refer http://www.gnu.org/software/libc/manual/html_node/BSD-Random.html
+#define _DEFAULT_SOURCE
+#define _BSD_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

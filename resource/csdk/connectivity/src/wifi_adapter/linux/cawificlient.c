@@ -17,6 +17,20 @@
 * limitations under the License.
 *
 ******************************************************************/
+
+// Defining _BSD_SOURCE or _DEFAULT_SOURCE causes header files to expose
+// definitions that may otherwise be skipped. Skipping can cause implicit
+// declaration warnings and/or bugs and subtle problems in code execution.
+// For glibc information on feature test macros,
+// Refer http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
+//
+// This file requires #define use due to random() and inet_aton()
+// For details on compatibility and glibc support,
+// Refer http://man7.org/linux/man-pages/man3/inet.3.html
+// Refer http://man7.org/linux/man-pages/man3/random.3.html
+#define _DEFAULT_SOURCE
+#define _BSD_SOURCE
+
 #include "cawifiinterface.h"
 
 #include <sys/types.h>
