@@ -87,12 +87,11 @@ if target_os in targets_support_cc:
 	prefix = env.get('TC_PREFIX')
 	tc_path = env.get('TC_PATH')
 	if prefix:
-		env.Replace(CC = prefix + 'gcc')
-		env.Replace(CXX = prefix + 'g++')
-		env.Replace(AR = prefix + 'ar')
-		env.Replace(AS = prefix + 'as')
-		env.Replace(LINK = prefix + 'ld')
-		env.Replace(RANLIB = prefix + 'ranlib')
+		env.Replace(CC = prefix + env.get('CC', 'gcc'))
+		env.Replace(CXX = prefix + env.get('CXX', 'g++'))
+		env.Replace(AR = prefix + env.get('AR', 'ar'))
+		env.Replace(AS = prefix + env.get('AS', 'as'))
+		env.Replace(RANLIB = prefix + env.get('RANLIB', 'ranlib'))
 
 	if tc_path:
 		env.PrependENVPath('PATH', tc_path)

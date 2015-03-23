@@ -99,7 +99,7 @@ user_config_file.close();
 
 # Ensure that the toolchain is in the PATH
 penv = os.environ.copy()
-penv["PATH"] = tool_path + ":" + penv["PATH"]
+penv["PATH"] = tool_path + ":" + env['ENV'].get('PATH', '') + ':' + penv["PATH"]
 
 build_path = os.path.join('build', target_os, target_arch)
 
