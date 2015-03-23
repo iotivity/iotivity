@@ -201,6 +201,16 @@ OCStackResult CAResultToOCResult(CAResult_t caResult);
 // This is done automatically during the OCInit process (via the call to OCInitCoAP),
 // so ensure that this call is done after that.
 const char* OCGetServerInstanceIDString(void);
+
+/**
+ * Map OCQualityOfService to CAMessageType
+ *
+ * @param OCQualityOfService - Input qos.
+ *
+ * Returns CA message type for a given qos.
+ */
+CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos);
+
 #ifdef WITH_PRESENCE
 //TODO: should the following function be public?
 OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,

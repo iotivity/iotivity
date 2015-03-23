@@ -302,7 +302,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     responseEndpoint.addressInfo      = serverRequest->addressInfo;
     responseEndpoint.connectivityType = serverRequest->connectivityType;
     responseEndpoint.isSecured        = serverRequest->secured;
-
     // Copy the info
     switch (ehResponse->ehResult)
     {
@@ -328,27 +327,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             responseInfo.result = CA_BAD_REQ;
             break;
     }
-
-    switch (serverRequest->qos)
-    {
-        case OC_LOW_QOS:
-            responseInfo.info.type = CA_MSG_NONCONFIRM;
-            break;
-        case OC_MEDIUM_QOS:
-            responseInfo.info.type = CA_MSG_NONCONFIRM;
-            break;
-        case OC_HIGH_QOS:
-            responseInfo.info.type = CA_MSG_CONFIRM;
-            break;
-        case OC_NA_QOS:
-            responseInfo.info.type = CA_MSG_NONCONFIRM;
-            break;
-        default:
-            responseInfo.info.type = CA_MSG_NONCONFIRM;
-            break;
-    }
-
-    responseInfo.info.token = (CAToken_t)OCCalloc(1, CA_MAX_TOKEN_LEN+1);
+    responseInfo.info.type = qualityOfServiceToMessageType(serverRequest->qos);
+    responseInfo.info.token = (CAToken_t) OCCalloc(1, CA_MAX_TOKEN_LEN + 1);
     if (!responseInfo.info.token)
     {
         OC_LOG(FATAL, TAG, "Response Info Token is NULL");
