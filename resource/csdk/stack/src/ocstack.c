@@ -357,6 +357,7 @@ exit:
     return ret;
 }
 
+// Note: Caller should invoke OCFree after done with resType pointer
 void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType)
 {
     char * tok = NULL;
@@ -365,27 +366,47 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, cha
     // %u : sequence number,
     // %u : max age
     // %s : Resource Type (Optional)
+
+    if (!payload || !seqNum || !maxAge || !resType)
+    {
+        return;
+    }
     tok = strtok_r(payload, "[:]}", &savePtr);
     payload[strlen(payload)] = ':';
+
+    //Retrieve sequence number
     tok = strtok_r(NULL, "[:]}", &savePtr);
+    if(tok == NULL)
+    {
+        return;
+    }
     payload[strlen((char *)payload)] = ':';
     *seqNum = (uint32_t) atoi(tok);
 
+    //Retrieve MaxAge
     tok = strtok_r(NULL, "[:]}", &savePtr);
-    *maxAge = (uint32_t) atoi(tok);
-    tok = strtok_r(NULL, "[:]}",&savePtr);
-
-    if(tok)
+    if(tok == NULL)
     {
-        *resType = (char *)OCMalloc(strlen(tok) + 1);
-        if(!*resType)
-        {
-            return;
-        }
-        payload[strlen((char *)payload)] = ':';
-        strcpy(*resType, tok);
-        OC_LOG_V(DEBUG, TAG, "resourceTypeName %s", *resType);
+        return;
     }
+    *maxAge = (uint32_t) atoi(tok);
+
+    //Retrieve ResourceType
+    tok = strtok_r(NULL, "[:]}",&savePtr);
+    if(tok == NULL)
+    {
+        return;
+    }
+
+    *resType = (char *)OCMalloc(strlen(tok) + 1);
+    if(!*resType)
+    {
+        return;
+    }
+    payload[strlen((char *)payload)] = ':';
+    strcpy(*resType, tok);
+    OC_LOG_V(DEBUG, TAG, "resourceTypeName %s", *resType);
+
     payload[strlen((char *)payload)] = ']';
 }
 

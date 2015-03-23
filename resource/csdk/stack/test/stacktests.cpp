@@ -23,6 +23,7 @@ extern "C"
 {
     #include "ocstack.h"
     #include "logger.h"
+    #include "ocmalloc.h"
 }
 
 #include "gtest/gtest.h"
@@ -1224,4 +1225,79 @@ TEST(StackResourceAccess, DeleteMiddleResource)
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+    void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType);
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+TEST(StackPresence, ParsePresencePayload)
+{
+
+    OC_LOG(INFO, TAG, "Starting ParsePresencePayload test");
+
+    char payload[100];
+    uint32_t seqNum = 0, maxAge = 0;
+    char * resType = NULL;
+
+    //Good Scenario
+    strncpy(payload, "{\"oc\":[100:99:presence]}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(100 == seqNum);
+    EXPECT_TRUE(99 == maxAge);
+    EXPECT_STREQ("presence", resType);
+    OCFree(resType);
+
+    //Bad Scenario -- should not result in Seg Fault
+    parsePresencePayload(payload, NULL, &maxAge, &resType);
+
+    //Bad Scenario
+    seqNum = 0; maxAge = 0; resType = NULL;
+    strncpy(payload, "{abracadabra}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(0 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+    //Bad Scenario
+    seqNum = 0; maxAge = 0; resType = NULL;
+    strncpy(payload, "{\"oc\":[100]}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(100 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+    //Bad Scenario
+    seqNum = 0; maxAge = 0; resType = NULL;
+    strncpy(payload, "{\"oc\":[]}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(0 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+    //Bad Scenario
+    strncpy(payload, "{:]}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(0 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+    //Bad Scenario
+    strncpy(payload, "{:[presence}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(0 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+}
+
 
