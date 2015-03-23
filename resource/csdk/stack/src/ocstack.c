@@ -1150,8 +1150,6 @@ exit:
  */
 OCStackResult OCStop()
 {
-    OCStackResult result = OC_STACK_ERROR;
-
     OC_LOG(INFO, TAG, PCF("Entering OCStop"));
 
     if (stackState == OC_STACK_UNINIT_IN_PROGRESS)
@@ -1177,30 +1175,14 @@ OCStackResult OCStop()
     deleteAllResources();
     DeleteDeviceInfo();
     CATerminate();
-    //CATerminate does not return any error code. It is OK to assign result to OC_STACK_OK.
-    result = OC_STACK_OK;
-
-    if (result == OC_STACK_OK)
-    {
-        // Remove all observers
-        DeleteObserverList();
-        // Remove all the client callbacks
-        DeleteClientCBList();
-        stackState = OC_STACK_UNINITIALIZED;
-        result = OC_STACK_OK;
-    } else {
-        stackState = OC_STACK_INITIALIZED;
-        result = OC_STACK_ERROR;
-    }
-
+    // Remove all observers
+    DeleteObserverList();
+    // Remove all the client callbacks
+    DeleteClientCBList();
     // Deinit security blob
     DeinitOCSecurityInfo();
-
-    if (result != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, PCF("Stack stop error"));
-    }
-
-    return result;
+    stackState = OC_STACK_UNINITIALIZED;
+    return OC_STACK_OK;
 }
 
 /**
