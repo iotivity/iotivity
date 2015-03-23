@@ -119,7 +119,8 @@ static uint32_t GetTime(float afterSeconds)
 static OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
         uint16_t port, OCDevAddr *ipAddr)
 {
-    if ( !ipAddr ) {
+    if (!ipAddr )
+    {
         OC_LOG(FATAL, TAG, PCF("Invalid argument"));
         return OC_STACK_INVALID_PARAM;
     }
@@ -512,12 +513,12 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     {
         if(cbNode->sequenceNumber == response.sequenceNumber)
         {
-            OC_LOG(INFO, TAG, PCF("===============No presence change"));
+            OC_LOG(INFO, TAG, PCF("No presence change"));
             goto exit;
         }
         if(maxAge == 0)
         {
-            OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+            OC_LOG(INFO, TAG, PCF("Stopping presence"));
             response.result = OC_STACK_PRESENCE_STOPPED;
             if(cbNode->presence)
             {
@@ -551,23 +552,23 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
                 }
             }
 
-            OC_LOG_V(INFO, TAG, "===============Update presence TTL, now time is %u", GetTime(0));
+            OC_LOG_V(INFO, TAG, "Update presence TTL, now time is %u", GetTime(0));
             cbNode->presence->TTL = maxAge;
             for(int index = 0; index < PresenceTimeOutSize; index++)
             {
                 lowerBound = GetTime(PresenceTimeOut[index]/ 100.0f*cbNode->presence->TTL);
                 higherBound = GetTime(PresenceTimeOut[index + 1]/100.0f*cbNode->presence->TTL);
                 cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
-                OC_LOG_V(DEBUG, TAG, "----------------lowerBound timeout  %d", lowerBound);
-                OC_LOG_V(DEBUG, TAG, "----------------higherBound timeout %d", higherBound);
-                OC_LOG_V(DEBUG, TAG, "----------------timeOut entry  %d",
+                OC_LOG_V(DEBUG, TAG, "lowerBound timeout  %d", lowerBound);
+                OC_LOG_V(DEBUG, TAG, "higherBound timeout %d", higherBound);
+                OC_LOG_V(DEBUG, TAG, "timeOut entry  %d",
                         cbNode->presence->timeOut[index]);
             }
             cbNode->presence->TTLlevel = 0;
-            OC_LOG_V(DEBUG, TAG, "----------------this TTL level %d", cbNode->presence->TTLlevel);
+            OC_LOG_V(DEBUG, TAG, "this TTL level %d", cbNode->presence->TTLlevel);
 
 
-            OC_LOG(INFO, TAG, PCF("===============Presence changed, calling up the stack"));
+            OC_LOG(INFO, TAG, PCF("Presence changed, calling up the stack"));
             cbNode->sequenceNumber = response.sequenceNumber;
 
             // Ensure that a filter is actually applied.
@@ -598,7 +599,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
 
             if(maxAge == 0)
             {
-                OC_LOG(INFO, TAG, PCF("===============Stopping presence"));
+                OC_LOG(INFO, TAG, PCF("Stopping presence"));
                 response.result = OC_STACK_PRESENCE_STOPPED;
             }
         }
@@ -765,13 +766,13 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 
     OCServerProtocolRequest serverRequest = {};
 
-    OC_LOG_V(INFO, TAG, PCF("***** Endpoint URI ***** : %s\n"), (char*)endPoint->resourceUri);
+    OC_LOG_V(INFO, TAG, PCF("Endpoint URI : %s\n"), (char*)endPoint->resourceUri);
 
     char * newUri = NULL;
     char * query = NULL;
     getQueryFromUri(endPoint->resourceUri, &query, &newUri);
-    OC_LOG_V(INFO, TAG, PCF("**********URI without query ****: %s\n"), newUri);
-    OC_LOG_V(INFO, TAG, PCF("**********Query ****: %s\n"), query);
+    OC_LOG_V(INFO, TAG, PCF("URI without query : %s\n"), newUri);
+    OC_LOG_V(INFO, TAG, PCF("Query : %s\n"), query);
     if(strlen(newUri) < MAX_URI_LENGTH)
     {
         //copy URI
@@ -955,7 +956,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     else
     {
         OC_LOG(INFO, TAG,
-                PCF("This is either a repeated Server Request or blocked Server Request"));
+                PCF("This is either a repeated or blocked Server Request"));
     }
 
     if(request->requestComplete)
@@ -3028,6 +3029,10 @@ static OCDoHandle GenerateInvocationHandle()
 OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable)
 {
+    if (!inputProperty)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
     if (resourceProperties
             > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW))
     {

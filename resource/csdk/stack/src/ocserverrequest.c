@@ -252,7 +252,8 @@ void FindAndDeleteServerResponse(OCServerResponse * serverResponse)
 
 void DeleteServerResponse(OCServerResponse * serverResponse)
 {
-    if(serverResponse) {
+    if(serverResponse)
+    {
         LL_DELETE(serverResponseList, serverResponse);
         OCFree(serverResponse->payload);
         OCFree(serverResponse);
@@ -278,7 +279,8 @@ void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
 
 void DeleteServerRequest(OCServerRequest * serverRequest)
 {
-    if(serverRequest) {
+    if(serverRequest)
+    {
         LL_DELETE(serverRequestList, serverRequest);
         OCFree(serverRequest);
         serverRequest = NULL;
@@ -292,6 +294,12 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     CARemoteEndpoint_t responseEndpoint = {};
     CAResponseInfo_t responseInfo = {};
     CAHeaderOption_t* optionsPointer = NULL;
+
+    if(!ehResponse)
+    {
+        OC_LOG(ERROR, TAG, PCF("HandleSingleResponse invalid parameters"));
+        return OC_STACK_INVALID_PARAM;
+    }
 
     OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
 
@@ -385,7 +393,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
     // Put the JSON prefix and suffix around the payload
     strcpy(payload, (const char *)OC_JSON_PREFIX);
-    strcat(payload, (const char *)ehResponse->payload);
+    strncat(payload, (const char *)ehResponse->payload, ehResponse->payloadSize);
     strcat(payload, (const char *)OC_JSON_SUFFIX);
     responseInfo.info.payload = (CAPayload_t)payload;
 
