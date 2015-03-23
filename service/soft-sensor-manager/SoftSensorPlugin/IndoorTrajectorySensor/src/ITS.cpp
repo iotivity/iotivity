@@ -31,10 +31,13 @@
 #include "GeneralData.h"
 #include "SysTimer.h"
 
+#include "tizen_public_ble.h"
+
 using namespace ITSName;
 
 //#define __INTERNAL_DEBUG__
 #define SENSOR_NAME "IndoorTrajectorySensor"
+
 
 #define INPUT_EA            4
 #define SEQ_ID                  0
@@ -57,6 +60,7 @@ physicalInput ITS::s_PHYSICAL_SENSORs[PHYSICAL_EA] =
 };
 
 ICtxDelegate *g_pDelegate;
+ITS *ITS::singleton = NULL;
 
 // map<TrackeeID, Trajectory>
 typedef std::map < std::string, Trajectory >        TrajectoryMap;
@@ -80,6 +84,7 @@ void parserTracker_Thing( int seq, std::vector< GeneralData > &gVector, CurrentS
         return ;
     }
 
+
     std::string name = "";
     gVector[0].get_Name(name);
 
@@ -95,6 +100,7 @@ void parserTracker_Thing( int seq, std::vector< GeneralData > &gVector, CurrentS
     }
 
     CService->service.timestamp = SysTimer::MilliSecondTime();
+
 
     name = "";
     gVector[1].get_Name(name);
@@ -121,6 +127,7 @@ void parserTracker_Thing( int seq, std::vector< GeneralData > &gVector, CurrentS
         printf("Error : m_TList is NULL.\n");
         return ;
     }
+
 
     for (unsigned int j = 2; j < gVector.size(); j++)
     {
@@ -161,13 +168,71 @@ void InitializeContext(ICtxDelegate *pDelegate)
 {
     std::vector < ContextData > contextData;
 
-    ITS *eventCls = new ITS();
+    ITS *eventCls = ITS::GetInstance();
     pDelegate->registerCallback(eventCls);
     g_pDelegate = pDelegate;
 
-    std::cout << "ITS sensor loaded -01-" << std::endl;
+    proximity_init(ITS::SelfTrajectoryThread);
+    ble_init(proximity_loop);
+    std::cout << "ITS sensor loaded -02-" << std::endl;
 
     return;
+}
+
+
+/******************************************************
+ * Loop function based thread.
+ */
+void *ITS::SelfTrajectoryThread(void *param)
+{
+//#ifdef __INTERNAL_DEBUG__
+    std::cout << "[DEBUG] ITS::" << __func__ << " is called." << std::endl;
+//#endif
+
+    ContextData out;
+    CurrentService CService;
+    Things *TList = (Things *)param;
+    Trajectory *tra = 0;
+    ITSResult flag = ERROR;
+    ITS *its = ITS::GetInstance();
+
+    CService.trackee.ID = "SelfTrackee";
+    CService.service.timestamp = SysTimer::MilliSecondTime();
+
+    if ( (flag = its->searchValidService( TList, &CService )) != SUCCESS )
+    {
+        if ( flag == NO_ELEMENT )
+            return 0;
+
+        std::cout << "Error : searchValidService() function failed." << std::endl;
+        return NULL;
+    }
+
+    if ( (tra = its->makeTrajectory(&CService)) == NULL)
+    {
+        std::cout << "Error : makeTrajectory() function failed." << std::endl;
+        return NULL;
+    }
+
+    if ( its->setOutput( tra, &out ) != SUCCESS )
+    {
+        std::cout << "Error : setOutput() function failed." << std::endl;
+        return NULL;
+    }
+
+    std::vector < ContextData > outList;
+    outList.push_back(out);
+    g_pDelegate->addOutput(outList);
+
+    return NULL;
+}
+
+ITS *ITS::GetInstance( void )
+{
+    if ( singleton == NULL )
+        singleton = new ITS();
+
+    return singleton;
 }
 
 ITS::ITS()
@@ -192,6 +257,9 @@ ITS::~ITS()
         m_TList = 0;
         m_closestThing = 0;
     }
+
+    if ( singleton )
+        delete singleton;
 }
 
 void ITS::onCtxEvent(enum CTX_EVENT_TYPE eventType,
@@ -207,8 +275,6 @@ void ITS::onCtxEvent(enum CTX_EVENT_TYPE eventType,
             break;
     }
 }
-
-
 
 int ITS::runLogic(std::vector< ContextData > &contextDataList)
 {
@@ -255,8 +321,6 @@ int ITS::runLogic(std::vector< ContextData > &contextDataList)
     return 0;
 }
 
-
-
 /**
  * Get Input data (temperature, humidity) using resource Client of Iotivity base.
  */
@@ -281,8 +345,7 @@ ITSResult ITS::getInput(std::vector< ContextData > &contextDataList, CurrentServ
             if (contextDataList[i].rootName == s_PHYSICAL_SENSORs[k].m_thingName)
             {
                 std::vector< GeneralData > gVector;
-                Conversion_DataFormat( contextDataList[i].outputProperty,
-                                       gVector );
+                Conversion_DataFormat( contextDataList[i].outputProperty, gVector );
 
                 switch ( k )
                 {
@@ -301,7 +364,6 @@ ITSResult ITS::getInput(std::vector< ContextData > &contextDataList, CurrentServ
     std::cout << "Success : " << __func__ << std::endl;
     return SUCCESS;
 }
-
 
 /**
  * searchValidService Function.

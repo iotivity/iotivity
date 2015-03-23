@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file   ThingsManager.h
-///
-/// @brief  This file contains the declaration of  ThingsManager class
-///         and its members related to ThingsManager.
+/**
+ * @file
+ *
+ * This file contains the declaration of  ThingsManager class and its
+ * members related to ThingsManager.
+ */
 
 #ifndef __OC_THINGSMANAGER__
 #define __OC_THINGSMANAGER__
@@ -30,6 +32,7 @@
 #include <vector>
 #include <map>
 #include <cstdlib>
+#include <ActionSet.h>
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "GroupManager.h"
@@ -116,7 +119,9 @@ namespace OIC
          * @return OCStackResult - return value of this API.
          *                         It returns OC_STACK_OK if success.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * NOTE: It return OC_STACK ERROR when It was finding a group.
+         *       You should call this api when the group finding process has stopped.
+         *       OCStackResult is defined in ocstack.h.
          */
         OCStackResult findGroup(std::vector< std::string > collectionResourceTypes,
                 FindCallback callback);
@@ -143,7 +148,10 @@ namespace OIC
          * @return OCStackResult - return value of this API.
          *                         It returns OC_STACK_OK if success.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * NOTE: If you want to join the resource in the remote(other) process,
+         *       use joinGroup(const std::shared_ptr< OCResource >, OCResourceHandle)
+         *       instead of this.
+         *       OCStackResult is defined in ocstack.h.
          */
         OCStackResult joinGroup(std::string collectionResourceType,
                 OCResourceHandle resourceHandle);
@@ -159,7 +167,10 @@ namespace OIC
          * @return OCStackResult - return value of this API.
          *                         It returns OC_STACK_OK if success.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * NOTE: NOTE: If you want to join the resource in the same process,
+         *       use joinGroup(std::string, OCResourceHandle)
+         *       instead of this.
+         *       OCStackResult is defined in ocstack.h.
          */
         OCStackResult joinGroup(const std::shared_ptr< OCResource > resource,
                 OCResourceHandle resourceHandle);
@@ -177,6 +188,24 @@ namespace OIC
          */
         OCStackResult leaveGroup(std::string collectionResourceType,
                 OCResourceHandle resourceHandle);
+
+        /**
+         * API for leaving a joined group.
+         *
+         * @param resource - group resource pointer to join.
+         *                   It can be the callback result of findGroup().
+         *
+         * @param collectionResourceType - resource type of a group to leave.
+         * @param resourceHandle - resource handle to leave a group.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult leaveGroup(const std::shared_ptr< OCResource > resource,
+                        std::string collectionResourceType,
+                        OCResourceHandle resourceHandle);
 
         /**
          * API for deleting a group.
@@ -371,6 +400,38 @@ namespace OIC
         OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
                 std::string actionsetName, PostCallback cb);
 
+        /**
+         * API for executing the Action Set.
+         * Callback is called when the response of  POST operation arrives.
+         *
+         * @param resource - resource pointer of the group resource
+         * @param actionsetName - Action Set name for executing the Action set
+         * @param delay - waiting time for until action set run.
+         * @param callback - callback for POST operation.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
+                std::string actionsetName, long int delay, PostCallback cb);
+
+        /**
+         * API for canceling the Action Set.
+         * Callback is called when the response of POST operation arrives.
+         *
+         * @param resource - resource pointer of the group resource
+         * @param actionsetName - Action Set name for executing the Action set
+         * @param callback - callback for POST operation.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult cancelActionSet(std::shared_ptr< OCResource > resource,
+                std::string actionsetName, PostCallback cb);
         /**
          * API for reading the Action Set.
          * Callback is called when the response of  GET operation arrives.

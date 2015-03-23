@@ -95,4 +95,31 @@
     </inputs>
   </softsensor>
   
+  <softsensor>
+    <name>BMISensor</name>
+    <attributes>
+      <attribute>
+        <name>version</name>
+        <type>string</type>
+        <value>1.0</value>
+      </attribute>
+      <attribute>
+        <name>lifetime</name>
+        <type>int</type>
+        <value>60</value>
+      </attribute>
+    </attributes>
+    <outputs>
+      <output>
+        <name>BMIresult</name>
+        <type>int</type>
+      </output>
+    </outputs>
+    <inputs>
+     <input>Thing_WeightSensor</input>  
+     <input>Thing_HeightSensor</input>
+    </inputs>
+  </softsensor>
+
+
 </softsensors>

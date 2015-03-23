@@ -42,25 +42,25 @@ extern "C" {
 #endif
 
 #if defined(WIN32) && !defined(WITH_BROKER)
-#	ifdef libmosquitto_EXPORTS
-#		define libmosq_EXPORT  __declspec(dllexport)
-#	else
-#		define libmosq_EXPORT  __declspec(dllimport)
-#	endif
+#   ifdef libmosquitto_EXPORTS
+#       define libmosq_EXPORT  __declspec(dllexport)
+#   else
+#       define libmosq_EXPORT  __declspec(dllimport)
+#   endif
 #else
-#	define libmosq_EXPORT
+#   define libmosq_EXPORT
 #endif
 
 #ifdef WIN32
-#	ifndef __cplusplus
-#		define bool char
-#		define true 1
-#		define false 0
-#	endif
+#   ifndef __cplusplus
+#       define bool char
+#       define true 1
+#       define false 0
+#   endif
 #else
-#	ifndef __cplusplus
-#		include <stdbool.h>
-#	endif
+#   ifndef __cplusplus
+#       include <stdbool.h>
+#   endif
 #endif
 
 #define LIBMOSQUITTO_MAJOR 1
@@ -81,48 +81,50 @@ extern "C" {
 #define MOSQ_LOG_ALL 0xFFFF
 
 /* Error values */
-enum mosq_err_t {
-	MOSQ_ERR_CONN_PENDING = -1,
-	MOSQ_ERR_SUCCESS = 0,
-	MOSQ_ERR_NOMEM = 1,
-	MOSQ_ERR_PROTOCOL = 2,
-	MOSQ_ERR_INVAL = 3,
-	MOSQ_ERR_NO_CONN = 4,
-	MOSQ_ERR_CONN_REFUSED = 5,
-	MOSQ_ERR_NOT_FOUND = 6,
-	MOSQ_ERR_CONN_LOST = 7,
-	MOSQ_ERR_TLS = 8,
-	MOSQ_ERR_PAYLOAD_SIZE = 9,
-	MOSQ_ERR_NOT_SUPPORTED = 10,
-	MOSQ_ERR_AUTH = 11,
-	MOSQ_ERR_ACL_DENIED = 12,
-	MOSQ_ERR_UNKNOWN = 13,
-	MOSQ_ERR_ERRNO = 14,
-	MOSQ_ERR_EAI = 15
+enum mosq_err_t
+{
+    MOSQ_ERR_CONN_PENDING = -1,
+    MOSQ_ERR_SUCCESS = 0,
+    MOSQ_ERR_NOMEM = 1,
+    MOSQ_ERR_PROTOCOL = 2,
+    MOSQ_ERR_INVAL = 3,
+    MOSQ_ERR_NO_CONN = 4,
+    MOSQ_ERR_CONN_REFUSED = 5,
+    MOSQ_ERR_NOT_FOUND = 6,
+    MOSQ_ERR_CONN_LOST = 7,
+    MOSQ_ERR_TLS = 8,
+    MOSQ_ERR_PAYLOAD_SIZE = 9,
+    MOSQ_ERR_NOT_SUPPORTED = 10,
+    MOSQ_ERR_AUTH = 11,
+    MOSQ_ERR_ACL_DENIED = 12,
+    MOSQ_ERR_UNKNOWN = 13,
+    MOSQ_ERR_ERRNO = 14,
+    MOSQ_ERR_EAI = 15
 };
 
 /* MQTT specification restricts client ids to a maximum of 23 characters */
 #define MOSQ_MQTT_ID_MAX_LENGTH 23
 
-struct mosquitto_message{
-	int mid;
-	char *topic;
-	void *payload;
-	int payloadlen;
-	int qos;
-	bool retain;
+struct mosquitto_message
+{
+    int mid;
+    char *topic;
+    void *payload;
+    int payloadlen;
+    int qos;
+    bool retain;
 };
 
 struct mosquitto;
 
 /*
  * Topic: Threads
- *	libmosquitto provides thread safe operation, with the exception of
- *	<mosquitto_lib_init> which is not thread safe.
+ *  libmosquitto provides thread safe operation, with the exception of
+ *  <mosquitto_lib_init> which is not thread safe.
  */
 /***************************************************
  * Important note
- * 
+ *
  * The following functions that deal with network operations will return
  * MOSQ_ERR_SUCCESS on success, but this does not mean that the operation has
  * taken place. An attempt will be made to write the network data, but if the
@@ -157,10 +159,10 @@ struct mosquitto;
  *             be returned in this variable.
  *
  * Returns:
- *	LIBMOSQUITTO_VERSION_NUMBER, which is a unique number based on the major,
- *		minor and revision values.
+ *  LIBMOSQUITTO_VERSION_NUMBER, which is a unique number based on the major,
+ *      minor and revision values.
  * See Also:
- * 	<mosquitto_lib_cleanup>, <mosquitto_lib_init>
+ *  <mosquitto_lib_cleanup>, <mosquitto_lib_init>
  */
 libmosq_EXPORT int mosquitto_lib_version(int *major, int *minor, int *revision);
 
@@ -172,10 +174,10 @@ libmosq_EXPORT int mosquitto_lib_version(int *major, int *minor, int *revision);
  * This function is *not* thread safe.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - always
+ *  MOSQ_ERR_SUCCESS - always
  *
  * See Also:
- * 	<mosquitto_lib_cleanup>, <mosquitto_lib_version>
+ *  <mosquitto_lib_cleanup>, <mosquitto_lib_version>
  */
 libmosq_EXPORT int mosquitto_lib_init(void);
 
@@ -185,10 +187,10 @@ libmosq_EXPORT int mosquitto_lib_init(void);
  * Call to free resources associated with the library.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - always
+ *  MOSQ_ERR_SUCCESS - always
  *
  * See Also:
- * 	<mosquitto_lib_init>, <mosquitto_lib_version>
+ *  <mosquitto_lib_init>, <mosquitto_lib_version>
  */
 libmosq_EXPORT int mosquitto_lib_cleanup(void);
 
@@ -198,9 +200,9 @@ libmosq_EXPORT int mosquitto_lib_cleanup(void);
  * Create a new mosquitto client instance.
  *
  * Parameters:
- * 	id -            String to use as the client id. If NULL, a random client id
- * 	                will be generated. If id is NULL, clean_session must be true.
- * 	clean_session - set to true to instruct the broker to clean all messages
+ *  id -            String to use as the client id. If NULL, a random client id
+ *                  will be generated. If id is NULL, clean_session must be true.
+ *  clean_session - set to true to instruct the broker to clean all messages
  *                  and subscriptions on disconnect, false to instruct it to
  *                  keep them. See the man page mqtt(7) for more details.
  *                  Note that a client will never discard its own outgoing
@@ -209,30 +211,30 @@ libmosq_EXPORT int mosquitto_lib_cleanup(void);
  *                  Use <mosquitto_reinitialise> to reset a client to its
  *                  original state.
  *                  Must be set to true if the id parameter is NULL.
- * 	obj -           A user pointer that will be passed as an argument to any
+ *  obj -           A user pointer that will be passed as an argument to any
  *                  callbacks that are specified.
  *
  * Returns:
- * 	Pointer to a struct mosquitto on success.
- * 	NULL on failure. Interrogate errno to determine the cause for the failure:
+ *  Pointer to a struct mosquitto on success.
+ *  NULL on failure. Interrogate errno to determine the cause for the failure:
  *      - ENOMEM on out of memory.
  *      - EINVAL on invalid input parameters.
  *
  * See Also:
- * 	<mosquitto_reinitialise>, <mosquitto_destroy>, <mosquitto_user_data_set>
+ *  <mosquitto_reinitialise>, <mosquitto_destroy>, <mosquitto_user_data_set>
  */
 libmosq_EXPORT struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj);
 
-/* 
+/*
  * Function: mosquitto_destroy
  *
  * Use to free memory associated with a mosquitto client instance.
  *
  * Parameters:
- * 	mosq - a struct mosquitto pointer to free.
+ *  mosq - a struct mosquitto pointer to free.
  *
  * See Also:
- * 	<mosquitto_new>, <mosquitto_reinitialise>
+ *  <mosquitto_new>, <mosquitto_reinitialise>
  */
 libmosq_EXPORT void mosquitto_destroy(struct mosquitto *mosq);
 
@@ -245,63 +247,65 @@ libmosq_EXPORT void mosquitto_destroy(struct mosquitto *mosq);
  * same as the output of <mosquitto_new>.
  *
  * Parameters:
- * 	mosq -          a valid mosquitto instance.
- * 	id -            string to use as the client id. If NULL, a random client id
- * 	                will be generated. If id is NULL, clean_session must be true.
- * 	clean_session - set to true to instruct the broker to clean all messages
+ *  mosq -          a valid mosquitto instance.
+ *  id -            string to use as the client id. If NULL, a random client id
+ *                  will be generated. If id is NULL, clean_session must be true.
+ *  clean_session - set to true to instruct the broker to clean all messages
  *                  and subscriptions on disconnect, false to instruct it to
  *                  keep them. See the man page mqtt(7) for more details.
  *                  Must be set to true if the id parameter is NULL.
- * 	obj -           A user pointer that will be passed as an argument to any
+ *  obj -           A user pointer that will be passed as an argument to any
  *                  callbacks that are specified.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- * 	<mosquitto_new>, <mosquitto_destroy>
+ *  <mosquitto_new>, <mosquitto_destroy>
  */
-libmosq_EXPORT int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_session, void *obj);
+libmosq_EXPORT int mosquitto_reinitialise(struct mosquitto *mosq, const char *id,
+        bool clean_session, void *obj);
 
-/* 
+/*
  * Function: mosquitto_will_set
  *
  * Configure will information for a mosquitto instance. By default, clients do
  * not have a will.  This must be called before calling <mosquitto_connect>.
  *
  * Parameters:
- * 	mosq -       a valid mosquitto instance.
- * 	topic -      the topic on which to publish the will.
- * 	payloadlen - the size of the payload (bytes). Valid values are between 0 and
+ *  mosq -       a valid mosquitto instance.
+ *  topic -      the topic on which to publish the will.
+ *  payloadlen - the size of the payload (bytes). Valid values are between 0 and
  *               268,435,455.
- * 	payload -    pointer to the data to send. If payloadlen > 0 this must be a
+ *  payload -    pointer to the data to send. If payloadlen > 0 this must be a
  *               valid memory location.
- * 	qos -        integer value 0, 1 or 2 indicating the Quality of Service to be
+ *  qos -        integer value 0, 1 or 2 indicating the Quality of Service to be
  *               used for the will.
- * 	retain -     set to true to make the will a retained message.
+ *  retain -     set to true to make the will a retained message.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS -      on success.
- * 	MOSQ_ERR_INVAL -        if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
- * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
+ *  MOSQ_ERR_SUCCESS -      on success.
+ *  MOSQ_ERR_INVAL -        if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
+ *  MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  */
-libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
+libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen,
+                                      const void *payload, int qos, bool retain);
 
-/* 
+/*
  * Function: mosquitto_will_clear
  *
  * Remove a previously configured will. This must be called before calling
  * <mosquitto_connect>.
  *
  * Parameters:
- * 	mosq - a valid mosquitto instance.
+ *  mosq - a valid mosquitto instance.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
  */
 libmosq_EXPORT int mosquitto_will_clear(struct mosquitto *mosq);
 
@@ -317,18 +321,19 @@ libmosq_EXPORT int mosquitto_will_clear(struct mosquitto *mosq);
  * This is must be called before calling <mosquitto_connect>.
  *
  * Parameters:
- * 	mosq -     a valid mosquitto instance.
- * 	username - the username to send as a string, or NULL to disable
+ *  mosq -     a valid mosquitto instance.
+ *  username - the username to send as a string, or NULL to disable
  *             authentication.
- * 	password - the password to send as a string. Set to NULL when username is
- * 	           valid in order to send just a username.
+ *  password - the password to send as a string. Set to NULL when username is
+ *             valid in order to send just a username.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  */
-libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, const char *password);
+libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username,
+        const char *password);
 
 /*
  * Function: mosquitto_connect
@@ -336,55 +341,57 @@ libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char 
  * Connect to an MQTT broker.
  *
  * Parameters:
- * 	mosq -      a valid mosquitto instance.
- * 	host -      the hostname or ip address of the broker to connect to.
- * 	port -      the network port to connect to. Usually 1883.
- * 	keepalive - the number of seconds after which the broker should send a PING
+ *  mosq -      a valid mosquitto instance.
+ *  host -      the hostname or ip address of the broker to connect to.
+ *  port -      the network port to connect to. Usually 1883.
+ *  keepalive - the number of seconds after which the broker should send a PING
  *              message to the client if no other messages have been exchanged
  *              in that time.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect_bind>, <mosquitto_connect_async>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_tls_set>
+ *  <mosquitto_connect_bind>, <mosquitto_connect_async>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_tls_set>
  */
-libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int keepalive);
+libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, int port,
+                                     int keepalive);
 
 /*
  * Function: mosquitto_connect_bind
  *
  * Connect to an MQTT broker. This extends the functionality of
  * <mosquitto_connect> by adding the bind_address parameter. Use this function
- * if you need to restrict network communication over a particular interface. 
+ * if you need to restrict network communication over a particular interface.
  *
  * Parameters:
- * 	mosq -         a valid mosquitto instance.
- * 	host -         the hostname or ip address of the broker to connect to.
- * 	port -         the network port to connect to. Usually 1883.
- * 	keepalive -    the number of seconds after which the broker should send a PING
+ *  mosq -         a valid mosquitto instance.
+ *  host -         the hostname or ip address of the broker to connect to.
+ *  port -         the network port to connect to. Usually 1883.
+ *  keepalive -    the number of seconds after which the broker should send a PING
  *                 message to the client if no other messages have been exchanged
  *                 in that time.
  *  bind_address - the hostname or ip address of the local network interface to
  *                 bind to.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect>, <mosquitto_connect_async>, <mosquitto_connect_bind_async>
+ *  <mosquitto_connect>, <mosquitto_connect_async>, <mosquitto_connect_bind_async>
  */
-libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
+libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port,
+        int keepalive, const char *bind_address);
 
 /*
  * Function: mosquitto_connect_async
@@ -397,25 +404,26 @@ libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *ho
  * May be called before or after <mosquitto_loop_start>.
  *
  * Parameters:
- * 	mosq -      a valid mosquitto instance.
- * 	host -      the hostname or ip address of the broker to connect to.
- * 	port -      the network port to connect to. Usually 1883.
- * 	keepalive - the number of seconds after which the broker should send a PING
+ *  mosq -      a valid mosquitto instance.
+ *  host -      the hostname or ip address of the broker to connect to.
+ *  port -      the network port to connect to. Usually 1883.
+ *  keepalive - the number of seconds after which the broker should send a PING
  *              message to the client if no other messages have been exchanged
  *              in that time.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect_bind_async>, <mosquitto_connect>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_tls_set>
+ *  <mosquitto_connect_bind_async>, <mosquitto_connect>, <mosquitto_reconnect>, <mosquitto_disconnect>, <mosquitto_tls_set>
  */
-libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port, int keepalive);
+libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *host, int port,
+        int keepalive);
 
 /*
  * Function: mosquitto_connect_async
@@ -427,32 +435,33 @@ libmosq_EXPORT int mosquitto_connect_async(struct mosquitto *mosq, const char *h
  *
  * This extends the functionality of <mosquitto_connect_async> by adding the
  * bind_address parameter. Use this function if you need to restrict network
- * communication over a particular interface. 
+ * communication over a particular interface.
  *
  * May be called before or after <mosquitto_loop_start>.
  *
  * Parameters:
- * 	mosq -         a valid mosquitto instance.
- * 	host -         the hostname or ip address of the broker to connect to.
- * 	port -         the network port to connect to. Usually 1883.
- * 	keepalive -    the number of seconds after which the broker should send a PING
+ *  mosq -         a valid mosquitto instance.
+ *  host -         the hostname or ip address of the broker to connect to.
+ *  port -         the network port to connect to. Usually 1883.
+ *  keepalive -    the number of seconds after which the broker should send a PING
  *                 message to the client if no other messages have been exchanged
  *                 in that time.
  *  bind_address - the hostname or ip address of the local network interface to
  *                 bind to.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect_async>, <mosquitto_connect>, <mosquitto_connect_bind>
+ *  <mosquitto_connect_async>, <mosquitto_connect>, <mosquitto_connect_bind>
  */
-libmosq_EXPORT int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
+libmosq_EXPORT int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int port,
+        int keepalive, const char *bind_address);
 
 /*
  * Function: mosquitto_connect_srv
@@ -464,31 +473,32 @@ libmosq_EXPORT int mosquitto_connect_bind_async(struct mosquitto *mosq, const ch
  *
  * This extends the functionality of <mosquitto_connect_async> by adding the
  * bind_address parameter. Use this function if you need to restrict network
- * communication over a particular interface. 
+ * communication over a particular interface.
  *
  * May be called before or after <mosquitto_loop_start>.
  *
  * Parameters:
- * 	mosq -         a valid mosquitto instance.
- * 	host -         the hostname or ip address of the broker to connect to.
- * 	keepalive -    the number of seconds after which the broker should send a PING
+ *  mosq -         a valid mosquitto instance.
+ *  host -         the hostname or ip address of the broker to connect to.
+ *  keepalive -    the number of seconds after which the broker should send a PING
  *                 message to the client if no other messages have been exchanged
  *                 in that time.
  *  bind_address - the hostname or ip address of the local network interface to
  *                 bind to.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect_async>, <mosquitto_connect>, <mosquitto_connect_bind>
+ *  <mosquitto_connect_async>, <mosquitto_connect>, <mosquitto_connect_bind>
  */
-libmosq_EXPORT int mosquitto_connect_srv(struct mosquitto *mosq, const char *host, int keepalive, const char *bind_address);
+libmosq_EXPORT int mosquitto_connect_srv(struct mosquitto *mosq, const char *host, int keepalive,
+        const char *bind_address);
 
 /*
  * Function: mosquitto_reconnect
@@ -499,25 +509,25 @@ libmosq_EXPORT int mosquitto_connect_srv(struct mosquitto *mosq, const char *hos
  * connection has been lost. It uses the values that were provided in the
  * <mosquitto_connect> call. It must not be called before
  * <mosquitto_connect>.
- * 
+ *
  * Parameters:
- * 	mosq - a valid mosquitto instance.
+ *  mosq - a valid mosquitto instance.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect>, <mosquitto_disconnect>, <mosquitto_reconnect_async>
+ *  <mosquitto_connect>, <mosquitto_disconnect>, <mosquitto_reconnect_async>
  */
 libmosq_EXPORT int mosquitto_reconnect(struct mosquitto *mosq);
 
@@ -530,25 +540,25 @@ libmosq_EXPORT int mosquitto_reconnect(struct mosquitto *mosq);
  * connection has been lost. It uses the values that were provided in the
  * <mosquitto_connect> or <mosquitto_connect_async> calls. It must not be
  * called before <mosquitto_connect>.
- * 
+ *
  * Parameters:
- * 	mosq - a valid mosquitto instance.
+ *  mosq - a valid mosquitto instance.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
  *
  * See Also:
- * 	<mosquitto_connect>, <mosquitto_disconnect>
+ *  <mosquitto_connect>, <mosquitto_disconnect>
  */
 libmosq_EXPORT int mosquitto_reconnect_async(struct mosquitto *mosq);
 
@@ -558,50 +568,51 @@ libmosq_EXPORT int mosquitto_reconnect_async(struct mosquitto *mosq);
  * Disconnect from the broker.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
+ *  mosq - a valid mosquitto instance.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NO_CONN -  if the client isn't connected to a broker.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NO_CONN -  if the client isn't connected to a broker.
  */
 libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
 
-/* 
+/*
  * Function: mosquitto_publish
  *
  * Publish a message on a given topic.
- * 
+ *
  * Parameters:
- * 	mosq -       a valid mosquitto instance.
- * 	mid -        pointer to an int. If not NULL, the function will set this
+ *  mosq -       a valid mosquitto instance.
+ *  mid -        pointer to an int. If not NULL, the function will set this
  *               to the message id of this particular message. This can be then
  *               used with the publish callback to determine when the message
  *               has been sent.
  *               Note that although the MQTT protocol doesn't use message ids
  *               for messages with QoS=0, libmosquitto assigns them message ids
  *               so they can be tracked with this parameter.
- * 	payloadlen - the size of the payload (bytes). Valid values are between 0 and
+ *  payloadlen - the size of the payload (bytes). Valid values are between 0 and
  *               268,435,455.
- * 	payload -    pointer to the data to send. If payloadlen > 0 this must be a
+ *  payload -    pointer to the data to send. If payloadlen > 0 this must be a
  *               valid memory location.
- * 	qos -        integer value 0, 1 or 2 indicating the Quality of Service to be
+ *  qos -        integer value 0, 1 or 2 indicating the Quality of Service to be
  *               used for the message.
- * 	retain -     set to true to make the message retained.
+ *  retain -     set to true to make the message retained.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS -      on success.
- * 	MOSQ_ERR_INVAL -        if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -      if the client isn't connected to a broker.
- *	MOSQ_ERR_PROTOCOL -     if there is a protocol error communicating with the
+ *  MOSQ_ERR_SUCCESS -      on success.
+ *  MOSQ_ERR_INVAL -        if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
+ *  MOSQ_ERR_NO_CONN -      if the client isn't connected to a broker.
+ *  MOSQ_ERR_PROTOCOL -     if there is a protocol error communicating with the
  *                          broker.
- * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
+ *  MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  *
- * See Also: 
- *	<mosquitto_max_inflight_messages_set>
+ * See Also:
+ *  <mosquitto_max_inflight_messages_set>
  */
-libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
+libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic,
+                                     int payloadlen, const void *payload, int qos, bool retain);
 
 /*
  * Function: mosquitto_subscribe
@@ -609,19 +620,19 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const cha
  * Subscribe to a topic.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
- *	mid -  a pointer to an int. If not NULL, the function will set this to
- *	       the message id of this particular message. This can be then used
- *	       with the subscribe callback to determine when the message has been
- *	       sent.
- *	sub -  the subscription pattern.
- *	qos -  the requested Quality of Service for this subscription.
+ *  mosq - a valid mosquitto instance.
+ *  mid -  a pointer to an int. If not NULL, the function will set this to
+ *         the message id of this particular message. This can be then used
+ *         with the subscribe callback to determine when the message has been
+ *         sent.
+ *  sub -  the subscription pattern.
+ *  qos -  the requested Quality of Service for this subscription.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
  */
 libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos);
 
@@ -631,18 +642,18 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  * Unsubscribe from a topic.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
- *	mid -  a pointer to an int. If not NULL, the function will set this to
- *	       the message id of this particular message. This can be then used
- *	       with the unsubscribe callback to determine when the message has been
- *	       sent.
- *	sub -  the unsubscription pattern.
+ *  mosq - a valid mosquitto instance.
+ *  mid -  a pointer to an int. If not NULL, the function will set this to
+ *         the message id of this particular message. This can be then used
+ *         with the unsubscribe callback to determine when the message has been
+ *         sent.
+ *  sub -  the unsubscription pattern.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
  */
 libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub);
 
@@ -653,29 +664,30 @@ libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const
  * Useful for preserving a message received in the on_message() callback.
  *
  * Parameters:
- *	dst - a pointer to a valid mosquitto_message struct to copy to.
- *	src - a pointer to a valid mosquitto_message struct to copy from.
+ *  dst - a pointer to a valid mosquitto_message struct to copy to.
+ *  src - a pointer to a valid mosquitto_message struct to copy from.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- * 	<mosquitto_message_free>
+ *  <mosquitto_message_free>
  */
-libmosq_EXPORT int mosquitto_message_copy(struct mosquitto_message *dst, const struct mosquitto_message *src);
+libmosq_EXPORT int mosquitto_message_copy(struct mosquitto_message *dst,
+        const struct mosquitto_message *src);
 
 /*
  * Function: mosquitto_message_free
- * 
+ *
  * Completely free a mosquitto_message struct.
  *
  * Parameters:
- *	message - pointer to a mosquitto_message pointer to free.
+ *  message - pointer to a mosquitto_message pointer to free.
  *
  * See Also:
- * 	<mosquitto_message_copy>
+ *  <mosquitto_message_copy>
  */
 libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
 
@@ -699,29 +711,29 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  * <mosquitto_loop_misc>.
  *
  * Threads:
- *	
+ *
  * Parameters:
- *	mosq -        a valid mosquitto instance.
- *	timeout -     Maximum number of milliseconds to wait for network activity
- *	              in the select() call before timing out. Set to 0 for instant
- *	              return.  Set negative to use the default of 1000ms.
- *	max_packets - this parameter is currently unused and should be set to 1 for
- *	              future compatibility.
- * 
+ *  mosq -        a valid mosquitto instance.
+ *  timeout -     Maximum number of milliseconds to wait for network activity
+ *                in the select() call before timing out. Set to 0 for instant
+ *                return.  Set negative to use the default of 1000ms.
+ *  max_packets - this parameter is currently unused and should be set to 1 for
+ *                future compatibility.
+ *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  MOSQ_ERR_SUCCESS -   on success.
+ *  MOSQ_ERR_INVAL -     if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
+ *  MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
  *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
- *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *  MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
  *                       broker.
- * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ *  MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
  * See Also:
- *	<mosquitto_loop_forever>, <mosquitto_loop_start>, <mosquitto_loop_stop>
+ *  <mosquitto_loop_forever>, <mosquitto_loop_start>, <mosquitto_loop_stop>
  */
 libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets);
 
@@ -737,27 +749,27 @@ libmosq_EXPORT int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_p
  *
  * Parameters:
  *  mosq - a valid mosquitto instance.
- *	timeout -     Maximum number of milliseconds to wait for network activity
- *	              in the select() call before timing out. Set to 0 for instant
- *	              return.  Set negative to use the default of 1000ms.
- *	max_packets - this parameter is currently unused and should be set to 1 for
- *	              future compatibility.
+ *  timeout -     Maximum number of milliseconds to wait for network activity
+ *                in the select() call before timing out. Set to 0 for instant
+ *                return.  Set negative to use the default of 1000ms.
+ *  max_packets - this parameter is currently unused and should be set to 1 for
+ *                future compatibility.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  MOSQ_ERR_SUCCESS -   on success.
+ *  MOSQ_ERR_INVAL -     if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
+ *  MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
  *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
- *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *  MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
  *                       broker.
- * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ *  MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
  *
  * See Also:
- *	<mosquitto_loop>, <mosquitto_loop_start>
+ *  <mosquitto_loop>, <mosquitto_loop_start>
  */
 libmosq_EXPORT int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets);
 
@@ -772,12 +784,12 @@ libmosq_EXPORT int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, i
  *  mosq - a valid mosquitto instance.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -       on success.
- * 	MOSQ_ERR_INVAL -         if the input parameters were invalid.
- *	MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
+ *  MOSQ_ERR_SUCCESS -       on success.
+ *  MOSQ_ERR_INVAL -         if the input parameters were invalid.
+ *  MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
  *
  * See Also:
- *	<mosquitto_connect_async>, <mosquitto_loop>, <mosquitto_loop_forever>, <mosquitto_loop_stop>
+ *  <mosquitto_connect_async>, <mosquitto_loop>, <mosquitto_loop_forever>, <mosquitto_loop_stop>
  */
 libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
 
@@ -792,16 +804,16 @@ libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
  *
  * Parameters:
  *  mosq - a valid mosquitto instance.
- *	force - set to true to force thread cancellation. If false,
- *	        <mosquitto_disconnect> must have already been called.
+ *  force - set to true to force thread cancellation. If false,
+ *          <mosquitto_disconnect> must have already been called.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -       on success.
- * 	MOSQ_ERR_INVAL -         if the input parameters were invalid.
- *	MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
+ *  MOSQ_ERR_SUCCESS -       on success.
+ *  MOSQ_ERR_INVAL -         if the input parameters were invalid.
+ *  MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
  *
  * See Also:
- *	<mosquitto_loop>, <mosquitto_loop_start>
+ *  <mosquitto_loop>, <mosquitto_loop_start>
  */
 libmosq_EXPORT int mosquitto_loop_stop(struct mosquitto *mosq, bool force);
 
@@ -812,10 +824,10 @@ libmosq_EXPORT int mosquitto_loop_stop(struct mosquitto *mosq, bool force);
  * include a mosquitto client in your own select() calls.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
+ *  mosq - a valid mosquitto instance.
  *
  * Returns:
- *	The socket for the mosquitto client or -1 on failure.
+ *  The socket for the mosquitto client or -1 on failure.
  */
 libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
 
@@ -827,25 +839,25 @@ libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
  * monitoring the client network socket for activity yourself.
  *
  * Parameters:
- *	mosq -        a valid mosquitto instance.
- *	max_packets - this parameter is currently unused and should be set to 1 for
- *	              future compatibility.
+ *  mosq -        a valid mosquitto instance.
+ *  max_packets - this parameter is currently unused and should be set to 1 for
+ *                future compatibility.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  MOSQ_ERR_SUCCESS -   on success.
+ *  MOSQ_ERR_INVAL -     if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
+ *  MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
  *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
- *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *  MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
  *                       broker.
- * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ *  MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
  *
  * See Also:
- *	<mosquitto_socket>, <mosquitto_loop_write>, <mosquitto_loop_misc>
+ *  <mosquitto_socket>, <mosquitto_loop_write>, <mosquitto_loop_misc>
  */
 libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq, int max_packets);
 
@@ -857,25 +869,25 @@ libmosq_EXPORT int mosquitto_loop_read(struct mosquitto *mosq, int max_packets);
  * monitoring the client network socket for activity yourself.
  *
  * Parameters:
- *	mosq -        a valid mosquitto instance.
- *	max_packets - this parameter is currently unused and should be set to 1 for
- *	              future compatibility.
+ *  mosq -        a valid mosquitto instance.
+ *  max_packets - this parameter is currently unused and should be set to 1 for
+ *                future compatibility.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  MOSQ_ERR_SUCCESS -   on success.
+ *  MOSQ_ERR_INVAL -     if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
+ *  MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
  *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
- *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *  MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
  *                       broker.
- * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ *  MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
  *
  * See Also:
- *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_misc>, <mosquitto_want_write>
+ *  <mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_misc>, <mosquitto_want_write>
  */
 libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq, int max_packets);
 
@@ -890,15 +902,15 @@ libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
  * to be retried, so should be called fairly frequently.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
+ *  mosq - a valid mosquitto instance.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  MOSQ_ERR_SUCCESS -   on success.
+ *  MOSQ_ERR_INVAL -     if the input parameters were invalid.
+ *  MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
  *
  * See Also:
- *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write>
+ *  <mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write>
  */
 libmosq_EXPORT int mosquitto_loop_misc(struct mosquitto *mosq);
 
@@ -908,10 +920,10 @@ libmosq_EXPORT int mosquitto_loop_misc(struct mosquitto *mosq);
  * Returns true if there is data ready to be written on the socket.
  *
  * Parameters:
- *	mosq - a valid mosquitto instance.
+ *  mosq - a valid mosquitto instance.
  *
  * See Also:
- *	<mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write>
+ *  <mosquitto_socket>, <mosquitto_loop_read>, <mosquitto_loop_write>
  */
 libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
 
@@ -954,17 +966,17 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  *                instance.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_tls_opts_set>, <mosquitto_tls_psk_set>, <mosquitto_tls_insecure_set>
+ *  <mosquitto_tls_opts_set>, <mosquitto_tls_psk_set>, <mosquitto_tls_insecure_set>
  */
 libmosq_EXPORT int mosquitto_tls_set(struct mosquitto *mosq,
-		const char *cafile, const char *capath,
-		const char *certfile, const char *keyfile,
-		int (*pw_callback)(char *buf, int size, int rwflag, void *userdata));
+                                     const char *cafile, const char *capath,
+                                     const char *certfile, const char *keyfile,
+                                     int (*pw_callback)(char *buf, int size, int rwflag, void *userdata));
 
 /*
  * Function: mosquitto_tls_insecure_set
@@ -985,11 +997,11 @@ libmosq_EXPORT int mosquitto_tls_set(struct mosquitto *mosq,
  *          the connection is insecure.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
  *
  * See Also:
- *	<mosquitto_tls_set>
+ *  <mosquitto_tls_set>
  */
 libmosq_EXPORT int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value);
 
@@ -1000,32 +1012,33 @@ libmosq_EXPORT int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value
  *
  * Parameters:
  *  mosq -        a valid mosquitto instance.
- *	cert_reqs -   an integer defining the verification requirements the client
- *	              will impose on the server. This can be one of:
- *	              * SSL_VERIFY_NONE (0): the server will not be verified in any way.
- *	              * SSL_VERIFY_PEER (1): the server certificate will be verified
- *	                and the connection aborted if the verification fails.
- *	              The default and recommended value is SSL_VERIFY_PEER. Using
- *	              SSL_VERIFY_NONE provides no security.
- *	tls_version - the version of the SSL/TLS protocol to use as a string. If NULL,
- *	              the default value is used. The default value and the
- *	              available values depend on the version of openssl that the
- *	              library was compiled against. For openssl >= 1.0.1, the
- *	              available options are tlsv1.2, tlsv1.1 and tlsv1, with tlv1.2
- *	              as the default. For openssl < 1.0.1, only tlsv1 is available.
- *	ciphers -     a string describing the ciphers available for use. See the
- *	              "openssl ciphers" tool for more information. If NULL, the
- *	              default ciphers will be used.
+ *  cert_reqs -   an integer defining the verification requirements the client
+ *                will impose on the server. This can be one of:
+ *                * SSL_VERIFY_NONE (0): the server will not be verified in any way.
+ *                * SSL_VERIFY_PEER (1): the server certificate will be verified
+ *                  and the connection aborted if the verification fails.
+ *                The default and recommended value is SSL_VERIFY_PEER. Using
+ *                SSL_VERIFY_NONE provides no security.
+ *  tls_version - the version of the SSL/TLS protocol to use as a string. If NULL,
+ *                the default value is used. The default value and the
+ *                available values depend on the version of openssl that the
+ *                library was compiled against. For openssl >= 1.0.1, the
+ *                available options are tlsv1.2, tlsv1.1 and tlsv1, with tlv1.2
+ *                as the default. For openssl < 1.0.1, only tlsv1 is available.
+ *  ciphers -     a string describing the ciphers available for use. See the
+ *                "openssl ciphers" tool for more information. If NULL, the
+ *                default ciphers will be used.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_tls_set>
+ *  <mosquitto_tls_set>
  */
-libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs, const char *tls_version, const char *ciphers);
+libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs,
+        const char *tls_version, const char *ciphers);
 
 /*
  * Function: mosquitto_tls_psk_set
@@ -1040,21 +1053,22 @@ libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs,
  *  psk -      the pre-shared-key in hex format with no leading "0x".
  *  identity - the identity of this client. May be used as the username
  *             depending on the server settings.
- *	ciphers -  a string describing the PSK ciphers available for use. See the
- *	           "openssl ciphers" tool for more information. If NULL, the
- *	           default ciphers will be used.
+ *  ciphers -  a string describing the PSK ciphers available for use. See the
+ *             "openssl ciphers" tool for more information. If NULL, the
+ *             default ciphers will be used.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_tls_set>
+ *  <mosquitto_tls_set>
  */
-libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers);
+libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk,
+        const char *identity, const char *ciphers);
 
-/* 
+/*
  * Function: mosquitto_connect_callback_set
  *
  * Set the connect callback. This is called when the broker sends a CONNACK
@@ -1076,14 +1090,15 @@ libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk
  * * 3 - connection refused (broker unavailable)
  * * 4-255 - reserved for future use
  */
-libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int));
- 
+libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq,
+        void (*on_connect)(struct mosquitto *, void *, int));
+
 /*
  * Function: mosquitto_disconnect_callback_set
  *
  * Set the disconnect callback. This is called when the broker has received the
  * DISCONNECT command and has disconnected the client.
- * 
+ *
  * Parameters:
  *  mosq -          a valid mosquitto instance.
  *  on_disconnect - a callback function in the following form:
@@ -1096,14 +1111,15 @@ libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void 
  *         means the client has called <mosquitto_disconnect>. Any other value
  *         indicates that the disconnect is unexpected.
  */
-libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int));
- 
+libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq,
+        void (*on_disconnect)(struct mosquitto *, void *, int));
+
 /*
  * Function: mosquitto_publish_callback_set
  *
  * Set the publish callback. This is called when a message initiated with
  * <mosquitto_publish> has been sent to the broker successfully.
- * 
+ *
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_publish - a callback function in the following form:
@@ -1114,14 +1130,15 @@ libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, vo
  *  obj -  the user data provided in <mosquitto_new>
  *  mid -  the message id of the sent message.
  */
-libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int));
+libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq,
+        void (*on_publish)(struct mosquitto *, void *, int));
 
 /*
  * Function: mosquitto_message_callback_set
  *
  * Set the message callback. This is called when a message is received from the
  * broker.
- * 
+ *
  * Parameters:
  *  mosq -       a valid mosquitto instance.
  *  on_message - a callback function in the following form:
@@ -1135,16 +1152,17 @@ libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void 
  *            should make copies of any of the data it requires.
  *
  * See Also:
- * 	<mosquitto_message_copy>
+ *  <mosquitto_message_copy>
  */
-libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void (*on_message)(struct mosquitto *, void *, const struct mosquitto_message *));
+libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq,
+        void (*on_message)(struct mosquitto *, void *, const struct mosquitto_message *));
 
 /*
  * Function: mosquitto_subscribe_callback_set
  *
  * Set the subscribe callback. This is called when the broker responds to a
  * subscription request.
- * 
+ *
  * Parameters:
  *  mosq -         a valid mosquitto instance.
  *  on_subscribe - a callback function in the following form:
@@ -1158,14 +1176,15 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
  *  granted_qos - an array of integers indicating the granted QoS for each of
  *                the subscriptions.
  */
-libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *));
+libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq,
+        void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *));
 
 /*
  * Function: mosquitto_unsubscribe_callback_set
  *
  * Set the unsubscribe callback. This is called when the broker responds to a
  * unsubscription request.
- * 
+ *
  * Parameters:
  *  mosq -           a valid mosquitto instance.
  *  on_unsubscribe - a callback function in the following form:
@@ -1176,7 +1195,8 @@ libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, voi
  *  obj -  the user data provided in <mosquitto_new>
  *  mid -  the message id of the unsubscribe message.
  */
-libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int));
+libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq,
+        void (*on_unsubscribe)(struct mosquitto *, void *, int));
 
 /*
  * Function: mosquitto_log_callback_set
@@ -1192,14 +1212,15 @@ libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, v
  *  mosq -  the mosquitto instance making the callback.
  *  obj -   the user data provided in <mosquitto_new>
  *  level - the log message level from the values:
- *	        MOSQ_LOG_INFO
- *	        MOSQ_LOG_NOTICE
- *	        MOSQ_LOG_WARNING
- *	        MOSQ_LOG_ERR
- *	        MOSQ_LOG_DEBUG
- *	str -   the message string.
+ *          MOSQ_LOG_INFO
+ *          MOSQ_LOG_NOTICE
+ *          MOSQ_LOG_WARNING
+ *          MOSQ_LOG_ERR
+ *          MOSQ_LOG_DEBUG
+ *  str -   the message string.
  */
-libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *));
+libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq,
+        void (*on_log)(struct mosquitto *, void *, int, const char *));
 
 /*
  * Function: mosquitto_reconnect_delay_set
@@ -1215,12 +1236,12 @@ libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on
  * set an upper bound on the delay with reconnect_delay_max.
  *
  * Example 1:
- *	delay=2, delay_max=10, exponential_backoff=False
- *	Delays would be: 2, 4, 6, 8, 10, 10, ...
+ *  delay=2, delay_max=10, exponential_backoff=False
+ *  Delays would be: 2, 4, 6, 8, 10, 10, ...
  *
  * Example 2:
- *	delay=3, delay_max=30, exponential_backoff=True
- *	Delays would be: 3, 6, 12, 24, 30, 30, ...
+ *  delay=3, delay_max=30, exponential_backoff=True
+ *  Delays would be: 3, 6, 12, 24, 30, 30, ...
  *
  * Parameters:
  *  mosq -                          a valid mosquitto instance.
@@ -1233,10 +1254,11 @@ libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on
  *                                  exponential backoff.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
  */
-libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
+libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq,
+        unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
 
 /*
  * Function: mosquitto_max_inflight_messages_set
@@ -1258,17 +1280,18 @@ libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigne
  *                          to 20.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
  */
-libmosq_EXPORT int mosquitto_max_inflight_messages_set(struct mosquitto *mosq, unsigned int max_inflight_messages);
+libmosq_EXPORT int mosquitto_max_inflight_messages_set(struct mosquitto *mosq,
+        unsigned int max_inflight_messages);
 
 /*
  * Function: mosquitto_message_retry_set
  *
  * Set the number of seconds to wait before retrying messages. This applies to
  * publish messages with QoS>0. May be called at any time.
- * 
+ *
  * Parameters:
  *  mosq -          a valid mosquitto instance.
  *  message_retry - the number of seconds to wait for a response before
@@ -1287,8 +1310,8 @@ libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned
  *
  * Parameters:
  *  mosq - a valid mosquitto instance.
- * 	obj -  A user pointer that will be passed as an argument to any callbacks
- * 	       that are specified.
+ *  obj -  A user pointer that will be passed as an argument to any callbacks
+ *         that are specified.
  */
 libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
 
@@ -1306,10 +1329,10 @@ libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
  * Call to obtain a const string description of a mosquitto error number.
  *
  * Parameters:
- *	mosq_errno - a mosquitto error number.
+ *  mosq_errno - a mosquitto error number.
  *
  * Returns:
- *	A constant string describing the error.
+ *  A constant string describing the error.
  */
 libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
 
@@ -1319,10 +1342,10 @@ libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
  * Call to obtain a const string description of an MQTT connection result.
  *
  * Parameters:
- *	connack_code - an MQTT connection result.
+ *  connack_code - an MQTT connection result.
  *
  * Returns:
- *	A constant string describing the result.
+ *  A constant string describing the result.
  */
 libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
 
@@ -1356,20 +1379,20 @@ libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
  * topics[4] = "hierarchy"
  *
  * Parameters:
- *	subtopic - the subscription/topic to tokenise
- *	topics -   a pointer to store the array of strings
- *	count -    an int pointer to store the number of items in the topics array.
+ *  subtopic - the subscription/topic to tokenise
+ *  topics -   a pointer to store the array of strings
+ *  count -    an int pointer to store the number of items in the topics array.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * Example:
  *
  * > char **topics;
  * > int topic_count;
  * > int i;
- * > 
+ * >
  * > mosquitto_sub_topic_tokenise("$SYS/broker/uptime", &topics, &topic_count);
  * >
  * > for(i=0; i<token_count; i++){
@@ -1377,7 +1400,7 @@ libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
  * > }
  *
  * See Also:
- *	<mosquitto_sub_topic_tokens_free>
+ *  <mosquitto_sub_topic_tokens_free>
  */
 libmosq_EXPORT int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *count);
 
@@ -1387,15 +1410,15 @@ libmosq_EXPORT int mosquitto_sub_topic_tokenise(const char *subtopic, char ***to
  * Free memory that was allocated in <mosquitto_sub_topic_tokenise>.
  *
  * Parameters:
- *	topics - pointer to string array.
- *	count - count of items in string array.
+ *  topics - pointer to string array.
+ *  count - count of items in string array.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_SUCCESS - on success
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
  *
  * See Also:
- *	<mosquitto_sub_topic_tokenise>
+ *  <mosquitto_sub_topic_tokenise>
  */
 libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
 
@@ -1410,15 +1433,15 @@ libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
  * non/matching would not match the subscription non/+/+
  *
  * Parameters:
- *	sub - subscription string to check topic against.
- *	topic - topic to check.
- *	result - bool pointer to hold result. Will be set to true if the topic
- *	         matches the subscription.
+ *  sub - subscription string to check topic against.
+ *  topic - topic to check.
+ *  result - bool pointer to hold result. Will be set to true if the topic
+ *           matches the subscription.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *  MOSQ_ERR_SUCCESS - on success
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *  MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  */
 libmosq_EXPORT int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result);
 

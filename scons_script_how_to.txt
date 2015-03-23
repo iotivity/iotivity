@@ -90,8 +90,8 @@ When write IoTivity project build script, you can get this environment as
 following:
 	Import('env')
 
-You can use 'env' directly after import it. You can also clone a new environment
-and update its keys.
+You can use 'env' directly after import it(it isn't recommended). You can also
+clone a new environment and update its keys(recommended).
 
 	new_env1 = Clone('env')
 	new_env2 = Clone('env')
@@ -108,20 +108,19 @@ XXX is the information name, below are the extra information added by IoTivity
 common scrirpts:
 BUILD_DIR: the path of the build directory, all output are in this directory
 SRC_DIR: the path of the top directory of the source code
-OIC_UTILS: the path of oic-utilities project
 RELEASE: build type, boolean. True - release build, False - debug build
 TARGET_OS: the name of the target OS. The possible value depends on the host
 	platform. Bellow is the list of host and possible target OS. (darwin means
 	MAC OSX)
-		linux: linux / android / arduino / tizen
-(the line means on Linux, you can build the project for Linux/Android/Arduino/Tizen)
+		linux: linux / android / arduino / tizen (means on Linux, you can build the
+			project for Linux/Android/Arduino/Tizen)
 		windows: windows / winrt / android / arduino
 		darwin: darwin / ios / android / arduino
 
-TARGET_ARCH: the target CPU arch. Its possible value depend on the target OS.
+TARGET_ARCH: the target CPU arch. Its possible value depends on the target OS.
 	Bellow list the target OS and allowed CPU architecture.
-		linux: x86 / x86_64 / arm / arm64
-(above line means if the target OS is Linux, the CPU arch can be x86/x86_64/arm/arm64)
+		linux: x86 / x86_64 / arm / arm64 (means if the target OS is Linux, the CPU
+			arch can be x86/x86_64/arm/arm64)
 		android: x86 / x86_64 / armeabi / armeabi-v7a / armeabi-v7a-hard / arm64-v8a
 		windows: x86 / amd64 / arm
 		winrt: arm
@@ -133,9 +132,12 @@ TARGET_ARCH: the target CPU arch. Its possible value depend on the target OS.
 
 For convenience, in the common scripts, some extra functions are added.
 
-PrintTargets(): print all targets in the help information.
-AppendTarget(target): add 'target' into targets list, when use PrintTargets,
-	the 'target' will be print.
+PrintTargets(): print all target names in the help information.
+AppendTarget(name, target = None): add a target name into targets list, when use
+	PrintTargets, the target name will be print
+# @param name - the name of the target(s)(user defined name)
+# @param target - Final binary, file(s) etc genereted after build.
+
 InstallTarget(files, name): it takes the same action as AppendTarget, besides,
 	it installs the 'files' to BUILD_DIR.
 
@@ -146,14 +148,40 @@ this function. 'lib' is the name of the library to import. The 'include' path
 will be auto added to the environment and the library will be built and linked
 into the final binary.
 
-CreateBin('bin', src): For Arduino, after build the program, it's required to
+CreateBin(bin, src): For Arduino, after build the program, it's required to
 be converted into specific format (e.g .hex). This function will genearate the
-required .hex (and .eep if target arch is avr) file.
+required .hex (and .eep if target arch is avr) file from 'bin'.
 
 UploadHelp(): For different board, the upload command line is different, this
 function print the recommended upload command line. You can see the recommended
 upload command line in the help information(the output of command "scons
 [options] -h")
+Functions for external library management:
+PrepareLib(libname, lib = None, path = None, script = None): Check whether a
+library exists, if not, notify user to install it or try to download the source
+code and build it
+# @param libname - the name of the library try to prepare
+# @param lib - the lib(.so, .a etc) to check (a library may include more then
+#      one lib, e.g. boost, includes boost_thread, boost_system ...
+# @param path - the path of the library building script, if it's not set,
+#			by default, it's <src_dir>/extlibs/<libname>/
+# @param script - the building script, by default, it's 'SConscript'
+
+Download(target, url): Download source code from URL 'url' and save as 'target'.
+# @param target - the name of the source code package to be saved as
+# @param url - the URL from which to download the source code
+
+Configure(cwd, cmd): Run configure command(such as: boostrap, configure etc.
+usually it's done before build a library)
+# @param cwd - the work directory, full path or relative path to the directory
+		where the library build script in
+# @param cmd - the command to run, can be a script or system command
+
+Install_head_file(file): Install header file(s) to <src_dir>/deps/<target_os>/include
+# @param file - the head file(s) to install
+
+Install_lib(lib): Install library binaries to <src_dir>/deps/<target_os>/lib/<arch>
+# @param lib - the library binary(.so, .a etc) to install
 
 ==== Scripts Hierarchy ====
 
@@ -192,7 +220,7 @@ SConscript('sub_prj_11/SConscript')
 SConscript('sub_prj_1n/SConscript')
 
 The path is relevant to 'prj_1/SConscript'. You can also use the full path
-build_dir + 'prj_1/sub_prj_1x/SConscript', but it's not recommended.
+(build_dir + 'prj_1/sub_prj_1x/SConscript'), but it's not recommended.
 
 Above just to show a recommended way to manage subsidiary scripts. You don't
 need restrictly follow it.
@@ -203,7 +231,7 @@ After run the scripts in build_common (usally it's done at the beginning of
 SConstruct), an global environment 'env' is exported, 'env' has include the
 default configuration of the target OS and arch. 'env' is used in all projects,
 should avoid to change its keys. To avoid change 'env', usually clone 'env' and
-update it accroding to the requirement of cuurent sub project. Then specify the
+update it accroding to the requirement of current sub project. Then specify the
 target(usually binary) to build.
 
 Below is an example:
@@ -215,7 +243,7 @@ Below is an example:
 
 	# Update the new enviroment, usally include add header file paths,
 	# library path, libs to link and other compiler flags. This part is
-	# optional. If not present, the default configuration will be used
+	# optional.
 	new_env.AppeneUnique(xxx = [ .... ])
 
 	# Specify the target(application, library, object or others) to build
@@ -225,16 +253,17 @@ Below is an example:
 	# If it's an important library or daemon to be published
 	new_env.InstallTarget(ts, 'target_name')
 or
-	# If is't examples or test program or others will not be published
-	new_env.Alias('target_name', ts)
-	new_env.AppendTarget('target_name')
+	# If it's examples or test program or others will not be published
+	new_env.AppendTarget('target_name', ts)
 
 ==== Tips ====
-1. library order: if A lib use B lib, both A and B are linked to target T, the
-	when specify libraries, A should in front of B, otherwise there may be link
-	error.
+1. library order: if A lib use B lib, both A and B are linked to target T, when
+	specify libraries, A should in front of B, otherwise there may be link
+	error. e.g.
+		xx_env.AppendUnique(LIBS = ['A', 'B'])
+
 2. On android:
 	(1)'pthread' is in libc. So don't use '-lpthread' for android
 	(2)By default 'rtti' and 'exception' is disabled, to enable it, you need
 	add flags '-frtti' and '-fexceptions'
-	(3)If STL is used, need link 'gnustl_static' library
+	(3)If STL is used, need link 'gnustl_shared' library

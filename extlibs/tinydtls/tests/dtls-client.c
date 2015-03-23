@@ -22,9 +22,10 @@
 
 #define DEFAULT_PORT 20220
 
-#define PSK_DEFAULT_IDENTITY "Client_identity"
+#define PSK_CLIENT_IDENTITY  "Client_identity"
+#define PSK_SERVER_IDENTITY  "Server_identity"
 #define PSK_DEFAULT_KEY      "secretPSK"
-#define PSK_OPTIONS          "i:k:"
+#define PSK_OPTIONS          "i:s:k:"
 
 #ifdef __GNUC__
 #define UNUSED_PARAM __attribute__((unused))
@@ -43,6 +44,7 @@ typedef struct {
 static dtls_str output_file = { 0, NULL }; /* output file name */
 
 static dtls_context_t *dtls_context = NULL;
+static dtls_context_t *orig_dtls_context = NULL;
 
 
 static const unsigned char ecdsa_priv_key[] = {
@@ -93,8 +95,10 @@ read_from_file(char *arg, unsigned char *buf, size_t max_buf_len) {
 /* The PSK information for DTLS */
 #define PSK_ID_MAXLEN 256
 #define PSK_MAXLEN 256
-static unsigned char psk_id[PSK_ID_MAXLEN];
-static size_t psk_id_length = 0;
+static unsigned char psk_client_id[PSK_ID_MAXLEN];
+static size_t psk_client_id_length = 0;
+static unsigned char psk_server_id[PSK_ID_MAXLEN];
+static size_t psk_server_id_length = 0;
 static unsigned char psk_key[PSK_MAXLEN];
 static size_t psk_key_length = 0;
 
@@ -114,15 +118,15 @@ get_psk_info(struct dtls_context_t *ctx UNUSED_PARAM,
       dtls_debug("got psk_identity_hint: '%.*s'\n", id_len, id);
     }
 
-    if (result_length < psk_id_length) {
+    if (result_length < psk_client_id_length) {
       dtls_warn("cannot set psk_identity -- buffer too small\n");
       return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
     }
 
-    memcpy(result, psk_id, psk_id_length);
-    return psk_id_length;
+    memcpy(result, psk_client_id, psk_client_id_length);
+    return psk_client_id_length;
   case DTLS_PSK_KEY:
-    if (id_len != psk_id_length || memcmp(psk_id, id, id_len) != 0) {
+    if (id_len != psk_server_id_length || memcmp(psk_server_id, id, id_len) != 0) {
       dtls_warn("PSK for unknown id requested, exiting\n");
       return dtls_alert_fatal_create(DTLS_ALERT_ILLEGAL_PARAMETER);
     } else if (result_length < psk_key_length) {
@@ -232,6 +236,7 @@ dtls_handle_read(struct dtls_context_t *ctx) {
 static void dtls_handle_signal(int sig)
 {
   dtls_free_context(dtls_context);
+  dtls_free_context(orig_dtls_context);
   signal(sig, SIG_DFL);
   kill(getpid(), sig);
 }
@@ -291,12 +296,13 @@ usage( const char *program, const char *version) {
   fprintf(stderr, "%s v%s -- DTLS client implementation\n"
 	  "(c) 2011-2014 Olaf Bergmann <bergmann@tzi.org>\n\n"
 #ifdef DTLS_PSK
-	  "usage: %s [-i file] [-k file] [-o file] [-p port] [-v num] addr [port]\n"
+	  "usage: %s [-i file] [-s file] [-k file] [-o file] [-p port] [-v num] addr [port]\n"
 #else /*  DTLS_PSK */
 	  "usage: %s [-o file] [-p port] [-v num] addr [port]\n"
 #endif /* DTLS_PSK */
 #ifdef DTLS_PSK
-	  "\t-i file\t\tread PSK identity from file\n"
+	  "\t-i file\t\tread PSK Client identity from file\n"
+	  "\t-s file\t\tread PSK Server identity from file\n"
 	  "\t-k file\t\tread pre-shared key from file\n"
 #endif /* DTLS_PSK */
 	  "\t-o file\t\toutput received data to this file (use '-' for STDOUT)\n"
@@ -321,6 +327,12 @@ static dtls_handler_t cb = {
 #define DTLS_CLIENT_CMD_CLOSE "client:close"
 #define DTLS_CLIENT_CMD_RENEGOTIATE "client:renegotiate"
 
+/* As per RFC 6347 section 4.2.8, DTLS Server should support requests
+ * from clients who have silently abandoned the existing association
+ * and initiated a new handshake request by sending a ClientHello.
+ * Below command tests this feature.
+ */
+#define DTLS_CLIENT_CMD_REHANDSHAKE "client:rehandshake"
 int 
 main(int argc, char **argv) {
   fd_set rfds, wfds;
@@ -337,9 +349,11 @@ main(int argc, char **argv) {
   snprintf(port_str, sizeof(port_str), "%d", port);
 
 #ifdef DTLS_PSK
-  psk_id_length = strlen(PSK_DEFAULT_IDENTITY);
+  psk_client_id_length = strlen(PSK_CLIENT_IDENTITY);
+  psk_server_id_length = strlen(PSK_SERVER_IDENTITY);
   psk_key_length = strlen(PSK_DEFAULT_KEY);
-  memcpy(psk_id, PSK_DEFAULT_IDENTITY, psk_id_length);
+  memcpy(psk_client_id, PSK_CLIENT_IDENTITY, psk_client_id_length);
+  memcpy(psk_server_id, PSK_SERVER_IDENTITY, psk_server_id_length);
   memcpy(psk_key, PSK_DEFAULT_KEY, psk_key_length);
 #endif /* DTLS_PSK */
 
@@ -347,11 +361,20 @@ main(int argc, char **argv) {
     switch (opt) {
 #ifdef DTLS_PSK
     case 'i' : {
-      ssize_t result = read_from_file(optarg, psk_id, PSK_ID_MAXLEN);
+      ssize_t result = read_from_file(optarg, psk_client_id, PSK_ID_MAXLEN);
       if (result < 0) {
-	dtls_warn("cannot read PSK identity\n");
+	dtls_warn("cannot read Client PSK identity\n");
       } else {
-	psk_id_length = result;
+	psk_client_id_length = result;
+      }
+      break;
+    }
+    case 's' : {
+      ssize_t result = read_from_file(optarg, psk_server_id, PSK_ID_MAXLEN);
+      if (result < 0) {
+	dtls_warn("cannot read Server PSK identity\n");
+      } else {
+	psk_server_id_length = result;
       }
       break;
     }
@@ -490,6 +513,24 @@ main(int argc, char **argv) {
 	printf("client: renegotiate connection\n");
 	dtls_renegotiate(dtls_context, &dst);
 	len = 0;
+      } else if (len >= strlen(DTLS_CLIENT_CMD_REHANDSHAKE) &&
+	         !memcmp(buf, DTLS_CLIENT_CMD_REHANDSHAKE, strlen(DTLS_CLIENT_CMD_REHANDSHAKE))) {
+	printf("client: rehandshake connection\n");
+	if (orig_dtls_context == NULL) {
+	  /* Cache the current context. We cannot free the current context as it will notify 
+	   * the Server to close the connection (which we do not want).
+	   */
+	  orig_dtls_context = dtls_context;
+	  /* Now, Create a new context and attempt to initiate a handshake. */
+	  dtls_context = dtls_new_context(&fd);
+	  if (!dtls_context) {
+	    dtls_emerg("cannot create context\n");
+	    exit(-1);
+          }
+	  dtls_set_handler(dtls_context, &cb);
+	  dtls_connect(dtls_context, &dst);
+	}
+	len = 0;
       } else {
 	try_send(dtls_context, &dst);
       }
@@ -497,6 +538,7 @@ main(int argc, char **argv) {
   }
   
   dtls_free_context(dtls_context);
+  dtls_free_context(orig_dtls_context);
   exit(0);
 }
 

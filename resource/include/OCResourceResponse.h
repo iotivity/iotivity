@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file OCResourceResponse.h
-
-/// @brief  This file contains the declaration of classes and its members related to
-///         ResourceResponse.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * ResourceResponse.
+ */
 
 #ifndef __OCRESOURCERESPONSE_H
 #define __OCRESOURCERESPONSE_H
@@ -126,8 +128,7 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param attributeMap reference containing the name value pairs representing
-        *         the resource's attributes
+        *  @param rep reference to the resource's representation
         *  @param interface specifies the interface
         */
         void setResourceRepresentation(OCRepresentation& rep, std::string interface) {
@@ -137,8 +138,7 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param attributeMap rvalue reference containing the name value pairs representing
-        *         the resource's attributes
+        *  @param rep rvalue reference to the resource's representation
         *  @param interface specifies the interface
         */
         void setResourceRepresentation(OCRepresentation&& rep, std::string interface) {
@@ -147,8 +147,7 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param attributeMap reference containing the name value pairs representing the resource's
-        *  attributes
+        *  @param rep reference to the to the resource's representation
         */
         void setResourceRepresentation(OCRepresentation& rep) {
             // Call the default
@@ -158,8 +157,7 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param attributeMap rvalue reference containing the name value pairs representing the
-        *  resource's attributes
+        *  @param rep rvalue reference to the resource's representation
         */
         void setResourceRepresentation(OCRepresentation&& rep) {
             // Call the above function

@@ -17,7 +17,6 @@
  * limitations under the License.
  *
  ******************************************************************/
-
 #ifndef _SSMResourceServer_H_
 #define _SSMResourceServer_H_
 

@@ -24,7 +24,9 @@
 
 #ifndef __FELIXADAPTER_H__
 #define __FELIXADAPTER_H__
+#ifndef DLOPEN_POSIX
 #define DLOPEN_POSIX
+#endif
 
 #include <vector>
 #include <dirent.h>
@@ -35,6 +37,7 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <internal.h>
+#include <jni.h>
 
 #include "Plugin.h"
 #include "Config.h"
@@ -166,11 +169,11 @@ namespace OIC
             *
             * @return OICPluginManager pointer Address.
             */
-            static FelixAdapter *Getinstance()
+            static FelixAdapter *Getinstance(void *args = NULL)
             {
                 if (NULL == s_pinstance)
                 {
-                    s_pinstance = new FelixAdapter();
+                    s_pinstance = new FelixAdapter((JavaVM *)args);
                 }
 
                 return s_pinstance;
@@ -179,18 +182,12 @@ namespace OIC
 
 
         private:
+            JavaVM *jvm;
             Config *config;
             typedef std::map<std::string, bool> File_list;
             std::vector<Plugin> m_plugins;
             boost::thread m_file_detect_thread;
-            /*
-            cp_context_t *m_context;
-            cp_status_t m_status;
-            cp_plugin_info_t **m_cp_plugins;
-            cp_plugin_info_t *m_plugin;
-            boost::thread_group m_thread_g;
-            std::string m_path;
-            */
+
             static FelixAdapter *s_pinstance;
 
             /**
@@ -198,7 +195,7 @@ namespace OIC
             * During construction time, all plugins under the root plugin path will be loaded.
             *
             */
-            FelixAdapter();
+            FelixAdapter(JavaVM *);
 
             /**
             * Virtual destructor

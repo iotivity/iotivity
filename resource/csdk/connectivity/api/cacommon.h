@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,9 +19,12 @@
  ******************************************************************/
 
 /**
- * @file cacommon.h
- * @brief This file contains the common data structures between Resource , CA and adapters
+ * @file
+ *
+ * This file contains the common data structures between Resource, CA and
+ * adapters.
  */
+
 #ifndef __CA_COMMON_H_
 #define __CA_COMMON_H_
 

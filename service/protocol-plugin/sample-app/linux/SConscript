@@ -1,7 +1,7 @@
 ##
 #sample-app build script
 ##
-
+import os
 Import('env')
 
 # Add third party libraries
@@ -16,16 +16,17 @@ target_os = env.get('TARGET_OS')
 sample_env.AppendUnique(CPPPATH = [
 				'../../plugin-manager/src/',
 				'../../lib/cpluff/libcpluff/',
-				'../../lib/rapidxml'])
+				env.get('SRC_DIR') + '/extlibs/rapidxml'
+                        ])
 if target_os not in ['windows', 'winrt']:
-	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread', '-std=c++0x'])
+	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread'])
 
+sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'ppm', 'pmimpl', 'boost_system', 'boost_thread', 'dl'])
 sample_env.AppendUnique(LIBS = ['pthread'])
-sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'coap', 'ppm', 'pmimpl', 'dl'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
 mqttclient = sample_env.Program('mqtt/mqttclient', 'mqtt/mqttclient.cpp')
 
-Alias('mqttclient', mqttclient)
-env.AppendTarget('mqttclient')
+env.AppendTarget('mqttclient', mqttclient)

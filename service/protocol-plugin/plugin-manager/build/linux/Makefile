@@ -7,7 +7,7 @@ CPLUFF_DIR = $(LIB)/cpluff/libcpluff
 SRC = ../../src/
 
 CXX_INC    = -I. -I$(CPLUFF_DIR)
-CXX_INC += -I$(LIB)/rapidxml 
+CXX_INC += -I../../../../../extlibs/rapidxml 
 
 LINK_LIB = -lboost_system -ldl -lexpat -lboost_thread 
 CXX_LIBS = $(CPLUFF_DIR)/.libs/libcpluff.a 

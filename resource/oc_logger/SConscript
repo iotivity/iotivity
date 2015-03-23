@@ -4,10 +4,7 @@
 
 Import('env')
 
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
-
-liboc_logger_env = lib_env.Clone()
+liboc_logger_env = env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
@@ -16,11 +13,11 @@ liboc_logger_env.PrependUnique(CPPPATH = ['include'])
 target_os = env.get('TARGET_OS')
 if target_os == 'android':
 	liboc_logger_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	liboc_logger_env.AppendUnique(LIBS = ['gnustl_static', 'log'])
+	liboc_logger_env.AppendUnique(LIBS = ['gnustl_shared', 'log'])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
-	liboc_logger_env.AppendUnique(CFLAGS = ['-Wall', '-std=c99', '-fPIC'])
-	liboc_logger_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x', '-fPIC'])
+	liboc_logger_env.AppendUnique(CFLAGS = ['-std=c99'])
+	liboc_logger_env.AppendUnique(CCFLAGS = ['-Wall'])
 
 ######################################################################
 # Source files and Targets

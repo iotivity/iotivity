@@ -21,14 +21,19 @@
 #ifndef OIC_GROUP_H
 #define OIC_GROUP_H
 
-#include "ocstack.h"
 #include "ocstackinternal.h"
+#include "ocstack.h"
+#include "ocresource.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 void AddCapability(OCCapability** head, OCCapability* node);
 
 void AddAction(OCAction** head, OCAction* node);
 
-void AddActionSet(OCActionSet **head, OCActionSet* node);
+OCStackResult AddActionSet(OCActionSet **head, OCActionSet* node);
 
 void DeleteCapability(OCCapability *del);
 
@@ -40,18 +45,25 @@ OCStackResult DeleteActionSets(OCResource** resource);
 
 OCStackResult FindAndDeleteActionSet(OCResource **resource, const char * actionsetName);
 
-OCStackResult GetActionSetFromString(OCResource **resource, unsigned char *request, char** method,
-        char **actionsetName);
+OCStackResult ExtractKeyValueFromRequest(char *request, char **key, char **value);
 
-OCStackResult GetStringFromActionSet(OCActionSet* actionset, char** desc);
+OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc);
+
+OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc);
 
 OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         OCClientResponse* clientResponse);
 
 void ActionSetCD(void *context);
 
+
 OCStackResult
 BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHandlerFlag flag*/,
         OCResource *resource, OCEntityHandlerRequest *ehRequest);
+
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif // OIC_GROUP_H

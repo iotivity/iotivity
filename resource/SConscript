@@ -4,6 +4,7 @@
 ##
 
 Import('env')
+Import('targets_csdk_only')
 
 target_os = env.get('TARGET_OS')
 
@@ -16,7 +17,7 @@ SConscript('csdk/SConscript')
 if target_os == 'android':
 	SConscript('android/SConscript')
 
-if target_os != 'arduino':
+if target_os not in targets_csdk_only:
 	# Build liboc_logger
 	SConscript('oc_logger/SConscript')
 

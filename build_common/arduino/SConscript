@@ -374,9 +374,8 @@ else:
 
 	if target_arch == 'arm':
 		env.AppendUnique(LINKFLAGS = ['-Os', '-Wl,--gc-sections', cpu_flag,
-					'-T' + variant_folder + '/' + __get_board_info(board, '.build.ldscript'),
-					'-Wl,-Map,' + env.get('BUILD_DIR') + 'arduino_prj.map'])
-		env.AppendUnique(LINKFLAGS = Split('-lm -lgcc -mthumb -Wl,--cref -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group'))
+					'-T' + variant_folder + '/' + __get_board_info(board, '.build.ldscript')])
+		env.AppendUnique(LINKFLAGS = Split('-lm -lgcc -mthumb -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group'))
 
 		variant_system_lib = __get_board_info(board, '.build.variant_system_lib')
 		if variant_system_lib:
@@ -392,9 +391,7 @@ else:
 		env.AppendUnique(LIBS = 'm')
 	env.Replace(ARCOM = '$AR ' + platform_info.get('compiler.ar.flags') + ' $TARGET $SOURCES')
 
-__build_core(env)
-
 env.AddMethod(__import_lib, "ImportLib") #import arduino library
-#env.AddMethod(__build_core, "BuildCore") #build arduino core
+env.AddMethod(__build_core, "BuildCore") #build arduino core
 env.AddMethod(__create_bin, "CreateBin") #create binary files(.eep and .hex)
 env.AddMethod(__upload_help, "UploadHelp") #print the command line that to upload binary to the boardf

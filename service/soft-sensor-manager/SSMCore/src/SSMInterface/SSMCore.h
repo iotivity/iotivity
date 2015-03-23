@@ -28,17 +28,6 @@ using namespace OIC;
 
 #define IN
 #define OUT
-/*
-#if defined(WIN32) && defined(SSMCORE_WINDOWS_EXPORTS)
-#define INTERFACE_DECLSPEC    __declspec(dllexport)
-#elif defined(WIN32)
-#define INTERFACE_DECLSPEC    __declspec(dllimport)
-#pragma comment(lib, "SSMCore_Windows.lib")
-#else
-#define INTERFACE_DECLSPEC
-#endif
-*/
-#define INTERFACE_DECLSPEC
 
 /**
 * @class    IQueryEngine

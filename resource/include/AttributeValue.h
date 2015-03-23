@@ -1,4 +1,3 @@
-
 //******************************************************************
 //
 // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
@@ -19,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file AttributeValue.h
-
-/// @brief  This file contains the definition of the internally used
-// type AttributeValue
+/**
+ * @file
+ *
+ * This file contains the definition of the internally used type
+ * AttributeValue.
+ */
 
 #ifndef __ATTRIBUTEVALUE_H
 #define __ATTRIBUTEVALUE_H
@@ -33,20 +34,20 @@
 #define BOOST_MPL_LIMIT_LIST_SIZE 30
 #define BOOST_MPL_LIMIT_VECTOR_SIZE 30
 #include <boost/variant.hpp>
-
+#include <iosfwd>
+#include <OCUtilities.h>
 namespace OC
 {
     class OCRepresentation;
 
     struct NullType{};
+
     // Since null needs to be encoded in a special fashion in JSON, the encoder
     // needs to know the index of the NullType Sentinel  Any time the code does a special
     // case for the NullType, we use the AttributeValueNullIndex.  This MUST be kept up to date
     // with the variant's which() for NullType.
     static const int AttributeValueNullIndex = 0;
     typedef boost::variant<
-
-        // Base values:
         NullType, // Note: this handles the null-type and must match the above static const
         int,
         double,
@@ -78,5 +79,56 @@ namespace OC
         std::vector<std::vector<std::vector<OC::OCRepresentation>>>
     > AttributeValue;
 
+    enum class AttributeType
+    {
+        Null,
+        Integer,
+        Double,
+        Boolean,
+        String,
+        OCRepresentation,
+        Vector
+    };
+
+    template<typename T>
+    struct AttributeTypeConvert{};
+
+    template<>
+    struct AttributeTypeConvert<NullType>
+    {
+        constexpr static AttributeType type = AttributeType::Null;
+    };
+
+    template<>
+    struct AttributeTypeConvert<int>
+    {
+        constexpr static AttributeType type = AttributeType::Integer;
+    };
+
+    template<>
+    struct AttributeTypeConvert<double>
+    {
+        constexpr static AttributeType type = AttributeType::Double;
+    };
+
+    template<>
+    struct AttributeTypeConvert<bool>
+    {
+        constexpr static AttributeType type = AttributeType::Boolean;
+    };
+
+    template<>
+    struct AttributeTypeConvert<std::string>
+    {
+        constexpr static AttributeType type = AttributeType::String;
+    };
+
+    template<>
+    struct AttributeTypeConvert<OCRepresentation>
+    {
+        constexpr static AttributeType type = AttributeType::OCRepresentation;
+    };
+
+    std::ostream& operator << (std::ostream& os, const AttributeType at);
 }
 #endif // __ATTRIBUTEVALUE_H

@@ -18,8 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file    ThingsConfiguration.cpp
-/// @brief
+/**
+ * @file
+ *
+ */
 
 #include <OCApi.h>
 #include <OCPlatform.h>
@@ -31,14 +33,61 @@ using namespace OC;
 
 namespace OIC
 {
-    const int SUCCESS_RESPONSE = 0;
     int cnt = 0;
 
     std::map< std::string, ConfigurationRequestEntry > configurationRequestTable;
-
     ThingsConfiguration* ThingsConfiguration::thingsConfigurationInstance = NULL;
-
     ConfigurationCallback g_bootstrapCallback;
+
+    ConfigurationRequestEntry::ConfigurationRequestEntry(std::string ID,
+                                                        ConfigurationCallback callback,
+                                                        std::shared_ptr< OCResource > resource,
+                                                        std::string updateVal)
+    {
+        m_ID = ID;
+        m_callback = callback;
+        m_resource = resource;
+        m_updateVal = updateVal;
+    }
+
+    ConfigurationUnitInfo::ConfigurationUnitInfo(std::string name,
+                                                std::string attribute,
+                                                std::string uri)
+    {
+        m_name = name;
+        m_attribute = attribute;
+        m_uri = uri;
+    }
+
+    std::string ConfigurationUnitInfo::getJSON()
+    {
+        std::string res;
+
+        res = "{\"name\":\"" + m_name + "\",\"property\":\"" + m_attribute + "\"}";
+
+        return res;
+    }
+
+    ThingsConfiguration::ThingsConfiguration(void)
+    {
+        ConfigurationUnitInfo unit[] =
+        {
+        { "all", "All attributes", "/oic/con" },
+        { "r", "Region", "/oic/con" },
+        { "st", "System Time", "/oic/con"},
+        { "loc", "Location", "/oic/con"},
+        { "c","Currency", "/oic/con" } };
+
+        for (int i = 0; i < NUMCONFUNIT; i++)
+            ConfigurationUnitTable.push_back(unit[i]);
+    }
+
+    ThingsConfiguration::~ThingsConfiguration(void){}
+
+    void ThingsConfiguration::setGroupManager(GroupManager *groupmanager)
+    {
+        g_groupmanager = groupmanager;
+    }
 
     ThingsConfiguration* ThingsConfiguration::getInstance()
     {
@@ -154,8 +203,6 @@ namespace OIC
     {
         std::shared_ptr < OCResource > resource = getResource(conf);
 
-        std::cout << __func__ << std::endl;
-
         if (resource)
         {
             QueryParamsMap query;
@@ -170,7 +217,6 @@ namespace OIC
                             std::bind(&ThingsConfiguration::onGetChildInfoForUpdate, this,
                                     std::placeholders::_1, std::placeholders::_2,
                                     std::placeholders::_3, conf)));
-
         }
 
     }
@@ -178,186 +224,172 @@ namespace OIC
     void ThingsConfiguration::onGetChildInfoForUpdate(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode, std::string conf)
     {
-        if (eCode == SUCCESS_RESPONSE)
-        {
-            std::cout << "GET request was successful" << std::endl;
-
-            std::cout << "\tResource URI: " << rep.getUri() << std::endl;
-
-            std::vector < OCRepresentation > children = rep.getChildren();
-            for (auto oit = children.begin(); oit != children.end(); ++oit)
-            {
-                std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
-            }
-
-            // Get information by using configuration name(conf)
-            std::shared_ptr < OCResource > resource = getResource(conf);
-            std::string actionstring = conf;
-            std::string uri = getUriByConfigurationName(conf);
-            std::string attr = getAttributeByConfigurationName(conf);
-
-            if (uri == "")
-                return;
-
-            if (resource)
-            {
-                // In this nest, we create a new action set of which name is the configuration name.
-                // Required information consists of a host address, URI, attribute key, and
-                // attribute value.
-                ActionSet *newActionSet = new ActionSet();
-                newActionSet->actionsetName = conf;
-
-                for (auto oit = children.begin(); oit != children.end(); ++oit)
-                {
-                    Action *newAction = new Action();
-
-                    // oit->getUri() includes a host address as well as URI.
-                    // We should split these to each other and only use the host address to create
-                    // a child resource's URI. Note that the collection resource and its child
-                    // resource are located in same host.
-                    newAction->target = getHostFromURI(oit->getUri()) + uri;
-
-                    Capability *newCapability = new Capability();
-                    newCapability->capability = attr;
-                    newCapability->status = getUpdateVal(conf);
-
-                    newAction->listOfCapability.push_back(newCapability);
-                    newActionSet->listOfAction.push_back(newAction);
-                }
-
-                // Request to create a new action set by using the above actionSet
-                g_groupmanager->addActionSet(resource, newActionSet,
-                        std::function<
-                                void(const HeaderOptions& headerOptions,
-                                        const OCRepresentation& rep, const int eCode) >(
-                                std::bind(&ThingsConfiguration::onCreateActionSet, this,
-                                        std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3, conf)));
-
-                free(newActionSet);
-            }
-
-        }
-        else
+        if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
+            getCallback(conf)(headerOptions, rep, eCode);
+            return ;
+        }
+
+        std::cout << "GET request was successful" << std::endl;
+
+        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+
+        std::vector < OCRepresentation > children = rep.getChildren();
+        for (auto oit = children.begin(); oit != children.end(); ++oit)
+        {
+            std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+        }
+
+        // Get information by using configuration name(conf)
+        std::shared_ptr < OCResource > resource = getResource(conf);
+        std::string actionstring = conf;
+        std::string uri = getUriByConfigurationName(conf);
+        std::string attrKey = conf;
+
+        if (uri == "")
+            return;
+
+        if (resource)
+        {
+            // In this nest, we create a new action set of which name is the configuration name.
+            // Required information consists of a host address, URI, attribute key, and
+            // attribute value.
+            ActionSet *newActionSet = new ActionSet();
+            newActionSet->actionsetName = conf;
+
+            for (auto oit = children.begin(); oit != children.end(); ++oit)
+            {
+                Action *newAction = new Action();
+
+                // oit->getUri() includes a host address as well as URI.
+                // We should split these to each other and only use the host address to create
+                // a child resource's URI. Note that the collection resource and its child
+                // resource are located in same host.
+                newAction->target = getHostFromURI(oit->getUri()) + uri;
+
+                Capability *newCapability = new Capability();
+                newCapability->capability = attrKey;
+                newCapability->status = getUpdateVal(conf);
+
+                newAction->listOfCapability.push_back(newCapability);
+                newActionSet->listOfAction.push_back(newAction);
+            }
+
+            // Request to create a new action set by using the above actionSet
+            g_groupmanager->addActionSet(resource, newActionSet,
+                    std::function<
+                            void(const HeaderOptions& headerOptions,
+                                    const OCRepresentation& rep, const int eCode) >(
+                            std::bind(&ThingsConfiguration::onCreateActionSet, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, conf)));
+
+            free(newActionSet);
         }
     }
 
     void ThingsConfiguration::onGetChildInfoForGet(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode, std::string conf)
     {
-        if (eCode == SUCCESS_RESPONSE)
+        if (eCode != OC_STACK_OK)
         {
-            std::cout << "GET request was successful" << std::endl;
-            std::cout << "\tResource URI: " << rep.getUri() << std::endl;
-
-            std::shared_ptr< OCResource > resource, tempResource;
-            std::vector < std::shared_ptr< OCResource > > p_resources;
-            std::vector < std::string > m_if;
-            std::string uri = getUriByConfigurationName(conf);
-
-            if (uri == "")
-                return;
-
-            if (uri == "/oic/con" || uri == "/factoryset" || uri == "/factoryset/oic/con")
-                m_if.push_back(BATCH_INTERFACE);
-            else
-                m_if.push_back(DEFAULT_INTERFACE);
-
-            std::vector < OCRepresentation > children = rep.getChildren();
-            for (auto oit = children.begin(); oit != children.end(); ++oit)
-            {
-                std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
-
-                // Using a host address and child URIs, we can dynamically create resource objects.
-                // Note that the child resources have not found before, we have no resource objects.
-                // For this reason, we create the resource objects.
-
-                std::string host = getHostFromURI(oit->getUri());
-                tempResource = OCPlatform::constructResourceObject(host, uri, true,
-                        oit->getResourceTypes(), m_if);
-
-                p_resources.push_back(tempResource);
-            }
-
-            // Send GET messages to the child resources in turn.
-            for (unsigned int i = 0; i < p_resources.size(); ++i)
-            {
-                resource = p_resources.at(i);
-                if (resource)
-                {
-                    try
-                    {
-                        if (isSimpleResource(resource))
-                        {
-                            QueryParamsMap test;
-                            resource->get(test, getCallback(conf));
-                        }
-                        else
-                        {
-                            QueryParamsMap test;
-                            resource->get(resource->getResourceTypes().at(0), BATCH_INTERFACE, test,
-                                    getCallback(conf));
-                        }
-                    }
-                    catch (OCException& e)
-                    {
-                        std::cout << e.reason() << std::endl;
-                    }
-
-                }
-            }
+            std::cout << "onGet Response error: " << eCode << std::endl;
+            getCallback(conf)(headerOptions, rep, eCode);
+            return ;
         }
+
+        std::cout << "GET request was successful" << std::endl;
+        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
+
+        std::shared_ptr< OCResource > resource, tempResource;
+        std::vector < std::shared_ptr< OCResource > > p_resources;
+        std::vector < std::string > m_if;
+        std::string uri = getUriByConfigurationName(conf);
+
+        if (uri == "")
+            return;
+
+        if (uri == "/factoryset" || uri == "/factoryset/oic/con")
+            m_if.push_back(BATCH_INTERFACE);
         else
+            m_if.push_back(DEFAULT_INTERFACE);
+
+        std::vector < OCRepresentation > children = rep.getChildren();
+        for (auto oit = children.begin(); oit != children.end(); ++oit)
         {
-            std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
+            std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+
+            // Using a host address and child URIs, we can dynamically create resource objects.
+            // Note that the child resources have not found before, we have no resource objects.
+            // For this reason, we create the resource objects.
+
+            std::string host = getHostFromURI(oit->getUri());
+            tempResource = OCPlatform::constructResourceObject(host, uri, true,
+                    oit->getResourceTypes(), m_if);
+
+            p_resources.push_back(tempResource);
+        }
+
+        // Send GET messages to the child resources in turn.
+        for (unsigned int i = 0; i < p_resources.size(); ++i)
+        {
+            resource = p_resources.at(i);
+            if (resource)
+            {
+                try
+                {
+                    QueryParamsMap test;
+                    resource->get(test, getCallback(conf));
+                }
+                catch (OCException& e)
+                {
+                    std::cout << e.reason() << std::endl;
+                }
+
+            }
         }
     }
 
     void ThingsConfiguration::onCreateActionSet(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode, std::string conf)
     {
-        if (eCode == SUCCESS_RESPONSE)
-        {
-            std::cout << "PUT request was successful" << std::endl;
-
-            std::shared_ptr < OCResource > resource = getResource(conf);
-            if (resource)
-            {
-                // Now, it is time to execute the action set.
-                g_groupmanager->executeActionSet(resource, conf,
-                        std::function<
-                                void(const HeaderOptions& headerOptions,
-                                        const OCRepresentation& rep, const int eCode) >(
-                                std::bind(&ThingsConfiguration::onExecuteForGroupAction, this,
-                                        std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3, conf)));
-            }
-        }
-        else
+        if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
+            getCallback(conf)(headerOptions, rep, eCode);
+            return ;
+        }
+
+        std::cout << "PUT request was successful" << std::endl;
+
+        std::shared_ptr < OCResource > resource = getResource(conf);
+        if (resource)
+        {
+            // Now, it is time to execute the action set.
+            g_groupmanager->executeActionSet(resource, conf,
+                    std::function<
+                            void(const HeaderOptions& headerOptions,
+                                    const OCRepresentation& rep, const int eCode) >(
+                            std::bind(&ThingsConfiguration::onExecuteForGroupAction, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, conf)));
         }
     }
 
     void ThingsConfiguration::onExecuteForGroupAction(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode, std::string conf)
     {
-        if (eCode == SUCCESS_RESPONSE)
-        {
-            std::cout << "PUT request was successful" << std::endl;
-
-            getCallback(conf)(headerOptions, rep, eCode);
-        }
-        else
+        if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
+            getCallback(conf)(headerOptions, rep, eCode);
+            return ;
         }
+
+        std::cout << "PUT request was successful" << std::endl;
+
+        getCallback(conf)(headerOptions, rep, eCode);
     }
 
     bool ThingsConfiguration::isSimpleResource(std::shared_ptr< OCResource > resource)
@@ -386,34 +418,31 @@ namespace OIC
     void ThingsConfiguration::onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep,
             const int eCode, std::string conf)
     {
-        if (eCode == SUCCESS_RESPONSE)
+        if (eCode != OC_STACK_OK)
         {
-            std::cout << "Get request was successful" << std::endl;
-
+            std::cout << "onGet Response error: " << eCode << std::endl;
             getCallback(conf)(headerOptions, rep, eCode);
+            return ;
         }
-        else
-        {
-            std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
-        }
+
+        std::cout << "Get request was successful" << std::endl;
+
+        getCallback(conf)(headerOptions, rep, eCode);
     }
 
     void ThingsConfiguration::onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
             const int eCode, std::string conf)
     {
-        if (eCode == SUCCESS_RESPONSE)
-        {
-            std::cout << "PUT request was successful" << std::endl;
-
-            // Callback
-            getCallback(conf)(headerOptions, rep, eCode);
-        }
-        else
+        if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            std::exit(-1);
+            getCallback(conf)(headerOptions, rep, eCode);
+            return;
         }
+
+        std::cout << "PUT request was successful" << std::endl;
+
+        getCallback(conf)(headerOptions, rep, eCode);
     }
 
     OCStackResult ThingsConfiguration::updateConfigurations(std::shared_ptr< OCResource > resource,
@@ -453,7 +482,7 @@ namespace OIC
         if (isSimpleResource(resource))
         {
             // This resource does not need to use a group manager. Just send a PUT message
-            rep.setValue(getAttributeByConfigurationName(conf), getUpdateVal(conf));
+            rep.setValue(conf, getUpdateVal(conf));
             return resource->put(resource->getResourceTypes().at(0), DEFAULT_INTERFACE, rep, query,
                     std::function<
                             void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
@@ -546,16 +575,14 @@ namespace OIC
     void ThingsConfiguration::onGetBootstrapInformation(const HeaderOptions& headerOptions,
             const OCRepresentation& rep, const int eCode)
     {
-        if (eCode == SUCCESS_RESPONSE)
-        {
-            g_bootstrapCallback(headerOptions, rep, eCode);
-        }
-
-        else
+        if (eCode != OC_STACK_OK)
         {
             std::cout << "onGET Response error: " << eCode << std::endl;
-            std::exit(-1);
+            g_bootstrapCallback(headerOptions, rep, eCode);
+            return;
         }
+
+        g_bootstrapCallback(headerOptions, rep, eCode);
     }
 
     void ThingsConfiguration::onFoundBootstrapServer(
@@ -610,3 +637,4 @@ namespace OIC
         return g_groupmanager->findCandidateResources(type, &onFoundBootstrapServer);
     }
 }
+

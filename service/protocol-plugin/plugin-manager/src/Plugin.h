@@ -73,68 +73,67 @@ namespace OIC
             */
             virtual ~Plugin(void);
 
+
             /**
-            * Get unique ID of the plug-in
+            * Get unique ID of the plugin.
             *
-            * @return unique id string of the pluin. if ID is not exist, it return ""
+            * @return unique id string of the pluin. if ID is not exist, it return "".
             */
             std::string getID(void);
 
 
             /**
-            * Get version of the plug-in
+            * Get version of the plugin.
             *
-            * @return version information string of the plugin. if Version is not exist, it return ""
-            *
+            * @return version information string of the plugin. if Version is not exist, it return "".
             */
             std::string getVersion(void);
 
 
             /**
-            * Get name of the plug-in
+            * Get name of the plugin.
             *
-            * @return name string of the plugin. if Name is not exist, it return ""
+            * @return name string of the plugin. if Name is not exist, it return "".
             */
             std::string getName(void);
 
 
             /**
-            * Get provider name of the plug-in
+            * Get provider name of the plugin.
             *
-            * @return provider name of the plugin. if ProviderName is not exist, it return ""
-            *
+            * @return provider name of the plugin. if ProviderName is not exist, it return "".
             */
             std::string getProviderName(void);
 
 
             /**
-            * Get value for the attributes
+            * Get value for the attributes.
             *
-            * @param attribute attriubute string to get value
-            * @return value of the attribute. if "attribute" is not exist, it return ""
-            *
+            * @param attriubute string to get value.
+            * @return value of the attribute. if "attribute" is not exist, it return "".
             */
             std::string getValueByAttribute(const std::string attribute);
+
 
             /**
             * Check whether the plugin same or not.
             *
-            * @param plugin
-            * @return true if same, else return false
-            *
+            * @param plugin.
+            * @return true if same, else return false.
             */
             bool operator==(Plugin &plugin);
 
         private:
             friend class CpluffAdapter;
             friend class FelixAdapter;
-              /**
+
+
+            /**
             * Set key, value. key is attribute name.
             *
             * @param key is atrribute name.
             * @param value for the attribute.
-            * @return void
-            *
+            * @return void.
             */
             void setValue(const std::string key, const std::string value);
 
