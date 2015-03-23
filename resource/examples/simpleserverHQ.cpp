@@ -411,7 +411,7 @@ void * ChangeLightRepresentation (void *param)
 void PrintUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : simpleserver <isListOfObservers>\n";
+    std::cout << "Usage : simpleserverHQ <ObserveType>\n";
     std::cout << "   ObserveType : 0 - Observe All\n";
     std::cout << "   ObserveType : 1 - Observe List of observers\n\n";
 }
