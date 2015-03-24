@@ -215,25 +215,33 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource,
         char * bufferPtr, uint16_t *remaining)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    cJSON *resObj;
-    char *jsonStr;
+    cJSON *resObj = NULL;
+    char *jsonStr = NULL;
     uint16_t jsonLen;
 
     OC_LOG(INFO, TAG, PCF("Entering BuildRootResourceJSON"));
     resObj = cJSON_CreateObject();
 
-    if (resource)
+    if ( ! resObj)
+    {
+        ret = OC_STACK_NO_MEMORY;
+    }
+    else if (resource)
     {
         cJSON_AddItemToObject (resObj, OC_RSRVD_HREF, cJSON_CreateString(resource->uri));
+        jsonStr = cJSON_PrintUnformatted (resObj);
+        jsonLen = strlen(jsonStr);
+        if (jsonLen < *remaining)
+        {
+            strncpy(bufferPtr, jsonStr, jsonLen);
+            *remaining -= jsonLen;
+            bufferPtr += jsonLen;
+            ret = OC_STACK_OK;
+        }
     }
-    jsonStr = cJSON_PrintUnformatted (resObj);
-    jsonLen = strlen(jsonStr);
-    if (jsonLen < *remaining)
+    else
     {
-        strncpy(bufferPtr, jsonStr, jsonLen);
-        *remaining -= jsonLen;
-        bufferPtr += jsonLen;
-        ret = OC_STACK_OK;
+        ret = OC_STACK_INVALID_PARAM;
     }
 
     cJSON_Delete (resObj);
@@ -263,10 +271,10 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
     remaining = MAX_RESPONSE_LENGTH;
 
     ret = BuildRootResourceJSON(collResource, ptr, &remaining);
-    ptr += strlen((char*)ptr);
 
     if (ret == OC_STACK_OK && remaining >= (sizeof(OC_JSON_SEPARATOR) + 1))
     {
+        ptr += strlen((char*)ptr);
         *ptr = OC_JSON_SEPARATOR;
         ptr++;
         remaining--;
@@ -275,7 +283,6 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
     {
         ret = OC_STACK_ERROR;
     }
-    *(ptr + 1) = '\0';
 
     if (ret == OC_STACK_OK)
     {
@@ -285,7 +292,9 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
             if (temp)
             {
                 //TODO : Update needed here to get correct connectivity type
-                //from ServerRequest data structure
+                //from ServerRequest data structure.
+
+                // Function will return error if not enough space in buffer.
                 ret = BuildVirtualResourceResponse(temp, filterOn, filterValue,
                          (char*)ptr, &remaining, CA_WIFI );
                 if (ret != OC_STACK_OK)
@@ -293,13 +302,25 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
                     break;
                 }
                 ptr += strlen((char*)ptr);
+
+                // Check if we have added all resources.
+                if ((i + 1) == MAX_CONTAINED_RESOURCES)
+                {
+                    break;
+                }
+                // Add separator if more resources and enough space present.
                 if (collResource->rsrcResources[i+1] && remaining > sizeof(OC_JSON_SEPARATOR))
                 {
                     *ptr = OC_JSON_SEPARATOR;
                     ptr++;
                     remaining--;
                 }
-                *(ptr + 1) = '\0';
+                // No point continuing as no more space on buffer
+                // and/or no more resources.
+                else
+                {
+                    break;
+                }
             }
             else
             {
@@ -339,7 +360,6 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     stackRet = BuildRootResourceJSON(collResource, ptr, &remaining);
     ptr += strlen((char*)ptr);
-    *(ptr + 1) = '\0';
 
     jsonbufferLength = strlen((const char *)jsonbuffer);
     if(jsonbufferLength)

@@ -589,7 +589,9 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
             ptr = discoveryResBuf;
             remaining = MAX_RESPONSE_LENGTH;
 
-            while(resource)
+            // Check if valid resource and enough space in buffer for atleast
+            // the null character.
+            while(resource && (remaining > 1))
             {
                 if((resource->resourceProperties & OC_ACTIVE)
                         && (resource->resourceProperties & OC_DISCOVERABLE))
@@ -619,7 +621,6 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                         break;
                     }
                     ptr += strlen((char *)ptr);
-                    *(ptr + 1) = '\0';
                 }
                 resource = resource->next;
             }
