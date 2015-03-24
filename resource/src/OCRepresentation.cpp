@@ -198,6 +198,11 @@ namespace OC
         return m_children;
     }
 
+    void OCRepresentation::setChildren(const std::vector<OCRepresentation>& children)
+    {
+        m_children = children;
+    }
+
     void OCRepresentation::setUri(const std::string& uri)
     {
         m_uri = uri;
