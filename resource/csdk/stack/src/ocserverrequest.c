@@ -291,7 +291,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     OCStackResult result = OC_STACK_ERROR;
     CARemoteEndpoint_t responseEndpoint = {};
     CAResponseInfo_t responseInfo = {};
-    CAHeaderOption_t* optionsPointer;
+    CAHeaderOption_t* optionsPointer = NULL;
 
     OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
 
@@ -328,12 +328,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             break;
     }
     responseInfo.info.type = qualityOfServiceToMessageType(serverRequest->qos);
-    responseInfo.info.token = (CAToken_t) OCCalloc(1, CA_MAX_TOKEN_LEN + 1);
-    if (!responseInfo.info.token)
-    {
-        OC_LOG(FATAL, TAG, "Response Info Token is NULL");
-        return result;
-    }
+    char token[CA_MAX_TOKEN_LEN + 1] = {};
+    responseInfo.info.token = token;
     memcpy(responseInfo.info.token, serverRequest->requestToken, CA_MAX_TOKEN_LEN);
 
     if(serverRequest->observeResult == OC_STACK_OK)
@@ -345,37 +341,47 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.numOptions = ehResponse->numSendVendorSpecificHeaderOptions;
     }
 
-    responseInfo.info.options = (CAHeaderOption_t *)
-                                  OCMalloc(sizeof(CAHeaderOption_t) * responseInfo.info.numOptions);
-
-    optionsPointer = responseInfo.info.options;
-
-    // TODO: This exposes CoAP specific details.  At some point, this should be
-    // re-factored and handled in the CA layer.
-    if(serverRequest->observeResult == OC_STACK_OK)
+    if(responseInfo.info.numOptions > 0)
     {
-        responseInfo.info.options[0].protocolID = CA_COAP_ID;
-        responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;
-        responseInfo.info.options[0].optionLength = sizeof(uint32_t);
-        memcpy(responseInfo.info.options[0].optionData,
-                &(serverRequest->observationOption), sizeof(uint32_t));
+        responseInfo.info.options = (CAHeaderOption_t *)
+                                      OCCalloc(responseInfo.info.numOptions,
+                                              sizeof(CAHeaderOption_t));
 
-        // Point to the next header option before copying vender specific header options
-        optionsPointer += 1;
+        if(!responseInfo.info.options)
+        {
+            OC_LOG(FATAL, TAG, PCF("options is NULL"));
+            return OC_STACK_NO_MEMORY;
+        }
+
+        optionsPointer = responseInfo.info.options;
+
+        // TODO: This exposes CoAP specific details.  At some point, this should be
+        // re-factored and handled in the CA layer.
+        if(serverRequest->observeResult == OC_STACK_OK)
+        {
+            responseInfo.info.options[0].protocolID = CA_COAP_ID;
+            responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;
+            responseInfo.info.options[0].optionLength = sizeof(uint32_t);
+            memcpy(responseInfo.info.options[0].optionData,
+                    &(serverRequest->observationOption), sizeof(uint32_t));
+
+            // Point to the next header option before copying vender specific header options
+            optionsPointer += 1;
+        }
+
+        if (ehResponse->numSendVendorSpecificHeaderOptions)
+        {
+            memcpy(optionsPointer, ehResponse->sendVendorSpecificHeaderOptions,
+                            sizeof(OCHeaderOption) *
+                            ehResponse->numSendVendorSpecificHeaderOptions);
+        }
+    }
+    else
+    {
+        responseInfo.info.options = NULL;
     }
 
-    if (ehResponse->numSendVendorSpecificHeaderOptions)
-    {
-        memcpy(optionsPointer, ehResponse->sendVendorSpecificHeaderOptions,
-                        sizeof(OCHeaderOption) * ehResponse->numSendVendorSpecificHeaderOptions);
-    }
-
-    // Allocate memory for the payload.
-    char *payload = (char *)OCCalloc(1, MAX_RESPONSE_LENGTH);
-    if(!payload)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
+    char payload[MAX_RESPONSE_LENGTH] = {};
 
     // Put the JSON prefix and suffix around the payload
     strcpy(payload, (const char *)OC_JSON_PREFIX);
@@ -404,7 +410,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             if(caResult != CA_STATUS_OK)
             {
                 OC_LOG_V(ERROR, TAG, "CASendResponse failed on %s", connTypes[i]);
-                result = OC_STACK_ERROR;
+                result = CAResultToOCResult(caResult);
             }
             else
             {
@@ -417,6 +423,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     if(caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CASendResponse failed"));
+        result = CAResultToOCResult(caResult);
     }
     else
     {
@@ -424,7 +431,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
     #endif
 
-    OCFree(payload);
+    OCFree(responseInfo.info.options);
     //Delete the request
     FindAndDeleteServerRequest(serverRequest);
     return result;
