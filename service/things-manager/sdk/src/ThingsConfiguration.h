@@ -141,8 +141,8 @@ namespace OIC
          * updateConfiguration()->...(CoAP msg. is transmitted)->OnPut()->callback function in APP.
          *
          * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: a nickname of attribute of target resource
-         *                         (e.g., installedlocation, currency, (IP)address)
+         * @param configurations - ConfigurationUnit: an attribute key of target resource
+         *                         (e.g., loc, st, c, r)
          *                         Value : a value to be updated
          * @param callback - callback.
          *
@@ -166,7 +166,7 @@ namespace OIC
          * getConfigurations()->...(CoAP msg. is transmitted)->onGet()->callback function in APP.
          *
          * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: a nickname of attribute of target resource.
+         * @param configurations - ConfigurationUnit: an attribute key of target resource.
          * @param callback - callback.
          *
          * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.

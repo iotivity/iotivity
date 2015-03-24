@@ -41,15 +41,30 @@ enum ACTIONSET_TYPE
 
 typedef tm OCTime;
 
+/**
+ * @class	Time
+ * @brief	This class provides time-related information used for scheduled/recursive group action
+ *          features. Along with time-related variables, it also provides various useful functionality
+ *          including translating time to second unit
+ */
 class Time
 {
 public:
-    long int mDelay;
-    OCTime mTime;
-    ACTIONSET_TYPE type;
-
+    /**
+     * Constructor for Time
+     */
     Time();
+    /**
+     * Virtual destructor for Time
+     */
     ~Time();
+
+    /** @brief a unit of second.*/
+    long int mDelay;
+    /** @brief time information in structure tm.*/
+    OCTime mTime;
+    /** @brief flag to indicate group action type(NONE, SCHEDULED, RECURSIVE).*/
+    ACTIONSET_TYPE type;
 
     void setTime(OCTime t);
     void setTime(unsigned int yy, unsigned int mm, unsigned int dd,
@@ -69,23 +84,47 @@ public:
     std::string toString() const;
 };
 
+/**
+ * @class	Capability
+ * @brief	This class provides a structure to help developers to easily specify a unit of attribute
+ *          key-value pair which corresponds to action.
+ */
 class Capability
 {
 public:
+    /** @brief This corresponds with attribute key.*/
     std::string capability;
+    /** @brief This corresponds with attribute value.*/
     std::string status;
 };
 
+/**
+ * @class	Action
+ * @brief	This class provides a structure to help developers to easily specify an action which a
+ *          target resource have to do for.
+ */
 class Action
 {
 public:
+    /**
+     * Constructor for Action
+     */
     Action();
+    /**
+     * Virtual destructor for Action
+     */
     ~Action();
 
+    /** @brief This is a target URL of this action. It includes IP address, port, and resource URI.*/
     std::string target;
+    /** @brief This is a list of capabilites.*/
     std::vector<Capability*> listOfCapability;
 };
 
+/**
+ * @class	ActionSet
+ * @brief	This class provides a structure to help developers to easily specify group action.
+ */
 class ActionSet: public Time
 {
 public:
@@ -98,7 +137,9 @@ public:
      */
     ~ActionSet();
 
+    /** @brief a name of group action */
     std::string actionsetName;
+    /** @brief a list of actions composing group action */
     std::vector<Action*> listOfAction;
 };
 }
