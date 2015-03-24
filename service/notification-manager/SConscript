@@ -35,8 +35,9 @@ if target_os == 'android':
 ######################################################################
 NOTI_SRC_DIR = 'NotificationManager/src/'
 notimgr_src = [
-		NOTI_SRC_DIR + 'hosting.c',
-		NOTI_SRC_DIR + 'virtualResource.c']
+        NOTI_SRC_DIR + 'hosting.c',
+        NOTI_SRC_DIR + 'requestHandler.c',
+        NOTI_SRC_DIR + 'virtualResource.c']
 
 notificationsdk = notimgr_env.StaticLibrary('NOTISDKLibrary', notimgr_src)
 

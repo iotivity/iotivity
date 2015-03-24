@@ -30,7 +30,12 @@
 #include "logger.h"
 
 #include "cJSON.h"
-#define TAG  PCF("virtualResource")
+#define TAG  PCF("MirrorResource")
+//-----------------------------------------------------------------------------
+// Definition of Constant
+//-----------------------------------------------------------------------------
+#define VR_TAG "__NM__"
+#define RH_TAG "__RM__"
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -41,11 +46,21 @@
 */
 typedef enum
 {
-    OIC_SOURCE_ADDRESS     = 0,
-    OIC_MIRROR_ADDRESS     = 1,
-    OIC_REQUEST_HANDLE     = 0,
-    OIC_MIRROR_HANDLE      = 1,
-    OIC_NONE               = 255
+    /*
+     * for mirrorResourceHandle
+     */
+    OIC_SOURCE_ADDRESS  = 0,
+    OIC_MIRROR_ADDRESS  = 1,
+    OIC_REQUEST_HANDLE  = 0,
+    OIC_MIRROR_HANDLE       = 1,
+
+    /*
+     * for requestHandle
+     */
+    OIC_REQUEST_BY_CLIENT       = 0,
+    OIC_REQUEST_BY_COORDINATOR  = 1,
+
+    OIC_NONE                        = 255
 } OICResourceCoordinatorParamType;
 
 /**
@@ -70,8 +85,6 @@ typedef struct MirrorResource
     char *uri;
     MirrorResourceProperty prop;
 
-    unsigned char isAliveCheck;
-
     struct MirrorResource *next;
 
     /*
@@ -90,8 +103,33 @@ typedef struct MirrorResourceList
     struct MirrorResource *tailNode;
 } MirrorResourceList;
 
+/**
+* Request Object
+*/
+typedef struct RequestHandle
+{
+    void *requestHandle[2];         // OIC_REQUEST_BY_CLIENT = 0, OIC_REQUEST_BY_COORDINATOR = 1
+    OCResourceHandle resourceHandle;
+    OCRequestHandle entityRequestHandle;
+
+    OCMethod method;
+
+    unsigned char isAliveCheck;
+
+    struct RequestHandle *next;
+} RequestHandle;
+
+/**
+* Request Object List
+*/
+typedef struct RequestHandleList
+{
+    struct RequestHandle *headerNode;
+    struct RequestHandle *tailNode;
+} RequestHandleList;
+
 //-----------------------------------------------------------------------------
-// Function prototypes
+// Function prototypes for mirrorResourceHandle
 //-----------------------------------------------------------------------------
 
 /**
@@ -245,4 +283,21 @@ OCStackResult ejectMirrorResource(MirrorResourceList *mirrorResourceList,
 */
 OCStackResult printMirrorResourceList(MirrorResourceList *mirrorResourceList);
 
-#endif
+//-----------------------------------------------------------------------------
+// Function prototypes for RequestHandle
+//-----------------------------------------------------------------------------
+RequestHandleList *createRequestHandleList();
+RequestHandle *createRequestHandle();
+OCStackResult insertRequestHandle(RequestHandleList *requestHandleList,
+                                  RequestHandle *requestHandle);
+
+OCStackResult deleteRequestHandleFromList(RequestHandleList *requestHandleList,
+        RequestHandle *requestHandle);
+OCStackResult destroyRequestHandle(RequestHandle *requestHandle);
+
+OCStackResult destroyRequestHandleList(RequestHandleList *requestHandleList);
+
+RequestHandle *findRequestHandle(RequestHandleList *requestHandleList,
+                                 OCDoHandle handle, OICResourceCoordinatorParamType paramType);
+
+#endif //_MIRROR_RESOURCE_H_
