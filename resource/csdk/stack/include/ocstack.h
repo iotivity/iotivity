@@ -39,6 +39,7 @@ extern "C" {
 #define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5683/oc/core/d?rt=core.led"
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
 #define OC_MULTICAST_IP                      "224.0.1.187"
+#define OC_MULTICAST_PORT                    5683
 
 #ifdef WITH_PRESENCE
 #define OC_DEFAULT_PRESENCE_TTL (60)

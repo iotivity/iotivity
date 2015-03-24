@@ -1812,7 +1812,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 
         CAAddress_t addressInfo;
         strncpy(addressInfo.IP.ipAddress, OC_MULTICAST_IP, CA_IPADDR_SIZE);
-        addressInfo.IP.port = 5683;
+        addressInfo.IP.port = OC_MULTICAST_PORT;
 
         //TODO make sure there is no memory leak here since another copy
         //of token is being created inside AddObserver
