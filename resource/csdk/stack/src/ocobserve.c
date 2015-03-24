@@ -415,6 +415,7 @@ OCStackResult DeleteObserverUsingToken (CAToken_t * token)
         LL_DELETE (serverObsList, obsNode);
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);
+        OCFree(obsNode->token);
         OCFree(obsNode);
     }
     // it is ok if we did not find the observer...
