@@ -35,6 +35,12 @@
 #define ATTR_DELIMITER          "|"
 #define ATTR_ASSIGN             "="
 
+// Definitions for operations related to actions
+#define DO_ACTION               "DoAction"
+#define GET_ACTIONSET           "GetActionSet"
+#define ACTIONSET               "ActionSet"
+#define DELETE_ACTIONSET        "DelActionSet"
+
 typedef struct aggregatehandleinfo
 {
     OCServerRequest *ehRequest;
@@ -110,8 +116,6 @@ void RemoveClientRequestInfo(ClientRequestInfo **head, ClientRequestInfo* del)
         }
     }
 }
-
-
 
 void AddCapability(OCCapability** head, OCCapability* node)
 {
@@ -478,7 +482,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
     {
         strncat(temp, actionset->actionsetName, sizeof(temp));
         remaining -= strlen(actionset->actionsetName);
-        strcat(temp, "*");
+        strcat(temp, ACTION_DELIMITER);
         remaining--;
     }
     else
@@ -493,7 +497,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         remaining -= strlen("uri=");
         strcat(temp, action->resourceUri);
         remaining -= strlen(action->resourceUri);
-        strcat(temp, "|");
+        strcat(temp, ATTR_DELIMITER);
         remaining--;
 
         OCCapability *capas = action->head;
@@ -502,7 +506,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
             OC_LOG_V(INFO, TAG, "\t\t%s = %s\n", capas->capability, capas->status);
             strcat(temp, capas->capability);
             remaining -= strlen(capas->capability);
-            strcat(temp, "=");
+            strcat(temp, ATTR_ASSIGN);
             remaining--;
             strcat(temp, capas->status);
             remaining -= strlen(capas->capability);
@@ -510,14 +514,14 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
             capas = capas->next;
             if (capas != NULL)
             {
-                strcat(temp, "|");
+                strcat(temp, ATTR_DELIMITER);
             }
         }
 
         action = action->next;
         if (action != NULL)
         {
-            strcat(temp, "*");
+            strcat(temp, ACTION_DELIMITER);
             remaining--;
         }
     }
@@ -588,7 +592,7 @@ OCStackResult BuildActionJSON(OCAction* action, char* bufferPtr, uint16_t *remai
     OC_LOG(INFO, TAG, PCF("Entering BuildActionJSON"));
     json = cJSON_CreateObject();
 
-    cJSON_AddItemToObject(json, "rep", body = cJSON_CreateObject());
+    cJSON_AddItemToObject(json, OC_RSRVD_REPRESENTATION, body = cJSON_CreateObject());
 
     OCCapability* pointerCapa = action->head;
     while (pointerCapa)
@@ -669,12 +673,12 @@ OCStackResult BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHa
     if (method == OC_REST_PUT)
     {
         json = cJSON_CreateObject();
-        cJSON_AddStringToObject(json, "href", resource->uri);
-        cJSON_AddItemToObject(json, "rep", format = cJSON_CreateObject());
+        cJSON_AddStringToObject(json, OC_RSRVD_HREF, resource->uri);
+        cJSON_AddItemToObject(json, OC_RSRVD_REPRESENTATION, format = cJSON_CreateObject());
 
         OC_LOG(INFO, TAG, PCF("Group Action[PUT]."));
 
-        if(strcmp(doWhat, "ActionSet") == 0)
+        if(strcmp(doWhat, ACTIONSET) == 0)
         {
             OCActionSet *actionSet;
             BuildActionSetFromString(&actionSet, details);
@@ -690,7 +694,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHa
             }
 
         }
-        else if (strncmp(doWhat, "DelActionSet", sizeof("DelActionSet")) == 0)
+        else if (strncmp(doWhat, DELETE_ACTIONSET, sizeof(DELETE_ACTIONSET)) == 0)
         {
             if (FindAndDeleteActionSet(&resource, details) == OC_STACK_OK)
             {
@@ -730,19 +734,19 @@ OCStackResult BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHa
         OCActionSet *actionset = NULL;
 
         json = cJSON_CreateObject();
-        cJSON_AddStringToObject(json, "href", resource->uri);
+        cJSON_AddStringToObject(json, OC_RSRVD_HREF, resource->uri);
 
-        if (strcmp(doWhat, "DoAction") == 0)
+        if (strcmp(doWhat, DO_ACTION) == 0)
         {
             if (GetActionSet(details, resource->actionsetHead, &actionset) != OC_STACK_OK)
             {
-                OC_LOG(INFO, TAG, PCF("ERROR"));
+                OC_LOG(ERROR, TAG, PCF("ERROR: GetActionSet failed"));
                 stackRet = OC_STACK_ERROR;
             }
 
             if (actionset == NULL)
             {
-                OC_LOG(INFO, TAG, PCF("ERROR"));
+                OC_LOG(ERROR, TAG, PCF("ERROR: Actionset is NULL"));
                 stackRet = OC_STACK_ERROR;
             }
             else
@@ -786,12 +790,12 @@ OCStackResult BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHa
                 stackRet = OC_STACK_OK;
             }
         }
-        else if (strcmp(doWhat, "GetActionSet") == 0)
+        else if (strcmp(doWhat, GET_ACTIONSET) == 0)
         {
             char *plainText = NULL;
             OCActionSet *actionset = NULL;
 
-            cJSON_AddItemToObject(json, "rep", format = cJSON_CreateObject());
+            cJSON_AddItemToObject(json, OC_RSRVD_REPRESENTATION, format = cJSON_CreateObject());
             GetActionSet(details, resource->actionsetHead, &actionset);
             if (actionset != NULL)
             {
@@ -799,7 +803,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHa
 
                 if (plainText != NULL)
                 {
-                    cJSON_AddStringToObject(format, "ActionSet", plainText);
+                    cJSON_AddStringToObject(format, ACTIONSET, plainText);
                 }
 
                 stackRet = OC_STACK_OK;
