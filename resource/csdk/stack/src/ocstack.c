@@ -314,10 +314,9 @@ OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType, OCConnectiv
 }
 
 // update response.addr appropriately from endPoint.addressInfo
-OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpoint_t* endPoint)
+OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* endPoint)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    static OCDevAddr address = {};
     char * tok = NULL;
     char * savePtr = NULL;
     char * cpAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
@@ -339,20 +338,11 @@ OCStackResult UpdateResponseAddr(OCClientResponse *response, const CARemoteEndpo
             ret = OC_STACK_ERROR;
             goto exit;
         }
-        address.addr[i] = atoi(tok);
+        address->addr[i] = atoi(tok);
     }
 
-    memcpy(&address.addr[4], &endPoint->addressInfo.IP.port, sizeof(endPoint->addressInfo.IP.port));
+    memcpy(&address->addr[4], &endPoint->addressInfo.IP.port, sizeof(uint16_t));
 
-    if(response)
-    {
-        response->addr = &address;
-        ret = CAToOCConnectivityType(endPoint->connectivityType, &(response->connType));
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, PCF("OCClientResponse is NULL!"));
-    }
 exit:
     OCFree(cpAddress);
     return ret;
@@ -417,7 +407,8 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
     ClientCB * cbNode = NULL;
     char *resourceTypeName = NULL;
-    OCClientResponse response = {0};
+    OCClientResponse response = {};
+    OCDevAddr address = {};
     OCStackResult result = OC_STACK_ERROR;
     uint32_t lowerBound = 0;
     uint32_t higherBound = 0;
@@ -435,9 +426,9 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         return OC_STACK_ERROR;
     }
 
-    fullUri = (char *) OCMalloc(MAX_URI_LENGTH );
+    fullUri = (char *) OCMalloc(MAX_URI_LENGTH);
 
-    if(NULL == fullUri)
+    if(!fullUri)
     {
         OC_LOG(ERROR, TAG, PCF("Memory could not be allocated for fullUri"));
         result = OC_STACK_NO_MEMORY;
@@ -447,7 +438,7 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     addressLen = strlen(endPoint->addressInfo.IP.ipAddress);
     ipAddress = (char *) OCMalloc(addressLen + 1);
 
-    if(NULL == ipAddress)
+    if(!ipAddress)
     {
         OC_LOG(ERROR, TAG, PCF("Memory could not be allocated for ipAddress"));
         result = OC_STACK_NO_MEMORY;
@@ -486,9 +477,18 @@ OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     response.resJSONPayload = NULL;
     response.result = OC_STACK_OK;
 
-    result = UpdateResponseAddr(&response, endPoint);
+    result = UpdateResponseAddr(&address, endPoint);
     if(result != OC_STACK_OK)
     {
+        goto exit;
+    }
+
+    response.addr = &address;
+
+    result = CAToOCConnectivityType(endPoint->connectivityType, &(response.connType));
+    if(result != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("Invalid connectivity type in endpoint"));
         goto exit;
     }
 
@@ -672,15 +672,23 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
     if (cbNode)
     {
         OC_LOG(INFO, TAG, PCF("Calling into application address space"));
-        OCClientResponse response;
+        OCClientResponse response = {};
+        OCDevAddr address = {};
 
-        OCStackResult result = UpdateResponseAddr(&response, endPoint);
+        OCStackResult result = UpdateResponseAddr(&address, endPoint);
+        if(result != OC_STACK_OK)
+        {
+            return;
+        }
+
+
+        result = CAToOCConnectivityType(endPoint->connectivityType, &(response.connType));
         if(result != OC_STACK_OK)
         {
             OC_LOG(ERROR, TAG, PCF("Invalid connectivity type in endpoint"));
             return;
         }
-
+        response.addr = &address;
         response.result = CAToOCStackResult(responseInfo->result);
         response.resJSONPayload = responseInfo->info.payload;
         response.numRcvdVendorSpecificHeaderOptions = 0;
