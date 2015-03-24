@@ -17,6 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
+
 #ifndef _ObjectManager_H_
 #define _ObjectManager_H_
 

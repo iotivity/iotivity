@@ -87,8 +87,8 @@ cpp_sdk: prep_dirs c_sdk liboc.a
 examples: liboc.a
 	cd examples && $(MAKE) apps "BUILD=$(BUILD)"
 
-liboc.a: OCPlatform_impl.o OCPlatform.o OCResource.o OCException.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o OCRepresentation.o OCResourceRequest.o
-	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform_impl.o $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o $(OBJ_DIR)/OCRepresentation.o $(OBJ_DIR)/OCResourceRequest.o
+liboc.a: OCPlatform_impl.o OCPlatform.o OCResource.o OCException.o OCUtilities.o InProcServerWrapper.o InProcClientWrapper.o OCRepresentation.o
+	ar -cvq $(OBJ_DIR)/liboc.a $(OBJ_DIR)/OCPlatform_impl.o $(OBJ_DIR)/OCPlatform.o $(OBJ_DIR)/OCResource.o $(OBJ_DIR)/OCException.o $(OBJ_DIR)/OCUtilities.o $(OBJ_DIR)/InProcServerWrapper.o $(OBJ_DIR)/InProcClientWrapper.o $(OBJ_DIR)/OCRepresentation.o
 
 OCPlatform_impl.o: src/OCPlatform_impl.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCPlatform_impl.cpp $(CXX_INC)
@@ -113,9 +113,6 @@ InProcServerWrapper.o: src/InProcServerWrapper.cpp
 
 InProcClientWrapper.o: src/InProcClientWrapper.cpp
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/InProcClientWrapper.cpp $(CXX_INC)
-
-OCResourceRequest.o: src/OCResourceRequest.cpp
-	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OBJ_DIR)/$@ -c src/OCResourceRequest.cpp $(CXX_INC)
 
 clean: clean_legacy
 	-rm -rf release

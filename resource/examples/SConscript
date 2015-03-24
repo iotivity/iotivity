@@ -2,8 +2,12 @@
 # Examples build script
 ##
 Import('env')
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
-examples_env = env.Clone()
+examples_env = lib_env.Clone()
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -19,7 +23,7 @@ examples_env.AppendUnique(CPPPATH = [
 
 target_os = env.get('TARGET_OS')
 if target_os not in ['windows', 'winrt']:
-	examples_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread'])
+	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 
 	# Note: 'pthread' is in libc for android. On other platform, if use
 	# new gcc(>4.9?) it isn't required, otherwise, it's required
@@ -31,7 +35,7 @@ examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	examples_env.AppendUnique(LIBS = ['gnustl_shared'])
+	examples_env.AppendUnique(LIBS = ['gnustl_static'])
 
 	if not env.get('RELEASE'):
 		examples_env.AppendUnique(LIBS = ['log'])
@@ -55,18 +59,15 @@ roomserver = examples_env.Program('roomserver', 'roomserver.cpp')
 roomclient = examples_env.Program('roomclient', 'roomclient.cpp')
 garageserver = examples_env.Program('garageserver', 'garageserver.cpp')
 garageclient = examples_env.Program('garageclient', 'garageclient.cpp')
-groupserver = examples_env.Program('groupserver', 'groupserver.cpp')
-groupclient = examples_env.Program('groupclient', 'groupclient.cpp')
-lightserver = examples_env.Program('lightserver', 'lightserver.cpp')
-threadingsample = examples_env.Program('threadingsample', 'threadingsample.cpp')
 devicediscoveryserver = examples_env.Program('devicediscoveryserver', 'devicediscoveryserver.cpp')
 devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicediscoveryclient.cpp')
 
 Alias("examples", [simpleserver, simpleserverHQ, simpleclient, simpleclientHQ,
 		fridgeserver, fridgeclient, presenceserver, presenceclient,
 		simpleclientserver, roomserver, roomclient, garageserver,
-		garageclient, groupserver, groupclient, lightserver, threadingsample,
-		devicediscoveryserver, devicediscoveryclient])
-
+		garageclient, devicediscoveryserver, devicediscoveryclient])
 env.AppendTarget('examples')
 
+#ios doesn't allow run application from terminal, so won't build these examples
+if target_os != 'ios':
+	SConscript('ocicuc/SConscript')

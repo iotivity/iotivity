@@ -47,11 +47,6 @@ class OCException : public std::runtime_error
             return e.reason();
         }
 
-        OCStackResult code() const
-        {
-            return m_reason;
-        }
-
     private:
         OCStackResult m_reason;
 };

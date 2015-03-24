@@ -288,12 +288,14 @@ void CContextQuery::make_QueryCondition(OUT QueryCondition *result)
     {
         int k = m_root.child_token.at(1).child_token.size();
         std::string model_name = "";
+        ModelConditionVec modelcondition;
+        ModelCondition model_data;
 
-        std::map<std::string, ModelConditionVec> modelConditionList;
-
-        for (int i = 0; i < k; i++)
+        for (int i = 0 ; i < k ; i++)
         {
+            modelcondition.clear();
             Token *temp = &(m_root.child_token.at(1).child_token.at(i));
+
 
             if (temp->type == Context)
             {
@@ -311,20 +313,16 @@ void CContextQuery::make_QueryCondition(OUT QueryCondition *result)
                     }
                 }
 
-                ModelCondition model_data;
+
+
                 model_data.predicate = m_root.child_token.at(1).child_token.at(i + 1).condition;
                 model_data.modelProperty.propertyName = temp->model_property.propertyName;
                 model_data.modelProperty.propertyType = temp->model_property.propertyType;
                 model_data.modelProperty.propertyValue = temp->model_property.propertyValue;
-                modelConditionList[model_name].push_back(model_data);
+                modelcondition.push_back(model_data);
+                result->push_back(std::pair<std::string, ModelConditionVec>(model_name, modelcondition));
+                ///result->push_back(model_name[i],modelcondition);
             }
-        }
-
-        for (std::map<std::string, ModelConditionVec>::iterator itor = modelConditionList.begin();
-             itor != modelConditionList.end(); ++itor)
-        {
-            result->push_back(std::pair<std::string, ModelConditionVec>(itor->first,
-                              itor->second));
         }
     }
 }

@@ -1,0 +1,49 @@
+
+OCICUC is a light framework for rapidly building OIC test/demo/example applications. It provides pre-built
+entry points and handling for things like command line parameters and modularlizes resources, so that
+adding new features or building a new test application is a lightweight undertaking.
+
+.
+├── client.cpp				- a multi-resource client, similar to simpleclient
+├── demo_client.hpp			- client code, shared between client and multiprocess programs
+├── driver.cpp				- ocicuc base driver program
+├── exec.hpp				- header for binding with the driver
+├── light_resource.cpp		- example resource
+├── light_resource.hpp		- example resource
+├── monoprocess.cpp			- client and server in a single process
+├── server.cpp				- a multi-resource server, similar to simpleserver
+├── small_example.cpp		- a near-minimal example program
+├── utility.cpp				- utility functions for the demo programs
+└── utility.hpp				- utility functions
+
+You can extend the existing programs to add new resource types, etc.. Refer to the help screen for each program
+for further details. For instance, to start a server with 5 resources and then test it with a separate client,
+you could run:
+
+	./server --nres=5
+
+...and, in another shell:
+
+	./client --nres=5
+
+To build a new program that hooks into the ocicuc driver program, you just need to define the functions in "exec.hpp",
+for example:
+
+namespace Intel { namespace OCDemo {
+
+int exec(const boost::program_options::variables_map& vm);
+
+auto make_description()
+    -> boost::program_options::options_description;
+
+}} // namespace Intel::OCDemo
+
+You can see an example of a skeleton program in small_example.cpp.
+
+To run a program with default parameters, use "--", for example:
+
+./monoprocess --
+
+Have fun!
+
+

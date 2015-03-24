@@ -33,7 +33,7 @@
 using namespace OC;
 
 /// This function internally calls registerResource API.
-void DiagnosticsResource::createResources(ResourceEntityHandler callback)
+void DiagnosticsCollection::createResources(ResourceEntityHandler callback)
 {
     using namespace OC::OCPlatform;
 
@@ -53,72 +53,192 @@ void DiagnosticsResource::createResources(ResourceEntityHandler callback)
         std::cout << "Resource creation (diagnostics) was unsuccessful\n";
     }
 
+    result = bindInterfaceToResource(m_diagnosticsHandle, m_diagnosticsInterfaces[1]);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Binding TypeName to Resource was unsuccessful\n";
+    }
+
+    result = bindInterfaceToResource(m_diagnosticsHandle, m_diagnosticsInterfaces[2]);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Binding TypeName to Resource was unsuccessful\n";
+    }
+
+    result = registerResource(m_factoryResetHandle, m_factoryResetUri, m_factoryResetTypes[0],
+            m_factoryResetInterfaces[0], callback, OC_DISCOVERABLE | OC_OBSERVABLE);
+
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Resource creation (factoryReset) was unsuccessful\n";
+    }
+
+    result = registerResource(m_rebootHandle, m_rebootUri, m_rebootTypes[0], m_rebootInterfaces[0],
+            callback, OC_DISCOVERABLE | OC_OBSERVABLE);
+
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Resource creation (reboot) was unsuccessful\n";
+    }
+
+    result = registerResource(m_startCollectionHandle, m_startCollectionUri,
+            m_startCollectionTypes[0], m_startCollectionInterfaces[0], callback,
+            OC_DISCOVERABLE | OC_OBSERVABLE);
+
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Resource creation (startCollection) was unsuccessful\n";
+    }
+
+    result = bindResource(m_diagnosticsHandle, m_factoryResetHandle);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Binding installedLocation resource to room was unsuccessful\n";
+    }
+
+    result = bindResource(m_diagnosticsHandle, m_rebootHandle);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Binding time resource to room was unsuccessful\n";
+    }
+
+    result = bindResource(m_diagnosticsHandle, m_startCollectionHandle);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Binding network resource to room was unsuccessful\n";
+    }
+
     thread exec(
             std::function< void(int second) >(
-                    std::bind(&DiagnosticsResource::diagnosticsMonitor, this,
+                    std::bind(&DiagnosticsCollection::diagnosticsMonitor, this,
                             std::placeholders::_1)), 10); // every 10 seconds
     exec.detach();
 
-    std::cout << "Diagnostics Resource is Created!\n";
+    std::cout << "Diagnostics Collection is Created!\n";
 }
 
-void DiagnosticsResource::setDiagnosticsRepresentation(OCRepresentation& rep)
+void DiagnosticsCollection::setDiagnosticsRepresentation(OCRepresentation& rep)
 {
     string value;
 
-    if (rep.getValue("fr", value))
+    if (rep.getValue("value", value))
     {
-        m_factoryReset = value;
-        std::cout << "\t\t\t\t" << "m_factoryReset: " << m_factoryReset << std::endl;
-    }
+        m_diagnosticsValue = value;
 
-    if (rep.getValue("rb", value))
-    {
-        m_reboot = value;
-        std::cout << "\t\t\t\t" << "m_reboot: " << m_reboot << std::endl;
-    }
-
-    if (rep.getValue("ssc", value))
-    {
-        m_startStatCollection = value;
-        std::cout << "\t\t\t\t" << "m_startStatCollection: " << m_startStatCollection << std::endl;
+        std::cout << "\t\t\t\t" << "m_diagnosticsValue: " << m_diagnosticsValue << std::endl;
     }
 }
 
-OCRepresentation DiagnosticsResource::getDiagnosticsRepresentation()
+void DiagnosticsCollection::setFactoryResetRepresentation(OCRepresentation& rep)
 {
-    m_diagnosticsRep.setValue("fr", m_factoryReset);
-    m_diagnosticsRep.setValue("rb", m_reboot);
-    m_diagnosticsRep.setValue("ssc", m_startStatCollection);
+    string value;
+
+    if (rep.getValue("value", value))
+    {
+        m_factoryResetValue = value;
+
+        std::cout << "\t\t\t\t" << "value: " << m_factoryResetValue << std::endl;
+    }
+}
+
+void DiagnosticsCollection::setRebootRepresentation(OCRepresentation& rep)
+{
+    string value;
+
+    if (rep.getValue("value", value))
+    {
+        m_rebootValue = value;
+
+        std::cout << "\t\t\t\t" << "value: " << m_rebootValue << std::endl;
+    }
+}
+
+void DiagnosticsCollection::setStartCollectionRepresentation(OCRepresentation& rep)
+{
+    string value;
+
+    if (rep.getValue("value", value))
+    {
+        m_startCollectionValue = value;
+
+        std::cout << "\t\t\t\t" << "value: " << m_startCollectionValue << std::endl;
+    }
+}
+
+OCRepresentation DiagnosticsCollection::getFactoryResetRepresentation()
+{
+    m_factoryResetRep.setValue("value", m_factoryResetValue);
+
+    return m_factoryResetRep;
+}
+
+OCRepresentation DiagnosticsCollection::getRebootRepresentation()
+{
+    m_rebootRep.setValue("value", m_rebootValue);
+
+    return m_rebootRep;
+}
+
+OCRepresentation DiagnosticsCollection::getStartCollectionRepresentation()
+{
+    m_startCollectionRep.setValue("value", m_startCollectionValue);
+
+    return m_startCollectionRep;
+}
+
+OCRepresentation DiagnosticsCollection::getDiagnosticsRepresentation()
+{
+    m_diagnosticsRep.clearChildren();
+
+    m_diagnosticsRep.addChild(getFactoryResetRepresentation());
+    m_diagnosticsRep.addChild(getRebootRepresentation());
+    m_diagnosticsRep.addChild(getStartCollectionRepresentation());
+
+    m_diagnosticsRep.setValue("value", m_diagnosticsValue);
 
     return m_diagnosticsRep;
 }
 
-std::string DiagnosticsResource::getUri()
+std::string DiagnosticsCollection::getDiagnosticsUri()
 {
     return m_diagnosticsUri;
 }
 
-void DiagnosticsResource::diagnosticsMonitor(int second)
+std::string DiagnosticsCollection::getFactoryResetUri()
+{
+    return m_factoryResetUri;
+}
+
+std::string DiagnosticsCollection::getRebootUri()
+{
+    return m_rebootUri;
+}
+
+std::string DiagnosticsCollection::getStartCollectionUri()
+{
+    return m_startCollectionUri;
+}
+
+void DiagnosticsCollection::diagnosticsMonitor(int second)
 {
     while (1)
     {
         sleep(second);
 
-        if (m_reboot == "true")
+        if (m_rebootValue == "true")
         {
             int res;
             std::cout << "Reboot will be soon..." << std::endl;
-            m_reboot = defaultReboot;
+            m_rebootValue = defaultReboot;
             res = system("sudo reboot"); // System reboot
 
             std::cout << "return: " << res << std::endl;
 
         }
-        else if (m_factoryReset == "true")
+        else if (m_factoryResetValue == "true")
         {
             std::cout << "Factory Reset will be soon..." << std::endl;
-            m_factoryReset = defaultFactoryReset;
+            m_factoryResetValue = defaultFactoryReset;
             factoryReset();
         }
     }

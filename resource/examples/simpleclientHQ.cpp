@@ -33,7 +33,6 @@ using namespace OC;
 
 const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
-std::mutex curResourceLock;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
 class Light
@@ -286,11 +285,9 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-    std::lock_guard<std::mutex> lock(curResourceLock);
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
-        return;
     }
 
     std::string resourceURI;

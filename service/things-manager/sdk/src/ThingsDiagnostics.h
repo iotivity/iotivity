@@ -18,12 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * ThingsDiagnostics.
- */
+/// @file   ThingsDiagnostics.h
+
+/// @brief  This file contains the declaration of classes and its members related to
+///         ThingsDiagnostics.
 
 #ifndef __OC_THINGSDIAGNOSTICS__
 #define __OC_THINGSDIAGNOSTICS__
@@ -39,6 +37,7 @@
 using namespace OC;
 namespace OIC
 {
+
     /// Declearation of Diagnostics Callback funtion type
     typedef std::function<
             void(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
@@ -57,7 +56,11 @@ namespace OIC
     {
     public:
         DiagnosticsRequestEntry(std::string ID, DiagnosticsCallback callback,
-                std::shared_ptr< OCResource > resource, std::string updateVal);
+                std::shared_ptr< OCResource > resource, std::string updateVal) :
+                m_ID(ID), m_callback(callback), m_resource(resource), m_updateVal(updateVal)
+        {
+        }
+        ;
 
         // Diagnostics Name (used in key value in std::map structure)
         // e.g., reboot and factoryset
@@ -85,14 +88,27 @@ namespace OIC
     class DiagnosticsUnitInfo
     {
     public:
+        DiagnosticsUnitInfo(std::string name, std::string description, std::string uri,
+                std::string attribute) :
+                m_name(name), m_description(description), m_uri(uri), m_attribute(attribute)
+        {
+        }
+        ;
+
         std::string m_name;
-        std::string m_attribute;
+        std::string m_description;
         std::string m_uri;
+        std::string m_attribute;
 
-        DiagnosticsUnitInfo(std::string name, std::string attribute, std::string uri);
+        // If a developer wants to know a list of diagnostics names, gives it in JSON format.
+        std::string getJSON()
+        {
+            std::string res;
 
-        // If a developer wants to know a list of configuration names, gives it in JSON format.
-        std::string getJSON();
+            res = "{\"name\":\"" + m_name + "\",\"description\":\"" + m_description + "\"}";
+
+            return res;
+        }
     };
 
 #define NUMDIAGUNIT 3
@@ -105,18 +121,39 @@ namespace OIC
         /**
          * Constructor for ThingsDiagnostics. Constructs a new ThingsDiagnostics
          */
-        ThingsDiagnostics(void);
+        ThingsDiagnostics(void)
+        {
+            DiagnosticsUnitInfo unit[] =
+                    {
+                    { "reboot", "reboot", "/oic/diag/0/reboot", "value" },
+                            { "value",
+                                    "Collecting any device statistics",
+                                    "/oic/diag/0/startCollection", "value" },
+                            { "factoryreset", "restore all configuration values to default values",
+                                    "/oic/diag/0/factoryReset", "value" } };
+
+            for (int i = 0; i < NUMDIAGUNIT; i++)
+                DiagnosticsUnitTable.push_back(unit[i]);
+        }
+        ;
 
         /**
          * Virtual destructor
          */
-        ~ThingsDiagnostics(void);
+        ~ThingsDiagnostics(void)
+        {
+        }
+        ;
 
         static ThingsDiagnostics *thingsDiagnosticsInstance;
         static ThingsDiagnostics* getInstance();
         void deleteInstance();
 
-        void setGroupManager(GroupManager *groupmanager);
+        void setGroupManager(GroupManager *groupmanager)
+        {
+            g_groupmanager = groupmanager;
+        }
+        ;
 
         /**
          * API to make things reboot

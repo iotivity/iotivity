@@ -70,9 +70,9 @@ void formResourceRequest(OCEntityHandlerFlag flag,
         {
             if(entityHandlerRequest->query)
             {
-                OC::Utilities::QueryParamsKeyVal qp =
-                    OC::Utilities::getQueryParams(
-                            reinterpret_cast<char*>(entityHandlerRequest->query));
+                std::string querystr(reinterpret_cast<char*>(entityHandlerRequest->query));
+
+                OC::Utilities::QueryParamsKeyVal qp = OC::Utilities::getQueryParams(querystr);
 
                 if(qp.size() > 0)
                 {

@@ -1,22 +1,9 @@
-/******************************************************************
-*
-* Copyright 2014 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+/*
+ * oic_wifiLib.cpp
+ *
+ *  Created on: 2014. 11. 13.
+ *      Author: eunseok
+ */
 
 #include "logger.h"
 #include "ocstack.h"
@@ -40,7 +27,7 @@
 #endif
 
 
-PROGMEM const char TAG[] = "TrackeeSensor";
+PROGMEM const char TAG[] = "ReferenceSensor";
 
 #ifdef ARDUINOWIFI
 // Arduino WiFi Shield
@@ -51,10 +38,10 @@ PROGMEM const char TAG[] = "TrackeeSensor";
 static const char INTEL_WIFI_SHIELD_FW_VER[] = "1.2.0";
 
 /// WiFi network info and credentials
-//char ssid[] = "SoftSensor_AP";
-//char pass[] = "1234567890";
-char ssid[] = "SoftSensor_2.4G";
-char pass[] = "12344321";
+char ssid[] = "SoftSensor_AP";
+char pass[] = "1234567890";
+//char ssid[] = "SoftSensor_2.4G";
+//char pass[] = "12344321";
 
 int ConnectToNetwork()
 {
@@ -70,7 +57,7 @@ int ConnectToNetwork()
     // Verify that WiFi Shield is running the firmware with all UDP fixes
     fwVersion = WiFi.firmwareVersion();
     OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
-    if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) != 0 )
+    if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) !=0 )
     {
         OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
         return -1;
@@ -80,7 +67,7 @@ int ConnectToNetwork()
     while (status != WL_CONNECTED)
     {
         OC_LOG_V(INFO, TAG, "Attempting to connect to SSID: %s", ssid);
-        status = WiFi.begin(ssid, pass);
+        status = WiFi.begin(ssid,pass);
 
         // wait 10 seconds for connection:
         delay(10000);

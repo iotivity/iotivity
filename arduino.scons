@@ -3,17 +3,9 @@
 ##
 Import('env')
 
-# Add 'NET' build option, let user select board network connection type
-vars = Variables()
-vars.Add(EnumVariable('NET', 'Network connection type', 'Ethernet', ['Ethernet', 'Wifi']))
-vars.Update(env)
-Help(vars.GenerateHelpText(env))
-
 env.ImportLib('Time')
 if env.get('NET') == 'Ethernet':
 	env.ImportLib('Ethernet')
 else:
 	env.ImportLib('WiFi')
 env.ImportLib('SPI')
-
-env.BuildCore()

@@ -3,7 +3,11 @@
 ##
 Import('env')
 
-compatibilitylib_env = env.Clone()
+# Add third party libraries
+lib_env = env.Clone()
+#SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+compatibilitylib_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
@@ -13,7 +17,8 @@ target_os = env.get('TARGET_OS')
 
 if target_os == 'android':
 	compatibilitylib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	compatibilitylib_env.AppendUnique(LIBS = ['gnustl_shared'])
+	#oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	compatibilitylib_env.AppendUnique(LIBS = ['gnustl_static'])
 
 ######################################################################
 # Source files and Targets

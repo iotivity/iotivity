@@ -73,7 +73,7 @@ struct plugin_data_t
     bool flag;
 };
 
-struct mosquitto *myMosquitto;
+
 class LightResource
 {
     public:
@@ -176,14 +176,6 @@ class LightResource
                 if (rep.getValue("power", m_power))
                 {
                     cout << "\t\t\t\t" << "power: " << m_power << endl;
-                    if (m_power == 1)
-                    {
-                        mosquitto_publish(myMosquitto, NULL, "actuators/fan", 32, "onfan", 0, true);
-                    }
-                    else
-                    {
-                        mosquitto_publish(myMosquitto, NULL, "actuators/fan", 32, "offfan", 0, true);
-                    }
                 }
                 else
                 {
@@ -392,6 +384,7 @@ class LightResource
 };
 
 // Create the instance of the resource class (in this case instance of class 'LightResource').
+struct mosquitto *myMosquitto;
 
 // ChangeLightRepresentaion is an observation function,
 // which notifies any changes to the resource to stack

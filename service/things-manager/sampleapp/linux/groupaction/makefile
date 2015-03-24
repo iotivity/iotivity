@@ -1,6 +1,5 @@
 
 TGMROOT=../../../
-OIC_ROOT=${TGMROOT}../..
 IOT_BASE=${TGMROOT}../../resource
 RST_NAME=.
 
@@ -14,7 +13,6 @@ DEPEND_DIR:= ../../../../../resource/dependencies/
 CEREAL_DIR:= $(DEPEND_DIR)/cereal
 
 CXX_INC	:= -I../../ -I../../inc/
-CXX_INC += -I${OIC_ROOT}/extlibs/timer
 CXX_INC	+= -I${IOT_BASE}/include/
 CXX_INC	+= -I${IOT_BASE}/oc_logger/include
 CXX_INC	+= -I${IOT_BASE}/csdk/stack/include

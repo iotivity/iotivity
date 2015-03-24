@@ -1,7 +1,7 @@
 
 
-OIC_ROOT=../../../../..
-IOT_BASE=${OIC_ROOT}/resource
+#OIC_ROOT=../../../resource/
+IOT_BASE=../../../../../resource
 #BOOST=${BOOST_DIR}
 RST_NAME=.
 
@@ -16,7 +16,6 @@ CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -ldl
 
 
 CXX_INC	:= -I../../ -I../../inc/ -I../../src/
-CXX_INC += -I${OIC_ROOT}/extlibs/timer
 CXX_INC	+= -I${IOT_BASE}/include/ 
 CXX_INC += -I${IOT_BASE}/oc_logger/include
 CXX_INC	+= -I${IOT_BASE}/csdk/stack/include 

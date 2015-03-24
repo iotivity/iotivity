@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,9 +19,8 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the APIs for Resource Model to use.
+ * @file cainterface.h
+ * @brief This file contains the APIs for Resource Model to use
  */
 
 #ifndef __CA_INTERFACE_H_

@@ -18,12 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related 
- * to OCRepresentation.
- */
+/// @file OCRepresentation.h
+
+/// @brief  This file contains the declaration of classes and its members
+///         related to OCRepresentation
 
 #ifndef __OCREPRESENTATION_H
 #define __OCREPRESENTATION_H
@@ -100,13 +98,6 @@ namespace OC
     class OCRepresentation
     {
         public:
-            // Note: Implementation of all constructors and destructors
-            // are all placed in the same location due to a crash that
-            // was observed in Android, where merely constructing/destructing
-            // an OCRepresentation object was enough to cause an invalid 'free'.
-            // It is believed that this is a result of incompatible compiler
-            // options between the gradle JNI and armeabi scons build, however
-            // this fix will work in the meantime.
             OCRepresentation(): m_interfaceType(InterfaceType::None){}
 
             OCRepresentation(OCRepresentation&&) = default;
@@ -141,7 +132,7 @@ namespace OC
 
             void setResourceInterfaces(const std::vector<std::string>& resourceInterfaces);
 
-            bool emptyData() const;
+            bool empty() const;
 
             int numberOfAttributes() const;
 
@@ -153,14 +144,6 @@ namespace OC
                 m_values[str] = val;
             }
 
-            /**
-             *  Retrieve the attribute value associated with the supplied name
-             *
-             *  @param str Name of the attribute
-             *  @param val Value of the attribute
-             *  @return The getValue method returns true if the attribute was
-             *        found in the representation.  Otherwise it returns false.
-             */
             template <typename T>
             bool getValue(const std::string& str, T& val) const
             {
@@ -178,14 +161,6 @@ namespace OC
                 }
             }
 
-            /**
-             *  Return the attribute value associated with the supplied name
-             *
-             *  @param str Name of the attribute
-             *  @return When the representation contains the attribute, the
-             *       the associated value is returned.  Otherwise, getValue
-             *       returns the default contructed value for the type.
-             */
             template <typename T>
             T getValue(const std::string& str) const
             {
@@ -198,172 +173,11 @@ namespace OC
                 return val;
             }
 
-            std::string getValueToString(const std::string& key) const;
             bool hasAttribute(const std::string& str) const;
 
             void setNULL(const std::string& str);
 
             bool isNULL(const std::string& str) const;
-
-            // STL Container stuff
-        public:
-            class iterator;
-            class const_iterator;
-            // Shim class to allow iterating and indexing of the OCRepresentation
-            // object.
-            class AttributeItem
-            {
-                friend class OCRepresentation;
-                friend class iterator;
-                friend class const_iterator;
-                public:
-                    const std::string& attrname() const;
-                    AttributeType type() const;
-                    AttributeType base_type() const;
-                    size_t depth() const;
-                    template<typename T>
-                    T getValue() const
-                    {
-                        return boost::get<T>(m_values[m_attrName]);
-                    }
-
-                    std::string getValueToString() const;
-
-                    template<typename T>
-                    AttributeItem& operator=(T&& rhs)
-                    {
-                        m_values[m_attrName] = std::forward<T>(rhs);
-                        return *this;
-                    }
-
-                    AttributeItem& operator=(std::nullptr_t rhs)
-                    {
-                        NullType t;
-                        m_values[m_attrName] = t;
-                        return *this;
-                    }
-
-                    // Enable-if required to prevent conversions to alternate types.  This prevents
-                    // ambigious conversions in the case where conversions can include a number of
-                    // types, such as the string constructor.
-                    template<typename T, typename= typename std::enable_if<
-                     std::is_same<T, int>::value ||
-                     std::is_same<T, double>::value ||
-                     std::is_same<T, bool>::value ||
-                     std::is_same<T, std::string>::value ||
-                     std::is_same<T, OCRepresentation>::value ||
-                     std::is_same<T, std::vector<int>>::value ||
-                     std::is_same<T, std::vector<std::vector<int>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<int>>>>::value ||
-                     std::is_same<T, std::vector<double>>::value ||
-                     std::is_same<T, std::vector<std::vector<double>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<double>>>>::value ||
-                     std::is_same<T, std::vector<bool>>::value ||
-                     std::is_same<T, std::vector<std::vector<bool>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<bool>>>>::value ||
-                     std::is_same<T, std::vector<std::string>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::string>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<std::string>>>>::value ||
-                     std::is_same<T, std::vector<OCRepresentation>>::value ||
-                     std::is_same<T, std::vector<std::vector<OCRepresentation>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<OCRepresentation>>>>::value
-                     >::type // enable_if
-                    >
-                    operator T() const
-                    {
-                        return this->getValue<T>();
-                    }
-
-                    operator std::nullptr_t() const
-                    {
-                        this->getValue<NullType>();
-                        return nullptr;
-                    }
-
-                private:
-                    AttributeItem(const std::string& name,
-                            std::map<std::string, AttributeValue>& vals);
-                    AttributeItem(const AttributeItem&) = default;
-                    std::string m_attrName;
-                    std::map<std::string, AttributeValue>& m_values;
-            };
-
-            // Iterator to allow iteration via STL containers/methods
-            class iterator
-            {
-                friend class OCRepresentation;
-                public:
-                    typedef iterator self_type;
-                    typedef AttributeItem value_type;
-                    typedef value_type& reference;
-                    typedef value_type* pointer;
-                    typedef std::forward_iterator_tag iterator_category;
-                    typedef int difference_type;
-
-                    iterator(const iterator&) = default;
-                    ~iterator() = default;
-
-                    bool operator ==(const iterator&) const;
-                    bool operator !=(const iterator&) const;
-
-                    iterator& operator++();
-                    iterator operator++(int);
-
-                    reference operator*();
-                    pointer operator->();
-                private:
-                    iterator(std::map<std::string, AttributeValue>::iterator&& itr,
-                            std::map<std::string, AttributeValue>& vals)
-                        : m_iterator(std::move(itr)),
-                        m_item(m_iterator != vals.end() ? m_iterator->first:"", vals){}
-                    std::map<std::string, AttributeValue>::iterator m_iterator;
-                    AttributeItem m_item;
-            };
-
-            class const_iterator
-            {
-                friend class OCRepresentation;
-                public:
-                    typedef iterator self_type;
-                    typedef const AttributeItem value_type;
-                    typedef value_type& const_reference;
-                    typedef value_type* const_pointer;
-                    typedef std::forward_iterator_tag iterator_category;
-                    typedef int difference_type;
-
-                    const_iterator(const iterator& rhs)
-                        :m_iterator(rhs.m_iterator), m_item(rhs.m_item){}
-                    const_iterator(const const_iterator&) = default;
-                    ~const_iterator() = default;
-
-                    bool operator ==(const const_iterator&) const;
-                    bool operator !=(const const_iterator&) const;
-
-                    const_iterator& operator++();
-                    const_iterator operator++(int);
-
-                    const_reference operator*() const;
-                    const_pointer operator->() const;
-                private:
-                    const_iterator(std::map<std::string, AttributeValue>::const_iterator&& itr,
-                            std::map<std::string, AttributeValue>& vals)
-                        : m_iterator(std::move(itr)),
-                        m_item(m_iterator != vals.end() ? m_iterator->first: "", vals){}
-                    std::map<std::string, AttributeValue>::const_iterator m_iterator;
-                    AttributeItem m_item;
-            };
-
-            iterator begin();
-            const_iterator begin() const;
-            const_iterator cbegin() const;
-            iterator end();
-            const_iterator end() const;
-            const_iterator cend() const;
-            size_t size() const;
-            bool empty() const;
-
-            AttributeItem operator[](const std::string& key);
-            const AttributeItem operator[](const std::string& key) const;
         private:
             friend class OCResourceResponse;
             friend class cereal::access;
@@ -414,14 +228,12 @@ namespace OC
         private:
             std::string m_uri;
             std::vector<OCRepresentation> m_children;
-            mutable std::map<std::string, AttributeValue> m_values;
+            std::map<std::string, AttributeValue> m_values;
             std::vector<std::string> m_resourceTypes;
             std::vector<std::string> m_interfaces;
 
             InterfaceType m_interfaceType;
     };
-
-    std::ostream& operator <<(std::ostream& os, const OCRepresentation::AttributeItem& ai);
 } // namespace OC
 
 

@@ -32,26 +32,13 @@ developing applications that use %{name}.
 %setup -q -n %{name}-%{version}
 
 %build
-%ifarch armv7l
-export RPM_ARCH=armeabi-v7a
-%else
 %ifarch %arm
 export RPM_ARCH=arm
 %else
-%ifarch aarch64
-export RPM_ARCH=arm64
-%else
-%ifarch i586 i686 %{ix86}
 export RPM_ARCH=x86
-%else
-export RPM_ARCH=%{_arch}
-%endif
-%endif
-%endif
 %endif
 
-
-scons -j 4 TARGET_OS=tizen TARGET_ARCH=$RPM_ARCH
+scons -j 4 TARGET_ARCH=$RPM_ARCH
 
 %install
 rm -rf %{buildroot}
@@ -59,8 +46,8 @@ mkdir -p %{buildroot}%{_includedir}
 mkdir -p %{buildroot}%{_libdir}
 mkdir -p %{buildroot}%{_sbindir}
 
-cp out/tizen/*/release/lib*.so %{buildroot}%{_libdir}
-cp out/tizen/*/release/lib*.a %{buildroot}%{_libdir}
+cp out/linux/*/release/lib*.so %{buildroot}%{_libdir}
+cp out/linux/*/release/lib*.a %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/ocstack.h %{buildroot}%{_includedir}
 cp resource/include/*.h %{buildroot}%{_includedir}

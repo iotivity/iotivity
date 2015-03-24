@@ -79,7 +79,6 @@ namespace OC
         static const char NOT_FOUND[]                  = "Resource Not Found";
         static const char RESOURCE_ERROR[]             = "Resource Error";
         static const char SLOW_RESOURCE[]              = "Slow Resource";
-        static const char DUPLICATE_REQUEST[]          = "Duplicate Request";
         static const char NO_OBSERVERS[]               = "No Observers";
         static const char OBSV_NO_FOUND[]              = "Stack observer not found";
         static const char OBSV_NOT_ADDED[]             = "Stack observer not added";
@@ -95,8 +94,6 @@ namespace OC
         static const char PERSISTENT_BUFFER_REQUIRED[] = "Persistent response buffer required";
         static const char STACK_CONTINUE[]             = "Stack continue";
         static const char INVALID_REQUEST_HANDLE[]     = "Invalid request handle";
-        static const char INVALID_DEVICE_INFO[]        = "Invalid device info";
-        static const char INVALID_JSON[]               = "Invalid JSON";
         static const char UNKNOWN_ERROR[]              = "Unknown Error";
         static const char INVALID_REPRESENTATION[]     = "Invalid Payload JSON";
         static const char INVALID_JSON_TYPE[]          = "Unrecognized JSON Type ";

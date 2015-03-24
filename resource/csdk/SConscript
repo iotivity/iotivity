@@ -1,9 +1,13 @@
 ##
 # liboctbstack (share library) build script
 ##
+
 Import('env')
 
-liboctbstack_env = env.Clone()
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+liboctbstack_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
 # As in the source code, it includes arduino Time library (C++)
@@ -17,7 +21,6 @@ if target_os == 'arduino':
 ######################################################################
 liboctbstack_env.PrependUnique(CPPPATH = [
 		'../../extlibs/cjson/',
-		'../../extlibs/timer/',
 		'ocsocket/include',
 		'logger/include',
 		'ocrandom/include',
@@ -41,6 +44,8 @@ liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
 if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
+else:
+	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
 
 if target_os in ['darwin', 'ios']:
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
@@ -54,7 +59,6 @@ if not env.get('RELEASE'):
 OCTBSTACK_SRC = 'stack/src/'
 liboctbstack_src = [
 	'../../extlibs/cjson/cJSON.c',
-	'../../extlibs/timer/timer.c',
 	'occoap/src/occoap.c',
 	'occoap/src/occoaphelper.c',
 	OCTBSTACK_SRC + 'ocstack.c',
@@ -73,3 +77,5 @@ else:
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
+
+

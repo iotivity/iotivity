@@ -32,7 +32,7 @@
 using namespace OC;
 
 std::shared_ptr<OCResource> curResource;
-std::mutex curResourceLock;
+
 static int TEST_CASE = 0;
 
 /**
@@ -92,11 +92,9 @@ void presenceHandler(OCStackResult result, const unsigned int nonce, const std::
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-    std::lock_guard<std::mutex> lock(curResourceLock);
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
-        return;
     }
 
     std::string resourceURI;

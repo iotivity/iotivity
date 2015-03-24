@@ -17,19 +17,19 @@ target_os = env.get('TARGET_OS')
 plugins_env.AppendUnique(CPPPATH = ['../lib/cpluff/libcpluff'])
 
 if target_os not in ['windows', 'winrt']:
-    plugins_env.AppendUnique(CXXFLAGS = ['-g3', '-Wall', '-pthread'])
-    plugins_env.PrependUnique(CCFLAGS = ['-fPIC'])
-    plugins_env.AppendUnique(LINKFLAGS = ['-fPIC'])
+	plugins_env.AppendUnique(CXXFLAGS = ['-g3', '-Wall', '-pthread', '-std=c++0x'])
+	plugins_env.PrependUnique(CCFLAGS = ['-fPIC']) 
+	plugins_env.AppendUnique(LINKFLAGS = ['-fPIC'])
 
-    if target_os not in ['arduino', 'android']:
-        plugins_env.AppendUnique(LIBS = ['pthread'])
+	if target_os not in ['arduino', 'android']:
+		plugins_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
-    plugins_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    plugins_env.AppendUnique(LIBS = ['gnustl_shared'])
+	plugins_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	plugins_env.AppendUnique(LIBS = ['gnustl_static'])
 
 plugins_env.AppendUnique(LIBS = [File(env.get('BUILD_DIR') + '/libmosquitto.a'),
-        'mosquitto', 'ssl', 'rt'])
+		'mosquitto', 'ssl', 'rt'])
 
 
 ######################################################################

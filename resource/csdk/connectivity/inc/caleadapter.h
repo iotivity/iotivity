@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,11 +19,9 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the APIs for LE adapters to be implemented.
+ * @file caleadapter.h
+ * @brief This file contains the APIs for LE adapters to be implemented
  */
-
 #ifndef _CA_LEADAPTER_H_
 #define _CA_LEADAPTER_H_
 

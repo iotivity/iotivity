@@ -13,10 +13,10 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-things_manager_env.AppendUnique(CPPPATH = ['../../extlibs/timer', 'sdk/inc', 'sdk/src'])
+things_manager_env.AppendUnique(CPPPATH = ['sdk/inc', 'sdk/src'])
 
 if target_os not in ['windows', 'winrt']:
-	things_manager_env.AppendUnique(CXXFLAGS = ['-Wall'])
+	things_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
 	if target_os != 'android':
 		things_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
@@ -26,7 +26,7 @@ if target_os == 'android':
 ######################################################################
 # Source files and Targets
 ######################################################################
-tgm_src = env.Glob('sdk/src/*.cpp', '../../extlibs/timer/timer.c')
+tgm_src = env.Glob('sdk/src/*.cpp')
 tgmsdk = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
 
 things_manager_env.InstallTarget(tgmsdk, 'libTGMSDK')

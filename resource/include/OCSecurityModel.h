@@ -18,12 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members required to
- * provide security model support.
- */
+/// @file OCSecurityModel.h 
+
+/// @brief	This file contains the declaration of classes and its members required to provide 
+///			security model support. 
 
 #ifndef __OCSECURITYMODEL_H
 #define __OCSECURITYMODEL_H

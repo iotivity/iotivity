@@ -27,22 +27,27 @@
 #include <utility>
 #include <exception>
 
-#include <OCException.h>
-#include <StringConstants.h>
+#include "OCException.h"
 
 namespace OC {
     namespace Utilities {
 
         typedef std::map<std::string, std::string> QueryParamsKeyVal;
         /*
-         * @brief helper function that parses the query parameters component
-         * of a URI into a key-value map.  This function expects the uri
-         * parameter to contain the query parameters component of a URI
-         * (everything after the '?', excluding anything anchors).
-         *
-         * Note that output will not perform URL decoding
+         * @brief Helper function to get query parameter from a URI
+         * @remarks      Its okay to return a copy of the container.\
+         *               The size is not expected to be huge.
+         * @remarks      Temporary: The URI must strictly have\
+         *               coap as the protocol in the fully qualified URI\
+         *               e.g., coap://1.2.3.4:5657/foo?bar=0)
+         * @remarks      If a separate class for URI parser is needed,\
+         *               please talk to Erich Keane.
+         * @todo         If more URI elements need to be parsed,\
+         *               please move the common parsing logic to a
+         *               different function
          */
         QueryParamsKeyVal getQueryParams(const std::string& uri);
+
     }
 }
 
@@ -91,25 +96,6 @@ namespace OC {
         return result_guard(nil_guard(p, fn, std::forward<ParamTs>(params)...));
     }
 
-} // namespace OC
-
-namespace OC
-{
-    template<typename T, typename = void>
-    struct is_vector
-    {
-        constexpr static bool value = false;
-    };
-
-    template<typename T>
-    struct is_vector<T,
-        typename std::enable_if<
-            std::is_same<T, std::vector<typename T::value_type, typename T::allocator_type>>::value
-        >::type
-    >
-    {
-        constexpr static bool value = true;
-    };
 } // namespace OC
 
 #endif

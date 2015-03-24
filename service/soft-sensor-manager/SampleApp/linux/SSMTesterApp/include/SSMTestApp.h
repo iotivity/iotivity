@@ -35,16 +35,10 @@ namespace APPMenu
 {
     typedef enum
     {
-        NONE = 0, REGISTER, UNREGISTER, DISCOMFORT_SAMPLE, ITS_SAMPLE, BMI_SAMPLE, EXIT = 9
+        NONE = 0, REGISTER, UNREGISTER, DISCOMFORT_SAMPLE, ITS_SAMPLE, EXIT = 9
     } APPMenu;
 }
 ;
-
-typedef enum
-{
-    UNKOWNBMI = 0, UNDERWEIGHT, NORMALRANGE, OVERWEIGHT, OBESE
-} BMIResult;
-
 
 typedef enum
 {

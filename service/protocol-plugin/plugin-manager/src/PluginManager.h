@@ -24,9 +24,7 @@
 
 #ifndef __PLUGINMANAGER_H
 #define __PLUGINMANAGER_H
-#ifndef DLOPEN_POSIX
 #define DLOPEN_POSIX
-#endif
 
 #include <vector>
 #include <dirent.h>
@@ -53,20 +51,19 @@ namespace OIC
             * Virtual destructor
             */
             ~PluginManager(void);
-
             /**
-            * Start plugins by key-value pair.
+            * Start  plugins by resource type
             *
-            * @param key-value pair string to be started.
-            * @return int, 1 is success, 0 is fail.
+            * @param type resouce type string to be started.
+            *
             */
             int startPlugins(const std::string key, const std::string value);
 
             /**
-            * Stop plugins by key-value pair.
+            * Stop  plugins by resource type
             *
-            * @param key-value pair string to be stopped.
-            * @return int, 1 is success, 0 is fail.
+            * @param type resouce type string to be started.
+            *
             */
             int stopPlugins(const std::string key, const std::string value);
 
@@ -74,24 +71,25 @@ namespace OIC
             * Rescan Plugin.
             * This function will call rescan function of plugins in the configuration folder
             *
-            * @param void.
+            * @param Plugin
             * @return int, 1 is success, 0 is fail.
             */
-            int rescanPlugin(void);
+            int rescanPlugin();
 
             /**
             * Get Plugin list.
             *
-            * @param void.
-            * @return Plugin vector
+            *
+            *
+            * @return
             */
             std::vector<Plugin> getPlugins(void);
 
             /**
             * Get Plugin state.
             *
-            * @param Plugin ID string.
-            * @return Plugin state string.
+            * @param Plugin ID
+            * @return Plugin state.
             */
             std::string getState(const std::string plugID);
 

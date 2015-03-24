@@ -30,12 +30,15 @@
  */
 #include "SSMModelDefinition.h"
 
+#define _EXPORT_
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-INTERFACE_DECLSPEC void InitializeContext(ICtxDelegate *pDelegate);
+void _EXPORT_ InitializeContext(ICtxDelegate *pDelegate);
 #ifdef __cplusplus
+
 }
 ;
 #endif
@@ -85,7 +88,7 @@ namespace DiscomfortIndexSensorName
             DIResult makeDiscomfortIndex(InValue *data);
             ContextData setOutput(int property_count, InValue *data);
 
-            friend void INTERFACE_DECLSPEC initializeContext(ICtxDelegate *pDelegate);
+            friend void _EXPORT_ initializeContext(ICtxDelegate *pDelegate);
     };
 }
 ;

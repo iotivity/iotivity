@@ -19,221 +19,19 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #define _POSIX_C_SOURCE 200112L
-
 #include <string.h>
 
-#include "oicgroup.h"
 #include "cJSON.h"
 #include "ocmalloc.h"
+#include "oicgroup.h"
+#include "ocresource.h"
 #include "occollection.h"
-#include "logger.h"
-#include "timer.h"
-
-#ifndef WITH_ARDUINO
-#include <pthread.h>
-#endif
 
 #define TAG PCF("OICGROUP")
 
-#define DESC_DELIMITER          "\""
-#define ACTION_DELIMITER        "*"
-#define ATTR_DELIMITER          "|"
-#define ATTR_ASSIGN             "="
-
-#define OIC_ACTION_PREFIX               "{\"oc\":[{\"rep\":{"
-#define VARIFY_POINTER_NULL(pointer, result, toExit) \
-    if(pointer == NULL) \
-    {\
-        result = OC_STACK_NO_MEMORY;\
-        goto toExit;\
-    }
-#define VARIFY_PARAM_NULL(pointer, result, toExit) \
-    if(pointer == NULL)\
-    {\
-        result = OC_STACK_INVALID_PARAM;\
-        goto exit;\
-    }
-
-#define OCFREE(pointer) \
-    { \
-        OCFree(pointer); \
-        pointer = NULL; \
-    }
-
-#ifndef WITH_ARDUINO
-pthread_mutex_t lock;
-#endif
-
-enum ACTION_TYPE
-{
-    NONE = 0, SCHEDULED, RECURSIVE
-};
-
-typedef struct scheduledresourceinfo
-{
-    OCResource *resource;
-    OCActionSet *actionset;
-
-    int timer_id;
-
-    OCServerRequest *ehRequest;
-
-    time_t time;
-    struct scheduledresourceinfo* next;
-} ScheduledResourceInfo;
-
-ScheduledResourceInfo *scheduleResourceList = NULL;
-
-void AddScheduledResource(ScheduledResourceInfo **head,
-        ScheduledResourceInfo* add)
-{
-    OC_LOG(INFO, TAG, PCF("AddScheduledResource Entering..."));
-
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
-    ScheduledResourceInfo *tmp = NULL;
-
-    if (*head != NULL)
-    {
-        tmp = *head;
-
-        while (tmp->next)
-        {
-            tmp = tmp->next;
-        }
-        tmp->next = add;
-    }
-    else
-    {
-        *head = add;
-    }
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
-}
-
-ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
-{
-    OC_LOG(INFO, TAG, PCF("GetScheduledResource Entering..."));
-
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
-
-    time_t t_now;
-
-    ScheduledResourceInfo *tmp = NULL;
-    tmp = head;
-
-#ifndef WITH_ARDUINO
-    time(&t_now);
-#else
-    t_now = now();
-#endif
-
-    if (tmp)
-    {
-        while (tmp)
-        {
-            time_t diffTm = 0;
-#ifndef WITH_ARDUINO
-            diffTm = timespec_diff(tmp->time, t_now);
-#else
-            diffTm = timespec_diff(tmp->time, t_now);
-#endif
-
-            if (diffTm <= (time_t) 0)
-            {
-                OC_LOG(INFO, TAG, PCF("return Call INFO."));
-                goto exit;
-            }
-
-            tmp = tmp->next;
-        }
-    }
-
-    exit:
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
-    if (tmp == NULL)
-    {
-        OC_LOG(INFO, TAG, PCF("Cannot Find Call Info."));
-    }
-    return tmp;
-}
-
-ScheduledResourceInfo* GetScheduledResourceByActionSetName(ScheduledResourceInfo *head, char *setName)
-{
-    OC_LOG(INFO, TAG, PCF("GetScheduledResourceByActionSetName Entering..."));
-
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
-    ScheduledResourceInfo *tmp = NULL;
-    tmp = head;
-
-    if (tmp)
-    {
-        while (tmp)
-        {
-            if (strcmp(tmp->actionset->actionsetName, setName) == 0)
-            {
-                OC_LOG(INFO, TAG, PCF("return Call INFO."));
-                goto exit;
-            }
-            tmp = tmp->next;
-        }
-    }
-
-exit:
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
-    if (tmp == NULL)
-    {
-        OC_LOG(INFO, TAG, PCF("Cannot Find Call Info."));
-    }
-    return tmp;
-}
-
-void RemoveScheduledResource(ScheduledResourceInfo **head,
-        ScheduledResourceInfo* del)
-{
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
-    OC_LOG(INFO, TAG, PCF("RemoveScheduledResource Entering..."));
-    ScheduledResourceInfo *tmp = NULL;
-
-    if (del == NULL)
-    {
-        return;
-    }
-
-    if (*head == del)
-    {
-        *head = (*head)->next;
-    }
-    else
-    {
-        tmp = *head;
-        while (tmp->next && (tmp->next != del))
-        {
-            tmp = tmp->next;
-        }
-        if (tmp->next)
-        {
-            tmp->next = del->next;
-        }
-    }
-
-    OCFREE(del)
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
-}
+#define DESC_DELIMITER "\""
+#define ACTION_DELIMITER "*"
+#define ATTR_DELIMITER "|"
 
 typedef struct aggregatehandleinfo
 {
@@ -243,6 +41,9 @@ typedef struct aggregatehandleinfo
 
     struct aggregatehandleinfo *next;
 } ClientRequstInfo;
+
+// unsigned int nHandleIdx = 0;
+// ClientRequstInfo g_AggregateResponseHandle[10];
 
 ClientRequstInfo *clientRequstList = NULL;
 
@@ -266,8 +67,7 @@ void AddClientRequestInfo(ClientRequstInfo **head, ClientRequstInfo* add)
     }
 }
 
-ClientRequstInfo* GetClientRequestInfo(ClientRequstInfo *head,
-        OCDoHandle handle)
+ClientRequstInfo* GetClientRequestInfo(ClientRequstInfo *head, OCDoHandle handle)
 {
     ClientRequstInfo *tmp = NULL;
 
@@ -277,6 +77,7 @@ ClientRequstInfo* GetClientRequestInfo(ClientRequstInfo *head,
     {
         while (tmp)
         {
+//            printf("%p :: %p\n", tmp->required, handle);
             if (tmp->required == handle)
             {
                 break;
@@ -293,9 +94,6 @@ ClientRequstInfo* GetClientRequestInfo(ClientRequstInfo *head,
 void RemoveClientRequestInfo(ClientRequstInfo **head, ClientRequstInfo* del)
 {
     ClientRequstInfo *tmp = NULL;
-
-    if (del == NULL)
-        return;
 
     if (*head == del)
     {
@@ -314,6 +112,8 @@ void RemoveClientRequestInfo(ClientRequstInfo **head, ClientRequstInfo* del)
         }
     }
 }
+
+
 
 void AddCapability(OCCapability** head, OCCapability* node)
 {
@@ -352,46 +152,31 @@ void AddAction(OCAction** head, OCAction* node)
     }
 }
 
-OCStackResult AddActionSet(OCActionSet **head, OCActionSet* node)
+void AddActionSet(OCActionSet **head, OCActionSet* node)
 {
     OCActionSet *pointer = *head;
-    OCActionSet *prev = NULL;
-    if(node == NULL)
-    {
-        return OC_STACK_ERROR;
-    }
     if (NULL == pointer)
     {
         *head = node;
     }
     else
     {
-        prev = pointer;
-        while (pointer != NULL)
-        {
-            // check the uniqeness of actionsetname.
-            if (strcmp(pointer->actionsetName, node->actionsetName) == 0)
-            {
-                return OC_STACK_ERROR;
-            }
 
-            prev = pointer;
+        while (pointer->next != NULL)
+        {
             pointer = pointer->next;
         }
 
-        prev->next = node;
+        pointer->next = node;
     }
-
-    return OC_STACK_OK;
 }
 
 void DeleteCapability(OCCapability *del)
 {
-    OCFREE(del->capability)
+    free(del->capability);
     del->capability = NULL;
-    OCFREE(del->status)
+    free(del->status);
     del->status = NULL;
-    OCFREE(del)
 }
 
 void DeleteAction(OCAction** action)
@@ -407,16 +192,13 @@ void DeleteAction(OCAction** action)
         DeleteCapability(pDel);
         pDel->next = NULL;
     }
-    OCFREE((*action)->resourceUri)
+    OCFree((*action)->resourceUri);
+    (*action)->resourceUri = NULL;
     (*action)->next = NULL;
-    OCFREE(*action)
 }
 
 void DeleteActionSet(OCActionSet** actionset)
 {
-    if(*actionset == NULL)
-        return;
-
     OCAction* pointer = (*actionset)->head;
     OCAction* pDel = NULL;
 
@@ -426,17 +208,19 @@ void DeleteActionSet(OCActionSet** actionset)
         pointer = pointer->next;
 
         DeleteAction(&pDel);
+        pDel->next = NULL;
     }
-    //    (*actionset)->head = NULL;
-    OCFREE((*actionset)->actionsetName)
-    OCFREE(*actionset)
+
+    OCFree((*actionset)->actionsetName);
+    (*actionset)->head = NULL;
 }
 
-OCStackResult FindAndDeleteActionSet(OCResource **resource,
-        const char * actionsetName)
+OCStackResult FindAndDeleteActionSet(OCResource **resource, const char * actionsetName)
 {
+
     if (*resource != NULL)
     {
+
         OCActionSet *pointer = NULL;
         OCActionSet *pDel = NULL;
 
@@ -456,6 +240,7 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource,
                     (*resource)->actionsetHead = NULL;
 
                 DeleteActionSet(&pointer);
+
             }
             else if (pointer->next != NULL)
             {
@@ -463,8 +248,7 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource,
                 {
                     if (pointer->next != NULL)
                     {
-                        if (strcmp(pointer->next->actionsetName, actionsetName)
-                                == 0)
+                        if (strcmp(pointer->next->actionsetName, actionsetName) == 0)
                         {
                             pDel = pointer->next;
                             pointer->next = pointer->next->next;
@@ -472,7 +256,6 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource,
                             DeleteActionSet(&pDel);
                         }
                     }
-                    pointer = pointer->next;
                 }
             }
 
@@ -480,6 +263,7 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource,
         }
 
     }
+
     return OC_STACK_ERROR;
 }
 
@@ -501,8 +285,7 @@ OCStackResult DeleteActionSets(OCResource** resource)
     return OC_STACK_OK;
 }
 
-OCStackResult GetActionSet(const char *actionName, OCActionSet *head,
-        OCActionSet** actionset)
+OCStackResult GetActionSet(const char *actionName, OCActionSet *head, OCActionSet** actionset)
 {
     OCActionSet *pointer = head;
 
@@ -521,213 +304,217 @@ OCStackResult GetActionSet(const char *actionName, OCActionSet *head,
 
 }
 
-OCStackResult ExtractKeyValueFromRequest(char *request, char **key,
-        char **value)
+OCStackResult GetActionSetFromString(OCResource **resource, unsigned char *request, char** method,
+        char **actionsetName)
 {
-    OCStackResult result = OC_STACK_OK;
-    size_t length = 0;
+    char *acitonRequest;
+    char *iterTokenPtr = NULL;
+    char *iterToken = NULL;
+    char *description = NULL;
+    char *iterDescPtr = NULL;
 
-    char* pRequest = (char *) request + strlen(OIC_ACTION_PREFIX);
-    char* iterToken, *iterTokenPtr;
+    char *attributes = NULL;
+    char *iterAttrbutesPtr = NULL;
 
-    iterToken = (char *) strtok_r(pRequest, ":", &iterTokenPtr);
-    length = strlen(iterToken) + 1;
+    char *attr = NULL;
+    char *iterAttrPtr = NULL;
 
-    *key = (char *) OCMalloc(length);
-    VARIFY_POINTER_NULL(*key, result, exit)
+    OCActionSet* actionset = NULL;
+    OCAction* action = NULL;
 
-    strncpy(*key, iterToken + 1, length);
-    ((*key)[((length - 1) - 2)]) = '\0';
+    acitonRequest = (char *) OCMalloc(strlen((char *) request) + 1);
+    strncpy(acitonRequest, (char *) request, strlen((char *) request) + 1);
 
-    iterToken = (char *) strtok_r(NULL, "}", &iterTokenPtr);
-    length = strlen(iterToken) + 1;
-
-    *value = (char *) OCMalloc(length);
-    VARIFY_POINTER_NULL(*value, result, exit)
-
-    strncpy(*value, iterToken + 1, length);
-    ((*value)[((length - 1) - 2)]) = '\0';
-
-exit:
-    if (result != OC_STACK_OK)
+    //printf("\t%s\n", acitonRequest);
+    if (acitonRequest != NULL)
     {
-        OCFREE(*key)
-        OCFREE(*value)
-    }
+        iterToken = (char *) strtok_r(acitonRequest, DESC_DELIMITER, &iterTokenPtr);
 
-    return result;
-}
-
-OCStackResult ExtractActionSetNameAndDelaytime(char *pChar, char **setName,
-        long int *pa)
-{
-    char *token, *tokenPtr;
-    OCStackResult result = OC_STACK_OK;
-
-    token = (char*) strtok_r(pChar, ACTION_DELIMITER, &tokenPtr);
-    *setName = (char *) OCMalloc(strlen(token) + 1);
-    VARIFY_POINTER_NULL(*setName, result, exit)
-    VARIFY_PARAM_NULL(token, result, exit)
-    strncpy(*setName, token, strlen(token) + 1);
-
-    token = strtok_r(NULL, ACTION_DELIMITER, &tokenPtr);
-    VARIFY_POINTER_NULL(pa, result, exit)
-    VARIFY_PARAM_NULL(token, result, exit)
-    *pa = atoi(token);
-
-    return OC_STACK_OK;
-
-exit:
-    OCFREE(*setName);
-    return result;
-}
-
-OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
-{
-    OCStackResult result = OC_STACK_OK;
-
-    char *iterToken = NULL, *iterTokenPtr = NULL;
-    char *descIterToken = NULL, *descIterTokenPtr = NULL;
-    char *attrIterToken = NULL, *attrIterTokenPtr = NULL;
-    char *desc = NULL, *attr = NULL;
-    char *key = NULL, *value = NULL;
-
-    OCAction *action = NULL;
-    OCCapability *capa = NULL;
-
-    OC_LOG(INFO, TAG, PCF("Build ActionSet Instance."));
-
-    *set = (OCActionSet*) OCMalloc(sizeof(OCActionSet));
-    VARIFY_POINTER_NULL(*set, result, exit)
-
-    iterToken = (char *) strtok_r(actiondesc, ACTION_DELIMITER, &iterTokenPtr);
-
-    // ActionSet Name
-    memset(*set, 0, sizeof(OCActionSet));
-    (*set)->actionsetName = (char *) OCMalloc(strlen(iterToken) + 1);
-    VARIFY_POINTER_NULL((*set)->actionsetName, result, exit)
-    VARIFY_PARAM_NULL(iterToken, result, exit)
-    strncpy((*set)->actionsetName, iterToken, strlen(iterToken) + 1);
-
-    // Time info. for Scheduled/Recursive Group action.
-    // d is meant Day of the week.
-    // T is meant ActionType.
-    // yyyy-mm-dd hh:mm:ss d
-    iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
-    VARIFY_PARAM_NULL(iterToken, result, exit)
-#ifndef WITH_ARDUINO
-    sscanf(iterToken, "%ld %d", &(*set)->timesteps, &(*set)->type);
-#endif
-
-    OC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
-
-    iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
-    while (iterToken)
-    {
-        desc = (char *) OCMalloc(strlen(iterToken) + 1);
-        VARIFY_POINTER_NULL(desc, result, exit)
-        VARIFY_PARAM_NULL(desc, result, exit)
-        strncpy(desc, iterToken, strlen(iterToken) + 1);
-        descIterToken = (char *) strtok_r(desc, ATTR_DELIMITER,
-                &descIterTokenPtr);
-        while (descIterToken)
+        while (iterToken != NULL)
         {
-            attr = (char *) OCMalloc(strlen(descIterToken) + 1);
-            VARIFY_POINTER_NULL(attr, result, exit)
-            VARIFY_PARAM_NULL(descIterToken, result, exit)
-            strncpy(attr, descIterToken, strlen(descIterToken) + 1);
+            if (strcmp(iterToken, "ActionSet") == 0)
+            { // if iterToken is ActionSet, will be created and added a new action set.
 
-            attrIterToken = (char *) strtok_r(attr, ATTR_ASSIGN,
-                    &attrIterTokenPtr);
-            key = (char *) OCMalloc(strlen(attrIterToken) + 1);
-            VARIFY_POINTER_NULL(key, result, exit)
-            VARIFY_PARAM_NULL(attrIterToken, result, exit)
-            strncpy(key, attrIterToken, strlen(attrIterToken) + 1);
+                *method = (char *) OCMalloc(strlen(iterToken) + 1);
+                strncpy(*method, iterToken, strlen(iterToken) + 1);
 
-            attrIterToken = (char *) strtok_r(NULL, ATTR_ASSIGN,
-                    &attrIterTokenPtr);
-            value = (char *) OCMalloc(strlen(attrIterToken) + 1);
-            VARIFY_POINTER_NULL(value, result, exit)
-            VARIFY_PARAM_NULL(attrIterToken, result, exit)
-            strncpy(value, attrIterToken, strlen(attrIterToken) + 1);
+                //GetActionName(iterToken, &actionsetName);
+                // printf("%s\n", iterToken, &iterTokenPtr);
+                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr); // it is mean ':'.
+                // printf("%s\n", iterToken);
+                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr); // it is body of action description.
+                // printf("%s\n", iterToken);
 
-            if (strcmp(key, "uri") == 0)
-            {
-                OC_LOG(INFO, TAG, PCF("Build OCAction Instance."));
+                // printf("DESC :: %s\n", iterToken);
+                description = (char *) OCMalloc(strlen(iterToken) + 1);
+                strncpy(description, iterToken, strlen(iterToken) + 1);
+                // printf("DESC Copied :: %s\n", description);
 
-                action = (OCAction*) OCMalloc(sizeof(OCAction));
-                VARIFY_POINTER_NULL(action, result, exit)
-                memset(action, 0, sizeof(OCAction));
-                action->resourceUri = (char *) OCMalloc(strlen(value) + 1);
-                VARIFY_POINTER_NULL(action->resourceUri, result, exit)
-                VARIFY_PARAM_NULL(value, result, exit)
-                strncpy(action->resourceUri, value, strlen(value) + 1);
-            }
-            else
-            {
-                if ((key != NULL) && (value != NULL))
+                // Find the action name from description.
+                iterDescPtr = NULL;
+                iterToken = (char *) strtok_r(description, ACTION_DELIMITER, &iterDescPtr);
+                //while(iterToken != NULL)
+                if (iterToken != NULL)
                 {
-                    OC_LOG(INFO, TAG, PCF("Build OCCapability Instance."));
+                    if (*actionsetName != NULL)
+                    {
+                        // printf("ERROR :: ACTIONSET NAME as ActionSet(%s)\n", iterToken);
+                        return OC_STACK_ERROR; // ERROR OCCURED.
+                    }
+                    else
+                    {
+                        //  Actionset name.
+                        // printf("ACTION SET NAME :: %s\n", iterToken);
+                        *actionsetName = (char *) OCMalloc(strlen(iterToken) + 1);
 
-                    capa = (OCCapability*) OCMalloc(sizeof(OCCapability));
-                    VARIFY_POINTER_NULL(capa, result, exit)
-                    memset(capa, 0, sizeof(OCCapability));
+                        strncpy(*actionsetName, iterToken, strlen(iterToken) + 1);
+                        // printf("ACTION SET NAME :: %s\n", *actionsetName);
+                        // break;
+                    }
 
-                    capa->capability = (char *) OCMalloc(strlen(key) + 1);
-                    VARIFY_POINTER_NULL(capa->capability, result, exit)
-                    VARIFY_PARAM_NULL(key, result, exit)
-                    strncpy(capa->capability, key, strlen(key) + 1);
-
-                    capa->status = (char *) OCMalloc(strlen(value) + 1);
-                    VARIFY_POINTER_NULL(capa->status, result, exit)
-                    VARIFY_PARAM_NULL(value, result, exit)
-                    strncpy(capa->status, value, strlen(value) + 1);
-
-                    VARIFY_POINTER_NULL(action, result, exit)
-
-                    AddCapability(&action->head, capa);
+                    iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterDescPtr);
                 }
+                else
+                {
+                    return OC_STACK_ERROR;
+
+                } // end Action Set Name.
+
+                // New ActionSet Add to OCResource's ActionSet list.
+                // 1. Allocate a new pointer for actionset.
+                actionset = (OCActionSet*) OCMalloc(sizeof(OCActionSet));
+                // 2. Initiate actionset.
+                memset(actionset, 0, sizeof(OCActionSet));
+                actionset->actionsetName = (char *) OCMalloc(strlen(*actionsetName) + 1);
+                strncpy(actionset->actionsetName, *actionsetName, strlen(*actionsetName) + 1);
+                // printf("ACTION SET NAME :: %s\n", actionset->actionsetName);
+
+                while (iterToken != NULL)
+                {
+                    action = (OCAction *) OCMalloc(sizeof(OCAction));
+                    memset(action, 0, sizeof(OCAction));
+
+                    // printf("ATTR Copied :: %s\n", iterToken);
+                    attributes = (char *) OCMalloc(strlen(iterToken) + 1);
+                    strncpy(attributes, iterToken, strlen(iterToken) + 1);
+                    // printf("ATTR Copied :: %s\n", attributes);
+
+                    iterToken = (char *) strtok_r(attributes, ATTR_DELIMITER, &iterAttrbutesPtr);
+                    while (iterToken != NULL)
+                    {
+                        attr = (char *) OCMalloc(strlen(iterToken) + 1);
+                        strncpy(attr, iterToken, strlen(iterToken) + 1);
+
+                        iterToken = (char *) strtok_r(attr, "=", &iterAttrPtr);
+                        while (iterToken != NULL)
+                        {
+                            // Find the URI from description.
+                            if (strcmp(iterToken, "uri") == 0)
+                            {
+                                iterToken = (char *) strtok_r(NULL, "=", &iterAttrPtr);
+                                //printf("uri :: %s\n", iterToken);
+                                action->resourceUri = (char *) OCMalloc(strlen(iterToken) + 1);
+                                strncpy(action->resourceUri, iterToken, strlen(iterToken) + 1);
+                            }
+                            else
+                            {
+                                OCCapability* capa = (OCCapability*) OCMalloc(sizeof(OCCapability));
+                                memset(capa, 0, sizeof(OCCapability));
+                                //printf("%s :: ", iterToken);
+                                capa->capability = (char *) OCMalloc(strlen(iterToken) + 1);
+                                strncpy(capa->capability, iterToken, strlen(iterToken) + 1);
+                                iterToken = (char *) strtok_r(NULL, "=", &iterAttrPtr);
+                                //printf("%s\n", iterToken);
+                                capa->status = (char *) OCMalloc(strlen(iterToken) + 1);
+                                strncpy(capa->status, iterToken, strlen(iterToken) + 1);
+
+                                AddCapability(&action->head, capa);
+                            }
+
+                            iterToken = (char *) strtok_r(NULL, "=", &iterAttrPtr);
+                        }
+
+                        iterToken = (char *) strtok_r(NULL, ATTR_DELIMITER, &iterAttrbutesPtr);
+                    } // End of Action
+
+                    AddAction(&actionset->head, action);
+
+                    iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterDescPtr);
+                }
+
+                // 3. Add the pointer OCResource's ActionSet list.
+                AddActionSet(&(*resource)->actionsetHead, actionset);
+                return OC_STACK_OK;
+            }
+            else if (strcmp(iterToken, "DoAction") == 0 || strcmp(iterToken, "DelActionSet") == 0
+                    || strcmp(iterToken, "GetActionSet") == 0)
+            {
+                *method = (char *) OCMalloc(strlen(iterToken) + 1);
+                strncpy(*method, iterToken, strlen(iterToken) + 1);
+
+                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr); // it is mean ':'.
+                // printf("%s\n", iterToken);
+                iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr); // it is body of action description.
+                // printf("%s\n", iterToken);
+
+                description = (char *) OCMalloc(strlen(iterToken) + 1);
+                strncpy(description, iterToken, strlen(iterToken) + 1);
+
+                // Find the action name from description.
+                iterDescPtr = NULL;
+                iterToken = (char *) strtok_r(description, ACTION_DELIMITER, &iterDescPtr);
+                if (iterToken != NULL)
+                {
+                    if (*actionsetName != NULL)
+                    {
+                        // printf("ERROR :: ACTIONSET NAME as ActionSet(%s)\n", iterToken);
+                        return OC_STACK_ERROR; // ERROR OCCURED.
+                    }
+                    else
+                    {
+                        //  Actionset name.
+                        // printf("ACTION SET NAME :: %s\n", iterToken);
+                        *actionsetName = (char *) OCMalloc(strlen(iterToken) + 1);
+
+                        strncpy(*actionsetName, iterToken, strlen(iterToken) + 1);
+                        // printf("ACTION SET NAME :: %s\n", *actionsetName);
+                    }
+
+                    iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterDescPtr);
+                    return OC_STACK_OK;
+                }
+                else
+                {
+                    return OC_STACK_ERROR;
+
+                } // end Action Set Name.
+                break;
             }
 
-            OCFREE(key)
-            OCFREE(value)
-            OCFREE(attr)
-
-            descIterToken = (char *) strtok_r(NULL, ATTR_DELIMITER,
-                    &descIterTokenPtr);
+            iterToken = (char *) strtok_r(NULL, DESC_DELIMITER, &iterTokenPtr);
         }
-
-        AddAction(&(*set)->head, action);
-        iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
-        OCFREE(desc);
     }
 
-    return OC_STACK_OK;
-exit:
-    OCFREE(attr)
-    OCFREE(desc)
-    OCFREE(capa)
-    OCFREE(action)
-    OCFREE(*set)
-    OCFREE(key)
-    OCFREE(value)
-    OCFREE(attr)
-
-    return result;
+    return OC_STACK_ERROR;
 }
 
-OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
+OCStackResult GetStringFromActionSet(OCActionSet* actionset, char** desc)
 {
-    char temp[1024] = { 0 };
+    char temp[1024] =
+    { 0 };
     int remaining = 1023;
 
+    // OCActionSet *as = resource->actionsetHead;
+    // while(as != NULL)
+    // {
+    printf("\n\n\nAction Set Name :: %s\n", actionset->actionsetName);
     OCAction *action = actionset->head;
 
     if (remaining >= strlen(actionset->actionsetName) + 1)
     {
         strcat(temp, actionset->actionsetName);
         remaining -= strlen(actionset->actionsetName);
-        strcat(temp, ACTION_DELIMITER);
+        strcat(temp, "*");
         remaining--;
     }
     else
@@ -737,6 +524,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
 
     while (action != NULL)
     {
+        printf("\tURI :: %s\n", action->resourceUri);
         strcat(temp, "uri=");
         remaining -= strlen("uri=");
         strcat(temp, action->resourceUri);
@@ -747,6 +535,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         OCCapability *capas = action->head;
         while (capas != NULL)
         {
+            printf("\t\t%s = %s\n", capas->capability, capas->status);
             strcat(temp, capas->capability);
             remaining -= strlen(capas->capability);
             strcat(temp, "=");
@@ -764,13 +553,16 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         action = action->next;
         if (action != NULL)
         {
-            strcat(temp, ACTION_DELIMITER);
+            strcat(temp, "*");
             remaining--;
         }
     }
+    //     as = as->next;
+    // }
 
     *desc = (char *) OCMalloc(1024 - remaining);
     strcpy(*desc, temp);
+    // printf("\t\tPlain Text = %s(%i)\n", *desc, 1024 - remaining);
 
     return OC_STACK_OK;
 }
@@ -778,7 +570,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
 OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         OCClientResponse* clientResponse)
 {
-    OC_LOG(INFO, TAG, PCF("Entering BuildActionJSON"));
+    printf("\n\n\tcallback is called\n\n");
 
     ClientRequstInfo *info = GetClientRequestInfo(clientRequstList, handle);
 
@@ -788,13 +580,12 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
 
         unsigned char *responseJson;
         responseJson = (unsigned char *) OCMalloc(
-                (unsigned int) (strlen((char *) clientResponse->resJSONPayload)
-                        + 1));
+                (unsigned int) (strlen((char *) clientResponse->resJSONPayload) + 1));
 
         // We need the body of response.
         // Copy the body from the response
-        strcpy((char *) responseJson,
-                ((char *) clientResponse->resJSONPayload + OC_JSON_PREFIX_LEN));
+        strcpy((char *) responseJson, ((char *) clientResponse->resJSONPayload
+                + OC_JSON_PREFIX_LEN));
         idx = strlen((char *) responseJson) - OC_JSON_SUFFIX_LEN;
         // And insert NULL at the end of body.
         (responseJson[idx]) = 0;
@@ -810,19 +601,22 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         OCDoResponse(&response);
 
         RemoveClientRequestInfo(&clientRequstList, info);
-        OCFREE(info)
-        OCFREE(responseJson)
+        OCFree(responseJson);
     }
+
+    // g_AggregateResponseHandle
 
     return OC_STACK_KEEP_TRANSACTION;
 }
 
 void ActionSetCD(void *context)
 {
+    // printf("\n\t\tCD is called\n");
+
+    // free( context );
 }
 
-OCStackResult BuildActionJSON(OCAction* action, unsigned char* bufferPtr,
-        uint16_t *remaining)
+OCStackResult BuildActionJSON(OCAction* action, unsigned char* bufferPtr, uint16_t *remaining)
 {
     OCStackResult ret = OC_STACK_ERROR;
     cJSON *json;
@@ -839,8 +633,7 @@ OCStackResult BuildActionJSON(OCAction* action, unsigned char* bufferPtr,
     OCCapability* pointerCapa = action->head;
     while (pointerCapa)
     {
-        cJSON_AddStringToObject(body, pointerCapa->capability,
-                pointerCapa->status);
+        cJSON_AddStringToObject(body, pointerCapa->capability, pointerCapa->status);
         pointerCapa = pointerCapa->next;
     }
 
@@ -863,158 +656,47 @@ OCStackResult BuildActionJSON(OCAction* action, unsigned char* bufferPtr,
 
 unsigned int GetNumOfTargetResource(OCAction *actionset)
 {
-    int numOfResource = 0;
+    int numOfREsource = 0;
 
     OCAction *pointerAction = actionset;
 
     while (pointerAction != NULL)
     {
-        numOfResource++;
+        numOfREsource++;
         pointerAction = pointerAction->next;
     }
 
-    return numOfResource;
+    return numOfREsource;
 }
 
-OCStackResult SendAction(OCDoHandle *handle, const char *targetUri,
-        const unsigned char *action)
+OCStackResult SendAction(OCDoHandle *handle, const char *targetUri, const unsigned char *action)
 {
-    OCCallbackData cbdata = { 0 };
+    OCCallbackData cbdata =
+    { 0 };
     cbdata.cb = &ActionSetCB;
     cbdata.cd = &ActionSetCD;
     cbdata.context = (void *) 0x99;
 
     return OCDoResource(handle, OC_REST_PUT, targetUri,
-    NULL, (char *) action, OC_NA_QOS, &cbdata, NULL, 0);
+    //temp->rsrcType->resourcetypename,
+            NULL, (char *) action, OC_NA_QOS, &cbdata, NULL, 0);
 }
 
-OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
-        OCServerRequest* requestHandle)
-{
-    OCStackResult result = OC_STACK_ERROR;
-    OCAction *pointerAction = actionset->head;
-
-    while (pointerAction != NULL)
-    {
-        unsigned char actionDesc[MAX_RESPONSE_LENGTH] = { 0 };
-        unsigned char* actionDescPtr = actionDesc;
-        uint16_t remaining = MAX_RESPONSE_LENGTH;
-
-        strncpy((char *) actionDescPtr, (const char *) OC_JSON_PREFIX,
-                strlen((const char *) OC_JSON_PREFIX) + 1);
-        BuildActionJSON(pointerAction, actionDescPtr, &remaining);
-        strncat((char *) actionDescPtr, (const char *) OC_JSON_SUFFIX,
-                strlen((const char *) OC_JSON_SUFFIX));
-
-        ClientRequstInfo *info = (ClientRequstInfo *) OCMalloc(
-                sizeof(ClientRequstInfo));
-        memset(info, 0, sizeof(ClientRequstInfo));
-
-        info->collResource = resource;
-        info->ehRequest = requestHandle;
-
-        result = SendAction(&info->required, pointerAction->resourceUri,
-                actionDescPtr);
-        if (result != OC_STACK_OK)
-        {
-            return result;
-        }
-
-        AddClientRequestInfo(&clientRequstList, info);
-
-        pointerAction = pointerAction->next;
-    }
-
-    return result;
-}
-
-void DoScheduledGroupAction()
-{
-    OC_LOG(INFO, TAG, PCF("DoScheduledGroupAction Entering..."));
-    ScheduledResourceInfo* info = GetScheduledResource(scheduleResourceList);
-
-    if (info == NULL)
-    {
-        OC_LOG(INFO, TAG, PCF("Target resource is NULL"));
-        goto exit;
-    }
-    else if (info->resource == NULL)
-    {
-        OC_LOG(INFO, TAG, PCF("Target resource is NULL"));
-        goto exit;
-    }
-    else if (info->actionset == NULL)
-    {
-        OC_LOG(INFO, TAG, PCF("Target ActionSet is NULL"));
-        goto exit;
-    }
-    else if (info->ehRequest == NULL)
-    {
-        OC_LOG(INFO, TAG, PCF("Target ActionSet is NULL"));
-        goto exit;
-    }
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
-    DoAction(info->resource, info->actionset, info->ehRequest);
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
-
-    if (info->actionset->type == RECURSIVE)
-    {
-        ScheduledResourceInfo *schedule;
-        schedule = (ScheduledResourceInfo *) OCMalloc(
-                sizeof(ScheduledResourceInfo));
-
-        if (schedule)
-        {
-            OC_LOG(INFO, TAG, PCF("Building New Call Info."));
-            memset(schedule, 0, sizeof(ScheduledResourceInfo));
-
-            if (info->actionset->timesteps > 0)
-            {
-#ifndef WITH_ARDUINO
-                pthread_mutex_lock(&lock);
-#endif
-                schedule->resource = info->resource;
-                schedule->actionset = info->actionset;
-                schedule->ehRequest = info->ehRequest;
-
-                schedule->time = registerTimer(info->actionset->timesteps,
-                        &schedule->timer_id,
-                        &DoScheduledGroupAction);
-
-                OC_LOG(INFO, TAG, PCF("Reregisteration."));
-#ifndef WITH_ARDUINO
-                pthread_mutex_unlock(&lock);
-#endif
-                AddScheduledResource(&scheduleResourceList, schedule);
-            }
-        }
-    }
-
-    RemoveScheduledResource(&scheduleResourceList, info);
-
-    exit:
-
-    return;
-}
-
-OCStackResult BuildCollectionGroupActionJSONResponse(
-        OCMethod method/*OCEntityHandlerFlag flag*/, OCResource *resource,
-        OCEntityHandlerRequest *ehRequest)
+OCStackResult BuildCollectionGroupActionJSONResponse(OCMethod method/*OCEntityHandlerFlag flag*/,
+        OCResource *resource, OCEntityHandlerRequest *ehRequest)
 {
     OCStackResult stackRet = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Group Action is requested."));
     // if (stackRet == OC_STACK_OK)
     {
+
         char *doWhat = NULL;
-        char *details = NULL;
+        char *actionName = NULL;
 
         size_t bufferLength = 0;
-        unsigned char buffer[MAX_RESPONSE_LENGTH] = { 0 };
+        unsigned char buffer[MAX_RESPONSE_LENGTH] =
+        { 0 };
         unsigned char *bufferPtr = NULL;
 
         bufferPtr = buffer;
@@ -1022,9 +704,6 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
         OCResource * collResource = (OCResource *) ehRequest->resource;
 
         char *jsonResponse;
-
-        ExtractKeyValueFromRequest((char *) ehRequest->reqJSONPayload, &doWhat,
-                &details);
 
         cJSON *json;
         cJSON *format;
@@ -1037,36 +716,12 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
 
             OC_LOG(INFO, TAG, PCF("Group Action[PUT]."));
 
-            if (strcmp(doWhat, "ActionSet") == 0)
-            {
-                OCActionSet *actionSet = NULL;
-                stackRet = BuildActionSetFromString(&actionSet, details);
+            unsigned char *actionPtr = (unsigned char *) ehRequest->reqJSONPayload;
+            GetActionSetFromString(&resource, actionPtr, &doWhat, &actionName);
 
-                if(stackRet == OC_STACK_OK)
-                {
-                    if (actionSet != NULL)
-                    {
-                        stackRet = AddActionSet(&resource->actionsetHead,
-                                actionSet);
-                        if (stackRet == OC_STACK_ERROR)
-                        {
-                            if(actionSet != NULL)
-                            {
-                                DeleteActionSet( &actionSet );
-                            }
-                            OC_LOG(INFO, TAG, PCF("Duplicated ActionSet "));
-                        }
-                    }
-                }
-                else
-                {
-                    stackRet = OC_STACK_ERROR;
-                }
-
-            }
-            else if (strcmp(doWhat, "DelActionSet") == 0)
+            if (strcmp(doWhat, "DelActionSet") == 0)
             {
-                if (FindAndDeleteActionSet(&resource, details) == OC_STACK_OK)
+                if (FindAndDeleteActionSet(&resource, actionName) == OC_STACK_OK)
                 {
                     stackRet = OC_STACK_OK;
                 }
@@ -1084,154 +739,96 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
             bufferLength = strlen((const char *) buffer);
             if (bufferLength > 0)
             {
-                OCEntityHandlerResponse response = { 0 };
-                if(stackRet == OC_STACK_OK)
-                    response.ehResult = OC_EH_OK;
-                else
-                    response.ehResult = OC_EH_ERROR;
+                OCEntityHandlerResponse response =
+                { 0 };
+                response.ehResult = OC_EH_OK;
                 response.payload = buffer;
                 response.payloadSize = bufferLength + 1;
                 response.persistentBufferFlag = 0;
-                response.requestHandle =
-                        (OCRequestHandle) ehRequest->requestHandle;
+                response.requestHandle = (OCRequestHandle) ehRequest->requestHandle;
                 response.resourceHandle = (OCResourceHandle) collResource;
                 stackRet = OCDoResponse(&response);
             }
+
+            stackRet = OC_STACK_OK;
         }
 
         if (method == OC_REST_POST)
         {
+            OC_LOG(INFO, TAG, PCF("Group Action[POST]."));
+
             OCActionSet *actionset = NULL;
+            unsigned char *actionPtr = (unsigned char *) ehRequest->reqJSONPayload;
+
+            GetActionSetFromString(&resource, actionPtr, &doWhat, &actionName);
 
             json = cJSON_CreateObject();
             cJSON_AddStringToObject(json, "href", resource->uri);
 
-            if ((strcmp(doWhat, "DoAction") == 0)
-                    || (strcmp(doWhat, "DoScheduledAction") == 0))
+            if (strcmp(doWhat, "DoAction") == 0)
             {
-                char *pActionsetName = NULL;
-                long int delay = -1;
-
-                if (strcmp(doWhat, "DoScheduledAction") == 0)
+                if (GetActionSet(actionName, resource->actionsetHead, &actionset) != OC_STACK_OK)
                 {
-                    stackRet = ExtractActionSetNameAndDelaytime(details,
-                            &pActionsetName, &delay);
-
-                    OCFREE(details)
-                    details = pActionsetName;
-                }
-                else
-                {
-                    stackRet = OC_STACK_OK;
-                }
-
-                if (stackRet == OC_STACK_OK)
-                {
-                    if (GetActionSet(details, resource->actionsetHead,
-                            &actionset) != OC_STACK_OK)
-                    {
-                        OC_LOG(INFO, TAG, PCF("ERROR"));
-                        stackRet = OC_STACK_ERROR;
-                    }
-
-                    if (actionset == NULL)
-                    {
-                        OC_LOG(INFO, TAG, PCF("Cannot Find ActionSet"));
-                        stackRet = OC_STACK_ERROR;
-                    }
-                    else
-                    {
-                        OC_LOG(INFO, TAG, PCF("Group Action[POST]."));
-                        if (actionset->type == NONE)
-                        {
-                            OC_LOG_V(INFO, TAG, "Execute ActionSet : %s",
-                                    actionset->actionsetName);
-                            unsigned int num = GetNumOfTargetResource(
-                                    actionset->head);
-
-                            ((OCServerRequest *) ehRequest->requestHandle)->ehResponseHandler =
-                                    HandleAggregateResponse;
-                            ((OCServerRequest *) ehRequest->requestHandle)->numResponses =
-                                    num + 1;
-
-                            DoAction(resource, actionset,
-                                    (OCServerRequest*) ehRequest->requestHandle);
-                            stackRet = OC_STACK_OK;
-                        }
-                        else
-                        {
-                            OC_LOG_V(INFO, TAG, "Execute Scheduled ActionSet : %s",
-                                    actionset->actionsetName);
-
-                            delay =
-                                    (delay == -1 ? actionset->timesteps : delay);
-
-                            ScheduledResourceInfo *schedule;
-                            schedule = (ScheduledResourceInfo *) OCMalloc(
-                                    sizeof(ScheduledResourceInfo));
-
-                            if (schedule)
-                            {
-                                OC_LOG(INFO, TAG, PCF("Building New Call Info."));
-                                memset(schedule, 0,
-                                        sizeof(ScheduledResourceInfo));
-
-                                schedule->resource = resource;
-                                schedule->actionset = actionset;
-                                schedule->ehRequest =
-                                        (OCServerRequest*) ehRequest->requestHandle;
-
-                                if (delay > 0)
-                                {
-                                    OC_LOG_V(INFO, TAG, "delay_time is %lf seconds.",
-                                            actionset->timesteps);
-
-                                    schedule->time = registerTimer(delay,
-                                            &schedule->timer_id,
-                                            &DoScheduledGroupAction);
-
-                                    AddScheduledResource(&scheduleResourceList,
-                                            schedule);
-                                    stackRet = OC_STACK_OK;
-                                }
-                                else
-                                {
-                                    stackRet = OC_STACK_ERROR;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else if (strcmp(doWhat, "CancelAction") == 0)
-            {
-                ScheduledResourceInfo *info =
-                        GetScheduledResourceByActionSetName(scheduleResourceList, details);
-
-                if(info != NULL)
-                {
-                    unregisterTimer(info->timer_id);
-
-                    RemoveScheduledResource(&scheduleResourceList, info);
-                    stackRet = OC_STACK_OK;
-                }
-                else
-                {
+                    OC_LOG(INFO, TAG, PCF("ERROR"));
                     stackRet = OC_STACK_ERROR;
                 }
-            }
 
+                if (actionset == NULL)
+                {
+                    OC_LOG(INFO, TAG, PCF("ERROR"));
+                    stackRet = OC_STACK_ERROR;
+                }
+                else
+                {
+
+                    OCAction *pointerAction = actionset->head;
+
+                    unsigned int num = GetNumOfTargetResource(pointerAction);
+
+                    ((OCServerRequest *) ehRequest->requestHandle)->ehResponseHandler =
+                            HandleAggregateResponse;
+                    ((OCServerRequest *) ehRequest->requestHandle)->numResponses = num + 1;
+
+//                    printf("ActionSet Name :: %s\n", actionset->actionsetName);
+                    while (pointerAction != NULL)
+                    {
+                        unsigned char actionDesc[MAX_RESPONSE_LENGTH] = { 0 };
+                        unsigned char* actionDescPtr = actionDesc;
+                        uint16_t remaining = MAX_RESPONSE_LENGTH;
+
+                        strcpy((char *) actionDescPtr, (const char *) OC_JSON_PREFIX);
+                        BuildActionJSON(pointerAction, actionDescPtr, &remaining);
+                        strcat((char *) actionDescPtr, (const char *) OC_JSON_SUFFIX);
+
+                        ClientRequstInfo *info = (ClientRequstInfo *) OCMalloc(
+                                sizeof(ClientRequstInfo));
+                        memset(info, 0, sizeof(ClientRequstInfo));
+
+                        info->collResource = resource;
+                        info->ehRequest = (OCServerRequest *) ehRequest->requestHandle;
+
+                        SendAction(&info->required, pointerAction->resourceUri, actionDescPtr);
+
+                        AddClientRequestInfo(&clientRequstList, info);
+
+
+                        pointerAction = pointerAction->next;
+                    }
+
+
+                    stackRet = OC_STACK_OK;
+                }
+            }
             else if (strcmp(doWhat, "GetActionSet") == 0)
             {
                 char *plainText = NULL;
                 OCActionSet *actionset = NULL;
 
-                cJSON_AddItemToObject(json, "rep", format =
-                        cJSON_CreateObject());
-                GetActionSet(details, resource->actionsetHead, &actionset);
+                cJSON_AddItemToObject(json, "rep", format = cJSON_CreateObject());
+                GetActionSet(actionName, resource->actionsetHead, &actionset);
                 if (actionset != NULL)
                 {
-                    BuildStringFromActionSet(actionset, &plainText);
+                    GetStringFromActionSet(actionset, &plainText);
 
                     if (plainText != NULL)
                     {
@@ -1242,7 +839,6 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
                 }
             }
 
-
             jsonResponse = cJSON_Print(json);
             cJSON_Delete(json);
 
@@ -1251,23 +847,17 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
             bufferLength = strlen((const char *) buffer);
             if (bufferLength > 0)
             {
-                OCEntityHandlerResponse response = { 0 };
-                if(stackRet == OC_STACK_OK)
-                    response.ehResult = OC_EH_OK;
-                else
-                    response.ehResult = OC_EH_ERROR;
+                OCEntityHandlerResponse response =
+                { 0 };
+                response.ehResult = OC_EH_OK;
                 response.payload = buffer;
                 response.payloadSize = bufferLength + 1;
                 response.persistentBufferFlag = 0;
-                response.requestHandle =
-                        (OCRequestHandle) ehRequest->requestHandle;
+                response.requestHandle = (OCRequestHandle) ehRequest->requestHandle;
                 response.resourceHandle = (OCResourceHandle) collResource;
                 stackRet = OCDoResponse(&response);
             }
         }
-
-        OCFREE(doWhat)
-        OCFREE(details)
     }
 
     return stackRet;

@@ -32,19 +32,8 @@
 
 using namespace OC;
 
-FactorySetResource::FactorySetResource()
-{
-    m_configurationUri = "/factorySet"; // URI of the resource
-    m_configurationTypes.clear();
-    m_configurationTypes.push_back("factorySet"); // resource type name.
-    m_configurationRep.setUri(m_configurationUri);
-    m_configurationRep.setResourceTypes(m_configurationTypes);
-}
-
-FactorySetResource::~FactorySetResource(){}
-
 /// This function internally calls registerResource API.
-void FactorySetResource::createResources(ResourceEntityHandler callback)
+void FactorySetCollection::createResources(ResourceEntityHandler callback)
 {
     using namespace OC::OCPlatform;
 
@@ -55,8 +44,8 @@ void FactorySetResource::createResources(ResourceEntityHandler callback)
     }
 
     // This will internally create and register the resource.
-    OCStackResult result = registerResource(m_configurationHandle, m_configurationUri,
-            m_configurationTypes[0], m_configurationInterfaces[0], callback,
+    OCStackResult result = registerResource(m_factorySetHandle, m_factorySetUri,
+            m_factorySetTypes[0], m_factorySetInterfaces[0], callback,
             OC_DISCOVERABLE | OC_OBSERVABLE);
 
     if (OC_STACK_OK != result)
@@ -64,49 +53,89 @@ void FactorySetResource::createResources(ResourceEntityHandler callback)
         std::cout << "Resource creation (configuration) was unsuccessful\n";
     }
 
-    std::cout << "FactorySet Resource is Created!\n";
+    result = bindInterfaceToResource(m_factorySetHandle, m_factorySetInterfaces[1]);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Binding TypeName to Resource was unsuccessful\n";
+    }
+
+    result = bindInterfaceToResource(m_factorySetHandle, m_factorySetInterfaces[2]);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Binding TypeName to Resource was unsuccessful\n";
+    }
+
+    result = registerResource(m_configurationCollectionHandle, m_configurationCollectionUri,
+            m_configurationCollectionTypes[0], m_configurationCollectionInterfaces[0], callback,
+            OC_DISCOVERABLE | OC_OBSERVABLE);
+
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Resource creation (installedLocation) was unsuccessful\n";
+    }
+
+    result = bindResource(m_factorySetHandle, m_configurationCollectionHandle);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "Binding installedLocation resource to room was unsuccessful\n";
+    }
+
+    defaultConfigurationCollection = new ConfigurationCollection(defaultConfigurationURIPrefix,
+            defaultConfigurationResourceTypePrefix);
+    //defaultConfigurationCollection->bindEntityHander(callback);
+    defaultConfigurationCollection->createResources(callback);
+
+    std::cout << "FactorySet Collection is Created!\n";
 }
 
-void FactorySetResource::setFactorySetRepresentation(OCRepresentation& rep)
+void FactorySetCollection::setFactorySetRepresentation(OCRepresentation& rep)
 {
     string value;
 
-    if (rep.getValue("loc", value))
+    if (rep.getValue("value", value))
     {
-        m_location = value;
-        std::cout << "\t\t\t\t" << "m_location: " << m_location << std::endl;
-    }
+        m_factorySetValue = value;
 
-    if (rep.getValue("st", value))
-    {
-        std::cout << "\t\t\t\t" << "SystemTime is not allowed to be written." << std::endl;
-    }
-
-    if (rep.getValue("c", value))
-    {
-        m_currency = value;
-        std::cout << "\t\t\t\t" << "m_currency: " << m_currency << std::endl;
-    }
-
-    if (rep.getValue("r", value))
-    {
-        m_region = value;
-        std::cout << "\t\t\t\t" << "m_region: " << m_region << std::endl;
+        std::cout << "\t\t\t\t" << "m_factorySetValue: " << m_factorySetValue << std::endl;
     }
 }
 
-OCRepresentation FactorySetResource::getFactorySetRepresentation()
+void FactorySetCollection::setConfigurationCollectionRepresentation(OCRepresentation& rep)
 {
-    m_configurationRep.setValue("loc", m_location);
-    m_configurationRep.setValue("st", m_systemTime);
-    m_configurationRep.setValue("c", m_currency);
-    m_configurationRep.setValue("r", m_region);
+    string value;
 
-    return m_configurationRep;
+    if (rep.getValue("link", value))
+    {
+        // NOT ALLOWED
+
+        std::cout << "\t\t\t\t" << "link: " << m_configurationCollectionLink << std::endl;
+    }
 }
 
-std::string FactorySetResource::getUri()
+OCRepresentation FactorySetCollection::getConfigurationCollectionRepresentation()
 {
-    return m_configurationUri;
+    m_configurationCollectionRep.setValue("link", m_configurationCollectionLink);
+
+    return m_configurationCollectionRep;
 }
 
+OCRepresentation FactorySetCollection::getFactorySetRepresentation()
+{
+    m_factorySetRep.clearChildren();
+
+    m_factorySetRep.addChild(getConfigurationCollectionRepresentation());
+
+    m_factorySetRep.setValue("value", m_factorySetValue);
+
+    return m_factorySetRep;
+}
+
+std::string FactorySetCollection::getFactorySetUri()
+{
+    return m_factorySetUri;
+}
+
+std::string FactorySetCollection::getConfigurationCollectionUri()
+{
+    return m_configurationCollectionUri;
+}

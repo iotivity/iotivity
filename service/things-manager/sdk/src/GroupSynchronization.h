@@ -18,12 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * GroupSynchronization.
- */
+/// @file   GroupSynchronization.h
+
+/// @brief  This file contains the declaration of classes and
+///its members related to GroupSynchronization.
 
 #ifndef __OC_GROUPSYNCHRONIZATION__
 #define __OC_GROUPSYNCHRONIZATION__
@@ -68,7 +66,6 @@ private:
     std::shared_ptr< OCResourceRequest > resourceRequest; // this is used for slow response
 
     static GroupSynchronization* groupSyncnstance;
-    static bool bIsFinding;
 
     GroupSynchronization()
     {
@@ -110,9 +107,6 @@ public:
             OCResourceHandle resourceHandle);
     OCStackResult leaveGroup(std::string collectionResourceType,
             OCResourceHandle resourceHandle);
-    OCStackResult leaveGroup(const std::shared_ptr< OCResource > resource,
-                std::string collectionResourceType,
-                OCResourceHandle resourceHandle);
     void deleteGroup(std::string collectionResourceType);
 
     std::map< std::string, OCResourceHandle > getGroupList();

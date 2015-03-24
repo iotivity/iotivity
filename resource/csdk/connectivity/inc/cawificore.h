@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,11 +19,9 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the APIs for Wi-Fi communications.
+ * @file cawificore.h
+ * @brief This file contains the APIs for Wi-Fi communications.
  */
-
 #ifndef __CA_WIFICORE_H_
 #define __CA_WIFICORE_H_
 

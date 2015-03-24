@@ -18,12 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * OCPlatform.
- */
+/// @file OCPlatform.h
+
+/// @brief  This file contains the declaration of classes and its members related to
+///         OCPlatform.
 
 #ifndef __OCPLATFORM_H
 #define __OCPLATFORM_H
@@ -52,7 +50,8 @@ namespace OC
         /**
         * API for notifying base that resource's attributes have changed.
         *
-        * @param resourceHandle resource handle of the resource
+        * @param OCResourceHandle resource handle of the resource
+        * @param QualityOfService the quality of communication
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: This API is for server side only.
@@ -60,27 +59,17 @@ namespace OC
         * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult notifyAllObservers(OCResourceHandle resourceHandle);
-        /**
-        * API for notifying base that resource's attributes have changed.
-        *
-        * @param resourceHandle resource handle of the resource
-        * @param QoS the quality of communication
-        *
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: This API is for server side only.
-        * NOTE: OCResourceHandle is defined in ocstack.h.
-        * NOTE: OCStackResult is defined in ocstack.h.
-        */
         OCStackResult notifyAllObservers(OCResourceHandle resourceHandle, QualityOfService QoS);
 
         /**
         * API for notifying only specific clients that resource's attributes have changed.
         *
-        * @param resourceHandle resource handle of the resource
+        * @param OCResourceHandle resource handle of the resource
         * @param observationIds std vector of observationIds. These set of ids are ones which
         * which will be notified upon resource change.
         * @param responsePtr OCResourceResponse pointer used by app to fill the response for this
         * resource change.
+        * @param QualityOfService the quality of communication
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         *
@@ -92,22 +81,6 @@ namespace OC
                     OCResourceHandle resourceHandle,
                     ObservationIds& observationIds,
                     const std::shared_ptr<OCResourceResponse> responsePtr);
-        /**
-        * API for notifying only specific clients that resource's attributes have changed.
-        *
-        * @param resourceHandle resource handle of the resource
-        * @param observationIds std vector of observationIds. These set of ids are ones which
-        * which will be notified upon resource change.
-        * @param responsePtr OCResourceResponse pointer used by app to fill the response for this
-        * resource change.
-        * @param QoS the quality of communication
-        *
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        *
-        * NOTE: This API is for server side only.
-        * NOTE: OCResourceHandle is defined in ocstack.h.
-        * NOTE: OCStackResult is defined in ocstack.h.
-        */
         OCStackResult notifyListOfObservers(
                     OCResourceHandle resourceHandle,
                     ObservationIds& observationIds,
@@ -116,60 +89,33 @@ namespace OC
 
         /**
         * API for Service and Resource Discovery.
+        * NOTE: This API applies to client side only.
         *
-        * @note This API applies to client side only.
-        * @note First parameter 'host' currently represents an IP address. This will change in
-        * future and will refer to endpoint interface so that we can refer to other transports such
-        * as BTH etc.
-        * @note OCStackResult is defined in ocstack.h.
-        *
-        * @param host Host IP Address of a service to direct resource discovery query. If null or
+        * @param host - Host IP Address of a service to direct resource discovery query. If null or
         *        empty, performs multicast resource discovery query
-        * @param resourceURI name of the resource. If null or empty, performs search for all
+        * @param resourceURI - name of the resource. If null or empty, performs search for all
         *       resource names
-        * @param resourceHandler Handles callbacks, success states and failure states.
+        * @param handler - Handles callbacks, success states and failure states.
         *
         *        Four modes of discovery defined as follows:
-        *        (NULL/Empty, NULL/Empty)  Performs ALL service discovery AND ALL resource
+        *        (NULL/Empty, NULL/Empty) - Performs ALL service discovery AND ALL resource
         *           discovery.
-        *        (NULL/Empty, Not Empty)   Performs query for a filtered/scoped/particular
+        *        (NULL/Empty, Not Empty) - Performs query for a filtered/scoped/particular
         *                                   resource(s) from ALL services.
-        *        (Not Empty, NULL/Empty)   Performs ALL resource discovery on a particular service.
-        *        (Not Empty, Not Empty)    Performs query for a filtered/scoped/particular
-        *                                  resource(s) from a particular service.
+        *        (Not Empty, NULL/Empty) - Performs ALL resource discovery on a particular service.
+        *        (Not Empty, Not Empty) - Performs query for a filtered/scoped/particular
+        *                                   resource(s)
+        *                                  from a particular service.
+        * @param QualityOfService the quality of communication
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+        * NOTE: First parameter 'host' currently represents an IP address. This will change in
+        * future and will refer to endpoint interface so that we can refer to other transports such
+        * as BTH etc.
+        * NOTE: OCStackResult is defined in ocstack.h.
         */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler);
-        /**
-        * API for Service and Resource Discovery.
-        *
-        * @note This API applies to client side only.
-        * @note First parameter 'host' currently represents an IP address. This will change in
-        * future and will refer to endpoint interface so that we can refer to other transports such
-        * as BTH etc.
-        * @note OCStackResult is defined in ocstack.h.
-        *
-        * @param host             Host IP Address of a service to direct resource
-        *         discovery query. If null or empty, performs multicast resource
-        *         discovery query
-        * @param resourceURI      Name of the resource. If null or empty, performs search for all
-        *         resource names
-        * @param resourceHandler  Handles callbacks, success states and failure states.
-        *
-        *        Four modes of discovery defined as follows:
-        *        (NULL/Empty, NULL/Empty)  Performs ALL service discovery AND ALL resource
-        *           discovery.
-        *        (NULL/Empty, Not Empty)   Performs query for a filtered/scoped/particular
-        *                                  resource(s) from ALL services.
-        *        (Not Empty, NULL/Empty)   Performs ALL resource discovery on a particular service.
-        *        (Not Empty, Not Empty)    Performs query for a filtered/scoped/particular
-        *                                  resource(s) from a particular service.
-        * @param QoS The quality of communication
-        *
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     FindCallback resourceHandler, QualityOfService QoS);
 
@@ -177,27 +123,14 @@ namespace OC
          * API for Device Discovery
          *
          *
-         * @param host Host IP Address. If null or empty, Multicast is performed.
-         * @param deviceURI Uri containing address to the virtual device in C Stack
-                   ("/oc/core/d")
-         * @param deviceInfoHandler  A callback function to receive the results of
-         *         getDeviceInfo()
+         * @param host - Host IP Address. If null or empty, Multicast is performed.
+         * @param resourceURI - Uri containing address to the virtual device in C Stack
+                                ("/oc/core/d")
+         * @param QualityOfService the quality of communication
          *
          */
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler);
-        /**
-         * API for Device Discovery
-         *
-         *
-         * @param host               Host IP Address. If null or empty, Multicast is performed.
-         * @param deviceURI          Uri containing address to the virtual device in C Stack
-                   ("/oc/core/d")
-         * @param deviceInfoHandler  A callback function to receive the results of
-         *         getDeviceInfo()
-         * @param QoS                The quality of communication
-         *
-         */
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler, QualityOfService QoS);
 
@@ -239,8 +172,8 @@ namespace OC
          * This API registers a resource with the server
          * NOTE: This API applies to server & client side.
 
-         * @param resourceHandle  Upon successful registration, resourceHandle will be filled
-         * @param resource        The instance of OCResource that all data filled.
+         * @param resourceHandle - Upon successful registration, resourceHandle will be filled
+         * @param OCResource - The instance of OCResource that all data filled.
          *
          * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
          */
@@ -288,7 +221,12 @@ namespace OC
         /**
         * Add a resource to a collection resource.
         *
-        * bindResource() must be used only after the both collection resource and
+        * @param collectionHandle - handle to the collection resource
+        * @param addedResourceHandle - handle to resource to be added to the collection resource
+        *
+        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.<br>
+        * NOTE: OCStackResult is defined in ocstack.h. <br>
+        * NOTE: bindResource must be used only after the both collection resource and
         * resource to add under a collections are created and respective handles obtained<br>
         * <b>Example:</b> <br>
         * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
@@ -297,12 +235,6 @@ namespace OC
         *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
         * Step 3: bindResource(homeResourceHandle, kitchenResourceHandle);<br>
         * At the end of Step 3, resource "a/home" will contain a reference to "a/kitchen".<br>
-        *
-        * @param collectionHandle  Handle to the collection resource
-        * @param resourceHandle    Handle to resource to be added to the collection resource
-        *
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.<br>
-        *     @note OCStackResult is defined in ocstack.h. <br>
         */
         OCStackResult bindResource(const OCResourceHandle collectionHandle,
                 const OCResourceHandle resourceHandle);
@@ -310,22 +242,27 @@ namespace OC
         /**
         * Add multiple resources to a collection resource.
         *
-        * bindResources() must be used only after the both collection resource and
-        * resource to add under a collections are created and respective handles obtained<br>
-        * <b>Example:</b> <br>
-        * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
-        *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
-        * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface,
-        *   entityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
-        * Step 3: bindResource(homeResourceHandle, kitchenResourceHandle);<br>
-        * At the end of Step 3, resource "a/home" will contain a reference to "a/kitchen".<br>
-        *
-        * @param collectionHandle         Handle to the collection resource
-        * @param addedResourceHandleList  Reference to list of resource handles to be added to the
-        *         collection resource
+        * @param collectionHandle - handle to the collection resource
+        * @param addedResourceHandleList reference to list of resource handles to be added to the
+        *   collection resource
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
-        * @note OCStackResult is defined in ocstack.h. <br>
+        * NOTE: OCStackResult is defined in ocstack.h. <br>
+        * NOTE: bindResources must be used only after the both collection resource and
+        * list of resources to add under a collection are created and respective handles
+        * obtained <br>
+        * <b> Example: </b> <br>
+        * Step 1: registerResource(homeResourceHandle, "a/home", "home", Link_Interface,
+        *   homeEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        * Step 2: registerResource(kitchenResourceHandle, "a/kitchen", "kitchen", Link_Interface,
+        *   kitchenEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        * Step 3: registerResource(roomResourceHandle, "a/room", "room", Link_Interface,
+        *   roomEntityHandler, OC_DISCOVERABLE | OC_OBSERVABLE);<br>
+        * Step 4: std::vector<OCResourceHandle> rList; rList.push_back(kitchenResourceHandle);
+        *   rList.push_back(roomResourceHandle);<br>
+        * Step 5: bindResource(homeResourceHandle, rList);<br>
+        * At the end of Step 5, resource "a/home" will contain a references to "a/kitchen" and
+        *   "a/room" <br>
         */
         OCStackResult bindResources(const OCResourceHandle collectionHandle,
                 const std::vector<OCResourceHandle>& addedResourceHandleList);
@@ -394,11 +331,10 @@ namespace OC
 
         /**
         * Binds an interface to a particular resource
-        *
-        * @param resourceHandle    Handle to the resource
-        * @param resourceInterfaceName  New interface to bind to the resource
+        * @param resourceHandle - handle to the resource
+        * @param resourceTypeName - new interface  to bind to the resource
 
-        * @return OCStackResult  return value of the API. Returns OCSTACK_OK if success <br>
+        * @return OCStackResult - return value of the API. Returns OCSTACK_OK if success <br>
         */
         OCStackResult bindInterfaceToResource(const OCResourceHandle& resourceHandle,
                         const std::string& resourceInterfaceName);
@@ -435,32 +371,18 @@ namespace OC
         * every time a server adds/removes/alters a resource, starts or is intentionally
         * stopped (potentially more to be added later).
         *
-        * @param presenceHandle  A handle object that can be used to identify this subscription
+        * @param presenceHandle - a handle object that can be used to identify this subscription
         *               request.  It can be used to unsubscribe from these events in the future.
         *               It will be set upon successful return of this method.
-        * @param host            The IP address/addressable name of the server to subscribe to.
-        * @param presenceHandler Callback function that will receive notifications/subscription
-        *               events
-        *
-        * @return OCStackResult - return value of the API.  Returns OCSTACK_OK if successful
-        */
-        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
-                        SubscribeCallback presenceHandler);
-        /**
-        * subscribes to a server's presence change events.  By making this subscription,
-        * every time a server adds/removes/alters a resource, starts or is intentionally
-        * stopped (potentially more to be added later).
-        *
-        * @param presenceHandle  A handle object that can be used to identify this subscription
-        *               request.  It can be used to unsubscribe from these events in the future.
-        *               It will be set upon successful return of this method.
-        * @param host            The IP address/addressable name of the server to subscribe to.
-        * @param resourceType    A resource type specified as a filter for subscription callbacks.
-        * @param presenceHandler Callback function that will receive notifications/subscription
+        * @param host - The IP address/addressable name of the server to subscribe to.
+        * @param resourceType - a resource type specified as a filter for subscription callbacks.
+        * @param presenceHandler - callback function that will receive notifications/subscription
         *               events
         *
         * @return OCStackResult - return value of the API.  Returns OCSTACK_OK if success <br>
         */
+        OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
+                        SubscribeCallback presenceHandler);
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         const std::string& resourceType, SubscribeCallback presenceHandler);
 

@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2015 Samsung Electronics All Rights Reserved.
+// Copyright 2014 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -21,7 +21,6 @@
 #include <functional>
 
 #include <pthread.h>
-#include <signal.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
@@ -31,17 +30,14 @@
 
 using namespace OC;
 using namespace std;
-using namespace OC::OCPlatform;
 
 int g_Observation = 0;
-int gQuitFlag = 0;
 
 pthread_cond_t m_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t m_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-
-
-OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request);
+OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request ,
+                                    std::shared_ptr< OCResourceResponse > response);
 
 class TempHumidResource
 {
@@ -49,9 +45,10 @@ class TempHumidResource
 
         int m_temp;
         int m_humid;
+
         std::string m_uri;
         OCResourceHandle m_resourceHandle;
-        ObservationIds m_interestedObservers;
+
         OCRepresentation m_Rep;
 
     public:
@@ -62,8 +59,8 @@ class TempHumidResource
 
         void createResource()
         {
-            std::string resourceURI = "/a/TempHumSensor/hosting";
-            std::string resourceTypeName = "Resource.Hosting";
+            std::string resourceURI = "/a/NM/TempHumSensor";
+            std::string resourceTypeName = "NotificationManager.Hosting";
             std::string resourceInterface = DEFAULT_INTERFACE;
 
             m_uri = resourceURI;
@@ -112,6 +109,7 @@ class TempHumidResource
         OCRepresentation post(OCRepresentation &rep)
         {
             static int first = 1;
+
             // for the first time it tries to create a resource
             if (first)
             {
@@ -162,20 +160,15 @@ class TempHumidResource
 
         OCRepresentation get()
         {
+            cout << "resource get\n";
             m_Rep.setValue("temperature", m_temp);
             m_Rep.setValue("humidity", m_humid);
+
+            cout << "resource get : done\n";
+
             return m_Rep;
         }
-        OCStackResult deleteDeviceResource()
-        {
-            OCStackResult result = OCPlatform::unregisterResource(m_resourceHandle);
-            if (OC_STACK_OK != result)
-            {
-                throw std::runtime_error(
-                    std::string("Device Resource failed to unregister/delete") + std::to_string(result));
-            }
-            return result;
-        }
+
 };
 
 TempHumidResource myResource;
@@ -217,11 +210,10 @@ void *ChangeLightRepresentation(void *param)
     return NULL;
 }
 
-OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request)
+OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request ,
+                                    std::shared_ptr< OCResourceResponse > response)
 {
     cout << "Sample Provider entityHandler\n";
-
-    OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (request)
     {
         cout << "flag : request\n";
@@ -236,23 +228,28 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
         if (requestFlag == RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";
-            auto pResponse = std::make_shared<OC::OCResourceResponse>();
-            pResponse->setRequestHandle(request->getRequestHandle());
-            pResponse->setResourceHandle(request->getResourceHandle());
-
             if (requestType == "GET")
             {
                 cout << "\t\trequestType : GET\n";
-
-                pResponse->setErrorCode(200);
-                pResponse->setResponseResult(OC_EH_OK);
-                pResponse->setResourceRepresentation(myResource.get());
-                if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                try
                 {
-                    ehResult = OC_EH_OK;
+                    if (response)
+                    {
+                        OCRepresentation rep = myResource.get();
+                        cout << rep.getJSONRepresentation() << endl;
+                        response->setErrorCode(200);
+                        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+                    }
+                    else
+                    {
+                        cout << "response is null\n";
+                    }
+                }
+                catch (exception &e)
+                {
+                    cout << e.what() << endl;
                 }
             }
-
             else if (requestType == "PUT")
             {
                 cout << "\t\t\trequestType : PUT\n";
@@ -260,60 +257,22 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
                 OCRepresentation rep = request->getResourceRepresentation();
                 myResource.put(rep);
 
-                if (pResponse)
+                if (response)
                 {
-                    pResponse->setErrorCode(200);
-                    pResponse->setResourceRepresentation(myResource.get());
-                }
-                if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-                {
-                    ehResult = OC_EH_OK;
+                    response->setErrorCode(200);
+                    response->setResourceRepresentation(myResource.get());
                 }
             }
-
             else if (requestType == "POST")
             {
-                cout << "\t\t\trequestType : POST\n";
             }
-
             else if (requestType == "DELETE")
             {
-                cout << "\t\trequestType : DELETE\n";
-                cout << "DeviceResource Delete Request" << std::endl;
-
-                if (myResource.deleteDeviceResource() == OC_STACK_OK)
-                {
-                    cout << "\tSuccess DELETE\n";
-                    pResponse->setErrorCode(200);
-                    pResponse->setResponseResult(OC_EH_RESOURCE_DELETED);
-                    ehResult = OC_EH_OK;
-                }
-                else
-                {
-                    pResponse->setResponseResult(OC_EH_ERROR);
-                    ehResult = OC_EH_ERROR;
-                }
-
-                OCPlatform::sendResponse(pResponse);
             }
         }
-        if (requestFlag & RequestHandlerFlag::ObserverFlag)
+        else if (requestFlag & RequestHandlerFlag::ObserverFlag)
         {
             pthread_t threadId;
-
-            ObservationInfo observationInfo = request->getObservationInfo();
-            if (ObserveAction::ObserveRegister == observationInfo.action)
-            {
-                myResource.m_interestedObservers.push_back(observationInfo.obsId);
-            }
-            else if (ObserveAction::ObserveUnregister == observationInfo.action)
-            {
-                myResource.m_interestedObservers.erase(std::remove(
-                        myResource.m_interestedObservers.begin(),
-                        myResource.m_interestedObservers.end(),
-                        observationInfo.obsId),
-                                                       myResource.m_interestedObservers.end());
-            }
 
             cout << request->getResourceUri() << endl;
             cout << request->getResourceRepresentation().getUri() << endl;
@@ -331,7 +290,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
                 pthread_create(&threadId , NULL , ChangeLightRepresentation , (void *) NULL);
                 startedThread = 1;
             }
-            ehResult = OC_EH_OK;
         }
     }
     else
@@ -339,22 +297,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
         std::cout << "Request invalid" << std::endl;
     }
 
-    return ehResult;
-}
-
-void quitProcess()
-{
-    stopPresence();
-    exit(0);
-}
-
-void handleSigInt(int signum)
-{
-    if (signum == SIGINT)
-    {
-        std::cout << " handleSigInt in" << std::endl;
-        quitProcess();
-    }
+    return OC_EH_OK;
 }
 
 int main()
@@ -375,11 +318,9 @@ int main()
 
     try
     {
-        startPresence(30);
 
         myResource.createResource();
 
-        signal(SIGINT, handleSigInt);
         while (true)
         {
             bool end = false;
@@ -389,7 +330,6 @@ int main()
             cout << "2. Temp is down" << endl;
             cout << "3. This Program will be ended." << endl;
             cout << "========================================================" << endl;
-
             cin >> number;
 
             switch (number)
@@ -413,14 +353,12 @@ int main()
                 case 3:
                     {
                         cout << "Bye!" << endl;
-                        stopPresence();
                         end = true;
-                        quitProcess();
                         break;
                     }
                 default:
                     {
-                        cout << "Invalid input. Please try again." << endl;
+                        cout << "You type wrong number. Try again!" << endl;
                         break;
                     }
             }
@@ -434,7 +372,4 @@ int main()
     {
         cout << "main exception  : " << e.what() << endl;
     }
-
-
 }
-

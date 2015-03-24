@@ -13,16 +13,11 @@ arduino_simplecs_env.PrependUnique(CPPPATH = [
 
 arduino_simplecs_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'coap'])
-arduino_simplecs_env.PrependUnique(LINKFLAGS = ['-Wl,-cref', '-Wl,-Map='+Dir('.').path+'/SimpleClientServer.map'])
-
-if not env.get('RELEASE'):
-	arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-if env.get('NET') == 'Wifi':
-	arduino_simplecs_env.AppendUnique(CPPDEFINES = ['ARDUINOWIFI'])
 
 arduino_simplecs = arduino_simplecs_env.Program('SimpleClientServer', 'ocserver.cpp')
 env.CreateBin('SimpleClientServer')
 
-Alias('arduino_simplecs', arduino_simplecs)
+i_arduino_simplecs = arduino_simplecs_env.Install(env.get('BUILD_DIR'), arduino_simplecs)
+
+Alias('arduino_simplecs', i_arduino_simplecs)
 env.AppendTarget('arduino_simplecs')

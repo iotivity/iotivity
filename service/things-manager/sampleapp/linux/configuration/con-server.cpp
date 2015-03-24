@@ -41,11 +41,16 @@ int isWaiting = 0;
 
 // Default system configuration value's variables
 // The variable's names should be same as the names of "extern" variables defined in
-// "ConfigurationResource.h"
-std::string defaultLocation;
-std::string defaultRegion;
-std::string defaultSystemTime;
-std::string defaultCurrency;
+// "ConfigurationCollection.h"
+std::string defaultRegionValue;
+std::string defaultTimeValue;
+std::string defaultCurrentTimeValue;
+std::string defaultNetworkValue;
+std::string defaultIPAddressValue;
+std::string defaultSecurityValue;
+std::string defaultModeValue;
+std::string defaultConfigurationValue;
+std::string defaultFactorySetValue;
 
 static ThingsManager* g_thingsmanager;
 
@@ -54,9 +59,9 @@ bool prepareResponseForResource(std::shared_ptr< OCResourceRequest > request);
 OCStackResult sendResponseForResource(std::shared_ptr< OCResourceRequest > pRequest);
 OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceRequest > request);
 
-ConfigurationResource *myConfigurationResource;
-DiagnosticsResource *myDiagnosticsResource;
-FactorySetResource *myFactorySetResource;
+ConfigurationCollection *myConfigurationCollection;
+DiagnosticsCollection *myDiagnosticsCollection;
+FactorySetCollection *myFactorySetCollection;
 
 typedef std::function< void(OCRepresentation&) > putFunc;
 typedef std::function< OCRepresentation(void) > getFunc;
@@ -65,15 +70,33 @@ getFunc getGetFunction(std::string uri)
 {
     getFunc res = NULL;
 
-    if (uri == myConfigurationResource->getUri())
+    if (uri == myConfigurationCollection->getTimeUri())
     {
-        res = std::bind(&ConfigurationResource::getConfigurationRepresentation,
-                myConfigurationResource);
+        res = std::bind(&ConfigurationCollection::getTimeRepresentation, myConfigurationCollection);
     }
-    else if (uri == myDiagnosticsResource->getUri())
+    else if (uri == myConfigurationCollection->getConfigurationUri())
     {
-        res = std::bind(&DiagnosticsResource::getDiagnosticsRepresentation,
-                myDiagnosticsResource);
+        res = std::bind(&ConfigurationCollection::getConfigurationRepresentation,
+                myConfigurationCollection);
+    }
+    else if (uri == myConfigurationCollection->myTimeCollection->getCurrentTimeUri())
+    {
+        res = std::bind(&TimeCollection::getCurrentTimeRepresentation,
+                myConfigurationCollection->myTimeCollection);
+    }
+    else if (uri == myConfigurationCollection->getRegionUri())
+    {
+        res = std::bind(&ConfigurationCollection::getRegionRepresentation,
+                myConfigurationCollection);
+    }
+    else if (uri == myDiagnosticsCollection->getFactoryResetUri())
+    {
+        res = std::bind(&DiagnosticsCollection::getFactoryResetRepresentation,
+                myDiagnosticsCollection);
+    }
+    else if (uri == myDiagnosticsCollection->getRebootUri())
+    {
+        res = std::bind(&DiagnosticsCollection::getRebootRepresentation, myDiagnosticsCollection);
     }
 
     return res;
@@ -83,15 +106,25 @@ putFunc getPutFunction(std::string uri)
 {
     putFunc res = NULL;
 
-    if (uri == myConfigurationResource->getUri())
+    if (uri == myConfigurationCollection->getRegionUri())
     {
-        res = std::bind(&ConfigurationResource::setConfigurationRepresentation,
-                myConfigurationResource, std::placeholders::_1);
+        res = std::bind(&ConfigurationCollection::setRegionRepresentation,
+                myConfigurationCollection, std::placeholders::_1);
     }
-    else if (uri == myDiagnosticsResource->getUri())
+    else if (uri == myConfigurationCollection->myTimeCollection->getCurrentTimeUri())
     {
-        res = std::bind(&DiagnosticsResource::setDiagnosticsRepresentation,
-                myDiagnosticsResource, std::placeholders::_1);
+        res = std::bind(&TimeCollection::setCurrentTimeRepresentation,
+                myConfigurationCollection->myTimeCollection, std::placeholders::_1);
+    }
+    else if (uri == myDiagnosticsCollection->getFactoryResetUri())
+    {
+        res = std::bind(&DiagnosticsCollection::setFactoryResetRepresentation,
+                myDiagnosticsCollection, std::placeholders::_1);
+    }
+    else if (uri == myDiagnosticsCollection->getRebootUri())
+    {
+        res = std::bind(&DiagnosticsCollection::setRebootRepresentation, myDiagnosticsCollection,
+                std::placeholders::_1);
     }
 
     return res;
@@ -198,8 +231,6 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
     std::cout << "\tIn Server CPP (entityHandlerForResource) entity handler:\n";
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
 
-    QueryParamsMap test = request->getQueryParameters();
-
     if (prepareResponseForResource(request))
     {
         if (OC_STACK_OK == sendResponseForResource(request))
@@ -221,27 +252,38 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
 // callback handler on GET request
 void onBootstrap(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
-    isWaiting = 0;
+    if (eCode == SUCCESS_RESPONSE)
+    {
+        std::cout << "\n\nGET request was successful" << std::endl;
+        std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
-    if (eCode != SUCCESS_RESPONSE)
+        defaultRegionValue = rep.getValue< std::string >("regionValue");
+        defaultTimeValue = rep.getValue< std::string >("timeValue");
+        defaultCurrentTimeValue = rep.getValue< std::string >("currentTimeValue");
+        defaultNetworkValue = rep.getValue< std::string >("networkValue");
+        defaultIPAddressValue = rep.getValue< std::string >("IPAddressValue");
+        defaultSecurityValue = rep.getValue< std::string >("securityValue");
+        defaultModeValue = rep.getValue< std::string >("modeValue");
+        defaultConfigurationValue = rep.getValue< std::string >("configurationValue");
+        defaultFactorySetValue = rep.getValue< std::string >("factorySetValue");
+
+        std::cout << "\tregionValue : " << defaultRegionValue << std::endl;
+        std::cout << "\ttimeValue : " << defaultTimeValue << std::endl;
+        std::cout << "\tcurrentTimeValue : " << defaultCurrentTimeValue << std::endl;
+        std::cout << "\tnetworkValue : " << defaultNetworkValue << std::endl;
+        std::cout << "\tIPAddressValue : " << defaultIPAddressValue << std::endl;
+        std::cout << "\tsecurityValue : " << defaultSecurityValue << std::endl;
+        std::cout << "\tmodeValue : " << defaultModeValue << std::endl;
+        std::cout << "\tconfigurationValue : " << defaultConfigurationValue << std::endl;
+        std::cout << "\tfactorySetValue : " << defaultFactorySetValue << std::endl;
+
+    }
+    else
     {
         std::cout << "onGET Response error: " << eCode << std::endl;
-        return ;
+        std::exit(-1);
     }
-
-    std::cout << "\n\nGET request was successful" << std::endl;
-    std::cout << "\tResource URI: " << rep.getUri() << std::endl;
-
-    defaultRegion = rep.getValue< std::string >("r");
-    defaultSystemTime = rep.getValue< std::string >("st");
-    defaultCurrency = rep.getValue< std::string >("c");
-    defaultLocation = rep.getValue< std::string >("loc");
-
-    std::cout << "\tLocation : " << defaultLocation << std::endl;
-    std::cout << "\tSystemTime : " << defaultSystemTime << std::endl;
-    std::cout << "\tCurrency : " << defaultCurrency << std::endl;
-    std::cout << "\tRegion : " << defaultRegion << std::endl;
-
+    isWaiting = 0;
 }
 
 int main()
@@ -290,19 +332,17 @@ int main()
             }
             else if (g_Steps == 2)
             {
-                myConfigurationResource = new ConfigurationResource();
-                myConfigurationResource->createResources(&entityHandlerForResource);
+                myConfigurationCollection = new ConfigurationCollection();
+                myConfigurationCollection->createResources(&entityHandlerForResource);
 
-                myDiagnosticsResource = new DiagnosticsResource();
-                myDiagnosticsResource->createResources(&entityHandlerForResource);
+                myDiagnosticsCollection = new DiagnosticsCollection();
+                myDiagnosticsCollection->createResources(&entityHandlerForResource);
 
-
-                myFactorySetResource = new FactorySetResource();
-                myFactorySetResource->createResources(&entityHandlerForResource);
-                myDiagnosticsResource->factoryReset = std::function < void()
-                        > (std::bind(&ConfigurationResource::factoryReset,
-                                myConfigurationResource));
-
+                myFactorySetCollection = new FactorySetCollection();
+                myFactorySetCollection->createResources(&entityHandlerForResource);
+                myDiagnosticsCollection->factoryReset = std::function < void()
+                        > (std::bind(&ConfigurationCollection::factoryReset,
+                                myConfigurationCollection));
                 isWaiting = 1;
             }
         }

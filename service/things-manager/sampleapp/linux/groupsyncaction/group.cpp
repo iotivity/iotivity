@@ -161,9 +161,6 @@ int main(int argc, char* argv[])
                     }
                 }
 
-                if(It == gResourceHandleList.end())
-                    continue;
-
                 gResourceHandleList.erase(It);
                 result = OCPlatform::unregisterResource(resourceHandle);
                 if (OC_STACK_OK == result)
@@ -198,9 +195,6 @@ int main(int argc, char* argv[])
                         break;
                     }
                 }
-
-                if(It == gResourceHandleList.end())
-                    continue;
 
                 gResourceHandleList.erase(It);
                 result = OCPlatform::unregisterResource(resourceHandle);

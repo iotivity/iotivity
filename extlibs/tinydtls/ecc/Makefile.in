@@ -35,19 +35,18 @@ abs_builddir = @abs_builddir@
 top_builddir = @top_builddir@
 top_srcdir:= @top_srcdir@
 
-
-ECC_SOURCES:= ecc.c test/test_ecdh.c test/test_ecdsa.c
-ECC_HEADERS:= ecc.h
-FILES:=Makefile.in Makefile.contiki $(ECC_SOURCES) $(ECC_HEADERS)
+ECC_SOURCES:= ecc.c testecc.c testfield.c test_helper.c
+ECC_HEADERS:= ecc.h test_helper.h
+FILES:=Makefile.in Makefile.contiki $(ECC_SOURCES) $(ECC_HEADERS) 
 DISTDIR=$(top_builddir)/@PACKAGE_TARNAME@-@PACKAGE_VERSION@
 
 ifeq ("@WITH_CONTIKI@", "1")
 include Makefile.contiki
 else
 ECC_OBJECTS:= $(patsubst %.c, %.o, $(ECC_SOURCES)) ecc_test.o
-PROGRAMS:= test_ecdh test_ecdsa
+PROGRAMS:= testecc testfield
 CPPFLAGS=@CPPFLAGS@
-CFLAGS=-Wall -std=c99 @CFLAGS@ -DTEST_INCLUDE
+CFLAGS=-Wall -std=c99 -pedantic @CFLAGS@ -DTEST_INCLUDE
 LDLIBS=@LIBS@
 
 .PHONY: all dirs clean install distclean .gitignore doc
@@ -60,13 +59,11 @@ all: $(PROGRAMS)
 ecc_test.o:	ecc.c ecc.h
 	$(CC) $(CFLAGS) $(CPPFLAGS)  -c -o $@ $<
 
-test_ecdh: ecc.c test/test_ecdh.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o test_ecdh ecc.c test/test_ecdh.c
+testecc: ecc_test.o test_helper.o
 
-test_ecdsa:ecc.c test/test_ecdsa.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o test_ecdsa ecc.c test/test_ecdsa.c
+testfield: ecc_test.o test_helper.o
 
-check:
+check:	
 	echo DISTDIR: $(DISTDIR)
 	echo top_builddir: $(top_builddir)
 

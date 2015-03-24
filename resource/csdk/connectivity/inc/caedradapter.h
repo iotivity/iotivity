@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -17,13 +17,10 @@
  * limitations under the License.
  *
  ******************************************************************/
-
 /**
- * @file
- *
- * This file contains the APIs for EDR adapters to be implemented.
+ * @file caedradapter.h
+ * @brief This file contains the APIs for EDR adapters to be implemented
  */
-
 #ifndef __CA_EDRADAPTER_H_
 #define __CA_EDRADAPTER_H_
 

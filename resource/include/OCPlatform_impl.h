@@ -18,13 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * Implementation of the OCPlatform functionality. It contains a singleton
- * interface that is used only by the OCPlatform namespace and is the
- * central entrance to the stack.
- */
+/// @file OCPlatform_impl.h
+
+/// @brief Implementation of the OCPlatform functionality.  It contains
+/// a singleton interface that is used only by the OCPlatform namespace and is the
+/// central entrance to the stack.
 
 #ifndef __OCPLATFORM_IMPL_H
 #define __OCPLATFORM_IMPL_H

@@ -38,7 +38,7 @@ Linux, Tizen, Android, Arduino, Windows, MAC OSX, IOS ...).
 The output of the build is in:
   <top directory of the project>/out/<target_os>/<target_arch>/<build_type>/
 e.g.
-	iotivity/out/android/armeabi-v7a/release/.
+	oic-resource/out/android/armeabi-v7a/release/.
 
 This document takes 'iotivity' project as example, the way to build other
 projects is almost the same.
@@ -56,16 +56,7 @@ information(include build options). To see the help information:
       $ scons [options] -h
 
 Note: If no value is specified for an option, the default value will be used.
-The change of options value may impact the help information and the behavior
-of the building.
-
-Generally, it's required to specify the target OS and target ARCH, that's to say
-tell Scons which OS and which ARCH you'd like build this project for. By default,
-the target OS and ARCH is the same as the host.
-
-Some more options may be required, please care the 'error' notification when build.
-For help about how to set an option, please run:
-     $ scons TARGET_OS=xxx TARGET_ARCH=yyy [XXX=zzz ...] -h
+The change of options value may impact the output.
 
 
 === Prerequites ===
@@ -85,7 +76,7 @@ To build for Android, Andorid NDK and SDK are required.
   Android NDK: http://developer.android.com/tools/sdk/ndk/index.html
   Android SDK: http://developer.android.com/sdk/index.html
 (Note: as in some IoTivity projects, C++11 features are used, recommend Android
- NDK >= r10)
+ NDK >= r10, according to our test result r10c is the best one currently)
 
 Arduino:
 To build for Arduino, Arduino IDE is required.
@@ -116,21 +107,32 @@ so you don't need to add it in command line each time. The build script will
 guide you to do that.)
 
 * 3. External libraries
-IoTivity project depends on some external libraries, such as boost, expat ...
-During building, the existence of external library will be checked, if it doesn't
-exist, the build script will try to download, unpack and build the library or
-notify user to install it.
+For Android and IOS build, most of the external libraries are provided as
+binary in oic-utilities project (https://oic-review.01.org/gerrit/oic-utilities).
+Please download it in the same directory as other IoTivity projects. If it's
+in different directory, an additional option (OIC_UITLS) will be required. The
+build command should be:
+      $ scons OIC_UITLS=<path to oic-utilities> [other options] [target]
 
-Downloading and unpacking may fail due to network problem or required unpacking
-tool isn't installed. An message will be displayed, please follow the message
-to skip it.
+(Note: for convenience, you can also add it in environment variable. So you
+don't need to add this option in command line each time.)
+  e.g.:
+      $ export OIC_UITLS=<path to oic-utilities project>
 
 
 === Build IoTivity project on Linux(Ubuntu) ===
 
+Generally, it's required to specify the target OS and target ARCH, that's to say
+tell Scons which OS and which ARCH you'd like build this project for. By default,
+the target OS and ARCH is the same as the host.
+
+Some more options may be required, please care the 'error' notification when build.
+For help about how to set an option, please run:
+	$ scons TARGET_OS=xxx TARGET_ARCH=yyy [XXX=zzz ...] -h
+
 1. Build IoTivity project for Linux
       $ cd <top directory of the project>
-      $ sudo apt-get install libboost-dev libexpat1-dev libboost-thread-dev
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev
       $ scons
 
 2. Build IoTivity project for Android
@@ -138,6 +140,10 @@ to skip it.
       $ scons TARGET_OS=android TARGET_ARCH=xxx
 (xxx can be x86, armeabi, armeabi-v7a, armeabi-v7a-hard. To see all of its
 allowed value, please execute command 'scons TARGET_OS=android -Q -h')
+
+Note: Currently as x86_64/arm64_v8a external library binaries aren't provided,
+you may meet link problem if build executable binary which depends on external
+library for x86_64/arm64_v8a.
 
 3. Build IoTivity project for Arduino
       $ cd <top directory of the project>

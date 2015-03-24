@@ -18,12 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains the declaration of classes and its members related to
- * OCHeaderOption.
- */
+/// @file OCHeaderOption.h
+
+/// @brief  This file contains the declaration of classes and its members related to
+///         OCHeaderOption.
 
 #ifndef __OCHEADEROPTION_H
 #define __OCHEADEROPTION_H

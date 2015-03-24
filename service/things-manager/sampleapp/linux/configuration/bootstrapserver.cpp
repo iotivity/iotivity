@@ -37,11 +37,15 @@ bool prepareResponse(std::shared_ptr< OCResourceRequest > request);
 OCStackResult sendResponse(std::shared_ptr< OCResourceRequest > pRequest);
 OCEntityHandlerResult entityHandlerBootstrap(std::shared_ptr< OCResourceRequest > request);
 
-#define DefaultRegion "Seoul, Korea"
-#define DefaultSystemTime "00:00:00"
-#define DefaultLocation "37.256616, 127.052806"
-#define DefaultCurrency "Won"
-
+#define DefaultConfigurationValue "Configuration Collection"
+#define DefaultRegionValue "Seoul, Korea"
+#define DefaultTimeValue "Time Collection"
+#define DefaultCurrentTimeValue "00:00:00"
+#define DefaultNetworkValue "Network Collection"
+#define DefaultIPAddressValue "192.168.0.2"
+#define DefaultSecurityValue "SecurityValue"
+#define DefaultModeValue "NoSec"
+#define DefaultFactorySetValue "FactorySet Value"
 
 class BootstrapResource
 {
@@ -88,10 +92,15 @@ public:
 
     OCRepresentation getBootstrapRepresentation()
     {
-        m_bootstrapRep.setValue< std::string >("r", DefaultRegion);
-        m_bootstrapRep.setValue< std::string >("st", DefaultSystemTime);
-        m_bootstrapRep.setValue< std::string >("loc", DefaultLocation);
-        m_bootstrapRep.setValue< std::string >("c", DefaultCurrency);
+        m_bootstrapRep.setValue< std::string >("regionValue", DefaultRegionValue);
+        m_bootstrapRep.setValue< std::string >("timeValue", DefaultTimeValue);
+        m_bootstrapRep.setValue< std::string >("currentTimeValue", DefaultCurrentTimeValue);
+        m_bootstrapRep.setValue< std::string >("networkValue", DefaultNetworkValue);
+        m_bootstrapRep.setValue< std::string >("IPAddressValue", DefaultIPAddressValue);
+        m_bootstrapRep.setValue< std::string >("securityValue", DefaultSecurityValue);
+        m_bootstrapRep.setValue< std::string >("modeValue", DefaultModeValue);
+        m_bootstrapRep.setValue< std::string >("configurationValue", DefaultConfigurationValue);
+        m_bootstrapRep.setValue< std::string >("factorySetValue", DefaultFactorySetValue);
 
         return m_bootstrapRep;
     }

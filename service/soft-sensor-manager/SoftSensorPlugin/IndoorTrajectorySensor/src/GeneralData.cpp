@@ -33,7 +33,7 @@ class AllFormat_data : public Virtual_data
         TYPE data;
 
     public :
-        AllFormat_data(int typenum) : base(typenum)
+        AllFormat_data(int typenum) : base(typenum), data()
         {
 #ifdef __INTER_DEBUG__
             printf("[DEBUG] Test_data Constructor().\n");
@@ -65,6 +65,7 @@ void Virtual_data::s2data( const char *value)
                 char data = atoi(value);
                 put_data( (void *)&data );
             }
+            break;
         case TYPE_INT :
         case TYPE_SHORT :
             {

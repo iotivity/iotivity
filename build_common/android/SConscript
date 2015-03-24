@@ -81,13 +81,13 @@ target_arch = env.get('TARGET_ARCH')
 
 # Android ndk early version doesn't support C++11. Detect the toolchain version
 # to make sure proper toolchain is used
-for tc_ver in ['4.7', '4.8', '4.9', '']:
+for tc_ver in ['4.9', '4.8', '4.7', '']:
 	if os.path.exists(android_ndk + '/toolchains/x86-' + tc_ver):
 		break
 
 cmd = [ndk_build_cmd]
 cmd.append('APP_ABI=' + target_arch)
-cmd.append('APP_STL=gnustl_shared')
+cmd.append('APP_STL=gnustl_static')
 if env.get('RELEASE'):
 	cmd.append('APP_OPTIM=release')
 else:
@@ -133,18 +133,24 @@ for flags in p.stdout.readlines():
 
 	elif cmp(flags[0:7], 'TC_VER=') == 0:  # set gnustl library path
 		ver = flags[7:].strip()
-		stl_path = android_ndk + '/sources/cxx-stl/gnu-libstdc++/' + ver + '/libs/' + target_arch
-		if target_arch in ['armeabi', 'armeabi-v7a', 'armeabi-v7a-hard']:
-			stl_path = stl_path + '/thumb/'
-
-		env.AppendUnique(LIBPATH = [stl_path])
-		env.Install(env.get('BUILD_DIR'), stl_path + '/libgnustl_shared.so')
+		env.AppendUnique(LIBPATH = [android_ndk + '/sources/cxx-stl/gnu-libstdc++/'
+				+ ver + '/libs/' + target_arch])
 
 	elif cmp(flags[0:9], 'PLATFORM=') == 0:  # get target platform: android-x
 		platform_ver = flags[9+8:].strip()
 		if not platform_ver.isdigit():
 			platform_ver = ''
 
+# Determine dependency faux SYS_ROOT
+dep_sys_root = env.get('SRC_DIR') + os.sep +'dep' + os.sep + 'android' + os.sep  + target_arch + os.sep + 'usr'
+dep_src_dir =  dep_sys_root + os.sep + 'include'
+dep_lib_dir =  dep_sys_root + os.sep + 'lib'
+
+env['DEP_SYS_ROOT'] = dep_sys_root
+
+# Add external libraries including boost
+env.AppendUnique(CPPPATH = [ dep_src_dir ])
+env.AppendUnique(LIBPATH = [ dep_lib_dir ])
 
 ######################################################################
 # Set release/debug flags
@@ -168,3 +174,6 @@ env.Replace(LINKCOM = '$LINK -o $TARGET -pie $LINKFLAGS $__RPATH $SOURCES $_LIBD
 #	SConscript('compatibility/c_compat.scons')
 #
 #SConscript('compatibility/cpp11_compat.scons')
+
+# Make sure that boost for android is available
+SConscript(env.get('SRC_DIR') + '/extlibs/boost/SConscript')

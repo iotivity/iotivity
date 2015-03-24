@@ -47,9 +47,6 @@ handle_sigint(int signum) {
 #endif
 
 #ifdef DTLS_PSK
-
-#define PSK_SERVER_HINT  "Server_identity"
-
 /* This function is the "key store" for tinyDTLS. It is called to
  * retrieve a key for the given identity within this particular
  * session. */
@@ -73,35 +70,23 @@ get_psk_info(struct dtls_context_t *ctx, const session_t *session,
       (unsigned char *)"", 1 }
   };
 
-  switch (type) {
-  case DTLS_PSK_HINT:
-    if (result_length < strlen(PSK_SERVER_HINT)) {
-      dtls_warn("cannot set psk_hint -- buffer too small\n");
-      return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
-    }
+  if (type != DTLS_PSK_KEY) {
+    return 0;
+  }
 
-    memcpy(result, PSK_SERVER_HINT, strlen(PSK_SERVER_HINT));
-    return strlen(PSK_SERVER_HINT);
+  if (id) {
+    int i;
+    for (i = 0; i < sizeof(psk)/sizeof(struct keymap_t); i++) {
+      if (id_len == psk[i].id_length && memcmp(id, psk[i].id, id_len) == 0) {
+	if (result_length < psk[i].key_length) {
+	  dtls_warn("buffer too small for PSK");
+	  return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
+	}
 
-  case DTLS_PSK_KEY:
-    if (id) {
-      int i;
-      for (i = 0; i < sizeof(psk)/sizeof(struct keymap_t); i++) {
-        if (id_len == psk[i].id_length && memcmp(id, psk[i].id, id_len) == 0) {
-	  if (result_length < psk[i].key_length) {
-	    dtls_warn("buffer too small for PSK");
-	    return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
-	  }
-
-	  memcpy(result, psk[i].key, psk[i].key_length);
-	  return psk[i].key_length;
-        }
+	memcpy(result, psk[i].key, psk[i].key_length);
+	return psk[i].key_length;
       }
     }
-    break;
-
-  default:
-    dtls_warn("unsupported request type: %d\n", type);
   }
 
   return dtls_alert_fatal_create(DTLS_ALERT_DECRYPT_ERROR);

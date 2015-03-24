@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,11 +19,9 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the APIs for adapters to be implemented.
+ * @file caadapterinterface.h
+ * @brief This file contains the APIs for adapters to be implemented
  */
-
 #ifndef __CA_ADAPTER_INTERFACE_H_
 #define __CA_ADAPTER_INTERFACE_H_
 

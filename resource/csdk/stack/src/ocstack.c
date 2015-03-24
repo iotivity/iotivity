@@ -235,7 +235,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     else
     {
         OC_LOG(INFO, TAG, PCF("This is either a repeated Server Request or blocked Server Request"));
-        result = OC_STACK_DUPLICATE_REQUEST;
+        result = OC_STACK_REPEATED_REQUEST;
     }
 
     return result;

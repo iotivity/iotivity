@@ -13,12 +13,10 @@ target_os = env.get('TARGET_OS')
 # Build flags
 ######################################################################
 notimgr_env.AppendUnique(CPPPATH = ['NotificationManager/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
-notimgr_env.AppendUnique(CPPPATH = ['../../resource/csdk/logger/include'])
 notimgr_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap'])
 
 if target_os not in ['windows', 'winrt']:
-	notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
+	notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os == 'linux':
 	notimgr_env.AppendUnique(LIBS = ['pthread'])
@@ -35,12 +33,15 @@ if target_os == 'android':
 ######################################################################
 NOTI_SRC_DIR = 'NotificationManager/src/'
 notimgr_src = [
-		NOTI_SRC_DIR + 'hosting.c',
-		NOTI_SRC_DIR + 'virtualResource.c']
+		NOTI_SRC_DIR + 'LinuxMain.cpp',
+		NOTI_SRC_DIR + 'NotificationManager.cpp',
+		NOTI_SRC_DIR + 'RegistrationManager.cpp',
+		NOTI_SRC_DIR + 'ResourceManager.cpp',
+		NOTI_SRC_DIR + 'VirtualRepresentation.cpp']
 
-notificationsdk = notimgr_env.StaticLibrary('NOTISDKLibrary', notimgr_src)
+notificationmanager = notimgr_env.Program('noti_manager', notimgr_src)
 
-notimgr_env.InstallTarget(notificationsdk, 'libNMSDK')
+notimgr_env.InstallTarget(notificationmanager, 'notificationmanager')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

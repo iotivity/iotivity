@@ -106,26 +106,16 @@ int main()
         OCPlatform::bindInterfaceToResource(resourceHandle, DEFAULT_INTERFACE);
 
         int selectedMenu;
-        bool isRun = true;
-        while (isRun)
+        while (true)
         {
-            cout << endl
-                 << "0 :: Quit 1 :: UNREGISTER RESOURCES\n" << endl;
-
             std::cin >> selectedMenu;
 
-            switch(selectedMenu)
+            if (selectedMenu == 1)
             {
-                case 0:
-                    isRun = false;
-                    break;
-                case 1:
-                    std::cout << "Unregistering resources" << std::endl;
-                    for (unsigned int i = 0; i < resourceHandleVector.size(); ++i)
-                    {
-                        OCPlatform::unregisterResource(resourceHandleVector.at(i));
-                    }
-                    break;
+                for (unsigned int i = 0; i < resourceHandleVector.size(); ++i)
+                {
+                    OCPlatform::unregisterResource(resourceHandleVector.at(i));
+                }
             }
 
         }

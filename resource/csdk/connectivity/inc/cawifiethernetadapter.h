@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,11 +19,9 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the APIs for WiFi/Ethernet Adapter.
+ * @file cawifiethernetadapter.h
+ * @brief This file contains the APIs for WiFi/Ethernet Adapter.
  */
-
 #ifndef __CA_WIFI_ETHERNET_ADAPTER_H__
 #define __CA_WIFI_ETHERNET_ADAPTER_H__
 
