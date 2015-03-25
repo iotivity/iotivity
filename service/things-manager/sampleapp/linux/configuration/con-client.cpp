@@ -262,6 +262,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
 
 int main(int argc, char* argv[])
 {
+    std::string str_steps;
 
     //**************************************************************
     // STEP 0
@@ -290,8 +291,21 @@ int main(int argc, char* argv[])
         cout << "(6) Reboot (for the group)" << std::endl;
         cout << "(10) Show Configuration Units" << std::endl;
 
-        cin >> g_Steps;
-        //
+        try
+        {
+            std::getline (std::cin, str_steps);
+
+            if(str_steps == "")
+                continue;
+            else
+                g_Steps = std::stoi(str_steps);
+        }
+        catch(std::invalid_argument&)
+        {
+            std::cout << "Please put a digit, not string" << std::endl;
+            continue;
+        }
+
         if (g_Steps == 0)
             break;
         else if (g_Steps == 1)
