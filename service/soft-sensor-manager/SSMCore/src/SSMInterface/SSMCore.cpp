@@ -53,12 +53,16 @@ SSMRESULT InitializeSSMCore(IN std::string xmlDescription)
 {
     SSMRESULT res = SSM_E_FAIL;
 
+    if (g_pSoftSensorManager != NULL)
+        SSM_CLEANUP_ASSERT(SSM_E_INITIALIZED);
+
     SSM_CLEANUP_ASSERT(CreateGlobalInstanceRepo());
     SSM_CLEANUP_ASSERT(CreateInstance(OID_ISoftSensorManager, (IBase **)&g_pSoftSensorManager));
     SSM_CLEANUP_ASSERT(g_pSoftSensorManager->initializeCore(xmlDescription));
 
 CLEANUP:
-    if (res != SSM_S_OK)
+    if (res != SSM_S_OK &&
+        res != SSM_E_INITIALIZED)
     {
         SAFE_RELEASE(g_pSoftSensorManager);
     }

@@ -37,7 +37,7 @@
 extern "C"
 {
 #endif
-void _EXPORT_ InitializeContext(ICtxDelegate *pDelegate);
+INTERFACE_DECLSPEC void InitializeContext(ICtxDelegate *pDelegate);
 #ifdef __cplusplus
 
 };
@@ -58,7 +58,7 @@ namespace ITSName
     {
         SUCCESS = 0, ERROR, NO_ELEMENT
     } ITSResult;
-	
+
     class SThing
     {
         public:
@@ -96,6 +96,7 @@ namespace ITSName
     class ITS: public ICtxEvent
     {
         private:
+            static ITS *singleton;
             Things *m_TList;
             SThing *m_closestThing;
 
@@ -104,9 +105,11 @@ namespace ITSName
         public:
             static physicalInput s_PHYSICAL_SENSORs[PHYSICAL_EA];
 
+            static ITS *GetInstance( void );
             ITS();
             ~ITS();
 
+            static void *SelfTrajectoryThread(void *param);
             void onCtxEvent(enum CTX_EVENT_TYPE eventType, std::vector< ContextData > contextDataList);
 
             ITSResult getInput(std::vector< ContextData > &contextDataList, CurrentService *CService );
@@ -114,7 +117,7 @@ namespace ITSName
             Trajectory *makeTrajectory(CurrentService *CService);
             ITSResult setOutput( Trajectory *m_result, ContextData *out );
 
-            friend void _EXPORT_ initializeContext(ICtxDelegate *pDelegate);
+            friend void INTERFACE_DECLSPEC initializeContext(ICtxDelegate *pDelegate);
     };
 }
 ;

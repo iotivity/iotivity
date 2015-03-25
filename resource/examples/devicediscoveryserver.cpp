@@ -157,7 +157,10 @@ int main()
     std::mutex blocker;
     std::condition_variable cv;
     std::unique_lock<std::mutex> lock(blocker);
-    cv.wait(lock);
+    while(true)
+    {
+        cv.wait(lock);
+    }
 
     // No explicit call to stop the platform.
     // When OCPlatform::destructor is invoked, internally we do platform cleanup

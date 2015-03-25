@@ -1,0 +1,7 @@
+<plugin id="oic.plugin.mqtt-light" 
+  version="0.1"
+  name="mqtt-light"
+  url="light"
+  resourcetype="oic.light">
+	<runtime library="lightserver_mqtt_plugin" funcs="mqtt_plugin_lightserver_funcs"/>
+</plugin>

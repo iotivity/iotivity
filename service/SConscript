@@ -3,10 +3,11 @@
 #
 ##
 Import('env')
+Import('targets_csdk_only')
 
 target_os = env.get('TARGET_OS')
 
-if target_os != 'arduino':
+if target_os not in targets_csdk_only:
 	# Build things manager project
 	SConscript('things-manager/SConscript')
 
@@ -15,10 +16,10 @@ if target_os != 'arduino':
 
 	# Build protocol plugin project
 	# protocol-plugin use 'inotify', this feature isn't support by MAC OSX
-	if target_os not in ['darwin', 'ios', 'android']:
+	if target_os not in ['darwin', 'ios']:
 		SConscript('protocol-plugin/SConscript')
 
 	# Build notification manager project
-#	SConscript('notification-manager/SConscript')
+	SConscript('notification-manager/SConscript')
 #else:
 #	SConscript('notification-manager/SampleApp/arduino/SConscript')

@@ -71,9 +71,11 @@ void _mosquitto_net_cleanup(void);
 
 void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet);
 int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *packet);
-int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
+int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
+                              const char *bind_address, bool blocking);
 int _mosquitto_socket_close(struct mosquitto *mosq);
-int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
+int _mosquitto_try_connect(const char *host, uint16_t port, int *sock, const char *bind_address,
+                           bool blocking);
 int _mosquitto_socket_nonblock(int sock);
 int _mosquitto_socketpair(int *sp1, int *sp2);
 

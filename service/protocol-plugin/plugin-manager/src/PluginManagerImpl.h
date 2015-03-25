@@ -27,7 +27,10 @@
 
 #include "Plugin.h"
 #include "CpluffAdapter.h"
+
+#ifdef ANDROID
 #include "FelixAdapter.h"
+#endif
 
 namespace OIC
 {
@@ -40,7 +43,7 @@ namespace OIC
             * During construction time, all plugins under the root plugin path will be loaded.
             *
             */
-            PluginManagerImpl();
+            PluginManagerImpl(void *args);
 
             /**
             * Virtual destructor
@@ -59,7 +62,6 @@ namespace OIC
             *
             */
             int registerPlugin(std::string path);
-
 
 
             /**
@@ -174,11 +176,11 @@ namespace OIC
             */
             virtual std::vector<Plugin> &getAllPlugins(void);
 
-            static PluginManagerImpl *Getinstance()
+            static PluginManagerImpl *Getinstance(void *arg)
             {
                 if (NULL == s_pinstance)
                 {
-                    s_pinstance = new PluginManagerImpl();
+                    s_pinstance = new PluginManagerImpl(arg);
                 }
 
                 return s_pinstance;
@@ -187,7 +189,9 @@ namespace OIC
         private:
 
             CpluffAdapter *cppm;
+#ifdef ANDROID
             FelixAdapter *javappm;
+#endif
 
             std::vector<Plugin> m_plugins;
             static PluginManagerImpl *s_pinstance;

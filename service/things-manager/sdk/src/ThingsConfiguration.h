@@ -18,10 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/// @file   ThingsConfiguration.h
-
-/// @brief  This file contains the declaration of classes and its members related to
-///         ThingsConfiguration.
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to
+ * ThingsConfiguration.
+ */
 
 #ifndef __OC_THINGSCONFIGURATION__
 #define __OC_THINGSCONFIGURATION__
@@ -59,11 +61,7 @@ namespace OIC
     {
     public:
         ConfigurationRequestEntry(std::string ID, ConfigurationCallback callback,
-                std::shared_ptr< OCResource > resource, std::string updateVal):
-                m_ID(ID), m_callback(callback), m_resource(resource), m_updateVal(updateVal)
-        {
-        }
-        ;
+                std::shared_ptr< OCResource > resource, std::string updateVal);
 
         // Configuration Name (used in key value in std::map structure)
         // e.g., time, network, security, and so on
@@ -90,29 +88,16 @@ namespace OIC
     public:
 
         std::string m_name;
-        std::string m_description;
-        std::string m_uri;
         std::string m_attribute;
+        std::string m_uri;
 
-        ConfigurationUnitInfo(std::string name, std::string description, std::string uri,
-                std::string attribute) :
-                m_name(name), m_description(description), m_uri(uri), m_attribute(attribute)
-        {
-        }
-        ;
+        ConfigurationUnitInfo(std::string name, std::string attribute, std::string uri);
 
         // If a developer wants to know a list of configuration names, gives it in JSON format.
-        std::string getJSON()
-        {
-            std::string res;
-
-            res = "{\"name\":\"" + m_name + "\",\"description\":\"" + m_description + "\"}";
-
-            return res;
-        }
+        std::string getJSON();
     };
 
-#define NUMCONFUNIT 6
+#define NUMCONFUNIT 5
     typedef std::string ConfigurationName;
     typedef std::string ConfigurationValue;
 
@@ -122,44 +107,18 @@ namespace OIC
         /**
          * Constructor for ThingsConfiguration. Constructs a new ThingsConfiguration
          */
-        ThingsConfiguration(void)
-        {
-            ConfigurationUnitInfo unit[] =
-            {
-            { "configuration", "Configuration Collection's value and its child resource's value",
-                    "/oic/con", "value" },
-            { "region", "the current region in which the device is located geographically",
-                    "/oic/con/0/region", "value" },
-            { "timelink", "link of time collection.", "/oic/con/0/time", "link" },
-            { "ipaddress", "IP Address", "/oic/con/network/0/IPAddress", "value" },
-            { "securitymode",
-                    "Resource for security information (credentials, access control list etc.)",
-                    "/oic/con/security/0/mode", "value" },
-                    { "getfactoryset", "get all default configuration value", "/factoryset/oic/con",
-                            "value" } };
-
-            for (int i = 0; i < NUMCONFUNIT; i++)
-                ConfigurationUnitTable.push_back(unit[i]);
-        }
-        ;
+        ThingsConfiguration(void);
 
         /**
          * Virtual destructor
          */
-        ~ThingsConfiguration(void)
-        {
-        }
-        ;
+        ~ThingsConfiguration(void);
 
         static ThingsConfiguration *thingsConfigurationInstance;
         static ThingsConfiguration* getInstance();
         void deleteInstance();
 
-        void setGroupManager(GroupManager *groupmanager)
-        {
-            g_groupmanager = groupmanager;
-        }
-        ;
+        void setGroupManager(GroupManager *groupmanager);
 
         /**
          * API for updating configuration value of multiple things of a target group or a single
@@ -182,8 +141,8 @@ namespace OIC
          * updateConfiguration()->...(CoAP msg. is transmitted)->OnPut()->callback function in APP.
          *
          * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: a nickname of attribute of target resource
-         *                         (e.g., installedlocation, currency, (IP)address)
+         * @param configurations - ConfigurationUnit: an attribute key of target resource
+         *                         (e.g., loc, st, c, r)
          *                         Value : a value to be updated
          * @param callback - callback.
          *
@@ -207,7 +166,7 @@ namespace OIC
          * getConfigurations()->...(CoAP msg. is transmitted)->onGet()->callback function in APP.
          *
          * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: a nickname of attribute of target resource.
+         * @param configurations - ConfigurationUnit: an attribute key of target resource.
          * @param callback - callback.
          *
          * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
@@ -263,271 +222,6 @@ namespace OIC
         static void onFoundBootstrapServer(std::vector< std::shared_ptr< OCResource > > resources);
         static void onGetBootstrapInformation(const HeaderOptions& headerOptions,
                 const OCRepresentation& rep, const int eCode);
-        // Copyright 2014 Samsung Electronics All Rights Reserved.
-
-        /// @file   ThingsConfiguration.h
-
-        /// @brief  This file contains the declaration of classes and its members related to
-        ///         ThingsConfiguration.
-
-#ifndef __OC_THINGSCONFIGURATION__
-#define __OC_THINGSCONFIGURATION__
-
-#include <string>
-#include <vector>
-#include <map>
-#include <cstdlib>
-#include "GroupManager.h"
-#include "OCPlatform.h"
-#include "OCApi.h"
-
-        using namespace OC;
-
-/// Declearation of Configuation Callback funtion type
-        typedef std::function<
-        void(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode) > ConfigurationCallback;
-
-        typedef std::string ConfigurationName;
-        typedef std::string ConfigurationValue;
-
-        /**
-         * @brief
-         * The following class is used as a item stacking in request queue. The class stores a
-         * request and referential information (e.g., a configuration name, a target resource
-         * object, a callback function passed from the applications, and a update value). When the
-         * function for updating/getting configuration value is called from applications, this class
-         * instance is created and stored in the request queue. The queue is maintained in
-         * a std::map structure so if desiring to find a specific request, you can find it
-         * by querying a configuration name.
-         */
-        class ConfigurationRequestEntry
-        {
-        public:
-            ConfigurationRequestEntry(std::string ID, ConfigurationCallback callback,
-                    std::shared_ptr< OCResource > resource, std::string updateVal) :
-            m_ID(ID), m_callback(callback), m_resource(resource), m_updateVal(updateVal)
-            {
-            }
-            ;
-
-            // Configuration Name (used in key value in std::map structure)
-            // e.g., time, network, security, and so on
-            std::string m_ID;
-            // Reference callback pointer
-            ConfigurationCallback m_callback;
-            // Reference resource object
-            std::shared_ptr< OCResource > m_resource;
-            // Update value only used for configuration update
-            std::string m_updateVal;
-        };
-
-        /**
-         * @brief
-         * The following class is used to store providing configuration name and its relevant
-         * information. The relevant information includes a brief description, uri, and attribute
-         * key. Note that a developer only specifies a configuration name, not URI nor attribute
-         * key, to update/get a value to a remote. Thus, using configuration name, we convert it to
-         * more specific information (i.e. uri and attribute key) to send a request. This class is
-         * reponsible to storing these information.
-         */
-        class ConfigurationUnitInfo
-        {
-        public:
-
-            std::string m_name;
-            std::string m_description;
-            std::string m_uri;
-            std::string m_attribute;
-
-            ConfigurationUnitInfo(std::string name, std::string description, std::string uri,
-                    std::string attribute) :
-            m_name(name), m_description(description), m_uri(uri), m_attribute(attribute)
-            {
-            }
-            ;
-
-            // If a developer wants to know a list of configuration names, gives it in JSON format.
-            std::string getJSON()
-            {
-                std::string res;
-
-                res = "{\"name\":\"" + m_name + "\",\"description\":\"" + m_description + "\"}";
-
-                return res;
-            }
-        };
-
-#define NUMCONFUNIT 6
-        typedef std::string ConfigurationName;
-        typedef std::string ConfigurationValue;
-
-        class ThingsConfiguration
-        {
-        public:
-            /**
-             * Constructor for ThingsConfiguration. Constructs a new ThingsConfiguration
-             */
-            ThingsConfiguration(void)
-            {
-                ConfigurationUnitInfo unit[] =
-                {
-                    {   "configuration", "Configuration value and its child resource's value",
-                            "/oic/con", "value"},
-                    {   "region", "the current region in which the Thing is located geographically",
-                        "/oic/con/0/region", "value"},
-                    {   "timelink", "link of time collection.", "/oic/con/0/time", "link"},
-                    {   "ipaddress", "IP Address", "/oic/con/network/0/IPAddress", "value"},
-                    {   "securitymode",
-                        "Resource for security information (credentials, access control list etc.)",
-                        "/oic/con/security/0/mode", "value"},
-                    {   "getfactoryset", "get all default configuration value",
-                        "/factoryset/oic/con", "value"}};
-
-                for (int i = 0; i < NUMCONFUNIT; i++)
-                ConfigurationUnitTable.push_back(unit[i]);
-            }
-            ;
-
-            /**
-             * Virtual destructor
-             */
-            ~ThingsConfiguration(void)
-            {
-            }
-            ;
-
-            static ThingsConfiguration *thingsConfigurationInstance;
-            static ThingsConfiguration* getInstance();
-            void deleteInstance();
-
-            void setGroupManager(GroupManager *groupmanager)
-            {
-                g_groupmanager = groupmanager;
-            }
-            ;
-
-            /**
-             * API for updating configuration value of multiple things of a target group or a single
-             * thing.
-             * Callback is called when a response arrives.
-             * Before using the below function, a developer should acquire a resource pointer of
-             * (collection) resource that he want to send a request by calling findResource()
-             * function provided in OCPlatform. And he should also notice a "Configuration Name"
-             * term which represents a nickname of a target attribute of a resource that he wants to
-             * update.
-             * The base motivation to introduce the term is to avoid a usage of URI to access
-             * a resource from a developer. Thus, a developer should know which configuration names
-             * are supported by Things Configuration class and what the configuration name means.
-             * To get a list of supported configuration names, use getListOfSupportedConfigurationU-
-             * nits() function, which provides the list in JSON format.
-             * NOTICE: A series of callback functions is called from updateConfigurations() function
-             * (1) For a collection resource
-             * updateConfiguration()->onDeleteActionSet()->onGetChildInfoForUpdate()->onCreateActio-
-             * nSet()->...(CoAP msg. is transmitted)->OnExecuteForGroupAction()->callback function
-             * in APP.
-             * (2) For a simple resource
-             * updateConfiguration()->...(CoAP msg. is transmitted)->OnPut()->callback function in
-             * APP.
-             *
-             * @param resource - resource pointer representing the target group or the single thing.
-             * @param configurations - ConfigurationUnit: a nickname of attribute of target resource
-             *                         (e.g., installedlocation, currency, (IP)address)
-             *                         Value : a value to be updated
-             * @param callback - callback.
-             *
-             * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-             *
-             * NOTE: OCStackResult is defined in ocstack.h.
-             */
-            OCStackResult updateConfigurations(std::shared_ptr< OCResource > resource,
-                    std::map< ConfigurationName, ConfigurationValue > configurations,
-                    ConfigurationCallback callback);
-
-            /**
-             * API for getting configuration value of multiple things of a target group or a single
-             * thing.
-             * Callback is called when a response arrives.
-             * NOTICE: A series of callback functions is called from getConfigurations() function:
-             * (1) For a collection resource
-             * getConfigurations()->onGetChildInfoForGet()->...(CoAP msg. is transmitted)
-             * ->callback function in APP.
-             * (2) For a simple resource
-             * getConfigurations()->...(CoAP msg. is transmitted)->onGet()->callback function in APP
-             *
-             * @param resource - resource pointer representing the target group or the single thing.
-             * @param configurations - ConfigurationUnit: a nickname of attribute of target resource
-             * @param callback - callback.
-             *
-             * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-             *
-             * NOTE: OCStackResult is defined in ocstack.h.
-             */
-            OCStackResult getConfigurations(std::shared_ptr< OCResource > resource,
-                    std::vector< ConfigurationName > configurations, ConfigurationCallback callback);
-
-            /**
-             * API to show a list of supported configuration units (configurable parameters)
-             * Callback call when a response arrives.
-             *
-             * @return the list in JSON format
-             */
-            std::string getListOfSupportedConfigurationUnits();
-
-            /**
-             * API for bootstrapping functionality. Find a bootstrap server and get configuration
-             * information from the bootstrap server. With the information, make a configuration
-             * resource.
-             *
-             * @param callback - callback.
-             *
-             * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-             *
-             * NOTE: OCStackResult is defined in ocstack.h.
-             */
-            OCStackResult doBootstrap(ConfigurationCallback callback);
-
-        private:
-
-            GroupManager *g_groupmanager;
-
-            std::vector< ConfigurationUnitInfo > ConfigurationUnitTable;
-
-            void onExecuteForGroupAction(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode, std::string conf);
-            void onGetChildInfoForUpdate(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode, std::string conf);
-            void onGetChildInfoForGet(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode, std::string conf);
-            void onCreateActionSet(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode, std::string conf);
-            void onGetActionSet(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode, std::string conf);
-            void onDeleteActionSet(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode, std::string conf);
-            void onGet(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode, std::string conf);
-            void onPut(const HeaderOptions& headerOptions,
-                const OCRepresentation& rep, const int eCode, std::string conf);
-            static void onFoundBootstrapServer(std::vector< std::shared_ptr< OCResource >
-                > resources);
-            static void onGetBootstrapInformation(const HeaderOptions& headerOptions,
-                    const OCRepresentation& rep, const int eCode);
-
-            std::shared_ptr< OCResource > getResource(std::string conf);
-            ConfigurationCallback getCallback(std::string conf);
-            std::string getUpdateVal(std::string conf);
-            std::string getAttributeByConfigurationName(ConfigurationName name);
-            std::string getUriByConfigurationName(ConfigurationName name);
-
-            std::string getHostFromURI(std::string oldUri);
-
-            bool isSimpleResource(std::shared_ptr< OCResource > resource);
-            bool hasBatchInterface(std::shared_ptr< OCResource > resource);
-
-        };
-
-#endif  /* __OC_THINGSCONFIGURATION__*/
 
         std::shared_ptr< OCResource > getResource(std::string conf);
         ConfigurationCallback getCallback(std::string conf);

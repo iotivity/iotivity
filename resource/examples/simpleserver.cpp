@@ -523,9 +523,11 @@ int main(int argc, char* argv[])
 
         // Invoke createResource function of class light.
         myLight.createResource();
+        std::cout << "Created resource." << std::endl;
 
         myLight.addType(std::string("core.brightlight"));
         myLight.addInterface(std::string("oc.mi.ll"));
+        std::cout << "Added Interface and Type" << std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we
@@ -534,6 +536,7 @@ int main(int argc, char* argv[])
         std::mutex blocker;
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
+        std::cout <<"Waiting" << std::endl;
         cv.wait(lock);
     }
     catch(OCException e)

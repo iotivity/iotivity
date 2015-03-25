@@ -19,151 +19,39 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <OCApi.h>
-
-#include "OCUtilities.h"
+#include <OCUtilities.h>
 
 #include <boost/algorithm/string.hpp>
-
 #include <sstream>
 #include <iterator>
 #include <algorithm>
 
-extern "C" {
-#include <uri.h>    // libcoap
-#include <option.h> // libcoap
-}
-
-namespace OC {
-
-    // Helper function to escape special character.
-    std::string escapeString(const std::string& value)
-    {
-        std::ostringstream stringStream;
-        for (const char& c : value)
-        {
-            switch (c)
-            {
-                case '\\': stringStream << "\\\\";
-                    break;
-                case '"': stringStream << "\\\"";
-                    break;
-                case '/': stringStream << "\\/";
-                    break;
-                case '\b': stringStream << "\\b";
-                    break;
-                case '\f': stringStream << "\\f";
-                    break;
-                case '\n': stringStream << "\\n";
-                    break;
-                case '\r': stringStream << "\\r";
-                    break;
-                case '\t': stringStream << "\\t";
-                    break;
-                default: stringStream << c;
-                    break;
-           }
-        }
-        return stringStream.str();
-    }
-}
-// [TODO] remove this function
-// it seems that the C stack is parsing and giving out the query separately.
-// the entire URI need not be parsed
-static OC::Utilities::QueryParamsKeyVal tempPatch(const std::string& _uri)
+OC::Utilities::QueryParamsKeyVal OC::Utilities::getQueryParams(const std::string& uri)
 {
     OC::Utilities::QueryParamsKeyVal qp;
-    if(_uri.empty())
+    if(uri.empty())
     {
         return qp;
     }
 
     std::vector<std::string> queryparams;
-    boost::split(queryparams, _uri, boost::is_any_of("&"));
+    boost::split(queryparams, uri, [](const char c){return c=='&';},
+            boost::token_compress_on);
 
     for(std::string& it: queryparams)
     {
-        std::vector<std::string> keyval;
-        boost::split(keyval, it, boost::is_any_of("="));
-        if(2 == keyval.size())
+        auto index = it.find('=');
+
+        if(index == std::string::npos)
         {
-            qp[keyval.at(0)] = keyval.at(1);
+            qp[it] = "";
+        }
+        else
+        {
+            qp[it.substr(0, index)] = it.substr(index + 1);
         }
     }
 
-    return qp;
-}
-
-// implementation can be split into two functions if needed
-// uses do{}while(0) to avoid returning from multiple locations
-OC::Utilities::QueryParamsKeyVal OC::Utilities::getQueryParams(const std::string& _uri)
-{
-
-    // this is a temporary fix. [TODO] remove this after permanent fix
-    return tempPatch(_uri);
-
-    OC::Utilities::QueryParamsKeyVal qp;
-    unsigned char *bufptr = nullptr; // don't delete via bufptr
-    unsigned char *bufptrToDelete = nullptr; // bufptr may be incremented. need this one to keep track.
-    do // while(0)
-    {
-        if(_uri.empty())
-        {
-            break;
-        }
-
-        coap_uri_t coapuri = {{0}};
-        unsigned char* uristr = reinterpret_cast<unsigned char*>(const_cast<char*>(_uri.c_str()));
-
-        if(coap_split_uri(uristr, _uri.length(), &coapuri) < 0)
-        {
-            break;
-        }
-
-        size_t buflen = 2048; // this is big enough buffer. [TODO] may want to downsize it. I have seen that the size may have to be greater than coap.query.length, which is counterintuitve but there may be a bug in coap uri parser.
-        bufptrToDelete = bufptr = new (std::nothrow) unsigned char[buflen](); // why heap? will need it for incrementing the pointer in the logic below
-
-        if(!bufptr)
-        {
-            break;
-        }
-
-        int segments = -1;
-        if((segments = coap_split_query(coapuri.query.s, coapuri.query.length, bufptr, &buflen)) < 0)
-        {
-            break;
-        }
-
-        // coap uri parser has weird api. its not straighforward to understand what the coap function calls below do.
-        // coap uri parser lacks ability to split the key value pair in query params. that will be done in getQueryParams() function
-        std::vector<std::string> queryparams;
-        while(segments--)
-        {
-            queryparams.push_back(std::string (reinterpret_cast<char*>(coap_opt_value(bufptr)), coap_opt_length(bufptr)));
-            bufptr += coap_opt_size(bufptr);
-        }
-
-        if(queryparams.empty())
-        {
-            break;
-        }
-
-        //[TODO] use foreach
-        for(std::string& it : queryparams)
-        {
-            std::vector<std::string> keyval;
-            boost::split(keyval, it, boost::is_any_of("="));
-            if(2 == keyval.size())
-            {
-                qp[keyval.at(0)] = keyval.at(1);
-            }
-        }
-    }
-    while(0);
-
-    if(bufptrToDelete)
-    {
-        delete [] bufptrToDelete;
-    }
     return qp;
 }
 

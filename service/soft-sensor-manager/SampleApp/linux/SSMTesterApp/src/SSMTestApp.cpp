@@ -39,6 +39,7 @@ void SSMTestApp::displayMenu()
     printf("   2. Unregister Query \n");
     printf("   3. Register DiscomfortIndexSensor sample query \n");
     printf("   4. Register IndoorTrajectorySensor sample query \n");
+    printf("   5. Register BMISensor sample query \n");
     printf("   9. exit \n");
     printf("===============================================\n");
     printf("   Please Enter the NO: ");
@@ -53,7 +54,6 @@ void SSMTestApp::registerQuery(std::string queryString)
     if (queryString.size() == 0)
     {
         printf("   Please Enter query string: ");
-        cin.ignore();
         getline(cin, queryString);
     }
 
@@ -75,7 +75,6 @@ void SSMTestApp::unregisterQuery(void)
     SSMRESULT rtn = SSM_E_FAIL;
 
     printf("   Please Enter query Id: ");
-    cin.ignore();
     getline(cin, qid);
 
     rtn = UnregisterQuery(atoi(qid.c_str()));
@@ -211,6 +210,7 @@ int main()
     printf("searching SSMResource\n");
     SSMTestApp *SSMApp = new SSMTestApp();
     APPMenu::APPMenu menu = APPMenu::NONE;
+    std::string strMenu;
 
     std::string xmlDescription = "<SSMCore>"
                                  "<Device>"
@@ -227,9 +227,8 @@ int main()
     {
         SSMApp->displayMenu();
 
-        menu = (APPMenu::APPMenu) (getchar() - '0');
-        if ((APPMenu::APPMenu) 0 > menu || menu > APPMenu::EXIT)
-            menu = (APPMenu::APPMenu) (getchar() - '0');
+        getline(cin, strMenu);
+        menu = (APPMenu::APPMenu) (atoi(strMenu.c_str()));
 
         switch (menu)
         {
@@ -252,6 +251,16 @@ int main()
                 SSMApp->registerQuery("subscribe Device.IndoorTrajectorySensor "\
                                       "if Device.IndoorTrajectorySensor.trackeeID == \"9059AF16FEF7\"");
                 break;
+
+            case APPMenu::BMI_SAMPLE:
+                SSMApp->registerQuery("subscribe Device.BMISensor "\
+                                      "if Device.BMISensor.BMIresult > 0");
+
+                break;
+
+
+
+
 
             case APPMenu::EXIT:
                 std::cout << "program exit." << std::endl;

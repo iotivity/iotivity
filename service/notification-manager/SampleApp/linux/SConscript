@@ -12,11 +12,17 @@ notimgr_env = lib_env.Clone()
 # Build flags
 ######################################################################
 notimgr_env.AppendUnique(CPPPATH = ['../../NotificationManager/include'])
-notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap', 'pthread'])
-notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+notimgr_env.AppendUnique(CPPPATH = ['../../../../extlibs/cjson'])
+notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap', 'pthread','NOTISDKLibrary'])
+notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 sampleprovider = notimgr_env.Program('sampleprovider', 'sampleProvider/SampleProvider.cpp')
 sampleconsumer = notimgr_env.Program('sampleconsumer', 'sampleConsumer/SampleConsumer.cpp')
+notificationmanager = notimgr_env.Program('notificationmanager', 'notificationManager/main.c')
+
+#notimgr_env.InstallTarget(sampleprovider, 'sampleprovider')
+#notimgr_env.InstallTarget(sampleconsumer, 'sampleconsumer')
+#notimgr_env.InstallTarget(notificationmanager, 'notificationmanager')

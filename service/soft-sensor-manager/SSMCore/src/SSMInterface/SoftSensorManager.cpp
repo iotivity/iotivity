@@ -58,65 +58,79 @@ SSMRESULT CSoftSensorManager::initializeCore(IN std::string xmlDescription)
     std::string                 pathSoftSensors;
     std::string                 pathDescription;
 
-    xmlDoc.parse<0>((char *)xmlDescription.c_str());
+    std::string                 copyDescription = xmlDescription.c_str();
 
-    root = xmlDoc.first_node();
-
-    strKey = root->name();
-
-    if (strKey != "SSMCore")
+    try
     {
-        return SSM_E_FAIL;
+        xmlDoc.parse<0>((char *)copyDescription.c_str());
+
+        root = xmlDoc.first_node();
+
+        if (!root)
+        {
+            throw rapidxml::parse_error("No Root Element", 0);
+        }
+
+        strKey = root->name();
+
+        if (strKey != "SSMCore")
+        {
+            throw rapidxml::parse_error("Invalid root tag name", 0);
+        }
+
+        for (itemSSMCore = root->first_node(); itemSSMCore; itemSSMCore = itemSSMCore->next_sibling())
+        {
+            strKey = itemSSMCore->name();
+
+            if (strKey == "Device")
+            {
+                for (itemDevice = itemSSMCore->first_node(); itemDevice; itemDevice = itemDevice->next_sibling())
+                {
+                    strKey = itemDevice->name();
+
+                    if (strKey == "Name")
+                    {
+                        name = itemDevice->value();
+                    }
+                    else if (strKey == "Type")
+                    {
+                        type = itemDevice->value();
+                    }
+                    else
+                    {
+                        ;/*NULL*/
+                    }
+                }
+            }
+            else if (strKey == "Config")
+            {
+                for (itemDevice = itemSSMCore->first_node(); itemDevice; itemDevice = itemDevice->next_sibling())
+                {
+                    strKey = itemDevice->name();
+
+                    if (strKey == "SoftSensorRepository")
+                    {
+                        pathSoftSensors = itemDevice->value();
+                    }
+                    else if (strKey == "SoftSensorDescription")
+                    {
+                        pathDescription = itemDevice->value();
+                    }
+                    else
+                    {
+                        ;/*NULL*/
+                    }
+                }
+            }
+            else
+            {
+                ;/*NULL*/
+            }
+        }
     }
-
-    for (itemSSMCore = root->first_node(); itemSSMCore; itemSSMCore = itemSSMCore->next_sibling())
+    catch (rapidxml::parse_error &e)
     {
-        strKey = itemSSMCore->name();
-
-        if (strKey == "Device")
-        {
-            for (itemDevice = itemSSMCore->first_node(); itemDevice; itemDevice = itemDevice->next_sibling())
-            {
-                strKey = itemDevice->name();
-
-                if (strKey == "Name")
-                {
-                    name = itemDevice->value();
-                }
-                else if (strKey == "Type")
-                {
-                    type = itemDevice->value();
-                }
-                else
-                {
-                    ;/*NULL*/
-                }
-            }
-        }
-        else if (strKey == "Config")
-        {
-            for (itemDevice = itemSSMCore->first_node(); itemDevice; itemDevice = itemDevice->next_sibling())
-            {
-                strKey = itemDevice->name();
-
-                if (strKey == "SoftSensorRepository")
-                {
-                    pathSoftSensors = itemDevice->value();
-                }
-                else if (strKey == "SoftSensorDescription")
-                {
-                    pathDescription = itemDevice->value();
-                }
-                else
-                {
-                    ;/*NULL*/
-                }
-            }
-        }
-        else
-        {
-            ;/*NULL*/
-        }
+        SSM_CLEANUP_ASSERT(SSM_E_INVALIDXML);
     }
 
     SSM_CLEANUP_ASSERT(CreateGlobalInstance(OID_ISensingEngine, (IBase **)&m_pSensingEngine));

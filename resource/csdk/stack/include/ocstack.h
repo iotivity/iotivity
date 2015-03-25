@@ -158,7 +158,7 @@ typedef enum {
     OC_STACK_NO_RESOURCE,               /* resource not found */
     OC_STACK_RESOURCE_ERROR,            /* ex: not supported method or interface */
     OC_STACK_SLOW_RESOURCE,
-    OC_STACK_REPEATED_REQUEST,
+    OC_STACK_DUPLICATE_REQUEST,
     OC_STACK_NO_OBSERVERS,              /* resource has no registered observers */
     OC_STACK_OBSERVER_NOT_FOUND,
     OC_STACK_VIRTUAL_DO_NOT_HANDLE,
@@ -167,6 +167,7 @@ typedef enum {
     OC_STACK_PERSISTENT_BUFFER_REQUIRED,
     OC_STACK_INVALID_REQUEST_HANDLE,
     OC_STACK_INVALID_DEVICE_INFO,
+    OC_STACK_INVALID_JSON,
     /* NOTE: Insert all new error codes here!*/
     #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED = 128,

@@ -3,18 +3,26 @@
 #
 ##
 
-# Load common build config
-SConscript('build_common/SConscript')
+import os
 
-# Load extra options
-SConscript('extra_options.scons')
+# List of targets that only support the IoTivity C SDK.
+targets_csdk_only = ['arduino']
+
+# Load common build config
+SConscript('build_common/SConscript', exports = 'targets_csdk_only')
+
 Import('env')
 
 target_os = env.get('TARGET_OS')
 if target_os == 'arduino':
 	SConscript('arduino.scons')
-if target_os == 'android':
-	SConscript('android/android_api/SConscript')
+else:
+	# Prepare libraries
+	env.PrepareLib('cereal')
+	env.PrepareLib('expat')
+	env.PrepareLib('boost', 'boost_thread', os.path.join(env.get('SRC_DIR'), 'extlibs', 'boost'))
+	env.PrepareLib('boost', 'boost_system', os.path.join(env.get('SRC_DIR'), 'extlibs', 'boost'))
+
 # By default, src_dir is current dir, the build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/
 #
@@ -27,10 +35,12 @@ if target_os == 'android':
 build_dir = env.get('BUILD_DIR')
 
 # Build 'resource' sub-project
-SConscript(build_dir + 'resource/SConscript')
+SConscript(os.path.join(build_dir, 'resource', 'SConscript'),
+           exports = 'targets_csdk_only')
 
 # Build 'service' sub-project
-SConscript(build_dir + 'service/SConscript')
+SConscript(os.path.join(build_dir, 'service', 'SConscript'),
+           exports = 'targets_csdk_only')
 
 # Append targets information to the help information, to see help info, execute command line:
 #     $ scon [options] -h

@@ -23,6 +23,26 @@
 #include <string>
 #include <vector>
 
+#if defined(WIN32)
+
+#if defined(SSMSENSOR_WINDOWS_EXPORTS)
+#define INTERFACE_DECLSPEC    __declspec(dllexport)
+#elif defined(WIN32)
+#define INTERFACE_DECLSPEC    __declspec(dllimport)
+#endif
+
+#elif defined(TIZEN)
+
+#include <tizen.h>
+
+#define INTERFACE_DECLSPEC EXPORT_API
+
+#else
+
+#define INTERFACE_DECLSPEC
+
+#endif
+
 #define SSM_MODEL_RETRY 3
 typedef enum {SSM_ONCE, SSM_REPEAT} TypeofEvent;
 typedef enum {SSM_EVENT_NORMAL, SSM_EVENT_ADDED, SSM_REMOVED, SSM_UPDATED} RESOURCE_EVENT_TYPE;
@@ -37,6 +57,7 @@ class ISSMResource
         ISSMResource(const std::string &n, const std::string &t) :
             name(n), type(t)
         {
+        	location = SENSOR_LOCATION_LOCAL;
         }
         SENSOR_LOCATION location;
         std::string name;

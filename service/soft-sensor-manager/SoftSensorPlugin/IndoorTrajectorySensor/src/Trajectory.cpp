@@ -17,7 +17,6 @@
 * limitations under the License.
 *
 ******************************************************************/
-
 #include "Trajectory.h"
 
 #include <stdlib.h>

@@ -20,16 +20,13 @@ if target_os == 'arduino':
 # Build flags
 ######################################################################
 if target_os not in ['windows', 'winrt']:
-	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-DLINUX'])
+	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-Wall', '-DLINUX', '-DNDEBUG'])
 	if target_os != 'android':
-		soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
+		soft_sensor_manager_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
 	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_static', 'compatibility'])
-
-	if not env.get('RELEASE'):
-		soft_sensor_manager_env.AppendUnique(LIBS = ['log'])
+	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 
 #######################################################################
 ## build SSM SDK
@@ -67,6 +64,28 @@ DiscomfortIndexSensor_src = [ Glob(DISCOMFORTINDEXSENSOR_DIR + 'src/*.cpp')]
 DiscomfortIndexSensor = DiscomfortIndexSensor_env.SharedLibrary('DiscomfortIndexSensor', DiscomfortIndexSensor_src)
 DiscomfortIndexSensor_env.InstallTarget(DiscomfortIndexSensor, 'libDiscomfortIndexSensor')
 
+
+
+
+######################################################################
+# build BMISensor plugin
+######################################################################
+BMISensor_env = soft_sensor_manager_env.Clone()
+
+BMISensor_env.AppendUnique(CCFLAGS = ['-fPIC'])
+BMISENSOR_DIR = 'SoftSensorPlugin/BMISensor/'
+BMISensor_env.AppendUnique(CPPPATH = [
+		BMISENSOR_DIR + 'include',
+		'SSMCore/src/SSMInterface/'
+		])
+
+BMISensor_src = [ Glob(BMISENSOR_DIR + 'src/*.cpp')]
+
+BMISensor = BMISensor_env.SharedLibrary('BMISensor', BMISensor_src)
+BMISensor_env.InstallTarget(BMISensor, 'libBMISensor')
+
+
+
 ######################################################################
 # build SSM CORE
 ######################################################################
@@ -102,12 +121,21 @@ ssm_core_c_src = [
 		'SSMCore/src/Common/sqlite3.c'
 ]
 
-libssmcore = ssmcore_env.StaticLibrary(
+
+static_libssmcore = ssmcore_env.StaticLibrary(
 		target = 'SSMCore',
 		source = [ssm_core_cpp_src, ssm_core_c_src]
 		)
 
-ssmcore_env.InstallTarget(libssmcore, 'libSSMCORE')
+ssmcore_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
+
+shared_libssmcore = ssmcore_env.SharedLibrary(
+		target = 'SSMCore',
+		source = [ssm_core_cpp_src, ssm_core_c_src]
+		)
+
+ssmcore_env.InstallTarget([shared_libssmcore, static_libssmcore], 'libSSMCORE')
 
 #######################################################################
 ## build SampleApp
@@ -123,3 +151,5 @@ if target_os == 'linux':
 	Command("SoftSensorDescription.xml", "SoftSensorPlugin/SoftSensorDescription.xml", Copy("$TARGET", "$SOURCE"))
 	Command("THSensorApp","SampleApp/linux/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
 	Command("THSensorApp1","SampleApp/linux/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
+	Command("HeightSensorApp","SampleApp/linux/HeightSensorApp/HeightSensorApp", Copy("$TARGET", "$SOURCE"))
+	Command("WeightSensorApp","SampleApp/linux/WeightSensorApp/WeightSensorApp", Copy("$TARGET", "$SOURCE"))
