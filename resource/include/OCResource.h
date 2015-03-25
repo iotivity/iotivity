@@ -56,6 +56,16 @@ namespace OC
         friend std::ostream& operator <<(std::ostream& os, const OCResourceIdentifier& ri);
 
         public:
+            OCResourceIdentifier() = delete;
+
+            OCResourceIdentifier(const OCResourceIdentifier&) = default;
+
+            OCResourceIdentifier(OCResourceIdentifier&&) = default;
+
+            OCResourceIdentifier& operator=(const OCResourceIdentifier&) = delete;
+
+            OCResourceIdentifier& operator=(OCResourceIdentifier&&) = delete;
+
             bool operator==(const OCResourceIdentifier &other) const;
 
             bool operator!=(const OCResourceIdentifier &other) const;
