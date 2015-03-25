@@ -24,5 +24,8 @@ if env.get('NET') == 'Wifi':
 arduino_simplecs = arduino_simplecs_env.Program('SimpleClientServer', 'ocserver.cpp')
 env.CreateBin('SimpleClientServer')
 
+#The map file is intermediate file, make sure it's removed when clean build
+arduino_simplecs_env.Clean(arduino_simplecs, 'SimpleClientServer.map')
+
 Alias('arduino_simplecs', arduino_simplecs)
 env.AppendTarget('arduino_simplecs')

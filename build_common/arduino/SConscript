@@ -221,7 +221,7 @@ else:
 # Get IDE version
 if os.path.exists(arduino_home + '/lib/version.txt'):
 	vf = open(arduino_home + '/lib/version.txt', 'r')
-	version = vf.readline().replace('.', '')
+	version = vf.readline().replace('.', '').strip()
 else:
 	print '''
 ************************************* Error ***********************************
@@ -390,6 +390,12 @@ else:
 		env.AppendUnique(LINKFLAGS = [cpu_flag])
 		env.AppendUnique(LIBS = 'm')
 	env.Replace(ARCOM = '$AR ' + platform_info.get('compiler.ar.flags') + ' $TARGET $SOURCES')
+
+# Make sure the .d files are removed when clean the build
+if env.GetOption('clean'):
+	dfs = __search_files(env.get('BUILD_DIR'), '*.d')
+	for df in dfs:
+		Execute(Delete(df))
 
 env.AddMethod(__import_lib, "ImportLib") #import arduino library
 env.AddMethod(__build_core, "BuildCore") #build arduino core
