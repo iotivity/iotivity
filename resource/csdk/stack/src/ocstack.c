@@ -2255,8 +2255,6 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     // TODO:  Does resource attribute resentation really have to be maintained in stack?
     // Is it presented during resource discovery?
 
-    //TODO ("Make sure that the resourcetypename doesn't already exist in the resource");
-
     // Create the resourcetype and insert it into the resource list
     pointer = (OCResourceType *) OCCalloc(1, sizeof(OCResourceType));
     if (!pointer)
@@ -3273,33 +3271,43 @@ void deleteResourceInterface(OCResourceInterface *resourceInterface)
 
 /**
  * Insert a resource type into a resource's resource type linked list.
- *
+ * If resource type already exists, it will not be inserted and the
+ * resourceType will be free'd.
+ * resourceType->next should be null to avoid memory leaks.
+ * Function returns silently for null args..
  * @param resource - resource where resource type is to be inserted
  * @param resourceType - resource type to be inserted
  */
 void insertResourceType(OCResource *resource, OCResourceType *resourceType)
 {
     OCResourceType *pointer = NULL;
-
-    if (resource && !resource->rsrcType)
+    OCResourceType *previous = NULL;
+    if (!resource || !resourceType)
+    {
+        return;
+    }
+    // resource type list is empty.
+    else if (!resource->rsrcType)
     {
         resource->rsrcType = resourceType;
     }
     else
     {
-        if(resource)
+        pointer = resource->rsrcType;
+
+        while (pointer)
         {
-            pointer = resource->rsrcType;
-        }
-        else
-        {
-            pointer = resourceType;
-        }
-        while (pointer->next)
-        {
+            // resource type already exists. Free 2nd arg and return.
+            if (!strcmp(resourceType->resourcetypename, pointer->resourcetypename))
+            {
+                OCFree(resourceType->resourcetypename);
+                OCFree(resourceType);
+                return;
+            }
+            previous = pointer;
             pointer = pointer->next;
         }
-        pointer->next = resourceType;
+        previous->next = resourceType;
     }
     resourceType->next = NULL;
 }
@@ -3372,7 +3380,9 @@ OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char *
 }
 /**
  * Insert a resource interface into a resource's resource interface linked list.
- *
+ * If resource interface already exists, it will not be inserted and the
+ * resourceInterface will be free'd.
+ * resourceInterface->next should be null to avoid memory leaks.
  * @param resource - resource where resource interface is to be inserted
  * @param resourceInterface - resource interface to be inserted
  */
@@ -3380,6 +3390,8 @@ void insertResourceInterface(OCResource *resource,
         OCResourceInterface *resourceInterface)
 {
     OCResourceInterface *pointer = NULL;
+    OCResourceInterface *previous = NULL;
+
     if (!resource->rsrcInterface)
     {
         resource->rsrcInterface = resourceInterface;
@@ -3387,11 +3399,19 @@ void insertResourceInterface(OCResource *resource,
     else
     {
         pointer = resource->rsrcInterface;
-        while (pointer->next)
+        while (pointer)
         {
+            // resource type already exists. Free 2nd arg and return.
+            if (!strcmp(resourceInterface->name, pointer->name))
+            {
+                OCFree(resourceInterface->name);
+                OCFree(resourceInterface);
+                return;
+            }
+            previous = pointer;
             pointer = pointer->next;
         }
-        pointer->next = resourceInterface;
+        previous->next = resourceInterface;
     }
     resourceInterface->next = NULL;
 }
