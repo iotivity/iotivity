@@ -44,11 +44,11 @@ public class QueryEngine
         }
 
         /**
-         * @fn     GetQueryEngineInstance
-         * @brief Obtain the instance value of the called query engine object,
+         * Obtain the instance value of the called query engine object,
          *          this value is set on creation of the QueryEngine object
          *
          * @return int - Instance of the query engine object, set on object's creation
+         * 
          */
         public int GetQueryEngineInstance()
         {
@@ -56,13 +56,14 @@ public class QueryEngine
         }
 
         /**
-         * @fn     ExecuteContextQuery
-         * @brief Execute the query with the QueryEngine and return the generated ContextQuery ID
-         *          for the query string.
+         * Execute the query with the QueryEngine and return ContextQuery ID
+         *            for the query
          *
-         * @param [in] contextQuery - query string to execute
+         * @param contextQuery 
+         *               - query string to be executed
          *
-         * @return int - generated ID for the ContextQuery string
+         * @return int - ID of context query executed
+         * 
          */
         public int ExecuteContextQuery(String contextQuery) throws Exception
         {
@@ -71,12 +72,13 @@ public class QueryEngine
         }
 
         /**
-         * @fn     RegisterQueryEvent
-         * @brief Register QueryEngineEvent to the QueryEngine.
+         * Register QueryEngineEvent to QueryEngine
          *
-         * @param [in] queryEngineEvent - the event to register with QueryEngine
+         * @param queryEngineEvent 
+         *               - the event to register with QueryEngine
          *
          * @return void
+         * 
          */
         public void RegisterQueryEvent(IQueryEngineEvent queryEngineEvent)
         {
@@ -85,13 +87,13 @@ public class QueryEngine
         }
 
         /**
-         * @fn    KillContextQuery
-         * @brief Kill the registered ContextQuery corresponding to the  to cqid
+         * Kill the registered ContextQuery corresponding to the  to cqid
          *
-         * @param [in] cqid - ContextQuery ID of the query to be terminated.
-         *                   This ID was generated on execution of the query
+         * @param cqid 
+         *              - ContextQuery ID of the query to be terminated
          *
          * @return void
+         * 
          */
         public void KillContextQuery(int cqid) throws Exception
         {

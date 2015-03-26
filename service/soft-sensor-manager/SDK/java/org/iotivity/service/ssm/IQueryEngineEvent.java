@@ -23,9 +23,10 @@
  * @brief    This file provides a class that represents Query Engine's event that contains results
  *
  */
+
 package org.iotivity.service.ssm;
 
-/**
+    /**
     * @class    IQueryEngineEvent
     * @brief    This is an interface class for sample applications.It handles the response from
     *            SSMCore received asynchronously on making a query with the SSMCore.
@@ -33,8 +34,7 @@ package org.iotivity.service.ssm;
     *            The Application should call registerQuery() and add a listener.
     *
     *
-    *<pre>
-    *Sample code :
+    Sample code :
 
         int cqid = SoftSensorManager.registerQuery(edtQuery.getText().toString(), mQueryEngineEventListener);
         mRunningQueries.add(cqid);
@@ -61,23 +61,23 @@ package org.iotivity.service.ssm;
                 }
         }
         };
-    </pre>
     */
 public abstract class IQueryEngineEvent
 {
 
         /**
-                  * @fn     OnQueryEngineEvent
-                  * @brief Transmits result of SSMCore to Application layer
-                  *     This abstract method needs to be implemeted by application
-                  *     as a precondition for query engine implementation.
-                  *
-                  * @param [in] cqid - ContextQuery ID of the registered query
-                  *
-                  * @param [in] result - data received from SSMCore
-                  *
-                  * @return void
-                  *
-                  */
+         * Transmits result of SSMCore to Application layer
+         *     This abstract method needs to be implemeted by application
+         *     as a precondition for query engine implementation.
+         *
+         * @param cqid 
+         *              - ContextQuery ID of the registered query
+         *
+         * @param result 
+         *              - data received from SSMCore
+         *
+         * @return void
+         *
+         */
         public abstract void OnQueryEngineEvent(int cqid, DataReader result);
 }

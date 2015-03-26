@@ -35,19 +35,17 @@ package org.iotivity.service.ssm;
  */
 public abstract class IReportReceiver
 {
-
         /**
-        * @fn    OnMessageReceived
-        * @brief Handle response on receiving message
-        *       This abstract method needs to be implemeted by application
-           *        as a precondition for query engine implementation.
-        *
-        * @param [in] tag
-        *
-        * @param [in] msg - received message
-        *
-        *
-        * @return void
-        */
+         * Handle response on receiving message
+         *       This abstract method needs to be implemeted by application
+         *        as a precondition for query engine implementation.
+         *
+         * @param tag
+         *
+         * @param msg - received message
+         *
+         * @return void
+         * 
+         */
         public abstract void OnMessageReceived(String tag, String msg);
 }

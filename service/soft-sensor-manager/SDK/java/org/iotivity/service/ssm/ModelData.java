@@ -28,11 +28,11 @@
 package org.iotivity.service.ssm;
 
 /**
-  * @class    ModelData
-  * @brief    This class provides a set of API for DataReader class to handle the data
-  *         received by IQueryEngineEvent listeners from SSMCore
-  *
-  */
+ * @class    ModelData
+ * @brief    This class provides a set of API for DataReader class to handle the data
+ *         received by IQueryEngineEvent listeners from SSMCore
+ *
+ */
 public class ModelData
 {
 
@@ -44,25 +44,24 @@ public class ModelData
         }
 
         /**
-            * @fn     GetDataId
-            * @brief Get the affected DataId - ContextModel has plenty of data so the
-            *            returned data is matched fom given condition and returned,
-            *        which in this case is the model data object instance
-            *
-            * @return int - the affected DataId
-            */
+         * Get the affected DataId. ContextModel has plenty of data so returned data is matched 
+         *               from given condition which in this case is the model data object instance
+         *
+         * @return int - the affected DataId
+         * 
+         */
         public int GetDataId()
         {
             return CoreController.getInstance().GetDataId(pIModelDataInstance);
         }
 
         /**
-            * @fn     GetPropertyCount
-            * @brief ContextModel has at least one property that contains data \n
-            *         the property is described from its specification.
-            *
-            * @return int -the property count
-            */
+         * ContextModel has at least one property that contains data \n
+         *           property is described from its specification.
+         *
+         * @return int - number of properties
+         * 
+         */
         public int GetPropertyCount()
         {
             return CoreController.getInstance().GetPropertyCount(
@@ -70,13 +69,14 @@ public class ModelData
         }
 
         /**
-            * @fn     GetPropertyName
-            * @brief Retrieve the name of the property using the given index value
-            *
-            * @param [in] propertyIndex - index of property to read
-            *
-            * @return String - the property name
-            */
+         * Retrieve the name of the property using the given index
+         *
+         * @param propertyIndex 
+         *               - index of property to read
+         *
+         * @return String - property name
+         * 
+         */
         public String GetPropertyName(int propertyIndex)
         {
             return CoreController.getInstance().GetPropertyName(
@@ -84,13 +84,14 @@ public class ModelData
         }
 
         /**
-            * @fn     GetPropertyValue
-            * @brief Retrieve the value of the property using the given index value
-            *
-            * @param [in] propertyIndex - index of property to read
-            *
-            * @return String - the property value
-            */
+         * Retrieve the value of the property using the given index
+         *
+         * @param propertyIndex 
+         *               - index of property to read
+         *
+         * @return String - property value
+         * 
+         */
         public String GetPropertyValue(int propertyIndex)
         {
             return CoreController.getInstance().GetPropertyValue(
