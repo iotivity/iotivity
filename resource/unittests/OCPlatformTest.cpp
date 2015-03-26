@@ -106,6 +106,7 @@ namespace OCPlatformTest
 
     //Configure
     // Enable it when the stack throw an exception
+    // https://jira.iotivity.org/browse/IOT-428
     TEST(ConfigureTest, DISABLED_ConfigureInvalidModeType)
     {
         PlatformConfig cfg {
@@ -115,11 +116,12 @@ namespace OCPlatformTest
              0,
              OC::QualityOfService::LowQos
          };
-
+         OCPlatform::Configure(cfg);
          EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
      }
 
     // Enable it when the stack throw an exception
+    // https://jira.iotivity.org/browse/IOT-428
     TEST(ConfigureTest, DISABLED_ConfigureInvalidServiceType)
     {
         PlatformConfig cfg {
@@ -129,11 +131,12 @@ namespace OCPlatformTest
              0,
              OC::QualityOfService::LowQos
          };
-
+         OCPlatform::Configure(cfg);
          EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
      }
 
     // Enable it when the stack throw an exception
+    // https://jira.iotivity.org/browse/IOT-428
     TEST(ConfigureTest, DISABLED_ConfigureClientOutProc)
     {
         PlatformConfig cfg {
@@ -147,7 +150,6 @@ namespace OCPlatformTest
         std::string type = "core.light";
         uint8_t gResourceProperty = 0;
         OCPlatform::Configure(cfg);
-
         EXPECT_ANY_THROW(OCPlatform::registerResource(
              resourceHandle, uri, type,
              gResourceInterface, entityHandler, gResourceProperty));
