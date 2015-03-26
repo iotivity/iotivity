@@ -660,7 +660,7 @@ OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resou
 }
 
 OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resource,
-        std::string actionsetName, long int delay, PostCallback cb)
+        std::string actionsetName, unsigned int delay, PostCallback cb)
 {
     if(delay == 0 )
     {

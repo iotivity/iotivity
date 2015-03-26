@@ -193,7 +193,7 @@ namespace OIC
         return g_groupManager->executeActionSet(resource, actionsetName, cb);
     }
     OCStackResult ThingsManager::executeActionSet(std::shared_ptr< OCResource > resource,
-                    std::string actionsetName, long int delay, PostCallback cb)
+                    std::string actionsetName, unsigned int delay, PostCallback cb)
     {
         return g_groupManager->executeActionSet(resource, actionsetName, delay, cb);
     }

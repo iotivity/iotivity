@@ -413,7 +413,7 @@ namespace OIC
          * NOTE: OCStackResult is defined in ocstack.h.
          */
         OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
-                std::string actionsetName, long int delay, PostCallback cb);
+                std::string actionsetName, unsigned int delay, PostCallback cb);
 
         /**
          * API for canceling an existing action set.
