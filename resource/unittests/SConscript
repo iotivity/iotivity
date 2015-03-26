@@ -67,7 +67,8 @@ unittests = unittests_env.Program('unittests', ['ConstructResourceTest.cpp',
                                                 'OCPlatformTest.cpp',
                                                 'OCRepresentationTest.cpp',
                                                 'OCResourceTest.cpp',
-                                                'OCExceptionTest.cpp'])
+                                                'OCExceptionTest.cpp',
+                                                'OCHeaderOptionTest.cpp'])
 
 Alias("unittests", [unittests])
 
