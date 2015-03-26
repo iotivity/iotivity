@@ -26,49 +26,201 @@ namespace OCPlatformTest
 {
     using namespace OC;
 
+    const OCResourceHandle HANDLE_ZERO = 0;
+    const std::string gResourceTypeName = "core.res";
+    const std::string gResourceInterface = DEFAULT_INTERFACE;
+    const uint8_t gResourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
+    OCResourceHandle resourceHandle;
+
     // Callbacks
     OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     {
         return OC_EH_OK;
     }
 
-    const OCResourceHandle HANDLE_ZERO = 0;
-
-    PlatformConfig cfg;
-
     void foundResource(std::shared_ptr<OCResource> resource)
     {
     }
 
-    std::string resourceURI;
-    std::string resourceTypeName = "core.res";
-    std::string resourceInterface = DEFAULT_INTERFACE;
-    uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
-    OCResourceHandle resourceHandle;
+    void receivedDeviceInfo(const OCRepresentation& rep)
+    {
+    }
+
+    void presenceHandler(OCStackResult result,
+            const unsigned int nonce, const std::string& hostAddress)
+    {
+    }
 
     //Helper methods
+    void DeleteDeviceInfo(OCDeviceInfo deviceInfo)
+    {
+        delete[] deviceInfo.contentType;
+        delete[] deviceInfo.dateOfManufacture;
+        delete[] deviceInfo.deviceName;
+        delete[] deviceInfo.deviceUUID;
+        delete[] deviceInfo.firmwareVersion;
+        delete[] deviceInfo.hostName;
+        delete[] deviceInfo.manufacturerName;
+        delete[] deviceInfo.manufacturerUrl;
+        delete[] deviceInfo.modelNumber;
+        delete[] deviceInfo.platformVersion;
+        delete[] deviceInfo.supportUrl;
+        delete[] deviceInfo.version;
+    }
+
+    void DuplicateString(char ** targetString, std::string sourceString)
+    {
+        *targetString = new char[sourceString.length() + 1];
+        strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+    }
+
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)
     {
+        PlatformConfig cfg = {};
+        OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK,OCPlatform::registerResource(
                                         resourceHandle, uri, type,
-                                        iface, entityHandler, resourceProperty));
+                                        iface, entityHandler, gResourceProperty));
         return resourceHandle;
     }
 
     OCResourceHandle RegisterResource(std::string uri, std::string type)
     {
+        PlatformConfig cfg = {};
+        OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                                         resourceHandle, uri, type,
-                                        resourceInterface, entityHandler, resourceProperty));
+                                        gResourceInterface, entityHandler, gResourceProperty));
         return resourceHandle;
     }
 
     OCResourceHandle RegisterResource(std::string uri)
     {
+        PlatformConfig cfg = {};
+        OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
-                                        resourceHandle, uri, resourceTypeName,
-                                        resourceInterface, entityHandler, resourceProperty));
+                                        resourceHandle, uri, gResourceTypeName,
+                                        gResourceInterface, entityHandler, gResourceProperty));
         return resourceHandle;
+    }
+
+    //Configure
+    // Enable it when the stack throw an exception
+    TEST(ConfigureTest, DISABLED_ConfigureInvalidModeType)
+    {
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+            (OC::ModeType)99,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos
+         };
+
+         EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
+     }
+
+    // Enable it when the stack throw an exception
+    TEST(ConfigureTest, DISABLED_ConfigureInvalidServiceType)
+    {
+        PlatformConfig cfg {
+             (OC::ServiceType)99,
+            OC::ModeType::Client,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos
+         };
+
+         EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
+     }
+
+    // Enable it when the stack throw an exception
+    TEST(ConfigureTest, DISABLED_ConfigureClientOutProc)
+    {
+        PlatformConfig cfg {
+            OC::ServiceType::OutOfProc,
+            OC::ModeType::Client,
+            "0.0.0.0",
+            0,
+            OC::QualityOfService::LowQos
+        };
+        std::string uri = "/a/light66";
+        std::string type = "core.light";
+        uint8_t gResourceProperty = 0;
+        OCPlatform::Configure(cfg);
+
+        EXPECT_ANY_THROW(OCPlatform::registerResource(
+             resourceHandle, uri, type,
+             gResourceInterface, entityHandler, gResourceProperty));
+    }
+
+    TEST(ConfigureTest, ConfigureServerOutProc)
+    {
+        PlatformConfig cfg {
+            OC::ServiceType::OutOfProc,
+            OC::ModeType::Server,
+            "0.0.0.0",
+            0,
+            OC::QualityOfService::LowQos
+        };
+        std::string uri = "/a/light67";
+        std::string type = "core.light";
+        uint8_t gResourceProperty = 0;
+        OCPlatform::Configure(cfg);
+
+        EXPECT_ANY_THROW(OCPlatform::registerResource(
+             resourceHandle, uri, type,
+             gResourceInterface, entityHandler, gResourceProperty));
+    }
+
+    TEST(ConfigureTest, ConfigureDefault)
+    {
+        std::string uri = "/a/light68";
+        std::string type = "core.light";
+        uint8_t gResourceProperty = 0;
+        PlatformConfig cfg = {};
+        OCPlatform::Configure(cfg);
+
+        EXPECT_NO_THROW(OCPlatform::registerResource(
+                 resourceHandle, uri, type,
+                 gResourceInterface, entityHandler, gResourceProperty));
+    }
+
+    TEST(ConfigureTest, ConfigureServer)
+    {
+        std::string uri = "/a/light69";
+        std::string type = "core.light";
+        uint8_t gResourceProperty = 0;
+        PlatformConfig cfg {
+            OC::ServiceType::InProc,
+            OC::ModeType::Server,
+            "0.0.0.0",
+            0,
+            OC::QualityOfService::LowQos
+        };
+        OCPlatform::Configure(cfg);
+
+        EXPECT_NO_THROW(OCPlatform::registerResource(
+                 resourceHandle, uri, type,
+                 gResourceInterface, entityHandler, gResourceProperty));
+    }
+
+    TEST(ConfigureTest, ConfigureClient)
+    {
+        std::string uri = "/a/light70";
+        std::string type = "core.light";
+        uint8_t gResourceProperty = 0;
+        PlatformConfig cfg {
+            OC::ServiceType::InProc,
+            OC::ModeType::Client,
+            "0.0.0.0",
+            0,
+            OC::QualityOfService::LowQos
+        };
+        OCPlatform::Configure(cfg);
+
+        EXPECT_NO_THROW(OCPlatform::registerResource(
+                 resourceHandle, uri, type,
+                 gResourceInterface, entityHandler, gResourceProperty));
     }
 
     //RegisterResourceTest
@@ -105,17 +257,17 @@ namespace OCPlatformTest
         // We should not allow empty URI.
         std::string emptyStr = "";
         EXPECT_ANY_THROW(OCPlatform::registerResource(resourceHandle, emptyStr, emptyStr,
-                                        emptyStr, entityHandler, resourceProperty));
+                                        emptyStr, entityHandler, gResourceProperty));
     }
 
     TEST(RegisterResourceTest, RegisterZeroResourceProperty)
     {
         std::string uri = "/a/light6";
         std::string type = "core.light";
-        uint8_t resourceProperty = 0;
+        uint8_t gResourceProperty = 0;
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                 resourceHandle, uri, type,
-                resourceInterface, entityHandler, resourceProperty));
+                gResourceInterface, entityHandler, gResourceProperty));
     }
 
     //UnregisterTest
@@ -218,14 +370,46 @@ namespace OCPlatformTest
     //NotifyAllObserverTest
     TEST(NotifyAllObserverTest, NotifyAllObservers)
     {
-        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs"),
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs1"),
             std::string("core.obs"));
         EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome));
     }
 
-    TEST(NotifyAllObserverTest, NotifyListOfObservers)
+    TEST(NotifyAllObserverTest, NotifyAllObserversWithLowQos)
     {
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs2"),
+            std::string("core.obs"));
+        EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome,
+                OC::QualityOfService::LowQos));
+    }
+
+    TEST(NotifyAllObserverTest, NotifyAllObserversWithMidQos)
+    {
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs3"),
+            std::string("core.obs"));
+        EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome,
+                OC::QualityOfService::MidQos));
+    }
+
+    TEST(NotifyAllObserverTest, NotifyAllObserversWithNaQos)
+    {
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs4"),
+            std::string("core.obs"));
+        EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome,
+                OC::QualityOfService::NaQos));
+    }
+
+    TEST(NotifyAllObserverTest, NotifyAllObserversWithHighQos)
+    {
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs5"),
+            std::string("core.obs"));
+        EXPECT_EQ(OC_STACK_NO_OBSERVERS, OCPlatform::notifyAllObservers(resourceHome,
+                OC::QualityOfService::HighQos));
+    }
+
+    TEST(NotifyAllObserverTest, NotifyListOfObservers)
+    {
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs6"),
             std::string("core.obs"));
 
         std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
@@ -234,10 +418,308 @@ namespace OCPlatformTest
             interestedObservers, resourceResponse));
     }
 
+    TEST(NotifyAllObserverTest, NotifyListOfObserversWithLowQos)
+    {
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs7"),
+            std::string("core.obs"));
+
+        std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
+        ObservationIds interestedObservers;
+        EXPECT_ANY_THROW(OCPlatform::notifyListOfObservers(resourceHome,
+            interestedObservers, resourceResponse,OC::QualityOfService::LowQos));
+    }
+
+    TEST(NotifyAllObserverTest, NotifyListOfObserversWithMidQos)
+    {
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs8"),
+            std::string("core.obs"));
+
+        std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
+        ObservationIds interestedObservers;
+        EXPECT_ANY_THROW(OCPlatform::notifyListOfObservers(resourceHome,
+            interestedObservers, resourceResponse,OC::QualityOfService::MidQos));
+    }
+
+    TEST(NotifyAllObserverTest, NotifyListOfObserversWithNaQos)
+    {
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs9"),
+            std::string("core.obs"));
+
+        std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
+        ObservationIds interestedObservers;
+        EXPECT_ANY_THROW(OCPlatform::notifyListOfObservers(resourceHome,
+            interestedObservers, resourceResponse,OC::QualityOfService::NaQos));
+    }
+
+    TEST(NotifyAllObserverTest, NotifyListOfObserversWithHighQos)
+    {
+        OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs10"),
+            std::string("core.obs"));
+
+        std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
+        ObservationIds interestedObservers;
+        EXPECT_ANY_THROW(OCPlatform::notifyListOfObservers(resourceHome,
+            interestedObservers, resourceResponse,OC::QualityOfService::HighQos));
+    }
+
     //DeviceEntityHandlerTest
     TEST(DeviceEntityHandlerTest, SetDefaultDeviceEntityHandler)
     {
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setDefaultDeviceEntityHandler(entityHandler));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setDefaultDeviceEntityHandler(NULL));
     }
+
+
+    //FindResource test
+    TEST(FindResourceTest, FindResourceValid)
+    {
+      std::ostringstream requestURI;
+      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      EXPECT_EQ(OC_STACK_OK, OCPlatform::findResource("", requestURI.str(),
+              OC_WIFI, &foundResource));
+    }
+
+    TEST(FindResourceTest, FindResourceNullResourceURI)
+    {
+      EXPECT_ANY_THROW(OCPlatform::findResource("", nullptr,
+              OC_WIFI, &foundResource));
+    }
+
+    TEST(FindResourceTest, FindResourceNullResourceURI1)
+    {
+      std::ostringstream requestURI;
+      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
+              OC_WIFI, &foundResource));
+    }
+
+    TEST(FindResourceTest, FindResourceNullHost)
+    {
+      std::ostringstream requestURI;
+      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
+              OC_WIFI, &foundResource));
+    }
+
+    TEST(FindResourceTest, FindResourceNullresourceHandler)
+    {
+      std::ostringstream requestURI;
+      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      EXPECT_EQ(OC_STACK_OK, OCPlatform::findResource("", requestURI.str(),
+              OC_WIFI, NULL));
+    }
+
+    TEST(FindResourceTest, FindResourceWithLowQoS)
+    {
+        std::ostringstream requestURI;
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::findResource("", requestURI.str(), OC_WIFI, &foundResource,
+                        OC::QualityOfService::LowQos));
+    }
+
+    TEST(FindResourceTest, FindResourceWithMidQos)
+    {
+        std::ostringstream requestURI;
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::findResource("", requestURI.str(), OC_WIFI, &foundResource,
+                        OC::QualityOfService::MidQos));
+    }
+
+    //We will enable it when CON is supported in the stack
+    TEST(FindResourceTest, DISABLED_FindResourceWithHighQos)
+    {
+        std::ostringstream requestURI;
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::findResource("", requestURI.str(), OC_WIFI, &foundResource,
+                        OC::QualityOfService::HighQos));
+    }
+
+    TEST(FindResourceTest, FindResourceWithNaQos)
+    {
+        std::ostringstream requestURI;
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::findResource("", requestURI.str(), OC_WIFI, &foundResource,
+                        OC::QualityOfService::NaQos));
+    }
+
+    //GetDeviceInfo Test
+    TEST(GetDeviceInfoTest, GetDeviceInfoWithValidParameters)
+    {
+        std::string deviceDiscoveryURI = "/oc/core/d";
+        PlatformConfig cfg;
+        OCPlatform::Configure(cfg);
+        std::ostringstream requestURI;
+        requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::getDeviceInfo("", requestURI.str(), OC_WIFI, &receivedDeviceInfo));
+    }
+
+    TEST(GetDeviceInfoTest, GetDeviceInfoNullDeviceURI)
+    {
+        PlatformConfig cfg;
+        OCPlatform::Configure(cfg);
+        EXPECT_ANY_THROW(
+                OCPlatform::getDeviceInfo("", nullptr, OC_WIFI, &receivedDeviceInfo));
+    }
+
+    TEST(GetDeviceInfoTest, GetDeviceInfoWithNullDeviceInfoHandler)
+    {
+        std::string deviceDiscoveryURI = "/oc/core/d";
+        PlatformConfig cfg;
+        OCPlatform::Configure(cfg);
+        std::ostringstream requestURI;
+        requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::getDeviceInfo("", requestURI.str(), OC_WIFI, NULL));
+    }
+
+    TEST(GetDeviceInfoTest, GetDeviceInfoWithLowQos)
+    {
+        std::string deviceDiscoveryURI = "/oc/core/d";
+        PlatformConfig cfg;
+        OCPlatform::Configure(cfg);
+        std::ostringstream requestURI;
+        requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::getDeviceInfo("", requestURI.str(), OC_WIFI, &receivedDeviceInfo,
+                        OC::QualityOfService::LowQos));
+    }
+
+    TEST(GetDeviceInfoTest, GetDeviceInfoWithMidQos)
+    {
+        std::string deviceDiscoveryURI = "/oc/core/d";
+        PlatformConfig cfg;
+        OCPlatform::Configure(cfg);
+        std::ostringstream requestURI;
+        requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::getDeviceInfo("", requestURI.str(), OC_WIFI, &receivedDeviceInfo,
+                        OC::QualityOfService::MidQos));
+    }
+
+    //We will enable it when CON is supported in the stack
+    TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithHighQos)
+    {
+        std::string deviceDiscoveryURI = "/oc/core/d";
+        PlatformConfig cfg;
+        OCPlatform::Configure(cfg);
+        std::ostringstream requestURI;
+        requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::getDeviceInfo("", requestURI.str(), OC_WIFI, &receivedDeviceInfo,
+                        OC::QualityOfService::HighQos));
+    }
+
+    TEST(GetDeviceInfoTest, GetDeviceInfoWithNaQos)
+    {
+        std::string deviceDiscoveryURI = "/oc/core/d";
+        PlatformConfig cfg;
+        OCPlatform::Configure(cfg);
+        std::ostringstream requestURI;
+        requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
+        EXPECT_EQ(OC_STACK_OK,
+                OCPlatform::getDeviceInfo("", requestURI.str(), OC_WIFI, &receivedDeviceInfo,
+                        OC::QualityOfService::NaQos));
+    }
+
+    //RegisterDeviceInfo test
+    TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithValidParameters)
+    {
+        OCDeviceInfo deviceInfo;
+
+        DuplicateString(&deviceInfo.contentType, "myContentType");
+        DuplicateString(&deviceInfo.dateOfManufacture, "myDateOfManufacture");
+        DuplicateString(&deviceInfo.deviceName, "myDeviceName");
+        DuplicateString(&deviceInfo.deviceUUID, "myDeviceUUID");
+        DuplicateString(&deviceInfo.firmwareVersion, "myFirmwareVersion");
+        DuplicateString(&deviceInfo.hostName, "myHostName");
+        DuplicateString(&deviceInfo.manufacturerName, "myManufacturerNa");
+        DuplicateString(&deviceInfo.manufacturerUrl, "myManufacturerUrl");
+        DuplicateString(&deviceInfo.modelNumber, "myModelNumber");
+        DuplicateString(&deviceInfo.platformVersion, "myPlatformVersion");
+        DuplicateString(&deviceInfo.supportUrl, "mySupportUrl");
+        DuplicateString(&deviceInfo.version, "myVersion");
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo));
+        EXPECT_NO_THROW(DeleteDeviceInfo(deviceInfo));
+    }
+
+    TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithEmptyObject)
+    {
+        OCDeviceInfo di = {};
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(di));
+    }
+
+    //SubscribePresence Test
+    TEST(SubscribePresenceTest,SubscribePresenceWithValidParameters)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                 OC_WIFI, &presenceHandler));
+    }
+
+    TEST(SubscribePresenceTest,SubscribePresenceWithNullHost)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+
+        EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle, nullptr,
+                 OC_WIFI, &presenceHandler));
+    }
+
+    TEST(SubscribePresenceTest,SubscribePresenceWithNullPresenceHandler)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+
+        EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle, nullptr,
+                 OC_WIFI, NULL));
+    }
+
+    TEST(SubscribePresenceTest,SubscribePresenceWithResourceType)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
+                OC_MULTICAST_IP, "core.light", OC_WIFI, &presenceHandler));
+    }
+
+    TEST(SubscribePresenceTest,SubscribePresenceWithNullResourceType)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+
+        EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle,
+                OC_MULTICAST_IP, nullptr, OC_WIFI, &presenceHandler));
+    }
+
+    //UnsubscribePresence Test
+    //We will enable it after fixing double free or corruption
+    TEST(SubscribePresenceTest, DISABLED_UnsubscribePresenceWithValidHandleAndRT)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
+                OC_MULTICAST_IP, "core.light", OC_WIFI, &presenceHandler));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+    }
+
+    TEST(SubscribePresenceTest, UnsubscribePresenceWithNullHandle)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        EXPECT_ANY_THROW(OCPlatform::unsubscribePresence(presenceHandle));
+    }
+
+    TEST(SubscribePresenceTest, UnsubscribePresenceWithValidHandle)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
+                OC_MULTICAST_IP, OC_WIFI, &presenceHandler));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+    }
+
 }
