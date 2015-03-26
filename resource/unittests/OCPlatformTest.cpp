@@ -698,9 +698,7 @@ namespace OCPlatformTest
                 OC_MULTICAST_IP, nullptr, OC_WIFI, &presenceHandler));
     }
 
-    //UnsubscribePresence Test
-    //We will enable it after fixing double free or corruption
-    TEST(SubscribePresenceTest, DISABLED_UnsubscribePresenceWithValidHandleAndRT)
+    TEST(SubscribePresenceTest, UnsubscribePresenceWithValidHandleAndRT)
     {
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 

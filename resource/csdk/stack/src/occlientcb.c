@@ -90,15 +90,21 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         OCFree(*token);
         OCFree(*handle);
         OCFree(requestUri);
-        OCFree(resourceTypeName);
         *handle = cbNode->handle;
     }
 
     #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE && resourceTypeName)
-    {   // Amend the found or created node by adding a new resourceType to it.
+    {
+        // Amend the found or created node by adding a new resourceType to it.
         return InsertResourceTypeFilter(cbNode, resourceTypeName);
     }
+    else
+    {
+        OCFree(resourceTypeName);
+    }
+    #else
+    OCFree(resourceTypeName);
     #endif
 
     return OC_STACK_OK;
