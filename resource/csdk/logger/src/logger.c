@@ -33,7 +33,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__
     static android_LogPriority LEVEL[] = {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
-#elif defined __linux__
+#elif defined(__linux__) || defined(__APPLE__)
     static const char * LEVEL[] __attribute__ ((unused)) = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
     #include <stdarg.h>
@@ -70,7 +70,7 @@ void OCLogInit() {
 }
 
 void OCLogShutdown() {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
     if (logCtx && logCtx->destroy)
     {
         logCtx->destroy(logCtx);
@@ -114,11 +114,10 @@ void OCLog(LogLevel level, const char * tag, const char * logStr) {
 
     #ifdef __ANDROID__
         __android_log_write(LEVEL[level], tag, logStr);
-    #elif defined __linux__
+    #elif defined(__linux__) || defined(__APPLE__)
         if (logCtx && logCtx->write_level)
         {
             logCtx->write_level(logCtx, LEVEL_XTABLE[level], logStr);
-
         }
         else
         {

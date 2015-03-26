@@ -307,7 +307,7 @@ int main(int argc, char* argv[])
     /*Get Ip address on defined interface and initialize coap on it with random port number
      * this port number will be used as a source port in all coap communications*/
     if ( OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr,
-                sizeof(addr)) == ERR_SUCCESS)
+                sizeof(addr)) == OC_ERR_SUCCESS)
     {
         OC_LOG_V(INFO, TAG, "Starting ocserver on address %s:%d",addr,port);
         paddr = addr;

@@ -101,10 +101,10 @@ void SendReceiveTest()
     uint8_t buf[MAX_BUF_SIZE];
     uint16_t recvPort;
 
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), OC_ERR_SUCCESS);
     VERIFY_SUCCESS(OCBuildIPv4Address(PEER_IP_ADDR[0], PEER_IP_ADDR[1],
-                PEER_IP_ADDR[2], PEER_IP_ADDR[3], TEST_PORT_NUM, &peerAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd), ERR_SUCCESS);
+                PEER_IP_ADDR[2], PEER_IP_ADDR[3], TEST_PORT_NUM, &peerAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("Peer Addr :"));
     OC_LOG_BUFFER(INFO, MOD_NAME, peerAddr.addr, peerAddr.size);
     for (int i = 0; i < 300; i++)
@@ -149,7 +149,7 @@ void SendReceiveTest()
 
         }
     }
-    VERIFY_SUCCESS(OCClose( sfd), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("WifiTest - Completed"));
 
 }

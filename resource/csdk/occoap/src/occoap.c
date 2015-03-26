@@ -954,7 +954,7 @@ OCStackResult OCGetResourceEndPointInfo (OCResource *resPtr, void *info) {
     sfd = (resPtr->resourceProperties & OC_SECURE) ? gCoAPCtx->sockfd_dtls :
             gCoAPCtx->sockfd;
 
-    if (OCGetSocketInfo(sfd, (uint16_t*)info) == ERR_SUCCESS)
+    if (OCGetSocketInfo(sfd, (uint16_t*)info) == OC_ERR_SUCCESS)
         result = OC_STACK_OK;
 exit:
     return result;

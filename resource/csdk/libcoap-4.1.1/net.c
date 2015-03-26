@@ -369,7 +369,7 @@ coap_new_context(uint8_t ipAddr[], uint16_t port) {
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     if (OCInitUDP((OCDevAddr *)listen_addr,
-                    (int32_t *)&(c->sockfd), OC_SOCKET_REUSEADDR) != ERR_SUCCESS) {
+                    (int32_t *)&(c->sockfd), OC_SOCKET_REUSEADDR) != OC_ERR_SUCCESS) {
         coap_free( c);
         return NULL;
     }
@@ -453,7 +453,7 @@ int coap_join_wellknown_group(coap_context_t *ctx,
         const coap_address_t *multicast_addr) {
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     if (OCInitUDPMulticast((OCDevAddr *)multicast_addr,
-                    (int32_t *)&(ctx->sockfd_wellknown)) != ERR_SUCCESS) {
+                    (int32_t *)&(ctx->sockfd_wellknown)) != OC_ERR_SUCCESS) {
         return 1;
     }
     return 0;

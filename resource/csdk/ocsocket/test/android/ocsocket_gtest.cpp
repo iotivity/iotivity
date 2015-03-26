@@ -83,13 +83,13 @@ unsigned int buf2_len = sizeof(buf2);
 
 TEST(BuildIPv4, Positive) {
     OCDevAddr ipaddr;
-    EXPECT_EQ(ERR_SUCCESS, OCBuildIPv4Address(224,0,0,251,5353, &ipaddr));
+    EXPECT_EQ(OC_ERR_SUCCESS, OCBuildIPv4Address(224,0,0,251,5353, &ipaddr));
 }
 
 
 TEST(BuildIPv4, InvalidInput) {
-    EXPECT_EQ(ERR_INVALID_INPUT, OCBuildIPv4Address(24,24,24,24,2424, NULL));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCBuildIPv4Address(-24,24,-24,24,2424, NULL));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCBuildIPv4Address(24,24,24,24,2424, NULL));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCBuildIPv4Address(-24,24,-24,24,2424, NULL));
 }
 
 
@@ -98,9 +98,9 @@ TEST(DevAddrToIPv4Addr, Positive) {
     uint8_t  a,b,c,d;
     uint16_t port;
     OCBuildIPv4Address(1,2,3,4,5353, &ipaddr);
-    EXPECT_EQ(ERR_SUCCESS, OCDevAddrToIPv4Addr(&ipaddr, &a, &b, &c, &d ));
+    EXPECT_EQ(OC_ERR_SUCCESS, OCDevAddrToIPv4Addr(&ipaddr, &a, &b, &c, &d ));
     EXPECT_TRUE((a == 1) && (b == 2) && (c == 3) && (d ==4));
-    EXPECT_EQ(ERR_SUCCESS, OCDevAddrToPort(&ipaddr, &port ));
+    EXPECT_EQ(OC_ERR_SUCCESS, OCDevAddrToPort(&ipaddr, &port ));
     EXPECT_TRUE(port == 5353);
 }
 
@@ -110,20 +110,20 @@ TEST(DevAddrToIPv4Addr, InvalidInput) {
     uint8_t  a,b,c,d;
     uint16_t port;
     OCBuildIPv4Address(1,2,3,4,5353, &ipaddr);
-    EXPECT_EQ(ERR_INVALID_INPUT, OCDevAddrToIPv4Addr(NULL, &a, &b, &c, &d ));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCDevAddrToIPv4Addr(&ipaddr, NULL, &b, &c, &d ));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCDevAddrToIPv4Addr(NULL, NULL, &b, &c, &d ));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCDevAddrToIPv4Addr(NULL, &a, &b, &c, &d ));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCDevAddrToIPv4Addr(&ipaddr, NULL, &b, &c, &d ));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCDevAddrToIPv4Addr(NULL, NULL, &b, &c, &d ));
 
-    EXPECT_EQ(ERR_INVALID_INPUT, OCDevAddrToPort(NULL, &port ));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCDevAddrToPort(&ipaddr, NULL ));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCDevAddrToPort(NULL, NULL ));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCDevAddrToPort(NULL, &port ));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCDevAddrToPort(&ipaddr, NULL ));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCDevAddrToPort(NULL, NULL ));
 }
 
 
 TEST(GetInterfaceAddress, Positive) {
     uint8_t addr[20];
     uint8_t ifname[] = "wlan0";
-    EXPECT_EQ(ERR_SUCCESS, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr)));
+    EXPECT_EQ(OC_ERR_SUCCESS, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr)));
     OC_LOG_V(INFO, MOD_NAME, "IPv4 Address: %s\n", addr);
     //On Android, it is MUST to provide interface name
     //EXPECT_EQ(0, get_ipv4addr( NULL, 0, addr, sizeof(addr)));
@@ -132,11 +132,11 @@ TEST(GetInterfaceAddress, Positive) {
 TEST(GetInterfaceAddress, Negative) {
     uint8_t addr[20];
     uint8_t ifname[] = "ethxx";
-    EXPECT_EQ(ERR_INVALID_INPUT, OCGetInterfaceAddress( NULL, 0, AF_INET, addr, sizeof(addr)));
-    EXPECT_EQ(ERR_UNKNOWN, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr)));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, NULL, sizeof(addr)));
-    EXPECT_EQ(ERR_UNKNOWN, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, 0));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCGetInterfaceAddress( ifname, sizeof(ifname),  AF_INET6, addr, sizeof(addr)));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCGetInterfaceAddress( NULL, 0, AF_INET, addr, sizeof(addr)));
+    EXPECT_EQ(OC_ERR_UNKNOWN, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr)));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, NULL, sizeof(addr)));
+    EXPECT_EQ(OC_ERR_UNKNOWN, OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, 0));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCGetInterfaceAddress( ifname, sizeof(ifname),  AF_INET6, addr, sizeof(addr)));
 }
 
 TEST(InitUDP, Positive) {
@@ -147,17 +147,17 @@ TEST(InitUDP, Positive) {
     uint8_t a,b,c,d;
 
     OCBuildIPv4Address(0,0,0,0, 0, &ipaddr);
-    EXPECT_EQ(ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
+    EXPECT_EQ(OC_ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
     OCClose(sockfd);
 
     OCBuildIPv4Address(0,0,0,0, 5678, &ipaddr);
-    EXPECT_EQ(ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
+    EXPECT_EQ(OC_ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
     OCClose(sockfd);
 
     OCGetInterfaceAddress( ifname, sizeof(ifname), AF_INET, addr, sizeof(addr));
     sscanf((const char*)addr, "%d.%d.%d.%d", (int*)&a, (int*)&b, (int*)&c, (int*)&d);
     OCBuildIPv4Address(a,b,c,d, TEST_PORT_NUM, &ipaddr);
-    EXPECT_EQ(ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
+    EXPECT_EQ(OC_ERR_SUCCESS, OCInitUDP(&ipaddr, &sockfd));
     OCClose(sockfd);
 }
 
@@ -167,9 +167,9 @@ TEST(InitUDP, Negative) {
     int32_t  sockfd;
 
     OCBuildIPv4Address(0,0,0,0, 0, &ipaddr);
-    EXPECT_EQ(ERR_INVALID_INPUT, OCInitUDP(NULL, &sockfd));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCInitUDP(NULL, &sockfd));
 
-    EXPECT_EQ(ERR_INVALID_INPUT, OCInitUDP(&ipaddr, NULL));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCInitUDP(&ipaddr, NULL));
 }
 
 
@@ -179,7 +179,7 @@ TEST(InitUDPMulticast, Positive) {
     int32_t sfd;
 
     OCBuildIPv4Address(224, 0, 0, 251, 5353, &ipaddr1); //address to which MEMBERSHIP needs to be added
-    EXPECT_EQ(ERR_SUCCESS, OCInitUDPMulticast(&ipaddr1, &sfd));
+    EXPECT_EQ(OC_ERR_SUCCESS, OCInitUDPMulticast(&ipaddr1, &sfd));
     OCClose(sfd);
 }
 
@@ -189,8 +189,8 @@ TEST(InitUDPMulticast, Negative) {
     int32_t sfd;
 
     OCBuildIPv4Address(224, 0, 0, 251, 5353, &ipaddr1); //address to which MEMBERSHIP needs to be added
-    EXPECT_EQ(ERR_INVALID_INPUT, OCInitUDPMulticast(NULL, &sfd));
-    EXPECT_EQ(ERR_INVALID_INPUT, OCInitUDPMulticast(&ipaddr1, NULL));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCInitUDPMulticast(NULL, &sfd));
+    EXPECT_EQ(OC_ERR_INVALID_INPUT, OCInitUDPMulticast(&ipaddr1, NULL));
 }
 
 
@@ -221,7 +221,7 @@ TEST(SendToRecvfromUnicast, Positive) {
     ipaddr3.size = sizeof(ipaddr3.addr);
     //EXPECT_EQ(buf1_len, OCRecvFrom(rsfd, tmp1, sizeof(tmp1), 0, &ipaddr3));
     //Compare the received buffer with send buffer
-    //EXPECT_EQ(ERR_SUCCESS, memcmp(tmp1, buf1, buf1_len));
+    //EXPECT_EQ(OC_ERR_SUCCESS, memcmp(tmp1, buf1, buf1_len));
 
     //Test 2 -- Send 1 byte
     //Send the packet to ipaddr2(myself:TEST_PORT_NUM)
@@ -230,7 +230,7 @@ TEST(SendToRecvfromUnicast, Positive) {
     ipaddr3.size = sizeof(ipaddr3.addr);
     //EXPECT_EQ( 1, OCRecvFrom(rsfd, tmp1, sizeof(tmp1), 0, &ipaddr3));
     //Compare the received buffer with send buffer
-    //EXPECT_EQ(ERR_SUCCESS, memcmp(tmp1, buf1, 1));
+    //EXPECT_EQ(OC_ERR_SUCCESS, memcmp(tmp1, buf1, 1));
 
     //Test 3 -- Send 320 byte
     //Send the packet to ipaddr2(myself:TEST_PORT_NUM)
@@ -239,7 +239,7 @@ TEST(SendToRecvfromUnicast, Positive) {
     ipaddr3.size = sizeof(ipaddr3.addr);
     //EXPECT_EQ(buf2_len, OCRecvFrom(rsfd, tmp1, sizeof(tmp1), 0, &ipaddr3));
     //Compare the received buffer with send buffer
-    //EXPECT_EQ(ERR_SUCCESS, memcmp(tmp1, buf2, buf2_len));
+    //EXPECT_EQ(OC_ERR_SUCCESS, memcmp(tmp1, buf2, buf2_len));
 
     OCClose(ssfd);
     OCClose(rsfd);
@@ -266,7 +266,7 @@ TEST(SendToRecvfromMulticast, Positive) {
     ipaddr4.size = sizeof(ipaddr4.addr);
     EXPECT_EQ(buf1_len, OCRecvFrom(ssfd, tmp1, sizeof(tmp1), 0, &ipaddr4));
     //Compare the received buffer with send buffer
-    EXPECT_EQ(ERR_SUCCESS, memcmp(tmp1, buf1, buf1_len));
+    EXPECT_EQ(OC_ERR_SUCCESS, memcmp(tmp1, buf1, buf1_len));
 
     //Test 2 -- Send 1 byte
     EXPECT_EQ( 1, OCSendTo(ssfd, buf1, 1, 0, &ipaddr3));
@@ -274,7 +274,7 @@ TEST(SendToRecvfromMulticast, Positive) {
     ipaddr4.size = sizeof(ipaddr4.addr);
     EXPECT_EQ( 1, OCRecvFrom(ssfd, tmp1, sizeof(tmp1), 0, &ipaddr4));
     //Compare the received buffer with send buffer
-    EXPECT_EQ(ERR_SUCCESS, memcmp(tmp1, buf1, 1));
+    EXPECT_EQ(OC_ERR_SUCCESS, memcmp(tmp1, buf1, 1));
 
     //Test 3 -- Send 320 byte
     EXPECT_EQ(buf2_len, OCSendTo(ssfd, buf2, buf2_len, 0, &ipaddr3));
@@ -282,7 +282,7 @@ TEST(SendToRecvfromMulticast, Positive) {
     ipaddr4.size = sizeof(ipaddr4.addr);
     EXPECT_EQ(buf2_len, OCRecvFrom(ssfd, tmp1, sizeof(tmp1), 0, &ipaddr3));
     //Compare the received buffer with send buffer
-    EXPECT_EQ(ERR_SUCCESS, memcmp(tmp1, buf2, buf2_len));
+    EXPECT_EQ(OC_ERR_SUCCESS, memcmp(tmp1, buf2, buf2_len));
 
     OCClose(ssfd);
 }

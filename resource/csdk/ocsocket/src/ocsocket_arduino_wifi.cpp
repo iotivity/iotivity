@@ -31,7 +31,7 @@
 
 /// Macro to verify the validity of input argument
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG_V(FATAL, MOD_NAME, "%s is NULL", #arg); \
-         return ERR_INVALID_INPUT;} }
+         return OC_ERR_INVALID_INPUT;} }
 
 /// Length of the IP address decimal notation string
 #define IPNAMESIZE (16)
@@ -75,7 +75,7 @@ int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t 
     ardAddr-> d = d;
     ardAddr-> port = port;
 
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 
@@ -88,11 +88,11 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
     VERIFY_NON_NULL(addr);
     if (addrLen < IPNAMESIZE) {
         OC_LOG(FATAL, MOD_NAME, PCF("OCGetInterfaceAddress: addrLen MUST be at least 16"));
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 
     if (addrType != AF_INET) {
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 
     IPAddress ip = WiFi.localIP();
@@ -100,7 +100,7 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
 
     OC_LOG_BUFFER(INFO, MOD_NAME, addr, addrLen);
 
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 /// Retrieves a empty socket and bind it for UDP with the input port
@@ -126,11 +126,11 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t* sockfd, OC_SOCKET_OPTION sockoptio
 
     if (*sockfd == -1)
     {
-        return ERR_UNKNOWN;
+        return OC_ERR_UNKNOWN;
     }
 
     OC_LOG(DEBUG, MOD_NAME, PCF("OCInitUDP End"));
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 
@@ -260,7 +260,7 @@ int32_t OCClose(int32_t sockfd)
     WiFiClass::_server_port[sockfd] = 0;
     WiFiClass::_state[sockfd] = NA_STATE;
 
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 
@@ -272,7 +272,7 @@ int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
 
     if ( !ardAddr || !a || !b || !c || !d ) {
         OC_LOG(FATAL, MOD_NAME, PCF("Invalid argument"));
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 
     *a = ardAddr->a;
@@ -280,7 +280,7 @@ int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
     *c = ardAddr->c;
     *d = ardAddr->d;
 
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 
@@ -291,16 +291,16 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
 
     if ( !ardAddr || !port ) {
         OC_LOG(FATAL, MOD_NAME, PCF("Invalid argument"));
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 
     *port = ardAddr->port;
 
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 /// Retrieve the port to which socket is bound
 int32_t OCGetSocketInfo(int32_t sockfd, uint16_t *port)
 {
-    return ERR_NOT_IMPLEMENTED;
+    return OC_ERR_NOT_IMPLEMENTED;
 }

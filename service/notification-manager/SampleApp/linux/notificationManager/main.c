@@ -41,7 +41,7 @@ int main()
     printf("OCResourceHosting is starting...\n");
 
     if ( OCGetInterfaceAddress(interfaceName, sizeof(interfaceName), AF_INET, interfaceAddress,
-                               sizeof(interfaceAddress)) == ERR_SUCCESS)
+                               sizeof(interfaceAddress)) == OC_ERR_SUCCESS)
     {
         printf("Starting OIC resource hosting on address %s\n", interfaceAddress);
         coordinatingAddress = interfaceAddress;

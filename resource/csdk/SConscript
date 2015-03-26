@@ -65,7 +65,7 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'ocsecurity.c',
     OCTBSTACK_SRC + 'oicgroup.c'
 	]
-if target_os == 'arduino':
+if target_os in ['arduino','darwin'] :
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')
 else:

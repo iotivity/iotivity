@@ -30,5 +30,9 @@ if target_os not in targets_csdk_only:
 if target_os == 'linux':
 	# Build c samples
 	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
+elif target_os == 'darwin':
+	# Build linux samples for now
+	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
 elif target_os == 'arduino':
+	# Build c samples
 	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')

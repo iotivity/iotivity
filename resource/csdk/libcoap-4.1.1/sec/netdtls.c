@@ -381,10 +381,10 @@ int coap_dtls_init(coap_context_t *ctx, uint8_t ipAddr[]) {
 
     OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3],
                                         COAP_DTLS_DEFAULT_PORT, &dev_addr);
-    if (OCInitUDP((OCDevAddr *)&dev_addr, (int32_t *)&(ctx->sockfd_dtls), 0) != ERR_SUCCESS) {
+    if (OCInitUDP((OCDevAddr *)&dev_addr, (int32_t *)&(ctx->sockfd_dtls), 0) != OC_ERR_SUCCESS) {
         OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3],
                                         COAP_DTLS_RANDOM_PORT, &dev_addr);
-        if (OCInitUDP((OCDevAddr *)&dev_addr, (int32_t *)&(ctx->sockfd_dtls), 0) != ERR_SUCCESS) {
+        if (OCInitUDP((OCDevAddr *)&dev_addr, (int32_t *)&(ctx->sockfd_dtls), 0) != OC_ERR_SUCCESS) {
             goto exit;
         }
     }

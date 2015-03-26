@@ -39,13 +39,13 @@ extern "C" {
  * This Socket interface  needs to be implemented for every platform on
  * which CCF TB stack is expected to run. If some functionality is not
  * available on a platform, implement the method by returning error
- * ERR_NOT_IMPLEMENTED.
+ * OC_ERR_NOT_IMPLEMENTED.
  */
 
-#define ERR_SUCCESS          (0)
-#define ERR_INVALID_INPUT    (-900)
-#define ERR_UNKNOWN          (-901)
-#define ERR_NOT_IMPLEMENTED  (-903)
+#define OC_ERR_SUCCESS          (0)
+#define OC_ERR_INVALID_INPUT    (-900)
+#define OC_ERR_UNKNOWN          (-901)
+#define OC_ERR_NOT_IMPLEMENTED  (-903)
 
 
 /** This would need to be modified for specific platforms and specific

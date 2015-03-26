@@ -6,7 +6,7 @@
 import os
 
 # List of targets that only support the IoTivity C SDK.
-targets_csdk_only = ['arduino']
+targets_csdk_only = ['arduino','darwin']
 
 # Load common build config
 SConscript('build_common/SConscript', exports = 'targets_csdk_only')
@@ -14,14 +14,16 @@ SConscript('build_common/SConscript', exports = 'targets_csdk_only')
 Import('env')
 
 target_os = env.get('TARGET_OS')
-if target_os == 'arduino':
-	SConscript('arduino.scons')
-else:
+
+if target_os not in targets_csdk_only:
 	# Prepare libraries
 	env.PrepareLib('cereal')
 	env.PrepareLib('expat')
 	env.PrepareLib('boost', 'boost_thread', os.path.join(env.get('SRC_DIR'), 'extlibs', 'boost'))
 	env.PrepareLib('boost', 'boost_system', os.path.join(env.get('SRC_DIR'), 'extlibs', 'boost'))
+else:
+	if target_os == 'arduino':
+		SConscript('arduino.scons')
 
 # By default, src_dir is current dir, the build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/

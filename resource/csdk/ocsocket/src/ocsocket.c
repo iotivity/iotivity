@@ -45,7 +45,7 @@
 #define MOD_NAME ("ocsocket")
 
 /// Macro to verify the validity of input argument
-#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, MOD_NAME, #arg " is NULL"); return ERR_INVALID_INPUT;} }
+#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, MOD_NAME, #arg " is NULL"); return OC_ERR_INVALID_INPUT;} }
 
 /// Builds a socket interface address using IP address and port number
 int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t port, OCDevAddr *ipAddr)
@@ -69,7 +69,7 @@ int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t 
     sa->sin_addr.s_addr = htonl(ip);
     sa->sin_port = htons(port);
 
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 #ifdef __ANDROID__
@@ -77,17 +77,17 @@ int32_t OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t 
 int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addrType,
              uint8_t *addr,  uint32_t addrLen)
 {
-    int32_t ret = ERR_UNKNOWN;
+    int32_t ret = OC_ERR_UNKNOWN;
     int32_t sfd = 0xFFFFFFFF;
     struct ifreq ifr;
 
     VERIFY_NON_NULL(addr);
     VERIFY_NON_NULL(ifName);
     if (ifNameLen > (IFNAMSIZ - 1) ) {
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
     if (addrType != AF_INET) {
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 
     sfd = socket(addrType, SOCK_DGRAM, 0);
@@ -108,7 +108,7 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
     strncpy((char *)addr,
             inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr),
             addrLen);
-    ret = ERR_SUCCESS;
+    ret = OC_ERR_SUCCESS;
 
 exit:
     if (sfd >= 0) {
@@ -123,12 +123,12 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
              uint8_t *addr,  uint32_t addrLen)
 {
     struct ifaddrs *myaddrs = NULL, *ifa = NULL;
-    int32_t ret = ERR_UNKNOWN;
+    int32_t ret = OC_ERR_UNKNOWN;
 
     VERIFY_NON_NULL(addr);
 
     if (addrType != AF_INET) {
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 
     if(getifaddrs(&myaddrs) != 0) {
@@ -154,7 +154,7 @@ int32_t OCGetInterfaceAddress(uint8_t* ifName, uint32_t ifNameLen, uint16_t addr
                 {
                     struct sockaddr_in *s4 = (struct sockaddr_in *)ifa->ifa_addr;
                     if(inet_ntop(AF_INET, &(s4->sin_addr), (char *)addr, addrLen))
-                        ret = ERR_SUCCESS;
+                        ret = OC_ERR_SUCCESS;
                     goto exit;
                 }
 
@@ -174,7 +174,7 @@ exit:
 /// Creates a BSD socket and binds it specified port for UDP
 int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t *sockfd, OC_SOCKET_OPTION sockoption)
 {
-    int32_t ret = ERR_UNKNOWN;
+    int32_t ret = OC_ERR_UNKNOWN;
     int32_t sfd = 0xFFFFFFFF;
     int set_option_on = 1;
 
@@ -205,10 +205,10 @@ int32_t OCInitUDP(OCDevAddr* ipAddr, int32_t *sockfd, OC_SOCKET_OPTION sockoptio
     }
 
     *sockfd = sfd;
-    ret = ERR_SUCCESS;
+    ret = OC_ERR_SUCCESS;
 
 exit:
-    if ((ret != ERR_SUCCESS) && (sfd >= 0)) {
+    if ((ret != OC_ERR_SUCCESS) && (sfd >= 0)) {
         close(sfd);
     }
 
@@ -221,7 +221,7 @@ exit:
 /// Creates a BSD socket and binds the specified port for UDP multicast.
 int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
 {
-    int32_t ret = ERR_UNKNOWN;
+    int32_t ret = OC_ERR_UNKNOWN;
     int32_t sfd = 0xFFFFFFFF;
     char loopch=1;
     int set_option_on = 1;
@@ -274,10 +274,10 @@ int32_t OCInitUDPMulticast(OCDevAddr* ipmcastaddr, int32_t* sockfd)
         goto exit;
     }
 
-    ret = ERR_SUCCESS;
+    ret = OC_ERR_SUCCESS;
 
 exit:
-    if (ret == ERR_SUCCESS) {
+    if (ret == OC_ERR_SUCCESS) {
         *sockfd = sfd;
     } else {
         close(sfd);
@@ -329,7 +329,7 @@ int32_t OCRecvFrom(int32_t sockfd, uint8_t* buf, uint32_t bufLen, uint32_t flags
         return ret;
     }
     if (!FD_ISSET(sockfd, &reads)) {
-        return ERR_SUCCESS;
+        return OC_ERR_SUCCESS;
     }
 
     // Read available data.
@@ -361,16 +361,16 @@ int32_t OCDevAddrToString(OCDevAddr* addr, char* stringAddress)
     {
         if (!stringAddress)
         {
-            return ERR_INVALID_INPUT;
+            return OC_ERR_INVALID_INPUT;
         }
 
         snprintf(stringAddress, DEV_ADDR_SIZE_MAX, "%u.%u.%u.%u",
                 a, b, c, d);
-        return ERR_SUCCESS;
+        return OC_ERR_SUCCESS;
     }
     else
     {
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 }
 
@@ -383,7 +383,7 @@ int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
 
     if ( !ipAddr || !a || !b || !c || !d ) {
         OC_LOG(FATAL, MOD_NAME, "Invalid argument");
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 
     sa = (struct sockaddr_in*)ipAddr->addr;
@@ -393,7 +393,7 @@ int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
     *b = *((uint8_t*)&ip + 2);
     *a = *((uint8_t*)&ip + 3);
 
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 
@@ -403,19 +403,19 @@ int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port)
     struct sockaddr_in *sa;
     if ( !ipAddr || !port ) {
         OC_LOG(FATAL, MOD_NAME, "Invalid argument");
-        return ERR_INVALID_INPUT;
+        return OC_ERR_INVALID_INPUT;
     }
 
     sa = (struct sockaddr_in*)ipAddr->addr;
     *port = ntohs(sa->sin_port);
 
-    return ERR_SUCCESS;
+    return OC_ERR_SUCCESS;
 }
 
 /// Retrieve the port to which socket is bound
 int32_t OCGetSocketInfo(int32_t sockfd, uint16_t *port)
 {
-    int32_t ret = ERR_SUCCESS;
+    int32_t ret = OC_ERR_SUCCESS;
 
     struct sockaddr_in sa;
     socklen_t salen = sizeof(sa);
@@ -424,7 +424,7 @@ int32_t OCGetSocketInfo(int32_t sockfd, uint16_t *port)
     } else {
         OC_LOG_V(FATAL, MOD_NAME, "getsockname API failed with errno \
             %s", strerror(errno));
-        ret = ERR_UNKNOWN;
+        ret = OC_ERR_UNKNOWN;
     }
     return ret;
 }

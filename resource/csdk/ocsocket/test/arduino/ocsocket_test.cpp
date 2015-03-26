@@ -91,20 +91,20 @@ unsigned int TEST_BUF_LEN = sizeof(TEST_BUF);
 //OCGetInterfaceAddress tests
 void test10() {
     char strAddr[16] = "";
-    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, (uint8_t*)strAddr, 16), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, (uint8_t*)strAddr, 16), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("My IP address :"));
     OC_LOG_BUFFER(INFO, MOD_NAME, (uint8_t*)strAddr, sizeof(strAddr));
     delay(15000);
-    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, NULL, 16), ERR_INVALID_INPUT);
-    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, (uint8_t*)strAddr, 10), ERR_INVALID_INPUT);
+    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, NULL, 16), OC_ERR_INVALID_INPUT);
+    VERIFY_SUCCESS(OCGetInterfaceAddress(NULL, 0, AF_INET, (uint8_t*)strAddr, 10), OC_ERR_INVALID_INPUT);
     OC_LOG(DEBUG, MOD_NAME, PCF("test10 - Completed"));
 }
 
 //OCBuildIPv4Address tests
 void test20() {
     OCDevAddr ipAddr;
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, NULL), ERR_INVALID_INPUT);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, NULL), OC_ERR_INVALID_INPUT);
     OC_LOG(DEBUG, MOD_NAME, PCF("test20 - Completed"));
 }
 
@@ -114,20 +114,20 @@ void test30() {
     OCDevAddr ipAddr;
     uint8_t a, b, c, d;
     uint16_t port;
-    VERIFY_SUCCESS(OCBuildIPv4Address( 1, 2, 3, 4, TEST_PORT_NUM, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCDevAddrToIPv4Addr( &ipAddr, &a, &b, &c, &d), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 1, 2, 3, 4, TEST_PORT_NUM, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCDevAddrToIPv4Addr( &ipAddr, &a, &b, &c, &d), OC_ERR_SUCCESS);
     if ((a != 1) || (b != 2) || (c !=3) || (d !=4)) {
         OC_LOG(DEBUG, MOD_NAME, PCF("test30 - Failed !!!"));
         return;
     }
 
-    VERIFY_SUCCESS(OCDevAddrToPort( &ipAddr, &port), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCDevAddrToPort( &ipAddr, &port), OC_ERR_SUCCESS);
     if (port != TEST_PORT_NUM) {
         OC_LOG(DEBUG, MOD_NAME, PCF("test30 - Failed !!!"));
         return;
     }
-    VERIFY_SUCCESS(OCDevAddrToIPv4Addr( NULL, &a, &b, &c, &d), ERR_INVALID_INPUT);
-    VERIFY_SUCCESS(OCDevAddrToPort( &ipAddr, NULL), ERR_INVALID_INPUT);
+    VERIFY_SUCCESS(OCDevAddrToIPv4Addr( NULL, &a, &b, &c, &d), OC_ERR_INVALID_INPUT);
+    VERIFY_SUCCESS(OCDevAddrToPort( &ipAddr, NULL), OC_ERR_INVALID_INPUT);
     OC_LOG(DEBUG, MOD_NAME, PCF("test30 - Completed"));
 }
 
@@ -137,29 +137,29 @@ void test40() {
     int32_t sfd1, sfd2, sfd3, sfd4, sfd5;
 
     //We should be able to successfully open 4 sockets.
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd1), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd1), OC_ERR_SUCCESS);
 
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 1, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd2), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 1, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd2), OC_ERR_SUCCESS);
 
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 2, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd3), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 2, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd3), OC_ERR_SUCCESS);
 
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 3, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd4), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 3, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd4), OC_ERR_SUCCESS);
 
     //5th socket creation call should FAIL
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 4, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd5), ERR_UNKNOWN);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 4, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd5), OC_ERR_UNKNOWN);
 
-    VERIFY_SUCCESS(OCClose( sfd4), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd5), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd4), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd5), OC_ERR_SUCCESS);
 
-    VERIFY_SUCCESS(OCClose( sfd1), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCClose( sfd2), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCClose( sfd3), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCClose( sfd5), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd1), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd2), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd3), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd5), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("test40 - Completed"));
 }
 
@@ -170,14 +170,14 @@ void test50() {
     int32_t sfd1, sfd2;
 
     VERIFY_SUCCESS(OCBuildIPv4Address( MULTICAST_IP_ADDR[0], MULTICAST_IP_ADDR[1],
-                MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddr, &sfd1), ERR_SUCCESS);
+                MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddr, &sfd1), OC_ERR_SUCCESS);
 
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 1, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd2), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM + 1, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd2), OC_ERR_SUCCESS);
 
-    VERIFY_SUCCESS(OCClose( sfd1), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCClose( sfd2), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd1), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd2), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("test50 - Completed"));
 }
 
@@ -187,18 +187,18 @@ void test60() {
     OCDevAddr ipAddr, peerAddr;
     int32_t sfd;
 
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), OC_ERR_SUCCESS);
     VERIFY_SUCCESS(OCBuildIPv4Address(PEER_IP_ADDR[0], PEER_IP_ADDR[0],
-                PEER_IP_ADDR[0], PEER_IP_ADDR[0], TEST_PORT_NUM, &peerAddr), ERR_SUCCESS);
+                PEER_IP_ADDR[0], PEER_IP_ADDR[0], TEST_PORT_NUM, &peerAddr), OC_ERR_SUCCESS);
 
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd), OC_ERR_SUCCESS);
     for (int i = 2; i < 300; ) {
         VERIFY_SUCCESS(OCSendTo(sfd, TEST_BUF, i, 0, &peerAddr), i);
         i = i + 12;
 
         delay(100);
     }
-    VERIFY_SUCCESS(OCClose( sfd), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("test60 - Completed"));
 }
 
@@ -209,15 +209,15 @@ void test70() {
     int32_t sfd;
 
     VERIFY_SUCCESS(OCBuildIPv4Address( MULTICAST_IP_ADDR[0], MULTICAST_IP_ADDR[1],
-                MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddrMcast), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddrMcast, &sfd), ERR_SUCCESS);
+                MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddrMcast), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddrMcast, &sfd), OC_ERR_SUCCESS);
     for (int i = 2; i < 300; ) {
         VERIFY_SUCCESS(OCSendTo(sfd, TEST_BUF, i, 0, &ipAddrMcast), i);
         i = i + 12;
 
         delay(100);
     }
-    VERIFY_SUCCESS(OCClose( sfd), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose( sfd), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("test70 - Completed"));
 }
 
@@ -233,8 +233,8 @@ void test80() {
     uint8_t pktrecv = 0;
 
     //Unicast
-    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCBuildIPv4Address( 0, 0, 0, 0, TEST_PORT_NUM, &ipAddr), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDP( &ipAddr, &sfd), OC_ERR_SUCCESS);
 
     do {
         recvLen = OCRecvFrom(sfd, buf, MAX_BUF_SIZE, 0, &peerAddr);
@@ -252,7 +252,7 @@ void test80() {
         delay(500); //delay  secs
     } while (pktrecv < TEST_NUM_PKTS);
 
-    VERIFY_SUCCESS(OCClose(sfd), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose(sfd), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("test80 - Completed"));
 }
 
@@ -268,8 +268,8 @@ void test90() {
 
     //Multicast
     VERIFY_SUCCESS(OCBuildIPv4Address( MULTICAST_IP_ADDR[0], MULTICAST_IP_ADDR[1],
-                MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddrMcast), ERR_SUCCESS);
-    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddrMcast, &sfd), ERR_SUCCESS);
+                MULTICAST_IP_ADDR[2], MULTICAST_IP_ADDR[3], TEST_PORT_NUM, &ipAddrMcast), OC_ERR_SUCCESS);
+    VERIFY_SUCCESS(OCInitUDPMulticast( &ipAddrMcast, &sfd), OC_ERR_SUCCESS);
 
     do {
 
@@ -288,7 +288,7 @@ void test90() {
         delay(500); //delay  secs
     } while (pktrecv < TEST_NUM_PKTS);
 
-    VERIFY_SUCCESS(OCClose(sfd), ERR_SUCCESS);
+    VERIFY_SUCCESS(OCClose(sfd), OC_ERR_SUCCESS);
     OC_LOG(DEBUG, MOD_NAME, PCF("test90 - Completed"));
 }
 
