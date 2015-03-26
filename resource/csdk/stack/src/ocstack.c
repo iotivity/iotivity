@@ -342,6 +342,7 @@ OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* e
     }
 
     memcpy(&address->addr[4], &endPoint->addressInfo.IP.port, sizeof(uint16_t));
+    ret = OC_STACK_OK;
 
 exit:
     OCFree(cpAddress);
@@ -678,6 +679,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         OCStackResult result = UpdateResponseAddr(&address, endPoint);
         if(result != OC_STACK_OK)
         {
+            OC_LOG(ERROR, TAG, PCF("Error parsing IP address in UpdateResponseAddr"));
             return;
         }
 
