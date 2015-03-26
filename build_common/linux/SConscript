@@ -27,7 +27,7 @@ elif target_arch.find('v7a-hard') > 0:
 	env.AppendUnique(LINKFLAGS = ['-mfloat-abi=hard'])
 elif target_arch.find('v7a') > 0:
 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
-elif target_arch.find('arm64') > 0:
+elif target_arch.find('arm64') >= 0:
 	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
 else:
 	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
