@@ -86,21 +86,20 @@ static bool CACheckTimeout(uint64_t currentTime, uint64_t timeStamp, uint8_t tri
 
 void CACheckRetransmissionList()
 {
-    uint64_t currentTime = 0;
-
-    uint32_t i = 0;
     uint32_t len = u_arraylist_length(g_retransmissionPtr->dataList);
 
     OIC_LOG_V(DEBUG, TAG, "len=%d", len);
-    for (i = 0; i < len; i++)
+    for (uint32_t i = 0; i < len; i++)
     {
         CARetransmissionData_t *retData =
-            (CARetransmissionData_t *)u_arraylist_get(g_retransmissionPtr->dataList, i);
+                (CARetransmissionData_t *) u_arraylist_get(g_retransmissionPtr->dataList, i);
 
-        if (retData == NULL)
+        if (NULL == retData)
+        {
             continue;
+        }
 
-        currentTime = getCurrentTimeInMicroSeconds();
+        uint64_t currentTime = getCurrentTimeInMicroSeconds();
 
         OIC_LOG_V(DEBUG, TAG, "currtime=%lu", currentTime);
         if (CACheckTimeout(currentTime, retData->timeStamp, retData->triedCount))
@@ -122,14 +121,16 @@ void CACheckRetransmissionList()
         // #4. if tried count is max, remove the retransmission data from list.
         if (retData->triedCount >= g_retransmissionPtr->config.tryingCount)
         {
-            CARetransmissionData_t *removedData =
-                (CARetransmissionData_t *)u_arraylist_remove(g_retransmissionPtr->dataList, i);
+            CARetransmissionData_t *removedData = (CARetransmissionData_t *) u_arraylist_remove(
+                    g_retransmissionPtr->dataList, i);
             if (NULL == removedData)
             {
-                OIC_LOG(DEBUG, TAG, "Removed data is NULL");
+                OIC_LOG(ERROR, TAG, "Removed data is NULL");
                 return;
             }
+
             OIC_LOG(DEBUG, TAG, "max trycount rchd");
+
             OIC_LOG_V(DEBUG, TAG, "max trycount, remove retransmission CON data!!, messageid=%d",
                       removedData->messageId);
 
@@ -137,7 +138,7 @@ void CACheckRetransmissionList()
             if (g_retransmissionPtr->timeoutCallback != NULL)
             {
                 g_retransmissionPtr->timeoutCallback(removedData->endpoint, removedData->pdu,
-                        removedData->size);
+                                                     removedData->size);
             }
 
             CADestroyRemoteEndpointInternal(removedData->endpoint);
@@ -156,7 +157,7 @@ void CARetransmissionBaseRoutine(void *threadValue)
 {
     CARetransmission_t *context = (CARetransmission_t *) threadValue;
 
-    if (context == NULL)
+    if (NULL == context)
     {
         OIC_LOG(ERROR, TAG, "cnxt null");
         return;
@@ -177,10 +178,10 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
                                       CARetransmissionConfig_t *config)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    if (context == NULL)
+    if (NULL == context)
     {
         OIC_LOG(ERROR, TAG, "cnxt null");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
     memset(context, 0, sizeof(CARetransmission_t));
@@ -188,10 +189,10 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
     CARetransmissionConfig_t cfg;
     memset(&cfg, 0, sizeof(CARetransmissionConfig_t));
 
-    if (config == NULL)
+    if (NULL == config)
     {
         // setDefault
-        cfg.supportType = (CAConnectivityType_t)DEFAULT_RETRANSMISSION_TYPE;
+        cfg.supportType = (CAConnectivityType_t) DEFAULT_RETRANSMISSION_TYPE;
         cfg.tryingCount = DEFAULT_RETRANSMISSION_COUNT;
     }
     else
@@ -212,23 +213,22 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
     return CA_STATUS_OK;
 }
 
-CAResult_t CARetransmissionSentData(CARetransmission_t *context,
-                                    const CARemoteEndpoint_t *endpoint,
+CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CARemoteEndpoint_t *endpoint,
                                     const void *pdu, uint32_t size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    if (context == NULL || endpoint == NULL || pdu == NULL)
+    if (NULL == context || NULL == endpoint || NULL == pdu)
     {
-        OIC_LOG(DEBUG, TAG, "error");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_STATUS_INVALID_PARAM;
     }
 
     // #0. check support connectivity type
     if (!(context->config.supportType & endpoint->connectivityType))
     {
-        OIC_LOG(DEBUG, TAG, "error");
-        OIC_LOG_V(DEBUG, TAG, "not supported conntype=%d", endpoint->connectivityType);
-        return CA_STATUS_OK;
+        OIC_LOG(ERROR, TAG, "error");
+        OIC_LOG_V(ERROR, TAG, "not supported conntype=%d", endpoint->connectivityType);
+        return CA_NOT_SUPPORTED;
     }
 
     // #1. check PDU method type and get message id.
@@ -239,38 +239,37 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
     if (type != CA_MSG_CONFIRM)
     {
-        OIC_LOG(DEBUG, TAG, "error");
-        return CA_STATUS_OK;
+        OIC_LOG(DEBUG, TAG, "not supported message type");
+        return CA_NOT_SUPPORTED;
     }
 
     // create retransmission data
-    CARetransmissionData_t *retData = (CARetransmissionData_t *) OICMalloc(
-                                          sizeof(CARetransmissionData_t));
+    CARetransmissionData_t *retData = (CARetransmissionData_t *) OICCalloc(
+            1, sizeof(CARetransmissionData_t));
 
-    if (retData == NULL)
+    if (NULL == retData)
     {
-        OIC_LOG(DEBUG, TAG, "error");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_MEMORY_ALLOC_FAILED;
     }
-    memset(retData, 0, sizeof(CARetransmissionData_t));
 
     // copy PDU data
-    void *pduData = (void *) OICMalloc(sizeof(int8_t) * size);
-    if (pduData == NULL)
+    void *pduData = (void *) OICMalloc(size);
+    if (NULL == pduData)
     {
         OICFree(retData);
-        OIC_LOG(DEBUG, TAG, "error");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_MEMORY_ALLOC_FAILED;
     }
-    memcpy(pduData, pdu, sizeof(int8_t) * size);
+    memcpy(pduData, pdu, size);
 
     // clone remote endpoint
     CARemoteEndpoint_t *remoteEndpoint = CACloneRemoteEndpoint(endpoint);
-    if (remoteEndpoint == NULL)
+    if (NULL == remoteEndpoint)
     {
         OICFree(retData);
         OICFree(pduData);
-        OIC_LOG(DEBUG, TAG, "error");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -293,12 +292,13 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 }
 
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint, const void *pdu, uint32_t size)
+                                        const CARemoteEndpoint_t *endpoint, const void *pdu,
+                                        uint32_t size, void **retransmissionPdu)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    if (context == NULL || endpoint == NULL || pdu == NULL)
+    if (NULL == context || NULL == endpoint || NULL == pdu || NULL == retransmissionPdu)
     {
-        OIC_LOG(DEBUG, TAG, "error");
+        OIC_LOG(ERROR, TAG, "error");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -327,36 +327,62 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     // find index
     for (i = 0; i < len; i++)
     {
-        CARetransmissionData_t *retData =
-            (CARetransmissionData_t *)u_arraylist_get(context->dataList, i);
+        CARetransmissionData_t *retData = (CARetransmissionData_t *) u_arraylist_get(
+                context->dataList, i);
 
-        if (retData == NULL)
-            continue;
-
-        // found index
-        if ((retData->endpoint->connectivityType == endpoint->connectivityType)
-            && retData->messageId == messageId)
-            break;
-    }
-
-    // #2. remove data from list
-    if (i < len)
-    {
-        CARetransmissionData_t *removedData =
-            (CARetransmissionData_t *)u_arraylist_remove(context->dataList, i);
-        if (NULL == removedData)
+        if (NULL == retData)
         {
-            OIC_LOG(DEBUG, TAG, "Removed data is NULL");
-            return CA_STATUS_FAILED;
+            continue;
         }
 
-        OIC_LOG_V(DEBUG, TAG, "remove RTCON data, msgid=%d", messageId);
+        // found index
+        if (NULL != retData->endpoint && retData->messageId == messageId
+            && (retData->endpoint->connectivityType == endpoint->connectivityType))
+        {
+            // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
+            // if retransmission was finish..token will be unavailable.
+            if (CA_EMPTY == CAGetCodeFromPduBinaryData(pdu, size))
+            {
+                OIC_LOG(DEBUG, TAG, "CA_EMPTY");
 
-        CADestroyRemoteEndpointInternal(removedData->endpoint);
-        OICFree(removedData->pdu);
+                if (NULL == retData->pdu)
+                {
+                    OIC_LOG(ERROR, TAG, "retData->pdu is null");
+                    OICFree(retData);
+                    return CA_STATUS_FAILED;
+                }
 
-        OICFree(removedData);
+                // copy PDU data
+                (*retransmissionPdu) = (void *) OICCalloc(1, retData->size);
+                if (NULL == (*retransmissionPdu))
+                {
+                    OICFree(retData);
+                    OIC_LOG(ERROR, TAG, "error");
+                    return CA_MEMORY_ALLOC_FAILED;
+                }
+                memcpy((*retransmissionPdu), retData->pdu, retData->size);
+            }
+
+            // #2. remove data from list
+            CARetransmissionData_t *removedData = (CARetransmissionData_t *) u_arraylist_remove(
+                    context->dataList, i);
+            if (NULL == removedData)
+            {
+                OIC_LOG(ERROR, TAG, "Removed data is NULL");
+                return CA_STATUS_FAILED;
+            }
+
+            OIC_LOG_V(DEBUG, TAG, "remove RTCON data, msgid=%d", messageId);
+
+            CADestroyRemoteEndpointInternal(removedData->endpoint);
+            OICFree(removedData->pdu);
+
+            OICFree(removedData);
+
+            break;
+        }
     }
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -364,10 +390,10 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 CAResult_t CARetransmissionStop(CARetransmission_t *context)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    if (context == NULL)
+    if (NULL == context)
     {
-        OIC_LOG(DEBUG, TAG, "error");
-        return CA_STATUS_FAILED;
+        OIC_LOG(ERROR, TAG, "error");
+        return CA_STATUS_INVALID_PARAM;
     }
 
     // set stop flag
@@ -379,10 +405,10 @@ CAResult_t CARetransmissionStop(CARetransmission_t *context)
 CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    if (context == NULL)
+    if (NULL == context)
     {
-        OIC_LOG(DEBUG, TAG, "error");
-        return CA_STATUS_FAILED;
+        OIC_LOG(ERROR, TAG, "error");
+        return CA_STATUS_INVALID_PARAM;
     }
 
     u_arraylist_free(&context->dataList);

@@ -247,14 +247,16 @@ typedef enum
  */
 typedef enum
 {
-    /* Success status code - START HERE */
-    CA_SUCCESS = 200,           /**< Success */
-    CA_CREATED = 201,           /**< Created */
-    CA_DELETED = 202,           /**< Deleted */
-    CA_BAD_REQ = 400,           /**< Bad Request */
-    CA_BAD_OPT = 402,           /**< Bad Option */
-    CA_NOT_FOUND = 404,         /**< Not found */
-    CA_RETRANSMIT_TIMEOUT = 500 /**< Retransmit timeout */
+    /* Response status code - START HERE */
+    CA_EMPTY = 0,                    /**< Empty */
+    CA_SUCCESS = 200,                /**< Success */
+    CA_CREATED = 201,                /**< Created */
+    CA_DELETED = 202,                /**< Deleted */
+    CA_BAD_REQ = 400,                /**< Bad Request */
+    CA_BAD_OPT = 402,                /**< Bad Option */
+    CA_NOT_FOUND = 404,              /**< Not found */
+    CA_INTERNAL_SERVER_ERROR = 500,  /**< Internal Server Error */
+    CA_RETRANSMIT_TIMEOUT = 504      /**< Retransmit timeout */
     /* Response status code - END HERE */
 } CAResponseResult_t;
 

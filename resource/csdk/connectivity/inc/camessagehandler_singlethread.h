@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,18 +19,38 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains message functionality.
+ * @file camessagehandler_singlethread.h
+ * @brief This file contains message functionality.
  */
 
 #ifndef __CA_MESSAGE_HANDLER_SINGLETHREAD_H_
 #define __CA_MESSAGE_HANDLER_SINGLETHREAD_H_
 
-#include <stdint.h>
 #include "cacommon.h"
-#include "cainterface.h"
-#include "caretransmission_singlethread.h"
+#include "coap.h"
+
+/**
+ * @def VERIFY_NON_NULL
+ * @brief Macro to verify the validity of input argument.
+ */
+#define VERIFY_NON_NULL(arg, log_tag, log_message) \
+    if (NULL == arg ){ \
+        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
+        return CA_STATUS_INVALID_PARAM; \
+    } \
+
+/**
+ * @def VERIFY_NON_NULL_VOID
+ * @brief Macro to verify the validity of input argument.
+ */
+#define VERIFY_NON_NULL_VOID(arg, log_tag, log_message) \
+    if (NULL == arg ){ \
+        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
+        return; \
+    } \
+
+#define CA_MEMORY_ALLOC_CHECK(arg) { if (NULL == arg) {OIC_LOG(ERROR, TAG, "Out of memory"); \
+goto memory_error_exit;} }
 
 #ifdef __cplusplus
 extern "C"
@@ -39,29 +59,29 @@ extern "C"
 
 /**
  * @brief   Detaches control from the caller for sending unicast request
- * @param   endpoint   [IN]    endpoint information where the data has to be sent
- * @param   request    [IN]    request that needs to be sent
- * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @param   endpoint       [IN]    endpoint information where the data has to be sent
+ * @param   request        [IN]    request that needs to be sent
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *endpoint,
                                   const CARequestInfo_t *request);
 
 /**
  * @brief   Detaches control from the caller for sending multicast request
- * @param   object    [IN]    Group endpoint information where the data has to be sent
- * @param   request   [IN]    request that needs to be sent
- * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @param   object         [IN]    Group endpoint information where the data has to be sent
+ * @param   request        [IN]    request that needs to be sent
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
                                        const CARequestInfo_t *request);
 
 /**
  * @brief   Detaches control from the caller for sending response
- * @param   object     [IN]    endpoint information where the data has to be sent
- * @param   response   [IN]    request that needs to be sent
- * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @param   endpoint       [IN]    endpoint information where the data has to be sent
+ * @param   response       [IN]    response that needs to be sent
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
+CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *endpoint,
                                    const CAResponseInfo_t *response);
 
 /**
@@ -79,30 +99,35 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
 
 /**
  * @brief   Setting the request and response callbacks for network packets
- * @param   ReqHandler   [IN]    callback for receiving the requests
- * @param   RespHandler  [IN]    callback for receiving the response
- * @return   void
+ * @param   ReqHandler     [IN]    callback for receiving the requests
+ * @param   RespHandler    [IN]    callback for receiving the response
+ * @return  NONE
  */
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler,
-                                   CAResponseCallback RespHandler);
+void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
 
 /**
- * @brief  Initialize the message handler by starting thread pool and initializing the
- *         send and receive queue
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief   Initialize the message handler by starting thread pool and initializing the
+ *          send and receive queue
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAInitializeMessageHandler();
 
 /**
- * @brief  Terminate the message handler by stopping  the thread pool and destroying the queues
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief   Terminate the message handler by stopping  the thread pool and destroying the queues
+ * @return  NONE
  */
 void CATerminateMessageHandler();
 
 /**
- * @brief Handler for receiving request and response callback in singled thread model
+ * @brief   Handler for receiving request and response callback in single thread model
  */
 void CAHandleRequestResponseCallbacks();
+
+/**
+ * @brief To log the PDU data
+ * @param   pdu            [IN]    pdu data
+ */
+void CALogPDUInfo(coap_pdu_t *pdu);
 
 #ifdef __cplusplus
 } /* extern "C" */
