@@ -40,7 +40,7 @@ namespace OIC
 {
 
     /**
-    * @brief    After installing a plug-in in a directory, each plug-ins can be managed by this class.
+    * @brief  After installing a plug-in in a directory, each plug-in can be managed by this class.
     *
     *
     */
@@ -52,46 +52,47 @@ namespace OIC
             /**
             * Virtual destructor
             */
-            ~PluginManager(void);
+            ~PluginManager();
 
             /**
-            * Start plugins by key-value pair.
+            * Start plug-ins by key-value pair.
             *
-            * @param key-value pair string to be started.
-            * @return int, 1 is success, 0 is fail.
+            * @param key    - key information of the plug-in to be started.
+            * @param value   - value information of the plug-in to be started.
+            * @return int   - 1 on success or 0 on failure.
             */
             int startPlugins(const std::string key, const std::string value);
 
             /**
-            * Stop plugins by key-value pair.
+            * Stop plug-ins by key-value pair.
             *
-            * @param key-value pair string to be stopped.
-            * @return int, 1 is success, 0 is fail.
+            * @param key    - key information of the plug-in to be stopped.
+            * @param value   - value information of the plug-in to be stopped.
+            * @return int   - 1 on success or 0 on failure.
             */
             int stopPlugins(const std::string key, const std::string value);
 
             /**
-            * Rescan Plugin.
-            * This function will call rescan function of plugins in the configuration folder
+            * Rescan for plug-ins in the registered directory, installing plug-ins.
             *
-            * @param void.
-            * @return int, 1 is success, 0 is fail.
+            * @param void
+            * @return int   - 1 on success or 0 on failure.
             */
-            int rescanPlugin(void);
+            int rescanPlugin();
 
             /**
-            * Get Plugin list.
+            * Get list of plug-ins.
             *
-            * @param void.
-            * @return Plugin vector
+            * @param void
+            * @return std::vector<Plugin>   - Plug-in vector.
             */
-            std::vector<Plugin> getPlugins(void);
+            std::vector<Plugin> getPlugins();
 
             /**
-            * Get Plugin state.
+            * Get state of the plug-in.
             *
-            * @param Plugin ID string.
-            * @return Plugin state string.
+            * @param pluginID       - ID of the plug-in to get state.
+            * @return std::string   - state of the plug-in.
             */
             std::string getState(const std::string plugID);
 
