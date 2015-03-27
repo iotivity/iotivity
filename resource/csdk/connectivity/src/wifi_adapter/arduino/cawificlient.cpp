@@ -34,7 +34,7 @@
 #include "caadapterutils.h"
 
 /// This is the max buffer size between Arduino and WiFi Shield
-#define ARDUINO_WIFI_SPI_RECV_BUFFERSIZE (64)
+#define ARDUINO_WIFI_BUFFERSIZE (90)
 
 #define MOD_NAME "WC"
 
@@ -68,13 +68,31 @@ uint32_t CAWiFiSendData(const char *remoteAddress, uint32_t port,
 
     IPAddress remoteIp(ip);
     Udp.beginPacket(remoteIp, (uint16_t)port);
-    int32_t ret = (int32_t)Udp.write((char *)data, dataLength);
+
+    uint32_t bytesWritten = 0;
+    while(bytesWritten < dataLength)
+    {
+        // get remaining bytes
+        size_t writeCount = dataLength - bytesWritten;
+        // write upto max ARDUINO_WIFI_BUFFERSIZE bytes
+        writeCount = Udp.write((uint8_t *)data + bytesWritten,
+                                (writeCount > ARDUINO_WIFI_BUFFERSIZE ?
+                                 ARDUINO_WIFI_BUFFERSIZE : writeCount));
+        if(writeCount == 0)
+        {
+            // write failed
+            OIC_LOG_V(ERROR, MOD_NAME, "Failed after %u", bytesWritten);
+            break;
+        }
+        bytesWritten += writeCount;
+    }
+
     if (Udp.endPacket() == 0)
     {
         OIC_LOG(ERROR, MOD_NAME, "Failed to send");
         return 0;
     }
     OIC_LOG(DEBUG, MOD_NAME, "OUT");
-    return ret;
+    return bytesWritten;
 }
 
