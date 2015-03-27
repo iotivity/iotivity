@@ -19,10 +19,12 @@ if sys_version is None:
 	print '''
 *********************************** Error *************************************
 *   MAC OSX/IOS version isn't set, please set it in command line as :         *
-*      # scons SYS_VERSION=<version> ...                                      *
+*      # scons TARGET_ARCH=<arch> TARGET_OS=<os> SYS_VERSION=<version> ...    *
 *   To get the version, please see:                      					  *
 * /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/   *
 * /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/ *
+*   <arch> is 'armv7','armv7s','arm64','i386', 'x86_64'
+*   <os> is 'darwin','ios'
 *******************************************************************************
 '''
 	Exit(1)

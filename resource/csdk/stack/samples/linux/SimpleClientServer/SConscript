@@ -1,6 +1,6 @@
 
 Import('env')
-
+target_os = env.get('TARGET_OS')
 samples_env = env.Clone()
 ######################################################################
 # Build flags
@@ -19,7 +19,10 @@ samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 samples_env.AppendUnique(LIBS = ['-lpthread'])
 
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-samples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger', 'm'])
+if target_os in ['darwin','ios']:
+	samples_env.PrependUnique(LIBS = ['octbstack', 'coap', 'm'])
+else:
+	samples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger', 'm'])
 
 samples_env.AppendUnique(CPPDEFINES = ['CA_INT', 'TB_LOG'])
 

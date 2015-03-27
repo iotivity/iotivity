@@ -6,7 +6,7 @@
 import os
 
 # List of targets that only support the IoTivity C SDK.
-targets_csdk_only = ['arduino','darwin']
+targets_csdk_only = ['arduino','darwin','ios']
 
 # Load common build config
 SConscript('build_common/SConscript', exports = 'targets_csdk_only')
