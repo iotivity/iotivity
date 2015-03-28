@@ -51,8 +51,10 @@ typedef struct OCServerRequest
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
     CAConnectivityType_t connectivityType;
-    // token for the observe request
+    // token for the request
     CAToken_t requestToken;
+    // token length the request
+    uint8_t tokenLength;
     // The ID of CoAP pdu                                   //Kept in
     uint16_t coapID;                                        //CoAP
     uint8_t delayedResNeeded;
@@ -79,7 +81,7 @@ typedef struct OCServerResponse {
     OCRequestHandle requestHandle;
 } OCServerResponse;
 
-OCServerRequest * GetServerRequestUsingToken (const CAToken_t token);
+OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tokenLength);
 
 OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle);
 
@@ -91,6 +93,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         char * reqJSONPayload, CAToken_t * requestToken,
+        uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType);
 

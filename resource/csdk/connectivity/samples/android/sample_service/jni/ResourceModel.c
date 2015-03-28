@@ -38,6 +38,7 @@ void callback(char *subject, char *receivedData);
 
 CAConnectivityType_t g_selectedNwType = CA_WIFI;
 static CAToken_t g_lastRequestToken = NULL;
+static uint8_t g_lastRequestTokenLength;
 static const char SECURE_COAPS_PREFIX[] = "coaps://";
 static const char SECURE_INFO_DATA[]
                                    = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
@@ -49,6 +50,8 @@ static const char NORMAL_INFO_DATA[]
 static jobject g_responseListenerObject = NULL;
 extern JavaVM *g_jvm;
 
+static CAToken_t g_clientToken;
+static uint8_t g_clientTokenLength = NULL;
 // init
 JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_setNativeResponseListener
     (JNIEnv *env, jobject obj, jobject listener){
@@ -198,24 +201,31 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMFindResource(JNIE
 
     // create token
     CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    CAResult_t res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        LOGI("token generate error!!\n");
-        token = NULL;
+        LOGE("token generate error!!");
         return;
     }
 
-    LOGI("generated token %s\n", (token != NULL) ? token : "");
+    printf("Generated token %s\n", token);
 
-    if(CA_STATUS_OK != CAFindResource((const CAURI_t)strUri, token))
+    res = CAFindResource((const CAURI_t) strUri, token, tokenLength);
+
+    if (res != CA_STATUS_OK)
     {
-        LOGI("Could not find resource");
+        LOGE("Could not find resource");
+        //destroy token
+        CADestroyToken(token);
     }
     else
     {
         LOGI("find resource to %s URI", strUri);
+        CADestroyToken(g_lastRequestToken);
         g_lastRequestToken = token;
+        g_lastRequestTokenLength = tokenLength;
     }
 }
 
@@ -249,13 +259,12 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
 
     // create token
     CAToken_t token = NULL;
-    res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        LOGI("token generate error!!\n");
-        token = NULL;
-        // destroy token
-        CADestroyToken(token);
+        LOGE("token generate error!!");
         // destroy remote endpoint
         CADestroyRemoteEndpoint(endpoint);
         return;
@@ -267,6 +276,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
 
     CAInfo_t requestData = {0};
     requestData.token = token;
+    requestData.tokenLength = tokenLength;
 
     const char* strPayload = (*env)->GetStringUTFChars(env, payload, NULL);
     if (isSecured == 1)
@@ -351,11 +361,13 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse(JNIE
 
     // create token
     CAToken_t token = NULL;
-    res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        LOGI("token generate error!");
-        token = NULL;
+        LOGE("token generate error!");
+        CADestroyRemoteEndpoint(endpoint);
     }
 
     char resourceURI[15] = {0};
@@ -613,8 +625,9 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
         }
     }
 
-    if (g_lastRequestToken != NULL && requestInfo->info.token != NULL
-        && (strcmp((char *)g_lastRequestToken, requestInfo->info.token) == 0))
+    if ((!g_lastRequestToken) && (!requestInfo->info.token) &&
+            (strncmp(g_lastRequestToken, requestInfo->info.token,
+                     requestInfo->info.tokenLength) == 0))
     {
         LOGI("token is same. received request of it's own. skip.. \n");
         return;

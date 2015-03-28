@@ -350,23 +350,25 @@ void find_fixed_resource()
 
     // create token
     CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    CAResult_t res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        printf("token generate error!!");
+        printf("Token generate error!!");
         return;
     }
 
-    printf("generated token %s\n", (token != NULL) ? token : "");
+    printf("Generated token %s\n", token);
 
-    res = CAFindResource(buf, token);
-    if (res != CA_STATUS_OK)
+    res = CAFindResource(buf, token, tokenLength);
+    if (CA_STATUS_OK != res)
     {
-        printf("find resource error : %d\n", res);
+        printf("Find resource error : %d\n", res);
     }
     else
     {
-        printf("find resource to %s URI\n", buf);
+        printf("Find resource to %s URI\n", buf);
     }
 
     // delete token
@@ -390,29 +392,27 @@ void find_resource()
 
     // create token
     CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    CAResult_t res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        printf("token generate error!!\n");
+        printf("Token generate error!!\n");
         return;
     }
 
-    printf("generated token %s\n", (token != NULL) ? token : "");
+    printf("Generated token %s\n", token);
 
-    res = CAFindResource(buf, token);
-    if (res != CA_STATUS_OK)
+    res = CAFindResource(buf, token, tokenLength);
+    if (CA_STATUS_OK != res)
     {
-        printf("find resource error : %d\n", res);
+        printf("Find resource error : %d\n", res);
+        CADestroyToken(token);
     }
     else
     {
-        printf("find resource to %s URI\n", buf);
-
-        if (g_last_request_token != NULL)
-        {
-            CADestroyToken(g_last_request_token);
-        }
-
+        printf("Find resource to %s URI\n", buf);
+        CADestroyToken(g_last_request_token);
         g_last_request_token = token;
     }
 
@@ -485,14 +485,17 @@ void send_request()
 
     // create token
     CAToken_t token = NULL;
-    res = CAGenerateToken(&token);
-    if (CA_STATUS_OK != res)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        printf("token generate error, error code : %d\n", res);
+        printf("Token generate error, error code : %d\n", res);
+        CADestroyRemoteEndpoint(endpoint);
         return;
     }
 
-    printf("generated token %s\n", (token != NULL) ? token : "");
+    printf("Generated token %s\n", token);
 
     // extract relative resourceuri from give uri
     char resourceURI[15] = {0};
@@ -503,13 +506,17 @@ void send_request()
     // create request data
     CAInfo_t requestData = { 0 };
     requestData.token = token;
+    requestData.tokenLength = tokenLength;
+
     if (strcmp(secureRequest, "1") == 0)
     {
         int length = sizeof(SECURE_INFO_DATA) + strlen(resourceURI);
         requestData.payload = (CAPayload_t) calloc(length,  sizeof(char));
         if (requestData.payload == NULL)
         {
-            printf("memory alloc fail\n");
+            printf("Memory allocation fail\n");
+            CADestroyRemoteEndpoint(endpoint);
+            CADestroyToken(token);
             return;
         }
         snprintf(requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_local_secure_port);
@@ -520,7 +527,9 @@ void send_request()
         requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
         if (requestData.payload == NULL)
         {
-            printf("memory alloc fail\n");
+            printf("Memory allocation fail\n");
+            CADestroyRemoteEndpoint(endpoint);
+            CADestroyToken(token);
             return;
         }
         snprintf(requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
@@ -570,16 +579,22 @@ void send_secure_request()
 
     // create token
     CAToken_t token = NULL;
-    if (CA_STATUS_OK != CAGenerateToken(&token))
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        printf("Failed to generate token !\n");
+        printf("Token generate error, error code : %d\n", res);
         goto exit;
     }
+
+    printf("Generated token %s\n", token);
 
     // create request data
     CAMessageType_t msgType = CA_MSG_NONCONFIRM;
     CAInfo_t requestData = { 0 };
     requestData.token = token;
+    requestData.tokenLength = tokenLength;
     requestData.type = msgType;
 
     CARequestInfo_t requestInfo = { 0 };
@@ -642,18 +657,22 @@ void send_request_all()
 
     // create token
     CAToken_t token = NULL;
-    res = CAGenerateToken(&token);
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
 
-    if (res != CA_STATUS_OK)
+    res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        printf("token generate error!!\n");
+        printf("Token generate error!!\n");
+        CADestroyRemoteEndpoint(endpoint);
+        free(group);
         return;
     }
 
-    printf("generated token %s\n", (token != NULL) ? token : "");
+    printf("generated token %s\n", token);
 
     CAInfo_t requestData = { 0 };
     requestData.token = token;
+    requestData.tokenLength = tokenLength;
     requestData.payload = "Temp Json Payload";
     requestData.type = CA_MSG_NONCONFIRM;
 
@@ -662,9 +681,17 @@ void send_request_all()
     requestInfo.info = requestData;
 
     // send request
-    CASendRequestToAll(group, &requestInfo);
-
-    CADestroyToken(token);
+    res = CASendRequestToAll(group, &requestInfo);
+    if (CA_STATUS_OK != res)
+    {
+        printf("Could not send request to all\n");
+        CADestroyToken(token);
+    }
+    else
+    {
+        CADestroyToken(g_last_request_token);
+        g_last_request_token = token;
+    }
 
     // destroy remote endpoint
     CADestroyRemoteEndpoint(endpoint);
@@ -736,20 +763,29 @@ void advertise_resource()
 
     // create token
     CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    CAResult_t res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
     {
-        printf("token generate error!!\n");
-        token = NULL;
+        printf("Token generate error!!\n");
+        free(headerOpt);
         return;
     }
 
-    printf("generated token %s\n", (token != NULL) ? token : "");
+    printf("Generated token %s\n", token);
 
-    CAAdvertiseResource(buf, token, headerOpt, (uint8_t) optionNum);
-
-    // delete token
-    CADestroyToken(token);
+    res = CAAdvertiseResource(buf, token, tokenLength, headerOpt, (uint8_t) optionNum);
+    if (CA_STATUS_OK != res)
+    {
+        printf("Could not start advertise resource\n");
+        CADestroyToken(token);
+    }
+    else
+    {
+        CADestroyToken(g_last_request_token);
+        g_last_request_token = token;
+    }
 
     free(headerOpt);
 }
@@ -788,6 +824,19 @@ void send_notification()
         return;
     }
 
+    // create token
+    CAToken_t token = NULL;
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    res = CAGenerateToken(&token, tokenLength);
+    if ((CA_STATUS_OK != res) || (!token))
+    {
+        printf("Token generate error!!\n");
+        CADestroyRemoteEndpoint(endpoint);
+        return;
+    }
+
+    printf("Generated token %s\n", token);
     CAInfo_t respondData = { 0 };
     respondData.token = "client token";
     respondData.payload = "Temp Notification Data";
@@ -807,6 +856,8 @@ void send_notification()
         printf("send notification success\n");
     }
 
+    // destroy token
+    CADestroyToken(token);
     // destroy remote endpoint
     CADestroyRemoteEndpoint(endpoint);
 
@@ -989,8 +1040,9 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
 
     printf("Data: %s\n", requestInfo->info.payload);
     printf("Message type: %s\n", MESSAGE_TYPE[requestInfo->info.type]);
-    if (g_last_request_token != NULL && requestInfo->info.token != NULL
-        && (strcmp((char *)g_last_request_token, requestInfo->info.token) == 0))
+    if ((!g_last_request_token) && (!requestInfo->info.token)
+        && (strncmp(g_last_request_token, requestInfo->info.token,
+                    requestInfo->info.tokenLength) == 0))
     {
         printf("token is same. received request of it's own. skip.. \n");
         return;
@@ -1100,8 +1152,12 @@ void send_response(CARemoteEndpoint_t *endpoint, CAInfo_t *info)
         ((info->type == CA_MSG_CONFIRM) ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM) :
             CA_MSG_NONCONFIRM;
     responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.token = (info != NULL) ? info->token : "";
-    responseData.payload = "response payload";
+    if(3 != messageType)
+    {
+        responseData.token = (info != NULL) ? info->token : NULL;
+        responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
+        responseData.payload = "response payload";
+    }
 
     CAResponseInfo_t responseInfo = { 0 };
     responseInfo.result = 203;

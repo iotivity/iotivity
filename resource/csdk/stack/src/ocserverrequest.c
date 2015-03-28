@@ -38,7 +38,7 @@
 static struct OCServerRequest * serverRequestList = NULL;
 static struct OCServerResponse * serverResponseList = NULL;
 
-OCServerRequest * GetServerRequestUsingToken (const CAToken_t token)
+OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tokenLength)
 {
     if(!token)
     {
@@ -50,9 +50,9 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token)
     LL_FOREACH (serverRequestList, out)
     {
         OC_LOG(INFO, TAG,PCF("comparing tokens"));
-        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, CA_MAX_TOKEN_LEN);
-        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, CA_MAX_TOKEN_LEN);
-        if(memcmp(out->requestToken, token, CA_MAX_TOKEN_LEN) == 0)
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, tokenLength);
+        if(memcmp(out->requestToken, token, tokenLength) == 0)
         {
             return out;
         }
@@ -95,6 +95,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         char * reqJSONPayload, CAToken_t * requestToken,
+        uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType)
 {
@@ -141,11 +142,17 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->requestComplete = 0;
     if(requestToken)
     {
-        serverRequest->requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
-        VERIFY_NON_NULL (serverRequest->requestToken);
-        memcpy(serverRequest->requestToken, *requestToken, CA_MAX_TOKEN_LEN);
-        serverRequest->requestToken[CA_MAX_TOKEN_LEN]='\0';
+        // If tokenLength is zero, the return value depends on the
+        // particular library implementation (it may or may not be a null pointer).
+        if (tokenLength)
+        {
+            serverRequest->requestToken = (CAToken_t) OCMalloc(tokenLength);
+            VERIFY_NON_NULL(serverRequest->requestToken);
+            memcpy(serverRequest->requestToken, *requestToken, tokenLength);
+        }
+
     }
+    serverRequest->tokenLength = tokenLength;
 
     if(resourceUrl)
     {
@@ -336,9 +343,10 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             break;
     }
     responseInfo.info.type = qualityOfServiceToMessageType(serverRequest->qos);
-    char token[CA_MAX_TOKEN_LEN + 1] = {};
+    char token[CA_MAX_TOKEN_LEN] = {};
     responseInfo.info.token = token;
-    memcpy(responseInfo.info.token, serverRequest->requestToken, CA_MAX_TOKEN_LEN);
+    memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
+    responseInfo.info.tokenLength = serverRequest->tokenLength;
 
     if(serverRequest->observeResult == OC_STACK_OK)
     {

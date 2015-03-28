@@ -276,15 +276,12 @@ CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
 
 CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
 {
-    char *temp = NULL;
-    int len = 0;
-
     if (rep == NULL)
         return NULL;
 
     // allocate the request info structure.
     CARequestInfo_t *clone = (CARequestInfo_t *) OICMalloc(sizeof(CARequestInfo_t));
-    if (clone == NULL)
+    if (!clone)
     {
         OIC_LOG(DEBUG, TAG, "CACloneRequestInfo Out of memory");
         return NULL;
@@ -292,24 +289,30 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
 
     memcpy(clone, rep, sizeof(CARequestInfo_t));
 
-    if (rep->info.token != NULL)
+    if (rep->info.token)
     {
+        char *temp = NULL;
+
         // allocate token field
-        len = strlen(rep->info.token);
+        int len = rep->info.tokenLength;
 
-        temp = (char *) OICCalloc(len + 1, sizeof(char));
-        if (temp == NULL)
+        if (len)
         {
-            OIC_LOG(DEBUG, TAG, "CACloneRequestInfo Out of memory");
+            temp = (char *) OICCalloc(len, sizeof(char));
+            if (!temp)
+            {
+                OIC_LOG(DEBUG, TAG, "CACloneRequestInfo Out of memory");
 
-            CADestroyRequestInfoInternal(clone);
+                CADestroyRequestInfoInternal(clone);
 
-            return NULL;
+                return NULL;
+            }
+            memcpy(temp, rep->info.token, len);
         }
-        strncpy(temp, rep->info.token, len);
 
         // save the token
         clone->info.token = temp;
+        clone->info.tokenLength = len;
     }
 
     if (rep->info.options != NULL && rep->info.numOptions > 0)
@@ -336,8 +339,10 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
 
     if (rep->info.payload != NULL)
     {
+        char *temp = NULL;
+
         // allocate payload field
-        len = strlen(rep->info.payload);
+        int len = strlen(rep->info.payload);
 
         temp = (char *) OICMalloc(sizeof(char) * (len + 1));
         if (temp == NULL)
@@ -360,9 +365,6 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
 
 CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
 {
-    char *temp = NULL;
-    int len = 0;
-
     if (rep == NULL)
         return NULL;
 
@@ -375,24 +377,29 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     }
     memcpy(clone, rep, sizeof(CAResponseInfo_t));
 
-    if (rep->info.token != NULL)
+    if (rep->info.token)
     {
+        char *temp = NULL;
+
         // allocate token field
-        len = strlen(rep->info.token);
+        int len = rep->info.tokenLength;
 
-        temp = (char *) OICCalloc(len + 1, sizeof(char));
-        if (temp == NULL)
+        if (len)
         {
-            OIC_LOG(DEBUG, TAG, "CACloneResponseInfo Out of memory");
+            temp = (char *) OICCalloc(len, sizeof(char));
+            if (!temp)
+            {
+                OIC_LOG(DEBUG, TAG, "CACloneResponseInfo Out of memory");
 
-            CADestroyResponseInfoInternal(clone);
+                CADestroyResponseInfoInternal(clone);
 
-            return NULL;
+                return NULL;
+            }
+            memcpy(temp, rep->info.token, len);
         }
-        strncpy(temp, rep->info.token, len);
-
         // save the token
         clone->info.token = temp;
+        clone->info.tokenLength = len;
     }
 
     if (rep->info.options != NULL && rep->info.numOptions)
@@ -419,8 +426,9 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
 
     if (rep->info.payload != NULL)
     {
+        char *temp = NULL;
         // allocate payload field
-        len = strlen(rep->info.payload);
+        int len = strlen(rep->info.payload);
 
         temp = (char *) OICCalloc(len + 1, sizeof(char));
         if (temp == NULL)
@@ -458,7 +466,7 @@ void CADestroyRequestInfoInternal(CARequestInfo_t *rep)
         return;
 
     // free token field
-    OICFree((char *) rep->info.token);
+    OICFree(rep->info.token);
 
     // free options field
     OICFree((CAHeaderOption_t *) rep->info.options);
@@ -475,7 +483,7 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t *rep)
         return;
 
     // free token field
-    OICFree((char *) rep->info.token);
+    OICFree(rep->info.token);
 
     // free options field
     if (rep->info.options != NULL && rep->info.numOptions)

@@ -470,7 +470,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     snprintf(fullUri, MAX_URI_LENGTH, "coap://%s:%u%s", ipAddress, endPoint->addressInfo.IP.port,
                 OC_PRESENCE_URI);
 
-    cbNode = GetClientCB(NULL, NULL, fullUri);
+    cbNode = GetClientCB(NULL, 0, NULL, fullUri);
 
     if(cbNode)
     {
@@ -479,7 +479,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     else
     {
         snprintf(fullUri, MAX_URI_LENGTH, "%s%s", OC_MULTICAST_IP, endPoint->resourceUri);
-        cbNode = GetClientCB(NULL, NULL, fullUri);
+        cbNode = GetClientCB(NULL, 0, NULL, fullUri);
         if(cbNode)
         {
             multicastPresenceSubscribe = 1;
@@ -689,7 +689,8 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         return;
     }
 
-    ClientCB *cbNode = GetClientCB(&(responseInfo->info.token), NULL, NULL);
+    ClientCB *cbNode = GetClientCB(&(responseInfo->info.token),
+            responseInfo->info.tokenLength, NULL, NULL);
 
     if (cbNode)
     {
@@ -875,17 +876,20 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
             }
     }
 
-    OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d", CA_MAX_TOKEN_LEN);
-    OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token, CA_MAX_TOKEN_LEN);
+    OC_LOG_V(INFO, TAG, "HandleCARequests: CA token length = %d",
+            requestInfo->info.tokenLength);
+    OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token,
+            requestInfo->info.tokenLength);
 
-    serverRequest.requestToken = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
+    serverRequest.requestToken = (CAToken_t)OCMalloc(requestInfo->info.tokenLength);
+    serverRequest.tokenLength = requestInfo->info.tokenLength;
     // Module Name
     if (!serverRequest.requestToken)
     {
         OC_LOG(FATAL, TAG, "Server Request Token is NULL");
         return;
     }
-    memcpy(serverRequest.requestToken, requestInfo->info.token, CA_MAX_TOKEN_LEN);
+    memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
 
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
@@ -960,7 +964,8 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCServerRequest * request = GetServerRequestUsingToken(protocolRequest->requestToken);
+    OCServerRequest * request = GetServerRequestUsingToken(protocolRequest->requestToken,
+            protocolRequest->tokenLength);
     if(!request)
     {
         OC_LOG(INFO, TAG, PCF("This is a new Server Request"));
@@ -970,6 +975,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->observationOption, protocolRequest->qos,
                 protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
                 protocolRequest->reqJSONPayload, &protocolRequest->requestToken,
+                protocolRequest->tokenLength,
                 protocolRequest->resourceUrl,protocolRequest->reqTotalSize,
                 &protocolRequest->addressInfo, protocolRequest->connectivityType);
         if (OC_STACK_OK != result)
@@ -1316,6 +1322,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     CARemoteEndpoint_t* endpoint = NULL;
     CAResult_t caResult;
     CAToken_t token = NULL;
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
     OCDoHandle resHandle = NULL;
     CAInfo_t requestData ={};
     CARequestInfo_t requestInfo ={};
@@ -1459,7 +1466,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
     // create token
-    caResult = CAGenerateToken(&token);
+    caResult = CAGenerateToken(&token, tokenLength);
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
@@ -1469,6 +1476,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     requestData.type = qualityOfServiceToMessageType(qos);
     requestData.token = token;
+    requestData.tokenLength = tokenLength;
     if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
     {
         result = CreateObserveHeaderOption (&(requestData.options), options,
@@ -1533,7 +1541,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    if((result = AddClientCB(&clientCB, cbData, &token, &resHandle, method,
+    if((result = AddClientCB(&clientCB, cbData, &token, tokenLength,  &resHandle, method,
                              requestUri, resourceType)) != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
@@ -1617,7 +1625,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 
     OC_LOG(INFO, TAG, PCF("Entering OCCancel"));
 
-    ClientCB *clientCB = GetClientCB(NULL, handle, NULL);
+    ClientCB *clientCB = GetClientCB(NULL, 0, handle, NULL);
 
     if(clientCB)
     {
@@ -1637,6 +1645,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 memset(&requestData, 0, sizeof(CAInfo_t));
                 requestData.type =  qualityOfServiceToMessageType(qos);
                 requestData.token = clientCB->token;
+                requestData.tokenLength = clientCB->tokenLength;
                 if (CreateObserveHeaderOption (&(requestData.options),
                             options, numOptions, OC_OBSERVE_DEREGISTER) != OC_STACK_OK)
                 {
@@ -1656,6 +1665,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 {
                     ret = OC_STACK_OK;
                 }
+                break;
             #ifdef WITH_PRESENCE
             case OC_REST_PRESENCE:
                 FindAndDeleteClientCB(clientCB);
@@ -1833,6 +1843,7 @@ OCStackResult OCProcess()
  */
 OCStackResult OCStartPresence(const uint32_t ttl)
 {
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
     OCChangeResourceProperty(
             &(((OCResource *)presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 1);
@@ -1851,7 +1862,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         addressInfo.IP.port = OC_MULTICAST_PORT;
 
         CAToken_t caToken = NULL;
-        CAResult_t caResult = CAGenerateToken(&caToken);
+        CAResult_t caResult = CAGenerateToken(&caToken, tokenLength);
         if (caResult != CA_STATUS_OK)
         {
             OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
@@ -1861,7 +1872,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 
         CAConnectivityType_t connType;
         OCToCAConnectivityType(OC_ALL, &connType );
-        AddObserver(OC_PRESENCE_URI, NULL, 0, &caToken,
+        AddObserver(OC_PRESENCE_URI, NULL, 0, &caToken, tokenLength,
                 (OCResource *)presenceResource.handle, OC_LOW_QOS,
                 &addressInfo, connType);
         CADestroyToken(caToken);

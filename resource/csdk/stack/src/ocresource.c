@@ -762,7 +762,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
-                ehRequest.obsInfo.obsId, &request->requestToken,
+                ehRequest.obsInfo.obsId, &request->requestToken, request->tokenLength,
                 resource, request->qos,
                 &request->addressInfo, request->connectivityType);
 
@@ -789,7 +789,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     {
         OC_LOG(INFO, TAG, PCF("Deregistering observation requested"));
 
-        resObs = GetObserverUsingToken (&request->requestToken);
+        resObs = GetObserverUsingToken (&request->requestToken, request->tokenLength);
 
         if (NULL == resObs)
         {
@@ -801,7 +801,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         ehRequest.obsInfo.obsId = resObs->observeId;
         ehFlag = (OCEntityHandlerFlag)(ehFlag | OC_OBSERVE_FLAG);
 
-        result = DeleteObserverUsingToken (&request->requestToken);
+        result = DeleteObserverUsingToken (&request->requestToken, request->tokenLength);
 
         if(result == OC_STACK_OK)
         {

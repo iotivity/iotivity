@@ -203,10 +203,11 @@ coap_pdu_t *CAGeneratePduImpl(const code_t code, coap_list_t *options, const CAI
 
     if (info.token)
     {
-        uint32_t tokenLength = strlen(info.token);
-        OIC_LOG_V(DEBUG, TAG, "token info : %s, %d", info.token, tokenLength);
+        uint32_t tokenLength = info.tokenLength;
+        OIC_LOG_V(DEBUG, TAG, "token info token length: %d, token :", tokenLength);
+        OIC_LOG_BUFFER(DEBUG, TAG, info.token, tokenLength);
 
-        int32_t ret = coap_add_token(pdu, tokenLength, (uint8_t *) info.token);
+        int32_t ret = coap_add_token(pdu, tokenLength, (unsigned char *) info.token);
         if (0 == ret)
         {
             OIC_LOG(DEBUG, TAG, "cannot add token to request");
@@ -563,17 +564,18 @@ void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInf
     // set token data
     if (pdu->hdr->token_length > 0)
     {
-        OIC_LOG(DEBUG, TAG, "inside pdu->hdr->token_length");
-        outInfo->token = (char *) OICMalloc(pdu->hdr->token_length + 1);
-        if (outInfo->token == NULL)
+        OIC_LOG_V(DEBUG, TAG, "inside token length : %d", pdu->hdr->token_length);
+        outInfo->token = (char *) OICMalloc(pdu->hdr->token_length);
+        if (NULL == outInfo->token)
         {
-            OIC_LOG(DEBUG, TAG, "CAGetInfoFromPDU, Memory allocation failed !");
+            OIC_LOG(ERROR, TAG, "memory allocation failed");
             OICFree(outInfo->options);
             return;
         }
         memcpy(outInfo->token, pdu->hdr->token, pdu->hdr->token_length);
-        outInfo->token[pdu->hdr->token_length] = '\0';
     }
+
+    outInfo->tokenLength = pdu->hdr->token_length;
 
     // set payload data
     if (NULL != pdu->data)
@@ -609,20 +611,20 @@ exit:
     return;
 }
 
-CAResult_t CAGenerateTokenInternal(CAToken_t *token)
+CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
 {
     OIC_LOG(DEBUG, TAG, "CAGenerateTokenInternal IN");
-    if (token == NULL)
+
+    if(!token)
     {
-        return CA_STATUS_FAILED;
+        OIC_LOG(ERROR, TAG, "invalid token pointer");
+        return CA_STATUS_INVALID_PARAM;
     }
 
-    // memory allocation
-    char *temp = (char *) OICCalloc(1, (CA_MAX_TOKEN_LEN + 1) * sizeof(char));
-    if (temp == NULL)
+    if((tokenLength > CA_MAX_TOKEN_LEN) || (0 == tokenLength))
     {
-        OIC_LOG(DEBUG, TAG, "CAGenerateTokenInternal, Memory allocation failed !");
-        return CA_MEMORY_ALLOC_FAILED;
+        OIC_LOG(ERROR, TAG, "invalid token length");
+        return CA_STATUS_INVALID_PARAM;
     }
 
     if (SEED == 0)
@@ -632,26 +634,32 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token)
         {
             OIC_LOG(DEBUG, TAG, "Failed to Create Seed!");
             SEED = 0;
-            OICFree(temp);
             return CA_STATUS_FAILED;
         }
         srandom(SEED);
     }
 
-    // set random byte
-    uint32_t index;
-    for (index = 0; index < CA_MAX_TOKEN_LEN; index++)
+    // memory allocation
+    char *temp = (char *) OICCalloc(tokenLength, sizeof(char));
+    if (NULL == temp)
     {
-        // use valid characters
-        temp[index] = (random() % 94 + 33) & 0xFF;
+        OIC_LOG(ERROR, TAG, "CAGenerateTokenInternal, Memory allocation failed !");
+        return CA_MEMORY_ALLOC_FAILED;
     }
 
-    temp[index] = '\0';
+    // set random byte
+    uint8_t index;
+    for (index = 0; index < tokenLength; index++)
+    {
+        // use valid characters
+        temp[index] = random() & 0x00FF;
+    }
+
     // save token
     *token = temp;
 
-    OIC_LOG(DEBUG, TAG, "generate the token!!");
-    OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) *token, CA_MAX_TOKEN_LEN);
+    OIC_LOG_V(DEBUG, TAG, "token info token length: %d, token :", tokenLength);
+    OIC_LOG_BUFFER(DEBUG, TAG, *token, tokenLength);
 
     OIC_LOG(DEBUG, TAG, "CAGenerateTokenInternal OUT");
     return CA_STATUS_OK;
@@ -660,14 +668,7 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token)
 void CADestroyTokenInternal(CAToken_t token)
 {
     OIC_LOG(DEBUG, TAG, "CADestroyTokenInternal IN");
-    if (token != NULL)
-    {
-        OIC_LOG(DEBUG, TAG, "destroy the token!!");
-        OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) token, CA_MAX_TOKEN_LEN);
-        OICFree(token);
-        token = NULL;
-    }
-
+    OICFree(token);
     OIC_LOG(DEBUG, TAG, "CADestroyTokenInternal OUT");
 }
 

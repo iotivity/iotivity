@@ -163,12 +163,12 @@ void CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInf
 coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode);
 
 /**
- * @brief  generates the token
- * @param   token        [OUT]   generated token
+ * @brief   generates the token
+ * @param   token        [OUT]  generated token
+ * @param   tokenLength  [IN]   length of the token
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-
-CAResult_t CAGenerateTokenInternal(CAToken_t *token);
+CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength);
 
 /**
  * @brief  destroys the token

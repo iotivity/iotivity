@@ -36,10 +36,11 @@ static OCMulticastNode * mcPresenceNodes = NULL;
 
 OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
-             CAToken_t * token, OCDoHandle *handle, OCMethod method,
+             CAToken_t * token, uint8_t tokenLength,
+             OCDoHandle *handle, OCMethod method,
              char * requestUri, char * resourceTypeName)
 {
-    if(!clientCB || !cbData || !token || !handle || !requestUri)
+    if(!clientCB || !cbData || !handle || !requestUri || tokenLength > CA_MAX_TOKEN_LEN)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -49,7 +50,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
     #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE)
     {   // Retrieve the presence callback structure for this specific requestUri.
-        cbNode = GetClientCB(NULL, NULL, requestUri);
+        cbNode = GetClientCB(NULL, 0, NULL, requestUri);
     }
     #endif // WITH_PRESENCE
 
@@ -69,6 +70,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             //Note: token memory is allocated in the caller OCDoResource
             //but freed in DeleteClientCB
             cbNode->token = *token;
+            cbNode->tokenLength = tokenLength;
             cbNode->handle = *handle;
             cbNode->method = method;
             cbNode->sequenceNumber = 0;
@@ -123,8 +125,8 @@ void DeleteClientCB(ClientCB * cbNode)
     if(cbNode) {
         LL_DELETE(cbList, cbNode);
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, cbNode->tokenLength);
         CADestroyToken (cbNode->token);
-        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, CA_MAX_TOKEN_LEN);
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
         if(cbNode->deleteCallback)
@@ -155,29 +157,40 @@ void DeleteClientCB(ClientCB * cbNode)
     }
 }
 
-ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const char * requestUri)
+ClientCB* GetClientCB(const CAToken_t * token, uint8_t tokenLength,
+        OCDoHandle handle, const char * requestUri)
 {
+
     ClientCB* out = NULL;
-    if(token) {
-        LL_FOREACH(cbList, out) {
+
+    if(token && *token &&
+            tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
+    {
+        LL_FOREACH(cbList, out)
+        {
             OC_LOG(INFO, TAG, PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)*token, CA_MAX_TOKEN_LEN);
-            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, CA_MAX_TOKEN_LEN);
-            if(memcmp(out->token, *token, CA_MAX_TOKEN_LEN) == 0)
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)*token, tokenLength);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
+            if(memcmp(out->token, *token, tokenLength) == 0)
             {
                 return out;
             }
         }
     }
-    else if(handle) {
-        LL_FOREACH(cbList, out) {
-            if(out->handle == handle) {
+    else if(handle)
+    {
+        LL_FOREACH(cbList, out)
+        {
+            if(out->handle == handle)
+            {
                 return out;
             }
         }
     }
-    else if(requestUri) {
-        LL_FOREACH(cbList, out) {
+    else if(requestUri)
+    {
+        LL_FOREACH(cbList, out)
+        {
             if(out->requestUri && strcmp(out->requestUri, requestUri ) == 0)
             {
                 return out;

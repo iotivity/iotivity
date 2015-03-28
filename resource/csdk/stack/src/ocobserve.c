@@ -122,7 +122,8 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
-                        &resourceObserver->token, resourceObserver->resUri, 0,
+                        &resourceObserver->token, resourceObserver->tokenLength,
+                        resourceObserver->resUri, 0,
                         &(resourceObserver->addressInfo), resourceObserver->connectivityType);
 
                 if(request)
@@ -157,7 +158,8 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
-                        &resourceObserver->token, resourceObserver->resUri, 0,
+                        &resourceObserver->token, resourceObserver->tokenLength,
+                        resourceObserver->resUri, 0,
                         &(resourceObserver->addressInfo), resourceObserver->connectivityType);
 
                 if(result == OC_STACK_OK)
@@ -226,7 +228,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
 
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observation->query,
-                        NULL, NULL, &observation->token,
+                        NULL, NULL, &observation->token, observation->tokenLength,
                         observation->resUri, 0,
                         &(observation->addressInfo), observation->connectivityType);
 
@@ -308,6 +310,7 @@ OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
                            CAToken_t          *token,
+                           uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            const CAAddress_t  *addressInfo,
@@ -345,12 +348,15 @@ OCStackResult AddObserver (const char         *resUri,
             VERIFY_NON_NULL (obsNode->query);
             memcpy (obsNode->query, query, strlen(query)+1);
         }
-
-        obsNode->token = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
-        VERIFY_NON_NULL (obsNode->token);
-        memcpy(obsNode->token, *token, CA_MAX_TOKEN_LEN);
-        obsNode->token[CA_MAX_TOKEN_LEN]='\0';
-
+        // If tokenLength is zero, the return value depends on the
+        // particular library implementation (it may or may not be a null pointer).
+        if(tokenLength)
+        {
+            obsNode->token = (CAToken_t)OCMalloc(tokenLength);
+            VERIFY_NON_NULL (obsNode->token);
+            memcpy(obsNode->token, *token, tokenLength);
+        }
+        obsNode->tokenLength = tokenLength;
         obsNode->addressInfo = *addressInfo;
         obsNode->connectivityType = connectivityType;
         obsNode->resource = resHandle;
@@ -386,7 +392,7 @@ ResourceObserver* GetObserverUsingId (const OCObservationId observeId)
     return NULL;
 }
 
-ResourceObserver* GetObserverUsingToken (const CAToken_t * token)
+ResourceObserver* GetObserverUsingToken (const CAToken_t * token, uint8_t tokenLength)
 {
     ResourceObserver *out = NULL;
 
@@ -395,9 +401,9 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t * token)
         LL_FOREACH (serverObsList, out)
         {
             OC_LOG(INFO, TAG,PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, CA_MAX_TOKEN_LEN);
-            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, CA_MAX_TOKEN_LEN);
-            if((memcmp(out->token, *token, CA_MAX_TOKEN_LEN) == 0))
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
+            if((memcmp(out->token, *token, tokenLength) == 0))
             {
                 return out;
             }
@@ -407,7 +413,7 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t * token)
     return NULL;
 }
 
-OCStackResult DeleteObserverUsingToken (CAToken_t * token)
+OCStackResult DeleteObserverUsingToken (CAToken_t * token, uint8_t tokenLength)
 {
     if(!token || !*token)
     {
@@ -416,11 +422,11 @@ OCStackResult DeleteObserverUsingToken (CAToken_t * token)
 
     ResourceObserver *obsNode = NULL;
 
-    obsNode = GetObserverUsingToken (token);
+    obsNode = GetObserverUsingToken (token, tokenLength);
     if (obsNode)
     {
         OC_LOG_V(INFO, TAG, PCF("deleting tokens"));
-        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)obsNode->token, CA_MAX_TOKEN_LEN);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)obsNode->token, tokenLength);
         LL_DELETE (serverObsList, obsNode);
         OCFree(obsNode->resUri);
         OCFree(obsNode->query);
@@ -439,7 +445,7 @@ void DeleteObserverList()
     {
         if(out)
         {
-            DeleteObserverUsingToken (&(out->token));
+            DeleteObserverUsingToken (&(out->token), out->tokenLength);
         }
     }
     serverObsList = NULL;

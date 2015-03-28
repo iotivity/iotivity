@@ -95,7 +95,7 @@ typedef struct
 
     //token for the observe request
     CAToken_t requestToken;
-
+    uint8_t tokenLength; //token length
     // The ID of CoAP pdu
     uint16_t coapID;
     uint8_t delayedResNeeded;

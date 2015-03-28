@@ -126,6 +126,7 @@ static void CAProcessData(CAData_t *data)
         info.options = data->options;
         info.numOptions = data->numOptions;
         info.token = data->requestInfo->info.token;
+        info.tokenLength = data->requestInfo->info.tokenLength;
         info.type = data->requestInfo->info.type;
 
         pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri, CA_GET, info);
@@ -434,55 +435,59 @@ memory_error_exit:
 }
 
 CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
-                                      const CAHeaderOption_t *options,
+                                      uint8_t tokenLength, const CAHeaderOption_t *options,
                                       uint8_t numOptions)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    if (resourceUri == NULL)
-    {
-        return CA_STATUS_FAILED;
-    }
-
-    CARemoteEndpoint_t *remoteEndpoint = NULL;
+    VERIFY_NON_NULL(resourceUri, TAG, "resourceUri is NULL");
+    VERIFY_NON_NULL(token, TAG, "Token is NULL");
 
     // allocate & initialize
     CAData_t *data = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
     CA_MEMORY_ALLOC_CHECK(data);
 
     CAAddress_t addr = {0};
-    remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, addr,
-                     CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE);
+    CARemoteEndpoint_t *remoteEndpoint =
+            CACreateRemoteEndpointInternal(resourceUri, addr,
+                                           CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE);
+
+    // create request info
+    CARequestInfo_t *reqInfo = (CARequestInfo_t *) OICCalloc(1, sizeof(CARequestInfo_t));
+    CA_MEMORY_ALLOC_CHECK(reqInfo);
+
+    // save request info data
+    reqInfo->method = CA_GET;
+    reqInfo->info.type = CA_MSG_NONCONFIRM;
+
+    reqInfo->info.token = token;
+    reqInfo->info.tokenLength = tokenLength;
 
     // save data
     data->type = SEND_TYPE_MULTICAST;
     data->remoteEndpoint = remoteEndpoint;
-    CARequestInfo_t *ReqInfo = (CARequestInfo_t *) OICCalloc(1, sizeof(CARequestInfo_t));
-    CA_MEMORY_ALLOC_CHECK(ReqInfo);
-    ReqInfo->method = CA_GET;
-    ReqInfo->info.token = token;
-    ReqInfo->info.type = CA_MSG_NONCONFIRM;
-    data->requestInfo = ReqInfo;
+    data->requestInfo = reqInfo;
 
     data->responseInfo = NULL;
     data->options = NULL;
     data->numOptions = 0;
-    CAHeaderOption_t *temp = NULL;
-    if (options != NULL && numOptions > 0)
+    CAHeaderOption_t *headerOption = NULL;
+    if (NULL != options && numOptions > 0)
     {
         // copy data
-        temp = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t) * numOptions);
-        CA_MEMORY_ALLOC_CHECK(temp);
-        memcpy(temp, options, sizeof(CAHeaderOption_t) * numOptions);
+        headerOption = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t) * numOptions);
+        CA_MEMORY_ALLOC_CHECK(headerOption);
+        memcpy(headerOption, options, sizeof(CAHeaderOption_t) * numOptions);
 
-        data->options = temp;
+        data->options = headerOption;
         data->numOptions = numOptions;
     }
 
     CAProcessData(data);
+
     CADestroyRemoteEndpoint(remoteEndpoint);
-    OICFree(temp);
+    OICFree(headerOption);
     OICFree(data);
-    OICFree(ReqInfo);
+    OICFree(reqInfo);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 

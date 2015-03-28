@@ -269,8 +269,10 @@ void FindResource()
     }
     // create token
     CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK || token == NULL)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    CAResult_t res = CAGenerateToken(&token, tokenLength);
+    if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
         return;
@@ -279,7 +281,7 @@ void FindResource()
     Serial.print("token:");
     Serial.println(token);
 
-    res = CAFindResource(buf, token);
+    res = CAFindResource(buf, token, tokenLength);
     if (res != CA_STATUS_OK)
     {
         Serial.print("find error: ");
@@ -341,17 +343,19 @@ void SendRequest()
 
     // create token
     CAToken_t token = NULL;
-    res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    res = CAGenerateToken(&token, tokenLength);
+    if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
-        token = NULL;
         return;
     }
 
-    Serial.println((token != NULL) ? token : "");
+    Serial.println(token);
     CAInfo_t requestData = {CA_MSG_RESET};
     requestData.token = token;
+    requestData.tokenLength = tokenLength;
     requestData.payload = (CAPayload_t)"Json Payload";
 
     requestData.type = msgType;
@@ -362,7 +366,7 @@ void SendRequest()
 
     // send request
     CASendRequest(endpoint, &requestInfo);
-    if (token != NULL)
+    if (NULL != token)
     {
         CADestroyToken(token);
     }
@@ -373,6 +377,7 @@ void SendRequest()
         CADestroyRemoteEndpoint(endpoint);
     }
 
+    CADestroyToken(token);
     Serial.println("============");
 }
 
@@ -414,18 +419,20 @@ void SendRequestAll()
 
     // create token
     CAToken_t token = NULL;
-    res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    res = CAGenerateToken(&token, tokenLength);
+    if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
-        token = NULL;
         return;
     }
 
-    Serial.println((token != NULL) ? token : "");
+    Serial.println(token);
 
     CAInfo_t requestData = {CA_MSG_RESET};
     requestData.token = token;
+    requestData.tokenLength = tokenLength;
     requestData.payload = "Temp Json Payload";
     requestData.type = CA_MSG_NONCONFIRM;
 
@@ -437,7 +444,7 @@ void SendRequestAll()
     // CASendRequest(endpoint, &requestInfo);
     CASendRequestToAll(group, &requestInfo);
 
-    if (token != NULL)
+    if (NULL != token)
     {
         CADestroyToken(token);
     }
@@ -533,18 +540,19 @@ void AdvertiseResource()
     Serial.println("============");
     // create token
     CAToken_t token = NULL;
-    CAResult_t res = CAGenerateToken(&token);
-    if (res != CA_STATUS_OK)
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    CAResult_t res = CAGenerateToken(&token, tokenLength);
+    if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
-        token = NULL;
         return;
     }
 
     Serial.println("token");
-    Serial.println((token != NULL) ? token : "");
+    Serial.println(token);
 
-    CAAdvertiseResource(buf, token, headerOpt, (uint8_t)optionNum);
+    CAAdvertiseResource(buf, token, tokenLength, headerOpt, (uint8_t)optionNum);
     OICFree(headerOpt);
     CADestroyToken(token);
 }
@@ -578,13 +586,25 @@ void SendNotification()
         return;
     }
 
-    CAInfo_t respondeData = {CA_MSG_RESET};
-    respondeData.token = (CAToken_t)"token";
-    respondeData.payload = (CAPayload_t)"Notification Data";
+    // create token
+    CAToken_t token = NULL;
+    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+
+    res = CAGenerateToken(&token, tokenLength);
+    if (res != CA_STATUS_OK || (!token))
+    {
+        Serial.println("token error");
+        return;
+    }
+
+    CAInfo_t respondData = {CA_MSG_NONCONFIRM};
+    respondData.token = token;
+    respondData.tokenLength = tokenLength;
+    respondData.payload = (CAPayload_t)"Notification Data";
 
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
     responseInfo.result = CA_SUCCESS;
-    responseInfo.info = respondeData;
+    responseInfo.info = respondData;
 
     // send request
     CASendNotification(endpoint, &responseInfo);
@@ -593,6 +613,8 @@ void SendNotification()
     {
         CADestroyRemoteEndpoint(endpoint);
     }
+
+    CADestroyToken(token);
     Serial.println("============");
 }
 
@@ -788,6 +810,8 @@ void ResponseHandler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *r
 
 void SendResponse(CARemoteEndpoint_t *endpoint, const CAInfo_t* info)
 {
+    char buf[MAX_BUF_LEN] = {0};
+
     Serial.println("============");
     CAInfo_t responseData = {CA_MSG_RESET};
     if(info && info->type == CA_MSG_CONFIRM)
@@ -800,7 +824,8 @@ void SendResponse(CARemoteEndpoint_t *endpoint, const CAInfo_t* info)
     }
 
     responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.token = (info != NULL) ? (CAToken_t)info->token : (CAToken_t)"";
+    responseData.token = (info != NULL) ? (CAToken_t)info->token : NULL;
+    responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
     responseData.payload = (CAPayload_t)"response payload";
 
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};

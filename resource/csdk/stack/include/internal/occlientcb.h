@@ -51,6 +51,8 @@ typedef struct ClientCB {
     OCClientContextDeleter deleteCallback;
     //  when a response is recvd with this token, above callback will be invoked
     CAToken_t token;
+    // a response is recvd with this token length
+    uint8_t tokenLength;
     // Invocation handle tied to original call to OCDoResource()
     OCDoHandle handle;
     // This is used to determine if all responses should be consumed or not.
@@ -96,7 +98,8 @@ extern struct ClientCB *cbList;
  */
 OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
-             CAToken_t * token, OCDoHandle *handle, OCMethod method,
+             CAToken_t * token, uint8_t tokenLength,
+             OCDoHandle *handle, OCMethod method,
              char * requestUri, char * resourceTypeName);
 
 /** @ingroup ocstack
@@ -124,7 +127,8 @@ void DeleteClientCB(ClientCB *cbNode);
  *
  * @return address of the node if found, otherwise NULL
  */
-ClientCB* GetClientCB(const CAToken_t * token, OCDoHandle handle, const char * requestUri);
+ClientCB* GetClientCB(const CAToken_t * token, uint8_t tokenLength,
+        OCDoHandle handle, const char * requestUri);
 
 /**
  * Inserts a new resource type filter into this cb node.

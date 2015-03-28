@@ -110,11 +110,11 @@ void CADestroyRemoteEndpoint(CARemoteEndpoint_t *rep)
     CADestroyRemoteEndpointInternal(rep);
 }
 
-CAResult_t CAGenerateToken(CAToken_t *token)
+CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
 {
     OIC_LOG_V(DEBUG, TAG, "CAGenerateToken");
 
-    return CAGenerateTokenInternal(token);
+    return CAGenerateTokenInternal(token, tokenLength);
 }
 
 void CADestroyToken(CAToken_t token)
@@ -131,11 +131,11 @@ CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
     return CAGetNetworkInformationInternal(info, size);
 }
 
-CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token)
+CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint8_t tokenLength)
 {
     OIC_LOG_V(DEBUG, TAG, "CAFindResource");
 
-    return CADetachMessageResourceUri(resourceUri, token, NULL, 0);
+    return CADetachMessageResourceUri(resourceUri, token, tokenLength, NULL, 0);
 
 }
 
@@ -173,11 +173,12 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
 }
 
 CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
-                              const CAHeaderOption_t *options,const uint8_t numOptions)
+                               uint8_t tokenLength, const CAHeaderOption_t *options,
+                               const uint8_t numOptions)
 {
     OIC_LOG_V(DEBUG, TAG, "CAAdvertiseResource");
 
-    return CADetachMessageResourceUri(resourceUri, token, options, numOptions);
+    return CADetachMessageResourceUri(resourceUri, token, tokenLength, options, numOptions);
 
 }
 

@@ -66,14 +66,16 @@ CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
 
 /**
  * @brief   Detaches control from the caller for sending request
- * @param   resourceUri   [IN]    resource uri that needs to  be sent in the request
- * @param   token         [IN]    token information of the request
- * @param   options       [IN]    header options that need to be append in the request
- * @param   numOptions    [IN]    number of options be appended
- * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @param   resourceUri    [IN]    resource uri that needs to  be sent in the request
+ * @param   token          [IN]    token information of the request
+ * @param   tokenLength    [IN]    length of the token
+ * @param   options        [IN]    header options that need to be append in the request
+ * @param   numOptions     [IN]    number of options be appended
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
-                                      const CAHeaderOption_t *options, uint8_t numOptions);
+                                      uint8_t tokenLength, const CAHeaderOption_t *options,
+                                      uint8_t numOptions);
 
 /**
  * @brief   Setting the request and response callbacks for network packets

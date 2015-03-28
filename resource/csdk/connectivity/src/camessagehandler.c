@@ -266,6 +266,7 @@ static void CASendThreadProcess(void *threadData)
         info.options = data->options;
         info.numOptions = data->numOptions;
         info.token = data->requestInfo->info.token;
+        info.tokenLength = data->requestInfo->info.tokenLength;
         info.type = data->requestInfo->info.type;
 
         pdu = (coap_pdu_t *) CAGeneratePdu(data->remoteEndpoint->resourceUri, CA_GET, info);
@@ -351,7 +352,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         if (NULL != ReqInfo->info.token)
         {
             OIC_LOG(DEBUG, TAG, "Request- token:");
-            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) ReqInfo->info.token, CA_MAX_TOKEN_LEN);
+            OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) ReqInfo->info.token,
+                           ReqInfo->info.tokenLength);
         }
 
         if (NULL != endpoint)
@@ -690,44 +692,48 @@ memory_error_exit:
 }
 
 CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
-                                      const CAHeaderOption_t *options,const uint8_t numOptions)
+                                      uint8_t tokenLength, const CAHeaderOption_t *options,
+                                      uint8_t numOptions)
 {
-    if (resourceUri == NULL)
-    {
-        return CA_STATUS_FAILED;
-    }
-    CARequestInfo_t *ReqInfo = NULL;
-    CAToken_t tempToken = NULL;
-    CARemoteEndpoint_t *remoteEndpoint = NULL;
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL(resourceUri, TAG, "resourceUri is NULL");
+    VERIFY_NON_NULL(token, TAG, "Token is NULL");
 
+    CARemoteEndpoint_t *remoteEndpoint = NULL;
+    CARequestInfo_t *reqInfo = NULL;
+    char *tempToken = NULL;
+
+    // allocate & initialize
     CAData_t *data = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
     CA_MEMORY_ALLOC_CHECK(data);
 
     CAAddress_t addr = {};
     remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, addr,
-                                         CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE);
+                                                    CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE);
 
     // create request info
-    ReqInfo = (CARequestInfo_t *) OICCalloc(1, sizeof(CARequestInfo_t));
-    CA_MEMORY_ALLOC_CHECK(ReqInfo);
+    reqInfo = (CARequestInfo_t *) OICCalloc(1, sizeof(CARequestInfo_t));
+    CA_MEMORY_ALLOC_CHECK(reqInfo);
 
-    // copy token value
-    if (token != NULL)
+    if (tokenLength)
     {
-        int32_t len = strlen(token);
-        tempToken = (char *) OICCalloc((len + 1), sizeof(char));
+        // copy token value
+        tempToken = (char *) OICMalloc(tokenLength);
         CA_MEMORY_ALLOC_CHECK(tempToken);
-        strncpy(tempToken, token, len);
+        memcpy(tempToken, token, tokenLength);
     }
 
     // save request info data
-    ReqInfo->method = CA_GET;
-    ReqInfo->info.token = tempToken;
-    ReqInfo->info.type = CA_MSG_NONCONFIRM;
+    reqInfo->method = CA_GET;
+    reqInfo->info.type = CA_MSG_NONCONFIRM;
+
+    reqInfo->info.token = tempToken;
+    reqInfo->info.tokenLength = tokenLength;
+
     // save data
     data->type = SEND_TYPE_MULTICAST;
     data->remoteEndpoint = remoteEndpoint;
-    data->requestInfo = ReqInfo;
+    data->requestInfo = reqInfo;
 
     data->responseInfo = NULL;
     data->options = NULL;
@@ -756,21 +762,10 @@ memory_error_exit:
 
     CADestroyRemoteEndpointInternal(remoteEndpoint);
 
-    if (tempToken != NULL)
-    {
-        OICFree(tempToken);
-    }
-
-    if (ReqInfo != NULL)
-    {
-        OICFree(ReqInfo);
-    }
-
-    if (data != NULL)
-    {
-        OICFree(data);
-    }
-
+    OICFree(tempToken);
+    OICFree(reqInfo);
+    OICFree(data);
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_MEMORY_ALLOC_FAILED;
 }
 

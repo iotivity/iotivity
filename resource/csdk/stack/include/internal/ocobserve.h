@@ -38,6 +38,8 @@ typedef struct ResourceObserver
     char *query;
     //token for the observe request
     CAToken_t token;
+    //token length for the observe request
+    uint8_t tokenLength;
     // Resource handle
     OCResource *resource;
     //TODO bundle it in Endpoint structure(address, uri, type, secured)
@@ -77,14 +79,15 @@ OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
                            CAToken_t          *token,
+                           uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            const CAAddress_t  *addressInfo,
                            CAConnectivityType_t connectivityType);
 
-OCStackResult DeleteObserverUsingToken (CAToken_t * token);
+OCStackResult DeleteObserverUsingToken (CAToken_t * token, uint8_t tokenLength);
 
-ResourceObserver* GetObserverUsingToken (const CAToken_t * token);
+ResourceObserver* GetObserverUsingToken (const CAToken_t * token, uint8_t tokenLength);
 
 ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
 
