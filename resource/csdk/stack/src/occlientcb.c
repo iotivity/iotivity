@@ -86,7 +86,12 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         // Ensure that the handle the SDK hands back up to the application layer for the
         // OCDoResource call matches the found ClientCB Node.
         *clientCB = cbNode;
-        cbData->cd(cbData->context);
+
+        if (cbData->cd)
+        {
+            cbData->cd(cbData->context);
+        }
+
         OCFree(*token);
         OCFree(*handle);
         OCFree(requestUri);
