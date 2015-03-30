@@ -40,7 +40,7 @@ public abstract class IReportReceiver
          *       This abstract method needs to be implemeted by application
          *        as a precondition for query engine implementation.
          *
-         * @param tag
+         * @param tag - tag from SSMCore
          *
          * @param msg - received message
          *

@@ -33,7 +33,7 @@ package org.iotivity.service.ssm;
     *            Application should implement the pure virtual function OnQueryEngineEvent.
     *            The Application should call registerQuery() and add a listener.
     *
-    *
+    *<pre>
     Sample code :
 
         int cqid = SoftSensorManager.registerQuery(edtQuery.getText().toString(), mQueryEngineEventListener);
@@ -60,7 +60,7 @@ package org.iotivity.service.ssm;
                     }
                 }
         }
-        };
+        };</pre>
     */
 public abstract class IQueryEngineEvent
 {

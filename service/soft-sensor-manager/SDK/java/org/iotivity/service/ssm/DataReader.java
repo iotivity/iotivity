@@ -47,7 +47,7 @@ public class DataReader
         /**
          * Get affected context models. The CQL(context query language) can specify
          *       multiple ContextModels for retrieving data so a list of string of affected
-         *       dacontext models is returned
+         *       context models is returned
          *
          * @return List<String> - affected ContextModel list
          * 

@@ -65,7 +65,13 @@ public class CoreController
         }
 
         static private CoreController coreController;
-
+        
+        /**
+         * Return instance of this class.
+         *
+         * @return CoreController - instance of this class
+         * 
+         */
         public static CoreController getInstance()
         {
             if (coreController == null)
@@ -156,7 +162,7 @@ public class CoreController
          *               of the query engine with which the query is to be registered
          *
          * @param queryEngineEvent 
-         *               - the event to register with QueryEngine
+         *               - the event class to receive QueryEngine events
          *
          * @return void
          * 
@@ -166,7 +172,7 @@ public class CoreController
 
 
         /**
-         * Kill the registered ContextQuery corresponding to the  to cqid
+         * Kill the registered ContextQuery corresponding to the cqid
          *
          * @param pQueryEngineInstance 
          *              - instance(created on creation of the QueryEngine)
@@ -203,7 +209,7 @@ public class CoreController
          *           property is described from its specification.
          *
          * @param pIModelDataInstance - instance(created on creation of the ModelData)
-         *                of the model data for which propertycount is to be returned
+         *                of the model data for which property count is to be returned
          *
          * @return @return int - number of properties
          * 
@@ -246,7 +252,7 @@ public class CoreController
         /**
          * Get affected context models. The CQL(context query language) can specify
          *       multiple ContextModels for retrieving data so a list of string of affected
-         *       dacontext models is returned
+         *       context models is returned
          *
          * @param pDataReaderInstance 
          *              - instance(created on creation of the DataReader)

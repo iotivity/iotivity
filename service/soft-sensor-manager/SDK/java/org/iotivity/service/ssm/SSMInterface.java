@@ -22,7 +22,7 @@
  *
  * @brief    This file gives description of SSMInterface class and its utility functions.
  *         This is the interface between an application and the query engine.
- *         SSMinterface makes desired querries in form of CQL(Context Query Language)
+ *         SSMinterface makes desired queries in form of CQL(Context Query Language)
  *         to the query engine and passes the returned result obtained in form of callback
  *         back to the application.
  */
@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @class SSMInterface
  * @brief This class provides a set of APIs to manage the SSM framework
  *      This class sits in between the application and query engine and acts
- *      as an interface between them. SSMinterface makes desired querries in form of CQL(Context Query Language)
+ *      as an interface between them. SSMinterface makes desired queries in form of CQL(Context Query Language)
  *      to the query engine and passes the returned result obtained in form of callback
  *      back to the application
  */
@@ -83,7 +83,7 @@ public class SSMInterface
                 }
 
                 /**
-                 * To lock QueryEngineEventReceiver object to execute a query atomicaly,
+                 * To lock QueryEngineEventReceiver object to execute a query atomically,
                  *         this is done to provide synchronization in case of multiple queries.
                  *
                  * @return void
@@ -221,7 +221,7 @@ public class SSMInterface
         }
 
         /**
-         * unregister a registered query using its query ID the query corresponding
+         * unregister a registered query using its query ID. The query corresponding
          *      to the cqid will be terminated and removes listener for the given query
          *      The SSMCore will not send any callbacks after successful unregistration.
          *

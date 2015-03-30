@@ -75,7 +75,7 @@ public class QueryEngine
          * Register QueryEngineEvent to QueryEngine
          *
          * @param queryEngineEvent 
-         *               - the event to register with QueryEngine
+         *               - the event class to receive QueryEngine events
          *
          * @return void
          * 
