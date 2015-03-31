@@ -87,7 +87,7 @@ static uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 
 static OCMode myStackMode;
 OCDeviceEntityHandler defaultDeviceHandler;
-OCStackResult getQueryFromUri(const char * uri, char** resourceType, char ** newURI);
+
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -103,20 +103,92 @@ OCStackResult getQueryFromUri(const char * uri, char** resourceType, char ** new
 //TODO: we should allow the server to define this
 #define MAX_OBSERVE_AGE (0x2FFFFUL)
 
-//=============================================================================
-// Helper Functions
-//=============================================================================
-static uint32_t GetTime(float afterSeconds)
+// TODO: Not sure if I agree with this.  I think it should be static but it is called in
+// stack/test/stacktests.cpp, not included via a header file.  If we intend to allow it
+// to be called externally, we should change the name to OCParsePresencePayload and make
+// it part of the official public API.  But can't change now due to current API freeze.
+// Another option might be to make non-API utility functions for doing stuff like this
+void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType);
+
+//-----------------------------------------------------------------------------
+// Private internal function prototypes
+//-----------------------------------------------------------------------------
+static OCDoHandle GenerateInvocationHandle();
+static OCStackResult initResources();
+static void insertResource(OCResource *resource);
+static OCResource *findResource(OCResource *resource);
+static void insertResourceType(OCResource *resource,
+        OCResourceType *resourceType);
+static OCResourceType *findResourceTypeAtIndex(OCResourceHandle handle,
+        uint8_t index);
+static void insertResourceInterface(OCResource *resource,
+        OCResourceInterface *resourceInterface);
+static OCResourceInterface *findResourceInterfaceAtIndex(
+        OCResourceHandle handle, uint8_t index);
+static void deleteResourceType(OCResourceType *resourceType);
+static void deleteResourceInterface(OCResourceInterface *resourceInterface);
+static void deleteResourceElements(OCResource *resource);
+static OCStackResult deleteResource(OCResource *resource);
+static void deleteAllResources();
+static void incrementSequenceNumber(OCResource * resPtr);
+static OCStackResult verifyUriQueryLength(const char * inputUri,
+        uint16_t uriLen);
+static bool OCIsPacketTransferRequired(const char *request, const char *response, size_t size);
+static OCStackResult getResourceType(const char * query, char** resourceType);
+static CAResult_t OCSelectNetwork();
+static uint32_t GetTime(float afterSeconds);
+static OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
+        uint16_t port, OCDevAddr *ipAddr);
+static OCStackResult CAToOCStackResult(CAResponseResult_t caCode);
+static OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType,
+        CAConnectivityType_t* caConType);
+static OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType,
+        OCConnectivityType *ocConType);
+static OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* endPoint);
+static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
+        const CAResponseInfo_t* responseInfo);
+static void HandleCAResponses(const CARemoteEndpoint_t* endPoint,
+        const CAResponseInfo_t* responseInfo);
+static void HandleCARequests(const CARemoteEndpoint_t* endPoint,
+        const CARequestInfo_t* requestInfo);
+static OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
+static bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
+static OCStackResult getQueryFromUri(const char * uri, char** resourceType, char ** newURI);
+
+//-----------------------------------------------------------------------------
+// Internal functions
+//-----------------------------------------------------------------------------
+
+/**
+ * Get the CoAP ticks after the specified number of seconds
+ *
+ * @param afterSeconds - seconds
+ * @return
+ *     CoAP ticks
+ */
+uint32_t GetTime(float afterSeconds)
 {
     coap_tick_t now;
     coap_ticks(&now);
     return now + (uint32_t)(afterSeconds * COAP_TICKS_PER_SECOND);
 }
 
-/// This method is used to create the IPv4 dev_addr structure.
-/// TODO: Remove in future. Temporary helper function.
-/// Builds a socket interface address using IP address and port number
-static OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
+/**
+ * This method is used to create the IPv4 dev_addr structure.
+ * Builds a socket interface address using IP address and port number
+ * TODO: Remove in future. Temporary helper function.
+ *
+ * @param a - IPv4 octet 0
+ * @param b - IPv4 octet 1
+ * @param c - IPv4 octet 2
+ * @param d - IPv4 octet 3
+ * @param port - port number
+ * @param ipAddr - IPv4 address
+ * @return
+ *     OCStackResult
+ */
+
+OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
         uint16_t port, OCDevAddr *ipAddr)
 {
     if (!ipAddr )
@@ -135,107 +207,13 @@ static OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t
     return OC_STACK_OK;
 }
 
-//-----------------------------------------------------------------------------
-// Internal API function
-//-----------------------------------------------------------------------------
 
-// This internal function is called to update the stack with the status of
-// observers and communication failures
-OCStackResult OCStackFeedBack(CAToken_t * token, uint8_t status)
-{
-    OCStackResult result = OC_STACK_ERROR;
-    ResourceObserver * observer = NULL;
-    OCEntityHandlerRequest ehRequest = {};
-
-    switch(status)
-    {
-    case OC_OBSERVER_NOT_INTERESTED:
-        OC_LOG(DEBUG, TAG, PCF("observer is not interested in our notifications anymore"));
-        observer = GetObserverUsingToken (token);
-        if(observer)
-        {
-            result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) NULL,
-                    OC_REST_NOMETHOD, (OCResourceHandle) NULL, NULL, NULL, 0,
-                    NULL, OC_OBSERVE_DEREGISTER, observer->observeId);
-            if(result != OC_STACK_OK)
-            {
-                return result;
-            }
-            observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
-        }
-        //observer is not observing anymore
-        result = DeleteObserverUsingToken (token);
-        if(result == OC_STACK_OK)
-        {
-            OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
-        }
-        else
-        {
-            result = OC_STACK_OK;
-            OC_LOG(DEBUG, TAG, PCF("Observer Removal failed"));
-        }
-        break;
-    case OC_OBSERVER_STILL_INTERESTED:
-        //observer is still interested
-        OC_LOG(DEBUG, TAG, PCF("observer is interested in our \
-                notifications, reset the failedCount"));
-        observer = GetObserverUsingToken (token);
-        if(observer)
-        {
-            observer->forceHighQos = 0;
-            observer->failedCommCount = 0;
-            result = OC_STACK_OK;
-        }
-        else
-        {
-            result = OC_STACK_OBSERVER_NOT_FOUND;
-        }
-        break;
-    case OC_OBSERVER_FAILED_COMM:
-        //observer is not reachable
-        OC_LOG(DEBUG, TAG, PCF("observer is unreachable"));
-        observer = GetObserverUsingToken (token);
-        if(observer)
-        {
-            if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
-            {
-                result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) NULL,
-                        OC_REST_NOMETHOD, (OCResourceHandle) NULL, NULL, NULL, 0,
-                        NULL, OC_OBSERVE_DEREGISTER, observer->observeId);
-                if(result != OC_STACK_OK)
-                {
-                    return OC_STACK_ERROR;
-                }
-                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
-                //observer is unreachable
-                result = DeleteObserverUsingToken (token);
-                if(result == OC_STACK_OK)
-                {
-                    OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
-                }
-                else
-                {
-                    result = OC_STACK_OK;
-                    OC_LOG(DEBUG, TAG, PCF("Observer Removal failed"));
-                }
-            }
-            else
-            {
-                observer->failedCommCount++;
-                result = OC_STACK_CONTINUE;
-            }
-            observer->forceHighQos = 1;
-            OC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",observer->failedCommCount);
-        }
-        break;
-    default:
-        OC_LOG(ERROR, TAG, PCF("Unknown status"));
-        result = OC_STACK_ERROR;
-        break;
-        }
-    return result;
-}
-
+/**
+ * Convert CAResponseResult_t to OCStackResult
+ * @param caCode - CAResponseResult_t code
+ * @return
+ *     OCStackResult
+ */
 OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -266,6 +244,13 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
     return ret;
 }
 
+/**
+ * Convert OCConnectivityType to CAConnectivityType_t
+ * @param ocConType - OCConnectivityType input
+ * @param caConType - CAConnectivityType_t output
+ * @return
+ *     OCStackResult
+ */
 OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType, CAConnectivityType_t* caConType)
 {
     OCStackResult ret = OC_STACK_OK;
@@ -295,7 +280,13 @@ OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType, CAConnectivit
     }
     return ret;
 }
-
+/**
+ * Convert CAConnectivityType_t to CAConnectivityType_t
+ * @param caConType - CAConnectivityType_t input
+ * @param ocConType - OCConnectivityType output
+ * @return
+ *     OCStackResult
+ */
 OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType, OCConnectivityType *ocConType)
 {
     OCStackResult ret = OC_STACK_OK;
@@ -321,7 +312,13 @@ OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType, OCConnectiv
     return ret;
 }
 
-// update response.addr appropriately from endPoint.addressInfo
+/**
+ * Update response.addr appropriately from endPoint.addressInfo
+ * @param address - OCDevAddr output
+ * @param endPoint - CARemoteEndpoint_t input
+ * @return
+ *     OCStackResult
+ */
 OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* endPoint)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -356,8 +353,14 @@ exit:
     OCFree(cpAddress);
     return ret;
 }
-
-// Note: Caller should invoke OCFree after done with resType pointer
+/**
+ * Parse the presence payload and extract various parameters
+ * Note: Caller should invoke OCFree after done with resType pointer
+ * @param payload - presence payload
+ * @param seqNum - sequence number
+ * @param maxAge - max age
+ * @param resType - resource type
+ */
 void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType)
 {
     char * tok = NULL;
@@ -410,7 +413,14 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, cha
     payload[strlen((char *)payload)] = ']';
 }
 
-OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
+/**
+ * Handle response from presence request
+ * @param endPoint - CA remote endpoint
+ * @param responseInfo - CA response info
+ * @return
+ *     OCStackResult
+ */
+static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
                             const CAResponseInfo_t* responseInfo)
 {
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
@@ -652,8 +662,11 @@ OCFree(resourceTypeName);
 return result;
 }
 
-
-//This function will be called back by CA layer when a response is received
+/**
+ * This function will be called back by CA layer when a response is received
+ * @param endPoint
+ * @param responseInfo
+ */
 void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
@@ -746,7 +759,11 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
     OC_LOG(INFO, TAG, PCF("Exit HandleCAResponses"));
 }
 
-//This function will be called back by CA layer when a request is received
+/**
+ * This function will be called back by CA layer when a request is received
+ * @param endPoint
+ * @param requestInfo
+ */
 void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
@@ -925,7 +942,12 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
 
-//This function will be called back by occoap layer when a request is received
+/**
+ * Handle incoming requests
+ * @param protocolRequest
+ * @return
+ *     OCStackResult
+ */
 OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 {
     OC_LOG(INFO, TAG, PCF("Entering HandleStackRequests (OCStack Layer)"));
@@ -994,7 +1016,16 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     return result;
 }
 
-int ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
+/**
+ * Parse IP address string into octets and port
+ * @param ipAddrStr
+ * @param ipAddr
+ * @param port
+ * @return
+ *     true - success
+ *     false - failure
+ */
+bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
 {
     size_t index = 0;
     char *itr, *coap;
@@ -1050,44 +1081,8 @@ int ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
         }
     }
 
-
-    if (dotCount == 3)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
+    return (3 == dotCount);
 }
-
-//-----------------------------------------------------------------------------
-// Private internal function prototypes
-//-----------------------------------------------------------------------------
-
-static OCDoHandle GenerateInvocationHandle();
-static OCStackResult initResources();
-static void insertResource(OCResource *resource);
-static OCResource *findResource(OCResource *resource);
-static void insertResourceType(OCResource *resource,
-        OCResourceType *resourceType);
-static OCResourceType *findResourceTypeAtIndex(OCResourceHandle handle,
-        uint8_t index);
-static void insertResourceInterface(OCResource *resource,
-        OCResourceInterface *resourceInterface);
-static OCResourceInterface *findResourceInterfaceAtIndex(
-        OCResourceHandle handle, uint8_t index);
-static void deleteResourceType(OCResourceType *resourceType);
-static void deleteResourceInterface(OCResourceInterface *resourceInterface);
-static void deleteResourceElements(OCResource *resource);
-static OCStackResult deleteResource(OCResource *resource);
-static void deleteAllResources();
-static void incrementSequenceNumber(OCResource * resPtr);
-static OCStackResult verifyUriQueryLength(const char * inputUri,
-        uint16_t uriLen);
-static uint8_t OCIsPacketTransferRequired(const char *request, const char *response, uint16_t size);
-OCStackResult getResourceType(const char * query, char** resourceType);
-static CAResult_t OCSelectNetwork();
 
 //-----------------------------------------------------------------------------
 // Public APIs
@@ -1679,6 +1674,12 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
     return ret;
 }
 
+/**
+ * Perform presence notifications
+ *
+ * @return
+ *     OCStackResult
+ */
 #ifdef WITH_PRESENCE
 OCStackResult OCProcessPresence()
 {
@@ -1909,7 +1910,16 @@ OCStackResult OCStopPresence()
 }
 #endif
 
-
+/**
+ * Set default device entity handler
+ *
+ * @param entityHandler - entity handler function that is called by ocstack to handle requests for
+ *                        any undefined resources or default actions.
+ *                        if NULL is passed it removes the device default entity handler.
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ */
 OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler)
 {
     defaultDeviceHandler = entityHandler;
@@ -1917,6 +1927,16 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
     return OC_STACK_OK;
 }
 
+/**
+ * Set device information.
+ *
+ * @param deviceInfo - Structure passed by the server application containing
+ *                     the device information.
+ *
+ *
+ * @return
+ *     OCStackResult
+ */
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
 {
     OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
@@ -2264,6 +2284,14 @@ OCStackResult OCUnBindResource(
     return OC_STACK_ERROR;
 }
 
+/**
+ * Bind a resourcetype to a resource
+ *
+ * @param resource - target resource
+ * @param resourceTypeName - resourcetype
+ * @return
+ *     OCStackResult
+ */
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName)
 {
@@ -2276,7 +2304,7 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 
     // Validate parameters
     VERIFY_NON_NULL(resourceTypeName, ERROR, OC_STACK_INVALID_PARAM);
-    // TODO:  Does resource attribute resentation really have to be maintained in stack?
+    // TODO:  Does resource attribute representation really have to be maintained in stack?
     // Is it presented during resource discovery?
 
     // Create the resourcetype and insert it into the resource list
@@ -2311,6 +2339,14 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     return result;
 }
 
+/**
+ * Bind a resource interface to a resource
+ *
+ * @param resource - target resource
+ * @param resourceInterfaceName - resource interface
+ * @return
+ *     OCStackResult
+ */
 OCStackResult BindResourceInterfaceToResource(OCResource* resource,
         const char *resourceInterfaceName)
 {
@@ -2628,8 +2664,6 @@ const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index)
     return (const char *) NULL;
 }
 
-
-
 /**
  * Get the number of resource interfaces of the resource.
  *
@@ -2788,6 +2822,11 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle)
     return resource->entityHandler;
 }
 
+/**
+ * Increment resource sequence number.  Handles rollover
+ *
+ * @param resPtr - pointer to resource
+ */
 void incrementSequenceNumber(OCResource * resPtr)
 {
     // Increment the sequence number
@@ -2804,15 +2843,11 @@ void incrementSequenceNumber(OCResource * resPtr)
  *
  * @param resourceType - Handle to the resourceType linked list of resource
  *                       that was modified.
- * @param qos          - Quality Of Service
- *
  * @return
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
 #ifdef WITH_PRESENCE
-
-
 OCStackResult SendPresenceNotification(OCResourceType *resourceType)
 {
     OCResource *resPtr = NULL;
@@ -2843,7 +2878,6 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType)
  *     OC_STACK_ERROR - stack process error
  *
  */
-
 OCStackResult SendStopNotification()
 {
     OCResource *resPtr = NULL;
@@ -2912,6 +2946,24 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
     }
 }
 
+/**
+ * Notify specific observers with updated value of representation.
+ * Before this API is invoked by entity handler it has finished processing
+ * queries for the associated observers.
+ *
+ * @param handle - handle of resource
+ * @param obsIdList - list of observation ids that need to be notified
+ * @param numberOfIds - number of observation ids included in obsIdList
+ * @param notificationJSONPayload - JSON encoded payload to send in notification
+ * @param qos - desired quality of service of the observation notifications
+ * NOTE: The memory for obsIdList and notificationJSONPayload is managed by the
+ * entity invoking the API. The maximum size of the notification is 1015 bytes
+ * for non-Arduino platforms. For Arduino the maximum size is 247 bytes.
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_NO_RESOURCE - invalid resource handle
+ */
 OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
                          OCObservationId  *obsIdList,
@@ -3026,6 +3078,9 @@ OCStackResult OCCancelResponse(OCResponseHandle responseHandle)
 //-----------------------------------------------------------------------------
 /**
  * Generate handle of OCDoResource invocation for callback management.
+ *
+ * @return
+ *     OCDoHandle
  */
 static OCDoHandle GenerateInvocationHandle()
 {
@@ -3039,6 +3094,17 @@ static OCDoHandle GenerateInvocationHandle()
 
     return handle;
 }
+
+/**
+ * Enable/disable a resource property
+ *
+ * @param inputProperty - pointer to resource property
+ * @param resourceProperties - property to be enabled/disabled
+ * @param enable - 0:disable, 1:enable
+ *
+ * @return
+ *     OCStackResult
+ */
 #ifdef WITH_PRESENCE
 OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable)
@@ -3067,6 +3133,9 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
 
 /**
  * Initialize resource data structures, variables, etc.
+ *
+ * @return
+ *     OCStackResult
  */
 OCStackResult initResources()
 {
@@ -3134,6 +3203,9 @@ OCResource *findResource(OCResource *resource)
     return NULL;
 }
 
+/**
+ * Delete all of the resources in the resource list
+ */
 void deleteAllResources()
 {
     OCResource *pointer = headResource;
@@ -3493,12 +3565,12 @@ OCResourceInterface *findResourceInterfaceAtIndex(OCResourceHandle handle,
  *                   the length of the request/response
  *
  * @return
- *    0 - packet transfer NOT required (i.e. normal request/response)
- *    1 - packet transfer required (i.e. block transfer needed)
+ *    false - packet transfer NOT required (i.e. normal request/response)
+ *    true  - packet transfer required (i.e. block transfer needed)
  */
-uint8_t OCIsPacketTransferRequired(const char *request, const char *response, uint16_t size)
+bool OCIsPacketTransferRequired(const char *request, const char *response, size_t size)
 {
-    uint8_t result = 0;
+    bool result = false;
 
     // Determine if we are checking a request or a response
     if (request)
@@ -3507,7 +3579,7 @@ uint8_t OCIsPacketTransferRequired(const char *request, const char *response, ui
         // assume request is null terminated and use strlen for size value
         if ((size > MAX_REQUEST_LENGTH) || (strlen(request) > MAX_REQUEST_LENGTH))
         {
-            result = 1;
+            result = true;
         }
     }
     else if (response)
@@ -3516,7 +3588,7 @@ uint8_t OCIsPacketTransferRequired(const char *request, const char *response, ui
         // assume response is null terminated and use strlen for size value
         if ((size > MAX_RESPONSE_LENGTH) || (strlen(response) > MAX_RESPONSE_LENGTH))
         {
-            result = 1;
+            result = true;
         }
     }
     return result;
@@ -3562,6 +3634,15 @@ OCStackResult getResourceType(const char * query, char** resourceType)
     return result;
 }
 
+/**
+ * Extract query from a URI
+ *
+ * @param uri - full URI with query
+ * @param query - pointer to string that will contain query
+ * @param newURI - pointer to string that will contain URI
+ * @return
+ *     OCStackResult
+ */
 OCStackResult getQueryFromUri(const char * uri, char** query, char ** newURI)
 {
     if(!uri)
@@ -3608,6 +3689,12 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** newURI)
         return OC_STACK_NO_MEMORY;
 }
 
+/**
+ * Return a server instance ID
+ *
+ * @return
+ *     ServerID
+ */
 const ServerID OCGetServerInstanceID(void)
 {
     static bool generated = false;
@@ -3622,6 +3709,11 @@ const ServerID OCGetServerInstanceID(void)
     return sid;
 }
 
+/**
+ * Return a server instance ID string
+ * @return
+ *     Server instance ID string
+ */
 const char* OCGetServerInstanceIDString(void)
 {
     // max printed length of a base 10

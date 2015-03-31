@@ -168,21 +168,58 @@ typedef uint32_t ServerID;
 // Internal function prototypes
 //-----------------------------------------------------------------------------
 
-OCStackResult OCStackFeedBack(CAToken_t * token, uint8_t status);
-
-OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
-OCStackResult HandleStackResponses(OCResponse * response);
 #ifdef WITH_PRESENCE
+/**
+ * Notify Presence subscribers that a resource has been modified
+ *
+ * @param resourceType - Handle to the resourceType linked list of resource
+ *                       that was modified.
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
+ */
 OCStackResult SendPresenceNotification(OCResourceType *resourceType);
+/**
+ * Send Stop Notification to Presence subscribers
+ *
+ * @return
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
+ *
+ */
 OCStackResult SendStopNotification();
 #endif // WITH_PRESENCE
-int ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
 
+/**
+ * Bind a resource interface to a resource
+ *
+ * @param resource - target resource
+ * @param resourceInterfaceName - resource interface
+ * @return
+ *     OCStackResult
+ */
 OCStackResult BindResourceInterfaceToResource(OCResource* resource,
                                             const char *resourceInterfaceName);
-
+/**
+ * Bind a resourcetype to a resource
+ *
+ * @param resource - target resource
+ * @param resourceTypeName - resourcetype
+ * @return
+ *     OCStackResult
+ */
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName);
+/**
+ * Finds a resource type in an OCResourceType link-list.
+ *
+ * @param resourceTypeList - the link-list to be searched through
+ * @param resourceTypeName - the key to search for
+ *
+ * @return
+ *      resourceType that matches the key (ie. resourceTypeName)
+ *      NULL - either an invalid parameter or this function was unable to find the key.
+ */
 OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char * resourceTypeName);
 
 // returns the internal representation of the server instance ID.
@@ -212,6 +249,16 @@ const char* OCGetServerInstanceIDString(void);
 CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos);
 
 #ifdef WITH_PRESENCE
+/**
+ * Enable/disable a resource property
+ *
+ * @param inputProperty - pointer to resource property
+ * @param resourceProperties - property to be enabled/disabled
+ * @param enable - 0:disable, 1:enable
+ *
+ * @return
+ *     OCStackResult
+ */
 //TODO: should the following function be public?
 OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
