@@ -108,7 +108,9 @@ extern "C"
 
 #ifdef WITH_ARDUINO
 #include "Time.h"
-#ifdef __AVR__
+#ifdef ARDUINO_ARCH_SAM
+#include <sys/types.h>  // time_t is defined in sys/types.h for ARM compiler
+#else
 typedef unsigned long time_t; //AVR compiler doesnt define time_t
 #endif
 typedef time_t coap_tick_t;

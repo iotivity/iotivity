@@ -326,7 +326,7 @@ void OICLog(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
         return;
     }
     char buffer[LINE_BUFFER_SIZE] = {0};
-    strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+    GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
     Serial.print(buffer);
     char c;
     Serial.print(F(": "));
@@ -360,7 +360,7 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
     char buffer[LINE_BUFFER_SIZE];
     va_list ap;
     va_start(ap, format);
-    strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
+    GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
     Serial.print(buffer);
 
     char c;
@@ -373,7 +373,11 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
     Serial.print(lineNum);
     Serial.print(F(": "));
 
+#ifdef __AVR__
     vsnprintf_P(buffer, sizeof(buffer), format, ap);
+#else
+    vsnprintf(buffer, sizeof(buffer), format, ap);
+#endif
     for (char *p = &buffer[0]; *p; p++)
     {
         // emulate cooked mode for newlines

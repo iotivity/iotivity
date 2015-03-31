@@ -24,11 +24,14 @@ STEPS to setup Arduino on linux machine for building CA code:
 	(2) Extract zip file and apply RBL patch(connectivity/lib/arduino/RBL_nRF8001.patch) to "RBL_nRF8001" folder by following below steps,
 		i)  Go to downloaded RBL_Library Folder ("nRF8001-master/Arduino/libraries/RBL_nRF8001")
 		ii) Apply dos2unix for RBL_Library Folder and RBL Patch File (RBL_nRF8001.patch), if we have downloaded Library in Non UNIX Platform.
-		iii) Apply RBL Patch by using the below command
+		iii) Apply RBL Patch[connectivity\lib\arduino\RBL_nRF8001.patch] by using the below command
 			patch -p1 < RBL_Patch_File_Location(RBL_nRF8001.patch)
 	(3) Copy the patched RBL_nRF8001 Library and place it in "arduino-<x.x.x>/libraries" folder
 	(4) Download Nordic Arduino BLE library [Tag: "0.9.5.Beta" Version] from the link (https://github.com/NordicSemiconductor/ble-sdk-arduino).
 		Extract the zip file and copy the "BLE" folder available under "libraries" folder and place it in "arduino-<x.x.x>/libraries" folder
+		i)  Apply dos2unix for the "BLE" folder.
+		ii) Go to the BLE folder and apply the patch[connectivity\lib\arduino\arduino_due_ble.patch] using the below command.
+			patch -p1 < path/to/arduino_due_ble.patch
 
 5) ONE TIME ONLY - PATCH
 	Complete patch has been provided at : "connectivity\lib\arduino\arduino_libraries.patch"

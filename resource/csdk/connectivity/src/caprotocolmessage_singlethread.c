@@ -26,6 +26,11 @@
 #include "logger.h"
 #include "oic_malloc.h"
 
+// ARM GCC compiler doesnt define srandom function.
+#if defined(ARDUINO) && !defined(ARDUINO_ARCH_SAM)
+#define HAVE_SRANDOM 1
+#endif
+
 #define TAG "CPM"
 
 #define CA_BUFSIZE 128
@@ -613,7 +618,11 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
             SEED = 0;
             return CA_STATUS_FAILED;
         }
+#if HAVE_SRANDOM
         srandom(SEED);
+#else
+        srand(SEED);
+#endif
     }
 
     // memory allocation
