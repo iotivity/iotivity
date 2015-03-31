@@ -75,7 +75,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniRescanPlug
 /*
  * Class:     org_iotivity_service_ppm_PluginManager
  * Method:    getPlugins
- * Signature: (V)[Lorg/oic/android/Plugin;
+ * Signature: (V)[Lorg/iotivity/service/ppm/Plugin;
  */
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetPlugins(JNIEnv *env,
         jobject jobj)
@@ -84,7 +84,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGe
 
     std::vector<OIC::Plugin> result = pluginManagerImpl->getAllPlugins();
 
-    jclass cls = env->FindClass("org/oic/android/Plugin");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/Plugin");
     jmethodID mid = env->GetMethodID(cls, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
     jobjectArray resultArray = (jobjectArray)env->NewObjectArray(result.size(), cls, NULL);
 

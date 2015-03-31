@@ -76,7 +76,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniRescanPlug
 /*
  * Class:     org_iotivity_service_ppm_PluginManager
  * Method:    jniGetPlugins
- * Signature: (V)[Lorg/oic/android/Plugin;
+ * Signature: (V)[Lorg/iotivity/service/ppm/Plugin;
  */
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetPlugins(JNIEnv *, jobject);
 
