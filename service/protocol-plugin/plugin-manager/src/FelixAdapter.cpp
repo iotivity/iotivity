@@ -81,7 +81,7 @@ int FelixAdapter::registerPlugin(const std::string path)
     jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
 
     jstring jpath = env->NewStringUTF(path.c_str());
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "registerPlugin", "(Ljava/lang/String;)I");
 
     // call registerPlugin() function
@@ -100,7 +100,7 @@ int FelixAdapter::registerAllPlugin(const std::string path)
     jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
 
     jstring jpath = env->NewStringUTF(path.c_str());
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "registerAllPlugin", "(Ljava/lang/String;)I");
 
     // call registerAllPlugin() function
@@ -114,7 +114,7 @@ int FelixAdapter::unregisterPlugin(Plugin *const plugin)
 
     const char *cpath = plugin->getID().c_str();
     jstring jpath = env->NewStringUTF(cpath);
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "unregisterPlugin", "(Ljava/lang/String;)I");
 
     // call unregisterPlugin() function
@@ -126,7 +126,7 @@ int FelixAdapter::unregisterAllPlugin(void)
     JNIEnv *env;
     jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
 
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "unregisterAllPlugin", "()I");
 
     // call registerAllPlugin() function
@@ -139,7 +139,7 @@ std::vector<Plugin> &FelixAdapter::getAllPlugins(void)
     jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
 
 
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "getAllPlugins", "()[Lorg/osgi/framework/Bundle;");
 
     // call getAllPlugins() function
@@ -169,7 +169,7 @@ std::vector<Plugin> &FelixAdapter::getAllPlugins(void)
         std::string version = env->GetStringUTFChars(jversion, 0);
         plugin->setValue("Version", version);
         // set Name value
-        cls = env->FindClass("org/oic/android/FelixManager");
+        cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
         mid = env->GetStaticMethodID(cls, "getValue",
                                      "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
         std::string key = "Name";
@@ -198,7 +198,7 @@ std::vector<Plugin> *FelixAdapter::findPlugins(const std::string key, const std:
     jstring jkey = env->NewStringUTF(key.c_str());
     jstring jvalue = env->NewStringUTF(value.c_str());
 
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "findPlugins",
                         "(Ljava/lang/String;Ljava/lang/String;)[Lorg/osgi/framework/Bundle;");
 
@@ -233,7 +233,7 @@ std::vector<Plugin> *FelixAdapter::findPlugins(const std::string key, const std:
         std::string version = env->GetStringUTFChars(jversion, 0);
         plugin->setValue("Version", version);
         // set Name value
-        cls = env->FindClass("org/oic/android/FelixManager");
+        cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
         mid = env->GetStaticMethodID(cls, "getValue",
                     "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
         std::string key = "Name";
@@ -277,7 +277,7 @@ int FelixAdapter::start(Plugin *const plugin, void *const arg)
 
     const char *cid = plugin->getID().c_str();
     jstring jid = env->NewStringUTF(cid);
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "start", "(Ljava/lang/String;)I");
 
     // call start() function
@@ -291,7 +291,7 @@ int FelixAdapter::stop(Plugin *const plugin)
 
     const char *cid = plugin->getID().c_str();
     jstring jid = env->NewStringUTF(cid);
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "stop", "(Ljava/lang/String;)I");
 
     // call stop() function
@@ -305,7 +305,7 @@ bool FelixAdapter::isStarted(Plugin *plugin)
 
     const char *cid = plugin->getID().c_str();
     jstring jid = env->NewStringUTF(cid);
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "isStarted", "(Ljava/lang/String;)Z");
 
     // call isStarted() function
@@ -325,7 +325,7 @@ const std::string FelixAdapter::getState(const std::string plugID)
     jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
 
     jstring jplugID = env->NewStringUTF(plugID.c_str());
-    jclass cls = env->FindClass("org/oic/android/FelixManager");
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "getState", 
                     "(Ljava/lang/String;)Ljava/lang/String;");
 
