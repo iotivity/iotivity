@@ -507,8 +507,8 @@ namespace OCPlatformTest
     {
       std::ostringstream requestURI;
       requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
-      EXPECT_EQ(OC_STACK_OK, OCPlatform::findResource("", requestURI.str(),
-              OC_WIFI, NULL));
+      EXPECT_THROW(OCPlatform::findResource("", requestURI.str(),
+              OC_WIFI, NULL), OC::OCException);
     }
 
     TEST(FindResourceTest, FindResourceWithLowQoS)
@@ -575,8 +575,9 @@ namespace OCPlatformTest
         OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
-        EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::getDeviceInfo("", requestURI.str(), OC_WIFI, NULL));
+        EXPECT_THROW(
+                OCPlatform::getDeviceInfo("", requestURI.str(), OC_WIFI, NULL),
+                OC::OCException);
     }
 
     TEST(GetDeviceInfoTest, GetDeviceInfoWithLowQos)

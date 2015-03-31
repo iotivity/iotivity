@@ -193,6 +193,11 @@ namespace OC
         const std::string& resourceType, OCConnectivityType connectivityType,
         FindCallback& callback, QualityOfService QoS)
     {
+        if(!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+
         OCStackResult result;
 
         OCCallbackData cbdata = {0};
@@ -249,6 +254,10 @@ namespace OC
         const std::string& deviceURI, OCConnectivityType connectivityType,
         FindDeviceCallback& callback, QualityOfService QoS)
     {
+        if(!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
         OCStackResult result;
 
         OCCallbackData cbdata = {0};
@@ -337,6 +346,10 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         GetCallback& callback, QualityOfService QoS)
     {
+        if(!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
@@ -442,6 +455,10 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         PostCallback& callback, QualityOfService QoS)
     {
+        if(!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
@@ -485,6 +502,10 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         PutCallback& callback, QualityOfService QoS)
     {
+        if(!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
@@ -544,6 +565,10 @@ namespace OC
         const std::string& uri, OCConnectivityType connectivityType,
         const HeaderOptions& headerOptions, DeleteCallback& callback, QualityOfService QoS)
     {
+        if(!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
@@ -617,6 +642,10 @@ namespace OC
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         ObserveCallback& callback, QualityOfService QoS)
     {
+        if(!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
         OCStackResult result;
         OCCallbackData cbdata = {0};
 
@@ -728,6 +757,10 @@ namespace OC
         const std::string& host, const std::string& resourceType,
         OCConnectivityType connectivityType, SubscribeCallback& presenceHandler)
     {
+        if(!presenceHandler)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
         OCCallbackData cbdata = {0};
 
         ClientCallbackContext::SubscribePresenceContext* ctx =
