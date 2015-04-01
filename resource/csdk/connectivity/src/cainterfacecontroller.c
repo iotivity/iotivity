@@ -143,7 +143,7 @@ void CAInitializeAdapters(u_thread_pool_t handle)
 #endif /* ETHERNET_ADAPTER */
 
 #ifdef WIFI_ADAPTER
-    CAInitializeWifi(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+    CAInitializeWIFI(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
                      handle);
 #endif /* WIFI_ADAPTER */
 

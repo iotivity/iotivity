@@ -47,7 +47,7 @@ extern "C"
  * @param handle                [IN] Threadpool Handle
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
+CAResult_t CAInitializeWIFI(CARegisterConnectivityCallback registerCallback,
                             CANetworkPacketReceivedCallback networkPacketCallback,
                             CANetworkChangeCallback netCallback, u_thread_pool_t handle);
 

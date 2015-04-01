@@ -372,7 +372,7 @@ void CAWiFiPacketReceivedCB(const char *ipAddress, uint16_t port,
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "OUT");
 }
 
-CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
+CAResult_t CAInitializeWIFI(CARegisterConnectivityCallback registerCallback,
                             CANetworkPacketReceivedCallback networkPacketCallback,
                             CANetworkChangeCallback netCallback, u_thread_pool_t handle)
 {
@@ -427,7 +427,7 @@ CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(INFO, WIFI_ADAPTER_TAG, "IntializeWifi is Success");
+    OIC_LOG(INFO, WIFI_ADAPTER_TAG, "Intialize WIFI is Success");
     return CA_STATUS_OK;
 }
 

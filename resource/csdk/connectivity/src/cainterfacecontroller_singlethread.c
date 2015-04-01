@@ -136,7 +136,7 @@ void CAInitializeAdapters()
 #endif /* ETHERNET_ADAPTER */
 
 #ifdef WIFI_ADAPTER
-    CAInitializeWifi(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeWIFI(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
 #endif /* WIFI_ADAPTER */
 
 #ifdef EDR_ADAPTER
