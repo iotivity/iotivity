@@ -29,11 +29,11 @@ namespace OCRepresentationTest
     using std::string;
     using std::vector;
 
-    template<typename T>
-    void parsedEqual(T expected, const std::string& actualStr)
+    void parsedEqual(double expected, const std::string& actualStr)
     {
-        T actual = boost::lexical_cast<T>(actualStr);
-        EXPECT_LT(std::abs(expected - actual), std::numeric_limits<T>::epsilon());
+        double actual = boost::lexical_cast<double>(actualStr);
+        EXPECT_GE(actual, expected - .0000001);
+        EXPECT_LE(actual, expected + .0000001);
     }
 
     // getValueToString(all types)

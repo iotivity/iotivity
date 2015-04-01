@@ -81,5 +81,5 @@ if env.get('TEST') == '1':
                 catest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
                 catest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
                 catest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
-                ut = catest_env.Command ('ut', None, out_dir + '/resource/csdk/connectivity/test/catests')
+                ut = catest_env.Command ('ut', None, 'valgrind -q --leak-check=full --xml=yes --xml-file=resource_csdk_connectivity_test.memcheck ' + out_dir + 'resource/csdk/connectivity/test/catests')
                 AlwaysBuild ('ut')

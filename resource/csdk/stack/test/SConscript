@@ -75,5 +75,5 @@ if env.get('TEST') == '1':
 		stacktest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		stacktest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
 		stacktest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
-		ut = stacktest_env.Command ('ut', None, out_dir + '/resource/csdk/stack/test/stacktests')
+		ut = stacktest_env.Command ('ut', None, 'valgrind -q --leak-check=full --xml=yes --xml-file=resource_csdk_stack_test.memcheck ' + out_dir + 'resource/csdk/stack/test/stacktests')
 		AlwaysBuild ('ut')

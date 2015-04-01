@@ -84,5 +84,5 @@ if env.get('TEST') == '1':
 		unittests_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
 		unittests_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
 		ut = unittests_env.Command ('ut', None,
-		 [out_dir + '/resource/unittests/unittests'])
+		 [ 'valgrind --leak-check=full --xml=yes --xml-file=resource_unittests_unittests.memcheck ' + out_dir + 'resource/unittests/unittests'])
 		AlwaysBuild ('ut')
