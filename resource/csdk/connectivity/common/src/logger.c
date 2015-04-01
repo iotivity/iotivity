@@ -18,6 +18,33 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Defining _POSIX_C_SOURCE macro with 199309L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1b, Real-time extensions
+// (IEEE Std 1003.1b-1993) specification
+//
+// For this specific file, see use of clock_gettime,
+// Refer http://man7.org/linux/man-pages/man2/clock_gettime.2.html
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 199309L
+#endif
+
+// Platform check can be extended to check and/or define more, or could be
+// moved into a config.h
+#if !defined(__ARDUINO__) && !defined(ARDUINO)
+#define HAVE_UNISTD_H 1
+#endif
+
+// Pull in _POSIX_TIMERS feature test macro to check for
+// clock_gettime() support.
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef  _POSIX_TIMERS
+#include <time.h>
+#endif
+
 #include "logger.h"
 #include "string.h"
 #include "oic_logger.h"
@@ -125,7 +152,17 @@ void OICLog(LogLevel level, const char *tag, const char *logStr)
     }
     else
     {
-        printf("%s: %s: %s\n", LEVEL[level], tag, logStr);
+        struct timespec when = {};
+        int min = 0;
+        int sec = 0;
+        int ms = 0;
+        if (!clock_gettime(CLOCK_REALTIME_COARSE, &when))
+        {
+            min = (when.tv_sec / 60) % 60;
+            sec = when.tv_sec % 60;
+            ms = when.tv_nsec / 1000000;
+        }
+        printf("%02d:%02d.%03d %s: %s: %s\n", min, sec, ms, LEVEL[level], tag, logStr);
     }
 #endif
 }

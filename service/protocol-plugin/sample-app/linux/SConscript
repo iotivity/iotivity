@@ -50,6 +50,11 @@ if env.get('SECURED') == '1':
 
 sample_env.ParseConfig('pkg-config --libs glib-2.0')
 
+# On some platforms link order can miss functions so librt needs to be
+# re-scanned at the end if present. gcc 4.6 is one with this issue.
+if 'rt' in sample_env.get('LIBS'):
+    sample_env.Append(LIBS = ['rt'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
