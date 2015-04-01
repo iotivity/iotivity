@@ -453,7 +453,7 @@ int InitPresence()
     if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTER || TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTERS)
     {
         querySuffix.str("");
-        querySuffix << query.str() << "?rt=core.light";
+        querySuffix << query.str() << "?rt=core.led";
         result = InvokeOCDoResource(querySuffix, OC_REST_PRESENCE, OC_LOW_QOS,
                 presenceCB, NULL, 0);
     }
