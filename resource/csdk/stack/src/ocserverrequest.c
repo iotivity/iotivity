@@ -38,6 +38,113 @@
 static struct OCServerRequest * serverRequestList = NULL;
 static struct OCServerResponse * serverResponseList = NULL;
 
+//-------------------------------------------------------------------------------------------------
+// Local functions
+//-------------------------------------------------------------------------------------------------
+
+/**
+ * Add a server response to the server response list
+ *
+ * @param response initialized server response that is created by this function
+ * @param requestHandle - handle of the response
+ *
+ * @return
+ *     OCStackResult
+ */
+static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle)
+{
+    OCServerResponse * serverResponse = NULL;
+
+    serverResponse = (OCServerResponse *) OCCalloc(1, sizeof(OCServerResponse));
+    VERIFY_NON_NULL(serverResponse);
+
+    serverResponse->payload = (char *) OCCalloc(1, MAX_RESPONSE_LENGTH);
+    VERIFY_NON_NULL(serverResponse->payload);
+
+    serverResponse->remainingPayloadSize = MAX_RESPONSE_LENGTH;
+    serverResponse->requestHandle = requestHandle;
+
+    *response = serverResponse;
+    OC_LOG(INFO, TAG, PCF("Server Response Added!!"));
+    LL_APPEND (serverResponseList, serverResponse);
+    return OC_STACK_OK;
+
+exit:
+    if (serverResponse)
+    {
+        OCFree(serverResponse);
+        serverResponse = NULL;
+    }
+    *response = NULL;
+    return OC_STACK_NO_MEMORY;
+}
+
+/**
+ * Delete a server request from the server request list
+ *
+ * @param serverRequest - server request to delete
+ */
+static void DeleteServerRequest(OCServerRequest * serverRequest)
+{
+    if(serverRequest)
+    {
+        LL_DELETE(serverRequestList, serverRequest);
+        OCFree(serverRequest);
+        serverRequest = NULL;
+        OC_LOG(INFO, TAG, PCF("Server Request Removed!!"));
+    }
+}
+
+/**
+ * Delete a server response from the server response list
+ *
+ * @param serverResponse - server response to delete
+ */
+static void DeleteServerResponse(OCServerResponse * serverResponse)
+{
+    if(serverResponse)
+    {
+        LL_DELETE(serverResponseList, serverResponse);
+        OCFree(serverResponse->payload);
+        OCFree(serverResponse);
+        OC_LOG(INFO, TAG, PCF("Server Response Removed!!"));
+    }
+}
+
+/**
+ * Find a server response and delete it from the server response list
+ *
+ * @param serverResponse - server response to find and delete
+ */
+static void FindAndDeleteServerResponse(OCServerResponse * serverResponse)
+{
+    OCServerResponse* tmp;
+    if(serverResponse)
+    {
+        LL_FOREACH(serverResponseList, tmp)
+        {
+            if (serverResponse == tmp)
+            {
+                DeleteServerResponse(tmp);
+                return;
+            }
+        }
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+// Internal APIs
+//-------------------------------------------------------------------------------------------------
+
+/**
+ * Get a server request from the server request list using the specified token.
+ *
+ * @param token - token of server request
+ * @param tokenLength - length of token
+ *
+ * @return
+ *     OCServerRequest*
+ */
 OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tokenLength)
 {
     if(!token)
@@ -61,6 +168,13 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tok
     return NULL;
 }
 
+/**
+ * Get a server request from the server request list using the specified handle
+ *
+ * @param handle - handle of server request
+ * @return
+ *     OCServerRequest*
+ */
 OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
 {
     OCServerRequest * out = NULL;
@@ -75,6 +189,14 @@ OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
     return NULL;
 }
 
+/**
+ * Get a server response from the server response list using the specified handle
+ *
+ * @param handle - handle of server response
+ *
+ * @return
+ *     OCServerResponse*
+ */
 OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
 {
     OCServerResponse * out = NULL;
@@ -89,6 +211,31 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
     return NULL;
 }
 
+/**
+ * Add a server request to the server request list
+ *
+ * @param request - initialized server request that is created by this function
+ * @param coapID - ID of CoAP pdu
+ * @param delayedResNeeded - delayed response required 0=no 1=yes
+ * @param secured - secure endpoint 0=no 1=yes
+ * @param notificationFlag - //TODO: remove - does not appear to be used any longer
+ * @param method - RESTful method
+ * @param numRcvdVendorSpecificHeaderOptions - number of received vendor specific header options
+ * @param observationOption - value of observation option
+ * @param qos - request QOS
+ * @param query - request query
+ * @param rcvdVendorSpecificHeaderOptions - received vendor specific header options
+ * @param reqJSONPayload - request JSON payload
+ * @param requestToken - request token
+ * @param tokenLength - request token length
+ * @param resourceUrl - URL of resource
+ * @param reqTotalSize - total size of the request
+ * @param addressInfo - CA Address
+ * @param connectivityType - connection type
+ *
+ * @return
+ *     OCStackResult
+ */
 OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
@@ -181,35 +328,23 @@ exit:
     return OC_STACK_NO_MEMORY;
 }
 
-OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle)
-{
-    OCServerResponse * serverResponse = NULL;
-
-    serverResponse = (OCServerResponse *) OCCalloc(1, sizeof(OCServerResponse));
-    VERIFY_NON_NULL(serverResponse);
-
-    serverResponse->payload = (char *) OCCalloc(1, MAX_RESPONSE_LENGTH);
-    VERIFY_NON_NULL(serverResponse->payload);
-
-    serverResponse->remainingPayloadSize = MAX_RESPONSE_LENGTH;
-    serverResponse->requestHandle = requestHandle;
-
-    *response = serverResponse;
-    OC_LOG(INFO, TAG, PCF("Server Response Added!!"));
-    LL_APPEND (serverResponseList, serverResponse);
-    return OC_STACK_OK;
-
-exit:
-    if (serverResponse)
-    {
-        OCFree(serverResponse);
-        serverResponse = NULL;
-    }
-    *response = NULL;
-    return OC_STACK_NO_MEMORY;
-}
-
-// Form the OCEntityHandlerRequest struct
+/**
+ * Form the OCEntityHandlerRequest struct that is passed to a resource's entity handler
+ *
+ * @param entityHandlerRequest - pointer to the OCEntityHandlerRequest struct that is created
+ * @param request          - request handle
+ * @param method           - RESTful method
+ * @param resource         - resource handle
+ * @param queryBuf         - resource query of request
+ * @param bufReqPayload    - JSON payload of request
+ * @param numVendorOptions - number of vendor options
+ * @param vendorOptions    - vendor options
+ * @param observeAction    - observe action flag
+ * @param observeID        - observe ID
+ *
+ * @return
+ *     OCStackResult
+ */
 OCStackResult FormOCEntityHandlerRequest(
         OCEntityHandlerRequest * entityHandlerRequest,
         OCRequestHandle request,
@@ -241,33 +376,11 @@ OCStackResult FormOCEntityHandlerRequest(
     return OC_STACK_INVALID_PARAM;
 }
 
-void FindAndDeleteServerResponse(OCServerResponse * serverResponse)
-{
-    OCServerResponse* tmp;
-    if(serverResponse)
-    {
-        LL_FOREACH(serverResponseList, tmp)
-        {
-            if (serverResponse == tmp)
-            {
-                DeleteServerResponse(tmp);
-                return;
-            }
-        }
-    }
-}
-
-void DeleteServerResponse(OCServerResponse * serverResponse)
-{
-    if(serverResponse)
-    {
-        LL_DELETE(serverResponseList, serverResponse);
-        OCFree(serverResponse->payload);
-        OCFree(serverResponse);
-        OC_LOG(INFO, TAG, PCF("Server Response Removed!!"));
-    }
-}
-
+/**
+ * Find a server request in the server request list and delete
+ *
+ * @param serverRequest - server request to find and delete
+ */
 void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
 {
     OCServerRequest* tmp;
@@ -284,17 +397,14 @@ void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
     }
 }
 
-void DeleteServerRequest(OCServerRequest * serverRequest)
-{
-    if(serverRequest)
-    {
-        LL_DELETE(serverRequestList, serverRequest);
-        OCFree(serverRequest);
-        serverRequest = NULL;
-        OC_LOG(INFO, TAG, PCF("Server Request Removed!!"));
-    }
-}
-
+/**
+ * Handler function for sending a response from a single resource
+ *
+ * @param ehResponse - pointer to the response from the resource
+ *
+ * @return
+ *     OCStackResult
+ */
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
@@ -453,6 +563,18 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     return result;
 }
 
+/**
+ * Handler function for sending a response from multiple resources, such as a collection.
+ * Aggregates responses from multiple resource until all responses are received then sends the
+ * concatenated response
+ *
+ * TODO: Need to add a timeout in case a (remote?) resource does not respond
+ *
+ * @param ehResponse - pointer to the response from the resource
+ *
+ * @return
+ *     OCStackResult
+ */
 OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult stackRet = OC_STACK_ERROR;
