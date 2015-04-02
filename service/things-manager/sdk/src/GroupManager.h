@@ -82,7 +82,8 @@ public:
     OCStackResult subscribeCollectionPresence(std::shared_ptr< OCResource > resource,
             CollectionPresenceCallback);
 
-    OCStackResult bindResourceToGroup(OCResourceHandle& childHandle, std::shared_ptr< OCResource > resource, OCResourceHandle& collectionHandle);
+    OCStackResult bindResourceToGroup(OCResourceHandle& childHandle,
+            std::shared_ptr< OCResource > resource, OCResourceHandle& collectionHandle);
 
 private:
 
@@ -108,6 +109,10 @@ public:
     OCStackResult addActionSet(std::shared_ptr< OCResource > resource,
             const ActionSet* newActionSet, PutCallback cb);
     OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
+            std::string actionsetName, PostCallback cb);
+    OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
+            std::string actionsetName, long int delay, PostCallback cb);
+    OCStackResult cancelActionSet(std::shared_ptr< OCResource > resource,
             std::string actionsetName, PostCallback cb);
     OCStackResult getActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName,
             PostCallback cb);

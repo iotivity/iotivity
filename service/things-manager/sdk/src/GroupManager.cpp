@@ -4,7 +4,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed under the Apache License, Version 2.0 (the "License{");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -36,9 +36,8 @@
 #define ATTR_DELIMITER "="
 
 using namespace OC;
+using namespace OIC;
 
-namespace OIC
-{
 std::map< std::vector< std::string >, CandidateCallback > candidateRequest;
 std::map< std::vector< std::string >, CandidateCallback > candidateRequestForTimer;
 std::map< std::string, std::map< std::string, std::shared_ptr< OCResource > > > rtForResourceList;
@@ -194,7 +193,8 @@ void GroupManager::lazyCallback(int second)
 
 }
 
-OCStackResult GroupManager::findCandidateResources(std::vector< std::string > resourceTypes,
+OCStackResult GroupManager::findCandidateResources(
+        std::vector< std::string > resourceTypes,
         CandidateCallback callback, int waitsec)
 {
     if (resourceTypes.size() < 1)
@@ -221,15 +221,24 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
 
     for (unsigned int i = 0; i < resourceTypes.size(); ++i)
     {
-        std::cout << "resourceTypes : " << resourceTypes.at(i) << std::endl;
+        // std::cout << "resourceTypes : " << resourceTypes.at(i) << std::endl;
         std::string query = OC_WELL_KNOWN_QUERY;
-        query += "?rt=";
-        query += resourceTypes.at(i);
+        query.append("?rt=");
+        query.append(resourceTypes.at(i));
 
-        OCPlatform::findResource("", query, OC_WIFI,
+        OCPlatform::findResource("", 
+                query,
+                OC_ETHERNET,
                 std::function < void(std::shared_ptr < OCResource > resource)
-                > (std::bind(&GroupManager::onFoundResource, this,
-                        std::placeholders::_1, waitsec)));
+                        > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
+                                waitsec)));
+
+        OCPlatform::findResource("", 
+                query,
+                OC_WIFI,
+                std::function < void(std::shared_ptr < OCResource > resource)
+                        > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
+                                waitsec)));
     }
 
     if (waitsec >= 0)
@@ -316,7 +325,6 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
      }
      */
     std::vector< OCRepresentation > children = rep.getChildren();
-
     if(children.size() == 0 )
     {
         callback("", OC_STACK_ERROR);
@@ -325,7 +333,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
 
     for (auto oit = children.begin(); oit != children.end(); ++oit)
     {
-        std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+        // std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
         std::vector< std::string > hostAddressVector = str_split(oit->getUri(), '/');
         std::string hostAddress = "";
         for (unsigned int i = 0; i < hostAddressVector.size(); ++i)
@@ -341,19 +349,23 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
         }
 
         std::vector< std::string > resourceTypes = oit->getResourceTypes();
-        for (unsigned int i = 0; i < resourceTypes.size(); ++i)
-        {
-            std::cout << "\t\t\tresourcetype :" << resourceTypes.at(i) << std::endl;
-        }
+        // for (unsigned int i = 0; i < resourceTypes.size(); ++i)
+        // {
+        //     std::cout << "\t\t\tresourcetype :" << resourceTypes.at(i) << std::endl;
+        // }
 
-        std::string resourceType = "core.";
-        resourceType.append(str_split(oit->getUri(), '/').at(4));
-        std::cout << "\t\tconvertRT : " << resourceType << std::endl;
-        std::cout << "\t\thost : " << hostAddress << std::endl;
+        // std::string resourceType = "core.";
+        // resourceType.append(str_split(oit->getUri(), '/').at(4));
+        // std::cout << "\t\tconvertRT : " << resourceType << std::endl;
+        // std::cout << "\t\tresource type front : " << resourceTypes.front() << endl;
+        // std::cout << "\t\thost : " << hostAddress << std::endl;
         OCPlatform::OCPresenceHandle presenceHandle;
+        OCStackResult result = OC_STACK_ERROR;
 
-        OCStackResult result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                resourceType, OC_WIFI,
+        result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                // resourceType,
+                resourceTypes.front(),
+                OC_WIFI,
                 std::function<
                         void(OCStackResult result, const unsigned int nonce,
                                 const std::string& hostAddress) >(
@@ -363,14 +375,12 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
 
         if (result == OC_STACK_OK)
         {
-            std::cout << "\t\tOK!" << std::endl;
             presenceCallbacks.insert(std::make_pair(oit->getUri(), callback));
         }
         else
         {
             callback("", OC_STACK_ERROR);
         }
-
     }
 }
 
@@ -399,7 +409,7 @@ OCStackResult GroupManager::subscribeCollectionPresence(
     {
         return OC_STACK_ERROR;
     }
-
+    
     OCStackResult result = OC_STACK_OK;
     //callback("core.room",OC_STACK_OK);
 
@@ -428,6 +438,8 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
         return message;
 
     message = newActionSet->actionsetName;
+    message.append("*");
+    message.append(newActionSet->toString());
     message.append("*");
     for (auto iterAction = newActionSet->listOfAction.begin();
             iterAction != newActionSet->listOfAction.end(); iterAction++)
@@ -468,7 +480,6 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
 
 ActionSet* GroupManager::getActionSetfromString(std::string description)
 {
-
     char *token = NULL;
     char *plainText = NULL;
     char *plainPtr = NULL;
@@ -476,6 +487,16 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
 
     Capability *capa = NULL;
     ActionSet *actionset = new ActionSet();
+
+    if(description.empty())
+    {
+        goto exit;
+    }
+    else if(description.at(0) == '*')
+    {
+        goto exit;
+    }
+
     plainText = new char[(description.length() + 1)];
     strcpy(plainText, description.c_str());
 
@@ -495,6 +516,17 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
         goto exit;
     }
 
+    if (token != NULL)
+    {
+        sscanf(token, "%ld %d", &actionset->mDelay, (int*)&actionset->type);
+
+        token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
+    }
+    else
+    {
+        goto exit;
+    }
+
     while (token)
     {
         char *descPtr = NULL;
@@ -506,15 +538,12 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
             strcpy(desc, token);
             token = strtok_r(desc, DESC_DELIMITER, &descPtr);
 
-            // cout << "desc :: " << token << endl;
             while (token != NULL)
             {
                 char *attrPtr = NULL;
                 attr = new char[(strlen(token) + 1)];
 
                 strcpy(attr, token);
-
-                // cout << "attr :: " << attr << endl;
 
                 token = strtok_r(attr, ATTR_DELIMITER, &attrPtr);
                 while (token != NULL)
@@ -596,10 +625,9 @@ OCStackResult GroupManager::addActionSet(std::shared_ptr< OCResource > resource,
     if ((resource != NULL) && (newActionSet != NULL))
     {
         std::string message = getStringFromActionSet(newActionSet);
+
         OCRepresentation rep;
-
         rep.setValue("ActionSet", message);
-
         return resource->put(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
                 QueryParamsMap(), cb);
     }
@@ -617,6 +645,47 @@ OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resou
         OCRepresentation rep;
 
         rep.setValue("DoAction", actionsetName);
+        return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
+                QueryParamsMap(), cb);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
+}
+
+OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resource,
+        std::string actionsetName, long int delay, PostCallback cb)
+{
+    if(delay == 0 )
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (resource != NULL)
+    {
+        std::string value = actionsetName;
+        value.append("*");
+        value.append(std::to_string(delay));
+
+        OCRepresentation rep;
+        rep.setValue("DoScheduledAction", value);
+        return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
+                QueryParamsMap(), cb);
+    }
+    else
+    {
+        return OC_STACK_ERROR;
+    }
+}
+
+OCStackResult GroupManager::cancelActionSet(std::shared_ptr< OCResource > resource,
+        std::string actionsetName, PostCallback cb)
+{
+    if (resource != NULL)
+    {
+        OCRepresentation rep;
+
+        rep.setValue("CancelAction", actionsetName);
         return resource->post(resource->getResourceTypes().front(), GROUP_INTERFACE, rep,
                 QueryParamsMap(), cb);
     }
@@ -661,5 +730,3 @@ OCStackResult GroupManager::deleteActionSet(std::shared_ptr< OCResource > resour
         return OC_STACK_ERROR;
     }
 }
-}
-

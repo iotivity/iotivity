@@ -26,13 +26,13 @@
 #include "GroupSynchronization.h"
 
 using namespace OC;
+using namespace std;
 
 namespace OIC
 {
 
-    using std::cout;
-    using std::endl;
     GroupSynchronization* GroupSynchronization::groupSyncnstance = NULL;
+    bool GroupSynchronization::bIsFinding = false;
 
     GroupSynchronization* GroupSynchronization::getInstance()
     {
@@ -57,6 +57,9 @@ namespace OIC
     {
         cout << "GroupSynchronization::findGroup" << endl;
 
+        if(bIsFinding)
+            return OC_STACK_ERROR;
+
         foundGroupResourceList.clear();
         findCallback = callback;
 
@@ -65,18 +68,24 @@ namespace OIC
             return OC_STACK_ERROR;
         }
 
-
         for (unsigned int i = 0; i < collectionResourceTypes.size(); ++i)
         {
+
             std::string query = OC_WELL_KNOWN_QUERY;
-            query += "?rt=";
-            query += collectionResourceTypes.at(i);
+            query.append("?rt=");
+            query.append(collectionResourceTypes.at(i));
             cout << "GroupSynchronization::findGroup - " << query << endl;
 
-            OCPlatform::findResource("", query, OC_WIFI,
+            OCPlatform::findResource("", query,
+                    OC_ETHERNET,
+                    std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
+
+            OCPlatform::findResource("", query,
+                    OC_WIFI,
                     std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
         }
 
+        bIsFinding = true;
 
         // thread to check if GroupSynchronization::onFoundGroup is called or not.
         std::thread t(std::bind(&GroupSynchronization::checkFindGroup, this));
@@ -197,7 +206,6 @@ namespace OIC
         }
 
         OCResourceHandle collectionResHandle = resIt->second;
-
         try{
             OCStackResult result = OCPlatform::bindResource(collectionResHandle, resourceHandle);
             if (result != OC_STACK_OK)
@@ -274,8 +282,12 @@ namespace OIC
         std::vector< std::string > resourceInterface;
         resourceInterface.push_back(DEFAULT_INTERFACE);
 
-        OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri, OC_WIFI,
-                1, resourceTypes, resourceInterface);
+        OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri,
+                OC_ETHERNET, false, resourceTypes, resourceInterface);
+
+        // OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri,
+        //         OC_WIFI, false, resourceTypes, resourceInterface);
+
         groupSyncResourceList[type[0]] = groupSyncResource;
 
         cout << "GroupSynchronization::joinGroup : creating groupSyncResource." << endl;
@@ -414,70 +426,76 @@ namespace OIC
 
             debugGroupSync();
         }
-        else // requesting to unbind this resourceHandle to the remote collection resource
-        {
-            auto resourceIt = groupSyncResourceList.find(collectionResourceType);
-
-            if (resourceIt == groupSyncResourceList.end())
-            {
-                cout << "GroupSynchronization::leaveGroup : "
-                        << "Error! There is no collectin resource type to leave." << endl;
-                return OC_STACK_INVALID_PARAM;
-            }
-
-            std::shared_ptr< OCResource > resource = resourceIt->second;
-            if(resource == NULL)
-                return OC_STACK_NO_RESOURCE;
-//            cout << "GroupSynchronization::leaveGroup : group sync resource uri - "
-//                    << resource->uri() << endl;
-
-            handleIt = collectionResourceHandleList.find(collectionResourceType);
-            if (handleIt == collectionResourceHandleList.end())
-            {
-                cout << "GroupSynchronization::leaveGroup : "
-                        << "Error! There is no collection resource handle to leave." << endl;
-                return OC_STACK_INVALID_PARAM;
-            }
-
-            collectionResHandle = handleIt->second;
-
-            // making representation to leave group
-            std::string method = "leaveGroup";
-            std::string type = OCGetResourceTypeName(collectionResHandle, 0);
-            std::string resourceType;
-            resourceType.append(OCGetResourceTypeName(resourceHandle, 0));
-
-            OCRepresentation rep;
-            rep.setValue("method", method);
-            rep.setValue("collectionResourceType", type);
-            rep.setValue("resourceType", resourceType);
-
-            cout << "\tmethod - " << method << endl;
-            cout << "\tcollectionResourceType - " << type << endl;
-            cout << "\tresourceType - " << resourceType << endl;
-
-            QueryParamsMap queryParamsMap;
-
-            // request to leave group to the remote group sync resource
-            OCStackResult result = resource->put(rep, queryParamsMap,
-                    std::bind(&GroupSynchronization::onLeaveGroup, this, std::placeholders::_1,
-                            std::placeholders::_2, std::placeholders::_3));
-            if (OC_STACK_OK == result)
-            {
-                cout << "GroupSynchronization::leaveGroup : "
-                        << "groupSyncResource->put was successful." << endl;
-            }
-            else
-            {
-                cout << "GroupSynchronization::leaveGroup : "
-                        << "groupSyncResource->put was unsuccessful. result - " << result << endl;
-            }
-
-            // deleting all remote resources. These are copied in onGetJoinedRemoteChild()
-            deleteGroup(collectionResourceType);
-        }
 
         return OC_STACK_OK;
+    }
+
+OCStackResult GroupSynchronization::leaveGroup(
+        const std::shared_ptr<OCResource> resource,
+        std::string collectionResourceType, OCResourceHandle resourceHandle)
+    {
+        if ((!resource) || (!resourceHandle))
+        {
+            cout << "GroupSynchronization::joinGroup : Error! Input params are wrong." << endl;
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        cout << "GroupSynchronization::joinGroup" << endl;
+
+        // making representation to join group
+        std::vector< std::string > type = resource->getResourceTypes();
+        std::string host = resource->host();
+        std::string uri = resource->uri() + "/groupsync";
+
+        std::vector< std::string > resourceTypes;
+        std::string temp;
+        for (unsigned int i = 0; i < type.size(); ++i)
+        {
+            temp = type[0] + ".groupsync";
+            resourceTypes.push_back(temp);
+        }
+
+        std::vector< std::string > resourceInterface;
+        resourceInterface.push_back(DEFAULT_INTERFACE);
+
+        OCResource::Ptr groupSyncResource;
+        groupSyncResource = OCPlatform::constructResourceObject(host, uri,
+                OC_ETHERNET, false, resourceTypes, resourceInterface);
+        // groupSyncResource = OCPlatform::constructResourceObject(host, uri,
+        //         OC_WIFI, false, resourceTypes, resourceInterface);
+
+        // making representation to leave group
+        std::string method = "leaveGroup";
+//        std::string type = OCGetResourceTypeName(collectionResourceType, 0);
+        std::string resourceType;
+        resourceType.append(OCGetResourceTypeName(resourceHandle, 0));
+
+        OCRepresentation rep;
+        rep.setValue("method", method);
+        rep.setValue("collectionResourceType", collectionResourceType);
+        rep.setValue("resourceType", resourceType);
+
+        cout << "\tmethod - " << method << endl;
+        cout << "\tcollectionResourceType - " << collectionResourceType << endl;
+        cout << "\tresourceType - " << resourceType << endl;
+
+        QueryParamsMap queryParamsMap;
+
+        // request to leave group to the remote group sync resource
+        OCStackResult result = groupSyncResource->put(rep, queryParamsMap,
+                std::bind(&GroupSynchronization::onLeaveGroup, this, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3));
+        if (OC_STACK_OK == result)
+        {
+            cout << "GroupSynchronization::leaveGroup : "
+                    << "groupSyncResource->put was successful." << endl;
+        }
+        else
+        {
+            cout << "GroupSynchronization::leaveGroup : "
+                    << "groupSyncResource->put was unsuccessful. result - " << result << endl;
+        }
+        return result;
     }
 
     void GroupSynchronization::deleteGroup(std::string collectionResourceType)
@@ -681,7 +699,13 @@ namespace OIC
 
                         resourceRequest = request;
 
-                        OCPlatform::findResource("", resourceName, OC_WIFI,
+                        OCPlatform::findResource("", resourceName,
+                                OC_ETHERNET,
+                                std::bind(&GroupSynchronization::onFindResource, this,
+                                        std::placeholders::_1));
+                        
+                        OCPlatform::findResource("", resourceName,
+                                OC_WIFI,
                                 std::bind(&GroupSynchronization::onFindResource, this,
                                         std::placeholders::_1));
                     }
@@ -746,7 +770,6 @@ namespace OIC
 
                         }
 
-
                         childResourceHandleList[collectionResourceHandle] = childList;
 
                         debugGroupSync();
@@ -799,7 +822,6 @@ namespace OIC
         try
         {
             if (resource)
-
             {
                 // Debugging
                 std::string resourceURI;
@@ -827,7 +849,6 @@ namespace OIC
                 cout << "\tList of resource interfaces: " << endl;
                 for (auto &resourceInterfaces : resource->getResourceInterfaces())
                 {
-
                     cout << "\t\t" << resourceInterfaces << endl;
                 }
 
@@ -844,6 +865,7 @@ namespace OIC
                 findCallback(NULL);
             }
 
+            bIsFinding = false;
         }
         catch (std::exception& e)
         {
@@ -928,29 +950,29 @@ namespace OIC
             return;
         }
 
-        cout << "GroupSynchronization::onJoinGroup : " << endl;
-
-        if (remoteCollectionResource)
-        {
-            std::string resourceInterface = DEFAULT_INTERFACE;
-            QueryParamsMap queryParamsMap;
-
-            OCStackResult result = remoteCollectionResource->get("", resourceInterface,
-                    queryParamsMap,
-                    std::bind(&GroupSynchronization::onGetJoinedRemoteChild, this,
-                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-            if (OC_STACK_OK == result)
-            {
-                cout << "GroupSynchronization::onJoinGroup : "
-                        << "remoteCollectionResource->get was successful." << endl;
-            }
-            else
-            {
-                cout << "GroupSynchronization::onJoinGroup : "
-                        << "remoteCollectionResource->get was unsuccessful. result - " << result
-                        << endl;
-            }
-        }
+//        cout << "GroupSynchronization::onJoinGroup : " << endl;
+//
+//        if (remoteCollectionResource)
+//        {
+//            std::string resourceInterface = DEFAULT_INTERFACE;
+//            QueryParamsMap queryParamsMap;
+//
+//            OCStackResult result = remoteCollectionResource->get("", resourceInterface,
+//                    queryParamsMap,
+//                    std::bind(&GroupSynchronization::onGetJoinedRemoteChild, this,
+//                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+//            if (OC_STACK_OK == result)
+//            {
+//                cout << "GroupSynchronization::onJoinGroup : "
+//                        << "remoteCollectionResource->get was successful." << endl;
+//            }
+//            else
+//            {
+//                cout << "GroupSynchronization::onJoinGroup : "
+//                        << "remoteCollectionResource->get was unsuccessful. result - " << result
+//                        << endl;
+//            }
+//        }
     }
 
     void GroupSynchronization::onFindResource(std::shared_ptr< OCResource > resource)
@@ -1307,4 +1329,3 @@ namespace OIC
         }
     }
 }
-

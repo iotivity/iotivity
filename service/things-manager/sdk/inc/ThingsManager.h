@@ -74,7 +74,7 @@ namespace OIC
          */
         OCStackResult findCandidateResources(std::vector< std::string > resourceTypes,
                 std::function< void(std::vector< std::shared_ptr< OCResource > >) > callback,
-                int waitsec = -1);
+                int waitsec);
 
         /**
          * API for subscribing child's state.
@@ -91,10 +91,10 @@ namespace OIC
                 std::function< void(std::string, OCStackResult) > callback);
 
         /**
-         * API for register and bind resource to group.
+         * API for registering and binding resource to group.
          *
          * @param childHandle - child resource handle. It will be filled from resource param.
-         * @param resource - resource for register and bind to group. It has all data.
+         * @param resource - resource for registering and binding to group. It has all data.
          * @param collectionHandle - collection resource handle. It will be added child resource.
          *
          * @return OCStackResult - return value of this API.
@@ -119,8 +119,8 @@ namespace OIC
          * @return OCStackResult - return value of this API.
          *                         It returns OC_STACK_OK if success.
          *
-         * NOTE: It return OC_STACK ERROR when It was finding a group.
-         *       You should call this api when the group finding process has stopped.
+         * NOTE: It return OC_STACK ERROR when it is already finding a group.
+         *       You should call this api after the group finding process has stopped.
          *       OCStackResult is defined in ocstack.h.
          */
         OCStackResult findGroup(std::vector< std::string > collectionResourceTypes,
@@ -190,6 +190,24 @@ namespace OIC
                 OCResourceHandle resourceHandle);
 
         /**
+         * API for leaving a joined group.
+         *
+         * @param resource - group resource pointer to join.
+         *                   It can be the callback result of findGroup().
+         *
+         * @param collectionResourceType - resource type of a group to leave.
+         * @param resourceHandle - resource handle to leave a group.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult leaveGroup(const std::shared_ptr< OCResource > resource,
+                        std::string collectionResourceType,
+                        OCResourceHandle resourceHandle);
+
+        /**
          * API for deleting a group.
          *
          * @param collectionResourceType - resource type of a group to delete.
@@ -201,12 +219,10 @@ namespace OIC
         /**
          * API for getting a list of joined groups.
          *
-         * @param void
-         *
          * @return std::map - return value of this API.
          *                  It returns group resource type and group resource handle as a map type.
          */
-        std::map< std::string, OCResourceHandle > getGroupList(void);
+        std::map< std::string, OCResourceHandle > getGroupList();
 
         // Things Configuration
 
@@ -226,8 +242,8 @@ namespace OIC
          * function, which provides the list in JSON format.
          *
          * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: a nickname of attribute of target resource
-         *                         (e.g., installedlocation, currency, (IP)address)
+         * @param configurations - ConfigurationUnit: an attribute key of target resource.
+         *                         (e.g., loc, st, c, r)
          *                         Value : a value to be updated
          * @param callback - callback for updateConfigurations.
          *
@@ -248,7 +264,7 @@ namespace OIC
          * Callback is called when a response arrives.
          *
          * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: a nickname of attribute of target resource.
+         * @param configurations - ConfigurationUnit: an attribute key of target resource.
          * @param callback - callback for getConfigurations.
          *
          * @return OCStackResult - return value of this API.
@@ -263,7 +279,7 @@ namespace OIC
                                 const int eCode) > callback);
 
         /**
-         * API for showing the list of supported configuration units (configurable parameters)
+         * API for showing the list of supported configuration units (attribute keys)
          * Callback is called when a response arrives.
          *
          * @param void
@@ -274,7 +290,7 @@ namespace OIC
 
         /**
          * API for boostrapping system configuration parameters from a bootstrap server.
-         * Callback call when a response from the bootstrap server arrives.
+         * Callback is called when a response from the bootstrap server arrives.
          *
          * @param callback - callback for doBootstrap.
          *
@@ -329,21 +345,21 @@ namespace OIC
         // Group Action.
 
         /**
-         * API for extracting Action Set string from the Action Set class instance
+         * API for extracting an action set string from the ActionSet class instance
          *
-         * @param newActionSet - pointer of Action Set
+         * @param newActionSet - pointer of ActionSet class instance
          *
          * @return std::string - return value of this API.
-         *					     It returns Action Set String.
+         *					     It returns an action set String.
          *
          * NOTE: OCStackResult is defined in ocstack.h.
          */
         std::string getStringFromActionSet(const ActionSet *newActionSet);
 
         /**
-         * API for extrracting Action Set class instance from Action Set String.
+         * API for extrracting ActionSet class instance from an action set string.
          *
-         * @param desc - description of Action set
+         * @param desc - description of an action set string
          *
          * @return ActionSet* - return value of this API.
          *                      It returns pointer of ActionSet.
@@ -351,11 +367,11 @@ namespace OIC
         ActionSet* getActionSetfromString(std::string desc);
 
         /**
-         * API for adding an Action Set.
+         * API for adding an action set.
          * Callback is called when the response of PUT operation arrives.
          *
          * @param resource - resource pointer of the group resource
-         * @param newActionSet - pointer of Action Set
+         * @param newActionSet - pointer of ActionSet class instance
          * @param callback - callback for PUT operation.
          *
          * @return OCStackResult - return value of this API.
@@ -367,11 +383,11 @@ namespace OIC
                 const ActionSet* newActionSet, PutCallback cb);
 
         /**
-         * API for executing the Action Set.
+         * API for executing an existing action set.
          * Callback is called when the response of  POST operation arrives.
          *
          * @param resource - resource pointer of the group resource
-         * @param actionsetName - Action Set name for executing the Action set
+         * @param actionsetName - the action set name for executing the action set
          * @param callback - callback for POST operation.
          *
          * @return OCStackResult - return value of this API.
@@ -383,11 +399,43 @@ namespace OIC
                 std::string actionsetName, PostCallback cb);
 
         /**
-         * API for reading the Action Set.
-         * Callback is called when the response of  GET operation arrives.
+         * API for executing an existing action set.
+         * Callback is called when the response of  POST operation arrives.
          *
          * @param resource - resource pointer of the group resource
-         * @param actionsetName - Action Set name for reading the Action set
+         * @param actionsetName - the action set name for executing the action set
+         * @param delay - waiting time for until the action set run.
+         * @param callback - callback for POST operation.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
+                std::string actionsetName, long int delay, PostCallback cb);
+
+        /**
+         * API for canceling an existing action set.
+         * Callback is called when the response of POST operation arrives.
+         *
+         * @param resource - resource pointer of the group resource
+         * @param actionsetName - the action set name for executing the action set
+         * @param callback - callback for POST operation.
+         *
+         * @return OCStackResult - return value of this API.
+         *                         It returns OC_STACK_OK if success.
+         *
+         * NOTE: OCStackResult is defined in ocstack.h.
+         */
+        OCStackResult cancelActionSet(std::shared_ptr< OCResource > resource,
+                std::string actionsetName, PostCallback cb);
+        /**
+         * API for reading an existing action set.
+         * Callback is called when the response of GET operation arrives.
+         *
+         * @param resource - resource pointer of the group resource
+         * @param actionsetName - the action set name for reading the action set
          * @param callback - callback for GET operation.
          *
          * @return OCStackResult - return value of this API.
@@ -399,11 +447,11 @@ namespace OIC
                 std::string actionsetName, GetCallback cb);
 
         /**
-         * API for removing the Action Set.
+         * API for removing an existing action set.
          * Callback is called when the response of  POST operation arrives.
          *
          * @param resource - resource pointer of the group resource
-         * @param actionsetName - Action Set name for removing the Action set
+         * @param actionsetName - the action set name for removing the action set
          * @param callback - callback for POST operation.
          *
          * @return OCStackResult - return value of this API.

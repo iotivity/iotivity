@@ -33,6 +33,7 @@ linux_sample_env = lib_env.Clone()
 # Build flags
 ######################################################################
 linux_sample_env.AppendUnique(CPPPATH = ['include'])
+linux_sample_env.AppendUnique(CPPPATH = ['../../../../../extlibs/timer'])
 linux_sample_env.AppendUnique(CPPPATH = ['../../../sdk/inc'])
 linux_sample_env.AppendUnique(CPPPATH = ['../../../sdk/src'])
 linux_sample_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
@@ -62,4 +63,3 @@ Alias("BootstrapServerApp", bootstrapserver)
 env.AppendTarget('ConServerApp')
 env.AppendTarget('ConClientApp')
 env.AppendTarget('BootstrapServerApp')
-

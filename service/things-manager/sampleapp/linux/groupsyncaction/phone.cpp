@@ -433,7 +433,7 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                result = gThingManager->leaveGroup(collectionResourceType, gPhoneResourceHandle);
+                result = gThingManager->leaveGroup(gFindGroup, collectionResourceType,  gPhoneResourceHandle);
                 if (OC_STACK_OK == result)
                 {
                     cout << "Leaving group was successful\n";
