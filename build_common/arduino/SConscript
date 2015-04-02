@@ -153,7 +153,7 @@ def __create_bin(env, source):
 	else:
 		hex = env.Command(name + '.hex', source, 'arm-none-eabi-objcopy -O binary $SOURCE $TARGET')
 
-#Currently supporting only megaADK build
+#Currently supporting only mega (ie. Arduino ATMega2560) and arduino_due_x/arduino_due_x_dbg (i.e. Arduino Due) builds
 def __upload(env, binary):
         if target_arch == 'avr':
                 protocol = __get_board_info(board, '.upload.protocol')
@@ -161,10 +161,16 @@ def __upload(env, binary):
                 port = '/dev/ttyACM0'
                 upload_cmd = arduino_home + '/hardware/tools/avr/bin/avrdude -C' + arduino_home +'/hardware/tools/avr/etc/avrdude.conf -p' \
                 + mcu + ' -c' + protocol + ' -P' + port + ' -b' + speed + ' -D -Uflash:w:' + binary + ':i'
-
                 print "Upload command: %s" %upload_cmd
                 install_cmd = env.Command('install_cmd', None, upload_cmd)
                 env.Default('install_cmd')
+        elif target_arch == 'arm':
+                protocol = __get_board_info(board, '.upload.protocol')
+                speed = __get_board_info(board, '.upload.speed')
+                port = 'ttyACM0'
+                uu = __get_board_info(board, '.upload.native_usb')
+                os.system('stty -F /dev/' + port + ' speed 1200 cs8 -cstopb -parenb')
+                os.system(arduino_home + '/hardware/tools/bossac -i --port=' + port + ' -U false -e -w -b ' + binary + ' -R')
 
 # Print the command line that to upload binary to the board
 def __upload_help(env):
@@ -351,11 +357,13 @@ else:
 	else:
 		cpu_flag = '-mcpu=' + mcu
 
-	comm_flag = [cpu_flag, '-DF_CPU=' + f_cpu, '-DARDUINO=' + version, '-DARDUINO_' + __get_board_info(board, '.build.board'), '-std=gnu99']
+	comm_flag = [cpu_flag, '-DF_CPU=' + f_cpu, '-DARDUINO=' + version, '-DARDUINO_' + __get_board_info(board, '.build.board')]
 	if target_arch == 'arm':
-		comm_flag.extend(['-DARDUINO_ARCH_SAM'])
+ 		# As of 1.5.8 the arduino headers for arm had _asm_ bugs with ARM and
+ 		# require gnu99 to be used
+		comm_flag.extend(['-std=gnu99', '-DARDUINO_ARCH_SAM'])
 	else:
-		comm_flag.extend(['-DARDUINO_ARCH_AVR'])
+		comm_flag.extend(['-std=c99', '-DARDUINO_ARCH_AVR'])
 
 	compiler_path = platform_info.get('compiler.path')
 	compiler_path = compiler_path.replace('{runtime.ide.path}', arduino_home)
