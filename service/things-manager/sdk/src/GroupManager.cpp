@@ -502,6 +502,13 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
 
     Capability *capa = NULL;
     ActionSet *actionset = new ActionSet();
+
+
+    if( description.at(0) == '*')
+    {
+        goto exit;
+    }
+
     plainText = new char[(description.length() + 1)];
     strcpy(plainText, description.c_str());
 
@@ -629,6 +636,11 @@ OCStackResult GroupManager::addActionSet(std::shared_ptr< OCResource > resource,
     // BUILD message of ActionSet which it is included delimiter.
     if ((resource != NULL) && (newActionSet != NULL))
     {
+        if(newActionSet->mDelay < 0)
+        {
+            return OC_STACK_INVALID_PARAM; 
+        }
+
         std::string message = getStringFromActionSet(newActionSet);
 
         OCRepresentation rep;
@@ -662,7 +674,7 @@ OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resou
 OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resource,
         std::string actionsetName, long int delay, PostCallback cb)
 {
-    if(delay == 0 )
+    if(delay <= 0 )
     {
         return OC_STACK_INVALID_PARAM;
     }
