@@ -7,6 +7,7 @@ boost_env = env.Clone()
 modules = ['thread','program_options']
 
 target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
 
 boost_version   = '1.57.0'
 boost_base_name  = 'boost_'+string.replace(boost_version,'.','_')
@@ -27,50 +28,63 @@ boost_zip = boost_env.Download(boost_arch_name, boost_url)
 
 # Unpack source code
 if not os.path.exists(boost_bootstrap):
-	boost_env.UnpackAll(boost_bootstrap, boost_zip)
+    boost_env.UnpackAll(boost_bootstrap, boost_zip)
+
+# Fix android x86_64 build error due to missing asm/page.h
+if target_os == 'android':
+    file_object = open(boost_base_name + '/boost/thread/pthread/thread_data.hpp', 'r+')
+    try:
+        content = file_object.read()
+        idx = content.find('#include <asm/page.h>')
+        if idx > 0 :
+            if content[idx -1] != '/' :
+                content = content.replace('#include <asm/page.h>', '//#include <asm/page.h>')
+                file_object.seek(0)
+                file_object.write(content)
+    finally:
+        file_object.close( )
 
 # Run bootstrap.sh
 if not os.path.exists(boost_b2_name):
-	boost_env.Configure(boost_base_name, './bootstrap.sh')
+    boost_env.Configure(boost_base_name, './bootstrap.sh')
 
 cmd = None
 
 # Windows...
 if boost_env["PLATFORM"] in ["win32"] :
-	if boost_env.WhereIs("cmd") :
-		# TODO: Add Windows Support
-		cmd = None
+    if boost_env.WhereIs("cmd") :
+        # TODO: Add Windows Support
+        cmd = None
 
 # read the tools on *nix systems and sets the default parameters
 elif boost_env["PLATFORM"] in ["darwin", "linux", "posix"] :
-	if boost_env.WhereIs("sh") :
-		cmd = ['./b2']
+    if boost_env.WhereIs("sh") :
+        cmd = ['./b2']
 
 if not cmd :
-	raise SCons.Errors.StopError("Boost build system not supported on this platform [%s]" % (boost_env["PLATFORM"]))
+    raise SCons.Errors.StopError("Boost build system not supported on this platform [%s]" % (boost_env["PLATFORM"]))
 
 # We need to be in the target's directory
 cwd = boost_base_name
 
 # Gather all of the path, bin and flags
 version     = boost_env.get('VERSION','')
-target_os   = boost_env['TARGET_OS']
-target_arch = boost_env['TARGET_ARCH']
 tool_path   = os.path.dirname(boost_env['CXX'])
 cxx_bin     = os.path.basename(boost_env['CXX'])
 ar_bin      = os.path.basename(boost_env['AR'])
 ranlib_bin  = os.path.basename(boost_env['RANLIB'])
-ccflags     = list(boost_env['CFLAGS'])
+cflags     = list(boost_env['CFLAGS'])
+ccflags    = list(boost_env['CCFLAGS'])
 cxxflags    = list(boost_env['CXXFLAGS'])
 
 try:
-	cxxflags.remove('-fno-rtti')
+    cxxflags.remove('-fno-rtti')
 except ValueError:
-	pass
+    pass
 try:
-	cxxflags.remove('-fno-exceptions')
+    cxxflags.remove('-fno-exceptions')
 except ValueError:
-	pass
+    pass
 
 # Write a user-config for this variant
 user_config_name = os.path.join(cwd, 'tools', 'build', 'src', 'user-config.jam')
@@ -84,16 +98,18 @@ user_config_file.write(' '+cxx_bin+' :\n')
 user_config_file.write('    <archiver>'+ar_bin+'\n')
 user_config_file.write('    <ranlib>'+ranlib_bin+'\n')
 for value in boost_env['CPPDEFINES'] :
-	if len(value) > 1 :
-		user_config_file.write('    <compileflags>-D'+value[0]+'='+value[1]+'\n')
-	else :
-		user_config_file.write('    <compileflags>-D'+value[0]+'\n')
+    if len(value) > 1 :
+        user_config_file.write('    <compileflags>-D'+value[0]+'='+value[1]+'\n')
+    else :
+        user_config_file.write('    <compileflags>-D'+value[0]+'\n')
 for value in boost_env['CPPPATH'] :
-	user_config_file.write('    <compileflags>-I'+value+'\n')
+    user_config_file.write('    <compileflags>-I'+value+'\n')
 for flag in ccflags :
-	user_config_file.write('    <compileflags>'+flag+'\n')
+    user_config_file.write('    <compileflags>'+flag+'\n')
+for flag in cflags :
+    user_config_file.write('    <cflags>'+flag+'\n')
 for flag in cxxflags :
-	user_config_file.write('    <cxxflags>'+flag+'\n')
+    user_config_file.write('    <cxxflags>'+flag+'\n')
 user_config_file.write('    ;\n')
 user_config_file.close();
 
@@ -112,7 +128,7 @@ cmd.append('--build-type=minimal')
 cmd.append('--prefix='+ build_path + os.sep + 'install_tmp')
 cmd.append('--build-dir='+build_path)
 for module in modules :
-	cmd.append('--with-'+module)
+    cmd.append('--with-'+module)
 cmd.append('headers')
 cmd.append('install')
 
@@ -122,12 +138,12 @@ print "Building boost [%s] on the source [%s]" % (cmd, boost_b2_name)
 handle  = subprocess.Popen(cmd, env=penv, cwd=cwd)#, stdout=devnull )
 
 if handle.wait() <> 0 :
-	raise SCons.Errors.BuildError( "Building boost [%s] on the source [%s]" % (cmd, boost_b2_name) )
+    raise SCons.Errors.BuildError( "Building boost [%s] on the source [%s]" % (cmd, boost_b2_name) )
 
 # Use Copy instead of InstallXXX to make sure boost is installed immediately
 Execute(Copy(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include'),
-	os.path.join(boost_base_name, build_path, 'install_tmp', 'include')))
+    os.path.join(boost_base_name, build_path, 'install_tmp', 'include')))
 
 Execute(Copy(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch),
-	os.path.join(boost_base_name, build_path, 'install_tmp', 'lib')))
+    os.path.join(boost_base_name, build_path, 'install_tmp', 'lib')))
 

@@ -38,6 +38,9 @@ if target_os not in ['windows', 'winrt']:
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
+if target_os not in ['android', 'arduino', 'windows', 'winrt']:
+	liboctbstack_env.AppendUnique(LIBS = ['pthread'])
+
 if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
 

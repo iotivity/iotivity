@@ -126,7 +126,6 @@ for flags in p.stdout.readlines():
 	elif cmp(flags[0:8], 'SYSROOT=') == 0:
 		sysroot = flags[8:].strip()
 		env.AppendUnique(LINKFLAGS = ['--sysroot=' + sysroot])
-		env.AppendUnique(LIBPATH = [sysroot + '/usr/lib'])
 
 	elif cmp(flags[0:8], 'LDFLAGS=') == 0:
 		env.AppendUnique(LINKFLAGS = Split(flags[8:]))

@@ -113,11 +113,13 @@ def __import_lib(env, lib):
 	lib_src.extend(__search_files(lib_path, '*.c'))
 	lib_src.extend(__search_files(lib_path, '*.cpp'))
 
-	build_dir = env.get('BUILD_DIR')
-	if build_dir:
-		lib_a = env.StaticLibrary(build_dir + lib, __src_to_obj(env, lib_src))
-	else:
-		lib_a = env.StaticLibrary(lib, __src_to_obj(env, lib_src))
+	prefix = env.get('BOARD') + '_'
+	if env.get('CPU'):
+		prefix += env.get('CPU') + '_'
+
+	lib = env.get('BUILD_DIR', '.') + '/arduino/' + prefix + lib
+	lib_a = env.StaticLibrary(lib, __src_to_obj(env, lib_src))
+
 	env.AppendUnique(LIBS = [File(lib_a[0])])
 
 def __build_core(env):
@@ -130,11 +132,14 @@ def __build_core(env):
 	core_src.extend(__search_files(variant_folder, '*.cpp'))
 
 	core_obj = __src_to_obj(env, core_src)
-	build_dir = env.get('BUILD_DIR')
-	if build_dir:
-		s_core = env.StaticLibrary(build_dir + 'core', core_obj)
-	else:
-		s_core = env.StaticLibrary('core', core_obj)
+
+	prefix = env.get('BOARD') + '_'
+	if env.get('CPU'):
+		prefix += env.get('CPU') + '_'
+
+	core = env.get('BUILD_DIR', '.') + '/arduino/' + prefix + 'core'
+	s_core = env.StaticLibrary(core, core_obj)
+
 	env.AppendUnique(LIBS = [File(s_core[0])])
 
 	# To avoid compiler issue. Otherewise there may be warnings:
