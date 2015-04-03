@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -353,6 +353,11 @@ OCStackResult OICStartCoordinate()
     s_requestHandleList = createRequestHandleList();
     result = requestPresence(OC_DEFAULT_ADDRESS);
 
+    if(result != OC_STACK_OK)
+    {
+        return OC_STACK_ERROR;
+    }
+
     return result;
 }
 
@@ -360,7 +365,11 @@ OCStackResult OICStopCoordinate()
 {
     OCStackResult result = OC_STACK_ERROR;
 
-    destroyMirrorResourceList(s_mirrorResourceList);
+    result = destroyMirrorResourceList(s_mirrorResourceList);
+    if(result != OC_STACK_OK)
+    {
+        return OC_STACK_ERROR;
+    }
 
     return result;
 }
@@ -833,8 +842,8 @@ OCStackApplicationResult checkResourceValidation(OCDoHandle handle)
         OC_LOG_V(DEBUG, HOSTING_TAG, "This response is Alive Check : Expired resource");
 
         OCDeleteResource(foundRequestHandle->requestHandle[OIC_REQUEST_BY_CLIENT]);
-        deleteRequestHandleFromList(s_requestHandleList, foundRequestHandle);
     }
+    deleteRequestHandleFromList(s_requestHandleList, foundRequestHandle);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -850,20 +859,31 @@ MirrorResource *updateMirrorResource(OCDoHandle handle, const char *payload)
         return NULL;
     }
 
+    cJSON *repData;
     cJSON *observeJson = cJSON_CreateObject();
     observeJson = cJSON_Parse(payload);
 
-    cJSON *ocArray = cJSON_GetObjectItem(observeJson, "oc");
-    int arraySize = cJSON_GetArraySize(ocArray);
+    if (observeJson)
+    {
+        cJSON *ocArray = cJSON_GetObjectItem(observeJson, "oc");
+        int arraySize = cJSON_GetArraySize(ocArray);
 
-    cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
-    cJSON *tempData = cJSON_GetObjectItem(ocArray_sub, "rep");
-    char *temp = cJSON_PrintUnformatted(tempData);
+        cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
+        cJSON *tempData = cJSON_GetObjectItem(ocArray_sub, "rep");
+        char *temp = cJSON_PrintUnformatted(tempData);
 
-    cJSON *repData = cJSON_Parse(temp);
-
-    free(temp);
-    cJSON_Delete(observeJson);
+        repData = cJSON_Parse(temp);
+        if (temp != NULL)
+        {
+            free(temp);
+        }
+        cJSON_Delete(observeJson);
+    }
+    else
+    {
+        OC_LOG_V(DEBUG, HOSTING_TAG, "payload is not correct");
+        return NULL;
+    }
 
     if (foundMirrorResource->rep)
     {
@@ -875,7 +895,7 @@ MirrorResource *updateMirrorResource(OCDoHandle handle, const char *payload)
     cJSON *json = cJSON_CreateObject();
 
     char nodeData[OIC_STRING_MAX_VALUE] = {'\0'};
-    sprintf(nodeData, "%s", foundMirrorResource->uri);
+    snprintf(nodeData, sizeof(foundMirrorResource->uri), "%s", foundMirrorResource->uri);
     cJSON_AddStringToObject(json, "href", nodeData);
 
     cJSON *nodeRep = cJSON_Parse(cJSON_PrintUnformatted(foundMirrorResource->rep));
@@ -1165,6 +1185,7 @@ OCStackResult requestIsAlive(const char *address)
         {
             deleteRequestHandleFromList(s_requestHandleList, requestAlive);
         }
+        mirrorResource = mirrorResource->next;
     }
     destroyMirrorResourceList(requestMirrorResourceList);
 
@@ -1274,7 +1295,7 @@ OCStackResult requestQuery(RequestHandle *request, OCMethod method,
     }
     else
     {
-        sprintf(queryFullUri, "coap://%s%s%s", queryAddress , queryUri, OIC_COORDINATING_FLAG);
+        snprintf(queryFullUri, sizeof(queryFullUri) ,"coap://%s%s%s", queryAddress , queryUri, OIC_COORDINATING_FLAG);
     }
 
     cbData.cb = requestQueryCB;
@@ -1283,7 +1304,7 @@ OCStackResult requestQuery(RequestHandle *request, OCMethod method,
 
     if(method == OC_REST_PUT){
         char payload[OIC_STRING_MAX_VALUE] = {'\0'};
-        sprintf(payload , "%s" ,
+        snprintf(payload , OIC_STRING_MAX_VALUE, "%s" ,
          ((OCEntityHandlerRequest*)request->requestHandle[OIC_REQUEST_BY_CLIENT])->reqJSONPayload);
 
         result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
@@ -1374,7 +1395,7 @@ OCEntityHandlerResponse buildEntityHandlerResponse(OCEntityHandlerRequest *entit
            sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof response.resourceUri);
 
-    char *temp;
+    char *temp = NULL;
     if(entityHandlerRequest->method == OC_REST_PUT){
         cJSON *observeJson = cJSON_CreateObject();
         observeJson = cJSON_Parse(clientPayload);
@@ -1404,7 +1425,9 @@ OCEntityHandlerResponse buildEntityHandlerResponse(OCEntityHandlerRequest *entit
     response.persistentBufferFlag = 0;
 
     if(entityHandlerRequest->method == OC_REST_PUT){
-        free(temp);
+        if(temp){
+            free(temp);
+        }
     }
 
     return response;
@@ -1420,7 +1443,7 @@ OCEntityHandlerResult handleRequestPayload (OCEntityHandlerRequest *entityHandle
     {
         sprintf(payload,"");
         OC_LOG_V(DEBUG, HOSTING_TAG, "DELETE");
-        return OC_EH_OK;
+        return OC_EH_RESOURCE_DELETED;
     }
 
     char *responsePayload = buildResponsePayload(entityHandlerRequest);

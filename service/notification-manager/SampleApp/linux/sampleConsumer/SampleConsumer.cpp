@@ -167,15 +167,7 @@ void foundResource(std::shared_ptr< OCResource > resource)
 
     try
     {
-        /*std::lock_guard<std::mutex> lock(curResourceLock);
-        if (g_curResource)
-        {
-            std::cout << "Found another resource, ignoring" << std::endl;
-            return;
-        }*/
-
         std::cout << "mutex lock passed" << std::endl;
-
         if (resource)
         {
             std::cout << resource->uri() << std::endl;
