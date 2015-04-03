@@ -56,6 +56,7 @@ require_upload = ARGUMENTS.get('UPLOAD', False)
 targets_disallow_multitransport = ['arduino']
 
 help_vars = Variables()
+help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
 help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 
@@ -97,6 +98,12 @@ tc_set_msg = '''
 * cause inexplicable errors.                                                  *
 *******************************************************************************
 '''
+if env.get('VERBOSE') == False:
+	env['CCCOMSTR'] = "Compiling $TARGET"
+	env['CXXCOMSTR'] = "Compiling $TARGET"
+	env['LINKCOMSTR'] = "Linking $TARGET"
+	env['ARCOMSTR'] = "Archiving $TARGET"
+	env['RANLIBCOMSTR'] = "Indexing Archive $TARGET"
 
 if target_os in targets_support_cc:
 	prefix = env.get('TC_PREFIX')
