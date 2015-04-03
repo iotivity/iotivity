@@ -39,6 +39,9 @@ env.AppendUnique(CPPPATH = [root_dir+'aes/'])
 env.AppendUnique(CPPPATH = [root_dir+'ecc/'])
 env.AppendUnique(CPPPATH = [root_dir+'sha2/'])
 
+if target_os not in ['arduino', 'windows', 'winrt']:
+	env.AppendUnique(CPPDEFINES = ['HAVE_SYS_TIME_H'])
+
 ######################################################################
 # Source files and Target(s)
 ######################################################################
@@ -64,9 +67,32 @@ if not env.get('RELEASE'):
 else:
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 
-env.AppendUnique(CPPDEFINES = ['WITH_OICSTACK', 'DTLSV12',  'WITH_SHA256', 'DTLS_CHECK_CONTENTTYPE'])
+env.AppendUnique(CPPDEFINES = ['DTLSV12',  'WITH_SHA256', 'DTLS_CHECK_CONTENTTYPE'])
 
 libtinydtls = env.StaticLibrary('libtinydtls', env.get('TINYDTLS_SRC'), OBJPREFIX='libtinydtls_')
+
+######################################################################
+# Generate tinydtls samples
+#
+# Note:
+# Currently there is a bug in debug.h/debug.c which fails compilation
+# of tinydtls samples in release mode. This bug is being tracked in 
+# IOT-395
+######################################################################
+if not env.get('RELEASE'):
+	samples_env = env.Clone()
+
+	if target_os not in ['arduino', 'windows', 'winrt']:
+		samples_env.AppendUnique(CPPDEFINES = ['_GNU_SOURCE'])
+
+	dtlsserver = samples_env.Program('dtls-server', ['tests/dtls-server.c'])
+	dtlsclient = samples_env.Program('dtls-client', ['tests/dtls-client.c'])
+
+	samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	samples_env.PrependUnique(LIBS = ['tinydtls'])
+
+	Alias("samples", [dtlsserver, dtlsclient])
+	samples_env.AppendTarget('samples')
 
 env.InstallTarget(libtinydtls, 'libtinydtls');
 

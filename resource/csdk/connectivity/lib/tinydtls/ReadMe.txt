@@ -1,5 +1,4 @@
 Currently Sconscript alone has been added for tinydtls compilation.
-Before compiling the code, Please add tinydtls source code in this folder.
+Before compiling the code, Please copy the source code from
+<iotivity>/extlibs/tinydtls to this directory
 
-Source Code will be available in following link:
-http://sourceforge.net/projects/tinydtls/files/latest/download?source=files
