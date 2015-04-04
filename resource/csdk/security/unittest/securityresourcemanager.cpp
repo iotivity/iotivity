@@ -39,11 +39,11 @@ void UTResponseHandler(const CARemoteEndpoint_t *endPoint, const CAResponseInfo_
     printf("UTResponseHandler\n");
 }
 
-FILE *utopen(const char *path, const char *mode, FILE **stream)
+FILE *utopen(const char *path, const char *mode)
 {
     printf("utopen\n");
-    *stream = fopen(path, mode);
-    return *stream;
+    FILE *stream = fopen(path, mode);
+    return stream;
 
 }
 
@@ -122,8 +122,8 @@ TEST(PersistentStorageHandlerTest, PersistentStorageValidHandlers)
     EXPECT_TRUE(psi != NULL);
 
     unsigned char buf[PATH_MAX];
-    FILE* streamIn;
-    FILE* streamOut;
+    FILE* streamIn = NULL;
+    FILE* streamOut = NULL;
     struct passwd *pw = getpwuid(getuid());
     const char *homeDir = pw->pw_dir;
     char inFilePath [PATH_MAX];
@@ -131,20 +131,29 @@ TEST(PersistentStorageHandlerTest, PersistentStorageValidHandlers)
     snprintf(inFilePath, PATH_MAX, "%s/iotivity/Readme.scons.txt", homeDir );
     snprintf(outFilePath, PATH_MAX, "%s/Downloads/Readme.scons.out.txt", homeDir );
 
-    psi->open(inFilePath, "r", &streamIn);
+    streamIn = psi->open(inFilePath, "r");
     EXPECT_TRUE(streamIn != NULL);
-    psi->open(outFilePath, "w", &streamOut);
+    streamOut = psi->open(outFilePath, "w");
     EXPECT_TRUE(streamOut != NULL);
 
-    size_t value = 1;
-    while (value)
+    if (streamIn && streamOut)
     {
-        value = psi->read(buf, 1, sizeof(buf), streamIn);
-        psi->write(buf, 1, value, streamOut);
+        size_t value = 1;
+        while (value)
+        {
+            value = psi->read(buf, 1, sizeof(buf), streamIn);
+            psi->write(buf, 1, value, streamOut);
+        }
     }
 
-    psi->close(streamIn);
-    psi->close(streamOut);
+    if (streamIn)
+    {
+        psi->close(streamIn);
+    }
+    if (streamOut)
+    {
+        psi->close(streamOut);
+    }
     psi->unlink(outFilePath);
     free(psi);
 }

@@ -243,7 +243,7 @@ typedef enum {
  */
 typedef struct {
     // Persistent storage open handler
-    FILE* (* open)(const char *path, const char *mode, FILE **stream);
+    FILE* (* open)(const char *path, const char *mode);
     // Persistent storage read handler
     size_t (* read)(void *ptr, size_t size, size_t nmemb, FILE *stream);
     // Persistent storage write handler
