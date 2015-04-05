@@ -451,6 +451,14 @@ void DeleteObserverList()
     serverObsList = NULL;
 }
 
+/*
+ * CA layer expects observe registration/de-reg/notiifcations to be passed as a header
+ * option, which breaks the protocol abstraction requirement between RI & CA, and
+ * has to be fixed in the future. The function below adds the header option for observe.
+ * It should be noted that the observe header option is assumed to be the first option
+ * in the list of user defined header options and hence it is inserted at the front
+ * of the header options list and number of options adjusted accordingly.
+ */
 OCStackResult
 CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
                            OCHeaderOption *ocHdrOpt,
@@ -482,6 +490,14 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
     return OC_STACK_OK;
 }
 
+/*
+ * CA layer passes observe information to the RI layer as a header option, which
+ * breaks the protocol abstraction requirement between RI & CA, and has to be fixed
+ * in the future. The function below removes the observe header option and processes it.
+ * It should be noted that the observe header option is always assumed to be the first
+ * option in the list of user defined header options and hence it is deleted from the
+ * front of the header options list and the number of options is adjusted accordingly.
+ */
 OCStackResult
 GetObserveHeaderOption (uint32_t * observationOption,
                         CAHeaderOption_t *options,

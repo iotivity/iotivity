@@ -1470,7 +1470,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
-        result = CAResultToOCResult(caResult);
+        CADestroyToken(token);
+        result = CAResultToOCResult (caResult);
         goto exit;
     }
 
@@ -1527,7 +1528,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         if (caResult != CA_STATUS_OK)
         {
             OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
-            result = CAResultToOCResult(caResult);
+            result = CAResultToOCResult (caResult);
+            CADestroyToken(token);
             goto exit;
         }
 
@@ -1537,7 +1539,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CASendRequest"));
-        result = CAResultToOCResult(caResult);
+        result = CAResultToOCResult (caResult);
+        CADestroyToken(token);
         goto exit;
     }
 
@@ -1565,7 +1568,6 @@ exit:
         OCFree(resHandle);
         OCFree(requestUri);
         OCFree(resourceType);
-        CADestroyToken(token);
     }
     CADestroyRemoteEndpoint(endpoint);
     OCFree(grpEnd.resourceUri);
@@ -1661,10 +1663,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 {
                     OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
                 }
-                if(caResult == CA_STATUS_OK)
-                {
-                    ret = OC_STACK_OK;
-                }
+                ret = CAResultToOCResult (caResult);
                 break;
             #ifdef WITH_PRESENCE
             case OC_REST_PRESENCE:
