@@ -50,6 +50,13 @@ target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 # set to 'no', 'false' or 0 for only compilation
 require_upload = ARGUMENTS.get('UPLOAD', False) 
 
+if ARGUMENTS.get('TEST'):
+	logging_default = False
+else:
+	logging_default = (ARGUMENTS.get('RELEASE', True) == 'false')
+
+
+
 ######################################################################
 # Common build options (release, target os, target arch)
 ######################################################################
@@ -68,6 +75,7 @@ else:
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
+help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
 ######################################################################

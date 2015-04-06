@@ -12,6 +12,8 @@ if env.get('RELEASE'):
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
 	env.AppendUnique(CCFLAGS = ['-g'])
+
+if env.get('LOGGING'):
 	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])

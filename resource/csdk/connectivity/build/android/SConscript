@@ -154,7 +154,9 @@ if env.get('RELEASE'):
 else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 
-env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__','-DTB_LOG'])
+env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__'])
+if env.get('LOGGING'):
+	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC','`pkg-config','--cflags','glib-2.0`'])
 env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread', '-lglib-2.0', '-lgthread-2.0', '-llog', '-landroid'])
 

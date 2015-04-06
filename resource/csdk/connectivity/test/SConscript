@@ -59,8 +59,8 @@ if env.get('SECURED') == '1':
     catest_env.AppendUnique(LIBS = ['tinydtls'])
 catest_env.ParseConfig('pkg-config --libs glib-2.0');
 
-if not env.get('RELEASE'):
-        catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if env.get('LOGGING'):
+	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################
 # Source files and Targets

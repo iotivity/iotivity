@@ -44,7 +44,7 @@ if target_os == 'arduino':
 if target_os in ['darwin', 'ios']:
 	libcoap_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
-if not env.get('RELEASE'):
+if env.get('LOGGING'):
 	libcoap_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################

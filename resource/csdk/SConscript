@@ -76,7 +76,7 @@ if target_os in ['darwin', 'ios']:
 	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	liboctbstack_env.AppendUnique(LIBS = ['coap'])
 
-if not env.get('RELEASE'):
+if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################

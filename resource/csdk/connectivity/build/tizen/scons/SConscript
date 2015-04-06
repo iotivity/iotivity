@@ -13,7 +13,10 @@ print "Given Transport is %s" % transport
 if env.get('RELEASE'):
 	env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE'])
 else:
-	env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DTB_LOG'])
+	env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE'])
+
+if env.get('LOGGING'):
+	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
 
 env.ParseConfig("pkg-config --cflags --libs capi-network-wifi dlog glib-2.0")
 if 'ALL' in transport:

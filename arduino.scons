@@ -35,7 +35,6 @@ if 'BLE' in env.get('TARGET_TRANSPORT'):
 
 env.ImportLib('Time/Time')
 # we have variety of macros for arduino!!
-if env.get('RELEASE'):
-	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO', '__ARDUINO__'])
-else:
-	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO', '__ARDUINO__', 'TB_LOG'])
+env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO', '__ARDUINO__'])
+if env.get('LOGGING'):
+	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
