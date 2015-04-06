@@ -33,10 +33,10 @@ arduino_simplecs_env.PrependUnique(CPPPATH = [
 arduino_simplecs_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-if 'Ethernet' == env.get('NET'):
-	transportLib = 'Ethernet'
-elif 'Wifi' == env.get('NET'):
-	transportLib = 'WiFi'
+if 'ETHERNET' in env.get('TARGET_TRANSPORT'):
+    transportLib = 'Ethernet'
+if 'WIFI' in env.get('TARGET_TRANSPORT'):
+    transportLib = 'WiFi'
 
 arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction','coap',transportLib])
 

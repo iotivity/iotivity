@@ -31,13 +31,6 @@ target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 src_dir = env.get('SRC_DIR')
 
-if target_os == 'arduino':
-	# Add 'NET' build option, let user select board network connection type
-	vars = Variables()
-	vars.Add(EnumVariable('NET', 'Network connection type', 'Ethernet', ['Ethernet', 'Wifi']))
-	vars.Update(env)
-	Help(vars.GenerateHelpText(env))
-
 # check 'cereal' library, temporarily put it here
 if not os.path.exists(src_dir + '/extlibs/cereal'):
 	print '''
