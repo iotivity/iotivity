@@ -21,48 +21,248 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "ocmalloc.h"
+#include "cJSON.h"
 #include "resourcemanager.h"
 #include "aclresource.h"
+#include "psinterface.h"
 #include "utlist.h"
-#include "cJSON.h"
+#include "srmresourcestrings.h"
 #include <stdlib.h>
 #include <string.h>
 
 #define TAG  PCF("SRM-ACL")
 
-const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
-const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
+#define VERIFY_SUCCESS(op, logLevel) { if ((op)) \
+            {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
+
+#define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
+             TAG, PCF(#arg " is NULL")); goto exit; } }
 
 OicSecAcl_t        *gAcl = NULL;
 OCResourceHandle    gAclHandle = NULL;
 
-/*
- * This internal method converts ACL data into JSON format.
- */
-static char * ToJSON(OicSecAcl_t * acl)
+static void DeleteACLList(OicSecAcl_t* acl)
 {
-    char *jsonStr = NULL;
-
-    /* This is demo code to display JSON marshalling */
     if (acl)
     {
-        cJSON *json = cJSON_CreateObject();
-        cJSON *jsonAcl = NULL;
-        if (json)
+        OicSecAcl_t *aclTmp1 = NULL, *aclTmp2 = NULL;
+        LL_FOREACH_SAFE(acl, aclTmp1, aclTmp2)
         {
-            cJSON_AddItemToObject(json, "acl", jsonAcl = cJSON_CreateObject());
-            if (jsonAcl)
+            int i = 0;
+
+            LL_DELETE(acl, aclTmp1);
+
+            /* Clean Subject */
+            OCFree(aclTmp1->Subject);
+
+            /* Clean Resources */
+            for (i = 0; i < aclTmp1->ResourcesLen; i++)
             {
-                cJSON_AddStringToObject(jsonAcl, "sbj",  "1111111111111111");
-                cJSON_AddStringToObject(jsonAcl, "rsrc", "/light");
-                cJSON_AddNumberToObject(jsonAcl, "per", 0x001F);
-                jsonStr = cJSON_Print(json);
+                OCFree(aclTmp1->Resources[i]);
             }
-            cJSON_Delete(json);
+            OCFree(aclTmp1->Resources);
+
+            /* Clean Owners */
+            OCFree(aclTmp1->Owners);
+
+            /* Clean ACL node itself */
+            OCFree(aclTmp1);
         }
+    }
+}
+
+
+/*
+ * This internal method converts ACL data into JSON format.
+ *
+ * Note: Caller needs to invoke 'free' when finished done using
+ * return string.
+ */
+static char * BinToJSON(OicSecAcl_t * acl)
+{
+    cJSON *jsonRoot = NULL;
+    char *jsonStr = NULL;
+
+    if (acl)
+    {
+        jsonRoot = cJSON_CreateObject();
+        VERIFY_NON_NULL(jsonRoot, INFO);
+
+        cJSON *jsonAclArray = NULL;
+        cJSON_AddItemToObject (jsonRoot, OIC_JSON_ACL_NAME, jsonAclArray = cJSON_CreateArray());
+        VERIFY_NON_NULL(jsonAclArray, INFO);
+
+        while(acl)
+        {
+            cJSON *jsonAcl = cJSON_CreateObject();
+
+            /* Subject -- Mandatory */
+            cJSON_AddStringToObject(jsonAcl, OIC_JSON_SUBJECT_NAME,  acl->Subject);
+
+            /* Resources -- Mandatory */
+            cJSON *jsonRsrcArray = NULL;
+            cJSON_AddItemToObject (jsonAcl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray = cJSON_CreateArray());
+            VERIFY_NON_NULL(jsonRsrcArray, INFO);
+            for (int i = 0; i < acl->ResourcesLen; i++)
+            {
+                cJSON_AddItemToArray (jsonRsrcArray, cJSON_CreateString(acl->Resources[i]));
+            }
+
+            /* Permissions -- Mandatory */
+            cJSON_AddNumberToObject (jsonAcl, OIC_JSON_PERMISSION_NAME, acl->Permission);
+
+            /* Owners -- Mandatory */
+            cJSON *jsonOwnrArray = NULL;
+            cJSON_AddItemToObject (jsonAcl, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
+            VERIFY_NON_NULL(jsonOwnrArray, INFO);
+            for (int i = 0; i < acl->OwnersLen; i++)
+            {
+#if 0
+                /* TODO Update once the format of OicSecSvc_t is finalized */
+                cJSON_AddItemToArray (jsonOwnrArray, cJSON_CreateString(acl->Owners[i]));
+#endif
+                cJSON_AddItemToArray (jsonOwnrArray, cJSON_CreateString("Unknown"));
+            }
+
+            /* Attach current acl node to Acl Array */
+            cJSON_AddItemToArray(jsonAclArray, jsonAcl);
+            acl = acl->next;
+        }
+
+        jsonStr = cJSON_PrintUnformatted(jsonRoot);
+    }
+
+exit:
+    if (jsonRoot)
+    {
+        cJSON_Delete(jsonRoot);
     }
     return jsonStr;
 }
+
+
+
+/*
+ * This internal method converts JSON ACL into binary ACL.
+ */
+static OicSecAcl_t * JSONToBin(const char * jsonStr)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    OicSecAcl_t * headAcl = NULL;
+    OicSecAcl_t * prevAcl = NULL;
+
+    cJSON *jsonRoot = cJSON_Parse(jsonStr);
+    VERIFY_NON_NULL(jsonRoot, INFO);
+
+    cJSON *jsonAclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
+    VERIFY_NON_NULL(jsonAclArray, INFO);
+
+    if (jsonAclArray->type == cJSON_Array)
+    {
+        int numAcl = cJSON_GetArraySize(jsonAclArray);
+        int idx = 0;
+
+        VERIFY_SUCCESS(numAcl > 0, INFO);
+        do
+        {
+            cJSON *jsonAcl = cJSON_GetArrayItem(jsonAclArray, idx);
+            VERIFY_NON_NULL(jsonAcl, INFO);
+
+            OicSecAcl_t *acl = (OicSecAcl_t*)OCCalloc(1, sizeof(OicSecAcl_t));
+            VERIFY_NON_NULL(acl, INFO);
+
+            headAcl = (headAcl) ? headAcl : acl;
+            if (prevAcl)
+            {
+                prevAcl->next = acl;
+            }
+
+            size_t jsonObjLen = 0;
+            cJSON *jsonObj = NULL;
+            /* Subject -- Mandatory */
+            // TODO -- Confirmt he data type for Subject field
+            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
+            VERIFY_NON_NULL(jsonObj, ERROR);
+            if (jsonObj->type == cJSON_String)
+            {
+                jsonObjLen = strlen(jsonObj->valuestring) + 1;
+                acl->Subject = (char*)OCMalloc(jsonObjLen);
+                VERIFY_NON_NULL(acl->Subject, INFO);
+                strncpy(acl->Subject, jsonObj->valuestring, jsonObjLen);
+            }
+
+            /* Resources -- Mandatory */
+            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
+            VERIFY_NON_NULL(jsonObj, ERROR);
+            if (jsonObj->type == cJSON_Array)
+            {
+                acl->ResourcesLen = cJSON_GetArraySize(jsonObj);
+                int idxx = 0;
+
+                VERIFY_SUCCESS(acl->ResourcesLen > 0, INFO);
+                acl->Resources = (char**)OCCalloc(acl->ResourcesLen, sizeof(char*));
+                VERIFY_NON_NULL(acl->Resources, FATAL);
+                do
+                {
+                    cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
+                    VERIFY_NON_NULL(jsonRsrc, ERROR);
+
+                    jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
+                    acl->Resources[idxx] = (char*)OCMalloc(jsonObjLen);
+                    VERIFY_NON_NULL(acl->Resources[idxx], FATAL);
+                    strncpy(acl->Resources[idxx], jsonObj->valuestring, jsonObjLen);
+                } while ( ++idxx < acl->ResourcesLen);
+            }
+
+            /* Permissions -- Mandatory */
+            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERMISSION_NAME);
+            VERIFY_NON_NULL(jsonObj, ERROR);
+            if (jsonObj && jsonObj->type == cJSON_Number)
+            {
+                acl->Permission = jsonObj->valueint;
+            }
+
+            /* Owners -- Mandatory */
+            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_OWNERS_NAME);
+            VERIFY_NON_NULL(jsonObj, ERROR);
+            if (jsonObj->type == cJSON_Array)
+            {
+                acl->OwnersLen = cJSON_GetArraySize(jsonObj);
+                int idxx = 0;
+
+                VERIFY_SUCCESS(acl->OwnersLen > 0, INFO);
+                acl->Owners = (OicSecSvc_t*)OCCalloc(acl->OwnersLen, sizeof(OicSecSvc_t));
+                VERIFY_NON_NULL(acl->Owners, FATAL);
+                do
+                {
+                    cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
+                    VERIFY_NON_NULL(jsonOwnr, ERROR);
+#if 0
+                    /* TODO Update once the format of OicSecSvc_t is finalized */
+                    jsonObjLen = strlen(jsonOwnr->valuestring) + 1;
+                    acl->Owners[idxx] = (char*)OCMalloc(jsonObjLen);
+                    VERIFY_NON_NULL(acl->Owners[idxx], FATAL);
+                    strncpy(acl->Owners[idxx], jsonObj->valuestring, jsonObjLen);
+#endif
+                } while ( ++idxx < acl->OwnersLen);
+            }
+
+            prevAcl = acl;
+        } while( ++idx < numAcl);
+    }
+
+    ret = OC_STACK_OK;
+
+exit:
+    cJSON_Delete(jsonRoot);
+    if (OC_STACK_OK != ret)
+    {
+        DeleteACLList(headAcl);
+        headAcl = NULL;
+    }
+    return headAcl;
+}
+
 
 /*
  * This internal method is the entity handler for ACL resources.
@@ -81,11 +281,11 @@ static OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         /* TODO :  Handle PUT/POST/DEL methods */
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
         if (OC_REST_GET == ehRequest->method)
         {
             /* Convert ACL data into JSON for transmission */
-            jsonRsp = ToJSON(gAcl);
+            jsonRsp = BinToJSON(gAcl);
 
             /* Send payload to request originator */
             ret = (SendSRMResponse(ehRequest, jsonRsp) == OC_STACK_OK ?
@@ -114,6 +314,7 @@ static OCStackResult CreateACLResource()
 
     if (ret != OC_STACK_OK)
     {
+        OC_LOG (FATAL, TAG, PCF("Unable to instantiate ACL resource"));
         DeInitACLResource();
     }
     return ret;
@@ -128,13 +329,19 @@ OCStackResult InitACLResource()
 {
     OCStackResult ret;
 
-    /*
-     * TODO : Read ACL resource from PS
-     * TODO : Unmarshal JSON to OicSecAcl_t
-     */
+    /* Read ACL resource from PS */
+    char* jsonSVRDatabase = GetSVRDatabase();
+    VERIFY_NON_NULL(jsonSVRDatabase, FATAL);
+
+    /* Convert JSON ACL into binary format */
+    gAcl = JSONToBin(jsonSVRDatabase);
+    VERIFY_NON_NULL(gAcl, FATAL);
 
     /* Instantiate 'oic.sec.acl' */
     ret = CreateACLResource();
+
+exit:
+    OCFree(jsonSVRDatabase);
     return ret;
 }
 
@@ -146,12 +353,7 @@ OCStackResult InitACLResource()
 void DeInitACLResource()
 {
     OCDeleteResource(gAclHandle);
-    OicSecAcl_t *aclTmp1 = NULL, *aclTmp2 = NULL;
-    LL_FOREACH_SAFE(gAcl, aclTmp1, aclTmp2)
-    {
-        LL_DELETE(gAcl, aclTmp1);
-        OCFree(aclTmp1);
-    }
+    DeleteACLList(gAcl);
     gAcl = NULL;
 }
 
