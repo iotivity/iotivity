@@ -40,12 +40,19 @@
 
 static struct ResourceObserver * serverObsList = NULL;
 
-// send notifications based on the qos of the request
-// The qos passed as a parameter overrides what the client requested
-// If we want the client preference taking high priority make:
-// qos = resourceObserver->qos;
-OCQualityOfService DetermineObserverQoS(OCMethod method, ResourceObserver * resourceObserver,
-        OCQualityOfService appQoS)
+/**
+ * Determine observe QOS based on the QOS of the request.
+ * The qos passed as a parameter overrides what the client requested.
+ * If we want the client preference taking high priority make:
+ *     qos = resourceObserver->qos;
+ *
+ * @param method RESTful method.
+ * @param resourceObserver Observer.
+ * @param appQoS Quality of service.
+ * @return The quality of service of the observer.
+ */
+static OCQualityOfService DetermineObserverQoS(OCMethod method,
+        ResourceObserver * resourceObserver, OCQualityOfService appQoS)
 {
     if(!resourceObserver)
     {
@@ -106,6 +113,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
     OCServerRequest * request = NULL;
     OCEntityHandlerRequest ehRequest = {};
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
+    bool observeErrorFlag = false;
 
     // Find clients that are observing this resource
     while (resourceObserver)
@@ -186,13 +194,25 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 }
             }
             #endif
+
+            // Since we are in a loop, set an error flag to indicate at least one error occurred.
+            if (result != OC_STACK_OK)
+            {
+                observeErrorFlag = true;
+            }
         }
         resourceObserver = resourceObserver->next;
     }
+
     if (numObs == 0)
     {
         OC_LOG(INFO, TAG, PCF("Resource has no observers"));
         result = OC_STACK_NO_OBSERVERS;
+    }
+    else if (observeErrorFlag)
+    {
+        OC_LOG(ERROR, TAG, PCF("Observer notification error"));
+        result = OC_STACK_ERROR;
     }
     return result;
 }
@@ -212,6 +232,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     uint8_t numSentNotification = 0;
     OCServerRequest * request = NULL;
     OCStackResult result = OC_STACK_ERROR;
+    bool observeErrorFlag = false;
 
     OC_LOG(INFO, TAG, PCF("Entering SendListObserverNotification"));
     while(numIds)
@@ -253,6 +274,9 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         result = OCDoResponse(&ehResponse);
                         if(result == OC_STACK_OK)
                         {
+                            // Increment sent notifications only if OCDoResponse is successful
+                            numSentNotification++;
+
                             OCFree(ehResponse.payload);
                             FindAndDeleteServerRequest(request);
                         }
@@ -262,14 +286,19 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         FindAndDeleteServerRequest(request);
                     }
                 }
-
-                numSentNotification++;
+                // Since we are in a loop, set an error flag to indicate
+                // at least one error occurred.
+                if (result != OC_STACK_OK)
+                {
+                    observeErrorFlag = true;
+                }
             }
         }
         obsIdList++;
         numIds--;
     }
-    if(numSentNotification == numberOfIds)
+
+    if(numSentNotification == numberOfIds && !observeErrorFlag)
     {
         return OC_STACK_OK;
     }
@@ -279,9 +308,8 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     }
     else
     {
-        //TODO: we need to signal that not every one in the
-        // list got an update, should we also indicate who did not receive on?
-        return OC_STACK_OK;
+        OC_LOG(ERROR, TAG, PCF("Observer notification error"));
+        return OC_STACK_ERROR;
     }
 }
 

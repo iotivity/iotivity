@@ -67,7 +67,9 @@ typedef struct
     OCStackResult result;
 } OCObserveReq;
 
-// following structure will be created in occoap and passed up the stack on the server side
+/**
+ * This structure will be created in occoap and passed up the stack on the server side.
+ */
 typedef struct
 {
     // Observe option field
@@ -140,7 +142,9 @@ typedef struct
     char * resourceUri;
 } OCServerProtocolResponse;
 
-// following structure will be created in occoap and passed up the stack on the client side
+/**
+ * This structure will be created in occoap and passed up the stack on the client side.
+ */
 typedef struct
 {
     // handle is retrieved by comparing the token-handle pair in the PDU.
@@ -161,7 +165,9 @@ typedef struct
     OCClientResponse * clientResponse;
 } OCResponse;
 
-// following typedef is to represent our Server Instance identification.
+/**
+ * This typedef is to represent our Server Instance identification.
+ */
 typedef uint32_t ServerID;
 
 //-----------------------------------------------------------------------------
@@ -170,94 +176,79 @@ typedef uint32_t ServerID;
 
 #ifdef WITH_PRESENCE
 /**
- * Notify Presence subscribers that a resource has been modified
+ * Notify Presence subscribers that a resource has been modified.
  *
- * @param resourceType - Handle to the resourceType linked list of resource
- *                       that was modified.
- * @return
- *     OC_STACK_OK    - no errors
- *     OC_STACK_ERROR - stack process error
+ * @param resourceType Handle to the resourceType linked list of resource
+ *                     that was modified.
+ * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult SendPresenceNotification(OCResourceType *resourceType);
+
 /**
- * Send Stop Notification to Presence subscribers
+ * Send Stop Notification to Presence subscribers.
  *
- * @return
- *     OC_STACK_OK    - no errors
- *     OC_STACK_ERROR - stack process error
- *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult SendStopNotification();
 #endif // WITH_PRESENCE
 
 /**
- * Bind a resource interface to a resource
+ * Bind a resource interface to a resource.
  *
- * @param resource - target resource
- * @param resourceInterfaceName - resource interface
- * @return
- *     OCStackResult
+ * @param resource Target resource.
+ * @param resourceInterfaceName Resource interface.
+ * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult BindResourceInterfaceToResource(OCResource* resource,
                                             const char *resourceInterfaceName);
 /**
- * Bind a resourcetype to a resource
+ * Bind a resourcetype to a resource.
  *
- * @param resource - target resource
- * @param resourceTypeName - resourcetype
- * @return
- *     OCStackResult
+ * @param resource Target resource.
+ * @param resourceTypeName Name of resource type.
+ * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName);
-/**
- * Finds a resource type in an OCResourceType link-list.
- *
- * @param resourceTypeList - the link-list to be searched through
- * @param resourceTypeName - the key to search for
- *
- * @return
- *      resourceType that matches the key (ie. resourceTypeName)
- *      NULL - either an invalid parameter or this function was unable to find the key.
- */
-OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char * resourceTypeName);
-
-// returns the internal representation of the server instance ID.
-// Note: This will NOT seed the RNG, so it must be called after the RNG is seeded.
-// This is done automatically during the OCInit process (via the call to OCInitCoAP),
-// so ensure that this call is done after that.
-const ServerID OCGetServerInstanceID(void);
 
 // Converts a CAResult_t type to a OCStackResult type.
+/**
+ * Converts a CAResult_t type to a OCStackResult type.
+ *
+ * @param caResult CAResult_t value to convert
+ * @return OCStackResult that was converted from the input CAResult_t value.
+ */
 OCStackResult CAResultToOCResult(CAResult_t caResult);
 
-// returns a string representation  the server instance ID.
-// The memory is managed internal to this function, so freeing externally will result
-// in a compiler error
-// Note: This will NOT seed the RNG, so it must be called after the RNG is seeded.
-// This is done automatically during the OCInit process (via the call to OCInitCoAP),
-// so ensure that this call is done after that.
+/**
+ * Get a string representation the server instance ID.
+ * The memory is managed internal to this function, so freeing externally will result
+ * in a compiler error
+ * Note: This will NOT seed the RNG, so it must be called after the RNG is seeded.
+ * This is done automatically during the OCInit process (via the call to OCInitCoAP),
+ * so ensure that this call is done after that.
+ *
+ * @return A string representation  the server instance ID.
+ */
 const char* OCGetServerInstanceIDString(void);
 
 /**
- * Map OCQualityOfService to CAMessageType
+ * Map OCQualityOfService to CAMessageType.
  *
- * @param OCQualityOfService - Input qos.
- *
- * Returns CA message type for a given qos.
+ * @param qos Input qos.
+ * @return CA message type for a given qos.
  */
 CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos);
 
 #ifdef WITH_PRESENCE
 /**
- * Enable/disable a resource property
+ * Enable/disable a resource property.
  *
- * @param inputProperty - pointer to resource property
- * @param resourceProperties - property to be enabled/disabled
- * @param enable - 0:disable, 1:enable
+ * @param inputProperty Pointer to resource property.
+ * @param resourceProperties Property to be enabled/disabled.
+ * @param enable 0:disable, 1:enable.
  *
- * @return
- *     OCStackResult
+ * @return OCStackResult that was converted from the input CAResult_t value.
  */
 //TODO: should the following function be public?
 OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
