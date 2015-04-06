@@ -50,7 +50,7 @@ public class QueryEngine
          * @return int - Instance of the query engine object, set on object's creation
          * 
          */
-        public int GetQueryEngineInstance()
+        public int getQueryEngineInstance()
         {
             return pQueryEngineInstance;
         }
@@ -65,9 +65,9 @@ public class QueryEngine
          * @return int - ID of context query executed
          * 
          */
-        public int ExecuteContextQuery(String contextQuery) throws Exception
+        public int executeContextQuery(String contextQuery) throws Exception
         {
-            return CoreController.getInstance().ExecuteContextQuery(
+            return CoreController.getInstance().executeContextQuery(
                 pQueryEngineInstance, contextQuery);
         }
 
@@ -80,9 +80,9 @@ public class QueryEngine
          * @return void
          * 
          */
-        public void RegisterQueryEvent(IQueryEngineEvent queryEngineEvent)
+        public void registerQueryEvent(IQueryEngineEvent queryEngineEvent)
         {
-            CoreController.getInstance().RegisterQueryEvent(pQueryEngineInstance,
+            CoreController.getInstance().registerQueryEvent(pQueryEngineInstance,
                     queryEngineEvent);
         }
 
@@ -95,9 +95,9 @@ public class QueryEngine
          * @return void
          * 
          */
-        public void KillContextQuery(int cqid) throws Exception
+        public void killContextQuery(int cqid) throws Exception
         {
-            CoreController.getInstance().KillContextQuery(pQueryEngineInstance,
+            CoreController.getInstance().killContextQuery(pQueryEngineInstance,
             cqid);
         }
 }

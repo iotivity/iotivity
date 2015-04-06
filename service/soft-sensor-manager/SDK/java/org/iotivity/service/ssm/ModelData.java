@@ -50,9 +50,9 @@ public class ModelData
          * @return int - the affected DataId
          * 
          */
-        public int GetDataId()
+        public int getDataId()
         {
-            return CoreController.getInstance().GetDataId(pIModelDataInstance);
+            return CoreController.getInstance().getDataId(pIModelDataInstance);
         }
 
         /**
@@ -62,9 +62,9 @@ public class ModelData
          * @return int - number of properties
          * 
          */
-        public int GetPropertyCount()
+        public int getPropertyCount()
         {
-            return CoreController.getInstance().GetPropertyCount(
+            return CoreController.getInstance().getPropertyCount(
                        pIModelDataInstance);
         }
 
@@ -77,9 +77,9 @@ public class ModelData
          * @return String - property name
          * 
          */
-        public String GetPropertyName(int propertyIndex)
+        public String getPropertyName(int propertyIndex)
         {
-            return CoreController.getInstance().GetPropertyName(
+            return CoreController.getInstance().getPropertyName(
                        pIModelDataInstance, propertyIndex);
         }
 
@@ -92,9 +92,9 @@ public class ModelData
          * @return String - property value
          * 
          */
-        public String GetPropertyValue(int propertyIndex)
+        public String getPropertyValue(int propertyIndex)
         {
-            return CoreController.getInstance().GetPropertyValue(
+            return CoreController.getInstance().getPropertyValue(
                        pIModelDataInstance, propertyIndex);
         }
 }

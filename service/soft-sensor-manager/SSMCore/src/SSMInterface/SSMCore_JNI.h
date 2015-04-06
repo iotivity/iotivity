@@ -26,58 +26,55 @@
 extern "C" {
 #endif
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_InitializeSSMCore
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_initializeSSMCore
 (JNIEnv *env, jclass clz, jstring jstrXmlDescription);
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_StartSSMCore
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_startSSMCore
 (JNIEnv *env, jclass clz);
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_StopSSMCore
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_stopSSMCore
 (JNIEnv *env, jclass clz);
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_TerminateSSMCore
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_terminateSSMCore
 (JNIEnv *env, jclass clz);
 
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_CreateQueryEngine
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_createQueryEngine
 (JNIEnv *env, jclass clz);
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_ReleaseQueryEngine
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQueryEngine
 (JNIEnv *env, jclass clz, jobject queryEngine);
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_ExecuteContextQuery
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_executeContextQuery
 (JNIEnv *env, jclass clz, jint pQueryEngineInstance, jstring jstrContextQuery);
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_RegisterQueryEvent
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerQueryEvent
 (JNIEnv *env, jclass clz, jint pQueryEngineInstance, jobject queryEngineEvent);
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_KillContextQuery
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_killContextQuery
 (JNIEnv *env, jclass clz, jint pQueryEngineInstance, jint cqid);
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_Release
-(JNIEnv *env, jclass clz, jint pQueryEngineInstance);
-
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetDataId
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getDataId
 (JNIEnv *env, jclass clz, jint pDataReaderInstance);
 
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_GetAffectedModels
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getAffectedModels
 (JNIEnv *env, jclass clz, jint pDataReaderInstance);
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetModelDataCount
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getModelDataCount
 (JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName);
 
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_GetModelData
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getModelData
 (JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName, jint jintDataIndex );
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetPropertyCount
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyCount
 (JNIEnv *env, jclass clz, jint pIModelDataInstance );
 
-JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_GetPropertyName
+JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyName
 (JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex );
 
-JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_GetPropertyValue
+JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyValue
 (JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex );
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_RegisterReportReceiver
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerReportReceiver
 (JNIEnv *env, jclass clz, jobject reportReceiver );
 
 #ifdef __cplusplus

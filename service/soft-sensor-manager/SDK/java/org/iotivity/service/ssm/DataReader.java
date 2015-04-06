@@ -52,9 +52,9 @@ public class DataReader
          * @return List<String> - affected ContextModel list
          * 
          */
-        public List<String> GetAffectedModels()
+        public List<String> getAffectedModels()
         {
-            return CoreController.getInstance().GetAffectedModels(
+            return CoreController.getInstance().getAffectedModels(
                        pDataReaderInstance);
         }
 
@@ -68,9 +68,9 @@ public class DataReader
          * @return int  - affected dataId count
          * 
          */
-        public int GetModelDataCount(String modelName) throws Exception
+        public int getModelDataCount(String modelName) throws Exception
         {
-            return CoreController.getInstance().GetModelDataCount(
+            return CoreController.getInstance().getModelDataCount(
                 pDataReaderInstance, modelName);
         }
 
@@ -86,10 +86,10 @@ public class DataReader
          * @return ModelData  - affected ContextModel data reader
          * 
          */
-        public ModelData GetModelData(String modelName, int dataIndex)
+        public ModelData getModelData(String modelName, int dataIndex)
         throws Exception
         {
-            return CoreController.getInstance().GetModelData(pDataReaderInstance,
+            return CoreController.getInstance().getModelData(pDataReaderInstance,
             modelName, dataIndex);
         }
 }

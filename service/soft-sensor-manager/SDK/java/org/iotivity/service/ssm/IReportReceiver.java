@@ -47,5 +47,5 @@ public abstract class IReportReceiver
          * @return void
          * 
          */
-        public abstract void OnMessageReceived(String tag, String msg);
+        public abstract void onMessageReceived(String tag, String msg);
 }

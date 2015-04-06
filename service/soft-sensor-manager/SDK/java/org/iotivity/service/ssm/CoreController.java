@@ -89,7 +89,7 @@ public class CoreController
          * @return void
          * 
          */
-        public native void InitializeSSMCore(String xmlDescription)
+        public native void initializeSSMCore(String xmlDescription)
         throws Exception;
 
         /**
@@ -99,7 +99,7 @@ public class CoreController
          * @return void
          * 
          */
-        public native void StartSSMCore() throws Exception;
+        public native void startSSMCore() throws Exception;
 
         /**
          * Stops the framework and terminate all communications.
@@ -107,7 +107,7 @@ public class CoreController
          * @return void
          * 
          */
-        public native void StopSSMCore() throws Exception;
+        public native void stopSSMCore() throws Exception;
 
         /**
          * Terminate the framework, return all allocated resources
@@ -115,7 +115,7 @@ public class CoreController
          * @return void
          * 
          */
-        public native void TerminateSSMCore() throws Exception;
+        public native void terminateSSMCore() throws Exception;
 
         /**
          * Creates an instance of the Query Engine
@@ -123,7 +123,7 @@ public class CoreController
          * @return QueryEngine - QueryEngine object created
          *               
          */
-        public native QueryEngine CreateQueryEngine() throws Exception;
+        public native QueryEngine createQueryEngine() throws Exception;
 
         /**
          * Release the QueryEngine object.
@@ -134,7 +134,7 @@ public class CoreController
          * @return int - success or failure result
          * 
          */
-        public native int ReleaseQueryEngine(QueryEngine queryEngine);
+        public native int releaseQueryEngine(QueryEngine queryEngine);
 
         // QueryEngine
         /**
@@ -151,7 +151,7 @@ public class CoreController
          * @return int - ID of context query executed
          * 
          */
-        public native int ExecuteContextQuery(int pQueryEngineInstance,
+        public native int executeContextQuery(int pQueryEngineInstance,
                                               String contextQuery) throws Exception;
 
         /**
@@ -167,7 +167,7 @@ public class CoreController
          * @return void
          * 
          */
-        public native void RegisterQueryEvent(int pQueryEngineInstance,
+        public native void registerQueryEvent(int pQueryEngineInstance,
                                               IQueryEngineEvent queryEngineEvent);
 
 
@@ -184,7 +184,7 @@ public class CoreController
          * @return void
          * 
          */
-        public native void KillContextQuery(int pQueryEngineInstance, int cqid)
+        public native void killContextQuery(int pQueryEngineInstance, int cqid)
         throws Exception;
 
         // public native void UnregiterQueryEvent(int pQueryEngineInstance,
@@ -202,7 +202,7 @@ public class CoreController
          * @return int - the affected DataId
          * 
          */
-        public native int GetDataId(int pIModelDataInstance);
+        public native int getDataId(int pIModelDataInstance);
 
         /**
          * ContextModel has at least one property that contains data \n
@@ -214,7 +214,7 @@ public class CoreController
          * @return @return int - number of properties
          * 
          */
-        public native int GetPropertyCount(int pIModelDataInstance);
+        public native int getPropertyCount(int pIModelDataInstance);
 
         /**
          * Retrieve the name of the property using the given index
@@ -229,7 +229,7 @@ public class CoreController
          * @return String - property name
          * 
          */
-        public native String GetPropertyName(int pIModelDataInstance,
+        public native String getPropertyName(int pIModelDataInstance,
                                              int propertyIndex);
 
         /**
@@ -245,7 +245,7 @@ public class CoreController
          * @return String - property value
          * 
          */
-        public native String GetPropertyValue(int pIModelDataInstance,
+        public native String getPropertyValue(int pIModelDataInstance,
                                               int propertyIndex);
 
         // IDataReader
@@ -261,7 +261,7 @@ public class CoreController
          * @return List<String> - affected ContextModel list
          * 
          */
-        public native List<String> GetAffectedModels(int pDataReaderInstance);
+        public native List<String> getAffectedModels(int pDataReaderInstance);
 
         /**
          * Get affected model data count. There can be multiple data models existing
@@ -277,7 +277,7 @@ public class CoreController
          * @return int  - affected dataId count
          * 
          */
-        public native int GetModelDataCount(int pDataReaderInstance,
+        public native int getModelDataCount(int pDataReaderInstance,
                                             String modelName) throws Exception;
 
         /**
@@ -296,7 +296,7 @@ public class CoreController
          * @return ModelData  - affected ContextModel data reader
          * 
          */
-        public native ModelData GetModelData(int pDataReaderInstance,
+        public native ModelData getModelData(int pDataReaderInstance,
                                              String modelName, int dataIndex) throws Exception;
 
         /**
@@ -308,5 +308,5 @@ public class CoreController
          * @return void
          * 
          */
-        public native void RegisterReportReceiver(IReportReceiver reportReceiver);
+        public native void registerReportReceiver(IReportReceiver reportReceiver);
 }

@@ -36,22 +36,22 @@ public class MainActivity extends Activity {
 
 	private IQueryEngineEvent mQueryEngineEventListener = new IQueryEngineEvent() {
 		@Override
-		public void OnQueryEngineEvent(int cqid, DataReader result) {
+		public void onQueryEngineEvent(int cqid, DataReader result) {
 			Log.i("[SSM]", "event received! cqid=" + cqid);
 			PrintLog("Event from cqid " + cqid + " has received");
 
-			List<String> models = result.GetAffectedModels();
+			List<String> models = result.getAffectedModels();
 
 			for (String modelName : models) {
 				PrintLog("Model: " + modelName);
 				try {
-					int dataCount = result.GetModelDataCount(modelName);
+					int dataCount = result.getModelDataCount(modelName);
 					for (int i = 0; i < dataCount; i++) {
-						ModelData modelData = result.GetModelData(modelName, i);
-						for (int j = 0; j < modelData.GetPropertyCount(); j++) {
-							PrintLog("Name: " + modelData.GetPropertyName(j)
+						ModelData modelData = result.getModelData(modelName, i);
+						for (int j = 0; j < modelData.getPropertyCount(); j++) {
+							PrintLog("Name: " + modelData.getPropertyName(j)
 									+ " Value: "
-									+ modelData.GetPropertyValue(j));
+									+ modelData.getPropertyValue(j));
 						}
 					}
 				} catch (Exception e) {

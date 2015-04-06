@@ -73,11 +73,11 @@ public class SSMInterface
                  * @return void
                  *
                  */
-                public void OnQueryEngineEvent(int cqid, DataReader result)
+                public void onQueryEngineEvent(int cqid, DataReader result)
                 {
                     mMtxListener.lock();
 
-                    mMapListener.get(cqid).OnQueryEngineEvent(cqid, result);
+                    mMapListener.get(cqid).onQueryEngineEvent(cqid, result);
 
                     mMtxListener.unlock();
                 }
@@ -160,12 +160,12 @@ public class SSMInterface
         public void startSSMCore(String initConfig) throws Exception
         {
             mSSMCore = CoreController.getInstance();
-            mSSMCore.InitializeSSMCore(initConfig);
-            mSSMCore.StartSSMCore();
+            mSSMCore.initializeSSMCore(initConfig);
+            mSSMCore.startSSMCore();
 
-            mQueryEngine = mSSMCore.CreateQueryEngine();
+            mQueryEngine = mSSMCore.createQueryEngine();
 
-            mQueryEngine.RegisterQueryEvent(mQueryEngineEventListenerReceiver);
+            mQueryEngine.registerQueryEvent(mQueryEngineEventListenerReceiver);
         }
 
         /**
@@ -176,12 +176,12 @@ public class SSMInterface
          */
         public void stopSSMCore() throws Exception
         {
-            mQueryEngine.RegisterQueryEvent(null);
-            mSSMCore.ReleaseQueryEngine(mQueryEngine);
+            mQueryEngine.registerQueryEvent(null);
+            mSSMCore.releaseQueryEngine(mQueryEngine);
             mQueryEngineEventListenerReceiver = null;
             mQueryEngine = null;
-            mSSMCore.StopSSMCore();
-            mSSMCore.TerminateSSMCore();
+            mSSMCore.stopSSMCore();
+            mSSMCore.terminateSSMCore();
         }
 
         /**
@@ -206,7 +206,7 @@ public class SSMInterface
 
             try {
                 mQueryEngineEventListenerReceiver.lockListener();
-                cqid = mQueryEngine.ExecuteContextQuery(contextQuery);
+                cqid = mQueryEngine.executeContextQuery(contextQuery);
                 mQueryEngineEventListenerReceiver.addListener(cqid, listener);
                 mRunningCQLs.add(cqid);
             }
@@ -235,7 +235,7 @@ public class SSMInterface
         {
             try {
                 mQueryEngineEventListenerReceiver.lockListener();
-                mQueryEngine.KillContextQuery(cqid);
+                mQueryEngine.killContextQuery(cqid);
                 mQueryEngineEventListenerReceiver.removeListener(cqid);
                 mRunningCQLs.remove((Object) cqid);
             }

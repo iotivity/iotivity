@@ -42,7 +42,7 @@ package org.iotivity.service.ssm;
         private IQueryEngineEvent mQueryEngineEventListener = new IQueryEngineEvent()
         {
         @Override
-        public void OnQueryEngineEvent(int cqid, DataReader result)
+        public void onQueryEngineEvent(int cqid, DataReader result)
         {
                 List<String> models = result.GetAffectedModels();
 
@@ -79,5 +79,5 @@ public abstract class IQueryEngineEvent
          * @return void
          *
          */
-        public abstract void OnQueryEngineEvent(int cqid, DataReader result);
+        public abstract void onQueryEngineEvent(int cqid, DataReader result);
 }
