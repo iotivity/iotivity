@@ -28,14 +28,22 @@ if 'ALL' in transport:
 	print "CA Transport is ALL"
 else:
 	if 'BT' in transport:
-		env.AppendUnique(CPPDEFINES = ['EDR_ADAPTER'])
-		print "CA Transport is BT"
+		if target_os == 'linux':
+			print "CA Transport BT is not supported in Linux"
+			Exit(1)
+		else:
+			env.AppendUnique(CPPDEFINES = ['EDR_ADAPTER'])
+			print "CA Transport is BT"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_EDR_ADAPTER'])
 
 	if 'BLE' in transport:
-		env.AppendUnique(CPPDEFINES = ['LE_ADAPTER'])
-		print "CA Transport is BLE"
+		if target_os == 'linux':
+			print "CA Transport BLE is not supported in Linux"
+			Exit(1)
+		else:
+			env.AppendUnique(CPPDEFINES = ['LE_ADAPTER'])
+			print "CA Transport is BLE"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_LE_ADAPTER'])
 
