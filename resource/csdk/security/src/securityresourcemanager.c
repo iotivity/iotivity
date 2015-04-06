@@ -22,6 +22,7 @@
 #include "logger.h"
 #include "cainterface.h"
 #include "securityresourcemanager.h"
+#include "resourcemanager.h"
 
 #define TAG  PCF("SRM")
 
@@ -121,3 +122,23 @@ OCPersistentStorage* SRMGetPersistentStorageHandler()
     OC_LOG(INFO, TAG, PCF("SRMGetPersistentStorageHandler !!"));
     return gPersistentStorageHandler;
 }
+
+
+/**
+ * @brief   Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SRMInitSecureResources()
+{
+    return InitSecureResources();
+}
+
+/**
+ * @brief   Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @retval  none
+ */
+void SRMDeInitSecureResources()
+{
+    DestroySecureResources();
+}
+

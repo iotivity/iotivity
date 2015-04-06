@@ -52,6 +52,18 @@ OCPersistentStorage* SRMGetPersistentStorageHandler();
  */
 OCStackResult SRMRegisterHandler(CARequestCallback reqHandler, CAResponseCallback respHandler);
 
+/**
+ * @brief   Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SRMInitSecureResources();
+
+/**
+ * @brief   Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @retval  none
+ */
+void SRMDeInitSecureResources();
+
 #ifdef __cplusplus
 }
 #endif

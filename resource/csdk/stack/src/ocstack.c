@@ -3229,6 +3229,12 @@ OCStackResult initResources() {
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
     #endif
+
+    if (result == OC_STACK_OK)
+    {
+        result = SRMInitSecureResources();
+    }
+
     return result;
 }
 
@@ -3291,6 +3297,8 @@ void deleteAllResources()
         #endif // WITH_PRESENCE
         pointer = temp;
     }
+
+    SRMDeInitSecureResources();
 
     #ifdef WITH_PRESENCE
     // Ensure that the last resource to be deleted is the presence resource. This allows for all

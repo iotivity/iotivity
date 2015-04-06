@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 /**
- * Data type definitions for all oic.sec.* types defined in the 
+ * Data type definitions for all oic.sec.* types defined in the
  * OIC Security Specification.
  *
  * Note that throughout, ptrs are used rather than arrays.  There
@@ -32,14 +32,14 @@
  *
  * The primary drawback to this decision is that marshalling functions
  * will have to be written by hand to marshal these structures (e.g. to/from
- * Persistent Storage, or across memory boundaries). 
+ * Persistent Storage, or across memory boundaries).
  *
  * Last reconciled against Spec v0.92.
  */
 
 //
 // TODO WARNING: this code hasn't been tested except to compile!
-// TODO NHS REMOVE this comment after code has been tested! 
+// TODO NHS REMOVE this comment after code has been tested!
 //
 
 #ifndef OC_SECURITY_RESOURCE_TYPES_H
@@ -62,7 +62,7 @@ typedef enum
 } SRMBool_t;
 
 /**
- * @brief   Values used to create bit-maskable enums for single-value 
+ * @brief   Values used to create bit-maskable enums for single-value
  *          response with embedded code.
  */
 #define ACCESS_GRANTED_DEF            (1 << 0)
@@ -73,7 +73,7 @@ typedef enum
 #define REASON_MASK_DEF               (1 << 5)
 
 /**
- * @brief   Response type for all Action requests from CA layer; 
+ * @brief   Response type for all Action requests from CA layer;
  *          may include a reason code.
  *
  * To extract codes use GetReasonCode function on SRMAccessResponse:
@@ -90,11 +90,11 @@ typedef enum
 typedef enum {
     ACCESS_GRANTED = ACCESS_GRANTED_DEF,
     ACCESS_DENIED = ACCESS_DENIED_DEF,
-    ACCESS_DENIED_INSUFFICIENT_PERMISSION = ACCESS_DENIED_DEF 
+    ACCESS_DENIED_INSUFFICIENT_PERMISSION = ACCESS_DENIED_DEF
         | INSUFFICIENT_PERMISSION_DEF,
-    ACCESS_DENIED_SUBJECT_NOT_FOUND = ACCESS_DENIED_DEF 
+    ACCESS_DENIED_SUBJECT_NOT_FOUND = ACCESS_DENIED_DEF
         | SUBJECT_NOT_FOUND_DEF,
-    ACCESS_DENIED_RESOURCE_NOT_FOUND = ACCESS_DENIED_DEF 
+    ACCESS_DENIED_RESOURCE_NOT_FOUND = ACCESS_DENIED_DEF
         | RESOURCE_NOT_FOUND_DEF,
 } SRMAccessResponse_t;
 
@@ -109,7 +109,7 @@ typedef enum {
 } SRMAccessResponseReasonCode_t;
 
 static inline SRMAccessResponseReasonCode_t GetReasonCode(
-    SRMAccessResponse_t response) 
+    SRMAccessResponse_t response)
 {
     // switch(reponse) {
     //   case ACCESS_ALLOWED:
@@ -142,7 +142,7 @@ typedef struct OicSecCred OicSecCred_t;
  *          From OIC Security Spec v0.92:
  *              0:  no security mode
  *              1:  symmetric pair-wise key
- *              2:  symmetric group key 
+ *              2:  symmetric group key
  *              4:  asymmetric key
  *              8:  signed asymmetric key (aka certificate)
  *              16: PIN /password
@@ -201,10 +201,11 @@ struct OicSecAcl
     char                *Recurrences;   // 5:R:M:N:String
     size_t              OwnersLen;      // the number of elts in Owners
     OicSecSvc_t         *Owners;        // 6:R:M:Y:oic.sec.svc
+    OicSecAcl_t         *next;
 };
 
 /**
- * @brief   /oic/sec/amacl (Access Manager Service Accesss Control List) 
+ * @brief   /oic/sec/amacl (Access Manager Service Accesss Control List)
  *          data type.
  *          Derived from OIC Security Spec v0.92... see spec
  *          for full explanation of each line item.
@@ -238,6 +239,7 @@ struct OicSecCred
     char                *Period;        // 7:R:S:N:String
     size_t              OwnersLen;      // the number of elts in Owners
     OicSecSvc_t         *Owners;        // 8:R:M:Y:oic.sec.svc
+    OicSecCred_t        *next;
     //TODO fill in from OIC Security Spec v0.92
 };
 
@@ -246,7 +248,7 @@ struct OicSecCred
  */
 struct OicSecDoxm
 {
-    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>    
+    // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     //TODO fill in from OIC Security Spec v0.92
 };
 
