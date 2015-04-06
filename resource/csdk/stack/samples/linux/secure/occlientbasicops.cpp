@@ -236,7 +236,7 @@ int InitGetRequest(OCQualityOfService qos)
             OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
 }
 
-int InitDiscovery(OCQualityOfService qos)
+int InitDiscovery()
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -279,7 +279,7 @@ int InitDiscovery(OCQualityOfService qos)
         szQueryUri);
 
     ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0,
-            discoveryReqConnType, ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
+            discoveryReqConnType, OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
@@ -333,14 +333,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if(TEST_CASE == TEST_NON_CON_OP)
-    {
-        InitDiscovery(OC_LOW_QOS);
-    }
-    else if(TEST_CASE == TEST_CON_OP)
-    {
-        InitDiscovery(OC_HIGH_QOS);
-    }
+    InitDiscovery();
 
     timeout.tv_sec  = 0;
     timeout.tv_nsec = 100000000L;
