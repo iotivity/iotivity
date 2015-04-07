@@ -23,22 +23,6 @@
 
 #include "ocsecurityconfig.h"
 
-
-#ifdef CA_SEC_MERGE_WORKAROUND
-/**
- * This is a workaround to enable CA merge into master branch.
- * This will be removed by updating code in CA library to use updated data structure.
- */
-typedef struct
-{
-   uint32_t unused;
-   unsigned char identity[DTLS_PSK_ID_LEN];
-   uint32_t num;
-   OCDtlsPskCreds *creds;
-} CADtlsPskCredsBlob;
-#endif //CA_SEC_MERGE_WORKAROUND
-
-
 /**
  * This callback is used by lower stack (i.e. CA layer) to retrieve PSK
  * credentials from RI security layer.
@@ -51,7 +35,9 @@ typedef struct
  *
  * @retval none
  */
-void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
+#ifdef __WITH_DTLS__
+void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
+#endif //__WITH_DTLS__
 
 
 /**

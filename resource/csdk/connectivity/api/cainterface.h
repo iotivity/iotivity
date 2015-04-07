@@ -61,12 +61,26 @@ typedef void (*CAResponseCallback)(const CARemoteEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo);
 
 #ifdef __WITH_DTLS__
+
+/**
+ * Binary blob containing device identity and the credentials for all devices
+ * trusted by this device.
+ */
+typedef struct
+{
+   unsigned char identity[DTLS_PSK_ID_LEN]; /** identity of self */
+   uint32_t num;                            /** number of credentials in this blob */
+   OCDtlsPskCreds *creds;                   /** list of credentials. Size of this
+                                                array is determined by 'num' variable. */
+} CADtlsPskCredsBlob_t;
+
 /**
  * @brief   Callback function type for getting DTLS credentials.
- * @param   credInfo          [OUT] DTLS credentials info
+ * @param   credInfo          [OUT] DTLS credentials info. Handler has to allocate new memory for
+ *                                  both credInfo and credInfo->creds which is then freed by CA
  * @return  NONE
  */
-typedef void (*CAGetDTLSCredentialsHandler)(OCDtlsPskCredsBlob **credInfo);
+typedef void (*CAGetDTLSCredentialsHandler)(CADtlsPskCredsBlob_t **credInfo);
 #endif //__WITH_DTLS__
 
 /**
@@ -184,7 +198,7 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint
  * @param   requestInfo [IN] Information for the request.
  * @return  #CA_STATUS_OK #CA_STATUS_FAILED #CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t *requestInfo);
+CAResult_t CASendRequest(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
 
 /**
  * @brief   Send control Request on a resource to multicast group

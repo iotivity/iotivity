@@ -60,7 +60,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_setNativeResponseLi
 }
 
 #ifdef __WITH_DTLS__
-static OCDtlsPskCredsBlob *pskCredsBlob = NULL;
+static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
 
 void clearDtlsCredentialInfo()
 {
@@ -68,58 +68,78 @@ void clearDtlsCredentialInfo()
     if (pskCredsBlob)
     {
         // Initialize sensitive data to zeroes before freeing.
-        if (pskCredsBlob->creds != NULL)
+        if (pskCredsBlob->creds)
         {
-            memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCredsBlob)*(pskCredsBlob->num));
+            memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds)*(pskCredsBlob->num));
             free(pskCredsBlob->creds);
         }
 
-        memset(pskCredsBlob, 0, sizeof(OCDtlsPskCredsBlob));
+        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
         free(pskCredsBlob);
         pskCredsBlob = NULL;
     }
     LOGI("clearDtlsCredentialInfo OUT\n");
 }
 
-// Internal API. Invoked by OC stack to retrieve credentials from this module
-void CAGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
+// Internal API. Invoked by CA stack to retrieve credentials from this module
+void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
 {
     LOGI("CAGetDtlsPskCredentials IN\n");
+    if(!credInfo)
+    {
+        LOGE("Invalid credential container");
+        return;
+    }
 
-    *credInfo = pskCredsBlob;
+    *credInfo = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
+    if (NULL == *credInfo)
+    {
+        LOGE("Failed to allocate credential blob.");
+        return;
+    }
+
+    int16_t credLen = sizeof(OCDtlsPskCreds) * (pskCredsBlob->num);
+    (*credInfo)->creds = (OCDtlsPskCreds *)malloc(credLen);
+    if (NULL == (*credInfo)->creds)
+    {
+        LOGE("Failed to allocate crentials.");
+        free(*credInfo);
+        *credInfo = NULL;
+        return;
+    }
+
+    memcpy((*credInfo)->identity, pskCredsBlob->identity, DTLS_PSK_ID_LEN);
+    (*credInfo)->num = pskCredsBlob->num;
+    memcpy((*credInfo)->creds, pskCredsBlob->creds, credLen);
 
     LOGI("CAGetDtlsPskCredentials OUT\n");
 }
 
-int32_t SetCredentials()
+bool SetCredentials()
 {
     LOGI("SetCredentials IN\n");
-    pskCredsBlob = (OCDtlsPskCredsBlob *)calloc(1, sizeof(OCDtlsPskCredsBlob));
+    pskCredsBlob = (CADtlsPskCredsBlob_t *)calloc(1, sizeof(CADtlsPskCredsBlob_t));
     if (NULL == pskCredsBlob)
      {
-        LOGI("Memory allocation failed!\n");
-        return -1;
+        LOGE("Memory allocation failed!\n");
+        return false;
      }
-    memcpy(pskCredsBlob->rsIdentity, IDENTITY, DTLS_PSK_ID_LEN);
-
+    memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
     pskCredsBlob->num = 1;
 
-    pskCredsBlob->creds = (OCDtlsPskCredsBlob *)malloc(sizeof(OCDtlsPskCredsBlob) *
-            (pskCredsBlob->num));
+    pskCredsBlob->creds = (OCDtlsPskCreds *)malloc(sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
     if (NULL == pskCredsBlob->creds)
     {
-        LOGI("Memory allocation failed!\n");
-        return -1;
+        LOGE("Memory allocation failed!\n");
+        free(pskCredsBlob);
+        return false;
     }
 
-    uint32_t i;
-    for (i = 0; i < pskCredsBlob->num; i++)
-    {
-        memcpy(pskCredsBlob->creds[i].id, IDENTITY, DTLS_PSK_ID_LEN);
-        memcpy(pskCredsBlob->creds[i].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
-    }
+    memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
+    memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
+
     LOGI("SetCredentials OUT\n");
-    return 1;
+    return true;
 }
 #endif
 
@@ -136,7 +156,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
     CAResult_t res;
 
 #ifdef __WITH_DTLS__
-    if (SetCredentials() != 1)
+    if (true != SetCredentials())
     {
         LOGI("SetCredentials failed\n");
         return;

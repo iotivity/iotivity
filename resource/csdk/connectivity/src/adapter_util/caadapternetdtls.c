@@ -359,13 +359,19 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
     VERIFY_NON_NULL_RET(g_getCredentialsCallback, NET_DTLS_TAG, "GetCredential callback", -1);
     VERIFY_NON_NULL_RET(result, NET_DTLS_TAG, "result", -1);
 
-    OCDtlsPskCredsBlob *credInfo = NULL;
+    CADtlsPskCredsBlob_t *credInfo = NULL;
 
     // Retrieve the credentials blob from security module
-    // OCGetDtlsPskCredentials(&credInfo);
     g_getCredentialsCallback(&credInfo);
 
-    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "CAGetDtlsPskCredentials credInfo is NULL", -1);
+    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "credInfo is NULL", -1);
+    if(NULL == credInfo->creds)
+    {
+        OIC_LOG(DEBUG, NET_DTLS_TAG, "credentials are NULL");
+        memset(credInfo, 0, sizeof(CADtlsPskCredsBlob_t));
+        OICFree(credInfo);
+        return -1;
+    }
 
     if ((type == DTLS_PSK_HINT) || (type == DTLS_PSK_IDENTITY))
     {
@@ -378,8 +384,8 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
 
     if ((type == DTLS_PSK_KEY) && (desc) && (descLen == DTLS_PSK_PSK_LEN))
     {
-        //Check if we have the credentials for the device with which we
-        //are trying to perform a handshake
+        // Check if we have the credentials for the device with which we
+        // are trying to perform a handshake
         int index = 0;
         for (index = 0; index < credInfo->num; index++)
         {
@@ -390,6 +396,14 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
             }
         }
     }
+
+    // Erase sensitive data before freeing.
+    memset(credInfo->creds, 0, sizeof(OCDtlsPskCreds) * (credInfo->num));
+    OICFree(credInfo->creds);
+
+    memset(credInfo, 0, sizeof(CADtlsPskCredsBlob_t));
+    OICFree(credInfo);
+    credInfo = NULL;
 
     return ret;
 }

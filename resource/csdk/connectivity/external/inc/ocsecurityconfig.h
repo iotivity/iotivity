@@ -44,14 +44,11 @@ typedef struct
  */
 typedef struct
 {
-   uint16_t blobVer;                        /**< version of the blob */
-   uint16_t reserved;                       /**< reserved for future use */
-   unsigned char identity[DTLS_PSK_ID_LEN]; /**< identity of self */
-   uint32_t num;                            /**< number of credentials in this blob */
-   OCDtlsPskCreds *creds;                 /**< list of credentials. Size of this
-                                                 array is determined by 'num' variable. */
+   unsigned char identity[DTLS_PSK_ID_LEN]; /** identity of self */
+   uint32_t num;                            /** number of credentials in this blob */
+   OCDtlsPskCreds creds[1];                 /** list of credentials. Size of this
+                                                array is determined by 'num' variable. */
 } OCDtlsPskCredsBlob;
-
 
 #endif //OC_SECURITY_CONFIG_H
 

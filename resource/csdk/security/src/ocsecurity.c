@@ -22,24 +22,12 @@
 #include "ocmalloc.h"
 #include "ocsecurity.h"
 #include "ocsecurityconfig.h"
-#ifdef CA_SEC_MERGE_WORKAROUND
-#include "ocsecurityinternal.h"
-#endif //CA_SEC_MERGE_WORKAROUND
+#include "cainterface.h"
 #include <string.h>
 
 static OCSecConfigData* secConfigData;
 static int secConfigDataLen;
 
-/**
- * Currently, there is a disconnect in the data structure used between RI layer
- * and CA layer to convey DTLS PSK credentials. We cannot update this data
- * structure until all reviews of CA layer is completed. To enable security
- * feature in CA branch this workaround is added as a temporary stop-gap.
- *
- */
-#ifdef CA_SEC_MERGE_WORKAROUND
-static CADtlsPskCredsBlob *caBlob;
-#endif //CA_SEC_MERGE_WORKAROUND
 
 /**
  * This internal API removes/clears the global variable holding the security
@@ -57,15 +45,6 @@ void DeinitOCSecurityInfo()
         OCFree(secConfigData);
         secConfigData = NULL;
     }
-
-#ifdef CA_SEC_MERGE_WORKAROUND
-    if (caBlob)
-    {
-        OCFree(caBlob->creds);
-    }
-    OCFree(caBlob);
-#endif
-
 }
 
 /**
@@ -80,8 +59,12 @@ void DeinitOCSecurityInfo()
  *
  * @retval none
  */
-void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
+#ifdef __WITH_DTLS__
+void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
 {
+    // CA layer interface publishes security data structures ONLY if
+    // stack is compiled in SECURED mode
+    CADtlsPskCredsBlob_t * caBlob = NULL;
     if(secConfigData && credInfo)
     {
         unsigned int i = 0;
@@ -90,41 +73,39 @@ void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
         {
             if (osb->type == OC_BLOB_TYPE_PSK)
             {
-#ifdef CA_SEC_MERGE_WORKAROUND
-                OCDtlsPskCredsBlob * ocBlob = (OCDtlsPskCredsBlob *)osb->val;
-                if (!caBlob)
+                caBlob = (CADtlsPskCredsBlob_t *)OCCalloc(sizeof(CADtlsPskCredsBlob_t), 1);
+                if (caBlob)
                 {
-                    caBlob = (CADtlsPskCredsBlob *)OCCalloc(sizeof(CADtlsPskCredsBlob), 1);
-                    if (caBlob)
+                    OCDtlsPskCredsBlob * ocBlob = (OCDtlsPskCredsBlob *)osb->val;
+
+                    memcpy(caBlob->identity, ocBlob->identity, sizeof(caBlob->identity));
+                    caBlob->num = ocBlob->num;
+                    caBlob->creds =
+                        (OCDtlsPskCreds*) OCMalloc(caBlob->num * sizeof(OCDtlsPskCreds));
+                    if (caBlob->creds)
                     {
-                        memcpy(caBlob->identity, ocBlob->identity, sizeof(caBlob->identity));
-                        caBlob->num = ocBlob->num;
-                        caBlob->creds =
-                            (OCDtlsPskCreds*) OCMalloc(caBlob->num * sizeof(OCDtlsPskCreds));
-                        if (caBlob->creds)
-                        {
-                            memcpy(caBlob->creds, ocBlob->creds,
-                                    caBlob->num * sizeof(OCDtlsPskCreds));
-                        }
+                        memcpy(caBlob->creds, ocBlob->creds,
+                                caBlob->num * sizeof(OCDtlsPskCreds));
+                        *credInfo = caBlob;
+                        // We copied the credential blob in the CA data structure.
+                        // Let's get out of here.
+                        return;
                     }
                 }
-                *credInfo = (OCDtlsPskCredsBlob *) caBlob;
                 break;
-#else
-                OCDtlsPskCredsBlob * blob;
-                blob = (OCDtlsPskCredsBlob *)OCMalloc(osb->len);
-                if (blob)
-                {
-                    memcpy(blob, osb->val, osb->len);
-                    *credInfo = blob;
-                    break;
-                }
-#endif //CA_SEC_MERGE_WORKAROUND
             }
             osb = config_data_next_blob(osb);
         }
     }
+
+    // Clear memory if any memory allocation failed above
+    if(caBlob)
+    {
+        OCFree(caBlob->creds);
+        OCFree(caBlob);
+    }
 }
+#endif //__WITH_DTLS__
 
 
 /**

@@ -56,7 +56,18 @@ static const char NORMAL_INFO_DATA[] =
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
 
 #ifdef __WITH_DTLS__
-static OCDtlsPskCredsBlob *pskCredsBlob = NULL;
+
+/**
+ * @def RS_IDENTITY
+ * @brief
+ */
+#define IDENTITY     ("1111111111111111")
+/* @def RS_CLIENT_PSK
+ * @brief
+ */
+#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+
+static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
 
 void clearDtlsCredentialInfo()
 {
@@ -67,7 +78,7 @@ void clearDtlsCredentialInfo()
         memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
         free(pskCredsBlob->creds);
 
-        memset(pskCredsBlob, 0, sizeof(OCDtlsPskCredsBlob));
+        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
         free(pskCredsBlob);
         pskCredsBlob = NULL;
     }
@@ -75,7 +86,7 @@ void clearDtlsCredentialInfo()
 }
 
 // Internal API. Invoked by OC stack to retrieve credentials from this module
-void CAGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
+void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
 {
     printf("CAGetDtlsPskCredentials IN\n");
 
@@ -90,9 +101,9 @@ void CAGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
 int32_t SetCredentials()
 {
     printf("SetCredentials IN\n");
-    pskCredsBlob = (OCDtlsPskCredsBlob *)malloc(sizeof(OCDtlsPskCredsBlob));
+    pskCredsBlob = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
 
-    memset(pskCredsBlob, 0x0, sizeof(OCDtlsPskCredsBlob));
+    memset(pskCredsBlob, 0x0, sizeof(CADtlsPskCredsBlob_t));
     memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
 
     pskCredsBlob->num = 1;
@@ -690,10 +701,8 @@ TEST(RegisterDTLSCredentialsHandlerTest, TC_34_positive_01)
     if (SetCredentials() == 0)
     {
         printf("SetCredentials failed\n");
-        return 0;
     }
 
-    res = CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials);
     EXPECT_EQ(CA_STATUS_OK, CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials));
 #endif
 }

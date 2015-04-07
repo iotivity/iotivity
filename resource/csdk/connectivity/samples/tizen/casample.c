@@ -87,7 +87,7 @@ static const char g_normalInfoData[] = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
 
 #ifdef __WITH_DTLS__
-static OCDtlsPskCredsBlob *pskCredsBlob = NULL;
+static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
 
 void ClearDtlsCredentialInfo()
 {
@@ -95,28 +95,49 @@ void ClearDtlsCredentialInfo()
     if (pskCredsBlob)
     {
         // Initialize sensitive data to zeroes before freeing.
-        memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
-        free(pskCredsBlob->creds);
+        if (pskCredsBlob->creds)
+        {
+            memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
+            free(pskCredsBlob->creds);
+        }
 
-        memset(pskCredsBlob, 0, sizeof(OCDtlsPskCredsBlob));
+        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
         free(pskCredsBlob);
         pskCredsBlob = NULL;
     }
     printf("clearDtlsCredentialInfo OUT\n");
 }
 
-// Internal API. Invoked by OC stack to retrieve credentials from this module
-void CAGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
+// Internal API. Invoked by CA stack to retrieve credentials from this module
+void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
 {
     printf("CAGetDtlsPskCredentials IN\n");
-
     if(!credInfo)
     {
-        printf("Memory is not allocated for credInfo\n");
+        printf("Invalid credential container");
         return;
     }
 
-    *credInfo = pskCredsBlob;
+    *credInfo = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
+    if (NULL == *credInfo)
+    {
+        printf("Failed to allocate credential blob.");
+        return;
+    }
+
+    int16_t credLen = sizeof(OCDtlsPskCreds) * (pskCredsBlob->num);
+    (*credInfo)->creds = (OCDtlsPskCreds *)malloc(credLen);
+    if (NULL == (*credInfo)->creds)
+    {
+        printf("Failed to allocate credentials.");
+        free(*credInfo);
+        *credInfo = NULL;
+        return;
+    }
+
+    memcpy((*credInfo)->identity, pskCredsBlob->identity, DTLS_PSK_ID_LEN);
+    (*credInfo)->num = pskCredsBlob->num;
+    memcpy((*credInfo)->creds, pskCredsBlob->creds, credLen);
 
     printf("CAGetDtlsPskCredentials OUT\n");
 }
@@ -124,33 +145,29 @@ void CAGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
 bool SetCredentials()
 {
     printf("SetCredentials IN\n");
-    pskCredsBlob = (OCDtlsPskCredsBlob *)malloc(sizeof(OCDtlsPskCredsBlob));
-
-    if(!pskCredsBlob)
+    pskCredsBlob = (CADtlsPskCredsBlob_t *)calloc(1, sizeof(CADtlsPskCredsBlob_t));
+    if (NULL == pskCredsBlob)
     {
-        printf("Memory allocation is failed\n");
-        return 0;
+        printf("Memory allocation failed!\n");
+        return false;
     }
 
-    memset(pskCredsBlob, 0x0, sizeof(OCDtlsPskCredsBlob));
     memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
-
     pskCredsBlob->num = 1;
 
     pskCredsBlob->creds = (OCDtlsPskCreds *)malloc(sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
-
-    if(!pskCredsBlob->creds)
+    if (NULL == pskCredsBlob->creds)
     {
-        printf("Memory allocation is failed\n");
-        return 0;
+        printf("Memory allocation failed!\n");
+        free(pskCredsBlob);
+        return false;
     }
-
 
     memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
     memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
 
     printf("SetCredentials OUT\n");
-    return 1;
+    return true;
 }
 #endif
 
@@ -173,7 +190,7 @@ int main()
     * set in the OC stack.
     */
 #ifdef __WITH_DTLS__
-    if (SetCredentials() == 0)
+    if (SetCredentials() == false)
     {
         printf("SetCredentials failed\n");
         return 1;
