@@ -28,14 +28,14 @@ using namespace OIC;
 
 CpluffAdapter *CpluffAdapter::s_pinstance;
 
-CpluffAdapter::CpluffAdapter()
+CpluffAdapter::CpluffAdapter(void *args)
 {
     m_status = cp_init();
     m_context = cp_create_context(&m_status);
     m_cp_plugins = nullptr;
     m_plugin = nullptr;
 
-    config = Config::Getinstance();
+    config = Config::Getinstance(args);
     std::string pluginpath = config->getPluginPath();
     if (pluginpath != "")
     {

@@ -32,6 +32,9 @@
 #include "rapidxml.hpp"
 #include <fstream>
 #include <vector>
+#ifdef ANDROID
+#include <jni.h>
+#endif
 
 using namespace rapidxml;
 
@@ -72,11 +75,11 @@ namespace OIC
             *
             * @return config pointer Address.
             */
-            static Config *Getinstance()
+            static Config *Getinstance(void *args = NULL)
             {
                 if (NULL == s_configinstance)
                 {
-                    s_configinstance = new Config();
+                    s_configinstance = new Config(args);
                 }
 
                 return s_configinstance;
@@ -95,7 +98,7 @@ namespace OIC
             * During construction time, configuration file  will be loaded.
             *
             */
-            Config();
+            Config(void *args = NULL);
 
             /**
             * Virtual destructor

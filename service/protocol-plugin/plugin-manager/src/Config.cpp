@@ -25,16 +25,30 @@
 
 #include "Config.h"
 
-
 using namespace OIC;
 using namespace rapidxml;
 using namespace std;
 
 Config *Config::s_configinstance = NULL;
 
-Config::Config()
+Config::Config(void *args)
 {
-    if (loadConfigFile("./pluginmanager.xml") != PM_S_OK)
+    std::string path = ".";
+#ifdef ANDROID
+    JavaVM *jvm = (JavaVM *)args;
+    JNIEnv *env;
+    jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
+
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
+    jmethodID mid = env->GetStaticMethodID(cls, "getPackageName", "()Ljava/lang/String;");
+    jstring jpath = (jstring)env->CallStaticObjectMethod(cls, mid);
+    path = env->GetStringUTFChars(jpath, 0);
+#endif
+
+    if(path != ".")
+        path = "/data/data/" + path + "/files";
+    
+    if (loadConfigFile(path + "/pluginmanager.xml") != PM_S_OK)
     {
         fprintf(stderr, "PM Configuration file is not exist current Folder.\n" );
         exit(EXIT_FAILURE);

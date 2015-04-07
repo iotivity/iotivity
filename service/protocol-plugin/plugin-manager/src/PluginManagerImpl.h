@@ -176,11 +176,11 @@ namespace OIC
             */
             virtual std::vector<Plugin> &getAllPlugins(void);
 
-            static PluginManagerImpl *Getinstance(void *arg)
+            static PluginManagerImpl *Getinstance(void *args)
             {
                 if (NULL == s_pinstance)
                 {
-                    s_pinstance = new PluginManagerImpl(arg);
+                    s_pinstance = new PluginManagerImpl(args);
                 }
 
                 return s_pinstance;
@@ -191,6 +191,7 @@ namespace OIC
             CpluffAdapter *cppm;
 #ifdef ANDROID
             FelixAdapter *javappm;
+            void *m_args;
 #endif
 
             std::vector<Plugin> m_plugins;

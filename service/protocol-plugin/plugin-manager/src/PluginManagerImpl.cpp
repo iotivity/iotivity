@@ -42,13 +42,18 @@ extern "C" void destroy_object( PluginManagerImpl *object )
 
 PluginManagerImpl::PluginManagerImpl(void *args)
 {
-    cppm = CpluffAdapter::Getinstance();
+#ifndef ANDROID
+        cppm = CpluffAdapter::Getinstance();
+#endif
 #ifdef ANDROID
+    m_args = args;
+    cppm = CpluffAdapter::Getinstance(args);    
     if (args)
         javappm = FelixAdapter::Getinstance(args);
     else
         javappm = NULL;
 #endif
+    
     refreshPluginInfo();
 }
 
@@ -60,6 +65,7 @@ PluginManagerImpl::~PluginManagerImpl()
 int PluginManagerImpl::registerPlugin(std::string path)
 {
     int flag = 0;
+
     flag = cppm->registerPlugin(path);
 #ifdef ANDROID
     if (javappm)
@@ -127,7 +133,7 @@ int PluginManagerImpl::unregisterAllPlugin()
 
 int PluginManagerImpl::rescanPlugin()
 {
-    Config *config = Config::Getinstance();
+    Config *config = Config::Getinstance(m_args);
     std::string pluginpath = config->getPluginPath();
     if (pluginpath != "")
     {
