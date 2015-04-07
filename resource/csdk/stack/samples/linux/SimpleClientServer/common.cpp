@@ -61,8 +61,6 @@ const char *getResult(OCStackResult result)
         case OC_STACK_NO_OBSERVERS:
             return "OC_STACK_NO_OBSERVERS";
 #ifdef WITH_PRESENCE
-        case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
-            return "OC_STACK_VIRTUAL_DO_NOT_HANDLE";
         case OC_STACK_PRESENCE_STOPPED:
             return "OC_STACK_PRESENCE_STOPPED";
         case OC_STACK_PRESENCE_TIMEOUT:

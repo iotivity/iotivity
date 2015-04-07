@@ -67,6 +67,8 @@ typedef struct ClientCB {
     OCPresence * presence;
     OCResourceType * filterResourceType;
     #endif
+    // The connectivity type on which the request was sent on.
+    OCConnectivityType conType;
     // next node in this list
     struct ClientCB    *next;
 } ClientCB;
@@ -91,6 +93,8 @@ extern struct ClientCB *cbList;
  *              the resource uri of the request.
  * @param[in] resourceType
  *              the resourceType associated with a presence request.
+ * @param[in] conType
+ *              the connectivity type on which the associated request for this clientCB was sent on.
  *
  * @brief If the handle you're looking for does not exist, the stack will reply with a RST message.
  *
@@ -98,9 +102,9 @@ extern struct ClientCB *cbList;
  */
 OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
-             CAToken_t * token, uint8_t tokenLength,
+             CAToken_t token, uint8_t tokenLength,
              OCDoHandle *handle, OCMethod method,
-             char * requestUri, char * resourceTypeName);
+             char * requestUri, char * resourceTypeName, OCConnectivityType conType);
 
 /** @ingroup ocstack
  *
@@ -127,7 +131,7 @@ void DeleteClientCB(ClientCB *cbNode);
  *
  * @return address of the node if found, otherwise NULL
  */
-ClientCB* GetClientCB(const CAToken_t * token, uint8_t tokenLength,
+ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
         OCDoHandle handle, const char * requestUri);
 
 /**

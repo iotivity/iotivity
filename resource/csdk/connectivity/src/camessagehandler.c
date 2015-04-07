@@ -101,6 +101,8 @@ static void CATimeoutCallback(const CARemoteEndpoint_t *endpoint, const void *pd
     {
         OIC_LOG(ERROR, TAG, "fail to get Token from retransmission list");
         OICFree(resInfo->info.token);
+        OICFree(resInfo);
+        CADestroyRemoteEndpointInternal(ep);
         return;
     }
 

@@ -255,7 +255,8 @@ typedef enum
     OC_EH_RESOURCE_CREATED,
     OC_EH_RESOURCE_DELETED,
     OC_EH_SLOW,
-    OC_EH_FORBIDDEN
+    OC_EH_FORBIDDEN,
+    OC_EH_RESOURCE_NOT_FOUND
 } OCEntityHandlerResult;
 
 /**

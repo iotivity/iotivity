@@ -46,9 +46,6 @@ std::shared_ptr<OCResource> curResource;
 std::mutex resourceLock;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
 
-//TODO-CA: Since CA CON message support is still in progress, this client uses
-// LowQos messages. This needs to change once Confirmable messages are supported in CA.
-
 class Light
 {
 public:
@@ -103,7 +100,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         if(observe_count() > 30)
         {
             std::cout<<"Cancelling Observe..."<<std::endl;
-            OCStackResult result = curResource->cancelObserve(OC::QualityOfService::LowQos);
+            OCStackResult result = curResource->cancelObserve(OC::QualityOfService::HighQos);
 
             std::cout << "Cancel result: "<< result << " waiting for confirmation ..." <<std::endl;
         }
@@ -143,7 +140,7 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
             std::cout << std::endl << "ObserveAll is used." << std::endl << std::endl;
         sleep(1);
         curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve,
-                OC::QualityOfService::LowQos);
+                OC::QualityOfService::HighQos);
 
     }
     else
@@ -185,7 +182,7 @@ void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, con
         rep2.setValue("state", mylight.m_state);
         rep2.setValue("power", mylight.m_power);
         sleep(1);
-        curResource->post(rep2, QueryParamsMap(), &onPost2, OC::QualityOfService::LowQos);
+        curResource->post(rep2, QueryParamsMap(), &onPost2, OC::QualityOfService::HighQos);
     }
     else
     {
@@ -210,7 +207,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
         rep.setValue("power", mylight.m_power);
 
         // Invoke resource's post API with rep, query map and the callback parameter
-        resource->post(rep, QueryParamsMap(), &onPost, OC::QualityOfService::LowQos);
+        resource->post(rep, QueryParamsMap(), &onPost, OC::QualityOfService::HighQos);
     }
 }
 
@@ -254,7 +251,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
         rep.setValue("power", mylight.m_power);
 
         // Invoke resource's put API with rep, query map and the callback parameter
-        resource->put(rep, QueryParamsMap(), &onPut, OC::QualityOfService::LowQos);
+        resource->put(rep, QueryParamsMap(), &onPut, OC::QualityOfService::HighQos);
     }
 }
 
@@ -292,7 +289,7 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
         // Invoke resource's get API with the callback parameter
 
         QueryParamsMap test;
-        resource->get(test, &onGet,OC::QualityOfService::LowQos);
+        resource->get(test, &onGet,OC::QualityOfService::HighQos);
     }
 }
 
@@ -448,7 +445,7 @@ int main(int argc, char* argv[]) {
         OC::ModeType::Client,
         "0.0.0.0",
         0,
-        OC::QualityOfService::LowQos
+        OC::QualityOfService::HighQos
     };
 
     OCPlatform::Configure(cfg);

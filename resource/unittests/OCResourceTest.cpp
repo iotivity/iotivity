@@ -78,8 +78,7 @@ namespace OCResourceTest
         EXPECT_THROW(resource->get(OC::QueryParamsMap(), &onGetPut), OC::OCException);
     }
 
-    // Enable it when the CON is supported in the stack
-    TEST(ResourceGetTest, DISABLED_ResourceGetWithHighQos)
+    TEST(ResourceGetTest, ResourceGetWithHighQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -182,8 +181,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->post(rep, query, &onGetPut, QualityOfService::LowQos));
     }
 
-    // Enable it when the CON is supported in the stack
-    TEST(ResourcePostTest, DISABLED_ResourcePostWithHighQos)
+    TEST(ResourcePostTest, ResourcePostWithHighQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -229,8 +227,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->put(rep, query, &onGetPut, QualityOfService::MidQos));
     }
 
-    // Enable it when the CON is supported in the stack
-    TEST(ResourcePutTest, DISABLED_ResourcePutWithHighQos)
+    TEST(ResourcePutTest, ResourcePutWithHighQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -307,8 +304,7 @@ namespace OCResourceTest
                         QualityOfService::MidQos));
     }
 
-    //Enable it when CON is supported in the stack.
-    TEST(ResourceObserveTest, DISABLED_ResourceObserveHighQos)
+    TEST(ResourceObserveTest, ResourceObserveHighQos)
     {
         QueryParamsMap query = {};
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/Observe");
@@ -360,8 +356,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->cancelObserve(QualityOfService::MidQos));
     }
 
-    // We enable it when the CON is supported in the stack.
-    TEST(ResourceObserveTest, DISABLED_ResourceCancelObserveWithHighQos)
+    TEST(ResourceObserveTest, ResourceCancelObserveWithHighQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);

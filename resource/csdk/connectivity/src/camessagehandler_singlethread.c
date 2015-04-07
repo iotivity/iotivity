@@ -179,7 +179,6 @@ static void CAProcessData(const CAData_t *data)
                 coap_delete_pdu(pdu);
                 return;
             }
-
             coap_delete_pdu(pdu);
         }
     }

@@ -54,19 +54,6 @@ extern OCDeviceEntityHandler defaultDeviceHandler;
 #define OC_COAP_SCHEME "coap://"
 #define OC_OFFSET_SEQUENCE_NUMBER (4) // the first outgoing sequence number will be 5
 
-typedef struct
-{
-    // Observe option field
-    uint32_t option;
-    // IP address & port of client registered for observe
-    OCDevAddr *subAddr;
-
-    CAToken_t *token;
-
-    // The result of the observe request
-    OCStackResult result;
-} OCObserveReq;
-
 /**
  * This structure will be created in occoap and passed up the stack on the server side.
  */
@@ -111,37 +98,6 @@ typedef struct
     size_t reqTotalSize;
 } OCServerProtocolRequest;
 
-typedef struct
-{
-    // Observe option field
-    uint32_t observationOption;
-    // qos is indicating if the request is CON or NON
-    OCQualityOfService qos;
-    // Allow the entity handler to pass a result with the response
-    OCStackResult result;
-    // IP address & port of client registered for observe
-    OCDevAddr *requesterAddr;
-
-    CAToken_t *requestToken;
-
-    // The ID of CoAP pdu
-    uint16_t coapID;
-    // Flag indicating that response is to be delayed before sending
-    uint8_t delayedResNeeded;
-    uint8_t secured;
-    uint8_t slowFlag;
-    uint8_t notificationFlag;
-    // this is the pointer to server payload data to be transferred
-    char *payload;
-    // size of server payload data.  Don't rely on null terminated data for size
-    uint16_t payloadSize;
-    // An array of the vendor specific header options the entity handler wishes to use in response
-    uint8_t numSendVendorSpecificHeaderOptions;
-    OCHeaderOption *sendVendorSpecificHeaderOptions;
-    // URI of new resource that entity handler might create
-    char * resourceUri;
-} OCServerProtocolResponse;
-
 /**
  * This structure will be created in occoap and passed up the stack on the client side.
  */
@@ -159,7 +115,7 @@ typedef struct
     char * bufRes;
 
     // This is the token received OTA.
-    CAToken_t * rcvdToken;
+    CAToken_t rcvdToken;
 
     // this structure will be passed to client
     OCClientResponse * clientResponse;
@@ -173,6 +129,17 @@ typedef uint32_t ServerID;
 //-----------------------------------------------------------------------------
 // Internal function prototypes
 //-----------------------------------------------------------------------------
+
+
+OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t status);
+
+OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
+
+OCStackResult SendResponse(const CARemoteEndpoint_t* endPoint, const uint16_t coapID,
+        const CAResponseResult_t responseResult, const CAMessageType_t type,
+        const uint8_t numOptions, const CAHeaderOption_t *options,
+        CAToken_t token);
+
 
 #ifdef WITH_PRESENCE
 /**
@@ -191,6 +158,7 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType);
  */
 OCStackResult SendStopNotification();
 #endif // WITH_PRESENCE
+bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
 
 /**
  * Bind a resource interface to a resource.

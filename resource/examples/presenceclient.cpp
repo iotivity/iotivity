@@ -86,9 +86,6 @@ void presenceHandler(OCStackResult result, const unsigned int nonce, const std::
         case OC_STACK_PRESENCE_TIMEOUT:
             std::cout << "Presence Timeout\n";
             break;
-        case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
-            std::cout << "Virtual do not handle\n";
-            break;
         default:
             std::cout << "Error\n";
             break;

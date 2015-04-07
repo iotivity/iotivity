@@ -111,9 +111,6 @@ void CResourceFinder::presenceHandler(OCStackResult result, const unsigned int n
             }
             break;
 
-        case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
-            break;
-
         default:
             break;
     }

@@ -135,7 +135,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId);
 OCStackResult AddObserver (const char         *resUri,
                            const char         *query,
                            OCObservationId    obsId,
-                           CAToken_t          *token,
+                           CAToken_t          token,
                            uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
@@ -151,7 +151,7 @@ OCStackResult AddObserver (const char         *resUri,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult DeleteObserverUsingToken (CAToken_t * token, uint8_t tokenLength);
+ OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength);
 
 /**
  * Search the list of observers for the specified token.
@@ -161,7 +161,7 @@ OCStackResult DeleteObserverUsingToken (CAToken_t * token, uint8_t tokenLength);
  *
  * @return Pointer to found observer.
  */
-ResourceObserver* GetObserverUsingToken (const CAToken_t * token, uint8_t tokenLength);
+ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLength);
 
 /**
  * Search the list of observers for the specified observe ID.

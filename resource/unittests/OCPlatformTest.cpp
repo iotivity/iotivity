@@ -529,8 +529,7 @@ namespace OCPlatformTest
                         OC::QualityOfService::MidQos));
     }
 
-    //We will enable it when CON is supported in the stack
-    TEST(FindResourceTest, DISABLED_FindResourceWithHighQos)
+    TEST(FindResourceTest, FindResourceWithHighQos)
     {
         std::ostringstream requestURI;
         requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
@@ -604,8 +603,7 @@ namespace OCPlatformTest
                         OC::QualityOfService::MidQos));
     }
 
-    //We will enable it when CON is supported in the stack
-    TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithHighQos)
+    TEST(GetDeviceInfoTest, GetDeviceInfoWithHighQos)
     {
         std::string deviceDiscoveryURI = "/oc/core/d";
         PlatformConfig cfg;

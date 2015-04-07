@@ -146,7 +146,6 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
                 OIC_LOG(ERROR, TAG, "out of memory");
                 return NULL;
             }
-
             strcat(coapUri, COAP_URI_HEADER);
             strcat(coapUri, uri);
 

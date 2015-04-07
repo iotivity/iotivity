@@ -360,11 +360,11 @@ OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *
     }
     else
     {
-        OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
+        OC_LOG_V (ERROR, TAG, "Response buffer: %d bytes is too small",
                 maxPayloadSize);
     }
 
-    return OC_EH_RESOURCE_DELETED;
+    return OC_EH_RESOURCE_NOT_FOUND;
 }
 
 void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest)
@@ -718,6 +718,7 @@ void *ChangeLightRepresentation (void *param)
     return NULL;
 }
 
+#ifdef WITH_PRESENCE
 void *presenceNotificationGenerator(void *param)
 {
     sleep(5);
@@ -768,6 +769,7 @@ void *presenceNotificationGenerator(void *param)
     }
     return NULL;
 }
+#endif
 
 static void PrintUsage()
 {
@@ -856,7 +858,10 @@ int main(int argc, char* argv[])
      * Create a thread for generating changes that cause presence notifications
      * to be sent to clients
      */
+
+    #ifdef WITH_PRESENCE
     pthread_create(&threadId_presence, NULL, presenceNotificationGenerator, (void *)NULL);
+    #endif
 
     // Break from loop with Ctrl-C
     OC_LOG(INFO, TAG, "Entering ocserver main loop...");

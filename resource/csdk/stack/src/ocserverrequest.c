@@ -241,7 +241,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        char * reqJSONPayload, CAToken_t * requestToken,
+        char * reqJSONPayload, CAToken_t requestToken,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
         CAAddress_t *addressInfo, CAConnectivityType_t connectivityType)
@@ -295,7 +295,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         {
             serverRequest->requestToken = (CAToken_t) OCMalloc(tokenLength);
             VERIFY_NON_NULL(serverRequest->requestToken);
-            memcpy(serverRequest->requestToken, *requestToken, tokenLength);
+            memcpy(serverRequest->requestToken, requestToken, tokenLength);
         }
 
     }
@@ -397,6 +397,41 @@ void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
     }
 }
 
+CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
+{
+    CAResponseResult_t caResult = CA_BAD_REQ;
+
+    switch (result)
+    {
+        case OC_EH_OK:
+            caResult = CA_SUCCESS;
+            break;
+        case OC_EH_ERROR:
+            caResult = CA_BAD_REQ;
+            break;
+        case OC_EH_RESOURCE_CREATED:
+            caResult = CA_CREATED;
+            break;
+        case OC_EH_RESOURCE_DELETED:
+            caResult = CA_DELETED;
+            break;
+        case OC_EH_SLOW:
+            caResult = CA_SUCCESS;
+            break;
+        case OC_EH_FORBIDDEN:
+            caResult = CA_BAD_REQ;
+            break;
+        case OC_EH_RESOURCE_NOT_FOUND:
+            caResult = CA_NOT_FOUND;
+            break;
+        default:
+            caResult = CA_BAD_REQ;
+            break;
+    }
+    return caResult;
+}
+
+
 /**
  * Handler function for sending a response from a single resource
  *
@@ -405,6 +440,7 @@ void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
  * @return
  *     OCStackResult
  */
+
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
@@ -412,13 +448,12 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     CAResponseInfo_t responseInfo = {};
     CAHeaderOption_t* optionsPointer = NULL;
 
-    if(!ehResponse)
-    {
-        OC_LOG(ERROR, TAG, PCF("HandleSingleResponse invalid parameters"));
-        return OC_STACK_INVALID_PARAM;
-    }
-
     OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
+
+    if(!ehResponse || !ehResponse->requestHandle)
+    {
+        return OC_STACK_ERROR;
+    }
 
     OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
 
@@ -427,34 +462,40 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     responseEndpoint.addressInfo      = serverRequest->addressInfo;
     responseEndpoint.connectivityType = serverRequest->connectivityType;
     responseEndpoint.isSecured        = serverRequest->secured;
-    // Copy the info
-    switch (ehResponse->ehResult)
+
+    responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult);
+
+    if(serverRequest->notificationFlag && serverRequest->qos == OC_HIGH_QOS)
     {
-        case OC_EH_OK:
-            responseInfo.result = CA_SUCCESS;
-            break;
-        case OC_EH_ERROR:
-            responseInfo.result = CA_BAD_REQ;
-            break;
-        case OC_EH_RESOURCE_CREATED:
-            responseInfo.result = CA_CREATED;
-            break;
-        case OC_EH_RESOURCE_DELETED:
-            responseInfo.result = CA_DELETED;
-            break;
-        case OC_EH_SLOW:
-            responseInfo.result = CA_SUCCESS;
-            break;
-        case OC_EH_FORBIDDEN:
-            responseInfo.result = CA_BAD_REQ;
-            break;
-        default:
-            responseInfo.result = CA_BAD_REQ;
-            break;
+        responseInfo.info.type = CA_MSG_CONFIRM;
     }
-    responseInfo.info.type = qualityOfServiceToMessageType(serverRequest->qos);
-    char token[CA_MAX_TOKEN_LEN] = {};
-    responseInfo.info.token = token;
+    else if(serverRequest->notificationFlag && serverRequest->qos != OC_HIGH_QOS)
+    {
+        responseInfo.info.type = CA_MSG_NONCONFIRM;
+    }
+    else if(!serverRequest->notificationFlag && !serverRequest->slowFlag &&
+            serverRequest->qos == OC_HIGH_QOS)
+    {
+        responseInfo.info.type = CA_MSG_ACKNOWLEDGE;
+    }
+    else if(!serverRequest->notificationFlag && serverRequest->slowFlag &&
+            serverRequest->qos == OC_HIGH_QOS)
+    {
+        responseInfo.info.type = CA_MSG_CONFIRM;
+    }
+    else if(!serverRequest->notificationFlag)
+    {
+        responseInfo.info.type = CA_MSG_NONCONFIRM;
+    }
+
+    responseInfo.info.messageId = serverRequest->coapID;
+    responseInfo.info.token = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
+    if (!responseInfo.info.token)
+    {
+        OC_LOG(FATAL, TAG, "Response Info Token is NULL");
+        return result;
+    }
+
     memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
     responseInfo.info.tokenLength = serverRequest->tokenLength;
 

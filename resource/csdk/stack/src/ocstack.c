@@ -389,7 +389,6 @@ static void HandleCARequests(const CARemoteEndpoint_t* endPoint,
  * @param protocolRequest Incoming request from lower level stack.
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 
 /**
  * Parse IP address string into octets and port.
@@ -401,7 +400,6 @@ static OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolReque
  *     true - success.
  *     false - failure.
  */
-static bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port);
 
 /**
  * Extract query from a URI.
@@ -462,6 +460,106 @@ OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
     return OC_STACK_OK;
 }
 
+//-----------------------------------------------------------------------------
+// Internal API function
+//-----------------------------------------------------------------------------
+
+// This internal function is called to update the stack with the status of
+// observers and communication failures
+OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t status)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    ResourceObserver * observer = NULL;
+    OCEntityHandlerRequest ehRequest = {};
+
+    switch(status)
+    {
+    case OC_OBSERVER_NOT_INTERESTED:
+        OC_LOG(DEBUG, TAG, PCF("observer is not interested in our notifications anymore"));
+        observer = GetObserverUsingToken (token, tokenLength);
+        if(observer)
+        {
+            result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) NULL,
+                    OC_REST_NOMETHOD, (OCResourceHandle) NULL, NULL, NULL, 0,
+                    NULL, OC_OBSERVE_DEREGISTER, observer->observeId);
+            if(result != OC_STACK_OK)
+            {
+                return result;
+            }
+            observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
+        }
+        //observer is not observing anymore
+        result = DeleteObserverUsingToken (token, tokenLength);
+        if(result == OC_STACK_OK)
+        {
+            OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
+        }
+        else
+        {
+            result = OC_STACK_OK;
+            OC_LOG(DEBUG, TAG, PCF("Observer Removal failed"));
+        }
+        break;
+    case OC_OBSERVER_STILL_INTERESTED:
+        //observer is still interested
+        OC_LOG(DEBUG, TAG, PCF("observer is interested in our \
+                notifications, reset the failedCount"));
+        observer = GetObserverUsingToken (token, tokenLength);
+        if(observer)
+        {
+            observer->forceHighQos = 0;
+            observer->failedCommCount = 0;
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            result = OC_STACK_OBSERVER_NOT_FOUND;
+        }
+        break;
+    case OC_OBSERVER_FAILED_COMM:
+        //observer is not reachable
+        OC_LOG(DEBUG, TAG, PCF("observer is unreachable"));
+        observer = GetObserverUsingToken (token, tokenLength);
+        if(observer)
+        {
+            if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
+            {
+                result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) NULL,
+                        OC_REST_NOMETHOD, (OCResourceHandle) NULL, NULL, NULL, 0,
+                        NULL, OC_OBSERVE_DEREGISTER, observer->observeId);
+                if(result != OC_STACK_OK)
+                {
+                    return OC_STACK_ERROR;
+                }
+                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
+                //observer is unreachable
+                result = DeleteObserverUsingToken (token, tokenLength);
+                if(result == OC_STACK_OK)
+                {
+                    OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
+                }
+                else
+                {
+                    result = OC_STACK_OK;
+                    OC_LOG(DEBUG, TAG, PCF("Observer Removal failed"));
+                }
+            }
+            else
+            {
+                observer->failedCommCount++;
+                result = OC_STACK_CONTINUE;
+            }
+            observer->forceHighQos = 1;
+            OC_LOG_V(DEBUG, TAG, "Failed count for this observer is %d",observer->failedCommCount);
+        }
+        break;
+    default:
+        OC_LOG(ERROR, TAG, PCF("Unknown status"));
+        result = OC_STACK_ERROR;
+        break;
+        }
+    return result;
+}
 OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -485,6 +583,9 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
             break;
         case CA_NOT_FOUND:
             ret = OC_STACK_NO_RESOURCE;
+            break;
+        case CA_RETRANSMIT_TIMEOUT:
+            ret = OC_STACK_COMM_ERROR;
             break;
         default:
             break;
@@ -898,77 +999,217 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
         return;
     }
 
-    ClientCB *cbNode = GetClientCB(&(responseInfo->info.token),
+    ClientCB *cbNode = GetClientCB(responseInfo->info.token,
             responseInfo->info.tokenLength, NULL, NULL);
+    OC_LOG_V(DEBUG, TAG, "Response has the token %s", responseInfo->info.token);
+    ResourceObserver * observer = GetObserverUsingToken (responseInfo->info.token,
+            responseInfo->info.tokenLength);
 
-    if (cbNode)
+    if(cbNode)
     {
-        OC_LOG(INFO, TAG, PCF("Calling into application address space"));
-        OCClientResponse response = {};
-        OCDevAddr address = {};
-
-        OCStackResult result = UpdateResponseAddr(&address, endPoint);
-        if(result != OC_STACK_OK)
+        OC_LOG(INFO, TAG, PCF("There is a cbNode associated with the response token"));
+        if(responseInfo->result == CA_EMPTY)
         {
-            OC_LOG(ERROR, TAG, PCF("Error parsing IP address in UpdateResponseAddr"));
-            return;
-        }
-
-
-        result = CAToOCConnectivityType(endPoint->connectivityType, &(response.connType));
-        if(result != OC_STACK_OK)
-        {
-            OC_LOG(ERROR, TAG, PCF("Invalid connectivity type in endpoint"));
-            return;
-        }
-        response.addr = &address;
-        response.result = CAToOCStackResult(responseInfo->result);
-        response.resJSONPayload = responseInfo->info.payload;
-        response.numRcvdVendorSpecificHeaderOptions = 0;
-
-        // Will be overwritten with seq num if response is OBSERVE
-        // notification. If no sequence number obtained, registration failed
-        // and client app expected to delete the associated callback.
-        response.sequenceNumber = OC_OBSERVE_NO_OPTION;
-
-        if(responseInfo->info.options && responseInfo->info.numOptions > 0)
-        {
-            int start = 0;
-            //First option always with option ID is OC_COAP_OPTION_OBSERVE if it is available.
-            if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
+            OC_LOG(INFO, TAG, PCF("Receiving A ACK/RESET for this token"));
+            // We do not have a case for the client to receive a RESET
+            if(responseInfo->info.type == CA_MSG_ACKNOWLEDGE)
             {
-                memcpy (&(response.sequenceNumber),
-                            &(responseInfo->info.options[0].optionData), sizeof(uint32_t));
-                response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
-                start = 1;
+                //This is the case of receiving an ACK on a request to a slow resource!
+                OC_LOG(INFO, TAG, PCF("This is a pure ACK"));
+                //TODO: should we inform the client
+                //      app that at least the request was received at the server?
             }
-            else
+        }
+        else if(responseInfo->result == CA_RETRANSMIT_TIMEOUT)
+        {
+            OC_LOG(INFO, TAG, PCF("Receiving A Timeout for this token"));
+            OC_LOG(INFO, TAG, PCF("Calling into application address space"));
+            OCClientResponse response = {};
+            OCDevAddr address = {};
+            OCStackResult result = UpdateResponseAddr(&address, endPoint);
+            if(result != OC_STACK_OK)
             {
-               response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions;
-            }
-
-            if(response.numRcvdVendorSpecificHeaderOptions > MAX_HEADER_OPTIONS)
-            {
-                OC_LOG(ERROR, TAG, PCF("#header options are more than MAX_HEADER_OPTIONS"));
+                OC_LOG(ERROR, TAG, PCF("Error parsing IP address in UpdateResponseAddr"));
                 return;
             }
 
-            for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
+            result = UpdateResponseAddr(&address, endPoint);
+            if(result != OC_STACK_OK)
             {
-                memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
-                 &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+                OC_LOG(ERROR, TAG, PCF("Invalid connectivity type in endpoint"));
+                return;
             }
-        }
-        if (cbNode->callBack(cbNode->context,cbNode->handle, &response)
-                == OC_STACK_DELETE_TRANSACTION)
-        {
+            response.addr = &address;
+
+            response.result = CAToOCStackResult(responseInfo->result);
+            cbNode->callBack(cbNode->context,
+                    cbNode->handle, &response);
             FindAndDeleteClientCB(cbNode);
         }
+        else
+        {
+            OC_LOG(INFO, TAG, PCF("This is a regular response, A client call back is found"));
+            OC_LOG(INFO, TAG, PCF("Calling into application address space"));
+            OCClientResponse response = {};
+            OCDevAddr address = {};
+
+            OCStackResult result = UpdateResponseAddr(&address, endPoint);
+            if(result != OC_STACK_OK)
+            {
+                OC_LOG(ERROR, TAG, PCF("Error parsing IP address in UpdateResponseAddr"));
+                return;
+            }
+            response.addr = &address;
+            // Populate the connectivity type. If this is a discovery response,
+            // the resource that will be constructed from this response will make
+            // further API calls from this interface.
+            result = CAToOCConnectivityType(endPoint->connectivityType,
+                                    &(response.connType));
+            if(result != OC_STACK_OK)
+            {
+                OC_LOG(ERROR, TAG, PCF("Invalid connectivity type in endpoint"));
+                return;
+            }
+
+            response.result = CAToOCStackResult(responseInfo->result);
+            response.resJSONPayload = (const char*)responseInfo->info.payload;
+            response.numRcvdVendorSpecificHeaderOptions = 0;
+            if(responseInfo->info.numOptions > 0)
+            {
+                int start = 0;
+                //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
+                if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
+                {
+                    memcpy (&(response.sequenceNumber),
+                            &(responseInfo->info.options[0].optionData), sizeof(uint32_t));
+                    response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
+                    start = 1;
+                }
+                else
+                {
+                    response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions;
+                }
+
+                if(response.numRcvdVendorSpecificHeaderOptions > MAX_HEADER_OPTIONS)
+                {
+                    OC_LOG(ERROR, TAG, PCF("#header options are more than MAX_HEADER_OPTIONS"));
+                    return;
+                }
+
+                for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
+                {
+                    memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
+                            &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+                }
+            }
+            if (cbNode->callBack(cbNode->context,
+                    cbNode->handle, &response) == OC_STACK_DELETE_TRANSACTION)
+            {
+                FindAndDeleteClientCB(cbNode);
+            }
+
+            //Need to send ACK when the response is CON
+            if(responseInfo->info.type == CA_MSG_CONFIRM)
+            {
+                SendResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
+                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL);
+            }
+        }
+        return;
     }
+
+    if(observer)
+    {
+        OC_LOG(INFO, TAG, PCF("There is an observer associated with the response token"));
+        if(responseInfo->result == CA_EMPTY)
+        {
+            OC_LOG(INFO, TAG, PCF("Receiving A ACK/RESET for this token"));
+            if(responseInfo->info.type == CA_MSG_RESET)
+            {
+                OC_LOG(INFO, TAG, PCF("This is a RESET"));
+                OCStackFeedBack(responseInfo->info.token, responseInfo->info.tokenLength,
+                        OC_OBSERVER_NOT_INTERESTED);
+            }
+            else if(responseInfo->info.type == CA_MSG_ACKNOWLEDGE)
+            {
+                OC_LOG(INFO, TAG, PCF("This is a pure ACK"));
+                OCStackFeedBack(responseInfo->info.token, responseInfo->info.tokenLength,
+                        OC_OBSERVER_STILL_INTERESTED);
+            }
+        }
+        else if(responseInfo->result == CA_RETRANSMIT_TIMEOUT)
+        {
+            OC_LOG(INFO, TAG, PCF("Receiving Time Out for an observer"));
+            OCStackFeedBack(responseInfo->info.token, responseInfo->info.tokenLength,
+                    OC_OBSERVER_FAILED_COMM);
+        }
+        return;
+    }
+
+    if(!cbNode && !observer)
+    {
+        if(myStackMode == OC_CLIENT || myStackMode == OC_CLIENT_SERVER)
+        {
+            OC_LOG(INFO, TAG, PCF("This is a client, but no cbNode was found for token"));
+            if(responseInfo->result == CA_EMPTY)
+            {
+                OC_LOG(INFO, TAG, PCF("Receiving CA_EMPTY in the ocstack"));
+            }
+            else
+            {
+                OC_LOG(INFO, TAG, PCF("Received a response or notification,\
+                        but I do not have callback. Sending RESET"));
+                SendResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
+                        CA_MSG_RESET, 0, NULL, NULL);
+            }
+        }
+
+        if(myStackMode == OC_SERVER || myStackMode == OC_CLIENT_SERVER)
+        {
+            OC_LOG(INFO, TAG, PCF("This is a server, but no observer was found for token"));
+            if (responseInfo->info.type == CA_MSG_ACKNOWLEDGE)
+            {
+                OC_LOG_V(INFO, TAG, PCF("Received ACK at server for messageId : %d"),
+                                            responseInfo->info.messageId);
+            }
+            if (responseInfo->info.type == CA_MSG_RESET)
+            {
+                OC_LOG_V(INFO, TAG, PCF("Received RESET at server for messageId : %d"),
+                                            responseInfo->info.messageId);
+            }
+        }
+        return;
+    }
+
     OC_LOG_V(INFO, TAG, PCF("Received payload: %s\n"), (char*)responseInfo->info.payload);
     OC_LOG(INFO, TAG, PCF("Exit HandleCAResponses"));
 }
 
+
+OCStackResult SendResponse(const CARemoteEndpoint_t* endPoint, const uint16_t coapID,
+        const CAResponseResult_t responseResult, const CAMessageType_t type,
+        const uint8_t numOptions, const CAHeaderOption_t *options,
+        CAToken_t token)
+{
+    CAResponseInfo_t respInfo = {};
+    respInfo.result = responseResult;
+    respInfo.info.messageId = coapID;
+    respInfo.info.numOptions = numOptions;
+    respInfo.info.options = (CAHeaderOption_t*)options;
+    respInfo.info.payload = NULL;
+    respInfo.info.token = token;
+    respInfo.info.type = type;
+
+    CAResult_t caResult = CASendResponse(endPoint, &respInfo);
+    if(caResult != CA_STATUS_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
+}
+
+//This function will be called back by CA layer when a request is received
 void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
     OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
@@ -1076,6 +1317,9 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
         default:
             {
                 OC_LOG(ERROR, TAG, PCF("Received CA method %d not supported"));
+                SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
+                        requestInfo->info.type, requestInfo->info.numOptions,
+                        requestInfo->info.options, requestInfo->info.token);
                 return;
             }
     }
@@ -1084,13 +1328,15 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
             requestInfo->info.tokenLength);
     OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token,
             requestInfo->info.tokenLength);
-
     serverRequest.requestToken = (CAToken_t)OCMalloc(requestInfo->info.tokenLength);
     serverRequest.tokenLength = requestInfo->info.tokenLength;
     // Module Name
     if (!serverRequest.requestToken)
     {
         OC_LOG(FATAL, TAG, "Server Request Token is NULL");
+        SendResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
+                requestInfo->info.type, requestInfo->info.numOptions,
+                requestInfo->info.options, requestInfo->info.token);
         return;
     }
     memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
@@ -1099,37 +1345,31 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         serverRequest.qos = OC_HIGH_QOS;
     }
-    else if (requestInfo->info.type == CA_MSG_NONCONFIRM)
+    else
     {
         serverRequest.qos = OC_LOW_QOS;
     }
-    else if (requestInfo->info.type == CA_MSG_ACKNOWLEDGE)
-    {
-        // TODO-CA: Need to handle this
-    }
-    else if (requestInfo->info.type == CA_MSG_RESET)
-    {
-        // TODO-CA: Need to handle this
-    }
-    // CA does not need the following 3 fields
-    serverRequest.coapID = 0;
+    // CA does not need the following 2 fields
+    // Are we sure CA does not need them? how is it responding to multicast
     serverRequest.delayedResNeeded = 0;
     serverRequest.secured = endPoint->isSecured;
+
+    serverRequest.coapID = requestInfo->info.messageId;
 
     // copy the address
     serverRequest.addressInfo      = endPoint->addressInfo;
     serverRequest.connectivityType = endPoint->connectivityType;
 
     // copy vendor specific header options
-    // TODO-CA: CA is including non-vendor header options as well, like observe.
-    // Need to filter those out
     uint8_t tempNum = (requestInfo->info.numOptions);
     GetObserveHeaderOption(&serverRequest.observationOption, requestInfo->info.options, &tempNum);
     if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
     {
         OC_LOG(ERROR, TAG,
                 PCF("The request info numOptions is greater than MAX_HEADER_OPTIONS"));
-        OCFree(serverRequest.requestToken);
+        SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_OPT,
+                requestInfo->info.type, requestInfo->info.numOptions,
+                requestInfo->info.options, requestInfo->info.token);
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
@@ -1140,9 +1380,23 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     }
 
     requestResult = HandleStackRequests (&serverRequest);
-    if(requestResult != OC_STACK_OK)
+
+    // Send ACK to client as precursor to slow response
+    if(requestResult == OC_STACK_SLOW_RESOURCE)
+    {
+        SendResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
+                    CA_MSG_ACKNOWLEDGE,
+                    0,      // numptions
+                    NULL,   // *options
+                    NULL   // token
+                    );
+    }
+    else if(requestResult != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("HandleStackRequests failed"));
+        SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
+                requestInfo->info.type, requestInfo->info.numOptions,
+                requestInfo->info.options, requestInfo->info.token);
     }
     // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
     // The token is copied in there, and is thus still owned by this function.
@@ -1172,7 +1426,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->method, protocolRequest->numRcvdVendorSpecificHeaderOptions,
                 protocolRequest->observationOption, protocolRequest->qos,
                 protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
-                protocolRequest->reqJSONPayload, &protocolRequest->requestToken,
+                protocolRequest->reqJSONPayload, protocolRequest->requestToken,
                 protocolRequest->tokenLength,
                 protocolRequest->resourceUrl,protocolRequest->reqTotalSize,
                 &protocolRequest->addressInfo, protocolRequest->connectivityType);
@@ -1223,13 +1477,13 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
 {
     size_t index = 0;
-    char *itr, *coap;
-    uint8_t dotCount = 0;
+     char *itr, *coap;
+     uint8_t dotCount = 0;
 
-    ipAddr[index] = 0;
-    *port = 0;
-    /* search for scheme */
-    itr = ipAddrStr;
+     ipAddr[index] = 0;
+     *port = 0;
+     /* search for scheme */
+     itr = ipAddrStr;
     if (!isdigit((char) *ipAddrStr))
     {
         coap = OC_COAP_SCHEME;
@@ -1585,13 +1839,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             goto exit;
     }
 
-    //High QoS is not supported
-    if(qos == OC_HIGH_QOS)
-    {
-        result = OC_STACK_INVALID_PARAM;
-        goto exit;
-    }
-
     // create token
     caResult = CAGenerateToken(&token, tokenLength);
     if (caResult != CA_STATUS_OK)
@@ -1671,8 +1918,8 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    if((result = AddClientCB(&clientCB, cbData, &token, tokenLength,  &resHandle, method,
-                             requestUri, resourceType)) != OC_STACK_OK)
+    if((result = AddClientCB(&clientCB, cbData, token, tokenLength,  &resHandle, method,
+                             requestUri, resourceType, conType)) != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
@@ -1719,7 +1966,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      *      When the next notification comes in from server,
      *      reply with RESET message to server.
      *      Keep in mind that the server will react to RESET only
-     *      if the last notification was sent ans CON
+     *      if the last notification was sent as CON
      *
      * 2. qos == OC_CONFIRMABLE. When OCCancel is called,
      *      and it is associated with an observe request
@@ -1730,7 +1977,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      */
     OCStackResult ret = OC_STACK_OK;
     CARemoteEndpoint_t* endpoint = NULL;
-    CAResult_t caResult= CA_STATUS_OK;
+    CAResult_t caResult;
     CAInfo_t requestData = {};
     CARequestInfo_t requestInfo = {};
 
@@ -1749,35 +1996,50 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         {
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
-                //TODO-CA : Why CA_WIFI alone?
-                caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri, CA_WIFI,
-                                                  &endpoint);
-                if (caResult != CA_STATUS_OK)
+                OC_LOG(INFO, TAG, PCF("Canceling observation"));
+                if(qos == OC_HIGH_QOS)
                 {
-                    OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
-                    return OC_STACK_ERROR;
-                }
-
-                memset(&requestData, 0, sizeof(CAInfo_t));
-                requestData.type =  qualityOfServiceToMessageType(qos);
-                requestData.token = clientCB->token;
-                requestData.tokenLength = clientCB->tokenLength;
-                if (CreateObserveHeaderOption (&(requestData.options),
+                    requestData.type =  qualityOfServiceToMessageType(qos);
+                    requestData.token = clientCB->token;
+                    requestData.tokenLength = clientCB->tokenLength;
+                     if (CreateObserveHeaderOption (&(requestData.options),
                             options, numOptions, OC_OBSERVE_DEREGISTER) != OC_STACK_OK)
-                {
-                    CADestroyRemoteEndpoint(endpoint);
-                    return OC_STACK_ERROR;
-                }
-                requestData.numOptions = numOptions + 1;
-                requestInfo.method = CA_GET;
-                requestInfo.info = requestData;
-                // send request
-                caResult = CASendRequest(endpoint, &requestInfo);
-                if (caResult != CA_STATUS_OK)
-                {
-                    OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
-                }
+                    {
+                        return OC_STACK_ERROR;
+                    }
+                    requestData.numOptions = numOptions + 1;
+                    requestInfo.method = CA_GET;
+                    requestInfo.info = requestData;
+
+                    CAConnectivityType_t caConType;
+                    ret = OCToCAConnectivityType(clientCB->conType, &caConType);
+                    if(ret != OC_STACK_OK)
+                    {
+                        goto Error;
+                    }
+
+                    caResult = CACreateRemoteEndpoint((char *)clientCB->requestUri,
+                            caConType, &endpoint);
+                    if (caResult != CA_STATUS_OK)
+                    {
+                        OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
+                        ret = OC_STACK_ERROR;
+                        goto Error;
+                    }
+
+                    // send request
+                    caResult = CASendRequest(endpoint, &requestInfo);
+                    if (caResult != CA_STATUS_OK)
+                    {
+                        OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
+                        ret = OC_STACK_ERROR;
+                    }
                 ret = CAResultToOCResult (caResult);
+                }
+                else
+                {
+                    FindAndDeleteClientCB(clientCB);
+                }
                 break;
             #ifdef WITH_PRESENCE
             case OC_REST_PRESENCE:
@@ -1785,9 +2047,11 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 break;
             #endif
             default:
-                return OC_STACK_INVALID_METHOD;
+                ret = OC_STACK_INVALID_METHOD;
+                break;
         }
     }
+    Error:
     CADestroyRemoteEndpoint(endpoint);
     if (requestData.numOptions > 0)
     {
@@ -1836,7 +2100,7 @@ OCStackResult OCProcessPresence()
                 if(cbNode->presence->TTLlevel >= PresenceTimeOutSize)
                 {
                     OC_LOG(DEBUG, TAG, PCF("No more timeout ticks"));
-                    if (ParseIPv4Address( cbNode->requestUri, ipAddr, &port))
+                    if (ParseIPv4Address(cbNode->requestUri, ipAddr, &port))
                     {
                         OCBuildIPv4Address(ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3], port,
                                 &dst);
@@ -1874,11 +2138,12 @@ OCStackResult OCProcessPresence()
 
                     OC_LOG(DEBUG, TAG, PCF("time to test server presence"));
 
-                    //TODO-CA : Why CA_WIFI alone?
-                    caResult = CACreateRemoteEndpoint((char *)cbNode->requestUri, CA_WIFI,
-                                                  &endpoint);
 
-                    if (caResult != CA_STATUS_OK)
+                    CAConnectivityType_t caConType;
+                    result = OCToCAConnectivityType(cbNode->conType, &caConType);
+                    caResult = CACreateRemoteEndpoint((char *)cbNode->requestUri, caConType,
+                                                        &endpoint);
+                    if (caResult != CA_STATUS_OK || result != OC_STACK_OK)
                     {
                         OC_LOG(ERROR, TAG, PCF("CACreateRemoteEndpoint error"));
                         goto exit;
@@ -1957,7 +2222,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 
         CAConnectivityType_t connType;
         OCToCAConnectivityType(OC_ALL, &connType );
-        AddObserver(OC_PRESENCE_URI, NULL, 0, &caToken, tokenLength,
+        AddObserver(OC_PRESENCE_URI, NULL, 0, caToken, tokenLength,
                 (OCResource *)presenceResource.handle, OC_LOW_QOS,
                 &addressInfo, connType);
         CADestroyToken(caToken);
