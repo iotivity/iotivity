@@ -19,7 +19,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 Import('env')
-
+target_os = env.get('TARGET_OS')
 samples_env = env.Clone()
 ######################################################################
 # Build flags
@@ -35,9 +35,14 @@ samples_env.PrependUnique(CPPPATH = [
 
 samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 samples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-samples_env.AppendUnique(LIBS = ['-lpthread'])
+samples_env.AppendUnique(LIBS = ['-lpthread' ])
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+
+if target_os in ['darwin']:
+	samples_env.PrependUnique(LIBS = ['m','octbstack', 'connectivity_abstraction','coap' ])
+else:
+	samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+
 if env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS = ['tinydtls'])
 samples_env.ParseConfig('pkg-config --libs glib-2.0');

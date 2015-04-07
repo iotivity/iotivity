@@ -35,6 +35,9 @@ if env.get('RELEASE'):
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
 	env.AppendUnique(CCFLAGS = ['-g'])
+	env.AppendUnique(LINKFLAGS = ['-g'])
+
+env.ParseConfig("pkg-config glib-2.0 gthread-2.0 --cflags --libs")
 
 if target_os == 'darwin':
 	sys_root = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX' + sys_version + '.sdk/'

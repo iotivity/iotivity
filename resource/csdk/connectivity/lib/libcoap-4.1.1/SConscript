@@ -7,6 +7,7 @@ Import('env')
 libcoap_env = env.Clone()
 
 target_os = env.get('TARGET_OS')
+
 # As in the source code(C) includes arduino Time library head file(C++)
 # It requires compile the .c with g++
 if target_os == 'arduino':
@@ -29,7 +30,7 @@ if target_os == 'arduino':
 
 if target_os not in ['arduino', 'windows', 'winrt']:
 	libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
-	libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99', '-fPIC'])
+	libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99','-fPIC'])
 
 if target_os not in ['windows', 'winrt']:
 	libcoap_env.AppendUnique(CFLAGS = ['-Wall', '-ffunction-sections',

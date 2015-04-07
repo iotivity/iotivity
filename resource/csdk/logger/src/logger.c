@@ -45,6 +45,10 @@
 #include <time.h>
 #endif
 
+#ifdef __APPLE__
+#include <sys/time.h>
+#endif
+
 #include "logger.h"
 #include "string.h"
 #include "oc_logger.h"
@@ -59,7 +63,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__
     static android_LogPriority LEVEL[] = {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
-#elif defined __linux__
+#elif defined(__linux__) || defined(__APPLE__)
     static const char * LEVEL[] __attribute__ ((unused)) = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
     #include <stdarg.h>
@@ -96,7 +100,7 @@ void OCLogInit() {
 }
 
 void OCLogShutdown() {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
     if (logCtx && logCtx->destroy)
     {
         logCtx->destroy(logCtx);
@@ -125,6 +129,36 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...) {
     OCLog(level, tag, buffer);
 }
 
+#if defined(__linux__)
+static void  osalGetTime(int *min,int *sec, int *ms)
+{
+    if (min && sec && ms)
+    {
+        struct timespec when = {};
+        if (!clock_gettime(CLOCK_REALTIME_COARSE, &when))
+        {
+            *min = (when.tv_sec / 60) % 60;
+            *sec = when.tv_sec % 60;
+            *ms = when.tv_nsec / 1000000;
+        }
+    }
+}
+#elif defined(__APPLE__)
+static void  osalGetTime(int *min,int *sec, int *ms)
+{
+    if (min && sec && ms)
+    {
+        struct timeval now;
+        if (!gettimeofday(&now, NULL))
+        {
+            *min = (now.tv_sec / 60) % 60;
+            *sec = now.tv_sec % 60;
+            *ms = now.tv_usec * 1000;
+        }
+    }
+}
+#endif
+
 /**
  * Output a log string with the specified priority level.
  * Only defined for Linux and Android
@@ -138,29 +172,24 @@ void OCLog(LogLevel level, const char * tag, const char * logStr) {
         return;
     }
 
-    #ifdef __ANDROID__
-        __android_log_write(LEVEL[level], tag, logStr);
-    #elif defined __linux__
-        if (logCtx && logCtx->write_level)
-        {
-            logCtx->write_level(logCtx, LEVEL_XTABLE[level], logStr);
+#ifdef __ANDROID__
+    __android_log_write(LEVEL[level], tag, logStr);
+#elif defined(__linux__) || defined(__APPLE__)
+    if (logCtx && logCtx->write_level)
+    {
+        logCtx->write_level(logCtx, LEVEL_XTABLE[level], logStr);
+    }
+    else
+    {
 
-        }
-        else
-        {
-            struct timespec when = {};
-            int min = 0;
-            int sec = 0;
-            int ms = 0;
-            if (!clock_gettime(CLOCK_REALTIME_COARSE, &when))
-            {
-                min = (when.tv_sec / 60) % 60;
-                sec = when.tv_sec % 60;
-                ms = when.tv_nsec / 1000000;
-            }
-            printf("%02d:%02d.%03d %s: %s: %s\n", min, sec, ms, LEVEL[level], tag, logStr);
-        }
-    #endif
+        int min = 0;
+        int sec = 0;
+        int ms = 0;
+        osalGetTime(&min,&sec,&ms);
+
+        printf("%02d:%02d.%03d %s: %s: %s\n", min, sec, ms, LEVEL[level], tag, logStr);
+    }
+#endif
 }
 
 /**
@@ -384,5 +413,6 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
 
 
 #endif
+
 
 

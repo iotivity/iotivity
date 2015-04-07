@@ -66,7 +66,7 @@ liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
 if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
-else:
+elif target_os not in ['darwin','ios']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
 
 if target_os in ['darwin', 'ios']:
@@ -95,7 +95,7 @@ liboctbstack_src = [
 	'ocrandom/src/ocrandom.c',
 	'ocmalloc/src/ocmalloc.c'
 	]
-if target_os == 'arduino':
+if target_os in ['arduino','darwin'] :
 	liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 else:
 	liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)

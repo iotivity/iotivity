@@ -27,6 +27,12 @@ env.AppendUnique(CPPPATH = [root_dir + '/inc/'])
 env.AppendUnique(CPPPATH = [root_dir + '/lib/libcoap-4.1.1/'])
 env.AppendUnique(CPPPATH = [root_dir + '/common/inc/'])
 
+if ca_os not in ['arduino', 'windows', 'winrt']:
+	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+
+if ca_os in ['darwin']:
+	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
 #Getting common source files
 env.SConscript('./../common/SConscript')
 

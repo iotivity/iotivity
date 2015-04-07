@@ -23,6 +23,8 @@ if 'ALL' in transport:
 		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'ETHERNET_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'NO_ETHERNET_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
+	elif target_os == 'darwin':
+		env.AppendUnique(CPPDEFINES = ['NO_WIFI_ADAPTER','ETHERNET_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
 	else:
 		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'ETHERNET_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 	print "CA Transport is ALL"

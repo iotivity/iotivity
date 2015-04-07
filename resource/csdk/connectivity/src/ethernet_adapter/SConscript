@@ -18,7 +18,7 @@ else:
         env.AppendUnique(CA_SRC=[src_dir+'caethernetadapter.c'])
 
 #Source files to build in Linux platform
-if target_os == 'linux':
+if target_os in ['linux','darwin']:
 	env.AppendUnique(CA_SRC=[src_dir+'linux/caethernetclient.c',
 			src_dir+'linux/caethernetserver.c',
 			src_dir+'linux/caethernetnwmonitor.c',

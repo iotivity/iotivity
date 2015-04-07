@@ -29,6 +29,7 @@
 #include "cainterfacecontroller.h"
 #include "caprotocolmessage.h"
 #include "caretransmission.h"
+#include "caadapterutils.h"
 #include "uqueue.h"
 #include "logger.h"
 #include "config.h" /* for coap protocol */

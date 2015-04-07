@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
 #include "fcntl.h"
 #include "unistd.h"
 #endif
@@ -62,7 +62,7 @@ uint8_t GetRandomBit() {
 #endif
 
 int8_t OCSeedRandom() {
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
     int32_t fd = open("/dev/urandom", O_RDONLY);
     if (fd > 0) {
         uint32_t randomSeed;
@@ -109,7 +109,7 @@ uint32_t OCGetRandom() {
 }
 
 uint8_t OCGetRandomByte(void) {
-#if defined(__ANDROID__) || defined(__linux__)
+#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
     return rand() & 0x00FF;
 #elif defined ARDUINO
     return random(256) & 0x00FF;

@@ -60,6 +60,12 @@
 
 #define ETHERNET_MONITOR_TAG "ETHERNET_MONITOR"
 
+#ifdef __APPLE__
+#define ETHERNET_INF_PREFIX "en"
+#else
+#define ETHERNET_INF_PREFIX "eth"
+#endif
+
 /**
  * @var nwConnectivityStatus
  * @brief  Maintains network status.
@@ -112,8 +118,8 @@ static CAEthernetConnectionStateChangeCallback g_networkChangeCb = NULL;
  * @fn CAEthernetGetInterfaceInformation
  * @brief This methods gets local interface name and IP address information.
  */
-static void CAEthernetGetInterfaceInformation(char **interfaceName, char **ipAddress,
-        char **subnetMask);
+static void CAEthernetGetInterfaceInformation(const char *interfacePrefix,
+        char **interfaceName, char **ipAddress,char **subnetMask);
 
 static void CANetworkMonitorThread(void *threadData);
 
@@ -129,7 +135,7 @@ CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool)
     }
 
     u_mutex_lock(g_ethernetNetInfoMutex);
-    CAEthernetGetInterfaceInformation(&g_ethernetInterfaceName, &g_ethernetIPAddress,
+    CAEthernetGetInterfaceInformation(ETHERNET_INF_PREFIX,&g_ethernetInterfaceName, &g_ethernetIPAddress,
                                       &g_ethernetSubnetMask);
     u_mutex_unlock(g_ethernetNetInfoMutex);
 
@@ -287,7 +293,7 @@ void CAEthernetSetConnectionStateChangeCallback
     OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
 }
 
-void CAEthernetGetInterfaceInformation(char **interfaceName,
+void CAEthernetGetInterfaceInformation(const char *interfaceNamePrefix,char **interfaceName,
     char **ipAddress, char **subnetMask)
 {
     if (!interfaceName || !ipAddress || !subnetMask)
@@ -328,9 +334,8 @@ void CAEthernetGetInterfaceInformation(char **interfaceName,
             continue;
         }
 
-        const char matchName[] = "eth";
-        int matchNameLen = strlen(matchName);
-        if (!strncasecmp(ifa->ifa_name, matchName, matchNameLen))
+        int matchNameLen = strlen(interfaceNamePrefix);
+        if (!strncasecmp(ifa->ifa_name, interfaceNamePrefix, matchNameLen))
         {
             // get the interface ip address
             if (0 != getnameinfo(ifa->ifa_addr, len, interfaceAddress,
@@ -375,7 +380,7 @@ void CANetworkMonitorThread(void *threadData)
         char *interfaceName = NULL;
         char *ipAddress = NULL;
         char *subnetMask = NULL;
-        CAEthernetGetInterfaceInformation(&interfaceName, &ipAddress, &subnetMask);
+        CAEthernetGetInterfaceInformation(ETHERNET_INF_PREFIX,&interfaceName, &ipAddress, &subnetMask);
 
         // check current network status
         CANetworkStatus_t currNetworkStatus;

@@ -75,7 +75,7 @@ typedef enum
 #ifdef __TIZEN__
 #define OICLog(level,tag,mes) LOG(level,tag,mes)
 #define OICLogv(level,tag,fmt,args...) LOG(level,tag,fmt,##args)
-#elif defined(ANDROID) || defined(__linux__)
+#elif defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
 /**
  * Configure logger to use a context that defines a custom logger function
  *

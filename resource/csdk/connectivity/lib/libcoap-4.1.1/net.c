@@ -49,7 +49,7 @@
 
 #if defined(WITH_POSIX) || defined(WITH_ARDUINO)
 
-time_t clock_offset;
+time_t clock_offset=0;
 
 static inline coap_queue_t *
 coap_malloc_node()
