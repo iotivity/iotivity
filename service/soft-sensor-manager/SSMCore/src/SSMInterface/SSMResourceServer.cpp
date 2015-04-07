@@ -108,7 +108,8 @@ class CQueryEngineEvent: public IQueryEngineEvent
             g_vecQueryEventResults.push_back(queryEventResult);
 
             //TODO: need to modify for notifying proper clients
-            OCPlatform::notifyAllObservers(m_hSSMResource);
+            if (OCPlatform::notifyAllObservers(m_hSSMResource) != OC_STACK_OK)
+                return SSM_E_FAIL;
 
             return SSM_S_OK;
         }

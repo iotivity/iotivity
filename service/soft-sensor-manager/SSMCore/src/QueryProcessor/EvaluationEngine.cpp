@@ -198,7 +198,6 @@ void CEvaluationEngine::terminateEngine()
         SSM_CLEANUP_ASSERT(executeSQL_NoReturn(sstream.str()));
         sstream.str("");
     }
-    m_mtxTriggerId.unlock();
 
     if (strlen(LOCATION_SSM_DB_DUMP) > 0)
     {
@@ -216,7 +215,9 @@ void CEvaluationEngine::terminateEngine()
     m_pSQLite3 = NULL;
 
     res = SSM_S_OK;
+
 CLEANUP:
+    m_mtxTriggerId.unlock();
     return;
 }
 

@@ -236,6 +236,7 @@ void CResourceFinder::onExecute(IN void *pArg)
                 m_mapResourcePresenceHandles.erase(((OICResourceHandler *)pMessage[1])->m_SSMResource.ip);
             }
 
+            delete m_mapResourceHandler[((OICResourceHandler *)pMessage[1])->m_SSMResource.name];
             m_mapResourceHandler.erase(((OICResourceHandler *) pMessage[1])->m_SSMResource.name);
             break;
     }
