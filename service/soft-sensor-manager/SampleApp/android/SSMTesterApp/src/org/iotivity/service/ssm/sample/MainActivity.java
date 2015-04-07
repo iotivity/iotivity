@@ -31,262 +31,283 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-	private SSMInterface SoftSensorManager = null;
-	private ArrayList<Integer> mRunningQueries = new ArrayList<Integer>();
+    private SSMInterface       SoftSensorManager         = null;
+    private ArrayList<Integer> mRunningQueries           = new ArrayList<Integer>();
 
-	private IQueryEngineEvent mQueryEngineEventListener = new IQueryEngineEvent() {
-		@Override
-		public void onQueryEngineEvent(int cqid, DataReader result) {
-			Log.i("[SSM]", "event received! cqid=" + cqid);
-			PrintLog("Event from cqid " + cqid + " has received");
+    private IQueryEngineEvent  mQueryEngineEventListener = null;
 
-			List<String> models = result.getAffectedModels();
+    void PrintLog(String log) {
+        Message msg = new Message();
+        Bundle data = new Bundle();
+        data.putString("Log", log);
+        msg.setData(data);
+        logHandler.sendMessage(msg);
+    }
 
-			for (String modelName : models) {
-				PrintLog("Model: " + modelName);
-				try {
-					int dataCount = result.getModelDataCount(modelName);
-					for (int i = 0; i < dataCount; i++) {
-						ModelData modelData = result.getModelData(modelName, i);
-						for (int j = 0; j < modelData.getPropertyCount(); j++) {
-							PrintLog("Name: " + modelData.getPropertyName(j)
-									+ " Value: "
-									+ modelData.getPropertyValue(j));
-						}
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-					PrintLog("Receiving Event from cqid " + cqid + " failed");
-				}
-			}
-		}
-	};
+    private Handler      logHandler         = new Handler() {
+                                                @Override
+                                                public void handleMessage(
+                                                        Message msg) {
+                                                    tvLog.append(msg.getData()
+                                                            .getString("Log")
+                                                            + "\n");
+                                                    svLog.fullScroll(ScrollView.FOCUS_DOWN);
+                                                }
+                                            };
 
-	void PrintLog(String log) {
-		Message msg = new Message();
-		Bundle data = new Bundle();
-		data.putString("Log", log);
-		msg.setData(data);
-		logHandler.sendMessage(msg);
-	}
+    private TextView     tvLog              = null;
+    private ScrollView   svLog              = null;
+    private EditText     edtQuery           = null;
+    private EditText     edtUnregisterQuery = null;
 
-	private Handler logHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			tvLog.append(msg.getData().getString("Log") + "\n");
-			svLog.fullScroll(ScrollView.FOCUS_DOWN);
-		}
-	};
+    View.OnClickListener clickHandler       = null;
 
-	private TextView tvLog = null;
-	private ScrollView svLog = null;
-	private EditText edtQuery = null;
-	private EditText edtUnregisterQuery = null;
+    View.OnClickListener textAddHandler     = null;
 
-	View.OnClickListener clickHandler = new View.OnClickListener() {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-		public void onClick(View v) {
-			switch (v.getId()) {
-			case R.id.btnRegisterQuery:
-				int cqid = 0;
-				try {
-					cqid = SoftSensorManager.registerQuery(edtQuery.getText()
-							.toString(), mQueryEngineEventListener);
-					mRunningQueries.add(cqid);
-					PrintLog(edtQuery.getText().toString()
-							+ " has executed, cqid=" + cqid);
-				} catch (Exception e) {
-					PrintLog("Register Query failed");
-				}
+        tvLog = (TextView) findViewById(R.id.txtLog);
+        svLog = (ScrollView) findViewById(R.id.sclLog);
+        edtQuery = (EditText) findViewById(R.id.editQuery);
+        edtUnregisterQuery = (EditText) findViewById(R.id.editUnregisterQuery);
 
-				break;
+        findViewById(R.id.btnRegisterQuery).setOnClickListener(clickHandler);
+        findViewById(R.id.btnUnregisterQuery).setOnClickListener(clickHandler);
+        findViewById(R.id.btFullDevice).setOnClickListener(textAddHandler);
+        findViewById(R.id.btDiscomfortIndex).setOnClickListener(textAddHandler);
+        findViewById(R.id.btPlus).setOnClickListener(clickHandler);
+        findViewById(R.id.btMinus).setOnClickListener(clickHandler);
+        findViewById(R.id.btClear).setOnClickListener(textAddHandler);
+        findViewById(R.id.btLogClear).setOnClickListener(textAddHandler);
 
-			case R.id.btnUnregisterQuery:
-				Iterator<Integer> it = mRunningQueries.iterator();
+        mQueryEngineEventListener = new IQueryEngineEvent() {
+            @Override
+            public void onQueryEngineEvent(int cqid, DataReader result) {
+                Log.i("[SSM]", "event received! cqid=" + cqid);
+                PrintLog("Event from cqid " + cqid + " has received");
 
-				while (it.hasNext()) {
-					if (it.next() == Integer.parseInt(edtUnregisterQuery
-							.getText().toString())) {
-						try {
-							SoftSensorManager.unregisterQuery(Integer
-									.parseInt(edtUnregisterQuery.getText()
-											.toString()));
-							PrintLog("Unregister Query has executed, cqid="
-									+ Integer.parseInt(edtUnregisterQuery
-											.getText().toString()));
-							it.remove();
-						} catch (NumberFormatException e) {
-							PrintLog("Invalid Query Id");
-						} catch (Exception e) {
-							PrintLog("UnRegister Query failed");
-						}
-						break;
-					}
-				}
-				break;
+                List<String> models = result.getAffectedModels();
 
-			case R.id.btPlus:
-				int queryNum = 0;
+                for (String modelName : models) {
+                    PrintLog("Model: " + modelName);
 
-				try {
-					queryNum = Integer.parseInt(edtUnregisterQuery.getText()
-							.toString()) + 1;
-					edtUnregisterQuery.setText(queryNum + "");
-				} catch (NumberFormatException e) {
-					PrintLog("Invalid Query Id");
-				}
-				break;
+                    try {
+                        int dataCount = result.getModelDataCount(modelName);
 
-			case R.id.btMinus:
-				try {
-					queryNum = Integer.parseInt(edtUnregisterQuery.getText()
-							.toString()) - 1;
-					edtUnregisterQuery.setText(queryNum + "");
-				} catch (NumberFormatException e) {
-					PrintLog("Invalid Query Id");
-				}
-				break;
-			}
-		}
-	};
+                        for (int i = 0; i < dataCount; i++) {
+                            ModelData modelData = result.getModelData(
+                                    modelName, i);
 
-	View.OnClickListener textAddHandler = new View.OnClickListener() {
+                            for (int j = 0; j < modelData.getPropertyCount(); j++) {
+                                PrintLog("Name: "
+                                        + modelData.getPropertyName(j)
+                                        + " Value: "
+                                        + modelData.getPropertyValue(j));
 
-		public void onClick(View v) {
-			switch (v.getId()) {
-			case R.id.btClear:
-				edtQuery.setText("");
-				break;
+                            }
 
-			case R.id.btLogClear:
-				tvLog.setText("");
-				break;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        PrintLog("Receiving Event from cqid " + cqid
+                                + " failed");
+                    }
+                }
+            }
+        };
 
-			case R.id.btFullDevice:
-				edtQuery.setText("subscribe Device if Device.dataId != 0");
-				break;
+        clickHandler = new View.OnClickListener() {
 
-			case R.id.btDiscomfortIndex:
-				edtQuery.setText("subscribe Device.DiscomfortIndexSensor if Device.DiscomfortIndexSensor.discomfortIndex > 0");
-				break;
-			}
-		}
-	};
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.btnRegisterQuery:
+                        int cqid = 0;
+                        try {
+                            cqid = SoftSensorManager.registerQuery(edtQuery
+                                    .getText().toString(),
+                                    mQueryEngineEventListener);
+                            mRunningQueries.add(cqid);
+                            PrintLog(edtQuery.getText().toString()
+                                    + " has executed, cqid=" + cqid);
+                        } catch (Exception e) {
+                            PrintLog("Register Query failed");
+                        }
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+                        break;
 
-		tvLog = (TextView) findViewById(R.id.txtLog);
-		svLog = (ScrollView) findViewById(R.id.sclLog);
-		edtQuery = (EditText) findViewById(R.id.editQuery);
-		edtUnregisterQuery = (EditText) findViewById(R.id.editUnregisterQuery);
+                    case R.id.btnUnregisterQuery:
+                        Iterator<Integer> it = mRunningQueries.iterator();
 
-		findViewById(R.id.btnRegisterQuery).setOnClickListener(clickHandler);
-		findViewById(R.id.btnUnregisterQuery).setOnClickListener(clickHandler);
-		findViewById(R.id.btFullDevice).setOnClickListener(textAddHandler);
-		findViewById(R.id.btDiscomfortIndex).setOnClickListener(textAddHandler);
-		findViewById(R.id.btPlus).setOnClickListener(clickHandler);
-		findViewById(R.id.btMinus).setOnClickListener(clickHandler);
-		findViewById(R.id.btClear).setOnClickListener(textAddHandler);
-		findViewById(R.id.btLogClear).setOnClickListener(textAddHandler);
+                        while (it.hasNext()) {
+                            if (it.next() == Integer
+                                    .parseInt(edtUnregisterQuery.getText()
+                                            .toString())) {
+                                try {
+                                    SoftSensorManager.unregisterQuery(Integer
+                                            .parseInt(edtUnregisterQuery
+                                                    .getText().toString()));
+                                    PrintLog("Unregister Query has executed, cqid="
+                                            + Integer
+                                                    .parseInt(edtUnregisterQuery
+                                                            .getText()
+                                                            .toString()));
+                                    it.remove();
+                                } catch (NumberFormatException e) {
+                                    PrintLog("Invalid Query Id");
+                                } catch (Exception e) {
+                                    PrintLog("UnRegister Query failed");
+                                }
+                                break;
+                            }
+                        }
+                        break;
 
-		copyFiles("lib");
+                    case R.id.btPlus:
+                        int queryNum = 0;
 
-		SoftSensorManager = new SSMInterface();
+                        try {
+                            queryNum = Integer.parseInt(edtUnregisterQuery
+                                    .getText().toString()) + 1;
+                            edtUnregisterQuery.setText(queryNum + "");
+                        } catch (NumberFormatException e) {
+                            PrintLog("Invalid Query Id");
+                        }
+                        break;
 
-		String initConfig = "<SSMCore>" + "<Device>" + "<UDN>" + getUUID()
-				+ "</UDN>" + "<Name>MyMobile</Name>" + "<Type>Mobile</Type>"
-				+ "</Device>" + "<Config>"
-				+ "<SoftSensorRepository>/data/data/" + getPackageName()
-				+ "/files/</SoftSensorRepository>"
-				+ "<SoftSensorDescription>/data/data/" + getPackageName()
-				+ "/files/SoftSensorDescription.xml</SoftSensorDescription>"
-				+ "</Config>" + "</SSMCore>";
+                    case R.id.btMinus:
+                        try {
+                            queryNum = Integer.parseInt(edtUnregisterQuery
+                                    .getText().toString()) - 1;
+                            edtUnregisterQuery.setText(queryNum + "");
+                        } catch (NumberFormatException e) {
+                            PrintLog("Invalid Query Id");
+                        }
+                        break;
+                }
+            }
+        };
 
-		try {
-			SoftSensorManager.startSSMCore(initConfig);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+        textAddHandler = new View.OnClickListener() {
 
-	@Override
-	protected void onDestroy() {
-		try {
-			SoftSensorManager.stopSSMCore();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.btClear:
+                        edtQuery.setText("");
+                        break;
 
-		super.onDestroy();
-	}
+                    case R.id.btLogClear:
+                        tvLog.setText("");
+                        break;
 
-	private String getUUID() {
-		String PREF_UNIQUE_ID = "PREF_UNIQUE_ID";
-		SharedPreferences sharedPrefs = getSharedPreferences(PREF_UNIQUE_ID,
-				Context.MODE_PRIVATE);
-		String uniqueID = sharedPrefs.getString(PREF_UNIQUE_ID, null);
+                    case R.id.btFullDevice:
+                        edtQuery.setText("subscribe Device if Device.dataId != 0");
+                        break;
 
-		if (uniqueID == null) {
-			uniqueID = UUID.randomUUID().toString();
-			Editor editor = sharedPrefs.edit();
-			editor.putString(PREF_UNIQUE_ID, uniqueID);
-			editor.commit();
-		}
+                    case R.id.btDiscomfortIndex:
+                        edtQuery.setText("subscribe Device.DiscomfortIndexSensor if Device.DiscomfortIndexSensor.discomfortIndex > 0");
+                        break;
+                }
+            }
+        };
 
-		return uniqueID;
-	}
+        copyFiles("lib");
 
-	private void copyFiles(String path) {
-		AssetManager assetManager = getAssets();
-		String assets[] = null;
+        SoftSensorManager = new SSMInterface();
 
-		try {
-			assets = assetManager.list(path);
+        String initConfig = "<SSMCore>" + "<Device>" + "<UDN>" + getUUID()
+                + "</UDN>" + "<Name>MyMobile</Name>" + "<Type>Mobile</Type>"
+                + "</Device>" + "<Config>"
+                + "<SoftSensorRepository>/data/data/" + getPackageName()
+                + "/files/</SoftSensorRepository>"
+                + "<SoftSensorDescription>/data/data/" + getPackageName()
+                + "/files/SoftSensorDescription.xml</SoftSensorDescription>"
+                + "</Config>" + "</SSMCore>";
 
-			if (assets.length == 0) {
-				copyFile(path);
-			} else {
-				String fullPath = "/data/data/"
-						+ this.getClass().getPackage().toString() + "/" + path;
-				File dir = new File(fullPath);
+        try {
+            SoftSensorManager.startSSMCore(initConfig);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-				if (!dir.exists())
-					dir.mkdir();
-				for (int i = 0; i < assets.length; ++i) {
-					copyFiles(path + "/" + assets[i]);
-				}
-			}
-		} catch (IOException ex) {
-			Log.e("tag", "I/O Exception", ex);
-		}
-	}
+    @Override
+    protected void onDestroy() {
+        try {
+            SoftSensorManager.stopSSMCore();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-	private void copyFile(String filename) {
-		AssetManager assetManager = getAssets();
-		InputStream in = null;
-		OutputStream out = null;
+        super.onDestroy();
+    }
 
-		try {
-			in = assetManager.open(filename);
-			out = openFileOutput(filename.split("/")[1], Context.MODE_PRIVATE);
+    private String getUUID() {
+        String PREF_UNIQUE_ID = "PREF_UNIQUE_ID";
+        SharedPreferences sharedPrefs = getSharedPreferences(PREF_UNIQUE_ID,
+                Context.MODE_PRIVATE);
+        String uniqueID = sharedPrefs.getString(PREF_UNIQUE_ID, null);
 
-			byte[] buffer = new byte[1024];
-			int read;
+        if (uniqueID == null) {
+            uniqueID = UUID.randomUUID().toString();
+            Editor editor = sharedPrefs.edit();
+            editor.putString(PREF_UNIQUE_ID, uniqueID);
+            editor.commit();
+        }
 
-			while ((read = in.read(buffer)) != -1) {
-				out.write(buffer, 0, read);
-			}
+        return uniqueID;
+    }
 
-			in.close();
-			in = null;
-			out.flush();
-			out.close();
-			out = null;
-		} catch (Exception e) {
-			Log.e("tag", e.getMessage());
-		}
-	}
+    private void copyFiles(String path) {
+        AssetManager assetManager = getAssets();
+        String assets[] = null;
+
+        try {
+            assets = assetManager.list(path);
+
+            if (assets.length == 0) {
+                copyFile(path);
+            } else {
+                String fullPath = "/data/data/"
+                        + this.getClass().getPackage().toString() + "/" + path;
+                File dir = new File(fullPath);
+
+                if (!dir.exists())
+                    dir.mkdir();
+                for (int i = 0; i < assets.length; ++i) {
+                    copyFiles(path + "/" + assets[i]);
+                }
+            }
+        } catch (IOException ex) {
+            Log.e("tag", "I/O Exception", ex);
+        }
+    }
+
+    private void copyFile(String filename) {
+        AssetManager assetManager = getAssets();
+        InputStream in = null;
+        OutputStream out = null;
+
+        try {
+            in = assetManager.open(filename);
+            out = openFileOutput(filename.split("/")[1], Context.MODE_PRIVATE);
+
+            byte[] buffer = new byte[1024];
+            int read;
+
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+
+            in.close();
+            in = null;
+            out.flush();
+            out.close();
+            out = null;
+        } catch (Exception e) {
+            Log.e("tag", e.getMessage());
+        }
+    }
 }
