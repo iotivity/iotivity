@@ -94,6 +94,7 @@ build_common/arduino/extlibs/arduino/arduino-1.5.8
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~
 *#*#
+*.orig
 
 # Ignore byte-compiled Python scripts
 *.pyc
