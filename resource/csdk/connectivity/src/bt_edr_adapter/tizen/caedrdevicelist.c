@@ -96,7 +96,7 @@ CAResult_t CACreateEDRDevice(const char *deviceAddress, const char *uuid, EDRDev
     *device = (EDRDevice *) OICMalloc(sizeof(EDRDevice));
     if (NULL == *device)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Out of memory (device)!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Out of memory (device)!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -148,7 +148,7 @@ CAResult_t CAAddEDRDeviceToList(EDRDeviceList **deviceList, EDRDevice *device)
     EDRDeviceList *node = (EDRDeviceList *) OICMalloc(sizeof(EDRDeviceList));
     if (NULL == node)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Out of memory (device list)!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Out of memory (device list)!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
@@ -358,7 +358,7 @@ CAResult_t CAAddEDRDataToList(EDRDataList **dataList, const void *data, uint32_t
 
 CAResult_t CARemoveEDRDataFromList(EDRDataList **dataList)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(dataList, EDR_ADAPTER_TAG, "Data list is null");
 
@@ -372,13 +372,13 @@ CAResult_t CARemoveEDRDataFromList(EDRDataList **dataList)
         OICFree(curNode);
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CADestroyEDRDataList(EDRDataList **dataList)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL_VOID(dataList, EDR_ADAPTER_TAG, "Data list is null");
 
@@ -393,7 +393,7 @@ void CADestroyEDRDataList(EDRDataList **dataList)
 
     *dataList = NULL;
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 void CADestroyEDRData(EDRData *data)

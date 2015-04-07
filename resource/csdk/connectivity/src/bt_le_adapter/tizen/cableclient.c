@@ -170,7 +170,7 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
         OICFree(data);
         return;
     }
-    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Sending data up !");
+    OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "Sending data up !");
 
     u_mutex_lock(g_bleServerBDAddressMutex);
     uint32_t sentLength = 0;
@@ -239,7 +239,7 @@ void CABleGattDescriptorDiscoveredCb(int result, unsigned char format, int total
                                             stTemp);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "u_thread_pool_add_task failed");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "u_thread_pool_add_task failed");
         bt_gatt_destroy_attribute_handle(stTemp->characteristic);
         OICFree(stTemp->desc);
         OICFree(stTemp);
@@ -288,7 +288,7 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
         CAResult_t retVal = CAAppendBLECharInfo(characteristic, BLE_GATT_READ_CHAR, bleServiceInfo);
         if (CA_STATUS_OK != retVal)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG , "CAAppendBLECharInfo failed ");
+            OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "CAAppendBLECharInfo failed ");
             return false;
         }
         char *uuid = NULL;
@@ -305,7 +305,7 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
         CAResult_t retVal = CAAppendBLECharInfo(characteristic, BLE_GATT_WRITE_CHAR, bleServiceInfo);
         if (CA_STATUS_OK != retVal)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG , "CAAppendBLECharInfo failed! ");
+            OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "CAAppendBLECharInfo failed! ");
             return false;
         }
         char *uuid = NULL;
@@ -470,7 +470,7 @@ bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int index, int count
     {
         OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "Its OIC service");
 
-        OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG , "Registering to watch characteristics changes  \n");
+        OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG , "Registering to watch characteristics changes  \n");
 
         result = CABleGattWatchCharacteristicChanges(service);
         if (CA_STATUS_OK != result)
@@ -525,7 +525,7 @@ bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int index, int count
         u_mutex_unlock(g_bleServiceListMutex);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG , "CAAddBLEServiceInfoToList failed!");
+            OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "CAAddBLEServiceInfoToList failed!");
             OICFree(stTemp->address);
             OICFree(stTemp);
             CAFreeBLEServiceInfo(bleServiceInfo);
@@ -588,7 +588,7 @@ void CABleGattConnectionStateChangedCb(int result, bool connected,
         ret = CABleGattStartDeviceDiscovery();
         if (CA_STATUS_OK != ret)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "CABleGattStartDeviceDiscovery failed");
+            OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "CABleGattStartDeviceDiscovery failed");
             return;
         }
     }
@@ -796,7 +796,7 @@ CAResult_t CAStartBLEGattClient()
                                      NULL);
     if (CA_STATUS_OK != retVal)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "u_thread_pool_add_task failed");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "u_thread_pool_add_task failed");
         CATerminateGattClientMutexVariables();
         u_mutex_unlock(g_bleClientThreadPoolMutex);
         return CA_STATUS_FAILED;
@@ -1323,7 +1323,7 @@ void CADiscoverCharThread(void *stServiceInfo)
     CAResult_t  result = CABleGattDiscoverCharacteristics(stTemp->serviceInfo, stTemp->address);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG , "CABleGattDiscoverCharacteristics failed!");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "CABleGattDiscoverCharacteristics failed!");
         bt_gatt_destroy_attribute_handle(stTemp->serviceInfo);
         OICFree(stTemp->address);
         OICFree(stTemp);
@@ -1339,7 +1339,7 @@ void CADiscoverCharThread(void *stServiceInfo)
 CAResult_t CABleGattDiscoverCharacteristics(bt_gatt_attribute_h service,
         const char *remoteAddress)
 {
-    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
+    OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
     VERIFY_NON_NULL_RET(service, NULL, "service is NULL", CA_STATUS_FAILED);
 
@@ -1393,7 +1393,7 @@ void CADiscoverDescriptorThread(void *stServiceInfo)
 
 CAResult_t CABleGattDiscoverDescriptor(bt_gatt_attribute_h service, const char *remoteAddress)
 {
-    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
+    OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
     VERIFY_NON_NULL_RET(service, NULL, "service is NULL", CA_STATUS_FAILED);
 
@@ -1422,7 +1422,7 @@ void CASetCharacteristicDescriptorValueThread(void *stServiceInfo)
     CAResult_t  result = CASetCharacteristicDescriptorValue(stTemp);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG , "CASetCharacteristicDescriptorValue failed!");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "CASetCharacteristicDescriptorValue failed!");
         bt_gatt_destroy_attribute_handle(stTemp->characteristic);
         OICFree(stTemp->desc);
         OICFree(stTemp);
@@ -1544,7 +1544,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
 
     if (0 >= dataLen)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "dataLen is less than or equal zero. Invalid input!");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "dataLen is less than or equal zero. Invalid input!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -1567,7 +1567,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
 
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "CAGetBLEServiceInfoByPosition is failed");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "CAGetBLEServiceInfoByPosition is failed");
         return CA_STATUS_FAILED;
     }
 
@@ -1614,7 +1614,7 @@ CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
 
     if (0 >= dataLen)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "dataLen is less than or equal zero. Invalid input !");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "dataLen is less than or equal zero. Invalid input !");
         return CA_STATUS_INVALID_PARAM;
     }
 

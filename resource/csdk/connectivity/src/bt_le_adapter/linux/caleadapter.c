@@ -34,7 +34,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
                           u_thread_pool_t handle)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAInitializeLE");
+    OIC_LOG(DEBUG, TAG, "CAInitializeLE");
 
     g_leReceivedCallback = reqRespCallback;
     g_threadPoolHandle = handle;
@@ -60,62 +60,62 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLE");
+    OIC_LOG(DEBUG, TAG, "CAStartLE");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartLEListeningServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLEListeningServer");
+    OIC_LOG(DEBUG, TAG, "CAStartLEListeningServer");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartLEDiscoveryServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLEDiscoveryServer");
+    OIC_LOG(DEBUG, TAG, "CAStartLEDiscoveryServer");
 
     return CA_STATUS_OK;
 }
 
 int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendLEUnicastData");
+    OIC_LOG(DEBUG, TAG, "CASendLEUnicastData");
 
     return -1;
 }
 
 int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendLEMulticastData");
+    OIC_LOG(DEBUG, TAG, "CASendLEMulticastData");
 
     return -1;
 }
 
 CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAGetLEInterfaceInformation");
+    OIC_LOG(DEBUG, TAG, "CAGetLEInterfaceInformation");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAReadLEData()
 {
-    OIC_LOG_V(DEBUG, TAG, "Read LE Data");
+    OIC_LOG(DEBUG, TAG, "Read LE Data");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStopLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStopLE");
+    OIC_LOG(DEBUG, TAG, "CAStopLE");
 
     return CA_STATUS_OK;
 }
 
 void CATerminateLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "TerminatLE");
+    OIC_LOG(DEBUG, TAG, "TerminatLE");
 }
 

@@ -92,7 +92,7 @@ static void CALENetStateChangeCallback(const char* address, const uint32_t statu
         CALocalConnectivity_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_LE, address);
         if (!localEndpoint)
         {
-            OIC_LOG_V(ERROR, TAG, "Out of memory");
+            OIC_LOG(ERROR, TAG, "Out of memory");
             return;
         }
 
@@ -139,7 +139,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLE");
+    OIC_LOG(DEBUG, TAG, "CAStartLE");
     //CANativeLEStartScan();
 
     return CA_STATUS_OK;
@@ -147,7 +147,7 @@ CAResult_t CAStartLE()
 
 CAResult_t CAStartLEListeningServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLEListeningServer");
+    OIC_LOG(DEBUG, TAG, "CAStartLEListeningServer");
 
     g_isBluetoothGattServer = JNI_TRUE;
 
@@ -159,7 +159,7 @@ CAResult_t CAStartLEListeningServer()
 
 CAResult_t CAStartLEDiscoveryServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLEDiscoveryServer");
+    OIC_LOG(DEBUG, TAG, "CAStartLEDiscoveryServer");
 
     g_isBluetoothGattServer = JNI_FALSE;
 
@@ -174,12 +174,12 @@ int32_t CASendLEUnicastData(const CARemoteEndpoint_t* endpoint, const void* data
 
     if (g_isBluetoothGattServer == JNI_FALSE)
     {
-        OIC_LOG_V(DEBUG, TAG, "CALESendUnicastData");
+        OIC_LOG(DEBUG, TAG, "CALESendUnicastData");
         CALESendUnicastMessage(endpoint->addressInfo.BT.btMacAddress, data, dataLen);
     }
     else
     {
-        OIC_LOG_V(DEBUG, TAG, "CALEServerSendUnicastData");
+        OIC_LOG(DEBUG, TAG, "CALEServerSendUnicastData");
         CALEServerSendUnicastMessage(endpoint->addressInfo.BT.btMacAddress, data, dataLen);
     }
 
@@ -190,12 +190,12 @@ int32_t CASendLEMulticastData(const void* data, uint32_t dataLen)
 {
     if (g_isBluetoothGattServer == JNI_FALSE)
     {
-        OIC_LOG_V(DEBUG, TAG, "CASendLEMulticastData");
+        OIC_LOG(DEBUG, TAG, "CASendLEMulticastData");
         CALESendMulticastMessage(data, dataLen);
     }
     else
     {
-        OIC_LOG_V(DEBUG, TAG, "CALEServerSendMulticastMessage");
+        OIC_LOG(DEBUG, TAG, "CALEServerSendMulticastMessage");
         CALEServerSendMulticastMessage(data, dataLen);
     }
 
@@ -204,7 +204,7 @@ int32_t CASendLEMulticastData(const void* data, uint32_t dataLen)
 
 CAResult_t CAStartLENotifyServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLENotifyServer");
+    OIC_LOG(DEBUG, TAG, "CAStartLENotifyServer");
 
     return CA_STATUS_OK;
 }
@@ -214,12 +214,12 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, const void* da
 {
     if (g_isBluetoothGattServer == JNI_FALSE)
     {
-        OIC_LOG_V(DEBUG, TAG, "not server mode");
+        OIC_LOG(DEBUG, TAG, "not server mode");
         return -1;
     }
     else
     {
-        OIC_LOG_V(DEBUG, TAG, "CALEServerSendLEUnicastData");
+        OIC_LOG(DEBUG, TAG, "CALEServerSendLEUnicastData");
         CALEServerSendUnicastMessage(endpoint->addressInfo.BT.btMacAddress, data, dataLen);
     }
 
@@ -228,7 +228,7 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, const void* da
 
 CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t** info, uint32_t* size)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAGetLEInterfaceInformation");
+    OIC_LOG(DEBUG, TAG, "CAGetLEInterfaceInformation");
 
     CALocalConnectivity_t *netInfo = NULL;
 
@@ -237,7 +237,7 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t** info, uint32_t* s
     netInfo = (CALocalConnectivity_t *) OICMalloc(sizeof(CALocalConnectivity_t) * netInfoSize);
     if (NULL == netInfo)
     {
-        OIC_LOG_V(ERROR, TAG, "Invalid input..");
+        OIC_LOG(ERROR, TAG, "Invalid input..");
         return CA_MEMORY_ALLOC_FAILED;
     }
     memset(netInfo, 0, sizeof(CALocalConnectivity_t) * netInfoSize);
@@ -281,7 +281,7 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t** info, uint32_t* s
 
 CAResult_t CAReadLEData()
 {
-    OIC_LOG_V(DEBUG, TAG, "Read LE Data");
+    OIC_LOG(DEBUG, TAG, "Read LE Data");
 
     return CA_STATUS_OK;
 }
@@ -291,12 +291,12 @@ CAResult_t CAStopLE()
 
     if (g_isBluetoothGattServer == JNI_FALSE)
     {
-        OIC_LOG_V(DEBUG, TAG, "CA Stop LE Scan");
+        OIC_LOG(DEBUG, TAG, "CA Stop LE Scan");
         CANativeLEStopScan();
     }
     else
     {
-        OIC_LOG_V(DEBUG, TAG, "CA Stop Gatt Server");
+        OIC_LOG(DEBUG, TAG, "CA Stop Gatt Server");
     }
 
     return CA_STATUS_OK;
@@ -306,12 +306,12 @@ void CATerminateLE()
 {
     if (g_isBluetoothGattServer == JNI_FALSE)
     {
-        OIC_LOG_V(DEBUG, TAG, "Terminat Gatt Client");
+        OIC_LOG(DEBUG, TAG, "Terminat Gatt Client");
         CALETerminate();
     }
     else
     {
-        OIC_LOG_V(DEBUG, TAG, "Terminat Gatt Server");
+        OIC_LOG(DEBUG, TAG, "Terminat Gatt Server");
         CALEServerTerminate();
     }
 }

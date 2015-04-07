@@ -653,7 +653,7 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
         return;
     }
 
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Sending data up !");
+    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "Sending data up !");
     u_mutex_lock(g_bleClientBDAddressMutex);
     uint32_t sentLength = 0;
     g_bleServerDataReceivedCallback(g_remoteClientAddress, OIC_BLE_SERVICE_ID,

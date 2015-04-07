@@ -40,14 +40,14 @@ static int32_t g_maxPendingConnections = 10;
 
 CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, u_thread_pool_t handle)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "Service UUID is null");
     VERIFY_NON_NULL(serverFD, EDR_ADAPTER_TAG, "Server fd holder is null");
 
     if (!serviceUUID[0])
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: Empty service uuid!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Empty service uuid!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -62,7 +62,7 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, u_thread_poo
 
     if (isRunning)
     {
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Service is already running with this UUID!");
+        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Service is already running with this UUID!");
         return CA_SERVER_STARTED_ALREADY;
     }
 
@@ -90,13 +90,13 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, u_thread_poo
 
     *serverFD = socketFD;
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRServerStop(int serverFD)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     bt_error_e err = bt_socket_destroy_rfcomm(serverFD);
     if (BT_ERROR_NONE != err)
@@ -106,7 +106,7 @@ CAResult_t CAEDRServerStop(int serverFD)
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -118,8 +118,8 @@ void CAEDRServerTerminate()
 
 CAResult_t CAEDRManagerReadData(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_NOT_SUPPORTED;
 }
 

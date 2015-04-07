@@ -201,7 +201,7 @@ void CAWiFiNotifyNetworkChange(const char *address, uint16_t port,
     CALocalConnectivity_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_WIFI, address);
     if (!localEndpoint)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Out of memory");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Out of memory");
         return;
     }
 
@@ -562,7 +562,7 @@ int32_t CASendWIFIData(const CARemoteEndpoint_t *remoteEndpoint, const void *dat
 
     if (0 == dataLength)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Invalid Data Length");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Invalid Data Length");
         return dataSize;
     }
 
@@ -570,7 +570,7 @@ int32_t CASendWIFIData(const CARemoteEndpoint_t *remoteEndpoint, const void *dat
     CAWiFiData *wifiData = CACreateWiFiData(remoteEndpoint, data, dataLength);
     if (!wifiData)
     {
-        OIC_LOG_V(ERROR, WIFI_ADAPTER_TAG, "Failed to create wifidata!");
+        OIC_LOG(ERROR, WIFI_ADAPTER_TAG, "Failed to create wifidata!");
         return dataSize;
     }
 

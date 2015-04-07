@@ -315,7 +315,7 @@ static void CAReceiveHandler(void *data)
         char *netMask = NULL;
         if (CA_STATUS_OK != CAEthernetGetInterfaceSubnetMask(&netMask))
         {
-            OIC_LOG_V(ERROR, ETHERNET_SERVER_TAG, "Failed to get ethernet subnet");
+            OIC_LOG(ERROR, ETHERNET_SERVER_TAG, "Failed to get ethernet subnet");
             continue;
         }
 
@@ -355,7 +355,7 @@ static void CAReceiveHandler(void *data)
 #endif //__WITH_DTLS__
             default:
                 // Should never occur
-                OIC_LOG_V(DEBUG, ETHERNET_SERVER_TAG, "Invalid server type");
+                OIC_LOG(DEBUG, ETHERNET_SERVER_TAG, "Invalid server type");
                 if (ctx->stopFd != -1)
                 {
                     close(ctx->stopFd);
@@ -673,7 +673,7 @@ CAResult_t CAEthernetStartUnicastServer(const char *localAddress, uint16_t *port
 
     if (0 >= *port)
     {
-        OIC_LOG_V(ERROR, ETHERNET_SERVER_TAG, "Invalid input: port is invalid!");
+        OIC_LOG(ERROR, ETHERNET_SERVER_TAG, "Invalid input: port is invalid!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -695,7 +695,7 @@ CAResult_t CAEthernetStartUnicastServer(const char *localAddress, uint16_t *port
         if (CA_STATUS_OK != CAStartUnicastServer(localAddress, port, forceStart, isSecured,
                 &g_unicastServerSocketFD))
         {
-            OIC_LOG_V(ERROR, ETHERNET_SERVER_TAG, "Failed to start unicast server!");
+            OIC_LOG(ERROR, ETHERNET_SERVER_TAG, "Failed to start unicast server!");
             g_unicastServerSocketFD = -1;
             u_mutex_unlock(g_mutexUnicastServer);
             return CA_STATUS_FAILED;
@@ -722,7 +722,7 @@ CAResult_t CAEthernetStartUnicastServer(const char *localAddress, uint16_t *port
         if (CA_STATUS_OK != CAStartUnicastServer(localAddress, port, forceStart, isSecured,
                 &g_secureUnicastServerSocketFD))
         {
-            OIC_LOG_V(ERROR, ETHERNET_SERVER_TAG, "Failed to start unicast server!");
+            OIC_LOG(ERROR, ETHERNET_SERVER_TAG, "Failed to start unicast server!");
             g_secureUnicastServerSocketFD = -1;
             u_mutex_unlock(g_mutexSecureUnicastServer);
             return CA_STATUS_FAILED;
@@ -749,7 +749,7 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress,
     uint16_t port = multicastPort;
     if (0 >= port)
     {
-        OIC_LOG_V(ERROR, ETHERNET_SERVER_TAG, "Invalid input: Multicast port is invalid!");
+        OIC_LOG(ERROR, ETHERNET_SERVER_TAG, "Invalid input: Multicast port is invalid!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -757,7 +757,7 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress,
 
     if (g_multicastServerSocketFD != -1)
     {
-        OIC_LOG_V(ERROR, ETHERNET_SERVER_TAG, "Multicast Server is already running!");
+        OIC_LOG(ERROR, ETHERNET_SERVER_TAG, "Multicast Server is already running!");
         u_mutex_unlock(g_mutexMulticastServer);
         return CA_SERVER_STARTED_ALREADY;
     }

@@ -40,14 +40,14 @@ extern void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallbac
 
 CAResult_t CAInitialize()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAInitialize");
+    OIC_LOG(DEBUG, TAG, "CAInitialize");
 
     return CAInitializeMessageHandler();;
 }
 
 void CATerminate()
 {
-    OIC_LOG_V(DEBUG, TAG, "CATerminate");
+    OIC_LOG(DEBUG, TAG, "CATerminate");
 
     CATerminateMessageHandler();
 
@@ -56,21 +56,21 @@ void CATerminate()
 
 CAResult_t CAStartListeningServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartListeningServer");
+    OIC_LOG(DEBUG, TAG, "CAStartListeningServer");
 
     return CAStartListeningServerAdapters();
 }
 
 CAResult_t CAStartDiscoveryServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartDiscoveryServer");
+    OIC_LOG(DEBUG, TAG, "CAStartDiscoveryServer");
 
     return CAStartDiscoveryServerAdapters();
 }
 
 void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
 {
-    OIC_LOG_V(DEBUG, TAG, "CARegisterHandler");
+    OIC_LOG(DEBUG, TAG, "CARegisterHandler");
 
     CASetRequestResponseCallbacks(ReqHandler, RespHandler);
 }
@@ -88,13 +88,13 @@ CAResult_t CARegisterDTLSCredentialsHandler(
 CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
     const CAConnectivityType_t connectivityType,CARemoteEndpoint_t **remoteEndpoint)
 {
-    OIC_LOG_V(DEBUG, TAG, "CACreateRemoteEndpoint");
+    OIC_LOG(DEBUG, TAG, "CACreateRemoteEndpoint");
 
     CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri, connectivityType);
 
     if (remote == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "remote is NULL!");
+        OIC_LOG(DEBUG, TAG, "remote is NULL!");
         return CA_STATUS_FAILED;
     }
 
@@ -105,35 +105,35 @@ CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
 
 void CADestroyRemoteEndpoint(CARemoteEndpoint_t *rep)
 {
-    OIC_LOG_V(DEBUG, TAG, "CADestroyRemoteEndpoint");
+    OIC_LOG(DEBUG, TAG, "CADestroyRemoteEndpoint");
 
     CADestroyRemoteEndpointInternal(rep);
 }
 
 CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAGenerateToken");
+    OIC_LOG(DEBUG, TAG, "CAGenerateToken");
 
     return CAGenerateTokenInternal(token, tokenLength);
 }
 
 void CADestroyToken(CAToken_t token)
 {
-    OIC_LOG_V(DEBUG, TAG, "CADestroyToken");
+    OIC_LOG(DEBUG, TAG, "CADestroyToken");
 
     CADestroyTokenInternal(token);
 }
 
 CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAGetNetworkInformation");
+    OIC_LOG(DEBUG, TAG, "CAGetNetworkInformation");
 
     return CAGetNetworkInformationInternal(info, size);
 }
 
 CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint8_t tokenLength)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAFindResource");
+    OIC_LOG(DEBUG, TAG, "CAFindResource");
 
     return CADetachMessageResourceUri(resourceUri, token, tokenLength, NULL, 0);
 
@@ -141,7 +141,7 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint
 
 CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t *requestInfo)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendGetRequest");
+    OIC_LOG(DEBUG, TAG, "CASendGetRequest");
 
     return CADetachRequestMessage(object, requestInfo);
 }
@@ -149,7 +149,7 @@ CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t 
 CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
                               const CARequestInfo_t *requestInfo)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendRequestToAll");
+    OIC_LOG(DEBUG, TAG, "CASendRequestToAll");
 
     return CADetachRequestToAllMessage(object, requestInfo);
 }
@@ -157,7 +157,7 @@ CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
 CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
     const CAResponseInfo_t *responseInfo)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendNotification");
+    OIC_LOG(DEBUG, TAG, "CASendNotification");
 
     return CADetachResponseMessage(object, responseInfo);
 
@@ -166,7 +166,7 @@ CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
 CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
     const CAResponseInfo_t *responseInfo)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendResponse");
+    OIC_LOG(DEBUG, TAG, "CASendResponse");
 
     return CADetachResponseMessage(object, responseInfo);
 
@@ -176,7 +176,7 @@ CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
                                uint8_t tokenLength, const CAHeaderOption_t *options,
                                const uint8_t numOptions)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAAdvertiseResource");
+    OIC_LOG(DEBUG, TAG, "CAAdvertiseResource");
 
     return CADetachMessageResourceUri(resourceUri, token, tokenLength, options, numOptions);
 
@@ -258,7 +258,7 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 
 CAResult_t CAHandleRequestResponse()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAHandleRequestResponse");
+    OIC_LOG(DEBUG, TAG, "CAHandleRequestResponse");
 
     CAHandleRequestResponseCallbacks();
 

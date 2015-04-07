@@ -117,7 +117,7 @@ void CASendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus);
 
 CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     g_threadPool = threadPool;
 
@@ -135,13 +135,13 @@ CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 
     g_nwConnectivityStatus = (g_wifiIPAddress) ? CA_INTERFACE_UP : CA_INTERFACE_DOWN;
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CAWiFiTerminateNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     g_threadPool = NULL;
 
@@ -173,12 +173,12 @@ void CAWiFiTerminateNetworkMonitor(void)
         g_wifiNetInfoMutex = NULL;
     }
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
 }
 
 CAResult_t CAWiFiStartNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     u_mutex_lock(g_wifiNetInfoMutex);
     g_stopNetworkMonitor = false;
@@ -190,7 +190,7 @@ CAResult_t CAWiFiStartNetworkMonitor(void)
 
 CAResult_t CAWiFiStopNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     u_mutex_lock(g_wifiNetInfoMutex);
 
@@ -205,13 +205,13 @@ CAResult_t CAWiFiStopNetworkMonitor(void)
 
     u_mutex_unlock(g_wifiNetInfoMutex);
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     VERIFY_NON_NULL(interfaceName, WIFI_MONITOR_TAG, "interface name");
     VERIFY_NON_NULL(ipAddress, WIFI_MONITOR_TAG, "ip address");
@@ -221,7 +221,7 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
     if(g_wifiInterfaceName == NULL || g_wifiIPAddress == NULL)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Network not enabled");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "Network not enabled");
         return CA_ADAPTER_NOT_ENABLED;
 
     }
@@ -239,14 +239,14 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
 CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     VERIFY_NON_NULL(subnetMask, WIFI_MONITOR_TAG, "subnet mask");
 
     u_mutex_lock(g_wifiNetInfoMutex);
     if(NULL == g_wifiSubnetMask)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "There is no subnet mask information!");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "There is no subnet mask information!");
         u_mutex_unlock(g_wifiNetInfoMutex);
         return CA_STATUS_FAILED;
     }
@@ -255,7 +255,7 @@ CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask)
                                : NULL;
     u_mutex_unlock(g_wifiNetInfoMutex);
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -267,11 +267,11 @@ bool CAWiFiIsConnected(void)
 void CAWiFiSetConnectionStateChangeCallback(
     CAWiFiConnectionStateChangeCallback callback)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     g_networkChangeCb = callback;
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
 }
 
 void CAWiFiUpdateInterfaceInformation(char **interfaceName, char **ipAddress,
@@ -386,7 +386,7 @@ void CAWiFiUpdateInterfaceInformation(char **interfaceName, char **ipAddress,
         }
         else
         {
-            OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "did not match name : wlan");
+            OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "did not match name : wlan");
         }
 
         OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG,
@@ -401,24 +401,24 @@ void CAWiFiUpdateInterfaceInformation(char **interfaceName, char **ipAddress,
 
 void CAWiFiJniInit(JavaVM* jvm)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] CAWiFiJniInit");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] CAWiFiJniInit");
     g_jvm = jvm;
 }
 
 void CAJniSetContext(jobject context)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "caWifiSetObject");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "caWifiSetObject");
     g_context = context;
 }
 
 void CACreateWiFiJNIInterfaceObject(jobject context)
 {
     JNIEnv* env;
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] CACreateWiFiJNIInterfaceObject");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] CACreateWiFiJNIInterfaceObject");
 
     if ((*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get JNIEnv pointer");
         return;
     }
 
@@ -426,7 +426,7 @@ void CACreateWiFiJNIInterfaceObject(jobject context)
     jclass contextClass = (*env)->FindClass(env, "android/content/Context");
     if (contextClass == 0)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get context object class");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get context object class");
         return;
     }
 
@@ -434,7 +434,7 @@ void CACreateWiFiJNIInterfaceObject(jobject context)
             "getApplicationContext", "()Landroid/content/Context;");
     if (getApplicationContextMethod == 0)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get getApplicationContext method");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get getApplicationContext method");
         return;
     }
 
@@ -445,7 +445,7 @@ void CACreateWiFiJNIInterfaceObject(jobject context)
     jclass WiFiJniInterface = (*env)->FindClass(env, "com/iotivity/jar/CAWiFiInterface");
     if (!WiFiJniInterface)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get CAWiFiInterface class");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get CAWiFiInterface class");
         return;
     }
 
@@ -453,13 +453,13 @@ void CACreateWiFiJNIInterfaceObject(jobject context)
             WiFiJniInterface, "<init>", "(Landroid/content/Context;)V");
     if (!WiFiInterfaceConstructorMethod)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get CAWiFiInterface constructor method");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] Could not get CAWiFiInterface constructor method");
         return;
     }
 
     (*env)->NewObject(env, WiFiJniInterface, WiFiInterfaceConstructorMethod, gApplicationContext);
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore]Create CAWiFiInterface instance");
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] NewObject Successs");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore]Create CAWiFiInterface instance");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WIFICore] NewObject Successs");
 
 }
 
@@ -481,7 +481,7 @@ void CASendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus)
 
     if(NULL == g_networkChangeCb)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] g_networkChangeCb is NULL");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] g_networkChangeCb is NULL");
         u_mutex_lock(g_wifiNetInfoMutex);
         return;
     }
@@ -508,11 +508,11 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_cawifiinterface_CAWiFiStateEnabled
   (JNIEnv *env, jclass class)
 {
     CANetworkStatus_t currNetworkStatus = CA_INTERFACE_UP;
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] CAWiFiStateEnabled");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] CAWiFiStateEnabled");
 
     if (currNetworkStatus == g_nwConnectivityStatus)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] Network State not changed");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] Network State not changed");
         return;
     }
 
@@ -524,11 +524,11 @@ JNIEXPORT void JNICALL Java_com_iotivity_jar_cawifiinterface_CAWiFiStateDisabled
   (JNIEnv *env, jclass class)
 {
     CANetworkStatus_t currNetworkStatus = CA_INTERFACE_DOWN;
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] CAWiFiStateDisabled");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] CAWiFiStateDisabled");
 
     if (currNetworkStatus == g_nwConnectivityStatus)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] Network State not changed");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "[WiFiCore] Network State not changed");
         return;
     }
     CASendNetworkChangeCallback(currNetworkStatus);

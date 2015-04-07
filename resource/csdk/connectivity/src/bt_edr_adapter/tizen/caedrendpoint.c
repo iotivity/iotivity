@@ -32,14 +32,14 @@
 CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength,
                          uint32_t *sentDataLen)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
     VERIFY_NON_NULL(sentDataLen, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
     if (0 > serverFD)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative socket id");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative socket id");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -52,7 +52,7 @@ CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength,
     }
 
     *sentDataLen = dataLen;
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 

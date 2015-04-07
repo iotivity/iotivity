@@ -119,7 +119,7 @@ static void CANetworkMonitorThread(void *threadData);
 
 CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
 
     g_threadPool = threadPool;
 
@@ -135,13 +135,13 @@ CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 
     nwConnectivityStatus = (g_ethernetIPAddress) ? CA_INTERFACE_UP : CA_INTERFACE_DOWN;
 
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CAEthernetTerminateNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
 
     g_threadPool = NULL;
 
@@ -169,18 +169,18 @@ void CAEthernetTerminateNetworkMonitor(void)
         g_ethernetNetInfoMutex = NULL;
     }
 
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
 }
 
 CAResult_t CAEthernetStartNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
 
     g_stopNetworkMonitor = false;
 
     if (g_stopNetworkMonitor)
     {
-        OIC_LOG_V(ERROR, ETHERNET_MONITOR_TAG, "Stop network monitor requested");
+        OIC_LOG(ERROR, ETHERNET_MONITOR_TAG, "Stop network monitor requested");
         return CA_STATUS_FAILED;
     }
 
@@ -197,7 +197,7 @@ CAResult_t CAEthernetStartNetworkMonitor(void)
 
 CAResult_t CAEthernetStopNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
 
     if (g_stopNetworkMonitor)
     {
@@ -207,13 +207,13 @@ CAResult_t CAEthernetStopNetworkMonitor(void)
 
     g_stopNetworkMonitor = true;
 
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
 
     VERIFY_NON_NULL(interfaceName, ETHERNET_MONITOR_TAG, "interface name");
     VERIFY_NON_NULL(ipAddress, ETHERNET_MONITOR_TAG, "ip address");
@@ -222,7 +222,7 @@ CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
     u_mutex_lock(g_ethernetNetInfoMutex);
     if (g_ethernetInterfaceName == NULL || g_ethernetIPAddress == NULL)
     {
-        OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "Network not enabled");
+        OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "Network not enabled");
 
         u_mutex_unlock(g_ethernetNetInfoMutex);
         return CA_ADAPTER_NOT_ENABLED;
@@ -235,20 +235,20 @@ CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
     u_mutex_unlock(g_ethernetNetInfoMutex);
 
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEthernetGetInterfaceSubnetMask(char **subnetMask)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
 
     VERIFY_NON_NULL(subnetMask, ETHERNET_MONITOR_TAG, "subnet mask");
 
     u_mutex_lock(g_ethernetNetInfoMutex);
     if (NULL == g_ethernetSubnetMask)
     {
-        OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "There is no subnet mask information!");
+        OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "There is no subnet mask information!");
 
         u_mutex_unlock(g_ethernetNetInfoMutex);
         return CA_STATUS_FAILED;
@@ -259,21 +259,21 @@ CAResult_t CAEthernetGetInterfaceSubnetMask(char **subnetMask)
                   : NULL;
     u_mutex_unlock(g_ethernetNetInfoMutex);
 
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 bool CAEthernetIsConnected(void)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
 
     if (CA_INTERFACE_DOWN == nwConnectivityStatus) {
-        OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+        OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
 
         return false;
     }
 
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
 
     return true;
 }
@@ -281,10 +281,10 @@ bool CAEthernetIsConnected(void)
 void CAEthernetSetConnectionStateChangeCallback
     (CAEthernetConnectionStateChangeCallback callback)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
     g_networkChangeCb = callback;
 
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
 }
 
 void CAEthernetGetInterfaceInformation(char **interfaceName,
@@ -367,7 +367,7 @@ void CAEthernetGetInterfaceInformation(char **interfaceName,
 
 void CANetworkMonitorThread(void *threadData)
 {
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "IN");
 
     while (!g_stopNetworkMonitor)
     {
@@ -409,6 +409,6 @@ void CANetworkMonitorThread(void *threadData)
         OICFree(subnetMask);
     }
 
-    OIC_LOG_V(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
 }
 

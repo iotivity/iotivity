@@ -218,7 +218,7 @@ static void CAReceiveHandler(void *data)
         if(NULL == srcIPAddress)
         {
             OICFree(ctx);
-            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Error in OICStrdup, exit CAReceiveHandler");
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Error in OICStrdup, exit CAReceiveHandler");
             break;
         }
 
@@ -230,7 +230,7 @@ static void CAReceiveHandler(void *data)
         char *netMask = NULL;
         if (CA_STATUS_OK != CAWiFiGetInterfaceSubnetMask(&netMask))
         {
-            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to get ethernet subnet");
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to get ethernet subnet");
             OICFree(srcIPAddress);
             continue;
         }
@@ -267,7 +267,7 @@ static void CAReceiveHandler(void *data)
 #endif //__WITH_DTLS__
             default:
                 // Should never occur
-                OIC_LOG_V(DEBUG, WIFI_SERVER_TAG, "Invalid server type");
+                OIC_LOG(DEBUG, WIFI_SERVER_TAG, "Invalid server type");
                 OICFree(srcIPAddress);
                 OICFree(ctx);
                 return;
@@ -543,7 +543,7 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port,
 
     if (0 >= *port)
     {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Invalid input: port is invalid!");
+        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Invalid input: port is invalid!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -565,7 +565,7 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port,
         if (CA_STATUS_OK != CAStartUnicastServer(localAddress, port, forceStart, isSecured,
                 &g_unicastServerSocketFD))
         {
-            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
             close(g_unicastServerSocketFD);
             g_unicastServerSocketFD = -1;
             u_mutex_unlock(g_mutexUnicastServer);
@@ -593,7 +593,7 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port,
         if (CA_STATUS_OK != CAStartUnicastServer(localAddress, port, forceStart, isSecured,
                 &g_secureUnicastServerSocketFD))
         {
-            OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
+            OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
             g_secureUnicastServerSocketFD = -1;
             u_mutex_unlock(g_mutexSecureUnicastServer);
             return CA_STATUS_FAILED;
@@ -620,7 +620,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
     uint16_t port = multicastPort;
     if (0 >= port)
     {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Invalid input: Multicast port is invalid!");
+        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Invalid input: Multicast port is invalid!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -628,7 +628,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
 
     if (g_multicastServerSocketFD != -1)
     {
-        OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Multicast Server is already running!");
+        OIC_LOG(ERROR, WIFI_SERVER_TAG, "Multicast Server is already running!");
         u_mutex_unlock(g_mutexMulticastServer);
         return CA_SERVER_STARTED_ALREADY;
     }

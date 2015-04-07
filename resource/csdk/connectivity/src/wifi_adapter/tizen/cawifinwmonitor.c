@@ -82,13 +82,13 @@ static void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress
 
 CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     // Initialize Wifi service
     wifi_error_e ret = wifi_initialize();
     if (WIFI_ERROR_NONE != ret)
     {
-        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "wifi_initialize failed");
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "wifi_initialize failed");
         return CA_STATUS_FAILED;
     }
 
@@ -97,19 +97,19 @@ CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
         g_wifiNetInfoMutex = u_mutex_new();
     }
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CAWiFiTerminateNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     // Deinitialize Wifi service
     wifi_error_e ret = wifi_deinitialize();
     if (WIFI_ERROR_NONE != ret)
     {
-        OIC_LOG_V(INFO, WIFI_MONITOR_TAG, "wifi_deinitialize failed");
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_deinitialize failed");
     }
 
     if (g_wifiInterfaceName)
@@ -136,18 +136,18 @@ void CAWiFiTerminateNetworkMonitor(void)
         g_wifiNetInfoMutex = NULL;
     }
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
 }
 
 CAResult_t CAWiFiStartNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     // Set callback for receiving state changes
     wifi_error_e ret = wifi_set_device_state_changed_cb(CAWIFIDeviceStateChangedCb, NULL);
     if (WIFI_ERROR_NONE != ret)
     {
-        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "wifi_set_device_state_changed_cb failed");
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "wifi_set_device_state_changed_cb failed");
         return CA_STATUS_FAILED;
     }
 
@@ -155,41 +155,41 @@ CAResult_t CAWiFiStartNetworkMonitor(void)
     ret = wifi_set_connection_state_changed_cb(CAWIFIConnectionStateChangedCb, NULL);
     if (WIFI_ERROR_NONE != ret)
     {
-        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "wifi_set_connection_state_changed_cb failed");
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "wifi_set_connection_state_changed_cb failed");
         return CA_STATUS_FAILED;
     }
 
     CAWiFiGetInterfaceInformation(&g_wifiInterfaceName, &g_wifiIPAddress, &g_wifiSubnetMask);
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAWiFiStopNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     // Reset callback for receiving state changes
     wifi_error_e ret = wifi_unset_device_state_changed_cb();
     if (WIFI_ERROR_NONE != ret)
     {
-        OIC_LOG_V(INFO, WIFI_MONITOR_TAG, "wifi_unset_device_state_changed_cb failed");
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_unset_device_state_changed_cb failed");
     }
 
     // Reset callback for receiving connection state changes
     ret = wifi_unset_connection_state_changed_cb();
     if (WIFI_ERROR_NONE != ret)
     {
-        OIC_LOG_V(INFO, WIFI_MONITOR_TAG, "wifi_unset_connection_state_changed_cb failed");
+        OIC_LOG(INFO, WIFI_MONITOR_TAG, "wifi_unset_connection_state_changed_cb failed");
     }
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     VERIFY_NON_NULL(interfaceName, WIFI_MONITOR_TAG, "interface name holder is NULL");
     VERIFY_NON_NULL(ipAddress, WIFI_MONITOR_TAG, "IP address holder is NULL");
@@ -198,7 +198,7 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
     if (NULL == g_wifiInterfaceName || NULL == g_wifiIPAddress)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Network not enabled");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "Network not enabled");
         u_mutex_unlock(g_wifiNetInfoMutex);
         return CA_ADAPTER_NOT_ENABLED;
     }
@@ -215,20 +215,20 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
 
     u_mutex_unlock(g_wifiNetInfoMutex);
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     VERIFY_NON_NULL(subnetMask, WIFI_MONITOR_TAG, "subnet mask");
 
     u_mutex_lock(g_wifiNetInfoMutex);
     if (NULL == g_wifiSubnetMask)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "There is no subnet mask information!");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "There is no subnet mask information!");
         u_mutex_unlock(g_wifiNetInfoMutex);
         return CA_STATUS_FAILED;
     }
@@ -236,36 +236,36 @@ CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask)
     *subnetMask = (g_wifiSubnetMask) ? OICStrdup((const char *)g_wifiSubnetMask): NULL;
     u_mutex_unlock(g_wifiNetInfoMutex);
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 bool CAWiFiIsConnected(void)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     wifi_connection_state_e connection_state;
     wifi_error_e ret = wifi_get_connection_state(&connection_state);
     if (WIFI_ERROR_NONE != ret)
     {
-        OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get the Connection State");
+        OIC_LOG(ERROR, WIFI_MONITOR_TAG, "Failed to get the Connection State");
         return false;
     }
 
     if (WIFI_CONNECTION_STATE_DISCONNECTED == connection_state)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "WIFI is not Connected");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "WIFI is not Connected");
         return false;
     }
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return true;
 }
 
 void CAWiFiSetConnectionStateChangeCallback(
     CAWiFiConnectionStateChangeCallback callback)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     g_networkChangeCb = callback;
 }
@@ -273,12 +273,12 @@ void CAWiFiSetConnectionStateChangeCallback(
 void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
                                     void *userData)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     if (WIFI_CONNECTION_STATE_ASSOCIATION == state
         || WIFI_CONNECTION_STATE_CONFIGURATION == state)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Connection is in Association State");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "Connection is in Association State");
         return;
     }
 
@@ -317,31 +317,31 @@ void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
         g_networkChangeCb(g_wifiIPAddress, nwStatus);
     }
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return;
 }
 
 void CAWIFIDeviceStateChangedCb(wifi_device_state_e state, void *userData)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     if (WIFI_DEVICE_STATE_ACTIVATED == state)
     {
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Wifi is in Activated State");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "Wifi is in Activated State");
     }
     else
     {
         CAWIFIConnectionStateChangedCb(WIFI_CONNECTION_STATE_DISCONNECTED, NULL, NULL);
-        OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "Wifi is in Deactivated State");
+        OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "Wifi is in Deactivated State");
     }
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return;
 }
 
 void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char **subnetMask)
 {
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
     int ret = WIFI_ERROR_NONE;
 
@@ -400,6 +400,6 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
 
     u_mutex_unlock(g_wifiNetInfoMutex);
 
-    OIC_LOG_V(DEBUG, WIFI_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
 }
 

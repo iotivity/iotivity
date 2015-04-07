@@ -47,7 +47,7 @@ static void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapt
 
 CAResult_t CAEDRInitializeNetworkMonitor()
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Initialize Bluetooth service
     int err = bt_initialize();
@@ -58,48 +58,48 @@ CAResult_t CAEDRInitializeNetworkMonitor()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CAEDRTerminateNetworkMonitor(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     g_edrNetworkChangeCallback = NULL;
 
     // Terminate Bluetooth service
     bt_deinitialize();
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 CAResult_t CAEDRStartNetworkMonitor()
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     int ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
     if(BT_ERROR_NONE != ret)
     {
-       OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
+       OIC_LOG(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
        return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRStopNetworkMonitor()
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
     // Unset bluetooth adapter callbacks
     int ret = bt_adapter_unset_state_changed_cb();
     if(BT_ERROR_NONE != ret)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
         return CA_STATUS_FAILED;
     }
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -111,7 +111,7 @@ void CAEDRSetNetworkChangeCallback(
 
 CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
     VERIFY_NON_NULL(info, EDR_ADAPTER_TAG, "LocalConnectivity info is null");
@@ -131,7 +131,7 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
     *info = CAAdapterCreateLocalEndpoint(CA_EDR, localAddress);
     if (NULL == *info)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to create LocalConnectivity instance!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create LocalConnectivity instance!");
 
         OICFree(localAddress);
         return CA_MEMORY_ALLOC_FAILED;
@@ -139,13 +139,13 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
 
     OICFree(localAddress);
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRGetAdapterEnableState(bool *state)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
     VERIFY_NON_NULL(state, EDR_ADAPTER_TAG, "state holder is NULL!");
@@ -168,14 +168,14 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
         *state = true;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState,
                                      void *userData)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     if (BT_ADAPTER_ENABLED == adapterState)
     {
@@ -194,5 +194,5 @@ void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState
         }
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }

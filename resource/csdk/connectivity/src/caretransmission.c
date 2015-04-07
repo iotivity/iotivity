@@ -356,7 +356,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     if (NULL == pduData)
     {
         OICFree(retData);
-        OIC_LOG_V(ERROR, TAG, "memory error!!");
+        OIC_LOG(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
     }
     memcpy(pduData, pdu, size);
@@ -427,7 +427,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
                                         const CARemoteEndpoint_t *endpoint, const void *pdu,
                                         uint32_t size, void **retransmissionPdu)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN - CARetransmissionReceivedData");
+    OIC_LOG(DEBUG, TAG, "IN - CARetransmissionReceivedData");
     if (NULL == context || NULL == endpoint || NULL == pdu || NULL == retransmissionPdu)
     {
         OIC_LOG(ERROR, TAG, "invalid parameter..");

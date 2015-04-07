@@ -78,11 +78,11 @@ static u_cond g_threadCond;
 //FIXME getting context
 void CALEClientJNISetContext(JNIEnv *env, jobject context)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientJNISetContext");
+    OIC_LOG(DEBUG, TAG, "CALEClientJNISetContext");
 
     if (context == NULL)
     {
-        OIC_LOG_V(ERROR, TAG, "context is null");
+        OIC_LOG(ERROR, TAG, "context is null");
         return;
     }
 
@@ -91,19 +91,19 @@ void CALEClientJNISetContext(JNIEnv *env, jobject context)
 
 void CALeCreateJniInterfaceObject()
 {
-    OIC_LOG_V(DEBUG, TAG, "CALeCreateJniInterfaceObject");
+    OIC_LOG(DEBUG, TAG, "CALeCreateJniInterfaceObject");
 
     jboolean isAttached = JNI_FALSE;
     JNIEnv* env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = JNI_TRUE;
@@ -112,7 +112,7 @@ void CALeCreateJniInterfaceObject()
     jclass LeJniInterface = (*env)->FindClass(env, "com/iotivity/jar/CALeInterface");
     if (!LeJniInterface)
     {
-        OIC_LOG_V(DEBUG, TAG, "Could not get CALeInterface class");
+        OIC_LOG(DEBUG, TAG, "Could not get CALeInterface class");
         return;
     }
 
@@ -120,12 +120,12 @@ void CALeCreateJniInterfaceObject()
                                                                  "(Landroid/content/Context;)V");
     if (!LeInterfaceConstructorMethod)
     {
-        OIC_LOG_V(DEBUG, TAG, "Could not get CALeInterface constructor method");
+        OIC_LOG(DEBUG, TAG, "Could not get CALeInterface constructor method");
         return;
     }
 
     (*env)->NewObject(env, LeJniInterface, LeInterfaceConstructorMethod, g_context);
-    OIC_LOG_V(DEBUG, TAG, "Create CALeInterface instance");
+    OIC_LOG(DEBUG, TAG, "Create CALeInterface instance");
 
     if (isAttached)
     {
@@ -135,7 +135,7 @@ void CALeCreateJniInterfaceObject()
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
-    OIC_LOG_V(DEBUG, TAG, "JNI_OnLoad in calecore");
+    OIC_LOG(DEBUG, TAG, "JNI_OnLoad in calecore");
 
     JNIEnv* env;
     if ((*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
@@ -154,7 +154,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 
 void JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
-    OIC_LOG_V(DEBUG, TAG, "JNI_OnUnload in calecore");
+    OIC_LOG(DEBUG, TAG, "JNI_OnUnload in calecore");
 
     JNIEnv* env;
     if ((*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
@@ -189,12 +189,12 @@ void CALETerminate()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = JNI_TRUE;
@@ -252,7 +252,7 @@ void CALETerminate()
 
 void CANativeSendFinish(JNIEnv *env, jobject gatt)
 {
-    OIC_LOG_V(DEBUG, TAG, "CANativeSendFinish");
+    OIC_LOG(DEBUG, TAG, "CANativeSendFinish");
 
     if (gatt)
     {
@@ -284,11 +284,11 @@ CAResult_t CALEStartUnicastServer(const char* address)
 
 CAResult_t CALEStartMulticastServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEStartMulticastServer");
+    OIC_LOG(DEBUG, TAG, "CALEStartMulticastServer");
 
     if (g_isStartServer)
     {
-        OIC_LOG_V(ERROR, TAG, "server is already started..it will be skipped");
+        OIC_LOG(ERROR, TAG, "server is already started..it will be skipped");
         return CA_STATUS_FAILED;
     }
 
@@ -297,12 +297,12 @@ CAResult_t CALEStartMulticastServer()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return CA_STATUS_FAILED;
         }
         isAttached = JNI_TRUE;
@@ -350,11 +350,11 @@ void CALEGetLocalAddress(char** address)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = JNI_TRUE;
@@ -389,11 +389,11 @@ CAResult_t CALESendUnicastMessageImpl(const char* address, const char* data, con
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return CA_STATUS_FAILED;
         }
         isAttached = JNI_TRUE;
@@ -465,11 +465,11 @@ CAResult_t CALESendMulticastMessageImpl(const char* data, const uint32_t dataLen
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return CA_STATUS_FAILED;
         }
         isAttached = JNI_TRUE;
@@ -617,7 +617,7 @@ void CANativeLEStartScan()
 {
     if (!g_isStartServer)
     {
-        OIC_LOG_V(DEBUG, TAG, "server is not started yet..scan will be passed");
+        OIC_LOG(DEBUG, TAG, "server is not started yet..scan will be passed");
         return;
     }
 
@@ -626,12 +626,12 @@ void CANativeLEStartScan()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
 
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = TRUE;
@@ -813,11 +813,11 @@ void CANativeLEStopScan()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = TRUE;
@@ -976,7 +976,7 @@ void CANativeLEDisconnect(JNIEnv *env, jobject bluetoothGatt)
 
 void CANativeLEDisconnectAll(JNIEnv *env)
 {
-    OIC_LOG_V(DEBUG, TAG, "CANativeLEDisconnectAll");
+    OIC_LOG(DEBUG, TAG, "CANativeLEDisconnectAll");
 
     if (!g_gattObjectList)
     {
@@ -1338,12 +1338,12 @@ void CANativeCreateUUIDList()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if (res != JNI_OK)
         {
-            OIC_LOG_V(ERROR, TAG, "AttachCurrentThread failed");
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = TRUE;
@@ -1388,7 +1388,7 @@ void CANativeCreateScanDeviceList(JNIEnv *env)
     // create new object array
     if (g_deviceList == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Create device list");
+        OIC_LOG(DEBUG, TAG, "Create device list");
 
         g_deviceList = u_arraylist_create();
     }
@@ -1421,7 +1421,7 @@ void CANativeAddScanDeviceToList(JNIEnv *env, jobject device)
     {
         jobject gdevice = (*env)->NewGlobalRef(env, device);
         u_arraylist_add(g_deviceList, gdevice);
-        OIC_LOG_V(DEBUG, TAG, "Set Object to Array as Element");
+        OIC_LOG(DEBUG, TAG, "Set Object to Array as Element");
     }
 }
 
@@ -1450,18 +1450,18 @@ jboolean CANativeIsDeviceInList(JNIEnv *env, const char* remoteAddress)
 
         if (!strcmp(remoteAddress, setAddress))
         {
-            OIC_LOG_V(DEBUG, TAG, "the device is already set");
+            OIC_LOG(DEBUG, TAG, "the device is already set");
             return TRUE;
         }
     }
 
-    OIC_LOG_V(DEBUG, TAG, "there are no the device in list. we can add");
+    OIC_LOG(DEBUG, TAG, "there are no the device in list. we can add");
     return FALSE;
 }
 
 void CANativeRemoveAllDevices(JNIEnv *env)
 {
-    OIC_LOG_V(DEBUG, TAG, "CANativeRemoveAllDevices");
+    OIC_LOG(DEBUG, TAG, "CANativeRemoveAllDevices");
 
     if (!g_deviceList)
     {
@@ -1488,7 +1488,7 @@ void CANativeRemoveAllDevices(JNIEnv *env)
 
 void CANativeRemoveDevice(JNIEnv *env, jstring address)
 {
-    OIC_LOG_V(DEBUG, TAG, "CANativeRemoveDevice");
+    OIC_LOG(DEBUG, TAG, "CANativeRemoveDevice");
 
     if (!g_deviceList)
     {
@@ -1554,7 +1554,7 @@ void CANativeCreateGattObjList(JNIEnv *env)
     // create new object array
     if (g_gattObjectList == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Create Gatt object list");
+        OIC_LOG(DEBUG, TAG, "Create Gatt object list");
 
         g_gattObjectList = u_arraylist_create();
     }
@@ -1589,7 +1589,7 @@ void CANativeAddGattobjToList(JNIEnv *env, jobject gatt)
     {
         jobject gGatt = (*env)->NewGlobalRef(env, gatt);
         u_arraylist_add(g_gattObjectList, gGatt);
-        OIC_LOG_V(DEBUG, TAG, "Set Object to Array as Element");
+        OIC_LOG(DEBUG, TAG, "Set Object to Array as Element");
     }
 }
 
@@ -1619,7 +1619,7 @@ jboolean CANativeIsGattObjInList(JNIEnv *env, const char* remoteAddress)
 
         if (!strcmp(remoteAddress, setAddress))
         {
-            OIC_LOG_V(DEBUG, TAG, "the device is already set");
+            OIC_LOG(DEBUG, TAG, "the device is already set");
             return TRUE;
         }
         else
@@ -1628,13 +1628,13 @@ jboolean CANativeIsGattObjInList(JNIEnv *env, const char* remoteAddress)
         }
     }
 
-    OIC_LOG_V(DEBUG, TAG, "there are no the gatt obejct in list. we can add");
+    OIC_LOG(DEBUG, TAG, "there are no the gatt obejct in list. we can add");
     return FALSE;
 }
 
 void CANativeRemoveAllGattObjsList(JNIEnv *env)
 {
-    OIC_LOG_V(DEBUG, TAG, "CANativeRemoveAllGattObjsList");
+    OIC_LOG(DEBUG, TAG, "CANativeRemoveAllGattObjsList");
 
     if (!g_gattObjectList)
     {
@@ -1661,7 +1661,7 @@ void CANativeRemoveAllGattObjsList(JNIEnv *env)
 
 void CANativeRemoveGattObj(JNIEnv *env, jobject gatt)
 {
-    OIC_LOG_V(DEBUG, TAG, "CANativeRemoveGattObj");
+    OIC_LOG(DEBUG, TAG, "CANativeRemoveGattObj");
 
     if (!g_gattObjectList)
     {
@@ -1757,7 +1757,7 @@ JNIEXPORT void JNICALL
 Java_com_iotivity_jar_caleinterface_CARegisterLeScanCallback(JNIEnv *env, jobject obj,
                                                              jobject callback)
 {
-    OIC_LOG_V(DEBUG, TAG, "CARegisterLeScanCallback");
+    OIC_LOG(DEBUG, TAG, "CARegisterLeScanCallback");
 
     g_leScanCallback = (*env)->NewGlobalRef(env, callback);
 }
@@ -1766,7 +1766,7 @@ JNIEXPORT void JNICALL
 Java_com_iotivity_jar_caleinterface_CARegisterLeGattCallback(JNIEnv *env, jobject obj,
                                                              jobject callback)
 {
-    OIC_LOG_V(DEBUG, TAG, "CARegisterLeGattCallback");
+    OIC_LOG(DEBUG, TAG, "CARegisterLeGattCallback");
 
     g_leGattCallback = (*env)->NewGlobalRef(env, callback);
 }
@@ -1909,7 +1909,7 @@ Java_com_iotivity_jar_caleinterface_CALeGattCharacteristicChangedCallback(JNIEnv
                                                                           jobject characteristic,
                                                                           jbyteArray data)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback");
+    OIC_LOG(DEBUG, TAG, "CALeGattCharacteristicChangedCallback");
 
     // get Byte Array and covert to char*
     jint length = (*env)->GetArrayLength(env, data);
@@ -1920,7 +1920,7 @@ Java_com_iotivity_jar_caleinterface_CALeGattCharacteristicChangedCallback(JNIEnv
     char* recevicedData = (char*) OICMalloc(sizeof(char) * length);
     if (NULL == recevicedData)
     {
-        OIC_LOG_V(ERROR, TAG, "recevicedData is null");
+        OIC_LOG(ERROR, TAG, "recevicedData is null");
         CANativeSendFinish(env, gatt);
 
         return;

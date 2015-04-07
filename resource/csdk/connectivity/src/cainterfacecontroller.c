@@ -37,7 +37,7 @@
 #define TAG PCF("CA")
 
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
-    {OIC_LOG_V(ERROR, TAG, "memory error");goto memory_error_exit;} }
+    {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
 
 #define CA_CONNECTIVITY_TYPE_NUM   4
 
@@ -292,7 +292,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 
     res = CA_STATUS_OK;
 
-    OIC_LOG_V(DEBUG, TAG, "each network info save success!");
+    OIC_LOG(DEBUG, TAG, "each network info save success!");
 
     return res;
 
@@ -317,7 +317,7 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, const void *dat
 
     if (endpoint == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Invalid endpoint");
+        OIC_LOG(DEBUG, TAG, "Invalid endpoint");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -385,7 +385,7 @@ CAResult_t CASendMulticastData(const void *data, uint32_t length)
             void *payload = (void *) OICMalloc(length);
             if (!payload)
             {
-                OIC_LOG_V(ERROR, TAG, "Out of memory!");
+                OIC_LOG(ERROR, TAG, "Out of memory!");
                 return CA_MEMORY_ALLOC_FAILED;
             }
             memcpy(payload, data, length);
@@ -399,7 +399,7 @@ CAResult_t CASendMulticastData(const void *data, uint32_t length)
         }
         else
         {
-            OIC_LOG_V(ERROR, TAG, "sendDataToAll failed!");
+            OIC_LOG(ERROR, TAG, "sendDataToAll failed!");
         }
     }
 
@@ -473,7 +473,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
         if (index == -1)
         {
-            OIC_LOG_V(DEBUG, TAG, "unknown connectivity type!");
+            OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
             continue;
         }
 

@@ -247,7 +247,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     result = CAInitializeLENetworkMonitor();
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "CAInitializeLENetworkMonitor() failed");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLENetworkMonitor() failed");
         return CA_STATUS_FAILED;
     }
 
@@ -853,7 +853,7 @@ CAResult_t CAInitBleServerSenderQueue()
 
     if (CA_STATUS_OK != CAQueueingThreadStart(g_sendQueueHandle))
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
         OICFree(g_sendQueueHandle);
         g_sendQueueHandle = NULL;
         return CA_STATUS_FAILED;
@@ -892,7 +892,7 @@ CAResult_t CAInitBleClientSenderQueue()
 
     if (CA_STATUS_OK != CAQueueingThreadStart(g_bLEClientSendQueueHandle))
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
         OICFree(g_bLEClientSendQueueHandle);
         g_bLEClientSendQueueHandle = NULL;
         return CA_STATUS_FAILED;
@@ -932,7 +932,7 @@ CAResult_t CAInitBleServerReceiverQueue()
 
     if (CA_STATUS_OK != CAQueueingThreadStart(g_bleServerReceiverQueue))
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
         OICFree(g_bleServerReceiverQueue);
         g_bleServerReceiverQueue = NULL;
         return CA_STATUS_FAILED;
@@ -974,7 +974,7 @@ CAResult_t CAInitBleClientReceiverQueue()
     }
     if (CA_STATUS_OK != CAQueueingThreadStart(g_bleClientReceiverQueue))
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
         OICFree(g_bleClientReceiverQueue);
         g_bleClientReceiverQueue = NULL;
         return CA_STATUS_FAILED;
@@ -1046,7 +1046,7 @@ void CATerminateBleQueues()
 }
 void CABLEServerDataReceiverHandler(void *threadData)
 {
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     static uint32_t recvDataLen = 0;
     static uint32_t totalDataLen = 0;
@@ -1058,7 +1058,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
 
     if (g_dataReceiverHandlerState)
     {
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "checking for DE Fragmentation");
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "checking for DE Fragmentation");
 
         CALEData_t *bleData = (CALEData_t *) threadData;
         if (!bleData)
@@ -1067,11 +1067,11 @@ void CABLEServerDataReceiverHandler(void *threadData)
             return;
         }
 
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "checking for DE Fragmentation");
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "checking for DE Fragmentation");
 
         if (!isHeaderAvailable)
         {
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Parsing the header");
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Parsing the header");
             totalDataLen = CAParseHeader((char*)bleData->data);
 
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Total data to be accumulated [%d] bytes", totalDataLen);
@@ -1112,7 +1112,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
                 u_mutex_unlock(g_bleAdapterReqRespCbMutex);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Sending data up !");
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending data up !");
             g_networkPacketReceivedCallback(remoteEndpoint, defragData, recvDataLen);
             recvDataLen = 0;
             totalDataLen = 0;
@@ -1124,7 +1124,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
 
         if (false == g_dataReceiverHandlerState)
         {
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "GATTClient is terminating. Cleaning up");
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "GATTClient is terminating. Cleaning up");
             recvDataLen = 0;
             totalDataLen = 0;
             isHeaderAvailable = false;
@@ -1135,12 +1135,12 @@ void CABLEServerDataReceiverHandler(void *threadData)
         }
     }
     u_mutex_unlock(g_bleClientReceiveDataMutex);
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 void CABLEClientDataReceiverHandler(void *threadData)
 {
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     static const char *remoteAddress = NULL;
     static const char *serviceUUID = NULL;
@@ -1154,7 +1154,7 @@ void CABLEClientDataReceiverHandler(void *threadData)
 
     if (g_dataReceiverHandlerState)
     {
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "checking for DE Fragmentation");
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "checking for DE Fragmentation");
 
         CALEData_t *bleData = (CALEData_t *) threadData;
         if (!bleData)
@@ -1163,11 +1163,11 @@ void CABLEClientDataReceiverHandler(void *threadData)
             return;
         }
 
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "checking for DE Fragmentation");
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "checking for DE Fragmentation");
 
         if (!isHeaderAvailable)
         {
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Parsing the header");
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Parsing the header");
 
             totalDataLen = CAParseHeader(bleData->data);
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Total data to be accumulated [%d] bytes",
@@ -1210,7 +1210,7 @@ void CABLEClientDataReceiverHandler(void *threadData)
                 u_mutex_unlock(g_bleAdapterReqRespCbMutex);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Sending data up !");
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending data up !");
             g_networkPacketReceivedCallback(remoteEndpoint, defragData, recvDataLen);
             recvDataLen = 0;
             totalDataLen = 0;
@@ -1222,7 +1222,7 @@ void CABLEClientDataReceiverHandler(void *threadData)
 
         if (false == g_dataReceiverHandlerState)
         {
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "GATTClient is terminating. Cleaning up");
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "GATTClient is terminating. Cleaning up");
             OICFree(defragData);
             CAAdapterFreeRemoteEndpoint(remoteEndpoint);
             u_mutex_unlock(g_bleClientReceiveDataMutex);
@@ -1230,7 +1230,7 @@ void CABLEClientDataReceiverHandler(void *threadData)
         }
     }
     u_mutex_unlock(g_bleClientReceiveDataMutex);
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
 void CABLEServerSendDataThread(void *threadData)
@@ -1546,7 +1546,7 @@ CAResult_t CABLEClientSendData(const CARemoteEndpoint_t *remoteEndpoint,
     CALEData_t *bleData = CACreateBLEData(remoteEndpoint, data, dataLen);
     if (!bleData)
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
         return CA_MEMORY_ALLOC_FAILED;
     }
     // Add message to send queue
@@ -1582,7 +1582,7 @@ CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
     CALEData_t *bleData = CACreateBLEData(remoteEndpoint, data, dataLen);
     if (!bleData)
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
         return CA_MEMORY_ALLOC_FAILED;
     }
     // Add message to send queue
@@ -1597,7 +1597,7 @@ CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
 CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *serviceUUID,
                                    const void *data, uint32_t dataLength, uint32_t *sentLength)
 {
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     //Input validation
     VERIFY_NON_NULL(serviceUUID, CALEADAPTER_TAG, "service UUID is null");
@@ -1611,7 +1611,7 @@ CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *servic
                                          serviceUUID);
     if (NULL == remoteEndpoint)
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Failed to create remote endpoint !");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create remote endpoint !");
         return CA_STATUS_FAILED;
     }
 
@@ -1621,7 +1621,7 @@ CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *servic
     CALEData_t *bleData = CACreateBLEData(remoteEndpoint, data, dataLength);
     if (!bleData)
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
         CAAdapterFreeRemoteEndpoint(remoteEndpoint);
         return CA_MEMORY_ALLOC_FAILED;
     }
@@ -1632,14 +1632,14 @@ CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *servic
 
     *sentLength = dataLength;
 
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *serviceUUID,
                                    const void *data, uint32_t dataLength, uint32_t *sentLength)
 {
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     //Input validation
     VERIFY_NON_NULL(serviceUUID, CALEADAPTER_TAG, "service UUID is null");
@@ -1653,7 +1653,7 @@ CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *servic
                                          serviceUUID);
     if (NULL == remoteEndpoint)
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Failed to create remote endpoint !");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create remote endpoint !");
         return CA_STATUS_FAILED;
     }
 
@@ -1663,7 +1663,7 @@ CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *servic
     CALEData_t *bleData = CACreateBLEData(remoteEndpoint, data, dataLength);
     if (!bleData)
     {
-        OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
         CAAdapterFreeRemoteEndpoint(remoteEndpoint);
         return CA_MEMORY_ALLOC_FAILED;
     }
@@ -1674,7 +1674,7 @@ CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *servic
 
     *sentLength = dataLength;
 
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 

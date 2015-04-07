@@ -49,7 +49,7 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
     jclass jni_cid_BTSocket = (*env)->FindClass(env, "android/bluetooth/BluetoothSocket");
     if(!jni_cid_BTSocket)
     {
-        OIC_LOG_V(ERROR, TAG, "[EDR] getRemoteAddress: jni_cid_BTSocket is null");
+        OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: jni_cid_BTSocket is null");
         return NULL;
     }
 
@@ -58,7 +58,7 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
             "()Landroid/bluetooth/BluetoothDevice;");
     if(!jni_mid_getRemoteDevice)
     {
-        OIC_LOG_V(ERROR, TAG, "[EDR] getRemoteAddress: jni_mid_getRemoteDevice is null");
+        OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: jni_mid_getRemoteDevice is null");
         return NULL;
     }
 
@@ -66,28 +66,28 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
             bluetoothSocketObj, jni_mid_getRemoteDevice);
     if(!jni_obj_remoteBTDevice)
     {
-        OIC_LOG_V(ERROR, TAG, "[EDR] getRemoteAddress: jni_obj_remoteBTDevice is null");
+        OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: jni_obj_remoteBTDevice is null");
         return NULL;
     }
 
     jclass jni_cid_BTDevice = (*env)->FindClass(env, "android/bluetooth/BluetoothDevice");
     if(!jni_cid_BTDevice)
     {
-        OIC_LOG_V(ERROR, TAG, "[EDR] getRemoteAddress: jni_cid_BTDevice is null");
+        OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: jni_cid_BTDevice is null");
         return NULL;
     }
     jmethodID j_mid_getAddress = (*env)->GetMethodID(env, jni_cid_BTDevice,
             "getAddress", "()Ljava/lang/String;");
     if(!j_mid_getAddress)
     {
-        OIC_LOG_V(ERROR, TAG, "[EDR] getRemoteAddress: j_mid_getAddress is null");
+        OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: j_mid_getAddress is null");
         return NULL;
     }
 
     jstring j_str_address = (*env)->CallObjectMethod(env, jni_obj_remoteBTDevice, j_mid_getAddress);
     if(!j_str_address)
     {
-        OIC_LOG_V(ERROR, TAG, "[EDR] getRemoteAddress: j_str_address is null");
+        OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: j_str_address is null");
         return NULL;
     }
 

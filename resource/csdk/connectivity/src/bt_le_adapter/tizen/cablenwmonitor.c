@@ -76,7 +76,7 @@ CAResult_t CAInitializeLENetworkMonitor()
     CAResult_t res = CAInitLENetworkMonitorMutexVariables();
     if (CA_STATUS_OK != res)
     {
-        OIC_LOG_V(ERROR, TZ_LE_NWK_MONITOR_TAG, "CAInitLENetworkMonitorMutexVariables() failed");
+        OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "CAInitLENetworkMonitorMutexVariables() failed");
         return CA_STATUS_FAILED;
     }
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
@@ -110,14 +110,14 @@ CAResult_t CAInitializeLEAdapter()
     int ret = bt_initialize();
     if (0 != ret)
     {
-        OIC_LOG_V(ERROR, TZ_LE_NWK_MONITOR_TAG, "bt_initialize failed");
+        OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "bt_initialize failed");
         return CA_STATUS_FAILED;
     }
 
     ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
     if (0 != ret)
     {
-        OIC_LOG_V(ERROR, TZ_LE_NWK_MONITOR_TAG, "bt_adapter_set_visibility failed");
+        OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "bt_adapter_set_visibility failed");
         return CA_STATUS_FAILED;
     }
 

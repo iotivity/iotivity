@@ -36,7 +36,7 @@
 jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
 {
 
-    OIC_LOG_V(DEBUG, TAG, "CALEGetUuidFromString");
+    OIC_LOG(DEBUG, TAG, "CALEGetUuidFromString");
 
     jclass jni_cid_UUID = (*env)->FindClass(env, "java/util/UUID");
 
@@ -49,7 +49,7 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
                                                           str_uuid);
     if (!jni_obj_uuid)
     {
-        OIC_LOG_V(DEBUG, TAG, "Fail to get jni uuid object");
+        OIC_LOG(DEBUG, TAG, "Fail to get jni uuid object");
         return NULL;
     }
 
@@ -58,7 +58,7 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
 
 jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEGetParcelUuid");
+    OIC_LOG(DEBUG, TAG, "CALEGetParcelUuid");
 
     jclass jni_cid_ParcelUuid = (*env)->FindClass(env, "android/os/ParcelUuid");
 
@@ -68,7 +68,7 @@ jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
     jobject jni_ParcelUuid = (*env)->NewObject(env, jni_cid_ParcelUuid, jni_mid_ParcelUuid, uuid);
     if (!jni_ParcelUuid)
     {
-        OIC_LOG_V(DEBUG, TAG, "Fail to get jni ParcelUuid");
+        OIC_LOG(DEBUG, TAG, "Fail to get jni ParcelUuid");
         return NULL;
     }
 

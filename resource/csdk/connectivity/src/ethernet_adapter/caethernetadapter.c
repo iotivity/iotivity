@@ -199,7 +199,7 @@ void CAEthernetNotifyNetworkChange(const char *address, const uint16_t port,
     CALocalConnectivity_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_ETHERNET, address);
     if (!localEndpoint)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Out of memory");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Out of memory");
         return;
     }
 
@@ -547,7 +547,7 @@ int32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *remoteEndpoint, cons
 
     if (0 == dataLength)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Invalid Data Length");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Invalid Data Length");
         return -1;
     }
 
@@ -555,7 +555,7 @@ int32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *remoteEndpoint, cons
     CAEthernetData *ethernetData = CACreateEthernetData(remoteEndpoint, data, dataLength);
     if (!ethernetData)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Failed to create ethernetData!");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Failed to create ethernetData!");
         return -1;
     }
     else
@@ -577,7 +577,7 @@ int32_t CASendEthernetMulticastData(const void *data, uint32_t dataLength)
 
     if (0 == dataLength)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Invalid Data Length");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Invalid Data Length");
         return -1;
     }
 
@@ -585,7 +585,7 @@ int32_t CASendEthernetMulticastData(const void *data, uint32_t dataLength)
     CAEthernetData *EthernetData = CACreateEthernetData(NULL, data, dataLength);
     if (!EthernetData)
     {
-        OIC_LOG_V(ERROR, ETHERNET_ADAPTER_TAG, "Failed to create ethernetData!");
+        OIC_LOG(ERROR, ETHERNET_ADAPTER_TAG, "Failed to create ethernetData!");
         return -1;
     }
     else

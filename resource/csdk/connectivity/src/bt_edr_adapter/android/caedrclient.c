@@ -116,9 +116,9 @@ typedef struct
 // TODO: It will be updated when android EDR support is added
 CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -131,17 +131,17 @@ void CAEDRClientTerminate()
 
 CAResult_t CAEDRManagerReadData(void)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_NOT_SUPPORTED;
 }
 
 CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
                                       const void *data, uint32_t dataLength, uint32_t *sentLength)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     CAEDRSendUnicastMessage(remoteAddress, (const char*) data, dataLength);
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -149,34 +149,34 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
                                         uint32_t dataLength, uint32_t *sentLength)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     CAEDRSendMulticastMessage((const char*) data, dataLength);
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 // TODO: It will be updated when android EDR support is added
 void CAEDRClientUnsetCallbacks(void)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 // TODO: It will be updated when android EDR support is added
 void CAEDRClientDisconnectAll(void)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAEDRGetAdapterEnableState(bool *state)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (!g_jvm)
     {
-        OIC_LOG_V(ERROR, TAG, "g_jvm is null");
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
         return CA_STATUS_INVALID_PARAM;
     }
     jboolean isAttached = JNI_FALSE;
@@ -184,12 +184,12 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
     if(res != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "CAEDRGetAdapterEnableState - Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "CAEDRGetAdapterEnableState - Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if(res != JNI_OK)
         {
-            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            OIC_LOG(DEBUG, TAG, "AttachCurrentThread failed");
             return CA_STATUS_INVALID_PARAM;
         }
         isAttached = JNI_TRUE;
@@ -207,7 +207,7 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
     if(isAttached)
         (*g_jvm)->DetachCurrentThread(g_jvm);
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -216,11 +216,11 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
 
 void CAEDRJniSetContext(jobject context)
 {
-    OIC_LOG_V(DEBUG, TAG, "caedrSetObject");
+    OIC_LOG(DEBUG, TAG, "caedrSetObject");
 
     if (!context)
     {
-        OIC_LOG_V(ERROR, TAG, "context is null");
+        OIC_LOG(ERROR, TAG, "context is null");
         return;
     }
     jboolean isAttached = JNI_FALSE;
@@ -228,12 +228,12 @@ void CAEDRJniSetContext(jobject context)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
     if(res != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "CAEDRInitialize - Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "CAEDRInitialize - Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if(res != JNI_OK)
         {
-            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            OIC_LOG(DEBUG, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = JNI_TRUE;
@@ -248,11 +248,11 @@ void CAEDRJniSetContext(jobject context)
 void CAEDRCreateJNIInterfaceObject(jobject context)
 {
     JNIEnv* env;
-    OIC_LOG_V(DEBUG, TAG, "[EDRCore] CAEDRCreateJNIInterfaceObject");
+    OIC_LOG(DEBUG, TAG, "[EDRCore] CAEDRCreateJNIInterfaceObject");
 
     if ((*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "[EDRCore] Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "[EDRCore] Could not get JNIEnv pointer");
         return;
     }
 
@@ -260,7 +260,7 @@ void CAEDRCreateJNIInterfaceObject(jobject context)
     jclass contextClass = (*env)->FindClass(env, "android/content/Context");
     if (contextClass == 0)
     {
-        OIC_LOG_V(DEBUG, TAG, "[EDRCore] Could not get context object class");
+        OIC_LOG(DEBUG, TAG, "[EDRCore] Could not get context object class");
         return;
     }
 
@@ -268,7 +268,7 @@ void CAEDRCreateJNIInterfaceObject(jobject context)
             "getApplicationContext", "()Landroid/content/Context;");
     if (getApplicationContextMethod == 0)
     {
-        OIC_LOG_V(DEBUG, TAG, "[EDRCore] Could not get getApplicationContext method");
+        OIC_LOG(DEBUG, TAG, "[EDRCore] Could not get getApplicationContext method");
         return;
     }
 
@@ -281,7 +281,7 @@ void CAEDRCreateJNIInterfaceObject(jobject context)
     jclass WiFiJniInterface = (*env)->FindClass(env, "com/iotivity/jar/CAEDRInterface");
     if (!WiFiJniInterface)
     {
-        OIC_LOG_V(DEBUG, TAG, "[EDRCore] Could not get CAWiFiInterface class");
+        OIC_LOG(DEBUG, TAG, "[EDRCore] Could not get CAWiFiInterface class");
         return;
     }
 
@@ -289,13 +289,13 @@ void CAEDRCreateJNIInterfaceObject(jobject context)
             WiFiJniInterface, "<init>", "(Landroid/content/Context;)V");
     if (!WiFiInterfaceConstructorMethod)
     {
-        OIC_LOG_V(ERROR, TAG, "[EDRCore] Could not get CAWiFiInterface constructor method");
+        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get CAWiFiInterface constructor method");
         return;
     }
 
     (*env)->NewObject(env, WiFiJniInterface, WiFiInterfaceConstructorMethod, gApplicationContext);
-    OIC_LOG_V(DEBUG, TAG, "[EDRCore] Create CAWiFiInterface instance");
-    OIC_LOG_V(DEBUG, TAG, "[EDRCore] NewObject Success");
+    OIC_LOG(DEBUG, TAG, "[EDRCore] Create CAWiFiInterface instance");
+    OIC_LOG(DEBUG, TAG, "[EDRCore] NewObject Success");
 
 }
 
@@ -371,12 +371,12 @@ void CAEDRInitialize(u_thread_pool_t handle)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
     if(res != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "CAEDRInitialize - Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "CAEDRInitialize - Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if(res != JNI_OK)
         {
-            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            OIC_LOG(DEBUG, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = JNI_TRUE;
@@ -409,12 +409,12 @@ void CAEDRTerminate()
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
     if(res != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "CAEDRTerminate - Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "CAEDRTerminate - Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if(res != JNI_OK)
         {
-            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            OIC_LOG(DEBUG, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = JNI_TRUE;
@@ -440,7 +440,7 @@ void CAEDRTerminate()
 
 void CAEDRCoreJniInit(JNIEnv *env, JavaVM *jvm)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAEdrClientJniInit");
+    OIC_LOG(DEBUG, TAG, "CAEdrClientJniInit");
     g_jvm = jvm;
 
     CAEDRServerJniInit(env, jvm);
@@ -463,12 +463,12 @@ CAResult_t CAEDRSendMulticastMessage(const char* data, uint32_t dataLen)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
     if(res != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "CAEDRSendMulticastMessage - Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "CAEDRSendMulticastMessage - Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
         if(res != JNI_OK)
         {
-            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            OIC_LOG(DEBUG, TAG, "AttachCurrentThread failed");
             return CA_STATUS_INVALID_PARAM;
         }
         isAttached = JNI_TRUE;
@@ -476,15 +476,15 @@ CAResult_t CAEDRSendMulticastMessage(const char* data, uint32_t dataLen)
 
     CAEDRSendMulticastMessageImpl(env, data, dataLen);
 
-    OIC_LOG_V(DEBUG, TAG, "sent data");
+    OIC_LOG(DEBUG, TAG, "sent data");
 
     if(isAttached)
     {
-        OIC_LOG_V(DEBUG, TAG, "DetachCurrentThread");
+        OIC_LOG(DEBUG, TAG, "DetachCurrentThread");
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
 
-    OIC_LOG_V(DEBUG, TAG, "OUT - CAEDRSendMulticastMessage");
+    OIC_LOG(DEBUG, TAG, "OUT - CAEDRSendMulticastMessage");
     return CA_STATUS_OK;
 }
 
@@ -501,11 +501,11 @@ void CAEDRGetLocalAddress(char **address)
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
     if(res != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "CAEDRGetLocalAddress - Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "CAEDRGetLocalAddress - Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if(res != JNI_OK)
         {
-            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            OIC_LOG(DEBUG, TAG, "AttachCurrentThread failed");
             return;
         }
         isAttached = JNI_TRUE;
@@ -540,11 +540,11 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data,
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
     if(res != JNI_OK)
     {
-        OIC_LOG_V(DEBUG, TAG, "CAEDRSendUnicastMessageImpl - Could not get JNIEnv pointer");
+        OIC_LOG(DEBUG, TAG, "CAEDRSendUnicastMessageImpl - Could not get JNIEnv pointer");
         res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
         if(res != JNI_OK)
         {
-            OIC_LOG_V(DEBUG, TAG, "AttachCurrentThread failed");
+            OIC_LOG(DEBUG, TAG, "AttachCurrentThread failed");
             return CA_STATUS_INVALID_PARAM;
         }
         isAttached = TRUE;
@@ -563,7 +563,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data,
     jobjectArray jni_arrayPairedDevices = CAEDRNativeGetBondedDevices(env);
     if(!jni_arrayPairedDevices)
     {
-        OIC_LOG_V(DEBUG, TAG, "[EDR][Native] jni_arrayPairedDevices is empty");
+        OIC_LOG(DEBUG, TAG, "[EDR][Native] jni_arrayPairedDevices is empty");
         if (isAttached)
             (*g_jvm)->DetachCurrentThread(g_jvm);
         return CA_STATUS_INVALID_PARAM;
@@ -573,7 +573,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data,
     jsize i;
     for( i = 0 ; i < length ; i++ )
     {
-        OIC_LOG_V(DEBUG, TAG, "[EDR][Native] start to check device");
+        OIC_LOG(DEBUG, TAG, "[EDR][Native] start to check device");
         // get name, address from BT device
         jobject j_obj_device = (*env)->GetObjectArrayElement(env, jni_arrayPairedDevices, i);
 
@@ -630,7 +630,7 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t
     jobjectArray jni_arrayPairedDevices = CAEDRNativeGetBondedDevices(env);
     if(!jni_arrayPairedDevices)
     {
-        OIC_LOG_V(DEBUG, TAG, "[EDR][Native] jni_arrayPairedDevices is empty");
+        OIC_LOG(DEBUG, TAG, "[EDR][Native] jni_arrayPairedDevices is empty");
         return CA_STATUS_INVALID_PARAM;
     }
     // Get information from array of devices
@@ -970,7 +970,7 @@ void CAEDRNativeCreateDeviceStateList()
     // create new object array
     if (g_deviceStateList == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Create device list");
+        OIC_LOG(DEBUG, TAG, "Create device list");
 
         g_deviceStateList = u_arraylist_create();
     }
@@ -1028,7 +1028,7 @@ jboolean CAEDRNativeIsDeviceInList(const char* remoteAddress){
 
         if(!strcmp(remoteAddress, state->address))
         {
-            OIC_LOG_V(DEBUG, TAG, "the device is already set");
+            OIC_LOG(DEBUG, TAG, "the device is already set");
             return JNI_TRUE;
         }
         else
@@ -1037,13 +1037,13 @@ jboolean CAEDRNativeIsDeviceInList(const char* remoteAddress){
         }
     }
 
-    OIC_LOG_V(DEBUG, TAG, "there are no the device in list.");
+    OIC_LOG(DEBUG, TAG, "there are no the device in list.");
     return JNI_FALSE;
 }
 
 void CAEDRNativeRemoveAllDeviceState()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAEDRNativeRemoveAllDevices");
+    OIC_LOG(DEBUG, TAG, "CAEDRNativeRemoveAllDevices");
 
     if(!g_deviceStateList)
     {
@@ -1070,7 +1070,7 @@ void CAEDRNativeRemoveAllDeviceState()
 
 void CAEDRNativeRemoveDevice(const char *remoteAddress)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAEDRNativeRemoveDeviceforStateList");
+    OIC_LOG(DEBUG, TAG, "CAEDRNativeRemoveDeviceforStateList");
 
     if(!g_deviceStateList)
     {
@@ -1106,7 +1106,7 @@ void CAEDRNativeRemoveDevice(const char *remoteAddress)
 
 CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAEDRIsConnectedDevice");
+    OIC_LOG(DEBUG, TAG, "CAEDRIsConnectedDevice");
 
     if(!g_deviceStateList)
     {
@@ -1126,7 +1126,7 @@ CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress)
 
         if(!strcmp(state->address, remoteAddress))
         {
-            OIC_LOG_V(DEBUG, TAG, "[EDR][Native] check whether it is connected or not");
+            OIC_LOG(DEBUG, TAG, "[EDR][Native] check whether it is connected or not");
 
             return state->state;
         }
@@ -1161,7 +1161,7 @@ void CAEDRNativeCreateDeviceSocketList()
     // create new object array
     if (g_deviceObjectList == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "Create Device object list");
+        OIC_LOG(DEBUG, TAG, "Create Device object list");
 
         g_deviceObjectList = u_arraylist_create();
     }
@@ -1198,7 +1198,7 @@ void CAEDRNativeAddDeviceSocketToList(JNIEnv *env, jobject deviceSocket)
     {
         jobject gDeviceSocker = (*env)->NewGlobalRef(env, deviceSocket);
         u_arraylist_add(g_deviceObjectList, gDeviceSocker);
-        OIC_LOG_V(DEBUG, TAG, "Set Socket Object to Array");
+        OIC_LOG(DEBUG, TAG, "Set Socket Object to Array");
     }
 
     u_mutex_unlock(g_mutexSocketListManager);
@@ -1240,7 +1240,7 @@ jboolean CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char* remoteAddress)
 
         if(!strcmp(remoteAddress, setAddress))
         {
-            OIC_LOG_V(DEBUG, TAG, "the device is already set");
+            OIC_LOG(DEBUG, TAG, "the device is already set");
             return JNI_TRUE;
         }
         else
@@ -1249,13 +1249,13 @@ jboolean CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char* remoteAddress)
         }
     }
 
-    OIC_LOG_V(DEBUG, TAG, "there are no the Device obejct in list. we can add");
+    OIC_LOG(DEBUG, TAG, "there are no the Device obejct in list. we can add");
     return JNI_FALSE;
 }
 
 void CAEDRNativeRemoveAllDeviceSocket(JNIEnv *env)
 {
-    OIC_LOG_V(DEBUG, TAG, "CANativeRemoveAllDeviceObjsList");
+    OIC_LOG(DEBUG, TAG, "CANativeRemoveAllDeviceObjsList");
 
     if(!g_deviceObjectList)
     {
@@ -1282,7 +1282,7 @@ void CAEDRNativeRemoveAllDeviceSocket(JNIEnv *env)
 
 void CAEDRNativeRemoveDeviceSocket(JNIEnv *env, jobject deviceSocket)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAEDRNativeRemoveDeviceSocket");
+    OIC_LOG(DEBUG, TAG, "CAEDRNativeRemoveDeviceSocket");
 
     if(!g_deviceObjectList)
     {
@@ -1335,7 +1335,7 @@ void CAEDRNativeRemoveDeviceSocket(JNIEnv *env, jobject deviceSocket)
 
 jobject CAEDRNativeGetDeviceSocket(uint32_t idx)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAEDRNativeGetDeviceSocket");
+    OIC_LOG(DEBUG, TAG, "CAEDRNativeGetDeviceSocket");
 
     if(idx < 0)
     {

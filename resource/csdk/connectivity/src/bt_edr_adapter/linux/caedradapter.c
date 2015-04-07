@@ -34,7 +34,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
         CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
         u_thread_pool_t handle)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAInitializeEDR");
+    OIC_LOG(DEBUG, TAG, "CAInitializeEDR");
 
     g_edrReceivedCallback = reqRespCallback;
     g_threadPoolHandle = handle;
@@ -60,21 +60,21 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartEDR()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartEDR");
+    OIC_LOG(DEBUG, TAG, "CAStartEDR");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartEDRListeningServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartEDRListeningServer");
+    OIC_LOG(DEBUG, TAG, "CAStartEDRListeningServer");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartEDRDiscoveryServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartEDRDiscoveryServer");
+    OIC_LOG(DEBUG, TAG, "CAStartEDRDiscoveryServer");
 
     return CA_STATUS_OK;
 }
@@ -82,41 +82,41 @@ CAResult_t CAStartEDRDiscoveryServer()
 int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
     uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendEDRUnicastData");
+    OIC_LOG(DEBUG, TAG, "CASendEDRUnicastData");
 
     return -1;
 }
 
 int32_t CASendEDRMulticastData(const void *data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendEDRMulticastData");
+    OIC_LOG(DEBUG, TAG, "CASendEDRMulticastData");
 
     return -1;
 }
 
 CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAGetEDRInterfaceInformation");
+    OIC_LOG(DEBUG, TAG, "CAGetEDRInterfaceInformation");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAReadEDRData()
 {
-    OIC_LOG_V(DEBUG, TAG, "Read EDR Data");
+    OIC_LOG(DEBUG, TAG, "Read EDR Data");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStopEDR()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStopEDR");
+    OIC_LOG(DEBUG, TAG, "CAStopEDR");
 
     return CA_STATUS_OK;
 }
 
 void CATerminateEDR()
 {
-    OIC_LOG_V(DEBUG, TAG, "CATerminateEDR");
+    OIC_LOG(DEBUG, TAG, "CATerminateEDR");
 }
 

@@ -35,11 +35,11 @@ static CALENetStateChantedCallback g_networkChangeCb = NULL;
 //getting context
 void CALENetworkMonitorJNISetContext(JNIEnv *env, jobject context)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALENetworkMonitorJNISetContext");
+    OIC_LOG(DEBUG, TAG, "CALENetworkMonitorJNISetContext");
 
     if (context == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "context is null");
+        OIC_LOG(DEBUG, TAG, "context is null");
     }
 
     g_context = (*env)->NewGlobalRef(env, context);
@@ -48,13 +48,13 @@ void CALENetworkMonitorJNISetContext(JNIEnv *env, jobject context)
 //getting jvm
 void CALeNetworkMonitorJniInit(JNIEnv *env, JavaVM *jvm)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALeNetworkMonitorJniInit");
+    OIC_LOG(DEBUG, TAG, "CALeNetworkMonitorJniInit");
     g_jvm = jvm;
 }
 
 void CALESetNetStateCallback(CALENetStateChantedCallback callback)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALESetNetStateCallback");
+    OIC_LOG(DEBUG, TAG, "CALESetNetStateCallback");
     g_networkChangeCb = callback;
 }
 
@@ -62,11 +62,11 @@ JNIEXPORT void JNICALL
 Java_com_iotivity_jar_caleinterface_CALeStateChangedCallback(JNIEnv *env, jobject obj, jint status)
 {
     // STATE_ON:12, STATE_OFF:10
-    OIC_LOG_V(DEBUG, TAG, "CALeInterface - Network State Changed");
+    OIC_LOG(DEBUG, TAG, "CALeInterface - Network State Changed");
 
     if (g_networkChangeCb == NULL)
     {
-        OIC_LOG_V(DEBUG, TAG, "g_networkChangeCb is null", status);
+        OIC_LOG(DEBUG, TAG, "g_networkChangeCb is null", status);
     }
 
     jstring jni_address = CALEGetLocalDeviceAddress(env);

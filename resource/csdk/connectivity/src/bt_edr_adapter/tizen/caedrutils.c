@@ -33,11 +33,11 @@
 bool CAEDRIsServiceSupported(const char **serviceUUID, int32_t serviceCount,
                                  const char *matchService)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     if (NULL == serviceUUID || 0 == serviceCount || NULL == matchService)
     {
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Invalid input");
+        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Invalid input");
         return false;
     }
 
@@ -45,12 +45,12 @@ bool CAEDRIsServiceSupported(const char **serviceUUID, int32_t serviceCount,
     {
         if (!strcasecmp(serviceUUID[i], matchService))
         {
-            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Service found !");
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Service found !");
             return true;
         }
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return false;
 }
 

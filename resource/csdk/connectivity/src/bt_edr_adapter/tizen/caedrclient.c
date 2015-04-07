@@ -143,7 +143,7 @@ void CAEDRSetPacketReceivedCallback(CAEDRDataReceivedCallback packetReceivedCall
 void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e state,
                                        bt_socket_connection_s *connection, void *userData)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     EDRDevice *device = NULL;
 
@@ -175,7 +175,7 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
 
                     if(!device)
                     {
-                        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
+                        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
                         u_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
@@ -187,7 +187,7 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
 
                 if(!device)
                 {
-                    OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
+                    OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
                     u_mutex_unlock(g_edrDeviceListMutex);
                     return;
                 }
@@ -224,14 +224,14 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
             break;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 
 void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_e state,
                                  bt_adapter_device_discovery_info_s *discoveryInfo, void *userData)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     EDRDevice *device = NULL;
 
@@ -246,13 +246,13 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
     {
         case BT_ADAPTER_DEVICE_DISCOVERY_STARTED:
             {
-                OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Discovery started!");
+                OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Discovery started!");
             }
             break;
 
         case BT_ADAPTER_DEVICE_DISCOVERY_FINISHED:
             {
-                OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Discovery finished!");
+                OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Discovery finished!");
             }
             break;
 
@@ -271,7 +271,7 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                     {
                         if(!device)
                         {
-                            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
+                            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
                             u_mutex_unlock(g_edrDeviceListMutex);
                             return;
                         }
@@ -285,14 +285,14 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                             discoveryInfo->remote_address, OIC_EDR_SERVICE_ID, &device);
                     if (CA_STATUS_OK != res)
                     {
-                        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to add device to list!");
+                        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to add device to list!");
                         u_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
 
                     if(!device)
                     {
-                        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
+                        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
                         u_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
@@ -301,23 +301,23 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                 }
                 else
                 {
-                    OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Device does not support OIC service!");
+                    OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Device does not support OIC service!");
                 }
             }
             break;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 void CAEDRServiceSearchedCallback(int32_t result,
                 bt_device_sdp_info_s *sdpInfo,void *userData)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     if (NULL == sdpInfo)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "SDP info is null!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "SDP info is null!");
         return;
     }
 
@@ -329,7 +329,7 @@ void CAEDRServiceSearchedCallback(int32_t result,
     {
         if (device->serviceSearched)
         {
-            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Service is already searched for this device!");
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Service is already searched for this device!");
             u_mutex_unlock(g_edrDeviceListMutex);
             return;
         }
@@ -341,7 +341,7 @@ void CAEDRServiceSearchedCallback(int32_t result,
             res = CAEDRClientConnect(sdpInfo->remote_address, OIC_EDR_SERVICE_ID);
             if (CA_STATUS_OK != res)
             {
-                OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to make rfcomm connection!");
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to make rfcomm connection!");
 
                 // Remove the device from device list
                 CARemoveEDRDeviceFromList(&g_edrDeviceList, sdpInfo->remote_address);
@@ -349,7 +349,7 @@ void CAEDRServiceSearchedCallback(int32_t result,
         }
         else
         {
-            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Device does not contain OIC service!");
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Device does not contain OIC service!");
 
             // Remove device from list as it does not support OIC service
             CARemoveEDRDeviceFromList(&g_edrDeviceList, sdpInfo->remote_address);
@@ -358,12 +358,12 @@ void CAEDRServiceSearchedCallback(int32_t result,
 
     u_mutex_unlock(g_edrDeviceListMutex);
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 CAResult_t CAEDRStartDeviceDiscovery(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
 
     bool isDiscoveryStarted = false;
@@ -389,13 +389,13 @@ CAResult_t CAEDRStartDeviceDiscovery(void)
         }
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRStopServiceSearch(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     bt_error_e err = bt_device_cancel_service_search();
     // Stop ongoing service search
@@ -406,13 +406,13 @@ CAResult_t CAEDRStopServiceSearch(void)
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRStopDeviceDiscovery(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     bool isDiscoveryStarted = false;
     bt_error_e err = bt_adapter_is_discovering(&isDiscoveryStarted);
@@ -427,7 +427,7 @@ CAResult_t CAEDRStopDeviceDiscovery(void)
     //stop the device discovery process
     if (true == isDiscoveryStarted)
     {
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Stopping the device search process");
+        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Stopping the device search process");
         if (BT_ERROR_NONE != (err = bt_adapter_stop_device_discovery()))
         {
             OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to stop discovery!, error num [%x]",
@@ -435,19 +435,19 @@ CAResult_t CAEDRStopDeviceDiscovery(void)
         }
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRStartServiceSearch(const char *remoteAddress)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
     VERIFY_NON_NULL(remoteAddress, EDR_ADAPTER_TAG, "Remote address is null");
     if (!remoteAddress[0])
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Remote address is empty!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Remote address is empty!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -460,13 +460,13 @@ CAResult_t CAEDRStartServiceSearch(const char *remoteAddress)
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRClientSetCallbacks(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Register for discovery and rfcomm socket connection callbacks
     bt_adapter_set_device_discovery_state_changed_cb(CAEDRDeviceDiscoveryCallback, NULL);
@@ -482,14 +482,14 @@ CAResult_t CAEDRClientSetCallbacks(void)
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 
 void CAEDRClientUnsetCallbacks(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Stop service search
     CAEDRStopServiceSearch();
@@ -498,30 +498,30 @@ void CAEDRClientUnsetCallbacks(void)
     CAEDRStopDeviceDiscovery();
 
     // reset bluetooth adapter callbacks
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Resetting the callbacks");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Resetting the callbacks");
     bt_adapter_unset_device_discovery_state_changed_cb();
     bt_device_unset_service_searched_cb();
     bt_socket_unset_connection_state_changed_cb();
     bt_socket_unset_data_received_cb();
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 void CAEDRManagerInitializeMutex(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     if (!g_edrDeviceListMutex)
     {
         g_edrDeviceListMutex = u_mutex_new();
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 void CAEDRManagerTerminateMutex(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     if (g_edrDeviceListMutex)
     {
@@ -529,7 +529,7 @@ void CAEDRManagerTerminateMutex(void)
         g_edrDeviceListMutex = NULL;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 void CAEDRInitializeClient(u_thread_pool_t handle)
@@ -558,7 +558,7 @@ void CAEDRClientTerminate()
 
 void CAEDRClientDisconnectAll(void)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     u_mutex_lock(g_edrDeviceListMutex);
 
@@ -583,14 +583,14 @@ void CAEDRClientDisconnectAll(void)
 
     u_mutex_unlock(g_edrDeviceListMutex);
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 
 CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
                                       const void *data, uint32_t dataLength, uint32_t *sentLength)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     EDRDevice *device = NULL;
 
@@ -602,7 +602,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 
     if (0 >= dataLength)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative data length!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative data length!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -616,7 +616,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
                                             OIC_EDR_SERVICE_ID, &device);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed create device and add to list!");
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed create device and add to list!");
 
             u_mutex_unlock(g_edrDeviceListMutex);
             return CA_STATUS_FAILED;
@@ -626,7 +626,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
         result = CAEDRStartServiceSearch(remoteAddress);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to initiate service search!");
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to initiate service search!");
 
             // Remove device from list
             CARemoveEDRDeviceFromList(&g_edrDeviceList, remoteAddress);
@@ -638,7 +638,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 
     if(!device)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
         // Remove device from list
         CARemoveEDRDeviceFromList(&g_edrDeviceList, remoteAddress);
 
@@ -655,7 +655,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
                                               dataLength);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to add data to pending list!");
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to add data to pending list!");
 
             //Remove device from list
             CARemoveEDRDeviceFromList(&g_edrDeviceList, remoteAddress);
@@ -666,7 +666,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
         if (device->serviceSearched &&
             CA_STATUS_OK != CAEDRClientConnect(remoteAddress, serviceUUID))
         {
-            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to make RFCOMM connection!");
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to make RFCOMM connection!");
 
             //Remove device from list
             CARemoveEDRDeviceFromList(&g_edrDeviceList, remoteAddress);
@@ -679,19 +679,19 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
         result = CAEDRSendData(device->socketFD, data, dataLength, sentLength);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send data!");
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to send data!");
             return CA_STATUS_FAILED;
         }
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
                                         uint32_t dataLength, uint32_t *sentLength)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
     VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "service UUID is null");
@@ -700,7 +700,7 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *dat
 
     if (0 >= dataLength)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative data length!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative data length!");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -717,17 +717,17 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *dat
 
         if (!device)
         {
-            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "There is no device!");
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "There is no device!");
             break;
         }
 
         if (-1 == device->socketFD)
         {
-            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN1");
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN1");
             // Check if the device service search is finished
             if (false == device->serviceSearched)
             {
-                OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Device services are still unknown!");
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Device services are still unknown!");
                 continue;
             }
 
@@ -736,7 +736,7 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *dat
                                                   dataLength);
             if (CA_STATUS_OK != result)
             {
-                OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to add data to pending list !");
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to add data to pending list !");
                 continue;
             }
 
@@ -744,35 +744,35 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *dat
             result = CAEDRClientConnect(device->remoteAddress, device->serviceUUID);
             if (CA_STATUS_OK != result)
             {
-                OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to make RFCOMM connection !");
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to make RFCOMM connection !");
 
                 //Remove the data which added to pending list
                 CARemoveEDRDataFromList(&device->pendingDataList);
                 continue;
             }
-            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN2");
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN2");
         }
         else
         {
-            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN3");
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN3");
             result = CAEDRSendData(device->socketFD, data, dataLength, sentLength);
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send data to [%s] !",
                           device->remoteAddress);
             }
-            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN4");
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN4");
         }
     }
     u_mutex_unlock(g_edrDeviceListMutex);
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRClientConnect(const char *remoteAddress, const char *serviceUUID)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(remoteAddress, EDR_ADAPTER_TAG, "Remote address is null");
     VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "Service UUID is null");
@@ -780,13 +780,13 @@ CAResult_t CAEDRClientConnect(const char *remoteAddress, const char *serviceUUID
     size_t addressLen = strlen(remoteAddress);
     if (0 == addressLen || CA_MACADDR_SIZE - 1 != addressLen)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: Invalid remote address");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Invalid remote address");
         return  CA_STATUS_INVALID_PARAM;
     }
 
     if (!serviceUUID[0])
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: Empty service uuid");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Empty service uuid");
         return  CA_STATUS_INVALID_PARAM;
     }
 
@@ -799,18 +799,18 @@ CAResult_t CAEDRClientConnect(const char *remoteAddress, const char *serviceUUID
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAEDRClientDisconnect(const int32_t clientID)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
     if (0 > clientID)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Invalid input: negative client id");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: negative client id");
         return CA_STATUS_INVALID_PARAM;
     }
 
@@ -822,19 +822,19 @@ CAResult_t CAEDRClientDisconnect(const int32_t clientID)
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
 {
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     EDRDevice *device = NULL;
 
     if (NULL == data || 0 >= data->data_size)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Data is null!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Data is null!");
         return;
     }
 
@@ -843,7 +843,7 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
     CAResult_t result = CAGetEDRDeviceBySocketId(g_edrDeviceList, data->socket_fd, &device);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Could not find the device!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Could not find the device!");
 
         u_mutex_unlock(g_edrDeviceListMutex);
         return;
@@ -852,7 +852,7 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
 
     if (!device)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "There is no device!");
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "There is no device!");
         return;
     }
 
@@ -861,7 +861,7 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
     g_edrPacketReceivedCallback(device->remoteAddress, data->data,
                                 (uint32_t)data->data_size, &sentLength);
 
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
 
