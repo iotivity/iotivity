@@ -1,12 +1,31 @@
+/* ****************************************************************
+ *
+ * Copyright 2014 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
 #include "gtest/gtest.h"
 #include "cainterface.h"
 #include "cacommon.h"
 #include <string.h>
 
+
 void request_handler(CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo);
 void response_handler(CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo);
-
-static CAToken_t g_lastRequestToken = NULL;
 
 void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo)
 {
@@ -25,6 +44,7 @@ static CAInfo_t requestData;
 static CAInfo_t responseData;
 static CAResponseInfo_t responseInfo;
 static CAToken_t tempToken = NULL;
+uint8_t tokenLength = CA_MAX_TOKEN_LEN;
 static const char URI[] = "coap://10.11.12.13:4545/a/light";
 static const char RESOURCE_URI[] = "/a/light";
 
@@ -215,7 +235,7 @@ TEST(DestroyRemoteEndpointTest, TC_10_Positive_01)
 // check return value
 TEST(GenerateTokenTest, TC_11_Positive_01)
 {
-    EXPECT_EQ(CA_STATUS_OK, CAGenerateToken(&tempToken));
+    EXPECT_EQ(CA_STATUS_OK, CAGenerateToken(&tempToken, tokenLength));
 
     CADestroyToken(tempToken);
 }
@@ -223,14 +243,14 @@ TEST(GenerateTokenTest, TC_11_Positive_01)
 // check return value when CAGenerateToken is passed a NULL instead a valid pointer
 TEST(GenerateTokenTest, TC_12_Negative_01)
 {
-    EXPECT_EQ(CA_STATUS_FAILED, CAGenerateToken(NULL));
+    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CAGenerateToken(NULL, tokenLength));
 }
 
 // CADestroyToken TC
 // check destroyed token
 TEST(DestroyTokenTest, TC_13_Positive_01)
 {
-    CAGenerateToken(&tempToken);
+    CAGenerateToken(&tempToken, tokenLength);
     CADestroyToken(tempToken);
 
     char * check = (char *) "destroy success";
@@ -243,16 +263,18 @@ TEST(FindResourceTest, TC_14_Positive_01)
 {
     uri = (char *) RESOURCE_URI;
 
-    CAGenerateToken(&tempToken);
-    EXPECT_EQ(CA_STATUS_OK, CAFindResource(uri, tempToken));
+    CAGenerateToken(&tempToken, tokenLength);
+    EXPECT_EQ(CA_STATUS_OK, CAFindResource(uri, tempToken, tokenLength));
+    CADestroyToken(tempToken);
 }
 
 // check return value when uri is NULL
 TEST(FindResourceTest, TC_15_Negative_01)
 {
     uri = NULL;
-    CAGenerateToken(&tempToken);
-    EXPECT_EQ(CA_STATUS_FAILED, CAFindResource(uri, tempToken));
+    CAGenerateToken(&tempToken, tokenLength);
+    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CAFindResource(uri, tempToken, tokenLength));
+    CADestroyToken(tempToken);
 }
 
 // CASendRequest TC
@@ -263,8 +285,9 @@ TEST(SendRequestTest, TC_16_Positive_01)
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&requestData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken);
+    CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
     requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
@@ -293,8 +316,9 @@ TEST(SendRequestTest, TC_17_Negative_01)
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&requestData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken);
+    CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
     requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
@@ -325,8 +349,9 @@ TEST(SendRequestTest, TC_18_Negative_02)
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&requestData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken);
+    CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
     requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
@@ -358,10 +383,13 @@ TEST(SendResponseTest, TC_19_Positive_01)
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken);
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (char *) "response payload";
+
+    CAGenerateToken(&tempToken, tokenLength);
+    requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = CA_SUCCESS;
@@ -381,10 +409,13 @@ TEST(SendResponseTest, TC_20_Negative_01)
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken);
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (char *) "response payload";
+
+    CAGenerateToken(&tempToken, tokenLength);
+    requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = CA_SUCCESS;
@@ -407,10 +438,13 @@ TEST(SendResponseTest, TC_21_Negative_02)
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken);
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (char *) "response payload";
+
+    CAGenerateToken(&tempToken, tokenLength);
+    requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = CA_SUCCESS;
@@ -434,8 +468,12 @@ TEST(SendNotificationTest, TC_22_Positive_01)
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.token = (char *) "client token";
+    responseData.type = CA_MSG_NONCONFIRM;
     responseData.payload = (char *) "Temp Notification Data";
+
+    CAGenerateToken(&tempToken, tokenLength);
+    requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = CA_SUCCESS;
@@ -443,8 +481,12 @@ TEST(SendNotificationTest, TC_22_Positive_01)
 
     EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
 
-    CADestroyRemoteEndpoint(tempRep);
-    tempRep = NULL;
+    CADestroyToken(tempToken);
+    if (tempRep != NULL)
+    {
+        CADestroyRemoteEndpoint(tempRep);
+        tempRep = NULL;
+    }
 }
 
 // check return value when uri is NULL
@@ -454,8 +496,12 @@ TEST(SendNotificationTest, TC_23_Negative_01)
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.token = (char *) "client token";
+    responseData.type = CA_MSG_NONCONFIRM;
     responseData.payload = (char *) "Temp Notification Data";
+
+    CAGenerateToken(&tempToken, tokenLength);
+    requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
     responseInfo.result = CA_SUCCESS;
@@ -463,6 +509,7 @@ TEST(SendNotificationTest, TC_23_Negative_01)
 
     EXPECT_EQ(CA_STATUS_FAILED, CASendNotification(tempRep, &responseInfo));
 
+    CADestroyToken(tempToken);
     if (tempRep != NULL)
     {
         CADestroyRemoteEndpoint(tempRep);
@@ -494,9 +541,11 @@ TEST(AdvertiseResourceTest, TC_24_Positive_01)
     memcpy(headerOpt[1].optionData, tmpOptionData2, tmpOptionDataLen);
     headerOpt[1].optionLength = (uint16_t) tmpOptionDataLen;
 
-    CAGenerateToken(&tempToken);
+    CAGenerateToken(&tempToken, tokenLength);
 
-    EXPECT_EQ(CA_STATUS_OK, CAAdvertiseResource(uri, tempToken, headerOpt, (uint8_t )optionNum));
+    EXPECT_EQ(CA_STATUS_OK, CAAdvertiseResource(uri, tempToken, tokenLength, headerOpt, (uint8_t )optionNum));
+
+    CADestroyToken(tempToken);
 
     free(headerOpt);
 }
@@ -524,10 +573,12 @@ TEST(AdvertiseResourceTest, TC_25_Negative_01)
     memcpy(headerOpt[1].optionData, tmpOptionData2, tmpOptionDataLen);
     headerOpt[1].optionLength = (uint16_t) tmpOptionDataLen;
 
-    CAGenerateToken(&tempToken);
+    CAGenerateToken(&tempToken, tokenLength);
 
-    EXPECT_EQ(CA_STATUS_FAILED,
-            CAAdvertiseResource(uri, tempToken, headerOpt, (uint8_t )optionNum));
+    EXPECT_EQ(CA_STATUS_INVALID_PARAM,
+            CAAdvertiseResource(uri, tempToken, tokenLength, headerOpt, (uint8_t )optionNum));
+
+    CADestroyToken(tempToken);
 
     free(headerOpt);
 }
@@ -581,8 +632,9 @@ TEST (SendRequestToAllTest, TC_31_Positive_01)
     group->resourceUri = tempRep->resourceUri;
 
     memset(&requestData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken);
+    CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     requestData.payload = (char *) "Temp Json Payload";
     requestData.type = CA_MSG_NONCONFIRM;
@@ -592,10 +644,7 @@ TEST (SendRequestToAllTest, TC_31_Positive_01)
 
     EXPECT_EQ(CA_STATUS_OK, CASendRequestToAll(group, &requestInfo));
 
-    if (tempToken != NULL)
-    {
-        CADestroyToken(tempToken);
-    }
+    CADestroyToken(tempToken);
 
     CADestroyRemoteEndpoint(tempRep);
     tempRep = NULL;
@@ -607,19 +656,12 @@ TEST (SendRequestToAllTest, TC_31_Positive_01)
 TEST (SendRequestToAllTest, TC_32_Negative_01)
 {
     uri = (char *) RESOURCE_URI;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
     CAGroupEndpoint_t *group = NULL;
-    group = (CAGroupEndpoint_t *) malloc(sizeof(CAGroupEndpoint_t));
-
-    if (tempRep != NULL)
-    {
-        group->connectivityType = tempRep->connectivityType;
-        group->resourceUri = NULL;
-    }
 
     memset(&requestData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken);
+    CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
+    requestData.tokenLength = tokenLength;
 
     requestData.payload = (char *) "Temp Json Payload";
     requestData.type = CA_MSG_NONCONFIRM;
@@ -627,20 +669,9 @@ TEST (SendRequestToAllTest, TC_32_Negative_01)
     requestInfo.method = CA_GET;
     requestInfo.info = requestData;
 
-    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequestToAll(group, &requestInfo));
+    EXPECT_EQ(CA_STATUS_FAILED, CASendRequestToAll(group, &requestInfo));
 
-    if (tempToken != NULL)
-    {
-        CADestroyToken(tempToken);
-    }
-
-    if (tempRep != NULL)
-    {
-        CADestroyRemoteEndpoint(tempRep);
-        tempRep = NULL;
-    }
-
-    free(group);
+    CADestroyToken(tempToken);
 }
 
 // CAGetNetworkInformation TC

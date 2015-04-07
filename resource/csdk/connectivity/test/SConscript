@@ -66,7 +66,8 @@ if env.get('LOGGING'):
 # Source files and Targets
 ######################################################################
 catests = catest_env.Program('catests', ['catests.cpp',
-                                         'caprotocolmessagetest.cpp'])
+                                         'caprotocolmessagetest.cpp',
+                                               'ca_api_unittest.cpp'])
 
 Alias("test", [catests])
 
