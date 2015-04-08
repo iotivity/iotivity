@@ -58,6 +58,7 @@ device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
 ######################################################################
 help_vars = Variables()
 help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
+help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', False))
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'WIFI', 'BT', 'BLE', 'ETHERNET']))
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
@@ -66,7 +67,7 @@ help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_up
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
 
 help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device', 'OIC-DEVICE', None, None),)
-	
+
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
