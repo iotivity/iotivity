@@ -321,7 +321,7 @@ TEST(SendRequestTest, TC_16_Positive_01)
 }
 
 // check return value when uri is NULL
-TEST(SendRequestTest, DISABLED_TC_17_Negative_01)
+TEST(SendRequestTest, TC_17_Negative_01)
 {
     uri = NULL;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -340,7 +340,7 @@ TEST(SendRequestTest, DISABLED_TC_17_Negative_01)
     requestInfo.method = CA_GET;
     requestInfo.info = requestData;
 
-    EXPECT_EQ(CA_STATUS_FAILED, CASendRequest(tempRep, &requestInfo));
+    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequest(tempRep, &requestInfo));
 
     CADestroyToken(tempToken);
 
@@ -414,7 +414,7 @@ TEST(SendResponseTest, TC_19_Positive_01)
 }
 
 // check return value when uri is NULL
-TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
+TEST(SendResponseTest, TC_20_Negative_01)
 {
     uri = NULL;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -432,7 +432,7 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     responseInfo.result = CA_SUCCESS;
     responseInfo.info = responseData;
 
-    EXPECT_EQ(CA_STATUS_FAILED, CASendResponse(tempRep, &responseInfo));
+    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendResponse(tempRep, &responseInfo));
 
     CADestroyToken(tempToken);
     if (tempRep != NULL)
@@ -501,7 +501,7 @@ TEST(SendNotificationTest, TC_22_Positive_01)
 }
 
 // check return value when uri is NULL
-TEST(SendNotificationTest, DISABLED_TC_23_Negative_01)
+TEST(SendNotificationTest, TC_23_Negative_01)
 {
     uri = NULL;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -518,7 +518,7 @@ TEST(SendNotificationTest, DISABLED_TC_23_Negative_01)
     responseInfo.result = CA_SUCCESS;
     responseInfo.info = responseData;
 
-    EXPECT_EQ(CA_STATUS_FAILED, CASendNotification(tempRep, &responseInfo));
+    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendNotification(tempRep, &responseInfo));
 
     CADestroyToken(tempToken);
     if (tempRep != NULL)
