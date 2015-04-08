@@ -21,11 +21,14 @@
 #include "gtest/gtest.h"
 #include "cainterface.h"
 #include "cacommon.h"
-#include <string.h>
 
 
 void request_handler(CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo);
 void response_handler(CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo);
+CAResult_t checkGetNetworkInfo();
+CAResult_t checkSelectNetwork();
+
+
 
 void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo)
 {
@@ -44,7 +47,8 @@ static CAInfo_t requestData;
 static CAInfo_t responseData;
 static CAResponseInfo_t responseInfo;
 static CAToken_t tempToken = NULL;
-uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+static uint8_t tokenLength = CA_MAX_TOKEN_LEN;
+static CAResult_t g_selectNetworkResult = CA_STATUS_OK;
 static const char URI[] = "coap://10.11.12.13:4545/a/light";
 static const char RESOURCE_URI[] = "/a/light";
 
@@ -145,7 +149,7 @@ TEST(TerminateTest, TC_02_Positive_01)
 // check return value
 TEST(StartListeningServerTest, TC_03_Positive_01)
 {
-    CASelectNetwork(CA_WIFI);
+    CASelectNetwork(CA_ETHERNET);
     EXPECT_EQ(CA_STATUS_OK, CAStartListeningServer());
 }
 
@@ -173,8 +177,11 @@ TEST(CreateRemoteEndpointTest, TC_06_Positive_01)
 
     EXPECT_EQ(CA_STATUS_OK, CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep));
 
-    CADestroyRemoteEndpoint(tempRep);
-    tempRep = NULL;
+    if (tempRep != NULL)
+    {
+        CADestroyRemoteEndpoint(tempRep);
+        tempRep = NULL;
+    }
 }
 
 // check remoteEndpoint and values of remoteEndpoint
@@ -182,7 +189,7 @@ TEST(CreateRemoteEndpointTest, TC_07_Positive_02)
 {
     uri = (char *) URI;
 
-    CACreateRemoteEndpoint(uri, CA_WIFI, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     EXPECT_TRUE(tempRep != NULL);
 
@@ -191,8 +198,11 @@ TEST(CreateRemoteEndpointTest, TC_07_Positive_02)
         EXPECT_STRNE(NULL, tempRep->resourceUri);
     }
 
-    CADestroyRemoteEndpoint(tempRep);
-    tempRep = NULL;
+    if (tempRep != NULL)
+    {
+        CADestroyRemoteEndpoint(tempRep);
+        tempRep = NULL;
+    }
 }
 
 // check return value when uri is NULL
@@ -213,7 +223,7 @@ TEST(CreateRemoteEndpointTest, TC_08_Negative_01)
 TEST(CreateRemoteEndpointTest, TC_09_Negative_02)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, CA_WIFI, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
     if (tempRep != NULL)
     {
@@ -359,19 +369,6 @@ TEST(SendRequestTest, TC_18_Negative_02)
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
-    memset(&requestData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
-    requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
-    snprintf(requestData.payload, length, NORMAL_INFO_DATA, "a/light");
-    requestData.type = CA_MSG_NONCONFIRM;
-
-    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
-    requestInfo.method = CA_GET;
-    requestInfo.info = requestData;
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequest(tempRep, NULL));
 
@@ -447,19 +444,6 @@ TEST(SendResponseTest, TC_21_Negative_02)
 {
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
-
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
-    responseData.messageId = 1;
-    responseData.payload = (char *) "response payload";
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
-    responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendResponse(tempRep, NULL));
 
@@ -554,7 +538,8 @@ TEST(AdvertiseResourceTest, TC_24_Positive_01)
 
     CAGenerateToken(&tempToken, tokenLength);
 
-    EXPECT_EQ(CA_STATUS_OK, CAAdvertiseResource(uri, tempToken, tokenLength, headerOpt, (uint8_t )optionNum));
+    EXPECT_EQ(CA_STATUS_OK, CAAdvertiseResource(uri, tempToken, tokenLength,
+                                                headerOpt, (uint8_t )optionNum));
 
     CADestroyToken(tempToken);
 
@@ -586,8 +571,8 @@ TEST(AdvertiseResourceTest, TC_25_Negative_01)
 
     CAGenerateToken(&tempToken, tokenLength);
 
-    EXPECT_EQ(CA_STATUS_INVALID_PARAM,
-            CAAdvertiseResource(uri, tempToken, tokenLength, headerOpt, (uint8_t )optionNum));
+    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CAAdvertiseResource(uri, tempToken, tokenLength,
+                                                           headerOpt, (uint8_t )optionNum));
 
     CADestroyToken(tempToken);
 
@@ -596,10 +581,32 @@ TEST(AdvertiseResourceTest, TC_25_Negative_01)
 
 // CASelectNewwork TC
 // check return value
- TEST(SelectNetworkTest, TC_26_Positive_01)
+TEST(SelectNetworkTest, TC_26_Positive_01)
 {
-    //Select wifi network
-    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_WIFI));
+    CAResult_t res = checkSelectNetwork();
+    EXPECT_EQ(CA_STATUS_OK, res);
+}
+
+CAResult_t checkSelectNetwork()
+{
+    CAResult_t res = CASelectNetwork(CA_ETHERNET);
+
+    if (CA_STATUS_OK == res)
+    {
+        std::cout << "ok";
+        g_selectNetworkResult = res;
+        return CA_STATUS_OK;
+    }
+    else if (CA_NOT_SUPPORTED == res)
+    {
+        std::cout << "not supported";
+        g_selectNetworkResult = res;
+        return CA_STATUS_OK;
+    }
+    else
+    {
+        return CA_STATUS_FAILED;
+    }
 }
 
 // check return value when selected network is disable
@@ -613,8 +620,15 @@ TEST(SelectNetworkTest, TC_27_Negative_01)
 // check return value
 TEST(UnSelectNetworkTest, TC_28_Positive_01)
 {
-    //Unselect wifi network
-    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_WIFI));
+    if (CA_STATUS_OK == g_selectNetworkResult)
+    {
+        EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ETHERNET));
+    }
+
+    if (CA_NOT_SUPPORTED == g_selectNetworkResult)
+    {
+        EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(CA_ETHERNET));
+    }
 }
 
 // check return value when selected network is disable
@@ -689,10 +703,7 @@ TEST (SendRequestToAllTest, TC_32_Negative_01)
 // check return value
 TEST (GetNetworkInformationTest, TC_33_Positive_01)
 {
-    CALocalConnectivity_t *tempInfo = NULL;
-    uint32_t tempSize = 0;
-
-    EXPECT_EQ(CA_STATUS_OK, CAGetNetworkInformation(&tempInfo, &tempSize));
+    EXPECT_EQ(CA_STATUS_OK, checkGetNetworkInfo());
 }
 
 TEST(RegisterDTLSCredentialsHandlerTest, TC_34_positive_01)
@@ -707,3 +718,20 @@ TEST(RegisterDTLSCredentialsHandlerTest, TC_34_positive_01)
 #endif
 }
 
+CAResult_t checkGetNetworkInfo()
+{
+    CALocalConnectivity_t *tempInfo = NULL;
+    uint32_t tempSize = 0;
+
+    CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
+
+    if (CA_STATUS_OK == res || CA_ADAPTER_NOT_ENABLED == res ||
+            CA_ADAPTER_NOT_ENABLED == res)
+    {
+        return CA_STATUS_OK;
+    }
+    else
+    {
+        return CA_STATUS_FAILED;
+    }
+}
