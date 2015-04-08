@@ -484,12 +484,12 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
 
     OCAction *action = actionset->head;
 
-    if (remaining >= strlen(actionset->actionsetName) + 1)
+    if (remaining >= strlen(actionset->actionsetName) + (sizeof(ACTION_DELIMITER)-1) )
     {
-        strncat(temp, actionset->actionsetName, sizeof(temp));
+        strncat(temp, actionset->actionsetName, remaining);
         remaining -= strlen(actionset->actionsetName);
         strcat(temp, ACTION_DELIMITER);
-        remaining--;
+        remaining -= (sizeof(ACTION_DELIMITER)-1);
     }
     else
     {
