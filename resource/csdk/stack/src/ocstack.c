@@ -1112,7 +1112,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
             if(responseInfo->info.type == CA_MSG_CONFIRM)
             {
                 SendResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL);
+                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0);
             }
         }
         return;
@@ -1160,7 +1160,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
                 OC_LOG(INFO, TAG, PCF("Received a response or notification,\
                         but I do not have callback. Sending RESET"));
                 SendResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                        CA_MSG_RESET, 0, NULL, NULL);
+                        CA_MSG_RESET, 0, NULL, NULL, 0);
             }
         }
 
@@ -1189,7 +1189,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
 OCStackResult SendResponse(const CARemoteEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
-        CAToken_t token)
+        CAToken_t token, uint8_t tokenLength)
 {
     CAResponseInfo_t respInfo = {};
     respInfo.result = responseResult;
@@ -1198,6 +1198,7 @@ OCStackResult SendResponse(const CARemoteEndpoint_t* endPoint, const uint16_t co
     respInfo.info.options = (CAHeaderOption_t*)options;
     respInfo.info.payload = NULL;
     respInfo.info.token = token;
+    respInfo.info.tokenLength = tokenLength;
     respInfo.info.type = type;
 
     CAResult_t caResult = CASendResponse(endPoint, &respInfo);
@@ -1319,7 +1320,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
                 OC_LOG(ERROR, TAG, PCF("Received CA method %d not supported"));
                 SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
                         requestInfo->info.type, requestInfo->info.numOptions,
-                        requestInfo->info.options, requestInfo->info.token);
+                        requestInfo->info.options, requestInfo->info.token,
+                        requestInfo->info.tokenLength);
                 return;
             }
     }
@@ -1336,7 +1338,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
         OC_LOG(FATAL, TAG, "Server Request Token is NULL");
         SendResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
                 requestInfo->info.type, requestInfo->info.numOptions,
-                requestInfo->info.options, requestInfo->info.token);
+                requestInfo->info.options, requestInfo->info.token,
+                requestInfo->info.tokenLength);
         return;
     }
     memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
@@ -1369,7 +1372,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
                 PCF("The request info numOptions is greater than MAX_HEADER_OPTIONS"));
         SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_OPT,
                 requestInfo->info.type, requestInfo->info.numOptions,
-                requestInfo->info.options, requestInfo->info.token);
+                requestInfo->info.options, requestInfo->info.token,
+                requestInfo->info.tokenLength);
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
@@ -1388,15 +1392,16 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
                     CA_MSG_ACKNOWLEDGE,
                     0,      // numptions
                     NULL,   // *options
-                    NULL   // token
-                    );
+                    NULL,   // token
+                    0);
     }
     else if(requestResult != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("HandleStackRequests failed"));
         SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
                 requestInfo->info.type, requestInfo->info.numOptions,
-                requestInfo->info.options, requestInfo->info.token);
+                requestInfo->info.options, requestInfo->info.token,
+                requestInfo->info.tokenLength);
     }
     // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
     // The token is copied in there, and is thus still owned by this function.

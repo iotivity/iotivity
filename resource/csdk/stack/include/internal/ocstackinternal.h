@@ -138,7 +138,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 OCStackResult SendResponse(const CARemoteEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
-        CAToken_t token);
+        CAToken_t token, uint8_t tokenLength);
 
 
 #ifdef WITH_PRESENCE
