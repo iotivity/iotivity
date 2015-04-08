@@ -24,9 +24,10 @@
 // (IEEE Std 1003.1b-1993) specification
 //
 // For this specific file, see use of clock_gettime,
-// Refer http://man7.org/linux/man-pages/man2/clock_gettime.2.html
+// Refer to http://pubs.opengroup.org/stage7tc1/functions/clock_gettime.html
+// and to http://man7.org/linux/man-pages/man2/clock_gettime.2.html
 #ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 199309L
+#define _POSIX_C_SOURCE 200809L
 #endif
 
 // Platform check can be extended to check and/or define more, or could be
@@ -39,10 +40,10 @@
 // clock_gettime() support.
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
-#ifdef  _POSIX_TIMERS
+// if we have unistd.h, we're a Unix system
 #include <time.h>
+#include <sys/time.h>
 #endif
 
 #include "logger.h"
@@ -152,16 +153,30 @@ void OICLog(LogLevel level, const char *tag, const char *logStr)
     }
     else
     {
-        struct timespec when = {};
         int min = 0;
         int sec = 0;
         int ms = 0;
-        if (!clock_gettime(CLOCK_REALTIME_COARSE, &when))
+#ifdef _POSIX_TIMERS
+        struct timespec when = {};
+        clockid_t clk = CLOCK_REALTIME;
+#ifdef CLOCK_REALTIME_COARSE
+        clk = CLOCK_REALTIME_COARSE;
+#endif
+        if (!clock_gettime(clk, &when))
         {
             min = (when.tv_sec / 60) % 60;
             sec = when.tv_sec % 60;
             ms = when.tv_nsec / 1000000;
         }
+#else
+        struct timeval now;
+        if (!gettimeofday(&now, NULL))
+        {
+            min = (now.tv_sec / 60) % 60;
+            sec = now.tv_sec % 60;
+            ms = now.tv_usec * 1000;
+        }
+#endif
         printf("%02d:%02d.%03d %s: %s: %s\n", min, sec, ms, LEVEL[level], tag, logStr);
     }
 #endif

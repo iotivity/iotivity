@@ -24,9 +24,10 @@
 // (IEEE Std 1003.1b-1993) specification
 //
 // For this specific file, see use of clock_gettime,
-// Refer http://man7.org/linux/man-pages/man2/clock_gettime.2.html
+// Refer to http://pubs.opengroup.org/stage7tc1/functions/clock_gettime.html
+// and to http://man7.org/linux/man-pages/man2/clock_gettime.2.html
 #ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 199309L
+#define _POSIX_C_SOURCE 200809L
 #endif
 
 // Platform check can be extended to check and/or define more, or could be
@@ -39,13 +40,9 @@
 // clock_gettime() support.
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
-#ifdef  _POSIX_TIMERS
+// if we have unistd.h, we're a Unix system
 #include <time.h>
-#endif
-
-#ifdef __APPLE__
 #include <sys/time.h>
 #endif
 
@@ -129,25 +126,23 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...) {
     OCLog(level, tag, buffer);
 }
 
-#if defined(__linux__)
-static void  osalGetTime(int *min,int *sec, int *ms)
+static void osalGetTime(int *min,int *sec, int *ms)
 {
     if (min && sec && ms)
     {
+#ifdef _POSIX_TIMERS
         struct timespec when = {};
-        if (!clock_gettime(CLOCK_REALTIME_COARSE, &when))
+        clockid_t clk = CLOCK_REALTIME;
+#ifdef CLOCK_REALTIME_COARSE
+        clk = CLOCK_REALTIME_COARSE;
+#endif
+        if (!clock_gettime(clk, &when))
         {
             *min = (when.tv_sec / 60) % 60;
             *sec = when.tv_sec % 60;
             *ms = when.tv_nsec / 1000000;
         }
-    }
-}
-#elif defined(__APPLE__)
-static void  osalGetTime(int *min,int *sec, int *ms)
-{
-    if (min && sec && ms)
-    {
+#else
         struct timeval now;
         if (!gettimeofday(&now, NULL))
         {
@@ -155,9 +150,9 @@ static void  osalGetTime(int *min,int *sec, int *ms)
             *sec = now.tv_sec % 60;
             *ms = now.tv_usec * 1000;
         }
+#endif
     }
 }
-#endif
 
 /**
  * Output a log string with the specified priority level.
