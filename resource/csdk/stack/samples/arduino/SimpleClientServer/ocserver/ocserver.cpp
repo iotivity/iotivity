@@ -65,6 +65,8 @@ static char responsePayloadPut[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":fa
 // Note : Arduino WiFi Shield currently does NOT support multicast and therefore
 // this server will NOT be listening on 224.0.1.187 multicast address.
 
+static const char ARDUINO_WIFI_SHIELD_UDP_FW_VER[] = "1.1.0";
+
 /// WiFi Shield firmware with Intel patches
 static const char INTEL_WIFI_SHIELD_FW_VER[] = "1.2.0";
 
@@ -86,7 +88,7 @@ int ConnectToNetwork()
     // Verify that WiFi Shield is running the firmware with all UDP fixes
     fwVersion = WiFi.firmwareVersion();
     OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
-    if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) !=0 )
+    if ( strncmp(fwVersion, ARDUINO_WIFI_SHIELD_UDP_FW_VER, sizeof(ARDUINO_WIFI_SHIELD_UDP_FW_VER)) !=0 )
     {
         OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
         return -1;

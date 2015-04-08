@@ -113,12 +113,27 @@ def __import_lib(env, lib):
 	lib_src.extend(__search_files(lib_path, '*.c'))
 	lib_src.extend(__search_files(lib_path, '*.cpp'))
 
+	lib_obj = __src_to_obj(env, lib_src)
 	build_dir = env.get('BUILD_DIR')
 	if build_dir:
-		lib_a = env.StaticLibrary(build_dir + lib, __src_to_obj(env, lib_src))
+		lib_a = env.StaticLibrary(build_dir + lib, lib_obj)
 	else:
-		lib_a = env.StaticLibrary(lib, __src_to_obj(env, lib_src))
-	env.AppendUnique(LIBS = [File(lib_a[0])])
+		lib_a = env.StaticLibrary(lib, lib_obj)
+
+	# If we link libSPI.a, the final binary is not getting launched
+	# on the board.  Which is not the case if we directly use SPI.o.
+
+	if env.get('TARGET_ARCH') == 'arm':
+		if lib == 'SPI':
+			for obj in lib_obj:
+				if obj.name.endswith('SPI.o'):
+					env.PrependUnique(LIBS = [File(obj)])
+		else:
+			env.AppendUnique(LIBS = [File(lib_a[0])])
+	else:
+		env.PrependUnique(LIBS = [File(lib_a[0])])
+
+	#env.AppendUnique(LIBS = [File(lib_a[0])])
 
 def __build_core(env):
 	core_src = __search_files(core_folder, '*.S')
@@ -408,6 +423,7 @@ else:
 		env.AppendUnique(LINKFLAGS = [cpu_flag])
 		env.AppendUnique(LIBS = 'm')
 	env.Replace(ARCOM = '$AR ' + platform_info.get('compiler.ar.flags') + ' $TARGET $SOURCES')
+
 
 __build_core(env)
 
