@@ -9,7 +9,12 @@ ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 root_dir = './../'
 ca_path = './'
-build_dir = env.get('BUILD_DIR')
+current_dir=env.get('SRC_DIR')
+
+# The tinydtls library location is ~/iotivity/extlibs. When scons run from connectivity folder,
+# the build folder is ~/iotivity/resource/csdk/connectivity/out/linux/x86_64/release/.
+# To include  ~/iotivity/extlibs/tinyDTLS, it should go seven level up from the build folder.
+extlib_dir ='../../../../../../../../'
 
 #####################################################################
 # Source files and Target(s)
@@ -26,7 +31,10 @@ env.AppendUnique(CPPPATH = [root_dir + '/common/inc/'])
 env.SConscript('./../common/SConscript')
 
 if env.get('SECURED') == '1':
-	env.SConscript('./../lib/tinydtls/SConscript')
+	if current_dir.find('connectivity') == -1:
+		env.SConscript(current_dir +'/extlibs/tinydtls/SConscript')
+	else:
+		env.SConscript(extlib_dir + '/extlibs/tinydtls/SConscript')
 
 
 env.AppendUnique(CA_SRC=[ca_path+'adapter_util/caadapterutils.c'])
@@ -58,7 +66,10 @@ else:
 		]
 	if secured == '1':
 		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
-		env.AppendUnique(CPPPATH = [root_dir + '/lib/tinydtls'])
+		if current_dir.find('connectivity') == -1:
+			env.AppendUnique(CPPPATH = [current_dir + '/extlibs/tinydtls'])
+		else:
+			env.AppendUnique(CPPPATH = [extlib_dir + '/extlibs/tinydtls'])
 env.AppendUnique(CA_SRC = ca_common_src)
 
 
