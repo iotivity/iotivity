@@ -152,6 +152,74 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
 void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
 
 /**
+ * Select the cipher suite for dtls handshake
+ *
+ * @param[in] cipher    cipher suite
+ *                             0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                             0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
+ *                             0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+ * @return  0 on success otherwise a positive error value
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher);
+
+/**
+ * Select the cipher suite for dtls handshake
+ *
+ * @param[in] enable  0, enabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                     other value, disabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *
+ * @return  0 on success otherwise a positive error value
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CADtlsEnablesAnonEcdh(const uint8_t enable);
+
+/**
+ * Initiate DTLS handshake with selected cipher suite
+ *
+ * @param[in] addrInfo  information of network address
+ * @param[in] connType  connectivity type
+ *
+ * @return  0 on success otherwise a positive error value
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
+                                  const CAConnectivityType_t connType);
+
+/**
+ * Generate ownerPSK using PRF
+ * OwnerPSK = TLS-PRF('master key' , 'oic.sec.doxm.jw',
+ *                                    'ID of new device(Resource Server)',
+ *                                    'ID of owner smart-phone(Provisioning Server)')
+ *
+ * @param[in] addrInfo  information of network address
+ * @param[in] connType  connectivity type
+ * @param[in] label  Ownership transfer method e.g)"oic.sec.doxm.jw"
+ * @param[in] labelLen  Byte length of label
+ * @param[in] rsrcServerDeviceID  ID of new device(Resource Server)
+ * @param[in] rsrcServerDeviceIDLen  Byte length of rsrcServerDeviceID
+ * @param[in] provServerDeviceID  label of previous owner
+ * @param[in] provServerDeviceIDLen  byte length of provServerDeviceID
+ * @param[in,out] ownerPSK  Output buffer for owner PSK
+ * @param[in] ownerPSKSize  Byte length of the ownerPSK to be generated
+ *
+ * @return  0 on success otherwise a positive error value
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CADtlsGenerateOwnerPSK(const CAAddress_t* addrInfo,
+                    const CAConnectivityType_t connType,
+                    const uint8_t* label, const size_t labelLen,
+                    const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
+                    const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
+                    uint8_t* ownerPSK, const size_t ownerPSKSize);
+;
+
+/**
  * @fn  CAAdapterNetDtlsInit
  * @brief  initialize tinyDTLS library and other necessary intialization.
  *

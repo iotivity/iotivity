@@ -250,6 +250,81 @@ CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
  */
 CAResult_t CAHandleRequestResponse();
 
+
+#ifdef __WITH_DTLS__
+
+/**
+ * Select the cipher suite for dtls handshake
+ *
+ * @param[IN] cipher  cipher suite (Note : Make sure endianness)
+ *                               0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                               0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
+ *                               0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+ *
+ * @return  0 on success otherwise a positive error value
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CASelectCipherSuite(const uint16_t cipher);
+
+/**
+ * TLS_ECDH_anon_WITH_AES_128_CBC_SHA cipher suite enabling/disabling in dtls
+ *
+ * @param[IN] enable  '0' is disabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                                 other value is enabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *
+ * @return  0 on success otherwise a positive error value
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAEnablesAnonEcdh(const uint8_t enable);
+
+
+/**
+ * Generate ownerPSK using PRF
+ * OwnerPSK = TLS-PRF('master key' , 'oic.sec.doxm.jw',
+ *                                    'ID of new device(Resource Server)',
+ *                                    'ID of owner smart-phone(Provisioning Server)')
+ *
+ * @param[IN] addrInfo  information of network address
+ * @param[IN] connType  connectivity type
+ * @param[IN] label  Ownership transfer method e.g)"oic.sec.doxm.jw"
+ * @param[IN] labelLen  Byte length of label
+ * @param[IN] rsrcServerDeviceID  ID of new device(Resource Server)
+ * @param[IN] rsrcServerDeviceIDLen  Byte length of rsrcServerDeviceID
+ * @param[IN] provServerDeviceID  label of previous owner
+ * @param[IN] provServerDeviceIDLen  byte length of provServerDeviceID
+ * @param[IN,OUT] ownerPSK  Output buffer for owner PSK
+ * @param[IN] ownerPSKSize  Byte length of the ownerPSK to be generated
+ *
+ * @return  0 on success otherwise a positive error value
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAGenerateOwnerPSK(const CAAddress_t* addrInfo,
+                    const CAConnectivityType_t connType,
+                    const uint8_t* label, const size_t labelLen,
+                    const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
+                    const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
+                    uint8_t* ownerPSK, const size_t ownerPSKSize);
+
+/**
+ * Initiate DTLS handshake with selected cipher suite
+ *
+ * @param[IN] addrInfo    information of network address
+ * @param[IN] connType  connectivity type
+ *
+ * @return  0 on success otherwise a positive error value
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAInitiateHandshake(const CAAddress_t* addrInfo,
+                                            const CAConnectivityType_t connType);
+
+
+#endif /* __WITH_DTLS__ */
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

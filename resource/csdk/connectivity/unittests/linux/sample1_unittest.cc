@@ -374,5 +374,42 @@ TEST (HandlerRequestResponseTest, TC_27_Positive_01)
     EXPECT_EQ(CA_STATUS_OK, CAHandleRequestResponse());
 }
 
+// CASelectCipherSuite TC
+// check return value
+TEST(DtlsSelectCiperSuiteTest, TC_28_Positive_01)
+{
+    //TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+    EXPECT_EQ(CA_STATUS_OK, CASelectCipherSuite(0xC018));
+}
+
+TEST(DtlsSelectCiperSuiteTest, TC_28_Positive_02)
+{
+    //TLS_PSK_WITH_AES_128_CCM_8
+    EXPECT_EQ(CA_STATUS_OK, CASelectCipherSuite(0xC0A8));
+}
+
+TEST(DtlsSelectCiperSuiteTest, TC_28_Positive_03)
+{
+    //TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+    EXPECT_EQ(CA_STATUS_OK, CASelectCipherSuite(0xC0AE));
+}
+
+//T.B.D
+//Nagative test case of CASelectCipherSuite() will be added when tinydtls is updated.
+
+// CAEnablesAnonEcdh TC
+// check return value
+TEST(DtlsEnablesAnonEcdh, TC_29_Positive_01)
+{
+    EXPECT_EQ(CA_STATUS_OK, CAEnablesAnonEcdh(CA_FALSE));
+}
+
+TEST(DtlsEnablesAnonEcdh, TC_29_Positive_02)
+{
+    EXPECT_EQ(CA_STATUS_OK, CAEnablesAnonEcdh(CA_TRUE));
+}
+
+//T.B.D
+//Nagative test case of DtlsEnablesAnonEcdh() will be added when tinydtls is updated.
 
 

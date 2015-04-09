@@ -21,7 +21,7 @@
 #include "cacommon.h"
 #include "cawifiinterface.h"
 #include "dtls.h"
-
+#include "global.h"
 
 /**
  * @def NET_DTLS_TAG
@@ -374,7 +374,7 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
   // OCGetDtlsPskCredentials(&credInfo);
     gGetCredentialsCallback(&credInfo);
 
-    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "CAGetDtlsPskCredentials credInfo is NULL", 0);    
+    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "CAGetDtlsPskCredentials credInfo is NULL", 0);
 
     if ((type == DTLS_PSK_HINT) || (type == DTLS_PSK_IDENTITY))
     {
@@ -431,6 +431,160 @@ void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback)
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
     gGetCredentialsCallback = credCallback;
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+}
+
+CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+
+    u_mutex_lock(gDtlsContextMutex);
+    if (NULL == gCaDtlsContext)
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
+        u_mutex_unlock(gDtlsContextMutex);
+        return CA_STATUS_FAILED;
+    }
+    /**
+     * T.B.D
+     * NOTE : below API not supported security-M3 branch.
+     * Comment will be removed when new tinydtls is updated.
+     */
+    //dtls_select_cipher(gCaDtlsContext, cipher);
+    u_mutex_unlock(gDtlsContextMutex);
+
+    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "Selected cipher suite is 0x%02X%02X\n",
+        ((uint8_t*)(&cipher))[1], ((uint8_t*)(&cipher))[0]);
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+
+    return CA_STATUS_OK ;
+}
+
+CAResult_t CADtlsEnablesAnonEcdh(const uint8_t enable)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+
+    u_mutex_lock(gDtlsContextMutex);
+    if (NULL == gCaDtlsContext)
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
+        u_mutex_unlock(gDtlsContextMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    /**
+     * T.B.D
+     * NOTE : below API not supported security-M3 branch.
+     * Comment will be removed when new tinydtls is updated.
+     */
+    //dtls_enables_anon_ecdh(gCaDtlsContext, enable);
+
+    u_mutex_unlock(gDtlsContextMutex);
+    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA  is %s",
+        enable ? "enabled" : "disabled");
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+
+    return CA_STATUS_OK ;
+}
+
+CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
+                                 const CAConnectivityType_t connType)
+{
+    int res;
+    stCADtlsAddrInfo_t dst;
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsInitiateHandshake");
+
+    if(!addrInfo)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    memset(&dst, 0, sizeof(stCADtlsAddrInfo_t));
+
+    if(inet_aton(addrInfo->IP.ipAddress, &dst.addr.sin.sin_addr) == 0)
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to convert from ASCII to Network Address");
+        return CA_STATUS_FAILED;
+    }
+    dst.addr.sin.sin_family = AF_INET;
+    dst.addr.sin.sin_port = htons(addrInfo->IP.port);
+    dst.size = sizeof(dst.addr);
+
+    u_mutex_lock(gDtlsContextMutex);
+    if(NULL == gDtlsContextMutex)
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
+        u_mutex_unlock(gDtlsContextMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    if(0 > dtls_connect(gCaDtlsContext->dtlsContext, &dst))
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to connect");
+        u_mutex_unlock(gDtlsContextMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    u_mutex_unlock(gDtlsContextMutex);
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CADtlsInitiateHandshake");
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CADtlsGenerateOwnerPSK(const CAAddress_t* addrInfo,
+                    const CAConnectivityType_t connType,
+                    const uint8_t* label, const size_t labelLen,
+                    const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
+                    const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
+                    uint8_t* ownerPSK, const size_t ownerPSKSize)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+
+    if(!addrInfo || !label || 0 == labelLen || !ownerPSK || 0 == ownerPSKSize)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    u_mutex_lock(gDtlsContextMutex);
+    if (NULL == gCaDtlsContext)
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
+        u_mutex_unlock(gDtlsContextMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    /**
+     * T.B.D
+     * NOTE : below API not supported in security-M3 branch.
+     * Comment will be removed when new tinydtls is updated.
+     */
+    //Find session using addrInfo(address, port), connType
+    //
+    //dtls_generate_owner_psk(gCaDtlsContext->dtlsContext, session, label, labelLen,
+    //                              rsrcServerDeviceID, rsrcServerDeviceIDLen,
+    //                              provServerDeviceID, provServerDeviceIDLen,
+    //                              ownerPSK, ownerPSKSize);
+
+    u_mutex_unlock(gDtlsContextMutex);
+
+    //memcpy(ownerPSK, ownerPSKTmp, ownerPSKSize);
+
+    //dummy ownerPSK
+    if(ownerPSKSize > labelLen)
+    {
+        memset(ownerPSK, 0x11, ownerPSKSize);
+        memcpy(ownerPSK, label, labelLen);
+    }
+    else
+    {
+        memcpy(ownerPSK, label, ownerPSKSize);
+    }
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAAdapterNetDtlsInit()

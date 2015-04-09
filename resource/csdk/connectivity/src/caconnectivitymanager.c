@@ -291,3 +291,70 @@ CAResult_t CAHandleRequestResponse()
     return CA_STATUS_OK;
 }
 
+#ifdef __WITH_DTLS__
+
+CAResult_t CASelectCipherSuite(const uint16_t cipher)
+{
+    OIC_LOG_V(DEBUG, TAG, "CASelectCipherSuite");
+
+    return CADtlsSelectCipherSuite(cipher);
+}
+
+CAResult_t CAEnablesAnonEcdh(const uint8_t enable)
+{
+    OIC_LOG_V(DEBUG, TAG, "CAEnablesAnonEcdh");
+
+    return CADtlsEnablesAnonEcdh(enable);
+}
+
+CAResult_t CAGenerateOwnerPSK(const CAAddress_t* addrInfo,
+                    const CAConnectivityType_t connType,
+                    const uint8_t* label, const size_t labelLen,
+                    const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
+                    const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
+                    uint8_t* ownerPSK, const size_t ownerPSKSize)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN : CAGenerateOwnerPSK");
+
+    CAResult_t res = CA_STATUS_OK;
+
+    //newOwnerLabel and prevOwnerLabe can be NULL
+    if(!addrInfo || !label || 0 == labelLen || !ownerPSK || 0 == ownerPSKSize)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    res = CADtlsGenerateOwnerPSK(addrInfo, connType, label, labelLen,
+                                  rsrcServerDeviceID, rsrcServerDeviceIDLen,
+                                  provServerDeviceID, provServerDeviceIDLen,
+                                  ownerPSK, ownerPSKSize);
+    if(CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT : CAGenerateOwnerPSK");
+
+    return res;
+}
+
+CAResult_t CAInitiateHandshake(const CAAddress_t* addrInfo, const CAConnectivityType_t connType)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN : CAInitiateHandshake");
+    CAResult_t res = CA_STATUS_OK;
+
+    if(!addrInfo)
+    {
+        CA_STATUS_INVALID_PARAM;
+    }
+
+    res = CADtlsInitiateHandshake(addrInfo, connType);
+    if(CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);
+    }
+
+    return res;
+}
+
+#endif /* __WITH_DTLS__ */
