@@ -593,13 +593,11 @@ CAResult_t checkSelectNetwork()
 
     if (CA_STATUS_OK == res)
     {
-        std::cout << "ok";
         g_selectNetworkResult = res;
         return CA_STATUS_OK;
     }
     else if (CA_NOT_SUPPORTED == res)
     {
-        std::cout << "not supported";
         g_selectNetworkResult = res;
         return CA_STATUS_OK;
     }
@@ -726,7 +724,7 @@ CAResult_t checkGetNetworkInfo()
     CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
 
     if (CA_STATUS_OK == res || CA_ADAPTER_NOT_ENABLED == res ||
-            CA_ADAPTER_NOT_ENABLED == res)
+            CA_NOT_SUPPORTED == res)
     {
         return CA_STATUS_OK;
     }

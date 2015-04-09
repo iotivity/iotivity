@@ -211,12 +211,11 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(size, TAG, "size");
 
-    CAResult_t res = CA_STATUS_FAILED;
-
     CALocalConnectivity_t *tempInfo[CA_CONNECTIVITY_TYPE_NUM] = { 0 };
     uint32_t tempSize[CA_CONNECTIVITY_TYPE_NUM] = { 0 };
-    uint8_t index = 0;
 
+    uint8_t index = 0;
+    CAResult_t res = CA_STATUS_FAILED;
     // #1. get information each adapter
     for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
     {
@@ -245,7 +244,11 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 
     if (resSize <= 0)
     {
-        return res;
+        if (CA_ADAPTER_NOT_ENABLED == res || CA_NOT_SUPPORTED == res)
+        {
+            return res;
+        }
+        return CA_STATUS_FAILED;
     }
 
     // #3. add data into result

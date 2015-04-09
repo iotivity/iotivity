@@ -213,8 +213,6 @@ void CAStopAdapter(CAConnectivityType_t cType)
 
 CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 {
-    CAResult_t res = CA_STATUS_FAILED;
-
     CALocalConnectivity_t *tempInfo[CA_CONNECTIVITY_TYPE_NUM];
     uint32_t tempSize[CA_CONNECTIVITY_TYPE_NUM];
 
@@ -223,6 +221,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 
     // #1. get information each adapter
     uint8_t index = 0;
+    CAResult_t res = CA_STATUS_FAILED;
     for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
     {
         if (g_adapterHandler[index].GetnetInfo != NULL)
@@ -251,14 +250,18 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 
     if (resSize <= 0)
     {
-        res = CA_STATUS_FAILED;
-        return res;
+        if (res == CA_ADAPTER_NOT_ENABLED || res == CA_NOT_SUPPORTED)
+        {
+            return res;
+        }
+        return CA_STATUS_FAILED;
     }
 
     // #3. add data into result
     // memory allocation
 
-    CALocalConnectivity_t *resInfo = (CALocalConnectivity_t *) OICCalloc(resSize, sizeof(CALocalConnectivity_t));
+    CALocalConnectivity_t *resInfo = (CALocalConnectivity_t *) OICCalloc(
+            resSize, sizeof(CALocalConnectivity_t));
     CA_MEMORY_ALLOC_CHECK(resInfo);
 
     uint8_t pos = 0;
@@ -290,11 +293,8 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
         *size = resSize;
     }
 
-    res = CA_STATUS_OK;
-
     OIC_LOG(DEBUG, TAG, "each network info save success!");
-
-    return res;
+    return CA_STATUS_OK;
 
     // memory error label.
 memory_error_exit:
