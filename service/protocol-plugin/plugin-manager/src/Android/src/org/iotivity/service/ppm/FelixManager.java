@@ -25,6 +25,9 @@ package org.iotivity.service.ppm;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -36,6 +39,8 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.res.AssetManager;
 import android.os.FileObserver;
 import android.util.Log;
 
@@ -90,6 +95,7 @@ public class FelixManager {
     public static FelixManager getInstance(Context ctx) {
         if (m_felixmgr == null) {
             m_felixmgr = new FelixManager(ctx);
+            copyFiles("files");
         }
 
         return m_felixmgr;
@@ -508,5 +514,66 @@ public class FelixManager {
         FelixManager.printPluginList();
 
         return flag;
+    }
+
+    public static String getPackageName() {
+        String packagename;
+
+        packagename = m_context.getPackageName();
+
+        return packagename;
+    }
+
+    private static void copyFiles(String path) {
+        AssetManager assetManager = m_context.getAssets();
+        String assets[] = null;
+
+        try {
+            assets = assetManager.list(path);
+
+            if (assets.length == 0) {
+                copyFile(path);
+            } else {
+                String fullPath = "/data/data/"
+                        + m_context.getPackageName() + "/" + path;
+                Log.d("FELIX", fullPath);
+                File dir = new File(fullPath);
+
+                if (!dir.exists())
+                    dir.mkdir();
+                for (int i = 0; i < assets.length; ++i) {
+                    copyFiles(path + "/" + assets[i]);
+                }
+            }
+        } catch (IOException ex) {
+            Log.e("tag", "I/O Exception", ex);
+        }
+    }
+
+    private static void copyFile(String filename) {
+        AssetManager assetManager = m_context.getAssets();
+        InputStream in = null;
+        OutputStream out = null;
+
+        try {
+            in = assetManager.open(filename);
+            out = m_context.openFileOutput(filename.split("/")[1], Context.MODE_PRIVATE);
+
+            byte[] buffer = new byte[1024];
+            
+            int read;
+
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+
+            in.close();
+            in = null;
+            out.flush();
+            out.close();
+            out = null;
+        } catch (Exception e) {
+            Log.e("tag", e.getMessage());
+        }
     }
 }
