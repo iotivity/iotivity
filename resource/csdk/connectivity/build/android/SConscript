@@ -157,16 +157,19 @@ else:
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__'])
 if env.get('LOGGING'):
 	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
-env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC','`pkg-config','--cflags','glib-2.0`'])
-env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread', '-lglib-2.0', '-lgthread-2.0', '-llog', '-landroid'])
+env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
+env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 
-env.Append(LIBS=[
-  '-lglib-2.0', '-lgthread-2.0'
-])
+main_dir  = Dir('.').srcnode().abspath
+
+glib_dir = main_dir + '/../../../../../extlibs/glib/glib-2.40.2/'
+env.AppendUnique(CPPPATH = [
+                           glib_dir,
+                           glib_dir + 'glib',
+                           glib_dir + 'gthread'])
 
 # From android-5 (API > 20), all application must be built with flags '-fPIE' '-pie'.
 # Due to the limitation of Scons, it's required to added it into the command line
 # directly (otherwise, it will also be added when build share library)
 env.Replace(CCCOM = '$CC -o $TARGET -c $CFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SOURCES')
 env.Replace(CXXCOM = '$CXX -o $TARGET -c $CXXFLAGS $CCFLAGS $_CCCOMCOM -fPIE $SOURCES')
-env.Replace(LINKCOM = '$LINK -o $TARGET -pie $LINKFLAGS $__RPATH $SOURCES $_LIBDIRFLAGS $_LIBFLAGS')

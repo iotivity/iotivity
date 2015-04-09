@@ -47,11 +47,12 @@ build_dir = env.get('BUILD_DIR')
 # Build 'resource' sub-project
 SConscript(build_dir + 'resource/SConscript')
 
-if target_os not in ['arduino','darwin','ios']:
+if target_os not in ['arduino','darwin','ios', 'android']:
 	SConscript(build_dir + 'examples/OICMiddle/SConscript')
 
 # Build 'service' sub-project
-SConscript(build_dir + 'service/SConscript')
+if target_os != 'android':
+	SConscript(build_dir + 'service/SConscript')
 
 # Append targets information to the help information, to see help info, execute command line:
 #     $ scon [options] -h

@@ -46,6 +46,7 @@ if target_os not in ['arduino','darwin']:
 	# Build liboc
 	SConscript('src/SConscript')
 
+if target_os not in ['arduino','darwin', 'android']:
 	# Build examples
 	SConscript('examples/SConscript')
 

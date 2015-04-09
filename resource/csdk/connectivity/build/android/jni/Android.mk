@@ -6,11 +6,12 @@ PROJECT_API_PATH			= $(PROJECT_ROOT_PATH)/api
 PROJECT_INC_PATH			= $(PROJECT_ROOT_PATH)/inc
 PROJECT_SRC_PATH			= $(PROJECT_ROOT_PATH)/src
 PROJECT_COMMON_PATH			= $(PROJECT_ROOT_PATH)/common
-PROJECT_COMMON_INC_PATH		= $(PROJECT_COMMON_PATH)/inc
-PROJECT_COMMON_SRC_PATH		= $(PROJECT_COMMON_PATH)/src
+PROJECT_COMMON_INC_PATH			= $(PROJECT_COMMON_PATH)/inc
+PROJECT_COMMON_SRC_PATH			= $(PROJECT_COMMON_PATH)/src
 PROJECT_LIB_PATH			= $(PROJECT_ROOT_PATH)/lib
-PROJECT_EXTERNAL_PATH	= $(PROJECT_ROOT_PATH)/external/inc
-DTLS_LIB 					= $(PROJECT_LIB_PATH)/tinydtls
+PROJECT_EXTERNAL_PATH			= $(PROJECT_ROOT_PATH)/external/inc
+DTLS_LIB 				= $(PROJECT_LIB_PATH)/tinydtls
+GLIB_PATH				= $(PROJECT_LIB_PATH)/android/glib-2.40.2
 
 #Modify below values to enable/disable the Adapter
 #Suffix "NO_" to disable given adapter
@@ -38,8 +39,8 @@ include $(CLEAR_VARS)
 LOCAL_PATH = $(PROJECT_LIB_PATH)/android
 LOCAL_MODULE = Glib
 LOCAL_SRC_FILES := libglib-2.40.2.so
-LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-2.40.2 \
-                          $(PROJECT_LIB_PATH)/android/glib-2.40.2/glib
+LOCAL_EXPORT_C_INCLUDES = $(GLIB_PATH) \
+                          $(GLIB_PATH)/glib
 
 include $(PREBUILT_SHARED_LIBRARY)
 
@@ -50,8 +51,8 @@ include $(CLEAR_VARS)
 LOCAL_PATH = $(PROJECT_LIB_PATH)/android
 LOCAL_MODULE = GLibThread
 LOCAL_SRC_FILES := libgthread-2.40.2.so
-LOCAL_EXPORT_C_INCLUDES = $(PROJECT_LIB_PATH)/android/glib-2.40.2 \
-                          $(PROJECT_LIB_PATH)/android/glib-2.40.2/glib
+LOCAL_EXPORT_C_INCLUDES = $(GLIB_PATH) \
+                          $(GLIB_PATH)/glib
 
 include $(PREBUILT_SHARED_LIBRARY)
 
