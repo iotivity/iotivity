@@ -34,7 +34,7 @@
  * will have to be written by hand to marshal these structures (e.g. to/from
  * Persistent Storage, or across memory boundaries).
  *
- * Last reconciled against Spec v0.92.
+ * Last reconciled against Spec v0.95.
  */
 
 //
@@ -46,20 +46,11 @@
 #define OC_SECURITY_RESOURCE_TYPES_H
 
 #include <stdint.h> // for uint8_t typedef
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @enum    CABool_t
- * @brief   Boolean value used for specifying the success or failure.
- */
-typedef enum
-{
-    SRM_FALSE = 0,   /**< False */
-    SRM_TRUE = 1     /**< True */
-} SRMBool_t;
 
 /**
  * @brief   Values used to create bit-maskable enums for single-value
@@ -70,7 +61,11 @@ typedef enum
 #define INSUFFICIENT_PERMISSION_DEF   (1 << 2)
 #define SUBJECT_NOT_FOUND_DEF         (1 << 3)
 #define RESOURCE_NOT_FOUND_DEF        (1 << 4)
-#define REASON_MASK_DEF               (1 << 5)
+#define POLICY_ENGINE_ERROR_DEF       (1 << 5)
+#define REASON_MASK_DEF               (INSUFFICIENT_PERMISSION_DEF | \
+                                        SUBJECT_NOT_FOUND_DEF | \
+                                        RESOURCE_NOT_FOUND_DEF | \
+                                        POLICY_ENGINE_ERROR_DEF)
 
 /**
  * @brief   Response type for all Action requests from CA layer;
@@ -119,15 +114,16 @@ static inline SRMAccessResponseReasonCode_t GetReasonCode(
     //     return
     // }
 
-    SRMAccessResponseReasonCode_t reason = response | REASON_MASK_DEF;
+    SRMAccessResponseReasonCode_t reason =
+        (SRMAccessResponseReasonCode_t)(response & REASON_MASK_DEF);
     return reason;
 }
 
-static inline SRMBool_t IsAccessGranted(SRMAccessResponse_t response) {
-    if(ACCESS_GRANTED == (response | ACCESS_GRANTED)) {
-        return SRM_TRUE;
+static inline bool IsAccessGranted(SRMAccessResponse_t response) {
+    if(ACCESS_GRANTED == (response & ACCESS_GRANTED)) {
+        return true;
     } else {
-        return SRM_FALSE;
+        return false;
     }
 }
 
@@ -139,7 +135,7 @@ typedef struct OicSecCred OicSecCred_t;
 
 /**
  * @brief   /oic/sec/credtype (Credential Type) data type.
- *          From OIC Security Spec v0.92:
+ *          From OIC Security Spec v0.95:
  *              0:  no security mode
  *              1:  symmetric pair-wise key
  *              2:  symmetric group key
@@ -151,6 +147,24 @@ typedef uint16_t OicSecCredType_t;
 
 typedef struct OicSecDoxm OicSecDoxm_t;
 
+typedef enum {
+    NORMAL                          = 0x0,
+    RESET                           = (0x1 << 0),
+    TAKE_OWNER                      = (0x1 << 1),
+    BOOTSTRAP_SERVICE               = (0x1 << 2),
+    SECURITY_MANAGEMENT_SERVICES    = (0x1 << 3),
+    PROVISION_CREDENTIALS           = (0x1 << 4),
+    PROVISION_ACLS                  = (0x1 << 5),
+    // << 6 THROUGH 15 RESERVED
+} OicSecDpm_t;
+
+typedef enum {
+    MULTIPLE_SERVICE_SERVER_DRIVEN  = 0x0,
+    SINGLE_SERVICE_SERVER_DRIVEN    = 0x1,
+    MULTIPLE_SERVICE_CLIENT_DRIVEN  = 0x2,
+    SINGLE_SERVICE_CLIENT_DRIVEN    = 0x3,
+} OicSecDpom_t;
+
 typedef struct OicSecJwk OicSecJwk_t;
 
 typedef struct OicSecPstat OicSecPstat_t;
@@ -161,7 +175,9 @@ typedef struct OicSecSacl OicSecSacl_t;
 
 typedef struct OicSecSvc OicSecSvc_t;
 
-typedef struct OicUuid OicUuid_t;
+typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
+
+typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
 /**
  * @brief   /oic/uuid (Universal Unique Identifier) data type.
@@ -171,7 +187,7 @@ struct OicUuid
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     //TODO fill in unless this is defined elsewhere?
-    uint8_t             Id[UUID_LENGTH];
+    uint8_t             id[UUID_LENGTH];
 };
 
 /**
@@ -181,66 +197,79 @@ struct OicUuid
 #define JWK_LENGTH 256/8 // 256 bit key length
 struct OicSecJwk
 {
-    uint8_t             Data[JWK_LENGTH]; //TODO fill in with correct JWK defintion
+    char                *data;
 };
 
 /**
  * @brief   /oic/sec/acl (Access Control List) data type.
- *          Derived from OIC Security Spec v0.92... see spec
+ *          Derived from OIC Security Spec v0.95... see spec
  *          for full explanation of each line item.
  */
 struct OicSecAcl
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    char                *Subject;       // 0:R:S:Y:String
-    size_t              ResourcesLen;   // the number of elts in Resources
-    char                **Resources;    // 1:R:M:Y:String
-    uint16_t            Permission;     // 2:R:S:Y:UINT16
-    size_t              PeriodsLen;     // the number of elts in Periods
-    char                **Periods;      // 3:R:M*:N:String (<--M*; see Spec)
-    char                *Recurrences;   // 5:R:M:N:String
-    size_t              OwnersLen;      // the number of elts in Owners
-    OicSecSvc_t         *Owners;        // 6:R:M:Y:oic.sec.svc
+    OicUuid_t           subject;        // 0:R:S:Y:uuid TODO: this deviates
+                                        // from spec and needs to be updated
+                                        // in spec (where it's a String).
+    size_t              resourcesLen;   // the number of elts in Resources
+    char                **resources;    // 1:R:M:Y:String
+    uint16_t            permission;     // 2:R:S:Y:UINT16
+    size_t              periodsLen;     // the number of elts in Periods
+    char                **periods;      // 3:R:M*:N:String (<--M*; see Spec)
+    char                *recurrences;   // 5:R:M:N:String
+    size_t              ownersLen;      // the number of elts in Owners
+    OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid
+    // NOTE: we are using UUID for Owners instead of Svc type for mid-April
+    // SRM version only; this will change to Svc type for full implementation.
+    //TODO change Owners type to oic.sec.svc
+    //OicSecSvc_t         *Owners;        // 6:R:M:Y:oic.sec.svc
     OicSecAcl_t         *next;
 };
 
 /**
  * @brief   /oic/sec/amacl (Access Manager Service Accesss Control List)
  *          data type.
- *          Derived from OIC Security Spec v0.92... see spec
+ *          Derived from OIC Security Spec v0.95... see spec
  *          for full explanation of each line item.
  */
 struct OicSecAmacl
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    size_t              ResourcesLen;   // the number of elts in Resources
-    char                **Resources;    // 0:R:M:Y:String
-    size_t              AmssLen;        // the number of elts in Amss
-    OicSecSvc_t         *Amss;          // 1:R:M:Y:acl
-    size_t              OwnersLen;      // the number of elts in Owners
-    OicSecSvc_t         *Owners;        // 2:R:M:Y:oic.sec.svc
+    size_t              resourcesLen;   // the number of elts in Resources
+    char                **resources;    // 0:R:M:Y:String
+    size_t              amssLen;        // the number of elts in Amss
+    OicSecSvc_t         *amss;          // 1:R:M:Y:acl
+    size_t              ownersLen;      // the number of elts in Owners
+    OicUuid_t           *owners;        // 2:R:M:Y:oic.uuid
+    // NOTE: we are using UUID for Owners instead of Svc type for mid-April
+    // SRM version only; this will change to Svc type for full implementation.
+    //TODO change Owners type to oic.sec.svc
+    //OicSecSvc_t         *Owners;        // 2:R:M:Y:oic.sec.svc
 };
 
 /**
  * @brief   /oic/sec/cred (Credential) data type.
- *          Derived from OIC Security Spec v0.92... see spec
+ *          Derived from OIC Security Spec v0.95... see spec
  *          for full explanation of each line item.
  */
 struct OicSecCred
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    uint16_t            CredId;         // 0:R:S:Y:UINT16
-    OicUuid_t           SubjectId;      // 1:R:S:Y:oic.uuid
-    size_t              RoleIdsLen;     // the number of elts in RoleIds
-    OicSecRole_t        *RoleIds;       // 2:R:M:N:oic.sec.role
-    OicSecCredType_t    CredType;       // 3:R:S:Y:oic.sec.credtype
-    OicSecJwk_t         PublicData;     // 5:R:S:N:oic.sec.jwk
-    OicSecJwk_t         PrivateData;    // 6:R:S:N:oic.sec.jwk*
-    char                *Period;        // 7:R:S:N:String
-    size_t              OwnersLen;      // the number of elts in Owners
-    OicSecSvc_t         *Owners;        // 8:R:M:Y:oic.sec.svc
+    uint16_t            credId;         // 0:R:S:Y:UINT16
+    OicUuid_t           subjectId;      // 1:R:S:Y:oic.uuid
+    size_t              roleIdsLen;     // the number of elts in RoleIds
+    OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
+    OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
+    OicSecJwk_t         publicData;     // 5:R:S:N:oic.sec.jwk
+    OicSecJwk_t         privateData;    // 6:R:S:N:oic.sec.jwk*
+    char                *period;        // 7:R:S:N:String
+    size_t              ownersLen;      // the number of elts in Owners
+    OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid
+    // NOTE: we are using UUID for Owners instead of Svc type for mid-April
+    // SRM version only; this will change to Svc type for full implementation.
+    //OicSecSvc_t         *Owners;        // 8:R:M:Y:oic.sec.svc
+    //TODO change Owners type to oic.sec.svc
     OicSecCred_t        *next;
-    //TODO fill in from OIC Security Spec v0.92
 };
 
 /**
@@ -249,16 +278,38 @@ struct OicSecCred
 struct OicSecDoxm
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec v0.92
+    OicUrn_t            *oxmType;       // 0:R:M:N:URN
+    size_t              oxmTypeLen;     // the number of elts in OxmType
+    uint16_t            *oxm;           // 1:R:M:N:UINT16
+    size_t              oxmLen;         // the number of elts in Oxm
+    bool                owned;          // 2:R:S:Y:Boolean
+    uint8_t             deviceIDFormat; // 3:R:S:Y:UINT8
+    OicUuid_t           deviceID;       // 4:R:S:Y:oic.uuid
+    OicUuid_t           owner;          // 5:R:S:Y:oic.uuid
+    // NOTE: we are using UUID for Owner instead of Svc type for mid-April
+    // SRM version only; this will change to Svc type for full implementation.
+    //OicSecSvc_t       Owner;        // 5:R:S:Y:oic.sec.svc
+    //TODO change Owner type to oic.sec.svc
 };
 
 /**
  * @brief   /oic/sec/pstat (Provisioning Status) data type.
+ * NOTE: this struct is ahead of Spec v0.95 in definition to include Sm.
+ * TODO: change comment when reconciled to Spec v0.96.
  */
 struct OicSecPstat
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec v0.92
+    bool                isOp;           // 0:R:S:Y:Boolean
+    OicSecDpm_t         cm;             // 1:R:S:Y:oic.sec.dpm
+    OicSecDpm_t         tm;             // 2:RW:S:Y:oic.sec.dpm
+    OicUuid_t           deviceID;       // 3:R:S:Y:oic.uuid
+    OicSecDpom_t        om;             // 4:RW:M:Y:oic.sec.dpom
+    size_t              smsLen;         // the number of elts in Sms
+    OicSecDpom_t        *sms;           // 5:R:M:Y:oic.sec.dpom
+    uint16_t            commitHash;     // 6:R:S:Y:oic.sec.sha256
+    //TODO: this is supposed to be a 256-bit uint; temporarily use uint16_t
+    //TODO: need to decide which 256 bit and 128 bit types to use... boost?
 };
 
 /**
@@ -267,16 +318,16 @@ struct OicSecPstat
 struct OicSecRole
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    // TODO fill in with Role definition
+    //TODO fill in with Role definition
 };
 
 /**
  * @brief   /oic/sec/sacl (Signed Access Control List) data type.
  */
-struct OicSecSacl_t
+struct OicSecSacl
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec v0.92
+    //TODO fill in from OIC Security Spec v0.95
 };
 
 /**
@@ -285,7 +336,7 @@ struct OicSecSacl_t
 struct OicSecSvc
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec v0.92
+    //TODO fill in from OIC Security Spec v0.95
 };
 
 #ifdef __cplusplus

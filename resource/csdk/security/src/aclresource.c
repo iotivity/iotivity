@@ -175,8 +175,8 @@ const OicSecAcl_t* GetACLResourceData(const unsigned char* subjectId, size_t sub
     LL_FOREACH(gAcl, acl)
     {
         /* TODO : Need to synch on 'Subject' data type */
-        if (memcmp(acl->Subject, subjectId, subjectIdLen) == 0)
-            return acl;
+        // if (memcmp(acl->subject, subjectId, subjectIdLen) == 0)
+        //     return acl;
     }
     return NULL;
 }
