@@ -102,6 +102,8 @@ fi
 export SCONSFLAGS="-Q -j 8"
 build $1 $2 true
 build $1 $2 false
+scons resource RELEASE=false -c
+scons resource LOGGING=false RELEASE=false
 scons resource TEST=1 RELEASE=false
 echo "===================== done ====================="
 
