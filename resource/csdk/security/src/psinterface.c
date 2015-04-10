@@ -64,7 +64,7 @@ char * GetSVRDatabase()
     /* TODO Do we need a GetFileSize API ? */
     if (ps)
     {
-        fp = ps->open(SVR_DB_FILE_NAME, "r", &fp);
+        fp = ps->open(SVR_DB_FILE_NAME, "r");
         if (fp)
         {
             jsonStr = (char*)OCMalloc(MAX_DB_FILE_SIZE + 1);

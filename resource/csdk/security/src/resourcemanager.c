@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "resourcemanager.h"
+#include "securevirtualresourcetypes.h"
 #include "aclresource.h"
 #include "ocmalloc.h"
 #include "logger.h"

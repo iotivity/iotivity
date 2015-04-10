@@ -39,12 +39,10 @@ void DeInitACLResource();
  * This method is used by PolicyEngine to retrieve ACL for a Subject.
  *
  * @param subjectId - ID of the subject for which ACL is required.
- * @param subjectIdLen - length of subjectId field.
  *
  * @retval  reference to @ref OicSecAcl_t if ACL is found, else NULL
  */
-const OicSecAcl_t* GetACLResourceData(const unsigned char* subjectId,
-     size_t subjectIdLen);
+const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId);
 
 #endif //IOTVT_SRM_ACLR_H
 
