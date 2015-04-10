@@ -1,0 +1,670 @@
+diff -rupN glibremake/glibbase/glib-2.40.2/Android.mk glibremake/glib-2.40.2/Android.mk
+--- glibremake/glibbase/glib-2.40.2/Android.mk	1970-01-01 09:00:00.000000000 +0900
++++ glibremake/glib-2.40.2/Android.mk	2015-03-31 19:38:39.067561502 +0900
+@@ -0,0 +1,14 @@
++#GLIB Android Makefile to build GLIB modules
++
++LOCAL_PATH		:= $(call my-dir)
++GLIB_MAIN_DIR	:= $(LOCAL_PATH)
++
++GLIB_C_INCLUDES	:= $(GLIB_MAIN_DIR) \
++		   $(GLIB_MAIN_DIR)/glib
++
++GTHREAD_C_INCLUDES	:= $(GLIB_MAIN_DIR) \
++			   $(GLIB_MAIN_DIR)/gthread
++
++include $(GLIB_MAIN_DIR)/glib/Android.mk
++include $(GLIB_MAIN_DIR)/gthread/Android.mk
++
+diff -rupN glibremake/glibbase/glib-2.40.2/config.h glibremake/glib-2.40.2/config.h
+--- glibremake/glibbase/glib-2.40.2/config.h	2015-03-31 18:56:48.099484578 +0900
++++ glibremake/glib-2.40.2/config.h	2015-03-31 19:36:57.139558379 +0900
+@@ -8,10 +8,10 @@
+ #define ALIGNOF_GUINT32 4
+ 
+ /* The normal alignment of `guint64', in bytes. */
+-#define ALIGNOF_GUINT64 8
++#define ALIGNOF_GUINT64 4
+ 
+ /* The normal alignment of `unsigned long', in bytes. */
+-#define ALIGNOF_UNSIGNED_LONG 8
++#define ALIGNOF_UNSIGNED_LONG 4
+ 
+ /* poll doesn't work on devices */
+ /* #undef BROKEN_POLL */
+@@ -31,8 +31,9 @@
+ /* #undef ENABLE_GC_FRIENDLY_DEFAULT */
+ 
+ /* always defined to indicate that i18n is enabled */
++#ifndef _GLIB_ANDROID_
+ #define ENABLE_NLS 1
+-
++#endif /* _GLIB_ANDROID__ */
+ /* Define the gettext package to be used */
+ #define GETTEXT_PACKAGE "glib20"
+ 
+@@ -100,8 +101,9 @@
+ /* #undef HAVE_COCOA */
+ 
+ /* Have nl_langinfo (CODESET) */
++#ifndef _GLIB_ANDROID_
+ #define HAVE_CODESET 1
+-
++#endif /* _GLIB_ANDROID_ */
+ /* Define to 1 if you have the <crt_externs.h> header file. */
+ /* #undef HAVE_CRT_EXTERNS_H */
+ 
+@@ -130,8 +132,10 @@
+ /* we have the eventfd(2) system call */
+ #define HAVE_EVENTFD 1
+ 
++#ifndef _GLIB_ANDROID_
+ /* Define to 1 if you have the `fallocate' function. */
+ #define HAVE_FALLOCATE 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define if we have FAM */
+ /* #undef HAVE_FAM */
+@@ -224,6 +228,7 @@
+ /* Define to 1 if you have the `kqueue' function. */
+ /* #undef HAVE_KQUEUE */
+ 
++#ifndef _GLIB_ANDROID_
+ /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
+ #define HAVE_LANGINFO_CODESET 1
+ 
+@@ -232,6 +237,7 @@
+ 
+ /* Have nl_langinfo (PM_STR) */
+ #define HAVE_LANGINFO_TIME 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the `lchmod' function. */
+ /* #undef HAVE_LCHMOD */
+@@ -283,9 +289,10 @@
+ 
+ /* Define to 1 if you have the <memory.h> header file. */
+ #define HAVE_MEMORY_H 1
+-
++#ifndef _GLIB_ANDROID_
+ /* Define to 1 if you have the `mmap' function. */
+ #define HAVE_MMAP 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the <mntent.h> header file. */
+ #define HAVE_MNTENT_H 1
+@@ -317,8 +324,10 @@
+ /* Have POSIX function getgrgid_r */
+ #define HAVE_POSIX_GETGRGID_R 1
+ 
++#ifndef _GLIB_ANDROID_
+ /* Have POSIX function getpwuid_r */
+ #define HAVE_POSIX_GETPWUID_R 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the `posix_memalign' function. */
+ #define HAVE_POSIX_MEMALIGN 1
+@@ -333,8 +342,11 @@
+ #define HAVE_PTHREAD_CONDATTR_SETCLOCK 1
+ 
+ /* Have function pthread_cond_timedwait_relative_np */
++#ifndef _GLIB_ANDROID_
+ /* #undef HAVE_PTHREAD_COND_TIMEDWAIT_RELATIVE_NP */
+-
++#else
++#define HAVE_PTHREAD_COND_TIMEDWAIT_RELATIVE_NP 0
++#endif /* _GLIB_ANDROID_ */
+ /* Define to 1 if the system has the type `ptrdiff_t'. */
+ #define HAVE_PTRDIFF_T 1
+ 
+@@ -384,8 +396,10 @@
+ /* Define to 1 if you have the <stdlib.h> header file. */
+ #define HAVE_STDLIB_H 1
+ 
++#ifndef _GLIB_ANDROID_
+ /* Define to 1 if you have the `stpcpy' function. */
+ #define HAVE_STPCPY 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the `strcasecmp' function. */
+ #define HAVE_STRCASECMP 1
+@@ -532,10 +546,10 @@
+ 
+ /* Define to 1 if you have the <sys/xattr.h> header file. */
+ #define HAVE_SYS_XATTR_H 1
+-
++#ifndef _GLIB_ANDROID_
+ /* Define to 1 if you have the `timegm' function. */
+ #define HAVE_TIMEGM 1
+-
++#endif /* _GLIB_ANDROID_ */
+ /* Define to 1 if you have the <unistd.h> header file. */
+ #define HAVE_UNISTD_H 1
+ 
+@@ -563,7 +577,7 @@
+ 
+ /* Define to 1 if you have the `vsnprintf' function. */
+ #define HAVE_VSNPRINTF 1
+-
++#ifndef _GLIB_ANDROID_
+ /* Define if you have the 'wchar_t' type. */
+ #define HAVE_WCHAR_T 1
+ 
+@@ -575,12 +589,14 @@
+ 
+ /* Define to 1 if xattr is available */
+ #define HAVE_XATTR 1
+-
++#endif
+ /* Define to 1 if xattr API uses XATTR_NOFOLLOW */
+ /* #undef HAVE_XATTR_NOFOLLOW */
+ 
+ /* Define to 1 if you have the <xlocale.h> header file. */
++#ifndef _GLIB_ANDROID_
+ #define HAVE_XLOCALE_H 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the `_NSGetEnviron' function. */
+ /* #undef HAVE__NSGETENVIRON */
+@@ -628,7 +644,7 @@
+ #define SIZEOF_INT 4
+ 
+ /* The size of `long', as computed by sizeof. */
+-#define SIZEOF_LONG 8
++#define SIZEOF_LONG 4
+ 
+ /* The size of `long long', as computed by sizeof. */
+ #define SIZEOF_LONG_LONG 8
+@@ -637,13 +653,13 @@
+ #define SIZEOF_SHORT 2
+ 
+ /* The size of `size_t', as computed by sizeof. */
+-#define SIZEOF_SIZE_T 8
++#define SIZEOF_SIZE_T 4
+ 
+ /* The size of `ssize_t', as computed by sizeof. */
+-#define SIZEOF_SSIZE_T 8
++#define SIZEOF_SSIZE_T 4
+ 
+ /* The size of `void *', as computed by sizeof. */
+-#define SIZEOF_VOID_P 8
++#define SIZEOF_VOID_P 4
+ 
+ /* The size of `__int64', as computed by sizeof. */
+ #define SIZEOF___INT64 0
+@@ -720,13 +736,8 @@
+ # endif
+ #endif
+ 
+-/* Enable large inode numbers on Mac OS X 10.5.  */
+-#ifndef _DARWIN_USE_64_BIT_INODE
+-# define _DARWIN_USE_64_BIT_INODE 1
+-#endif
+-
+ /* Number of bits in a file offset, on hosts where this is settable. */
+-/* #undef _FILE_OFFSET_BITS */
++#define _FILE_OFFSET_BITS 64
+ 
+ /* defines how to decorate public symbols while building */
+ #define _GLIB_EXTERN __attribute__((visibility("default"))) extern
+diff -rupN glibremake/glibbase/glib-2.40.2/glib/Android.mk glibremake/glib-2.40.2/glib/Android.mk
+--- glibremake/glibbase/glib-2.40.2/glib/Android.mk	1970-01-01 09:00:00.000000000 +0900
++++ glibremake/glib-2.40.2/glib/Android.mk	2015-03-31 19:40:22.323564665 +0900
+@@ -0,0 +1,115 @@
++#glib Android Make File
++
++LOCAL_PATH		:= $(call my-dir)
++
++include $(CLEAR_VARS)
++
++LOCAL_MODULE	:= glib-2.40.2
++
++LOCAL_SRC_FILES	:= \
++    libcharset/localcharset.c \
++    garray.c        \
++    gasyncqueue.c   \
++    gatomic.c       \
++    gbacktrace.c    \
++    gbase64.c       \
++    gbitlock.c      \
++    gbookmarkfile.c \
++    gbytes.c	    \
++    gcharset.c      \
++    gchecksum.c     \
++    gconvert.c      \
++    gdataset.c      \
++    gdate.c         \
++    gdatetime.c     \
++    gdir.c          \
++    gerror.c        \
++    genviron.c      \
++    gfileutils.c    \
++    ggettext.c	    \
++    ghash.c         \
++    ghmac.c         \
++    ghook.c         \
++    ghostutils.c    \
++    giochannel.c    \
++    gkeyfile.c      \
++    glib-init.c	    \
++    glib-private.c  \
++    glib-unix.c     \
++    glist.c         \
++    gmain.c         \
++    gmappedfile.c   \
++    gmarkup.c       \
++    gmem.c          \
++    gmessages.c     \
++    gnode.c         \
++    goption.c       \
++    gpattern.c      \
++    gpoll.c         \
++    gprimes.c       \
++    gqsort.c        \
++    gquark.c        \
++    gqueue.c        \
++    grand.c         \
++    gregex.c        \
++    gscanner.c      \
++    gsequence.c     \
++    gshell.c        \
++    gslice.c        \
++    gslist.c        \
++    gstdio.c        \
++    gstrfuncs.c     \
++    gstring.c       \
++    gstringchunk.c  \
++    gtestutils.c    \
++    gthread.c       \
++    gthreadpool.c   \
++    gthread-posix.c \
++    gtimer.c        \
++    gtimezone.c     \
++    gtranslit.c     \
++    gtrashstack.c   \
++    gtree.c         \
++    guniprop.c      \
++    gutf8.c         \
++    gunibreak.c     \
++    gunicollate.c   \
++    gunidecomp.c    \
++    gurifuncs.c     \
++    gutils.c        \
++    gvariant.c      \
++    gvariant-core.c \
++    gvariant-parser.c \
++    gvariant-serialiser.c \
++    gvarianttypeinfo.c \
++    gvarianttype.c  \
++    gprintf.c       \
++    giounix.c       \
++    gspawn.c        \
++    gversion.c      \
++    gwakeup.c
++
++LOCAL_C_INCLUDES := $(GLIB_MAIN_DIR) \
++		    $(GLIB_MAIN_DIR)/glib \
++		    $(GLIB_MAIN_DIR)/glib/deprecated \
++		    $(GLIB_MAIN_DIR)/glib/libcharset \
++		    $(GLIB_MAIN_DIR)/pcre \
++
++LOCAL_STATIC_LIBRARIES := pcre
++
++LOCAL_LD_LIBS := -llog
++
++LOCAL_CFLAGS	:= \
++	-D_GLIB_ANDROID_ \
++	-DLIBDIR=\"$(libdir)\" \
++	-DHAVE_CONFIG_H	\
++	-DG_LOG_DOMAIN=\"GLib\" \
++	-DGLIB_COMPILATION \
++	-DPCRE_STATIC \
++	-DG_DISABLE_CAST_CHECKS
++
++include $(BUILD_SHARED_LIBRARY)
++
++include	$(GLIB_MAIN_DIR)/glib/pcre/Android.mk
++
++
+diff -rupN glibremake/glibbase/glib-2.40.2/glib/gconvert.c glibremake/glib-2.40.2/glib/gconvert.c
+--- glibremake/glibbase/glib-2.40.2/glib/gconvert.c	2015-03-31 18:56:47.783484568 +0900
++++ glibremake/glib-2.40.2/glib/gconvert.c	2015-03-31 19:00:09.863490759 +0900
+@@ -22,7 +22,11 @@
+ #include "glibconfig.h"
+ 
+ #ifndef G_OS_WIN32
++
++#ifndef _GLIB_ANDROID_
+ #include <iconv.h>
++#endif /* _GLIB_ANDROID_ */
++
+ #endif
+ #include <errno.h>
+ #include <stdio.h>
+@@ -168,6 +172,7 @@
+ 
+ G_DEFINE_QUARK (g_convert_error, g_convert_error)
+ 
++#ifndef _GLIB_ANDROID_
+ static gboolean
+ try_conversion (const char *to_codeset,
+ 		const char *from_codeset,
+@@ -200,6 +205,7 @@ try_to_aliases (const char **to_aliases,
+ 
+   return FALSE;
+ }
++#endif /* _GLIB_ANDROID_ */
+ 
+ /**
+  * g_iconv_open:
+@@ -220,6 +226,7 @@ GIConv
+ g_iconv_open (const gchar  *to_codeset,
+ 	      const gchar  *from_codeset)
+ {
++#ifndef _GLIB_ANDROID_
+   iconv_t cd;
+   
+   if (!try_conversion (to_codeset, from_codeset, &cd))
+@@ -248,6 +255,9 @@ g_iconv_open (const gchar  *to_codeset,
+ 
+  out:
+   return (cd == (iconv_t)-1) ? (GIConv)-1 : (GIConv)cd;
++#else
++  return (GIConv)-1;
++#endif /* _GLIB_ANDROID_ */
+ }
+ 
+ /**
+@@ -274,9 +284,13 @@ g_iconv (GIConv   converter,
+ 	 gchar  **outbuf,
+ 	 gsize   *outbytes_left)
+ {
++#ifndef _GLIB_ANDROID_
+   iconv_t cd = (iconv_t)converter;
+ 
+   return iconv (cd, inbuf, inbytes_left, outbuf, outbytes_left);
++#else
++  return -1;
++#endif /* _GLIB_ANDROID_ */
+ }
+ 
+ /**
+@@ -297,9 +311,13 @@ g_iconv (GIConv   converter,
+ gint
+ g_iconv_close (GIConv converter)
+ {
++#ifndef _GLIB_ANDROID_
+   iconv_t cd = (iconv_t)converter;
+ 
+   return iconv_close (cd);
++#else
++  return -1;
++#endif /* _GLIB_ANDROID_ */
+ }
+ 
+ static GIConv
+diff -rupN glibremake/glibbase/glib-2.40.2/glib/gfileutils.c glibremake/glib-2.40.2/glib/gfileutils.c
+--- glibremake/glibbase/glib-2.40.2/glib/gfileutils.c	2015-03-31 18:56:47.687484565 +0900
++++ glibremake/glib-2.40.2/glib/gfileutils.c	2015-03-31 18:59:50.395490162 +0900
+@@ -54,7 +54,7 @@
+ 
+ #ifdef HAVE_LINUX_MAGIC_H /* for btrfs check */
+ #include <linux/magic.h>
+-#include <sys/vfs.h>
++//#include <sys/vfs.h>
+ #endif
+ 
+ 
+diff -rupN glibremake/glibbase/glib-2.40.2/glib/ggettext.c glibremake/glib-2.40.2/glib/ggettext.c
+--- glibremake/glibbase/glib-2.40.2/glib/ggettext.c	2015-03-31 18:56:47.687484565 +0900
++++ glibremake/glib-2.40.2/glib/ggettext.c	2015-03-31 19:27:28.671540964 +0900
+@@ -40,7 +40,10 @@
+ 
+ #include <string.h>
+ #include <locale.h>
++
++#ifndef _GLIB_ANDROID_
+ #include <libintl.h>
++#endif /* _GLIB_ANDROID_ */
+ 
+ #ifdef G_OS_WIN32
+ 
+diff -rupN glibremake/glibbase/glib-2.40.2/glib/glibconfig.h glibremake/glib-2.40.2/glib/glibconfig.h
+--- glibremake/glibbase/glib-2.40.2/glib/glibconfig.h	2015-03-31 18:56:47.783484568 +0900
++++ glibremake/glib-2.40.2/glib/glibconfig.h	2015-03-31 19:33:14.071551545 +0900
+@@ -48,30 +48,30 @@ typedef unsigned int guint32;
+ #define G_GUINT32_FORMAT "u"
+ #define G_HAVE_GINT64 1          /* deprecated, always true */
+ 
+-typedef signed long gint64;
+-typedef unsigned long guint64;
++G_GNUC_EXTENSION typedef signed long long gint64;
++G_GNUC_EXTENSION typedef unsigned long long guint64;
+ 
+-#define G_GINT64_CONSTANT(val)	(val##L)
+-#define G_GUINT64_CONSTANT(val)	(val##UL)
+-#define G_GINT64_MODIFIER "l"
+-#define G_GINT64_FORMAT "li"
+-#define G_GUINT64_FORMAT "lu"
+-
+-#define GLIB_SIZEOF_VOID_P 8
+-#define GLIB_SIZEOF_LONG   8
+-#define GLIB_SIZEOF_SIZE_T 8
+-#define GLIB_SIZEOF_SSIZE_T 8
+-
+-typedef signed long gssize;
+-typedef unsigned long gsize;
+-#define G_GSIZE_MODIFIER "l"
+-#define G_GSSIZE_MODIFIER "l"
+-#define G_GSIZE_FORMAT "lu"
+-#define G_GSSIZE_FORMAT "li"
+-
+-#define G_MAXSIZE	G_MAXULONG
+-#define G_MINSSIZE	G_MINLONG
+-#define G_MAXSSIZE	G_MAXLONG
++#define G_GINT64_CONSTANT(val)	(G_GNUC_EXTENSION (val##LL))
++#define G_GUINT64_CONSTANT(val)	(G_GNUC_EXTENSION (val##ULL))
++#define G_GINT64_MODIFIER "ll"
++#define G_GINT64_FORMAT "lli"
++#define G_GUINT64_FORMAT "llu"
++
++#define GLIB_SIZEOF_VOID_P 4
++#define GLIB_SIZEOF_LONG   4
++#define GLIB_SIZEOF_SIZE_T 4
++#define GLIB_SIZEOF_SSIZE_T 4
++
++typedef signed int gssize;
++typedef unsigned int gsize;
++#define G_GSIZE_MODIFIER ""
++#define G_GSSIZE_MODIFIER ""
++#define G_GSIZE_FORMAT "u"
++#define G_GSSIZE_FORMAT "i"
++
++#define G_MAXSIZE	G_MAXUINT
++#define G_MINSSIZE	G_MININT
++#define G_MAXSSIZE	G_MAXINT
+ 
+ typedef gint64 goffset;
+ #define G_MINOFFSET	G_MININT64
+@@ -82,18 +82,18 @@ typedef gint64 goffset;
+ #define G_GOFFSET_CONSTANT(val) G_GINT64_CONSTANT(val)
+ 
+ 
+-#define GPOINTER_TO_INT(p)	((gint)  (glong) (p))
+-#define GPOINTER_TO_UINT(p)	((guint) (gulong) (p))
++#define GPOINTER_TO_INT(p)	((gint)  (gint) (p))
++#define GPOINTER_TO_UINT(p)	((guint) (guint) (p))
+ 
+-#define GINT_TO_POINTER(i)	((gpointer) (glong) (i))
+-#define GUINT_TO_POINTER(u)	((gpointer) (gulong) (u))
++#define GINT_TO_POINTER(i)	((gpointer) (gint) (i))
++#define GUINT_TO_POINTER(u)	((gpointer) (guint) (u))
+ 
+-typedef signed long gintptr;
+-typedef unsigned long guintptr;
++typedef signed int gintptr;
++typedef unsigned int guintptr;
+ 
+-#define G_GINTPTR_MODIFIER      "l"
+-#define G_GINTPTR_FORMAT        "li"
+-#define G_GUINTPTR_FORMAT       "lu"
++#define G_GINTPTR_MODIFIER      ""
++#define G_GINTPTR_FORMAT        "i"
++#define G_GUINTPTR_FORMAT       "u"
+ #ifndef G_DISABLE_DEPRECATED
+ #define g_ATEXIT(proc)	(atexit (proc))
+ #define g_memmove(dest,src,len) G_STMT_START { memmove ((dest), (src), (len)); } G_STMT_END
+@@ -107,7 +107,6 @@ typedef unsigned long guintptr;
+ 
+ 
+ #define G_VA_COPY	va_copy
+-#define G_VA_COPY_AS_ARRAY 1
+ 
+ #ifdef	__cplusplus
+ #define	G_HAVE_INLINE	1
+@@ -155,7 +154,9 @@ typedef unsigned long guintptr;
+ #define G_THREADS_ENABLED
+ #define G_THREADS_IMPL_POSIX
+ 
++#ifndef _GLIB_ANDROID_
+ #define G_ATOMIC_LOCK_FREE
++#endif /* _GLIB_ANDROID_ */
+ 
+ #define GINT16_TO_LE(val)	((gint16) (val))
+ #define GUINT16_TO_LE(val)	((guint16) (val))
+@@ -169,18 +170,18 @@ typedef unsigned long guintptr;
+ #define GUINT64_TO_LE(val)	((guint64) (val))
+ #define GINT64_TO_BE(val)	((gint64) GUINT64_SWAP_LE_BE (val))
+ #define GUINT64_TO_BE(val)	(GUINT64_SWAP_LE_BE (val))
+-#define GLONG_TO_LE(val)	((glong) GINT64_TO_LE (val))
+-#define GULONG_TO_LE(val)	((gulong) GUINT64_TO_LE (val))
+-#define GLONG_TO_BE(val)	((glong) GINT64_TO_BE (val))
+-#define GULONG_TO_BE(val)	((gulong) GUINT64_TO_BE (val))
++#define GLONG_TO_LE(val)	((glong) GINT32_TO_LE (val))
++#define GULONG_TO_LE(val)	((gulong) GUINT32_TO_LE (val))
++#define GLONG_TO_BE(val)	((glong) GINT32_TO_BE (val))
++#define GULONG_TO_BE(val)	((gulong) GUINT32_TO_BE (val))
+ #define GINT_TO_LE(val)		((gint) GINT32_TO_LE (val))
+ #define GUINT_TO_LE(val)	((guint) GUINT32_TO_LE (val))
+ #define GINT_TO_BE(val)		((gint) GINT32_TO_BE (val))
+ #define GUINT_TO_BE(val)	((guint) GUINT32_TO_BE (val))
+-#define GSIZE_TO_LE(val)	((gsize) GUINT64_TO_LE (val))
+-#define GSSIZE_TO_LE(val)	((gssize) GINT64_TO_LE (val))
+-#define GSIZE_TO_BE(val)	((gsize) GUINT64_TO_BE (val))
+-#define GSSIZE_TO_BE(val)	((gssize) GINT64_TO_BE (val))
++#define GSIZE_TO_LE(val)	((gsize) GUINT32_TO_LE (val))
++#define GSSIZE_TO_LE(val)	((gssize) GINT32_TO_LE (val))
++#define GSIZE_TO_BE(val)	((gsize) GUINT32_TO_BE (val))
++#define GSSIZE_TO_BE(val)	((gssize) GINT32_TO_BE (val))
+ #define G_BYTE_ORDER G_LITTLE_ENDIAN
+ 
+ #define GLIB_SYSDEF_POLLIN =1
+diff -rupN glibremake/glibbase/glib-2.40.2/glib/gslice.c glibremake/glib-2.40.2/glib/gslice.c
+--- glibremake/glibbase/glib-2.40.2/glib/gslice.c	2015-03-31 18:56:47.775484568 +0900
++++ glibremake/glib-2.40.2/glib/gslice.c	2015-03-31 18:57:16.255485440 +0900
+@@ -388,7 +388,9 @@ slice_config_init (SliceConfig *config)
+        * This way it's possible to force gslice to be enabled under
+        * valgrind just by setting G_SLICE to the empty string.
+        */
++ #if 0
+       if (RUNNING_ON_VALGRIND)
++#endif	  
+         config->always_malloc = TRUE;
+     }
+ }
+diff -rupN glibremake/glibbase/glib-2.40.2/glib/gstrfuncs.c glibremake/glib-2.40.2/glib/gstrfuncs.c
+--- glibremake/glibbase/glib-2.40.2/glib/gstrfuncs.c	2015-03-31 18:56:47.683484565 +0900
++++ glibremake/glib-2.40.2/glib/gstrfuncs.c	2015-03-31 18:57:07.783485181 +0900
+@@ -309,6 +309,7 @@ static const guint16 ascii_table_data[25
+ 
+ const guint16 * const g_ascii_table = ascii_table_data;
+ 
++#ifndef _GLIB_ANDROID_
+ #if defined (HAVE_NEWLOCALE) && \
+     defined (HAVE_USELOCALE) && \
+     defined (HAVE_STRTOD_L) && \
+@@ -316,6 +317,7 @@ const guint16 * const g_ascii_table = as
+     defined (HAVE_STRTOLL_L)
+ #define USE_XLOCALE 1
+ #endif
++#endif /* _GLIB_ANDROID_ */
+ 
+ #ifdef USE_XLOCALE
+ static locale_t
+diff -rupN glibremake/glibbase/glib-2.40.2/glib/pcre/Android.mk glibremake/glib-2.40.2/glib/pcre/Android.mk
+--- glibremake/glibbase/glib-2.40.2/glib/pcre/Android.mk	1970-01-01 09:00:00.000000000 +0900
++++ glibremake/glib-2.40.2/glib/pcre/Android.mk	2015-01-13 08:04:00.000000000 +0900
+@@ -0,0 +1,42 @@
++#libpcre Android Make File
++
++LOCAL_PATH		:= $(call my-dir)
++
++include $(CLEAR_VARS)
++
++LOCAL_MODULE	:= pcre
++
++LOCAL_LD_LIBS := -llog
++
++LOCAL_CFLAGS	:= \
++	-DG_LOG_DOMAIN=\"GLib-GRegex\" \
++	-DHAVE_CONFIG_H \
++	-DHAVE_MEMMOVE \
++	-DSUPPORT_UCP \
++	-DSUPPORT_UTF \
++	-DSUPPORT_UTF8 \
++	-DNEWLINE=-1 \
++	-DMATCH_LIMIT=10000000 \
++	-DMATCH_LIMIT_RECURSION=8192 \
++	-DMAX_NAME_SIZE=32 \
++	-DMAX_NAME_COUNT=10000 \
++	-DMAX_DUPLENGTH=30000 \
++	-DLINK_SIZE=2 \
++	-DPOSIX_MALLOC_THRESHOLD=10 \
++	-DPCRE_STATIC \
++	-DG_DISABLE_CAST_CHECKS \
++	-DGLIB_COMPILATION \
++	-D_GLIB_ANDROID_
++
++LOCAL_SRC_FILES	:=	pcre_xclass.c pcre_valid_utf8.c pcre_tables.c \
++					pcre_study.c pcre_string_utils.c pcre_ord2utf8.c \
++					pcre_newline.c pcre_jit_compile.c pcre_globals.c \
++					pcre_get.c pcre_fullinfo.c pcre_exec.c \
++					pcre_dfa_exec.c pcre_config.c pcre_compile.c \
++					pcre_chartables.c pcre_byte_order.c
++
++LOCAL_C_INCLUDES := $(GLIB_MAIN_DIR) \
++					$(GLIB_MAIN_DIR)/glib
++
++
++include $(BUILD_STATIC_LIBRARY)
+\ No newline at end of file
+diff -rupN glibremake/glibbase/glib-2.40.2/gthread/Android.mk glibremake/glib-2.40.2/gthread/Android.mk
+--- glibremake/glibbase/glib-2.40.2/gthread/Android.mk	1970-01-01 09:00:00.000000000 +0900
++++ glibremake/glib-2.40.2/gthread/Android.mk	2015-03-31 19:39:47.151563588 +0900
+@@ -0,0 +1,25 @@
++#gthread Android Make File
++
++LOCAL_PATH		:= $(call my-dir)
++
++include $(CLEAR_VARS)
++
++LOCAL_MODULE	:= gthread-2.40.2
++
++LOCAL_SRC_FILES	:=	gthread-impl.c
++
++LOCAL_C_INCLUDES := $(GLIB_MAIN_DIR) \
++	$(GLIB_MAIN_DIR)/glib \
++	$(GLIB_MAIN_DIR)/gthread
++
++
++LOCAL_CFLAGS	:= \
++	-DG_LOG_DOMAIN=\"GThread\" \
++	-DHAVE_CONFIG_H \
++	-DG_DISABLE_CAST_CHECKS \
++	-DG_DISABLE_DEPRECATED \
++	-D_GLIB_ANDROID_
++
++
++LOCAL_SHARED_LIBRARIES := glib-2.40.2
++include $(BUILD_SHARED_LIBRARY)
+\ No newline at end of file

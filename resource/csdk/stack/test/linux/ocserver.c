@@ -48,16 +48,8 @@ void handleSigInt(int signum) {
 }
 
 int main() {
-    uint8_t addr[20];
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
-
-    /*Get Ip address on defined interface and initialize coap on it with random port number
-     * this port number will be used as a source port in all coap communications*/
-    OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr, sizeof(addr));
-
     OC_LOG_V(INFO, TAG, "Starting ocserver on address %s:%d",addr,port);
-    if (OCInit((char *) addr, port, OC_SERVER) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
@@ -102,3 +94,4 @@ OCStackResult createLightResource() {
                     OC_DISCOVERABLE|OC_OBSERVABLE);
     return res;
 }
+

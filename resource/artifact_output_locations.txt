@@ -33,10 +33,8 @@ Please refer to the readme file at <oic-resource>/README for more information.
 
 TB Stack:
 	release:
-		<oic-resource>/csdk/libcoap/linux/release/libcoap.a
 		<oic-resource>/csdk/linux/release/liboctbstack.a
 	debug:
-		<oic-resource>/csdk/libcoap/linux/debug/libcoap.a
 		<oic-resource>/csdk/linux/debug/liboctbstack.a
 
 TB Unit Tests:
@@ -95,7 +93,7 @@ UB OCICUC:
 	<oic-resource>/examples/ocicuc/client
 	<oic-resource>/examples/ocicuc/monoprocess
 	<oic-resource>/examples/ocicuc/server
-		
+
 
 ===============================================================================
 ====           Arduino ATMega 2560 - Release & Debug - Ethernet Shield     ====
@@ -104,10 +102,8 @@ UB OCICUC:
 TB Stack:
 	Ethernet Shield:
 		release:
-			<oic-resource>/csdk/libcoap/arduinomega/ethernet_shield/release/libcoap.a
 			<oic-resource>/csdk/arduinomega/ethernet_shield/release/liboctbstack.a
 		debug:
-			<oic-resource>/csdk/libcoap/arduinomega/ethernet_shield/debug/libcoap.a
 			<oic-resource>/csdk/arduinomega/ethernet_shield/debug/liboctbstack.a
 
 TB Examples:
@@ -124,10 +120,8 @@ TB Examples:
 TB Stack:
 	WiFi Shield:
 		release:
-			<oic-resource>/csdk/libcoap/arduinomega/wifi_shield/release/libcoap.a
 			<oic-resource>/csdk/arduinomega/wifi_shield/release/liboctbstack.a
 		debug:
-			<oic-resource>/csdk/libcoap/arduinomega/wifi_shield/debug/libcoap.a
 			<oic-resource>/csdk/arduinomega/wifi_shield/debug/liboctbstack.a
 
 TB Examples:
@@ -144,10 +138,8 @@ TB Examples:
 TB Stack:
 	Ethernet Shield:
 		release:
-			<oic-resource>/csdk/libcoap/arduinodue/ethernet_shield/release/libcoap.a
 			<oic-resource>/csdk/arduinodue/ethernet_shield/release/liboctbstack.a
 		debug:
-			<oic-resource>/csdk/libcoap/arduinodue/ethernet_shield/debug/libcoap.a
 			<oic-resource>/csdk/arduinodue/ethernet_shield/debug/liboctbstack.a
 
 TB Examples:
@@ -164,10 +156,8 @@ TB Examples:
 TB Stack:
 	WiFi Shield:
 		release:
-			<oic-resource>/csdk/libcoap/arduinodue/wifi_shield/release/libcoap.a
 			<oic-resource>/csdk/arduinodue/wifi_shield/release/liboctbstack.a
 		debug:
-			<oic-resource>/csdk/libcoap/arduinodue/wifi_shield/debug/libcoap.a
 			<oic-resource>/csdk/arduinodue/wifi_shield/debug/liboctbstack.a
 
 TB Examples:
@@ -176,6 +166,7 @@ TB Examples:
 			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue/wifi_shield/release/ocserver.hex
 		debug:
 			<oic-resource>/csdk/stack/samples/arduino/SimpleClientServer/ocserver/arduinodue/wifi_shield/debug/ocserver.hex
+
 
 
 

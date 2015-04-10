@@ -1,0 +1,53 @@
+##
+# CA build script
+##
+
+Import('env')
+
+print "Reading common folder script"
+
+ca_os = env.get('TARGET_OS')
+
+root_dir = './../'
+
+
+ca_common_path = root_dir + 'common/'
+ca_common_src_path = ca_common_path + 'src/'
+
+env.AppendUnique(CPPPATH = [
+	'common/inc/',
+	])
+
+
+temp = env['CPPPATH']
+header = ' '
+for item in temp:
+	header = header + ' -I' + item
+
+######################################################################
+# Source files and Target(s)
+######################################################################
+ca_common_src = [
+		ca_common_src_path + 'oic_malloc.c',
+		ca_common_src_path + 'oic_string.c',
+		ca_common_src_path + 'uarraylist.c',
+		ca_common_src_path + 'uqueue.c',
+	]
+
+if ca_os == 'arduino':
+	env.Command(env.get('BUILD_DIR') + 'logger.c.o', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c.o' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + '-I' + Dir('.').srcnode().path + '/inc' + header + ' ' + Dir('.').srcnode().path + '/src/logger.c')
+	platform_src = [
+		env.get('BUILD_DIR') + 'logger.c.o',
+	]
+else:
+	platform_src = [
+		ca_common_src_path + 'logger.c',
+		ca_common_src_path + 'oic_logger.c',
+		ca_common_src_path + 'oic_console_logger.c',
+		ca_common_src_path + 'umutex.c',
+		ca_common_src_path + 'uthreadpool.c',
+	]
+
+env.AppendUnique(CA_SRC = ca_common_src)
+env.AppendUnique(CA_SRC = platform_src)
+

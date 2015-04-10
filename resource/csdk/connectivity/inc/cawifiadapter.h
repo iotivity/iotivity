@@ -29,6 +29,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -36,102 +37,96 @@ extern "C"
 #endif
 
 /**
- * @brief API to initialize WiFi Interface.
- * @param registerCallback [IN] To register WIFI interfaces to Connectivity Abstraction Layer
- * @param reqRespCallback [IN] sending responses and discovery messages from unicast , multicast servers
- * @param netCallback [IN] Intimate the network additions to Connectivity Abstraction Layer.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief Initialize WIFI Interface.
+ * @param registerCallback      [IN] Callback to register WIFI interfaces to Connectivity
+ *                                   Abstraction Layer
+ * @param networkPacketCallback [IN] Callback to notify request and response messages from server(s)
+ *                                   started at Connectivity Abstraction Layer.
+ * @param netCallback           [IN] Callback to notify the network additions to Connectivity
+ *                                   Abstraction Layer.
+ * @param handle                [IN] Threadpool Handle
+ * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAInitializeWifi(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback);
+CAResult_t CAInitializeWIFI(CARegisterConnectivityCallback registerCallback,
+                            CANetworkPacketReceivedCallback networkPacketCallback,
+                            CANetworkChangeCallback netCallback, u_thread_pool_t handle);
 
 /**
- * @brief Start WiFi Interface adapter.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief Start WIFI Interface adapter.
+ * @return  #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAStartWIFI();
 
 /**
- * @brief Starting listening server for receiving multicast search requests
+ * @brief Start Listening Server for receiving multicast search requests
  * Transport Specific Behavior:
- *   WIFI Starts Multicast Server on  all available IPs and prefixed port number and as per OIC Specification.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * WIFI Start multicast server on a particular interface and prefixed port
+ * as per OIC Specification.
+ * @return  #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAStartWIFIListeningServer();
 
 /**
- * @brief for starting discovery servers for receiving multicast advertisements
+ * @brief Start WIFI Discovery Server for receiving multicast advertisements
  * Transport Specific Behavior:
- *   WIFI Starts Start multicast server on all available IPs and prefixed port number as per OIC Specification
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * WIFI Start multicast server on a particular interface and prefixed port
+ * number as per OIC Specification
+ * @return  #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAStartWIFIDiscoveryServer();
 
 /**
  * @brief Sends data to the endpoint using the adapter connectivity.
- * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri and connectivity type) to
- *                              which the unicast data has to be sent.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
+ * @param endpoint  [IN] Remote Endpoint information (like ipaddress, port, reference uri and
+ *                       connectivity type) to which the unicast data has to be sent.
+ * @param data      [IN] Data to be sent.
+ * @param dataLen   [IN] Size of data to be sent.
+ * @return The number of bytes sent on the network. Returns -1 on error.
+ * @remarks  dataLen must be > 0.
  */
-uint32_t CASendWIFIUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen);
+int32_t CASendWIFIUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
+                               uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the WIFI connectivity.
- * Note: length must be > 0.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
+ * @param   data        [IN] Data which required to be sent.
+ * @param   dataLen     [IN] Size of data to be sent.
+ * @return  The number of bytes sent on the network. Returns -1 on error.
+ * @remarks  dataLen must be > 0.
  */
-uint32_t CASendWIFIMulticastData(void* data, uint32_t dataLen);
+int32_t CASendWIFIMulticastData(const void *data, uint32_t dataLen);
 
-/**
- * @brief Starts notification server on WIFI adapters.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
- */
-CAResult_t CAStartWIFINotifyRecvServers();
-
-/**
- * @brief Send notification information.
- * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri and connectivity type) to
- *                              which the unicast data has to be sent.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
- */
-uint32_t CASendWIFINotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen);
 /**
  * @brief Get WIFI Connectivity network information
- * @param   info        [OUT]   Local connectivity information structures
- * @param   size        [OUT]   Number of local connectivity structures.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @param   info  [OUT] Local connectivity information structures
+ * @param   size  [OUT] Number of local connectivity structures.
+ * @return  #CA_STATUS_OK or Appropriate error code
+ * @remarks info is allocated in this API and should be freed by the caller.
  */
-CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size);
+CAResult_t CAGetWIFIInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @return  #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAReadWIFIData();
 
 /**
- * @brief Stopping the adapters and close socket connections
- *   WIFI Stops all multicast and unicast servers and close sockets.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief WIFI Stops Unicast, Multicast servers and close the sockets.
+ * @return  #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAStopWIFI();
 
 /**
  * @brief Terminate the WIFI connectivity adapter.
  * Configuration information will be deleted from further use
+ * @return  NONE
  */
-void CATerminateWIfI();
+void CATerminateWIFI();
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif//#ifndef __CA_WIFI_ADAPTER_H__
+#endif  // #ifndef __CA_WIFI_ADAPTER_H__
+

@@ -3,7 +3,7 @@
  * Copyright (C) 2010,2011 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #ifndef _COAP_DEBUG_H_
@@ -36,7 +36,7 @@ coap_log_t coap_get_log_level();
 /** Sets the log level to the specified value. */
 void coap_set_log_level(coap_log_t level);
 
-/** 
+/**
  * Writes the given text to @c COAP_ERR_FD (for @p level <= @c
  * LOG_CRIT) or @c COAP_DEBUG_FD (for @p level >= @c LOG_WARNING). The
  * text is output only when @p level is below or equal to the log
@@ -59,6 +59,8 @@ void coap_log_impl(coap_log_t level, const char *format, ...);
 void coap_show_pdu(const coap_pdu_t *);
 
 struct coap_address_t;
+unsigned int print_readable(const unsigned char *data, unsigned int len, unsigned char *result,
+        unsigned int buflen, int encode_always);
 size_t coap_print_addr(const struct coap_address_t *, unsigned char *, size_t);
 
 #else

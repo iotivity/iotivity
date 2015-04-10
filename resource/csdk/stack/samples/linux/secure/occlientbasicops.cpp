@@ -34,12 +34,18 @@
 #define TAG "occlientbasicops"
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
-static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
+
+static int IPV4_ADDR_SIZE = 16;
+static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oc/core";
+static char MULTICAST_DISCOVERY_QUERY[] = "/oc/core";
+
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 static std::string coapServerIP;
 static std::string coapServerPort;
 static std::string coapServerResource;
 static int coapSecureResource;
+static OCConnectivityType ocConnType;
+
 
 //File containing Client's Identity and the PSK credentials
 //of other devices which the client trusts
@@ -74,15 +80,14 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
 
     cbData.cb = cb;
     cbData.context = NULL;
     cbData.cd = NULL;
 
-    ret = OCDoResource(&handle, method, query.str().c_str(), 0,
+    ret = OCDoResource(NULL, method, query.str().c_str(), 0,
             (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
-            qos, &cbData, options, numOptions);
+            ocConnType, qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
     {
@@ -153,18 +158,20 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
                 remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
 
+        ocConnType = clientResponse->connType;
+
         if (parseClientResponse(clientResponse) != -1)
         {
             switch(TEST_CASE)
             {
                 case TEST_NON_CON_OP:
                     InitGetRequest(OC_LOW_QOS);
-                    InitPutRequest();
+                    InitPutRequest(OC_LOW_QOS);
                     //InitPostRequest(OC_LOW_QOS);
                     break;
                 case TEST_CON_OP:
                     InitGetRequest(OC_HIGH_QOS);
-                    InitPutRequest();
+                    InitPutRequest(OC_HIGH_QOS);
                     //InitPostRequest(OC_HIGH_QOS);
                     break;
             }
@@ -175,13 +182,14 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
 }
 
-int InitPutRequest()
+int InitPutRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
+        << ":" << coapServerPort  << coapServerResource;
+    return (InvokeOCDoResource(query, OC_REST_PUT,
+            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS), putReqCB, NULL, 0));
 }
 
 int InitPostRequest(OCQualityOfService qos)
@@ -232,21 +240,47 @@ int InitDiscovery()
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
-    /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_URI_LENGTH] = { 0 };
+    OCConnectivityType discoveryReqConnType;
+
     if (UNICAST_DISCOVERY)
     {
-        strcpy(szQueryUri, TEST_APP_UNICAST_DISCOVERY_QUERY);
+        char ipv4addr[IPV4_ADDR_SIZE];
+        printf("Enter IPv4 address of the Server hosting secure resource (Ex: 11.12.13.14)\n");
+        if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
+        {
+            //Strip newline char from ipv4addr
+            StripNewLineChar(ipv4addr);
+            snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DISCOVERY_QUERY, ipv4addr);
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
+            return OC_STACK_INVALID_PARAM;
+        }
+        printf("Select Connectivity type on which discovery request needs to be send : ");
+        printf("0:ETH, 1:WIFI\n");
+        discoveryReqConnType = ((getchar() - '0') == 0) ? OC_ETHERNET : OC_WIFI;
     }
     else
     {
-        strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
+        //Send discovery request on Wifi and Ethernet interface
+        discoveryReqConnType = OC_ALL;
+        strcpy(szQueryUri, MULTICAST_DISCOVERY_QUERY);
     }
+
     cbData.cb = discoveryReqCB;
     cbData.context = NULL;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+
+    /* Start a discovery query*/
+    OC_LOG_V(INFO, TAG, "Initiating %s Resource Discovery : %s\n",
+        (UNICAST_DISCOVERY) ? "Unicast" : "Multicast",
+        szQueryUri);
+
+    ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0,
+            discoveryReqConnType, OC_LOW_QOS,
+            &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -256,10 +290,6 @@ int InitDiscovery()
 
 int main(int argc, char* argv[])
 {
-    uint8_t addr[20] = {0};
-    uint8_t* paddr = NULL;
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
     int opt;
     struct timespec timeout;
 
@@ -286,18 +316,8 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-
-    /*Get Ip address on defined interface and initialize coap on it with random port number
-     * this port number will be used as a source port in all coap communications*/
-    if ( OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr,
-                sizeof(addr)) == OC_ERR_SUCCESS)
-    {
-        OC_LOG_V(INFO, TAG, "Starting occlient on address %s",addr);
-        paddr = addr;
-    }
-
     /* Initialize OCStack*/
-    if (OCInit((char *) paddr, port, OC_CLIENT) != OC_STACK_OK)
+    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
@@ -440,3 +460,4 @@ int parseClientResponse(OCClientResponse * clientResponse)
     }
     return 0;
 }
+

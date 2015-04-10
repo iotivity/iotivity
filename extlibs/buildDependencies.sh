@@ -22,78 +22,58 @@ BOOST_MINOR=57
 BOOST_REVISION=0
 
 BOOST_VERSION="${BOOST_MAJOR}.${BOOST_MINOR}.${BOOST_REVISION}"
+BOOST_NAME="boost_${BOOST_MAJOR}_${BOOST_MINOR}_${BOOST_REVISION}"
+BOOST_FILE="${BOOST_NAME}.zip"
 
-# Determine the architecture
-HOST_ARCH=$(arch)
+function downloadBoost {
+    echo "Downloading boost v${BOOST_VERSION}"
+    wget --progress=bar --continue --output-document=${BOOST_FILE} http://downloads.sourceforge.net/project/boost/boost/${BOOST_VERSION}/${BOOST_FILE}?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F${BOOST_VERSION}%2F\&ts=1419450713\&use_mirror=iweb
+}
 
-if [ "${HOST_ARCH}" != "x86_64" ];
-then
-    HOST_ARCH="x86"
-fi
+function unpackBoost {
+    if [ ! -f "${BOOST_FILE}" ]; then
+        downloadBoost
+    fi
 
-HOST_ARCH="linux-${HOST_ARCH}"
-
-function cloneBoost {
-    echo "Removing old boost repo..."
-    rm -rf boost
-    echo "Cloning boost from GIT HUB..."
-    git clone --recursive https://github.com/boostorg/boost.git boost
+    echo "Unpacking boost v${BOOST_VERSION}"
+    unzip ${BOOST_FILE} >> build.log
+    pushd ${BOOST_NAME}
+    ./bootstrap.sh
+    popd
 }
 
 function buildBoost {
-    if [ ! -d "boost" ]; then
-        cloneBoost
+    if [ ! -d "${BOOST_NAME}" ]; then
+        unpackBoost
     fi
-    
-    # Determine the 
-    TOOLCHAIN=${ANDROID_NDK}/toolchains/${TOOLSET}-${VERSION}/prebuilt/${HOST_ARCH}/bin
+
+    TOOLCHAIN=${ANDROID_NDK}/toolchains/${TOOLSET}-${VERSION}/prebuilt/linux-x86/bin
+    echo "Copying user configs to boost"
+    cp ../resource/patches/user-config-${TOOLSET}.jam ${BOOST_NAME}/tools/build/v2/user-config.jam
 
     OLDPATH=$PATH
     PATH=$TOOLCHAIN:$PATH
 
-    rm -f boost.log
-
-    pushd boost
-    echo "Checking out boost v${BOOST_VERSION}..."
-    git checkout --force -B boost-${BOOST_VERSION} tags/boost-${BOOST_VERSION}                                   &>> ../boost.log
-    git submodule foreach --recursive git checkout --force -B boost-${BOOST_VERSION} tags/boost-${BOOST_VERSION} &>> ../boost.log
-    echo "Reset and clean all modular repositories..."
-    git reset --hard HEAD                                     >> ../boost.log
-    git clean -d --force                                      >> ../boost.log
-    git clean -d --force -x                                   >> ../boost.log
-    git submodule foreach --recursive git reset --hard HEAD   >> ../boost.log
-    git submodule foreach --recursive git clean --force -d    >> ../boost.log
-    git submodule foreach --recursive git clean --force -d -x >> ../boost.log
-    echo "Copying user configs to boost..."
-    cp ${EXTDIR}/../resource/patches/boost/${TOOLSET}/user-config.jam tools/build/src/user-config.jam
-    echo "Boostrapping boost..."
-    ./bootstrap.sh
-    echo "Building..."
+    pushd ${BOOST_NAME}
+    ./b2 clean
     ./b2 -q \
         target-os=linux \
         link=static \
         threading=multi \
         --layout=system \
-        --build-type=minimal \
-        -s PLATFORM=${PLATFORM} \
+        --prefix="./../../out/boost" \
+        -s PLATFORM=android-${PLATFORM} \
         -s VERSION=${VERSION} \
-        --prefix="${EXTDIR}/../out/boost" \
-        --includedir="${INCPATH}" \
-        --libdir="${LIBPATH}" \
-        --build-dir="$(pwd)/build" \
         --with-thread \
-        --with-program_options \
-        headers install
+        install
     popd
 
-    if [ ! -d "${INCPATH}" ];
-    then
-        echo "Copying headers to android include directory..."
-        mkdir -p ${INCPATH}
-        cp --recursive --dereference boost/boost ${INCPATH}
-    fi
-
     PATH=$OLDPATH
+
+    mkdir -p ${INCPATH}
+    cp -R ../out/boost/include/* ${INCPATH}
+    mkdir -p ${LIBPATH}
+    cp -R ../out/boost/lib/*     ${LIBPATH}
 }
 
 function checkBoost {
@@ -101,14 +81,19 @@ function checkBoost {
     TOOLSET=$2
     VERSION=$3
 
-    INCPATH="${EXTDIR}/../out/android/include"
-    LIBPATH="${EXTDIR}/../out/android/lib/${TOOLSET}"
+    INCPATH="$(dirname "$0")/../out/android/include"
+    LIBPATH="$(dirname "$0")/../out/android/lib/${TOOLSET}"
 
+    if [ ! -d "${INCPATH}" ];
+    then
+        buildBoost
+    fi
     if [ ! -d "${LIBPATH}" ];
     then
         buildBoost
     fi
 }
 
-checkBoost android-19 arm-linux-androideabi 4.9
-checkBoost android-19 x86 4.9
+checkBoost 19 arm-linux-androideabi 4.9
+checkBoost 19 x86 4.9
+

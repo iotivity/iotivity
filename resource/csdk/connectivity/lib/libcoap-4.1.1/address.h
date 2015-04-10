@@ -3,10 +3,10 @@
  * Copyright (C) 2010,2011 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
-/** 
+/**
  * @file address.h
  * @brief representation of network addresses
  */
@@ -34,6 +34,10 @@
 
 #ifdef HAVE_NETINET_IN_H
 #include <sys/socket.h>
+#endif
+
+#ifdef WITH_ARDUINO
+#define DEV_ADDR_SIZE_MAX (16)
 #endif
 
 #ifdef WITH_LWIP
@@ -117,29 +121,65 @@ _coap_is_mcast_impl(const coap_address_t *a)
 {
     if (!a)
     {
-        printf("[COAP] address - coap_address_t is false\n");
         return 0;
     }
     switch (a->addr.sa.sa_family)
     {
         case AF_INET:
-        printf("[COAP] address - local address : %s\n", a->addr.sin.sin_addr.s_addr);
         return IN_MULTICAST(a->addr.sin.sin_addr.s_addr);
         case AF_INET6:
         return IN6_IS_ADDR_MULTICAST(&a->addr.sin6.sin6_addr);
         default: /* fall through and signal error */
-        printf("[COAP] address - sa_family is default value\n");
         ;
     }
     return 0;
 }
 #endif /* WITH_POSIX */
 
-/** 
+#ifdef WITH_ARDUINO
+typedef struct coap_address_t
+{
+    uint32_t     size;                    /**< length of the address stored in addr field. */
+    uint8_t      addr[DEV_ADDR_SIZE_MAX]; /**< device address. */
+} coap_address_t;
+
+static inline int
+_coap_address_equals_impl(const coap_address_t *a,
+                          const coap_address_t *b)
+{
+    uint32_t i;
+
+    if ((a == NULL) || (b == NULL))
+        return 0;
+
+    if (a->size != b->size)
+        return 0;
+
+    for (i = 0; i < a->size; i++)
+    {
+        if (a->addr[i] != b->addr[i])
+            return 0;
+    }
+    return 1;
+}
+
+static inline int
+_coap_is_mcast_impl(const coap_address_t *a)
+{
+    if (!a)
+        return 0;
+
+    /* TODO */
+    return 0;
+}
+
+#endif /* WITH_ARDUINO */
+
+/**
  * Resets the given coap_address_t object @p addr to its default
  * values.  In particular, the member size must be initialized to the
  * available size for storing addresses.
- * 
+ *
  * @param addr The coap_address_t object to initialize.
  */
 static inline void coap_address_init(coap_address_t *addr)

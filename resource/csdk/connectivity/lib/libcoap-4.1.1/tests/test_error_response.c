@@ -3,7 +3,7 @@
  * Copyright (C) 2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include <assert.h>
@@ -310,10 +310,10 @@ CU_pSuite t_init_error_response_tests(void)
         return NULL;
     }
 
-#define ERROR_RESPONSE_TEST(s,t)					\
-  if (!CU_ADD_TEST(s,t)) {						\
+#define ERROR_RESPONSE_TEST(s,t)                    \
+  if (!CU_ADD_TEST(s,t)) {                      \
     fprintf(stderr, "W: cannot add error response generator test (%s)\n", \
-	    CU_get_error_msg());					\
+        CU_get_error_msg());                    \
   }
 
     ERROR_RESPONSE_TEST(suite[0], t_error_response1);

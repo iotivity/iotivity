@@ -42,6 +42,9 @@
 #endif
 
 #include <OCException.h>
+#ifdef __ANDROID__
+#include "android_cpp11_compat.h"
+#endif
 
 namespace cereal
 {
@@ -77,7 +80,7 @@ namespace OC
         public:
             void setJSONRepresentation(const std::string& payload);
 
-            void setJSONRepresentation(const unsigned char* payload);
+            void setJSONRepresentation(const char* payload);
 
             std::string getJSONRepresentation(OCInfoFormat f) const;
 
@@ -426,3 +429,4 @@ namespace OC
 
 
 #endif //__OCREPRESENTATION_H
+

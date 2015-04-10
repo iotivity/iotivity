@@ -17,21 +17,29 @@
  * limitations under the License.
  *
  ******************************************************************/
+#include "uqueue.h"
 
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-
 #include "logger.h"
-#include "uqueue.h"
 #include "oic_malloc.h"
 
+/**
+ * @def NO_MESSAGES
+ * @brief Number of messages in the queue
+ */
 #define NO_MESSAGES 0
-#define TAG PCF("UQUEUE")
 
-u_queue_t* u_queue_create()
+/**
+ * @def TAG
+ * @brief Logging tag for module name
+ */
+#define TAG "UQUEUE"
+
+u_queue_t *u_queue_create()
 {
-    u_queue_t* queuePtr = (u_queue_t*) OICMalloc(sizeof(u_queue_t));
+    u_queue_t *queuePtr = (u_queue_t *) OICMalloc(sizeof(u_queue_t));
     if (NULL == queuePtr)
     {
         OIC_LOG(DEBUG, TAG, "QueueCreate FAIL");
@@ -44,10 +52,10 @@ u_queue_t* u_queue_create()
     return queuePtr;
 }
 
-CAResult_t u_queue_add_element(u_queue_t* queue, u_queue_message_t *message)
+CAResult_t u_queue_add_element(u_queue_t *queue, u_queue_message_t *message)
 {
-    u_queue_element* element = NULL;
-    u_queue_element* ptr = NULL;
+    u_queue_element *element = NULL;
+    u_queue_element *ptr = NULL;
 
     if (NULL == queue)
     {
@@ -61,7 +69,7 @@ CAResult_t u_queue_add_element(u_queue_t* queue, u_queue_message_t *message)
         return CA_STATUS_FAILED;
     }
 
-    element = (u_queue_element*) OICMalloc(sizeof(u_queue_element));
+    element = (u_queue_element *) OICMalloc(sizeof(u_queue_element));
     if (NULL == element)
     {
         OIC_LOG(DEBUG, TAG, "QueueAddElement FAIL, memory allocation failed");
@@ -99,18 +107,15 @@ CAResult_t u_queue_add_element(u_queue_t* queue, u_queue_message_t *message)
         queue->element = element;
         queue->count++;
         OIC_LOG_V(DEBUG, TAG, "Queue Count : %d", queue->count);
-
-        return CA_STATUS_OK;
     }
 
     return CA_STATUS_OK;
 }
 
-u_queue_message_t* u_queue_get_element(u_queue_t* queue)
+u_queue_message_t *u_queue_get_element(u_queue_t *queue)
 {
-    u_queue_element* next = NULL;
-    u_queue_element* element = NULL;
-    u_queue_message_t* message = NULL;
+    u_queue_element *element = NULL;
+    u_queue_message_t *message = NULL;
 
     if (NULL == queue)
     {
@@ -122,12 +127,11 @@ u_queue_message_t* u_queue_get_element(u_queue_t* queue)
 
     if (NULL == element)
     {
-        OIC_LOG(DEBUG, TAG, "QueueGetElement : FAIL, no messages");
+        OIC_LOG(DEBUG, TAG, "QueueGetElement : empty, no messages");
         return NULL;
     }
 
-    next = element->next;
-    queue->element = next;
+    queue->element = element->next;;
     queue->count--;
 
     message = element->message;
@@ -135,10 +139,10 @@ u_queue_message_t* u_queue_get_element(u_queue_t* queue)
     return message;
 }
 
-CAResult_t u_queue_remove_element(u_queue_t* queue)
+CAResult_t u_queue_remove_element(u_queue_t *queue)
 {
-    u_queue_element* next = NULL;
-    u_queue_element* remove = NULL;
+    u_queue_element *next = NULL;
+    u_queue_element *remove = NULL;
 
     if (NULL == queue)
     {
@@ -165,7 +169,7 @@ CAResult_t u_queue_remove_element(u_queue_t* queue)
     return CA_STATUS_OK;
 }
 
-uint32_t u_queue_get_size(u_queue_t* queue)
+uint32_t u_queue_get_size(u_queue_t *queue)
 {
     if (NULL == queue)
     {
@@ -176,10 +180,8 @@ uint32_t u_queue_get_size(u_queue_t* queue)
     return queue->count;
 }
 
-CAResult_t u_queue_reset(u_queue_t* queue)
+CAResult_t u_queue_reset(u_queue_t *queue)
 {
-    CAResult_t error = CA_STATUS_FAILED;
-
     if (NULL == queue)
     {
         OIC_LOG(DEBUG, TAG, "QueueReset FAIL, Invalid Queue");
@@ -194,9 +196,7 @@ CAResult_t u_queue_reset(u_queue_t* queue)
 
     while (NULL != queue->element)
     {
-        error = u_queue_remove_element(queue);
-        if (error == CA_STATUS_FAILED)
-            break;
+       u_queue_remove_element(queue);
     }
 
     if (NO_MESSAGES != queue->count)
@@ -209,7 +209,7 @@ CAResult_t u_queue_reset(u_queue_t* queue)
 
 }
 
-CAResult_t u_queue_delete(u_queue_t* queue)
+CAResult_t u_queue_delete(u_queue_t *queue)
 {
     CAResult_t error = CA_STATUS_FAILED;
 
@@ -230,7 +230,7 @@ CAResult_t u_queue_delete(u_queue_t* queue)
     return (CA_STATUS_OK);
 }
 
-u_queue_message_t* u_queue_get_head(u_queue_t* queue)
+u_queue_message_t *u_queue_get_head(u_queue_t *queue)
 {
     if (NULL == queue)
     {
@@ -245,3 +245,4 @@ u_queue_message_t* u_queue_get_head(u_queue_t* queue)
     }
     return queue->element->message;
 }
+

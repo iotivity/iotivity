@@ -30,11 +30,6 @@ extern "C"
 #endif
 
 /**
- * Use this default size when initialized
- */
-#define U_ARRAYLIST_DEFAULT_SIZE 1
-
-/**
  * @struct u_arraylist_t
  * @brief array list structure
  */
@@ -49,51 +44,52 @@ typedef struct u_arraylist_t
  * @brief API to creates array list and initializes the elements.
  * @return  u_arraylist_t if Success, NULL otherwise
  */
-u_arraylist_t* u_arraylist_create();
+u_arraylist_t *u_arraylist_create();
 
 /**
  * @brief Resets and deletes the array list
- * application should free the memory of data in array list
- * @param u_arraylist_t- u_arraylist pointer
+ * Arraylist elements are deleted. Calling function must take care of free
+ * dynamic memory allocated before freeing the arraylist
+ * @param list- u_arraylist pointer
  * @return CAResult_t
- * CA_STATUS_OK if Success, CA_STATUS_FAILED otherwise
+ * CA_STATUS_OK if Success, CA_STATUS_INVALID_PARAM if pointer to list is NULL
  */
-CAResult_t u_arraylist_free(u_arraylist_t *list);
+CAResult_t u_arraylist_free(u_arraylist_t **list);
 
 /**
  * @brief Returns the data of the index from the array list
- * @param u_arraylist
+ * @param list
  *     [IN] pointer of array list
  * @param index
  *     [IN] index of array list
- * @return void pointer of the data
+ * @return void pointer of data if success or NULL pointer otherwise
  */
-void* u_arraylist_get(const u_arraylist_t *list, uint32_t index);
+void *u_arraylist_get(const u_arraylist_t *list, uint32_t index);
 
 /**
  * @brief Add data in the array list
- * @param u_arraylist
+ * @param list
  *     [IN] pointer of array list
  * @param data
  *     [IN] pointer of data
  * @return CAResult_t
- * CA_STATUS_OK if Success, CA_STATUS_FAILED otherwise
+ * CA_STATUS_OK if Success, CA_MEMORY_ALLOC_FAILED if memory allocation fails
  */
 CAResult_t u_arraylist_add(u_arraylist_t *list, void *data);
 
 /**
  * @brief Remove the data of the index from the array list
- * @param u_arraylist
+ * @param list
  *     [IN] pointer of array list
  * @param index
  *     [IN] index of array list
- * @return void pointer of the data
+ * @return void pointer of the data if success or NULL pointer otherwise
  */
-void* u_arraylist_remove(u_arraylist_t *list, uint32_t index);
+void *u_arraylist_remove(u_arraylist_t *list, uint32_t index);
 
 /**
  * @brief Returns the length of the array list
- * @param u_arraylist
+ * @param list
  *     [IN] pointer of array list
  * @return length of the array list
  */
@@ -101,13 +97,13 @@ uint32_t u_arraylist_length(const u_arraylist_t *list);
 
 /**
  * @brief Returns whether the data exists or not
- * @param u_arraylist
+ * @param list
  *     [IN] pointer of array list
  * @param data
  *     [IN] pointer of data
- * @return 1 if exists, 0 otherwise
+ * @return true if exists, false otherwise
  */
-uint8_t u_arraylist_contains(const u_arraylist_t *list, void *data);
+bool u_arraylist_contains(const u_arraylist_t *list,const void *data);
 
 #ifdef __cplusplus
 }

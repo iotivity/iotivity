@@ -27,5 +27,9 @@ const char *getResult(OCStackResult result);
 /* Read the credentials from persistent storage and provide to OC stack. */
 OCStackResult SetCredentials(const char* filename);
 
+/* Removes the new line character from a NULL terminated C string. */
+void StripNewLineChar(char* str);
+
 #endif //OCSAMPLE_COMMON_H_
+
 

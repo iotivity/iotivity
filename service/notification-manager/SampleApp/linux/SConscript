@@ -1,3 +1,23 @@
+#******************************************************************
+#
+# Copyright 2014 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 ##
 # NotificationManager build script
 ##
@@ -12,11 +32,8 @@ notimgr_env = lib_env.Clone()
 # Build flags
 ######################################################################
 notimgr_env.AppendUnique(CPPPATH = ['../../NotificationManager/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../../../../extlibs/cjson'])
-notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
-notimgr_c_env = notimgr_env.Clone()
-notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap', 'pthread','NOTISDKLibrary'])
-notimgr_c_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'coap', 'pthread','NOTISDKLibrary'])
+notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap', 'pthread'])
+notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 ######################################################################
 # Source files and Targets
@@ -24,8 +41,3 @@ notimgr_c_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'coap', 'pthread','
 sampleprovider = notimgr_env.Program('sampleprovider', 'sampleProvider/SampleProvider.cpp')
 sampleconsumer = notimgr_env.Program('sampleconsumer', 'sampleConsumer/SampleConsumer.cpp')
 
-notificationmanager = notimgr_c_env.Program('notificationmanager', 'notificationManager/main.c')
-
-#notimgr_env.InstallTarget(sampleprovider, 'sampleprovider')
-#notimgr_env.InstallTarget(sampleconsumer, 'sampleconsumer')
-#notimgr_env.InstallTarget(notificationmanager, 'notificationmanager')

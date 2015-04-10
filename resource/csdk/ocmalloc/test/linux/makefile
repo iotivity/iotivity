@@ -47,25 +47,16 @@ OUT_DIR	  := $(PWD)
 OCLOGGER_DIR	= $(ROOT_DIR)/logger
 OCMALLOC_DIR	= $(ROOT_DIR)/ocmalloc
 OCRANDOM_DIR	= $(ROOT_DIR)/ocrandom
-OCSOCKET_DIR	= $(ROOT_DIR)/ocsocket
-LCOAP_DIR		= $(ROOT_DIR)/libcoap-4.1.1
-OCCOAP_DIR		= $(ROOT_DIR)/occoap
 OCTBSTACK_DIR	= $(ROOT_DIR)/stack
 
 OCLOGGER_INC	= $(OCLOGGER_DIR)/include
 OCMALLOC_INC	= $(OCMALLOC_DIR)/include
 OCRANDOM_INC	= $(OCRANDOM_DIR)/include
-OCSOCKET_INC	= $(OCSOCKET_DIR)/include
-LCOAP_INC		= $(LCOAP_DIR)
-OCCOAP_INC		= $(OCCOAP_DIR)/include
 OCTBSTACK_INC	= $(OCTBSTACK_DIR)/include
 
 INC_DIRS	:= -I$(OCLOGGER_INC)
 INC_DIRS	+= -I$(OCMALLOC_INC)
 INC_DIRS	+= -I$(OCRANDOM_INC)
-INC_DIRS	+= -I$(OCSOCKET_INC)
-INC_DIRS	+= -I$(LCOAP_INC)
-INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS  += -I$(GTEST_DIR)/include
@@ -105,3 +96,4 @@ clean: legacy_clean
 
 legacy_clean:
 	rm -f *.o $(PROGRAMS)
+

@@ -21,9 +21,8 @@
 #ifndef OIC_GROUP_H
 #define OIC_GROUP_H
 
-#include "ocstackinternal.h"
 #include "ocstack.h"
-#include "ocresource.h"
+#include "ocstackinternal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +32,7 @@ void AddCapability(OCCapability** head, OCCapability* node);
 
 void AddAction(OCAction** head, OCAction* node);
 
-OCStackResult AddActionSet(OCActionSet **head, OCActionSet* node);
+void AddActionSet(OCActionSet **head, OCActionSet* node);
 
 void DeleteCapability(OCCapability *del);
 

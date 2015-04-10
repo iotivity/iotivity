@@ -18,14 +18,22 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Defining _POSIX_C_SOURCE macro with 200112L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1-2001 base
+// specification (excluding the XSI extension).
+// For POSIX.1-2001 base specification,
+// Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
 #include <string.h>
 #include "ocstack.h"
 #include "ocstackinternal.h"
 #include "ocresourcehandler.h"
 #include "logger.h"
-#include "debug.h"
+#include "ocmalloc.h"
 #include "cJSON.h"
+#include "ocmalloc.h"
+
 /// Module Name
 #include <stdio.h>
 
@@ -35,15 +43,23 @@
 
 #define TAG PCF("occollection")
 
-#define NUM_PARAM_IN_QUERY  2
+#define NUM_PARAM_IN_QUERY   2 // The expected number of parameters in a query
+#define NUM_FIELDS_IN_QUERY  2 // The expected number of fields in a query
 
 static OCStackResult CheckRTParamSupport(const OCResource* resource, const char* rtPtr)
 {
+    if(!resource || !rtPtr)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCResourceType* rTPointer = resource->rsrcType;
     while (rTPointer)
     {
         if( strcmp (rTPointer->resourcetypename, rtPtr) == 0)
+        {
             return OC_STACK_OK;
+        }
 
         rTPointer = rTPointer->next;
     }
@@ -52,11 +68,18 @@ static OCStackResult CheckRTParamSupport(const OCResource* resource, const char*
 
 static OCStackResult CheckIFParamSupport(const OCResource* resource, const char* ifPtr)
 {
+    if(!resource || !ifPtr)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCResourceInterface* iFPointer = resource->rsrcInterface;
     while (iFPointer)
     {
         if( strcmp (iFPointer->name, ifPtr) == 0)
-             return OC_STACK_OK;
+        {
+            return OC_STACK_OK;
+        }
 
         iFPointer = iFPointer->next;
     }
@@ -64,10 +87,11 @@ static OCStackResult CheckIFParamSupport(const OCResource* resource, const char*
 }
 
 static OCStackResult
-ValidateQuery (const unsigned char *query, OCResourceHandle resource,
+ValidateQuery (const char *query, OCResourceHandle resource,
                              OCStackIfTypes *ifParam, char **rtParam)
 {
-    uint8_t numFields = 0, numParam;
+    uint8_t numFields = 0;
+    uint8_t numParam;
 
     //TODO: Query and URL validation is being done for virtual resource case
     // using ValidateUrlQuery function. We should be able to merge it with this
@@ -76,6 +100,11 @@ ValidateQuery (const unsigned char *query, OCResourceHandle resource,
 
     if (!query)
         return OC_STACK_ERROR;
+
+    if(!ifParam || !rtParam)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
 
     if (!(*query))
     {
@@ -103,29 +132,33 @@ ValidateQuery (const unsigned char *query, OCResourceHandle resource,
         while (innerToken != NULL)
         {
             numParam++;
-            if (strcmp (innerToken, OC_RSRVD_INTERFACE) == 0)
+            if (strncmp (innerToken, OC_RSRVD_INTERFACE, sizeof(OC_RSRVD_INTERFACE)) == 0)
             {
                 // Determine the value of IF parameter
                 innerToken = strtok_r (NULL, "=", &endToken);
                 ifPtr = innerToken;
-            } else if (strcmp (innerToken, OC_RSRVD_RESOURCE_TYPE) == 0) {
+            }
+            else if (strcmp (innerToken, OC_RSRVD_RESOURCE_TYPE) == 0)
+            {
                 // Determine the value of RT parameter
                 innerToken = strtok_r (NULL, "=", &endToken);
                 rtPtr = innerToken;
-            } else {
+            }
+            else
+            {
                 innerToken = strtok_r (NULL, "=", &endToken);
             }
         }
-        if (numParam != 2)
+        if (numParam != NUM_PARAM_IN_QUERY)
         {
             // Query parameter should be of the form if=<string>. String should not have & or =
             return OC_STACK_INVALID_QUERY;
         }
         token = strtok_r (NULL, "&", &endStr);
     }
-    if (numFields > NUM_PARAM_IN_QUERY)
+    if (numFields > NUM_FIELDS_IN_QUERY)
     {
-        // M1 release supports one IF value, one RT value and no other params
+        // current release supports one IF value, one RT value and no other params
         return OC_STACK_INVALID_QUERY;
     }
 
@@ -185,32 +218,40 @@ ValidateQuery (const unsigned char *query, OCResourceHandle resource,
 
 
 static OCStackResult BuildRootResourceJSON(OCResource *resource,
-        unsigned char * bufferPtr, uint16_t *remaining)
+        char * bufferPtr, uint16_t *remaining)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    cJSON *resObj;
-    char *jsonStr;
+    cJSON *resObj = NULL;
+    char *jsonStr = NULL;
     uint16_t jsonLen;
 
     OC_LOG(INFO, TAG, PCF("Entering BuildRootResourceJSON"));
     resObj = cJSON_CreateObject();
 
-    if (resource)
+    if ( ! resObj)
+    {
+        ret = OC_STACK_NO_MEMORY;
+    }
+    else if (resource)
     {
         cJSON_AddItemToObject (resObj, OC_RSRVD_HREF, cJSON_CreateString(resource->uri));
+        jsonStr = cJSON_PrintUnformatted (resObj);
+        jsonLen = strlen(jsonStr);
+        if (jsonLen < *remaining)
+        {
+            strncpy(bufferPtr, jsonStr, jsonLen);
+            *remaining -= jsonLen;
+            bufferPtr += jsonLen;
+            ret = OC_STACK_OK;
+        }
     }
-    jsonStr = cJSON_PrintUnformatted (resObj);
-    jsonLen = strlen(jsonStr);
-    if (jsonLen < *remaining)
+    else
     {
-        strcpy((char*) bufferPtr, jsonStr);
-        *remaining -= jsonLen;
-        bufferPtr += jsonLen;
-        ret = OC_STACK_OK;
+        ret = OC_STACK_INVALID_PARAM;
     }
 
     cJSON_Delete (resObj);
-    free (jsonStr);
+    OCFree(jsonStr);
 
     return ret;
 }
@@ -220,21 +261,26 @@ static OCStackResult
 HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
                        uint8_t filterOn, char *filterValue)
 {
+    if(!ehRequest)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult ret = OC_STACK_ERROR;
-    unsigned char jsonbuffer[MAX_RESPONSE_LENGTH] = {0};
+    char jsonbuffer[MAX_RESPONSE_LENGTH] = {};
     size_t jsonbufferLength = 0;
     uint16_t remaining = 0;
-    unsigned char * ptr = NULL;
+    char * ptr = NULL;
     OCResource * collResource = (OCResource *) ehRequest->resource;
 
     ptr = jsonbuffer;
     remaining = MAX_RESPONSE_LENGTH;
 
     ret = BuildRootResourceJSON(collResource, ptr, &remaining);
-    ptr += strlen((char*)ptr);
 
     if (ret == OC_STACK_OK && remaining >= (sizeof(OC_JSON_SEPARATOR) + 1))
     {
+        ptr += strlen((char*)ptr);
         *ptr = OC_JSON_SEPARATOR;
         ptr++;
         remaining--;
@@ -243,7 +289,6 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
     {
         ret = OC_STACK_ERROR;
     }
-    *(ptr + 1) = '\0';
 
     if (ret == OC_STACK_OK)
     {
@@ -252,19 +297,36 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
             OCResource* temp = collResource->rsrcResources[i];
             if (temp)
             {
-                ret = BuildVirtualResourceResponse(temp, filterOn, filterValue, (char*)ptr, &remaining);
+                //TODO : Update needed here to get correct connectivity type
+                //from ServerRequest data structure.
+
+                // Function will return error if not enough space in buffer.
+                ret = BuildVirtualResourceResponse(temp, filterOn, filterValue,
+                         (char*)ptr, &remaining, CA_WIFI );
                 if (ret != OC_STACK_OK)
                 {
                     break;
                 }
                 ptr += strlen((char*)ptr);
+
+                // Check if we have added all resources.
+                if ((i + 1) == MAX_CONTAINED_RESOURCES)
+                {
+                    break;
+                }
+                // Add separator if more resources and enough space present.
                 if (collResource->rsrcResources[i+1] && remaining > sizeof(OC_JSON_SEPARATOR))
                 {
                     *ptr = OC_JSON_SEPARATOR;
                     ptr++;
                     remaining--;
                 }
-                *(ptr + 1) = '\0';
+                // No point continuing as no more space on buffer
+                // and/or no more resources.
+                else
+                {
+                    break;
+                }
             }
             else
             {
@@ -276,7 +338,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
     jsonbufferLength = strlen((const char *)jsonbuffer);
     if(ret == OC_STACK_OK && jsonbufferLength)
     {
-        OCEntityHandlerResponse response = {0};
+        OCEntityHandlerResponse response = {};
         response.ehResult = OC_EH_OK;
         response.payload = jsonbuffer;
         response.payloadSize = jsonbufferLength + 1;
@@ -293,10 +355,10 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 {
     OCStackResult stackRet = OC_STACK_ERROR;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    unsigned char jsonbuffer[MAX_RESPONSE_LENGTH] = {0};
+    char jsonbuffer[MAX_RESPONSE_LENGTH] = {0};
     size_t jsonbufferLength = 0;
     uint16_t remaining = 0;
-    unsigned char * ptr = NULL;
+    char * ptr = NULL;
     OCResource * collResource = (OCResource *) ehRequest->resource;
 
     ptr = jsonbuffer;
@@ -304,12 +366,11 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     stackRet = BuildRootResourceJSON(collResource, ptr, &remaining);
     ptr += strlen((char*)ptr);
-    *(ptr + 1) = '\0';
 
     jsonbufferLength = strlen((const char *)jsonbuffer);
     if(jsonbufferLength)
     {
-        OCEntityHandlerResponse response = {0};
+        OCEntityHandlerResponse response = {};
         response.ehResult = OC_EH_OK;
         response.payload = jsonbuffer;
         response.payloadSize = jsonbufferLength + 1;
@@ -359,21 +420,33 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
 uint8_t GetNumOfResourcesInCollection (OCResource *resource)
 {
-    uint8_t num = 0;
-    for (int i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+    if(resource)
     {
-        if (resource->rsrcResources[i])
+        uint8_t num = 0;
+        for (int i = 0; i < MAX_CONTAINED_RESOURCES; i++)
         {
-            num++;
+            if (resource->rsrcResources[i])
+            {
+                num++;
+            }
         }
+        return num;
     }
-    return num;
+    else
+    {
+        return -1;
+    }
 }
 
 
 OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *ehRequest)
 {
+    if(!ehRequest || !ehRequest->query)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult result = OC_STACK_ERROR;
     OCStackIfTypes ifQueryParam = STACK_IF_INVALID;
     char *rtQueryParam = NULL;
@@ -381,19 +454,24 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
     OC_LOG_V(INFO, TAG, "DefaultCollectionEntityHandler with query %s", ehRequest->query);
 
     if (flag != OC_REQUEST_FLAG)
+    {
         return OC_STACK_ERROR;
+    }
 
-    result = ValidateQuery ((const unsigned char *)ehRequest->query,
+    result = ValidateQuery (ehRequest->query,
                             ehRequest->resource, &ifQueryParam, &rtQueryParam);
 
     if (result != OC_STACK_OK)
+    {
         return result;
+    }
 
-  
-    if(!((ehRequest->method == OC_REST_GET) || 
+    if(!((ehRequest->method == OC_REST_GET) ||
         (ehRequest->method == OC_REST_PUT) ||
         (ehRequest->method == OC_REST_POST)))
+    {
         return OC_STACK_ERROR;
+    }
 
     if (ehRequest->method == OC_REST_GET)
     {
@@ -412,7 +490,8 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
 
             case STACK_IF_BATCH:
                 OC_LOG(INFO, TAG, PCF("STACK_IF_BATCH"));
-                ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler = HandleAggregateResponse;
+                ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
+                                                                        HandleAggregateResponse;
                 ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
                         GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
                 return HandleBatchInterface(ehRequest);
@@ -422,7 +501,9 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
             default:
                 return OC_STACK_ERROR;
         }
-    } else if (ehRequest->method == OC_REST_PUT) {
+    }
+    else if (ehRequest->method == OC_REST_PUT)
+    {
         switch (ifQueryParam)
         {
             case STACK_IF_DEFAULT:
@@ -434,7 +515,8 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                 return OC_STACK_ERROR;
 
             case STACK_IF_BATCH:
-                ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler = HandleAggregateResponse;
+                ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
+                                                                        HandleAggregateResponse;
                 ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
                         GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
                 return HandleBatchInterface(ehRequest);
@@ -466,6 +548,22 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                 return OC_STACK_ERROR;
         }
     }
+    else if (ehRequest->method == OC_REST_POST)
+    {
+
+        if(ifQueryParam == STACK_IF_GROUP)
+        {
+            OC_LOG_V(INFO, TAG, "IF_COLLECTION POST with request :: \n%s\n ",
+                    ehRequest->reqJSONPayload);
+            return BuildCollectionGroupActionJSONResponse(OC_REST_POST/*flag*/,
+                    (OCResource *) ehRequest->resource, ehRequest);
+        }
+        else
+        {
+            return OC_STACK_ERROR;
+        }
+    }
     return result;
 }
+
 

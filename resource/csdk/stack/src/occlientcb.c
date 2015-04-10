@@ -20,28 +20,37 @@
 
 
 #include "occlientcb.h"
-#include "occoap.h"
 #include "utlist.h"
 #include "logger.h"
 #include "ocmalloc.h"
 #include <string.h>
 
+#include "cacommon.h"
+#include "cainterface.h"
+
 /// Module Name
 #define TAG PCF("occlientcb")
 
 struct ClientCB *cbList = NULL;
-OCMulticastNode * mcPresenceNodes = NULL;
+static OCMulticastNode * mcPresenceNodes = NULL;
 
-OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
-        OCCoAPToken * token, OCDoHandle *handle, OCMethod method,
-        unsigned char * requestUri, unsigned char * resourceTypeName) {
+OCStackResult
+AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
+             CAToken_t token, uint8_t tokenLength,
+             OCDoHandle *handle, OCMethod method,
+             char * requestUri, char * resourceTypeName, OCConnectivityType conType)
+{
+    if(!clientCB || !cbData || !handle || !requestUri || tokenLength > CA_MAX_TOKEN_LEN)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
 
     ClientCB *cbNode = NULL;
 
     #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE)
     {   // Retrieve the presence callback structure for this specific requestUri.
-        cbNode = GetClientCB(NULL, NULL, requestUri);
+        cbNode = GetClientCB(NULL, 0, NULL, requestUri);
     }
     #endif // WITH_PRESENCE
 
@@ -58,7 +67,10 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
             cbNode->callBack = cbData->cb;
             cbNode->context = cbData->context;
             cbNode->deleteCallback = cbData->cd;
-            memcpy(&(cbNode->token), token, sizeof(OCCoAPToken));
+            //Note: token memory is allocated in the caller OCDoResource
+            //but freed in DeleteClientCB
+            cbNode->token = token;
+            cbNode->tokenLength = tokenLength;
             cbNode->handle = *handle;
             cbNode->method = method;
             cbNode->sequenceNumber = 0;
@@ -67,6 +79,7 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
             cbNode->filterResourceType = NULL;
             #endif // WITH_PRESENCE
             cbNode->requestUri = requestUri;
+            cbNode->conType = conType;
             LL_APPEND(cbList, cbNode);
             *clientCB = cbNode;
         }
@@ -76,16 +89,30 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
         // Ensure that the handle the SDK hands back up to the application layer for the
         // OCDoResource call matches the found ClientCB Node.
         *clientCB = cbNode;
-        OCFree(requestUri);
+
+        if (cbData->cd)
+        {
+            cbData->cd(cbData->context);
+        }
+
+        OCFree(token);
         OCFree(*handle);
+        OCFree(requestUri);
         *handle = cbNode->handle;
     }
 
     #ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE && resourceTypeName)
-    {   // Amend the found or created node by adding a new resourceType to it.
-        return InsertResourceTypeFilter(cbNode, (const char *)resourceTypeName);
+    {
+        // Amend the found or created node by adding a new resourceType to it.
+        return InsertResourceTypeFilter(cbNode,(char *)resourceTypeName);
     }
+    else
+    {
+        OCFree(resourceTypeName);
+    }
+    #else
+    OCFree(resourceTypeName);
     #endif
 
     return OC_STACK_OK;
@@ -94,11 +121,13 @@ OCStackResult AddClientCB(ClientCB** clientCB, OCCallbackData* cbData,
         return OC_STACK_NO_MEMORY;
 }
 
-void DeleteClientCB(ClientCB * cbNode) {
+void DeleteClientCB(ClientCB * cbNode)
+{
     if(cbNode) {
         LL_DELETE(cbList, cbNode);
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
-        OC_LOG_BUFFER(INFO, TAG, cbNode->token.token, cbNode->token.tokenLength);
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, cbNode->tokenLength);
+        CADestroyToken (cbNode->token);
         OCFree(cbNode->handle);
         OCFree(cbNode->requestUri);
         if(cbNode->deleteCallback)
@@ -129,29 +158,43 @@ void DeleteClientCB(ClientCB * cbNode) {
     }
 }
 
-ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * requestUri) {
+ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
+        OCDoHandle handle, const char * requestUri)
+{
+
     ClientCB* out = NULL;
-    if(token) {
-        LL_FOREACH(cbList, out) {
+
+    if(token && *token &&
+            tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
+    {
+        LL_FOREACH(cbList, out)
+        {
             OC_LOG(INFO, TAG, PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, token->token, token->tokenLength);
-            OC_LOG_BUFFER(INFO, TAG, out->token.token, out->token.tokenLength);
-            if((out->token.tokenLength == token->tokenLength) &&
-                (memcmp(out->token.token, token->token, token->tokenLength) == 0) ) {
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
+            if(memcmp(out->token, token, tokenLength) == 0)
+            if(memcmp(out->token, token, CA_MAX_TOKEN_LEN) == 0)
+            {
                 return out;
             }
         }
     }
-    else if(handle) {
-        LL_FOREACH(cbList, out) {
-            if(out->handle == handle) {
+    else if(handle)
+    {
+        LL_FOREACH(cbList, out)
+        {
+            if(out->handle == handle)
+            {
                 return out;
             }
         }
     }
-    else if(requestUri) {
-        LL_FOREACH(cbList, out) {
-            if(out->requestUri && strcmp((char *)out->requestUri, (char *)requestUri) == 0) {
+    else if(requestUri)
+    {
+        LL_FOREACH(cbList, out)
+        {
+            if(out->requestUri && strcmp(out->requestUri, requestUri ) == 0)
+            {
                 return out;
             }
         }
@@ -160,7 +203,8 @@ ClientCB* GetClientCB(OCCoAPToken * token, OCDoHandle handle, unsigned char * re
     return NULL;
 }
 
-OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceTypeName)
+#ifdef WITH_PRESENCE
+OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, char * resourceTypeName)
 {
     OCResourceType * newResourceType = NULL;
     if(cbNode && resourceTypeName)
@@ -173,13 +217,14 @@ OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, const char * resourceT
         }
 
         newResourceType->next = NULL;
-        newResourceType->resourcetypename = (char *) resourceTypeName;
+        newResourceType->resourcetypename = resourceTypeName;
 
         LL_APPEND(cbNode->filterResourceType, newResourceType);
         return OC_STACK_OK;
     }
     return OC_STACK_ERROR;
 }
+#endif // WITH_PRESENCE
 
 void DeleteClientCBList() {
     ClientCB* out;
@@ -205,8 +250,13 @@ void FindAndDeleteClientCB(ClientCB * cbNode) {
     }
 }
 
-OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, unsigned char* uri, uint32_t nonce)
+OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, char* uri, uint32_t nonce)
 {
+    if(!outnode)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCMulticastNode *node;
 
     node = (OCMulticastNode*) OCMalloc(sizeof(OCMulticastNode));
@@ -222,12 +272,12 @@ OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, unsigned char* uri, u
     return OC_STACK_NO_MEMORY;
 }
 
-OCMulticastNode* GetMCPresenceNode(unsigned char * uri) {
+OCMulticastNode* GetMCPresenceNode(const char * uri) {
     OCMulticastNode* out = NULL;
 
     if(uri) {
         LL_FOREACH(mcPresenceNodes, out) {
-            if(out->uri && strcmp((char *)out->uri, (char *)uri) == 0) {
+            if(out->uri && strcmp(out->uri, uri) == 0) {
                 return out;
             }
         }
@@ -235,3 +285,4 @@ OCMulticastNode* GetMCPresenceNode(unsigned char * uri) {
     OC_LOG(INFO, TAG, PCF("MulticastNode Not found !!"));
     return NULL;
 }
+

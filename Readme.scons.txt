@@ -207,7 +207,7 @@ Note:
 at once. Following is the usage:
 
 To build:
-     $ auto_build.sh <path-to-android-ndk> <path-to-arduino-home>
+     $ auto_build.sh <path-to-android-ndk>
 To clean:
      $ auto_build.sh -c
 

@@ -1,25 +1,47 @@
+#******************************************************************
+#
+# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 ##
 # Examples build script
 ##
 Import('env')
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
-examples_env = env.Clone()
+examples_env = lib_env.Clone()
+
 ######################################################################
 # Build flags
 ######################################################################
 examples_env.AppendUnique(CPPPATH = [
 		'../include/',
 		'../csdk/stack/include',
-		'../csdk/ocsocket/include',
 		'../csdk/ocrandom/include',
 		'../csdk/logger/include',
-		'../csdk/libcoap',
 		'../oc_logger/include'
 		])
 
 target_os = env.get('TARGET_OS')
 if target_os not in ['windows', 'winrt']:
-	examples_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread'])
+	examples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 
 	# Note: 'pthread' is in libc for android. On other platform, if use
 	# new gcc(>4.9?) it isn't required, otherwise, it's required
@@ -27,11 +49,15 @@ if target_os not in ['windows', 'winrt']:
 		examples_env.AppendUnique(LIBS = ['-lpthread'])
 
 examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
+examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+if env.get('SECURED') == '1':
+    examples_env.AppendUnique(LIBS = ['tinydtls'])
+
+examples_env.ParseConfig('pkg-config --libs glib-2.0');
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	examples_env.AppendUnique(LIBS = ['gnustl_shared'])
+	examples_env.AppendUnique(LIBS = ['gnustl_static'])
 
 	if not env.get('RELEASE'):
 		examples_env.AppendUnique(LIBS = ['log'])
@@ -43,8 +69,8 @@ if target_os in ['darwin', 'ios']:
 # Source files and Targets
 ######################################################################
 simpleserver = examples_env.Program('simpleserver', 'simpleserver.cpp')
-simpleserverHQ = examples_env.Program('simpleserverHQ', 'simpleserverHQ.cpp')
 simpleclient = examples_env.Program('simpleclient', 'simpleclient.cpp')
+simpleserverHQ = examples_env.Program('simpleserverHQ', 'simpleserverHQ.cpp')
 simpleclientHQ = examples_env.Program('simpleclientHQ', 'simpleclientHQ.cpp')
 fridgeserver = examples_env.Program('fridgeserver', 'fridgeserver.cpp')
 fridgeclient = examples_env.Program('fridgeclient', 'fridgeclient.cpp')
@@ -58,15 +84,21 @@ garageclient = examples_env.Program('garageclient', 'garageclient.cpp')
 groupserver = examples_env.Program('groupserver', 'groupserver.cpp')
 groupclient = examples_env.Program('groupclient', 'groupclient.cpp')
 lightserver = examples_env.Program('lightserver', 'lightserver.cpp')
-threadingsample = examples_env.Program('threadingsample', 'threadingsample.cpp')
 devicediscoveryserver = examples_env.Program('devicediscoveryserver', 'devicediscoveryserver.cpp')
 devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicediscoveryclient.cpp')
+threadingsample = examples_env.Program('threadingsample', 'threadingsample.cpp')
 
-Alias("examples", [simpleserver, simpleserverHQ, simpleclient, simpleclientHQ,
-		fridgeserver, fridgeclient, presenceserver, presenceclient,
+Alias("examples", [simpleserver, simpleclient,
+		simpleserverHQ, simpleclientHQ,
+		fridgeserver, fridgeclient,
+		presenceserver, presenceclient,
 		simpleclientserver, roomserver, roomclient, garageserver,
-		garageclient, groupserver, groupclient, lightserver, threadingsample,
-		devicediscoveryserver, devicediscoveryclient])
-
+		garageclient,
+		groupserver, groupclient,
+		lightserver,
+		devicediscoveryserver, devicediscoveryclient,
+		threadingsample
+     ])
 env.AppendTarget('examples')
+
 

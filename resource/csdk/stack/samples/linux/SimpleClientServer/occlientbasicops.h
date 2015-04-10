@@ -47,6 +47,19 @@ typedef enum {
 } CLIENT_TEST;
 
 //-----------------------------------------------------------------------------
+//ResourceNode
+//-----------------------------------------------------------------------------
+struct ResourceNode
+{
+    const char * sid;
+    const char * uri;
+    const char * ip;
+    const char * port;
+    OCConnectivityType connType;
+    ResourceNode * next;
+};
+
+//-----------------------------------------------------------------------------
 // Function prototype
 //-----------------------------------------------------------------------------
 
@@ -54,18 +67,48 @@ typedef enum {
 const char *getResult(OCStackResult result);
 
 /* Get the IP address of the server */
-std::string getIPAddrTBServer(OCClientResponse * clientResponse);
+const char * getIPAddr(const OCClientResponse * clientResponse);
 
 /* Get the port number the server is listening on */
-std::string getPortTBServer(OCClientResponse * clientResponse);
+const char * getPort(const OCClientResponse * clientResponse);
 
-/* Returns the query string for GET and PUT operations */
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse);
+/* Performs GET/PUT/POST query on most recently discovered resource*/
+void queryResource();
+
+/* Parses JSON payload received in the clientResponse to extract sid and resource uri information.
+ * Populates uri_c array with uris of the resources discovered and assigns sid_c with the server
+ * id received in the clientResponse.
+ */
+int parseJSON(unsigned  const char * resJSONPayload, char ** sid_c,
+              char *** uri_c, int * totalRes);
+
+/*
+ * Collect unique resource(sid:uri), regardless of the transport it arrives on.
+ */
+void collectUniqueResource(const OCClientResponse * clientResponse);
+
+/*
+ * Insert the newly discovered unique resource(sid:uri) in the front of the resourceList
+ *
+ */
+
+int insertResource(const char * sid, char const * uri,
+        const OCClientResponse * clientResponse);
+
+/*
+ * Returns most recently discovered resource
+ */
+const ResourceNode * getResource();
+
+/*
+ * Frees the ResourceList
+ */
+void freeResourceList();
 
 /* Following are initialization functions for GET, PUT
  * POST & Discovery operations
  */
-int InitPutRequest();
+int InitPutRequest(OCQualityOfService qos);
 int InitGetRequest(OCQualityOfService qos);
 int InitPostRequest(OCQualityOfService qos);
 int InitDiscovery();
@@ -81,6 +124,19 @@ void parseClientResponse(OCClientResponse * clientResponse);
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
         OCMethod method, OCQualityOfService qos,
         OCClientResponseHandler cb, OCHeaderOption * options, uint8_t numOptions);
+
+/*
+ * SIGINT handler: set gQuitFlag to 1 for graceful termination
+ */
+void handleSigInt(int signum);
+
+/*
+ * Printing helper functions
+ */
+static void PrintUsage();
+void printResourceList();
+
+
 
 //-----------------------------------------------------------------------------
 // Callback functions
@@ -98,5 +154,6 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse);
-
+void StripNewLineChar(char* str);
 #endif
+

@@ -5,7 +5,9 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_ARPA_INET_H 1
+#endif
 
 /* Define to 1 if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
@@ -36,7 +38,9 @@
 #define HAVE_NETDB_H 1
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_NETINET_IN_H 1
+#endif
 
 /* Define to 1 if you have the `select' function. */
 #define HAVE_SELECT 1
@@ -66,28 +70,42 @@
 #define HAVE_STRRCHR 1
 
 /* Define to 1 if you have the <syslog.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_SYSLOG_H 1
+#endif
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_SYS_SOCKET_H 1
+#endif
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_SYS_TIME_H 1
+#endif
 
 /* Define to 1 if you have the <sys/types.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_SYS_TYPES_H 1
+#endif
 
 /* Define to 1 if you have the <sys/unistd.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_SYS_UNISTD_H 1
+#endif
 
 /* Define to 1 if you have the <time.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_TIME_H 1
+#endif
 
 /* Define to 1 if you have the <unistd.h> header file. */
+#ifndef WITH_ARDUINO
 #define HAVE_UNISTD_H 1
+#endif
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""

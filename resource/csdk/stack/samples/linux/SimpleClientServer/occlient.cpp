@@ -31,13 +31,21 @@
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
-static const char * TEST_APP_UNICAST_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core";
-static const char * TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY = "coap://0.0.0.0:5683/oc/core/d";
-static const char * TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY = "coap://224.0.1.187:5683/oc/core/d";
-static std::string putPayload = "{\"state\":\"on\",\"power\":5}";
+static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oc/core";
+static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oc/core/d";
+static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
+static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
+//The following variable determines the interface (wifi, ethernet etc.)
+//to be used for sending unicast messages. Default set to WIFI.
+static OCConnectivityType OC_CONNTYPE = OC_WIFI;
+static std::string putPayload = "{\"oc\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/light";
+static const int IPV4_ADDR_SIZE = 16;
+//Use ipv4addr for both InitDiscovery and InitDeviceDiscovery
+char ipv4addr[IPV4_ADDR_SIZE];
+void StripNewLineChar(char* str);
 
 // The handle for the observe registration
 OCDoHandle gObserveDoHandle;
@@ -54,36 +62,39 @@ int gNumPresenceNotifies = 0;
 
 int gQuitFlag = 0;
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
-void handleSigInt(int signum) {
-    if (signum == SIGINT) {
+void handleSigInt(int signum)
+{
+    if (signum == SIGINT)
+    {
         gQuitFlag = 1;
     }
 }
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3|4|5|6|7>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
+    OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
     OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Put Requests");
     OC_LOG(INFO, TAG, "-t 4  :  Discover Resources and Initiate Nonconfirmable Post Requests");
     OC_LOG(INFO, TAG, "-t 5  :  Discover Resources and Initiate Nonconfirmable Delete Requests");
     OC_LOG(INFO, TAG, "-t 6  :  Discover Resources and Initiate Nonconfirmable Observe Requests");
-    OC_LOG(INFO, TAG, "-t 7  :  Discover Resources and Initiate Nonconfirmable Get Request for a resource which is unavailable");
-
+    OC_LOG(INFO, TAG, "-t 7  :  Discover Resources and Initiate Nonconfirmable Get Request "\
+            "for a resource which is unavailable");
     OC_LOG(INFO, TAG, "-t 8  :  Discover Resources and Initiate Confirmable Get Request");
     OC_LOG(INFO, TAG, "-t 9  :  Discover Resources and Initiate Confirmable Post Request");
     OC_LOG(INFO, TAG, "-t 10 :  Discover Resources and Initiate Confirmable Delete Requests");
     OC_LOG(INFO, TAG, "-t 11 :  Discover Resources and Initiate Confirmable Observe Requests");
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Nonconfirmable presence");
     OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence with "\
             "filter");
     OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable presence with "\
             "2 filters");
-    #endif
+#endif
 
     OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
             "then cancel immediately");
@@ -93,8 +104,11 @@ static void PrintUsage()
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
-                                 OCMethod method, OCQualityOfService qos,
-                                 OCClientResponseHandler cb, OCHeaderOption * options, uint8_t numOptions)
+                                 OCMethod method,
+                                 OCQualityOfService qos,
+                                 OCClientResponseHandler cb,
+                                 OCHeaderOption * options,
+                                 uint8_t numOptions)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -106,7 +120,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
                        (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
-                       qos, &cbData, options, numOptions);
+                       (OC_CONNTYPE), qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
     {
@@ -116,17 +130,18 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     {
         gObserveDoHandle = handle;
     }
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     else if (method == OC_REST_PRESENCE)
     {
         gPresenceHandle = handle;
     }
-    #endif
+#endif
 
     return ret;
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
+OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+{
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
@@ -135,7 +150,12 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response", clientResponse->resJSONPayload);
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response",
+                clientResponse->resJSONPayload);
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "putReqCB received Null clientResponse");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -150,12 +170,18 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Post Response", clientResponse->resJSONPayload);
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Post Response",
+                clientResponse->resJSONPayload);
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "postReqCB received Null clientResponse");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult deleteReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+OCStackApplicationResult deleteReqCB(void *ctx,
+        OCDoHandle handle, OCClientResponse *clientResponse)
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
@@ -165,7 +191,12 @@ OCStackApplicationResult deleteReqCB(void *ctx, OCDoHandle handle, OCClientRespo
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Delete Response", clientResponse->resJSONPayload);
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Delete Response",
+                clientResponse->resJSONPayload);
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "deleteReqCB received Null clientResponse");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -174,9 +205,10 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 {
     if(clientResponse == NULL)
     {
-        OC_LOG(INFO, TAG, "The clientResponse is NULL");
+        OC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
         return   OC_STACK_DELETE_TRANSACTION;
     }
+
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
@@ -198,15 +230,17 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
             {
                 OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
                         ((OCHeaderOption)rcvdOptions[i]).optionID );
+
                 OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
-                        ((OCHeaderOption)rcvdOptions[i]).optionLength);
+                    MAX_HEADER_OPTION_DATA_LENGTH);
             }
         }
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
+OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+{
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for OBS query recvd successfully");
@@ -216,55 +250,79 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d", gNumObserveNotifies);
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Obs Response", clientResponse->resJSONPayload);
+        OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
+                gNumObserveNotifies);
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Obs Response",
+                clientResponse->resJSONPayload);
         gNumObserveNotifies++;
-        if (gNumObserveNotifies == 3)	//large number to test observing in DELETE case.
+        if (gNumObserveNotifies == 3) //large number to test observing in DELETE case.
         {
-            if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON){
-                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
+            if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON)
+            {
+                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                {
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
                 return OC_STACK_DELETE_TRANSACTION;
-            }else if(TEST_CASE == TEST_OBS_REQ_NON_CANCEL_IMM){
-                if (OCCancel (gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK){
+            }
+            else if(TEST_CASE == TEST_OBS_REQ_NON_CANCEL_IMM)
+            {
+                if (OCCancel (gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                {
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
             }
         }
-        if(clientResponse->sequenceNumber == OC_OBSERVE_REGISTER){
+        if(clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+        {
             OC_LOG(INFO, TAG, "This also serves as a registration confirmation");
-        }else if(clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER){
+        }
+        else if(clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
+        {
             OC_LOG(INFO, TAG, "This also serves as a deregistration confirmation");
             return OC_STACK_DELETE_TRANSACTION;
-        }else if(clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION){
+        }
+        else if(clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
+        {
             OC_LOG(INFO, TAG, "This also tells you that registration/deregistration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "obsReqCB received Null clientResponse");
+    }
     return OC_STACK_KEEP_TRANSACTION;
 }
 #ifdef WITH_PRESENCE
-OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse) {
-    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+{
+    if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for Presence recvd successfully");
     }
 
-    if(clientResponse)
+    if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "NONCE NUMBER: %u", clientResponse->sequenceNumber);
-        OC_LOG_V(INFO, TAG, "Callback Context for Presence notification recvd successfully %d", gNumPresenceNotifies);
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Presence Response", clientResponse->resJSONPayload);
+        OC_LOG_V(INFO, TAG, "Callback Context for Presence notification recvd successfully %d",
+                gNumPresenceNotifies);
+        OC_LOG_V(INFO, TAG, "JSON = %s =============> Presence Response",
+                clientResponse->resJSONPayload);
         gNumPresenceNotifies++;
         if (gNumPresenceNotifies == 20)
         {
-            if (OCCancel (gPresenceHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK){
+            if (OCCancel(gPresenceHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+            {
                 OC_LOG(ERROR, TAG, "Presence cancel error");
             }
             return OC_STACK_DELETE_TRANSACTION;
         }
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "presenceCB received Null clientResponse");
     }
     return OC_STACK_KEEP_TRANSACTION;
 }
@@ -272,7 +330,8 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
 
 // This is a function called back when a device is discovered
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
-        OCClientResponse * clientResponse) {
+        OCClientResponse * clientResponse)
+{
     uint8_t remoteIpAddr[4];
     uint16_t remotePortNu;
 
@@ -289,6 +348,8 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
         OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
 
+        std::string connectionType = getConnectivityType (clientResponse->connType);
+        OC_LOG_V(INFO, TAG, "Discovered on %s", connectionType.c_str());
         OC_LOG_V(INFO, TAG,
                 "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
@@ -302,7 +363,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 InitGetRequest(OC_LOW_QOS, 0);
                 break;
             case TEST_PUT_REQ_NON:
-                InitPutRequest();
+                InitPutRequest(OC_LOW_QOS);
                 break;
             case TEST_POST_REQ_NON:
                 InitPostRequest(OC_LOW_QOS);
@@ -315,7 +376,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 InitObserveRequest(OC_LOW_QOS);
                 break;
             case TEST_GET_UNAVAILABLE_RES_REQ_NON:
-                InitGetRequestToUnavailableResource();
+                InitGetRequestToUnavailableResource(OC_LOW_QOS);
                 break;
             case TEST_GET_REQ_CON:
                 InitGetRequest(OC_HIGH_QOS, 0);
@@ -329,27 +390,29 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             case TEST_OBS_REQ_CON:
                 InitObserveRequest(OC_HIGH_QOS);
                 break;
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             case TEST_OBS_PRESENCE:
             case TEST_OBS_PRESENCE_WITH_FILTER:
             case TEST_OBS_PRESENCE_WITH_FILTERS:
                 InitPresence();
                 break;
-            #endif
+#endif
             case TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS:
                 InitGetRequest(OC_LOW_QOS, 1);
                 break;
             case TEST_DISCOVER_DEV_REQ:
-                InitDeviceDiscovery();
+                InitDeviceDiscovery(OC_LOW_QOS);
                 break;
             default:
                 PrintUsage();
                 break;
         }
     }
-
-    return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
-
+    else
+    {
+        OC_LOG_V(INFO, TAG, "discoveryReqCB received Null clientResponse");
+    }
+    return OC_STACK_KEEP_TRANSACTION;
 }
 
 OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
@@ -365,6 +428,10 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
         //OC_LOG truncates the response as it is too long.
         fprintf(stderr, "Discovery response: \n %s\n", clientResponse->resJSONPayload);
         fflush(stderr);
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "DeviceDiscoveryReqCB received Null clientResponse");
     }
 
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
@@ -386,7 +453,7 @@ int InitPresence()
     if(TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTER || TEST_CASE == TEST_OBS_PRESENCE_WITH_FILTERS)
     {
         querySuffix.str("");
-        querySuffix << query.str() << "?rt=core.light";
+        querySuffix << query.str() << "?rt=core.led";
         result = InvokeOCDoResource(querySuffix, OC_REST_PRESENCE, OC_LOW_QOS,
                 presenceCB, NULL, 0);
     }
@@ -403,12 +470,14 @@ int InitPresence()
     return result;
 }
 #endif
-int InitGetRequestToUnavailableResource()
+
+int InitGetRequestToUnavailableResource(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << "/SomeUnknownResource";
-    return (InvokeOCDoResource(query, OC_REST_GET, OC_LOW_QOS, getReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS,
+            getReqCB, NULL, 0));
 }
 
 int InitObserveRequest(OCQualityOfService qos)
@@ -416,15 +485,17 @@ int InitObserveRequest(OCQualityOfService qos)
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_OBSERVE, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
+    return (InvokeOCDoResource(query,
+            OC_REST_OBSERVE, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
 }
 
-int InitPutRequest()
+int InitPutRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT, OC_LOW_QOS, putReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_PUT, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS,
+            putReqCB, NULL, 0));
 }
 
 int InitPostRequest(OCQualityOfService qos)
@@ -461,7 +532,7 @@ int InitPostRequest(OCQualityOfService qos)
 
 void* RequestDeleteDeathResourceTask(void* myqos)
 {
-    sleep (30);	//long enough to give the server time to finish deleting the resource.
+    sleep (30);//long enough to give the server time to finish deleting the resource.
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
 
@@ -470,9 +541,13 @@ void* RequestDeleteDeathResourceTask(void* myqos)
     // Second DELETE operation to delete the resource that might have been removed already.
     OCQualityOfService qos;
     if (myqos == NULL)
+    {
         qos = OC_LOW_QOS;
+    }
     else
+    {
         qos = OC_HIGH_QOS;
+    }
 
     OCStackResult result = InvokeOCDoResource(query, OC_REST_DELETE,
                                qos,
@@ -522,10 +597,10 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
 
-    if(withVendorSpecificHeaderOptions)
+    if (withVendorSpecificHeaderOptions)
     {
-        uint8_t option0[] = {1,2,3,4,5,6,7,8,9,10};
-        uint8_t option1[] = {11,12,13,14,15,16,17,18,19,20};
+        uint8_t option0[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        uint8_t option1[] = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
         memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
         options[0].protocolID = OC_COAP_ID;
         options[0].optionID = 2048;
@@ -536,21 +611,22 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
         memcpy(options[1].optionData, option1, sizeof(option1));
         options[1].optionLength = 10;
     }
-    if(withVendorSpecificHeaderOptions)
+    if (withVendorSpecificHeaderOptions)
     {
-        return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, getReqCB, options, 2));
+        return (InvokeOCDoResource(query, OC_REST_GET,
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, getReqCB, options, 2));
     }
     else
     {
-        return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
+        return (InvokeOCDoResource(query, OC_REST_GET,
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, getReqCB, NULL, 0));
     }
 }
 
-int InitDeviceDiscovery()
+int InitDeviceDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
     char szQueryUri[64] = { 0 };
 
     cbData.cb = DeviceDiscoveryReqCB;
@@ -559,16 +635,24 @@ int InitDeviceDiscovery()
 
     if(UNICAST_DISCOVERY)
     {
-        strncpy(szQueryUri, TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY,
-                        (strlen(TEST_APP_UNICAST_DEVICE_DISCOVERY_QUERY) + 1));
+        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DEVICE_DISCOVERY_QUERY, ipv4addr);
     }
     else
     {
-        strncpy(szQueryUri, TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY,
-                (strlen(TEST_APP_MULTICAST_DEVICE_DISCOVERY_QUERY) + 1));
+        strncpy(szQueryUri, MULTICAST_DEVICE_DISCOVERY_QUERY,
+                (strlen(MULTICAST_DEVICE_DISCOVERY_QUERY) + 1));
     }
 
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+    if(UNICAST_DISCOVERY)
+    {
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+    }
+    else
+    {
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+    }
 
     if (ret != OC_STACK_OK)
     {
@@ -578,25 +662,35 @@ int InitDeviceDiscovery()
     return ret;
 }
 
-int InitDiscovery()
+int InitDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    OCDoHandle handle;
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
+
     if (UNICAST_DISCOVERY)
     {
-        strcpy(szQueryUri, TEST_APP_UNICAST_DISCOVERY_QUERY);
+        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DISCOVERY_QUERY, ipv4addr);
     }
     else
     {
-        strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
+        strcpy(szQueryUri, MULTICAST_RESOURCE_DISCOVERY_QUERY);
     }
+
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+    if(UNICAST_DISCOVERY)
+    {
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+    }
+    else
+    {
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+    }
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -604,14 +698,11 @@ int InitDiscovery()
     return ret;
 }
 
-int main(int argc, char* argv[]) {
-    uint8_t addr[20] = {0};
-    uint8_t* paddr = NULL;
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
+int main(int argc, char* argv[])
+{
     int opt;
 
-    while ((opt = getopt(argc, argv, "u:t:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
     {
         switch(opt)
         {
@@ -620,6 +711,9 @@ int main(int argc, char* argv[]) {
                 break;
             case 't':
                 TEST_CASE = atoi(optarg);
+                break;
+            case 'c':
+                OC_CONNTYPE = OCConnectivityType(atoi(optarg));
                 break;
             default:
                 PrintUsage();
@@ -634,30 +728,44 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-
-    /*Get Ip address on defined interface and initialize coap on it with random port number
-     * this port number will be used as a source port in all coap communications*/
-    if ( OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr,
-                sizeof(addr)) == OC_ERR_SUCCESS)
-    {
-        OC_LOG_V(INFO, TAG, "Starting occlient on address %s",addr);
-        paddr = addr;
-    }
-
     /* Initialize OCStack*/
-    if (OCInit((char *) paddr, port, OC_CLIENT) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+    if (UNICAST_DISCOVERY)
+    {
+        printf("Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)\n");
+        if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
+        {
+            //Strip newline char from ipv4addr
+            StripNewLineChar(ipv4addr);
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
+            return OC_STACK_INVALID_PARAM;
+        }
+     }
 
-    InitDiscovery();
+    if(UNICAST_DISCOVERY  == 0  && TEST_CASE == TEST_DISCOVER_DEV_REQ)
+    {
+        InitDeviceDiscovery(OC_LOW_QOS);
+    }
+    else
+    {
+        InitDiscovery(OC_LOW_QOS);
+    }
 
     // Break from loop with Ctrl+C
     OC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
-    while (!gQuitFlag) {
+    while (!gQuitFlag)
+    {
 
-        if (OCProcess() != OC_STACK_OK) {
+        if (OCProcess() != OC_STACK_OK)
+        {
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
@@ -666,41 +774,87 @@ int main(int argc, char* argv[]) {
     }
     OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
-    if (OCStop() != OC_STACK_OK) {
+    if (OCStop() != OC_STACK_OK)
+    {
         OC_LOG(ERROR, TAG, "OCStack stop error");
     }
 
     return 0;
 }
 
-std::string getIPAddrTBServer(OCClientResponse * clientResponse) {
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
+std::string getIPAddrTBServer(OCClientResponse * clientResponse)
+{
+    if (!clientResponse)
+    {
+        return "";
+    }
+    if (!clientResponse->addr)
+    {
+        return "";
+    }
     uint8_t a, b, c, d = 0;
-    if(0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) ) return "";
+    if (0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d))
+    {
+        return "";
+    }
 
     char ipaddr[16] = {'\0'};
-    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d); // ostringstream not working correctly here, hence snprintf
+    // ostringstream not working correctly here, hence snprintf
+    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d);
     return std::string (ipaddr);
 }
 
-std::string getPortTBServer(OCClientResponse * clientResponse){
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
+std::string getPortTBServer(OCClientResponse * clientResponse)
+{
+    if (!clientResponse)
+    {
+        return "";
+    }
+    if (!clientResponse->addr)
+    {
+        return "";
+    }
     uint16_t p = 0;
-    if(0 != OCDevAddrToPort(clientResponse->addr, &p) ) return "";
+    if (0 != OCDevAddrToPort(clientResponse->addr, &p))
+    {
+        return "";
+    }
     std::ostringstream ss;
     ss << p;
     return ss.str();
 }
 
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse){
+std::string getConnectivityType (OCConnectivityType connType)
+{
+    switch (connType)
+    {
+        case OC_ETHERNET:
+            return "Ethernet";
+
+        case OC_WIFI:
+            return "WiFi";
+
+        case OC_LE:
+            return "BLE";
+
+        case OC_EDR:
+            return "BT";
+
+        default:
+            return "Incorrect connectivity";
+    }
+}
+
+std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
+{
 
     return "/a/light";
 }
 
-void parseClientResponse(OCClientResponse * clientResponse){
+void parseClientResponse(OCClientResponse * clientResponse)
+{
     coapServerIP = getIPAddrTBServer(clientResponse);
     coapServerPort = getPortTBServer(clientResponse);
     coapServerResource = getQueryStrForGetPut(clientResponse);
 }
+

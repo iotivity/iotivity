@@ -1,0 +1,137 @@
+diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001/RBL_nRF8001.cpp
+--- RBL_nRF8001_old/RBL_nRF8001.cpp	2015-01-13 12:25:32.000000000 +0530
++++ RBL_nRF8001/RBL_nRF8001.cpp	2015-01-13 12:40:41.740244741 +0530
+@@ -22,7 +22,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOU
+ #endif
+ 
+ /* Store the setup for the nRF8001 in the flash of the AVR to save on RAM */
+-static hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] PROGMEM = SETUP_MESSAGES_CONTENT;
++static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] PROGMEM = SETUP_MESSAGES_CONTENT;
+ 
+ #if defined(BLEND_MICRO)
+ static char device_name[11] = "BlendMicro";
+@@ -31,7 +31,10 @@ static char device_name[11] = "Blend
+ #else
+ static char device_name[11] = "BLE Shield";
+ #endif
+-		
++
++#define BLE_ADDRESS_SIZE 18
++static unsigned char *gLeAddress = NULL;
++
+ static uint16_t Adv_Timeout = 0;	// Advertising all the time
+ static uint16_t Adv_Interval = 0x0050; /* advertising interval 50ms
+ 
+@@ -117,7 +120,7 @@ void ble_begin()
+         aci_state.aci_setup_info.services_pipe_type_mapping = NULL;
+     }
+     aci_state.aci_setup_info.number_of_pipes    = NUMBER_OF_PIPES;
+-    aci_state.aci_setup_info.setup_msgs         = setup_msgs;
++    aci_state.aci_setup_info.setup_msgs         = (hal_aci_data_t*)setup_msgs;
+     aci_state.aci_setup_info.num_setup_msgs     = NB_SETUP_MESSAGES;
+ 
+     /*
+@@ -159,7 +162,7 @@ void ble_begin()
+ static volatile byte ack = 0;
+ 
+ void ble_write(unsigned char data)
+-{	    
++{
+     if(tx_buffer_len == MAX_TX_BUFF)
+     {
+             return;
+@@ -199,13 +202,13 @@ unsigned char ble_connected()
+ }
+ 
+ void ble_set_name(char *name)
+-{       
++{
+     unsigned char len=0;
+-    
++
+     len = strlen(name);
+     if(len > 10)
+     {
+-        Serial.print("the new name is too long");        
++        Serial.print("the new name is too long");
+     }
+     else
+     {
+@@ -236,6 +239,10 @@ void ble_reset(uint8_t reset_pin)
+ void ble_disconnect(void)
+ {
+ 	lib_aci_disconnect(&aci_state, ACI_REASON_TERMINATE);
++    if (NULL != gLeAddress)
++    {
++        free(gLeAddress);
++    }
+ }
+ 
+ static void process_events()
+@@ -271,6 +278,7 @@ static void process_events()
+                             lib_aci_set_local_data(&aci_state, PIPE_GAP_DEVICE_NAME_SET , (uint8_t *)&device_name , strlen(device_name));
+                             lib_aci_connect(Adv_Timeout/* in seconds */, Adv_Interval /* advertising interval 50ms*/);
+                             Serial.println(F("Advertising started"));
++                            lib_aci_get_address();
+                         }
+                         break;
+                 }
+@@ -294,6 +302,32 @@ static void process_events()
+                     lib_aci_set_local_data(&aci_state, PIPE_DEVICE_INFORMATION_HARDWARE_REVISION_STRING_SET,
+                     (uint8_t *)&(aci_evt->params.cmd_rsp.params.get_device_version), sizeof(aci_evt_cmd_rsp_params_get_device_version_t));
+                 }
++
++                if (ACI_CMD_GET_DEVICE_ADDRESS == aci_evt->params.cmd_rsp.cmd_opcode)
++                {
++                    if (NULL != gLeAddress)
++                    {
++                        free(gLeAddress);
++                    }
++                    gLeAddress = (unsigned char *) malloc (BLE_ADDRESS_SIZE);
++                    if (NULL == gLeAddress)
++                    {
++                        Serial.println("error");
++                        break;
++                    }
++                    char *tempAddr = (char *) gLeAddress;
++                    int8_t iter = 0;
++                    for (iter = BTLE_DEVICE_ADDRESS_SIZE - 1; iter >= 0; iter--)
++                    {
++                        sprintf(tempAddr, "%02x%c",
++                                 (uint8_t)aci_evt->params.cmd_rsp.params.get_device_address.bd_addr_own[iter], 58);
++                        tempAddr += 3;
++                    }
++                    gLeAddress[BLE_ADDRESS_SIZE - 1] = '\0';
++                    Serial.println("LEAddress :");
++                    Serial.println((char *)gLeAddress);
++                    return;
++                }
+                 break;
+ 
+             case ACI_EVT_CONNECTED:
+@@ -471,3 +505,12 @@ void ble_do_events()
+ #endif
+ }
+ 
++unsigned char* ble_getAddress()
++{
++    return gLeAddress;
++}
++
++void ble_radio_reset()
++{
++    lib_aci_radio_reset();
++}
+diff -rupN RBL_nRF8001_old/RBL_nRF8001.h RBL_nRF8001/RBL_nRF8001.h
+--- RBL_nRF8001_old/RBL_nRF8001.h	2015-01-13 12:25:32.000000000 +0530
++++ RBL_nRF8001/RBL_nRF8001.h	2015-01-13 12:40:41.740244741 +0530
+@@ -48,6 +48,8 @@ void ble_set_pins(uint8_t reqn, uint8_t
+ unsigned char ble_busy();
+ void ble_reset(uint8_t reset_pin);
+ void ble_disconnect(void);
++unsigned char* ble_getAddress();
++void ble_radio_reset();
+ 
+ #endif
+ 
+

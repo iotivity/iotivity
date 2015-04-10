@@ -24,6 +24,10 @@
 // This file contains all the variables which can be configured/modified as
 // per platform or specific product usage scenarios.
 
+/** This would need to be updated in future as we move to support IPv6 and other
+ *  technologies.
+ */
+#define DEV_ADDR_SIZE_MAX (16)
 
 /**
  * Maximum length of the response supported by Server for any REST request.

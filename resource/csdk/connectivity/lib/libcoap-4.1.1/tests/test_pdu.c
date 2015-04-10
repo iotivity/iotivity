@@ -3,7 +3,7 @@
  * Copyright (C) 2012 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include <assert.h>
@@ -609,10 +609,10 @@ CU_pSuite t_init_pdu_tests(void)
         return NULL;
     }
 
-#define PDU_TEST(s,t)						      \
-  if (!CU_ADD_TEST(s,t)) {					      \
-    fprintf(stderr, "W: cannot add pdu parser test (%s)\n",	      \
-	    CU_get_error_msg());				      \
+#define PDU_TEST(s,t)                             \
+  if (!CU_ADD_TEST(s,t)) {                        \
+    fprintf(stderr, "W: cannot add pdu parser test (%s)\n",       \
+        CU_get_error_msg());                      \
   }
 
     PDU_TEST(suite[0], t_parse_pdu1);
@@ -633,10 +633,10 @@ CU_pSuite t_init_pdu_tests(void)
     suite[1] = CU_add_suite("pdu encoder", t_pdu_tests_create, t_pdu_tests_remove);
     if (suite[1])
     {
-#define PDU_ENCODER_TEST(s,t)						      \
-  if (!CU_ADD_TEST(s,t)) {					      \
-    fprintf(stderr, "W: cannot add pdu encoder test (%s)\n",	      \
-	    CU_get_error_msg());				      \
+#define PDU_ENCODER_TEST(s,t)                             \
+  if (!CU_ADD_TEST(s,t)) {                        \
+    fprintf(stderr, "W: cannot add pdu encoder test (%s)\n",          \
+        CU_get_error_msg());                      \
   }
         PDU_ENCODER_TEST(suite[1], t_encode_pdu1);
         PDU_ENCODER_TEST(suite[1], t_encode_pdu2);

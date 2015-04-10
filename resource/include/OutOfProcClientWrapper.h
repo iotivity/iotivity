@@ -33,7 +33,13 @@ namespace OC
         {}
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
-            const std::string& resourceType, FindCallback& callback, QualityOfService QoS)
+            const std::string& resourceType, OCConnectivityType connectivityType,
+            FindCallback& callback, QualityOfService QoS)
+            {return OC_STACK_NOTIMPL;}
+
+        virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
+            const std::string& deviceURI, OCConnectivityType connectivityType,
+            FindDeviceCallback& callback, QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
@@ -42,41 +48,40 @@ namespace OC
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
-            const std::string& uri, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions, GetCallback& callback,
-            QualityOfService QoS)
+            const std::string& uri, OCConnectivityType connectivityType,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            GetCallback& callback, QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
-            const std::string& uri, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams,
+            const std::string& uri, OCConnectivityType connectivityType,
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions, PutCallback& callback,
             QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
-            const std::string& uri, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            PostCallback& callback, QualityOfService QoS)
+            const std::string& uri, OCConnectivityType connectivityType,
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult DeleteResource(const std::string& host, const std::string& uri,
-            const HeaderOptions& headerOptions, DeleteCallback& callback,
-            QualityOfService QoS) {return OC_STACK_NOTIMPL;}
+            OCConnectivityType connectivityType, const HeaderOptions& headerOptions,
+            DeleteCallback& callback, QualityOfService QoS)
+            {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
-            const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions,
+            const std::string& host, const std::string& uri, OCConnectivityType connectivityType,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             ObserveCallback& callback, QualityOfService QoS){return OC_STACK_NOTIMPL;}
-
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
             const std::string& uri,
             const HeaderOptions& headerOptions, QualityOfService QoS){return OC_STACK_NOTIMPL;}
-
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
-            const std::string& resourceType, SubscribeCallback& presenceHandler)
+            const std::string& resourceType, OCConnectivityType connectivityType,
+            SubscribeCallback& presenceHandler)
         {return OC_STACK_NOTIMPL;}
-
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle){return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetDefaultQos(QualityOfService& QoS){return OC_STACK_NOTIMPL;}
@@ -84,3 +89,4 @@ namespace OC
 }
 
 #endif
+

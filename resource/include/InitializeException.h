@@ -27,49 +27,13 @@
 
 namespace OC
 {
-    class InitializeException : public std::exception
+    class InitializeException : public OC::OCException
     {
     public:
-        InitializeException(const std::string& msg, OCStackResult reasonCode): m_errorMessage(msg), m_reason(reasonCode)
+        InitializeException(const std::string& msg, OCStackResult reasonCode):
+            OC::OCException(msg, reasonCode)
         {
         }
-
-        OCStackResult ReasonCode()
-        {
-            return m_reason;
-        }
-
-        std::string Message()
-        {
-            return m_errorMessage;
-        }
-
-        std::string Reason()
-        {
-            switch(m_reason)
-            {
-            case OC_STACK_OK:
-                return OC::InitException::NO_ERROR;
-            case OC_STACK_INVALID_URI:
-                return OC::InitException::INVALID_URI;
-            case OC_STACK_INVALID_IP:
-                return OC::InitException::INVALID_IP;
-            case OC_STACK_INVALID_PORT:
-                return OC::InitException::INVALID_PORT;
-            case OC_STACK_INVALID_CALLBACK:
-                return OC::InitException::INVALID_CB;
-            case OC_STACK_INVALID_METHOD:
-                return OC::InitException::INVALID_METHOD;
-            case OC_STACK_ERROR:
-                return OC::InitException::GENERAL_FAULT;
-            default:
-                return OC::InitException::UNKNOWN_ERROR;
-            }
-        }
-
-    private:
-        const std::string& m_errorMessage;
-        OCStackResult m_reason;
     };
 }
 

@@ -1,34 +1,58 @@
+#******************************************************************
+#
+# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 ##
 # OCLib (share library) build script
 ##
 Import('env')
 
-oclib_env = env.Clone()
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+oclib_env = lib_env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
 oclib_env.AppendUnique(CPPPATH = [
 		'../include/',
 		'../csdk/stack/include',
-		'../csdk/ocsocket/include',
 		'../csdk/ocrandom/include',
+		'../csdk/ocmalloc/include',
 		'../csdk/logger/include',
-		'../csdk/libcoap',
-		'../oc_logger/include'
+		'../oc_logger/include',
+		'../csdk/connectivity/lib/libcoap-4.1.1'
 		])
 
 target_os = env.get('TARGET_OS')
 if target_os not in ['windows', 'winrt']:
-	oclib_env.AppendUnique(CXXFLAGS = ['-Wall'])
+	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
 
 if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger', 'boost_thread', 'gnustl_shared', 'log', 'compatibility'])
+	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'boost_thread', 'gnustl_static', 'log'])
 
 if target_os in ['darwin', 'ios']:
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	oclib_env.AppendUnique(LIBS = ['octbstack', 'coap', 'oc_logger'])
+	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
 
 ######################################################################
 # Source files and Targets
@@ -45,6 +69,7 @@ oclib_src = [
 		'OCResourceRequest.cpp'
 	]
 
-shared_oclib = oclib_env.SharedLibrary('oc', oclib_src)
-static_oclib = oclib_env.StaticLibrary('oc', oclib_src)
-oclib_env.InstallTarget([shared_oclib, static_oclib], 'liboc')
+oclib_env.AppendUnique(CPPPATH = [oclib_env.get('SRC_DIR') + '/extlibs/cereal/include'])
+oclib = oclib_env.SharedLibrary('oc', oclib_src)
+oclib_env.InstallTarget(oclib, 'liboc')
+

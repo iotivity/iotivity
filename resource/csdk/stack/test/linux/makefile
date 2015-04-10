@@ -28,7 +28,6 @@ BUILD	 := release
 PLATFORM=linux
 
 ROOT_DIR = ../../..
-OCSOCK_DIR = $(ROOT_DIR)/ocsocket
 OCSTACK_DIR = $(ROOT_DIR)/stack
 LOGGER_DIR = $(ROOT_DIR)/logger
 OC_LOG_DIR = $(ROOT_DIR)/../oc_logger
@@ -96,3 +95,4 @@ endif
 clean:
 	rm -rf debug
 	rm -rf release
+

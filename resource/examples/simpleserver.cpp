@@ -74,7 +74,8 @@ public:
 public:
     /// Constructor
     LightResource()
-        :m_name("John's light"), m_state(false), m_power(0), m_lightUri("/a/light") {
+        :m_name("John's light"), m_state(false), m_power(0), m_lightUri("/a/light"),
+                m_resourceHandle(nullptr) {
         // Initialize representation
         m_lightRep.setUri(m_lightUri);
 
@@ -496,6 +497,7 @@ int main(int argc, char* argv[])
                 break;
             case 4:
                 isSlowResponse = true;
+                break;
             default:
                 break;
        }
@@ -537,11 +539,11 @@ int main(int argc, char* argv[])
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
         std::cout <<"Waiting" << std::endl;
-        cv.wait(lock);
+        cv.wait(lock, []{return false;});
     }
-    catch(OCException e)
+    catch(OCException &e)
     {
-        //log(e.what());
+        std::cout << "OCException in main : " << e.what() << endl;
     }
 
     // No explicit call to stop the platform.
@@ -549,3 +551,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

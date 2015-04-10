@@ -26,6 +26,7 @@ CXX	      := g++
 #CXX	  := clang
 OUT_DIR	  := $(BUILD)
 
+#TODO-CA Remove the CA Flag later
 CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
 
 CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
@@ -33,14 +34,12 @@ CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
 CXX_INC	  := -I../include/
 CXX_INC   += -I../oc_logger/include
 CXX_INC	  += -I../csdk/stack/include
-CXX_INC	  += -I../csdk/ocsocket/include
 CXX_INC	  += -I../csdk/ocrandom/include
 CXX_INC	  += -I../csdk/logger/include
-CXX_INC	  += -I../csdk/libcoap
 
 LIB_OC_LOGGER := ../oc_logger/lib/oc_logger.a
 
-CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER)
+CXX_LIBS  := ../$(BUILD)/obj/liboc.a ../csdk/$(PLATFORM)/$(BUILD)/liboctbstack.a $(LIB_OC_LOGGER) -L../csdk/connectivity/build/out -lconnectivity_abstraction
 
 # Force metatargets to build:
 all.PHONY: prep_dirs oc_cpp_sdk simpleserver simpleserverHQ simpleclient simpleclientHQ simpleclientserver roomserver roomclient presenceserver presenceclient garageserver garageclient fridgeserver fridgeclient threadingsample devicediscoveryserver devicediscoveryclient groupserver groupclient lightserver
@@ -126,3 +125,4 @@ clean:
 clean_apps:
 	rm -rf debug
 	rm -rf release
+

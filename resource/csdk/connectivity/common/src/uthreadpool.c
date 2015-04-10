@@ -1,6 +1,7 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
+ *
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +17,18 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file    uthreadpool.c
- * @brief   This file provides APIs related to thread pool
+ * @file
+ *
+ * This file provides APIs related to thread pool.
  */
 
 #include "uthreadpool.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#define TAG PCF("UTHREADPOOL")
 
-/**
- * @var gThreadpool
- * @brief Glib thread pool.
- */
-static GThreadPool *gThreadpool;
+#define TAG PCF("UTHREADPOOL")
 
 /**
  * @fn run
@@ -40,13 +38,15 @@ static void run(void *thread_data, void *user_data);
 
 CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_pool)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     GError *error = NULL;
-    gThreadpool = g_thread_pool_new(run, NULL, num_of_threads, FALSE, &error);
-    if (NULL == gThreadpool)
+
+    GThreadPool *threadPool = g_thread_pool_new(run, NULL, num_of_threads, TRUE, &error);
+
+    if (NULL == threadPool)
     {
-        OIC_LOG_V(ERROR, TAG, "Error: g_thread_pool_new failed!");
+        OIC_LOG(ERROR, TAG, "g_thread_pool_new failed!");
         if (NULL != error)
         {
             OIC_LOG_V(ERROR, TAG, "Error is: %s", error->message);
@@ -54,63 +54,72 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
         }
         return CA_STATUS_FAILED;
     }
-    *thread_pool = (u_thread_pool_t) gThreadpool;
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    *thread_pool = (u_thread_pool_t) threadPool;
+
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(void *), void *data)
+CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, u_thread_func method,
+                                    void *data)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
-    gboolean result = FALSE;
-    if (NULL == routine)
+    if (NULL == method)
     {
-        OIC_LOG_V(ERROR, TAG, "Error: routine is NULL!");
+        OIC_LOG(ERROR, TAG, "routine is NULL!");
         return CA_STATUS_FAILED;
     }
 
     u_thread_msg_t *message = (u_thread_msg_t *) OICMalloc(sizeof(u_thread_msg_t));
-    message->data = data;
-    message->func = routine;
-    result = g_thread_pool_push((GThreadPool *) thread_pool, (void *) message, NULL);
-    if (FALSE == result)
+    if (NULL == message)
     {
-        OIC_LOG_V(ERROR, TAG, "Error: Failed to push the task to threadpool!");
-        return CA_STATUS_FAILED;
+        OIC_LOG(ERROR, TAG, "Memory allocation failed!");
+        return CA_MEMORY_ALLOC_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    message->data = data;
+    message->func = method;
+
+    g_thread_pool_push((GThreadPool *) thread_pool, (void *) message, NULL);
+
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void u_thread_pool_free(u_thread_pool_t thread_pool)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
+    if (NULL == thread_pool)
+    {
+        OIC_LOG(DEBUG, TAG, "thread_pool is NULL. Its already freed.");
+        return;
+    }
 
     GThreadPool *threadpool = (GThreadPool *) thread_pool;
     g_thread_pool_free(threadpool, TRUE, TRUE);
 
-    OIC_LOG_V(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void run(void *thread_data, void *user_data)
 {
     u_thread_msg_t *message = (u_thread_msg_t *) thread_data;
 
-    if (message && message->func)
+    if (NULL == message)
     {
-        OIC_LOG_V(DEBUG, TAG, "Calling routine with data as parameter");
-        message->func(message->data);
-    }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "Error: Invalid task data");
+        OIC_LOG(ERROR, TAG, "Invalid task data");
         return;
     }
 
-    //Free message
+    if(message->func)
+    {
+        OIC_LOG(DEBUG, TAG, "Calling routine with data as parameter");
+        message->func(message->data);
+    }
+
+    // Free message
     OICFree(message);
-    message = NULL;
 }
+

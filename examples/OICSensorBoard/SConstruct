@@ -1,9 +1,29 @@
-#This script builds edisonclient for Ubuntu and edisonserver for Yocto. 
+#******************************************************************
+#
+# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+#This script builds edisonclient for Ubuntu and edisonserver for Yocto.
 
 #Client build for Ubuntu
 #Set IOTIVITY_ROOT to the root of oic-resource on Ubuntu.
-IOTIVITY_ROOT = '' 
-#Set IOTIVITY_LIBS_PATH to path on Ubuntu that contains liboc.so, liboctbstack.so, liboc_logger.so and libcoap.so.               
+IOTIVITY_ROOT = ''
+#Set IOTIVITY_LIBS_PATH to path on Ubuntu that contains liboc.so, liboctbstack.so, liboc_logger.so and libcoap.so.
 IOTIVITY_LIBS_PATH = ''
 
 env = DefaultEnvironment()
@@ -13,9 +33,8 @@ env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap'])
 
 envClient = env.Clone()
 envClient.AppendUnique(CPPPATH = [
-                IOTIVITY_ROOT + '/resource/include', 
+                IOTIVITY_ROOT + '/resource/include',
                 IOTIVITY_ROOT + '/resource/csdk/stack/include',
-                IOTIVITY_ROOT + '/resource/csdk/ocsocket/include',
                 IOTIVITY_ROOT + '/resource/oc_logger/include',
                 ])
 envClient.AppendUnique(LIBPATH = [IOTIVITY_LIBS_PATH])
@@ -58,8 +77,8 @@ try:
     envServer.AppendUnique(CPPPATH = [
                 sdk_root + '/usr/include/iotivity/',
                 sdk_root + '/usr/include/iotivity/stack/',
-                sdk_root + '/usr/include/iotivity/ocsocket/',
                 sdk_root + '/usr/include/iotivity/oc_logger/',
-                ])	                
+                ])
 except:
     print "ERROR configuring Yocto cross-toolchain environment. This is required for building the server"
+

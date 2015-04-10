@@ -37,8 +37,7 @@ using namespace std;
 // Forward declaring the entityHandler
 OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request);
 
-/// This class represents a single resource named 'lightResource'. This resource has
-
+/// This class represents a single resource named 'GarageResource'.
 class GarageResource
 {
 public:
@@ -276,7 +275,7 @@ int main(int argc, char* argv[1])
     }
     catch(OCException e)
     {
-        //log(e.what());
+        oclog() << e.what();
     }
 
     // No explicit call to stop the OCPlatform
@@ -284,3 +283,4 @@ int main(int argc, char* argv[1])
 
     return 0;
 }
+

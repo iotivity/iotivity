@@ -63,6 +63,11 @@ extlibs/hippomocks-master/
 extlibs/master.zip
 extlibs/cereal/cereal
 extlibs/expat/expat*
+extlibs/cereal
+*.tgz
+*.zip
+extlibs/arduino/arduino-1.5.8
+build_common/arduino/extlibs/arduino/arduino-1.5.8
 
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~

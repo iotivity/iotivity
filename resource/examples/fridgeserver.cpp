@@ -57,7 +57,7 @@ class DeviceResource : public Resource
 {
     public:
 
-    DeviceResource()
+    DeviceResource():m_modelName{}
     {
         std::string resourceURI = "/device";
         std::string resourceTypeName = "intel.fridge";
@@ -254,7 +254,7 @@ class DeviceResource : public Resource
 class LightResource : public Resource
 {
     public:
-    LightResource()
+    LightResource() : m_isOn(false)
     {
         std::string resourceURI = "/light";
         std::string resourceTypeName = "intel.fridge.light";
@@ -345,7 +345,7 @@ class LightResource : public Resource
 class DoorResource : public Resource
 {
     public:
-    DoorResource(const std::string& side):m_side(side)
+    DoorResource(const std::string& side):m_isOpen{false}, m_side(side)
     {
 
         std::string resourceURI = "/door/"+ side;
@@ -479,3 +479,4 @@ int main ()
     std::this_thread::sleep_for(std::chrono::minutes(30));
     return 0;
 }
+

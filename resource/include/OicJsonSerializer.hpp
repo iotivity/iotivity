@@ -72,7 +72,7 @@ namespace cereal
 {
   // ######################################################################
   //! An output archive designed to save data to JSON
-  /*! This archive uses RapidJSON to build serialie data to JSON.
+  /*! This archive uses RapidJSON to build serialized data to JSON.
 
       JSON archives provides a human readable output but at decreased
       performance (both in time and space) compared to binary archives.

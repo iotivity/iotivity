@@ -19,9 +19,11 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <OCApi.h>
+
 #include <OCUtilities.h>
 
 #include <boost/algorithm/string.hpp>
+
 #include <sstream>
 #include <iterator>
 #include <algorithm>
@@ -36,7 +38,7 @@ OC::Utilities::QueryParamsKeyVal OC::Utilities::getQueryParams(const std::string
 
     std::vector<std::string> queryparams;
     boost::split(queryparams, uri, [](const char c){return c=='&';},
-            boost::token_compress_on);
+    boost::token_compress_on);
 
     for(std::string& it: queryparams)
     {
@@ -51,9 +53,8 @@ OC::Utilities::QueryParamsKeyVal OC::Utilities::getQueryParams(const std::string
             qp[it.substr(0, index)] = it.substr(index + 1);
         }
     }
-
-    return qp;
-}
+        return qp;
+    }
 
 namespace OC {
 
@@ -94,7 +95,6 @@ OCStackResult result_guard(const OCStackResult r)
     case OC_STACK_PRESENCE_TIMEOUT:
     case OC_STACK_PRESENCE_DO_NOT_HANDLE:
 #endif
-
     break;
  }
 
@@ -102,3 +102,4 @@ OCStackResult result_guard(const OCStackResult r)
 }
 
 } // namespace OC
+

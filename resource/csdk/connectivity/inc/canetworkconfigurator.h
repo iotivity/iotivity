@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -17,9 +17,17 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * @file
+ *
+ * This file contains  utility function for network configurations.
+ */
+
 #ifndef _NETWORK_CONFIGURATOR_H_
 #define _NETWORK_CONFIGURATOR_H_
 
+#include "cacommon.h"
 #include "uarraylist.h"
 
 #ifdef __cplusplus
@@ -27,19 +35,44 @@ extern "C"
 {
 #endif
 
-static uint32_t NETWORK_ETHERNET = CA_ETHERNET;
-static uint32_t NETWORK_WIFI = CA_WIFI;
-static uint32_t NETWORK_EDR = CA_EDR;
-static uint32_t NETWORK_LE = CA_LE;
+/**
+ * @brief   Add network type to the selected networks for network packets reception
+ * @param   connectivityType       [IN]    connectivity type that needs to be added
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CAAddNetworkType(CAConnectivityType_t connectivityType);
 
-CAResult_t CAAddNetworkType(uint32_t CAConnectivityType);
+/**
+ * @brief   Remove network type from the selected configuration
+ * @param   connectivityType       [IN]    connectivity type that needs to be removed
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CARemoveNetworkType(CAConnectivityType_t connectivityType);
 
-CAResult_t CARemoveNetworkType(uint32_t CAConnectivityType);
+/**
+ * @brief   Get selected network information
+ * @return array list having the connectivity types
+ */
+u_arraylist_t *CAGetSelectedNetworkList();
 
-u_arraylist_t* CAGetSelectedNetworkList();
+/**
+ * @brief  Getnetwork informations of the selected networks
+ * @param   info    [OUT]   LocalConnectivity objects
+ * @param   size    [OUT]   No Of Array objects
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t *size);
+
+/**
+ * @brief   Terminate network type from selected configuration
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CATerminateNetworkType();
+
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 #endif //#ifndef _NETWORK_CONFIGURATOR_H_
+

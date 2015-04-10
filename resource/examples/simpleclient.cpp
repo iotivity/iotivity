@@ -21,18 +21,22 @@
 // OCClient.cpp : Defines the entry point for the console application.
 //
 #include <string>
+#include <map>
 #include <cstdlib>
 #include <pthread.h>
 #include <mutex>
 #include <condition_variable>
-
 #include "OCPlatform.h"
 #include "OCApi.h"
 
 using namespace OC;
 
+typedef std::map<OCResourceIdentifier, std::shared_ptr<OCResource>> DiscoveredResourceMap;
+
+DiscoveredResourceMap discoveredResources;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+static OCConnectivityType connectivityType = OC_WIFI;
 std::mutex curResourceLock;
 
 class Light
@@ -64,8 +68,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         if(eCode == OC_STACK_OK)
         {
             std::cout << "OBSERVE RESULT:"<<std::endl;
-            std::cout << "\tSequenceNumber: "<< sequenceNumber << endl;
-
+            std::cout << "\tSequenceNumber: "<< sequenceNumber << std::endl;
             rep.getValue("state", mylight.m_state);
             rep.getValue("power", mylight.m_power);
             rep.getValue("name", mylight.m_name);
@@ -123,9 +126,9 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
             }
 
             if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
-                std::cout << endl << "Observe is used." << endl << endl;
+                std::cout << std::endl << "Observe is used." << std::endl << std::endl;
             else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
-                std::cout << endl << "ObserveAll is used." << endl << endl;
+                std::cout << std::endl << "ObserveAll is used." << std::endl << std::endl;
 
             curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
 
@@ -310,17 +313,31 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-    std::lock_guard<std::mutex> lock(curResourceLock);
-    if(curResource)
-    {
-        std::cout << "Found another resource, ignoring"<<std::endl;
-        return;
-    }
-
+    std::cout << "In foundResource\n";
     std::string resourceURI;
     std::string hostAddress;
     try
     {
+        {
+            std::lock_guard<std::mutex> lock(curResourceLock);
+            if(discoveredResources.find(resource->uniqueIdentifier()) == discoveredResources.end())
+            {
+                std::cout << "Found resource " << resource->uniqueIdentifier() <<
+                    " for the first time on server with ID: "<< resource->sid()<<std::endl;
+                discoveredResources[resource->uniqueIdentifier()] = resource;
+            }
+            else
+            {
+                std::cout<<"Found resource "<< resource->uniqueIdentifier() << " again!"<<std::endl;
+            }
+
+            if(curResource)
+            {
+                std::cout << "Found another resource, ignoring"<<std::endl;
+                return;
+            }
+        }
+
         // Do some operations with resource object.
         if(resource)
         {
@@ -367,32 +384,89 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-void PrintUsage()
+void printUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
+    std::cout << "---------------------------------------------------------------------\n";
+    std::cout << "Usage : simpleclient <ObserveType> <ConnectivityType>" << std::endl;
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
+    std::cout << "   connectivityType: Default WIFI" << std::endl;
+    std::cout << "   ConnectivityType : 0 - ETHERNET"<< std::endl;
+    std::cout << "   ConnectivityType : 1 - WIFI"<< std::endl;
+    std::cout << "---------------------------------------------------------------------\n\n";
 }
 
-int main(int argc, char* argv[]) {
-    if (argc == 1)
+void checkObserverValue(int value)
+{
+    if (value == 1)
     {
         OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+        std::cout << "<===Setting ObserveType to Observe===>\n\n";
     }
-    else if (argc == 2)
+    else if (value == 2)
     {
-        int value = atoi(argv[1]);
-        if (value == 1)
-            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-        else if (value == 2)
-            OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
-        else
-            OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+        OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
+        std::cout << "<===Setting ObserveType to ObserveAll===>\n\n";
     }
     else
     {
-        PrintUsage();
+        std::cout << "<===Invalid ObserveType selected."
+                  <<" Setting ObserveType to Observe===>\n\n";
+    }
+}
+
+void checkConnectivityValue(int value)
+{
+    if(value == 0)
+    {
+        connectivityType = OC_ETHERNET;
+        std::cout << "<===Setting connectivityType  to Ethernet===>\n\n";
+    }
+    else if(value == 1)
+    {
+        connectivityType = OC_WIFI;
+        std::cout << "<===Setting connectivityType  to WIFI===>\n\n";
+    }
+    else
+    {
+        std::cout << "<===Invalid ConnectivitType selected."
+                  <<"Setting ConnectivityType to WIFI===>\n\n";
+    }
+}
+
+int main(int argc, char* argv[]) {
+
+    std::ostringstream requestURI;
+
+    try
+    {
+        printUsage();
+        if (argc == 1)
+        {
+            std::cout << "<===Setting ObserveType to Observe and ConnectivityType to WIFI===>\n\n";
+        }
+        else if (argc == 2)
+        {
+
+            checkObserverValue(std::stoi(argv[1]));
+            std::cout << "<===No ConnectivtyType selected. "
+                      << "Setting ConnectivityType to WIFI===>\n\n";
+        }
+        else if(argc == 3)
+        {
+            checkObserverValue(std::stoi(argv[1]));
+            checkConnectivityValue(std::stoi(argv[2]));
+        }
+        else
+        {
+            std::cout << "<===Invalid number of command line arguments===>\n\n";
+            return -1;
+        }
+    }
+    catch(std::exception& e)
+    {
+        std::cout << "<===Invalid input arguments===>\n\n";
         return -1;
     }
 
@@ -411,8 +485,18 @@ int main(int argc, char* argv[]) {
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+
+        OCPlatform::findResource("", requestURI.str(),
+                connectivityType, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
+
+        // Find resource is done twice so that we discover the original resources a second time.
+        // These resources will have the same uniqueidentifier (yet be different objects), so that
+        // we can verify/show the duplicate-checking code in foundResource(above);
+        OCPlatform::findResource("", requestURI.str(),
+                connectivityType, &foundResource);
+        std::cout<< "Finding Resource for second time..." << std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we
@@ -425,9 +509,10 @@ int main(int argc, char* argv[]) {
 
     }catch(OCException& e)
     {
-        //log(e.what());
+        oclog() << "Exception in main: "<<e.what();
     }
 
     return 0;
 }
+
 

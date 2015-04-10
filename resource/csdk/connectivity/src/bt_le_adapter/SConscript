@@ -1,0 +1,46 @@
+#######################################################
+#	Building BLE adapter
+#######################################################
+
+Import('env')
+
+print"Reading ble adapter script"
+
+target_os = env.get('TARGET_OS')
+src_dir = './bt_le_adapter/'
+
+#Source files to build common for all platforms
+if target_os != 'arduino':
+	env.AppendUnique(CA_SRC=[src_dir+'caleadapter.c'])
+else:
+	env.AppendUnique(CA_SRC=[src_dir+'caleadapter_singlethread.c'])
+	
+#Source files to build in Linux platform
+if target_os == 'linux':
+	env.AppendUnique(CA_SRC=[src_dir+'linux/caleadapter.c',
+			])
+
+#Source files to build in Tizen platform
+if target_os == 'tizen':
+	env.PrependUnique(CPPPATH = [src_dir + 'tizen'])
+	env.PrependUnique(CFLAGS = ['-I'+ './con/lib/tizen/ble/inc'])
+	env.PrependUnique(CFLAGS = ['-I'+ './con/lib/tizen/ble/inc/mobile'])
+	env.AppendUnique(CA_SRC=[src_dir+'tizen/cableclient.c',
+			src_dir+'tizen/cableserver.c',
+			src_dir+'tizen/cableutil.c',
+			src_dir+'tizen/cablenwmonitor.c',
+			])
+
+#Source files to build in Arduino platform
+if target_os == 'arduino':
+	env.PrependUnique(CPPPATH = [src_dir + 'arduino'])
+	env.AppendUnique(CA_SRC=[src_dir+'arduino/cableserver.cpp',
+			src_dir+'arduino/cablenwmonitor.cpp',
+			])
+
+#Source files to build in Android platform
+if target_os == 'android':
+	env.AppendUnique(CA_SRC=[src_dir+'android/caleadapter.c',
+			src_dir+'android/caleclient.c',
+			src_dir+'android/caleserver.c',
+			])

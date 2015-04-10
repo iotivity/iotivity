@@ -18,6 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Defining _POSIX_C_SOURCE macro with 200112L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1-2001 base
+// specification (excluding the XSI extension).
+// For POSIX.1-2001 base specification,
+// Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
 #include <string.h>
 #include "ocstack.h"
@@ -26,10 +32,13 @@
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
-#include "occoap.h"
+#include "ocmalloc.h"
 #include "logger.h"
-#include "debug.h"
 #include "cJSON.h"
+
+#include "cacommon.h"
+#include "cainterface.h"
+
 
 /// Module Name
 #define TAG PCF("ocresource")
@@ -56,57 +65,109 @@ static const char * VIRTUAL_RSRCS[] = {
 //-----------------------------------------------------------------------------
 OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest * request) {
-    TODO ("Implement me!!!!");
+    //TODO ("Implement me!!!!");
     // TODO:  remove silence unused param warnings
     (void) flag;
     (void) request;
     return  OC_EH_OK; // Making sure that the Default EH and the Vendor EH have matching signatures
 }
 
-static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
+/* This method will retrieve the port at which the secure resource is hosted */
+static OCStackResult GetSecurePortInfo(CAConnectivityType_t connType, uint16_t *port)
+{
+    CALocalConnectivity_t* info = NULL;
+    uint32_t size = 0;
+    OCStackResult ret = OC_STACK_ERROR;
+
+    CAResult_t caResult = CAGetNetworkInformation(&info, &size);
+    if ((caResult == CA_STATUS_OK) && info && size)
+    {
+        while (size--)
+        {
+            if (info[size].isSecured && info[size].type == connType)
+            {
+                if (info[size].type == CA_ETHERNET ||
+                    info[size].type == CA_WIFI)
+                {
+                    *port = info[size].addressInfo.IP.port;
+                    ret = OC_STACK_OK;
+                    break;
+                }
+            }
+        }
+    }
+
+    OCFree(info);
+    return ret;
+}
+
+static OCStackResult ValidateUrlQuery (char *url, char *query,
                                 uint8_t *filterOn, char **filterValue)
 {
-    char *filterParam;
+    if(!filterOn || !filterValue)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    char *filterParam = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering ValidateUrlQuery"));
     if (!url)
+    {
         return OC_STACK_INVALID_URI;
+    }
 
     if (strcmp ((char *)url, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0 ||
-                strcmp ((char *)url, GetVirtualResourceUri(OC_DEVICE_URI)) == 0) {
+                strcmp ((char *)url, GetVirtualResourceUri(OC_DEVICE_URI)) == 0)
+    {
         *filterOn = STACK_RES_DISCOVERY_NOFILTER;
-        if (query && *query) {
-            char* strTokPtr;
+        if (query && *query)
+        {
+            char* strTokPtr = NULL;
             filterParam = strtok_r((char *)query, "=", &strTokPtr);
             *filterValue = strtok_r(NULL, " ", &strTokPtr);
-            if (!(*filterValue)) {
+
+            if (!(*filterValue) || ! filterParam)
+            {
                 return OC_STACK_INVALID_QUERY;
-            } else if (strcmp (filterParam, OC_RSRVD_INTERFACE) == 0) {
+            }
+            else if (strcmp (filterParam, OC_RSRVD_INTERFACE) == 0)
+            {
                 // Resource discovery with interface filter
                 *filterOn = STACK_RES_DISCOVERY_IF_FILTER;
-            } else if (strcmp (filterParam, OC_RSRVD_RESOURCE_TYPE) == 0) {
+            }
+            else if (strcmp (filterParam, OC_RSRVD_RESOURCE_TYPE) == 0)
+            {
                 // Resource discovery with resource type filter
                 *filterOn = STACK_RES_DISCOVERY_RT_FILTER;
-            } else if (strcmp (filterParam, OC_RSRVD_DEVICE_ID) == 0) {
+            }
+            else if (strcmp (filterParam, OC_RSRVD_DEVICE_ID) == 0)
+            {
                 //Device ID filter
                 *filterOn = STACK_DEVICE_DISCOVERY_DI_FILTER;
-            } else if (strcmp (filterParam, OC_RSRVD_DEVICE_NAME) == 0) {
+            }
+            else if (strcmp (filterParam, OC_RSRVD_DEVICE_NAME) == 0)
+            {
                 //Device Name filter
                 *filterOn = STACK_DEVICE_DISCOVERY_DN_FILTER;
-            } else {
+            }
+            else
+            {
                 // Other filter types not supported
                 return OC_STACK_INVALID_QUERY;
             }
         }
     }
     #ifdef WITH_PRESENCE
-    else if (strcmp((char *)url, GetVirtualResourceUri(OC_PRESENCE)) == 0) {
+    else if (strcmp((char *)url, GetVirtualResourceUri(OC_PRESENCE)) == 0)
+    {
         //Nothing needs to be done, except for pass a OC_PRESENCE query through as OC_STACK_OK.
         OC_LOG(INFO, TAG, PCF("OC_PRESENCE Request"));
         *filterOn = STACK_RES_DISCOVERY_NOFILTER;
     }
     #endif
-    else {
+    else
+    {
         // Other URIs not yet supported
         return OC_STACK_INVALID_URI;
     }
@@ -114,16 +175,26 @@ static OCStackResult ValidateUrlQuery (unsigned char *url, unsigned char *query,
     return OC_STACK_OK;
 }
 
-OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filterOn,
-                                            char *filterValue, char * out, uint16_t *remaining)
+
+OCStackResult
+BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
+                       const char *filterValue, char *out, uint16_t *remaining,
+                       CAConnectivityType_t connType )
 {
-    OCResourceType *resourceTypePtr;
-    OCResourceInterface *interfacePtr;
-    cJSON *resObj, *propObj, *rtArray;
-    char *jsonStr;
+    if(!resourcePtr || !out  || !remaining)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCResourceType *resourceTypePtr = NULL;
+    OCResourceInterface *interfacePtr = NULL;
+    cJSON *resObj = NULL;
+    cJSON *propObj = NULL;
+    cJSON *rtArray = NULL;
+    char *jsonStr = NULL;
     uint8_t encodeRes = 0;
     OCStackResult ret = OC_STACK_OK;
-    uint16_t jsonLen;
+    uint16_t jsonLen = 0;
 
     OC_LOG(INFO, TAG, PCF("Entering BuildVirtualResourceResponse"));
     resObj = cJSON_CreateObject();
@@ -131,40 +202,58 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
     if (resourcePtr)
     {
         encodeRes = 0;
-        if (filterOn == STACK_RES_DISCOVERY_RT_FILTER) {
+        if ((filterOn == STACK_RES_DISCOVERY_RT_FILTER) && filterValue)
+        {
             resourceTypePtr = resourcePtr->rsrcType;
-            while (resourceTypePtr) {
-                if (strcmp (resourceTypePtr->resourcetypename, filterValue) == 0) {
+            while (resourceTypePtr)
+            {
+                if (strcmp (resourceTypePtr->resourcetypename, filterValue) == 0)
+                {
                     encodeRes = 1;
                     break;
                 }
                 resourceTypePtr = resourceTypePtr->next;
             }
-        } else if (filterOn == STACK_RES_DISCOVERY_IF_FILTER) {
+        }
+        else if ((filterOn == STACK_RES_DISCOVERY_IF_FILTER) && filterValue)
+        {
             interfacePtr = resourcePtr->rsrcInterface;
-            while (interfacePtr) {
-                if (strcmp (interfacePtr->name, filterValue) == 0) {
+            while (interfacePtr)
+            {
+                if (strcmp (interfacePtr->name, filterValue) == 0)
+                {
                     encodeRes = 1;
                     break;
                 }
                 interfacePtr = interfacePtr->next;
             }
-        } else if (filterOn == STACK_RES_DISCOVERY_NOFILTER) {
+        }
+        else if (filterOn == STACK_RES_DISCOVERY_NOFILTER)
+        {
             encodeRes = 1;
-        } else {
+        }
+        else
+        {
             //TODO: Unsupported query filter
             return OC_STACK_INVALID_QUERY;
         }
 
-        if (encodeRes) {
+        if (encodeRes)
+        {
             // Add URIs
             cJSON_AddItemToObject (resObj, OC_RSRVD_HREF, cJSON_CreateString(resourcePtr->uri));
 
-            cJSON_AddItemToObject (resObj, "prop", propObj = cJSON_CreateObject());
+            // Add server instance id
+            cJSON_AddItemToObject (resObj,
+                                   OC_RSRVD_SERVER_INSTANCE_ID,
+                                   cJSON_CreateString(OCGetServerInstanceIDString()));
+
+            cJSON_AddItemToObject (resObj, OC_RSRVD_PROPERTY, propObj = cJSON_CreateObject());
             // Add resource types
             cJSON_AddItemToObject (propObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
             resourceTypePtr = resourcePtr->rsrcType;
-            while (resourceTypePtr) {
+            while (resourceTypePtr)
+            {
                 cJSON_AddItemToArray (rtArray,
                                       cJSON_CreateString(resourceTypePtr->resourcetypename));
                 resourceTypePtr = resourceTypePtr->next;
@@ -172,22 +261,26 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
             // Add interface types
             cJSON_AddItemToObject (propObj, OC_RSRVD_INTERFACE, rtArray = cJSON_CreateArray());
             interfacePtr = resourcePtr->rsrcInterface;
-            while (interfacePtr) {
+            while (interfacePtr)
+            {
                 cJSON_AddItemToArray (rtArray, cJSON_CreateString(interfacePtr->name));
                 interfacePtr = interfacePtr->next;
             }
             // If resource is observable, set observability flag.
             // Resources that are not observable will not have the flag.
-            if (resourcePtr->resourceProperties & OC_OBSERVABLE) {
+            if (resourcePtr->resourceProperties & OC_OBSERVABLE)
+            {
                 cJSON_AddItemToObject (propObj, OC_RSRVD_OBSERVABLE,
                                        cJSON_CreateNumber(OC_RESOURCE_OBSERVABLE));
             }
             // Set secure flag for secure resources
-            if (resourcePtr->resourceProperties & OC_SECURE) {
-                uint16_t port;
+            if (resourcePtr->resourceProperties & OC_SECURE)
+            {
                 cJSON_AddNumberToObject (propObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
                 //Set the IP port also as secure resources are hosted on a different port
-                if (OCGetResourceEndPointInfo (resourcePtr, &port) == OC_STACK_OK) {
+                uint16_t port = 0;
+                if (GetSecurePortInfo (connType, &port) == OC_STACK_OK)
+                {
                     cJSON_AddNumberToObject (propObj, OC_RSRVD_HOSTING_PORT, port);
                 }
             }
@@ -207,7 +300,7 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
         ret = OC_STACK_ERROR;
     }
     cJSON_Delete (resObj);
-    free (jsonStr);
+    OCFree (jsonStr);
 
     OC_LOG(INFO, TAG, PCF("Exiting BuildVirtualResourceResponse"));
     return ret;
@@ -216,28 +309,35 @@ OCStackResult BuildVirtualResourceResponse(OCResource *resourcePtr, uint8_t filt
 OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filterValue,
                                                     char *out, uint16_t *remaining)
 {
+    if(!out || !remaining)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult ret = OC_STACK_ERROR;
 
     if (savedDeviceInfo != NULL)
     {
         char *jsonStr = NULL;
         uint16_t jsonLen = 0;
-        cJSON *repObj = cJSON_GetObjectItem(savedDeviceInfo, "rep");
+        cJSON *repObj = cJSON_GetObjectItem(savedDeviceInfo, OC_RSRVD_REPRESENTATION);
 
         OC_LOG(INFO, TAG, PCF("Entering BuildVirtualResourceResponseForDevice"));
 
-        if (filterOn == STACK_DEVICE_DISCOVERY_DI_FILTER)
+        if ((filterOn == STACK_DEVICE_DISCOVERY_DI_FILTER) && filterValue)
         {
-            if((cJSON_GetObjectItem(repObj,"di") != NULL) &&
-                    strcmp(cJSON_GetObjectItem(repObj,"di")->valuestring, filterValue) == 0)
+            if((cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_ID) != NULL) &&
+                    strcmp(cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_ID)->valuestring, filterValue)
+                    == 0)
             {
                 ret = OC_STACK_OK;
             }
         }
-        else if (filterOn == STACK_DEVICE_DISCOVERY_DN_FILTER)
+        else if ((filterOn == STACK_DEVICE_DISCOVERY_DN_FILTER) && filterValue)
         {
-            if((cJSON_GetObjectItem(repObj,"dn") != NULL) &&
-                    strcmp(cJSON_GetObjectItem(repObj,"dn")->valuestring, filterValue) == 0)
+            if((cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_NAME) != NULL) &&
+                    strcmp(cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_NAME)->valuestring,
+                        filterValue) == 0)
             {
                 ret = OC_STACK_OK;
             }
@@ -270,7 +370,7 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
                     ret = OC_STACK_ERROR;
                 }
 
-                free(jsonStr);
+                OCFree(jsonStr);
             }
             else
             {
@@ -292,7 +392,6 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
     return ret;
 }
 
-TODO ("Does it make sense to make this method as inline")
 const char * GetVirtualResourceUri( OCVirtualResources resource)
 {
     if (resource < OC_MAX_VIRTUAL_RESOURCES)
@@ -303,20 +402,30 @@ const char * GetVirtualResourceUri( OCVirtualResources resource)
     return NULL;
 }
 
-uint8_t IsVirtualResource(const char* resourceUri)
+bool IsVirtualResource(const char* resourceUri)
 {
+    if(!resourceUri)
+    {
+        return false;
+    }
+
     for (int i = 0; i < OC_MAX_VIRTUAL_RESOURCES; i++)
     {
         if (strcmp(resourceUri, GetVirtualResourceUri((OCVirtualResources)i)) == 0)
         {
-            return 1;
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 uint8_t IsCollectionResource (OCResource *resource)
 {
+    if(!resource)
+    {
+        return 0;
+    }
+
     for (int i = 0; i < MAX_CONTAINED_RESOURCES; i++)
     {
         if (resource->rsrcResources[i])
@@ -329,6 +438,11 @@ uint8_t IsCollectionResource (OCResource *resource)
 
 OCResource *FindResourceByUri(const char* resourceUri)
 {
+    if(!resourceUri)
+    {
+        return NULL;
+    }
+
     OCResource * pointer = headResource;
     while (pointer) {
         if (strcmp(resourceUri, pointer->uri) == 0) {
@@ -341,10 +455,14 @@ OCResource *FindResourceByUri(const char* resourceUri)
 }
 
 
-OCStackResult DetermineResourceHandling (OCServerRequest *request,
+OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          ResourceHandling *handling,
                                          OCResource **resource)
 {
+    if(!request || !handling || !resource)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
 
     OC_LOG(INFO, TAG, PCF("Entering DetermineResourceHandling"));
 
@@ -359,7 +477,7 @@ OCStackResult DetermineResourceHandling (OCServerRequest *request,
     {
         // Resource URL not specified
         *handling = OC_RESOURCE_NOT_SPECIFIED;
-        return OC_STACK_OK;
+        return OC_STACK_NO_RESOURCE;
     }
     else
     {
@@ -383,7 +501,7 @@ OCStackResult DetermineResourceHandling (OCServerRequest *request,
         // secure resource will entertain only authorized requests
         if ((resourcePtr->resourceProperties & OC_SECURE) && (request->secured == 0))
         {
-            OC_LOG(INFO, TAG, PCF("Un-authorized request. Ignore it!"));
+            OC_LOG(ERROR, TAG, PCF("Un-authorized request. Ignoring"));
             return OC_STACK_RESOURCE_ERROR;
         }
 
@@ -394,17 +512,23 @@ OCStackResult DetermineResourceHandling (OCServerRequest *request,
             {
                 *handling = OC_RESOURCE_COLLECTION_WITH_ENTITYHANDLER;
                 return OC_STACK_OK;
-            } else {
+            }
+            else
+            {
                 *handling = OC_RESOURCE_COLLECTION_DEFAULT_ENTITYHANDLER;
                 return OC_STACK_OK;
             }
-        } else {
+        }
+        else
+        {
             // Resource not a collection
             if (resourcePtr->entityHandler != defaultResourceEHandler)
             {
                 *handling = OC_RESOURCE_NOT_COLLECTION_WITH_ENTITYHANDLER;
                 return OC_STACK_OK;
-            } else {
+            }
+            else
+            {
                 *handling = OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER;
                 return OC_STACK_OK;
             }
@@ -436,6 +560,9 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
         case OC_EH_RESOURCE_DELETED:
             result = OC_STACK_RESOURCE_DELETED;
             break;
+        case OC_EH_RESOURCE_NOT_FOUND:
+            result = OC_STACK_NO_RESOURCE;
+            break;
         default:
             result = OC_STACK_ERROR;
     }
@@ -446,13 +573,18 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
 static OCStackResult
 HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
+    if(!request || !resource)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult result = OC_STACK_ERROR;
     char *filterValue = NULL;
     uint8_t filterOn = 0;
     uint16_t remaining = 0;
-    unsigned char * ptr = NULL;
+    char * ptr = NULL;
     uint8_t firstLoopDone = 0;
-    unsigned char discoveryResBuf[MAX_RESPONSE_LENGTH] = {0};
+    char discoveryResBuf[MAX_RESPONSE_LENGTH] = {};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleVirtualResource"));
 
@@ -467,7 +599,9 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
             ptr = discoveryResBuf;
             remaining = MAX_RESPONSE_LENGTH;
 
-            while(resource)
+            // Check if valid resource and enough space in buffer for atleast
+            // the null character.
+            while(resource && (remaining > 1))
             {
                 if((resource->resourceProperties & OC_ACTIVE)
                         && (resource->resourceProperties & OC_DISCOVERABLE))
@@ -483,7 +617,7 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                     }
                     firstLoopDone = 1;
                     result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
-                            (char*)ptr, &remaining);
+                            (char*)ptr, &remaining, request->connectivityType );
 
                     if (result != OC_STACK_OK)
                     {
@@ -497,12 +631,38 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                         break;
                     }
                     ptr += strlen((char *)ptr);
-                    *(ptr + 1) = '\0';
                 }
                 resource = resource->next;
             }
 
             if(strlen((const char *)discoveryResBuf) > 0)
+            {
+                OCEntityHandlerResponse response = {};
+
+                response.ehResult = OC_EH_OK;
+                response.payload = discoveryResBuf;
+                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
+                response.persistentBufferFlag = 0;
+                response.requestHandle = (OCRequestHandle) request;
+                response.resourceHandle = (OCResourceHandle) resource;
+
+                result = OCDoResponse(&response);
+            }
+        }
+        else if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_DEVICE_URI)) == 0)
+        {
+            remaining = MAX_RESPONSE_LENGTH;
+            ptr = discoveryResBuf;
+
+            result = BuildVirtualResourceResponseForDevice(filterOn, filterValue,
+                    (char*)ptr, &remaining);
+
+            if(result == OC_STACK_OK)
+            {
+                ptr += strlen((char*)ptr);
+            }
+
+            if(remaining < MAX_RESPONSE_LENGTH)
             {
                 OCEntityHandlerResponse response = {0};
 
@@ -552,22 +712,28 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
         }
         #endif
     }
-    result = OC_STACK_VIRTUAL_DO_NOT_HANDLE;
+    result = OC_STACK_OK;
     return result;
 }
 
 static OCStackResult
 HandleDefaultDeviceEntityHandler (OCServerRequest *request)
 {
+    if(!request)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult result = OC_STACK_OK;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    OCEntityHandlerRequest ehRequest = {0};
+    OCEntityHandlerRequest ehRequest = {};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithDefaultDeviceEntityHandler"));
     result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
             request->method, (OCResourceHandle) NULL, request->query,
             request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
-            request->rcvdVendorSpecificHeaderOptions, (OCObserveAction)request->observationOption, (OCObservationId)0);
+            request->rcvdVendorSpecificHeaderOptions,
+            (OCObserveAction)request->observationOption, (OCObservationId)0);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // At this point we know for sure that defaultDeviceHandler exists
@@ -592,12 +758,17 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
                                  OCResource *resource,
                                  uint8_t collectionResource)
 {
+    if(!request || ! resource)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult result = OC_STACK_ERROR;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCEntityHandlerFlag ehFlag = OC_REQUEST_FLAG;
     ResourceObserver *resObs = NULL;
 
-    OCEntityHandlerRequest ehRequest = {0};
+    OCEntityHandlerRequest ehRequest = {};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithEntityHandler"));
     result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
@@ -621,19 +792,24 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
-                ehRequest.obsInfo.obsId, &request->requestToken,
-                &request->requesterAddr, resource, request->qos);
+                ehRequest.obsInfo.obsId, request->requestToken, request->tokenLength,
+                resource, request->qos,
+                &request->addressInfo, request->connectivityType);
+
         if(result == OC_STACK_OK)
         {
-            OC_LOG(DEBUG, TAG, PCF("Added observer successfully"));
+            OC_LOG(INFO, TAG, PCF("Added observer successfully"));
             request->observeResult = OC_STACK_OK;
             ehFlag = (OCEntityHandlerFlag)(OC_REQUEST_FLAG | OC_OBSERVE_FLAG);
         }
         else
         {
             result = OC_STACK_OK;
+            // The error in observeResult for the request will be
+            // used when responding to this request by omitting
+            // the observation option/sequence number.
             request->observeResult = OC_STACK_ERROR;
-            OC_LOG(DEBUG, TAG, PCF("Observer Addition failed"));
+            OC_LOG(ERROR, TAG, PCF("Observer Addition failed"));
             ehFlag = OC_REQUEST_FLAG;
         }
 
@@ -642,7 +818,9 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
             !collectionResource)
     {
         OC_LOG(INFO, TAG, PCF("Deregistering observation requested"));
-        resObs = GetObserverUsingToken (&request->requestToken);
+
+        resObs = GetObserverUsingToken (request->requestToken, request->tokenLength);
+
         if (NULL == resObs)
         {
             // Stack does not contain this observation request
@@ -653,17 +831,18 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         ehRequest.obsInfo.obsId = resObs->observeId;
         ehFlag = (OCEntityHandlerFlag)(ehFlag | OC_OBSERVE_FLAG);
 
-        result = DeleteObserverUsingToken (&request->requestToken);
+        result = DeleteObserverUsingToken (request->requestToken, request->tokenLength);
+
         if(result == OC_STACK_OK)
         {
-            OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
+            OC_LOG(INFO, TAG, PCF("Removed observer successfully"));
             request->observeResult = OC_STACK_OK;
         }
         else
         {
             result = OC_STACK_OK;
             request->observeResult = OC_STACK_ERROR;
-            OC_LOG(DEBUG, TAG, PCF("Observer Removal failed"));
+            OC_LOG(ERROR, TAG, PCF("Observer Removal failed"));
         }
     }
     else
@@ -691,8 +870,13 @@ static OCStackResult
 HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
                                               OCResource *resource)
 {
+    if(!request || !resource)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult result = OC_STACK_ERROR;
-    OCEntityHandlerRequest ehRequest = {0};
+    OCEntityHandlerRequest ehRequest = {};
 
     result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
             request->method, (OCResourceHandle) resource, request->query,
@@ -776,41 +960,42 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo deviceInfo)
     cJSON_AddItemToObject (savedDeviceInfo, OC_RSRVD_HREF,
             cJSON_CreateString(GetVirtualResourceUri(OC_DEVICE_URI)));
 
-    cJSON_AddItemToObject (savedDeviceInfo, "rep", repObj = cJSON_CreateObject());
+    cJSON_AddItemToObject (savedDeviceInfo, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
 
     if (deviceInfo.contentType)
     {
-        cJSON_AddItemToObject (repObj, "ct",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_CONTENT_TYPE,
                 cJSON_CreateString(deviceInfo.contentType));
     }
 
     if (deviceInfo.dateOfManufacture)
     {
-        cJSON_AddItemToObject (repObj, "mndt",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_DATE,
                 cJSON_CreateString(deviceInfo.dateOfManufacture));
     }
 
     if (deviceInfo.deviceName)
     {
-        cJSON_AddItemToObject (repObj, "dn",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_NAME,
                 cJSON_CreateString(deviceInfo.deviceName));
     }
 
     if (deviceInfo.deviceUUID)
     {
-        cJSON_AddItemToObject (repObj, "di",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_ID,
                 cJSON_CreateString(deviceInfo.deviceUUID));
     }
 
     if (deviceInfo.firmwareVersion)
     {
-        cJSON_AddItemToObject (repObj, "mnfv",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_FW_VERSION,
                 cJSON_CreateString(deviceInfo.firmwareVersion));
     }
 
     if (deviceInfo.hostName)
     {
-        cJSON_AddItemToObject (repObj, "hn", cJSON_CreateString(deviceInfo.hostName));
+        cJSON_AddItemToObject (repObj, OC_RSRVD_HOST_NAME,
+                cJSON_CreateString(deviceInfo.hostName));
     }
 
     if (deviceInfo.manufacturerName)
@@ -821,7 +1006,7 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo deviceInfo)
             return OC_STACK_INVALID_PARAM;
         }
 
-        cJSON_AddItemToObject (repObj, "mnmn",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME,
                 cJSON_CreateString(deviceInfo.manufacturerName));
     }
 
@@ -833,34 +1018,33 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo deviceInfo)
             return OC_STACK_INVALID_PARAM;
         }
 
-        cJSON_AddItemToObject (repObj, "mnml",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_URL,
                 cJSON_CreateString(deviceInfo.manufacturerUrl));
     }
 
     if (deviceInfo.modelNumber)
     {
-        cJSON_AddItemToObject (repObj, "mnmo",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MODEL_NUM,
                 cJSON_CreateString(deviceInfo.modelNumber));
     }
 
     if (deviceInfo.platformVersion)
     {
-        cJSON_AddItemToObject (repObj, "mnpv",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_VERSION,
                 cJSON_CreateString(deviceInfo.platformVersion));
     }
 
     if (deviceInfo.supportUrl)
     {
-        cJSON_AddItemToObject (repObj, "mnsl",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_SUPPORT_URL,
                 cJSON_CreateString(deviceInfo.supportUrl));
     }
 
     if (deviceInfo.version)
     {
-        cJSON_AddItemToObject (repObj, "icv",
+        cJSON_AddItemToObject (repObj, OC_RSRVD_VERSION,
                 cJSON_CreateString(deviceInfo.version));
     }
 
     return OC_STACK_OK;
 }
-

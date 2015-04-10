@@ -33,6 +33,7 @@
 #include <OCResourceResponse.h>
 #include <ocstack.h>
 #include <OCApi.h>
+#include <ocmalloc.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
 
@@ -54,8 +55,11 @@ void formResourceRequest(OCEntityHandlerFlag flag,
                          OCEntityHandlerRequest * entityHandlerRequest,
                          std::shared_ptr<OCResourceRequest> pRequest)
 {
-    pRequest->setRequestHandle(entityHandlerRequest->requestHandle);
-    pRequest->setResourceHandle(entityHandlerRequest->resource);
+    if(pRequest && entityHandlerRequest)
+    {
+        pRequest->setRequestHandle(entityHandlerRequest->requestHandle);
+        pRequest->setResourceHandle(entityHandlerRequest->resource);
+    }
 
     if(flag & OC_INIT_FLAG)
     {
@@ -70,9 +74,8 @@ void formResourceRequest(OCEntityHandlerFlag flag,
         {
             if(entityHandlerRequest->query)
             {
-                OC::Utilities::QueryParamsKeyVal qp =
-                    OC::Utilities::getQueryParams(
-                            reinterpret_cast<char*>(entityHandlerRequest->query));
+                OC::Utilities::QueryParamsKeyVal qp = OC::Utilities::getQueryParams(
+                        entityHandlerRequest->query);
 
                 if(qp.size() > 0)
                 {
@@ -579,7 +582,15 @@ namespace OC
             response.requestHandle = pResponse->getRequestHandle();
             response.resourceHandle = pResponse->getResourceHandle();
             response.ehResult = pResponse->getResponseResult();
-            response.payload = (unsigned char*) payLoad.c_str();
+
+            response.payload = static_cast<char*>(OCMalloc(payLoad.length() + 1));
+            if(!response.payload)
+            {
+                result = OC_STACK_NO_MEMORY;
+                throw OCException(OC::Exception::NO_MEMORY, OC_STACK_NO_MEMORY);
+            }
+
+            strncpy(response.payload, payLoad.c_str(), payLoad.length()+1);
             response.payloadSize = payLoad.length() + 1;
             response.persistentBufferFlag = 0;
 
@@ -635,3 +646,4 @@ namespace OC
         OCStop();
     }
 }
+

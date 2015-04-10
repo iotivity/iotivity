@@ -20,6 +20,8 @@ linux_sample_env.AppendUnique(LIBS = ['oc'])
 linux_sample_env.AppendUnique(LIBS = ['octbstack'])
 linux_sample_env.AppendUnique(LIBS = ['libcoap'])
 linux_sample_env.AppendUnique(LIBS = ['liboc_logger'])
+linux_sample_env.AppendUnique(LIBS = ['libconnectivity_abstraction'])
+linux_sample_env.AppendUnique(LIBS = ['libcoap'])
 linux_sample_env.AppendUnique(LIBS = ['pthread'])
 
 ######################################################################

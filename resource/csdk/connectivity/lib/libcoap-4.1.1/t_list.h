@@ -82,13 +82,13 @@ struct list
 
 #define LIST_CONCAT(s1, s2) s1##s2
 
-#define LIST_STRUCT(name)			\
-  void *LIST_CONCAT(name, _list);		\
+#define LIST_STRUCT(name)           \
+  void *LIST_CONCAT(name, _list);       \
   list_t name
 
-#define LIST_STRUCT_INIT(struct_ptr, name)  {				\
-    (struct_ptr)->name = &((struct_ptr)->LIST_CONCAT(name,_list));	\
-    (struct_ptr)->LIST_CONCAT(name,_list) = NULL;			\
+#define LIST_STRUCT_INIT(struct_ptr, name)  {               \
+    (struct_ptr)->name = &((struct_ptr)->LIST_CONCAT(name,_list));  \
+    (struct_ptr)->LIST_CONCAT(name,_list) = NULL;           \
   }
 
 static inline void *

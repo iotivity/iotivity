@@ -3,7 +3,7 @@
  * Copyright (C) 2010--2012,2014 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #ifndef _COAP_BLOCK_H_
@@ -32,17 +32,21 @@
 #endif
 
 /**
- * Structure of Block options. 
+ * Structure of Block options.
  */
 typedef struct
 {
-    unsigned int num :20; /**< block number */
-    unsigned int m :1; /**< 1 if more blocks follow, 0 otherwise */
-    unsigned int szx :3; /**< block size */
+#ifdef WITH_ARDUINO
+    unsigned long int num : 20;
+#else
+    unsigned int num : 20;
+#endif
+    unsigned int m : 1; /**< 1 if more blocks follow, 0 otherwise */
+    unsigned int szx : 3; /**< block size */
 } coap_block_t;
 
 /**
- * Returns the value of the least significant byte of a Block option @p opt. 
+ * Returns the value of the least significant byte of a Block option @p opt.
  * For zero-length options (i.e. num == m == szx == 0), COAP_OPT_BLOCK_LAST
  * returns @c NULL.
  */
@@ -88,7 +92,7 @@ static inline void coap_opt_block_set_m(coap_opt_t *block_opt, int m)
  * value @c 1. Otherwise, @c 0 is returned.
  *
  * @param pdu   The pdu to search for option @p type.
- * @param type  The option to search for (must be COAP_OPTION_BLOCK1 or 
+ * @param type  The option to search for (must be COAP_OPTION_BLOCK1 or
  *              COAP_OPTION_BLOCK2)
  * @param block The block structure to initilize.
  * @return @c 1 on success, @c 0 otherwise.
@@ -102,9 +106,9 @@ int coap_get_block(coap_pdu_t *pdu, unsigned short type, coap_block_t *block);
  * space is required. The actual length of the resource is specified
  * in @p data_length.
  *
- * This function may change *block to reflect the values written to 
+ * This function may change *block to reflect the values written to
  * @p pdu. As the function takes into consideration the remaining space
- * @p pdu, no more options should be added after coap_write_block_opt() 
+ * @p pdu, no more options should be added after coap_write_block_opt()
  * has returned.
  *
  * @param block      The block structure to use. On return, this object
@@ -120,7 +124,7 @@ int coap_get_block(coap_pdu_t *pdu, unsigned short type, coap_block_t *block);
 int coap_write_block_opt(coap_block_t *block, unsigned short type, coap_pdu_t *pdu,
         size_t data_length);
 
-/** 
+/**
  * Adds the @p block_num block of size 1 << (@p block_szx + 4) from
  * source @p data to @p pdu.
  *

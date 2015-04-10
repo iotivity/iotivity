@@ -3,7 +3,7 @@
  * Copyright (C) 2010,2011 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -16,7 +16,7 @@
 
 str *coap_new_string(size_t size)
 {
-    str *s = coap_malloc(sizeof(str) + size + 1);
+    str *s = (str *) coap_malloc(sizeof(str) + size + 1);
     if (!s)
     {
 #ifndef NDEBUG

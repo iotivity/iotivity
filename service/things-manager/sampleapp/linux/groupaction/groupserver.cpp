@@ -469,12 +469,22 @@ int main()
                 {
                     OCPlatform::findResource("",
                             "coap://224.0.1.187/oc/core?rt=a.collection",
+                            OC_ETHERNET,
+                            &foundResource);
+                    OCPlatform::findResource("",
+                            "coap://224.0.1.187/oc/core?rt=a.collection",
+                            OC_WIFI,
                             &foundResource);
                 }
                 else if (n == 0)
                 {
                     OCPlatform::findResource("",
                             "coap://224.0.1.187/oc/core?rt=core.bookmark",
+                            OC_ETHERNET,
+                            &foundResource);
+                    OCPlatform::findResource("",
+                            "coap://224.0.1.187/oc/core?rt=core.bookmark",
+                            OC_WIFI,
                             &foundResource);
                 }
                 else if (n == 1)

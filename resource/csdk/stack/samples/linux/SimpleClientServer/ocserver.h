@@ -35,16 +35,18 @@
 //-----------------------------------------------------------------------------
 
 /* Structure to represent a Light resource */
-typedef struct LIGHTRESOURCE{
+typedef struct LIGHTRESOURCE
+{
     OCResourceHandle handle;
     bool state;
     int power;
 } LightResource;
 
 /* Structure to represent the observers */
-typedef struct {
+typedef struct
+{
     OCObservationId observationId;
-    bool            valid;
+    bool valid;
     OCResourceHandle resourceHandle;
 } Observers;
 
@@ -115,3 +117,4 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
 
 
 #endif
+

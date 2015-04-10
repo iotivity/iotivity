@@ -74,8 +74,9 @@ public:
 
 public:
     /// Constructor
-    RoomResource(): m_roomName("John's Room"), m_lightState(false),
-                    m_lightColor(0), m_fanState(false), m_fanSpeed(0)
+    RoomResource(): m_roomName("John's Room"), m_roomHandle(nullptr), m_lightState(false),
+                    m_lightColor(0),m_lightHandle(nullptr),  m_fanState(false), m_fanSpeed(0),
+                    m_fanHandle(nullptr)
     {
         m_lightUri = "/a/light"; // URI of the resource
         m_lightTypes.push_back("core.light"); // resource type name. In this case, it is light
@@ -592,7 +593,7 @@ int main(int argc, char* argv[])
         cv.wait(lock);
 
     }
-    catch(OCException e)
+    catch(OCException &e)
     {
         std::cout << "Exception in main: " << e.what();
     }
@@ -602,3 +603,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

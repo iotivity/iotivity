@@ -52,7 +52,7 @@ bool isSlowResponse = false;
 // Forward declaring the entityHandler
 
 /// This class represents a single resource named 'lightResource'. This resource has
-/// two simple properties named 'state' and 'power'
+/// one simple attribute, power
 
 class LightResource
 {
@@ -322,9 +322,9 @@ int main(int argc, char* argv[])
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
     }
-    catch(OCException e)
+    catch(OCException& e)
     {
-        //log(e.what());
+       oclog() << "Exception in main: "<< e.what();
     }
 
     // No explicit call to stop the platform.
@@ -332,3 +332,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

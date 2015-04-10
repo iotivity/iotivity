@@ -53,18 +53,10 @@ OCStackApplicationResult applicationDiscoverCB(
 }
 
 int main() {
-    uint8_t addr[20];
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
-    OCDoHandle handle;
-
-    /*Get Ip address on defined interface and initialize coap on it with random port number
-     * this port number will be used as a source port in all coap communications*/
-    OCGetInterfaceAddress(ifname, sizeof(ifname), AF_INET, addr, sizeof(addr));
     OC_LOG_V(INFO, TAG, "Starting occlient on address %s",addr);
 
     /* Initialize OCStack*/
-    if (OCInit((char *) addr, port, OC_CLIENT) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
@@ -72,7 +64,7 @@ int main() {
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
     strcpy(szQueryUri, OC_EXPLICIT_DEVICE_DISCOVERY_URI);
-    if (OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS,
+    if (OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS,
             0, 0, 0) != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, "OCStack resource error");
         return 0;
@@ -97,3 +89,4 @@ int main() {
 
     return 0;
 }
+

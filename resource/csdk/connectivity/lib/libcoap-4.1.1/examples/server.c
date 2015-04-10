@@ -4,7 +4,7 @@
  * Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include <string.h>
@@ -54,7 +54,7 @@ void handle_sigint(int signum)
 }
 
 #define INDEX "This is a test server made with libcoap (see http://libcoap.sf.net)\n" \
-   	      "Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>\n\n"
+          "Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>\n\n"
 
 void hnd_get_index(coap_context_t *ctx, struct coap_resource_t *resource, coap_address_t *peer,
         coap_pdu_t *request, str *token, coap_pdu_t *response)

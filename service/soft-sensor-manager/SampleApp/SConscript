@@ -20,10 +20,10 @@ target_os = env.get('TARGET_OS')
 if target_os == 'linux' :
 	# Build linux sample app
 	SConscript('linux/SSMTesterApp/SConscript')
-	SConscript('linux/THSensorApp/SConscript')
-	SConscript('linux/THSensorApp1/SConscript')
-	SConscript('linux/HeightSensorApp/SConscript')
-	SConscript('linux/WeightSensorApp/SConscript')
+	#SConscript('linux/THSensorApp/SConscript')
+	#SConscript('linux/THSensorApp1/SConscript')
+	#SConscript('linux/HeightSensorApp/SConscript')
+	#SConscript('linux/WeightSensorApp/SConscript')
 
 
 

@@ -26,6 +26,7 @@
 #include "GroupSynchronization.h"
 
 using namespace OC;
+using namespace std;
 
 namespace OIC
 {
@@ -69,11 +70,18 @@ namespace OIC
 
         for (unsigned int i = 0; i < collectionResourceTypes.size(); ++i)
         {
-            std::string query = "coap://224.0.1.187/oc/core?rt=";
+
+            std::string query = OC_WELL_KNOWN_QUERY;
+            query.append("?rt=");
             query.append(collectionResourceTypes.at(i));
             cout << "GroupSynchronization::findGroup - " << query << endl;
 
             OCPlatform::findResource("", query,
+                    OC_ETHERNET,
+                    std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
+
+            OCPlatform::findResource("", query,
+                    OC_WIFI,
                     std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
         }
 
@@ -274,14 +282,12 @@ namespace OIC
         std::vector< std::string > resourceInterface;
         resourceInterface.push_back(DEFAULT_INTERFACE);
 
-
-#ifdef CA_INT
         OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri,
-                OC_ETHERNET | OC_WIFI, 1, resourceTypes, resourceInterface);
-#else
-        OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri, 1,
-                resourceTypes, resourceInterface);
-#endif
+                OC_ETHERNET, false, resourceTypes, resourceInterface);
+
+        // OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri,
+        //         OC_WIFI, false, resourceTypes, resourceInterface);
+
         groupSyncResourceList[type[0]] = groupSyncResource;
 
         cout << "GroupSynchronization::joinGroup : creating groupSyncResource." << endl;
@@ -453,13 +459,10 @@ OCStackResult GroupSynchronization::leaveGroup(
         resourceInterface.push_back(DEFAULT_INTERFACE);
 
         OCResource::Ptr groupSyncResource;
-#ifdef CA_INT
         groupSyncResource = OCPlatform::constructResourceObject(host, uri,
-                OC_ETHERNET | OC_WIFI, 1, resourceTypes, resourceInterface);
-#else
-        groupSyncResource = OCPlatform::constructResourceObject(host, uri, 1,
-                resourceTypes, resourceInterface);
-#endif
+                OC_ETHERNET, false, resourceTypes, resourceInterface);
+        // groupSyncResource = OCPlatform::constructResourceObject(host, uri,
+        //         OC_WIFI, false, resourceTypes, resourceInterface);
 
         // making representation to leave group
         std::string method = "leaveGroup";
@@ -697,6 +700,12 @@ OCStackResult GroupSynchronization::leaveGroup(
                         resourceRequest = request;
 
                         OCPlatform::findResource("", resourceName,
+                                OC_ETHERNET,
+                                std::bind(&GroupSynchronization::onFindResource, this,
+                                        std::placeholders::_1));
+                        
+                        OCPlatform::findResource("", resourceName,
+                                OC_WIFI,
                                 std::bind(&GroupSynchronization::onFindResource, this,
                                         std::placeholders::_1));
                     }
