@@ -38,13 +38,15 @@ extern "C" {
 #endif
 extern char * BinToAclJSON(const OicSecAcl_t * acl);
 extern OicSecAcl_t * JSONToAclBin(const char * jsonStr);
+char* ReadFile(const char* filename);
 #ifdef __cplusplus
 }
 #endif
 
-char ACL1_JSON_FILE_NAME[] = "oic_unittest_acl1.json";
+const char* JSON_FILE_NAME = "oic_unittest.json";
 
-char* ReadFile(const char* filename) {
+char* ReadFile(const char* filename)
+{
 
     FILE *fp = NULL;
     char *data = NULL;
@@ -101,30 +103,35 @@ TEST(ACLResourceTest, InitACLResource)
 
 TEST(ACLResourceTest, JSONMarshalliingTests)
 {
-    char *jsonStr1 = ReadFile(ACL1_JSON_FILE_NAME);
-    EXPECT_TRUE(NULL != jsonStr1);
-
-    cJSON_Minify(jsonStr1);
-    /* Workaround : cJSON_Minify does not remove all the unwanted characters
-       from the end. Here is an attempt to remove those characters */
-    int len = strlen(jsonStr1);
-    while(len > 0)
+    char *jsonStr1 = ReadFile(JSON_FILE_NAME);
+    if (NULL != jsonStr1)
     {
-        if (jsonStr1[--len] == '}')
+        cJSON_Minify(jsonStr1);
+        /* Workaround : cJSON_Minify does not remove all the unwanted characters
+         from the end. Here is an attempt to remove those characters */
+        int len = strlen(jsonStr1);
+        while (len > 0)
         {
-            break;
+            if (jsonStr1[--len] == '}')
+            {
+                break;
+            }
         }
+        jsonStr1[len + 1] = 0;
+
+        OicSecAcl_t * acl = JSONToAclBin(jsonStr1);
+        EXPECT_TRUE(NULL != acl);
+
+        char * jsonStr2 = BinToAclJSON(acl);
+        EXPECT_STREQ(jsonStr1, jsonStr2);
+
+        OCFree(jsonStr1);
+        OCFree(jsonStr2);
     }
-    jsonStr1[len + 1] = 0;
-
-    OicSecAcl_t * acl = JSONToAclBin(jsonStr1);
-    EXPECT_TRUE(NULL != acl);
-
-    char * jsonStr2 = BinToAclJSON(acl);
-    EXPECT_STREQ(jsonStr1, jsonStr2);
-
-    OCFree(jsonStr1);
-    OCFree(jsonStr2);
+    else
+    {
+        printf("Please copy %s into unittest folder\n", JSON_FILE_NAME);
+    }
 }
 
 

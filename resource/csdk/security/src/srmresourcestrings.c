@@ -18,17 +18,26 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
-
+const char * OIC_MI_DEF = "oic.mi.def";
+//ACL
 const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
 const char * OIC_JSON_ACL_NAME = "acl";
-
 
 const char * OIC_JSON_SUBJECT_NAME = "sub";
 const char * OIC_JSON_RESOURCES_NAME = "rsrc";
 const char * OIC_JSON_PERMISSION_NAME = "perms";
 const char * OIC_JSON_OWNERS_NAME = "ownrs";
 
-
+//Pstat
+const char * OIC_RSRC_TYPE_SEC_PSTAT = "oic.sec.pstat";
+const char * OIC_RSRC_PSTAT_URI =  "/oic/sec/pstat";
+const char * OIC_JSON_PSTAT_NAME = "pstat";
+const char * OIC_JSON_ISOP_NAME = "isop";
+const char * OIC_JSON_COMMIT_HASH_NAME = "commithash";
+const char * OIC_JSON_DEVICE_ID_NAME = "deviceid";
+const char * OIC_JSON_CM_NAME = "cm";
+const char * OIC_JSON_TM_NAME = "tm";
+const char * OIC_JSON_OM_NAME = "om";
+const char * OIC_JSON_SMS_NAME = "sms";

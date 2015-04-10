@@ -21,6 +21,7 @@
 #include "resourcemanager.h"
 #include "securevirtualresourcetypes.h"
 #include "aclresource.h"
+#include "pstatresource.h"
 #include "ocmalloc.h"
 #include "logger.h"
 #include "utlist.h"
@@ -36,7 +37,7 @@
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult SendSRMResponse(OCEntityHandlerRequest *ehRequest, char *rspPayload)
+OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest, const char *rspPayload)
 {
     OCEntityHandlerResponse response;
     if (ehRequest)
@@ -93,9 +94,12 @@ OCStackResult InitSecureResources( )
     OCStackResult ret;
 
     ret = InitACLResource();
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitPstatResource();
+    }
     /*
      * TODO : Update this method for all other resources
-     * InitPstatResource();
      * InitCredentialResource();
      */
 

@@ -18,37 +18,35 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef IOTVT_SRM_RM_H
-#define IOTVT_SRM_RM_H
+#ifndef IOTVT_SRM_PSTATR_H
+#define IOTVT_SRM_PSTATR_H
 
-#include <stdlib.h>
-#include "ocstack.h"
-#include "securevirtualresourcetypes.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
- * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * Initialize Pstat resource by loading data from persistent storage.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InitSecureResources();
+OCStackResult InitPstatResource();
 
 /**
- * Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * Perform cleanup for Pstat resources.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @retval
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_ERROR           - stack process error
+ *     OC_STACK_NO_RESOURCE     - resource not found
+ *     OC_STACK_INVALID_PARAM   - invalid param
  */
-OCStackResult DestroySecureResources();
+OCStackResult DeInitPstatResource();
 
-/**
- * This method is used by all secure resource modules to send responses to REST queries.
- *
- * @param ehRequest - pointer to entity handler request data structure.
- * @param rspPayload - response payload in JSON.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
-OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest, const char *rspPayload);
+#ifdef __cplusplus
+}
+#endif
 
-#endif //IOTVT_SRM_RM_H
+#endif //IOTVT_SRM_PSTATR_H
 
 
