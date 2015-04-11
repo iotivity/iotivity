@@ -23,7 +23,7 @@
 
 static ISoftSensorManager       *g_pSoftSensorManager = NULL;
 
-SSMRESULT CreateQueryEngine(OUT IQueryEngine **ppQueryEngine)
+SSMRESULT CreateQueryEngine(IQueryEngine **ppQueryEngine)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -34,7 +34,7 @@ CLEANUP:
     return res;
 }
 
-unsigned long ReleaseQueryEngine(IN IQueryEngine *pQueryEngine)
+unsigned long ReleaseQueryEngine(IQueryEngine *pQueryEngine)
 {
     if (pQueryEngine == NULL)
     {
@@ -49,7 +49,7 @@ unsigned long ReleaseQueryEngine(IN IQueryEngine *pQueryEngine)
     return g_pSoftSensorManager->releaseQueryEngine(pQueryEngine);
 }
 
-SSMRESULT InitializeSSMCore(IN std::string xmlDescription)
+SSMRESULT InitializeSSMCore(std::string xmlDescription)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -154,7 +154,7 @@ const char *GetSSMError(SSMRESULT res)
     return msg;
 }
 
-SSMRESULT GetInstalledModelList(OUT std::vector<ISSMResource *> *pList)
+SSMRESULT GetInstalledModelList(std::vector<ISSMResource *> *pList)
 {
     SSMRESULT res = SSM_E_FAIL;
 

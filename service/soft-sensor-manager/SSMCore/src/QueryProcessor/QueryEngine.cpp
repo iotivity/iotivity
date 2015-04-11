@@ -60,8 +60,8 @@ void CQueryEngine::finalRelease()
     m_mtxQueries.unlock();
 }
 
-SSMRESULT CQueryEngine::processQueryResult(IN int userTriggerId,
-        IN std::vector<result_model> *result)
+SSMRESULT CQueryEngine::processQueryResult(int userTriggerId,
+        std::vector<result_model> *result)
 {
     SSMRESULT           res = SSM_E_FAIL;
     ModelPropertyVec    modelData;
@@ -174,8 +174,8 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CQueryEngine::validateQueryResult(IN IConditionedQueryResult *pConditionedQueryResult,
-        OUT std::vector<result_model> *resultData)
+SSMRESULT CQueryEngine::validateQueryResult(IConditionedQueryResult *pConditionedQueryResult,
+        std::vector<result_model> *resultData)
 {
     SSMRESULT               res = SSM_E_FAIL;
     IContextModel           *pContextModel = NULL;
@@ -217,8 +217,8 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CQueryEngine::onConditionedQueryEvent(IN int userTriggerId,
-        IN IConditionedQueryResult *pConditionedQueryResult)
+SSMRESULT CQueryEngine::onConditionedQueryEvent(int userTriggerId,
+        IConditionedQueryResult *pConditionedQueryResult)
 {
     SSMRESULT                   res = SSM_E_FAIL;
     std::vector<result_model>   result;
@@ -276,7 +276,7 @@ void CQueryEngine::onTerminate(void *pArg)
     SAFE_ARRAY_DELETE(pData);
 }
 
-SSMRESULT CQueryEngine::executeContextQuery(IN std::string contextQuery, OUT int *cqid)
+SSMRESULT CQueryEngine::executeContextQuery(std::string contextQuery, int *cqid)
 {
     SSMRESULT               res = SSM_E_FAIL;
     IConditionedQuery       *pConditionedQuery = NULL;
@@ -370,13 +370,13 @@ CLEANUP:
 }
 
 //TODO: Registration with multiple instance support
-SSMRESULT CQueryEngine::registerQueryEvent(IN IQueryEngineEvent *pQueryEngineEvent)
+SSMRESULT CQueryEngine::registerQueryEvent(IQueryEngineEvent *pQueryEngineEvent)
 {
     m_pQueryEngineEvent = pQueryEngineEvent;
     return SSM_S_OK;
 }
 
-SSMRESULT CQueryEngine::unregisterQueryEvent(IN IQueryEngineEvent *pQueryEngineEvent)
+SSMRESULT CQueryEngine::unregisterQueryEvent(IQueryEngineEvent *pQueryEngineEvent)
 {
     if (m_pQueryEngineEvent == pQueryEngineEvent)
     {
@@ -387,7 +387,7 @@ SSMRESULT CQueryEngine::unregisterQueryEvent(IN IQueryEngineEvent *pQueryEngineE
     return SSM_E_FAIL;
 }
 
-SSMRESULT CQueryEngine::killContextQuery(IN int cqid)
+SSMRESULT CQueryEngine::killContextQuery(int cqid)
 {
     SSMRESULT res = SSM_E_FAIL;
 

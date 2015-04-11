@@ -42,7 +42,7 @@ void CResourceFinder::finalRelease()
 {
 }
 
-SSMRESULT CResourceFinder::registerResourceFinderEvent(IN IResourceFinderEvent *pEvent)
+SSMRESULT CResourceFinder::registerResourceFinderEvent(IResourceFinderEvent *pEvent)
 {
     m_pResourceFinderEvent = pEvent;
     return SSM_S_OK;
@@ -179,17 +179,17 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CResourceFinder::startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent)
+SSMRESULT CResourceFinder::startObserveResource(ISSMResource *pSensor, IEvent *pEvent)
 {
     return m_mapResourceHandler[pSensor->name]->startObserve(pEvent);
 }
 
-SSMRESULT CResourceFinder::stopObserveResource(IN ISSMResource *pSensor)
+SSMRESULT CResourceFinder::stopObserveResource(ISSMResource *pSensor)
 {
     return m_mapResourceHandler[pSensor->name]->stopObserve();
 }
 
-void CResourceFinder::onExecute(IN void *pArg)
+void CResourceFinder::onExecute(void *pArg)
 {
     SSMRESULT res = SSM_E_FAIL;
     OCStackResult ret = OC_STACK_ERROR;
@@ -278,7 +278,7 @@ CLEANUP:
     ;
 }
 
-void CResourceFinder::onTerminate(IN void *pArg)
+void CResourceFinder::onTerminate(void *pArg)
 {
     std::shared_ptr< OC::OCResource > *pResource = NULL;
     intptr_t *pMessage = (intptr_t *)pArg;

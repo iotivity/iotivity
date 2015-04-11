@@ -50,18 +50,18 @@ class CResourceFinder: public CObjectRoot< CObjectMultiThreadModel >,
         SSMRESULT finalConstruct();
         void finalRelease();
 
-        SSMRESULT registerResourceFinderEvent(IN IResourceFinderEvent *pEvent);
+        SSMRESULT registerResourceFinderEvent(IResourceFinderEvent *pEvent);
         void onResourceFound(std::shared_ptr< OC::OCResource > resource);
         void presenceHandler(OCStackResult result, const unsigned int nonce,
                              const std::string &hostAddress);
         SSMRESULT startResourceFinder();
         SSMRESULT stopResourceFinder();
 
-        SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent);
-        SSMRESULT stopObserveResource(IN ISSMResource *pSensor);
+        SSMRESULT startObserveResource(ISSMResource *pSensor, IEvent *pEvent);
+        SSMRESULT stopObserveResource(ISSMResource *pSensor);
 
-        void onExecute(IN void *pArg);
-        void onTerminate(IN void *pArg);
+        void onExecute(void *pArg);
+        void onTerminate(void *pArg);
 
     private:
         class OICResourceHandler
@@ -76,7 +76,7 @@ class CResourceFinder: public CObjectRoot< CObjectMultiThreadModel >,
                 }
 
                 SSMRESULT initHandler(std::shared_ptr< OC::OCResource > resource,
-                                      IN IThreadClient *pThreadClient)
+                                      IThreadClient *pThreadClient)
                 {
                     SSMRESULT res = SSM_E_FAIL;
 

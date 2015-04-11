@@ -86,8 +86,8 @@ class CContextRepository :
         * @exception
         * @see
         */
-        SSMRESULT initRepository(IN std::string name, IN std::string type, IN std::string pathSoftSensors,
-                                 IN std::string pathDescription);
+        SSMRESULT initRepository(std::string name, std::string type, std::string pathSoftSensors,
+                                 std::string pathDescription);
 
         /**
         * @fn           getSoftSensorList
@@ -107,7 +107,7 @@ class CContextRepository :
         * @exception
         * @see
         */
-        SSMRESULT getSoftSensorList(OUT std::vector<ISSMResource *> *pSoftSensorList);
+        SSMRESULT getSoftSensorList(std::vector<ISSMResource *> *pSoftSensorList);
 
         /**
         * @fn           getPrimitiveSensorList
@@ -127,27 +127,27 @@ class CContextRepository :
         * @exception
         * @see
         */
-        SSMRESULT getPrimitiveSensorList(OUT std::vector<ISSMResource *> *pPrimitiveSensorList);
+        SSMRESULT getPrimitiveSensorList(std::vector<ISSMResource *> *pPrimitiveSensorList);
 
-        SSMRESULT registerResourceFinderEvent(IN IResourceEvent *pResourceEvent);
+        SSMRESULT registerResourceFinderEvent(IResourceEvent *pResourceEvent);
         SSMRESULT startResourceFinder();
         SSMRESULT stopResourceFinder();
-        SSMRESULT onResourceFound(IN ISSMResource *pSensor);
-        SSMRESULT onResourceLost(IN ISSMResource *pSensor);
+        SSMRESULT onResourceFound(ISSMResource *pSensor);
+        SSMRESULT onResourceLost(ISSMResource *pSensor);
 
-        SSMRESULT startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent);
-        SSMRESULT stopObserveResource(IN ISSMResource *pSensor);
+        SSMRESULT startObserveResource(ISSMResource *pSensor, IEvent *pEvent);
+        SSMRESULT stopObserveResource(ISSMResource *pSensor);
 
-        SSMRESULT loadSoftSensor(IN std::string softSensorName, IN ICtxDelegate *pDelegate,
-                                 OUT void **hSoftSensor);
-        SSMRESULT unloadSoftSensor(IN void *hSoftSensor);
+        SSMRESULT loadSoftSensor(std::string softSensorName, ICtxDelegate *pDelegate,
+                                 void **hSoftSensor);
+        SSMRESULT unloadSoftSensor(void *hSoftSensor);
 
     private:
-        SSMRESULT makeSSMResourceListForDictionaryData(IN std::vector<DictionaryData> dataList,
-                OUT std::vector<ISSMResource *> *pList) ;
-        SSMRESULT loadXMLFromFile(IN std::string descriptionFilePath,
-                                  IN std::vector<DictionaryData> *dataList);
-        SSMRESULT loadXMLFromString(IN char *xmlData, IN std::vector<DictionaryData> *dataList);
-        SSMRESULT getCurrentPath(OUT std::string *path);
+        SSMRESULT makeSSMResourceListForDictionaryData(std::vector<DictionaryData> dataList,
+                std::vector<ISSMResource *> *pList) ;
+        SSMRESULT loadXMLFromFile(std::string descriptionFilePath,
+                                  std::vector<DictionaryData> *dataList);
+        SSMRESULT loadXMLFromString(char *xmlData, std::vector<DictionaryData> *dataList);
+        SSMRESULT getCurrentPath(std::string *path);
 };
 #endif

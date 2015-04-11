@@ -78,7 +78,7 @@ class CCQLParser
         * @exception
         * @see
         */
-        bool parse(IN std::string input, OUT Token *root);
+        bool parse(std::string input, Token *root);
 
         /**
         * @fn tolower
@@ -90,7 +90,7 @@ class CCQLParser
         * @exception
         * @see
         */
-        static std::string tolower(IN std::string str);
+        static std::string tolower(std::string str);
 
         /**
         * @fn check_Query_grammer
@@ -102,7 +102,7 @@ class CCQLParser
         * @exception
         * @see
         */
-        bool check_grammer(IN Token *token);
+        bool check_grammer(Token *token);
 
     private:
         /**
@@ -115,7 +115,7 @@ class CCQLParser
         * @exception
         * @see
         */
-        std::vector<std::string> tokenize(IN const std::string &input);
+        std::vector<std::string> tokenize(const std::string &input);
 
         /**
         * @fn getTokens
@@ -128,8 +128,8 @@ class CCQLParser
         * @exception
         * @see
         */
-        static std::vector<std::string> getTokens(IN const std::string &str,
-                IN const std::string &delimiters = " ");
+        static std::vector<std::string> getTokens(const std::string &str,
+                const std::string &delimiters = " ");
 
         /**
         * @fn check_index
@@ -142,7 +142,7 @@ class CCQLParser
         * @exception
         * @see
         */
-        void check_index(IN std::string input, OUT Token *token);
+        void check_index(std::string input, Token *token);
 
         /**
         * @fn split
@@ -158,8 +158,8 @@ class CCQLParser
         * @exception
         * @see
         */
-        bool split(IN std::string input, IN Token *root, IN bool flag, IN std::string arg1 = "",
-                   IN std::string arg2 = "");
+        bool split(std::string input, Token *root, bool flag, std::string arg1 = "",
+                   std::string arg2 = "");
 
         /**
         * @fn check_number
@@ -171,7 +171,7 @@ class CCQLParser
         * @exception
         * @see
         */
-        int check_number(IN std::string &str);
+        int check_number(std::string &str);
 
         /**
         * @fn check_Predicate
@@ -183,7 +183,7 @@ class CCQLParser
         * @exception
         * @see
         */
-        std::string check_Predicate(IN std::string input);
+        std::string check_Predicate(std::string input);
 };
 
 #endif /*_CQLParser_H_*/

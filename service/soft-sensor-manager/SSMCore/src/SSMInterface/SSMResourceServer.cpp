@@ -39,7 +39,7 @@ class CQueryEngineEvent: public IQueryEngineEvent
             m_hSSMResource = resourceHandle;
         }
 
-        SSMRESULT onQueryEngineEvent(IN int cqid, IN IDataReader *pResult)
+        SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult)
         {
             int dataCount = 0;
             IModelData *pModelData = NULL;

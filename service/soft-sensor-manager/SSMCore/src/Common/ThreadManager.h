@@ -431,7 +431,7 @@ static const OID OID_IThreadPool = { 0x53855605, 0xb2a0, 0x4a31, { 0xa2, 0x60, 0
 class IThreadPool : public IBase
 {
     public:
-        virtual SSMRESULT createWorkerThread(OUT IWorkerThread **ppWorkerThread) = 0;
+        virtual SSMRESULT createWorkerThread(IWorkerThread **ppWorkerThread) = 0;
         virtual SSMRESULT destroyThreadPool() = 0;
 };
 
@@ -469,7 +469,7 @@ class CThreadPool :
             return SSM_E_NOINTERFACE;
         }
 
-        SSMRESULT createWorkerThread(OUT IWorkerThread **ppWorkerThread);
+        SSMRESULT createWorkerThread(IWorkerThread **ppWorkerThread);
 
         SSMRESULT destroyThreadPool();
 };

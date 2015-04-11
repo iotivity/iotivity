@@ -65,7 +65,7 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CContextRepository::registerResourceFinderEvent(IN IResourceEvent *pResourceEvent)
+SSMRESULT CContextRepository::registerResourceFinderEvent(IResourceEvent *pResourceEvent)
 {
     m_resourceEvents.push_back(pResourceEvent);
     return SSM_S_OK;
@@ -75,8 +75,8 @@ void CContextRepository::finalRelease()
 {
 }
 
-SSMRESULT CContextRepository::initRepository(IN std::string name, IN std::string type,
-        IN std::string pathSoftSensors, IN std::string pathDescription)
+SSMRESULT CContextRepository::initRepository(std::string name, std::string type,
+        std::string pathSoftSensors, std::string pathDescription)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -243,7 +243,7 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CContextRepository::getSoftSensorList(OUT std::vector<ISSMResource *> *pSoftSensorList)
+SSMRESULT CContextRepository::getSoftSensorList(std::vector<ISSMResource *> *pSoftSensorList)
 {
     for (size_t i = 0; i < m_lstSoftSensor.size(); i++)
     {
@@ -253,7 +253,7 @@ SSMRESULT CContextRepository::getSoftSensorList(OUT std::vector<ISSMResource *> 
     return SSM_S_OK;
 }
 
-SSMRESULT CContextRepository::getPrimitiveSensorList(OUT std::vector<ISSMResource *>
+SSMRESULT CContextRepository::getPrimitiveSensorList(std::vector<ISSMResource *>
         *pPrimitiveSensorList)
 {
     for (size_t i = 0; i < m_lstPrimitiveSensor.size(); i++)
@@ -264,7 +264,7 @@ SSMRESULT CContextRepository::getPrimitiveSensorList(OUT std::vector<ISSMResourc
     return SSM_S_OK;
 }
 
-SSMRESULT CContextRepository::onResourceFound(IN ISSMResource *pSensor)
+SSMRESULT CContextRepository::onResourceFound(ISSMResource *pSensor)
 {
     m_lstPrimitiveSensor.push_back(pSensor);
 
@@ -276,7 +276,7 @@ SSMRESULT CContextRepository::onResourceFound(IN ISSMResource *pSensor)
     return SSM_S_OK;
 }
 
-SSMRESULT CContextRepository::onResourceLost(IN ISSMResource *pSensor)
+SSMRESULT CContextRepository::onResourceLost(ISSMResource *pSensor)
 {
     std::vector<ISSMResource *>::iterator    itor;
     itor = std::find(m_lstPrimitiveSensor.begin(), m_lstPrimitiveSensor.end(), pSensor);
@@ -290,12 +290,12 @@ SSMRESULT CContextRepository::onResourceLost(IN ISSMResource *pSensor)
     return SSM_E_FAIL;
 }
 
-SSMRESULT CContextRepository::startObserveResource(IN ISSMResource *pSensor, IN IEvent *pEvent)
+SSMRESULT CContextRepository::startObserveResource(ISSMResource *pSensor, IEvent *pEvent)
 {
     return m_resourceFinder->startObserveResource(pSensor, pEvent);
 }
 
-SSMRESULT CContextRepository::stopObserveResource(IN ISSMResource *pSensor)
+SSMRESULT CContextRepository::stopObserveResource(ISSMResource *pSensor)
 {
     return m_resourceFinder->stopObserveResource(pSensor);
 }
@@ -338,7 +338,7 @@ SSMRESULT CContextRepository::loadSoftSensor(std::string softSensorName, ICtxDel
     std::stringstream   sstream;
     SSMRESULT           res = SSM_E_FAIL;
 
-    typedef void(*InitContext)(IN ICtxDelegate *);
+    typedef void(*InitContext)(ICtxDelegate *);
     InitContext InitializeContextFunction = NULL;
 
     // load dll(so)

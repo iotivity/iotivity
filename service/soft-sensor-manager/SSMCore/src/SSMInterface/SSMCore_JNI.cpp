@@ -98,7 +98,7 @@ class QueryEngineEventReceiver
             m_objQueryEngineEvent = objQueryEngineEvent;
         }
 
-        SSMRESULT onQueryEngineEvent(IN int cqid, IN IDataReader *pResult)
+        SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult)
         {
             JNIEnv *env;
             g_JVM->GetEnv((void **) &env, JNI_VERSION_1_6);

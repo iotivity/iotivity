@@ -91,7 +91,7 @@ class IBase
         * @exception
         * @see
         */
-        virtual SSMRESULT queryInterface(IN const OID &interfaceID, OUT IBase **ppObject) = 0;
+        virtual SSMRESULT queryInterface(const OID &interfaceID, IBase **ppObject) = 0;
 
         /**
         * @fn     addRef
@@ -393,7 +393,7 @@ class CObjectPtr
 * @see
 */
 template <class T>
-SSMRESULT CreateNewObject(IN const OID &objectID, OUT IBase **ppObject)
+SSMRESULT CreateNewObject(const OID &objectID, IBase **ppObject)
 {
     SSMRESULT res = SSM_E_OUTOFMEMORY;
 

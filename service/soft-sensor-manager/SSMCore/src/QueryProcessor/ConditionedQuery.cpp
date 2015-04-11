@@ -55,22 +55,22 @@ void CConditionedQuery::finalRelease()
     }
 }
 
-SSMRESULT CConditionedQuery::create(IN IContextModel::ActivationType activationType,
-                                    IN int totalConditionsCount)
+SSMRESULT CConditionedQuery::create(IContextModel::ActivationType activationType,
+                                    int totalConditionsCount)
 {
     m_activationType = activationType;
     m_untrackedConditionsCount = totalConditionsCount;
     return SSM_S_OK;
 }
 
-SSMRESULT CConditionedQuery::registerQueryConditionEvent(IN IConditionedQueryEvent
+SSMRESULT CConditionedQuery::registerQueryConditionEvent(IConditionedQueryEvent
         *pConditionedQueryEvent)
 {
     m_conditionedQueryEvent = pConditionedQueryEvent;
     return SSM_S_OK;
 }
 
-SSMRESULT CConditionedQuery::onConditionedModelTriggered(IN int triggerId)
+SSMRESULT CConditionedQuery::onConditionedModelTriggered(int triggerId)
 {
     SSMRESULT res = SSM_E_FAIL;
     int         evaluatedConditions = m_conditionedModels.size();
@@ -95,7 +95,7 @@ CLEANUP:
     return res;
 }
 
-void CConditionedQuery::onExecute(IN void *pArg)
+void CConditionedQuery::onExecute(void *pArg)
 {
     if (m_conditionedQueryEvent)
     {
@@ -103,13 +103,13 @@ void CConditionedQuery::onExecute(IN void *pArg)
     }
 }
 
-void CConditionedQuery::onTerminate(IN void *pArg)
+void CConditionedQuery::onTerminate(void *pArg)
 {
     IConditionedQueryResult *pResult = (IConditionedQueryResult *)pArg;
     SAFE_RELEASE(pResult);
 }
 
-SSMRESULT CConditionedQuery::registerConditionedModel(IN IConditionedModel *pConditionedModel)
+SSMRESULT CConditionedQuery::registerConditionedModel(IConditionedModel *pConditionedModel)
 {
     SSMRESULT           res = SSM_E_FAIL;
     IContextModel       *pContextModel = NULL;
@@ -151,7 +151,7 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CConditionedQuery::activateTriggers(IN int userTriggerId)
+SSMRESULT CConditionedQuery::activateTriggers(int userTriggerId)
 {
     SSMRESULT           res = SSM_E_FAIL;
     int                 triggerId = 0;
@@ -223,7 +223,7 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CConditionedQuery::getConditionedQueryResult(OUT IConditionedQueryResult
+SSMRESULT CConditionedQuery::getConditionedQueryResult(IConditionedQueryResult
         **ppConditionedQueryResult)
 {
     SSMRESULT res = SSM_E_FAIL;

@@ -27,7 +27,7 @@ Token::Token()
     condition = ModelCondition::PREDICATE_EQ;
 }
 
-std::vector<std::string> CCQLParser::tokenize(IN const std::string &input)
+std::vector<std::string> CCQLParser::tokenize(const std::string &input)
 {
     std::vector<std::string> temp;
     temp.push_back(",");
@@ -51,7 +51,7 @@ std::vector<std::string> CCQLParser::tokenize(IN const std::string &input)
     return tokens_temp;
 }
 
-bool CCQLParser::parse(IN std::string input, OUT Token *root)
+bool CCQLParser::parse(std::string input, Token *root)
 {
     std::vector<std::string> tokens = tokenize(input);
     bool flag;//get,sub,if
@@ -223,7 +223,7 @@ bool CCQLParser::parse(IN std::string input, OUT Token *root)
     return true;
 }
 
-std::string CCQLParser::tolower(IN std::string str)
+std::string CCQLParser::tolower(std::string str)
 {
     for (unsigned int i = 0 ; i < str.size() ; i++)
     {
@@ -236,8 +236,8 @@ std::string CCQLParser::tolower(IN std::string str)
     return str;
 }
 
-std::vector<std::string> CCQLParser::getTokens(IN const std::string &str,
-        IN const std::string &delimiters)
+std::vector<std::string> CCQLParser::getTokens(const std::string &str,
+        const std::string &delimiters)
 {
     std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
     std::string::size_type pos     = str.find_first_of(delimiters, lastPos);
@@ -256,7 +256,7 @@ std::vector<std::string> CCQLParser::getTokens(IN const std::string &str,
     return tokens;
 }
 
-void CCQLParser::check_index(IN std::string input, OUT Token *token)
+void CCQLParser::check_index(std::string input, Token *token)
 {
     std::vector<std::string> tokens = getTokens(input, "[");
 
@@ -283,8 +283,8 @@ void CCQLParser::check_index(IN std::string input, OUT Token *token)
     }
 }
 
-bool CCQLParser::split(IN std::string input, IN Token *root, bool flag, IN std::string arg1,
-                       IN std::string arg2)
+bool CCQLParser::split(std::string input, Token *root, bool flag, std::string arg1,
+                       std::string arg2)
 {
     std::vector<std::string> tokens = getTokens(input, ".");
     Token *temp_token = root;
@@ -353,7 +353,7 @@ bool CCQLParser::split(IN std::string input, IN Token *root, bool flag, IN std::
     return true;
 }
 
-int CCQLParser::check_number(IN std::string &str)
+int CCQLParser::check_number(std::string &str)
 {
     int flag = 0; // 0 text /1 integer /2 real
     int dotCount = 0;
@@ -387,7 +387,7 @@ int CCQLParser::check_number(IN std::string &str)
     return flag;
 }
 
-std::string CCQLParser::check_Predicate(IN std::string input)
+std::string CCQLParser::check_Predicate(std::string input)
 {
     std::string temp = "";
     for (unsigned int i = 0 ; i < input.size() ; i++)
@@ -433,7 +433,7 @@ std::string CCQLParser::check_Predicate(IN std::string input)
     return temp;
 }
 
-bool CCQLParser::check_grammer(IN Token *token)
+bool CCQLParser::check_grammer(Token *token)
 {
     if (token->child_token.size() == 1 && tolower(token->child_token.at(0).name) == "get")
     {
