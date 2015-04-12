@@ -31,6 +31,9 @@ unittests_env.PrependUnique(CPPPATH = [
 		'../include',
 		'../oc_logger/include',
 		'../csdk/stack/include',
+		'../csdk/security/include',
+		'../csdk/stack/include/internal',
+		'../csdk/connectivity/api',
 		'../csdk/ocsocket/include',
 		'../csdk/ocrandom/include',
 		'../csdk/logger/include',
@@ -67,6 +70,7 @@ unittests = unittests_env.Program('unittests', ['ConstructResourceTest.cpp',
                                                 'OCRepresentationTest.cpp',
                                                 'OCResourceTest.cpp',
                                                 'OCExceptionTest.cpp',
+                                                'OCResourceResponseTest.cpp',
                                                 'OCHeaderOptionTest.cpp'])
 
 Alias("unittests", [unittests])

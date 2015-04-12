@@ -36,7 +36,7 @@ catest_env.PrependUnique(CPPPATH = [
                 '../../extlibs/cjson',
                 '../../../oc_logger/include',
                 '../../../../extlibs/gtest/gtest-1.7.0/include'
-                ])
+               ])
 
 tmplist = catest_env['LINKFLAGS'][:]
 if '-lpthread' in tmplist:

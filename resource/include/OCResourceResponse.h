@@ -222,7 +222,10 @@ namespace OC
         /**
         * Get error code
         */
-        int getErrorCode() const;
+        int getErrorCode() const
+        {
+            return m_errorCode;
+        }
 
         /**
          * Get the Response Representation
