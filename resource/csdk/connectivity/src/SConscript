@@ -55,7 +55,7 @@ if ca_os == 'arduino':
 		ca_path + 'caconnectivitymanager_singlethread.c',
 		ca_path + 'cainterfacecontroller_singlethread.c',
 		ca_path + 'camessagehandler_singlethread.c',
-		ca_path + 'canetworkconfigurator_singlethread.c',
+		ca_path + 'canetworkconfigurator.c',
 		ca_path + 'caprotocolmessage.c',
 		ca_path + 'caremotehandler.c',
 		ca_path + 'caretransmission_singlethread.c',
