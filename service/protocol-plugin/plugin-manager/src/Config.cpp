@@ -34,7 +34,16 @@ Config *Config::s_configinstance = NULL;
 
 Config::Config()
 {
+/**
+ * For Tizen Platform, specifiy the absolute location of config file. It is required for
+ * Tizen 2.3 EFL App to work.
+ */
+#ifdef __TIZEN__
+    if (loadConfigFile("/opt/usr/apps/org.iotivity.service.ppm.ppmsampleapp/lib/pluginmanager.xml")
+                                                                                        != PM_S_OK)
+#else
     if (loadConfigFile("./pluginmanager.xml") != PM_S_OK)
+#endif //#ifdef __TIZEN__
     {
         fprintf(stderr, "PM Configuration file is not exist current Folder.\n" );
         exit(EXIT_FAILURE);
