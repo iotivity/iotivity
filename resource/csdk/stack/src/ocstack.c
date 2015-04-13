@@ -1143,10 +1143,25 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
                             &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
                 }
             }
-            if (cbNode->callBack(cbNode->context,
-                    cbNode->handle, &response) == OC_STACK_DELETE_TRANSACTION)
+
+            if (cbNode->method == OC_REST_OBSERVE &&
+                response.sequenceNumber > OC_OFFSET_SEQUENCE_NUMBER &&
+                response.sequenceNumber <= cbNode->sequenceNumber)
             {
-                FindAndDeleteClientCB(cbNode);
+                OC_LOG_V(INFO, TAG, PCF("Received stale notification. Number :%d"),
+                                                 response.sequenceNumber);
+            }
+            else
+            {
+                OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
+                                                                        cbNode->handle,
+                                                                        &response);
+                cbNode->sequenceNumber = response.sequenceNumber;
+
+                if (appFeedback == OC_STACK_DELETE_TRANSACTION)
+                {
+                    FindAndDeleteClientCB(cbNode);
+                }
             }
 
             //Need to send ACK when the response is CON

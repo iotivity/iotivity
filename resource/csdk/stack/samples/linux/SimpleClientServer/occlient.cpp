@@ -86,7 +86,8 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-t 8  :  Discover Resources and Initiate Confirmable Get Request");
     OC_LOG(INFO, TAG, "-t 9  :  Discover Resources and Initiate Confirmable Post Request");
     OC_LOG(INFO, TAG, "-t 10 :  Discover Resources and Initiate Confirmable Delete Requests");
-    OC_LOG(INFO, TAG, "-t 11 :  Discover Resources and Initiate Confirmable Observe Requests");
+    OC_LOG(INFO, TAG, "-t 11 :  Discover Resources and Initiate Confirmable Observe Requests"\
+            " and cancel with Low QoS");
 
 #ifdef WITH_PRESENCE
     OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Nonconfirmable presence");
@@ -97,7 +98,7 @@ static void PrintUsage()
 #endif
 
     OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
-            "then cancel immediately");
+            "then cancel immediately with High QOS");
     OC_LOG(INFO, TAG, "-t 16 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
             "add  vendor specific header options");
     OC_LOG(INFO, TAG, "-t 17 :  Discover Devices");
@@ -255,7 +256,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         OC_LOG_V(INFO, TAG, "JSON = %s =============> Obs Response",
                 clientResponse->resJSONPayload);
         gNumObserveNotifies++;
-        if (gNumObserveNotifies == 3) //large number to test observing in DELETE case.
+        if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
         {
             if(TEST_CASE == TEST_OBS_REQ_NON || TEST_CASE == TEST_OBS_REQ_CON)
             {
