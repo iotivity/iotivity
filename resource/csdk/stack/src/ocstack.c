@@ -327,6 +327,14 @@ static OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t
 static OCStackResult CAToOCStackResult(CAResponseResult_t caCode);
 
 /**
+ * Convert OCStackResult to CAResponseResult_t.
+ *
+ * @param caCode OCStackResult code.
+ * @return ::CA_SUCCESS on success, some other value upon failure.
+ */
+static CAResponseResult_t OCToCAStackResult(OCStackResult ocCode);
+
+/**
  * Convert OCConnectivityType to CAConnectivityType_t.
  *
  * @param ocConType OCConnectivityType input.
@@ -586,6 +594,39 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
             break;
         case CA_RETRANSMIT_TIMEOUT:
             ret = OC_STACK_COMM_ERROR;
+            break;
+        default:
+            break;
+    }
+    return ret;
+}
+
+CAResponseResult_t OCToCAStackResult(OCStackResult ocCode)
+{
+    CAResponseResult_t ret = CA_INTERNAL_SERVER_ERROR;
+
+    switch(ocCode)
+    {
+        case OC_STACK_OK:
+            ret = CA_SUCCESS;
+            break;
+        case OC_STACK_RESOURCE_CREATED:
+            ret = CA_CREATED;
+            break;
+        case OC_STACK_RESOURCE_DELETED:
+            ret = CA_DELETED;
+            break;
+        case OC_STACK_INVALID_QUERY:
+            ret = CA_BAD_REQ;
+            break;
+        case OC_STACK_INVALID_OPTION:
+            ret = CA_BAD_OPT;
+            break;
+        case OC_STACK_NO_RESOURCE:
+            ret = CA_NOT_FOUND;
+            break;
+        case OC_STACK_COMM_ERROR:
+            ret = CA_RETRANSMIT_TIMEOUT;
             break;
         default:
             break;
@@ -1397,8 +1438,11 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     }
     else if(requestResult != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("HandleStackRequests failed"));
-        SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
+        OC_LOG_V(ERROR, TAG, PCF("HandleStackRequests failed. error: %d"), requestResult);
+
+        CAResponseResult_t stackResponse = OCToCAStackResult(requestResult);
+
+        SendResponse(endPoint, requestInfo->info.messageId, stackResponse,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
@@ -1465,10 +1509,6 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
         if (result == OC_STACK_OK)
         {
             result = ProcessRequest(resHandling, resource, request);
-        }
-        else
-        {
-            result = OC_STACK_ERROR;
         }
     }
     else
