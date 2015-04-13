@@ -22,14 +22,14 @@ if target_os == 'arduino':
 	if not arduino_home:
 		print 'Creating ARDUINO_HOME for Arduino lib'
 		print '''
-	*******************************************************************************
-	*   Arduino root directory isn't set, you can set enviornment variable        *
-	*   ARDUINO_HOME or add it in command line as follows (Only set if your       *
-	*   version has fixes applied as depicted below. Press ctrl+c now if you      *
-	*   wish to manually set ARDUINO_HOME.):                                      *
-	*      # scons ARDUINO_HOME=<path to arduino root directory> ...              *
-	*******************************************************************************
-	'''
+        *******************************************************************************
+        *   Arduino root directory isn't set, you can set enviornment variable        *
+        *   ARDUINO_HOME or add it in command line as follows (Only set if your       *
+        *   version has fixes applied as depicted below. Press ctrl+c now if you      *
+        *   wish to manually set ARDUINO_HOME.):                                      *
+        *      # scons ARDUINO_HOME=<path to arduino root directory> ...              *
+        *******************************************************************************
+        '''
 		arduinolib_dir      = src_dir + '/extlibs/arduino/arduino-1.5.8'
 
 		if not os.path.exists(arduinolib_dir):

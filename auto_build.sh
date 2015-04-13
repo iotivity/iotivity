@@ -43,15 +43,12 @@ function build()
 	fi
 
 	echo "*********** Build for arduino avr *************"
-	scons TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=ETHERNET NET=Ethernet RELEASE=$3
-	scons TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=WIFI NET=Wifi RELEASE=$3
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=ETHERNET NET=Ethernet RELEASE=$3
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=WIFI NET=Wifi RELEASE=$3
 
 	echo "*********** Build for arduino arm *************"
-	scons TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=ETHERNET NET=Ethernet RELEASE=$3
-	scons TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=WIFI NET=Wifi RELEASE=$3
-
-	echo "*********** Build for arduino mega w/WiFi *************"
-	scons TARGET_OS=arduino BOARD=mega NET=Wifi ARDUINO_HOME=$2 RELEASE=$3
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=ETHERNET NET=Ethernet RELEASE=$3
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=WIFI NET=Wifi RELEASE=$3
 
 	if [ $(uname -s) = "Darwin" ]
 	then
