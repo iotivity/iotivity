@@ -68,18 +68,15 @@ JNIEXPORT jint JNICALL JNIThingsManagerSubscribeCollectionPresence
 /**
  * API for register and bind resource to group.
  *
- * @param childHandle - child resource handle. It will be filled from resource param.
  * @param resource - resource for register and bind to group. It has all data.
  * @param collectionHandle - collection resource handle. It will be added child resource.
  *
- * @return OCStackResult - return value of this API.
- *                         It returns OC_STACK_OK if success.
+ * @return childHandle - child resource handle.
  *
  * NOTE: OCStackResult is defined in ocstack.h.
  */
-JNIEXPORT jint JNICALL JNIThingsManagerBindResourceToGroup
-(JNIEnv *env, jobject interfaceObject, jobject childHandle, jobject resource,
- jobject collectionHandle);
+JNIEXPORT jobject JNICALL JNIThingsManagerBindResourceToGroup
+(JNIEnv *env, jobject interfaceObject, jobject resource, jobject collectionHandle);
 
 /**
  * API for finding a specific remote group when a resource tries to join a group.

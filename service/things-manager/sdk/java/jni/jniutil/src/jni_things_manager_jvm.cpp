@@ -104,7 +104,7 @@ static JNINativeMethod gThingsManagerMethodTable[] =
 {
     { "findCandidateResources", "(Ljava/util/Vector;I)I", (void *) JNIThingsManagerFindCandidateResource},
     { "subscribeCollectionPresence", "(Lorg/iotivity/base/OcResource;)I", (void *) JNIThingsManagerSubscribeCollectionPresence},
-    { "bindResourceToGroup", "(Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResource;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIThingsManagerBindResourceToGroup},
+    { "bindResourceToGroup", "(Lorg/iotivity/base/OcResource;Lorg/iotivity/base/OcResourceHandle;)Lorg/iotivity/base/OcResourceHandle;", (void *) JNIThingsManagerBindResourceToGroup},
     { "findGroup", "(Ljava/util/Vector;)I", (void *) JNIThingsManagerFindGroup},
     { "createGroup", "(Ljava/lang/String;)I", (void *) JNIThingsManagerCreateGroup},
     { "joinGroup", "(Ljava/lang/String;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIThingsManagerJoinGroupString},

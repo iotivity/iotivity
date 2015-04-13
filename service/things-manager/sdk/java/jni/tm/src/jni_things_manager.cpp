@@ -113,19 +113,16 @@ JNIEXPORT jint JNICALL JNIThingsManagerSubscribeCollectionPresence(JNIEnv *env,
     return ocResult;
 }
 
-JNIEXPORT jint JNICALL JNIThingsManagerBindResourceToGroup(JNIEnv *env, jobject interfaceObject,
-        jobject jChildHandle, jobject jResource,
-        jobject jCollectionHandle)
+JNIEXPORT jobject JNICALL JNIThingsManagerBindResourceToGroup(JNIEnv *env, jobject interfaceObject,
+        jobject jResource, jobject jCollectionHandle)
 {
     LOGI("JNIThingsManagerBindResourceToGroup: Enter");
 
-    if ((!jChildHandle) || (!jResource) || (!jCollectionHandle))
+    if (!jResource || !jCollectionHandle)
     {
         LOGE("JNIThingsManagerBindResourceToGroup: Invalid parameter!");
-        return OC_STACK_INVALID_PARAM;
+        return NULL;
     }
-
-    OCStackResult ocResult = OC_STACK_ERROR;
 
     std::shared_ptr<OCResource> ocResource;
     JniOcResource *jniOcResource = JniOcResource::getJniOcResourcePtr(env, jResource);
@@ -137,40 +134,49 @@ JNIEXPORT jint JNICALL JNIThingsManagerBindResourceToGroup(JNIEnv *env, jobject 
     if (NULL == ocResource.get())
     {
         LOGE("JNIThingsManagerBindResourceToGroup: Failed to get OCResource object!");
-        return ocResult;
+        return NULL;
     }
 
-    JniOcResourceHandle *jniOcChildHandle = JniOcResourceHandle::getJniOcResourceHandlePtr(env,
-                                            jChildHandle);
     JniOcResourceHandle *jniOcCollectionHandle = JniOcResourceHandle::getJniOcResourceHandlePtr(env,
             jCollectionHandle);
+    if (NULL == jniOcCollectionHandle)
+    {
+        LOGE("JNIThingsManagerBindResourceToGroup: collection handle is null!");
+        return NULL;
+    }
 
+    jobject jResourceHandle = NULL;
     try
     {
-        if (NULL == jniOcChildHandle || NULL == jniOcCollectionHandle)
-        {
-            LOGE("JNIThingsManagerBindResourceToGroup: collection handle is null!");
-            return ocResult;
-        }
-
-        OCResourceHandle ocChildHandle = jniOcChildHandle->getOCResourceHandle();
+        OCResourceHandle ocChildHandle = NULL;
         OCResourceHandle ocCollectionHandle = jniOcCollectionHandle->getOCResourceHandle();
-
-        ocResult = g_ThingsManager.bindResourceToGroup(ocChildHandle, ocResource, ocCollectionHandle);
+        OCStackResult ocResult = g_ThingsManager.bindResourceToGroup(ocChildHandle, ocResource, ocCollectionHandle);
         if (OC_STACK_OK != ocResult)
         {
             LOGE("JNIThingsManagerBindResourceToGroup: bindResourceToGroup failed!");
-            return ocResult;
+            return NULL;
+        }
+
+        // Convert OCResourceHandle to java type
+        JniOcResourceHandle* jniHandle = new JniOcResourceHandle(ocChildHandle);
+        jlong handle = reinterpret_cast<jlong>(jniHandle);
+        jResourceHandle = env->NewObject(g_cls_OcResourceHandle, g_mid_OcResourceHandle_N_ctor, handle);
+        if (env->ExceptionCheck())
+        {
+            LOGE("JNIThingsManagerBindResourceToGroup: Failed to create OcResourceHandle");
+            delete jniHandle;
+            return NULL;
         }
     }
     catch (InitializeException &e)
     {
         LOGE("JNIThingsManagerBindResourceToGroup: Exception occurred! %s, %d", e.Reason().c_str(),
              e.ReasonCode());
-        return ocResult;
+        return NULL;
     }
+
     LOGI("JNIThingsManagerBindResourceToGroup: Exit");
-    return ocResult;
+    return jResourceHandle;
 }
 
 JNIEXPORT jint JNICALL JNIThingsManagerFindGroup(JNIEnv *env, jobject interfaceObject,

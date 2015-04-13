@@ -73,20 +73,16 @@ public class ThingsManagerNativeInterface {
     /**
      * Native function for register and bind resource to group.
      *
-     * @param childHandle
-     *            - child resource handle. It will be filled from resource
-     *            param.
      * @param resource
      *            - resource for register and bind to group. It has all data.
      * @param collectionHandle
      *            - collection resource handle. It will be added child resource.
      *
-     * @return OCStackResult - return value of this API. It returns OC_STACK_OK
-     *         if success.
+     * @return OcResourceHandle - Child resource handle.
      *
      */
-    public static native int bindResourceToGroup(OcResourceHandle childHandle,
-            OcResource resource, OcResourceHandle collectionHandle);
+    public static native OcResourceHandle bindResourceToGroup(OcResource resource,
+            OcResourceHandle collectionHandle);
 
     /**
      * Native function for finding a specific remote group when a resource tries

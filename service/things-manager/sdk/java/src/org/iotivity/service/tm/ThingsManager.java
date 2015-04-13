@@ -60,7 +60,6 @@ public class ThingsManager {
 
     static {
         System.loadLibrary("gnustl_shared");
-        System.loadLibrary("oc_logger_core");
         System.loadLibrary("oc_logger");
         System.loadLibrary("coap");
         System.loadLibrary("octbstack");
@@ -399,10 +398,10 @@ public class ThingsManager {
     }
 
     /**
-     * API for getting a list of joined groups.
+     * API for getting a list of local groups.
      *
-     * @return Returns the map with the resource type of a group and group
-     *         resource handle.
+     * @return Returns the map with the group resource type and group
+     *         resource handle on successs otherwise null.
      *
      * @code
      * Sample code:
@@ -415,35 +414,26 @@ public class ThingsManager {
      *
      */
     public Map<String, OcResourceHandle> getGroupList() {
-        Map<String, OcResourceHandle> groupMap = null;
-        groupMap = thingsManagerInterfaceObj.getGroupList();
-        return groupMap;
+       return thingsManagerInterfaceObj.getGroupList();
     }
 
     /**
      * API for registering and binding a resource to group.
      *
-     * @param childHandle
-     *            - child resource handle. It will be filled from resource
-     *            parameter.
      * @param resource
-     *            - resource for register and bind to group. It has all data.
+     *            resource for register and bind to group. It has all data.
      * @param collectionHandle
-     *            - collection resource handle. It will be the added child
+     *            collection resource handle. It will be the added child
      *            resource.
      *
-     * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
-     *         code.
+     * @return OcResourceHandle - Child resource handle.
      *
      */
-    public OCStackResult bindResourceToGroup(OcResourceHandle childHandle,
-            OcResource resource, OcResourceHandle collectionHandle)
+    public OcResourceHandle bindResourceToGroup(OcResource resource,
+            OcResourceHandle collectionHandle)
             throws OcException {
-        OCStackResult result;
-        result = thingsManagerInterfaceObj.bindResourceToGroup(childHandle,
-                resource, collectionHandle);
-        Log.i(LOG_TAG, "bindResourceToGroup" + result.name());
-        return result;
+        return thingsManagerInterfaceObj.bindResourceToGroup(resource,
+                              collectionHandle);
     }
 
     /**

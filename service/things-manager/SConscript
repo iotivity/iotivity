@@ -1,7 +1,7 @@
 ##
 # things_manager project build script
 ##
-
+import os
 Import('env')
 
 # Add third party libraries
@@ -16,20 +16,22 @@ target_os = env.get('TARGET_OS')
 things_manager_env.AppendUnique(CPPPATH = ['../../extlibs/timer', 'sdk/inc', 'sdk/src'])
 
 if target_os not in ['windows', 'winrt']:
-	things_manager_env.AppendUnique(CXXFLAGS = ['-Wall'])
-	if target_os != 'android':
-		things_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
+    things_manager_env.AppendUnique(CXXFLAGS = ['-Wall'])
+    if target_os != 'android':
+        things_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
 if target_os == 'android':
-	things_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    things_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    things_manager_env.PrependUnique(LIBS = ['oc', 'octbstack', 'gnustl_shared', 'compatibility', 'log'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 tgm_src = env.Glob('sdk/src/*.cpp', '../../extlibs/timer/timer.c')
-tgmsdk = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
+tgmsdk_static = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
+tgmsdk_shared = things_manager_env.SharedLibrary('TGMSDKLibrary', tgm_src)
 
-things_manager_env.InstallTarget(tgmsdk, 'libTGMSDK')
+things_manager_env.InstallTarget([tgmsdk_static,tgmsdk_shared], 'libTGMSDK')
 
 #Go to build sample apps
 SConscript('sampleapp/SConscript')

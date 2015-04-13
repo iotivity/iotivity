@@ -18,6 +18,7 @@ include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../out/android/$(TARGET_ARCH_ABI)/release
+BASE_LIB_PATH := ../../../../android/android_api/base/libs/$(TARGET_ARCH_ABI)
 OIC_RESOURCE_PATH := ../../../../resource
 OIC_SERVICE_PATH := ../../../../service
 OIC_OUT_PATH := ../../../../out
@@ -30,7 +31,7 @@ LOCAL_C_INCLUDES := $(OIC_RESOURCE_PATH)/include \
                     $(OIC_RESOURCE_PATH)/android/include \
                     $(OIC_RESOURCE_PATH)/dependencies/cereal/include \
                     $(OIC_RESOURCE_PATH)/../extlibs/boost/boost_1_57_0 \
-		    		$(OIC_RESOURCE_PATH)/../extlibs/timer \
+                    $(OIC_RESOURCE_PATH)/../extlibs/timer \
                     $(OIC_SERVICE_PATH)/things-manager/sdk/inc \
                     $(OIC_SERVICE_PATH)/things-manager/sdk/src \
                     $(OIC_SERVICE_PATH)/../android/android_api/base/jni \
@@ -46,7 +47,7 @@ LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/tm/sr
 
 LOCAL_CPPFLAGS := -std=c++0x -frtti -fexceptions
 
-LOCAL_LDLIBS := -llog -L$(OIC_LIB_PATH) -locstack-jni -loc -loctbstack -lcoap -loc_logger -loc_logger_core
+LOCAL_LDLIBS := -llog -L$(BASE_LIB_PATH) -locstack-jni -L$(OIC_LIB_PATH) -loc -loctbstack -lcoap -loc_logger
 LOCAL_LDLIBS += -L$(ANDROID_NDK_HOME)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/$(TARGET_ARCH_ABI) -lgnustl_shared
 LOCAL_SHARED_LIBRARIES := android-thingsmanager
 LOCAL_STATIC_LIBRARIES := android-boost_system

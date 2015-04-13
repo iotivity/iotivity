@@ -192,7 +192,7 @@ public class ThingsManagerInterface {
         } else {
             int ordinal = ThingsManagerNativeInterface.findCandidateResources(
                     resourceTypes, waitTime);
-            result = OCStackResult.values()[ordinal];
+            result = OCStackResult.conversion(ordinal);
         }
         return result;
     }
@@ -388,46 +388,24 @@ public class ThingsManagerInterface {
      *
      */
     public Map<String, OcResourceHandle> getGroupList() {
-        Map<String, OcResourceHandle> map = null;
-        map = ThingsManagerNativeInterface.getGroupList();
-
-        Iterator<Entry<String, OcResourceHandle>> it = map.entrySet()
-                .iterator();
-        while (it.hasNext()) {
-            Entry<String, OcResourceHandle> pairs = it.next();
-            System.out.println(pairs.getKey() + " = " + pairs.getValue());
-            it.remove(); // avoids a ConcurrentModificationException
-        }
-
-        return map;
+        return ThingsManagerNativeInterface.getGroupList();
     }
 
     /**
      * API for register and bind resource to group.
      *
-     * @param childHandle
-     *            - child resource handle. It will be filled from resource
-     *            param.
      * @param resource
      *            - resource for register and bind to group. It has all data.
      * @param collectionHandle
      *            - collection resource handle. It will be added child resource.
      *
-     * @return OCStackResult - return value of this API. It returns OC_STACK_OK
-     *         if success.
-     *
-     *         NOTE: OCStackResult is defined in ocstack.h.
+     * @return OcResourceHandle - Child resource handle.
      */
-    public OCStackResult bindResourceToGroup(OcResourceHandle childHandle,
-            OcResource resource, OcResourceHandle collectionHandle)
+    public OcResourceHandle bindResourceToGroup(OcResource resource,
+            OcResourceHandle collectionHandle)
             throws OcException {
-
-        OCStackResult result;
-        int ordinal = ThingsManagerNativeInterface.bindResourceToGroup(
-                childHandle, resource, collectionHandle);
-        result = OCStackResult.conversion(ordinal);
-
-        return result;
+        return ThingsManagerNativeInterface.bindResourceToGroup(
+                resource, collectionHandle);
     }
 
     /**
