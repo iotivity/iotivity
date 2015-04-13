@@ -50,6 +50,7 @@ if env.get('SECURED') == '1':
 	env.AppendUnique(CPPPATH = [root_dir + '/external/inc/'])
 
 if ca_os == 'arduino':
+	env.AppendUnique(CPPDEFINES = ['SINGLE_THREAD'])
 	ca_common_src = [
 		ca_path + 'caconnectivitymanager_singlethread.c',
 		ca_path + 'cainterfacecontroller_singlethread.c',
@@ -60,6 +61,7 @@ if ca_os == 'arduino':
 		ca_path + 'caretransmission_singlethread.c',
 		]
 else:
+	env.AppendUnique(CPPDEFINES = ['MULTI_THREAD'])
 	ca_common_src = [
 		ca_path + 'caconnectivitymanager.c',
 		ca_path + 'cainterfacecontroller.c',
