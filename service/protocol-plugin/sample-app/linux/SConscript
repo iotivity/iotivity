@@ -20,7 +20,6 @@
 ##
 #sample-app build script
 ##
-
 Import('env')
 
 # Add third party libraries
@@ -28,7 +27,6 @@ lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 
 sample_env = lib_env.Clone()
-
 target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
@@ -42,8 +40,8 @@ if target_os not in ['windows', 'winrt']:
 
 sample_env.AppendUnique(LIBS = ['pthread'])
 sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack',
-								'connectivity_abstraction', 'coap',
-								'ppm', 'pmimpl', 'dl'])
+                                'connectivity_abstraction', 'coap',
+                                'ppm', 'pmimpl', 'dl'])
 
 if env.get('SECURED') == '1':
     sample_env.AppendUnique(LIBS = ['tinydtls'])
@@ -62,5 +60,3 @@ mqttclient = sample_env.Program('mqtt/mqttclient', 'mqtt/mqttclient.cpp')
 
 Alias('mqttclient', mqttclient)
 env.AppendTarget('mqttclient')
-
-
