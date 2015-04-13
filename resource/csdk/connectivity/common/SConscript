@@ -17,7 +17,14 @@ ca_common_src_path = ca_common_path + 'src/'
 env.AppendUnique(CPPPATH = [
 	'common/inc/',
 	])
-
+	
+if ca_os == 'android':
+	main_dir  = Dir('.').srcnode().abspath
+	glib_dir = main_dir + '/../../../../extlibs/glib/glib-2.40.2/'
+	env.AppendUnique(CPPPATH = [
+        				glib_dir,
+					glib_dir + 'glib',
+					glib_dir + 'gthread'])
 
 temp = env['CPPPATH']
 header = ' '

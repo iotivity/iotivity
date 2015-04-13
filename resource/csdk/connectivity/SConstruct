@@ -7,7 +7,6 @@
 # Load common build config
 SConscript('./build/SConscript')
 
-SConscript('extra_options.scons')
 Import('env')
 
 sample_env = env.Clone()

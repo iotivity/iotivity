@@ -71,7 +71,7 @@ help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device', 'OIC-D
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
-targets_support_cc = ['linux', 'arduino', 'tizen', 'android']
+targets_support_cc = ['linux', 'arduino', 'tizen']
 
 if target_os in targets_support_cc:
 	# Set cross compile toolchain
