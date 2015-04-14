@@ -261,12 +261,12 @@ void CQueryEngine::onTerminate(void *pArg)
     switch (pData[0])
     {
         case EVENT_TYPE_INNER:
-            pResult = (std::vector<result_model> *)(((int *)pArg)[2]);
+            pResult = (std::vector<result_model> *)pData[2];
             SAFE_DELETE(pResult);
             break;
 
         case EVENT_TYPE_OUTER:
-            pDataReader = (CDataReader *)(((int *)pArg)[2]);
+            pDataReader = (CDataReader *)pData[2];
             SAFE_DELETE(pDataReader);
             break;
 

@@ -75,7 +75,7 @@ CLEANUP:
 void CEvaluationEngine::onSQLTrigger(IN sqlite3_context *context, IN int argc,
                                      IN sqlite3_value **argv)
 {
-    CEvaluationEngine *pEvaluationEngine = (CEvaluationEngine *)sqlite3_value_int(argv[0]);
+    CEvaluationEngine *pEvaluationEngine = (CEvaluationEngine *)sqlite3_value_int64(argv[0]);
 
     pEvaluationEngine->onWatcherTriggered(sqlite3_value_int(argv[1]), sqlite3_value_int(argv[2]));
 }
