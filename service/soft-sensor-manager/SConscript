@@ -152,7 +152,7 @@ static_libssmcore = ssmcore_env.StaticLibrary(
 		)
 
 ssmcore_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger',
+ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger',
             'connectivity_abstraction', 'coap'])
 
 ssmcore_env.ParseConfig('pkg-config --libs glib-2.0');
