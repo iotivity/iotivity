@@ -369,12 +369,7 @@ TEST(SendRequestTest, TC_18_Negative_02)
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
 
-
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequest(tempRep, NULL));
-
-    CADestroyToken(tempToken);
-
-    free(requestData.payload);
 
     if (tempRep != NULL)
     {
@@ -447,7 +442,6 @@ TEST(SendResponseTest, TC_21_Negative_02)
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendResponse(tempRep, NULL));
 
-    CADestroyToken(tempToken);
     if (tempRep != NULL)
     {
         CADestroyRemoteEndpoint(tempRep);
