@@ -26,7 +26,7 @@ if target_os == 'linux':
 if target_os == 'android':
 	notimgr_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	notimgr_env.AppendUnique(LIBS = ['gnustl_static'])
-
+        notimgr_env.AppendUnique(LIBS = ['log'])
 	if not env.get('RELEASE'):
 		notimgr_env.AppendUnique(LIBS = ['log'])
 
@@ -36,11 +36,23 @@ if target_os == 'android':
 NOTI_SRC_DIR = 'NotificationManager/src/'
 notimgr_src = [
 		NOTI_SRC_DIR + 'hosting.c',
-		NOTI_SRC_DIR + 'virtualResource.c']
+		NOTI_SRC_DIR + 'requestHandler.c',
+		NOTI_SRC_DIR + 'virtualResource.c',
+		NOTI_SRC_DIR + 'resourceCoordinator_JNI.cpp']
 
-notificationsdk = notimgr_env.StaticLibrary('NOTISDKLibrary', notimgr_src)
+static_libResourceHosting = notimgr_env.StaticLibrary(
+		target = 'NotificationManager',
+		source = [notimgr_src]
+		)
 
-notimgr_env.InstallTarget(notificationsdk, 'libNMSDK')
+notimgr_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
+shared_libResourceHosting = notimgr_env.SharedLibrary(
+		target = 'NotificationManager',
+		source = [notimgr_src]
+		)
+
+notimgr_env.InstallTarget([shared_libResourceHosting, static_libResourceHosting], 'libResouceHosting')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

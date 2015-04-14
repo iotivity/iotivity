@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -26,16 +26,17 @@
 #include "cJSON.h"
 
 /*
- * internal function
+ * internal function & static variable
  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 static MirrorResourceList *s_mirrorResourceList = NULL;
+static RequestHandleList *s_requestHandleList = NULL;
 
 #define OIC_COORDINATING_FLAG "/hosting"
 #define OIC_STRING_MAX_VALUE 100
 
 #define OC_DEFAULT_ADDRESS               "224.0.1.187"
-#define OC_DEFAULT_PORT                  "5683"
+#define OC_WELL_KNOWN_COORDINATING_QUERY "coap://224.0.1.187:5683/oc/core?rt=Resource.Hosting"
 #define OC_COORDINATING_QUERY            "/oc/core?rt=Resource.Hosting"
 #define OC_PRESENCE_URI                  "/oc/presence"
 #define DEFAULT_CONTEXT_VALUE 0x99
@@ -123,7 +124,7 @@ int requestCoordinateeCandidateDiscovery(char *address);
  * @brief callback for receiving response of discoverCoordinateeCandidate()
  *
  * @return
- *     PRINT("Callback Context for DISCOVER query recvd successfully\n")        - context is DEFAULT_CONTEXT_VALUE
+ *     PRINT("Callback Context for DISCOVER query recvd successfully")      - context is DEFAULT_CONTEXT_VALUE
  *     call the buildMirrorResource() method                                    - clientResponse is not NULL && clientResponse->result is OC_STACK_OK
  *     OC_STACK_KEEP_TRANSACTION                                                - otherwise case
  */
@@ -290,6 +291,15 @@ OCStackResult requestIsAlive(const char *address);
  */
 const char *getResultString(OCStackResult result);
 
+OCStackResult requestQuery(RequestHandle *request, OCMethod method,
+                           const char *queryAddress, const char *queryUri);
+OCStackApplicationResult requestQueryCB(void *context, OCDoHandle handle,
+                                        OCClientResponse *clientResponse);
+OCEntityHandlerResponse buildEntityHandlerResponse(OCEntityHandlerRequest *entityHandlerRequest,
+        const char *clientPayload);
+OCEntityHandlerResult handleRequestPayload (OCEntityHandlerRequest *entityHandlerRequest,
+        char *payload, uint16_t maxPayloadSize);
+
 /*
  * for Lite Device Side
  */
@@ -312,9 +322,6 @@ OCStackResult registerResourceAsCoordinatable(OCResourceHandle *handle,
         const char *resourceTypeName, const char *resourceInterfaceName,
         const char *resourceUri, OCEntityHandler entityHandler, uint8_t resourceProperties);
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 OCStackResult registerResourceAsCoordinatable(OCResourceHandle *handle,
         const char *resourceTypeName,
         const char *resourceInterfaceName,
@@ -327,7 +334,7 @@ OCStackResult registerResourceAsCoordinatable(OCResourceHandle *handle,
             OIC_COORDINATING_FLAG)));
     sprintf(coordinatingURI, "%s%s", resourceUri, OIC_COORDINATING_FLAG);
 
-    OC_LOG_V(DEBUG, HOSTING_TAG, "requiedUri+coordinatingFlag = %s\n", coordinatingURI);
+    OC_LOG_V(DEBUG, HOSTING_TAG, "requiedUri+coordinatingFlag = %s", coordinatingURI);
 
     OCStackResult result = OCCreateResource(handle, resourceTypeName, resourceInterfaceName,
                                             coordinatingURI, entityHandler, resourceProperties);
@@ -343,8 +350,13 @@ OCStackResult OICStartCoordinate()
     int result = OC_STACK_ERROR;
 
     s_mirrorResourceList = createMirrorResourceList();
-//    result = discoverCoordinateeCandidate(NULL);
+    s_requestHandleList = createRequestHandleList();
     result = requestPresence(OC_DEFAULT_ADDRESS);
+
+    if (result != OC_STACK_OK)
+    {
+        return OC_STACK_ERROR;
+    }
 
     return result;
 }
@@ -353,7 +365,11 @@ OCStackResult OICStopCoordinate()
 {
     OCStackResult result = OC_STACK_ERROR;
 
-    destroyMirrorResourceList(s_mirrorResourceList);
+    result = destroyMirrorResourceList(s_mirrorResourceList);
+    if (result != OC_STACK_OK)
+    {
+        return OC_STACK_ERROR;
+    }
 
     return result;
 }
@@ -368,7 +384,7 @@ int requestCoordinateeCandidateDiscovery(char *sourceResourceAddress)
     char queryUri[OIC_STRING_MAX_VALUE] = { '\0' };
     if (sourceResourceAddress == NULL)
     {
-        sprintf(queryUri, "coap://%s:%s%s", OC_DEFAULT_ADDRESS, OC_DEFAULT_PORT , OC_COORDINATING_QUERY);
+        strcpy(queryUri, OC_WELL_KNOWN_COORDINATING_QUERY);
     }
     else
     {
@@ -383,9 +399,9 @@ int requestCoordinateeCandidateDiscovery(char *sourceResourceAddress)
                           NULL, 0);
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "OCStack resource error\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "OCStack resource error");
     }
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Host Resource Finding...\n");
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Host Resource Finding...");
     return result;
 }
 
@@ -397,7 +413,7 @@ OCStackResult requestPresence(char *sourceResourceAddress)
 
     if (sourceResourceAddress == NULL)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "SourceResourceAddress is not available.\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "SourceResourceAddress is not available.");
         result = OC_STACK_ERROR;
         return result;
     }
@@ -408,18 +424,18 @@ OCStackResult requestPresence(char *sourceResourceAddress)
 
     char queryUri[OIC_STRING_MAX_VALUE] = { '\0' };
     sprintf(queryUri, "coap://%s%s", sourceResourceAddress , OC_PRESENCE_URI);
-    OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s\n", queryUri);
+    OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s", queryUri);
 
     result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
 
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating error\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating error");
         return result;
     }
     // Need presenceHandle manager
 
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Success initializePresenceForCoordinating\n");
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Success initializePresenceForCoordinating");
 
     return result;
 }
@@ -433,17 +449,17 @@ OCStackApplicationResult requestPresenceCB(void *context, OCDoHandle handle,
 
     if (context == (void *) DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "\tCallback Context for presence CB recv successfully\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "\tCallback Context for presence CB recv successfully");
     }
     if (clientResponse)
     {
         OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddress,
                             remoteIpAddress + 1, remoteIpAddress + 2, remoteIpAddress + 3);
         OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNumber);
-        OC_LOG_V(DEBUG, HOSTING_TAG, "\tStackResult: %s\n",  getResultString(clientResponse->result));
-        OC_LOG_V(DEBUG, HOSTING_TAG, "\tStackResult: %d\n",  clientResponse->result);
+        OC_LOG_V(DEBUG, HOSTING_TAG, "\tStackResult: %s",  getResultString(clientResponse->result));
+        OC_LOG_V(DEBUG, HOSTING_TAG, "\tStackResult: %d",  clientResponse->result);
         OC_LOG_V(DEBUG, HOSTING_TAG,
-                 "\tPresence Device =============> Presence %s @ %d.%d.%d.%d:%d\n",
+                 "\tPresence Device =============> Presence %s @ %d.%d.%d.%d:%d",
                  clientResponse->resJSONPayload, remoteIpAddress[0], remoteIpAddress[1],
                  remoteIpAddress[2], remoteIpAddress[3], remotePortNumber);
 
@@ -469,12 +485,12 @@ OCStackApplicationResult requestPresenceCB(void *context, OCDoHandle handle,
 OCStackApplicationResult requestCoordinateeCandidateDiscoveryCB(void *ctx, OCDoHandle handle,
         OCClientResponse *clientResponse)
 {
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Found Host Resource\n");
+    OC_LOG(DEBUG, HOSTING_TAG, "Found Host Resource");
     OCStackResult ret;
 
     if (ctx == (void *) DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Callback Context for DISCOVER query recvd successfully\n");
+        OC_LOG(DEBUG, HOSTING_TAG, "Callback Context for DISCOVER query recvd successfully");
     }
     if (clientResponse && clientResponse->result == OC_STACK_OK)
     {
@@ -486,7 +502,7 @@ OCStackApplicationResult requestCoordinateeCandidateDiscoveryCB(void *ctx, OCDoH
 
             if (vList->headerNode == NULL)
             {
-                OC_LOG_V(DEBUG, HOSTING_TAG, "This Discover Response is empty\n");
+                OC_LOG(DEBUG, HOSTING_TAG, "This Discover Response is empty");
                 return OC_STACK_KEEP_TRANSACTION;
             }
 
@@ -497,7 +513,7 @@ OCStackApplicationResult requestCoordinateeCandidateDiscoveryCB(void *ctx, OCDoH
                 MirrorResource *mirrorResource = vList->headerNode;
                 ret = ejectMirrorResource(vList, mirrorResource);
                 mirrorResource->next = NULL;
-                OC_LOG_V(DEBUG, HOSTING_TAG, "register virtual resource uri : %s\n", mirrorResource->uri);
+                OC_LOG_V(DEBUG, HOSTING_TAG, "register virtual resource uri : %s", mirrorResource->uri);
                 if (ret != OC_STACK_OK)
                 {
                     continue;
@@ -546,7 +562,7 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
 
     if ( strstr(ocArray_str, "[{}") == ocArray_str )
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "invalid payload : %s\n", ocArray_str);
+        OC_LOG_V(DEBUG, HOSTING_TAG, "invalid payload : %s", ocArray_str);
         cJSON_Delete(discoveryJson);
         return NULL;
     }
@@ -564,7 +580,7 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
     sprintf(sourceaddr, "%d.%d.%d.%d:%d", remoteIpAddr[0], remoteIpAddr[1],
             remoteIpAddr[2], remoteIpAddr[3], remotePortNum);
 
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Host Device =============> Discovered %s @ %s\n",
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Host Device =============> Discovered %s @ %s",
              clientResponse->resJSONPayload, sourceaddr);
 
     int i = 0;
@@ -586,7 +602,7 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
 
         if (OC_STACK_OK != insertMirrorResource(retList, mirrorResource))
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "buildVirtualResourceList : insert resource fail\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "buildVirtualResourceList : insert resource fail");
         }
     }
 
@@ -611,7 +627,7 @@ MirrorResource *buildMirrorResource(cJSON *ocArray_sub)
         mirrorResource->uri = (char *)malloc(sizeof(char) * OIC_STRING_MAX_VALUE);
         strncpy(mirrorResource->uri, temp, strlen(temp) - strlen(OIC_COORDINATING_FLAG));
         mirrorResource->uri[strlen(temp) - strlen(OIC_COORDINATING_FLAG)] = '\0';
-        OC_LOG_V(DEBUG, HOSTING_TAG, "VirtualResource URI : %s\n", mirrorResource->uri);
+        OC_LOG_V(DEBUG, HOSTING_TAG, "VirtualResource URI : %s", mirrorResource->uri);
 
         cJSON *inArray_sub = cJSON_GetObjectItem(ocArray_sub, "prop");
 
@@ -656,7 +672,7 @@ OCStackResult registerMirrorResource(MirrorResource *mirrorResource)
                                           mirrorResource->address[OIC_MIRROR_ADDRESS], OIC_MIRROR_ADDRESS, mirrorResource->uri);
     if (foundMirrorResource != NULL)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Already registered resource\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Already registered resource");
         goto RETURN_ERR;
     }
 
@@ -667,11 +683,12 @@ OCStackResult registerMirrorResource(MirrorResource *mirrorResource)
                               resourceEntityHandlerCB,
                               OC_DISCOVERABLE | OC_OBSERVABLE);
 
-    printf("mirror resource uri : %s\n", mirrorResource->uri);
+    OC_LOG_V(DEBUG, HOSTING_TAG, "created mirror resource Handle : %d",
+             (unsigned int)mirrorResource->resourceHandle[OIC_MIRROR_HANDLE]);
 
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "error return = %s\n", getResultString(result));
+        OC_LOG_V(DEBUG, HOSTING_TAG, "error return = %s", getResultString(result));
         mirrorResource->next = NULL;
         destroyMirrorResource(mirrorResource);
         goto RETURN_ERR;
@@ -686,7 +703,7 @@ OCStackResult registerMirrorResource(MirrorResource *mirrorResource)
                                                   mirrorResource->prop.resourceType[i]);
             if (result != OC_STACK_OK)
             {
-                OC_LOG_V(DEBUG, HOSTING_TAG, "Virtual Resource Registration Fail : BindResourceType\n");
+                OC_LOG_V(DEBUG, HOSTING_TAG, "Virtual Resource Registration Fail : BindResourceType");
                 OCDeleteResource(mirrorResource->resourceHandle[OIC_MIRROR_HANDLE]);
                 mirrorResource->next = NULL;
                 destroyMirrorResource(mirrorResource);
@@ -704,7 +721,7 @@ OCStackResult registerMirrorResource(MirrorResource *mirrorResource)
                      mirrorResource->prop.resourceInterfaceName[i]);
             if (result != OC_STACK_OK)
             {
-                OC_LOG_V(DEBUG, HOSTING_TAG, "Virtual Resource Registration Fail : BindResourceInterfaceName\n");
+                OC_LOG_V(DEBUG, HOSTING_TAG, "Virtual Resource Registration Fail : BindResourceInterfaceName");
                 OCDeleteResource(mirrorResource->resourceHandle[OIC_MIRROR_HANDLE]);
                 mirrorResource->next = NULL;
                 destroyMirrorResource(mirrorResource);
@@ -713,16 +730,16 @@ OCStackResult registerMirrorResource(MirrorResource *mirrorResource)
         }
     }
 
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource Registration Success\n");
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource uri : %s\n", mirrorResource->uri);
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource source address : %s\n",
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource Registration Success");
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource uri : %s", mirrorResource->uri);
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource source address : %s",
              mirrorResource->address[OIC_SOURCE_ADDRESS]);
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource virtual address : %s\n",
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource virtual address : %s",
              mirrorResource->address[OIC_MIRROR_ADDRESS]);
     return result;
 
 RETURN_ERR:
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource Registration Fail\n");
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource Registration Fail");
     return result;
 }
 
@@ -745,7 +762,7 @@ OCStackResult requestResourceObservation(MirrorResource *mirrorResource)
 
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "OCDoResource returns error %s with method %d\n",
+        OC_LOG_V(DEBUG, HOSTING_TAG, "OCDoResource returns error %s with method %d",
                  getResultString(result), OC_REST_OBSERVE);
     }
 
@@ -757,12 +774,12 @@ OCStackApplicationResult requestResourceObservationCB(void *context, OCDoHandle 
 {
     if (context == (void *)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Callback Context for OBS query recvd successfully\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Callback Context for OBS query recvd successfully");
     }
 
     if (clientResponse && clientResponse->result != OC_STACK_OK)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "observeCB result error = %s\n",
+        OC_LOG_V(DEBUG, HOSTING_TAG, "observeCB result error = %s",
                  getResultString(clientResponse->result));
         return checkResourceValidation(handle);
     }
@@ -770,51 +787,40 @@ OCStackApplicationResult requestResourceObservationCB(void *context, OCDoHandle 
     else if (clientResponse && clientResponse->result == OC_STACK_OK)
     {
         OC_LOG_V(DEBUG, HOSTING_TAG,
-                 "<=============\nCallback Context for OBSERVE notification recvd successfully\n");
-        OC_LOG_V(DEBUG, HOSTING_TAG, "SEQUENCE NUMBER: %d\n", clientResponse->sequenceNumber);
-        OC_LOG_V(DEBUG, HOSTING_TAG, "JSON = %s \n=============> Obs Response\n",
+                 "<=============Callback Context for OBSERVE notification recvd successfully");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+        OC_LOG_V(DEBUG, HOSTING_TAG, "JSON = %s =============> Obs Response",
                  clientResponse->resJSONPayload);
 
-        MirrorResource *foundMirrorResource = findMirrorResourceUsingHandle(s_mirrorResourceList,
-                                              handle, OIC_REQUEST_HANDLE);
+        MirrorResource *foundMirrorResource = updateMirrorResource(handle, clientResponse->resJSONPayload);
         if (foundMirrorResource == NULL)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found Mirror Resource : Fail\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found Mirror Resource : Fail");
             return OC_STACK_DELETE_TRANSACTION;
         }
-
-        if (foundMirrorResource->isAliveCheck)
-        {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "This response is Alive Check : Keep resource %s%s\n",
-                     foundMirrorResource->address[OIC_SOURCE_ADDRESS], foundMirrorResource->uri);
-            deleteMirrorResourceFromList(s_mirrorResourceList, foundMirrorResource);
-            return OC_STACK_KEEP_TRANSACTION;
-        }
-
-        foundMirrorResource = updateMirrorResource(handle, clientResponse->resJSONPayload);
 
         if ( OC_STACK_OK != OCNotifyAllObservers(foundMirrorResource->resourceHandle[OIC_MIRROR_HANDLE],
                 OC_HIGH_QOS) )
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Notify Mirror Resource's Subscriber : Fail\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Notify Mirror Resource's Subscriber : Fail");
         }
         else
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Notify Mirror Resource's Subscriber : Success\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Notify Mirror Resource's Subscriber : Success");
         }
 
         if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "This also serves as a registration confirmation\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "This also serves as a registration confirmation");
         }
         else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "This also serves as a deregistration confirmation\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "This also serves as a deregistration confirmation");
             return OC_STACK_DELETE_TRANSACTION;
         }
         else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "This also tells you that registration/deregistration failed\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "This also tells you that registration/deregistration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
@@ -823,34 +829,22 @@ OCStackApplicationResult requestResourceObservationCB(void *context, OCDoHandle 
 
 OCStackApplicationResult checkResourceValidation(OCDoHandle handle)
 {
-    MirrorResource *foundMirrorResource = findMirrorResourceUsingHandle(s_mirrorResourceList,
-                                          handle, OIC_REQUEST_HANDLE);
+    RequestHandle *foundRequestHandle = findRequestHandle(s_requestHandleList, handle,
+                                        OIC_REQUEST_BY_COORDINATOR);
 
-    if (foundMirrorResource == NULL)
+    if (foundRequestHandle == NULL)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Not found any error mirror resource.\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Not found any request.");
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    if (foundMirrorResource->isAliveCheck)
+    if (foundRequestHandle->isAliveCheck)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "This response is Alive Check : Expired resource %s%s\n",
-                 foundMirrorResource->address[OIC_SOURCE_ADDRESS], foundMirrorResource->uri);
-        MirrorResource *deletedMirrorResource = findMirrorResourceUsingAddressAndURI(s_mirrorResourceList,
-                                                foundMirrorResource->uri, OIC_SOURCE_ADDRESS, foundMirrorResource->address[OIC_SOURCE_ADDRESS]);
-        if (deletedMirrorResource)
-        {
-            OCDeleteResource(deletedMirrorResource->resourceHandle[OIC_MIRROR_HANDLE]);
-            deleteMirrorResourceFromList(s_mirrorResourceList, deletedMirrorResource);
-        }
+        OC_LOG_V(DEBUG, HOSTING_TAG, "This response is Alive Check : Expired resource");
+
+        OCDeleteResource(foundRequestHandle->requestHandle[OIC_REQUEST_BY_CLIENT]);
     }
-    else
-    {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "This response is Expired resource %s%s\n",
-                 foundMirrorResource->address[OIC_SOURCE_ADDRESS], foundMirrorResource->uri);
-        OCDeleteResource(foundMirrorResource->resourceHandle[OIC_MIRROR_HANDLE]);
-    }
-    deleteMirrorResourceFromList(s_mirrorResourceList, foundMirrorResource);
+    deleteRequestHandleFromList(s_requestHandleList, foundRequestHandle);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -862,25 +856,35 @@ MirrorResource *updateMirrorResource(OCDoHandle handle, const char *payload)
     if (!foundMirrorResource)
     {
         // TODO
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found Mirror Resource.\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found Mirror Resource. In updateMirrorResource");
         return NULL;
     }
 
+    cJSON *repData = NULL;
     cJSON *observeJson = cJSON_CreateObject();
     observeJson = cJSON_Parse(payload);
 
-    cJSON *ocArray = cJSON_GetObjectItem(observeJson, "oc");
-    int arraySize = cJSON_GetArraySize(ocArray);
+    if (observeJson)
+    {
+        cJSON *ocArray = cJSON_GetObjectItem(observeJson, "oc");
+        int arraySize = cJSON_GetArraySize(ocArray);
 
-    cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
+        cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
+        cJSON *tempData = cJSON_GetObjectItem(ocArray_sub, "rep");
+        char *temp = cJSON_PrintUnformatted(tempData);
 
-    cJSON *tempData = cJSON_GetObjectItem(ocArray_sub, "rep");
-    char *temp = cJSON_PrintUnformatted(tempData);
-
-    cJSON *repData = cJSON_Parse(temp);
-
-    free(temp);
-    cJSON_Delete(observeJson);
+        repData = cJSON_Parse(temp);
+        if (temp != NULL)
+        {
+            free(temp);
+        }
+        cJSON_Delete(observeJson);
+    }
+    else
+    {
+        OC_LOG_V(DEBUG, HOSTING_TAG, "payload is not correct");
+        return NULL;
+    }
 
     if (foundMirrorResource->rep)
     {
@@ -892,12 +896,12 @@ MirrorResource *updateMirrorResource(OCDoHandle handle, const char *payload)
     cJSON *json = cJSON_CreateObject();
 
     char nodeData[OIC_STRING_MAX_VALUE] = {'\0'};
-    sprintf(nodeData, "%s", foundMirrorResource->uri);
+    snprintf(nodeData, sizeof(nodeData) - 1, "%s", foundMirrorResource->uri);
     cJSON_AddStringToObject(json, "href", nodeData);
 
     cJSON *nodeRep = cJSON_Parse(cJSON_PrintUnformatted(foundMirrorResource->rep));
     cJSON_AddItemToObject(json, "rep", nodeRep);
-    OC_LOG_V(DEBUG, HOSTING_TAG, "It will notify resource : %s\n", cJSON_PrintUnformatted(json));
+    OC_LOG_V(DEBUG, HOSTING_TAG, "It will notify resource : %s", cJSON_PrintUnformatted(json));
 
     cJSON_Delete(json);
 
@@ -910,14 +914,27 @@ char *buildResponsePayload (OCEntityHandlerRequest *entityHandlerRequest)
                                      entityHandlerRequest->resource, OIC_MIRROR_HANDLE);
     if (!mirrorResource)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found Mirror Resource.\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found Mirror Resource. In buildResponsePayload()");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Mirror Resource's Handle : %x.", entityHandlerRequest->resource);
         return NULL;
     }
 
-    OC_LOG_V(DEBUG, HOSTING_TAG, "node's uri : %s\n", mirrorResource->uri);
-    OC_LOG_V(DEBUG, HOSTING_TAG, "node's source address : %s\n", mirrorResource->address[0]);
-    OC_LOG_V(DEBUG, HOSTING_TAG, "node's mirror address : %s\n", mirrorResource->address[1]);
-    OC_LOG_V(DEBUG, HOSTING_TAG, "node's rep : %s\n", cJSON_PrintUnformatted(mirrorResource->rep));
+    if (entityHandlerRequest->method == OC_REST_PUT)
+    {
+        OC_LOG_V(DEBUG, HOSTING_TAG, "oc_rest_put");
+        if (mirrorResource->rep)
+        {
+            cJSON_Delete(mirrorResource->rep);
+            mirrorResource->rep = NULL;
+        }
+        mirrorResource->rep = cJSON_CreateObject();
+        mirrorResource->rep = cJSON_Parse(entityHandlerRequest->reqJSONPayload);
+    }
+
+    OC_LOG_V(DEBUG, HOSTING_TAG, "node's uri : %s", mirrorResource->uri);
+    OC_LOG_V(DEBUG, HOSTING_TAG, "node's source address : %s", mirrorResource->address[0]);
+    OC_LOG_V(DEBUG, HOSTING_TAG, "node's mirror address : %s", mirrorResource->address[1]);
+    OC_LOG_V(DEBUG, HOSTING_TAG, "node's rep : %s", cJSON_PrintUnformatted(mirrorResource->rep));
 
     cJSON *jsonObject = cJSON_CreateObject();
 
@@ -927,7 +944,7 @@ char *buildResponsePayload (OCEntityHandlerRequest *entityHandlerRequest)
 
     cJSON *itemRep = cJSON_Parse(cJSON_PrintUnformatted(mirrorResource->rep));
     cJSON_AddItemToObject(jsonObject, "rep", itemRep);
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Will response resource : %s\n", cJSON_PrintUnformatted(jsonObject));
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Will response resource : %s", cJSON_PrintUnformatted(jsonObject));
 
     char *jsonResponse = cJSON_Print(jsonObject);
     cJSON_Delete(jsonObject);
@@ -939,7 +956,7 @@ OCEntityHandlerResult
 resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
                          OCEntityHandlerRequest *entityHandlerRequest)
 {
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Inside device default entity handler - flags: 0x%x\n",
+    OC_LOG_V(DEBUG, HOSTING_TAG, "Inside device default entity handler - flags: 0x%x",
              entifyHandlerFlag);
 
     OCEntityHandlerResult entityHandlerResult = OC_EH_OK;
@@ -949,7 +966,7 @@ resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Invalid request pointer\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -961,33 +978,62 @@ resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
 
     if (entifyHandlerFlag & OC_INIT_FLAG)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Flag includes OC_INIT_FLAG\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Flag includes OC_INIT_FLAG");
     }
     if (entifyHandlerFlag & OC_REQUEST_FLAG)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Flag includes OC_REQUEST_FLAG\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Flag includes OC_REQUEST_FLAG");
         if (entityHandlerRequest->resource == NULL)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Received request from client to a non-existing resource\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Received request from client to a non-existing resource");
             entityHandlerResult = handleNonExistingResourceRequest(entityHandlerRequest, payload,
                                   sizeof(payload) - 1);
         }
         else if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_REST_GET from client\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_REST_GET from client");
             entityHandlerResult = handleGetRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
         }
-        else if (OC_REST_PUT == entityHandlerRequest->method)
+        else if (OC_REST_PUT == entityHandlerRequest->method ||
+                 OC_REST_DELETE == entityHandlerRequest->method )
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_REST_PUT from client\n");
-        }
-        else if (OC_REST_DELETE == entityHandlerRequest->method)
-        {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_REST_DELETE from client\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_REST_PUT/DELETE from client");
+
+            RequestHandle *request = createRequestHandle();
+
+            request->requestHandle[OIC_REQUEST_BY_CLIENT] = entityHandlerRequest;
+            request->resourceHandle = entityHandlerRequest->resource;
+            request->method = entityHandlerRequest->method;
+            request->entityRequestHandle = entityHandlerRequest->requestHandle;
+
+            OCStackResult result = insertRequestHandle(s_requestHandleList, request);
+            if (result != OC_STACK_OK)
+            {
+                OC_LOG_V(DEBUG, HOSTING_TAG, "Insert request list : fail2(%d)", result);
+                return result;
+            }
+
+            MirrorResource *mirrorResource = findMirrorResourceUsingHandle(s_mirrorResourceList,
+                                             entityHandlerRequest->resource, OIC_MIRROR_HANDLE);
+            if (mirrorResource == NULL)
+            {
+                OC_LOG_V(DEBUG, HOSTING_TAG, "Not found requested resource");
+                return OC_EH_ERROR;
+            }
+
+            result = requestQuery(request,
+                                  entityHandlerRequest->method, mirrorResource->address[OIC_SOURCE_ADDRESS],
+                                  mirrorResource->uri);
+            if (result != OC_STACK_OK)
+            {
+                OC_LOG_V(DEBUG, HOSTING_TAG, "fail query about request");
+                deleteRequestHandleFromList(s_requestHandleList, request);
+            }
+            return OC_EH_OK;
         }
         else
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Received unsupported method %d from client\n",
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Received unsupported method %d from client",
                      entityHandlerRequest->method);
             entityHandlerResult = OC_EH_ERROR;
         }
@@ -1008,7 +1054,7 @@ resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
             if (entityHandlerRequest->rcvdVendorSpecificHeaderOptions &&
                 entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
             {
-                OC_LOG_V(DEBUG, HOSTING_TAG, "Received vendor specific options\n");
+                OC_LOG_V(DEBUG, HOSTING_TAG, "Received vendor specific options");
                 uint8_t i = 0;
                 OCHeaderOption *receivedVenderSpecificHeaderOptions =
                     entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
@@ -1016,7 +1062,7 @@ resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
                 {
                     if (((OCHeaderOption)receivedVenderSpecificHeaderOptions[i]).protocolID == OC_COAP_ID)
                     {
-                        OC_LOG_V(DEBUG, HOSTING_TAG, "Received option with OC_COAP_ID and ID %u with\n",
+                        OC_LOG_V(DEBUG, HOSTING_TAG, "Received option with OC_COAP_ID and ID %u with",
                                  ((OCHeaderOption)receivedVenderSpecificHeaderOptions[i]).optionID );
                     }
                 }
@@ -1045,14 +1091,14 @@ resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
     }
     if (entifyHandlerFlag & OC_OBSERVE_FLAG)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Flag includes OC_OBSERVE_FLAG\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Flag includes OC_OBSERVE_FLAG");
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_OBSERVE_REGISTER from client\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_OBSERVE_REGISTER from client");
         }
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_OBSERVE_DEREGISTER from client\n");
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Received OC_OBSERVE_DEREGISTER from client");
         }
     }
 
@@ -1061,7 +1107,7 @@ resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
 OCEntityHandlerResult handleGetRequest (OCEntityHandlerRequest *entityHandlerRequest,
                                         char *payload, uint16_t maxPayloadSize)
 {
-    OC_LOG_V(DEBUG, HOSTING_TAG, "ProcessGetRequest in....\n");
+    OC_LOG_V(DEBUG, HOSTING_TAG, "ProcessGetRequest in....");
 
     OCEntityHandlerResult entityHandlerResult;
     char *responsePayload = buildResponsePayload(entityHandlerRequest);
@@ -1073,7 +1119,7 @@ OCEntityHandlerResult handleGetRequest (OCEntityHandlerRequest *entityHandlerReq
     }
     else
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Response buffer: %d bytes is too small\n", maxPayloadSize);
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Response buffer: %d bytes is too small", maxPayloadSize);
         entityHandlerResult = OC_EH_ERROR;
     }
 
@@ -1084,7 +1130,7 @@ OCEntityHandlerResult handleGetRequest (OCEntityHandlerRequest *entityHandlerReq
 OCEntityHandlerResult handleNonExistingResourceRequest(OCEntityHandlerRequest *entityHandlerRequest,
         char *payload, uint16_t maxPayloadSize)
 {
-    OC_LOG_V(INFO, HOSTING_TAG, "\n\nExecuting %s ", __func__);
+    OC_LOG_V(INFO, HOSTING_TAG, "Executing %s ", __func__);
 
     const char *responsePayload = NULL;
     responsePayload = "{App determines payload: The resource does not exist.}";
@@ -1110,48 +1156,37 @@ OCStackResult requestIsAlive(const char *address)
 
     if (requestMirrorResourceList == NULL)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found any mirror resource1\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found any mirror resource1");
         return OC_STACK_ERROR;
     }
 
     if (requestMirrorResourceList->headerNode == NULL)
     {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found any mirror resource2\n");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found any mirror resource2");
         return OC_STACK_ERROR;
     }
 
     MirrorResource *mirrorResource = requestMirrorResourceList->headerNode;
     while (mirrorResource)
     {
-        MirrorResource *currentMirrorResource = mirrorResource;
-        mirrorResource = mirrorResource->next;
-        if (OC_STACK_OK != ejectMirrorResource(requestMirrorResourceList, currentMirrorResource))
-        {
-            continue;
-        }
+        RequestHandle *requestAlive = createRequestHandle();
+        requestAlive->isAliveCheck = 1;
+        requestAlive->requestHandle[OIC_REQUEST_BY_CLIENT] =
+            mirrorResource->resourceHandle[OIC_MIRROR_HANDLE];
 
-        OCCallbackData cbData;
-
-        cbData.cb = requestResourceObservationCB;
-        cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
-        cbData.cd = NULL;
-
-        char query[OIC_STRING_MAX_VALUE] = {'\0'};
-        sprintf(query, "coap://%s%s", address, currentMirrorResource->uri);
-
-        currentMirrorResource->resourceHandle[OIC_REQUEST_HANDLE] = NULL;
-        currentMirrorResource->isAliveCheck = 1;
-        insertMirrorResource(s_mirrorResourceList, currentMirrorResource);
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Check Alive IP : %s, URI : %s\n",
-                 currentMirrorResource->address[OIC_SOURCE_ADDRESS], currentMirrorResource->uri);
-        OCStackResult result = OCDoResource(&currentMirrorResource->resourceHandle[OIC_REQUEST_HANDLE],
-                                            OC_REST_GET, query, 0, NULL, OC_HIGH_QOS, &cbData, NULL, 0);
+        OCStackResult result = insertRequestHandle(s_requestHandleList, requestAlive);
         if (result != OC_STACK_OK)
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "OCDoResource returns error %s with method %d\n",
-                     getResultString(result), OC_REST_OBSERVE);
-            deleteMirrorResourceFromList(s_mirrorResourceList, currentMirrorResource);
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Insert request list : fail3");
+            return result;
         }
+
+        result = requestQuery(requestAlive, OC_REST_GET, address, mirrorResource->uri);
+        if (result != OC_STACK_OK)
+        {
+            deleteRequestHandleFromList(s_requestHandleList, requestAlive);
+        }
+        mirrorResource = mirrorResource->next;
     }
     destroyMirrorResourceList(requestMirrorResourceList);
 
@@ -1213,38 +1248,227 @@ const char *getResultString(OCStackResult result)
 
 void getJsonArrayPair(cJSON *tempData)
 {
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    // Test
     int countofrep = cJSON_GetArraySize(tempData);
     OC_LOG_V(DEBUG, HOSTING_TAG,
-             "//////////////////////////////////////////////////////////////////////////\n");
-    OC_LOG_V(DEBUG, HOSTING_TAG, "//Test\n");
-    OC_LOG_V(DEBUG, HOSTING_TAG, "rep Size : %d\n", countofrep);
+             "//////////////////////////////////////////////////////////////////////////");
+    OC_LOG_V(DEBUG, HOSTING_TAG, "//Test");
+    OC_LOG_V(DEBUG, HOSTING_TAG, "rep Size : %d", countofrep);
     int i = 0;
     for (i = 0; i < countofrep; ++i)
     {
         cJSON *arrayJSON = cJSON_GetArrayItem(tempData, i);
-        OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's name : %s\n", i, arrayJSON->string);
+        OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's name : %s", i, arrayJSON->string);
 
         switch (arrayJSON->type)
         {
             case cJSON_False:
             case cJSON_True:
-                OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's value : %d\n", i, arrayJSON->valueint);
+                OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's value : %d", i, arrayJSON->valueint);
                 break;
             case cJSON_Number:
-                OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's value : %f\n", i, arrayJSON->valuedouble);
+                OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's value : %f", i, arrayJSON->valuedouble);
                 break;
             case cJSON_String:
-                OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's value : %s\n", i, arrayJSON->valuestring);
+                OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's value : %s", i, arrayJSON->valuestring);
                 break;
             case cJSON_NULL:
             default:
-                OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's value : NULL\n", i);
+                OC_LOG_V(DEBUG, HOSTING_TAG, "rep#%d's value : NULL", i);
                 break;
         }
     }
     OC_LOG_V(DEBUG, HOSTING_TAG,
-             "//////////////////////////////////////////////////////////////////////////\n");
-    //////////////////////////////////////////////////////////////////////////////////////////////
+             "//////////////////////////////////////////////////////////////////////////");
+}
+
+OCStackResult requestQuery(RequestHandle *request, OCMethod method,
+                           const char *queryAddress, const char *queryUri)
+{
+
+    OCStackResult result = OC_STACK_ERROR;
+    OCCallbackData cbData;
+
+    /* Start a discovery query*/
+    char queryFullUri[OIC_STRING_MAX_VALUE] = {'\0'};
+    if (queryAddress == NULL)
+    {
+        return result;
+    }
+    else
+    {
+        snprintf(queryFullUri, sizeof(queryFullUri) - 1 , "coap://%s%s%s", queryAddress , queryUri,
+                 OIC_COORDINATING_FLAG);
+    }
+
+    cbData.cb = requestQueryCB;
+    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    if (method == OC_REST_PUT)
+    {
+        char payload[OIC_STRING_MAX_VALUE] = {'\0'};
+        snprintf(payload , sizeof(payload) - 1, "%s" ,
+                 ((OCEntityHandlerRequest *)request->requestHandle[OIC_REQUEST_BY_CLIENT])->reqJSONPayload);
+
+        result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
+                              method, queryFullUri, NULL, payload, OC_LOW_QOS, &cbData, NULL, 0);
+    }
+    else
+    {
+        result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
+                              method, queryFullUri, NULL, 0, OC_LOW_QOS, &cbData, NULL, 0);
+    }
+
+    if (result != OC_STACK_OK)
+    {
+        OC_LOG_V(DEBUG, HOSTING_TAG, "OCStack resource error");
+    }
+
+    return result;
+}
+
+OCStackApplicationResult requestQueryCB(void *context, OCDoHandle handle,
+                                        OCClientResponse *clientResponse)
+{
+    if (context == (void *) DEFAULT_CONTEXT_VALUE)
+    {
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Callback Context for Request query recvd successfully");
+    }
+
+    if (clientResponse && clientResponse->result != OC_STACK_OK
+        && clientResponse->result != OC_STACK_RESOURCE_DELETED)
+    {
+        OC_LOG_V(DEBUG, HOSTING_TAG, "requestQueryCB result error = %s",
+                 getResultString(clientResponse->result));
+        return checkResourceValidation(handle);
+    }
+
+    if (clientResponse && (clientResponse->result == OC_STACK_OK
+                           || clientResponse->result == OC_STACK_RESOURCE_DELETED))
+    {
+        RequestHandle *request = findRequestHandle(s_requestHandleList, handle, OIC_REQUEST_BY_COORDINATOR);
+        if (request == NULL)
+        {
+            OC_LOG_V(DEBUG, HOSTING_TAG, "Not found Any request");
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        if (request->isAliveCheck == 1)
+        {
+            OC_LOG_V(DEBUG, HOSTING_TAG, "This response is Alive Check : Keep resource");
+        }
+        else
+        {
+            OC_LOG_V(DEBUG, HOSTING_TAG, "requestCB's payload: %s", clientResponse->resJSONPayload);
+            OCEntityHandlerRequest *entityHandler = (OCEntityHandlerRequest *)(
+                    request->requestHandle[OIC_REQUEST_BY_CLIENT]);
+            OC_LOG_V(DEBUG, HOSTING_TAG, "requested resource handle : %u", (unsigned int)entityHandler->resource
+                    );
+
+            entityHandler->resource = request->resourceHandle;
+            entityHandler->method = request->method;
+            entityHandler->requestHandle = request->entityRequestHandle;
+
+            OCEntityHandlerResponse response = buildEntityHandlerResponse(
+                                                   entityHandler, clientResponse->resJSONPayload);
+            if (OCDoResponse(&response) != OC_STACK_OK)
+            {
+                OC_LOG_V(DEBUG, HOSTING_TAG, "Error sending response");
+                deleteRequestHandleFromList(s_requestHandleList, request);
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+            if (entityHandler->method == OC_REST_DELETE)
+            {
+                OCDeleteResource(entityHandler->resource);
+            }
+        }
+        deleteRequestHandleFromList(s_requestHandleList, request);
+    }
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCEntityHandlerResponse buildEntityHandlerResponse(OCEntityHandlerRequest *entityHandlerRequest,
+        const char *clientPayload)
+{
+    OC_LOG_V(DEBUG, HOSTING_TAG, "enter buildEntityHandlerResponse");
+    OCEntityHandlerResponse response;
+    OCEntityHandlerResult entityHandlerResult = OC_EH_OK;
+    char payload[MAX_RESPONSE_LENGTH] = {'\0'};
+
+    // Initialize certain response fields
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0,
+           sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
+
+    char *temp = NULL;
+    if (entityHandlerRequest->method == OC_REST_PUT)
+    {
+        cJSON *observeJson = cJSON_CreateObject();
+        observeJson = cJSON_Parse(clientPayload);
+
+        cJSON *ocArray = cJSON_GetObjectItem(observeJson, "oc");
+        int arraySize = cJSON_GetArraySize(ocArray);
+
+        cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
+
+        cJSON *tempData = cJSON_GetObjectItem(ocArray_sub, "rep");
+        temp = cJSON_PrintUnformatted(tempData);
+
+        cJSON_Delete(observeJson);
+
+        entityHandlerRequest->reqJSONPayload = temp;
+    }
+    entityHandlerResult = handleRequestPayload(entityHandlerRequest, payload, sizeof(payload) - 1);
+
+    // Format the response.  Note this requires some info about the request
+    response.requestHandle = entityHandlerRequest->requestHandle;
+    response.resourceHandle = entityHandlerRequest->resource;
+    response.ehResult = entityHandlerResult;
+
+    response.payload = (unsigned char *)payload;
+    response.payloadSize = strlen(payload);
+    // Indicate that response is NOT in a persistent buffer
+    response.persistentBufferFlag = 0;
+
+    if (entityHandlerRequest->method == OC_REST_PUT)
+    {
+        if (temp)
+        {
+            free(temp);
+        }
+    }
+
+    return response;
+}
+
+OCEntityHandlerResult handleRequestPayload (OCEntityHandlerRequest *entityHandlerRequest,
+        char *payload, uint16_t maxPayloadSize)
+{
+    OC_LOG_V(DEBUG, HOSTING_TAG, "enter handleRequestPayload");
+    OCEntityHandlerResult entityHandlerResult;
+
+    if (entityHandlerRequest->method == OC_REST_DELETE)
+    {
+        sprintf(payload, "");
+        OC_LOG_V(DEBUG, HOSTING_TAG, "DELETE");
+        return OC_EH_RESOURCE_DELETED;
+    }
+
+    char *responsePayload = buildResponsePayload(entityHandlerRequest);
+
+    if (maxPayloadSize > strlen ((char *)responsePayload))
+    {
+        strncpy(payload, responsePayload, strlen((char *)responsePayload));
+        entityHandlerResult = OC_EH_OK;
+    }
+    else
+    {
+        OC_LOG_V(DEBUG, HOSTING_TAG, "Response buffer: %d bytes is too small", maxPayloadSize);
+        entityHandlerResult = OC_EH_ERROR;
+    }
+
+    free(responsePayload);
+
+    return entityHandlerResult;
 }

@@ -26,7 +26,8 @@ MirrorResourceList *createMirrorResourceList()
     MirrorResourceList *mirrorResourceList = (MirrorResourceList *)malloc(sizeof(MirrorResourceList));
     if (!mirrorResourceList)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Virtual Resource List Creation Fail.\n");
+        __android_log_print(ANDROID_LOG_ERROR, "DOIL", "Virtual Resource List Creation Fail.");
+        OC_LOG_V(DEBUG, VR_TAG, "Virtual Resource List Creation Fail.");
     }
     else
     {
@@ -39,12 +40,11 @@ MirrorResourceList *createMirrorResourceList()
 
 MirrorResource *createMirrorResource()
 {
-
     MirrorResource *mirrorResource = (MirrorResource *)malloc(sizeof(MirrorResource));
-
     if (!mirrorResource)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Virtual Resource List Creation Fail.\n");
+        __android_log_print(ANDROID_LOG_ERROR, "DOIL", "Virtual Resource List Creation Fail.");
+        OC_LOG_V(DEBUG, VR_TAG, "Virtual Resource List Creation Fail.");
     }
     else
     {
@@ -61,8 +61,6 @@ MirrorResource *createMirrorResource()
         mirrorResource->prop.resourceType = NULL;
         mirrorResource->prop.countInterface = 0;
         mirrorResource->prop.resourceInterfaceName = NULL;
-
-        mirrorResource->isAliveCheck = 0;
     }
 
     return mirrorResource;
@@ -70,9 +68,8 @@ MirrorResource *createMirrorResource()
 
 OCStackResult destroyMirrorResourceList(MirrorResourceList *mirrorResourceList)
 {
-
-    OC_LOG_V(DEBUG, VR_TAG, "enter destroyVirtualResourceList\n");
-
+    __android_log_print(ANDROID_LOG_ERROR, "DOIL", "enter destroyVirtualResourceList");
+    OC_LOG_V(DEBUG, VR_TAG, "enter destroyVirtualResourceList");
     if (mirrorResourceList)
     {
         while (mirrorResourceList->headerNode)
@@ -92,9 +89,7 @@ OCStackResult destroyMirrorResourceList(MirrorResourceList *mirrorResourceList)
 
 OCStackResult destroyMirrorResource(MirrorResource *mirrorResource)
 {
-
-    OC_LOG_V(DEBUG, VR_TAG, "\n\n\n\nenter destroy virtual resource.\n");
-
+    OC_LOG_V(DEBUG, VR_TAG, "enter destroy virtual resource.");
     if (mirrorResource)
     {
         if (mirrorResource->next)
@@ -139,8 +134,6 @@ OCStackResult destroyMirrorResource(MirrorResource *mirrorResource)
             free(mirrorResource->prop.resourceInterfaceName);
             mirrorResource->prop.countInterface = 0;
         }
-
-
         free(mirrorResource);
     }
     else
@@ -149,7 +142,6 @@ OCStackResult destroyMirrorResource(MirrorResource *mirrorResource)
     }
 
     return OC_STACK_OK;
-
 }
 
 OCStackResult insertMirrorResource(MirrorResourceList *mirrorResourceList,
@@ -179,19 +171,19 @@ MirrorResource *findMirrorResourceUsingAddressAndURI(MirrorResourceList *mirrorR
 {
     if (mirrorResourceList->headerNode == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource : Empty Virtual Resource List.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource : Empty Virtual Resource List.");
         return NULL;
     }
     if (mirrorResourceList == NULL || address == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource : invalid parameter.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource : invalid parameter.");
         return NULL;
     }
 
     MirrorResource *tempMirrorResource = mirrorResourceList->headerNode;
     while (tempMirrorResource != NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "node's uri = %s\n", tempMirrorResource->uri);
+        OC_LOG_V(DEBUG, VR_TAG, "node's uri = %s", tempMirrorResource->uri);
         if (strcmp(tempMirrorResource->address[paramType], address) == 0) // if(It is Same)
         {
             if (strcmp(tempMirrorResource->uri, uri) == 0) // if(It is Same)
@@ -210,12 +202,12 @@ MirrorResource *findMirrorResourceUsingHandle(MirrorResourceList *mirrorResource
 {
     if (mirrorResourceList == NULL || handle == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource : invalid parameter.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource : invalid parameter.");
         return NULL;
     }
     if (mirrorResourceList->headerNode == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource : Empty Virtual Resource List.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource : Empty Virtual Resource List.");
         return NULL;
     }
 
@@ -236,16 +228,16 @@ OCStackResult deleteMirrorResourceFromList(MirrorResourceList *mirrorResourceLis
         MirrorResource *mirrorResource)
 {
 
-    OC_LOG_V(DEBUG, VR_TAG, "\n\n\n\nenter delete virtual resource.\n");
+    OC_LOG_V(DEBUG, VR_TAG, "enter delete virtual resource.");
 
     if (mirrorResourceList == NULL || mirrorResource == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Delete Virtual Resource : invalid parameter.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Delete Virtual Resource : invalid parameter.");
         return OC_STACK_INVALID_PARAM;
     }
     if (mirrorResourceList->headerNode == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Delete Virtual Resource : Empty Virtual Resource List.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Delete Virtual Resource : Empty Virtual Resource List.");
         return OC_STACK_ERROR;
     }
 
@@ -286,12 +278,12 @@ OCStackResult ejectMirrorResource(MirrorResourceList *mirrorResourceList,
 {
     if (mirrorResourceList == NULL || mirrorResource == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Eject Virtual Resource : invalid parameter.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Eject Virtual Resource : invalid parameter.");
         return OC_STACK_INVALID_PARAM;
     }
     if (mirrorResourceList->headerNode == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Eject Virtual Resource : Empty Virtual Resource List.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Eject Virtual Resource : Empty Virtual Resource List.");
     }
 
     if (mirrorResource == mirrorResourceList->headerNode)
@@ -306,7 +298,19 @@ OCStackResult ejectMirrorResource(MirrorResourceList *mirrorResourceList,
     {
         if (curNode == mirrorResource)
         {
-            preNode->next = curNode->next;
+            if (curNode == mirrorResourceList->headerNode)
+            {
+                mirrorResourceList->headerNode = NULL;
+                mirrorResourceList->tailNode = NULL;
+            }
+            else if (curNode == mirrorResourceList->tailNode)
+            {
+                mirrorResourceList->tailNode = preNode;
+            }
+            else
+            {
+                preNode->next = curNode->next;
+            }
             return OC_STACK_OK;
         }
         preNode = curNode;
@@ -324,8 +328,6 @@ MirrorResource *cloneMirrorResource(MirrorResource *sourceMirrorResource)
     int sizeofstr = 0;
     int i = 0;
 
-//    retNode->resourceHandle[OIC_REQUEST_HANDLE] = sourceNode->resourceHandle[OIC_REQUEST_HANDLE];
-//    retNode->resourceHandle[OIC_VIRTUAL_HANDLE] = sourceNode->resourceHandle[OIC_VIRTUAL_HANDLE];
     clonedMirrorResource->rep = cJSON_Parse(cJSON_PrintUnformatted(sourceMirrorResource->rep));
 
     sizeofstr = strlen(sourceMirrorResource->uri) + 1;
@@ -354,18 +356,18 @@ MirrorResourceList *findMirrorResourceListUsingAddress(MirrorResourceList *mirro
     int i = 0;
     while (tempNode != NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "%d's uri = %s\n", i++, tempNode->uri);
+        OC_LOG_V(DEBUG, VR_TAG, "%d's uri = %s", i++, tempNode->uri);
         tempNode = tempNode->next;
     }
 
     if (mirrorResourceList == NULL || address == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource List : invalid parameter.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource List : invalid parameter.");
         return NULL;
     }
     if (mirrorResourceList->headerNode == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource List : Empty Virtual Resource List.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "Find Virtual Resource List : Empty Virtual Resource List.");
         return NULL;
     }
 
@@ -386,26 +388,25 @@ MirrorResourceList *findMirrorResourceListUsingAddress(MirrorResourceList *mirro
 
 OCStackResult printMirrorResourceList(MirrorResourceList *mirrorResourceList)
 {
-
     if (mirrorResourceList == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "print Virtual Resource list : invalid parameter.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "print Virtual Resource list : invalid parameter.");
         return OC_STACK_INVALID_PARAM;
     }
     if (mirrorResourceList->headerNode == NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "print Virtual Resource list : Empty Virtual Resource List.\n");
+        OC_LOG_V(DEBUG, VR_TAG, "print Virtual Resource list : Empty Virtual Resource List.");
         return OC_STACK_INVALID_PARAM;
     }
-    OC_LOG_V(DEBUG, VR_TAG, "\n\n==============================================================\n");
+    OC_LOG_V(DEBUG, VR_TAG, "==============================================================");
     MirrorResource *mirrorResource = mirrorResourceList->headerNode;
     int i = 0;
     while (mirrorResource != NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "%d's uri = %s\n", i++, mirrorResource->uri);
+        OC_LOG_V(DEBUG, VR_TAG, "%d's uri = %s", i++, mirrorResource->uri);
         mirrorResource = mirrorResource->next;
     }
-    OC_LOG_V(DEBUG, VR_TAG, "\n==============================================================\n\n");
+    OC_LOG_V(DEBUG, VR_TAG, "==============================================================");
 
     return OC_STACK_OK;
 }
