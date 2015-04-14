@@ -63,7 +63,7 @@ namespace OCResourceTest
         EXPECT_ANY_THROW(ConstructResourceObject(std::string(""), std::string("")));
     }
 
-    TEST(ResourceGetTest, ResourceGetForValidUri)
+    TEST(ResourceGetTest, DISABLED_ResourceGetForValidUri)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -71,14 +71,14 @@ namespace OCResourceTest
 
     }
 
-    TEST(ResourceGetTest, ResourceGetForBadUri)
+    TEST(ResourceGetTest, DISABLED_ResourceGetForBadUri)
     {
         OCResource::Ptr resource = ConstructResourceObject("", "coap://192.168.1.2:5000");
         EXPECT_TRUE(resource != NULL);
         EXPECT_THROW(resource->get(OC::QueryParamsMap(), &onGetPut), OC::OCException);
     }
 
-    TEST(ResourceGetTest, ResourceGetWithHighQos)
+    TEST(ResourceGetTest, DISABLED_ResourceGetWithHighQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -86,7 +86,7 @@ namespace OCResourceTest
                 resource->get(OC::QueryParamsMap(), &onGetPut, QualityOfService::HighQos));
     }
 
-    TEST(ResourceGetTest, ResourceGetWithLowQos)
+    TEST(ResourceGetTest, DISABLED_ResourceGetWithLowQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -94,7 +94,7 @@ namespace OCResourceTest
                 resource->get(OC::QueryParamsMap(), &onGetPut, QualityOfService::LowQos));
     }
 
-    TEST(ResourceGetTest, ResourceGetWithMidQos)
+    TEST(ResourceGetTest, DISABLED_ResourceGetWithMidQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -102,7 +102,7 @@ namespace OCResourceTest
                 resource->get(OC::QueryParamsMap(), &onGetPut, QualityOfService::MidQos));
     }
 
-    TEST(ResourceGetTest, ResourceGetWithNaQos)
+    TEST(ResourceGetTest, DISABLED_ResourceGetWithNaQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -110,7 +110,7 @@ namespace OCResourceTest
                 resource->get(OC::QueryParamsMap(), &onGetPut, QualityOfService::NaQos));
     }
 
-    TEST(ResourceGetTest, ResourceGetWithRTIFNaQos)
+    TEST(ResourceGetTest, DISABLED_ResourceGetWithRTIFNaQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -119,7 +119,7 @@ namespace OCResourceTest
                         QualityOfService::NaQos));
     }
 
-    TEST(ResourceGetTest, ResourceGetWithNullResourceType)
+    TEST(ResourceGetTest, DISABLED_ResourceGetWithNullResourceType)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -129,7 +129,7 @@ namespace OCResourceTest
     }
 
 
-    TEST(ResourceGetTest, ResourceGetWithNullResourceInterface)
+    TEST(ResourceGetTest, DISABLED_ResourceGetWithNullResourceInterface)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -137,7 +137,7 @@ namespace OCResourceTest
                 resource->get("", nullptr, QueryParamsMap(), &onGetPut, QualityOfService::NaQos));
     }
 
-    TEST(ResourceGetTest, ResourceGetWithTypeAndInterface)
+    TEST(ResourceGetTest, DISABLED_ResourceGetWithTypeAndInterface)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -145,7 +145,7 @@ namespace OCResourceTest
     }
 
     //Post Test
-    TEST(ResourcePostTest, ResourcePostValidConfiguration)
+    TEST(ResourcePostTest, DISABLED_ResourcePostValidConfiguration)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -154,7 +154,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->post(rep, query, &onGetPut));
     }
 
-    TEST(ResourcePostTest, ResourcePostWithNaQos)
+    TEST(ResourcePostTest, DISABLED_ResourcePostWithNaQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -163,7 +163,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->post(rep, query, &onGetPut, QualityOfService::NaQos));
     }
 
-    TEST(ResourcePostTest, ResourcePostWithMidQos)
+    TEST(ResourcePostTest, DISABLED_ResourcePostWithMidQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -172,7 +172,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->post(rep, query, &onGetPut, QualityOfService::MidQos));
     }
 
-    TEST(ResourcePostTest, ResourcePostWithLowQos)
+    TEST(ResourcePostTest, DISABLED_ResourcePostWithLowQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -181,7 +181,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->post(rep, query, &onGetPut, QualityOfService::LowQos));
     }
 
-    TEST(ResourcePostTest, ResourcePostWithHighQos)
+    TEST(ResourcePostTest, DISABLED_ResourcePostWithHighQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -191,7 +191,7 @@ namespace OCResourceTest
     }
 
     //Put Test
-    TEST(ResourcePutTest, ResourcePutForValid)
+    TEST(ResourcePutTest, DISABLED_ResourcePutForValid)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -200,7 +200,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->put(rep, query, &onGetPut));
     }
 
-    TEST(ResourcePutTest, ResourcePutWithNaQos)
+    TEST(ResourcePutTest, DISABLED_ResourcePutWithNaQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -209,7 +209,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->put(rep, query, &onGetPut, QualityOfService::NaQos));
     }
 
-    TEST(ResourcePutTest, ResourcePutWithLowQos)
+    TEST(ResourcePutTest, DISABLED_ResourcePutWithLowQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -218,7 +218,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->put(rep, query, &onGetPut, QualityOfService::LowQos));
     }
 
-    TEST(ResourcePutTest, ResourcePutWithMidQos)
+    TEST(ResourcePutTest, DISABLED_ResourcePutWithMidQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -227,7 +227,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->put(rep, query, &onGetPut, QualityOfService::MidQos));
     }
 
-    TEST(ResourcePutTest, ResourcePutWithHighQos)
+    TEST(ResourcePutTest, DISABLED_ResourcePutWithHighQos)
     {
         OCRepresentation rep;
         QueryParamsMap query = {};
@@ -236,7 +236,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->put(rep, query, &onGetPut, QualityOfService::HighQos));
     }
 
-    TEST(ResourcePutTest, ResourcePutWithTypeAndInterface)
+    TEST(ResourcePutTest, DISABLED_ResourcePutWithTypeAndInterface)
     {
         OCRepresentation rep;
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
@@ -245,7 +245,7 @@ namespace OCResourceTest
                 resource->put("", DEFAULT_INTERFACE, rep, QueryParamsMap(), &onGetPut));
     }
 
-    TEST(ResourcePutTest, ResourcePutWithNullType)
+    TEST(ResourcePutTest, DISABLED_ResourcePutWithNullType)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -256,7 +256,7 @@ namespace OCResourceTest
         onGetPut(headerOptions, rep, OC_STACK_OK);
     }
 
-    TEST(ResourcePutTest, ResourcePutWithNullInterface)
+    TEST(ResourcePutTest, DISABLED_ResourcePutWithNullInterface)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -265,7 +265,7 @@ namespace OCResourceTest
     }
 
     // Observer Test
-    TEST(ResourceObserveTest, ResourceObserveValidUri)
+    TEST(ResourceObserveTest, DISABLED_ResourceObserveValidUri)
     {
         OCResource::Ptr resource =
                 ConstructResourceObject("coap://192.168.1.2:5000", "/Observe");
@@ -274,7 +274,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->observe(ObserveType::ObserveAll, query, &onObserve));
     }
 
-    TEST(ResourceObserveTest, ResourceObserveLoQos)
+    TEST(ResourceObserveTest, DISABLED_ResourceObserveLoQos)
     {
         QueryParamsMap query = {};
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/Observe");
@@ -284,7 +284,7 @@ namespace OCResourceTest
                         QualityOfService::LowQos));
     }
 
-    TEST(ResourceObserveTest, ResourceObserveNaQos)
+    TEST(ResourceObserveTest, DISABLED_ResourceObserveNaQos)
     {
         QueryParamsMap query = {};
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/Observe");
@@ -294,7 +294,7 @@ namespace OCResourceTest
                         QualityOfService::NaQos));
     }
 
-    TEST(ResourceObserveTest, ResourceObserveMidQos)
+    TEST(ResourceObserveTest, DISABLED_ResourceObserveMidQos)
     {
         QueryParamsMap query = {};
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/Observe");
@@ -304,7 +304,7 @@ namespace OCResourceTest
                         QualityOfService::MidQos));
     }
 
-    TEST(ResourceObserveTest, ResourceObserveHighQos)
+    TEST(ResourceObserveTest, DISABLED_ResourceObserveHighQos)
     {
         QueryParamsMap query = {};
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/Observe");
@@ -314,7 +314,7 @@ namespace OCResourceTest
                         QualityOfService::HighQos));
     }
 
-    TEST(ResourceObserveTest, ResourceCancelObserveValidUri)
+    TEST(ResourceObserveTest, DISABLED_ResourceCancelObserveValidUri)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -323,7 +323,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->cancelObserve());
     }
 
-    TEST(ResourceObserveTest, ResourceCancelObserveWithNaQos)
+    TEST(ResourceObserveTest, DISABLED_ResourceCancelObserveWithNaQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -334,7 +334,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->cancelObserve(QualityOfService::NaQos));
     }
 
-    TEST(ResourceObserveTest, ResourceCancelObserveWithLowQos)
+    TEST(ResourceObserveTest, DISABLED_ResourceCancelObserveWithLowQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -345,7 +345,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->cancelObserve(QualityOfService::LowQos));
     }
 
-    TEST(ResourceObserveTest, ResourceCancelObserveWithMidQos)
+    TEST(ResourceObserveTest, DISABLED_ResourceCancelObserveWithMidQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -356,7 +356,7 @@ namespace OCResourceTest
         EXPECT_EQ(OC_STACK_OK, resource->cancelObserve(QualityOfService::MidQos));
     }
 
-    TEST(ResourceObserveTest, ResourceCancelObserveWithHighQos)
+    TEST(ResourceObserveTest, DISABLED_ResourceCancelObserveWithHighQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -368,14 +368,14 @@ namespace OCResourceTest
     }
 
     //DeleteResource
-    TEST(DeleteResourceTest, DeleteResourceValidUri)
+    TEST(DeleteResourceTest, DISABLED_DeleteResourceValidUri)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
         EXPECT_EQ(OC_STACK_OK, resource->deleteResource(&deleteResponse));
     }
 
-    TEST(DeleteResourceTest, DeleteResourceWithLowQos)
+    TEST(DeleteResourceTest, DISABLED_DeleteResourceWithLowQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -383,7 +383,7 @@ namespace OCResourceTest
                 resource->deleteResource(&deleteResponse, QualityOfService::LowQos));
     }
 
-    TEST(DeleteResourceTest, DeleteResourceWithMidQos)
+    TEST(DeleteResourceTest, DISABLED_DeleteResourceWithMidQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
@@ -391,14 +391,14 @@ namespace OCResourceTest
                 resource->deleteResource(&deleteResponse, QualityOfService::MidQos));
     }
 
-    TEST(DeleteResourceTest, DeleteResourceWithHighQos)
+    TEST(DeleteResourceTest, DISABLED_DeleteResourceWithHighQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
         EXPECT_EQ(OC_STACK_OK,
                 resource->deleteResource(&deleteResponse, QualityOfService::HighQos));
     }
-    TEST(DeleteResourceTest, DeleteResourceWithNaQos)
+    TEST(DeleteResourceTest, DISABLED_DeleteResourceWithNaQos)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
