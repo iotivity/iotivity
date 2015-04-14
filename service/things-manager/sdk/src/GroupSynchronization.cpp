@@ -58,7 +58,9 @@ namespace OIC
         cout << "GroupSynchronization::findGroup" << endl;
 
         if(bIsFinding)
+        {
             return OC_STACK_ERROR;
+        }
 
         foundGroupResourceList.clear();
         findCallback = callback;
@@ -75,16 +77,15 @@ namespace OIC
             query.append("?rt=");
             query.append(collectionResourceTypes.at(i));
 
-            cout << query << endl;
             cout << "GroupSynchronization::findGroup - " << query << endl;
 
             OCPlatform::findResource("", query,
                     OC_ETHERNET,
                     std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
 
-            OCPlatform::findResource("", query,
-                    OC_WIFI,
-                    std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
+            // OCPlatform::findResource("", query,
+            //         OC_WIFI,
+            //         std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
         }
 
         bIsFinding = true;
@@ -695,8 +696,9 @@ OCStackResult GroupSynchronization::leaveGroup(
 
                     if (methodType == "joinGroup")
                     {
-                        std::string resourceName = "coap://224.0.1.187/oc/core?rt=";
-                        resourceName += resourceType;
+                        std::string resourceName = OC_WELL_KNOWN_QUERY;
+                        resourceName.append("?rt=");
+                        resourceName.append(resourceType);
                         cout << "\t\t\tresourceName : " << resourceName << endl;
 
                         resourceRequest = request;
@@ -705,11 +707,13 @@ OCStackResult GroupSynchronization::leaveGroup(
                                 OC_ETHERNET,
                                 std::bind(&GroupSynchronization::onFindResource, this,
                                         std::placeholders::_1));
-                        
+
                         // OCPlatform::findResource("", resourceName,
                         //         OC_WIFI,
                         //         std::bind(&GroupSynchronization::onFindResource, this,
                         //                 std::placeholders::_1));
+
+                        return OC_EH_SLOW;
                     }
                     else if (methodType == "leaveGroup")
                     {
@@ -983,6 +987,9 @@ OCStackResult GroupSynchronization::leaveGroup(
 
         if (resource)
         {
+            if(NULL == collectionResourceHandle)
+                return;
+
             // start of debugging
             std::string resourceURI;
             std::string hostAddress;
@@ -1022,8 +1029,6 @@ OCStackResult GroupSynchronization::leaveGroup(
                         << result << endl;
                 return;
             }
-//        cout << "GroupSynchronization::onFindResource : creating resourceHandle. resource type - "
-//                << OCGetResourceTypeName(resourceHandle, 0) << endl;
 
             result = OCPlatform::bindResource(collectionResourceHandle, resourceHandle);
             if (result != OC_STACK_OK)
@@ -1053,11 +1058,18 @@ OCStackResult GroupSynchronization::leaveGroup(
             pResponse->setResponseResult(OC_EH_OK);
 
             OCRepresentation rep = resourceRequest->getResourceRepresentation();
-            pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-            if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+            pResponse->setResourceRepresentation(rep);
+            try{
+                if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                {
+                    cout << "GroupSynchronization::onFindResource : sendResponse is successful."
+                            << endl;
+                }
+            }
+            catch( OCException &e )
             {
-                cout << "GroupSynchronization::onFindResource : sendResponse is successful."
-                        << endl;
+                // cout << e.what << endl;
+                return;
             }
         }
         else
