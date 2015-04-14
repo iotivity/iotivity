@@ -222,6 +222,7 @@ OCStackResult GroupManager::findCandidateResources(
     for (unsigned int i = 0; i < resourceTypes.size(); ++i)
     {
         // std::cout << "resourceTypes : " << resourceTypes.at(i) << std::endl;
+
         std::string query = OC_WELL_KNOWN_QUERY;
         query.append("?rt=");
         query.append(resourceTypes.at(i));
@@ -233,12 +234,12 @@ OCStackResult GroupManager::findCandidateResources(
                         > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
                                 waitsec)));
 
-        OCPlatform::findResource("", 
-                query,
-                OC_WIFI,
-                std::function < void(std::shared_ptr < OCResource > resource)
-                        > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
-                                waitsec)));
+        // OCPlatform::findResource("",
+        //         query,
+        //         OC_WIFI,
+        //         std::function < void(std::shared_ptr < OCResource > resource)
+        //                 > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
+        //                         waitsec)));
     }
 
     if (waitsec >= 0)
@@ -365,7 +366,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
         result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                 // resourceType,
                 resourceTypes.front(),
-                OC_WIFI,
+                OC_ETHERNET,
                 std::function<
                         void(OCStackResult result, const unsigned int nonce,
                                 const std::string& hostAddress) >(

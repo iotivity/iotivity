@@ -74,6 +74,8 @@ namespace OIC
             std::string query = OC_WELL_KNOWN_QUERY;
             query.append("?rt=");
             query.append(collectionResourceTypes.at(i));
+
+            cout << query << endl;
             cout << "GroupSynchronization::findGroup - " << query << endl;
 
             OCPlatform::findResource("", query,
@@ -704,10 +706,10 @@ OCStackResult GroupSynchronization::leaveGroup(
                                 std::bind(&GroupSynchronization::onFindResource, this,
                                         std::placeholders::_1));
                         
-                        OCPlatform::findResource("", resourceName,
-                                OC_WIFI,
-                                std::bind(&GroupSynchronization::onFindResource, this,
-                                        std::placeholders::_1));
+                        // OCPlatform::findResource("", resourceName,
+                        //         OC_WIFI,
+                        //         std::bind(&GroupSynchronization::onFindResource, this,
+                        //                 std::placeholders::_1));
                     }
                     else if (methodType == "leaveGroup")
                     {
