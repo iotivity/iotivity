@@ -44,11 +44,15 @@ stacktest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 stacktest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
 stacktest_env.PrependUnique(LIBS = ['m',
                                     'octbstack',
-                                    'oc_logger',
                                     'connectivity_abstraction',
                                     'coap',
                                     'gtest',
                                     'gtest_main'])
+
+target_os = env.get('TARGET_OS')
+if target_os != 'darwin':
+    stacktest_env.PrependUnique(LIBS = ['oc_logger'])
+
 
 if env.get('SECURED') == '1':
     stacktest_env.AppendUnique(LIBS = ['tinydtls'])

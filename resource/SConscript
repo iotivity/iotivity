@@ -59,9 +59,13 @@ if target_os == 'linux':
 
 	# Build C/C++ unit tests
 	SConscript('unit_tests.scons')
+
 elif target_os == 'darwin':
-	# Build linux samples for now
+	# Build linux samples for now.
 	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
+
+	# Build C stack's unit tests.
+	SConscript('unit_tests.scons')
+
 elif target_os == 'arduino':
 	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')
-
