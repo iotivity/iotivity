@@ -72,6 +72,18 @@ static CARetransmission_t g_retransmissionContext;
 static CARequestCallback g_requestHandler = NULL;
 static CAResponseCallback g_responseHandler = NULL;
 
+static bool CAIsSelectedNetworkAvailable()
+{
+    u_arraylist_t *list = CAGetSelectedNetworkList();
+    if (!list || list->length == 0)
+    {
+        OIC_LOG(ERROR, TAG, "No selected network");
+        return false;
+    }
+
+    return true;
+}
+
 static void CATimeoutCallback(const CARemoteEndpoint_t *endpoint, const void *pdu, uint32_t size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -582,6 +594,11 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object, const CARequ
     VERIFY_NON_NULL(object, TAG, "object");
     VERIFY_NON_NULL(request, TAG, "request");
 
+    if (false == CAIsSelectedNetworkAvailable())
+    {
+        return CA_STATUS_FAILED;
+    }
+
     CARemoteEndpoint_t *remoteEndpoint = NULL;
     CARequestInfo_t *requestInfo = NULL;
     CAData_t *data = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
@@ -633,6 +650,11 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
         return CA_STATUS_INVALID_PARAM;
     }
 
+    if (false == CAIsSelectedNetworkAvailable())
+    {
+        return CA_STATUS_FAILED;
+    }
+
     CARemoteEndpoint_t *remoteEndpoint = NULL;
     CARequestInfo_t *requestInfo = NULL;
 
@@ -642,7 +664,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
 
     CAAddress_t addr = {};
     remoteEndpoint = CACreateRemoteEndpointInternal(object->resourceUri, addr,
-                                                                        object->connectivityType);
+                                                    object->connectivityType);
 
     // clone request info
     requestInfo = CACloneRequestInfo(request);
@@ -676,6 +698,11 @@ CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(object, TAG, "object");
     VERIFY_NON_NULL(response, TAG, "response");
+
+    if (false == CAIsSelectedNetworkAvailable())
+    {
+        return CA_STATUS_FAILED;
+    }
 
     CARemoteEndpoint_t *remoteEndpoint = NULL;
     CAResponseInfo_t *responseInfo = NULL;
@@ -721,6 +748,11 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(resourceUri, TAG, "resourceUri is NULL");
     VERIFY_NON_NULL(token, TAG, "Token is NULL");
+
+    if (false == CAIsSelectedNetworkAvailable())
+    {
+        return CA_STATUS_FAILED;
+    }
 
     CARemoteEndpoint_t *remoteEndpoint = NULL;
     CARequestInfo_t *reqInfo = NULL;

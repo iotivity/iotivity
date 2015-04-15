@@ -636,6 +636,8 @@ TEST_F(CATests, HandlerRequestResponseTest)
 // check return value
 TEST(SendRequestToAllTest, DISABLED_TC_31_Positive_01)
 {
+    CASelectNetwork(CA_ETHERNET);
+
     uri = (char *) RESOURCE_URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
     CAGroupEndpoint_t *group = NULL;
