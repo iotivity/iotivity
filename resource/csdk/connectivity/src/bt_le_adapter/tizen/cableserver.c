@@ -27,7 +27,7 @@
 #include "cacommon.h"
 #include "caadapterutils.h"
 #include <gio/gio.h>
-#include "umutex.h"
+#include "camutex.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
 #include "camsgparser.h"
@@ -107,25 +107,25 @@ static bool g_isBleGattServerStarted = false;
  * @brief Mutex to synchronize the calls to be done to the platform from GATTServer
  *           interfaces from different threads.
  */
-static u_mutex g_bleServerStateMutex = NULL;
+static ca_mutex g_bleServerStateMutex = NULL;
 
 /**
  * @var g_bleCharacteristicMutex
  * @brief Mutex to synchronize writing operations on the characteristics.
  */
-static  u_mutex g_bleCharacteristicMutex = NULL;
+static  ca_mutex g_bleCharacteristicMutex = NULL;
 
 /**
  * @var g_bleServiceMutex
  * @brief  Mutex to synchronize to create the OIC service..
  */
-static  u_mutex g_bleServiceMutex = NULL;
+static  ca_mutex g_bleServiceMutex = NULL;
 
  /**
  * @var g_bleClientBDAddressMutex
  * @brief Mutex to synchronize the client BD Address update on server side.
  */
-static u_mutex g_bleClientBDAddressMutex = NULL;
+static ca_mutex g_bleClientBDAddressMutex = NULL;
 
 
 /**
@@ -133,13 +133,13 @@ static u_mutex g_bleClientBDAddressMutex = NULL;
  * @brief Mutex to synchronize access to the requestResponse callback to be called
  *           when the data needs to be sent from GATTClient.
  */
-static  u_mutex g_bleReqRespCbMutex = NULL;
+static  ca_mutex g_bleReqRespCbMutex = NULL;
 
 /**
  * @var g_bleServerThreadPoolMutex
  * @brief Mutex to synchronize the task to be pushed to thread pool.
  */
-static u_mutex g_bleServerThreadPoolMutex = NULL;
+static ca_mutex g_bleServerThreadPoolMutex = NULL;
 
 /**
  * @struct gRemoteAddress
@@ -173,9 +173,9 @@ void CABleGattServerConnectionStateChangedCb(int result, bool connected,
     {
         OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Connected to [%s]", remoteAddress);
 
-        u_mutex_lock(g_bleClientBDAddressMutex);
+        ca_mutex_lock(g_bleClientBDAddressMutex);
         g_remoteClientAddress = OICStrdup(remoteAddress);
-        u_mutex_unlock(g_bleClientBDAddressMutex);
+        ca_mutex_unlock(g_bleClientBDAddressMutex);
 
         VERIFY_NON_NULL_VOID(g_remoteClientAddress, TZ_BLE_SERVER_TAG, "Malloc failed");
     }
@@ -194,11 +194,11 @@ CAResult_t CAStartBleGattServer()
         return CA_SERVER_NOT_STARTED;
     }
 
-    u_mutex_lock(g_bleServerThreadPoolMutex);
+    ca_mutex_lock(g_bleServerThreadPoolMutex);
     if (NULL == g_bleServerThreadPool)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_bleServerThreadPool is NULL");
-        u_mutex_unlock(g_bleServerThreadPoolMutex);
+        ca_mutex_unlock(g_bleServerThreadPoolMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -207,11 +207,11 @@ CAResult_t CAStartBleGattServer()
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "u_thread_pool_add_task failed with ret [%d]", ret);
-        u_mutex_unlock(g_bleServerThreadPoolMutex);
+        ca_mutex_unlock(g_bleServerThreadPoolMutex);
         return CA_STATUS_FAILED;
     }
 
-    u_mutex_unlock(g_bleServerThreadPoolMutex);
+    ca_mutex_unlock(g_bleServerThreadPoolMutex);
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -219,11 +219,11 @@ CAResult_t CAStartBleGattServer()
 void CAStartBleGattServerThread(void *data)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
-    u_mutex_lock(g_bleServerStateMutex);
+    ca_mutex_lock(g_bleServerStateMutex);
     if (true == g_isBleGattServerStarted)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Gatt Server is already running");
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         CATerminateBleGattServer();
         return;
     }
@@ -232,7 +232,7 @@ void CAStartBleGattServerThread(void *data)
     if (CA_STATUS_OK != ret )
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "_bt_gatt_init_service failed");
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         CATerminateBleGattServer();
         return;
     }
@@ -245,7 +245,7 @@ void CAStartBleGattServerThread(void *data)
     if (CA_STATUS_OK != ret )
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewBleServiceInGattServer failed");
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         CATerminateBleGattServer();
         return;
     }
@@ -258,7 +258,7 @@ void CAStartBleGattServerThread(void *data)
     if (CA_STATUS_OK != ret )
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewCharacteristicsToGattServer failed");
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         CATerminateBleGattServer();
         return;
     }
@@ -272,7 +272,7 @@ void CAStartBleGattServerThread(void *data)
     if (CA_STATUS_OK != ret )
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewCharacteristicsToGattServer failed");
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         CATerminateBleGattServer();
         return;
     }
@@ -281,7 +281,7 @@ void CAStartBleGattServerThread(void *data)
     if (CA_STATUS_OK != ret )
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CARegisterBleServicewithGattServer failed");
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         CATerminateBleGattServer();
         return;
     }
@@ -300,7 +300,7 @@ void CAStartBleGattServerThread(void *data)
     if (NULL == g_hAdvertiser)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_hAdvertiser is NULL");
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         CATerminateBleGattServer();
         return;
     }
@@ -310,14 +310,14 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "bt_adapter_le_start_advertising failed with ret [%d] ",
                   res);
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         CATerminateBleGattServer();
         return;
     }
 
     g_isBleGattServerStarted = true;
 
-    u_mutex_unlock(g_bleServerStateMutex);
+    ca_mutex_unlock(g_bleServerStateMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG,
             "LE Server initialization complete.");
@@ -339,16 +339,16 @@ CAResult_t CAStopBleGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    u_mutex_lock(g_bleServerStateMutex);
+    ca_mutex_lock(g_bleServerStateMutex);
 
     if (false == g_isBleGattServerStarted)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Gatt Server is not running to stop");
 
-        u_mutex_unlock(g_bleServerStateMutex);
+        ca_mutex_unlock(g_bleServerStateMutex);
         return CA_STATUS_OK;
     }
-    u_mutex_unlock(g_bleServerStateMutex);
+    ca_mutex_unlock(g_bleServerStateMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -360,7 +360,7 @@ void CATerminateBleGattServer()
 
     g_isBleGattServerStarted = false;
 
-    u_mutex_lock(g_bleServerStateMutex);
+    ca_mutex_lock(g_bleServerStateMutex);
     GMainContext  *context_event_loop = NULL;
     // Required for waking up the thread which is running in gmain loop
     if ( NULL != g_eventLoop)
@@ -411,24 +411,24 @@ void CATerminateBleGattServer()
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "_bt_gatt_deinit_service failed with ret [%d]", res);
     }
 
-    u_mutex_lock(g_bleClientBDAddressMutex);
+    ca_mutex_lock(g_bleClientBDAddressMutex);
     OICFree(g_remoteClientAddress);
-    u_mutex_unlock(g_bleClientBDAddressMutex);
+    ca_mutex_unlock(g_bleClientBDAddressMutex);
     // free service Path(unique identifier for ble service)
-    u_mutex_lock(g_bleServiceMutex);
+    ca_mutex_lock(g_bleServiceMutex);
     OICFree(g_gattSvcPath);
     g_gattSvcPath = NULL;
-    u_mutex_unlock(g_bleServiceMutex);
+    ca_mutex_unlock(g_bleServiceMutex);
 
     // freeing characteristics
-    u_mutex_lock(g_bleCharacteristicMutex);
+    ca_mutex_lock(g_bleCharacteristicMutex);
     OICFree(g_gattReadCharPath);
     g_gattReadCharPath = NULL;
     OICFree(g_gattWriteCharPath);
     g_gattWriteCharPath = NULL;
-    u_mutex_unlock(g_bleCharacteristicMutex);
+    ca_mutex_unlock(g_bleCharacteristicMutex);
 
-    u_mutex_unlock(g_bleServerStateMutex);
+    ca_mutex_unlock(g_bleServerStateMutex);
 
     // Terminating all mutex variables.
     CATerminateGattServerMutexVariables();
@@ -440,50 +440,50 @@ CAResult_t CAInitGattServerMutexVariables()
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
     if (NULL == g_bleServerStateMutex)
     {
-        g_bleServerStateMutex = u_mutex_new();
+        g_bleServerStateMutex = ca_mutex_new();
         if (NULL == g_bleServerStateMutex)
         {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleServiceMutex)
     {
-        g_bleServiceMutex = u_mutex_new();
+        g_bleServiceMutex = ca_mutex_new();
         if (NULL == g_bleServiceMutex)
         {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleCharacteristicMutex)
     {
-        g_bleCharacteristicMutex = u_mutex_new();
+        g_bleCharacteristicMutex = ca_mutex_new();
         if (NULL == g_bleCharacteristicMutex)
         {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleReqRespCbMutex)
     {
-        g_bleReqRespCbMutex = u_mutex_new();
+        g_bleReqRespCbMutex = ca_mutex_new();
         if (NULL == g_bleReqRespCbMutex)
         {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleClientBDAddressMutex)
     {
-        g_bleClientBDAddressMutex = u_mutex_new();
+        g_bleClientBDAddressMutex = ca_mutex_new();
         if (NULL == g_bleClientBDAddressMutex)
         {
-            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
@@ -494,18 +494,18 @@ CAResult_t CAInitGattServerMutexVariables()
 void CATerminateGattServerMutexVariables()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
-    u_mutex_free(g_bleServerStateMutex);
+    ca_mutex_free(g_bleServerStateMutex);
     g_bleServerStateMutex = NULL;
 
-    u_mutex_free(g_bleClientBDAddressMutex);
+    ca_mutex_free(g_bleClientBDAddressMutex);
     g_bleClientBDAddressMutex = NULL;
 
     g_bleServerStateMutex = NULL;
-    u_mutex_free(g_bleServiceMutex);
+    ca_mutex_free(g_bleServiceMutex);
     g_bleServiceMutex = NULL;
-    u_mutex_free(g_bleCharacteristicMutex);
+    ca_mutex_free(g_bleCharacteristicMutex);
     g_bleCharacteristicMutex = NULL;
-    u_mutex_free(g_bleReqRespCbMutex);
+    ca_mutex_free(g_bleReqRespCbMutex);
     g_bleReqRespCbMutex = NULL;
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
@@ -544,9 +544,9 @@ CAResult_t CADeInitBleGattService()
 void CASetBleServerThreadPoolHandle(u_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
-    u_mutex_lock(g_bleServerThreadPoolMutex);
+    ca_mutex_lock(g_bleServerThreadPoolMutex);
     g_bleServerThreadPool = handle;
-    u_mutex_unlock(g_bleServerThreadPoolMutex);
+    ca_mutex_unlock(g_bleServerThreadPoolMutex);
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }
 
@@ -572,7 +572,7 @@ CAResult_t CAAddNewBleServiceInGattServer(const char *serviceUUID)
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,
                   "AddNewBleServiceInGattServer ServicePath obtained is %s", svcPath);
 
-        u_mutex_lock(g_bleServiceMutex);
+        ca_mutex_lock(g_bleServiceMutex);
 
         if (NULL != g_gattSvcPath)
         {
@@ -581,7 +581,7 @@ CAResult_t CAAddNewBleServiceInGattServer(const char *serviceUUID)
         }
         g_gattSvcPath = svcPath;
 
-        u_mutex_unlock(g_bleServiceMutex);
+        ca_mutex_unlock(g_bleServiceMutex);
     }
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
@@ -644,23 +644,23 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
 
     strncpy(data, (char *)charValue, charValueLen);
 
-    u_mutex_lock(g_bleReqRespCbMutex);
+    ca_mutex_lock(g_bleReqRespCbMutex);
     if (NULL == g_bleServerDataReceivedCallback)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gReqRespCallback is NULL!");
-        u_mutex_unlock(g_bleReqRespCbMutex);
+        ca_mutex_unlock(g_bleReqRespCbMutex);
         OICFree(data);
         return;
     }
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "Sending data up !");
-    u_mutex_lock(g_bleClientBDAddressMutex);
+    ca_mutex_lock(g_bleClientBDAddressMutex);
     uint32_t sentLength = 0;
     g_bleServerDataReceivedCallback(g_remoteClientAddress, OIC_BLE_SERVICE_ID,
                                      data, charValueLen, &sentLength);
-    u_mutex_unlock(g_bleClientBDAddressMutex);
+    ca_mutex_unlock(g_bleClientBDAddressMutex);
 
-    u_mutex_unlock(g_bleReqRespCbMutex);
+    ca_mutex_unlock(g_bleReqRespCbMutex);
 
     OICFree(data);
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
@@ -710,7 +710,7 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG,
               "bt_gatt_add_characteristic charPath obtained: %s", charPath);
 
-    u_mutex_lock(g_bleCharacteristicMutex);
+    ca_mutex_lock(g_bleCharacteristicMutex);
 
     if (!read)
     {
@@ -732,7 +732,7 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *
         g_gattWriteCharPath = charPath;
     }
 
-    u_mutex_unlock(g_bleCharacteristicMutex);
+    ca_mutex_unlock(g_bleCharacteristicMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -751,12 +751,12 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue,
 
     VERIFY_NON_NULL(charValue, NULL, "Param charValue is NULL");
 
-    u_mutex_lock(g_bleCharacteristicMutex);
+    ca_mutex_lock(g_bleCharacteristicMutex);
 
     if (NULL  == g_gattWriteCharPath)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_gattWriteCharPath is NULL");
-        u_mutex_unlock(g_bleCharacteristicMutex);
+        ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -764,7 +764,7 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue,
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "malloc failed!");
-        u_mutex_unlock(g_bleCharacteristicMutex);
+        ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -780,12 +780,12 @@ CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue,
                   "bt_gatt_update_characteristic failed with return [%d]", ret);
         OICFree(data);
         data = NULL;
-        u_mutex_unlock(g_bleCharacteristicMutex);
+        ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
 
     OICFree(data);
-    u_mutex_unlock(g_bleCharacteristicMutex);
+    ca_mutex_unlock(g_bleCharacteristicMutex);
 
     OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -795,11 +795,11 @@ void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    u_mutex_lock(g_bleReqRespCbMutex);
+    ca_mutex_lock(g_bleReqRespCbMutex);
 
     g_bleServerDataReceivedCallback = callback;
 
-    u_mutex_unlock(g_bleReqRespCbMutex);
+    ca_mutex_unlock(g_bleReqRespCbMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }

@@ -53,7 +53,7 @@
 #include <errno.h>
 
 #include "caadapterutils.h"
-#include "umutex.h"
+#include "camutex.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -76,7 +76,7 @@ static CANetworkStatus_t nwConnectivityStatus;
  * @var g_ethernetNetInfoMutex
  * @brief  Mutex for synchronizing access to cached interface and IP address information.
  */
-static u_mutex g_ethernetNetInfoMutex = NULL;
+static ca_mutex g_ethernetNetInfoMutex = NULL;
 
 /**
  * @var g_ethernetInterfaceName
@@ -131,13 +131,13 @@ CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 
     if (!g_ethernetNetInfoMutex)
     {
-        g_ethernetNetInfoMutex = u_mutex_new();
+        g_ethernetNetInfoMutex = ca_mutex_new();
     }
 
-    u_mutex_lock(g_ethernetNetInfoMutex);
+    ca_mutex_lock(g_ethernetNetInfoMutex);
     CAEthernetGetInterfaceInformation(ETHERNET_INF_PREFIX,&g_ethernetInterfaceName, &g_ethernetIPAddress,
                                       &g_ethernetSubnetMask);
-    u_mutex_unlock(g_ethernetNetInfoMutex);
+    ca_mutex_unlock(g_ethernetNetInfoMutex);
 
     nwConnectivityStatus = (g_ethernetIPAddress) ? CA_INTERFACE_UP : CA_INTERFACE_DOWN;
 
@@ -171,7 +171,7 @@ void CAEthernetTerminateNetworkMonitor(void)
 
     if (g_ethernetNetInfoMutex)
     {
-        u_mutex_free(g_ethernetNetInfoMutex);
+        ca_mutex_free(g_ethernetNetInfoMutex);
         g_ethernetNetInfoMutex = NULL;
     }
 
@@ -225,12 +225,12 @@ CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
     VERIFY_NON_NULL(ipAddress, ETHERNET_MONITOR_TAG, "ip address");
 
     // Get the interface and ipaddress information from cache
-    u_mutex_lock(g_ethernetNetInfoMutex);
+    ca_mutex_lock(g_ethernetNetInfoMutex);
     if (g_ethernetInterfaceName == NULL || g_ethernetIPAddress == NULL)
     {
         OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "Network not enabled");
 
-        u_mutex_unlock(g_ethernetNetInfoMutex);
+        ca_mutex_unlock(g_ethernetNetInfoMutex);
         return CA_ADAPTER_NOT_ENABLED;
     }
 
@@ -239,7 +239,7 @@ CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
     *ipAddress = (g_ethernetIPAddress) ? OICStrdup((const char *)g_ethernetIPAddress)
                  : NULL;
 
-    u_mutex_unlock(g_ethernetNetInfoMutex);
+    ca_mutex_unlock(g_ethernetNetInfoMutex);
 
     OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -251,19 +251,19 @@ CAResult_t CAEthernetGetInterfaceSubnetMask(char **subnetMask)
 
     VERIFY_NON_NULL(subnetMask, ETHERNET_MONITOR_TAG, "subnet mask");
 
-    u_mutex_lock(g_ethernetNetInfoMutex);
+    ca_mutex_lock(g_ethernetNetInfoMutex);
     if (NULL == g_ethernetSubnetMask)
     {
         OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "There is no subnet mask information!");
 
-        u_mutex_unlock(g_ethernetNetInfoMutex);
+        ca_mutex_unlock(g_ethernetNetInfoMutex);
         return CA_STATUS_FAILED;
     }
 
     *subnetMask = (g_ethernetSubnetMask) ?
                   strndup(g_ethernetSubnetMask, strlen(g_ethernetSubnetMask))
                   : NULL;
-    u_mutex_unlock(g_ethernetNetInfoMutex);
+    ca_mutex_unlock(g_ethernetNetInfoMutex);
 
     OIC_LOG(DEBUG, ETHERNET_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -390,7 +390,7 @@ void CANetworkMonitorThread(void *threadData)
         if (currNetworkStatus != nwConnectivityStatus)
         {
             // set current network information
-            u_mutex_lock(g_ethernetNetInfoMutex);
+            ca_mutex_lock(g_ethernetNetInfoMutex);
 
             nwConnectivityStatus = currNetworkStatus;
 
@@ -402,7 +402,7 @@ void CANetworkMonitorThread(void *threadData)
             g_ethernetIPAddress = (ipAddress) ? strndup(ipAddress, strlen(ipAddress)) : NULL;
             g_ethernetSubnetMask = (subnetMask) ? strndup(subnetMask, strlen(subnetMask)) : NULL;
 
-            u_mutex_unlock(g_ethernetNetInfoMutex);
+            ca_mutex_unlock(g_ethernetNetInfoMutex);
 
             if (g_networkChangeCb)
             {

@@ -23,7 +23,7 @@
 #include <wifi.h>
 #include "logger.h"
 #include "caadapterutils.h"
-#include "umutex.h"
+#include "camutex.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -34,7 +34,7 @@
  * @var g_wifiNetInfoMutex
  * @brief  Mutex for synchronizing access to cached interface and IP address information.
  */
-static u_mutex g_wifiNetInfoMutex = NULL;
+static ca_mutex g_wifiNetInfoMutex = NULL;
 
 /**
  * @var g_wifiInterfaceName
@@ -94,7 +94,7 @@ CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 
     if (!g_wifiNetInfoMutex)
     {
-        g_wifiNetInfoMutex = u_mutex_new();
+        g_wifiNetInfoMutex = ca_mutex_new();
     }
 
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
@@ -132,7 +132,7 @@ void CAWiFiTerminateNetworkMonitor(void)
 
     if (g_wifiNetInfoMutex)
     {
-        u_mutex_free(g_wifiNetInfoMutex);
+        ca_mutex_free(g_wifiNetInfoMutex);
         g_wifiNetInfoMutex = NULL;
     }
 
@@ -194,12 +194,12 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
     VERIFY_NON_NULL(interfaceName, WIFI_MONITOR_TAG, "interface name holder is NULL");
     VERIFY_NON_NULL(ipAddress, WIFI_MONITOR_TAG, "IP address holder is NULL");
 
-    u_mutex_lock(g_wifiNetInfoMutex);
+    ca_mutex_lock(g_wifiNetInfoMutex);
 
     if (NULL == g_wifiInterfaceName || NULL == g_wifiIPAddress)
     {
         OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "Network not enabled");
-        u_mutex_unlock(g_wifiNetInfoMutex);
+        ca_mutex_unlock(g_wifiNetInfoMutex);
         return CA_ADAPTER_NOT_ENABLED;
     }
 
@@ -213,7 +213,7 @@ CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress)
         *ipAddress = OICStrdup((const char *)g_wifiIPAddress);
     }
 
-    u_mutex_unlock(g_wifiNetInfoMutex);
+    ca_mutex_unlock(g_wifiNetInfoMutex);
 
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -225,16 +225,16 @@ CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask)
 
     VERIFY_NON_NULL(subnetMask, WIFI_MONITOR_TAG, "subnet mask");
 
-    u_mutex_lock(g_wifiNetInfoMutex);
+    ca_mutex_lock(g_wifiNetInfoMutex);
     if (NULL == g_wifiSubnetMask)
     {
         OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "There is no subnet mask information!");
-        u_mutex_unlock(g_wifiNetInfoMutex);
+        ca_mutex_unlock(g_wifiNetInfoMutex);
         return CA_STATUS_FAILED;
     }
 
     *subnetMask = (g_wifiSubnetMask) ? OICStrdup((const char *)g_wifiSubnetMask): NULL;
-    u_mutex_unlock(g_wifiNetInfoMutex);
+    ca_mutex_unlock(g_wifiNetInfoMutex);
 
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -296,7 +296,7 @@ void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
         CAWiFiGetInterfaceInformation(&interfaceName, &ipAddress, &subnetMask);
 
         // Update the cached network information
-        u_mutex_lock(g_wifiNetInfoMutex);
+        ca_mutex_lock(g_wifiNetInfoMutex);
 
         OICFree(g_wifiInterfaceName);
         OICFree(g_wifiIPAddress);
@@ -305,7 +305,7 @@ void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
         g_wifiIPAddress = ipAddress;
         g_wifiSubnetMask = subnetMask;
 
-        u_mutex_unlock(g_wifiNetInfoMutex);
+        ca_mutex_unlock(g_wifiNetInfoMutex);
     }
     else
     {
@@ -351,13 +351,13 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
         return;
     }
 
-    u_mutex_lock(g_wifiNetInfoMutex);
+    ca_mutex_lock(g_wifiNetInfoMutex);
     // Get wifi interface name
     if (WIFI_ERROR_NONE != (ret = wifi_get_network_interface_name(interfaceName)))
     {
         OIC_LOG_V(ERROR, WIFI_MONITOR_TAG, "Failed to get interface name! error num [%d]", ret);
 
-        u_mutex_unlock(g_wifiNetInfoMutex);
+        ca_mutex_unlock(g_wifiNetInfoMutex);
         return;
     }
 
@@ -370,7 +370,7 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
 
         OICFree(*interfaceName);
         *interfaceName = NULL;
-        u_mutex_unlock(g_wifiNetInfoMutex);
+        ca_mutex_unlock(g_wifiNetInfoMutex);
         return;
     }
 
@@ -381,7 +381,7 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
                   ret);
         OICFree(*interfaceName);
         *interfaceName = NULL;
-        u_mutex_unlock(g_wifiNetInfoMutex);
+        ca_mutex_unlock(g_wifiNetInfoMutex);
         return;
     }
 
@@ -394,11 +394,11 @@ void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress, char 
         OICFree(*interfaceName);
         *ipAddress = NULL;
         *interfaceName = NULL;
-        u_mutex_unlock(g_wifiNetInfoMutex);
+        ca_mutex_unlock(g_wifiNetInfoMutex);
         return;
     }
 
-    u_mutex_unlock(g_wifiNetInfoMutex);
+    ca_mutex_unlock(g_wifiNetInfoMutex);
 
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "OUT");
 }

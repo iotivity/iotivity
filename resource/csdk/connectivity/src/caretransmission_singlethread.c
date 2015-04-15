@@ -28,6 +28,10 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
+#ifndef __ARDUINO__
+#include <sys/time.h>
+#endif
+
 #define TAG "RT"
 
 typedef struct
@@ -425,7 +429,9 @@ uint64_t getCurrentTimeInMicroSeconds()
 
     OIC_LOG_V(DEBUG, TAG, "currtime=%lu", currentTime);
 #else
-    currentTime = g_get_monotonic_time();
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    currentTime = tv.tv_sec * USECS_PER_SEC + tv.tv_usec;
 #endif
 
     OIC_LOG(DEBUG, TAG, "OUT");

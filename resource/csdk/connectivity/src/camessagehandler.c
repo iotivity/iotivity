@@ -35,7 +35,7 @@
 #include "config.h" /* for coap protocol */
 #include "uthreadpool.h" /* for thread pool */
 #include "caqueueingthread.h"
-#include "umutex.h"
+#include "camutex.h"
 #include "oic_malloc.h"
 #include "canetworkconfigurator.h"
 
@@ -536,11 +536,11 @@ void CAHandleRequestResponseCallbacks()
     // #1 parse the data
     // #2 get endpoint
 
-    u_mutex_lock(g_receiveThread.threadMutex);
+    ca_mutex_lock(g_receiveThread.threadMutex);
 
     u_queue_message_t *item = u_queue_get_element(g_receiveThread.dataQueue);
 
-    u_mutex_unlock(g_receiveThread.threadMutex);
+    ca_mutex_unlock(g_receiveThread.threadMutex);
 
     if (NULL == item)
     {

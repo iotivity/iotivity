@@ -29,7 +29,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "uthreadpool.h" /* for thread pool */
-#include "umutex.h"
+#include "camutex.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
 
@@ -57,7 +57,7 @@ static jbyteArray g_sendBuffer;
  * @var g_mutexSocketListManager
  * @brief Mutex to synchronize socket list update
  */
-static u_mutex g_mutexSocketListManager;
+static ca_mutex g_mutexSocketListManager;
 
 // server socket instance
 static jobject g_serverSocketObject = NULL;
@@ -66,7 +66,7 @@ static jobject g_serverSocketObject = NULL;
  * @var g_mutexUnicastServer
  * @brief Mutex to synchronize unicast server
  */
-static u_mutex g_mutexUnicastServer = NULL;
+static ca_mutex g_mutexUnicastServer = NULL;
 
 /**
  * @var g_stopUnicast
@@ -78,7 +78,7 @@ static bool g_stopUnicast = false;
  * @var g_mutexMulticastServer
  * @brief Mutex to synchronize secure multicast server
  */
-static u_mutex g_mutexMulticastServer = NULL;
+static ca_mutex g_mutexMulticastServer = NULL;
 
 /**
  * @var g_stopMulticast
@@ -305,19 +305,19 @@ static void CAEDRDestroyMutex()
 
     if (g_mutexUnicastServer)
     {
-        u_mutex_free(g_mutexUnicastServer);
+        ca_mutex_free(g_mutexUnicastServer);
         g_mutexUnicastServer = NULL;
     }
 
     if (g_mutexMulticastServer)
     {
-        u_mutex_free(g_mutexMulticastServer);
+        ca_mutex_free(g_mutexMulticastServer);
         g_mutexMulticastServer = NULL;
     }
 
     if(g_mutexSocketListManager)
     {
-        u_mutex_free(g_mutexSocketListManager);
+        ca_mutex_free(g_mutexSocketListManager);
         g_mutexSocketListManager = NULL;
     }
 
@@ -328,14 +328,14 @@ static CAResult_t CAEDRCreateMutex()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    g_mutexUnicastServer = u_mutex_new();
+    g_mutexUnicastServer = ca_mutex_new();
     if (!g_mutexUnicastServer)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
         return CA_STATUS_FAILED;
     }
 
-    g_mutexMulticastServer = u_mutex_new();
+    g_mutexMulticastServer = ca_mutex_new();
     if (!g_mutexMulticastServer)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -344,7 +344,7 @@ static CAResult_t CAEDRCreateMutex()
         return CA_STATUS_FAILED;
     }
 
-    g_mutexSocketListManager = u_mutex_new();
+    g_mutexSocketListManager = ca_mutex_new();
     if (!g_mutexSocketListManager)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -1190,7 +1190,7 @@ void CAEDRNativeAddDeviceSocketToList(JNIEnv *env, jobject deviceSocket)
         return;
     }
 
-    u_mutex_lock(g_mutexSocketListManager);
+    ca_mutex_lock(g_mutexSocketListManager);
 
     const char* remoteAddress = (*env)->GetStringUTFChars(env, jni_remoteAddress, NULL);
 
@@ -1201,7 +1201,7 @@ void CAEDRNativeAddDeviceSocketToList(JNIEnv *env, jobject deviceSocket)
         OIC_LOG(DEBUG, TAG, "Set Socket Object to Array");
     }
 
-    u_mutex_unlock(g_mutexSocketListManager);
+    ca_mutex_unlock(g_mutexSocketListManager);
 }
 
 jboolean CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char* remoteAddress)
@@ -1290,7 +1290,7 @@ void CAEDRNativeRemoveDeviceSocket(JNIEnv *env, jobject deviceSocket)
         return;
     }
 
-    u_mutex_lock(g_mutexSocketListManager);
+    ca_mutex_lock(g_mutexSocketListManager);
 
     jint index;
     for (index = 0; index < u_arraylist_length(g_deviceObjectList); index++)
@@ -1327,7 +1327,7 @@ void CAEDRNativeRemoveDeviceSocket(JNIEnv *env, jobject deviceSocket)
             break;
         }
     }
-    u_mutex_unlock(g_mutexSocketListManager);
+    ca_mutex_unlock(g_mutexSocketListManager);
 
     OIC_LOG(DEBUG, TAG, "[EDR][Native] there are no target object");
     return;

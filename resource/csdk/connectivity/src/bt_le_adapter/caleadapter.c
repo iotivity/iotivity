@@ -24,7 +24,7 @@
 
 #include "caleinterface.h"
 #include "cacommon.h"
-#include "umutex.h"
+#include "camutex.h"
 #include "caadapterutils.h"
 #include "caqueueingthread.h"
 #include "camsgparser.h"
@@ -58,19 +58,19 @@ static bool g_isServer = false;
  * @var g_bleIsServerMutex
  * @brief Mutex to synchronize the task to be executed on the GattServer function calls.
  */
-static u_mutex g_bleIsServerMutex = NULL;
+static ca_mutex g_bleIsServerMutex = NULL;
 
 /**
  * @var g_bleNetworkCbMutex
  * @brief Mutex to synchronize the callback to be called for the network changes.
  */
-static u_mutex g_bleNetworkCbMutex = NULL;
+static ca_mutex g_bleNetworkCbMutex = NULL;
 
 /**
  * @var g_bleLocalAddressMutex
  * @brief Mutex to synchronize the updation of the local LE address of the adapter.
  */
-static u_mutex g_bleLocalAddressMutex = NULL;
+static ca_mutex g_bleLocalAddressMutex = NULL;
 
 /**
  * @var gBleClientThreadPool
@@ -82,7 +82,7 @@ static u_thread_pool_t g_bleAdapterThreadPool = NULL;
  * @var g_bleAdapterThreadPoolMutex
  * @brief Mutex to synchronize the task to be pushed to thread pool.
  */
-static u_mutex g_bleAdapterThreadPoolMutex = NULL;
+static ca_mutex g_bleAdapterThreadPoolMutex = NULL;
 
 /**
  * @var g_bLEClientSendQueueHandle
@@ -100,14 +100,14 @@ static CAQueueingThread_t *g_bleClientReceiverQueue = NULL;
  * @var g_bleClientSendDataMutex
  * @brief Mutex to synchronize the queing of the data from SenderQueue.
  */
-static u_mutex g_bleClientSendDataMutex = NULL;
+static ca_mutex g_bleClientSendDataMutex = NULL;
 
 
 /**
  * @var g_bleClientReceiveDataMutex
  * @brief Mutex to synchronize the queing of the data from ReceiverQueue.
  */
-static u_mutex g_bleClientReceiveDataMutex = NULL;
+static ca_mutex g_bleClientReceiveDataMutex = NULL;
 
 /**
  * @var g_dataReceiverHandlerState
@@ -131,19 +131,19 @@ static CAQueueingThread_t *g_bleServerReceiverQueue = NULL;
  * @var g_bleServerSendDataMutex
  * @brief Mutex to synchronize the queing of the data from SenderQueue.
  */
-static u_mutex g_bleServerSendDataMutex = NULL;
+static ca_mutex g_bleServerSendDataMutex = NULL;
 
 /**
  * @var g_bleServerReceiveDataMutex
  * @brief Mutex to synchronize the queing of the data from ReceiverQueue.
  */
-static u_mutex g_bleServerReceiveDataMutex = NULL;
+static ca_mutex g_bleServerReceiveDataMutex = NULL;
 
 /**
  * @var g_bleAdapterReqRespCbMutex
  * @brief Mutex to synchronize the callback to be called for the adapterReqResponse.
  */
-static u_mutex g_bleAdapterReqRespCbMutex = NULL;
+static ca_mutex g_bleAdapterReqRespCbMutex = NULL;
 
 /**
  * @var g_networkPacketReceivedCallback
@@ -285,7 +285,7 @@ CAResult_t CAStopLE()
 
     CAStopBleQueues();
 
-    u_mutex_lock(g_bleIsServerMutex);
+    ca_mutex_lock(g_bleIsServerMutex);
     if (true == g_isServer)
     {
         CAStopBleGattServer();
@@ -294,7 +294,7 @@ CAResult_t CAStopLE()
     {
         CAStopBLEGattClient();
     }
-    u_mutex_unlock(g_bleIsServerMutex);
+    ca_mutex_unlock(g_bleIsServerMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 
@@ -311,7 +311,7 @@ void CATerminateLE()
     CASetBLEReqRespAdapterCallback(NULL);
     CATerminateLENetworkMonitor();
 
-    u_mutex_lock(g_bleIsServerMutex);
+    ca_mutex_lock(g_bleIsServerMutex);
     if (true == g_isServer)
     {
         CATerminateBleGattServer();
@@ -320,7 +320,7 @@ void CATerminateLE()
     {
         CATerminateBLEGattClient();
     }
-    u_mutex_unlock(g_bleIsServerMutex);
+    ca_mutex_unlock(g_bleIsServerMutex);
 
     CATerminateBleQueues();
 
@@ -358,9 +358,9 @@ CAResult_t CAStartLEListeningServer()
     CAStartBleGattServer();
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    u_mutex_lock(g_bleIsServerMutex);
+    ca_mutex_lock(g_bleIsServerMutex);
     g_isServer = true;
-    u_mutex_unlock(g_bleIsServerMutex);
+    ca_mutex_unlock(g_bleIsServerMutex);
     return CA_STATUS_OK;
 }
 
@@ -391,9 +391,9 @@ CAResult_t CAStartLEDiscoveryServer()
 
     CAStartBLEGattClient();
 
-    u_mutex_lock(g_bleIsServerMutex);
+    ca_mutex_lock(g_bleIsServerMutex);
     g_isServer = false;
-    u_mutex_unlock(g_bleIsServerMutex);
+    ca_mutex_unlock(g_bleIsServerMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -433,7 +433,7 @@ int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data
 
     CAResult_t result = CA_STATUS_FAILED;
 
-    u_mutex_lock(g_bleIsServerMutex);
+    ca_mutex_lock(g_bleIsServerMutex);
     if (true  == g_isServer)
     {
         result = CABLEServerSendData(endpoint, data, dataLen);
@@ -441,7 +441,7 @@ int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG,
                     "[SendLEUnicastData] CABleServerSenderQueueEnqueueMessage failed \n");
-            u_mutex_unlock(g_bleIsServerMutex);
+            ca_mutex_unlock(g_bleIsServerMutex);
             return -1;
         }
     }
@@ -452,11 +452,11 @@ int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG,
                     "[SendLEUnicastData] CABleClientSenderQueueEnqueueMessage failed \n");
-            u_mutex_unlock(g_bleIsServerMutex);
+            ca_mutex_unlock(g_bleIsServerMutex);
             return -1;
         }
     }
-    u_mutex_unlock(g_bleIsServerMutex);
+    ca_mutex_unlock(g_bleIsServerMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return dataLen;
@@ -477,7 +477,7 @@ int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
 
     CAResult_t result = CA_STATUS_FAILED;
 
-    u_mutex_lock(g_bleIsServerMutex);
+    ca_mutex_lock(g_bleIsServerMutex);
     if (true  == g_isServer)
     {
         result = CABLEServerSendData(NULL, data, dataLen);
@@ -485,7 +485,7 @@ int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG,
                     "[SendLEMulticastDataToAll] CABleServerSenderQueueEnqueueMessage failed" );
-            u_mutex_unlock(g_bleIsServerMutex);
+            ca_mutex_unlock(g_bleIsServerMutex);
             return -1;
         }
     }
@@ -496,11 +496,11 @@ int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG,
                     "[SendLEMulticastDataToAll] CABleClientSenderQueueEnqueueMessage failed" );
-            u_mutex_unlock(g_bleIsServerMutex);
+            ca_mutex_unlock(g_bleIsServerMutex);
             return -1;
         }
     }
-    u_mutex_unlock(g_bleIsServerMutex);
+    ca_mutex_unlock(g_bleIsServerMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return dataLen;
@@ -530,9 +530,9 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     }
 
     strncpy((*info)->addressInfo.BT.btMacAddress, local_address, strlen(local_address));
-    u_mutex_lock(g_bleLocalAddressMutex);
+    ca_mutex_lock(g_bleLocalAddressMutex);
     strncpy(g_localBLEAddress, local_address, sizeof(g_localBLEAddress));
-    u_mutex_unlock(g_bleLocalAddressMutex);
+    ca_mutex_unlock(g_bleLocalAddressMutex);
 
     (*info)->type = CA_LE;
     *size = 1;
@@ -546,9 +546,9 @@ int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    u_mutex_lock(g_bleNetworkCbMutex);
+    ca_mutex_lock(g_bleNetworkCbMutex);
     g_networkCallback = netCallback;
-    u_mutex_unlock(g_bleNetworkCbMutex);
+    ca_mutex_unlock(g_bleNetworkCbMutex);
 
     if (netCallback)
     {
@@ -577,9 +577,9 @@ void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
 
     CALocalConnectivity_t localEndpoint = {};
 
-    u_mutex_lock(g_bleLocalAddressMutex);
+    ca_mutex_lock(g_bleLocalAddressMutex);
     strncpy(localEndpoint.addressInfo.BT.btMacAddress, g_localBLEAddress, strlen(g_localBLEAddress));
-    u_mutex_unlock(g_bleLocalAddressMutex);
+    ca_mutex_unlock(g_bleLocalAddressMutex);
 
     // Start a GattServer/Client if gLeServerStatus is SET
     if (CA_LISTENING_SERVER == gLeServerStatus)
@@ -594,7 +594,7 @@ void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
     }
     gLeServerStatus = CA_SERVER_NOTSTARTED;
 
-    u_mutex_lock(g_bleNetworkCbMutex);
+    ca_mutex_lock(g_bleNetworkCbMutex);
     if (NULL != g_networkCallback)
     {
         g_networkCallback(&localEndpoint, adapter_state);
@@ -603,7 +603,7 @@ void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "g_networkCallback is NULL");
     }
-    u_mutex_unlock(g_bleNetworkCbMutex);
+    ca_mutex_unlock(g_bleNetworkCbMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return;
@@ -615,90 +615,90 @@ CAResult_t CAInitBleAdapterMutex()
 
     if (NULL == g_bleIsServerMutex)
     {
-        g_bleIsServerMutex = u_mutex_new();
+        g_bleIsServerMutex = ca_mutex_new();
         if (NULL == g_bleIsServerMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleNetworkCbMutex)
     {
-        g_bleNetworkCbMutex = u_mutex_new();
+        g_bleNetworkCbMutex = ca_mutex_new();
         if (NULL == g_bleNetworkCbMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleLocalAddressMutex)
     {
-        g_bleLocalAddressMutex = u_mutex_new();
+        g_bleLocalAddressMutex = ca_mutex_new();
         if (NULL == g_bleLocalAddressMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleAdapterThreadPoolMutex)
     {
-        g_bleAdapterThreadPoolMutex = u_mutex_new();
+        g_bleAdapterThreadPoolMutex = ca_mutex_new();
         if (NULL == g_bleAdapterThreadPoolMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleClientSendDataMutex)
     {
-        g_bleClientSendDataMutex = u_mutex_new();
+        g_bleClientSendDataMutex = ca_mutex_new();
         if (NULL == g_bleClientSendDataMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleClientReceiveDataMutex)
     {
-        g_bleClientReceiveDataMutex = u_mutex_new();
+        g_bleClientReceiveDataMutex = ca_mutex_new();
         if (NULL == g_bleClientReceiveDataMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleServerSendDataMutex)
     {
-        g_bleServerSendDataMutex = u_mutex_new();
+        g_bleServerSendDataMutex = ca_mutex_new();
         if (NULL == g_bleServerSendDataMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleServerReceiveDataMutex)
     {
-        g_bleServerReceiveDataMutex = u_mutex_new();
+        g_bleServerReceiveDataMutex = ca_mutex_new();
         if (NULL == g_bleServerReceiveDataMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleAdapterReqRespCbMutex)
     {
-        g_bleAdapterReqRespCbMutex = u_mutex_new();
+        g_bleAdapterReqRespCbMutex = ca_mutex_new();
         if (NULL == g_bleAdapterReqRespCbMutex)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
@@ -711,31 +711,31 @@ void CATerminateBleAdapterMutex()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    u_mutex_free(g_bleIsServerMutex);
+    ca_mutex_free(g_bleIsServerMutex);
     g_bleIsServerMutex = NULL;
 
-    u_mutex_free(g_bleNetworkCbMutex);
+    ca_mutex_free(g_bleNetworkCbMutex);
     g_bleNetworkCbMutex = NULL;
 
-    u_mutex_free(g_bleLocalAddressMutex);
+    ca_mutex_free(g_bleLocalAddressMutex);
     g_bleLocalAddressMutex = NULL;
 
-    u_mutex_free(g_bleAdapterThreadPoolMutex);
+    ca_mutex_free(g_bleAdapterThreadPoolMutex);
     g_bleAdapterThreadPoolMutex = NULL;
 
-    u_mutex_free(g_bleClientSendDataMutex);
+    ca_mutex_free(g_bleClientSendDataMutex);
     g_bleClientSendDataMutex = NULL;
 
-    u_mutex_free(g_bleClientReceiveDataMutex);
+    ca_mutex_free(g_bleClientReceiveDataMutex);
     g_bleClientReceiveDataMutex = NULL;
 
-    u_mutex_free(g_bleServerSendDataMutex);
+    ca_mutex_free(g_bleServerSendDataMutex);
     g_bleServerSendDataMutex = NULL;
 
-    u_mutex_free(g_bleServerReceiveDataMutex);
+    ca_mutex_free(g_bleServerReceiveDataMutex);
     g_bleServerReceiveDataMutex = NULL;
 
-    u_mutex_free(g_bleAdapterReqRespCbMutex);
+    ca_mutex_free(g_bleAdapterReqRespCbMutex);
     g_bleAdapterReqRespCbMutex = NULL;
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
@@ -768,13 +768,13 @@ CAResult_t CAInitBleServerQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    u_mutex_lock(g_bleAdapterThreadPoolMutex);
+    ca_mutex_lock(g_bleAdapterThreadPoolMutex);
 
     CAResult_t result = CAInitBleServerSenderQueue();
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitBleServerSenderQueue failed");
-        u_mutex_unlock(g_bleAdapterThreadPoolMutex);
+        ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -782,13 +782,13 @@ CAResult_t CAInitBleServerQueues()
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitBleServerReceiverQueue failed");
-        u_mutex_unlock(g_bleAdapterThreadPoolMutex);
+        ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
         return CA_STATUS_FAILED;
     }
 
     g_dataReceiverHandlerState = true;
 
-    u_mutex_unlock(g_bleAdapterThreadPoolMutex);
+    ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -798,13 +798,13 @@ CAResult_t CAInitBleClientQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    u_mutex_lock(g_bleAdapterThreadPoolMutex);
+    ca_mutex_lock(g_bleAdapterThreadPoolMutex);
 
     CAResult_t result = CAInitBleClientSenderQueue();
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitBleClientSenderQueue failed");
-        u_mutex_unlock(g_bleAdapterThreadPoolMutex);
+        ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -812,13 +812,13 @@ CAResult_t CAInitBleClientQueues()
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitBleClientReceiverQueue failed");
-        u_mutex_unlock(g_bleAdapterThreadPoolMutex);
+        ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
         return CA_STATUS_FAILED;
     }
 
     g_dataReceiverHandlerState = true;
 
-    u_mutex_unlock(g_bleAdapterThreadPoolMutex);
+    ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -988,33 +988,33 @@ void CAStopBleQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    u_mutex_lock(g_bleClientSendDataMutex);
+    ca_mutex_lock(g_bleClientSendDataMutex);
     if (NULL != g_bLEClientSendQueueHandle)
     {
         CAQueueingThreadStop(g_bLEClientSendQueueHandle);
     }
-    u_mutex_unlock(g_bleClientSendDataMutex);
+    ca_mutex_unlock(g_bleClientSendDataMutex);
 
-    u_mutex_lock(g_bleClientReceiveDataMutex);
+    ca_mutex_lock(g_bleClientReceiveDataMutex);
     if (NULL != g_bleClientReceiverQueue)
     {
         CAQueueingThreadStop(g_bleClientReceiverQueue);
     }
-    u_mutex_unlock(g_bleClientReceiveDataMutex);
+    ca_mutex_unlock(g_bleClientReceiveDataMutex);
 
-    u_mutex_lock(g_bleServerSendDataMutex);
+    ca_mutex_lock(g_bleServerSendDataMutex);
     if (NULL != g_sendQueueHandle)
     {
         CAQueueingThreadStop(g_sendQueueHandle);
     }
-    u_mutex_unlock(g_bleServerSendDataMutex);
+    ca_mutex_unlock(g_bleServerSendDataMutex);
 
-    u_mutex_lock(g_bleServerReceiveDataMutex);
+    ca_mutex_lock(g_bleServerReceiveDataMutex);
     if (NULL != g_bleServerReceiverQueue)
     {
         CAQueueingThreadStop(g_bleServerReceiverQueue);
     }
-    u_mutex_unlock(g_bleServerReceiveDataMutex);
+    ca_mutex_unlock(g_bleServerReceiveDataMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
@@ -1054,7 +1054,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
     static bool isHeaderAvailable = false;
     static CARemoteEndpoint_t *remoteEndpoint = NULL;
 
-    u_mutex_lock(g_bleClientReceiveDataMutex);
+    ca_mutex_lock(g_bleClientReceiveDataMutex);
 
     if (g_dataReceiverHandlerState)
     {
@@ -1105,11 +1105,11 @@ void CABLEServerDataReceiverHandler(void *threadData)
         }
         if (totalDataLen == recvDataLen)
         {
-            u_mutex_lock(g_bleAdapterReqRespCbMutex);
+            ca_mutex_lock(g_bleAdapterReqRespCbMutex);
             if (NULL == g_networkPacketReceivedCallback)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "gReqRespCallback is NULL!");
-                u_mutex_unlock(g_bleAdapterReqRespCbMutex);
+                ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
                 return;
             }
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending data up !");
@@ -1119,7 +1119,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
             isHeaderAvailable = false;
             remoteEndpoint = NULL;
             defragData = NULL;
-            u_mutex_unlock(g_bleAdapterReqRespCbMutex);
+            ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
         }
 
         if (false == g_dataReceiverHandlerState)
@@ -1130,11 +1130,11 @@ void CABLEServerDataReceiverHandler(void *threadData)
             isHeaderAvailable = false;
             OICFree(defragData);
             CAAdapterFreeRemoteEndpoint(remoteEndpoint);
-            u_mutex_unlock(g_bleClientReceiveDataMutex);
+            ca_mutex_unlock(g_bleClientReceiveDataMutex);
             return;
         }
     }
-    u_mutex_unlock(g_bleClientReceiveDataMutex);
+    ca_mutex_unlock(g_bleClientReceiveDataMutex);
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
@@ -1150,7 +1150,7 @@ void CABLEClientDataReceiverHandler(void *threadData)
     static bool isHeaderAvailable = false;
     static CARemoteEndpoint_t *remoteEndpoint = NULL;
 
-    u_mutex_lock(g_bleClientReceiveDataMutex);
+    ca_mutex_lock(g_bleClientReceiveDataMutex);
 
     if (g_dataReceiverHandlerState)
     {
@@ -1203,11 +1203,11 @@ void CABLEClientDataReceiverHandler(void *threadData)
         }
         if (totalDataLen == recvDataLen)
         {
-            u_mutex_lock(g_bleAdapterReqRespCbMutex);
+            ca_mutex_lock(g_bleAdapterReqRespCbMutex);
             if (NULL == g_networkPacketReceivedCallback)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "gReqRespCallback is NULL!");
-                u_mutex_unlock(g_bleAdapterReqRespCbMutex);
+                ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
                 return;
             }
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending data up !");
@@ -1217,7 +1217,7 @@ void CABLEClientDataReceiverHandler(void *threadData)
             isHeaderAvailable = false;
             remoteEndpoint = NULL;
             defragData = NULL;
-            u_mutex_unlock(g_bleAdapterReqRespCbMutex);
+            ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
         }
 
         if (false == g_dataReceiverHandlerState)
@@ -1225,11 +1225,11 @@ void CABLEClientDataReceiverHandler(void *threadData)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "GATTClient is terminating. Cleaning up");
             OICFree(defragData);
             CAAdapterFreeRemoteEndpoint(remoteEndpoint);
-            u_mutex_unlock(g_bleClientReceiveDataMutex);
+            ca_mutex_unlock(g_bleClientReceiveDataMutex);
             return;
         }
     }
-    u_mutex_unlock(g_bleClientReceiveDataMutex);
+    ca_mutex_unlock(g_bleClientReceiveDataMutex);
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
@@ -1284,14 +1284,14 @@ void CABLEServerSendDataThread(void *threadData)
 
     int32_t iter = bleData->dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
     int32_t index = 0;
-    u_mutex_lock(g_bleServerSendDataMutex);
+    ca_mutex_lock(g_bleServerSendDataMutex);
     // Send the first segment with the header.
     result = CAUpdateCharacteristicsInGattServer(dataSegment, length);
     if (CA_STATUS_OK != result )
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsInGattServer failed");
         OICFree(dataSegment);
-        u_mutex_unlock(g_bleServerSendDataMutex);
+        ca_mutex_unlock(g_bleServerSendDataMutex);
         return ;
     }
 
@@ -1306,7 +1306,7 @@ void CABLEServerSendDataThread(void *threadData)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsInGattServer failed");
             OICFree(dataSegment);
-            u_mutex_unlock(g_bleServerSendDataMutex);
+            ca_mutex_unlock(g_bleServerSendDataMutex);
             return ;
         }
     }
@@ -1322,13 +1322,13 @@ void CABLEServerSendDataThread(void *threadData)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsInGattServer failed");
             OICFree(dataSegment);
-            u_mutex_unlock(g_bleServerSendDataMutex);
+            ca_mutex_unlock(g_bleServerSendDataMutex);
             return ;
         }
     }
 
     OICFree(dataSegment);
-    u_mutex_unlock(g_bleServerSendDataMutex); // TODO: this mutex required  ?
+    ca_mutex_unlock(g_bleServerSendDataMutex); // TODO: this mutex required  ?
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
@@ -1383,7 +1383,7 @@ void CABLEClientSendDataThread(void *threadData)
 
     int32_t iter = bleData->dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
     int32_t index = 0;
-    u_mutex_lock(g_bleClientSendDataMutex);
+    ca_mutex_lock(g_bleClientSendDataMutex);
     if (NULL != bleData->remoteEndpoint)
     {
         // Send the first segment with the header.
@@ -1395,7 +1395,7 @@ void CABLEClientSendDataThread(void *threadData)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
             OICFree(dataSegment);
-            u_mutex_unlock(g_bleClientSendDataMutex);
+            ca_mutex_unlock(g_bleClientSendDataMutex);
             return ;
         }
 
@@ -1410,7 +1410,7 @@ void CABLEClientSendDataThread(void *threadData)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
                 OICFree(dataSegment);
-                u_mutex_unlock(g_bleClientSendDataMutex);
+                ca_mutex_unlock(g_bleClientSendDataMutex);
                 return ;
             }
         }
@@ -1427,7 +1427,7 @@ void CABLEClientSendDataThread(void *threadData)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
                 OICFree(dataSegment);
-                u_mutex_unlock(g_bleClientSendDataMutex);
+                ca_mutex_unlock(g_bleClientSendDataMutex);
                 return ;
             }
         }
@@ -1441,7 +1441,7 @@ void CABLEClientSendDataThread(void *threadData)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
             OICFree(dataSegment);
-            u_mutex_unlock(g_bleClientSendDataMutex);
+            ca_mutex_unlock(g_bleClientSendDataMutex);
             return ;
         }
         // Send the remaining header.
@@ -1454,7 +1454,7 @@ void CABLEClientSendDataThread(void *threadData)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
                 OICFree(dataSegment);
-                u_mutex_unlock(g_bleClientSendDataMutex);
+                ca_mutex_unlock(g_bleClientSendDataMutex);
                 return ;
             }
         }
@@ -1469,14 +1469,14 @@ void CABLEClientSendDataThread(void *threadData)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
                 OICFree(dataSegment);
-                u_mutex_unlock(g_bleClientSendDataMutex);
+                ca_mutex_unlock(g_bleClientSendDataMutex);
                 return ;
             }
         }
     }
 
     OICFree(dataSegment);
-    u_mutex_unlock(g_bleClientSendDataMutex);
+    ca_mutex_unlock(g_bleClientSendDataMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
@@ -1550,9 +1550,9 @@ CAResult_t CABLEClientSendData(const CARemoteEndpoint_t *remoteEndpoint,
         return CA_MEMORY_ALLOC_FAILED;
     }
     // Add message to send queue
-    u_mutex_lock(g_bleClientSendDataMutex);
+    ca_mutex_lock(g_bleClientSendDataMutex);
     CAQueueingThreadAddData(g_bLEClientSendQueueHandle, bleData, sizeof(CALEData_t));
-    u_mutex_unlock(g_bleClientSendDataMutex);
+    ca_mutex_unlock(g_bleClientSendDataMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -1586,9 +1586,9 @@ CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
         return CA_MEMORY_ALLOC_FAILED;
     }
     // Add message to send queue
-    u_mutex_lock(g_bleServerSendDataMutex);
+    ca_mutex_lock(g_bleServerSendDataMutex);
     CAQueueingThreadAddData(g_sendQueueHandle, bleData, sizeof(CALEData_t));
-    u_mutex_unlock(g_bleServerSendDataMutex);
+    ca_mutex_unlock(g_bleServerSendDataMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -1682,9 +1682,9 @@ void CASetBleAdapterThreadPoolHandle(u_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    u_mutex_unlock(g_bleAdapterThreadPoolMutex);
+    ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
     g_bleAdapterThreadPool = handle;
-    u_mutex_unlock(g_bleAdapterThreadPoolMutex);
+    ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
@@ -1693,11 +1693,11 @@ void CASetBLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    u_mutex_lock(g_bleAdapterReqRespCbMutex);
+    ca_mutex_lock(g_bleAdapterReqRespCbMutex);
 
     g_networkPacketReceivedCallback = callback;
 
-    u_mutex_unlock(g_bleAdapterReqRespCbMutex);
+    ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }

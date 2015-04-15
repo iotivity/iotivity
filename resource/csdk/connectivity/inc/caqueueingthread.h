@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 #include "uthreadpool.h"
-#include "umutex.h"
+#include "camutex.h"
 #include "uqueue.h"
 #include "cacommon.h"
 #ifdef __cplusplus
@@ -49,9 +49,9 @@ typedef struct
     /** Thread pool of the thread started **/
     u_thread_pool_t threadPool;
     /** mutex for synchrnoization **/
-    u_mutex threadMutex;
+    ca_mutex threadMutex;
     /** conditional mutex for synchrnoization **/
-    u_cond threadCond;
+    ca_cond threadCond;
     /**Thread function to be invoked**/
     CAThreadTask threadTask;
     /**Data destroy function**/

@@ -58,7 +58,7 @@
 #ifdef __WITH_DTLS__
 #include "caadapternetdtls.h"
 #endif
-#include "umutex.h"
+#include "camutex.h"
 #include "oic_malloc.h"
 
 // TODO g_stopSecureUnicast is set but never used. The three groups of
@@ -96,7 +96,7 @@ static int32_t g_unicastServerSocketFD = -1;
  * @var g_mutexUnicastServer
  * @brief Mutex to synchronize unicast server
  */
-static u_mutex g_mutexUnicastServer = NULL;
+static ca_mutex g_mutexUnicastServer = NULL;
 
 /**
  * @var g_stopUnicast
@@ -119,7 +119,7 @@ static int32_t g_multicastServerSocketFD = -1;
  * @var g_mutexMulticastServer
  * @brief Mutex to synchronize secure multicast server
  */
-static u_mutex g_mutexMulticastServer = NULL;
+static ca_mutex g_mutexMulticastServer = NULL;
 
 /**
  * @var g_stopMulticast
@@ -143,7 +143,7 @@ static int32_t g_secureUnicastServerSocketFD = -1;
  * @var g_mutexSecureUnicastServer
  * @brief Mutex to synchronize secure unicast server
  */
-static u_mutex g_mutexSecureUnicastServer = NULL;
+static ca_mutex g_mutexSecureUnicastServer = NULL;
 
 /**
  * @var g_stopSecureUnicast
@@ -560,21 +560,21 @@ static void CAWiFiServerDestroyMutex(void)
 
     if (g_mutexUnicastServer)
     {
-        u_mutex_free(g_mutexUnicastServer);
+        ca_mutex_free(g_mutexUnicastServer);
         g_mutexUnicastServer = NULL;
     }
 
 #ifdef __WITH_DTLS__
     if (g_mutexSecureUnicastServer)
     {
-        u_mutex_free(g_mutexSecureUnicastServer);
+        ca_mutex_free(g_mutexSecureUnicastServer);
         g_mutexSecureUnicastServer = NULL;
     }
 #endif
 
     if (g_mutexMulticastServer)
     {
-        u_mutex_free(g_mutexMulticastServer);
+        ca_mutex_free(g_mutexMulticastServer);
         g_mutexMulticastServer = NULL;
     }
 
@@ -585,7 +585,7 @@ static CAResult_t CAWiFiServerCreateMutex(void)
 {
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
-    g_mutexUnicastServer = u_mutex_new();
+    g_mutexUnicastServer = ca_mutex_new();
     if (!g_mutexUnicastServer)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
@@ -593,7 +593,7 @@ static CAResult_t CAWiFiServerCreateMutex(void)
     }
 
 #ifdef __WITH_DTLS__
-    g_mutexSecureUnicastServer = u_mutex_new();
+    g_mutexSecureUnicastServer = ca_mutex_new();
     if (!g_mutexSecureUnicastServer)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
@@ -603,7 +603,7 @@ static CAResult_t CAWiFiServerCreateMutex(void)
     }
 #endif
 
-    g_mutexMulticastServer = u_mutex_new();
+    g_mutexMulticastServer = ca_mutex_new();
     if (!g_mutexMulticastServer)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to created mutex!");
@@ -667,14 +667,14 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port, co
     *serverFD = -1;
     if (false == isSecured)
     {
-        u_mutex_lock(g_mutexUnicastServer);
+        ca_mutex_lock(g_mutexUnicastServer);
         if (-1 != g_unicastServerSocketFD)
         {
             OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Unicast Server is Started Already!",
                     CA_SERVER_STARTED_ALREADY);
 
             *serverFD = g_unicastServerSocketFD;
-            u_mutex_unlock(g_mutexUnicastServer);
+            ca_mutex_unlock(g_mutexUnicastServer);
             return CA_SERVER_STARTED_ALREADY;
         }
 
@@ -685,24 +685,24 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port, co
         {
             OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
             g_unicastServerSocketFD = -1;
-            u_mutex_unlock(g_mutexUnicastServer);
+            ca_mutex_unlock(g_mutexUnicastServer);
             return CA_STATUS_FAILED;
         }
 
         *serverFD = g_unicastServerSocketFD;
-        u_mutex_unlock(g_mutexUnicastServer);
+        ca_mutex_unlock(g_mutexUnicastServer);
     }
 #ifdef __WITH_DTLS__
     else // Start unicast server for secured communication
     {
-        u_mutex_lock(g_mutexSecureUnicastServer);
+        ca_mutex_lock(g_mutexSecureUnicastServer);
         if (-1 != g_secureUnicastServerSocketFD)
         {
             OIC_LOG_V(ERROR, WIFI_SERVER_TAG, "Unicast Server is Started Already!",
                     CA_SERVER_STARTED_ALREADY);
 
             *serverFD = g_secureUnicastServerSocketFD;
-            u_mutex_unlock(g_mutexSecureUnicastServer);
+            ca_mutex_unlock(g_mutexSecureUnicastServer);
             return CA_SERVER_STARTED_ALREADY;
         }
 
@@ -712,12 +712,12 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port, co
         {
             OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to start unicast server!");
             g_secureUnicastServerSocketFD = -1;
-            u_mutex_unlock(g_mutexSecureUnicastServer);
+            ca_mutex_unlock(g_mutexSecureUnicastServer);
             return CA_STATUS_FAILED;
         }
 
         *serverFD = g_secureUnicastServerSocketFD;
-        u_mutex_unlock(g_mutexSecureUnicastServer);
+        ca_mutex_unlock(g_mutexSecureUnicastServer);
     }
 #endif
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
@@ -741,12 +741,12 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
         return CA_STATUS_INVALID_PARAM;
     }
 
-    u_mutex_lock(g_mutexMulticastServer);
+    ca_mutex_lock(g_mutexMulticastServer);
 
     if (g_multicastServerSocketFD != -1)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Multicast Server is already running!");
-        u_mutex_unlock(g_mutexMulticastServer);
+        ca_mutex_unlock(g_mutexMulticastServer);
         return CA_SERVER_STARTED_ALREADY;
     }
 
@@ -754,7 +754,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
     if (ret != CA_STATUS_OK)
     {
         OIC_LOG(ERROR, WIFI_SERVER_TAG, "Failed to create multicast socket");
-        u_mutex_unlock(g_mutexMulticastServer);
+        ca_mutex_unlock(g_mutexMulticastServer);
         return ret;
     }
 
@@ -771,7 +771,7 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
                 strerror(errno));
         close(g_multicastServerSocketFD);
         g_multicastServerSocketFD = -1;
-        u_mutex_unlock(g_mutexMulticastServer);
+        ca_mutex_unlock(g_mutexMulticastServer);
         return CA_STATUS_FAILED;
     }
 
@@ -822,13 +822,13 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
         close(g_multicastServerSocketFD);
         g_multicastServerSocketFD = -1;
         g_stopMulticast = true;
-        u_mutex_unlock(g_mutexMulticastServer);
+        ca_mutex_unlock(g_mutexMulticastServer);
         return CA_STATUS_FAILED;
     }
 
     *serverFD = g_multicastServerSocketFD;
     strncpy(g_multicastServerInterface, localAddress, IPNAMESIZE);
-    u_mutex_unlock(g_mutexMulticastServer);
+    ca_mutex_unlock(g_mutexMulticastServer);
 
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -838,7 +838,7 @@ CAResult_t CAWiFiStopUnicastServer()
 {
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
-    u_mutex_lock(g_mutexUnicastServer);
+    ca_mutex_lock(g_mutexUnicastServer);
     g_stopUnicast = true;
     if (g_unicastTriggerFD != -1)
     {
@@ -852,7 +852,7 @@ CAResult_t CAWiFiStopUnicastServer()
         g_unicastTriggerFD = -1;
     }
     CAResult_t ret = CAWiFiCloseSocket(&g_unicastServerSocketFD);
-    u_mutex_unlock(g_mutexUnicastServer);
+    ca_mutex_unlock(g_mutexUnicastServer);
 
     OIC_LOG_V(INFO, WIFI_SERVER_TAG, "Unicast server stopped [%d]", ret);
     return ret;
@@ -863,7 +863,7 @@ CAResult_t CAWiFiStopSecureUnicastServer()
 {
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
-    u_mutex_lock(g_mutexSecureUnicastServer);
+    ca_mutex_lock(g_mutexSecureUnicastServer);
     g_stopSecureUnicast = true;
     if (g_unicastTriggerFD != -1)
     {
@@ -877,7 +877,7 @@ CAResult_t CAWiFiStopSecureUnicastServer()
         g_unicastTriggerFD = -1;
     }
     CAResult_t ret = CAWiFiCloseSocket(&g_secureUnicastServerSocketFD);
-    u_mutex_unlock(g_mutexSecureUnicastServer);
+    ca_mutex_unlock(g_mutexSecureUnicastServer);
 
     OIC_LOG_V(INFO, WIFI_SERVER_TAG, "Secured unicast server stopped [%d]", ret);
     return ret;
@@ -888,12 +888,12 @@ CAResult_t CAWiFiStopMulticastServer(void)
 {
     OIC_LOG(DEBUG, WIFI_SERVER_TAG, "IN");
 
-    u_mutex_lock(g_mutexMulticastServer);
+    ca_mutex_lock(g_mutexMulticastServer);
 
     if (g_multicastServerSocketFD == -1)
     {
         OIC_LOG(INFO, WIFI_SERVER_TAG, "Multicast server is not yet started");
-        u_mutex_unlock(g_mutexMulticastServer);
+        ca_mutex_unlock(g_mutexMulticastServer);
         return CA_SERVER_NOT_STARTED;
     }
 
@@ -920,7 +920,7 @@ CAResult_t CAWiFiStopMulticastServer(void)
     }
 
     CAResult_t ret = CAWiFiCloseSocket(&g_multicastServerSocketFD);
-    u_mutex_unlock(g_mutexMulticastServer);
+    ca_mutex_unlock(g_mutexMulticastServer);
 
     OIC_LOG_V(INFO, WIFI_SERVER_TAG, "Multicast server stopped [%d]", ret);
     return ret;

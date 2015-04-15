@@ -30,13 +30,26 @@
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 
+// Defining _POSIX_C_SOURCE macro with 199309L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1b, Real-time extensions
+// (IEEE Std 1003.1b-1993) specification
+//
+// For this specific file, see use of clock_gettime,
+// Refer to http://pubs.opengroup.org/stage7tc1/functions/clock_gettime.html
+// and to http://man7.org/linux/man-pages/man2/clock_gettime.2.html
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <glib.h>
+#include <time.h>
+#include <sys/time.h>
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__)
 #include <linux/time.h>
 #endif
 
@@ -58,6 +71,8 @@ typedef struct
     void *pdu;                          /**< coap PDU */
     uint32_t size;                      /**< coap PDU size */
 } CARetransmissionData_t;
+
+static const uint64_t USECS_PER_SEC = 1000000;
 
 /**
  * @brief   getCurrent monotonic time
@@ -111,7 +126,7 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
     }
 
     // mutex lock
-    u_mutex_lock(context->threadMutex);
+    ca_mutex_lock(context->threadMutex);
 
     uint32_t i = 0;
     uint32_t len = u_arraylist_length(context->dataList);
@@ -178,7 +193,7 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
     }
 
     // mutex unlock
-    u_mutex_unlock(context->threadMutex);
+    ca_mutex_unlock(context->threadMutex);
 }
 
 static void CARetransmissionBaseRoutine(void *threadValue)
@@ -197,7 +212,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
     while (!context->isStop)
     {
         // mutex lock
-        u_mutex_lock(context->threadMutex);
+        ca_mutex_lock(context->threadMutex);
 
         if (u_arraylist_length(context->dataList) <= 0)
         {
@@ -205,7 +220,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
             OIC_LOG(DEBUG, TAG, "wait..there is no retransmission data.");
 
             // wait
-            u_cond_wait(context->threadCond, context->threadMutex);
+            ca_cond_wait(context->threadCond, context->threadMutex);
 
             OIC_LOG(DEBUG, TAG, "wake up..");
         }
@@ -213,15 +228,16 @@ static void CARetransmissionBaseRoutine(void *threadValue)
         {
             // check each RETRANSMISSION_CHECK_PERIOD_SEC time.
             OIC_LOG_V(DEBUG, TAG, "wait..(%d)microseconds",
-                      RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) 1000000);
+                      RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC);
 
             // wait
-            u_cond_wait_until(context->threadCond, context->threadMutex,
-                              RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) 1000000);
+            uint64_t absTime=getCurrentTimeInMicroSeconds();
+            absTime += RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC;
+            ca_cond_wait_until(context->threadCond, context->threadMutex, absTime );
         }
 
         // mutex unlock
-        u_mutex_unlock(context->threadMutex);
+        ca_mutex_unlock(context->threadMutex);
 
         // check stop flag
         if (context->isStop)
@@ -232,7 +248,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
         CACheckRetransmissionList(context);
     }
 
-    u_cond_signal(context->threadCond);
+    ca_cond_signal(context->threadCond);
 
     OIC_LOG(DEBUG, TAG, "retransmission main thread end..");
 
@@ -274,8 +290,8 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool
 
     // set send thread data
     context->threadPool = handle;
-    context->threadMutex = u_mutex_new();
-    context->threadCond = u_cond_new();
+    context->threadMutex = ca_mutex_new();
+    context->threadCond = ca_cond_new();
     context->dataSendMethod = retransmissionSendMethod;
     context->timeoutCallback = timeoutCallback;
     context->config = cfg;
@@ -381,7 +397,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     retData->size = size;
 
     // mutex lock
-    u_mutex_lock(context->threadMutex);
+    ca_mutex_lock(context->threadMutex);
 
     uint32_t i = 0;
     uint32_t len = u_arraylist_length(context->dataList);
@@ -403,7 +419,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
             OIC_LOG(ERROR, TAG, "Duplicate message ID");
 
             // mutex unlock
-            u_mutex_unlock(context->threadMutex);
+            ca_mutex_unlock(context->threadMutex);
 
             OICFree(retData);
             OICFree(pduData);
@@ -415,10 +431,10 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     u_arraylist_add(context->dataList, (void *) retData);
 
     // notify the thread
-    u_cond_signal(context->threadCond);
+    ca_cond_signal(context->threadCond);
 
     // mutex unlock
-    u_mutex_unlock(context->threadMutex);
+    ca_mutex_unlock(context->threadMutex);
 
     return CA_STATUS_OK;
 }
@@ -455,7 +471,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     }
 
     // mutex lock
-    u_mutex_lock(context->threadMutex);
+    ca_mutex_lock(context->threadMutex);
     uint32_t len = u_arraylist_length(context->dataList);
 
     // find index
@@ -484,7 +500,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
                     OIC_LOG(ERROR, TAG, "retData->pdu is null");
                     OICFree(retData);
                     // mutex unlock
-                    u_mutex_unlock(context->threadMutex);
+                    ca_mutex_unlock(context->threadMutex);
 
                     return CA_STATUS_FAILED;
                 }
@@ -497,7 +513,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
                     OIC_LOG(ERROR, TAG, "memory error!!");
 
                     // mutex unlock
-                    u_mutex_unlock(context->threadMutex);
+                    ca_mutex_unlock(context->threadMutex);
 
                     return CA_MEMORY_ALLOC_FAILED;
                 }
@@ -511,7 +527,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
                 OIC_LOG(ERROR, TAG, "Removed data is NULL");
 
                 // mutex unlock
-                u_mutex_unlock(context->threadMutex);
+                ca_mutex_unlock(context->threadMutex);
 
                 return CA_STATUS_FAILED;
             }
@@ -528,7 +544,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     }
 
     // mutex unlock
-    u_mutex_unlock(context->threadMutex);
+    ca_mutex_unlock(context->threadMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT - CARetransmissionReceivedData");
     return CA_STATUS_OK;
@@ -545,18 +561,18 @@ CAResult_t CARetransmissionStop(CARetransmission_t *context)
     OIC_LOG(DEBUG, TAG, "retransmission stop request!!");
 
     // mutex lock
-    u_mutex_lock(context->threadMutex);
+    ca_mutex_lock(context->threadMutex);
 
     // set stop flag
     context->isStop = true;
 
     // notify the thread
-    u_cond_signal(context->threadCond);
+    ca_cond_signal(context->threadCond);
 
-    u_cond_wait(context->threadCond, context->threadMutex);
+    ca_cond_wait(context->threadCond, context->threadMutex);
 
     // mutex unlock
-    u_mutex_unlock(context->threadMutex);
+    ca_mutex_unlock(context->threadMutex);
 
     return CA_STATUS_OK;
 }
@@ -571,9 +587,9 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
 
     OIC_LOG(DEBUG, TAG, "retransmission context destroy..");
 
-    u_mutex_free(context->threadMutex);
+    ca_mutex_free(context->threadMutex);
     context->threadMutex = NULL;
-    u_cond_free(context->threadCond);
+    ca_cond_free(context->threadCond);
     u_arraylist_free(&context->dataList);
 
     return CA_STATUS_OK;
@@ -581,6 +597,7 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context)
 
 uint64_t getCurrentTimeInMicroSeconds()
 {
+    OIC_LOG(DEBUG, TAG, "IN");
     uint64_t currentTime = 0;
 
 #ifdef __ANDROID__
@@ -591,7 +608,17 @@ uint64_t getCurrentTimeInMicroSeconds()
     currentTime = (getTs.tv_sec * (uint64_t)1000000000 + getTs.tv_nsec)/1000;
     OIC_LOG_V(DEBUG, TAG, "current time = %d", currentTime);
 #else
-    currentTime = g_get_monotonic_time();
+#if _POSIX_TIMERS > 0
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    currentTime = ts.tv_sec * USECS_PER_SEC + ts.tv_nsec / 1000;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    currentTime = tv.tv_sec * USECS_PER_SEC + tv.tv_usec;
 #endif
+#endif
+
+    OIC_LOG(DEBUG, TAG, "OUT");
     return currentTime;
 }

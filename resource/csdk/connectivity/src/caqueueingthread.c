@@ -47,7 +47,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
     while (!thread->isStop)
     {
         // mutex lock
-        u_mutex_lock(thread->threadMutex);
+        ca_mutex_lock(thread->threadMutex);
 
         // if queue is empty, thread will wait
         if (u_queue_get_size(thread->dataQueue) <= 0)
@@ -55,13 +55,13 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
             OIC_LOG(DEBUG, TAG, "wait..");
 
             // wait
-            u_cond_wait(thread->threadCond, thread->threadMutex);
+            ca_cond_wait(thread->threadCond, thread->threadMutex);
 
             OIC_LOG(DEBUG, TAG, "wake up..");
         }
 
         // mutex unlock
-        u_mutex_unlock(thread->threadMutex);
+        ca_mutex_unlock(thread->threadMutex);
 
         // check stop flag
         if (thread->isStop)
@@ -114,7 +114,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         }
     }
 
-    u_cond_signal(thread->threadCond);
+    ca_cond_signal(thread->threadCond);
 
     OIC_LOG(DEBUG, TAG, "message handler main thread end..");
 }
@@ -139,8 +139,8 @@ CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_
     // set send thread data
     thread->threadPool = handle;
     thread->dataQueue = u_queue_create();
-    thread->threadMutex = u_mutex_new();
-    thread->threadCond = u_cond_new();
+    thread->threadMutex = ca_mutex_new();
+    thread->threadCond = ca_cond_new();
     thread->isStop = true;
     thread->threadTask = task;
     thread->destroy = destroy;
@@ -169,10 +169,10 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
     }
 
     // mutex lock
-    u_mutex_lock(thread->threadMutex);
+    ca_mutex_lock(thread->threadMutex);
     thread->isStop = false;
     // mutex unlock
-    u_mutex_unlock(thread->threadMutex);
+    ca_mutex_unlock(thread->threadMutex);
 
     CAResult_t res = u_thread_pool_add_task(thread->threadPool, CAQueueingThreadBaseRoutine,
                                             thread);
@@ -212,16 +212,16 @@ CAResult_t CAQueueingThreadAddData(CAQueueingThread_t *thread, void *data, uint3
     message->size = size;
 
     // mutex lock
-    u_mutex_lock(thread->threadMutex);
+    ca_mutex_lock(thread->threadMutex);
 
     // add thread data into list
     u_queue_add_element(thread->dataQueue, message);
 
     // notity the thread
-    u_cond_signal(thread->threadCond);
+    ca_cond_signal(thread->threadCond);
 
     // mutex unlock
-    u_mutex_unlock(thread->threadMutex);
+    ca_mutex_unlock(thread->threadMutex);
 
     return CA_STATUS_OK;
 }
@@ -236,9 +236,9 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
 
     OIC_LOG(DEBUG, TAG, "thread destroy..");
 
-    u_mutex_free(thread->threadMutex);
+    ca_mutex_free(thread->threadMutex);
     thread->threadMutex = NULL;
-    u_cond_free(thread->threadCond);
+    ca_cond_free(thread->threadCond);
     u_queue_delete(thread->dataQueue);
 
     return CA_STATUS_OK;
@@ -257,18 +257,18 @@ CAResult_t CAQueueingThreadStop(CAQueueingThread_t *thread)
     if (!thread->isStop)
     {
         // mutex lock
-        u_mutex_lock(thread->threadMutex);
+        ca_mutex_lock(thread->threadMutex);
 
         // set stop flag
         thread->isStop = true;
 
         // notify the thread
-        u_cond_signal(thread->threadCond);
+        ca_cond_signal(thread->threadCond);
 
-        u_cond_wait(thread->threadCond, thread->threadMutex);
+        ca_cond_wait(thread->threadCond, thread->threadMutex);
 
         // mutex unlock
-        u_mutex_unlock(thread->threadMutex);
+        ca_mutex_unlock(thread->threadMutex);
     }
 
     return CA_STATUS_OK;

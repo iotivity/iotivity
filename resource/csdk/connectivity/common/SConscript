@@ -13,6 +13,7 @@ root_dir = './../'
 
 ca_common_path = root_dir + 'common/'
 ca_common_src_path = ca_common_path + 'src/'
+no_glib = 'darwin,ios'
 
 env.AppendUnique(CPPPATH = [
 	'common/inc/',
@@ -47,13 +48,23 @@ if ca_os == 'arduino':
 		env.get('BUILD_DIR') + 'logger.c.o',
 	]
 else:
-	platform_src = [
-		ca_common_src_path + 'logger.c',
-		ca_common_src_path + 'oic_logger.c',
-		ca_common_src_path + 'oic_console_logger.c',
-		ca_common_src_path + 'umutex.c',
-		ca_common_src_path + 'uthreadpool.c',
-	]
+	if ca_os in no_glib:
+		platform_src = [
+					ca_common_src_path + 'logger.c',
+					ca_common_src_path + 'oic_logger.c',
+					ca_common_src_path + 'oic_console_logger.c',
+					ca_common_src_path + 'uthreadpool.c',
+					ca_common_src_path + 'camutex_pthread.c'
+		]
+	else:
+		platform_src = [
+					ca_common_src_path + 'logger.c',
+					ca_common_src_path + 'oic_logger.c',
+					ca_common_src_path + 'oic_console_logger.c',
+					ca_common_src_path + 'uthreadpool.c',
+					ca_common_src_path + 'camutex_glib.c'
+		]
+
 
 env.AppendUnique(CA_SRC = ca_common_src)
 env.AppendUnique(CA_SRC = platform_src)

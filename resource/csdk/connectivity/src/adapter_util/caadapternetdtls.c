@@ -39,13 +39,13 @@ static stCADtlsContext_t *g_caDtlsContext = NULL;
  * @var g_dtlsContextMutex
  * @brief Mutex to synchronize access to g_caDtlsContext.
  */
-static u_mutex g_dtlsContextMutex = NULL;
+static ca_mutex g_dtlsContextMutex = NULL;
 
 /**
  * @var g_dtlsListMutex
  * @brief Mutex to synchronize access to DTLS Cache.
  */
-static u_mutex g_dtlsListMutex = NULL;
+static ca_mutex g_dtlsListMutex = NULL;
 
 /**
  * @var g_getCredentialsCallback
@@ -67,18 +67,18 @@ static eDtlsRet_t CAAdapterNetDtlsEncryptInternal(const stCADtlsAddrInfo_t *dstS
         return DTLS_FAIL;
     }
 
-    u_mutex_lock(g_dtlsContextMutex);
+    ca_mutex_lock(g_dtlsContextMutex);
     if (NULL == g_caDtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
-        u_mutex_unlock(g_dtlsContextMutex);
+        ca_mutex_unlock(g_dtlsContextMutex);
         return DTLS_FAIL;
     }
 
     int retLen = dtls_write(g_caDtlsContext->dtlsContext, (session_t *)dstSession, data,
                                 dataLen);
     OIC_LOG_V(DEBUG, NET_DTLS_TAG, "dtls_write retun len [%d]", retLen);
-    u_mutex_unlock(g_dtlsContextMutex);
+    ca_mutex_unlock(g_dtlsContextMutex);
 
     if (0 == retLen)
     {
@@ -138,11 +138,11 @@ static void CAClearCacheList()
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
     uint32_t list_index = 0;
     uint32_t list_length = 0;
-    u_mutex_lock(g_dtlsListMutex);
+    ca_mutex_lock(g_dtlsListMutex);
     if (NULL == g_caDtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Dtls Context is NULL");
-        u_mutex_unlock(g_dtlsListMutex);
+        ca_mutex_unlock(g_dtlsListMutex);
         return;
     }
     list_length = u_arraylist_length(g_caDtlsContext->cacheList);
@@ -157,7 +157,7 @@ static void CAClearCacheList()
     }
     u_arraylist_free(&g_caDtlsContext->cacheList);
     g_caDtlsContext->cacheList = NULL;
-    u_mutex_unlock(g_dtlsListMutex);
+    ca_mutex_unlock(g_dtlsListMutex);
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
 
@@ -165,11 +165,11 @@ static CAResult_t CADtlsCacheMsg(stCACacheMessage_t *msg)
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
 
-    u_mutex_lock(g_dtlsListMutex);
+    ca_mutex_lock(g_dtlsListMutex);
     if (NULL == g_caDtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Dtls Context is NULL");
-        u_mutex_unlock(g_dtlsListMutex);
+        ca_mutex_unlock(g_dtlsListMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -178,7 +178,7 @@ static CAResult_t CADtlsCacheMsg(stCACacheMessage_t *msg)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
     }
-    u_mutex_unlock(g_dtlsListMutex);
+    ca_mutex_unlock(g_dtlsListMutex);
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
     return result;
@@ -200,7 +200,7 @@ static void CASendCachedMsg(const stCADtlsAddrInfo_t *dstSession)
 
     uint32_t list_index = 0;
     uint32_t list_length = 0;
-    u_mutex_lock(g_dtlsListMutex);
+    ca_mutex_lock(g_dtlsListMutex);
     list_length = u_arraylist_length(g_caDtlsContext->cacheList);
     for (list_index = 0; list_index < list_length;)
     {
@@ -237,7 +237,7 @@ static void CASendCachedMsg(const stCADtlsAddrInfo_t *dstSession)
             ++list_index;
         }
     }
-    u_mutex_unlock(g_dtlsListMutex);
+    ca_mutex_unlock(g_dtlsListMutex);
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
@@ -258,11 +258,11 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *dtlsContext,
     uint32_t port = ntohs(addrInfo->addr.sin.sin_port);
     eDtlsAdapterType_t type = (eDtlsAdapterType_t)addrInfo->ifIndex;
 
-    u_mutex_lock(g_dtlsContextMutex);
+    ca_mutex_lock(g_dtlsContextMutex);
     if (NULL == g_caDtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
-        u_mutex_unlock(g_dtlsContextMutex);
+        ca_mutex_unlock(g_dtlsContextMutex);
         return 0;
     }
 
@@ -276,7 +276,7 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *dtlsContext,
     {
         OIC_LOG_V(DEBUG, NET_DTLS_TAG, "recvCallback Callback or adapter type is wrong [%d]", type);
     }
-    u_mutex_unlock(g_dtlsContextMutex);
+    ca_mutex_unlock(g_dtlsContextMutex);
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
     return 0;
@@ -412,11 +412,11 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
                                CAPacketSendCallback sendCallback, eDtlsAdapterType_t type)
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
-    u_mutex_lock(g_dtlsContextMutex);
+    ca_mutex_lock(g_dtlsContextMutex);
     if (NULL == g_caDtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
-        u_mutex_unlock(g_dtlsContextMutex);
+        ca_mutex_unlock(g_dtlsContextMutex);
         return;
     }
 
@@ -426,7 +426,7 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
         g_caDtlsContext->adapterCallbacks[type].sendCallback = sendCallback;
     }
 
-    u_mutex_unlock(g_dtlsContextMutex);
+    ca_mutex_unlock(g_dtlsContextMutex);
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
@@ -444,7 +444,7 @@ CAResult_t CAAdapterNetDtlsInit()
 
     if (NULL == g_dtlsContextMutex)
     {
-        g_dtlsContextMutex = u_mutex_new();
+        g_dtlsContextMutex = ca_mutex_new();
         VERIFY_NON_NULL_RET(g_dtlsContextMutex, NET_DTLS_TAG, "malloc failed",
             CA_MEMORY_ALLOC_FAILED);
     }
@@ -456,42 +456,42 @@ CAResult_t CAAdapterNetDtlsInit()
 
     if (NULL == g_dtlsListMutex)
     {
-        g_dtlsListMutex = u_mutex_new();
+        g_dtlsListMutex = ca_mutex_new();
         if (NULL == g_dtlsListMutex)
         {
             OIC_LOG(ERROR, NET_DTLS_TAG, "g_dtlsListMutex malloc failed");
-            u_mutex_free(g_dtlsContextMutex);
+            ca_mutex_free(g_dtlsContextMutex);
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
 
-    u_mutex_lock(g_dtlsContextMutex);
+    ca_mutex_lock(g_dtlsContextMutex);
     g_caDtlsContext = (stCADtlsContext_t *)OICCalloc(1, sizeof(stCADtlsContext_t));
 
     if (NULL == g_caDtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Context malloc failed");
-        u_mutex_free(g_dtlsListMutex);
-        u_mutex_unlock(g_dtlsContextMutex);
-        u_mutex_free(g_dtlsContextMutex);
+        ca_mutex_free(g_dtlsListMutex);
+        ca_mutex_unlock(g_dtlsContextMutex);
+        ca_mutex_free(g_dtlsContextMutex);
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    u_mutex_lock(g_dtlsListMutex);
+    ca_mutex_lock(g_dtlsListMutex);
     g_caDtlsContext->cacheList = u_arraylist_create();
 
     if (NULL == g_caDtlsContext->cacheList)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "cacheList initialization failed!");
-        u_mutex_unlock(g_dtlsListMutex);
-        u_mutex_free(g_dtlsListMutex);
-        u_mutex_unlock(g_dtlsContextMutex);
-        u_mutex_free(g_dtlsContextMutex);
+        ca_mutex_unlock(g_dtlsListMutex);
+        ca_mutex_free(g_dtlsListMutex);
+        ca_mutex_unlock(g_dtlsContextMutex);
+        ca_mutex_free(g_dtlsContextMutex);
         OICFree(g_caDtlsContext);
         g_caDtlsContext = NULL;
         return CA_STATUS_FAILED;
     }
-    u_mutex_unlock(g_dtlsListMutex);
+    ca_mutex_unlock(g_dtlsListMutex);
     // Initialize clock, crypto and other global vars in tinyDTLS library
     dtls_init();
 
@@ -500,7 +500,7 @@ CAResult_t CAAdapterNetDtlsInit()
     if (NULL ==  g_caDtlsContext->dtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "dtls_new_context failed");
-        u_mutex_unlock(g_dtlsContextMutex);
+        ca_mutex_unlock(g_dtlsContextMutex);
         CAAdapterNetDtlsDeInit();
         return CA_STATUS_FAILED;
     }
@@ -511,7 +511,7 @@ CAResult_t CAAdapterNetDtlsInit()
     g_caDtlsContext->callbacks.get_psk_info = CAGetPskCredentials;
 
     dtls_set_handler(g_caDtlsContext->dtlsContext, &(g_caDtlsContext->callbacks));
-    u_mutex_unlock(g_dtlsContextMutex);
+    ca_mutex_unlock(g_dtlsContextMutex);
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -522,17 +522,17 @@ void CAAdapterNetDtlsDeInit()
 
     VERIFY_NON_NULL_VOID(g_caDtlsContext, NET_DTLS_TAG, "context is NULL");
 
-    u_mutex_lock(g_dtlsContextMutex);
+    ca_mutex_lock(g_dtlsContextMutex);
     CAClearCacheList();
     dtls_free_context(g_caDtlsContext->dtlsContext);
     g_caDtlsContext->dtlsContext = NULL;
     OICFree(g_caDtlsContext);
     g_caDtlsContext = NULL;
-    u_mutex_unlock(g_dtlsContextMutex);
+    ca_mutex_unlock(g_dtlsContextMutex);
 
-    u_mutex_free(g_dtlsContextMutex);
+    ca_mutex_free(g_dtlsContextMutex);
     g_dtlsContextMutex = NULL;
-    u_mutex_free(g_dtlsListMutex);
+    ca_mutex_free(g_dtlsListMutex);
     g_dtlsListMutex = NULL;
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }

@@ -32,7 +32,7 @@
 #include "caadapterutils.h"
 #include "caedrutils.h"
 #include "logger.h"
-#include "umutex.h"
+#include "camutex.h"
 #include "cacommon.h"
 #include "caedrdevicelist.h"
 

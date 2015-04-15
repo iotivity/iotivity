@@ -33,7 +33,7 @@
 #include <bluetooth_product.h>
 
 
-#include "umutex.h"
+#include "camutex.h"
 #include "caleadapter.h"
 #include "caadapterutils.h"
 
@@ -54,7 +54,7 @@ static CALEDeviceStateChangedCallback g_bleDeviceStateChangedCallback = NULL;
  * @brief Mutex to synchronize access to the deviceStateChanged Callback when the state
  *           of the LE adapter gets change.
  */
-static u_mutex g_bleDeviceStateChangedCbMutex = NULL;
+static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
 
 /**
 * @fn  CALEAdapterStateChangedCb
@@ -88,7 +88,7 @@ void CATerminateLENetworkMonitorMutexVariables()
 {
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
 
-    u_mutex_free(g_bleDeviceStateChangedCbMutex);
+    ca_mutex_free(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCbMutex = NULL;
 
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
@@ -179,9 +179,9 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "Setting CALEDeviceStateChangedCallback");
 
-    u_mutex_lock(g_bleDeviceStateChangedCbMutex);
+    ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCallback = callback;
-    u_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+    ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 
     int ret = bt_adapter_set_state_changed_cb(CALEAdapterStateChangedCb, NULL);
     if (BT_ERROR_NONE != ret)
@@ -199,12 +199,12 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 {
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
 
-    u_mutex_lock(g_bleDeviceStateChangedCbMutex);
+    ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
 
     if (NULL == g_bleDeviceStateChangedCallback)
     {
         OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "g_bleDeviceStateChangedCallback is NULL!");
-        u_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+        ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
         return;
     }
 
@@ -212,13 +212,13 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
     {
         OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "Adapter is disabled");
         g_bleDeviceStateChangedCallback(CA_ADAPTER_DISABLED);
-        u_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+        ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
         return;
     }
 
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "Adapter is Enabled");
     g_bleDeviceStateChangedCallback(CA_ADAPTER_ENABLED);
-    u_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+    ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
 }
@@ -244,10 +244,10 @@ CAResult_t CAInitLENetworkMonitorMutexVariables()
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
     if (NULL == g_bleDeviceStateChangedCbMutex)
     {
-        g_bleDeviceStateChangedCbMutex = u_mutex_new();
+        g_bleDeviceStateChangedCbMutex = ca_mutex_new();
         if (NULL == g_bleDeviceStateChangedCbMutex)
         {
-            OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "u_mutex_new failed");
+            OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }

@@ -23,7 +23,7 @@
  * This file provides APIs related to mutex and semaphores.
  */
 
-#include "umutex.h"
+#include "camutex.h"
 #include <glib.h>
 #include <string.h>
 #include "logger.h"
@@ -34,18 +34,18 @@
  */
 #define TAG PCF("UMUTEX")
 
-u_mutex u_mutex_new(void)
+ca_mutex ca_mutex_new(void)
 {
     GMutex *mutexLock = g_new(GMutex, 1);
     g_mutex_init(mutexLock);
-    return (u_mutex) mutexLock;
+    return (ca_mutex) mutexLock;
 }
 
-void u_mutex_lock(u_mutex mutex)
+void ca_mutex_lock(ca_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG(ERROR, TAG , "u_mutex_lock, Invalid mutex !");
+        OIC_LOG(ERROR, TAG , "ca_mutex_lock, Invalid mutex !");
         return;
     }
 
@@ -53,11 +53,11 @@ void u_mutex_lock(u_mutex mutex)
     g_mutex_lock(mutexLock);
 }
 
-bool u_mutex_trylock(u_mutex mutex)
+bool ca_mutex_trylock(ca_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG(ERROR, TAG, "u_mutex_trylock, Invalid mutex !");
+        OIC_LOG(ERROR, TAG, "ca_mutex_trylock, Invalid mutex !");
         return false;
     }
 
@@ -66,11 +66,11 @@ bool u_mutex_trylock(u_mutex mutex)
     return(g_mutex_trylock(mutexLock));
 }
 
-void u_mutex_unlock(u_mutex mutex)
+void ca_mutex_unlock(ca_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG(ERROR, TAG, "u_mutex_unlock, Invalid mutex !");
+        OIC_LOG(ERROR, TAG, "ca_mutex_unlock, Invalid mutex !");
         return;
     }
 
@@ -78,31 +78,32 @@ void u_mutex_unlock(u_mutex mutex)
     g_mutex_unlock(mutexLock);
 }
 
-void u_mutex_free(u_mutex mutex)
+bool ca_mutex_free(ca_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG(ERROR, TAG, "u_mutex_free, Invalid mutex !");
-        return;
+        OIC_LOG(ERROR, TAG, "ca_mutex_free, Invalid mutex !");
+        return false;
     }
 
     GMutex *mutexLock = (GMutex *) mutex;
     g_mutex_clear(mutexLock);
     g_free(mutexLock);
+    return true;
 }
 
-u_cond u_cond_new(void)
+ca_cond ca_cond_new(void)
 {
     GCond *condition = g_new(GCond, 1);
     g_cond_init(condition);
-    return (u_cond) condition;
+    return (ca_cond) condition;
 }
 
-void u_cond_signal(u_cond cond)
+void ca_cond_signal(ca_cond cond)
 {
     if (NULL == cond)
     {
-        OIC_LOG(ERROR, TAG, "u_cond_signal, Invalid condition !");
+        OIC_LOG(ERROR, TAG, "ca_cond_signal, Invalid condition !");
         return;
     }
 
@@ -110,11 +111,11 @@ void u_cond_signal(u_cond cond)
     g_cond_signal(condition);
 }
 
-void u_cond_broadcast(u_cond cond)
+void ca_cond_broadcast(ca_cond cond)
 {
     if (NULL == cond)
     {
-        OIC_LOG(ERROR, TAG, "u_cond_broadcast, Invalid condition !");
+        OIC_LOG(ERROR, TAG, "ca_cond_broadcast, Invalid condition !");
         return;
     }
 
@@ -122,17 +123,17 @@ void u_cond_broadcast(u_cond cond)
     g_cond_broadcast(condition);
 }
 
-void u_cond_wait(u_cond cond, u_mutex mutex)
+void ca_cond_wait(ca_cond cond, ca_mutex mutex)
 {
     if (NULL == mutex)
     {
-        OIC_LOG(ERROR, TAG, "u_cond_wait, Invalid mutex !");
+        OIC_LOG(ERROR, TAG, "ca_cond_wait, Invalid mutex !");
         return;
     }
 
     if (NULL == cond)
     {
-        OIC_LOG(ERROR, TAG, "u_cond_wait, Invalid condition !");
+        OIC_LOG(ERROR, TAG, "ca_cond_wait, Invalid condition !");
         return;
     }
 
@@ -141,40 +142,38 @@ void u_cond_wait(u_cond cond, u_mutex mutex)
     g_cond_wait(condition, mutexLock);
 }
 
-void u_cond_wait_until(u_cond cond, u_mutex mutex, int32_t microseconds)
+CAWaitResult_t ca_cond_wait_until(ca_cond cond, ca_mutex mutex, uint64_t microseconds)
 {
     if (NULL == mutex)
     {
-        OIC_LOG(ERROR, TAG, "u_cond_wait, Invalid mutex !");
-        return;
+        OIC_LOG(ERROR, TAG, "ca_cond_wait, Invalid mutex !");
+        return CA_WAIT_INVAL;
     }
 
     if (NULL == cond)
     {
-        OIC_LOG(ERROR, TAG, "u_cond_wait, Invalid condition !");
-        return;
+        OIC_LOG(ERROR, TAG, "ca_cond_wait, Invalid condition !");
+        return CA_WAIT_INVAL;
     }
 
     GMutex *mutexLock = (GMutex *) mutex;
     GCond *condition = (GCond *) cond;
 
-    if (microseconds <= 0)
+    if (microseconds == 0)
     {
         g_cond_wait(condition, mutexLock);
-        return;
+        return CA_WAIT_SUCCESS;
     }
 
-    gint64 end_time;
-    end_time = g_get_monotonic_time() + microseconds;
-
-    g_cond_wait_until(condition, mutexLock, end_time);
+    gboolean bRet = g_cond_wait_until(condition, mutexLock, microseconds);
+    return bRet ? CA_WAIT_SUCCESS : CA_WAIT_TIMEDOUT;
 }
 
-void u_cond_free(u_cond cond)
+void ca_cond_free(ca_cond cond)
 {
     if (NULL == cond)
     {
-        OIC_LOG(ERROR, TAG, "u_cond_free, Invalid condition !");
+        OIC_LOG(ERROR, TAG, "ca_cond_free, Invalid condition !");
         return;
     }
 

@@ -24,8 +24,8 @@
  * This file provides APIs related to mutex and semaphores.
  */
 
-#ifndef __UMUTEX_H_
-#define __UMUTEX_H_
+#ifndef _CAMUTEX_H_
+#define _CAMUTEX_H_
 
 #include "cacommon.h"
 
@@ -34,115 +34,118 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-typedef void *u_mutex;
-typedef void *u_cond;
+typedef struct ca_mutex_internal *ca_mutex;
+typedef struct ca_cond_internal *ca_cond;
 
 /**
- * @fn  u_mutex_new
- * @brief  Creates new mutex
+ * Enums for ca_cond_wait_until return values
+ */
+typedef enum
+{
+   CA_WAIT_SUCCESS = 0,    /**< Condition Signal */
+   CA_WAIT_INVAL = -1,     /**< Invalid Condition */
+   CA_WAIT_TIMEDOUT = -2   /**< Condition Timed Out */
+} CAWaitResult_t;
+
+/**
+ * Creates new mutex.
  *
  * @return  Reference to newly created mutex, otherwise NULL.
  *
  */
-u_mutex u_mutex_new(void);
+ca_mutex ca_mutex_new(void);
 
 /**
- * @fn  u_mutex_lock
- * @brief  Lock the mutex
+ * Lock the mutex.
  *
  * @param  mutex  The mutex to be locked
  *
  */
-void u_mutex_lock(u_mutex mutex);
+void ca_mutex_lock(ca_mutex mutex);
 
 /**
- * @fn  u_mutex_trylock
- * @brief  Checks if the mutex can be locked
+ * Checks if the mutex can be locked.
  *
  * @param  mutex  The mutex to be locked
  *
  * @return  true if the mutex is not locked currently, otherwise false.
  *
  */
-bool u_mutex_trylock(u_mutex mutex);
+bool ca_mutex_trylock(ca_mutex mutex);
 
 /**
- * @fn  u_mutex_unlock
- * @brief  Unlock the mutex
+ * Unlock the mutex.
  *
  * @param  mutex  The mutex to be unlocked
  *
  */
-void u_mutex_unlock(u_mutex mutex);
+void ca_mutex_unlock(ca_mutex mutex);
 
 /**
- * @fn  u_mutex_free
- * @brief  Free the mutex
+ * Free the mutex.
  *
  * @param  mutex  The mutex to be freed
  *
  */
-void u_mutex_free(u_mutex mutex);
+bool ca_mutex_free(ca_mutex mutex);
 
 /**
- * @fn  u_cond_new
- * @brief  Creates new condition
+ * Creates new condition.
  *
- * @return  Reference to newly created @u_cond, otherwise NULL.
+ * @return  Reference to newly created @ca_cond, otherwise NULL.
  *
  */
-u_cond u_cond_new(void);
+ca_cond ca_cond_new(void);
 
 /**
- * @fn  u_cond_signal
- * @brief  One of threads is woken up if multiple threads are waiting for @cond
+ * One of threads is woken up if multiple threads are waiting for @cond.
  *
  * @param  cond  The condtion to be signaled
  *
  */
-void u_cond_signal(u_cond cond);
+void ca_cond_signal(ca_cond cond);
 
 /**
- * @fn  u_cond_broadcast
- * @brief  All of threads are woken up if multiple threads are waiting for @cond
+ * All of threads are woken up if multiple threads are waiting for @cond.
  *
  * @param  cond  The condtion to be signaled
  *
  */
-void u_cond_broadcast(u_cond cond);
+void ca_cond_broadcast(ca_cond cond);
 
 /**
- * @fn  u_cond_wait
- * @brief  Waits until this thread woken up on @cond
+ * Waits until this thread woken up on @cond.
  *
  * @param  cond  The condtion to be wait for to signal
  * @param  mutex  The mutex which is currently locked from calling thread
  *
  */
-void u_cond_wait(u_cond cond, u_mutex mutex);
+void ca_cond_wait(ca_cond cond, ca_mutex mutex);
 
 /**
- * @fn  u_cond_wait
- * @brief  Waits until this thread woken up on @cond,
- *      but not longer than until the time specified by microseconds.
- *      The mutex is unlocked before falling asleep and locked again before resuming.
- *      If microseconds is 0 or under, u_cond_wait_until() acts like u_cond_wait().
+ * Waits until this thread woken up on @cond,
+ * but not longer than until the time specified by microseconds.
+ * The mutex is unlocked before falling asleep and locked again before resuming.
+ * If microseconds is 0 or under, ca_cond_wait_until() acts like ca_cond_wait().
  *
  * @param  cond  The condtion to be wait for to signal
  * @param  mutex  The mutex which is currently locked from calling thread
- * @param  microseconds  relative time for waiting, microseconds
+ * @param  microseconds  absolute time for waiting, microseconds
+ *
+ * @return CA_WAIT_SUCCESS if the condition was signaled.
+ *         CA_WAIT_TIMEDDOUT if wait period exceeded
+ *         CA_WAIT_INVAL for invalid parameters
  *
  */
-void u_cond_wait_until(u_cond cond, u_mutex mutex, int32_t microseconds);
+CAWaitResult_t ca_cond_wait_until(ca_cond cond, ca_mutex mutex, uint64_t microseconds);
 
 /**
- * @fn  u_cond_free
- * @brief  Free the condition
+ * Free the condition.
  *
  * @param  cond  The condition to be freed
  *
  */
-void u_cond_free(u_cond cond);
+void ca_cond_free(ca_cond cond);
 
 #ifdef __cplusplus
 } /* extern "C" */

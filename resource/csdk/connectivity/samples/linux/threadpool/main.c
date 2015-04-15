@@ -22,12 +22,12 @@
 #include <stdlib.h>
 
 #include "uthreadpool.h"
-#include "umutex.h"
+#include "camutex.h"
 
 u_thread_pool_t g_threadPoolHandle = NULL;
 
-u_mutex g_mutex = NULL;
-u_cond g_cond = NULL;
+ca_mutex g_mutex = NULL;
+ca_cond g_cond = NULL;
 bool g_condFlag = false;
 
 void task(void *data)
@@ -36,10 +36,10 @@ void task(void *data)
 
     //Signal the condition that task has been completed
     printf("[TASK] Signaling the condition\n");
-    u_mutex_lock(g_mutex);
+    ca_mutex_lock(g_mutex);
     g_condFlag = true;
-    u_cond_signal(g_cond);
-    u_mutex_unlock(g_mutex);
+    ca_cond_signal(g_cond);
+    ca_mutex_unlock(g_mutex);
 }
 
 void testThreadPool(void)
@@ -59,7 +59,7 @@ void testThreadPool(void)
 
     //Create the mutex
     printf("[testThreadPool] Creating mutex\n");
-    g_mutex = u_mutex_new();
+    g_mutex = ca_mutex_new();
     if (NULL == g_mutex)
     {
         printf("[testThreadPool] Failed to create mutex!\n");
@@ -69,18 +69,18 @@ void testThreadPool(void)
 
     //Create the condition
     printf("[testThreadPool] Creating Condition\n");
-    g_cond = u_cond_new();
+    g_cond = ca_cond_new();
     if (NULL == g_cond)
     {
         printf("[testThreadPool] Failed to create condition!\n");
-        u_mutex_free(g_mutex);
+        ca_mutex_free(g_mutex);
         u_thread_pool_free(g_threadPoolHandle);
         return;
     }
 
     //Lock the mutex
     printf("[testThreadPool] Locking the mutex\n");
-    u_mutex_lock(g_mutex);
+    ca_mutex_lock(g_mutex);
 
     g_condFlag = false;
     //Add task to thread pool
@@ -89,9 +89,9 @@ void testThreadPool(void)
     {
         printf("[testThreadPool] thread_pool_add_task failed!\n");
         u_thread_pool_free(g_threadPoolHandle);
-        u_mutex_unlock(g_mutex);
-        u_mutex_free(g_mutex);
-        u_cond_free(g_cond);
+        ca_mutex_unlock(g_mutex);
+        ca_mutex_free(g_mutex);
+        ca_cond_free(g_cond);
         return;
     }
 
@@ -100,16 +100,16 @@ void testThreadPool(void)
 
     while (!g_condFlag)
     {
-        u_cond_wait(g_cond, g_mutex);
+        ca_cond_wait(g_cond, g_mutex);
     }
 
     //Unlock the mutex
     printf("[testThreadPool] Got the signal and unlock the mutex\n");
-    u_mutex_unlock(g_mutex);
+    ca_mutex_unlock(g_mutex);
 
     printf("[testThreadPool] Task is completed and terminating threadpool\n");
-    u_cond_free(g_cond);
-    u_mutex_free(g_mutex);
+    ca_cond_free(g_cond);
+    ca_mutex_free(g_mutex);
     u_thread_pool_free(g_threadPoolHandle);
 
     printf("Exiting from testThreadPool\n");

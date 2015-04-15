@@ -30,7 +30,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "uthreadpool.h" /* for thread pool */
-#include "umutex.h"
+#include "camutex.h"
 #include "uarraylist.h"
 #include "com_iotivity_jar_caleinterface.h"
 
@@ -70,9 +70,9 @@ static uint32_t g_targetCnt = 0;
 static uint32_t g_currentSentCnt = 0;
 
 /** mutex for synchrnoization **/
-static u_mutex g_threadMutex;
+static ca_mutex g_threadMutex;
 /** conditional mutex for synchrnoization **/
-static u_cond g_threadCond;
+static ca_cond g_threadCond;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //FIXME getting context
@@ -172,8 +172,8 @@ void CALEInitialize(u_thread_pool_t handle)
     g_threadPoolHandle = handle;
 
     // init mutex for send logic
-    g_threadMutex = u_mutex_new();
-    g_threadCond = u_cond_new();
+    g_threadMutex = ca_mutex_new();
+    g_threadCond = ca_cond_new();
 
     CANativeCreateUUIDList();
 
@@ -244,10 +244,10 @@ void CALETerminate()
     }
 
     // delete mutex object
-    u_mutex_free(g_threadMutex);
+    ca_mutex_free(g_threadMutex);
     g_threadMutex = NULL;
-    u_cond_signal(g_threadCond);
-    u_cond_free(g_threadCond);
+    ca_cond_signal(g_threadCond);
+    ca_cond_free(g_threadCond);
 }
 
 void CANativeSendFinish(JNIEnv *env, jobject gatt)
@@ -525,10 +525,10 @@ CAResult_t CALESendMulticastMessageImpl(const char* data, const uint32_t dataLen
     // wait for finish to send data through "CALeGattServicesDiscoveredCallback"
     if (!g_isFinishSendData)
     {
-        u_mutex_lock(g_threadMutex);
-        u_cond_wait(g_threadCond, g_threadMutex);
+        ca_mutex_lock(g_threadMutex);
+        ca_cond_wait(g_threadCond, g_threadMutex);
         OIC_LOG(DEBUG, TAG, "unset wait");
-        u_mutex_unlock(g_threadMutex);
+        ca_mutex_unlock(g_threadMutex);
     }
 
     // start LE Scan again
@@ -1730,7 +1730,7 @@ void CAReorderingGattList(uint32_t index)
 void CANativeupdateSendCnt(JNIEnv *env)
 {
     // mutex lock
-    u_mutex_lock(g_threadMutex);
+    ca_mutex_lock(g_threadMutex);
 
     g_currentSentCnt++;
 
@@ -1745,12 +1745,12 @@ void CANativeupdateSendCnt(JNIEnv *env)
             g_sendBuffer = NULL;
         }
         // notity the thread
-        u_cond_signal(g_threadCond);
+        ca_cond_signal(g_threadCond);
         g_isFinishSendData = TRUE;
         OIC_LOG(DEBUG, TAG, "set signal for send data");
     }
     // mutex unlock
-    u_mutex_unlock(g_threadMutex);
+    ca_mutex_unlock(g_threadMutex);
 }
 
 JNIEXPORT void JNICALL

@@ -30,7 +30,7 @@
 #ifdef __WITH_DTLS__
 #include "caadapternetdtls.h"
 #endif
-#include "umutex.h"
+#include "camutex.h"
 #include "logger.h"
 #include "oic_malloc.h"
 

@@ -29,7 +29,7 @@
 #include <bluetooth.h>
 
 #include "caedrinterface.h"
-#include "umutex.h"
+#include "camutex.h"
 #include "caedrendpoint.h"
 #include "caadapterutils.h"
 #include "caedrutils.h"
@@ -41,7 +41,7 @@
  * @var g_edrDeviceListMutex
  * @brief Mutex to synchronize the access to Bluetooth device information list.
  */
-static u_mutex g_edrDeviceListMutex = NULL;
+static ca_mutex g_edrDeviceListMutex = NULL;
 
 /**
  * @var g_edrDeviceList
@@ -158,7 +158,7 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
     {
         case BT_SOCKET_CONNECTED:
             {
-                u_mutex_lock(g_edrDeviceListMutex);
+                ca_mutex_lock(g_edrDeviceListMutex);
                 CAResult_t res = CAGetEDRDevice(g_edrDeviceList, connection->remote_address,
                                                    &device);
                 if (CA_STATUS_OK != res)
@@ -169,26 +169,26 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed add device to list ret[%d]", res);
-                        u_mutex_unlock(g_edrDeviceListMutex);
+                        ca_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
 
                     if(!device)
                     {
                         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
-                        u_mutex_unlock(g_edrDeviceListMutex);
+                        ca_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
 
                     device->socketFD = connection->socket_fd;
-                    u_mutex_unlock(g_edrDeviceListMutex);
+                    ca_mutex_unlock(g_edrDeviceListMutex);
                     return;
                 }
 
                 if(!device)
                 {
                     OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
-                    u_mutex_unlock(g_edrDeviceListMutex);
+                    ca_mutex_unlock(g_edrDeviceListMutex);
                     return;
                 }
                 device->socketFD = connection->socket_fd;
@@ -211,15 +211,15 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
                     // Remove the data which send from pending list
                     CARemoveEDRDataFromList(&device->pendingDataList);
                 }
-                u_mutex_unlock(g_edrDeviceListMutex);
+                ca_mutex_unlock(g_edrDeviceListMutex);
             }
             break;
 
         case BT_SOCKET_DISCONNECTED:
             {
-                u_mutex_lock(g_edrDeviceListMutex);
+                ca_mutex_lock(g_edrDeviceListMutex);
                 CARemoveEDRDeviceFromList(&g_edrDeviceList, connection->remote_address);
-                u_mutex_unlock(g_edrDeviceListMutex);
+                ca_mutex_unlock(g_edrDeviceListMutex);
             }
             break;
     }
@@ -265,18 +265,18 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                                                         OIC_EDR_SERVICE_ID))
                 {
                     // Check if the deivce is already in the list
-                    u_mutex_lock(g_edrDeviceListMutex);
+                    ca_mutex_lock(g_edrDeviceListMutex);
                     if (CA_STATUS_OK == CAGetEDRDevice(g_edrDeviceList,
                                                 discoveryInfo->remote_address, &device))
                     {
                         if(!device)
                         {
                             OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
-                            u_mutex_unlock(g_edrDeviceListMutex);
+                            ca_mutex_unlock(g_edrDeviceListMutex);
                             return;
                         }
                         device->serviceSearched = true;
-                        u_mutex_unlock(g_edrDeviceListMutex);
+                        ca_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
 
@@ -286,18 +286,18 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to add device to list!");
-                        u_mutex_unlock(g_edrDeviceListMutex);
+                        ca_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
 
                     if(!device)
                     {
                         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "EDRDevice is null!");
-                        u_mutex_unlock(g_edrDeviceListMutex);
+                        ca_mutex_unlock(g_edrDeviceListMutex);
                         return;
                     }
                     device->serviceSearched = true;
-                    u_mutex_unlock(g_edrDeviceListMutex);
+                    ca_mutex_unlock(g_edrDeviceListMutex);
                 }
                 else
                 {
@@ -321,7 +321,7 @@ void CAEDRServiceSearchedCallback(int32_t result,
         return;
     }
 
-    u_mutex_lock(g_edrDeviceListMutex);
+    ca_mutex_lock(g_edrDeviceListMutex);
 
     EDRDevice *device = NULL;
     CAResult_t res = CAGetEDRDevice(g_edrDeviceList, sdpInfo->remote_address, &device);
@@ -330,7 +330,7 @@ void CAEDRServiceSearchedCallback(int32_t result,
         if (device->serviceSearched)
         {
             OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Service is already searched for this device!");
-            u_mutex_unlock(g_edrDeviceListMutex);
+            ca_mutex_unlock(g_edrDeviceListMutex);
             return;
         }
 
@@ -356,7 +356,7 @@ void CAEDRServiceSearchedCallback(int32_t result,
         }
     }
 
-    u_mutex_unlock(g_edrDeviceListMutex);
+    ca_mutex_unlock(g_edrDeviceListMutex);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
@@ -513,7 +513,7 @@ void CAEDRManagerInitializeMutex(void)
 
     if (!g_edrDeviceListMutex)
     {
-        g_edrDeviceListMutex = u_mutex_new();
+        g_edrDeviceListMutex = ca_mutex_new();
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -525,7 +525,7 @@ void CAEDRManagerTerminateMutex(void)
 
     if (g_edrDeviceListMutex)
     {
-        u_mutex_free(g_edrDeviceListMutex);
+        ca_mutex_free(g_edrDeviceListMutex);
         g_edrDeviceListMutex = NULL;
     }
 
@@ -546,9 +546,9 @@ void CAEDRClientTerminate()
     // Free EDRDevices list
     if (g_edrDeviceListMutex)
     {
-        u_mutex_lock(g_edrDeviceListMutex);
+        ca_mutex_lock(g_edrDeviceListMutex);
         CADestroyEDRDeviceList(&g_edrDeviceList);
-        u_mutex_unlock(g_edrDeviceListMutex);
+        ca_mutex_unlock(g_edrDeviceListMutex);
     }
 
     // Free the mutex
@@ -560,7 +560,7 @@ void CAEDRClientDisconnectAll(void)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    u_mutex_lock(g_edrDeviceListMutex);
+    ca_mutex_lock(g_edrDeviceListMutex);
 
     EDRDeviceList *cur = g_edrDeviceList;
     while (cur != NULL)
@@ -581,7 +581,7 @@ void CAEDRClientDisconnectAll(void)
         }
     }
 
-    u_mutex_unlock(g_edrDeviceListMutex);
+    ca_mutex_unlock(g_edrDeviceListMutex);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
@@ -607,7 +607,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
     }
 
     // Check the connection existence with remote device
-    u_mutex_lock(g_edrDeviceListMutex);
+    ca_mutex_lock(g_edrDeviceListMutex);
     CAResult_t result = CAGetEDRDevice(g_edrDeviceList, remoteAddress, &device);
     if (CA_STATUS_OK != result)
     {
@@ -618,7 +618,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
         {
             OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed create device and add to list!");
 
-            u_mutex_unlock(g_edrDeviceListMutex);
+            ca_mutex_unlock(g_edrDeviceListMutex);
             return CA_STATUS_FAILED;
         }
 
@@ -631,7 +631,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
             // Remove device from list
             CARemoveEDRDeviceFromList(&g_edrDeviceList, remoteAddress);
 
-            u_mutex_unlock(g_edrDeviceListMutex);
+            ca_mutex_unlock(g_edrDeviceListMutex);
             return CA_STATUS_FAILED;
         }
     }
@@ -642,11 +642,11 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
         // Remove device from list
         CARemoveEDRDeviceFromList(&g_edrDeviceList, remoteAddress);
 
-        u_mutex_unlock(g_edrDeviceListMutex);
+        ca_mutex_unlock(g_edrDeviceListMutex);
         return CA_STATUS_FAILED;
     }
 
-    u_mutex_unlock(g_edrDeviceListMutex);
+    ca_mutex_unlock(g_edrDeviceListMutex);
 
     if (-1 == device->socketFD)
     {
@@ -707,7 +707,7 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *dat
     *sentLength = dataLength;
 
     // Send the packet to all OIC devices
-    u_mutex_lock(g_edrDeviceListMutex);
+    ca_mutex_lock(g_edrDeviceListMutex);
     EDRDeviceList *curList = g_edrDeviceList;
     CAResult_t result = CA_STATUS_FAILED;
     while (curList != NULL)
@@ -764,7 +764,7 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *dat
             OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN4");
         }
     }
-    u_mutex_unlock(g_edrDeviceListMutex);
+    ca_mutex_unlock(g_edrDeviceListMutex);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -839,16 +839,16 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
     }
 
     // Get EDR device from list
-    u_mutex_lock(g_edrDeviceListMutex);
+    ca_mutex_lock(g_edrDeviceListMutex);
     CAResult_t result = CAGetEDRDeviceBySocketId(g_edrDeviceList, data->socket_fd, &device);
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Could not find the device!");
 
-        u_mutex_unlock(g_edrDeviceListMutex);
+        ca_mutex_unlock(g_edrDeviceListMutex);
         return;
     }
-    u_mutex_unlock(g_edrDeviceListMutex);
+    ca_mutex_unlock(g_edrDeviceListMutex);
 
     if (!device)
     {
