@@ -536,6 +536,7 @@ OCStackResult ExtractKeyValueFromRequest(char *request, char **key,
     char* iterToken, *iterTokenPtr;
 
     iterToken = (char *) strtok_r(pRequest, ":", &iterTokenPtr);
+    VARIFY_POINTER_NULL(iterToken, result, exit);
     length = strlen(iterToken) + 1;
 
     *key = (char *) OCMalloc(length);
@@ -545,6 +546,7 @@ OCStackResult ExtractKeyValueFromRequest(char *request, char **key,
     ((*key)[((length - 1) - 2)]) = '\0';
 
     iterToken = (char *) strtok_r(NULL, "}", &iterTokenPtr);
+    VARIFY_POINTER_NULL(iterToken, result, exit);
     length = strlen(iterToken) + 1;
 
     *value = (char *) OCMalloc(length);
@@ -725,6 +727,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
 {
     char temp[1024] = { 0 };
     int remaining = 1023;
+    OCStackResult res = OC_STACK_ERROR;
 
     OCAction *action = actionset->head;
 
@@ -737,7 +740,8 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
     }
     else
     {
-        return OC_STACK_ERROR;
+        res = OC_STACK_ERROR;
+        goto exit;
     }
 
     while (action != NULL)
@@ -775,9 +779,15 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
     }
 
     *desc = (char *) OCMalloc(1024 - remaining);
+    VARIFY_POINTER_NULL(*desc, res, exit);
     strcpy(*desc, temp);
 
     return OC_STACK_OK;
+
+exit:
+    OCFREE(*desc);
+    return res;
+
 }
 
 OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
@@ -795,6 +805,9 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         responseJson = (unsigned char *) OCMalloc(
                 (unsigned int) (strlen((char *) clientResponse->resJSONPayload)
                         + 1));
+
+        if( responseJson == NULL )
+            return OC_STACK_DELETE_TRANSACTION;
 
         // We need the body of response.
         // Copy the body from the response
@@ -916,6 +929,10 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
 
         ClientRequestInfo *info = (ClientRequestInfo *) OCMalloc(
                 sizeof(ClientRequestInfo));
+
+        if( info == NULL )
+            return OC_STACK_NO_MEMORY;
+
         memset(info, 0, sizeof(ClientRequestInfo));
 
         info->collResource = resource;
