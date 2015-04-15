@@ -352,7 +352,6 @@ OCStackResult OICStartCoordinate()
     s_mirrorResourceList = createMirrorResourceList();
     s_requestHandleList = createRequestHandleList();
     result = requestPresence(OC_DEFAULT_ADDRESS);
-
     if(result != OC_STACK_OK)
     {
         return OC_STACK_ERROR;
@@ -395,8 +394,8 @@ int requestCoordinateeCandidateDiscovery(char *sourceResourceAddress)
     cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    result = OCDoResource(&handle, OC_REST_GET, queryUri, OIC_COORDINATING_FLAG, 0, OC_LOW_QOS, &cbData,
-                          NULL, 0);
+    result = OCDoResource(&handle, OC_REST_GET, queryUri, OIC_COORDINATING_FLAG, 0,
+            OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(DEBUG, HOSTING_TAG, "OCStack resource error");
@@ -426,7 +425,7 @@ OCStackResult requestPresence(char *sourceResourceAddress)
     sprintf(queryUri, "coap://%s%s", sourceResourceAddress , OC_PRESENCE_URI);
     OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s", queryUri);
 
-    result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+    result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
 
     if (result != OC_STACK_OK)
     {
@@ -756,7 +755,7 @@ OCStackResult requestResourceObservation(MirrorResource *mirrorResource)
             OIC_COORDINATING_FLAG);
 
     result = OCDoResource(&mirrorResource->resourceHandle[OIC_REQUEST_HANDLE], OC_REST_OBSERVE, query,
-                          0, NULL,
+                          0, NULL, OC_ETHERNET,
                           OC_HIGH_QOS, &cbData, NULL, 0);
 
     if (result != OC_STACK_OK)
@@ -1308,11 +1307,11 @@ OCStackResult requestQuery(RequestHandle *request, OCMethod method,
          ((OCEntityHandlerRequest*)request->requestHandle[OIC_REQUEST_BY_CLIENT])->reqJSONPayload);
 
         result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
-                method, queryFullUri, NULL, payload, OC_LOW_QOS, &cbData, NULL, 0);
+                method, queryFullUri, NULL, payload, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
     }
     else{
         result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
-                method, queryFullUri, NULL, 0, OC_LOW_QOS, &cbData, NULL, 0);
+                method, queryFullUri, NULL, 0, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
     }
 
     if (result != OC_STACK_OK)
