@@ -49,84 +49,85 @@ public class EntityHandlerWemo implements OcPlatform.EntityHandler {
         if (resourcerequest != null
                 && resourcerequest.getResourceUri().equals("/a/wemo")) {
             RequestType requestType = resourcerequest.getRequestType();
-            RequestHandlerFlag requestFlag = resourcerequest
-                    .getRequestHandlerFlag();
+            EnumSet<RequestHandlerFlag> handlerFlagSet = resourcerequest
+                    .getRequestHandlerFlagSet();
 
-            switch (requestFlag) {
-                case INIT:
-                    Log.e(TAG, "requestFlag : Init");
-                    break;
-                case REQUEST:
-                    OcResourceResponse response = new OcResourceResponse();
-                    OcRepresentation representation = new OcRepresentation();
-                    response.setRequestHandle(resourcerequest
-                            .getRequestHandle());
-                    response.setResourceHandle(resourcerequest
-                            .getResourceHandle());
-                    switch (requestType) {
-                        case GET:
-                            ArrayList<String> udns = Activator.mWeMoSDKContext
-                                    .getListOfWeMoDevicesOnLAN();
-                            for (String udn : udns) {
-                                WeMoDevice wemoDevice = Activator.mWeMoSDKContext
-                                        .getWeMoDeviceByUDN(udn);
-                                if (wemoDevice.getState() == "0") {
-                                    Activator.mySmartPlug.m_power = "off";
-                                } else if (wemoDevice.getState() == "1") {
+            if(handlerFlagSet.contains(RequestHandlerFlag.INIT))
+            {
+                Log.e(TAG, "requestFlag : Init");
+            }
+            if(handlerFlagSet.contains(RequestHandlerFlag.REQUEST))
+            {
+                OcResourceResponse response = new OcResourceResponse();
+                OcRepresentation representation = new OcRepresentation();
+                response.setRequestHandle(resourcerequest
+                        .getRequestHandle());
+                response.setResourceHandle(resourcerequest
+                        .getResourceHandle());
+                switch (requestType) {
+                    case GET:
+                        ArrayList<String> udns = Activator.mWeMoSDKContext
+                                .getListOfWeMoDevicesOnLAN();
+                        for (String udn : udns) {
+                            WeMoDevice wemoDevice = Activator.mWeMoSDKContext
+                                    .getWeMoDeviceByUDN(udn);
+                            if (wemoDevice.getState() == "0") {
+                                Activator.mySmartPlug.m_power = "off";
+                            } else if (wemoDevice.getState() == "1") {
+                                Activator.mySmartPlug.m_power = "on";
+                            }
+                        }
+                        break;
+                    case PUT:
+                        ArrayList<String> uudns = Activator.mWeMoSDKContext
+                                .getListOfWeMoDevicesOnLAN();
+                        for (String udn : uudns) {
+                            WeMoDevice wemoDevice = Activator.mWeMoSDKContext
+                                    .getWeMoDeviceByUDN(udn);
+                            String type = wemoDevice.getType();
+                            if (type.equals(WeMoDevice.SWITCH)) {
+                                String newState = "";
+                                if (resourcerequest
+                                        .getResourceRepresentation()
+                                        .getValueString("power")
+                                        .equals("on")) {
                                     Activator.mySmartPlug.m_power = "on";
+                                    newState = WeMoDevice.WEMO_DEVICE_ON;
+                                } else if (resourcerequest
+                                        .getResourceRepresentation()
+                                        .getValueString("power")
+                                        .equals("off")) {
+                                    Activator.mySmartPlug.m_power = "off";
+                                    newState = WeMoDevice.WEMO_DEVICE_OFF;
                                 }
+                                Activator.mWeMoSDKContext.setDeviceState(
+                                        newState, wemoDevice.getUDN());
                             }
-                            break;
-                        case PUT:
-                            ArrayList<String> uudns = Activator.mWeMoSDKContext
-                                    .getListOfWeMoDevicesOnLAN();
-                            for (String udn : uudns) {
-                                WeMoDevice wemoDevice = Activator.mWeMoSDKContext
-                                        .getWeMoDeviceByUDN(udn);
-                                String type = wemoDevice.getType();
-                                if (type.equals(WeMoDevice.SWITCH)) {
-                                    String newState = "";
-                                    if (resourcerequest
-                                            .getResourceRepresentation()
-                                            .getValueString("power")
-                                            .equals("on")) {
-                                        Activator.mySmartPlug.m_power = "on";
-                                        newState = WeMoDevice.WEMO_DEVICE_ON;
-                                    } else if (resourcerequest
-                                            .getResourceRepresentation()
-                                            .getValueString("power")
-                                            .equals("off")) {
-                                        Activator.mySmartPlug.m_power = "off";
-                                        newState = WeMoDevice.WEMO_DEVICE_OFF;
-                                    }
-                                    Activator.mWeMoSDKContext.setDeviceState(
-                                            newState, wemoDevice.getUDN());
-                                }
-                            }
-                            break;
-                        case POST:
-                            break;
-                    }
-                    response.setErrorCode(200);
-                    // representation.setUri("/a/wemo");
-                    representation.setValueString("name",
-                            Activator.mySmartPlug.m_name);
-                    representation.setValueString("power",
-                            Activator.mySmartPlug.m_power);
-                    representation.setValueInt("brightness", 0);
-                    representation.setValueInt("color", 0);
-                    response.setResourceRepresentation(representation);
-                    try {
-                        OcPlatform.sendResponse(response);
-                    } catch (OcException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                        return EntityHandlerResult.ERROR;
-                    }
-                    break;
-                case OBSERVER:
-                    Log.e(TAG, "requestFlag : Observer");
-                    break;
+                        }
+                        break;
+                    case POST:
+                        break;
+                }
+                response.setErrorCode(200);
+                // representation.setUri("/a/wemo");
+                representation.setValueString("name",
+                        Activator.mySmartPlug.m_name);
+                representation.setValueString("power",
+                        Activator.mySmartPlug.m_power);
+                representation.setValueInt("brightness", 0);
+                representation.setValueInt("color", 0);
+                response.setResourceRepresentation(representation);
+                try {
+                    OcPlatform.sendResponse(response);
+                } catch (OcException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    return EntityHandlerResult.ERROR;
+                }
+            }
+            if(handlerFlagSet.contains(RequestHandlerFlag.OBSERVER))
+            {
+                Log.e(TAG, "requestFlag : Observer");
             }
             return EntityHandlerResult.OK;
         }
