@@ -54,68 +54,69 @@ public class EntityHandlerNoti implements OcPlatform.EntityHandler {
         if (resourcerequest != null
                 && resourcerequest.getResourceUri().equals("/a/galaxy/gear")) {
             RequestType requestType = resourcerequest.getRequestType();
-            RequestHandlerFlag requestFlag = resourcerequest
-                    .getRequestHandlerFlag();
+            EnumSet<RequestHandlerFlag> handlerFlagSet = resourcerequest
+                    .getRequestHandlerFlagSet();
 
-            switch (requestFlag) {
-                case INIT:
-                    Log.e(TAG, "requestFlag : Init");
-                    break;
-                case REQUEST:
-                    OcResourceResponse response = new OcResourceResponse();
-                    OcRepresentation representation = new OcRepresentation();
-                    response.setRequestHandle(resourcerequest
-                            .getRequestHandle());
-                    response.setResourceHandle(resourcerequest
-                            .getResourceHandle());
-                    Log.d("JUDO",
-                            "/******************************************************************************/");
-                    Log.d("JUDO", "Name: "
-                            + resourcerequest.getResourceRepresentation()
-                                    .getValueString("name"));
-                    Log.d("JUDO", "Name: "
-                            + resourcerequest.getResourceRepresentation()
-                                    .getValueString("power"));
-                    Log.d("JUDO", "Name: "
-                            + resourcerequest.getResourceRepresentation()
-                                    .getValueInt("brigthness"));
-                    Log.d("JUDO", "Name: "
-                            + resourcerequest.getResourceRepresentation()
-                                    .getValueInt("color"));
-                    Log.d("JUDO",
-                            "/******************************************************************************/");
-                    switch (requestType) {
-                        case GET:
-                            break;
-                        case PUT:
-                            textNoti = resourcerequest
-                                    .getResourceRepresentation()
-                                    .getValueString("power");
-                            perform(0);
-                            break;
-                        case POST:
-                            break;
-                    }
-                    response.setErrorCode(200);
-                    // representation.setUri("/a/galaxy/gear");
-                    representation.setValueString("name",
-                            Activator.myNotify.m_name);
-                    representation.setValueString("power",
-                            Activator.myNotify.m_power);
-                    representation.setValueInt("brightness", 0);
-                    representation.setValueInt("color", 0);
-                    response.setResourceRepresentation(representation);
-                    try {
-                        OcPlatform.sendResponse(response);
-                    } catch (OcException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                        return EntityHandlerResult.ERROR;
-                    }
-                    break;
-                case OBSERVER:
-                    Log.e(TAG, "requestFlag : Observer");
-                    break;
+            if(handlerFlagSet.contains(RequestHandlerFlag.INIT))
+            {
+                Log.e(TAG, "requestFlag : Init");
+            }
+            if(handlerFlagSet.contains(RequestHandlerFlag.REQUEST))
+            {
+                OcResourceResponse response = new OcResourceResponse();
+                OcRepresentation representation = new OcRepresentation();
+                response.setRequestHandle(resourcerequest
+                        .getRequestHandle());
+                response.setResourceHandle(resourcerequest
+                        .getResourceHandle());
+                Log.d("JUDO",
+                        "/******************************************************************************/");
+                Log.d("JUDO", "Name: "
+                        + resourcerequest.getResourceRepresentation()
+                                .getValueString("name"));
+                Log.d("JUDO", "Name: "
+                        + resourcerequest.getResourceRepresentation()
+                                .getValueString("power"));
+                Log.d("JUDO", "Name: "
+                        + resourcerequest.getResourceRepresentation()
+                                .getValueInt("brigthness"));
+                Log.d("JUDO", "Name: "
+                        + resourcerequest.getResourceRepresentation()
+                                .getValueInt("color"));
+                Log.d("JUDO",
+                        "/******************************************************************************/");
+                switch (requestType) {
+                    case GET:
+                        break;
+                    case PUT:
+                        textNoti = resourcerequest
+                                .getResourceRepresentation()
+                                .getValueString("power");
+                        perform(0);
+                        break;
+                    case POST:
+                        break;
+                }
+                response.setErrorCode(200);
+                // representation.setUri("/a/galaxy/gear");
+                representation.setValueString("name",
+                        Activator.myNotify.m_name);
+                representation.setValueString("power",
+                        Activator.myNotify.m_power);
+                representation.setValueInt("brightness", 0);
+                representation.setValueInt("color", 0);
+                response.setResourceRepresentation(representation);
+                try {
+                    OcPlatform.sendResponse(response);
+                } catch (OcException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    return EntityHandlerResult.ERROR;
+                }
+                }
+            if(handlerFlagSet.contains(RequestHandlerFlag.OBSERVER))
+            {
+                Log.e(TAG, "requestFlag : Observer");
             }
             return EntityHandlerResult.OK;
         }
