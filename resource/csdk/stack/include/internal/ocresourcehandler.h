@@ -59,6 +59,8 @@
 
 /**
  * Common JSON string components used by the stack to build JSON strings.
+ * These details are exposed in ocstackconfig.h file in the form of documentation.
+ * Remember to update the documentation there if these are changed.
  */
 #define OC_JSON_PREFIX                     "{\"oc\":["
 #define OC_JSON_PREFIX_LEN                 (sizeof(OC_JSON_PREFIX) - 1)
