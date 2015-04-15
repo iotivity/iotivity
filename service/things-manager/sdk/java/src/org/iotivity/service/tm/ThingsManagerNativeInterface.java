@@ -34,13 +34,12 @@ import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResourceHandle;
 
 /**
- * @class ThingsManagerNativeInterface
- * @brief This class provides a set of native functions relating to group
- *        management, synchronization of group, configuration of things, and
- *        diagnostics about things.
+ * This class provides a set of native functions relating to group
+ * management, synchronization of group, configuration of things, and
+ * diagnostics about things.
  *
  */
-public class ThingsManagerNativeInterface {
+class ThingsManagerNativeInterface {
     /**
      * Native function for discoverying candidate resources.
      *
@@ -179,8 +178,6 @@ public class ThingsManagerNativeInterface {
      * @param collectionResourceType
      *            - resource type of a group to delete.
      *
-     * @return OCStackResult - return value of this API. It returns OC_STACK_OK
-     *         if success.
      *
      */
     public static native void deleteGroup(String collectionResourceType);

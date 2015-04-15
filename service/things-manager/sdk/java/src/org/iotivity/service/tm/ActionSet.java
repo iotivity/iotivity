@@ -31,11 +31,10 @@ import java.util.Vector;
 import android.util.Log;
 
 /**
- * @class ActionSet
- * @brief This class provides functions to retrieve ActionSet from plain text.
- *        An ActionSet is a set of descriptions of actions needed by remote
- *        devices as members of a specific group. To create an ActionSet, one
- *        needs to know the Delimeter serialization.
+ * This class provides functions to retrieve ActionSet from plain text.
+ * An ActionSet is a set of descriptions of actions needed by remote
+ * devices as members of a specific group. To create an ActionSet, one
+ * needs to know the Delimeter serialization.
  *
  */
 public class ActionSet extends Time {
@@ -96,7 +95,7 @@ public class ActionSet extends Time {
      * an ActionSet.
      *
      * @param actionsetString
-     *            - ActionSet in String format. (Example: movieTime*10
+     *            ActionSet in String format. (Example: movieTime*10
      *            1*uri=coap://10.251.44.228:49858/a/light|power=
      *            OFF*uri=coap://10.251.44.228:49858). The first segment before
      *            the first asterisk(*) is an ActionSet name. The second segment

@@ -27,8 +27,7 @@
 package org.iotivity.service.tm;
 
 /**
- * @class OCStackResult
- * @brief This Enum contains Status codes for Success and Errors
+ * This Enum contains Status codes for Success and Errors
  */
 public enum OCStackResult {
     /* Success status code - START HERE */

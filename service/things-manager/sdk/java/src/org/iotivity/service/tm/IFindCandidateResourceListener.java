@@ -31,9 +31,8 @@ import java.util.Vector;
 import org.iotivity.base.OcResource;
 
 /**
- * @interface IFindCandidateResourceListener
- * @brief Provides interface for getting notification when resources are
- *        discovered in network.
+ * Provides interface for getting notification when resources are
+ * discovered in network.
  */
 public interface IFindCandidateResourceListener {
     /**
@@ -41,7 +40,7 @@ public interface IFindCandidateResourceListener {
      * the network.
      *
      * @param resources
-     *            - List of resources discovered in the network
+     *            List of resources discovered in the network
      */
     public void onResourceCallback(Vector<OcResource> resources);
 }

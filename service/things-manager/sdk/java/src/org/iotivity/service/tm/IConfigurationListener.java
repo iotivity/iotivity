@@ -33,9 +33,8 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 
 /**
- * @interface IConfigurationListener
- * @brief Provides interface for receiving asynchronous response for
- *        configuration APIs.
+ * Provides interface for receiving asynchronous response for
+ * configuration APIs.
  */
 public interface IConfigurationListener {
     /**

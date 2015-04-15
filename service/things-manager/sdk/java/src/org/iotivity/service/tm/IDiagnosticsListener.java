@@ -33,9 +33,8 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 
 /**
- * @interface IDiagnosticsListener
- * @brief Provides interface for receiving asynchronous response for diagnostic
- *        feature APIs.
+ * Provides interface for receiving asynchronous response for diagnostic
+ * feature APIs.
  */
 public interface IDiagnosticsListener {
     /**

@@ -34,9 +34,8 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 
 /**
- * @interface IActionListener
- * @brief Provides interface for receiving the callback for the GET, PUT and
- *        POST requested actions.
+ * Provides interface for receiving the callback for the GET, PUT and
+ * POST requested actions.
  */
 public interface IActionListener {
     /**
@@ -44,14 +43,13 @@ public interface IActionListener {
      * request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onGetResponseCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue);
@@ -61,14 +59,13 @@ public interface IActionListener {
      * request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onPutResponseCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue);
@@ -78,14 +75,13 @@ public interface IActionListener {
      * or deleteActionSet request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onPostResponseCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue);

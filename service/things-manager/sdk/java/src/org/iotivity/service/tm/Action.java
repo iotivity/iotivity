@@ -33,9 +33,8 @@ import java.util.Vector;
 import android.util.Log;
 
 /**
- * @class Action
- * @brief This class provides functions to retrieve the Action details from a
- *        Segment.
+ * This class provides functions to retrieve the Action details from a
+ *  Segment.
  *
  */
 public class Action {
@@ -75,7 +74,7 @@ public class Action {
      * by a vertical bar(|): URI and a pair of attribute key and value
      *
      * @param actionString
-     *            - Segment String
+     *            Segment String
      *
      * @return Action needed by remote devices as members of a specific group
      *

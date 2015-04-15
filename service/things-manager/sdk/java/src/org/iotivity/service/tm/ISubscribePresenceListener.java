@@ -27,17 +27,16 @@
 package org.iotivity.service.tm;
 
 /**
- * @interface ISubscribePresenceListener
- * @brief Provides interface for getting child resource presence status.
+ * Provides interface for getting child resource presence status.
  */
 public interface ISubscribePresenceListener {
     /**
      * This callback method will be called for child resource presence status.
      *
      * @param resource
-     *            - URI of resource.
+     *            URI of resource.
      * @param result
-     *            - error code.
+     *            error code.
      */
     public void onPresenceCallback(String resource, OCStackResult result);
 }

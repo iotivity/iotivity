@@ -32,12 +32,11 @@ import java.util.StringTokenizer;
 import android.util.Log;
 
 /**
- * @class Capability
- * @brief This class needs to be created to specify an attribute key and value
- *        of the target resource. The attribute key and value are written in
- *        capability and status variables of Capability instance class,
- *        respectively. After filling the Capability instance, store it to
- *        listOfCapability vector variable of Action instance.
+ * This class needs to be created to specify an attribute key and value
+ * of the target resource. The attribute key and value are written in
+ * capability and status variables of Capability instance class,
+ * respectively. After filling the Capability instance, store it to
+ * listOfCapability vector variable of Action instance.
  *
  */
 public class Capability {
@@ -70,7 +69,7 @@ public class Capability {
      * This function parses the Capability String.
      *
      * @param capabilityString
-     *            - Capability in String format.
+     *            Capability in String format.
      *
      * @return Capability class.
      *

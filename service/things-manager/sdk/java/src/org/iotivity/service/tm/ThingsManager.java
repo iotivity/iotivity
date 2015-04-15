@@ -38,10 +38,9 @@ import org.iotivity.base.OcResourceHandle;
 import android.util.Log;
 
 /**
- * @class ThingsManager
- * @brief This class provides a set of APIs relating to group management,
- *        synchronization of group, configuration of things, and diagnostics
- *        about things.
+ * This class provides a set of APIs relating to group management,
+ * synchronization of group, configuration of things, and diagnostics
+ * about things.
  *
  */
 public class ThingsManager {
@@ -81,7 +80,7 @@ public class ThingsManager {
      * Set listener for receiving notification of resource discovery.
      *
      * @param listener
-     *            - @ref IFindCandidateResourceListener to receive the
+     *            IFindCandidateResourceListener to receive the
      *            discovered resources.
      */
     public void setFindCandidateResourceListener(
@@ -97,7 +96,7 @@ public class ThingsManager {
      * Set listener for receiving child resource presence notifications.
      *
      * @param listener
-     *            - @ref ISubscribePresenceListener to receive child resource
+     *            ISubscribePresenceListener to receive child resource
      *            presence state.
      */
     public void setSubscribePresenceListener(ISubscribePresenceListener listener) {
@@ -112,7 +111,7 @@ public class ThingsManager {
      * found or not.
      *
      * @param listener
-     *            - @ref IFindGroupListener to receive group discovery status.
+     *            IFindGroupListener to receive group discovery status.
      */
     public void setGroupListener(IFindGroupListener listener) {
         groupListener = listener;
@@ -124,7 +123,7 @@ public class ThingsManager {
      * Set listener for receiving asynchronous response for configuration APIs.
      *
      * @param listener
-     *            - @ref IConfigurationListener to receive asynchronous response
+     *            IConfigurationListener to receive asynchronous response
      *            for configuration APIs.
      */
     public void setConfigurationListener(IConfigurationListener listener) {
@@ -139,7 +138,7 @@ public class ThingsManager {
      * APIs.
      *
      * @param listener
-     *            - @ref IDiagnosticsListener to receive asynchronous response
+     *            IDiagnosticsListener to receive asynchronous response
      *            for diagnostic feature APIs.
      */
     public void setDiagnosticsListener(IDiagnosticsListener listener) {
@@ -151,7 +150,7 @@ public class ThingsManager {
      * Set listener for receiving notifications of Get, PUT and POST resource.
      *
      * @param listener
-     *            - @ref IActionListener to receive Get, PUT and POST request
+     *            IActionListener to receive Get, PUT and POST request
      *            callbacks.
      */
     public void setActionListener(IActionListener listener) {
@@ -165,34 +164,20 @@ public class ThingsManager {
      * This operation is sent via multicast to all services. However, the filter
      * limits the responders to just those that support the resource type in the
      * query. Currently only exact matches are supported.
+     * <p>
+     * Listener should be set using setFindCandidateResourceListener API
+     * <p>
+     * Listener IFindCandidateResourceListener::onResourceCallback
+     *       will be notified when resource is discovered in network.
      *
      * @param resourceTypes
-     *            - required resource types(called "candidate")
+     *            required resource types(called "candidate")
      * @param waitTime
-     *            - Delay time to add in seconds before starting to find the
+     *            Delay time to add in seconds before starting to find the
      *            resources in network.
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setFindCandidateResourceListener
-     *      API
-     *
-     * @post Listener @ref IFindCandidateResourceListener::onResourceCallback
-     *       will be notified when resource is discovered in network.
-     *
-     * @code
-     * Sample code:
-     * public void findLightResource() {
-     *       Vector<String> resourceTypes =
-     *       new Vector<String>(); resourceTypes.add("core.light");
-     *
-     *       OCStackResult result = thingsManagerObj.findCandidateResources(resourceTypes, 5);
-     *       if (OCStackResult.OC_STACK_OK != result) {
-     *           Log.e(LOG_TAG, "Error while calling findCandidateResources");
-     *       }
-     * }
-     * @endcode
      *
      */
     public OCStackResult findCandidateResources(Vector<String> resourceTypes,
@@ -214,17 +199,18 @@ public class ThingsManager {
      * adds/removes/alters a resource, starts or is intentionally stopped, a
      * notification is sent to subscriber.
      *
+     * <p>
+     * Listener should be set using setSubscribePresenceListener API.
+     * <p>
+     * Listener ISubscribePresenceListener::onPresenceCallback will
+     *       be notified for resource presence status
+     *
      * @param resource
-     *            - collection resource for subscribing presence of all child
+     *            collection resource for subscribing presence of all child
      *            resources
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setSubscribePresenceListener API.
-     *
-     * @post Listener @ref ISubscribePresenceListener::onPresenceCallback will
-     *       be notified for resource presence status
      *
      */
     public OCStackResult subscribeCollectionPresence(OcResource resource)
@@ -243,29 +229,18 @@ public class ThingsManager {
     /**
      * API for finding a specific remote group when a resource tries to join a
      * group.
+     * <p>
+     * Listener should be set using setGroupListener API
+     * <p>
+     * Listener IFindGroupListener::onGroupFindCallback will be
+     *       called to notify whenever a requested group is found.
      *
      * @param collectionResourceTypes
-     *            - resource types of a group to find and join
+     *            resource types of a group to find and join
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
      *
-     * @pre Listener should be set using @ref setGroupListener API
-     *
-     * @post Listener @ref IFindGroupListener::onGroupFindCallback will be
-     *       called to notify whenever a requested group is found.
-     *
-     * @code
-     * Sample code:
-     * public void findGroup() {
-     *     resourceTypes = new Vector<String>;
-     *     resourceTypes.add("b.collection");
-     *     result = thingsManagerObj.findGroup(resourceTypes);
-     *     if (OCStackResult.OC_STACK_OK != result) {
-     *         Log.e(LOG_TAG, "Error while calling findGroup");
-     *     }
-     * }
-     * @endcode
      *
      */
     public OCStackResult findGroup(Vector<String> collectionResourceTypes) {
@@ -283,7 +258,7 @@ public class ThingsManager {
      * API for creating a new group.
      *
      * @param collectionResourceType
-     *            - resource type of a group to create
+     *            resource type of a group to create
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
@@ -301,9 +276,9 @@ public class ThingsManager {
      * group.
      *
      * @param collectionResourceType
-     *            - resource type of a group to join.
+     *            resource type of a group to join.
      * @param resourceHandle
-     *            - resource handle to join a group.
+     *            resource handle to join a group.
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
@@ -323,9 +298,9 @@ public class ThingsManager {
      * doesn't have a group tries to find and join a specific remote group.
      *
      * @param resource
-     *            - group resource to join.
+     *            group resource to join.
      * @param resourceHandle
-     *            - resource handle to join a group.
+     *            resource handle to join a group.
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
@@ -343,9 +318,9 @@ public class ThingsManager {
      * API for leaving a joined group.
      *
      * @param collectionResourceType
-     *            - resource type of a group to leave.
+     *            resource type of a group to leave.
      * @param resourceHandle
-     *            - resource handle to leave a group.
+     *            resource handle to leave a group.
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
@@ -364,11 +339,11 @@ public class ThingsManager {
      * API for leaving a joined group.
      *
      * @param resource
-     *            - resource of a group to leave.
+     *            resource of a group to leave.
      * @param collectionResourceType
-     *            - resource type of a group to leave.
+     *            resource type of a group to leave.
      * @param resourceHandle
-     *            - resource handle to leave a group.
+     *            resource handle to leave a group.
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
@@ -387,10 +362,7 @@ public class ThingsManager {
      * API for deleting a created group.
      *
      * @param collectionResourceType
-     *            - resource type of a group to delete.
-     *
-     * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
-     *         code.
+     *            resource type of a group to delete.
      *
      */
     public void deleteGroup(String collectionResourceType) {
@@ -402,15 +374,6 @@ public class ThingsManager {
      *
      * @return Returns the map with the group resource type and group
      *         resource handle on successs otherwise null.
-     *
-     * @code
-     * Sample code:
-     * public Map<String, OcResourceHandle> getGroupList() {
-     *     Map<String, OcResourceHandle> groupMap = null;
-     *     groupMap = thingsManagerObj.getGroupList();
-     *     return groupMap;
-     * }
-     * @endcode
      *
      */
     public Map<String, OcResourceHandle> getGroupList() {
@@ -440,8 +403,14 @@ public class ThingsManager {
      * API for updating configuration value of multiple things of a target group
      * or a single thing to a resource server(s).
      *
+     * <p>
+     * Listener should be set using setConfigurationListener API.
+     * <p>
+     * Listener IConfigurationListener::onUpdateConfigurationsCallback will be
+     * notified when the response of update configuration arrives.
+     *
      * @param resource
-     *            - resource representing the target group or the single thing.
+     *            resource representing the target group or the single thing.
      *            It is a pointer of resource instance of Configuration
      *            resource. The resource pointer can be acquired by performing
      *            findResource() function with a dedicated resource type,
@@ -451,7 +420,7 @@ public class ThingsManager {
      *            these APIs, developers can send a series of requests to
      *            multiple things by calling the corresponding function at once.
      * @param configurations
-     *            - ConfigurationUnit: a nickname of attribute of target
+     *            ConfigurationUnit: a nickname of attribute of target
      *            resource (e.g., installed location, currency, (IP)address)
      *            Value : a value to be updated. It represents an indicator of
      *            which resource developers want to access and which value
@@ -468,39 +437,6 @@ public class ThingsManager {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setConfigurationListener API.
-     *
-     * @post Listener @ref
-     *       IConfigurationListener::onUpdateConfigurationsCallback will be
-     *       notified when the response of update configuration arrives.
-     *
-     * @code
-     * Sample code:
-     * private void updateConfiguration() {
-     *     String name = "region";
-     *     String value = "INDIA";
-     *     Map<String, String> configurations = new HashMap<String, String>();
-     *
-     *     try {
-     *            configurations.put(name, value);
-     *     } catch (Exception e) {
-     *            Log.e(LOG_TAG, "Exception occured! " + e.toString());
-     *     }
-     *
-     *     OCStackResult result = OCStackResult.values()[30];
-     *
-     *     try {
-     *            result = thingsManager.updateConfigurations(resource, configurations);
-     *     } catch (OcException e) {
-     *             e.printStackTrace();
-     *     }
-     *
-     *     if (OCStackResult.OC_STACK_OK != result) {
-     *         Log.e(LOG_TAG, "updateConfigurations failed!");
-     *     }
-     * }
-     * @endcode
      *
      */
     public OCStackResult updateConfigurations(OcResource resource,
@@ -524,33 +460,13 @@ public class ThingsManager {
      * them in form of a Vector and then use a getConfigurations() function.
      *
      * @param resource
-     *            - resource representing the target group or the single thing.
+     *            resource representing the target group or the single thing.
      * @param configurations
-     *            - ConfigurationUnit: a nickname of attribute of target
+     *            ConfigurationUnit: a nickname of attribute of target
      *            resource.
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @code
-     * Sample code:
-     * private void getConfiguration() {
-     *     String name = "configuration";
-     *     Vector<String> configs = new Vector<String>();
-     *     configs.add(name);
-     *
-     *     OCStackResult result = OCStackResult.values()[30];
-     *     try {
-     *         result = thingsManager.getConfigurations(resource, configs);
-     *     } catch (OcException e) {
-     *         e.printStackTrace();
-     *     }
-     *
-     *     if (OCStackResult.OC_STACK_OK != result) {
-     *         Log.e(LOG_TAG, "getConfigurations failed!");
-     *     }
-     * }
-     * @endcode
      *
      */
     public OCStackResult getConfigurations(OcResource resource,
@@ -582,14 +498,14 @@ public class ThingsManager {
     /**
      * API for bootstrapping system configuration parameters from a bootstrap
      * server.
+     * <p>
+     * Listener should be set using setConfigurationListener API.
+     * <p>
+     * Listener IConfigurationListener::onBootStrapCallback will be
+     * notified when the response arrives.
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setConfigurationListener API.
-     *
-     * @post Listener @ref IConfigurationListener::onBootStrapCallback will be
-     *       notified when the response arrives.
      *
      */
     public OCStackResult doBootstrap() {
@@ -608,17 +524,16 @@ public class ThingsManager {
      * rebooted. On receiving the request, the server attempts to reboot itself
      * in a deterministic time. The target thing could be a group of multiple
      * things or a single thing.
-     *
+     * <p>
+     * Listener should be set using setDiagnosticsListener API.
+     * <p>
+     * Listener IDiagnosticsListener::onRebootCallback will be
+     * notified when the response arrives.
      * @param resource
-     *            - resource pointer representing the target group
+     *            resource pointer representing the target group
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setDiagnosticsListener API.
-     *
-     * @post Listener @ref IDiagnosticsListener::onRebootCallback will be
-     *       notified when the response arrives.
      *
      */
     public OCStackResult reboot(OcResource resource) throws OcException {
@@ -640,16 +555,17 @@ public class ThingsManager {
      * restore the parameters, just use the factoryReset function.The target
      * thing could be a group of multiple things or a single thing.
      *
+     * <p>
+     * Listener should be set using setDiagnosticsListener API.
+     * <p>
+     * Listener IDiagnosticsListener::onFactoryResetCallback will be
+     * notified when the response arrives.
+     *
      * @param resource
-     *            - resource pointer representing the target group
+     *            resource pointer representing the target group
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setDiagnosticsListener API.
-     *
-     * @post Listener @ref IDiagnosticsListener::onFactoryResetCallback will be
-     *       notified when the response arrives.
      *
      */
     public OCStackResult factoryReset(OcResource resource) throws OcException {
@@ -666,64 +582,18 @@ public class ThingsManager {
     /**
      * API for adding a new ActionSet onto a specific resource.
      *
+     * <p>
+     * Listener should be set using setActionListener API.
+     * <p>
+     * Listener IActionListener::onPutResponseCallback will be
+     * notified when the response of PUT operation arrives.
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionSet
-     *            - pointer of ActionSet
+     *            pointer of ActionSet
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setActionListener API.
-     *
-     * @post Listener @ref IActionListener::onPutResponseCallback will be
-     *       notified when the response of PUT operation arrives.
-     *
-     * @code
-     * Sample code:
-     * public void createActionSet_AllBulbOff() {
-     *     ActionSet actionSet = new ActionSet();
-     *     Vector<Capability> listOfCap;
-     *     Action action = new Action();
-     *     Capability capability = new Capability();
-     *     Vector<Action> listOfAction = null;
-     *     Vector<String> lights = new Vector<String>();
-     *     int size = lights.size();
-     *     if (size == 0) {
-     *         return;
-     *     }
-     *     for (int i = 0; i < size; i++) {
-     *         action.target = lights.get(i);
-     *         capability.capability = "power";
-     *         capability.status = "off";
-     *         listOfCap = new Vector<Capability>();
-     *         listOfCap.add(capability);
-     *
-     *         action.listOfCapability = listOfCap;
-     *         listOfAction = new Vector<Action>();
-     *         listOfAction.add(action);
-     *     }
-     *
-     *     actionSet.actionsetName = BULBOFF;
-     *     actionSet.listOfAction = listOfAction;
-     *     String URI = foundResources.getUri();
-     *     String host = foundResources.getHost();
-     *
-     *     OCStackResult result = OCStackResult.values()[30];
-     *
-     *     try {
-     *         result = thingsManagerObj.addActionSet(resource, actionSet);
-     *     } catch (OcException e) {
-     *         e.printStackTrace();
-     *     }
-     *
-     *     if (OCStackResult.OC_STACK_OK != result) {
-     *         Log.e(LOG_TAG, "Error while calling addActionSet : " + result.name());
-     *     } else {
-     *         Log.i(LOG_TAG, "Success : createActionSet_AllBulbOn : " + result.name());
-     *     }
-     * }
-     * @endcode
      *
      */
     public OCStackResult addActionSet(OcResource resource, ActionSet actionSet)
@@ -742,37 +612,19 @@ public class ThingsManager {
     /**
      * API for executing a specific ActionSet belonging to a specific resource.
      *
+     * <p>
+     * Listener should be set using setActionListener API.
+     * <p>
+     * Listener IActionListener::onPostResponseCallback will be
+     * notified when the response of POST operation arrives.
+     *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - ActionSet name for removing the ActionSet
+     *            ActionSet name for removing the ActionSet
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setActionListener API.
-     *
-     * @post Listener @ref IActionListener::onPostResponseCallback will be
-     *       notified when the response of POST operation arrives.
-     *
-     * @code
-     * Sample code:
-     * public void executeActionSetOn() {
-     *     OCStackResult result = OCStackResult.values()[30];
-     *
-     *     try {
-     *         result = thingsManagerObj.executeActionSet(resource, "AllBulbOn");
-     *     } catch (OcException e) {
-     *         e.printStackTrace();
-     *     }
-     *
-     *     if (OCStackResult.OC_STACK_OK != result) {
-     *         Log.e(LOG_TAG, "Error while calling executeActionSet : " + result.name());
-     *     } else {
-     *        Log.i(LOG_TAG, "executeActionSetOn Success : " + result.name());
-     *     }
-     * }
-     * @endcode
      *
      */
     public OCStackResult executeActionSet(OcResource resource,
@@ -791,39 +643,21 @@ public class ThingsManager {
     /**
      * API for executing a specific ActionSet belonging to a specific resource.
      *
+     * <p>
+     * Listener should be set using setActionListener API.
+     * <p>
+     * Listener IActionListener::onPostResponseCallback will be
+     * notified when the response of POST operation arrives.
+     *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - ActionSet name for removing the ActionSet
+     *            ActionSet name for removing the ActionSet
      * @param delay
-     *            - Wait time for the ActionSet execution
+     *            Wait time for the ActionSet execution
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setActionListener API.
-     *
-     * @post Listener @ref IActionListener::onPostResponseCallback will be
-     *       notified when the response of POST operation arrives.
-     *
-     * @code
-     * Sample code:
-     * public void executeActionSetOn() {
-     *     OCStackResult result = OCStackResult.values()[30];
-     *
-     *     try {
-     *         result = thingsManagerObj.executeActionSet(resource, "AllBulbOn", 1);
-     *     } catch (OcException e) {
-     *         e.printStackTrace();
-     *     }
-     *
-     *     if (OCStackResult.OC_STACK_OK != result) {
-     *         Log.e(LOG_TAG, "Error while calling executeActionSet : " + result.name());
-     *     } else {
-     *        Log.i(LOG_TAG, "executeActionSetOn Success : " + result.name());
-     *     }
-     * }
-     * @endcode
      *
      */
     public OCStackResult executeActionSet(OcResource resource,
@@ -842,37 +676,18 @@ public class ThingsManager {
     /**
      * API to cancel the existing ActionSet.
      *
+     * <p>
+     * Listener should be set using setActionListener API.
+     * <p>
+     * Listener IActionListener::onPostResponseCallback will be
+     *       notified when the response of POST operation arrives.
      * @param resource
-     *            - resource pointer of the group resource.
+     *            resource pointer of the group resource.
      * @param actionsetName
-     *            - ActionSet name that has to be cancelled.
+     *            ActionSet name that has to be cancelled.
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setActionListener API.
-     *
-     * @post Listener @ref IActionListener::onPostResponseCallback will be
-     *       notified when the response of POST operation arrives.
-     *
-     * @code
-     * Sample code:
-     * public void cancelActionSetOn() {
-     *     OCStackResult result = OCStackResult.values()[30];
-     *
-     *     try {
-     *         result = thingsManagerObj.cancelActionSet(resource, "AllBulbOn");
-     *     } catch (OcException e) {
-     *         e.printStackTrace();
-     *     }
-     *
-     *     if (OCStackResult.OC_STACK_OK != result) {
-     *        Log.e(LOG_TAG, "Error while calling cancelActionSet : " + result.name());
-     *     } else {
-     *        Log.i(LOG_TAG, "cancelActionSetOn Success : " + result.name());
-     *     }
-     * }
-     * @endcode
      *
      */
 
@@ -888,36 +703,18 @@ public class ThingsManager {
     /**
      * API to to get an existing ActionSet belonging to a specific resource.
      *
+     * <p>
+     * Listener should be set using setActionListener API.
+     * <p>
+     * Listener IActionListener::onPostResponseCallback will be
+     * notified when the response of POST operation arrives.
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - ActionSet name for removing the ActionSet
+     *            ActionSet name for removing the ActionSet
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setActionListener API.
-     *
-     * @post Listener @ref IActionListener::onPostResponseCallback will be
-     *       notified when the response of POST operation arrives.
-     *
-     * @code
-     * Sample code:
-     * public void getActionSetOff() {
-     *     OCStackResult ocStackResult = OCStackResult.values()[30];
-     *     try {
-     *         ocStackResult = thingsManagerObj.getActionSet(resource, "AllBulbOff");
-     *     } catch (OcException e) {
-     *         e.printStackTrace();
-     *     }
-     *
-     *     if (OCStackResult.OC_STACK_OK != ocStackResult) {
-     *         Log.e(LOG_TAG, "Error while calling getActionSetOff : "+ ocStackResult.name());
-     *     } else {
-     *         Log.i(LOG_TAG, "Success : getActionSetOff : " + ocStackResult.name());
-     *     }
-     * }
-     * @endcode
      *
      */
     public OCStackResult getActionSet(OcResource resource, String actionsetName)
@@ -936,37 +733,19 @@ public class ThingsManager {
     /**
      * API to delete an existing ActionSet belonging to a specific resource.
      *
+     * <p>
+     * Listener should be set using setActionListener API.
+     * <p>
+     * Listener IActionListener::onPutResponseCallback will be
+     * notified when the response of PUT operation arrives.
+     *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - ActionSet name for removing the ActionSet
+     *            ActionSet name for removing the ActionSet
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
-     *
-     * @pre Listener should be set using @ref setActionListener API.
-     *
-     * @post Listener @ref IActionListener::onPutResponseCallback will be
-     *       notified when the response of PUT operation arrives.
-     *
-     * @code
-     * Sample code:
-     * public void deleteActionSetoff() {
-     *     OCStackResult result = OCStackResult.values()[30];
-     *
-     *     try {
-     *             result = thingsManagerObj.deleteActionSet(resource, "AllBulbOff");
-     *     } catch (OcException e) {
-     *             e.printStackTrace();
-     *     }
-     *
-     *     if (OCStackResult.OC_STACK_OK != result) {
-     *         Log.e(LOG_TAG, "Error while calling deleteActionSet : ");
-     *     } else {
-     *         Log.i(LOG_TAG, "deleteActionSetoff Success : " + result.name());
-     *     }
-     * }
-     * @endcode
      *
      */
     public OCStackResult deleteActionSet(OcResource resource,

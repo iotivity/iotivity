@@ -39,12 +39,11 @@ import org.iotivity.base.OcResourceHandle;
 import android.util.Log;
 
 /**
- * @class ThingsManagerInterface
- * @brief This class acts as an interface for Things Manager API calls between
- *        ThingsManager and ThingsManagerNativeInterface
+ * This class acts as an interface for Things Manager API calls between
+ * ThingsManager and ThingsManagerNativeInterface
  *
  */
-public class ThingsManagerInterface {
+class ThingsManagerInterface {
 
     private IFindCandidateResourceListener resourceListener;
     private ISubscribePresenceListener     presenceListener;
@@ -72,10 +71,8 @@ public class ThingsManagerInterface {
      * Register listener for findCandidateResource callback.
      *
      * @param listener
-     *            - interface for getting notification when resources are
+     *            interface for getting notification when resources are
      *            discovered in network.
-     *
-     * @return void
      *
      */
     public void registerFindCandidateResourceListener(
@@ -87,10 +84,8 @@ public class ThingsManagerInterface {
      * Register listener for subscribeCollectionPresence callback.
      *
      * @param listener
-     *            - interface for getting notification regarding child resource
+     *            interface for getting notification regarding child resource
      *            presence status.
-     *
-     * @return void
      *
      */
     public void registerSubscribePresenceListener(
@@ -102,10 +97,8 @@ public class ThingsManagerInterface {
      * Register listener for register group and find group callback.
      *
      * @param listener
-     *            - interface for getting notification on whether the group is
+     *            interface for getting notification on whether the group is
      *            found or not.
-     *
-     * @return void
      *
      */
     public void registerGroupListener(IFindGroupListener listener) {
@@ -117,11 +110,9 @@ public class ThingsManagerInterface {
      * callback.
      *
      * @param listener
-     *            - interface for getting notification on configuration values
+     *            interface for getting notification on configuration values
      *            information or when configuration value is updated for
      *            multiple things of a target group or a single thing.
-     *
-     * @return void
      *
      */
     public void registerConfigurationListener(IConfigurationListener listener) {
@@ -131,8 +122,6 @@ public class ThingsManagerInterface {
     /**
      * Unregister listener for findCandidateResource callback.
      *
-     * @return void
-     *
      */
     public void unregisterFindCandidateResourceListener() {
         resourceListener = null;
@@ -141,8 +130,6 @@ public class ThingsManagerInterface {
     /**
      * Unregister listener for subscribeCollectionPresence callback.
      *
-     * @return void
-     *
      */
     public void unregisterSubscribePresenceListener() {
         presenceListener = null;
@@ -150,8 +137,6 @@ public class ThingsManagerInterface {
 
     /**
      * Unregister listener for registerGroup and findGroup callback.
-     *
-     * @return void
      *
      */
     public void unregisterGroupListener() {
@@ -162,8 +147,6 @@ public class ThingsManagerInterface {
      * Unregister listener for updateConfigurations and getConfigurations
      * callback.
      *
-     * @return void
-     *
      */
     public void unregisterConfigurationListener() {
         configurationListener = null;
@@ -171,14 +154,15 @@ public class ThingsManagerInterface {
 
     /**
      * API for discovering candidate resources with waiting delay. Listener
-     *
-     * @ref IFindCandidateResourceListener::onResourceCallback will be notified
+     * <p>
+     * IFindCandidateResourceListener::onResourceCallback will be notified
      *      when resource is discovered in network.
+     * </p>
      *
      * @param resourceTypes
-     *            - required resource types(called "candidate")
+     *            required resource types(called "candidate")
      * @param waitTime
-     *            - Time duration in seconds to find the resources in network
+     *            Time duration in seconds to find the resources in network
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -199,12 +183,13 @@ public class ThingsManagerInterface {
 
     /**
      * API for subscribing child's state. Listener
-     *
-     * @ref ISubscribePresenceListener::onPresenceCallback will be notified for
+     * <p>
+     * ISubscribePresenceListener::onPresenceCallback will be notified for
      *      resource presence status
+     * </p>
      *
      * @param resource
-     *            - collection resource for subscribing presence of all child
+     *            collection resource for subscribing presence of all child
      *            resources
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
@@ -231,12 +216,13 @@ public class ThingsManagerInterface {
     /**
      * API for finding a specific remote group when a resource tries to join a
      * group.
-     *
-     * @ref IFindGroupListener::onGroupFindCallback will be called to notify
+     * <p>
+     * IFindGroupListener::onGroupFindCallback will be called to notify
      *      whether requested group found or not.
+     * </p>
      *
      * @param resourceTypes
-     *            - resource types of a group to find and join
+     *            resource types of a group to find and join
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -257,7 +243,7 @@ public class ThingsManagerInterface {
      * API for creating a new group.
      *
      * @param resourceType
-     *            - resource type of a group to create
+     *            resource type of a group to create
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -275,9 +261,9 @@ public class ThingsManagerInterface {
      * group tries to find a specific remote resource and makes it join a group.
      *
      * @param resourceType
-     *            - resource type of a group to join.
+     *            resource type of a group to join.
      * @param resourceHandle
-     *            - resource handle to join a group.
+     *            resource handle to join a group.
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -299,9 +285,9 @@ public class ThingsManagerInterface {
      * have a group tries to find and join a specific remote group.
      *
      * @param resource
-     *            - group resource to join.
+     *            group resource to join.
      * @param resourceHandle
-     *            - resource handle to join a group.
+     *            resource handle to join a group.
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -322,9 +308,9 @@ public class ThingsManagerInterface {
      * API for leaving a joined group.
      *
      * @param resourceType
-     *            - resource type of a group to leave.
+     *            resource type of a group to leave.
      * @param resourceHandle
-     *            - resource handle to leave a group.
+     *            resource handle to leave a group.
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -345,11 +331,11 @@ public class ThingsManagerInterface {
      * API for leaving a joined group.
      *
      * @param resource
-     *            - resource of a group to leave.
+     *            resource of a group to leave.
      * @param resourceType
-     *            - resource type of a group to leave.
+     *            resource type of a group to leave.
      * @param resourceHandle
-     *            - resource handle to leave a group.
+     *            resource handle to leave a group.
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -370,10 +356,7 @@ public class ThingsManagerInterface {
      * API for deleting a group.
      *
      * @param collectionResourceType
-     *            - resource type of a group to delete.
-     *
-     * @return OCStackResult - return value of this API. It returns OC_STACK_OK
-     *         if success.
+     *            resource type of a group to delete.
      *
      */
     public void deleteGroup(String collectionResourceType) {
@@ -395,9 +378,9 @@ public class ThingsManagerInterface {
      * API for register and bind resource to group.
      *
      * @param resource
-     *            - resource for register and bind to group. It has all data.
+     *            resource for register and bind to group. It has all data.
      * @param collectionHandle
-     *            - collection resource handle. It will be added child resource.
+     *            collection resource handle. It will be added child resource.
      *
      * @return OcResourceHandle - Child resource handle.
      */
@@ -413,9 +396,9 @@ public class ThingsManagerInterface {
      * or a single thing.
      *
      * @param resource
-     *            - resource representing the target group or the single thing.
+     *            resource representing the target group or the single thing.
      * @param configurations
-     *            - ConfigurationUnit: a nickname of attribute of target
+     *            ConfigurationUnit: a nickname of attribute of target
      *            resource (e.g., installed location, currency, (IP)address)
      *            Value : a value to be updated
      *
@@ -442,9 +425,9 @@ public class ThingsManagerInterface {
      * or a single thing.
      *
      * @param resource
-     *            - resource representing the target group or the single thing.
+     *            resource representing the target group or the single thing.
      * @param configurations
-     *            - ConfigurationUnit: a nickname of attribute of target
+     *            ConfigurationUnit: a nickname of attribute of target
      *            resource.
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
@@ -499,7 +482,7 @@ public class ThingsManagerInterface {
      * multiple things or a single thing.
      *
      * @param resource
-     *            - resource pointer representing the target group
+     *            resource pointer representing the target group
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success
@@ -518,7 +501,7 @@ public class ThingsManagerInterface {
      * of multiple things or a single thing.
      *
      * @param resource
-     *            - resource pointer representing the target group
+     *            resource pointer representing the target group
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -537,9 +520,9 @@ public class ThingsManagerInterface {
      * operation arrives.
      *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionSet
-     *            - pointer of Action Set
+     *            pointer of Action Set
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -560,9 +543,9 @@ public class ThingsManagerInterface {
      * POST operation arrives.
      *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - Action Set name for removing the Action set
+     *            Action Set name for removing the Action set
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -583,11 +566,11 @@ public class ThingsManagerInterface {
      * POST operation arrives.
      *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - Action Set name for removing the Action set
+     *            Action Set name for removing the Action set
      * @param delay
-     *            - waiting time for until action set run.
+     *            waiting time for until action set run.
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -608,9 +591,9 @@ public class ThingsManagerInterface {
      * of POST operation arrives.
      *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - Action Set name for removing the Action set
+     *            Action Set name for removing the Action set
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -631,9 +614,9 @@ public class ThingsManagerInterface {
      * GET operation arrives.
      *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - Action Set name for removing the Action set
+     *            Action Set name for removing the Action set
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
@@ -654,9 +637,9 @@ public class ThingsManagerInterface {
      * POST operation arrives.
      *
      * @param resource
-     *            - resource pointer of the group resource
+     *            resource pointer of the group resource
      * @param actionsetName
-     *            - Action Set name for removing the Action set
+     *            Action Set name for removing the Action set
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.

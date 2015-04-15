@@ -38,13 +38,12 @@ import org.iotivity.base.OcResource;
 import android.util.Log;
 
 /**
- * @class ThingsManagerCallback
- * @brief This class provides a set of callback functions for group management,
- *        synchronization of group, configuration of things, and diagnostics
- *        about things.
+ * This class provides a set of callback functions for group management,
+ * synchronization of group, configuration of things, and diagnostics
+ * about things.
  *
  */
-public class ThingsManagerCallback {
+class ThingsManagerCallback {
 
     private IFindCandidateResourceListener resourceListener;
     private ISubscribePresenceListener     presenceListener;
@@ -74,10 +73,8 @@ public class ThingsManagerCallback {
      * Register listener for findCandidateResource callback.
      *
      * @param listener
-     *            - interface for getting notification when resources are
+     *            interface for getting notification when resources are
      *            discovered in network.
-     *
-     * @return void
      *
      */
     public void registerFindCandidateResourceListener(
@@ -89,10 +86,8 @@ public class ThingsManagerCallback {
      * Register listener for subscribeCollectionPresence callback.
      *
      * @param listener
-     *            - interface for getting notification regarding child resource
+     *            interface for getting notification regarding child resource
      *            presence status.
-     *
-     * @return void
      *
      */
     public void registerSubscribePresenceListener(
@@ -104,10 +99,8 @@ public class ThingsManagerCallback {
      * Register listener for find group callback.
      *
      * @param listener
-     *            - interface for getting notification on whether the group is
+     *            interface for getting notification on whether the group is
      *            found or not.
-     *
-     * @return void
      *
      */
     public void registerGroupListener(IFindGroupListener listener) {
@@ -119,11 +112,9 @@ public class ThingsManagerCallback {
      * callback.
      *
      * @param listener
-     *            - interface for getting notification on configuration values
+     *            interface for getting notification on configuration values
      *            information or when configuration value is updated for
      *            multiple things of a target group or a single thing.
-     *
-     * @return void
      *
      */
     public void registerConfigurationListener(IConfigurationListener listener) {
@@ -134,10 +125,8 @@ public class ThingsManagerCallback {
      * Register listener for doBootstrap, reboot and factoryReset callbacks.
      *
      * @param listener
-     *            - interface for receiving asynchronous response for diagnostic
+     *            interface for receiving asynchronous response for diagnostic
      *            feature APIs.
-     *
-     * @return void
      *
      */
     public void registerDiagnosticsListener(IDiagnosticsListener listener) {
@@ -149,10 +138,8 @@ public class ThingsManagerCallback {
      * callback.
      *
      * @param listener
-     *            - interface for receiving the callback for the GET, PUT and
+     *            interface for receiving the callback for the GET, PUT and
      *            POST requested actions.
-     *
-     * @return void
      *
      */
     public void registerActionListener(IActionListener listener) {
@@ -162,8 +149,6 @@ public class ThingsManagerCallback {
     /**
      * Unregister listener for findCandidateResource callback.
      *
-     * @return void
-     *
      */
     public void unregisterFindCandidateResourceListener() {
         resourceListener = null;
@@ -172,8 +157,6 @@ public class ThingsManagerCallback {
     /**
      * Unregister listener for subscribeCollectionPresence callback.
      *
-     * @return void
-     *
      */
     public void unregisterSubscribePresenceListener() {
         presenceListener = null;
@@ -181,8 +164,6 @@ public class ThingsManagerCallback {
 
     /**
      * Unregister listener for find group callback.
-     *
-     * @return void
      *
      */
     public void unregisterGroupListener() {
@@ -193,8 +174,6 @@ public class ThingsManagerCallback {
      * Unregister listener for updateConfigurations and getConfigurations
      * callback.
      *
-     * @return void
-     *
      */
     public void unregisterConfigurationListener() {
         configurationListener = null;
@@ -202,8 +181,6 @@ public class ThingsManagerCallback {
 
     /**
      * Unregister listener for doBootstrap, reboot and factoryReset callbacks.
-     *
-     * @return void
      *
      */
     public void unregisterDiagnosticsListener() {
@@ -213,8 +190,6 @@ public class ThingsManagerCallback {
     /**
      * Unregister listener for getActionSet, executeActionSet and
      * deleteActionSet callback.
-     *
-     * @return void
      *
      */
     public void unregisterActionListener() {
@@ -226,9 +201,7 @@ public class ThingsManagerCallback {
      * the network.
      *
      * @param resources
-     *            - List of resources discovered in the network
-     *
-     * @return void
+     *            List of resources discovered in the network
      *
      */
     public void onResourceCallback(Vector<OcResource> resources) {
@@ -241,14 +214,13 @@ public class ThingsManagerCallback {
      * or deleteActionSet request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onPostResponseCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue) {
@@ -262,14 +234,13 @@ public class ThingsManagerCallback {
      * request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onPutResponseCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue) {
@@ -283,14 +254,13 @@ public class ThingsManagerCallback {
      * request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onGetResponseCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue) {
@@ -304,14 +274,13 @@ public class ThingsManagerCallback {
      * updateConfigurations request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onUpdateConfigurationsCallback(
             Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
@@ -326,14 +295,13 @@ public class ThingsManagerCallback {
      * request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onGetConfigurationsCallback(
             Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
@@ -348,14 +316,13 @@ public class ThingsManagerCallback {
      * request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onBootStrapCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue) {
@@ -372,14 +339,13 @@ public class ThingsManagerCallback {
      * just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onRebootCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue) {
@@ -396,14 +362,13 @@ public class ThingsManagerCallback {
      * request just arrives.
      *
      * @param headerOptions
-     *            - It comprises of optionID and optionData as members.
+     *            It comprises of optionID and optionData as members.
      * @param rep
-     *            - Configuration parameters are carried as a pair of attribute
+     *            Configuration parameters are carried as a pair of attribute
      *            key and value in a form of OCRepresentation instance.
      * @param errorValue
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onFactoryResetCallback(Vector<OcHeaderOption> headerOptions,
             OcRepresentation rep, int errorValue) {
@@ -419,9 +384,8 @@ public class ThingsManagerCallback {
      * This callback method is called to notify whether group is found or not.
      *
      * @param resource
-     *            - Resource URI
+     *            Resource URI
      *
-     * @return void
      */
     public void onGroupFindCallback(OcResource resource) {
         if (null != groupListener) {
@@ -435,11 +399,10 @@ public class ThingsManagerCallback {
      * This callback method is called for child resource presence status.
      *
      * @param resource
-     *            - URI of resource.
+     *            URI of resource.
      * @param result
-     *            - error code.
+     *            error code.
      *
-     * @return void
      */
     public void onPresenceCallback(String resource, OCStackResult result) {
         if (null != presenceListener) {

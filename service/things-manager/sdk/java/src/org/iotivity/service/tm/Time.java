@@ -3,11 +3,10 @@ package org.iotivity.service.tm;
 import android.util.Log;
 
 /**
- * @class Time
- * @brief This class provides time-related information used for
- *        scheduled/recursive group action features. Along with time-related
- *        variables, it also provides various useful functionality including
- *        translating time to second unit
+ * This class provides time-related information used for
+ * scheduled/recursive group action features. Along with time-related
+ * variables, it also provides various useful functionality including
+ * translating time to second unit
  */
 public class Time {
 
@@ -32,19 +31,19 @@ public class Time {
      * Set the time for executing ActionSet.
      *
      * @param year
-     *            - Year to be set
+     *            Year to be set
      * @param month
-     *            - Month of the year to be set
+     *            Month of the year to be set
      * @param day
-     *            - Day of the month to be set
+     *            Day of the month to be set
      * @param hour
-     *            - Hour to be set
+     *            Hour to be set
      * @param min
-     *            - Minute to be set
+     *            Minute to be set
      * @param sec
-     *            - Second to be set
+     *            Second to be set
      * @param dayOfTheWeek
-     *            - Day of the week to be set
+     *            Day of the week to be set
      *
      */
     public void setTime(int year, int month, int day, int hour, int min,
@@ -73,7 +72,7 @@ public class Time {
      * Set type of ActionSet.
      *
      * @param type
-     *            - Type of ActionSet
+     *            Type of ActionSet
      */
     public void setType(ActionSetType type) {
         mType = type;
@@ -83,7 +82,7 @@ public class Time {
      * Set day of the week for recursively executing ActionSet.
      *
      * @param day
-     *            - day of the week
+     *            day of the week
      */
     public void setDayOfWeekForRecursive(int day) {
         if (day != -1) {
@@ -96,7 +95,7 @@ public class Time {
      * Set the time delay in seconds for executing ActionSet.
      *
      * @param seconds
-     *            - time delay in seconds
+     *            time delay in seconds
      *
      */
     public void setDelay(long seconds) {

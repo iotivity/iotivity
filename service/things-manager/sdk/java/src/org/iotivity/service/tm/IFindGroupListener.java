@@ -29,8 +29,7 @@ package org.iotivity.service.tm;
 import org.iotivity.base.OcResource;
 
 /**
- * @interface IFindGroupListener
- * @brief Provides interface for getting group discovery status.
+ * Provides interface for getting group discovery status.
  */
 public interface IFindGroupListener {
     /**
@@ -38,7 +37,7 @@ public interface IFindGroupListener {
      * not.
      *
      * @param resource
-     *            - URI of resource.
+     *            URI of resource.
      */
     public void onGroupFindCallback(OcResource resource);
 }
