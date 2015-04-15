@@ -3792,7 +3792,7 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_COMM_ERROR;
         case CA_SEND_FAILED:
             return OC_STACK_COMM_ERROR;
-        case CA_RECEVIE_FAILED:
+        case CA_RECEIVE_FAILED:
             return OC_STACK_COMM_ERROR;
         case CA_MEMORY_ALLOC_FAILED:
             return OC_STACK_NO_MEMORY;

@@ -232,7 +232,7 @@ typedef enum
     CA_DESTINATION_NOT_REACHABLE,   /**< Destination is not reachable */
     CA_SOCKET_OPERATION_FAILED,     /**< Socket operation failed */
     CA_SEND_FAILED,                 /**< Send request failed */
-    CA_RECEVIE_FAILED,              /**< Receive failed */
+    CA_RECEIVE_FAILED,              /**< Receive failed */
     CA_MEMORY_ALLOC_FAILED,         /**< Memory allocation failed */
     CA_REQUEST_TIMEOUT,             /**< Request is Timeout */
     CA_DESTINATION_DISCONNECTED,    /**< Destination is disconnected */
