@@ -54,90 +54,91 @@ public class EntityHandlerHue implements OcPlatform.EntityHandler {
         if (resourcerequest != null
                 && resourcerequest.getResourceUri().equals("/a/huebulb")) {
             RequestType requestType = resourcerequest.getRequestType();
-            RequestHandlerFlag requestFlag = resourcerequest
-                    .getRequestHandlerFlag();
+            EnumSet<RequestHandlerFlag> handlerFlagSet = resourcerequest
+                    .getRequestHandlerFlagSet();
 
-            switch (requestFlag) {
-                case INIT:
-                    Log.e(TAG, "requestFlag : Init");
-                    break;
-                case REQUEST:
-                    OcResourceResponse response = new OcResourceResponse();
-                    OcRepresentation representation = new OcRepresentation();
-                    response.setRequestHandle(resourcerequest
-                            .getRequestHandle());
-                    response.setResourceHandle(resourcerequest
-                            .getResourceHandle());
-                    switch (requestType) {
-                        case GET:
-                            PHBridge bridge = PHHueSDK.getInstance()
-                                    .getSelectedBridge();
-                            List<PHLight> myLights = bridge.getResourceCache()
-                                    .getAllLights();
-                            for (PHLight light : myLights) {
-                                PHLightState lightState = new PHLightState();
-                                lightState = light.getLastKnownLightState();
-                                if (lightState.isOn()) {
-                                    Activator.myLight.m_power = "on";
-                                } else if (!lightState.isOn()) {
-                                    Activator.myLight.m_power = "off";
-                                }
-                                Activator.myLight.m_color = lightState.getHue();
-                                Activator.myLight.m_brightness = lightState
-                                        .getBrightness();
+            if(handlerFlagSet.contains(RequestHandlerFlag.INIT))
+            {
+                Log.e(TAG, "requestFlag : Init");
+            }
+            if(handlerFlagSet.contains(RequestHandlerFlag.REQUEST))
+            {
+                OcResourceResponse response = new OcResourceResponse();
+                OcRepresentation representation = new OcRepresentation();
+                response.setRequestHandle(resourcerequest
+                        .getRequestHandle());
+                response.setResourceHandle(resourcerequest
+                        .getResourceHandle());
+                switch (requestType) {
+                    case GET:
+                        PHBridge bridge = PHHueSDK.getInstance()
+                                .getSelectedBridge();
+                        List<PHLight> myLights = bridge.getResourceCache()
+                                .getAllLights();
+                        for (PHLight light : myLights) {
+                            PHLightState lightState = new PHLightState();
+                            lightState = light.getLastKnownLightState();
+                            if (lightState.isOn()) {
+                                Activator.myLight.m_power = "on";
+                            } else if (!lightState.isOn()) {
+                                Activator.myLight.m_power = "off";
                             }
-                            break;
-                        case PUT:
-                            PHBridge mbridge = PHHueSDK.getInstance()
-                                    .getSelectedBridge();
-                            List<PHLight> mmyLights = mbridge
-                                    .getResourceCache().getAllLights();
-                            for (PHLight light : mmyLights) {
-                                PHLightState lightState = new PHLightState();
-                                String str = resourcerequest
-                                        .getResourceRepresentation()
-                                        .getValueString("power");
-                                if (str.equals("on")) {
-                                    lightState.setOn(true);
-                                    Activator.myLight.m_power = "on";
-                                } else if (str.equals("off")) {
-                                    lightState.setOn(false);
-                                    Activator.myLight.m_power = "off";
-                                }
-                                lightState.setHue(resourcerequest
-                                        .getResourceRepresentation()
-                                        .getValueInt("color"));
-                                Activator.myLight.m_color = resourcerequest
-                                        .getResourceRepresentation()
-                                        .getValueInt("color");
-                                mbridge.updateLightState(light, lightState);
+                            Activator.myLight.m_color = lightState.getHue();
+                            Activator.myLight.m_brightness = lightState
+                                    .getBrightness();
+                        }
+                        break;
+                    case PUT:
+                        PHBridge mbridge = PHHueSDK.getInstance()
+                                .getSelectedBridge();
+                        List<PHLight> mmyLights = mbridge
+                                .getResourceCache().getAllLights();
+                        for (PHLight light : mmyLights) {
+                            PHLightState lightState = new PHLightState();
+                            String str = resourcerequest
+                                    .getResourceRepresentation()
+                                    .getValueString("power");
+                            if (str.equals("on")) {
+                                lightState.setOn(true);
+                                Activator.myLight.m_power = "on";
+                            } else if (str.equals("off")) {
+                                lightState.setOn(false);
+                                Activator.myLight.m_power = "off";
                             }
-                            break;
-                        case POST:
-                            break;
-                    }
-                    response.setErrorCode(200);
-                    // representation.setUri("/a/huebulb");
-                    representation.setValueString("name",
-                            Activator.myLight.m_name);
-                    representation.setValueString("power",
-                            Activator.myLight.m_power);
-                    representation.setValueInt("brightness",
-                            Activator.myLight.m_brightness);
-                    representation.setValueInt("color",
-                            Activator.myLight.m_color);
-                    response.setResourceRepresentation(representation);
-                    try {
-                        OcPlatform.sendResponse(response);
-                    } catch (OcException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                        return EntityHandlerResult.ERROR;
-                    }
-                    break;
-                case OBSERVER:
-                    Log.e(TAG, "requestFlag : Observer");
-                    break;
+                            lightState.setHue(resourcerequest
+                                    .getResourceRepresentation()
+                                    .getValueInt("color"));
+                            Activator.myLight.m_color = resourcerequest
+                                    .getResourceRepresentation()
+                                    .getValueInt("color");
+                            mbridge.updateLightState(light, lightState);
+                        }
+                        break;
+                    case POST:
+                        break;
+                }
+                response.setErrorCode(200);
+                // representation.setUri("/a/huebulb");
+                representation.setValueString("name",
+                        Activator.myLight.m_name);
+                representation.setValueString("power",
+                        Activator.myLight.m_power);
+                representation.setValueInt("brightness",
+                        Activator.myLight.m_brightness);
+                representation.setValueInt("color",
+                        Activator.myLight.m_color);
+                response.setResourceRepresentation(representation);
+                try {
+                    OcPlatform.sendResponse(response);
+                } catch (OcException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    return EntityHandlerResult.ERROR;
+                }
+            }
+            if(handlerFlagSet.contains(RequestHandlerFlag.OBSERVER))
+            {
+                Log.e(TAG, "requestFlag : Observer");
             }
             return EntityHandlerResult.OK;
         }
