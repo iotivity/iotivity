@@ -83,9 +83,9 @@ namespace OIC
                     OC_ETHERNET,
                     std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
 
-            // OCPlatform::findResource("", query,
-            //         OC_WIFI,
-            //         std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
+            OCPlatform::findResource("", query,
+                    OC_WIFI,
+                    std::bind(&GroupSynchronization::onFindGroup, this, std::placeholders::_1));
         }
 
         bIsFinding = true;
@@ -708,10 +708,10 @@ OCStackResult GroupSynchronization::leaveGroup(
                                 std::bind(&GroupSynchronization::onFindResource, this,
                                         std::placeholders::_1));
 
-                        // OCPlatform::findResource("", resourceName,
-                        //         OC_WIFI,
-                        //         std::bind(&GroupSynchronization::onFindResource, this,
-                        //                 std::placeholders::_1));
+                        OCPlatform::findResource("", resourceName,
+                                OC_WIFI,
+                                std::bind(&GroupSynchronization::onFindResource, this,
+                                        std::placeholders::_1));
 
                         return OC_EH_SLOW;
                     }
