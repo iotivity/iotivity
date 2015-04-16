@@ -23,6 +23,18 @@
 #include "cacommon.h"
 
 
+class CATests : public testing::Test {
+    protected:
+    virtual void SetUp() {
+        CAInitialize();
+    }
+
+    virtual void TearDown()
+    {
+        CATerminate();
+    }
+};
+
 void request_handler(CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo);
 void response_handler(CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo);
 CAResult_t checkGetNetworkInfo();
@@ -133,10 +145,11 @@ int main(int argc, char **argv)
 TEST(InitializeTest, TC_01_Positive_01)
 {
     EXPECT_EQ(CA_STATUS_OK, CAInitialize());
+    CATerminate();
 }
 
 //CATerminate TC
-TEST(TerminateTest, TC_02_Positive_01)
+TEST_F(CATests, TerminateTest)
 {
     CATerminate();
 
@@ -162,7 +175,7 @@ TEST(StartDiscoveryServerTest, TC_04_Positive_01)
 
 // CARegisterHandlerTest TC
 // check return value
-TEST(RegisterHandlerTest, TC_05_Positive_01)
+TEST_F(CATests, RegisterHandlerTest)
 {
     CARegisterHandler(request_handler, response_handler);
     char* check = (char *) "registerHandler success";
@@ -171,7 +184,7 @@ TEST(RegisterHandlerTest, TC_05_Positive_01)
 
 // CACreateRemoteEndpoint TC
 // check return value
-TEST(CreateRemoteEndpointTest, TC_06_Positive_01)
+TEST_F(CATests, CreateRemoteEndpointTestGood)
 {
     uri = (char *) URI;
 
@@ -185,7 +198,7 @@ TEST(CreateRemoteEndpointTest, TC_06_Positive_01)
 }
 
 // check remoteEndpoint and values of remoteEndpoint
-TEST(CreateRemoteEndpointTest, TC_07_Positive_02)
+TEST_F(CATests, CreateRemoteEndpointTestValues)
 {
     uri = (char *) URI;
 
@@ -206,7 +219,7 @@ TEST(CreateRemoteEndpointTest, TC_07_Positive_02)
 }
 
 // check return value when uri is NULL
-TEST(CreateRemoteEndpointTest, TC_08_Negative_01)
+TEST_F(CATests, CreateRemoteEndpointTestBad)
 {
     uri = NULL;
 
@@ -220,7 +233,7 @@ TEST(CreateRemoteEndpointTest, TC_08_Negative_01)
 }
 
 // check values of remoteEndpoint when uri is NULL
-TEST(CreateRemoteEndpointTest, TC_09_Negative_02)
+TEST_F(CATests, CreateRemoteEndpointTestWithNullUri)
 {
     uri = NULL;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -240,7 +253,7 @@ TEST(CreateRemoteEndpointTest, TC_09_Negative_02)
 
 // CADestroyRemoteEndpoint TC
 // check destroyed remoteEndpoint
-TEST(DestroyRemoteEndpointTest, TC_10_Positive_01)
+TEST_F(CATests, DestroyRemoteEndpointTest)
 {
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -254,7 +267,7 @@ TEST(DestroyRemoteEndpointTest, TC_10_Positive_01)
 
 // CAGerateToken TC
 // check return value
-TEST(GenerateTokenTest, TC_11_Positive_01)
+TEST_F(CATests, GenerateTokenTestGood)
 {
     EXPECT_EQ(CA_STATUS_OK, CAGenerateToken(&tempToken, tokenLength));
 
@@ -262,14 +275,14 @@ TEST(GenerateTokenTest, TC_11_Positive_01)
 }
 
 // check return value when CAGenerateToken is passed a NULL instead a valid pointer
-TEST(GenerateTokenTest, TC_12_Negative_01)
+TEST_F(CATests, GenerateTokenTestBad)
 {
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CAGenerateToken(NULL, tokenLength));
 }
 
 // CADestroyToken TC
 // check destroyed token
-TEST(DestroyTokenTest, TC_13_Positive_01)
+TEST_F(CATests, DestroyTokenTest)
 {
     CAGenerateToken(&tempToken, tokenLength);
     CADestroyToken(tempToken);
@@ -290,7 +303,7 @@ TEST(FindResourceTest, TC_14_Positive_01)
 }
 
 // check return value when uri is NULL
-TEST(FindResourceTest, TC_15_Negative_01)
+TEST_F(CATests, FindResourceTest)
 {
     uri = NULL;
     CAGenerateToken(&tempToken, tokenLength);
@@ -331,7 +344,7 @@ TEST(SendRequestTest, TC_16_Positive_01)
 }
 
 // check return value when uri is NULL
-TEST(SendRequestTest, TC_17_Negative_01)
+TEST_F(CATests, SendRequestTestWithNullURI)
 {
     uri = NULL;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -364,7 +377,7 @@ TEST(SendRequestTest, TC_17_Negative_01)
 }
 
 // check return value when a NULL is passed instead of a valid CARequestInfo_t address
-TEST(SendRequestTest, TC_18_Negative_02)
+TEST_F(CATests, SendRequestTestWithNullAddr)
 {
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -435,7 +448,7 @@ TEST(SendResponseTest, TC_20_Negative_01)
 }
 
 // check return value NULL is passed instead of a valid CAResponseInfo_t address
-TEST(SendResponseTest, TC_21_Negative_02)
+TEST_F(CATests, SendResponseTest)
 {
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -479,7 +492,7 @@ TEST(SendNotificationTest, TC_22_Positive_01)
 }
 
 // check return value when uri is NULL
-TEST(SendNotificationTest, TC_23_Negative_01)
+TEST_F(CATests, SendNotificationTest)
 {
     uri = NULL;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -541,7 +554,7 @@ TEST(AdvertiseResourceTest, TC_24_Positive_01)
 }
 
 // check return value when uri is NULL
-TEST(AdvertiseResourceTest, TC_25_Negative_01)
+TEST_F(CATests, AdvertiseResourceTest)
 {
     uri = NULL;
     int optionNum = 2;
@@ -575,7 +588,7 @@ TEST(AdvertiseResourceTest, TC_25_Negative_01)
 
 // CASelectNewwork TC
 // check return value
-TEST(SelectNetworkTest, TC_26_Positive_01)
+TEST_F(CATests, SelectNetworkTestGood)
 {
     CAResult_t res = checkSelectNetwork();
     EXPECT_EQ(CA_STATUS_OK, res);
@@ -602,7 +615,7 @@ CAResult_t checkSelectNetwork()
 }
 
 // check return value when selected network is disable
-TEST(SelectNetworkTest, TC_27_Negative_01)
+TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
     EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork(1000));
@@ -624,7 +637,7 @@ TEST(UnSelectNetworkTest, TC_28_Positive_01)
 }
 
 // check return value when selected network is disable
-TEST(UnSelectNetworkTest, TC_29_Negative_01)
+TEST_F(CATests, UnSelectNetworkTest)
 {
     //UnSelect disable network
     EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(1000));
@@ -632,7 +645,7 @@ TEST(UnSelectNetworkTest, TC_29_Negative_01)
 
 // CAHandlerRequestResponse TC
 // check return value
-TEST (HandlerRequestResponseTest, TC_30_Positive_01)
+TEST_F(CATests, HandlerRequestResponseTest)
 {
     EXPECT_EQ(CA_STATUS_OK, CAHandleRequestResponse());
 }
@@ -693,12 +706,12 @@ TEST (SendRequestToAllTest, TC_32_Negative_01)
 
 // CAGetNetworkInformation TC
 // check return value
-TEST (GetNetworkInformationTest, TC_33_Positive_01)
+TEST_F (CATests, GetNetworkInformationTestGood)
 {
     EXPECT_EQ(CA_STATUS_OK, checkGetNetworkInfo());
 }
 
-TEST(RegisterDTLSCredentialsHandlerTest, TC_34_positive_01)
+TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__
     if (SetCredentials() == 0)
