@@ -392,24 +392,6 @@ static void HandleCARequests(const CARemoteEndpoint_t* endPoint,
         const CARequestInfo_t* requestInfo);
 
 /**
- * Handle incoming requests.
- *
- * @param protocolRequest Incoming request from lower level stack.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-
-/**
- * Parse IP address string into octets and port.
- *
- * @param ipAddrStr IPv4 address input string.
- * @param ipAddr IPv4 address output.
- * @param port Port number.
- * @return
- *     true - success.
- *     false - failure.
- */
-
-/**
  * Extract query from a URI.
  *
  * @param uri Full URI with query.
@@ -430,6 +412,17 @@ static OCStackResult getQueryFromUri(const char * uri, char** resourceType, char
  */
 static OCResourceType *findResourceType(OCResourceType * resourceTypeList,
         const char * resourceTypeName);
+
+/**
+ * Reset presence TTL for a ClientCB struct. ttlLevel will be set to 0.
+ * TTL will be set to maxAge.
+ *
+ * @param cbNode Callback Node for which presence ttl is to be reset.
+ * @param maxAge New value of ttl in seconds.
+
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds);
 
 /**
  * Return a server instance ID.
@@ -724,6 +717,38 @@ exit:
     return ret;
 }
 
+static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds)
+{
+    uint32_t lowerBound  = 0;
+    uint32_t higherBound = 0;
+
+    if (!cbNode || !cbNode->presence || !cbNode->presence->timeOut)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OC_LOG_V(INFO, TAG, "Update presence TTL, time is %u", GetTime(0));
+
+    cbNode->presence->TTL = maxAgeSeconds;
+
+    for(int index = 0; index < PresenceTimeOutSize; index++)
+    {
+        lowerBound = GetTime(PresenceTimeOut[index]/ 100.0f*cbNode->presence->TTL);
+        higherBound = GetTime(PresenceTimeOut[index + 1]/100.0f*cbNode->presence->TTL);
+
+        cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
+
+        OC_LOG_V(DEBUG, TAG, "lowerBound timeout  %d", lowerBound);
+        OC_LOG_V(DEBUG, TAG, "higherBound timeout %d", higherBound);
+        OC_LOG_V(DEBUG, TAG, "timeOut entry  %d", cbNode->presence->timeOut[index]);
+    }
+
+    cbNode->presence->TTLlevel = 0;
+
+    OC_LOG_V(DEBUG, TAG, "this TTL level %d", cbNode->presence->TTLlevel);
+    return OC_STACK_OK;
+}
+
 void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType)
 {
     char * tok = NULL;
@@ -785,8 +810,6 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     OCClientResponse response = {};
     OCDevAddr address = {};
     OCStackResult result = OC_STACK_ERROR;
-    uint32_t lowerBound = 0;
-    uint32_t higherBound = 0;
     uint32_t maxAge = 0;
 
     char *fullUri = NULL;
@@ -879,7 +902,22 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     {
         if(cbNode->sequenceNumber == response.sequenceNumber)
         {
-            OC_LOG(INFO, TAG, PCF("No presence change"));
+            if (cbNode->presence)
+            {
+                OC_LOG(INFO, TAG, PCF("No presence change. Updating TTL."));
+
+                result = ResetPresenceTTL(cbNode, maxAge);
+
+                if (result != OC_STACK_OK)
+                {
+                    OC_LOG_V(ERROR, TAG, "ResetPresenceTTL failed with error: %u", result);
+                }
+            }
+            else
+            {
+                OC_LOG(INFO, TAG, PCF("Not subscribed to presence."));
+            }
+
             goto exit;
         }
         if(maxAge == 0)
@@ -918,21 +956,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
                 }
             }
 
-            OC_LOG_V(INFO, TAG, "Update presence TTL, now time is %u", GetTime(0));
-            cbNode->presence->TTL = maxAge;
-            for(int index = 0; index < PresenceTimeOutSize; index++)
-            {
-                lowerBound = GetTime(PresenceTimeOut[index]/ 100.0f*cbNode->presence->TTL);
-                higherBound = GetTime(PresenceTimeOut[index + 1]/100.0f*cbNode->presence->TTL);
-                cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
-                OC_LOG_V(DEBUG, TAG, "lowerBound timeout  %d", lowerBound);
-                OC_LOG_V(DEBUG, TAG, "higherBound timeout %d", higherBound);
-                OC_LOG_V(DEBUG, TAG, "timeOut entry  %d",
-                        cbNode->presence->timeOut[index]);
-            }
-            cbNode->presence->TTLlevel = 0;
-            OC_LOG_V(DEBUG, TAG, "this TTL level %d", cbNode->presence->TTLlevel);
-
+            ResetPresenceTTL(cbNode, maxAge);
 
             OC_LOG(INFO, TAG, PCF("Presence changed, calling up the stack"));
             cbNode->sequenceNumber = response.sequenceNumber;
@@ -2218,7 +2242,7 @@ OCStackResult OCProcessPresence()
 
                     requestData.type = CA_MSG_NONCONFIRM;
                     requestData.token = cbNode->token;
-
+                    requestData.tokenLength = cbNode->tokenLength;
                     requestInfo.method = CA_GET;
                     requestInfo.info = requestData;
 
