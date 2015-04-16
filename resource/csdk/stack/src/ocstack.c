@@ -1599,6 +1599,13 @@ bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
 
 OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
 {
+    if(stackState == OC_STACK_INITIALIZED)
+    {
+        OC_LOG(INFO, TAG, PCF("Subsequent calls to OCInit() without calling \
+                OCStop() between them are ignored."));
+        return OC_STACK_OK;
+    }
+
     (void) ipAddr;
     (void) port;
     OCStackResult result = OC_STACK_ERROR;
