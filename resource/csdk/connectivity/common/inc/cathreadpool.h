@@ -21,42 +21,36 @@
 /**
  * @file
  *
- * This file provides APIs related to thread pool.
+ * This file provides APIs related to thread pool.  Implementations are provided
+ * by adding a new .c file for each implementation, and adding them conditionally
+ * via the SCONS build script.  Currently, cathreadpool_pthreads.c is implemented,
+ * with cathreadpool_winthreads.c being considered.  RTOS implementations should use
+ * a name that best describes the used technology, not the OS.
  */
 
-#ifndef __UTHREAD_POOL_H_
-#define __UTHREAD_POOL_H_
-
-#include <glib.h>
+#ifndef CATHREAD_POOL_H_
+#define CATHREAD_POOL_H_
 
 #include "cacommon.h"
 
 #ifdef __cplusplus
 extern "C"
 {
-#endif /* __cplusplus */
+#endif // __cplusplus
 
 /**
- * @var u_thread_func
- * @brief Callback type can be registered to thread pool.
+ * Callback type can be registered to thread pool.
  */
-typedef void (*u_thread_func)(void *);
+typedef void (*ca_thread_func)(void *);
 
+struct ca_thread_pool_details_t;
 /**
- * @struct u_thread_msg_t
- * @brief Structure to maintain the data which needs to send to task function.
+ * Thread pool type.
  */
-typedef struct
+typedef struct ca_thread_pool
 {
-    void *data;
-    u_thread_func func;
-} u_thread_msg_t;
-
-/**
- * @var u_thread_pool_t
- * @brief Thread pool type.
- */
-typedef void *u_thread_pool_t;
+    struct ca_thread_pool_details_t* details;
+}*ca_thread_pool_t;
 
 /**
  * This function creates a newly allocated thread pool.
@@ -65,7 +59,7 @@ typedef void *u_thread_pool_t;
  * @param thread_pool_handle Handle to newly create thread pool.
  * @return Error code, CA_STATUS_OK if success, else error number.
  */
-CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_pool_handle);
+CAResult_t ca_thread_pool_init(int32_t num_of_threads, ca_thread_pool_t *thread_pool_handle);
 
 /**
  * This function adds a routine to be executed by the thread pool at some future time.
@@ -77,7 +71,7 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
  * @return CA_STATUS_OK on success.
  * @return Error on failure.
  */
-CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, u_thread_func method,
+CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func method,
                     void *data);
 
 /**
@@ -86,11 +80,11 @@ CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, u_thread_func met
  *
  * @param thread_pool The thread pool structure.
  */
-void u_thread_pool_free(u_thread_pool_t thread_pool);
+void ca_thread_pool_free(ca_thread_pool_t thread_pool);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /* __UTHREAD_POOL_H_ */
+#endif /* CATHREAD_POOL_H_ */
 

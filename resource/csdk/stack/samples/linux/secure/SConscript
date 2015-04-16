@@ -47,8 +47,6 @@ if env.get('SECURED') == '1':
 
 samples_env.Append(LINKFLAGS = ['-Wl,--no-as-needed'])
 
-samples_env.ParseConfig('pkg-config --libs glib-2.0');
-
 if target_os == 'android':
 	samples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	samples_env.AppendUnique(LIBS = ['gnustl_static'])

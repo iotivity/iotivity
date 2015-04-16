@@ -5,7 +5,7 @@
 #include "caedrinterface.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 #include "camutex.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"

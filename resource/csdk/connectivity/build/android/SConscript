@@ -23,19 +23,6 @@ if not android_ndk:
 '''
 	Exit(1)
 
-# check 'glib' library
-src_dir = env.get('SRC_DIR')
-if not os.path.exists(src_dir + '/../../../../extlibs/glib/glib-2.40.2'):
-        print '''
-*********************************** Error: **************************************
-* Android glib library does not exist. please download gnome glib to            *
-* extlibs/glib directory                                                        *
-* To build Android glib libraries please follow the instructions as below :     *
-* Download Gnome Glib from http://ftp.gnome.org/pub/GNOME/sources/glib/2.40/    *
-* Please go through build instructions at :                                     *
-* lib/android/glibpatch_Readme.txt                                              *
-*********************************************************************************
-        '''
 # Overwrite suffixes and prefixes
 if env['HOST_OS'] == 'win32':
 	env['OBJSUFFIX'] = '.o'
@@ -185,7 +172,7 @@ env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 env.AppendUnique(LIBPATH = [src_dir + '/lib/android'])
-env.AppendUnique(LIBS = ['log', 'glib-2.40.2', 'gthread-2.40.2', 'coap'])
+env.AppendUnique(LIBS = ['log', 'coap'])
 if env.get('SECURED') == '1':
 	env.AppendUnique(LIBS = ['tinydtls'])
 

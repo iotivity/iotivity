@@ -125,7 +125,7 @@ static GMainLoop *g_eventLoop = NULL;
  * @var g_bleClientThreadPool
  * @brief reference to threadpool
  */
-static u_thread_pool_t g_bleClientThreadPool = NULL;
+static ca_thread_pool_t g_bleClientThreadPool = NULL;
 
 /**
  * @struct stGattServiceInfo_t
@@ -234,12 +234,12 @@ void CABleGattDescriptorDiscoveredCb(int result, unsigned char format, int total
         return;
     }
 
-    CAResult_t ret = u_thread_pool_add_task(g_bleClientThreadPool,
+    CAResult_t ret = ca_thread_pool_add_task(g_bleClientThreadPool,
                                             CASetCharacteristicDescriptorValueThread,
                                             stTemp);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "u_thread_pool_add_task failed");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "ca_thread_pool_add_task failed");
         bt_gatt_destroy_attribute_handle(stTemp->characteristic);
         OICFree(stTemp->desc);
         OICFree(stTemp);
@@ -342,13 +342,13 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
             return false;
         }
 
-        retVal = u_thread_pool_add_task(g_bleClientThreadPool,
+        retVal = ca_thread_pool_add_task(g_bleClientThreadPool,
                                         CADiscoverDescriptorThread,
                                         stTemp);
         if (CA_STATUS_OK != retVal)
         {
             OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
-                      "u_thread_pool_add_task failed with ret [%d]", retVal);
+                      "ca_thread_pool_add_task failed with ret [%d]", retVal);
             bt_gatt_destroy_attribute_handle(stTemp->serviceInfo);
             OICFree(stTemp->address);
             OICFree(stTemp);
@@ -430,12 +430,12 @@ void CABtGattBondCreatedCb(int result, bt_device_info_s *device_info, void *user
             return;
         }
 
-        CAResult_t ret = u_thread_pool_add_task(g_bleClientThreadPool,
+        CAResult_t ret = ca_thread_pool_add_task(g_bleClientThreadPool,
                                                 CADiscoverCharThread, stTemp);
         if (CA_STATUS_OK != ret)
         {
             OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
-                      "u_thread_pool_add_task failed with ret [%d]", ret);
+                      "ca_thread_pool_add_task failed with ret [%d]", ret);
             bt_gatt_destroy_attribute_handle(stTemp->serviceInfo);
             OICFree(stTemp->address);
             OICFree(stTemp);
@@ -548,13 +548,13 @@ bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int index, int count
             return false;
         }
 
-        result = u_thread_pool_add_task(g_bleClientThreadPool,
+        result = ca_thread_pool_add_task(g_bleClientThreadPool,
                                         CAGATTCreateBondThread,
                                         stTemp);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
-                      "u_thread_pool_add_task failed with ret [%d]", result);
+                      "ca_thread_pool_add_task failed with ret [%d]", result);
             OICFree(stTemp->address);
             OICFree(stTemp);
             ca_mutex_lock(g_bleServiceListMutex);
@@ -620,11 +620,11 @@ void CABleGattConnectionStateChangedCb(int result, bool connected,
             return;
         }
 
-        ret = u_thread_pool_add_task(g_bleClientThreadPool, CADiscoverBLEServicesThread,
+        ret = ca_thread_pool_add_task(g_bleClientThreadPool, CADiscoverBLEServicesThread,
                                      addr);
         if (CA_STATUS_OK != ret)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "u_thread_pool_add_task failed with ret [%d]", ret);
+            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG, "ca_thread_pool_add_task failed with ret [%d]", ret);
             OICFree(addr);
 
             ca_mutex_lock(g_bleServerBDAddressMutex);
@@ -695,12 +695,12 @@ void CABtAdapterLeDeviceDiscoveryStateChangedCb(int result,
                         return;
                     }
 
-                    CAResult_t ret = u_thread_pool_add_task(g_bleClientThreadPool,
+                    CAResult_t ret = ca_thread_pool_add_task(g_bleClientThreadPool,
                                                   CAGattConnectThread, addr);
                     if (CA_STATUS_OK != ret)
                     {
                         OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
-                                  "u_thread_pool_add_task failed with ret [%d]", ret);
+                                  "ca_thread_pool_add_task failed with ret [%d]", ret);
                         OICFree(addr);
                         ca_mutex_unlock(g_bleClientThreadPoolMutex);
                         return;
@@ -746,7 +746,7 @@ void CAPrintDiscoveryInformation(const bt_adapter_le_device_discovery_info_s *di
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CASetBleClientThreadPoolHandle(u_thread_pool_t handle)
+void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -792,11 +792,11 @@ CAResult_t CAStartBLEGattClient()
         return CA_STATUS_FAILED;
     }
 
-    retVal = u_thread_pool_add_task(g_bleClientThreadPool, CAStartBleGattClientThread,
+    retVal = ca_thread_pool_add_task(g_bleClientThreadPool, CAStartBleGattClientThread,
                                      NULL);
     if (CA_STATUS_OK != retVal)
     {
-        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "u_thread_pool_add_task failed");
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "ca_thread_pool_add_task failed");
         CATerminateGattClientMutexVariables();
         ca_mutex_unlock(g_bleClientThreadPoolMutex);
         return CA_STATUS_FAILED;

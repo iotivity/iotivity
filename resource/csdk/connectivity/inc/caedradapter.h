@@ -32,7 +32,7 @@
  **/
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -58,7 +58,7 @@ extern "C"
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback reqRespCallback,
                            CANetworkChangeCallback netCallback,
-                           u_thread_pool_t handle);
+                           ca_thread_pool_t handle);
 
 /**
  * @brief  Starts EDR connectivity adapters. As its peer to peer it doesnot require to start

@@ -158,7 +158,7 @@ static GMainLoop *g_eventLoop = NULL;
  * @var g_bleServerThreadPool
  * @brief reference to threadpool
  */
-static u_thread_pool_t g_bleServerThreadPool = NULL;
+static ca_thread_pool_t g_bleServerThreadPool = NULL;
 
 void CABleGattServerConnectionStateChangedCb(int result, bool connected,
                                        const char *remoteAddress, void *userData)
@@ -202,11 +202,11 @@ CAResult_t CAStartBleGattServer()
         return CA_STATUS_FAILED;
     }
 
-    ret = u_thread_pool_add_task(g_bleServerThreadPool, CAStartBleGattServerThread,
+    ret = ca_thread_pool_add_task(g_bleServerThreadPool, CAStartBleGattServerThread,
                                  NULL);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "u_thread_pool_add_task failed with ret [%d]", ret);
+        OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "ca_thread_pool_add_task failed with ret [%d]", ret);
         ca_mutex_unlock(g_bleServerThreadPoolMutex);
         return CA_STATUS_FAILED;
     }
@@ -541,7 +541,7 @@ CAResult_t CADeInitBleGattService()
     return CA_STATUS_OK;
 }
 
-void CASetBleServerThreadPoolHandle(u_thread_pool_t handle)
+void CASetBleServerThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
     ca_mutex_lock(g_bleServerThreadPoolMutex);

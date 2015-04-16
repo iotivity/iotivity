@@ -124,9 +124,9 @@ static CAQueueingThread_t *g_sendQueueHandle = NULL;
 
 /**
  * @var g_threadPool
- * @brief ThreadPool for storing u_thread_pool_t handle passed from CA
+ * @brief ThreadPool for storing ca_thread_pool_t handle passed from CA
  */
-static u_thread_pool_t g_threadPool = NULL;
+static ca_thread_pool_t g_threadPool = NULL;
 
 static CAResult_t CAWiFiInitializeQueueHandles();
 static void CAWiFiDeinitializeQueueHandles();
@@ -374,7 +374,7 @@ void CAWiFiPacketReceivedCB(const char *ipAddress, uint16_t port,
 
 CAResult_t CAInitializeWIFI(CARegisterConnectivityCallback registerCallback,
                             CANetworkPacketReceivedCallback networkPacketCallback,
-                            CANetworkChangeCallback netCallback, u_thread_pool_t handle)
+                            CANetworkChangeCallback netCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
     VERIFY_NON_NULL(registerCallback, WIFI_ADAPTER_TAG, "registerCallback");

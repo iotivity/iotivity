@@ -119,7 +119,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
     OIC_LOG(DEBUG, TAG, "message handler main thread end..");
 }
 
-CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_t handle,
+CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, ca_thread_pool_t handle,
                                       CAThreadTask task, CADataDestroyFunction destroy)
 {
     if (NULL == thread)
@@ -174,7 +174,7 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
     // mutex unlock
     ca_mutex_unlock(thread->threadMutex);
 
-    CAResult_t res = u_thread_pool_add_task(thread->threadPool, CAQueueingThreadBaseRoutine,
+    CAResult_t res = ca_thread_pool_add_task(thread->threadPool, CAQueueingThreadBaseRoutine,
                                             thread);
     if (res != CA_STATUS_OK)
     {

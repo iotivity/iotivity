@@ -28,7 +28,7 @@
 #include "caleserver.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 #include "camutex.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
@@ -46,7 +46,7 @@ static const uint32_t MAX_PDU_BUFFER = 1024;
 static u_arraylist_t *g_deviceStateList = NULL;
 static u_arraylist_t *g_deviceObjectList = NULL;
 
-static u_thread_pool_t g_threadPoolHandle = NULL;
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 static JavaVM *g_jvm;
 static jobject g_context;
@@ -357,7 +357,7 @@ static CAResult_t CAEDRCreateMutex()
     return CA_STATUS_OK;
 }
 
-void CAEDRInitialize(u_thread_pool_t handle)
+void CAEDRInitialize(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CAEDRInitialize");
 
@@ -1388,7 +1388,7 @@ void CAEDRReorderingDeviceSocketList(uint32_t index)
     g_deviceObjectList->length--;
 }
 
-void CAEDRInitializeClient(u_thread_pool_t handle)
+void CAEDRInitializeClient(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CAEDRInitialize(handle);

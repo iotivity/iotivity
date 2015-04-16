@@ -38,7 +38,7 @@ digraph G {
         label = <<table border="1" cellspacing="0" cellborder="0">
                     <tr><td port="a" tooltip="Message Handler" bgcolor="gray">Message Handler</td></tr>
                     <hr/>
-                    <tr><td align="left" href="\ref g_threadPoolHandle" tooltip="-g_threadPoolHandle: u_thread_pool_t">-g_threadPoolHandle: u_thread_pool_t</td></tr>
+                    <tr><td align="left" href="\ref g_threadPoolHandle" tooltip="-g_threadPoolHandle: ca_thread_pool_t">-g_threadPoolHandle: ca_thread_pool_t</td></tr>
                     <tr><td align="left" href="\ref g_sendThread" tooltip="-g_sendThread: CAQueueingThread_t">-g_sendThread: CAQueueingThread_t</td></tr>
                     <tr><td align="left" href="\ref g_receiveThread" tooltip="-g_receiveThread: CAQueueingThread_t">-g_receiveThread: CAQueueingThread_t</td></tr>
                     <tr><td align="left" href="\ref g_retransmissionContext" tooltip="-g_retransmissionContext: CARetransmission_t">-g_retransmissionContext: CARetransmission_t</td></tr>
@@ -52,22 +52,22 @@ digraph G {
 
     threadpool [
         shape = none
-        margin = 0        
+        margin = 0
         label = <<table border="1" cellspacing="0" cellborder="0">
-                    <tr><td href="\ref u_thread_pool_t" tooltip="u_threadpool_t" bgcolor="gray">u_threadpool_t</td></tr>
+                    <tr><td href="\ref ca_thread_pool_t" tooltip="ca_threadpool_t" bgcolor="gray">ca_threadpool_t</td></tr>
                     <hr/>
                     <tr><td> </td></tr>
                     <hr/>
-                    <tr><td align="left" href="\ref u_thread_pool_init()" tooltip="+u_thread_pool_init">+u_thread_pool_init</td></tr>
-                    <tr><td align="left" href="\ref u_thread_pool_free()" tooltip="+u_thread_pool_free">+u_thread_pool_free</td></tr>
-                    <tr><td align="left" href="\ref u_thread_pool_add_task()" tooltip="+u_thread_pool_add_task">+u_thread_pool_add_task</td></tr>
+                    <tr><td align="left" href="\ref ca_thread_pool_init()" tooltip="+ca_thread_pool_init">+ca_thread_pool_init</td></tr>
+                    <tr><td align="left" href="\ref ca_thread_pool_free()" tooltip="+ca_thread_pool_free">+ca_thread_pool_free</td></tr>
+                    <tr><td align="left" href="\ref ca_thread_pool_add_task()" tooltip="+ca_thread_pool_add_task">+ca_thread_pool_add_task</td></tr>
                 </table>>
     ]
 
 
     thread_out [
         shape = none
-        margin = 0        
+        margin = 0
         label = <<table border="1" cellspacing="0" cellborder="0">
                     <tr><td href="\ref CASendThreadProcess()" tooltip="Send Thread" bgcolor="gray">Send Thread</td></tr>
                     <hr/>
@@ -79,7 +79,7 @@ digraph G {
 
     thread_in [
         shape = none
-        margin = 0        
+        margin = 0
         label = <<table border="1" cellspacing="0" cellborder="0">
                     <tr><td href="\ref CAReceiveThreadProcess()" tooltip="Receive Thread" bgcolor="gray">Receive Thread</td></tr>
                     <hr/>
@@ -91,7 +91,7 @@ digraph G {
 
     thread_retrans [
         shape = none
-        margin = 0        
+        margin = 0
         label = <<table border="1" cellspacing="0" cellborder="0">
                     <tr><td href="\ref CASendUnicastData()" tooltip="Retransmit Thread" bgcolor="gray">Retransmit Thread</td></tr>
                     <hr/>
@@ -108,7 +108,7 @@ digraph G {
 
 
         shape = none
-        margin = 0        
+        margin = 0
         label = <<table border="1" cellspacing="0" cellborder="0">
                     <tr><td href="\ref CAInitializeAdapters()" tooltip="Interface Controller" bgcolor="gray">Interface Controller</td></tr>
                     <hr/>
@@ -130,7 +130,7 @@ digraph G {
 
     conn_handler [
         shape = none
-        margin = 0        
+        margin = 0
         label = <<table border="1" cellspacing="0" cellborder="0">
                     <tr><td href="\ref CAConnectivityHandler_t" tooltip="CAConnectivityHandler_t" bgcolor="gray">CAConnectivityHandler_t</td></tr>
                     <hr/>

@@ -95,7 +95,7 @@ RELEASE_DIR = ./release
 ##
 ##	file declaration
 ##
-COMPONENT_SRCS := logger.c oic_logger.c oic_console_logger.c oic_malloc.c oic_string.c uqueue.c uarraylist.c umutex.c uthreadpool.c
+COMPONENT_SRCS := logger.c oic_logger.c oic_console_logger.c oic_malloc.c oic_string.c uqueue.c uarraylist.c umutex.c cathreadpool_pthreads.c
 COMPONENT_SRCS += caretransmission.c
 COMPONENT_SRCS += caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c camessagehandler.c caqueueingthread.c canetworkconfigurator.c caprotocolmessage.c
 COMPONENT_SRCS += caadapterutils.c

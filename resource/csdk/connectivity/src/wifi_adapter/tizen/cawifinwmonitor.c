@@ -80,7 +80,7 @@ static void CAWIFIDeviceStateChangedCb(wifi_device_state_e state, void *userData
 static void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress,
         char **subnetMask);
 
-CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
+CAResult_t CAWiFiInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 

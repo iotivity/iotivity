@@ -28,7 +28,7 @@
 #define __CA_LESERVER_H_
 
 #include "cacommon.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "uarraylist.h"
 #include "jni.h"
 
@@ -52,7 +52,7 @@ typedef void (*CAPacketReceiveCallback)(const char *address,
  * @param   handle           [IN] thread pool handle object
  * @return  None
  */
-void CALEServerInitialize(u_thread_pool_t handle);
+void CALEServerInitialize(ca_thread_pool_t handle);
 
 /**
  * @brief   terminate client for BLE

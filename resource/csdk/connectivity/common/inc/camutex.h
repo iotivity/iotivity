@@ -38,7 +38,7 @@ typedef struct ca_mutex_internal *ca_mutex;
 typedef struct ca_cond_internal *ca_cond;
 
 /**
- * Enums for ca_cond_wait_until return values
+ * Enums for ca_cond_wait_for return values
  */
 typedef enum
 {
@@ -124,20 +124,20 @@ void ca_cond_wait(ca_cond cond, ca_mutex mutex);
 
 /**
  * Waits until this thread woken up on @cond,
- * but not longer than until the time specified by microseconds.
+ * but not longer than the interval specified by microseconds.
  * The mutex is unlocked before falling asleep and locked again before resuming.
- * If microseconds is 0 or under, ca_cond_wait_until() acts like ca_cond_wait().
+ * If microseconds is 0, ca_cond_wait_for() acts like ca_cond_wait().
  *
  * @param  cond  The condtion to be wait for to signal
  * @param  mutex  The mutex which is currently locked from calling thread
- * @param  microseconds  absolute time for waiting, microseconds
+ * @param  microseconds  relative time for waiting, microseconds
  *
  * @return CA_WAIT_SUCCESS if the condition was signaled.
  *         CA_WAIT_TIMEDDOUT if wait period exceeded
  *         CA_WAIT_INVAL for invalid parameters
  *
  */
-CAWaitResult_t ca_cond_wait_until(ca_cond cond, ca_mutex mutex, uint64_t microseconds);
+CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseconds);
 
 /**
  * Free the condition.

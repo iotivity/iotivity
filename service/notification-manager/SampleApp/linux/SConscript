@@ -21,15 +21,9 @@ notimgr_c_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_abstr
 
 if env.get('SECURED') == '1':
     notimgr_env.AppendUnique(LIBS = ['tinydtls'])
-notimgr_env.ParseConfig('pkg-config --libs glib-2.0')
-notimgr_env.ParseConfig('pkg-config --cflags glib-2.0')
+    notimgr_c_env.AppendUnique(LIBS = ['tinydtls'])
 if 'rt' in notimgr_env.get('LIBS'):
     notimgr_env.Append(LIBS = ['rt'])
-
-if env.get('SECURED') == '1':
-    notimgr_c_env.AppendUnique(LIBS = ['tinydtls'])
-notimgr_c_env.ParseConfig('pkg-config --libs glib-2.0')
-notimgr_c_env.ParseConfig('pkg-config --cflags glib-2.0')
 if 'rt' in notimgr_c_env.get('LIBS'):
     notimgr_c_env.Append(LIBS = ['rt'])
 

@@ -231,9 +231,8 @@ static void CARetransmissionBaseRoutine(void *threadValue)
                       RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC);
 
             // wait
-            uint64_t absTime=getCurrentTimeInMicroSeconds();
-            absTime += RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC;
-            ca_cond_wait_until(context->threadCond, context->threadMutex, absTime );
+            uint64_t absTime = RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC;
+            ca_cond_wait_for(context->threadCond, context->threadMutex, absTime );
         }
 
         // mutex unlock
@@ -254,7 +253,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
 
 }
 
-CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool_t handle,
+CAResult_t CARetransmissionInitialize(CARetransmission_t *context, ca_thread_pool_t handle,
                                       CADataSendMethod_t retransmissionSendMethod,
                                       CATimeoutCallback_t timeoutCallback,
                                       CARetransmissionConfig_t* config)
@@ -315,7 +314,7 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
         return CA_STATUS_INVALID_PARAM;
     }
 
-    CAResult_t res = u_thread_pool_add_task(context->threadPool, CARetransmissionBaseRoutine,
+    CAResult_t res = ca_thread_pool_add_task(context->threadPool, CARetransmissionBaseRoutine,
                                             context);
 
     if (CA_STATUS_OK != res)

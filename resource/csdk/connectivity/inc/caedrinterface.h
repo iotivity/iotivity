@@ -154,7 +154,7 @@ void CAEDRClientUnsetCallbacks(void);
  * @brief Used to initialize the EDR client module where mutex is initialized
  * @return NONE
  */
-void CAEDRInitializeClient(u_thread_pool_t handle);
+void CAEDRInitializeClient(ca_thread_pool_t handle);
 
 /**
  * @brief Destroys the Device list and mutex.
@@ -214,7 +214,7 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info);
  * @retval #CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, u_thread_pool_t handle);
+CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, ca_thread_pool_t handle);
 
 /**
  * @brief  Stop RFCOMM server

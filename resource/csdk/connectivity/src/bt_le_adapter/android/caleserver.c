@@ -27,7 +27,7 @@
 #include "caleutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "uarraylist.h"
 #include "com_iotivity_jar_caleinterface.h"
 
@@ -48,7 +48,7 @@ static jobject g_leAdvertiseCallback;
 
 static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
 static u_arraylist_t *g_connectedDeviceList = NULL;
-static u_thread_pool_t g_threadPoolHandle = NULL;
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 static jboolean g_isStartServer;
 static jboolean g_isSendingMulticastData;
@@ -667,7 +667,7 @@ void CALeServerCreateJniInterfaceObject()
     }
 }
 
-void CALEServerInitialize(u_thread_pool_t handle)
+void CALEServerInitialize(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CALEServerInitialize");
 

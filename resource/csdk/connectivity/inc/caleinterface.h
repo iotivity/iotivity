@@ -249,7 +249,7 @@ void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-void CASetBleServerThreadPoolHandle(u_thread_pool_t handle);
+void CASetBleServerThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
 * @brief  Used to Set the gThreadPool handle which is required for spawning new thread.
@@ -257,7 +257,7 @@ void CASetBleServerThreadPoolHandle(u_thread_pool_t handle);
 *                    task.
 * @return NONE
 */
-void CASetBleClientThreadPoolHandle(u_thread_pool_t handle);
+void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
  * @brief  Used to unset the callback of adapter connection state change.

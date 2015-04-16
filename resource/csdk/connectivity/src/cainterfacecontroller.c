@@ -32,7 +32,7 @@
 #include "caremotehandler.h"
 #include "oic_malloc.h"
 #include "logger.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 
 #define TAG PCF("CA")
 
@@ -130,7 +130,7 @@ static void CANetworkChangedCallback(CALocalConnectivity_t *info,
     }
 }
 
-void CAInitializeAdapters(u_thread_pool_t handle)
+void CAInitializeAdapters(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "initialize adapters..");
 

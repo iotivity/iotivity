@@ -24,7 +24,7 @@
 #include "caleutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "uarraylist.h"
 
 #define TAG PCF("CA_LE_UTILS")

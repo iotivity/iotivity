@@ -28,7 +28,7 @@
 #define __CA_LECORE_H_
 
 #include "cacommon.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "jni.h"
 
 #ifdef __cplusplus
@@ -64,7 +64,7 @@ void CALeCreateJniInterfaceObject();
  * @param   handle           [IN] thread pool handle object
  * @return  None
  */
-void CALEInitialize(u_thread_pool_t handle);
+void CALEInitialize(ca_thread_pool_t handle);
 
 /**
  * @brief   terminate client for BLE

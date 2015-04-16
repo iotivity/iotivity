@@ -28,7 +28,7 @@
 
 #include <stdint.h>
 
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "camutex.h"
 #include "uarraylist.h"
 #include "cacommon.h"
@@ -66,7 +66,7 @@ typedef struct
 typedef struct
 {
     /** Thread pool of the thread started **/
-    u_thread_pool_t threadPool;
+    ca_thread_pool_t threadPool;
 
     /** mutex for synchronization **/
     ca_mutex threadMutex;
@@ -106,7 +106,7 @@ extern "C"
  *                                           if NULL is coming, it will set default values.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CARetransmissionInitialize(CARetransmission_t *context, u_thread_pool_t handle,
+CAResult_t CARetransmissionInitialize(CARetransmission_t *context, ca_thread_pool_t handle,
                                       CADataSendMethod_t retransmissionSendMethod,
                                       CATimeoutCallback_t timeoutCallback,
                                       CARetransmissionConfig_t* config);

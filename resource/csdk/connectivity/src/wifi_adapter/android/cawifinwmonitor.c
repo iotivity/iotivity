@@ -69,9 +69,9 @@ static char *g_wifiSubnetMask = NULL;
 
 /**
  * @var g_threadPool
- * @brief ThreadPool for storing u_thread_pool_t handle passed from adapter
+ * @brief ThreadPool for storing ca_thread_pool_t handle passed from adapter
  */
-static u_thread_pool_t g_threadPool = NULL;
+static ca_thread_pool_t g_threadPool = NULL;
 
 /**
  * @var g_stopNetworkMonitor
@@ -115,7 +115,7 @@ static void CACreateWiFiJNIInterfaceObject(jobject context);
  */
 void CASendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus);
 
-CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
+CAResult_t CAWiFiInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 

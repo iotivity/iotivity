@@ -36,7 +36,7 @@
 #include "gtest/gtest.h"
 
 #include <camutex.h>
-#include <uthreadpool.h>
+#include <cathreadpool.h>
 
 #include <time.h>
 #include <sys/time.h>
@@ -140,9 +140,9 @@ void mutexFunc(void *context)
 
 TEST(MutexTests, TC_03_THREAD_LOCKING)
 {
-    u_thread_pool_t mythreadpool;
+    ca_thread_pool_t mythreadpool;
 
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_init(3, &mythreadpool));
+    EXPECT_EQ(CA_STATUS_OK, ca_thread_pool_init(3, &mythreadpool));
 
     _func1_struct pData = {};
 
@@ -157,7 +157,7 @@ TEST(MutexTests, TC_03_THREAD_LOCKING)
         DBG_printf("test: starting thread\n");
         //start thread
         EXPECT_EQ(CA_STATUS_OK,
-                  u_thread_pool_add_task(mythreadpool, mutexFunc, &pData));
+                  ca_thread_pool_add_task(mythreadpool, mutexFunc, &pData));
 
         DBG_printf("test: waiting for thread to be up.\n");
 
@@ -188,7 +188,7 @@ TEST(MutexTests, TC_03_THREAD_LOCKING)
         ca_mutex_free(pData.mutex);
     }
 
-    u_thread_pool_free(mythreadpool);
+    ca_thread_pool_free(mythreadpool);
 }
 
 TEST(ConditionTests, TC_01_CREATE)
@@ -236,9 +236,9 @@ void condFunc(void *context)
 TEST(ConditionTests, TC_02_SIGNAL)
 {
     const int MAX_WAIT_MS = 2000;
-    u_thread_pool_t mythreadpool;
+    ca_thread_pool_t mythreadpool;
 
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_init(3, &mythreadpool));
+    EXPECT_EQ(CA_STATUS_OK, ca_thread_pool_init(3, &mythreadpool));
 
     ca_mutex sharedMutex = ca_mutex_new();
     ca_cond sharedCond = ca_cond_new();
@@ -252,13 +252,15 @@ TEST(ConditionTests, TC_02_SIGNAL)
     if (pData1.mutex != NULL)
     {
         DBG_printf("starting thread\n");
-        //start thread
+        // start threads
         EXPECT_EQ(CA_STATUS_OK,
-                  u_thread_pool_add_task(mythreadpool, condFunc, &pData1));
+                  ca_thread_pool_add_task(mythreadpool, condFunc, &pData1));
+        EXPECT_EQ(CA_STATUS_OK,
+                  ca_thread_pool_add_task(mythreadpool, condFunc, &pData2));
 
         //start thread
         EXPECT_EQ(CA_STATUS_OK,
-                  u_thread_pool_add_task(mythreadpool, condFunc, &pData2));
+                  ca_thread_pool_add_task(mythreadpool, condFunc, &pData2));
 
         DBG_printf("test    : sleeping\n");
 
@@ -329,15 +331,15 @@ TEST(ConditionTests, TC_02_SIGNAL)
 
     ca_cond_free(pData1.condition);
 
-    u_thread_pool_free(mythreadpool);
+    ca_thread_pool_free(mythreadpool);
 }
 
 TEST(ConditionTests, TC_03_BROADCAST)
 {
     const int MAX_WAIT_MS = 2000;
-    u_thread_pool_t mythreadpool;
+    ca_thread_pool_t mythreadpool;
 
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_init(3, &mythreadpool));
+    EXPECT_EQ(CA_STATUS_OK, ca_thread_pool_init(3, &mythreadpool));
 
     ca_mutex sharedMutex = ca_mutex_new();
     ca_cond sharedCond = ca_cond_new();
@@ -351,13 +353,15 @@ TEST(ConditionTests, TC_03_BROADCAST)
     if (pData1.mutex != NULL)
     {
         DBG_printf("starting thread\n");
-        //start thread
+        // start threads
         EXPECT_EQ(CA_STATUS_OK,
-                  u_thread_pool_add_task(mythreadpool, condFunc, &pData1));
+                  ca_thread_pool_add_task(mythreadpool, condFunc, &pData1));
+        EXPECT_EQ(CA_STATUS_OK,
+                  ca_thread_pool_add_task(mythreadpool, condFunc, &pData2));
 
         //start thread
         EXPECT_EQ(CA_STATUS_OK,
-                  u_thread_pool_add_task(mythreadpool, condFunc, &pData2));
+                  ca_thread_pool_add_task(mythreadpool, condFunc, &pData2));
 
         DBG_printf("test    : sleeping\n");
 
@@ -397,7 +401,7 @@ TEST(ConditionTests, TC_03_BROADCAST)
 
     ca_cond_free(sharedCond);
 
-    u_thread_pool_free(mythreadpool);
+    ca_thread_pool_free(mythreadpool);
 }
 
 TEST(CondTests, TC_04_TIMECHECK)
@@ -419,23 +423,21 @@ void timedFunc(void *context)
 
     ca_mutex_lock(pData->mutex);
 
-    uint64_t abs = getAbsTime();
-    abs += USECS_PER_SEC / 2; // 1/2 second
+    uint64_t abs = USECS_PER_SEC / 2; // 1/2 seconds
 
     // test UTIMEDOUT
-    CAWaitResult_t ret = ca_cond_wait_until(pData->condition,
-                                            pData->mutex, abs);
+    CAWaitResult_t ret = ca_cond_wait_for(pData->condition,
+                                          pData->mutex, abs);
     EXPECT_EQ(CA_WAIT_TIMEDOUT, ret);
 
     pData->thread_up = true;
 
     DBG_printf("Thread_%d: waiting for signal \n", pData->id);
 
-    abs = getAbsTime();
-    abs += 5 * USECS_PER_SEC; // 5 seconds
+    abs = 5 * USECS_PER_SEC; // 5 seconds
 
     // test signal
-    ret = ca_cond_wait_until(pData->condition, pData->mutex, abs);
+    ret = ca_cond_wait_for(pData->condition, pData->mutex, abs);
     EXPECT_EQ(CA_WAIT_SUCCESS, ret);
 
     pData->finished = true; // assignment guarded by lock
@@ -448,9 +450,9 @@ void timedFunc(void *context)
 TEST(ConditionTests, TC_05_WAIT)
 {
     const int MAX_WAIT_MS = 5000;
-    u_thread_pool_t mythreadpool;
+    ca_thread_pool_t mythreadpool;
 
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_init(3, &mythreadpool));
+    EXPECT_EQ(CA_STATUS_OK, ca_thread_pool_init(3, &mythreadpool));
 
     ca_mutex sharedMutex = ca_mutex_new();
     ca_cond sharedCond = ca_cond_new();
@@ -464,7 +466,7 @@ TEST(ConditionTests, TC_05_WAIT)
         DBG_printf("test    : starting thread\n");
         //start thread
         EXPECT_EQ(CA_STATUS_OK,
-                  u_thread_pool_add_task(mythreadpool, timedFunc, &pData1));
+                  ca_thread_pool_add_task(mythreadpool, timedFunc, &pData1));
 
         DBG_printf("test    : waiting for thread to timeout once.\n");
 
@@ -499,10 +501,11 @@ TEST(ConditionTests, TC_05_WAIT)
 
     ca_cond_free(sharedCond);
 
-    u_thread_pool_free(mythreadpool);
- }
+    ca_thread_pool_free(mythreadpool);
+}
 
-TEST(ConditionTests, TC_06_INVALIDWAIT)
+// Disabled because this should no longer be a valid test
+TEST(ConditionTests, DISABLED_TC_06_INVALIDWAIT)
 {
 
     ca_mutex sharedMutex = ca_mutex_new();
@@ -510,13 +513,13 @@ TEST(ConditionTests, TC_06_INVALIDWAIT)
 
     ca_mutex_lock(sharedMutex);
 
-    int ret = ca_cond_wait_until(NULL, sharedMutex, 5000);
+    int ret = ca_cond_wait_for(NULL, sharedMutex, 5000);
     EXPECT_EQ(CA_WAIT_INVAL,ret);
 
-    ret = ca_cond_wait_until(sharedCond, NULL, 5000);
+    ret = ca_cond_wait_for(sharedCond, NULL, 5000);
     EXPECT_EQ(CA_WAIT_INVAL,ret);
 
-    ret = ca_cond_wait_until(NULL, NULL, 5000);
+    ret = ca_cond_wait_for(NULL, NULL, 5000);
     EXPECT_EQ(CA_WAIT_INVAL,ret);
 
     ca_mutex_unlock(sharedMutex);
@@ -537,11 +540,10 @@ TEST(ConditionTests, TC_07_WAITDURATION)
 
     ca_mutex_lock(sharedMutex);
 
-    uint64_t abs = getAbsTime();
-    uint64_t beg = abs;
-    abs += TARGET_WAIT * USECS_PER_SEC;
+    uint64_t beg = getAbsTime();
 
-    CAWaitResult_t ret = ca_cond_wait_until(sharedCond, sharedMutex, abs);
+    CAWaitResult_t ret = ca_cond_wait_for(sharedCond, sharedMutex,
+                                          TARGET_WAIT * USECS_PER_SEC);
     EXPECT_EQ(CA_WAIT_TIMEDOUT,ret);
 
     uint64_t end = getAbsTime();

@@ -27,7 +27,7 @@
 #include "caedrserver.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 #include "camutex.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
@@ -45,7 +45,7 @@ static const uint32_t MAX_PDU_BUFFER = 1024;
 static u_arraylist_t *g_deviceStateList = NULL;
 static u_arraylist_t *g_deviceObjectList = NULL;
 
-static u_thread_pool_t g_threadPoolHandle = NULL;
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 static JavaVM *g_jvm;
 
@@ -230,7 +230,7 @@ static void CAAcceptHandler(void *data)
 
 // adapter common method
 
-CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, u_thread_pool_t handle)
+CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CAEDRServerInitialize(handle);
@@ -330,7 +330,7 @@ void CAEDRServerJniInit(JNIEnv *env, JavaVM* jvm)
     g_jvm = jvm;
 }
 
-void CAEDRServerInitialize(u_thread_pool_t handle)
+void CAEDRServerInitialize(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CAEDRServerInitialize");
 
@@ -378,7 +378,7 @@ void CAEDRServerInitialize(u_thread_pool_t handle)
     }
 
     ctx->stopFlag = &g_stopAccept;
-    if (CA_STATUS_OK != u_thread_pool_add_task(g_threadPoolHandle, CAAcceptHandler, (void *)ctx))
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAAcceptHandler, (void *)ctx))
     {
         OIC_LOG(ERROR, TAG, "Failed to create read thread!");
         OICFree((void *)ctx);
@@ -448,7 +448,7 @@ int32_t CAEDRStartUnicastServer(const char* address, bool isSecured)
 
     ctx->stopFlag = &g_stopUnicast;
     ctx->type = isSecured ? CA_SECURED_UNICAST_SERVER : CA_UNICAST_SERVER;
-    if (CA_STATUS_OK != u_thread_pool_add_task(g_threadPoolHandle, CAReceiveHandler, (void *)ctx))
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAReceiveHandler, (void *)ctx))
     {
         OIC_LOG(ERROR, TAG, "Failed to create read thread!");
         ca_mutex_unlock(g_mutexUnicastServer);
@@ -488,7 +488,7 @@ int32_t CAEDRStartMulticastServer(bool isSecured)
     ctx->type = CA_MULTICAST_SERVER;
 
     g_stopMulticast = false;
-    if (CA_STATUS_OK != u_thread_pool_add_task(g_threadPoolHandle, CAReceiveHandler, (void *)ctx))
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAReceiveHandler, (void *)ctx))
     {
         OIC_LOG(ERROR, TAG, "thread_pool_add_task failed!");
 

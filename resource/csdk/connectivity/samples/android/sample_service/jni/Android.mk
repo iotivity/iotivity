@@ -18,7 +18,7 @@ LOCAL_C_INCLUDES := ../../../api
 include $(BUILD_SHARED_LIBRARY)
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#Build glib CACommon CACoap CA
+#Build CACommon CACoap CA
 include $(CLEAR_VARS)
 PROJECT_ROOT_PATH			= ../../..
 CA_LIB_PATH 				= $(PROJECT_ROOT_PATH)/build/android

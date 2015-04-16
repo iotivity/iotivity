@@ -94,3 +94,17 @@ def check_cxx11_flags(context):
     _inform_user_of_broken_gcc_headers(context, ret)
 
     return ret
+
+def check_pthreads(context):
+    """
+    Check if pthreads are supported for this platform.
+
+    Sets POSIX_SUPPORTED based on the result.
+    """
+    context.Message('Checking for POSIX Thread Support...')
+    config = factory.make_c_compiler_config(context)
+
+    ret = config.has_pthreads_support()
+    context.env['POSIX_SUPPORTED'] = ret
+    context.Result(ret)
+    return ret

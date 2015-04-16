@@ -28,11 +28,11 @@
 #define TAG PCF("CA")
 
 static CANetworkPacketReceivedCallback g_leReceivedCallback = NULL;
-static u_thread_pool_t g_threadPoolHandle = NULL;
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
-                          u_thread_pool_t handle)
+                          ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CAInitializeLE");
 

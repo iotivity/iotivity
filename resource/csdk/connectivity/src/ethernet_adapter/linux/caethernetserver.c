@@ -155,9 +155,9 @@ static bool g_stopSecureUnicast = false;
 
 /**
  * @var g_threadPool
- * @brief ThreadPool for storing u_thread_pool_t handle passed from adapter
+ * @brief ThreadPool for storing ca_thread_pool_t handle passed from adapter
  */
-static u_thread_pool_t g_threadPool = NULL;
+static ca_thread_pool_t g_threadPool = NULL;
 
 /**
  * @var g_multicastServerInterface
@@ -541,7 +541,7 @@ static CAResult_t CAStartUnicastServer(const char *localAddress, uint16_t *port,
     ctx->stopFd = pipefd[PIPE_READ_FD]; // The read end of the pipe
     ctx->socket_fd = *serverFD;
     ctx->type = isSecured ? CA_SECURED_UNICAST_SERVER : CA_UNICAST_SERVER;
-    if (CA_STATUS_OK != u_thread_pool_add_task(g_threadPool, CAReceiveHandler, (void *)ctx))
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPool, CAReceiveHandler, (void *)ctx))
     {
         OIC_LOG(ERROR, ETHERNET_SERVER_TAG, "Failed to create read thread!");
 
@@ -629,7 +629,7 @@ static CAResult_t CAEthernetServerCreateMutex(void)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEthernetInitializeServer(const u_thread_pool_t threadPool)
+CAResult_t CAEthernetInitializeServer(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, ETHERNET_SERVER_TAG, "IN");
 
@@ -822,7 +822,7 @@ CAResult_t CAEthernetStartMulticastServer(const char *localAddress,
     ctx->type = CA_MULTICAST_SERVER;
 
     g_stopMulticast = false;
-    if (CA_STATUS_OK != u_thread_pool_add_task(g_threadPool, CAReceiveHandler, (void *)ctx))
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPool, CAReceiveHandler, (void *)ctx))
     {
         OIC_LOG(ERROR, ETHERNET_SERVER_TAG, "thread_pool_add_task failed!");
 

@@ -29,7 +29,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -49,7 +49,7 @@ extern "C"
  */
 CAResult_t CAInitializeWIFI(CARegisterConnectivityCallback registerCallback,
                             CANetworkPacketReceivedCallback networkPacketCallback,
-                            CANetworkChangeCallback netCallback, u_thread_pool_t handle);
+                            CANetworkChangeCallback netCallback, ca_thread_pool_t handle);
 
 /**
  * @brief Start WIFI Interface adapter.

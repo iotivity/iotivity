@@ -105,7 +105,7 @@ static void CALENetStateChangeCallback(const char* address, const uint32_t statu
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
-                          CANetworkChangeCallback netCallback, u_thread_pool_t handle)
+                          CANetworkChangeCallback netCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IntializeBLE");
 

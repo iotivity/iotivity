@@ -29,7 +29,7 @@
 
 #include "logger.h"
 #include "oic_malloc.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 #include "camutex.h"
 #include "uarraylist.h"
 #include "com_iotivity_jar_caleinterface.h"
@@ -57,7 +57,7 @@ JavaVM *g_jvm;
 static u_arraylist_t *g_deviceList = NULL;
 static u_arraylist_t *g_gattObjectList = NULL;
 static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
-static u_thread_pool_t g_threadPoolHandle = NULL;
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 static jobject g_leScanCallback;
 static jobject g_leGattCallback;
 static jobject g_context;
@@ -165,7 +165,7 @@ void JNI_OnUnload(JavaVM *jvm, void *reserved)
     return;
 }
 
-void CALEInitialize(u_thread_pool_t handle)
+void CALEInitialize(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CALEInitialize");
 

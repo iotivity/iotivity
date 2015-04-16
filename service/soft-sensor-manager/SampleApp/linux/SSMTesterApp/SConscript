@@ -50,8 +50,6 @@ linux_sample_env.AppendUnique(LIBS = ['dl'])
 if env.get('SECURED') == '1':
     linux_sample_env.AppendUnique(LIBS = ['tinydtls'])
 
-linux_sample_env.ParseConfig('pkg-config --libs glib-2.0')
-
 # On some platforms link order can miss functions so librt needs to be
 # re-scanned at the end if present. gcc 4.6 is one with this issue.
 if 'rt' in linux_sample_env.get('LIBS'):

@@ -28,7 +28,7 @@
 #define __CA_EDRUTILES_H_
 
 #include "cacommon.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "uarraylist.h"
 #include "jni.h"
 

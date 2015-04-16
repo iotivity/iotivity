@@ -49,11 +49,10 @@ if target_os not in ['windows', 'winrt']:
 		examples_env.AppendUnique(LIBS = ['-lpthread'])
 
 examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+examples_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction',
+        'coap', 'rt'])
 if env.get('SECURED') == '1':
     examples_env.AppendUnique(LIBS = ['tinydtls'])
-
-examples_env.ParseConfig('pkg-config --libs glib-2.0');
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])

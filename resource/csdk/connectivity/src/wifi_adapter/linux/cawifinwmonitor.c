@@ -90,9 +90,9 @@ static char *g_wifiSubnetMask = NULL;
 
 /**
  * @var g_threadPool
- * @brief ThreadPool for storing u_thread_pool_t handle passed from adapter
+ * @brief ThreadPool for storing ca_thread_pool_t handle passed from adapter
  */
-static u_thread_pool_t g_threadPool = NULL;
+static ca_thread_pool_t g_threadPool = NULL;
 
 /**
  * @var g_stopNetworkMonitor
@@ -115,7 +115,7 @@ static void CAWiFiGetInterfaceInformation(char **interfaceName, char **ipAddress
 
 static void CANetworkMonitorThread(void *threadData);
 
-CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool)
+CAResult_t CAWiFiInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, WIFI_MONITOR_TAG, "IN");
 
@@ -183,7 +183,7 @@ CAResult_t CAWiFiStartNetworkMonitor(void)
         return CA_STATUS_FAILED;
     }
 
-    if (CA_STATUS_OK != u_thread_pool_add_task(g_threadPool,  CANetworkMonitorThread,
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPool,  CANetworkMonitorThread,
             NULL))
     {
         OIC_LOG(ERROR, WIFI_MONITOR_TAG, "[ThreadPool] thread_pool_add_task failed!");

@@ -56,7 +56,6 @@ if target_os != 'darwin':
 
 if env.get('SECURED') == '1':
     stacktest_env.AppendUnique(LIBS = ['tinydtls'])
-stacktest_env.ParseConfig('pkg-config --libs glib-2.0');
 
 if env.get('LOGGING'):
 	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

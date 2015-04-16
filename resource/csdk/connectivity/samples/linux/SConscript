@@ -40,8 +40,6 @@ sample_env.PrependUnique(LIBPATH = [sample_env.get('BUILD_DIR'), '.',])
 sample_env.PrependUnique(RPATH = [sample_env.get('BUILD_DIR'), '.',])
 sample_env.PrependUnique(LIBS = ['connectivity_abstraction', 'coap',])
 
-sample_env.ParseConfig('pkg-config --libs glib-2.0');
-
 if secured == '1':
 	sample_env.AppendUnique(CPPPATH = [root_dir + 'external/inc/'])
 	sample_env.AppendUnique(LIBS = ['tinydtls'])

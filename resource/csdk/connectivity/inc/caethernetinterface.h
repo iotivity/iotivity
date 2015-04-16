@@ -30,7 +30,7 @@
 #include <stdbool.h>
 
 #include "cacommon.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -78,7 +78,7 @@ typedef void (*CAEthernetExceptionCallback)(CAAdapterServerType_t type);
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-CAResult_t CAEthernetInitializeServer(const u_thread_pool_t threadPool);
+CAResult_t CAEthernetInitializeServer(const ca_thread_pool_t threadPool);
 
 /**
  * @brief  Terminate Ethernet server
@@ -250,7 +250,7 @@ typedef void (*CAEthernetConnectionStateChangeCallback)(const char *ipAddress,
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-CAResult_t CAEthernetInitializeNetworkMonitor(const u_thread_pool_t threadPool);
+CAResult_t CAEthernetInitializeNetworkMonitor(const ca_thread_pool_t threadPool);
 
 /**
  * @brief Terminate Ethernet network monitor

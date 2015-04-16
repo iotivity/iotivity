@@ -31,7 +31,7 @@
 #include <stdbool.h>
 
 #include "cacommon.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -78,7 +78,7 @@ typedef void (*CAWiFiExceptionCallback)(CAAdapterServerType_t type);
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-CAResult_t CAWiFiInitializeServer(const u_thread_pool_t threadPool);
+CAResult_t CAWiFiInitializeServer(const ca_thread_pool_t threadPool);
 
 
 /**
@@ -247,7 +247,7 @@ typedef void (*CAWiFiConnectionStateChangeCallback)(const char *ipAddress,
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-CAResult_t CAWiFiInitializeNetworkMonitor(const u_thread_pool_t threadPool);
+CAResult_t CAWiFiInitializeNetworkMonitor(const ca_thread_pool_t threadPool);
 
 /**
  * @brief Terminate WIFI network monitor

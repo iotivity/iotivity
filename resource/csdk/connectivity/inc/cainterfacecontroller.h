@@ -28,7 +28,7 @@
 #define __CA_INTERFACE_CONTROLLER_H_
 
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
@@ -40,7 +40,7 @@ extern "C"
  * @param   handle         [IN]    thread pool handle created by message handler for different adapters.
  * @return  none
  */
-void CAInitializeAdapters(u_thread_pool_t handle);
+void CAInitializeAdapters(ca_thread_pool_t handle);
 
 /**
  * @brief   Set the received packets callback for message handler

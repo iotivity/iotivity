@@ -55,7 +55,6 @@ unittests_env.PrependUnique(LIBS = [
 
 if env.get('SECURED') == '1':
     unittests_env.AppendUnique(LIBS = ['tinydtls'])
-unittests_env.ParseConfig('pkg-config --libs glib-2.0');
 
 if env.get('LOGGING'):
 	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

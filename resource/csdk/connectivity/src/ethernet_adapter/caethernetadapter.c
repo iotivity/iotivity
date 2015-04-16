@@ -123,9 +123,9 @@ static CAQueueingThread_t *g_sendQueueHandle = NULL;
 
 /**
  * @var g_threadPool
- * @brief ThreadPool for storing u_thread_pool_t handle passed from CA
+ * @brief ThreadPool for storing ca_thread_pool_t handle passed from CA
  */
-static u_thread_pool_t g_threadPool = NULL;
+static ca_thread_pool_t g_threadPool = NULL;
 
 static CAResult_t CAEthernetInitializeQueueHandles();
 static void CAEthernetDeinitializeQueueHandles();
@@ -359,7 +359,7 @@ void CAEthernetPacketReceivedCB(const char *ipAddress, const uint16_t port,
 
 CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
                             CANetworkPacketReceivedCallback networkPacketCallback,
-                            CANetworkChangeCallback netCallback, u_thread_pool_t handle)
+                            CANetworkChangeCallback netCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
     VERIFY_NON_NULL(registerCallback, ETHERNET_ADAPTER_TAG, "registerCallback");

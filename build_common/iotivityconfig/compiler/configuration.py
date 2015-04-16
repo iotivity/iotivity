@@ -65,6 +65,16 @@ class Configuration:
                                  '.cpp',
                                  'CXXFLAGS')
 
+    def has_pthreads_support(self):
+        """
+        Check if PThreads are supported by this system
+
+        Returns 1 if this system DOES support pthreads, 0
+        otherwise
+        """
+
+        return self._context.TryCompile(self._pthreads_test_program(), '.c')
+
     # --------------------------------------------------------------
     # Check if flag is required to build the given test program.
     #
@@ -148,3 +158,21 @@ class Configuration:
     # --------------------------------------------------------------
     def _cxx11_flags(self):
         raise NotImplementedError('unimplemented method')
+
+    # --------------------------------------------------------------
+    # Return a test program to be used when checking for PThreads
+    # support
+    #
+    # --------------------------------------------------------------
+    def _pthreads_test_program(self):
+        return """
+#include <unistd.h>
+#include <pthread.h>
+int main()
+{
+    #ifndef _POSIX_THREADS
+    # error POSIX Threads support not available
+    #endif
+    return 0;
+}
+"""

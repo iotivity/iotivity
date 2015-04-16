@@ -24,7 +24,7 @@
 #include "caedrutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "uarraylist.h"
 
 #define ERROR_CODE (-1)

@@ -33,7 +33,7 @@
 #include "uqueue.h"
 #include "logger.h"
 #include "config.h" /* for coap protocol */
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 #include "caqueueingthread.h"
 #include "camutex.h"
 #include "oic_malloc.h"
@@ -60,7 +60,7 @@ typedef struct
 } CAData_t;
 
 // thread pool handle
-static u_thread_pool_t g_threadPoolHandle = NULL;
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 // message handler main thread
 static CAQueueingThread_t g_sendThread;
@@ -840,7 +840,7 @@ CAResult_t CAInitializeMessageHandler()
     CASetNetworkChangeCallback(CANetworkChangedCallback);
 
     // create thread pool
-    CAResult_t res = u_thread_pool_init(MAX_THREAD_POOL_SIZE, &g_threadPoolHandle);
+    CAResult_t res = ca_thread_pool_init(MAX_THREAD_POOL_SIZE, &g_threadPoolHandle);
 
     if (res != CA_STATUS_OK)
     {
@@ -862,7 +862,7 @@ CAResult_t CAInitializeMessageHandler()
     if (res != CA_STATUS_OK)
     {
         OIC_LOG(ERROR, TAG, "thread start error(send thread).");
-        u_thread_pool_free(g_threadPoolHandle);
+        ca_thread_pool_free(g_threadPoolHandle);
         g_threadPoolHandle = NULL;
         return res;
     }
@@ -951,7 +951,7 @@ void CATerminateMessageHandler()
     // destroy thread pool
     if (NULL != g_threadPoolHandle)
     {
-        u_thread_pool_free(g_threadPoolHandle);
+        ca_thread_pool_free(g_threadPoolHandle);
         g_threadPoolHandle = NULL;
     }
 

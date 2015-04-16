@@ -48,7 +48,7 @@ target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 
 # True if binary needs to be installed on board. (Might need root permissions)
 # set to 'no', 'false' or 0 for only compilation
-require_upload = ARGUMENTS.get('UPLOAD', False) 
+require_upload = ARGUMENTS.get('UPLOAD', False)
 
 if ARGUMENTS.get('TEST'):
 	logging_default = False
@@ -205,8 +205,8 @@ Export('env')
 ######################################################################
 if target_os == "yocto":
     '''
-    This code injects Yocto cross-compilation tools+flags into scons' 
-    build environment in order to invoke the relevant tools while 
+    This code injects Yocto cross-compilation tools+flags into scons'
+    build environment in order to invoke the relevant tools while
     performing a build.
     '''
     import os.path
@@ -244,7 +244,7 @@ if target_os == "yocto":
     env['TARGET_OS'] = 'linux'
     '''
     We want to preserve debug symbols to allow BitBake to generate both DEBUG and
-    RELEASE packages for OIC. 
+    RELEASE packages for OIC.
     '''
     env['CCFLAGS'].append('-g')
     Export('env')
@@ -258,15 +258,36 @@ else:
     else:
 		env.SConscript(target_os + '/SConscript')
 
-env.SConscript('external_libs.scons')
-
 # Delete the temp files of configuration
 if env.GetOption('clean'):
 	dir = env.get('SRC_DIR')
 
 	if os.path.exists(dir + '/config.log'):
 		Execute(Delete(dir + '/config.log'))
+	if os.path.exists(dir + '/.sconsign.dblite'):
 		Execute(Delete(dir + '/.sconsign.dblite'))
+	if os.path.exists(dir + '/.sconf_temp'):
 		Execute(Delete(dir + '/.sconf_temp'))
 
+######################################################################
+# Check for PThreads support
+######################################################################
+import iotivityconfig
+from iotivityconfig import *
+
+conf = Configure(env,
+        custom_tests =
+        {
+            'CheckPThreadsSupport' : iotivityconfig.check_pthreads
+        } )
+
+# Identify whether we have pthreads support, which is necessary for
+# threading and mutexes.  This will set the environment variable
+# POSIX_SUPPORTED, 1 if it is supported, 0 otherwise
+conf.CheckPThreadsSupport()
+
+env = conf.Finish()
+######################################################################
+
+env.SConscript('external_libs.scons')
 Return('env')

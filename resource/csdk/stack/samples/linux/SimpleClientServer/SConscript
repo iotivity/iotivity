@@ -40,12 +40,12 @@ samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if target_os in ['darwin', 'ios']:
 	samples_env.PrependUnique(LIBS = ['m','octbstack', 'connectivity_abstraction','coap' ])
-else:
+elif target_os not in ['arduino']:
 	samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+	samples_env.AppendUnique(LIBS = ['rt'])
 
 if env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS = ['tinydtls'])
-samples_env.ParseConfig('pkg-config --libs glib-2.0');
 
 samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 

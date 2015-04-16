@@ -40,7 +40,7 @@
 #include "cableutil.h"
 #include "caadapterinterface.h"
 #include "logger.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "caleinterface.h"
 #include "oic_malloc.h"
 

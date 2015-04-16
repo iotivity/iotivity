@@ -20,9 +20,6 @@
 #define build type
 BUILD = debug
 
-#you can set the path to ../../../../../extlibs/glib
-GLIB_SRC_PATH	?= $(YOUR_GLIB_PATH)/glib-2.40.2
-
 DEFINE_FLAG = -D__ANDROID__
 
 
@@ -31,6 +28,4 @@ BUILD_FLAG = $(BUILD_FLAG.$(BUILD))
 
 LOCAL_PATH = ../
 
-#Build glib
 include $(CLEAR_VARS)
-include $(GLIB_SRC_PATH)/Android.mk

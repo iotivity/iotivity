@@ -43,7 +43,7 @@
  * @var g_edrThreadPool
  * @brief Reference to threadpool.
  */
-static u_thread_pool_t g_edrThreadPool = NULL;
+static ca_thread_pool_t g_edrThreadPool = NULL;
 
 /**
  * @var g_sendQueueHandle
@@ -142,7 +142,7 @@ static void CAEDRDataDestroyer(void *data, uint32_t size);
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback packetReceivedCallback,
                            CANetworkChangeCallback networkStateChangeCallback,
-                           u_thread_pool_t handle)
+                           ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -412,7 +412,7 @@ CAResult_t CAStartServer(void)
     {
         OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Bluetooth adapter is disabled!");
         // Setting g_serverState for starting Rfcommserver when adapter starts
-        g_serverState = TRUE;
+        g_serverState = true;
         return CA_STATUS_OK;
     }
 
@@ -882,7 +882,7 @@ void CAEDRNotifyNetworkStatus(CANetworkStatus_t status)
         CAEDRNetworkEvent *event = CAEDRCreateNetworkEvent(g_localConnectivity, status);
         if (NULL != event)
         {
-            if (CA_STATUS_OK != u_thread_pool_add_task(g_edrThreadPool, CAEDROnNetworkStatusChanged,
+            if (CA_STATUS_OK != ca_thread_pool_add_task(g_edrThreadPool, CAEDROnNetworkStatusChanged,
                     event))
             {
                 OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create threadpool!");

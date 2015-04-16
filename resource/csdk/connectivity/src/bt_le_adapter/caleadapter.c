@@ -76,7 +76,7 @@ static ca_mutex g_bleLocalAddressMutex = NULL;
  * @var gBleClientThreadPool
  * @brief reference to threadpool
  */
-static u_thread_pool_t g_bleAdapterThreadPool = NULL;
+static ca_thread_pool_t g_bleAdapterThreadPool = NULL;
 
 /**
  * @var g_bleAdapterThreadPoolMutex
@@ -190,7 +190,7 @@ int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
 * @return  void
 *
 */
-void CASetBleAdapterThreadPoolHandle(u_thread_pool_t handle);
+void CASetBleAdapterThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
 * @fn  CALEDeviceStateChangedCb
@@ -228,7 +228,7 @@ static void CALEDataDestroyer(void *data, uint32_t size);
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CANetworkChangeCallback netCallback,
-                          u_thread_pool_t handle)
+                          ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -853,7 +853,7 @@ CAResult_t CAInitBleServerSenderQueue()
 
     if (CA_STATUS_OK != CAQueueingThreadStart(g_sendQueueHandle))
     {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_thread_pool_add_task failed ");
         OICFree(g_sendQueueHandle);
         g_sendQueueHandle = NULL;
         return CA_STATUS_FAILED;
@@ -892,7 +892,7 @@ CAResult_t CAInitBleClientSenderQueue()
 
     if (CA_STATUS_OK != CAQueueingThreadStart(g_bLEClientSendQueueHandle))
     {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_thread_pool_add_task failed ");
         OICFree(g_bLEClientSendQueueHandle);
         g_bLEClientSendQueueHandle = NULL;
         return CA_STATUS_FAILED;
@@ -932,7 +932,7 @@ CAResult_t CAInitBleServerReceiverQueue()
 
     if (CA_STATUS_OK != CAQueueingThreadStart(g_bleServerReceiverQueue))
     {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_thread_pool_add_task failed ");
         OICFree(g_bleServerReceiverQueue);
         g_bleServerReceiverQueue = NULL;
         return CA_STATUS_FAILED;
@@ -974,7 +974,7 @@ CAResult_t CAInitBleClientReceiverQueue()
     }
     if (CA_STATUS_OK != CAQueueingThreadStart(g_bleClientReceiverQueue))
     {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "u_thread_pool_add_task failed ");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_thread_pool_add_task failed ");
         OICFree(g_bleClientReceiverQueue);
         g_bleClientReceiverQueue = NULL;
         return CA_STATUS_FAILED;
@@ -1678,7 +1678,7 @@ CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *servic
     return CA_STATUS_OK;
 }
 
-void CASetBleAdapterThreadPoolHandle(u_thread_pool_t handle)
+void CASetBleAdapterThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 

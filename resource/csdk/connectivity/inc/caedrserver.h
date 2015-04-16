@@ -30,7 +30,7 @@
 #include <stdbool.h>
 
 #include "cacommon.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "jni.h"
 
 
@@ -55,7 +55,7 @@ void CAEDRServerJniInit(JNIEnv *env, JavaVM *jvm);
  * @param   handle           [IN] thread pool handle object
  * @return  None
  */
-void CAEDRServerInitialize(u_thread_pool_t handle);
+void CAEDRServerInitialize(ca_thread_pool_t handle);
 
 /**
  * @brief   Start unicast server

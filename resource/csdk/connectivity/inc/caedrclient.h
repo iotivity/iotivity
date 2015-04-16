@@ -30,7 +30,7 @@
 #include <stdbool.h>
 
 #include "cacommon.h"
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "jni.h"
 
 
@@ -58,7 +58,7 @@ void CAEDRCreateJNIInterfaceObject(jobject context);
  * @param   handle           [IN] thread pool handle object
  * @return  None
  */
-void CAEDRInitialize(u_thread_pool_t handle);
+void CAEDRInitialize(ca_thread_pool_t handle);
 
 /**
  * @brief   Terminate server for EDR

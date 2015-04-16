@@ -29,7 +29,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "uthreadpool.h" /* for thread pool */
+#include "cathreadpool.h" /* for thread pool */
 
 /**
  * BLE Interface APIs.
@@ -66,7 +66,7 @@ typedef struct
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CANetworkChangeCallback netCallback,
-                          u_thread_pool_t handle);
+                          ca_thread_pool_t handle);
 
 /**
  * @brief Starting LE connectivity adapters.

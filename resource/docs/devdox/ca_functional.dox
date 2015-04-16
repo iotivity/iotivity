@@ -55,7 +55,7 @@ The message handler owns athread pool and send and reive queue.
 
 @paragraph caf_ovr_comm_netinterface_control Interface controller
 
-This directly controls the individual adapters. Calling CAInitializeAdapters(u_thread_pool_t handle)
+This directly controls the individual adapters. Calling CAInitializeAdapters(ca_thread_pool_t handle)
 will invoke whatever config had been established by compile-time flags.
 
 @paragraph caf_ovr_comm_netinterface_eth Ethernet Adapter

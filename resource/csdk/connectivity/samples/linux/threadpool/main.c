@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "camutex.h"
 
-u_thread_pool_t g_threadPoolHandle = NULL;
+ca_thread_pool_t g_threadPoolHandle = NULL;
 
 ca_mutex g_mutex = NULL;
 ca_cond g_cond = NULL;
@@ -44,14 +44,14 @@ void task(void *data)
 
 void testThreadPool(void)
 {
-    char *string = "Test glib thread pool";
+    char *string = "Test thread pool";
 
     //Initialize the mutex
     printf("[testThreadPool] Initializing mutex\n");
 
     //Initialize the thread pool
     printf("[testThreadPool] Initializing thread pool\n");
-    if (CA_STATUS_OK != u_thread_pool_init(2, &g_threadPoolHandle))
+    if (CA_STATUS_OK != ca_thread_pool_init(2, &g_threadPoolHandle))
     {
         printf("thread_pool_init failed!\n");
         return;
@@ -63,7 +63,7 @@ void testThreadPool(void)
     if (NULL == g_mutex)
     {
         printf("[testThreadPool] Failed to create mutex!\n");
-        u_thread_pool_free(g_threadPoolHandle);
+        ca_thread_pool_free(g_threadPoolHandle);
         return;
     }
 
@@ -74,7 +74,7 @@ void testThreadPool(void)
     {
         printf("[testThreadPool] Failed to create condition!\n");
         ca_mutex_free(g_mutex);
-        u_thread_pool_free(g_threadPoolHandle);
+        ca_thread_pool_free(g_threadPoolHandle);
         return;
     }
 
@@ -85,10 +85,10 @@ void testThreadPool(void)
     g_condFlag = false;
     //Add task to thread pool
     printf("[testThreadPool] Adding the task to thread pool\n");
-    if (CA_STATUS_OK != u_thread_pool_add_task(g_threadPoolHandle, task, (void *) string))
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, task, (void *) string))
     {
         printf("[testThreadPool] thread_pool_add_task failed!\n");
-        u_thread_pool_free(g_threadPoolHandle);
+        ca_thread_pool_free(g_threadPoolHandle);
         ca_mutex_unlock(g_mutex);
         ca_mutex_free(g_mutex);
         ca_cond_free(g_cond);
@@ -110,7 +110,7 @@ void testThreadPool(void)
     printf("[testThreadPool] Task is completed and terminating threadpool\n");
     ca_cond_free(g_cond);
     ca_mutex_free(g_mutex);
-    u_thread_pool_free(g_threadPoolHandle);
+    ca_thread_pool_free(g_threadPoolHandle);
 
     printf("Exiting from testThreadPool\n");
 }

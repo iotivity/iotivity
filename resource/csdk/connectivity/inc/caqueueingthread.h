@@ -29,7 +29,7 @@
 
 #include <stdint.h>
 
-#include "uthreadpool.h"
+#include "cathreadpool.h"
 #include "camutex.h"
 #include "uqueue.h"
 #include "cacommon.h"
@@ -47,7 +47,7 @@ typedef void (*CADataDestroyFunction)(void *data, uint32_t size);
 typedef struct
 {
     /** Thread pool of the thread started **/
-    u_thread_pool_t threadPool;
+    ca_thread_pool_t threadPool;
     /** mutex for synchrnoization **/
     ca_mutex threadMutex;
     /** conditional mutex for synchrnoization **/
@@ -70,7 +70,7 @@ typedef struct
  * @param   destroy     [IN] function to data destroy
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_t handle,
+CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, ca_thread_pool_t handle,
                                       CAThreadTask task, CADataDestroyFunction destroy);
 
 /**
