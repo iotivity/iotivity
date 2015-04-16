@@ -180,7 +180,7 @@ TEST(StackStart, StackStartSuccessiveInits)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
-TEST(StackDiscovery, DoResourceDeviceDiscovery)
+TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OCCallbackData cbData;
@@ -216,7 +216,7 @@ TEST(StackStop, StackStopWithoutInit)
     EXPECT_EQ(OC_STACK_ERROR, OCStop());
 }
 
-TEST(StackResource, UpdateResourceNullURI)
+TEST(StackResource, DISABLED_UpdateResourceNullURI)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OCCallbackData cbData;

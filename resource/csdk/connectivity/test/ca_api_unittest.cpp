@@ -60,7 +60,6 @@ static CAInfo_t responseData;
 static CAResponseInfo_t responseInfo;
 static CAToken_t tempToken = NULL;
 static uint8_t tokenLength = CA_MAX_TOKEN_LEN;
-static CAResult_t g_selectNetworkResult = CA_STATUS_OK;
 static const char URI[] = "coap://10.11.12.13:4545/a/light";
 static const char RESOURCE_URI[] = "/a/light";
 
@@ -160,7 +159,7 @@ TEST_F(CATests, TerminateTest)
 }
 // CAStartListeningServer TC
 // check return value
-TEST(StartListeningServerTest, TC_03_Positive_01)
+TEST(StartListeningServerTest, DISABLED_TC_03_Positive_01)
 {
     CASelectNetwork(CA_ETHERNET);
     EXPECT_EQ(CA_STATUS_OK, CAStartListeningServer());
@@ -168,7 +167,7 @@ TEST(StartListeningServerTest, TC_03_Positive_01)
 
 // CAStartDiscoveryServer TC
 // check return value
-TEST(StartDiscoveryServerTest, TC_04_Positive_01)
+TEST(StartDiscoveryServerTest, DISABLED_TC_04_Positive_01)
 {
     EXPECT_EQ(CA_STATUS_OK, CAStartDiscoveryServer());
 }
@@ -293,7 +292,7 @@ TEST_F(CATests, DestroyTokenTest)
 
 // CAFindResource TC
 // check return value
-TEST(FindResourceTest, TC_14_Positive_01)
+TEST(FindResourceTest, DISABLED_TC_14_Positive_01)
 {
     uri = (char *) RESOURCE_URI;
 
@@ -313,7 +312,7 @@ TEST_F(CATests, FindResourceTest)
 
 // CASendRequest TC
 // check return value
-TEST(SendRequestTest, TC_16_Positive_01)
+TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
 {
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -393,7 +392,7 @@ TEST_F(CATests, SendRequestTestWithNullAddr)
 
 // CASendResponse TC
 // check return value
-TEST(SendResponseTest, TC_19_Positive_01)
+TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
 {
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -419,7 +418,7 @@ TEST(SendResponseTest, TC_19_Positive_01)
 }
 
 // check return value when uri is NULL
-TEST(SendResponseTest, TC_20_Negative_01)
+TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
 {
     uri = NULL;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -464,7 +463,7 @@ TEST_F(CATests, SendResponseTest)
 
 // CASendNotification TC
 // check return value
-TEST(SendNotificationTest, TC_22_Positive_01)
+TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
 {
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -521,7 +520,7 @@ TEST_F(CATests, SendNotificationTest)
 
 // CAAdvertiseResource TC
 // check return value
-TEST(AdvertiseResourceTest, TC_24_Positive_01)
+TEST(AdvertiseResourceTest, DISABLED_TC_24_Positive_01)
 {
     uri = (char *) RESOURCE_URI;
     int optionNum = 2;
@@ -600,18 +599,16 @@ CAResult_t checkSelectNetwork()
 
     if (CA_STATUS_OK == res)
     {
-        g_selectNetworkResult = res;
+        EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ETHERNET));
         return CA_STATUS_OK;
     }
-    else if (CA_NOT_SUPPORTED == res)
+    if (CA_NOT_SUPPORTED == res)
     {
-        g_selectNetworkResult = res;
+        EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(CA_ETHERNET));
         return CA_STATUS_OK;
     }
-    else
-    {
-        return CA_STATUS_FAILED;
-    }
+
+    return res;
 }
 
 // check return value when selected network is disable
@@ -619,21 +616,6 @@ TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
     EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork(1000));
-}
-
-// CAUnSelectNewwork TC
-// check return value
-TEST(UnSelectNetworkTest, TC_28_Positive_01)
-{
-    if (CA_STATUS_OK == g_selectNetworkResult)
-    {
-        EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ETHERNET));
-    }
-
-    if (CA_NOT_SUPPORTED == g_selectNetworkResult)
-    {
-        EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(CA_ETHERNET));
-    }
 }
 
 // check return value when selected network is disable
@@ -652,7 +634,7 @@ TEST_F(CATests, HandlerRequestResponseTest)
 
 // CASendRequestToAll TC
 // check return value
-TEST (SendRequestToAllTest, TC_31_Positive_01)
+TEST(SendRequestToAllTest, DISABLED_TC_31_Positive_01)
 {
     uri = (char *) RESOURCE_URI;
     CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
@@ -683,7 +665,7 @@ TEST (SendRequestToAllTest, TC_31_Positive_01)
 }
 
 // check return value when group->resourceUri is NULL
-TEST (SendRequestToAllTest, TC_32_Negative_01)
+TEST(SendRequestToAllTest, DISABLED_TC_32_Negative_01)
 {
     uri = (char *) RESOURCE_URI;
     CAGroupEndpoint_t *group = NULL;
