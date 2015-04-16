@@ -317,14 +317,32 @@ int main(int argc , char *argv[])
     OCPlatform::Configure(cfg);
 
     std::cout << "Created Platform..." << std::endl;
+
+    g_curResource = NULL;
+
     findResourceCandidate();
 
     while (1)
     {
+        sleep(2);
+        if(g_curResource == NULL)
+        {
+            continue;
+        }
         PRINT();
 
+        in = 0;
         std::cin >> in;
-        switch (in)
+
+        if(std::cin.fail())
+        {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Invalid input type, please try again" << std::endl;
+            continue;
+        }
+
+        switch ((int)in)
         {
             case OBSERVE:
                 startObserve(g_curResource);
