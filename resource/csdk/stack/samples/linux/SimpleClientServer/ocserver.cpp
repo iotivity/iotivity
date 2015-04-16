@@ -706,7 +706,7 @@ void *ChangeLightRepresentation (void *param)
 #ifdef WITH_PRESENCE
         if(stopPresenceCount > 0)
         {
-            OC_LOG_V(INFO, TAG, "================ presence count %d", stopPresenceCount);
+            OC_LOG_V(INFO, TAG, "================  Counting down to stop presence %d", stopPresenceCount);
         }
         if(!stopPresenceCount--)
         {
@@ -752,6 +752,8 @@ void *presenceNotificationGenerator(void *param)
                     getResult(res));
             break;
         }
+        OC_LOG_V(INFO, TAG, PCF("Created %s for presence notification"),
+                                presenceNotificationUris[i].c_str());
     }
     sleep(5);
     for(int i=0; i<numPresenceResources; i++)
@@ -766,6 +768,8 @@ void *presenceNotificationGenerator(void *param)
                     "resource %s.", presenceNotificationResources.at(i).c_str());
             break;
         }
+        OC_LOG_V(INFO, TAG, PCF("Deleted %s for presence notification"),
+                                presenceNotificationUris[i].c_str());
     }
     return NULL;
 }
