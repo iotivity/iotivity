@@ -29,6 +29,11 @@
 #include <iostream>
 #include <mutex>
 
+#define DO_ACTION               "DoAction"
+#define GET_ACTIONSET           "GetActionSet"
+#define ACTIONSET               "ActionSet"
+#define DELETE_ACTIONSET        "DelActionSet"
+
 using namespace std;
 using namespace OC;
 namespace PH = std::placeholders;
@@ -135,10 +140,14 @@ void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, con
     }
 }
 
-string buildActionSetDesc()
+string buildActionSetDesc(unsigned int delay = 0, unsigned int type = 0)
 {
     string actionsetDesc = "";
     actionsetDesc = "allbulboff";
+    actionsetDesc.append("*");
+    actionsetDesc.append(std::to_string(delay));        // Set delay time.
+    actionsetDesc.append(" ");
+    actionsetDesc.append(std::to_string(type));         // Set action type.
     actionsetDesc.append("*");
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -259,7 +268,7 @@ int main(int argc, char* argv[])
                     }
                     break;
                 case 2:
-                    rep.setValue("DoAction", std::string("allbulboff"));
+                    rep.setValue(DO_ACTION, std::string("allbulboff"));
                     if (g_resource)
                     {
                         g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
@@ -267,7 +276,7 @@ int main(int argc, char* argv[])
                      }
                      break;
                 case 3:
-                    rep.setValue("GetActionSet", std::string("allbulboff"));
+                    rep.setValue(GET_ACTIONSET, std::string("allbulboff"));
                     if (g_resource)
                     {
                         g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
