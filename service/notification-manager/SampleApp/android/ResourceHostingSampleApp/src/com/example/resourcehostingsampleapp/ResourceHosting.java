@@ -34,18 +34,24 @@ import android.view.View.OnClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/**
+ * To execute resource hosting function for android sample application .
+ * @author Copyright 2015 Samsung Electronics All Rights Reserved.
+ * @see className class :   ResourceHosting</br>
+ *
+ */
 
 public class ResourceHosting extends Activity implements OnClickListener
 {
-
-
         private String TAG = "ResourceHosting";
         private OcResourceHandle mResourceHandle;
         private String  mIpAddress;
         private TextView mLogTextView;
         private String mLog = "";
-        /*
-         * To initialize UI Function Setting
+        /**
+         * To initialize UI Function Setting.
+         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method : onCreate</br>
          */
         protected void onCreate(Bundle savedInstanceState)
         {
@@ -55,20 +61,24 @@ public class ResourceHosting extends Activity implements OnClickListener
             findViewById(R.id.btnStartHosting).setOnClickListener(this);
             findViewById(R.id.btnStopHosting).setOnClickListener(this);
             findViewById(R.id.btLogClear).setOnClickListener(this);
-
         }
-        /*
-         * To execute initOICStack for running Resource hosting
+
+        /**
+         * To execute initOICStack for running Resource hosting.
+         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method : onStart</br>
          */
         @Override
         protected void onStart()
         {
             super.onStart();
             initOICStack();
-
         }
-        /*
-         * To terminate Resource hosting
+
+        /**
+         * To terminate Resource hosting.
+         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method : onStop</br>
          */
         @Override
         protected void onStop()
@@ -80,23 +90,34 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onResume()
         {
             super.onResume();
-
         }
-        /*
-         * To execute initOICStack for running Resource hosting
+
+        /**
+         * To execute initOICStack for running Resource hosting.
+         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method : onRestart</br>
          */
         @Override
         protected void onRestart()
         {
             super.onRestart();
             initOICStack();
-
         }
+
+        /**
+         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method : onDestroy</br>
+         */
         protected void onDestroy()
         {
             super.onDestroy();
         }
 
+        /**
+         * get IpAddress and execute resourceHostingInit() method.
+         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method : initOICStack</br>
+         */
         private void initOICStack()
         {
             try
@@ -109,8 +130,10 @@ public class ResourceHosting extends Activity implements OnClickListener
                 e.printStackTrace();
             }
         }
-        /*
-         * To get IpAddress(IPv4)
+
+        /**
+         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method :  getIpAddress</br>
          */
         private String getIpAddress()
         {
@@ -138,15 +161,18 @@ public class ResourceHosting extends Activity implements OnClickListener
             return null;
         }
 
+        /**
+         * @see Class  class :   com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method method :   onClick</br>
+         * @param v view to choice
+         */
         public void onClick(View v)
         {
-
             int getId = v.getId();
 
             switch (getId)
             {
                 case R.id.btnStartHosting:
-
                     try
                     {
                         OICCoordinatorStart();
@@ -156,36 +182,70 @@ public class ResourceHosting extends Activity implements OnClickListener
                         Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                     break;
-
                 case R.id.btnStopHosting:
-
                     OICCoordinatorStop();
                     break;
                 case R.id.btLogClear:
                     clearLog();
                 default:
                     break;
-
             }
-
         }
+
+        /**
+         * all clear log view
+         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method :  clearLog</br>
+         */
         private void clearLog()
         {
             mLog = "";
             mLogTextView.setText(mLog);
         }
+
+        /**
+         * recieve the callback log message.
+         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method :  cbMessage</br>
+         * @param msg callback log message
+         */
         public void cbMessage(String msg)
         {
             mLog += msg + "\n";
             mLogTextView.setText(mLog);
         }
 
+        /**
+         * jni function - OicCorrdinatorstart() method.
+         * @see Class   class :    com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method :  OICCoordinatorStart</br>
+         * @see Signature signature : ()V</br>
+         */
         public native void OICCoordinatorStart();
 
+        /**
+         * jni function - OICCoordinatorStop() method.
+         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method :  OICCoordinatorStop</br>
+         * @see signature  signature : ()V</br>
+         */
         public native void OICCoordinatorStop();
 
+        /**
+         * jni function - ResourceHostingInit() method in order to execute OICCoordinatorStart() method.
+         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method :  ResourceHostingInit</br>
+         * @param addr ipAddress
+         * @see signature signature : (Ljava/lang/String;)V</br>
+         */
         public native void ResourceHostingInit(String addr);
 
+        /**
+         * jni function - ResourceHostingTerminate() method in order to terminate resource hosting
+         * @see Class   class  : com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method : ResourceHostingTerminate</br>
+         * @see signature signature : ()V</br>
+         */
         public native void ResourceHostingTerminate();
 
         static
