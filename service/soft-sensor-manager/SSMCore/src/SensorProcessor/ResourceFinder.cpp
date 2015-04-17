@@ -76,8 +76,7 @@ void CResourceFinder::presenceHandler(OCStackResult result, const unsigned int n
     switch (result)
     {
         case OC_STACK_OK:
-            requestURI << "coap://" << hostAddress << ":" << OC_MULTICAST_PORT <<
-                       "/oc/core?rt=SSManager.Sensor";
+            requestURI << "coap://" << hostAddress << "/oc/core?rt=SSManager.Sensor";
 
             ret = OC::OCPlatform::findResource("", requestURI.str(), OC_WIFI,
                                                std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
@@ -94,7 +93,6 @@ void CResourceFinder::presenceHandler(OCStackResult result, const unsigned int n
             break;
 
         case OC_STACK_PRESENCE_STOPPED:
-        case OC_STACK_PRESENCE_TIMEOUT:
             if (m_mapResources.find(hostAddress) != m_mapResources.end())
             {
                 while (!m_mapResources[hostAddress].empty())
@@ -108,6 +106,9 @@ void CResourceFinder::presenceHandler(OCStackResult result, const unsigned int n
 
                 m_mapResources.erase(hostAddress);
             }
+            break;
+
+        case OC_STACK_PRESENCE_TIMEOUT:
             break;
 
         case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
