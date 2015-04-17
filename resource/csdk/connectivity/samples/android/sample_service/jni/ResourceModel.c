@@ -7,7 +7,7 @@
 
 #include "cainterface.h"
 #include "cacommon.h"
-#include "com_iotivity_service_RMInterface.h"
+#include "org_iotivity_service_RMInterface.h"
 
 #define  LOG_TAG   "JNI_INTERFACE_SAMPLE"
 #define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -53,7 +53,7 @@ extern JavaVM *g_jvm;
 static CAToken_t g_clientToken;
 static uint8_t g_clientTokenLength = NULL;
 // init
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_setNativeResponseListener
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_setNativeResponseListener
     (JNIEnv *env, jobject obj, jobject listener){
     LOGI("setNativeResponseListener");
     g_responseListenerObject = (*env)->NewGlobalRef(env, obj);
@@ -143,7 +143,7 @@ bool SetCredentials()
 }
 #endif
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMInitialize
   (JNIEnv *env, jobject obj, jobject context)
 {
     LOGI("RMInitialize");
@@ -176,14 +176,14 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMInitialize
     }
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMTerminate(JNIEnv *env, jobject obj)
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMTerminate(JNIEnv *env, jobject obj)
 {
     LOGI("RMTerminate");
 
     CATerminate();
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMStartListeningServer(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMStartListeningServer(JNIEnv *env,
     jobject obj)
 {
     LOGI("RMStartListeningServer");
@@ -194,7 +194,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMStartListeningSer
     }
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMStartDiscoveryServer(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMStartDiscoveryServer(JNIEnv *env,
     jobject obj)
 {
     LOGI("RMStartDiscoveryServer");
@@ -205,7 +205,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMStartDiscoverySer
     }
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMRegisterHandler(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMRegisterHandler(JNIEnv *env,
     jobject obj)
 {
     LOGI("RMRegisterHandler");
@@ -213,7 +213,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMRegisterHandler(J
     CARegisterHandler(request_handler, response_handler);
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMFindResource(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMFindResource(JNIEnv *env,
         jobject obj, jstring uri)
 {
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
@@ -249,7 +249,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMFindResource(JNIE
     }
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendRequest(JNIEnv *env,
         jobject obj, jstring uri, jstring payload, jint selectedNetwork, jint isSecured,
         jint msgType)
 {
@@ -349,7 +349,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendRequest(JNIEn
     CADestroyRemoteEndpoint(endpoint);
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendResponse(JNIEnv *env,
     jobject obj, jstring uri, jstring payload, jint selectedNetwork, jint isSecured)
 {
     LOGI("RMSendResponse");
@@ -450,7 +450,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendResponse(JNIE
     CADestroyRemoteEndpoint(endpoint);
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMAdvertiseResource(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMAdvertiseResource(JNIEnv *env,
     jobject obj, jstring uri, jint selectedNetwork)
 {
     LOGI("RMAdvertiseResource");
@@ -492,7 +492,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMAdvertiseResource
     free(headerOpt);
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendNotification(JNIEnv *env,
     jobject obj, jstring uri, jstring payload, jint selectedNetwork, jint isSecured)
 {
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
@@ -590,7 +590,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSendNotification(
     CADestroyRemoteEndpoint(endpoint);
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj,
     jint networkType)
 {
     LOGI("RMSelectNetwork Type : %d", networkType);
@@ -601,7 +601,7 @@ JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMSelectNetwork(JNI
     }
 }
 
-JNIEXPORT void JNICALL Java_com_iotivity_service_RMInterface_RMHandleRequestResponse(JNIEnv *env,
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMHandleRequestResponse(JNIEnv *env,
     jobject obj)
 {
     LOGI("RMHandleRequestResponse");

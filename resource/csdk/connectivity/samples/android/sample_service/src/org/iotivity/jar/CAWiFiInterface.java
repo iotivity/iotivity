@@ -1,4 +1,4 @@
-package com.iotivity.jar;
+package org.iotivity.jar;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

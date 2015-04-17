@@ -1,4 +1,4 @@
-package com.iotivity.service;
+package org.iotivity.service;
 
 import java.util.ArrayList;
 
@@ -16,7 +16,7 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.iotivity.sample_service.R;
+import org.iotivity.sample_service.R;
 
 public class MainActivity extends Activity {
 
