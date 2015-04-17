@@ -350,6 +350,7 @@ int main(int argc, char *argv[])
     std::string key = "Name";
     std::string  state = "";
     std::string  id = "";
+    std::ostringstream requestURI;
 
     if (argc == 1)
     {
@@ -392,7 +393,8 @@ int main(int argc, char *argv[])
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.fan", OC_WIFI, &foundResourceFan);
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.fan";
+        OCPlatform::findResource("", requestURI.str(), OC_WIFI, &foundResourceFan);
         std::cout << "Finding Resource... " << std::endl;
         while (true)
         {
