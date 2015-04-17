@@ -17,6 +17,9 @@ function build()
         then
 		echo "*********** Build for linux *************"
 		scons RELEASE=$3
+
+		echo "*********** Build for linux with Security*************"
+		scons RELEASE=$3 SECURED=1
 	fi
 
 	# Note: for android, as oic-resource uses C++11 feature stoi and to_string,
