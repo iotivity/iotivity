@@ -43,6 +43,7 @@ CAResult_t CAInitialize()
 void CATerminate()
 {
     OIC_LOG(DEBUG, TAG, "IN");
+    CASetRequestResponseCallbacks(NULL, NULL);
     CATerminateMessageHandler();
 
     CATerminateNetworkType();
