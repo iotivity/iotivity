@@ -422,7 +422,7 @@ OCStackResult requestPresence(char *sourceResourceAddress)
     cbData.cd = NULL;
 
     char queryUri[OIC_STRING_MAX_VALUE] = { '\0' };
-    sprintf(queryUri, "coap://%s%s", sourceResourceAddress , OC_PRESENCE_URI);
+    sprintf(queryUri, "%s%s", sourceResourceAddress , OC_PRESENCE_URI);
     OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s", queryUri);
 
     result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
