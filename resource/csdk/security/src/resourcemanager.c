@@ -53,6 +53,36 @@ OCStackResult SendSRMResponse(OCEntityHandlerRequest *ehRequest, char *rspPayloa
     return OC_STACK_ERROR;
 }
 
+/* TODO: This global should be in doxmresource.c once it is defined. */
+uint16_t gOicSecDoxmJustWorks = 0x0;
+OicSecDoxm_t gDefaultDoxm =
+{
+    NULL,                   /* OicUrn_t *oxmType */
+    0,                      /* size_t oxmTypeLen */
+    &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
+    1,                      /* size_t oxmLen */
+    false,                  /* bool owned */
+    0,                      /* uint8_t deviceIDFormat */
+    {0},                    /* OicUuid_t deviceID */
+    {0},                    /* OicUuid_t owner */
+};
+
+/* TODO: These globals should be in pstatresource.c once it is defined. */
+OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
+OicSecPstat_t gDefaultPstat =
+{
+    false,                                      /* bool isOwned */
+    TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES \
+    | PROVISION_CREDENTIALS | PROVISION_ACLS,   /* OicSecDpm_t cm */
+    TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES \
+    | PROVISION_CREDENTIALS | PROVISION_ACLS,   /* OicSecDpm_t tm */
+    {0},                                        /* OicUuid_t deviceID */
+    SINGLE_SERVICE_CLIENT_DRIVEN,               /* OicSecDpom_t om */
+    1,                                          /* the number of elts in Sms */
+    &gSm,                                       /* OicSecDpom_t        *sms */
+    0,                                          /* uint16_t commitHash */
+};
+
 /**
  * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  *
@@ -68,6 +98,19 @@ OCStackResult InitSecureResources( )
      * InitPstatResource();
      * InitCredentialResource();
      */
+
+    if(OC_STACK_OK != ret)
+    {
+        /* Something has gone wrong with restoring Secure Virtual Resources.
+         * TODO: design secure behavior.
+         * For now: Fall back to default un-initialized state.
+         */
+        /* NOTE TO SACHIN:
+         * TODO: Do an OCCreateResource for gDefaultDoxm and gDefaultPstat.
+         * TODO: Create the binary SVR DB using gDefaultDoxm and gDefaultPstat.
+         */
+         ret = OC_STACK_OK;
+    }
 
     return ret;
 }
