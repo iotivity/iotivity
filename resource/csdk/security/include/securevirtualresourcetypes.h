@@ -192,6 +192,23 @@ typedef enum
     SINGLE_SERVICE_CLIENT_DRIVEN    = 0x3,
 } OicSecDpom_t;
 
+//TODO: Need more clarification on deviceIDFormat field type.
+#if 0
+typedef enum
+{
+    URN = 0x0
+}OicSecDvcIdFrmt_t;
+#endif
+
+typedef enum
+{
+    OIC_JUST_WORKS                          = 0x0,
+    OIC_MODE_SWITCH                         = 0x1,
+    OIC_RANDOM_DEVICE_PIN                   = 0x2,
+    OIC_PRE_PROVISIONED_DEVICE_PIN          = 0x3,
+    OIC_PRE_PROVISION_STRONG_CREDENTIAL     = 0x4
+}OicSecOxm_t;
+
 typedef struct OicSecJwk OicSecJwk_t;
 
 typedef struct OicSecPstat OicSecPstat_t;
@@ -205,6 +222,7 @@ typedef struct OicSecSvc OicSecSvc_t;
 typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
 
 typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
+
 
 /**
  * @brief   /oic/uuid (Universal Unique Identifier) data type.
@@ -305,12 +323,13 @@ struct OicSecDoxm
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     OicUrn_t            *oxmType;       // 0:R:M:N:URN
     size_t              oxmTypeLen;     // the number of elts in OxmType
-    uint16_t            *oxm;           // 1:R:M:N:UINT16
+    OicSecOxm_t         *oxm;           // 1:R:M:N:UINT16
     size_t              oxmLen;         // the number of elts in Oxm
     bool                owned;          // 2:R:S:Y:Boolean
-    uint8_t             deviceIDFormat; // 3:R:S:Y:UINT8
+    //TODO: Need more clarification on deviceIDFormat field type.
+    //OicSecDvcIdFrmt_t   deviceIDFormat; // 3:R:S:Y:UINT8
     OicUuid_t           deviceID;       // 4:R:S:Y:oic.uuid
-    OicUuid_t           owner;          // 5:R:S:Y:oic.uuid
+    OicUuid_t           owner;         // 5:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owner instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
     //OicSecSvc_t       Owner;        // 5:R:S:Y:oic.sec.svc

@@ -30,6 +30,7 @@ src_dir = srmtest_env.get('SRC_DIR')
 # Build flags
 ######################################################################
 srmtest_env.PrependUnique(CPPPATH = [
+         '../../ocmalloc/include',
 		'../../connectivity/inc',
 		'../../connectivity/api',
 		'../include',
@@ -66,7 +67,8 @@ if not env.get('RELEASE'):
 unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'policyengine.cpp',
                                             'provisitionstatusresource.cpp',
-                                            'securityresourcemanager.cpp'])
+                                            'securityresourcemanager.cpp',
+                                            'doxmresource.cpp'])
 
 Alias("test", [unittest])
 

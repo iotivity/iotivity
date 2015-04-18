@@ -32,7 +32,7 @@ static CARequestCallback gRequestHandler = NULL;
 //Response Callback handler
 static CAResponseCallback gResponseHandler = NULL;
 //Persistent Storage callback handler for open/read/write/close/unlink
-static OCPersistentStorage *gPersistentStorageHandler = NULL;
+static OCPersistentStorage *gPersistentStorageHandler =  NULL;
 
 /**
  * A single global Policy Engine context will suffice as long

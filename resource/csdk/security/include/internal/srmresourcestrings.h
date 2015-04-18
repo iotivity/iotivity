@@ -31,18 +31,30 @@ extern const char * OIC_RSRC_CORE_D_URI;
 extern const char * OIC_RSRC_PRESENCE_URI;
 extern const char * OIC_RSRC_TYPES_D_URI;
 
+//ACL
 extern const char * OIC_RSRC_TYPE_SEC_ACL;
 extern const char * OIC_RSRC_ACL_URI;
 extern const char * OIC_JSON_ACL_NAME;
+
+//PSTAT
+extern const char * OIC_RSRC_TYPE_SEC_PSTAT;
+extern const char * OIC_RSRC_PSTAT_URI;
+extern const char * OIC_JSON_PSTAT_NAME;
+
+//DOXM
+extern const char * OIC_RSRC_TYPE_SEC_DOXM;
+extern const char * OIC_RSRC_DOXM_URI;
+extern const char * OIC_JSON_DOXM_NAME;
 
 extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
 extern const char * OIC_JSON_PERMISSION_NAME;
 extern const char * OIC_JSON_OWNERS_NAME;
-
-extern const char * OIC_RSRC_TYPE_SEC_PSTAT;
-extern const char * OIC_RSRC_PSTAT_URI;
-extern const char * OIC_JSON_PSTAT_NAME;
+extern const char * OIC_JSON_OWNER_NAME;
+extern const char * OIC_JSON_OWNED_NAME;
+extern const char * OIC_JSON_OXM_NAME;
+extern const char * OIC_JSON_OXM_TYPE_NAME;
+extern const char * OIC_JSON_DEVICE_ID_FORMAT_NAME;
 extern const char * OIC_JSON_ISOP_NAME;
 extern const char * OIC_JSON_COMMIT_HASH_NAME;
 extern const char * OIC_JSON_DEVICE_ID_NAME;

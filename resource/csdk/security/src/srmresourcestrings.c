@@ -34,15 +34,25 @@ const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
 const char * OIC_JSON_ACL_NAME = "acl";
 
-const char * OIC_JSON_SUBJECT_NAME = "sub";
-const char * OIC_JSON_RESOURCES_NAME = "rsrc";
-const char * OIC_JSON_PERMISSION_NAME = "perms";
-const char * OIC_JSON_OWNERS_NAME = "ownrs";
-
 //Pstat
 const char * OIC_RSRC_TYPE_SEC_PSTAT = "oic.sec.pstat";
 const char * OIC_RSRC_PSTAT_URI =  "/oic/sec/pstat";
 const char * OIC_JSON_PSTAT_NAME = "pstat";
+
+//doxm
+const char * OIC_RSRC_TYPE_SEC_DOXM = "oic.sec.doxm";
+const char * OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
+const char * OIC_JSON_DOXM_NAME = "doxm";
+
+const char * OIC_JSON_SUBJECT_NAME = "sub";
+const char * OIC_JSON_RESOURCES_NAME = "rsrc";
+const char * OIC_JSON_PERMISSION_NAME = "perms";
+const char * OIC_JSON_OWNERS_NAME = "ownrs";
+const char * OIC_JSON_OWNER_NAME = "ownr";
+const char * OIC_JSON_OWNED_NAME = "owned";
+const char * OIC_JSON_OXM_NAME = "oxm";
+const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype";
+const char * OIC_JSON_DEVICE_ID_FORMAT_NAME = "dvcidfrmt";
 const char * OIC_JSON_ISOP_NAME = "isop";
 const char * OIC_JSON_COMMIT_HASH_NAME = "commithash";
 const char * OIC_JSON_DEVICE_ID_NAME = "deviceid";

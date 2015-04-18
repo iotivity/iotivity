@@ -68,6 +68,8 @@ int utunlink(const char *path)
     return unlink(path);
 }
 
+OCPersistentStorage gpsi;
+
 //RegisterHandler Tests
 TEST(RegisterHandlerTest, RegisterNullRequestHandler)
 {
@@ -103,17 +105,16 @@ TEST(PersistentStorageHandlerTest, GetNullPersistentStorageHandler)
 }
 TEST(PersistentStorageHandlerTest, RegisterValidHandler)
 {
-    OCPersistentStorage *psi = (OCPersistentStorage*) malloc(sizeof(OCPersistentStorage));
-    psi->open = utopen;
-    psi->read = utread;
-    psi->write = utwrite;
-    psi->close = utclose;
-    psi->unlink = utunlink;
+    gpsi.open = utopen;
+    gpsi.read = utread;
+    gpsi.write = utwrite;
+    gpsi.close = utclose;
+    gpsi.unlink = utunlink;
 
     EXPECT_EQ(OC_STACK_OK,
-            SRMRegisterPersistentStorageHandler(psi));
+            SRMRegisterPersistentStorageHandler(&gpsi));
     OCPersistentStorage *ps = SRMGetPersistentStorageHandler();
-    EXPECT_TRUE(psi == ps);
+    EXPECT_TRUE(&gpsi == ps);
 }
 
 TEST(PersistentStorageHandlerTest, PersistentStorageValidHandlers)
@@ -155,5 +156,4 @@ TEST(PersistentStorageHandlerTest, PersistentStorageValidHandlers)
         psi->close(streamOut);
     }
     psi->unlink(outFilePath);
-    free(psi);
 }

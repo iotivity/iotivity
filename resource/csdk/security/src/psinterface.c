@@ -62,7 +62,7 @@ char * GetSVRDatabase()
     OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
 
     /* TODO Do we need a GetFileSize API ? */
-    if (ps)
+    if (ps && ps->open)
     {
         /* TODO Build consensus on location of SRM database file on Ubuntu */
         fp = ps->open(SVR_DB_FILE_NAME, "r");
