@@ -35,9 +35,11 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../include',
 		'../include/internal',
 		'../../logger/include',
+		'../../ocmalloc/include',
 		'../../stack/include',
 		'../../../oc_logger/include',
 		'../../../../extlibs/gtest/gtest-1.7.0/include',
+		'../../../../extlibs/cjson/',
 		'../include'
 		])
 srmtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
@@ -62,8 +64,10 @@ if not env.get('RELEASE'):
 # Source files and Targets
 ######################################################################
 unittest = srmtest_env.Program('unittest', ['securityresourcemanager.cpp'])
+aclresourcetest = srmtest_env.Program('aclresourcetest', ['aclresourcetest.cpp'])
 
-Alias("test", [unittest])
+
+Alias("test", [unittest, aclresourcetest])
 
 env.AppendTarget('test')
 if env.get('TEST') == '1':

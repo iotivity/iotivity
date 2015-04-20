@@ -18,8 +18,8 @@
   *
   ******************************************************************/
 
-#ifndef _B64_H_
-#define _B64_H_
+#ifndef _IOTVT_B64_H_
+#define _IOTVT_B64_H_
 
 #include <stdint.h>
 #include <stdio.h>
@@ -27,6 +27,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Macro to calculate the size of 'output' buffer required for
+ * a 'input' buffer of length x during Base64 encoding operation.
+ */
+#define B64ENCODE_OUT_SAFESIZE(x) ((((x) + 3 - 1)/3) * 4)
+
+/**
+ * Macro to calculate the size of 'output' buffer required for
+ * a 'input' buffer of length x during Base64 decoding operation.
+ */
+#define B64DECODE_OUT_SAFESIZE(x) (((x)*3)/4)
 
 /**
  * Result code of base64 functions
@@ -73,5 +85,4 @@ B64Result b64Decode(const char* in, const size_t inLen,
 }
 #endif
 
-#endif
-
+#endif  //IOTVT_B64_H

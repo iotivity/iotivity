@@ -32,7 +32,7 @@
 #define TAG  PCF("SRM-PSI")
 
 /* TODO Consolidate all macros in one file */
-#define VERIFY_SUCCESS(op, logLevel) { if ((op)) \
+#define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
             {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
 
 #define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
@@ -64,6 +64,7 @@ char * GetSVRDatabase()
     /* TODO Do we need a GetFileSize API ? */
     if (ps)
     {
+        /* TODO Build consensus on location of SRM database file on Ubuntu */
         fp = ps->open(SVR_DB_FILE_NAME, "r");
         if (fp)
         {

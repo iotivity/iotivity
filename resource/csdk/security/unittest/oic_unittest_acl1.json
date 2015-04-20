@@ -1,0 +1,27 @@
+{
+    "acl": [
+        {
+            "sub": "MTExMTExMTExMTExMTExMQ==",
+            "rsrc": [
+				"/oic/light",
+				"/oic/fan"
+			],
+			"perms": 255,
+			"ownrs" : [
+				"MjIyMjIyMjIyMjIyMjIyMg=="
+			]
+		},
+		{
+            "sub": "MzMzMzMzMzMzMzMzMzMzMw==",
+            "rsrc": [
+				"/oic/light",
+				"/oic/garage"
+			],
+			"perms": 255,
+			"ownrs" : [
+				"MjIyMjIyMjIyMjIyMjIyMg==",
+                "NDQ0NDQ0NDQ0NDQ0NDQ0NA=="
+			]
+		}
+	]
+}

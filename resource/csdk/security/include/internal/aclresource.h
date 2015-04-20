@@ -21,6 +21,10 @@
 #ifndef IOTVT_SRM_ACLR_H
 #define IOTVT_SRM_ACLR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize ACL resource by loading data from persistent storage.
  *
@@ -43,6 +47,10 @@ void DeInitACLResource();
  * @retval  reference to @ref OicSecAcl_t if ACL is found, else NULL
  */
 const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IOTVT_SRM_ACLR_H
 
