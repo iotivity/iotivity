@@ -23,8 +23,8 @@
  * @brief This file contains common function for retransmission messages.
  */
 
-#ifndef __CA_RETRANSMISSION_H_
-#define __CA_RETRANSMISSION_H_
+#ifndef CA_RETRANSMISSION_H_
+#define CA_RETRANSMISSION_H_
 
 #include <stdint.h>
 
@@ -163,4 +163,4 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context);
 } /* extern "C" */
 #endif
 
-#endif  // __CA_RETRANSMISSION_H_
+#endif  // CA_RETRANSMISSION_H_

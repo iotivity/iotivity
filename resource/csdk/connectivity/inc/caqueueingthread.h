@@ -24,8 +24,8 @@
  * This file contains common utility function for handling message ques.
  */
 
-#ifndef __CA_THREAD_H_
-#define __CA_THREAD_H_
+#ifndef CA_QUEUEINGTHREAD_H_
+#define CA_QUEUEINGTHREAD_H_
 
 #include <stdint.h>
 
@@ -109,5 +109,5 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread);
 } /* extern "C" */
 #endif
 
-#endif  // __CA_THREAD_H_
+#endif  // CA_QUEUEINGTHREAD_H_
 

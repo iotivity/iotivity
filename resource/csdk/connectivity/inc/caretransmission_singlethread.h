@@ -23,8 +23,8 @@
  * @brief This file contains common function for retransmission messages.
  */
 
-#ifndef __CA_RETRANSMISSION_SINGLETHREAD_H_
-#define __CA_RETRANSMISSION_SINGLETHREAD_H_
+#ifndef CA_RETRANSMISSION_SINGLETHREAD_H_
+#define CA_RETRANSMISSION_SINGLETHREAD_H_
 
 #include <stdint.h>
 
@@ -151,5 +151,5 @@ void CARetransmissionBaseRoutine(void *threadValue);
 } /* extern "C" */
 #endif
 
-#endif  // __CA_RETRANSMISSION_SINGLETHREAD_H_
+#endif  // CA_RETRANSMISSION_SINGLETHREAD_H_
 
