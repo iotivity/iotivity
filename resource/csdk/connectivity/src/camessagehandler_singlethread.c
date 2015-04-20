@@ -26,7 +26,7 @@
 #include "cainterface.h"
 #include "camessagehandler_singlethread.h"
 #include "caremotehandler.h"
-#include "cainterfacecontroller_singlethread.h"
+#include "cainterfacecontroller.h"
 #include "caprotocolmessage.h"
 #include "caretransmission.h"
 #include "logger.h"
@@ -409,7 +409,7 @@ CAResult_t CAInitializeMessageHandler()
     CARetransmissionInitialize(&g_retransmissionContext, NULL, CASendUnicastData,
                                CATimeoutCallback, NULL);
 
-    CAInitializeAdapters();
+    CAInitializeAdapters(NULL);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

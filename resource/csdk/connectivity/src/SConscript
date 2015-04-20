@@ -55,8 +55,8 @@ if ca_os == 'arduino':
 	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO'])
 	print "setting WITH_ARDUINO"
 	ca_common_src = [
-		'caconnectivitymanager_singlethread.c',
-		'cainterfacecontroller_singlethread.c',
+		'caconnectivitymanager.c',
+		'cainterfacecontroller.c',
 		'camessagehandler_singlethread.c',
 		'canetworkconfigurator.c',
 		'caprotocolmessage.c',

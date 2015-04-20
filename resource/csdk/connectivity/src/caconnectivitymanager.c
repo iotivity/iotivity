@@ -36,7 +36,7 @@
 
 CAGlobals_t caglobals;
 
-#define TAG PCF("CA")
+#define TAG "CA"
 
 static bool g_isInitialized = false;
 
@@ -171,7 +171,10 @@ CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
 void CADestroyToken(CAToken_t token)
 {
     OIC_LOG(DEBUG, TAG, "CADestroyToken");
+
     CADestroyTokenInternal(token);
+
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
