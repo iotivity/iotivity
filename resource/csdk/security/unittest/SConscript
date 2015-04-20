@@ -69,7 +69,8 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'doxmresource.cpp',
                                             'policyengine.cpp',
                                             'securityresourcemanager.cpp',
-                                            'credentialresource.cpp'])
+                                            'credentialresource.cpp',
+                                            'base64tests.cpp'])
 
 Alias("test", [unittest])
 
