@@ -298,7 +298,17 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
     VERIFY_NON_NULL(localIp, IP_SERVER_TAG, "localIp is NULL");
     VERIFY_NON_NULL(port, IP_SERVER_TAG, "port is NULL");
     // Create a UDP socket
-    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    int sock = -1;
+
+#ifdef SOCK_CLOEXEC
+    sock = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+#endif
+
+    if (-1 == sock)
+    {
+        sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    }
+
     if (-1 == sock)
     {
         OIC_LOG_V(ERROR, IP_SERVER_TAG, "Failed to create Socket, Error code: %s",
