@@ -29,15 +29,15 @@ import org.iotivity.base.ResourceProperty;
 import android.util.Log;
 
 // For creating & deleting the FactorySet Resource
-public class FactorySetResource extends ConfigurationResource{
-    private final String     LOG_TAG                 = "[CON-SERVER]"
-                                                             + this.getClass()
-                                                                     .getSimpleName();
+public class FactorySetResource extends ConfigurationResource {
+    private final String LOG_TAG = "[CON-SERVER]"
+                                         + this.getClass().getSimpleName();
+
     // constructor
     public FactorySetResource() {
         Log.i(LOG_TAG, "FactorySetCollection: enter");
 
-        configurationUri="/factorySet";  //uri of the resource
+        configurationUri = "/factorySet"; // uri of the resource
         configurationTypes.clear();
         configurationTypes.add("factorySet");
         configurationRep.setUri(configurationUri);
@@ -84,7 +84,7 @@ public class FactorySetResource extends ConfigurationResource{
                     + location);
         }
         if (null != st) {
-            //systemTime = st;
+            // systemTime = st;
             Log.i(LOG_TAG, "setConfigurationRepresentation: New value: "
                     + systemTime);
         }
@@ -104,11 +104,11 @@ public class FactorySetResource extends ConfigurationResource{
     OcRepresentation getFactorySetRepresentation() {
 
         configurationRep.setValueString("loc", location);
-        configurationRep.setValueString("st",systemTime);
-        configurationRep.setValueString("c",currency);
+        configurationRep.setValueString("st", systemTime);
+        configurationRep.setValueString("c", currency);
         configurationRep.setValueString("r", region);
         return configurationRep;
-       }
+    }
 
     public String getUri() {
         return configurationUri;

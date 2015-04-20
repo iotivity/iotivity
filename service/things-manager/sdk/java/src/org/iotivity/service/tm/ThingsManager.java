@@ -147,11 +147,11 @@ public class ThingsManager {
     }
 
     /**
-     * Set listener for receiving notifications of Get, PUT and POST resource.
+     * Set listener for receiving responses of Get, PUT and POST requests.
      *
      * @param listener
      *            IActionListener to receive Get, PUT and POST request
-     *            callbacks.
+     *            responses.
      */
     public void setActionListener(IActionListener listener) {
         actionListener = listener;
@@ -182,14 +182,17 @@ public class ThingsManager {
      */
     public OCStackResult findCandidateResources(Vector<String> resourceTypes,
             int waitTime) {
-        OCStackResult result;
         if (null == resourceListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.findCandidateResources(
-                    resourceTypes, waitTime);
-            Log.i(LOG_TAG, "findCandidateResources" + result.name());
+            Log.e(LOG_TAG,"findCandidateResources: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj.findCandidateResources(
+                              resourceTypes, waitTime);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "findCandidateResources: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -215,14 +218,17 @@ public class ThingsManager {
      */
     public OCStackResult subscribeCollectionPresence(OcResource resource)
             throws OcException {
-        OCStackResult result;
         if (null == presenceListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj
-                    .subscribeCollectionPresence(resource);
-            Log.i(LOG_TAG, "subscribeCollectionPresence" + result.name());
+            Log.e(LOG_TAG,"subscribeCollectionPresence: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj
+                              .subscribeCollectionPresence(resource);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "subscribeCollectionPresence: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -244,13 +250,16 @@ public class ThingsManager {
      *
      */
     public OCStackResult findGroup(Vector<String> collectionResourceTypes) {
-        OCStackResult result;
         if (null == groupListener) {
-            result = OCStackResult.OC_STACK_ERROR;
-        } else {
-            result = thingsManagerInterfaceObj.findGroup(collectionResourceTypes);
-            Log.i(LOG_TAG, "findGroup" + result.name());
+            Log.e(LOG_TAG,"findGroup: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = result = thingsManagerInterfaceObj.findGroup(collectionResourceTypes);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "findGroup: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -264,16 +273,17 @@ public class ThingsManager {
      *         code.
      */
     public OCStackResult createGroup(String collectionResourceType) {
-        OCStackResult result;
-        result = thingsManagerInterfaceObj.createGroup(collectionResourceType);
-        Log.i(LOG_TAG, "createGroup" + result.name());
+        OCStackResult result = thingsManagerInterfaceObj.createGroup(collectionResourceType);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "createGroup: returned error: " + result.name());
+        }
+
         return result;
     }
 
     /**
-     * API for joining an existing group. This API is used when a resource that
-     * has a group tries to find a specific remote resource and makes it join a
-     * group.
+     * API for joining a group. This API is used for joining the resource
+     * to local group which is created using @createGroup API.
      *
      * @param collectionResourceType
      *            resource type of a group to join.
@@ -286,16 +296,18 @@ public class ThingsManager {
      */
     public OCStackResult joinGroup(String collectionResourceType,
             OcResourceHandle resourceHandle) {
-        OCStackResult result;
-        result = thingsManagerInterfaceObj.joinGroup(collectionResourceType,
-                resourceHandle);
-        Log.i(LOG_TAG, "joinGroup" + result.name());
+        OCStackResult result = thingsManagerInterfaceObj.joinGroup(collectionResourceType,
+                              resourceHandle);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "joinGroup: returned error: " + result.name());
+        }
+
         return result;
     }
 
     /**
-     * API for joining an existing group. This API is used when a resource that
-     * doesn't have a group tries to find and join a specific remote group.
+     * API for joining a group. This API is used for joining the resource to
+     * remote group.
      *
      * @param resource
      *            group resource to join.
@@ -308,14 +320,16 @@ public class ThingsManager {
      */
     public OCStackResult joinGroup(OcResource resource,
             OcResourceHandle resourceHandle) throws OcException {
-        OCStackResult result;
-        result = thingsManagerInterfaceObj.joinGroup(resource, resourceHandle);
-        Log.i(LOG_TAG, "joinGroup" + result.name());
+        OCStackResult result = thingsManagerInterfaceObj.joinGroup(resource, resourceHandle);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "joinGroup: returned error: " + result.name());
+        }
+
         return result;
     }
 
     /**
-     * API for leaving a joined group.
+     * API for leaving a joined local group.
      *
      * @param collectionResourceType
      *            resource type of a group to leave.
@@ -328,15 +342,17 @@ public class ThingsManager {
      */
     public OCStackResult leaveGroup(String collectionResourceType,
             OcResourceHandle resourceHandle) {
-        OCStackResult result;
-        result = thingsManagerInterfaceObj.leaveGroup(collectionResourceType,
-                resourceHandle);
-        Log.i(LOG_TAG, "leaveGroup" + result.name());
+        OCStackResult result = thingsManagerInterfaceObj.leaveGroup(collectionResourceType,
+                              resourceHandle);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "leaveGroup: returned error: " + result.name());
+        }
+
         return result;
     }
 
     /**
-     * API for leaving a joined group.
+     * API for leaving a joined remote group.
      *
      * @param resource
      *            resource of a group to leave.
@@ -351,10 +367,12 @@ public class ThingsManager {
      */
     public OCStackResult leaveGroup(OcResource resource, String collectionResourceType,
             OcResourceHandle resourceHandle) {
-        OCStackResult result;
-        result = thingsManagerInterfaceObj.leaveGroup(resource, collectionResourceType,
-                resourceHandle);
-        Log.i(LOG_TAG, "leaveGroup" + result.name());
+        OCStackResult result = thingsManagerInterfaceObj.leaveGroup(resource, collectionResourceType,
+                              resourceHandle);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "leaveGroup: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -441,14 +459,17 @@ public class ThingsManager {
      */
     public OCStackResult updateConfigurations(OcResource resource,
             Map<String, String> configurations) throws OcException {
-        OCStackResult result;
         if (null == configurationListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.updateConfigurations(resource,
-                    configurations);
-            Log.i(LOG_TAG, "updateConfigurations" + result.name());
+            Log.e(LOG_TAG,"updateConfigurations: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj.updateConfigurations(resource,
+                              configurations);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "updateConfigurations: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -471,20 +492,22 @@ public class ThingsManager {
      */
     public OCStackResult getConfigurations(OcResource resource,
             Vector<String> configurations) throws OcException {
-        OCStackResult result;
         if (null == configurationListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.getConfigurations(resource,
-                    configurations);
-            Log.i(LOG_TAG, "getConfigurations" + result.name());
+            Log.e(LOG_TAG,"getConfigurations: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
-        return result;
 
+        OCStackResult result = thingsManagerInterfaceObj.getConfigurations(resource,
+                              configurations);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "getConfigurations: returned error: " + result.name());
+        }
+
+        return result;
     }
 
     /**
-     * API for showing the list of supported configuration units (configurable
+     * API for getting the list of supported configuration units (configurable
      * parameters). It shows which Configuration Names are supported and their
      * brief descriptions. This information is provided in JSON format.
      *
@@ -509,13 +532,16 @@ public class ThingsManager {
      *
      */
     public OCStackResult doBootstrap() {
-        OCStackResult result;
-        if (null == diagnosticsListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.doBootstrap();
-            Log.i(LOG_TAG, "doBootstrap" + result.name());
+        if (null == configurationListener) {
+            Log.e(LOG_TAG,"doBootstrap: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj.doBootstrap();
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "doBootstrap: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -537,13 +563,16 @@ public class ThingsManager {
      *
      */
     public OCStackResult reboot(OcResource resource) throws OcException {
-        OCStackResult result;
         if (null == diagnosticsListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.reboot(resource);
-            Log.i(LOG_TAG, "reboot" + result.name());
+            Log.e(LOG_TAG,"reboot: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj.reboot(resource);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "reboot: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -569,13 +598,16 @@ public class ThingsManager {
      *
      */
     public OCStackResult factoryReset(OcResource resource) throws OcException {
-        OCStackResult result;
         if (null == diagnosticsListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.factoryReset(resource);
-            Log.i(LOG_TAG, "factoryReset" + result.name());
+            Log.e(LOG_TAG,"factoryReset: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj.factoryReset(resource);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "factoryReset: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -598,14 +630,17 @@ public class ThingsManager {
      */
     public OCStackResult addActionSet(OcResource resource, ActionSet actionSet)
             throws OcException {
-        OCStackResult result;
         if (null == actionListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj
-                    .addActionSet(resource, actionSet);
-            Log.i(LOG_TAG, "addActionSet" + result.name());
+            Log.e(LOG_TAG,"addActionSet: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj
+                                  .addActionSet(resource, actionSet);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "addActionSet: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -629,14 +664,17 @@ public class ThingsManager {
      */
     public OCStackResult executeActionSet(OcResource resource,
             String actionsetName) throws OcException {
-        OCStackResult result;
         if (null == actionListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.executeActionSet(resource,
-                    actionsetName);
-            Log.i(LOG_TAG, "executeActionSet" + result.name());
+            Log.e(LOG_TAG,"executeActionSet: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj
+                                  .executeActionSet(resource, actionsetName);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "executeActionSet: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -662,14 +700,17 @@ public class ThingsManager {
      */
     public OCStackResult executeActionSet(OcResource resource,
             String actionsetName, long delay) throws OcException {
-        OCStackResult result;
         if (null == actionListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.executeActionSet(resource,
-                    actionsetName, delay);
-            Log.i(LOG_TAG, "executeActionSet" + result.name());
+            Log.e(LOG_TAG,"executeActionSet: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj
+                                  .executeActionSet(resource, actionsetName, delay);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "executeActionSet: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -693,10 +734,17 @@ public class ThingsManager {
 
     public OCStackResult cancelActionSet(OcResource resource,
             String actionsetName) throws OcException {
-        OCStackResult result;
-        result = thingsManagerInterfaceObj.cancelActionSet(resource,
-                actionsetName);
-        Log.i(LOG_TAG, "executeActionSet" + result.name());
+        if (null == actionListener) {
+            Log.e(LOG_TAG,"cancelActionSet: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
+        }
+
+        OCStackResult result = thingsManagerInterfaceObj.cancelActionSet(resource,
+                              actionsetName);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "cancelActionSet: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -719,14 +767,17 @@ public class ThingsManager {
      */
     public OCStackResult getActionSet(OcResource resource, String actionsetName)
             throws OcException {
-        OCStackResult result;
         if (null == actionListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.getActionSet(resource,
-                    actionsetName);
-            Log.i(LOG_TAG, "getActionSet" + result.name());
+            Log.e(LOG_TAG,"getActionSet: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj.getActionSet(resource,
+                                  actionsetName);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "getActionSet: returned error: " + result.name());
+        }
+
         return result;
     }
 
@@ -750,14 +801,17 @@ public class ThingsManager {
      */
     public OCStackResult deleteActionSet(OcResource resource,
             String actionsetName) throws OcException {
-        OCStackResult result;
         if (null == actionListener) {
-            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
-        } else {
-            result = thingsManagerInterfaceObj.deleteActionSet(resource,
-                    actionsetName);
-            Log.i(LOG_TAG, "deleteActionSet" + result.name());
+            Log.e(LOG_TAG,"deleteActionSet: listener not set!");
+            return OCStackResult.OC_STACK_LISTENER_NOT_SET;
         }
+
+        OCStackResult result = thingsManagerInterfaceObj.deleteActionSet(resource,
+                                  actionsetName);
+        if (OCStackResult.OC_STACK_OK != result) {
+            Log.e(LOG_TAG, "deleteActionSet: returned error: " + result.name());
+        }
+
         return result;
     }
 

@@ -975,7 +975,7 @@ JNIEXPORT jint JNICALL JNIThingsManagerDeleteActionSet(JNIEnv *env, jobject inte
     std::string actionSetName(actionSetNamePointer);
 
     ocResult = g_ThingsManager.deleteActionSet(ocResource, actionSetName,
-               &ThingsManagerCallbacks::onPostResponse);
+               &ThingsManagerCallbacks::onPutResponse);
     if (OC_STACK_OK != ocResult)
     {
         LOGE("JNIThingsManagerDeleteActionSet: deleteActionSet is failed!");

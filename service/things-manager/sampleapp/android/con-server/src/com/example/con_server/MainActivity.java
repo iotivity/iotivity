@@ -95,7 +95,8 @@ public class MainActivity extends Activity {
             }
         });
 
-        // calling the method to check the Wi-fi connectivity and configuring the OcPlatform
+        // calling the method to check the Wi-fi connectivity and configuring
+        // the OcPlatform
         configurePlatform();
     }
 
@@ -126,7 +127,8 @@ public class MainActivity extends Activity {
             return;
         }
 
-        // If wifi is connected calling the configure method for configuring the ocPlatform
+        // If wifi is connected calling the configure method for configuring the
+        // ocPlatform
         PlatformConfig cfg = new PlatformConfig(ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
         OcPlatform.Configure(cfg);

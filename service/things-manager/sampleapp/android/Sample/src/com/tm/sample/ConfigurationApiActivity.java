@@ -102,7 +102,7 @@ public class ConfigurationApiActivity extends Activity {
 
     public static Context                    mcontext;
     public String                            region                                 = "";
-    public boolean                           findGruopPressedFlag                   = false;
+    public boolean                           findGroupPressedFlag                   = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,10 +162,9 @@ public class ConfigurationApiActivity extends Activity {
                     findCandidateResources(resourceTypes);
 
                     messageCount++;
-                    findGruopPressedFlag = true;
 
                 } else if (position == 1) { // Find All Resources
-                    if (false == findGruopPressedFlag) {
+                    if (false == findGroupPressedFlag) {
                         displayToastMessage("Configuration collection resource does not exist!");
                     } else {
                         Vector<String> resourceTypes = new Vector<String>();
@@ -249,38 +248,38 @@ public class ConfigurationApiActivity extends Activity {
             Log.e(LOG_TAG, "configuration resource doest not exist!");
             displayToastMessage("Configuration resource does not exist!");
         } else {
-        final Dialog dialog = new Dialog(mcontext);
-        dialog.setContentView(R.layout.userinputforregionvalue);
-        dialog.setTitle("Enter the Region Value");
+            final Dialog dialog = new Dialog(mcontext);
+            dialog.setContentView(R.layout.userinputforregionvalue);
+            dialog.setTitle("Enter the Region Value");
 
-        dialog.setCancelable(false);
-        dialog.show();
-        Button ok = (Button) dialog.findViewById(R.id.ok);
-        Button cancel = (Button) dialog.findViewById(R.id.cancel);
+            dialog.setCancelable(false);
+            dialog.show();
+            Button ok = (Button) dialog.findViewById(R.id.ok);
+            Button cancel = (Button) dialog.findViewById(R.id.cancel);
 
-        ok.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            ok.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
 
-                EditText regionValue = (EditText) dialog
-                        .findViewById(R.id.region);
-                region = regionValue.getText().toString();
-                if (region.equalsIgnoreCase("")) {
-                    String toastmessage = "Please enter the Region Value";
-                    displayToastMessage(toastmessage);
-                } else {
-                    dialog.dismiss();
-                    updateConfiguration(region);
+                    EditText regionValue = (EditText) dialog
+                            .findViewById(R.id.region);
+                    region = regionValue.getText().toString();
+                    if (region.equalsIgnoreCase("")) {
+                        String toastmessage = "Please enter the Region Value";
+                        displayToastMessage(toastmessage);
+                    } else {
+                        dialog.dismiss();
+                        updateConfiguration(region);
+                    }
                 }
-            }
-        });
-        cancel.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-    }
+            });
+            cancel.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+        }
     }
 
     @Override
@@ -504,8 +503,8 @@ public class ConfigurationApiActivity extends Activity {
     }
 
     /**
-     * This method update the configuration resource region attribute
-     * to given value.
+     * This method update the configuration resource region attribute to given
+     * value.
      *
      * @param region
      */
@@ -645,6 +644,9 @@ public class ConfigurationApiActivity extends Activity {
         }
 
         resourceInfo.resource = resource;
+        if (3 == messageCount) {
+            findGroupPressedFlag = true;
+        }
     }
 
     /**

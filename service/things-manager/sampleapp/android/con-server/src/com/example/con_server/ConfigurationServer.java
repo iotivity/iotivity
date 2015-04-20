@@ -42,18 +42,18 @@ import android.util.Log;
 /*
  * For Creating the Resources [configurtion, Diagnostic & FactoryRest]  &
  * for Handling of the Client's Request
-*/
-public class ConfigurationServer implements IDiagnosticsListener,IConfigurationListener,
-OcPlatform.EntityHandler {
-    private final String            LOG_TAG              = "[CON-SERVER]"
-            + this.getClass()
-            .getSimpleName();
-    private ThingsManager           thingsmanager        = null;
+ */
+public class ConfigurationServer implements IDiagnosticsListener,
+        IConfigurationListener, OcPlatform.EntityHandler {
+    private final String          LOG_TAG            = "[CON-SERVER]"
+                                                             + this.getClass()
+                                                                     .getSimpleName();
+    private ThingsManager         thingsmanager      = null;
     private ConfigurationResource conResource        = null;
     private DiagnosticsResource   diagResource       = null;
     private FactorySetResource    factorySetResource = null;
 
-    //constructor
+    // constructor
     public ConfigurationServer() {
         thingsmanager = new ThingsManager();
         thingsmanager.setDiagnosticsListener(this);
@@ -117,20 +117,19 @@ OcPlatform.EntityHandler {
         String message;
         Log.i(LOG_TAG, "onBootStrapCallback");
 
-        //setting the default values received from bootstrap Server
+        // setting the default values received from bootstrap Server
 
         ConfigurationDefaultValues.defaultRegion = rep.getValueString("r");
         ConfigurationDefaultValues.defaultSystemTime = rep.getValueString("st");
         ConfigurationDefaultValues.defaultCurrency = rep.getValueString("c");
         ConfigurationDefaultValues.defaultLocation = rep.getValueString("loc");
 
-
         // forming the message to display on UI
         message = "URI : " + rep.getUri() + "\n";
         message = message + "Region : "
                 + ConfigurationDefaultValues.defaultRegion + "\n";
-        message = message + "System Time : " + ConfigurationDefaultValues.defaultSystemTime
-                + "\n";
+        message = message + "System Time : "
+                + ConfigurationDefaultValues.defaultSystemTime + "\n";
         message = message + "Currency : "
                 + ConfigurationDefaultValues.defaultCurrency + "\n";
         message = message + "Location : "
@@ -138,12 +137,14 @@ OcPlatform.EntityHandler {
 
         Log.i(LOG_TAG, "Resource URI: " + rep.getUri());
         Log.i(LOG_TAG, "Region: " + ConfigurationDefaultValues.defaultRegion);
-        Log.i(LOG_TAG, "System Time: " + ConfigurationDefaultValues.defaultSystemTime);
+        Log.i(LOG_TAG, "System Time: "
+                + ConfigurationDefaultValues.defaultSystemTime);
         Log.i(LOG_TAG, "Currency: "
                 + ConfigurationDefaultValues.defaultCurrency);
-        Log.i(LOG_TAG, "Location: " + ConfigurationDefaultValues.defaultLocation);
+        Log.i(LOG_TAG, "Location: "
+                + ConfigurationDefaultValues.defaultLocation);
 
-        //showing the formed message on the UI
+        // showing the formed message on the UI
         Message msg = Message.obtain();
         msg.what = 0;
         MainActivity mainActivityObj = MainActivity.getMainActivityObject();
@@ -165,7 +166,7 @@ OcPlatform.EntityHandler {
         Log.i(LOG_TAG, "onFactoryResetCallback");
     }
 
-    //  For Handling the Client's Request
+    // For Handling the Client's Request
     @Override
     public EntityHandlerResult handleEntity(OcResourceRequest request) {
         Log.i(LOG_TAG, "handleEntity: enter");
@@ -202,7 +203,7 @@ OcPlatform.EntityHandler {
                         diagResource.getUri())) {
 
                     String factorySetAtt = rep.getValueString("fr");
-                    if(factorySetAtt.equalsIgnoreCase("true")){
+                    if (factorySetAtt.equalsIgnoreCase("true")) {
                         conResource.factoryReset();
                     }
                     diagResource.setDiagnosticsRepresentation(rep);
@@ -225,8 +226,7 @@ OcPlatform.EntityHandler {
         response.setRequestHandle(request.getRequestHandle());
         response.setResourceHandle(request.getResourceHandle());
 
-        if (request.getResourceUri().equalsIgnoreCase(
-                conResource.getUri())) {
+        if (request.getResourceUri().equalsIgnoreCase(conResource.getUri())) {
             rep = conResource.getConfigurationRepresentation();
         } else if (request.getResourceUri().equalsIgnoreCase(
                 diagResource.getUri())) {
@@ -242,6 +242,7 @@ OcPlatform.EntityHandler {
         }
         Log.i(LOG_TAG, "sendResponse: exit");
     }
+
     @Override
     public void onUpdateConfigurationsCallback(
             Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
@@ -262,19 +263,19 @@ OcPlatform.EntityHandler {
 // Default values for Resources
 class ConfigurationDefaultValues {
 
-    //configuration Resource default values
-    public static String defaultLocation = new String();
-    public static String defaultRegion = new String();
-    public static String defaultSystemTime = new String();
-    public static String defaultCurrency = new String();
-    public static String ConURIPrefix                = "/oic/con";
-    public static String ConResourceTypePrefix       = "oic.con";
+    // configuration Resource default values
+    public static String defaultLocation        = new String();
+    public static String defaultRegion          = new String();
+    public static String defaultSystemTime      = new String();
+    public static String defaultCurrency        = new String();
+    public static String ConURIPrefix           = "/oic/con";
+    public static String ConResourceTypePrefix  = "oic.con";
 
     // Diagnostics Resource default values
-    public static String diagURIPrefix               = "/oic/diag";
-    public static String diagResourceTypePrefix      = "oic.diag";
-    public static String diagnosticsValue            = "false";
-    public static String defaultFactoryReset         = "false";
-    public static String defaultReboot               = "false";
-    public static String defaultStartCollection      = "false";
+    public static String diagURIPrefix          = "/oic/diag";
+    public static String diagResourceTypePrefix = "oic.diag";
+    public static String diagnosticsValue       = "false";
+    public static String defaultFactoryReset    = "false";
+    public static String defaultReboot          = "false";
+    public static String defaultStartCollection = "false";
 }

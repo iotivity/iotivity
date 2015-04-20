@@ -32,33 +32,33 @@ import android.util.Log;
 
 //For creating/deleting the Diagnostics Resource
 public class DiagnosticsResource {
-    private final String     LOG_TAG                   = "[CON-SERVER]"
-                                                               + this.getClass()
-                                                                       .getSimpleName();
+    private final String     LOG_TAG               = "[CON-SERVER]"
+                                                           + this.getClass()
+                                                                   .getSimpleName();
     // diagnostics members
     private String           diagnosticsUri;
     private String           factoryReset;
     private String           reboot;
     private String           startCollection;
-    private Vector<String>   diagnosticsTypes          = new Vector<String>();
-    private Vector<String>   diagnosticsInterfaces     = new Vector<String>();
+    private Vector<String>   diagnosticsTypes      = new Vector<String>();
+    private Vector<String>   diagnosticsInterfaces = new Vector<String>();
     private OcResourceHandle diagnosticsHandle;
-    private OcRepresentation diagnosticsRep            = new OcRepresentation();
+    private OcRepresentation diagnosticsRep        = new OcRepresentation();
 
     // constructor
     public DiagnosticsResource() {
         Log.i(LOG_TAG, "DiagnosticsCollection: enter");
 
-        factoryReset    = ConfigurationDefaultValues.defaultFactoryReset;
-        reboot          = ConfigurationDefaultValues.defaultReboot;
+        factoryReset = ConfigurationDefaultValues.defaultFactoryReset;
+        reboot = ConfigurationDefaultValues.defaultReboot;
         startCollection = ConfigurationDefaultValues.defaultStartCollection;
 
         diagnosticsUri = ConfigurationDefaultValues.diagURIPrefix;
         diagnosticsTypes.add(ConfigurationDefaultValues.diagResourceTypePrefix);
         diagnosticsInterfaces.add(OcPlatform.DEFAULT_INTERFACE);
         diagnosticsRep.setValueString("fr", factoryReset);
-        diagnosticsRep.setValueString("rb",reboot);
-        diagnosticsRep.setValueString("ssc",startCollection);
+        diagnosticsRep.setValueString("rb", reboot);
+        diagnosticsRep.setValueString("ssc", startCollection);
         diagnosticsRep.setUri(diagnosticsUri);
         diagnosticsRep.setResourceTypes(diagnosticsTypes);
         diagnosticsRep.setResourceInterfaces(diagnosticsInterfaces);
@@ -91,7 +91,8 @@ public class DiagnosticsResource {
                 try {
                     while (true) {
                         // Put this thread for sleep for 1 sec.
-                        // Sleep value can be changed as per the developer convenience.
+                        // Sleep value can be changed as per the developer
+                        // convenience.
                         Thread.sleep(1000);
                         if (reboot.equalsIgnoreCase("true")) {
                             Log.i(LOG_TAG, "Reboot will be soon...");
@@ -139,30 +140,33 @@ public class DiagnosticsResource {
         Log.i(LOG_TAG, "setDiagnosticsRepresentation: enter");
 
         String fr = rep.getValueString("fr");
-        String rb =rep.getValueString("rb");
-        String ssc=rep.getValueString("ssc");
-
+        String rb = rep.getValueString("rb");
+        String ssc = rep.getValueString("ssc");
 
         if (!(fr.equalsIgnoreCase(""))) {
             factoryReset = fr;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value(FactoryReset): "
-                    + fr);
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(FactoryReset): "
+                            + fr);
         }
         if (!(rb.equalsIgnoreCase(""))) {
             reboot = rb;
-            Log.i(LOG_TAG, "setDiagnosticsRepresentation: new value:(reboot) " + rb);
+            Log.i(LOG_TAG, "setDiagnosticsRepresentation: new value:(reboot) "
+                    + rb);
         }
 
         if (!(ssc.equalsIgnoreCase(""))) {
             startCollection = ssc;
-            Log.i(LOG_TAG, "setDiagnosticsRepresentation: new value:(startcollection) " + ssc);
+            Log.i(LOG_TAG,
+                    "setDiagnosticsRepresentation: new value:(startcollection) "
+                            + ssc);
         }
 
-         Log.i(LOG_TAG, "setDiagnosticsRepresentation: exit");
+        Log.i(LOG_TAG, "setDiagnosticsRepresentation: exit");
     }
 
     OcRepresentation getDiagnosticsRepresentation() {
-        diagnosticsRep.setValueString("fr",factoryReset);
+        diagnosticsRep.setValueString("fr", factoryReset);
         diagnosticsRep.setValueString("rb", reboot);
         diagnosticsRep.setValueString("ssc", startCollection);
         return diagnosticsRep;
@@ -179,7 +183,7 @@ public class DiagnosticsResource {
         startCollection = ConfigurationDefaultValues.defaultStartCollection;
     }
 
-    // For Deleting  diagnostic resource
+    // For Deleting diagnostic resource
     public void deleteResource() {
         try {
             if (null != diagnosticsHandle) {

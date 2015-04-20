@@ -33,6 +33,6 @@ IDE/LINUX_TEST/tgmtest
 inc4.7/
 .settings/
 .cproject
-.project
+#.project
 TestApp/introspection/tgmclient
 TestApp/introspection/introspectionServer

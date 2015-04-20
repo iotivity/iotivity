@@ -33,36 +33,37 @@ import android.util.Log;
 //For creating/deleting the configuration Resource
 public class ConfigurationResource {
     private final String       LOG_TAG                 = "[CON-SERVER]"
-            + this.getClass()
-            .getSimpleName();
+                                                               + this.getClass()
+                                                                       .getSimpleName();
     // Configuration resource members
-    protected String             configurationUri;
-    protected String             location;
-    protected String             systemTime;
-    protected String             currency;
-    protected String             region;
-    protected Vector<String>     configurationTypes      = new Vector<String>();
-    protected Vector<String>     configurationInterfaces = new Vector<String>();
-    protected OcRepresentation   configurationRep        = new OcRepresentation();
-    protected OcResourceHandle   configurationHandle;
+    protected String           configurationUri;
+    protected String           location;
+    protected String           systemTime;
+    protected String           currency;
+    protected String           region;
+    protected Vector<String>   configurationTypes      = new Vector<String>();
+    protected Vector<String>   configurationInterfaces = new Vector<String>();
+    protected OcRepresentation configurationRep        = new OcRepresentation();
+    protected OcResourceHandle configurationHandle;
 
     // constructors
     public ConfigurationResource() {
         Log.i(LOG_TAG, "ConfigurationResource: enter");
 
-        location   =  ConfigurationDefaultValues.defaultLocation;
-        systemTime =  ConfigurationDefaultValues.defaultSystemTime;
-        currency   =  ConfigurationDefaultValues.defaultCurrency;
-        region     =  ConfigurationDefaultValues.defaultRegion;
+        location = ConfigurationDefaultValues.defaultLocation;
+        systemTime = ConfigurationDefaultValues.defaultSystemTime;
+        currency = ConfigurationDefaultValues.defaultCurrency;
+        region = ConfigurationDefaultValues.defaultRegion;
 
         configurationUri = ConfigurationDefaultValues.ConURIPrefix;
-        configurationTypes.add(ConfigurationDefaultValues.ConResourceTypePrefix);
+        configurationTypes
+                .add(ConfigurationDefaultValues.ConResourceTypePrefix);
         configurationInterfaces.add(OcPlatform.DEFAULT_INTERFACE);
 
-        configurationRep.setValueString("loc",location);
-        configurationRep.setValueString("st",systemTime);
-        configurationRep.setValueString("c",currency);
-        configurationRep.setValueString("r",region);
+        configurationRep.setValueString("loc", location);
+        configurationRep.setValueString("st", systemTime);
+        configurationRep.setValueString("c", currency);
+        configurationRep.setValueString("r", region);
         configurationRep.setUri(configurationUri);
         configurationRep.setResourceTypes(configurationTypes);
         configurationRep.setResourceInterfaces(configurationInterfaces);
@@ -83,7 +84,7 @@ public class ConfigurationResource {
         Log.i(LOG_TAG, "createResource(configuration): exit");
     }
 
-     // Setters and Getters methods for Configuration resource
+    // Setters and Getters methods for Configuration resource
     public void setConfigurationRepresentation(OcRepresentation rep) {
         Log.i(LOG_TAG, "setConfigurationRepresentation: enter");
 
@@ -97,23 +98,27 @@ public class ConfigurationResource {
         reg = rep.getValueString("r");
         if (!(loc.equalsIgnoreCase(""))) {
             location = loc;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value(location): "
-                    + location);
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(location): "
+                            + location);
         }
         if (!(st.equalsIgnoreCase(""))) {
             systemTime = st;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value(system time): "
-                    + systemTime);
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(system time): "
+                            + systemTime);
         }
         if (!(cur.equalsIgnoreCase(""))) {
             currency = cur;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value(currency): "
-                    + currency);
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(currency): "
+                            + currency);
         }
         if (!(reg.equalsIgnoreCase(""))) {
             region = reg;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value(region): "
-                    + region);
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(region): "
+                            + region);
         }
 
         Log.i(LOG_TAG, "setConfigurationRepresentation: exit");
@@ -122,8 +127,8 @@ public class ConfigurationResource {
     public OcRepresentation getConfigurationRepresentation() {
 
         configurationRep.setValueString("loc", location);
-        configurationRep.setValueString("st",systemTime);
-        configurationRep.setValueString("c",currency);
+        configurationRep.setValueString("st", systemTime);
+        configurationRep.setValueString("c", currency);
         configurationRep.setValueString("r", region);
         return configurationRep;
     }
@@ -137,7 +142,7 @@ public class ConfigurationResource {
 
         location = ConfigurationDefaultValues.defaultLocation;
         systemTime = ConfigurationDefaultValues.defaultSystemTime;
-        currency=ConfigurationDefaultValues.defaultCurrency;
+        currency = ConfigurationDefaultValues.defaultCurrency;
         region = ConfigurationDefaultValues.defaultRegion;
         Log.i(LOG_TAG, "ConfiguartionResource: factoryReset done");
 

@@ -39,8 +39,8 @@ import org.iotivity.base.OcRepresentation;
  */
 public interface IActionListener {
     /**
-     * This callback method is called when a response for the getActionSet
-     * request just arrives.
+     * This callback method is called when a asynchronous response for the getActionSet
+     * request is received.
      *
      * @param headerOptions
      *            It comprises of optionID and optionData as members.
@@ -55,8 +55,8 @@ public interface IActionListener {
             OcRepresentation rep, int errorValue);
 
     /**
-     * This callback method is called when a response for the addActionSet
-     * request just arrives.
+     * This callback method is called when a asynchronous response for the addActionSet
+     * request is received.
      *
      * @param headerOptions
      *            It comprises of optionID and optionData as members.
@@ -71,8 +71,8 @@ public interface IActionListener {
             OcRepresentation rep, int errorValue);
 
     /**
-     * This callback method is called when a response for the executeActionSet
-     * or deleteActionSet request just arrives.
+     * This callback method is called when a asynchronous response for the executeActionSet
+     * or deleteActionSet request is received.
      *
      * @param headerOptions
      *            It comprises of optionID and optionData as members.
