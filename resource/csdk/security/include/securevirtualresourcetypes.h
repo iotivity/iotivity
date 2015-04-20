@@ -37,10 +37,9 @@
  * Last reconciled against Spec v0.95.
  */
 
-//
-// TODO WARNING: this code hasn't been tested except to compile!
-// TODO NHS REMOVE this comment after code has been tested!
-//
+/**
+ * TODO WARNING: this code has NOT been unit tested!
+ */
 
 #ifndef OC_SECURITY_RESOURCE_TYPES_H
 #define OC_SECURITY_RESOURCE_TYPES_H
@@ -63,9 +62,29 @@ extern "C" {
 #define RESOURCE_NOT_FOUND_DEF        (1 << 4)
 #define POLICY_ENGINE_ERROR_DEF       (1 << 5)
 #define REASON_MASK_DEF               (INSUFFICIENT_PERMISSION_DEF | \
-                                        SUBJECT_NOT_FOUND_DEF | \
-                                        RESOURCE_NOT_FOUND_DEF | \
-                                        POLICY_ENGINE_ERROR_DEF)
+                                       SUBJECT_NOT_FOUND_DEF | \
+                                       RESOURCE_NOT_FOUND_DEF | \
+                                       POLICY_ENGINE_ERROR_DEF)
+
+
+/**
+ * Access policy in least significant bits (from Spec):
+ * 1st lsb:  C (Create)
+ * 2nd lsb:  R (Read, Observe, Discover)
+ * 3rd lsb:  U (Write, Update)
+ * 4th lsb:  D (Delete)
+ * 5th lsb:  N (Notify)
+ */
+#define PERMISSION_CREATE       (1 << 0)
+#define PERMISSION_READ         (1 << 1)
+#define PERMISSION_WRITE        (1 << 2)
+#define PERMISSION_DELETE       (1 << 3)
+#define PERMISSION_NOTIFY       (1 << 4)
+#define PERMISSION_FULL_CONTROL (PERMISSION_CREATE | \
+                                 PERMISSION_READ | \
+                                 PERMISSION_WRITE | \
+                                 PERMISSION_DELETE | \
+                                 PERMISSION_NOTIFY)
 
 /**
  * @brief   Response type for all Action requests from CA layer;
@@ -82,7 +101,8 @@ extern "C" {
  *     }
  * }
  */
-typedef enum {
+typedef enum
+{
     ACCESS_GRANTED = ACCESS_GRANTED_DEF,
     ACCESS_DENIED = ACCESS_DENIED_DEF,
     ACCESS_DENIED_INSUFFICIENT_PERMISSION = ACCESS_DENIED_DEF
@@ -91,38 +111,43 @@ typedef enum {
         | SUBJECT_NOT_FOUND_DEF,
     ACCESS_DENIED_RESOURCE_NOT_FOUND = ACCESS_DENIED_DEF
         | RESOURCE_NOT_FOUND_DEF,
+    ACCESS_DENIED_POLICY_ENGINE_ERROR = ACCESS_DENIED_DEF
+        | POLICY_ENGINE_ERROR_DEF,
 } SRMAccessResponse_t;
 
 /**
  * Reason code for SRMAccessResponse.
  */
-typedef enum {
+typedef enum
+{
     NO_REASON_GIVEN = 0,
     INSUFFICIENT_PERMISSION = INSUFFICIENT_PERMISSION_DEF,
     SUBJECT_NOT_FOUND = SUBJECT_NOT_FOUND_DEF,
     RESOURCE_NOT_FOUND = RESOURCE_NOT_FOUND_DEF,
 } SRMAccessResponseReasonCode_t;
 
+/**
+ * Extract Reason Code from Access Response.
+ */
 static inline SRMAccessResponseReasonCode_t GetReasonCode(
     SRMAccessResponse_t response)
 {
-    // switch(reponse) {
-    //   case ACCESS_ALLOWED:
-    //   case ACCESS_DENIED:
-    //     return NO_REASON_GIVEN;
-    //   case ACCESS_DENIED_INSUFFICIENT_PERMISSION:
-    //     return
-    // }
-
     SRMAccessResponseReasonCode_t reason =
         (SRMAccessResponseReasonCode_t)(response & REASON_MASK_DEF);
     return reason;
 }
 
-static inline bool IsAccessGranted(SRMAccessResponse_t response) {
-    if(ACCESS_GRANTED == (response & ACCESS_GRANTED)) {
+/**
+ * Returns 'true' iff request should be passed on to RI layer.
+ */
+static inline bool IsAccessGranted(SRMAccessResponse_t response)
+{
+    if(ACCESS_GRANTED == (response & ACCESS_GRANTED))
+    {
         return true;
-    } else {
+    }
+    else
+    {
         return false;
     }
 }
@@ -135,7 +160,7 @@ typedef struct OicSecCred OicSecCred_t;
 
 /**
  * @brief   /oic/sec/credtype (Credential Type) data type.
- *          From OIC Security Spec v0.95:
+ *          Derived from OIC Security Spec; see Spec for details.
  *              0:  no security mode
  *              1:  symmetric pair-wise key
  *              2:  symmetric group key
@@ -147,7 +172,8 @@ typedef uint16_t OicSecCredType_t;
 
 typedef struct OicSecDoxm OicSecDoxm_t;
 
-typedef enum {
+typedef enum
+{
     NORMAL                          = 0x0,
     RESET                           = (0x1 << 0),
     TAKE_OWNER                      = (0x1 << 1),
@@ -158,7 +184,8 @@ typedef enum {
     // << 6 THROUGH 15 RESERVED
 } OicSecDpm_t;
 
-typedef enum {
+typedef enum
+{
     MULTIPLE_SERVICE_SERVER_DRIVEN  = 0x0,
     SINGLE_SERVICE_SERVER_DRIVEN    = 0x1,
     MULTIPLE_SERVICE_CLIENT_DRIVEN  = 0x2,
@@ -202,8 +229,7 @@ struct OicSecJwk
 
 /**
  * @brief   /oic/sec/acl (Access Control List) data type.
- *          Derived from OIC Security Spec v0.95... see spec
- *          for full explanation of each line item.
+ *          Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecAcl
 {
@@ -229,8 +255,7 @@ struct OicSecAcl
 /**
  * @brief   /oic/sec/amacl (Access Manager Service Accesss Control List)
  *          data type.
- *          Derived from OIC Security Spec v0.95... see spec
- *          for full explanation of each line item.
+ *          Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecAmacl
 {
@@ -249,8 +274,7 @@ struct OicSecAmacl
 
 /**
  * @brief   /oic/sec/cred (Credential) data type.
- *          Derived from OIC Security Spec v0.95... see spec
- *          for full explanation of each line item.
+ *          Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecCred
 {
@@ -274,6 +298,7 @@ struct OicSecCred
 
 /**
  * @brief   /oic/sec/doxm (Device Owner Transfer Methods) data type
+ *          Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecDoxm
 {
@@ -314,6 +339,7 @@ struct OicSecPstat
 
 /**
  * @brief   /oic/sec/role (Role) data type.
+ *          Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecRole
 {
@@ -323,20 +349,22 @@ struct OicSecRole
 
 /**
  * @brief   /oic/sec/sacl (Signed Access Control List) data type.
+ *          Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecSacl
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec v0.95
+    //TODO fill in from OIC Security Spec
 };
 
 /**
  * @brief   /oic/sec/svc (Service requiring a secure connection) data type.
+ *          Derived from OIC Security Spec; see Spec for details.
  */
 struct OicSecSvc
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec v0.95
+    //TODO fill in from OIC Security Spec
 };
 
 #ifdef __cplusplus

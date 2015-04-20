@@ -54,15 +54,27 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler, CAResponseCallbac
 
 /**
  * @brief   Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult SRMInitSecureResources();
 
 /**
  * @brief   Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- * @retval  none
+ * @return  none
  */
 void SRMDeInitSecureResources();
+
+/**
+ * @brief   Initialize Policy Engine context.
+ * @return  OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult SRMInitPolicyEngine();
+
+/**
+ * @brief   Cleanup Policy Engine context.
+ * @return  none
+ */
+void SRMDeInitPolicyEngine();
 
 #ifdef __cplusplus
 }

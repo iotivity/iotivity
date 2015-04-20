@@ -1405,6 +1405,12 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     {
         result = initResources();
     }
+    // Initialize the SRM Policy Engine
+    if(result == OC_STACK_OK)
+    {
+        result = SRMInitPolicyEngine();
+        // TODO after BeachHead delivery: consolidate into single SRMInit()
+    }
     if(result != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("Stack initialization error"));
@@ -1465,6 +1471,10 @@ OCStackResult OCStop()
 
     // Deinit security blob
     DeinitOCSecurityInfo();
+
+    // De-init the SRM Policy Engine
+    // TODO after BeachHead delivery: consolidate into single SRMDeInit()
+    SRMDeInitPolicyEngine();
 
     if (result != OC_STACK_OK) {
         OC_LOG(ERROR, TAG, PCF("Stack stop error"));

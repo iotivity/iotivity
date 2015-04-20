@@ -23,6 +23,7 @@
 #include "cainterface.h"
 #include "securityresourcemanager.h"
 #include "resourcemanager.h"
+#include "policyengine.h"
 
 #define TAG  PCF("SRM")
 
@@ -32,6 +33,12 @@ static CARequestCallback gRequestHandler = NULL;
 static CAResponseCallback gResponseHandler = NULL;
 //Persistent Storage callback handler for open/read/write/close/unlink
 static OCPersistentStorage *gPersistentStorageHandler = NULL;
+
+/**
+ * A single global Policy Engine context will suffice as long
+ * as SRM is single-threaded.
+ */
+PEContext_t g_policyEngineContext;
 
 /**
  * @brief   Handle the request from the SRM.
@@ -130,7 +137,10 @@ OCPersistentStorage* SRMGetPersistentStorageHandler()
  */
 OCStackResult SRMInitSecureResources()
 {
-    return InitSecureResources();
+    // TODO: temporarily returning OC_STACK_OK every time until default
+    // behavior (for when SVR DB is missing) is settled.
+    InitSecureResources();
+    return OC_STACK_OK;
 }
 
 /**
@@ -142,3 +152,20 @@ void SRMDeInitSecureResources()
     DestroySecureResources();
 }
 
+/**
+ * @brief   Initialize Policy Engine.
+ * @return  OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult SRMInitPolicyEngine()
+{
+    return InitPolicyEngine(&g_policyEngineContext);
+}
+
+/**
+ * @brief   Cleanup Policy Engine.
+ * @return  none
+ */
+void SRMDeInitPolicyEngine()
+{
+    return DeInitPolicyEngine(&g_policyEngineContext);
+}
