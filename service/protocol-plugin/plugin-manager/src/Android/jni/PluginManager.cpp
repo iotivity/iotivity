@@ -37,6 +37,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStartPlugi
 {
     LOGD("jniStartPlugins() Called.");
 
+    if((!jkey)||(!jvalue))
+        return 0;
     std::string ckey = env->GetStringUTFChars(jkey, 0);
     std::string cvalue = env->GetStringUTFChars(jvalue, 0);
 
@@ -53,6 +55,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStopPlugin
 {
     LOGD("jniStopPlugins() Called.");
 
+    if((!jkey)||(!jvalue))
+        return 0;
     std::string ckey = env->GetStringUTFChars(jkey, 0);
     std::string cvalue = env->GetStringUTFChars(jvalue, 0);
 
@@ -111,6 +115,8 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetStat
 {
     LOGD("jniGetState() Called.");
 
+    if (!jplugID)
+        return env->NewStringUTF("NULL_INPUT");
     std::string cplugID = env->GetStringUTFChars(jplugID, 0);
     std::string result = pluginManagerImpl->getState(cplugID);
 
