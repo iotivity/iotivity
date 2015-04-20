@@ -24,8 +24,8 @@
  * This file contains  utility function for network configurations.
  */
 
-#ifndef _NETWORK_CONFIGURATOR_H_
-#define _NETWORK_CONFIGURATOR_H_
+#ifndef CA_NETWORK_CONFIGURATOR_H_
+#define CA_NETWORK_CONFIGURATOR_H_
 
 #include "cacommon.h"
 #include "uarraylist.h"
@@ -74,5 +74,5 @@ CAResult_t CATerminateNetworkType();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef _NETWORK_CONFIGURATOR_H_
+#endif //#ifndef CA_NETWORK_CONFIGURATOR_H_
 

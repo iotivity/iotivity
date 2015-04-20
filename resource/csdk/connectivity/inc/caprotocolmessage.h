@@ -22,8 +22,8 @@
  * @brief This file contains common function for handling protocol messages.
  */
 
-#ifndef __CA_PROTOCOL_MESSAGE_H_
-#define __CA_PROTOCOL_MESSAGE_H_
+#ifndef CA_PROTOCOL_MESSAGE_H_
+#define CA_PROTOCOL_MESSAGE_H_
 
 #include "cacommon.h"
 #include "config.h"
@@ -231,4 +231,4 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_PROTOCOL_MESSAGE_H_
+#endif //#ifndef CA_PROTOCOL_MESSAGE_H_
