@@ -64,7 +64,7 @@ if target_os == 'darwin':
 
 
 elif target_os == 'linux':
-	if not os.path.exists(gtest_dir):
+	if os.path.exists(gtest_dir):
 		# Run configure on gtest
 		print 'Configuring google unit test'
 		env.Configure(gtest_dir, './configure')
