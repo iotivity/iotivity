@@ -319,12 +319,6 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
 {
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
-    /* //bug not found
-     if(rep.hasAttribute("name"))
-     {
-     std::cout << "\tRoom name: " << rep.getValue<std::string>("name") << std::endl;
-     }
-     */
     std::vector< OCRepresentation > children = rep.getChildren();
     if(children.size() == 0 )
     {
@@ -334,7 +328,14 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
 
     for (auto oit = children.begin(); oit != children.end(); ++oit)
     {
-        // std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
+        if(oit->getUri().find("coap://") == std::string::npos)
+        {
+            std::cout << "The resource with a URI " << oit->getUri() << " is not a remote resource."
+                << " Thus, we ignore to send a request for presence check to the resource.\n";
+
+            continue;
+        }
+
         std::vector< std::string > hostAddressVector = str_split(oit->getUri(), '/');
         std::string hostAddress = "";
         for (unsigned int i = 0; i < hostAddressVector.size(); ++i)
@@ -363,27 +364,33 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
         OCPlatform::OCPresenceHandle presenceHandle;
         OCStackResult result = OC_STACK_ERROR;
 
-        result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                // resourceType,
-                resourceTypes.front(),
-                OC_ETHERNET,
-                std::function<
-                        void(OCStackResult result, const unsigned int nonce,
-                                const std::string& hostAddress) >(
-                        std::bind(&GroupManager::collectionPresenceHandler, this,
-                                std::placeholders::_1, std::placeholders::_2,
-                                std::placeholders::_3, hostAddress, oit->getUri())));
+        try
+        {
+            result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                    // resourceType,
+                    resourceTypes.front(),
+                    OC_ETHERNET,
+                    std::function<
+                            void(OCStackResult result, const unsigned int nonce,
+                                    const std::string& hostAddress) >(
+                            std::bind(&GroupManager::collectionPresenceHandler, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, hostAddress, oit->getUri())));
 
-        result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                // resourceType,
-                resourceTypes.front(),
-                OC_WIFI,
-                std::function<
-                        void(OCStackResult result, const unsigned int nonce,
-                                const std::string& hostAddress) >(
-                        std::bind(&GroupManager::collectionPresenceHandler, this,
-                                std::placeholders::_1, std::placeholders::_2,
-                                std::placeholders::_3, hostAddress, oit->getUri())));
+            result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
+                    // resourceType,
+                    resourceTypes.front(),
+                    OC_WIFI,
+                    std::function<
+                            void(OCStackResult result, const unsigned int nonce,
+                                    const std::string& hostAddress) >(
+                            std::bind(&GroupManager::collectionPresenceHandler, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, hostAddress, oit->getUri())));
+        }catch(OCException& e)
+        {
+            std::cout<< "Exception in subscribePresence: "<< e.what() << std::endl;
+        }
 
         if (result == OC_STACK_OK)
         {
