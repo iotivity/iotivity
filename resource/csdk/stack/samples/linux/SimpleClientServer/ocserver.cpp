@@ -112,8 +112,17 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
         carrier = cJSON_GetArrayItem(carrier, 0);
         carrier = cJSON_GetObjectItem(carrier, "rep");
 
-        currLightResource->power = cJSON_GetObjectItem(carrier,"power")->valueint;
-        currLightResource->state = cJSON_GetObjectItem(carrier,"state")->valueint;
+        cJSON* prop = cJSON_GetObjectItem(carrier,"power");
+        if (prop)
+        {
+            currLightResource->power =prop->valueint;
+        }
+
+        prop = cJSON_GetObjectItem(carrier,"state");
+        if (prop)
+        {
+            currLightResource->state = prop->valueint;
+        }
 
         cJSON_Delete(putJson);
     }
