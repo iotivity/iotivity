@@ -566,16 +566,6 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
 
 /**
- * Set device information.
- *
- * @param deviceInfo Structure passed by the server application containing
- *                   the device information.
- *
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
-
-/**
  * Create a resource.
  *
  * @param handle Pointer to handle to newly created resource.  Set by ocstack and
