@@ -115,7 +115,7 @@ namespace OIC
             }
             void setValue(const std::string key, const std::string value);
             PMRESULT loadConfigFile(const std::string configfilepath);
-            PMRESULT parsing(std::vector<char> buffer, xml_document<> *doc);
+            PMRESULT parsing(char *xmlData, xml_document<> *doc);
             PMRESULT getXmlData(  xml_node<> *pluginInfo, std::string key);
     };
 }

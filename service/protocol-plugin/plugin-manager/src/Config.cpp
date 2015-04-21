@@ -59,18 +59,25 @@ Config::~Config(void)
 PMRESULT Config::loadConfigFile(const std::string configfilepath)
 {
     // Read the xml file
-    std::ifstream xmlFile(configfilepath.c_str());
+    std::basic_ifstream< char > xmlFile(configfilepath.c_str());
     if (!xmlFile.good())
     {
         return PM_S_FALSE;
     }
-    xml_document<> doc;
-    //into a vector
-    std::vector<char> buffer((istreambuf_iterator<char>(xmlFile)), istreambuf_iterator<char>());
-    buffer.push_back('\0');
+    xml_document< char > doc;
 
-    // Parse the buffer using the xml file parsing library into doc
-    parsing(buffer, &doc);
+    xmlFile.seekg(0, std::ios::end);
+    unsigned int size = (unsigned int)xmlFile.tellg();
+    xmlFile.seekg(0);
+
+    std::vector< char > xmlData(size + 1);
+    xmlData[size] = 0;
+
+    xmlFile.read(&xmlData.front(), (std::streamsize)size);
+    xmlFile.close();
+
+    // Parse the xmlData using the xml file parsing library into doc
+    parsing(&xmlData.front(), &doc);
 
     // Find our root node
     xml_node<> *root_node = doc.first_node("pluginManager");
@@ -81,12 +88,12 @@ PMRESULT Config::loadConfigFile(const std::string configfilepath)
     return PM_S_OK;
 }
 
-PMRESULT Config::parsing(std::vector<char> buffer, xml_document<> *doc)
+PMRESULT Config::parsing(char *xmlData, xml_document<> *doc)
 {
-    // Parse the buffer using the xml file parsing library into doc
+    // Parse the xmlData using the xml file parsing library into doc
     try
     {
-        doc->parse<0>(&buffer[0]);
+        doc->parse< 0 >(xmlData);
     }
     catch (rapidxml::parse_error err)
     {
