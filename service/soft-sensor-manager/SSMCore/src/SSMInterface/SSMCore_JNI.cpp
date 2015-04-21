@@ -190,14 +190,15 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_initializeSSMCore
 (JNIEnv *env, jclass clz, jstring jstrXmlDescription)
 {
-    SSMRESULT res = SSM_E_FAIL;
-    const char *xmlDescription = env->GetStringUTFChars(jstrXmlDescription, NULL);
-
-    if (xmlDescription == NULL)
+    if (jstrXmlDescription == NULL)
     {
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"),
                       "InitializeSSMCore failed with Invalid parameter");
+        return;
     }
+
+    SSMRESULT res = SSM_E_FAIL;
+    const char *xmlDescription = env->GetStringUTFChars(jstrXmlDescription, NULL);
 
     res = InitializeSSMCore(xmlDescription);
 
@@ -266,16 +267,17 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQuery
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_executeContextQuery
 (JNIEnv *env, jclass clz, jint pQueryEngineInstance, jstring jstrContextQuery)
 {
-    int                 cqid = 0;
-    IQueryEngine        *pQueryEngine = (IQueryEngine *)pQueryEngineInstance;
-
-    const char *contextQuery = env->GetStringUTFChars(jstrContextQuery, NULL);
-
-    if (contextQuery == NULL)
+    int                 cqid = -1;
+    if (jstrContextQuery == NULL)
     {
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"),
                       "ExecuteContextQuery with Invalid context query");
+        return cqid;
     }
+
+    IQueryEngine        *pQueryEngine = (IQueryEngine *)pQueryEngineInstance;
+
+    const char *contextQuery = env->GetStringUTFChars(jstrContextQuery, NULL);
 
     if (pQueryEngine->executeContextQuery(contextQuery, &cqid) != SSM_S_OK)
     {
