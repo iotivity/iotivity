@@ -148,8 +148,7 @@ CAResult_t CARemoveNetworkType(CAConnectivityType_t connectivityType)
     }
 
     uint32_t selectedNetworkLength = u_arraylist_length(g_selectedNetworkList);
-    uint32_t index;
-    for (index = 0; index < selectedNetworkLength; index++)
+    for (uint32_t index = 0; index < selectedNetworkLength; index++)
     {
         void* ptrType = u_arraylist_get(g_selectedNetworkList, index);
         if (NULL == ptrType)

@@ -269,8 +269,7 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
 
     if (options)
     {
-        coap_list_t *opt;
-        for (opt = options; opt; opt = opt->next)
+        for (coap_list_t *opt = options; opt; opt = opt->next)
         {
             OIC_LOG_V(DEBUG, TAG, "[%s] opt will be added.",
                       COAP_OPTION_DATA(*(coap_option *) opt->data));
@@ -425,8 +424,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t info, coap_list_t **o
         return CA_STATUS_INVALID_PARAM;
     }
 
-    uint32_t i;
-    for (i = 0; i < info.numOptions; i++)
+    for (uint32_t i = 0; i < info.numOptions; i++)
     {
         if(!(info.options + i))
         {
@@ -817,8 +815,7 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
     }
 
     // set random byte
-    uint8_t index;
-    for (index = 0; index < tokenLength; index++)
+    for (uint8_t index = 0; index < tokenLength; index++)
     {
         // use valid characters
 #ifdef ARDUINO
