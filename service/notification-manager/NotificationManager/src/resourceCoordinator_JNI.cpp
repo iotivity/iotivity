@@ -48,45 +48,46 @@ void ocProcessFunc()
  */
 void messageCallback(JNIEnv *env, jobject obj, const char *c_str)
 {
-    jstring jstr = (env)->NewStringUTF(c_str);
-    jclass cls = env->GetObjectClass(obj);
-    jmethodID cbMessage = env->GetMethodID(cls, "cbMessage", "(Ljava/lang/String;)V");
-    env->CallVoidMethod(obj, cbMessage, jstr);
+      jstring jstr = (env)->NewStringUTF(c_str);
+      jclass cls = env->GetObjectClass(obj);
+      jmethodID cbMessage = env->GetMethodID(cls, "cbMessage", "(Ljava/lang/String;)V");
+      env->CallVoidMethod(obj,cbMessage, jstr);
 }
 /*
  *  for Hosting Device Side
  */
-JNIEXPORT void JNICALL
-Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStart(JNIEnv *env,
-        jobject obj)
+JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStart
+(JNIEnv *env, jobject obj)
 {
-
-    if (threadRun == true)
+    jint result;
+    result = 0;
+    if(threadRun==true)
     {
-        messageCallback(env, obj, "already execute OICCoordinatorStart");
-        return;
+
+        messageCallback(env,obj,"already execute OICCoordinatorStart");
+        result = (jint)RESOURCEHOSTING_DO_NOT_THREADRUNNING;
+        return result;
     }
     else
     {
-        messageCallback(env, obj, "OICCoordinatorStart");
-        int result;
-        result = 0;
-        result = OICStartCoordinate();
+        messageCallback(env,obj,"OICCoordinatorStart");
+        result = (jint)OICStartCoordinate();
         string str = "OICStartCoordinate result : ";
         string result_str = boost::lexical_cast<std::string>(result);
         str += result_str;
-        messageCallback(env, obj, str.c_str());
+        messageCallback(env,obj,str.c_str());
         threadRun = true;
         ocProcessThread = thread(ocProcessFunc);
+        return result;
     }
-
-
 }
 
-JNIEXPORT void JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStop(
-    JNIEnv *env, jobject obj)
+JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStop
+(JNIEnv *env, jobject obj)
 {
-    messageCallback(env, obj, "OICCoordinatorStop");
+    messageCallback(env,obj,"OICCoordinatorStop");
+    jint result;
+    result = 0;
     //terminate Thread
     if (ocProcessThread.joinable())
     {
@@ -95,48 +96,52 @@ JNIEXPORT void JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     }
     else
     {
-        messageCallback(env, obj, "The thread may be not running.");
+            messageCallback(env,obj,"The thread may be not running.");
+            result = (jint)RESOURCEHOSTING_DO_NOT_THREADRUNNING;
+            return result;
     }
-
-    int result;
-    result = 0;
-    result = OICStopCoordinate();
+    result = (jint)OICStopCoordinate();
     string str = "OICStopCoordinate result : ";
     string result_str = boost::lexical_cast<std::string>(result);
     str += result_str;
-    messageCallback(env, obj, str.c_str());
+    messageCallback(env,obj,str.c_str());
+    return result;
 }
 
-JNIEXPORT void JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingInit
-(JNIEnv *env, jobject obj, jstring j_addr)
+JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingInit
+(JNIEnv *env, jobject obj,jstring j_addr)
 {
-    messageCallback(env, obj, "ResourceHostingInit");
-    const char *addr = env->GetStringUTFChars(j_addr, NULL);
-    __android_log_print(ANDROID_LOG_ERROR, "DOIL", "addr : %s", addr);
+    messageCallback(env,obj,"ResourceHostingInit");
+    const char* addr = env->GetStringUTFChars(j_addr,NULL);
+    __android_log_print(ANDROID_LOG_ERROR,"DOIL","addr : %s",addr);
     uint8_t interfaceAddress[20] = {0};
     uint8_t *coordinatingAddress = NULL;
     uint8_t interfaceName[] = "eth0";
 
 
-    if (OCInit(addr, USE_RANDOM_PORT, OC_CLIENT_SERVER) != OC_STACK_OK)
+    if(OCInit(addr,USE_RANDOM_PORT,OC_CLIENT_SERVER)!=OC_STACK_OK)
     {
-        messageCallback(env, obj, "OCStack init Error");
-        return;
+        jint result;
+        messageCallback(env,obj,"OCStack init Error");
+        result = (jint)OCSTACK_ERROR;
+        return result;
     }
 
-    env->ReleaseStringUTFChars(j_addr, addr);
-
-
+    env->ReleaseStringUTFChars(j_addr,addr);
 }
 
-JNIEXPORT void JNICALL
-Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingTerminate(JNIEnv *env,
-        jobject obj)
+JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingTerminate
+(JNIEnv *env, jobject obj)
 {
-    messageCallback(env, obj, "ResourceHostingTerminate");
+    jint result;
+    result = 0;
+    messageCallback(env,obj,"ResourceHostingTerminate");
     if (OCStop() != OC_STACK_OK)
     {
-        messageCallback(env, obj, "OCStack stop error");
+
+        messageCallback(env,obj,"OCStack stop error");
+        result  = (jint)OCSTACK_ERROR;
+        return result;
     }
     //terminate Thread
     if (ocProcessThread.joinable())
@@ -146,6 +151,8 @@ Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingTermina
     }
     else
     {
-        messageCallback(env, obj, "The thread may be not running.");
+        messageCallback(env,obj,"The thread may be not running.");
+        result  = (jint)RESOURCEHOSTING_DO_NOT_THREADRUNNING;
+        return result;
     }
 }

@@ -33,41 +33,42 @@
 #define TAG "OIC-JNI"
 
 #define JNI_CURRENT_VERSION JNI_VERSION_1_6
+#define int OCSTACK_OK = 0
+#define int OCSTACK_ERROR = 255
+#define int RESOURCEHOSTING_DO_NOT_THREADRUNNING = -2
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*
- * Class org_iotivity_service_resourcehostingsampleapp_ResourceHosting
+ * Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
  * Method:    OICCoordinatorStart
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStart
+JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStart
 (JNIEnv *, jobject);
-
 /*
- * Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
- * Method:    OICCoordinatorStop
- * Signature: ()V
+ * @Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
+ * @Method:    OICCoordinatorStop
+ * @Signature: ()V
  */
 
-JNIEXPORT void JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStop
+JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStop
 (JNIEnv *, jobject);
 /*
  * Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
  * Method:    ResourceHostingInit
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingInit
-(JNIEnv *env, jobject obj, jstring j_addr);
+JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingInit
+(JNIEnv *env, jobject obj,jstring j_addr);
 /*
  * Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
  * Method:    ResourceHostingTerminate
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL
-Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingTerminate
+JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingTerminate
 (JNIEnv *env, jobject obj);
 
 #ifdef __cplusplus

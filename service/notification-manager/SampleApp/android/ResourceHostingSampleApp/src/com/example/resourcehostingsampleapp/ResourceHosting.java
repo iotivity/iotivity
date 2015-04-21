@@ -29,6 +29,7 @@ import org.iotivity.base.OcResourceHandle;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
@@ -43,6 +44,10 @@ import android.widget.Toast;
 
 public class ResourceHosting extends Activity implements OnClickListener
 {
+        private final int OCSTACK_OK = 0;
+        private final int OCSTACK_ERROR = 255;
+        private final int RESOURCEHOSTING_DO_NOT_THREADRUNNING = -2;
+
         private String TAG = "ResourceHosting";
         private OcResourceHandle mResourceHandle;
         private String  mIpAddress;
@@ -84,7 +89,9 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onStop()
         {
             super.onStop();
-            ResourceHostingTerminate();
+            int result;
+            result = ResourceHostingTerminate();
+            Log.d(TAG, "ResourceHostingTerminate : "+ result);
         }
 
         protected void onResume()
@@ -123,7 +130,9 @@ public class ResourceHosting extends Activity implements OnClickListener
             try
             {
                 mIpAddress = getIpAddress();
-                ResourceHostingInit(mIpAddress);
+                int result;
+                result = ResourceHostingInit(mIpAddress);
+                Log.d(TAG, "ResourceHostingInit : " + result);
             }
             catch (Exception e)
             {
@@ -175,7 +184,9 @@ public class ResourceHosting extends Activity implements OnClickListener
                 case R.id.btnStartHosting:
                     try
                     {
-                        OICCoordinatorStart();
+                        int result;
+                        result = OICCoordinatorStart();
+                        Log.d(TAG, "OICCoordinatorStart : " + result);
                     }
                     catch (Exception e)
                     {
@@ -183,7 +194,9 @@ public class ResourceHosting extends Activity implements OnClickListener
                     }
                     break;
                 case R.id.btnStopHosting:
-                    OICCoordinatorStop();
+                    int result;
+                    result = OICCoordinatorStop();
+                    Log.d(TAG, "OICCoordinatorStop : "+ result);
                     break;
                 case R.id.btLogClear:
                     clearLog();
@@ -221,7 +234,7 @@ public class ResourceHosting extends Activity implements OnClickListener
          * @see Method  method :  OICCoordinatorStart</br>
          * @see Signature signature : ()V</br>
          */
-        public native void OICCoordinatorStart();
+        public native int OICCoordinatorStart();
 
         /**
          * jni function - OICCoordinatorStop() method.
@@ -229,7 +242,7 @@ public class ResourceHosting extends Activity implements OnClickListener
          * @see Method  method :  OICCoordinatorStop</br>
          * @see signature  signature : ()V</br>
          */
-        public native void OICCoordinatorStop();
+        public native int OICCoordinatorStop();
 
         /**
          * jni function - ResourceHostingInit() method in order to execute OICCoordinatorStart() method.
@@ -238,7 +251,7 @@ public class ResourceHosting extends Activity implements OnClickListener
          * @param addr ipAddress
          * @see signature signature : (Ljava/lang/String;)V</br>
          */
-        public native void ResourceHostingInit(String addr);
+        public native int ResourceHostingInit(String addr);
 
         /**
          * jni function - ResourceHostingTerminate() method in order to terminate resource hosting
@@ -246,7 +259,7 @@ public class ResourceHosting extends Activity implements OnClickListener
          * @see Method  method : ResourceHostingTerminate</br>
          * @see signature signature : ()V</br>
          */
-        public native void ResourceHostingTerminate();
+        public native int ResourceHostingTerminate();
 
         static
         {
