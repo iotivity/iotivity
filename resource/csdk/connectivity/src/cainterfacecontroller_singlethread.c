@@ -214,10 +214,9 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     CALocalConnectivity_t *tempInfo[CA_CONNECTIVITY_TYPE_NUM] = { 0 };
     uint32_t tempSize[CA_CONNECTIVITY_TYPE_NUM] = { 0 };
 
-    uint8_t index = 0;
     CAResult_t res = CA_STATUS_FAILED;
     // #1. get information each adapter
-    for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
+    for (uint8_t index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
     {
         if (g_adapterHandler[index].GetnetInfo != NULL)
         {
@@ -228,7 +227,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     }
 
     uint32_t resSize = 0;
-    for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
+    for (uint8_t index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
     {
         // check information
         if (tempInfo[index] == NULL || tempSize[index] <= 0)
@@ -258,7 +257,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     CA_MEMORY_ALLOC_CHECK(resInfo);
 
     uint8_t i = 0;
-    for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
+    for (uint8_t index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
     {
         // check information
         if (tempInfo[index] == NULL || tempSize[index] <= 0)
@@ -285,7 +284,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     // memory error label.
 memory_error_exit:
 
-    for (index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
+    for (uint8_t index = 0; index < CA_CONNECTIVITY_TYPE_NUM; index++)
     {
 
         OICFree(tempInfo[index]);
@@ -344,8 +343,7 @@ CAResult_t CASendMulticastData(const void *data, uint32_t length)
         return res;
     }
 
-    uint8_t i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint8_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
         if (NULL == ptrType)
@@ -389,8 +387,7 @@ CAResult_t CAStartListeningServerAdapters()
         return CA_STATUS_FAILED;
     }
 
-    uint8_t i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint8_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
         if (NULL == ptrType)
@@ -429,8 +426,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
         return CA_STATUS_FAILED;
     }
 
-    uint8_t i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint8_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
         if (NULL == ptrType)
@@ -487,8 +483,7 @@ CAResult_t CAReadData()
         return CA_STATUS_FAILED;
     }
 
-    uint8_t i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint8_t i = 0; i < u_arraylist_length(list); i++)
     {
         void *ptrType = u_arraylist_get(list, i);
         if (NULL == ptrType)

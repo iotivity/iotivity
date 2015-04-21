@@ -107,7 +107,7 @@ void CACheckRetransmissionList()
 
             OIC_LOG(DEBUG, TAG, "RTdata-Success");
             // #2. if time's up, send the data.
-            if (g_retransmissionPtr->dataSendMethod != NULL)
+            if (NULL != g_retransmissionPtr->dataSendMethod)
             {
                 OIC_LOG_V(DEBUG, TAG, "retry CON data-msgid=%d", retData->messageId);
                 g_retransmissionPtr->dataSendMethod(retData->endpoint, retData->pdu, retData->size);
@@ -135,7 +135,7 @@ void CACheckRetransmissionList()
                       removedData->messageId);
 
             // callback for retransmit timeout
-            if (g_retransmissionPtr->timeoutCallback != NULL)
+            if (NULL != g_retransmissionPtr->timeoutCallback)
             {
                 g_retransmissionPtr->timeoutCallback(removedData->endpoint, removedData->pdu,
                                                      removedData->size);
@@ -237,7 +237,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CARemoteE
 
     OIC_LOG_V(DEBUG, TAG, "sent pdu, msgtype=%d,msgid=%d", type, messageId);
 
-    if (type != CA_MSG_CONFIRM)
+    if (CA_MSG_CONFIRM != type)
     {
         OIC_LOG(DEBUG, TAG, "not supported message type");
         return CA_NOT_SUPPORTED;
@@ -316,16 +316,15 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
     OIC_LOG_V(DEBUG, TAG, "recv pdu, msgtype=%d,msgid=%d", type, messageId);
 
-    if (type != CA_MSG_ACKNOWLEDGE && type != CA_MSG_RESET)
+    if ((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
     {
         return CA_STATUS_OK;
     }
 
-    uint32_t i = 0;
     uint32_t len = u_arraylist_length(context->dataList);
 
     // find index
-    for (i = 0; i < len; i++)
+    for (uint32_t i = 0; i < len; i++)
     {
         CARetransmissionData_t *retData = (CARetransmissionData_t *) u_arraylist_get(
                 context->dataList, i);

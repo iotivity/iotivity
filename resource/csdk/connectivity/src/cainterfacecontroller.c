@@ -80,7 +80,7 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CAConnectivityTy
         handler.stopAdapter == NULL ||
         handler.terminate == NULL)
     {
-        OIC_LOG(DEBUG, TAG, "connectivity handler is not enough to be used!");
+        OIC_LOG(ERROR, TAG, "connectivity handler is not enough to be used!");
         return;
     }
 
@@ -88,7 +88,7 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CAConnectivityTy
 
     if (index == -1)
     {
-        OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
+        OIC_LOG(ERROR, TAG, "unknown connectivity type!");
         return;
     }
 
@@ -114,7 +114,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         OICFree(data);
         data = NULL;
 
-        OIC_LOG(DEBUG, TAG, "network packet received callback is NULL!");
+        OIC_LOG(ERROR, TAG, "network packet received callback is NULL!");
     }
 }
 
@@ -181,7 +181,7 @@ CAResult_t CAStartAdapter(CAConnectivityType_t cType)
 
     if (index == -1)
     {
-        OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
+        OIC_LOG(ERROR, TAG, "unknown connectivity type!");
         return CA_STATUS_FAILED;
     }
 
@@ -413,7 +413,7 @@ CAResult_t CAStartListeningServerAdapters()
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list)
     {
-        OIC_LOG(DEBUG, TAG, "No selected network");
+        OIC_LOG(ERROR, TAG, "No selected network");
         return CA_STATUS_FAILED;
     }
 
@@ -432,7 +432,7 @@ CAResult_t CAStartListeningServerAdapters()
         int index = CAGetAdapterIndex(connType);
         if (index == -1)
         {
-            OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
+            OIC_LOG(ERROR, TAG, "unknown connectivity type!");
             continue;
         }
 
@@ -453,7 +453,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
     if (!list)
     {
-        OIC_LOG(DEBUG, TAG, "No selected network");
+        OIC_LOG(ERROR, TAG, "No selected network");
         return CA_STATUS_FAILED;
     }
 

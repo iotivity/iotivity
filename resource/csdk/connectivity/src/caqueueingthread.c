@@ -37,7 +37,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
 
     CAQueueingThread_t *thread = (CAQueueingThread_t *) threadValue;
 
-    if (thread == NULL)
+    if (NULL == thread)
     {
         OIC_LOG(ERROR, TAG, "thread data passing error!!");
 
@@ -71,7 +71,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
 
         // get data
         u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
-        if (message == NULL)
+        if (NULL == message)
         {
             continue;
         }
@@ -80,7 +80,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         thread->threadTask(message->msg);
 
         // free
-        if (thread->destroy != NULL)
+        if (NULL != thread->destroy)
         {
             thread->destroy(message->msg, message->size);
         }
@@ -99,8 +99,9 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
 
         // free
-        if(message != NULL) {
-            if (thread->destroy != NULL)
+        if(NULL != message)
+        {
+            if (NULL != thread->destroy)
             {
                 thread->destroy(message->msg, message->size);
             }
@@ -121,16 +122,16 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
 CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_t handle,
                                       CAThreadTask task, CADataDestroyFunction destroy)
 {
-    if (thread == NULL)
+    if (NULL == thread)
     {
         OIC_LOG(ERROR, TAG, "thread instance is empty..");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
-    if (handle == NULL)
+    if (NULL == handle)
     {
         OIC_LOG(ERROR, TAG, "thread pool handle is empty..");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
     OIC_LOG(DEBUG, TAG, "thread initialize..");
@@ -149,16 +150,16 @@ CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, u_thread_pool_
 
 CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
 {
-    if (thread == NULL)
+    if (NULL == thread)
     {
         OIC_LOG(ERROR, TAG, "thread instance is empty..");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
-    if (thread->threadPool == NULL)
+    if (NULL == thread->threadPool)
     {
         OIC_LOG(ERROR, TAG, "thread pool handle is empty..");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
     if (false == thread->isStop) //Queueing thread already running
@@ -185,23 +186,23 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
 
 CAResult_t CAQueueingThreadAddData(CAQueueingThread_t *thread, void *data, uint32_t size)
 {
-    if (thread == NULL)
+    if (NULL == thread)
     {
         OIC_LOG(ERROR, TAG, "thread instance is empty..");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
-    if (data == NULL || size == 0)
+    if (NULL == data || 0 == size)
     {
         OIC_LOG(ERROR, TAG, "data is empty..");
 
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
     // create thread data
     u_queue_message_t *message = (u_queue_message_t *) OICMalloc(sizeof(u_queue_message_t));
 
-    if (message == NULL)
+    if (NULL == message)
     {
         OIC_LOG(ERROR, TAG, "memory error!!");
         return CA_MEMORY_ALLOC_FAILED;
@@ -227,10 +228,10 @@ CAResult_t CAQueueingThreadAddData(CAQueueingThread_t *thread, void *data, uint3
 
 CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
 {
-    if (thread == NULL)
+    if (NULL == thread)
     {
         OIC_LOG(ERROR, TAG, "thread instance is empty..");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
     OIC_LOG(DEBUG, TAG, "thread destroy..");
@@ -245,10 +246,10 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
 
 CAResult_t CAQueueingThreadStop(CAQueueingThread_t *thread)
 {
-    if (thread == NULL)
+    if (NULL == thread)
     {
         OIC_LOG(ERROR, TAG, "thread instance is empty..");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_INVALID_PARAM;
     }
 
     OIC_LOG(DEBUG, TAG, "thread stop request!!");

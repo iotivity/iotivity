@@ -130,7 +130,7 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
         if (CACheckTimeout(currentTime, retData->timeStamp, retData->timeout, retData->triedCount))
         {
             // #2. if time's up, send the data.
-            if (context->dataSendMethod != NULL)
+            if (NULL != context->dataSendMethod)
             {
                 OIC_LOG_V(DEBUG, TAG, "retransmission CON data!!, message id(%d)",
                           retData->messageId);
@@ -147,13 +147,13 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
         {
             CARetransmissionData_t *removedData = u_arraylist_remove(context->dataList, i);
 
-            if (removedData != NULL)
+            if (NULL != removedData)
             {
                 OIC_LOG_V(DEBUG, TAG, "max trying count, remove retransmission CON data!!,\
                           message id(%d)", removedData->messageId);
 
                 // callback for retransmit timeout
-                if (context->timeoutCallback != NULL)
+                if (NULL != context->timeoutCallback)
                 {
                     context->timeoutCallback(removedData->endpoint, removedData->pdu,
                                              removedData->size);
@@ -302,7 +302,7 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
     CAResult_t res = u_thread_pool_add_task(context->threadPool, CARetransmissionBaseRoutine,
                                             context);
 
-    if (res != CA_STATUS_OK)
+    if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread pool add task error(send thread).");
         return res;
@@ -335,7 +335,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
     OIC_LOG_V(DEBUG, TAG, "sent pdu, message type(%d), message id(%d)", type, messageId);
 
-    if (type != CA_MSG_CONFIRM)
+    if (CA_MSG_CONFIRM != type)
     {
         OIC_LOG(DEBUG, TAG, "not supported message type for retransmission..");
         return CA_NOT_SUPPORTED;
@@ -449,19 +449,17 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
     OIC_LOG_V(DEBUG, TAG, "received pdu, message type(%d), message id(%d)", type, messageId);
 
-    if (type != CA_MSG_ACKNOWLEDGE && type != CA_MSG_RESET)
+    if ((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
     {
         return CA_STATUS_OK;
     }
 
     // mutex lock
     u_mutex_lock(context->threadMutex);
-
-    uint32_t i = 0;
     uint32_t len = u_arraylist_length(context->dataList);
 
     // find index
-    for (i = 0; i < len; i++)
+    for (uint32_t i = 0; i < len; i++)
     {
         CARetransmissionData_t *retData = (CARetransmissionData_t *) u_arraylist_get(
                 context->dataList, i);
@@ -552,7 +550,7 @@ CAResult_t CARetransmissionStop(CARetransmission_t *context)
     // set stop flag
     context->isStop = true;
 
-    // notity the thread
+    // notify the thread
     u_cond_signal(context->threadCond);
 
     u_cond_wait(context->threadCond, context->threadMutex);

@@ -19,10 +19,8 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the common data structures between Resource, CA and
- * adapters.
+ * @file 
+ * This file contains the common data structures between Resource , CA and adapters.
  */
 
 #ifndef __CA_COMMON_H_
@@ -223,7 +221,7 @@ typedef struct
  */
 typedef enum
 {
-    /* Success status code - START HERE */
+    // Result code - START HERE
     CA_STATUS_OK = 0,               /**< Success */
     CA_STATUS_INVALID_PARAM,        /**< Invalid Parameter */
     CA_ADAPTER_NOT_ENABLED,         /**< Adapter is not enabled */

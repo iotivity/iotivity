@@ -49,8 +49,8 @@ typedef uint32_t (*CAPacketSendCallback)(const char *ipAddress, const uint16_t p
  */
 typedef struct CAAdapterCallbacks
 {
-    CAPacketReceivedCallback recvCallback;
-    CAPacketSendCallback sendCallback;
+    CAPacketReceivedCallback recvCallback;  /**< Callback used to send data to upper layer. */
+    CAPacketSendCallback sendCallback;      /**< Callback used to send data to socket layer. */
 } stCAAdapterCallbacks_t;
 
 /**
@@ -60,11 +60,11 @@ typedef struct CAAdapterCallbacks
  */
 typedef struct stCADtlsContext
 {
-    u_arraylist_t  *cacheList;          /**< pdu's are cached until DTLS session is formed */
-    struct dtls_context_t *dtlsContext;    /**< pointer to tinyDTLS context */
-    struct stPacketInfo *packetInfo;          /**< used by callback during
-                                                                    decryption to hold address/length */
-    dtls_handler_t callbacks;           /**< pointer to callbacks needed by tinyDTLS */
+    u_arraylist_t *cacheList;            /**< PDU's are cached until DTLS session is formed. */
+    struct dtls_context_t *dtlsContext;  /**< Pointer to tinyDTLS context. */
+    struct stPacketInfo *packetInfo;     /**< used by callback during
+                                             decryption to hold address/length. */
+    dtls_handler_t callbacks;            /**< Pointer to callbacks needed by tinyDTLS. */
     stCAAdapterCallbacks_t adapterCallbacks[MAX_SUPPORTED_ADAPTERS];
 } stCADtlsContext_t;
 
@@ -92,22 +92,19 @@ typedef enum
     DTLS_HS_MSG
 } eDtlsRet_t;
 
-/**
- * @struct stGattServiceInfo_t
- * @brief structure to have address information.
- *
- */
+
+/** Structure to have address information which will match with DTLS session_t struct.*/
 typedef struct
 {
-    socklen_t size;       /**< size of addr */
+    socklen_t size;                 /**< Size of address. */
     union
     {
         struct sockaddr     sa;
         struct sockaddr_storage st;
         struct sockaddr_in  sin;
         struct sockaddr_in6 sin6;
-    } addr;
-    uint8_t ifIndex;
+    } addr;                         /**< Address information. */
+    uint8_t ifIndex;                /**< Holds adpater index to get callback info. */
 } stCADtlsAddrInfo_t;
 
 /**

@@ -325,7 +325,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         {
             CAResult_t res = CAGetTokenFromPDU((const coap_hdr_t *)retransmissionPdu,
                                                &(ResInfo->info));
-            if(res != CA_STATUS_OK)
+            if(CA_STATUS_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "fail to get Token from retransmission list");
                 OICFree(ResInfo->info.token);
