@@ -45,49 +45,51 @@ public class DataReader
         }
 
         /**
-            * @fn     GetAffectedModels
-            * @brief Get affected context models. The CQL(context query language) can specify
-            *       multiple ContextModels for retrieving data, so a list of strings of affected
-            *       context models is returned.
-            *
-            * @return List<String> - affected ContextModel list
-            */
-        public List<String> GetAffectedModels()
+         * Get affected context models. The CQL(context query language) can specify
+         *       multiple ContextModels for retrieving data so a list of string of affected
+         *       context models is returned
+         *
+         * @return List<String> - affected ContextModel list
+         * 
+         */
+        public List<String> getAffectedModels()
         {
-            return CoreController.getInstance().GetAffectedModels(
+            return CoreController.getInstance().getAffectedModels(
                        pDataReaderInstance);
         }
 
         /**
-            * @fn     GetModelDataCount
-            * @brief Get affected model data count. There can be multiple data models existing
-            *       from the given condition, return the count matching the condition.
-            *
-            * @param [in] modelName - affected ContextModel name
-            *
-            * @return int  - affected dataId count
-            */
-        public int GetModelDataCount(String modelName) throws Exception
+         * Get affected model data count. There can be multiple data models existing
+         *       from the given condition, return the count.
+         *
+         * @param modelName 
+         *              - affected ContextModel name
+         *
+         * @return int  - affected dataId count
+         * 
+         */
+        public int getModelDataCount(String modelName) throws Exception
         {
-            return CoreController.getInstance().GetModelDataCount(
+            return CoreController.getInstance().getModelDataCount(
                 pDataReaderInstance, modelName);
         }
 
         /**
-            * @fn     GetModelData
-            * @brief Get actual Context Model data
-            *
-            * @param [in] modelName - affected ContextModel name
-            *
-            *
-            * @param [in] dataIndex - affected dataId index
-            *
-            * @return ModelData  - affected ContextModel data reader
-            */
-        public ModelData GetModelData(String modelName, int dataIndex)
+         * Get actual Context Model data
+         *
+         * @param modelName 
+         *              - affected ContextModel name
+         *
+         * @param dataIndex 
+         *              - affected dataId index
+         *
+         * @return ModelData  - affected ContextModel data reader
+         * 
+         */
+        public ModelData getModelData(String modelName, int dataIndex)
         throws Exception
         {
-            return CoreController.getInstance().GetModelData(pDataReaderInstance,
+            return CoreController.getInstance().getModelData(pDataReaderInstance,
             modelName, dataIndex);
         }
 }

@@ -394,7 +394,7 @@ void createResource()
 {
 
     OCStackResult res = OCCreateResource(&m_handle,
-                                         "SoftSensorManager.Sensor",
+                                         "SSManager.Sensor",
                                          "oc.mi.def",
                                          "/Tracker_Thing",
                                          OCEntityHandlerCb,

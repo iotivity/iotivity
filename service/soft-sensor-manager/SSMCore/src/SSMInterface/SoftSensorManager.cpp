@@ -43,7 +43,7 @@ void CSoftSensorManager::finalRelease()
 {
 }
 
-SSMRESULT CSoftSensorManager::initializeCore(IN std::string xmlDescription)
+SSMRESULT CSoftSensorManager::initializeCore(std::string xmlDescription)
 {
     SSMRESULT                   res = SSM_E_FAIL;
     rapidxml::xml_document<>    xmlDoc;
@@ -175,7 +175,7 @@ SSMRESULT CSoftSensorManager::terminateCore(bool factoryResetFlag)
     return SSM_S_OK;
 }
 
-SSMRESULT CSoftSensorManager::createQueryEngine(OUT IQueryEngine **ppQueryEngine)
+SSMRESULT CSoftSensorManager::createQueryEngine(IQueryEngine **ppQueryEngine)
 {
     SSMRESULT res = SSM_E_FAIL;
     IQueryEngineInternal    *pQueryEngineInternal = NULL;
@@ -186,7 +186,7 @@ CLEANUP:
     return res;
 }
 
-unsigned long CSoftSensorManager::releaseQueryEngine(IN IQueryEngine *pQueryEngine)
+unsigned long CSoftSensorManager::releaseQueryEngine(IQueryEngine *pQueryEngine)
 {
     IQueryEngineInternal    *pQueryEngineInternal = NULL;
     pQueryEngineInternal = (IQueryEngineInternal *)(CQueryEngine *)pQueryEngine;
@@ -194,7 +194,7 @@ unsigned long CSoftSensorManager::releaseQueryEngine(IN IQueryEngine *pQueryEngi
     return pQueryEngineInternal->release();
 }
 
-SSMRESULT CSoftSensorManager::getInstalledModelList(OUT std::vector<ISSMResource *> *pList)
+SSMRESULT CSoftSensorManager::getInstalledModelList(std::vector<ISSMResource *> *pList)
 {
     m_pSensingEngine->getList(pList);
 
@@ -205,7 +205,7 @@ CSimpleMutex                *g_mtxGlobalInstance = NULL;
 std::map<OID, IBase *>       *g_globalInstance = NULL;
 IThreadPool                 *g_pThreadPool = NULL;
 
-SSMRESULT CreateGlobalInstance(IN const OID &objectID, OUT IBase **ppvObject)
+SSMRESULT CreateGlobalInstance(const OID &objectID, IBase **ppvObject)
 {
     SSMRESULT res = SSM_E_NOINTERFACE;
 
@@ -294,7 +294,7 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CreateInstance(IN const OID &objectID, OUT IBase **ppObject)
+SSMRESULT CreateInstance(const OID &objectID, IBase **ppObject)
 {
     SSMRESULT res = SSM_E_NOINTERFACE;
 

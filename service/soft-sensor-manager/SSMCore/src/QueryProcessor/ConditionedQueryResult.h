@@ -54,7 +54,7 @@ class CConditionedQueryResult :
         * @exception
         * @see
         */
-        SSMRESULT addConditionedModel(IN IConditionedModel *pConditionedModel);
+        SSMRESULT addConditionedModel(IConditionedModel *pConditionedModel);
 
         SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
         {
@@ -97,8 +97,8 @@ class CConditionedQueryResult :
         * @exception
         * @see
         */
-        SSMRESULT getConditionedContextModel(IN unsigned int conditionedModelIndex,
-                                             OUT IConditionedModel **ppConditionedModel);
+        SSMRESULT getConditionedContextModel(unsigned int conditionedModelIndex,
+                                             IConditionedModel **ppConditionedModel);
 };
 
 #endif

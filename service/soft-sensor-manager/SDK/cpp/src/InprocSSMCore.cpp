@@ -28,7 +28,7 @@ class SSMCoreEventReceiver : public IQueryEngineEvent
         {
         }
 
-        SSMRESULT onQueryEngineEvent(IN int cqid, IN IDataReader *pResult)
+        SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult)
         {
             SSMRESULT res = SSM_E_FAIL;
 
@@ -58,12 +58,12 @@ CLEANUP:
             m_mtxListener.unlock();
         }
 
-        void addListener(IN int cqid, IN IQueryEngineEvent *pEngineEvent)
+        void addListener(int cqid, IQueryEngineEvent *pEngineEvent)
         {
             m_mapListener[cqid] = pEngineEvent;
         }
 
-        void removeListener(IN int cqid)
+        void removeListener(int cqid)
         {
             m_mapListener.erase(cqid);
         }
@@ -118,8 +118,8 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT OIC::RegisterQuery(IN std::string queryString, IN IQueryEngineEvent *listener,
-                             IN int &cqid)
+SSMRESULT OIC::RegisterQuery(std::string queryString, IQueryEngineEvent *listener,
+                             int &cqid)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -136,7 +136,7 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT OIC::UnregisterQuery(IN int cqid)
+SSMRESULT OIC::UnregisterQuery(int cqid)
 {
     SSMRESULT res = SSM_E_FAIL;
 

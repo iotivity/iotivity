@@ -52,7 +52,7 @@ class CModelData : public IModelData
         * @exception
         * @see
         */
-        void setDataId(IN int dataId);
+        void setDataId(int dataId);
 
         /**
         * @fn     addModelData
@@ -66,7 +66,7 @@ class CModelData : public IModelData
         * @exception
         * @see
         */
-        void addModelData(IN std::string propertyName, IN std::string propertyValue);
+        void addModelData(std::string propertyName, std::string propertyValue);
 
         /**
         * @fn     getDataId
@@ -107,7 +107,7 @@ class CModelData : public IModelData
         * @exception
         * @see
         */
-        std::string getPropertyName(IN int propertyIndex);
+        std::string getPropertyName(int propertyIndex);
 
         /**
         * @fn     getPropertyValue
@@ -120,7 +120,7 @@ class CModelData : public IModelData
         * @exception
         * @see
         */
-        std::string getPropertyValue(IN int propertyIndex);
+        std::string getPropertyValue(int propertyIndex);
 
         /**
         * @fn     getPropertyValueByName
@@ -133,7 +133,7 @@ class CModelData : public IModelData
         * @exception
         * @see
         */
-        std::string getPropertyValueByName(IN std::string propertyName);
+        std::string getPropertyValueByName(std::string propertyName);
 };
 
 #endif

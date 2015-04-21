@@ -53,7 +53,7 @@ class CDataReader : public IDataReader
         * @exception
         * @see
         */
-        SSMRESULT addModelData(IN std::string modelName, IN std::vector<CModelData *> *pModelData);
+        SSMRESULT addModelData(std::string modelName, std::vector<CModelData *> *pModelData);
 
         /**
         * @fn     getAffectedModels
@@ -66,7 +66,7 @@ class CDataReader : public IDataReader
         * @exception
         * @see
         */
-        SSMRESULT getAffectedModels(OUT std::vector<std::string> *pAffectedModels);
+        SSMRESULT getAffectedModels(std::vector<std::string> *pAffectedModels);
 
         /**
         * @fn     getModelDataCount
@@ -81,7 +81,7 @@ class CDataReader : public IDataReader
         * @exception
         * @see
         */
-        SSMRESULT getModelDataCount(IN std::string modelName, OUT int *pDataCount);
+        SSMRESULT getModelDataCount(std::string modelName, int *pDataCount);
 
         /**
         * @fn     getModelData
@@ -100,7 +100,7 @@ class CDataReader : public IDataReader
         * @exception
         * @see
         */
-        SSMRESULT getModelData(IN std::string modelName, IN int dataIndex, OUT IModelData **ppModelData);
+        SSMRESULT getModelData(std::string modelName, int dataIndex, IModelData **ppModelData);
 };
 
 #endif

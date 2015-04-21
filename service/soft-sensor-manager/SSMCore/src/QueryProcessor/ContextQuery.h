@@ -80,7 +80,7 @@ class CContextQuery
         * @exception
         * @see
         */
-        SSMRESULT initialize(IN Token &input_root);
+        SSMRESULT initialize(Token &input_root);
 
         /**
         * @fn integrate_result
@@ -95,8 +95,8 @@ class CContextQuery
         * @exception
         * @see
         */
-        void integrate_result(OUT std::vector<result_model> *result, IN int modelId,
-                              IN std::vector<int> *dataid, IN std::string modelName);
+        void integrate_result(std::vector<result_model> *result, int modelId,
+                              std::vector<int> *dataid, std::string modelName);
 
         /**
         * @fn return_contextName
@@ -108,7 +108,7 @@ class CContextQuery
         * @exception
         * @see
         */
-        void return_contextName(OUT std::vector<std::string> *contextName);
+        void return_contextName(std::vector<std::string> *contextName);
 
         /**
         * @fn check_result_model
@@ -132,7 +132,7 @@ class CContextQuery
         * @exception
         * @see
         */
-        void return_modelID(OUT std::vector<int> *vector_int);
+        void return_modelID(std::vector<int> *vector_int);
 
         /**
         * @fn make_QueryCondition
@@ -144,7 +144,7 @@ class CContextQuery
         * @exception
         * @see
         */
-        void make_QueryCondition(OUT QueryCondition *result);
+        void make_QueryCondition(QueryCondition *result);
 
     private:
         /**
@@ -157,7 +157,7 @@ class CContextQuery
         * @exception
         * @see
         */
-        std::string search_last_modelName(IN Token *temp);
+        std::string search_last_modelName(Token *temp);
 
         Token m_root;
         CObjectPtr<IPropagationEngine>      m_pPropagationEngine;

@@ -66,8 +66,8 @@ void CPropagationEngine::finalRelease()
     }
 }
 
-SSMRESULT CPropagationEngine::findContextModel(IN std::string modelName,
-        OUT IContextModel  **ppContextModel)
+SSMRESULT CPropagationEngine::findContextModel(std::string modelName,
+        IContextModel  **ppContextModel)
 {
     SSMRESULT res = SSM_S_FALSE;
     std::map<std::string, IContextModel *>::iterator idxContextModel;
@@ -86,8 +86,8 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CPropagationEngine::registerCondition(IN IContextModel *pContextModel,
-        IN ModelConditionVec *pConditions, IN IConditionedQuery *pConditionedQuery)
+SSMRESULT CPropagationEngine::registerCondition(IContextModel *pContextModel,
+        ModelConditionVec *pConditions, IConditionedQuery *pConditionedQuery)
 {
     SSMRESULT res = SSM_E_FAIL;
     IConditionedModel           *pConditionedModel = NULL;
@@ -102,8 +102,8 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CPropagationEngine::registerVirtualCondition(IN std::string virtualContextModelName,
-        IN ModelConditionVec *pConditions, IN IConditionedQuery *pConditionedQuery)
+SSMRESULT CPropagationEngine::registerVirtualCondition(std::string virtualContextModelName,
+        ModelConditionVec *pConditions, IConditionedQuery *pConditionedQuery)
 {
     pConditionedQuery->addRef();
     m_mtxLookUpList.lock();
@@ -113,8 +113,8 @@ SSMRESULT CPropagationEngine::registerVirtualCondition(IN std::string virtualCon
     return SSM_S_OK;
 }
 
-SSMRESULT CPropagationEngine::propagateNewModel(IN std::string newModelName,
-        IN IContextModel *pContextModel)
+SSMRESULT CPropagationEngine::propagateNewModel(std::string newModelName,
+        IContextModel *pContextModel)
 {
     SSMRESULT res = SSM_E_FAIL;
     VirtualModelMap::iterator   itorVModels;
@@ -162,7 +162,7 @@ CLEANUP:
 }
 
 //Install new resource and update Device table
-SSMRESULT CPropagationEngine::installContextModelFromISSMResource(IN ISSMResource *pSSMResource)
+SSMRESULT CPropagationEngine::installContextModelFromISSMResource(ISSMResource *pSSMResource)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -243,7 +243,7 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CPropagationEngine::updateDeviceInfo(IN ISSMResource *pSSMResource, OUT int *deviceId)
+SSMRESULT CPropagationEngine::updateDeviceInfo(ISSMResource *pSSMResource, int *deviceId)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -307,9 +307,9 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CPropagationEngine::installContextModel(IN IContextModel *pParentModel,
-        IN IContextModel::ConstructionType constructionType, IN const char *modelName,
-        IN ModelPropertyVec *pModelDescs, OUT IContextModel **ppContextModel)
+SSMRESULT CPropagationEngine::installContextModel(IContextModel *pParentModel,
+        IContextModel::ConstructionType constructionType, const char *modelName,
+        ModelPropertyVec *pModelDescs, IContextModel **ppContextModel)
 {
     SSMRESULT                   res = SSM_E_FAIL;
     CObject<CContextModel>      *pNewModel;
@@ -360,7 +360,7 @@ CLEANUP:
     return res;
 }
 
-void CPropagationEngine::onExecute(IN void *pArg)
+void CPropagationEngine::onExecute(void *pArg)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -393,15 +393,15 @@ CLEANUP:
     ;
 }
 
-void CPropagationEngine::onTerminate(IN void *pArg)
+void CPropagationEngine::onTerminate(void *pArg)
 {
     intptr_t         *pMessage = (intptr_t *)pArg;
 
     delete[] pMessage;
 }
 
-int CPropagationEngine::onResourceEvent(IN RESOURCE_EVENT_TYPE eventType,
-                                        IN ISSMResource *pSSMResource, IN std::string info)
+int CPropagationEngine::onResourceEvent(RESOURCE_EVENT_TYPE eventType,
+                                        ISSMResource *pSSMResource, std::string info)
 {
     intptr_t          *pMessage = new intptr_t [2];
 
@@ -466,8 +466,8 @@ CLEANUP:
     return;
 }
 
-SSMRESULT CPropagationEngine::getContextModel(IN std:: string modelName,
-        OUT IContextModel **ppContextModel)
+SSMRESULT CPropagationEngine::getContextModel(std:: string modelName,
+        IContextModel **ppContextModel)
 {
     SSMRESULT res = SSM_E_FAIL;
 
@@ -476,9 +476,9 @@ SSMRESULT CPropagationEngine::getContextModel(IN std:: string modelName,
     return res == SSM_S_OK ? SSM_S_OK : SSM_E_FAIL;
 }
 
-SSMRESULT CPropagationEngine::createConditionedQuery(IN IContextModel::ActivationType
-        activationType, IN QueryCondition *pQueryCondition, IN IConditionedQueryEvent *pEvent,
-        OUT IConditionedQuery **ppConditionedQuery)
+SSMRESULT CPropagationEngine::createConditionedQuery(IContextModel::ActivationType
+        activationType, QueryCondition *pQueryCondition, IConditionedQueryEvent *pEvent,
+        IConditionedQuery **ppConditionedQuery)
 {
     SSMRESULT res = SSM_E_FAIL;
     CObject<CConditionedQuery>  *pConditionedQuery;
@@ -518,8 +518,8 @@ CLEANUP:
     return res;
 }
 
-SSMRESULT CPropagationEngine::onModelStatusChange(IN IContextModel::Status newStatus,
-        IN ISSMResource *pSSMResource, IN IContextModel *pModel)
+SSMRESULT CPropagationEngine::onModelStatusChange(IContextModel::Status newStatus,
+        ISSMResource *pSSMResource, IContextModel *pModel)
 {
     switch (newStatus)
     {
@@ -551,8 +551,8 @@ SSMRESULT CPropagationEngine::onModelStatusChange(IN IContextModel::Status newSt
     return SSM_S_OK;
 }
 
-SSMRESULT CPropagationEngine::onQueryContextModel(IN std::string modelName,
-        OUT IContextModel **ppContextModel)
+SSMRESULT CPropagationEngine::onQueryContextModel(std::string modelName,
+        IContextModel **ppContextModel)
 {
     std::map<std::string, IContextModel *>::iterator     itorContextModel;
 

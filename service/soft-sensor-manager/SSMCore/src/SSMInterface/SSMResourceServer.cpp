@@ -39,7 +39,7 @@ class CQueryEngineEvent: public IQueryEngineEvent
             m_hSSMResource = resourceHandle;
         }
 
-        SSMRESULT onQueryEngineEvent(IN int cqid, IN IDataReader *pResult)
+        SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult)
         {
             int dataCount = 0;
             IModelData *pModelData = NULL;
@@ -108,7 +108,8 @@ class CQueryEngineEvent: public IQueryEngineEvent
             g_vecQueryEventResults.push_back(queryEventResult);
 
             //TODO: need to modify for notifying proper clients
-            OCPlatform::notifyAllObservers(m_hSSMResource);
+            if (OCPlatform::notifyAllObservers(m_hSSMResource) != OC_STACK_OK)
+                return SSM_E_FAIL;
 
             return SSM_S_OK;
         }
@@ -201,8 +202,6 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
 
         if (requestFlag & RequestHandlerFlag::RequestFlag)
         {
-            cout << "\t\trequestFlag : Request\n";
-
             // If the request type is GET
             if (requestType == "GET")
             {
@@ -273,7 +272,7 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
                 }
                 else if (rep.getValue<std::string>("command") == "ReleaseQueryEngine")
                 {
-                    pQueryEngine = (IQueryEngine *) std::stoi(
+                    pQueryEngine = (IQueryEngine *) std::stoll(
                                        rep.getValue<std::string>("queryEngineId"));
 
                     ReleaseQueryEngine(pQueryEngine);
@@ -282,7 +281,7 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
                 {
                     int CQID = 0;
 
-                    pQueryEngine = (IQueryEngine *) std::stoi(
+                    pQueryEngine = (IQueryEngine *)std::stoll(
                                        rep.getValue<std::string>("queryEngineId"));
 
                     res = pQueryEngine->executeContextQuery(
@@ -300,7 +299,7 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
                 }
                 else if (rep.getValue<std::string>("command") == "KillContextQuery")
                 {
-                    pQueryEngine = (IQueryEngine *) std::stoi(
+                    pQueryEngine = (IQueryEngine *)std::stoll(
                                        rep.getValue<std::string>("queryEngineId"));
 
                     res = pQueryEngine->killContextQuery(std::stoi(rep.getValue<std::string>("CQID")));

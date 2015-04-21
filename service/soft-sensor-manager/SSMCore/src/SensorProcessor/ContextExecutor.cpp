@@ -146,7 +146,7 @@ void CContextExecutor::registerContext(TypeofEvent callType, ISSMResource *pSSMR
     }
 }
 
-void CContextExecutor::onExecute(IN void *pArg)
+void CContextExecutor::onExecute(void *pArg)
 {
     intptr_t         *pMessage = (intptr_t *)pArg;
 
@@ -187,7 +187,7 @@ void CContextExecutor::onExecute(IN void *pArg)
     }
 }
 
-void CContextExecutor::onTerminate(IN void *pArg)
+void CContextExecutor::onTerminate(void *pArg)
 {
     intptr_t         *pMessage = (intptr_t *)pArg;
 

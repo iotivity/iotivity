@@ -17,7 +17,6 @@
  * limitations under the License.
  *
  ******************************************************************/
-
 /**
  * @file    CoreController.java
  *
@@ -66,7 +65,13 @@ public class CoreController
         }
 
         static private CoreController coreController;
-
+        
+        /**
+         * Return instance of this class.
+         *
+         * @return CoreController - instance of this class
+         * 
+         */
         public static CoreController getInstance()
         {
             if (coreController == null)
@@ -76,103 +81,110 @@ public class CoreController
         }
 
         /**
-        * @fn    InitializeSSMCore
-        * @brief Initialize a framework using the given configuration
-        *
-        * @param [in] xmlDescription - Framework specifications described in XML format
-        *
-        *
-        * @return void
-        */
-        public native void InitializeSSMCore(String xmlDescription)
+         * Initialize a framework using the given configuration
+         *
+         * @param xmlDescription 
+         *               - Framework specifications described in XML format
+         *
+         * @return void
+         * 
+         */
+        public native void initializeSSMCore(String xmlDescription)
         throws Exception;
 
         /**
-          * @fn    StartSSMCore
-          * @brief Starts the framework that allows other devices to discover and communicate
-          *     with the SSMCore and underlying query engine.
-          *
-          * @return void
-          */
-        public native void StartSSMCore() throws Exception;
+         * Starts the framework that allows other devices to discover and communicate
+         *     with the SSMCore and underlying query engine.
+         *
+         * @return void
+         * 
+         */
+        public native void startSSMCore() throws Exception;
 
         /**
-          * @fn    StopSSMCore
-          * @brief Stops the framework and terminate all communications.
-          *
-          * @return void
-          */
-        public native void StopSSMCore() throws Exception;
+         * Stops the framework and terminate all communications.
+         *
+         * @return void
+         * 
+         */
+        public native void stopSSMCore() throws Exception;
 
         /**
-        * @fn    TerminateSSMCore
-        * @brief Terminate the framework, return all allocated resources
-        *
-        * @return void
-        */
-        public native void TerminateSSMCore() throws Exception;
+         * Terminate the framework, return all allocated resources
+         *
+         * @return void
+         * 
+         */
+        public native void terminateSSMCore() throws Exception;
 
         /**
-        * @fn    CreateQueryEngine
-        * @brief Creates an instance of the Query Engine
-        *
-        * @return QueryEngine - QueryEngine object created
-        */
-        public native QueryEngine CreateQueryEngine() throws Exception;
+         * Creates an instance of the Query Engine
+         *
+         * @return QueryEngine - QueryEngine object created
+         *               
+         */
+        public native QueryEngine createQueryEngine() throws Exception;
 
         /**
-        * @fn    ReleaseQueryEngine
-        * @brief Release the QueryEngine object.
-        *
-        * @param [in] queryEngine - QueryEngine instance to be released
-        *
-        * @return int - success or failure result
-        */
-        public native int ReleaseQueryEngine(QueryEngine queryEngine);
+         * Release the QueryEngine object.
+         *
+         * @param queryEngine 
+         *               - QueryEngine instance to be released
+         *
+         * @return int - success or failure result
+         * 
+         */
+        public native int releaseQueryEngine(QueryEngine queryEngine);
 
         // QueryEngine
         /**
-           * @fn     ExecuteContextQuery
-           * @brief Execute the query with the QueryEngine and return ContextQuery ID
-           *            for the query
-           *
-           * @param [in] pQueryEngineInstance - instance(created on creation of the QueryEngine)
-           *             of the query engine with which the query is to be executed
-           *
-           * @param [in] contextQuery - query string to be executed
-           *
-           * @return int - ID of context query executed
-           */
-        public native int ExecuteContextQuery(int pQueryEngineInstance,
+         * Execute the query with the QueryEngine and return ContextQuery ID
+         *            for the query
+         *
+         * @param pQueryEngineInstance 
+         *               - instance(created on creation of the QueryEngine)
+         *               of the query engine with which the query is to be executed
+         *
+         * @param contextQuery 
+         *               - query string to be executed
+         *
+         * @return int - ID of context query executed
+         * 
+         */
+        public native int executeContextQuery(int pQueryEngineInstance,
                                               String contextQuery) throws Exception;
 
         /**
-         * @fn     RegisterQueryEvent
-         * @brief Register QueryEngineEvent to QueryEngine.
+         * Register QueryEngineEvent to QueryEngine.
          *
-         * @param [in] pQueryEngineInstance - instance(created on creation of the QueryEngine)
+         * @param pQueryEngineInstance 
+         *               - instance(created on creation of the QueryEngine)
          *               of the query engine with which the query is to be registered
          *
-         * @param [in] queryEngineEvent - the event to register with QueryEngine
+         * @param queryEngineEvent 
+         *               - the event class to receive QueryEngine events
          *
          * @return void
+         * 
          */
-        public native void RegisterQueryEvent(int pQueryEngineInstance,
+        public native void registerQueryEvent(int pQueryEngineInstance,
                                               IQueryEngineEvent queryEngineEvent);
 
 
         /**
-         * @fn    KillContextQuery
-         * @brief Kill the registered ContextQuery corresponding to the  to cqid
+         * Kill the registered ContextQuery corresponding to the cqid
          *
-         * @param [in] pQueryEngineInstance - instance(created on creation of the QueryEngine)
-         *               of the query engine with which the query is to be terminated
+         * @param pQueryEngineInstance 
+         *              - instance(created on creation of the QueryEngine)
+         *              of the query engine with which the query is to be terminated
          *
-         * @param [in] cqid - ContextQuery ID of the query to be terminated
+         * @param cqid 
+         *              - ContextQuery ID of the query to be terminated
          *
          * @return void
+         * 
          */
-        public native void KillContextQuery(int pQueryEngineInstance, int cqid)
+        public native void killContextQuery(int pQueryEngineInstance, int cqid)
         throws Exception;
 
         // public native void UnregiterQueryEvent(int pQueryEngineInstance,
@@ -180,110 +192,121 @@ public class CoreController
 
         // IModelData
         /**
-            * @fn     GetDataId
-           * @brief Get the affected DataId - ContextModel has plenty of data so
-            *           returned data is matched from given condition which in this case is the model
-            *        data object instance
-            *
-            *@param [in] pIModelDataInstance - instance(created on creation of the ModelData)
-            *                of the model data for which Data ID is to be returned
-             *
-            * @return int - the affected DataId
-            */
-        public native int GetDataId(int pIModelDataInstance);
+         * Get the affected DataId. ContextModel has plenty of data so returned data is matched 
+         *               from given condition which in this case is the model data object instance
+         *
+         * @param pIModelDataInstance 
+         *               - instance(created on creation of the ModelData)
+         *                of the model data for which Data ID is to be returned
+         *
+         * @return int - the affected DataId
+         * 
+         */
+        public native int getDataId(int pIModelDataInstance);
 
         /**
-            * @fn     GetPropertyCount
-            * @brief ContextModel has at least one property that contains data \n
-            *           property is described from its specification.
-            *
-            *@param [in] pIModelDataInstance - instance(created on creation of the ModelData)
-            *                of the model data for which propertycount is to be returned
-            *
-            * @return int
-            */
-        public native int GetPropertyCount(int pIModelDataInstance);
+         * ContextModel has at least one property that contains data \n
+         *           property is described from its specification.
+         *
+         * @param pIModelDataInstance - instance(created on creation of the ModelData)
+         *                of the model data for which property count is to be returned
+         *
+         * @return @return int - number of properties
+         * 
+         */
+        public native int getPropertyCount(int pIModelDataInstance);
 
         /**
-            * @fn     GetPropertyName
-            * @brief Retrieve the name of the property using the given index
-            *
-            * @param [in] pIModelDataInstance - instance(created on creation of the ModelData)
-            *                of the model data for which property name is to be returned
-            *
-            * @param [in] propertyIndex - index of property to read
-            *
-            * @return String - property name
-            */
-        public native String GetPropertyName(int pIModelDataInstance,
+         * Retrieve the name of the property using the given index
+         *
+         * @param pIModelDataInstance 
+         *               - instance(created on creation of the ModelData)
+         *                of the model data for which property name is to be returned
+         *
+         * @param propertyIndex 
+         *               - index of property to read
+         *
+         * @return String - property name
+         * 
+         */
+        public native String getPropertyName(int pIModelDataInstance,
                                              int propertyIndex);
 
         /**
-            * @fn     GetPropertyValue
-            * @brief Retrieve the value of the property using the given index
-            *
-            * @param [in] pIModelDataInstance - instance(created on creation of the ModelData)
-            *                of the model data for which property value is to be returned
-            *
-            * @param [in] propertyIndex - index of property to read
-            *
-            * @return String - property value
-            */
-        public native String GetPropertyValue(int pIModelDataInstance,
+         * Retrieve the value of the property using the given index
+         *
+         * @param pIModelDataInstance 
+         *               - instance(created on creation of the ModelData)
+         *                of the model data for which property value is to be returned
+         *
+         * @param propertyIndex 
+         *               - index of property to read
+         *
+         * @return String - property value
+         * 
+         */
+        public native String getPropertyValue(int pIModelDataInstance,
                                               int propertyIndex);
 
         // IDataReader
         /**
-            * @fn     GetAffectedModels
-            * @brief Get affected context models. The CQL(context query language) can specify
-            *       multiple ContextModels for retrieving data so a list of string of affected
-            *       dacontext models is returned
-            *
-            * @param [in] pDataReaderInstance -  instance(created on creation of the DataReader)
-            *                of the data reader class object
-            *
-            * @return List<String> - affected ContextModel list
-            */
-        public native List<String> GetAffectedModels(int pDataReaderInstance);
+         * Get affected context models. The CQL(context query language) can specify
+         *       multiple ContextModels for retrieving data so a list of string of affected
+         *       context models is returned
+         *
+         * @param pDataReaderInstance 
+         *              - instance(created on creation of the DataReader)
+         *                of the data reader class object
+         *
+         * @return List<String> - affected ContextModel list
+         * 
+         */
+        public native List<String> getAffectedModels(int pDataReaderInstance);
 
         /**
-            * @fn     GetModelDataCount
-            * @brief Get affected model data count. There can be multiple data models existing
-            *       from the given condition, return the count.
-            *
-            * @param [in] pDataReaderInstance - instance(created on creation of the DataReader)
-            *                of the data reader class object
-            *
-            * @param [in] modelName - affected ContextModel name
-            *
-            * @return int  - affected dataId count
-            */
-        public native int GetModelDataCount(int pDataReaderInstance,
+         * Get affected model data count. There can be multiple data models existing
+         *       from the given condition, return the count.
+         *
+         * @param pDataReaderInstance 
+         *              - instance(created on creation of the DataReader)
+         *                of the data reader class object
+         *
+         * @param modelName 
+         *              - affected ContextModel name
+         *
+         * @return int  - affected dataId count
+         * 
+         */
+        public native int getModelDataCount(int pDataReaderInstance,
                                             String modelName) throws Exception;
 
         /**
-            * @fn     GetModelData
-            * @brief Get actual Context Model data
-            *
-            * @param [in] pDataReaderInstance - instance(created on creation of the DataReader)
-            *                of the data reader class object
-            *
-            * @param [in] modelName - affected ContextModel name
-            *
-            * @param [in] dataIndex - affected dataId index
-            *
-            * @return ModelData  - affected ContextModel data reader
-            */
-        public native ModelData GetModelData(int pDataReaderInstance,
+         * Get actual Context Model data
+         *
+         * @param pDataReaderInstance 
+         *              - instance(created on creation of the DataReader)
+         *                of the data reader class object
+         *
+         * @param modelName 
+         *              - affected ContextModel name
+         *
+         * @param dataIndex 
+         *              - affected dataId index
+         *
+         * @return ModelData  - affected ContextModel data reader
+         * 
+         */
+        public native ModelData getModelData(int pDataReaderInstance,
                                              String modelName, int dataIndex) throws Exception;
 
         /**
-            * @fn     RegisterReportReceiver
-            * @brief To register the report receiver to receive messages
-            *
-            * @param [in] reportReceiver - report receiver instance
-            *
-            * @return void
-            */
-        public native void RegisterReportReceiver(IReportReceiver reportReceiver);
+         * To register the report receiver to receive messages
+         *
+         * @param reportReceiver 
+         *              - report receiver instance
+         *
+         * @return void
+         * 
+         */
+        public native void registerReportReceiver(IReportReceiver reportReceiver);
 }

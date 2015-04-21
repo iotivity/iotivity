@@ -119,7 +119,7 @@ class CContextExecutor :
         * @exception
         * @see
         */
-        void registerCallback(IN ICtxEvent *pEvent);
+        void registerCallback(ICtxEvent *pEvent);
 
         /**
         * @fn           addOutput
@@ -133,7 +133,7 @@ class CContextExecutor :
         * @exception
         * @see
         */
-        void addOutput(IN std::vector<ContextData> contextData);
+        void addOutput(std::vector<ContextData> contextData);
 
         /**
         * @fn           getDataFromDatabase
@@ -151,8 +151,8 @@ class CContextExecutor :
         * @exception
         * @see
         */
-        void getDataFromDatabase(IN std::string modelName, IN int startIndex, IN int count,
-                                 OUT std::vector<ContextData> *data, OUT int *pLastIndex);
+        void getDataFromDatabase(std::string modelName, int startIndex, int count,
+                                 std::vector<ContextData> *data, int *pLastIndex);
 
         /**
         * @fn           onEvent
@@ -169,7 +169,7 @@ class CContextExecutor :
         * @exception
         * @see
         */
-        int onEvent(IN std::string deviceID, IN TypeofEvent callType, IN std::vector<ContextData> ctxData);
+        int onEvent(std::string deviceID, TypeofEvent callType, std::vector<ContextData> ctxData);
 
         /**
         * @fn           registerContext
@@ -185,7 +185,7 @@ class CContextExecutor :
         * @exception
         * @see
         */
-        void registerContext(IN TypeofEvent callType, IN ISSMResource *pSSMResouce, IN IEvent *pEvent);
+        void registerContext(TypeofEvent callType, ISSMResource *pSSMResouce, IEvent *pEvent);
 
         /**
         * @fn           unregisterContext
@@ -201,19 +201,19 @@ class CContextExecutor :
         * @exception
         * @see
         */
-        void  unregisterContext(IN TypeofEvent callType, IN ISSMResource *pSSMResource, IN IEvent *pEvent);
+        void  unregisterContext(TypeofEvent callType, ISSMResource *pSSMResource, IEvent *pEvent);
 
         void onExecute(void *pArg);
         void onTerminate(void *pArg);
-        int onResourceEvent(IN RESOURCE_EVENT_TYPE eventType, IN ISSMResource *pSSMResource,
-                            IN std::string info);
+        int onResourceEvent(RESOURCE_EVENT_TYPE eventType, ISSMResource *pSSMResource,
+                            std::string info);
 
     private:
-        SSMRESULT findString(IN std::vector<ISSMResource *> *sList, IN const std::string str,
-                             OUT ISSMResource **ppResource);
+        SSMRESULT findString(std::vector<ISSMResource *> *sList, const std::string str,
+                             ISSMResource **ppResource);
         std::map<std::string, std::vector<ContextData> >  getPreparedContextList(
-            IN std::string primitiveSensor);
-        void runLogic(IN std::vector<ContextData> inputData, IN std::string softSensor);
+            std::string primitiveSensor);
+        void runLogic(std::vector<ContextData> inputData, std::string softSensor);
 };
 
 #endif

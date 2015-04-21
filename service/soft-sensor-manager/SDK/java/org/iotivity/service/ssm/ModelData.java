@@ -28,11 +28,11 @@
 package org.iotivity.service.ssm;
 
 /**
-  * @class    ModelData
-  * @brief    This class provides a set of API for DataReader class to handle the data
-  *         received by IQueryEngineEvent listeners from SSMCore
-  *
-  */
+ * @class    ModelData
+ * @brief    This class provides a set of API for DataReader class to handle the data
+ *         received by IQueryEngineEvent listeners from SSMCore
+ *
+ */
 public class ModelData
 {
 
@@ -44,56 +44,57 @@ public class ModelData
         }
 
         /**
-            * @fn     GetDataId
-            * @brief Get the affected DataId - ContextModel has plenty of data so the
-            *            returned data is matched fom given condition and returned,
-            *        which in this case is the model data object instance
-            *
-            * @return int - the affected DataId
-            */
-        public int GetDataId()
+         * Get the affected DataId. ContextModel has plenty of data so returned data is matched 
+         *               from given condition which in this case is the model data object instance
+         *
+         * @return int - the affected DataId
+         * 
+         */
+        public int getDataId()
         {
-            return CoreController.getInstance().GetDataId(pIModelDataInstance);
+            return CoreController.getInstance().getDataId(pIModelDataInstance);
         }
 
         /**
-            * @fn     GetPropertyCount
-            * @brief ContextModel has at least one property that contains data \n
-            *         the property is described from its specification.
-            *
-            * @return int -the property count
-            */
-        public int GetPropertyCount()
+         * ContextModel has at least one property that contains data \n
+         *           property is described from its specification.
+         *
+         * @return int - number of properties
+         * 
+         */
+        public int getPropertyCount()
         {
-            return CoreController.getInstance().GetPropertyCount(
+            return CoreController.getInstance().getPropertyCount(
                        pIModelDataInstance);
         }
 
         /**
-            * @fn     GetPropertyName
-            * @brief Retrieve the name of the property using the given index value
-            *
-            * @param [in] propertyIndex - index of property to read
-            *
-            * @return String - the property name
-            */
-        public String GetPropertyName(int propertyIndex)
+         * Retrieve the name of the property using the given index
+         *
+         * @param propertyIndex 
+         *               - index of property to read
+         *
+         * @return String - property name
+         * 
+         */
+        public String getPropertyName(int propertyIndex)
         {
-            return CoreController.getInstance().GetPropertyName(
+            return CoreController.getInstance().getPropertyName(
                        pIModelDataInstance, propertyIndex);
         }
 
         /**
-            * @fn     GetPropertyValue
-            * @brief Retrieve the value of the property using the given index value
-            *
-            * @param [in] propertyIndex - index of property to read
-            *
-            * @return String - the property value
-            */
-        public String GetPropertyValue(int propertyIndex)
+         * Retrieve the value of the property using the given index
+         *
+         * @param propertyIndex 
+         *               - index of property to read
+         *
+         * @return String - property value
+         * 
+         */
+        public String getPropertyValue(int propertyIndex)
         {
-            return CoreController.getInstance().GetPropertyValue(
+            return CoreController.getInstance().getPropertyValue(
                        pIModelDataInstance, propertyIndex);
         }
 }

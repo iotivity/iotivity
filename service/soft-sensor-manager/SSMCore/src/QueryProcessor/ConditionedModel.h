@@ -63,7 +63,7 @@ class CConditionedModel :
         * @exception
         * @see
         */
-        SSMRESULT create(IN IContextModel *pBaseModel, IN ModelConditionVec *pModelConditions);
+        SSMRESULT create(IContextModel *pBaseModel, ModelConditionVec *pModelConditions);
 
         /**
         * @fn     onWatchModelData
@@ -77,7 +77,7 @@ class CConditionedModel :
         * @exception
         * @see
         */
-        SSMRESULT onWatchModelData(IN int triggerId, IN int dataId);
+        SSMRESULT onWatchModelData(int triggerId, int dataId);
 
         SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
         {
@@ -106,7 +106,7 @@ class CConditionedModel :
         * @exception
         * @see
         */
-        SSMRESULT getBaseContextModel(OUT IContextModel **ppBaseContextModel);
+        SSMRESULT getBaseContextModel(IContextModel **ppBaseContextModel);
 
         /**
         * @fn     registerConditionedModelEvent
@@ -119,7 +119,7 @@ class CConditionedModel :
         * @exception
         * @see
         */
-        SSMRESULT registerConditionedModelEvent(IN IConditionedModelEvent *pConditionedModelEvent);
+        SSMRESULT registerConditionedModelEvent(IConditionedModelEvent *pConditionedModelEvent);
 
         /**
         * @fn     activateTrigger
@@ -132,7 +132,7 @@ class CConditionedModel :
         * @exception
         * @see
         */
-        SSMRESULT activateTrigger(OUT int *pTriggerId);
+        SSMRESULT activateTrigger(int *pTriggerId);
 
         /**
         * @fn     deactivateTrigger
@@ -171,7 +171,7 @@ class CConditionedModel :
         * @exception
         * @see
         */
-        SSMRESULT getAffectedData(OUT IntVec *pDataIds);
+        SSMRESULT getAffectedData(IntVec *pDataIds);
 
         /**
         * @fn     getWatchCondition
@@ -184,7 +184,7 @@ class CConditionedModel :
         * @exception
         * @see
         */
-        SSMRESULT getWatchCondition(OUT ModelConditionVec *pModelConditions);
+        SSMRESULT getWatchCondition(ModelConditionVec *pModelConditions);
 };
 
 #endif

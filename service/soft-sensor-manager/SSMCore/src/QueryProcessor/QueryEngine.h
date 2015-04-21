@@ -52,9 +52,9 @@ class CQueryEngine :
         CObjectPtr<ITasker>                 m_pTasker;
 
     private:
-        SSMRESULT processQueryResult(IN int userTriggerId, IN std::vector<result_model> *result);
-        SSMRESULT validateQueryResult(IN IConditionedQueryResult *pConditionedQueryResult,
-                                      OUT std::vector<result_model> *resultData);
+        SSMRESULT processQueryResult(int userTriggerId, std::vector<result_model> *result);
+        SSMRESULT validateQueryResult(IConditionedQueryResult *pConditionedQueryResult,
+                                      std::vector<result_model> *resultData);
 
     public:
         enum EventType {EVENT_TYPE_INNER, EVENT_TYPE_OUTER};
@@ -74,8 +74,8 @@ class CQueryEngine :
         * @exception
         * @see
         */
-        SSMRESULT onConditionedQueryEvent(IN int userTriggerId,
-                                          IN IConditionedQueryResult *pConditionedQueryResult);
+        SSMRESULT onConditionedQueryEvent(int userTriggerId,
+                                          IConditionedQueryResult *pConditionedQueryResult);
 
         SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
         {
@@ -104,7 +104,7 @@ class CQueryEngine :
         * @exception
         * @see
         */
-        SSMRESULT executeContextQuery(IN std::string contextQuery, OUT int *cqid);
+        SSMRESULT executeContextQuery(std::string contextQuery, int *cqid);
 
         //TODO: Registration with multiple instance support
         /**
@@ -117,7 +117,7 @@ class CQueryEngine :
         * @exception
         * @see
         */
-        SSMRESULT registerQueryEvent(IN IQueryEngineEvent *pQueryEngineEvent);
+        SSMRESULT registerQueryEvent(IQueryEngineEvent *pQueryEngineEvent);
 
 
         /**
@@ -130,7 +130,7 @@ class CQueryEngine :
         * @exception
         * @see
         */
-        SSMRESULT unregisterQueryEvent(IN IQueryEngineEvent *pQueryEngineEvent);
+        SSMRESULT unregisterQueryEvent(IQueryEngineEvent *pQueryEngineEvent);
 
         /**
         * @fn killContextQuery
@@ -143,7 +143,7 @@ class CQueryEngine :
         * @exception
         * @see
         */
-        SSMRESULT killContextQuery(IN int cqid);
+        SSMRESULT killContextQuery(int cqid);
 };
 
 #endif /*_QueryEngine_H_*/

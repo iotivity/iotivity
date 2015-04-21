@@ -37,7 +37,7 @@ void CConditionedQueryResult::finalRelease()
     }
 }
 
-SSMRESULT CConditionedQueryResult::addConditionedModel(IN IConditionedModel *pConditionedModel)
+SSMRESULT CConditionedQueryResult::addConditionedModel(IConditionedModel *pConditionedModel)
 {
     pConditionedModel->addRef();
     m_conditionedModels.push_back(pConditionedModel);
@@ -50,8 +50,8 @@ unsigned int CConditionedQueryResult::getConditionedModelCount()
     return m_conditionedModels.size();
 }
 
-SSMRESULT CConditionedQueryResult::getConditionedContextModel(IN unsigned int conditionedModelIndex,
-        OUT IConditionedModel **ppConditionedModel)
+SSMRESULT CConditionedQueryResult::getConditionedContextModel(unsigned int conditionedModelIndex,
+        IConditionedModel **ppConditionedModel)
 {
     if (conditionedModelIndex > m_conditionedModels.size() - 1)
     {

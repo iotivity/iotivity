@@ -28,13 +28,13 @@ CContextQuery::CContextQuery()
 {
 }
 
-SSMRESULT CContextQuery::initialize(IN Token &input_root)
+SSMRESULT CContextQuery::initialize(Token &input_root)
 {
     m_root = input_root;
     return CreateGlobalInstance(OID_IPropagationEngine, (IBase **)&m_pPropagationEngine);
 }
 
-std::string CContextQuery::search_last_modelName(IN Token *temp)
+std::string CContextQuery::search_last_modelName(Token *temp)
 {
     while (true)
     {
@@ -49,8 +49,8 @@ std::string CContextQuery::search_last_modelName(IN Token *temp)
     }
 }
 
-void CContextQuery::integrate_result(OUT std::vector<result_model> *result, IN int modelId,
-                                     IN std::vector<int> *dataid, IN std::string modelName)
+void CContextQuery::integrate_result(std::vector<result_model> *result, int modelId,
+                                     std::vector<int> *dataid, std::string modelName)
 {
     bool flag = false;
 
@@ -91,7 +91,7 @@ void CContextQuery::integrate_result(OUT std::vector<result_model> *result, IN i
 
 
 
-void CContextQuery::return_contextName(OUT std::vector<std::string> *contextName)
+void CContextQuery::return_contextName(std::vector<std::string> *contextName)
 {
     int k = m_root.child_token.at(0).child_token.size();
 
@@ -203,7 +203,7 @@ void CContextQuery::check_result_model()
     }
 }
 
-void CContextQuery::return_modelID(OUT std::vector<int> *vector_int)
+void CContextQuery::return_modelID(std::vector<int> *vector_int)
 {
     int k = m_root.child_token.at(0).child_token.size();
 
@@ -223,7 +223,7 @@ void CContextQuery::return_modelID(OUT std::vector<int> *vector_int)
     }
 }
 
-void CContextQuery::make_QueryCondition(OUT QueryCondition *result)
+void CContextQuery::make_QueryCondition(QueryCondition *result)
 {
 
     if (m_root.child_token.size() < 2)

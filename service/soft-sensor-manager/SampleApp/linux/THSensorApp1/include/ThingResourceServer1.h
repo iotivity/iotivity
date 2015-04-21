@@ -40,7 +40,7 @@ using namespace std;
 #define COAP_MODE               ModeType::Server
 #define COAP_SRVTYPE        ServiceType::InProc
 
-#define COAP_TYPE_NAME          "SoftSensorManager.Sensor"
+#define COAP_TYPE_NAME          "SSManager.Sensor"
 
 // Forward declaring the entityHandler
 

@@ -174,7 +174,7 @@ typedef std::vector<int> IntVec;
 * @exception
 * @see
 */
-INTERFACE_DECLSPEC SSMRESULT CreateInstance(IN const OID &objectID, OUT IBase **ppObject);
+INTERFACE_DECLSPEC SSMRESULT CreateInstance(const OID &objectID, IBase **ppObject);
 
 /**
 * @fn createGlobalInstance
@@ -189,7 +189,7 @@ INTERFACE_DECLSPEC SSMRESULT CreateInstance(IN const OID &objectID, OUT IBase **
 * @exception
 * @see
 */
-INTERFACE_DECLSPEC SSMRESULT CreateGlobalInstance(IN const OID &objectID, OUT IBase **ppObject);
+INTERFACE_DECLSPEC SSMRESULT CreateGlobalInstance(const OID &objectID, IBase **ppObject);
 
 INTERFACE_DECLSPEC SSMRESULT CreateGlobalInstanceRepo();
 

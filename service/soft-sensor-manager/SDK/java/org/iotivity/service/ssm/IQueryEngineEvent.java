@@ -23,18 +23,18 @@
  * @brief    This file provides a class that represents Query Engine's event that contains results
  *
  */
+
 package org.iotivity.service.ssm;
 
-/**
+    /**
     * @class    IQueryEngineEvent
     * @brief    This is an interface class for sample applications.It handles the response from
     *            SSMCore received asynchronously on making a query with the SSMCore.
     *            Application should implement the pure virtual function OnQueryEngineEvent.
     *            The Application should call registerQuery() and add a listener.
     *
-    *
     *<pre>
-    *Sample code :
+    Sample code :
 
         int cqid = SoftSensorManager.registerQuery(edtQuery.getText().toString(), mQueryEngineEventListener);
         mRunningQueries.add(cqid);
@@ -42,7 +42,7 @@ package org.iotivity.service.ssm;
         private IQueryEngineEvent mQueryEngineEventListener = new IQueryEngineEvent()
         {
         @Override
-        public void OnQueryEngineEvent(int cqid, DataReader result)
+        public void onQueryEngineEvent(int cqid, DataReader result)
         {
                 List<String> models = result.GetAffectedModels();
 
@@ -60,24 +60,24 @@ package org.iotivity.service.ssm;
                     }
                 }
         }
-        };
-    </pre>
+        };</pre>
     */
 public abstract class IQueryEngineEvent
 {
 
         /**
-                  * @fn     OnQueryEngineEvent
-                  * @brief Transmits result of SSMCore to Application layer
-                  *     This abstract method needs to be implemeted by application
-                  *     as a precondition for query engine implementation.
-                  *
-                  * @param [in] cqid - ContextQuery ID of the registered query
-                  *
-                  * @param [in] result - data received from SSMCore
-                  *
-                  * @return void
-                  *
-                  */
-        public abstract void OnQueryEngineEvent(int cqid, DataReader result);
+         * Transmits result of SSMCore to Application layer
+         *     This abstract method needs to be implemeted by application
+         *     as a precondition for query engine implementation.
+         *
+         * @param cqid 
+         *              - ContextQuery ID of the registered query
+         *
+         * @param result 
+         *              - data received from SSMCore
+         *
+         * @return void
+         *
+         */
+        public abstract void onQueryEngineEvent(int cqid, DataReader result);
 }

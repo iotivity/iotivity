@@ -53,7 +53,7 @@ void ReportMessage(const char *tag, const char *msg)
     ATTACH_CURRENT_THREAD(g_JVM, env);
 
     jmethodID midReportReceiver =
-        env->GetMethodID(g_ClassReportReceiver, "OnMessageReceived",
+        env->GetMethodID(g_ClassReportReceiver, "onMessageReceived",
                          "(Ljava/lang/String;Ljava/lang/String;)V");
 
     env->CallVoidMethod(g_objReportReceiver, midReportReceiver,
@@ -86,7 +86,7 @@ class QueryEngineEventReceiver
             }
         }
 
-        void SetQueryEngineEventObj(jobject objQueryEngineEvent)
+        void setQueryEngineEventObj(jobject objQueryEngineEvent)
         {
             if (m_objQueryEngineEvent != NULL)
             {
@@ -98,7 +98,7 @@ class QueryEngineEventReceiver
             m_objQueryEngineEvent = objQueryEngineEvent;
         }
 
-        SSMRESULT onQueryEngineEvent(IN int cqid, IN IDataReader *pResult)
+        SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult)
         {
             JNIEnv *env;
             g_JVM->GetEnv((void **) &env, JNI_VERSION_1_6);
@@ -106,7 +106,7 @@ class QueryEngineEventReceiver
             ATTACH_CURRENT_THREAD(g_JVM, env);
 
             jmethodID midQueryEngineEvent =
-                env->GetMethodID(g_ClassQueryEngineEvent, "OnQueryEngineEvent",
+                env->GetMethodID(g_ClassQueryEngineEvent, "onQueryEngineEvent",
                                  "(ILorg/iotivity/service/ssm/DataReader;)V");
 
             jmethodID cid_DataReader = env->GetMethodID(g_ClassDataReader, "<init>", "(I)V");
@@ -187,7 +187,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
         delete g_QueryEngineEventReceiver;
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_InitializeSSMCore
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_initializeSSMCore
 (JNIEnv *env, jclass clz, jstring jstrXmlDescription)
 {
     SSMRESULT res = SSM_E_FAIL;
@@ -207,28 +207,28 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_InitializeSS
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "InitializeSSMCore failed");
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_StartSSMCore
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_startSSMCore
 (JNIEnv *env, jclass clz)
 {
     if (StartSSMCore() != SSM_S_OK)
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "StartSSMCore failed");
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_StopSSMCore
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_stopSSMCore
 (JNIEnv *env, jclass clz)
 {
     if (StopSSMCore() != SSM_S_OK)
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "StopSSMCore failed");
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_TerminateSSMCore
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_terminateSSMCore
 (JNIEnv *env, jclass clz)
 {
     if (TerminateSSMCore() != SSM_S_OK)
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "TerminateSSMCore failed");
 }
 
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_CreateQueryEngine
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_createQueryEngine
 (JNIEnv *env, jclass clz)
 {
     IQueryEngine        *pQueryEngine = NULL;
@@ -247,7 +247,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_CreateQue
     return env->NewObject(g_ClassQueryEngine, cid_QueryEngine, (jint)pQueryEngine);
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_ReleaseQueryEngine
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQueryEngine
 (JNIEnv *env, jclass clz, jobject queryEngine)
 {
     IQueryEngine        *pQueryEngine = NULL;
@@ -263,7 +263,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_ReleaseQuery
     return ReleaseQueryEngine(pQueryEngine);
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_ExecuteContextQuery
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_executeContextQuery
 (JNIEnv *env, jclass clz, jint pQueryEngineInstance, jstring jstrContextQuery)
 {
     int                 cqid = 0;
@@ -286,7 +286,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_ExecuteConte
     return cqid;
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_RegisterQueryEvent
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerQueryEvent
 (JNIEnv *env, jclass clz, jint pQueryEngineInstance, jobject queryEngineEvent)
 {
     IQueryEngine        *pQueryEngine = (IQueryEngine *)pQueryEngineInstance;
@@ -297,11 +297,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_RegisterQuer
         return;
     }
 
-    g_QueryEngineEventReceiver->SetQueryEngineEventObj(env->NewGlobalRef(queryEngineEvent));
+    g_QueryEngineEventReceiver->setQueryEngineEventObj(env->NewGlobalRef(queryEngineEvent));
     pQueryEngine->registerQueryEvent(g_QueryEngineEventReceiver);
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_KillContextQuery
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_killContextQuery
 (JNIEnv *env, jclass clz, jint pQueryEngineInstance, jint cqid)
 {
     IQueryEngine        *pQueryEngine = (IQueryEngine *)pQueryEngineInstance;
@@ -312,7 +312,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_KillContextQ
     }
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetDataId
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getDataId
 (JNIEnv *env, jclass clz, jint pDataReaderInstance)
 {
     IModelData *pDataReader = (IModelData *)pDataReaderInstance;
@@ -320,7 +320,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetDataId
     return pDataReader->getDataId();
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetPropertyCount
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyCount
 (JNIEnv *env, jclass clz, jint pIModelDataInstance )
 {
     IModelData *pModelData = (IModelData *)pIModelDataInstance;
@@ -328,7 +328,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetPropertyC
     return pModelData->getPropertyCount();
 }
 
-JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_GetPropertyName
+JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyName
 (JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex )
 {
     IModelData *pModelData = (IModelData *)pIModelDataInstance;
@@ -336,7 +336,7 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_GetProper
     return env->NewStringUTF(pModelData->getPropertyName(propertyIndex).c_str());
 }
 
-JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_GetPropertyValue
+JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyValue
 (JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex )
 {
     IModelData *pModelData = (IModelData *)pIModelDataInstance;
@@ -344,7 +344,7 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_GetProper
     return env->NewStringUTF(pModelData->getPropertyValue(propertyIndex).c_str());
 }
 
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_GetAffectedModels
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getAffectedModels
 (JNIEnv *env, jclass clz, jint pDataReaderInstance)
 {
     IDataReader *pDataReader = (IDataReader *)pDataReaderInstance;
@@ -369,7 +369,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_GetAffect
     return objAffectedModels;
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetModelDataCount
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getModelDataCount
 (JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName)
 {
     IDataReader *pDataReader = (IDataReader *)pDataReaderInstance;
@@ -386,7 +386,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_GetModelData
     return modelCount;
 }
 //return IModelData
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_GetModelData
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getModelData
 (JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName, jint jintDataIndex )
 {
     IDataReader *pDataReader = (IDataReader *)pDataReaderInstance;
@@ -407,7 +407,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_GetModelD
     return env->NewObject(g_ClassModelData, cid_ModelData, (jint)pModelData);
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_RegisterReportReceiver
+JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerReportReceiver
 (JNIEnv *env, jclass clz, jobject reportReceiver)
 {
     if (g_objReportReceiver != NULL)

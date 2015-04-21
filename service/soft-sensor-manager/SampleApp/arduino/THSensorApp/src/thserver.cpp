@@ -394,7 +394,7 @@ void createTHResource()
     TH.m_temp = 0;
 
     OCStackResult res = OCCreateResource(&TH.m_handle,
-                                         "SoftSensorManager.Sensor",
+                                         "SSManager.Sensor",
                                          "oc.mi.def",
                                          "/Thing_TempHumSensor",
                                          OCEntityHandlerCb,

@@ -62,26 +62,26 @@ class CPropagationEngine :
 
         std::map<std::string, int>                  m_searchedSensorDataId;
 
-        SSMRESULT findContextModel(IN std::string modelName, OUT IContextModel  **ppContextModel);
+        SSMRESULT findContextModel(std::string modelName, IContextModel  **ppContextModel);
 
-        SSMRESULT registerCondition(IN IContextModel *pContextModel, IN ModelConditionVec *pConditions,
-                                    IN IConditionedQuery *pConditionedQuery);
+        SSMRESULT registerCondition(IContextModel *pContextModel, ModelConditionVec *pConditions,
+                                    IConditionedQuery *pConditionedQuery);
 
-        SSMRESULT registerVirtualCondition(IN std::string virtualContextModelName,
-                                           IN ModelConditionVec *pConditions, IN IConditionedQuery *pConditionedQuery);
+        SSMRESULT registerVirtualCondition(std::string virtualContextModelName,
+                                           ModelConditionVec *pConditions, IConditionedQuery *pConditionedQuery);
 
-        SSMRESULT propagateNewModel(IN std::string newModelName, IN IContextModel *pContextModel);
+        SSMRESULT propagateNewModel(std::string newModelName, IContextModel *pContextModel);
 
         SSMRESULT addResourceFromGetList();
 
         //TODO: Install Context model from SSMResource
         SSMRESULT installCurrentSensors();
 
-        SSMRESULT installContextModelFromISSMResource(IN ISSMResource *pSSMResource);
+        SSMRESULT installContextModelFromISSMResource(ISSMResource *pSSMResource);
 
-        SSMRESULT installContextModel(IN IContextModel *pParentModel,
-                                      IN IContextModel::ConstructionType constructionType,
-                                      IN const char *modelName, IN ModelPropertyVec *pModelDescs, OUT IContextModel **ppContextModel);
+        SSMRESULT installContextModel(IContextModel *pParentModel,
+                                      IContextModel::ConstructionType constructionType,
+                                      const char *modelName, ModelPropertyVec *pModelDescs, IContextModel **ppContextModel);
 
         SSMRESULT recoverEngineFromDatabase();
 
@@ -91,16 +91,16 @@ class CPropagationEngine :
 
         void terminateEngine();
 
-        SSMRESULT updateDeviceInfo(IN ISSMResource *pSSMResource, OUT int *deviceId);
+        SSMRESULT updateDeviceInfo(ISSMResource *pSSMResource, int *deviceId);
 
     public:
         SSMRESULT finalConstruct();
 
         void finalRelease();
 
-        void onExecute(IN void *pArg);
+        void onExecute(void *pArg);
 
-        void onTerminate(IN void *pArg);
+        void onTerminate(void *pArg);
 
         /**
         * @fn     onResourceEvent
@@ -115,8 +115,8 @@ class CPropagationEngine :
         * @exception
         * @see
         */
-        int onResourceEvent(IN RESOURCE_EVENT_TYPE eventType, IN ISSMResource *pSSMResource,
-                            IN std::string info);
+        int onResourceEvent(RESOURCE_EVENT_TYPE eventType, ISSMResource *pSSMResource,
+                            std::string info);
 
         SSMRESULT queryInterface(const OID &objectID, IBase **ppObject)
         {
@@ -146,7 +146,7 @@ class CPropagationEngine :
         * @exception
         * @see
         */
-        SSMRESULT getContextModel(IN std::string modelName, OUT IContextModel **ppContextModel);
+        SSMRESULT getContextModel(std::string modelName, IContextModel **ppContextModel);
 
         /**
         * @fn     createConditionedQuery
@@ -162,9 +162,9 @@ class CPropagationEngine :
         * @exception
         * @see
         */
-        SSMRESULT createConditionedQuery(IN IContextModel::ActivationType activationType,
-                                         IN QueryCondition *pQueryCondition,
-                                         IN IConditionedQueryEvent *pEvent, OUT IConditionedQuery **ppConditionedQuery);
+        SSMRESULT createConditionedQuery(IContextModel::ActivationType activationType,
+                                         QueryCondition *pQueryCondition,
+                                         IConditionedQueryEvent *pEvent, IConditionedQuery **ppConditionedQuery);
 
         /**
         * @fn     onModelStatusChange
@@ -179,8 +179,8 @@ class CPropagationEngine :
         * @exception
         * @see
         */
-        SSMRESULT onModelStatusChange(IN IContextModel::Status newStatus, IN ISSMResource *pSSMResource,
-                                      IN IContextModel *pModel);
+        SSMRESULT onModelStatusChange(IContextModel::Status newStatus, ISSMResource *pSSMResource,
+                                      IContextModel *pModel);
 
         /**
         * @fn     onQueryContextModel
@@ -194,6 +194,6 @@ class CPropagationEngine :
         * @exception
         * @see
         */
-        SSMRESULT onQueryContextModel(IN std::string modelName, OUT IContextModel **ppContextModel);
+        SSMRESULT onQueryContextModel(std::string modelName, IContextModel **ppContextModel);
 };
 #endif

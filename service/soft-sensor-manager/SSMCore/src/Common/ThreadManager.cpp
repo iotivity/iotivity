@@ -346,7 +346,7 @@ void CThreadPool::finalRelease()
     }
 }
 
-SSMRESULT CThreadPool::createWorkerThread(OUT IWorkerThread **ppWorkerThread)
+SSMRESULT CThreadPool::createWorkerThread(IWorkerThread **ppWorkerThread)
 {
     SSMRESULT res = SSM_E_FAIL;
 
