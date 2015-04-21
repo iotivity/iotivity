@@ -27,6 +27,7 @@
 #include "SensorProcessor/ContextExecutor.h"
 #include "SensorProcessor/ContextDataReader.h"
 #include "SensorProcessor/ResourceFinder.h"
+#include "rapidxml/rapidxml.hpp"
 
 inline bool operator<( const OID &lhs, const OID &rhs )
 {

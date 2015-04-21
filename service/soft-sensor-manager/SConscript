@@ -116,6 +116,7 @@ BMISensor_env.InstallTarget(BMISensor, 'libBMISensor')
 ssmcore_env = soft_sensor_manager_env.Clone()
 
 ssmcore_env.AppendUnique(CPPPATH = [
+		env.get('SRC_DIR')+'/extlibs',
 		'SSMCore/include/',
 		'SSMCore/src/',
 		'SSMCore/src/Common/'

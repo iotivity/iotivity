@@ -23,7 +23,6 @@
 #include "SSMInterface/SSMCore.h"
 #include "Common/PlatformLayer.h"
 #include "Common/InternalInterface.h"
-#include "Common/rapidxml.hpp"
 
 /**
 * @class    CSoftSensorManager

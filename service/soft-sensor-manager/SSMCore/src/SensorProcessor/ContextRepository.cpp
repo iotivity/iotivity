@@ -18,6 +18,7 @@
 *
 ******************************************************************/
 #include "ContextRepository.h"
+#include "rapidxml/rapidxml.hpp"
 
 static inline std::string trim_both(const std::string &str)
 {

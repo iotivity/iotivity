@@ -23,8 +23,6 @@
 #include "SSMInterface/SSMCore.h"
 #include "Common/PlatformLayer.h"
 #include "Common/InternalInterface.h"
-#include "Common/rapidxml.hpp"
-#include "Common/rapidxml_print.hpp"
 #include "ResourceFinder.h"
 
 /**
