@@ -7,6 +7,10 @@ Import('env')
 print"Reading bt adapter script"
 
 target_os = env.get('TARGET_OS')
+
+if target_os == 'tizen':
+    env.ParseConfig("pkg-config --cflags --libs capi-network-bluetooth")
+
 src_dir = './bt_edr_adapter/'
 
 #Source files to build common for all platforms
