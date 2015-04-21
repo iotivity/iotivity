@@ -351,7 +351,7 @@ OCStackResult OICStartCoordinate()
 
     s_mirrorResourceList = createMirrorResourceList();
     s_requestHandleList = createRequestHandleList();
-    result = requestPresence(OC_DEFAULT_ADDRESS);
+    result = requestPresence(OC_MULTICAST_PREFIX);
     if(result != OC_STACK_OK)
     {
         return OC_STACK_ERROR;
@@ -422,7 +422,7 @@ OCStackResult requestPresence(char *sourceResourceAddress)
     cbData.cd = NULL;
 
     char queryUri[OIC_STRING_MAX_VALUE] = { '\0' };
-    sprintf(queryUri, "%s%s", sourceResourceAddress , OC_PRESENCE_URI);
+    sprintf(queryUri, "coap://%s%s", sourceResourceAddress , OC_PRESENCE_URI);
     OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s", queryUri);
 
     result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);

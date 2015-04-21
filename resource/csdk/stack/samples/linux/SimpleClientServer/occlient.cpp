@@ -95,13 +95,14 @@ static void PrintUsage()
             "filter");
     OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable presence with "\
             "2 filters");
+    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable multicast presence.");
 #endif
 
-    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
+    OC_LOG(INFO, TAG, "-t 16 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
             "then cancel immediately with High QOS");
-    OC_LOG(INFO, TAG, "-t 16 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
+    OC_LOG(INFO, TAG, "-t 17 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
             "add  vendor specific header options");
-    OC_LOG(INFO, TAG, "-t 17 :  Discover Devices");
+    OC_LOG(INFO, TAG, "-t 18 :  Discover Devices");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -395,6 +396,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             case TEST_OBS_PRESENCE:
             case TEST_OBS_PRESENCE_WITH_FILTER:
             case TEST_OBS_PRESENCE_WITH_FILTERS:
+            case TEST_OBS_MULTICAST_PRESENCE:
                 InitPresence();
                 break;
 #endif
@@ -465,6 +467,17 @@ int InitPresence()
             querySuffix.str("");
             querySuffix << query.str() << "?rt=core.fan";
             result = InvokeOCDoResource(querySuffix, OC_REST_PRESENCE, OC_LOW_QOS,
+                    presenceCB, NULL, 0);
+        }
+    }
+    if(TEST_CASE == TEST_OBS_MULTICAST_PRESENCE)
+    {
+        if(result == OC_STACK_OK)
+        {
+            std::ostringstream multicastPresenceQuery;
+            multicastPresenceQuery.str("");
+            multicastPresenceQuery << "coap://" << OC_MULTICAST_PREFIX << OC_PRESENCE_URI;
+            result = InvokeOCDoResource(multicastPresenceQuery, OC_REST_PRESENCE, OC_LOW_QOS,
                     presenceCB, NULL, 0);
         }
     }

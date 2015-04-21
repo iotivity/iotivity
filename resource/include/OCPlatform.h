@@ -380,6 +380,7 @@ namespace OC
         *               request.  It can be used to unsubscribe from these events in the future.
         *               It will be set upon successful return of this method.
         * @param host - The IP address/addressable name of the server to subscribe to.
+        *               This should be in the format coap://address:port
         * @param connectivityType - @ref OCConnectivityType type of connectivity indicating the
         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
         * @param resourceType - a resource type specified as a filter for subscription callbacks.

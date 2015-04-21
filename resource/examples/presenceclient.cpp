@@ -63,11 +63,6 @@ void printUsage()
               << std::endl;
     std::cout << "-t 6 : Discover Resources and Initiate Multicast Presence with two Filters"
             << std::endl;
-    std::cout << "-t 4 : Discover Resources and Initiate Multicast Presence" << std::endl;
-    std::cout << "-t 5 : Discover Resources and Initiate Multicast Presence with Filter"
-              << std::endl;
-    std::cout << "-t 6 : Discover Resources and Initiate Multicast Presence with two Filters"
-                  << std::endl;
     std::cout<<"ConnectivityType: Default WIFI" << std::endl;
     std::cout << "-c 0 : Send message over ETHERNET interface" << std::endl;
     std::cout << "-c 1 : Send message over WIFI interface" << std::endl;
@@ -279,10 +274,13 @@ int main(int argc, char* argv[]) {
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
         OCStackResult result = OC_STACK_OK;
 
+        std::ostringstream multicastPresenceURI;
+        multicastPresenceURI << "coap://" << OC_MULTICAST_PREFIX;
+
         if(TEST_CASE == TEST_MULTICAST_PRESENCE_NORMAL)
         {
             result = OCPlatform::subscribePresence(presenceHandle,
-                    OC_MULTICAST_IP, connectivityType, presenceHandler);
+                    multicastPresenceURI.str(), connectivityType, presenceHandler);
 
             if(result == OC_STACK_OK)
             {
@@ -295,7 +293,7 @@ int main(int argc, char* argv[]) {
         }
         else if(TEST_CASE == TEST_MULTICAST_PRESENCE_WITH_FILTER)
         {
-            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
+            result = OCPlatform::subscribePresence(presenceHandle, multicastPresenceURI.str(), "core.light",
                     connectivityType, &presenceHandler);
             if(result == OC_STACK_OK)
             {
@@ -309,7 +307,7 @@ int main(int argc, char* argv[]) {
         }
         else if(TEST_CASE == TEST_MULTICAST_PRESENCE_WITH_FILTERS)
         {
-            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.light",
+            result = OCPlatform::subscribePresence(presenceHandle, multicastPresenceURI.str(), "core.light",
                     connectivityType, &presenceHandler);
             if(result == OC_STACK_OK)
             {
@@ -321,7 +319,7 @@ int main(int argc, char* argv[]) {
             }
             std::cout << "\"core.light\"." << std::endl;
 
-            result = OCPlatform::subscribePresence(presenceHandle, OC_MULTICAST_IP, "core.fan",
+            result = OCPlatform::subscribePresence(presenceHandle, multicastPresenceURI.str(), "core.fan",
                     connectivityType, &presenceHandler);
             if(result == OC_STACK_OK)
             {

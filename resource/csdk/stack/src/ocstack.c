@@ -857,7 +857,8 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     }
     else
     {
-        snprintf(fullUri, MAX_URI_LENGTH, "%s%s", OC_MULTICAST_IP, endPoint->resourceUri);
+        snprintf(fullUri, MAX_URI_LENGTH, "coap://%s:%u%s", OC_MULTICAST_IP, OC_MULTICAST_PORT,
+                                                endPoint->resourceUri);
         cbNode = GetClientCB(NULL, 0, NULL, fullUri);
         if(cbNode)
         {
