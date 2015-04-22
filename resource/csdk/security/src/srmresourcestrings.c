@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include "securevirtualresourcetypes.h"
 
-const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
+const char * SVR_DB_FILE_NAME = "oic_unittest.json";
 const char * OIC_MI_DEF = "oic.mi.def";
 
 const char * OIC_RSRC_CORE_URI =  "/oc/core";

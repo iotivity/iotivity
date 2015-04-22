@@ -31,17 +31,17 @@ using namespace std;
 // Helper Methods
 void UTRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
 {
-    printf("UTRequestHandler\n");
+    EXPECT_TRUE(true) << "UTRequestHandler\n";
 }
 
 void UTResponseHandler(const CARemoteEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
 {
-    printf("UTResponseHandler\n");
+     EXPECT_TRUE(true) << "UTResponseHandler\n";
 }
 
 FILE *utopen(const char *path, const char *mode)
 {
-    printf("utopen\n");
+    EXPECT_TRUE((path != NULL)) << "utopen\n";
     FILE *stream = fopen(path, mode);
     return stream;
 
@@ -59,16 +59,15 @@ size_t utwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 int utclose(FILE *fp)
 {
-    printf("utclose\n");
+    EXPECT_TRUE((fp != NULL)) << "utclose\n";
     return fclose(fp);
 }
 int utunlink(const char *path)
 {
-    printf("utunlink\n");
+    EXPECT_TRUE((path != NULL)) << "utunlink\n";
     return unlink(path);
 }
-
-OCPersistentStorage gpsi;
+static OCPersistentStorage gpsi;
 
 //RegisterHandler Tests
 TEST(RegisterHandlerTest, RegisterNullRequestHandler)
@@ -133,9 +132,7 @@ TEST(PersistentStorageHandlerTest, PersistentStorageValidHandlers)
     snprintf(outFilePath, PATH_MAX, "%s/Downloads/Readme.scons.out.txt", homeDir );
 
     streamIn = psi->open(inFilePath, "r");
-    EXPECT_TRUE(streamIn != NULL);
     streamOut = psi->open(outFilePath, "w");
-    EXPECT_TRUE(streamOut != NULL);
 
     if (streamIn && streamOut)
     {

@@ -405,7 +405,7 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
             case OC_REST_GET:
                 break;
             case OC_REST_POST:
-                HandlePostRequest(ehRequest);
+                ret = HandlePostRequest(ehRequest);
                 break;
             default:
                 break;
@@ -413,7 +413,7 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
     }
 
     //Send payload to request originator
-    ret = (SendSRMResponse(ehRequest, NULL) == OC_STACK_OK ?
+    ret = (SendSRMResponse(ehRequest, ret, NULL) == OC_STACK_OK ?
                        OC_EH_OK : OC_EH_ERROR);
 
     return ret;

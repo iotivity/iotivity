@@ -287,7 +287,7 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
             jsonRsp = BinToDoxmJSON(gDoxm);
 
             // Send payload to request originator
-            ret = (SendSRMResponse(ehRequest, jsonRsp) == OC_STACK_OK ?
+            ret = (SendSRMResponse(ehRequest,OC_EH_OK, jsonRsp) == OC_STACK_OK ?
                    OC_EH_OK : OC_EH_ERROR);
         }
     }

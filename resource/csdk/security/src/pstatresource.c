@@ -33,16 +33,30 @@
 
 #define TAG  PCF("SRM-PSTAT")
 
-/* TODO : Add info about macro */
+// TODO : Add info about macro
 #define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
             {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
 
-/* TODO : Add info about macro */
+// TODO : Add info about macro
 #define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, PCF(#arg " is NULL")); goto exit; } }
 
-OicSecPstat_t    *gPstat = NULL;
-OCResourceHandle gPstatHandle = NULL;
+static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
+static OicSecPstat_t gDefaultPstat =
+{
+    false,                                    // bool isOwned
+    TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
+    PROVISION_CREDENTIALS | PROVISION_ACLS,   // OicSecDpm_t cm
+    TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
+    PROVISION_CREDENTIALS | PROVISION_ACLS,   // OicSecDpm_t tm
+    {},                                       // OicUuid_t deviceID
+    SINGLE_SERVICE_CLIENT_DRIVEN,             // OicSecDpom_t om */
+    1,                                        // the number of elts in Sms
+    &gSm,                                     // OicSecDpom_t *sms
+    0,                                        // uint16_t commitHash
+};
+static OicSecPstat_t    *gPstat = NULL;
+static OCResourceHandle gPstatHandle = NULL;
 
 /*
  * This internal method converts pstat data into JSON format.
@@ -106,13 +120,15 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
 
     pstat = (OicSecPstat_t*)OCCalloc(1, sizeof(OicSecPstat_t));
     VERIFY_NON_NULL(pstat, INFO);
-
-    pstat->isOp = cJSON_GetObjectItem(jsonPstat, OIC_JSON_ISOP_NAME)->valueint;
     cJSON *jsonObj = NULL;
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_ISOP_NAME);
+    VERIFY_NON_NULL(jsonObj, ERROR);
+    VERIFY_SUCCESS((cJSON_True == jsonObj->type || cJSON_False == jsonObj->type) , ERROR);
+    pstat->isOp = jsonObj->valueint;
+
     unsigned char base64Buff[sizeof(((OicUuid_t*) 0)->id)] = {};
     uint32_t outLen = 0;
     B64Result b64Ret = B64_OK;
-
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_DEVICE_ID_NAME);
     VERIFY_NON_NULL(jsonObj, ERROR);
     VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
@@ -120,9 +136,22 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
                 sizeof(base64Buff), &outLen);
     VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(pstat->deviceID.id)), ERROR);
     memcpy(pstat->deviceID.id, base64Buff, outLen);
-    pstat->commitHash  = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME)->valueint;
-    pstat->cm  = cJSON_GetObjectItem(jsonPstat, OIC_JSON_CM_NAME)->valueint;
-    pstat->om  = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME)->valueint;
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME);
+    VERIFY_NON_NULL(jsonObj, ERROR);
+    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
+    pstat->commitHash  = jsonObj->valueint;
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_CM_NAME);
+    VERIFY_NON_NULL(jsonObj, ERROR);
+    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
+    pstat->cm  = jsonObj->valueint;
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
+    VERIFY_NON_NULL(jsonObj, ERROR);
+    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
+    pstat->om  = jsonObj->valueint;
+
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_SMS_NAME);
     VERIFY_NON_NULL(jsonObj, ERROR);
     if (cJSON_Array == jsonObj->type)
@@ -145,42 +174,131 @@ exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
     {
-        OCFree(pstat);
-        pstat = NULL;
-    }
+       OC_LOG (ERROR, TAG, PCF("JSONToPstatBin failed"));
+       OCFree(pstat);
+     }
     return pstat;
+}
+
+/*
+ * The entity handler determines how to process a GET request.
+ */
+static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest * ehRequest)
+{
+    // Convert ACL data into JSON for transmission
+    char* jsonStr = BinToPstatJSON(gPstat);
+
+    // A device should always have a default pstat. Therefore, jsonStr should never be NULL.
+    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
+
+    // Send response payload to request originator
+    SendSRMResponse(ehRequest, ehRet, jsonStr);
+    OCFree(jsonStr);
+    return ehRet;
+}
+
+/*
+ * The entity handler determines how to process a POST request.
+ * Per the REST paradigm, POST can also be used to update representation of existing
+ * resource or create a new resource.
+ * For pstat, it updates only tm and om.
+ */
+static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    cJSON *postJson = NULL;
+
+    if (ehRequest->resource)
+    {
+        postJson = cJSON_Parse((char *) ehRequest->reqJSONPayload);
+        VERIFY_NON_NULL(postJson, INFO);
+        cJSON *jsonPstat = cJSON_GetObjectItem(postJson, OIC_JSON_PSTAT_NAME);
+        VERIFY_NON_NULL(jsonPstat, INFO);
+        cJSON *commitHashJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME);
+        uint16_t commitHash = 0;
+        if (commitHashJson)
+        {
+            commitHash = commitHashJson->valueint;
+        }
+        cJSON *tmJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_TM_NAME);
+        if (tmJson && gPstat)
+        {
+            gPstat->tm = tmJson->valueint;
+            if(0 == tmJson->valueint && gPstat->commitHash == commitHash)
+            {
+                gPstat->isOp = true;
+                gPstat->cm = 0;
+                OC_LOG (INFO, TAG, PCF("CommitHash is valid and isOp is TRUE"));
+            }
+            else
+            {
+                OC_LOG (INFO, TAG, PCF("CommitHash is not valid"));
+            }
+        }
+        cJSON *omJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
+        if (omJson && gPstat)
+        {
+            /*
+             * Check if the operation mode is in the supported provisioning services
+             * operation mode list.
+             */
+            for(size_t i=0; i< gPstat->smsLen; i++)
+            {
+                if(gPstat->sms[i] == omJson->valueint)
+                {
+                    gPstat->om = omJson->valueint;
+                    break;
+                }
+            }
+        }
+        // Convert pstat data into JSON for update to persistent storage
+        char *jsonStr = BinToPstatJSON(gPstat);
+        if (jsonStr)
+        {
+            cJSON *jsonPstat = cJSON_Parse(jsonStr);
+            OCFree(jsonStr);
+            if (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_PSTAT_NAME, jsonPstat))
+            {
+                ehRet = OC_EH_OK;
+            }
+        }
+    }
+ exit:
+    //Send payload to request originator
+    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    {
+        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandlePstatPostRequest"));
+    }
+    cJSON_Delete(postJson);
+    return ehRet;
 }
 
 /*
  * This internal method is the entity handler for pstat resources.
  */
-OCEntityHandlerResult PstatEntityHandler (OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest)
+OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest * ehRequest)
 {
-    OCEntityHandlerResult ret = OC_EH_ERROR;
-    char *jsonRsp = NULL;
-
-    /*
-     * This method will handle REST request (GET/PUT/POST/DEL) for
-     * virtual resources such as: /oic/sec/pstat, /oic/sec/acl etc
-     */
-
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    // This method will handle REST request (GET/POST) for /oic/sec/pstat
     if (flag & OC_REQUEST_FLAG)
     {
-        /* TODO :  Handle PUT/POST/DEL methods */
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
-        if (OC_REST_GET == ehRequest->method)
+        switch (ehRequest->method)
         {
-            /* Convert pstat data into JSON for transmission */
-            jsonRsp = BinToPstatJSON(gPstat);
-
-            /* Send payload to request originator */
-            ret = (SendSRMResponse(ehRequest, jsonRsp) == OC_STACK_OK ?
-                   OC_EH_OK : OC_EH_ERROR);
+            case OC_REST_GET:
+                ehRet = HandlePstatGetRequest(ehRequest);
+                break;
+            case OC_REST_POST:
+                ehRet = HandlePstatPostRequest(ehRequest);
+                break;
+            default:
+                ehRet = OC_EH_ERROR;
+                SendSRMResponse(ehRequest, ehRet, NULL);
+                break;
         }
     }
-    OCFree(jsonRsp);
-    return ret;
+    return ehRet;
 }
 
 /*
@@ -190,13 +308,13 @@ OCStackResult CreatePstatResource()
 {
     OCStackResult ret;
 
-    /* TODO : Does these resources needs to be OC_DISCOVERABLE */
+    // TODO : Does these resources needs to be OC_DISCOVERABLE
     ret = OCCreateResource(&gPstatHandle,
                            OIC_RSRC_TYPE_SEC_PSTAT,
                            OIC_MI_DEF,
                            OIC_RSRC_PSTAT_URI,
                            PstatEntityHandler,
-                           OC_DISCOVERABLE | OC_OBSERVABLE);
+                           OC_DISCOVERABLE);
 
     if (ret != OC_STACK_OK)
     {
@@ -204,6 +322,12 @@ OCStackResult CreatePstatResource()
         DeInitPstatResource();
     }
     return ret;
+}
+
+//Post ACL hander update the commitHash during ACL provisioning.
+void SetCommitHash(uint16_t commitHash)
+{
+    gPstat->commitHash = commitHash;
 }
 
 /**
@@ -215,15 +339,21 @@ OCStackResult InitPstatResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    /* Read Pstat resource from PS */
+    // Read Pstat resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
     VERIFY_NON_NULL(jsonSVRDatabase, FATAL);
 
-    /* Convert JSON Pstat into binary format */
+    // Convert JSON Pstat into binary format
     gPstat = JSONToPstatBin(jsonSVRDatabase);
-    VERIFY_NON_NULL(gPstat, FATAL);
-
-    /* Instantiate 'oic.sec.pstat' */
+    if(!gPstat)
+    {
+        /*
+         * TODO: The device to fall back to the default doxm and acl as well
+         * if pstat is fail safe to default.
+         */
+        gPstat = &gDefaultPstat;
+    }
+    // Instantiate 'oic.sec.pstat'
     ret = CreatePstatResource();
 
 exit:
@@ -238,8 +368,10 @@ exit:
  */
 OCStackResult DeInitPstatResource()
 {
-    OCFree(gPstat);
-    gPstat = NULL;
+    if(gPstat != &gDefaultPstat)
+    {
+        OCFree(gPstat);
+    }
     return OCDeleteResource(gPstatHandle);
 }
 

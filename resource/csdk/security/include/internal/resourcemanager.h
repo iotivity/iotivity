@@ -47,7 +47,8 @@ OCStackResult DestroySecureResources();
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest, const char *rspPayload);
+OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
+        OCEntityHandlerResult ehRet, const char *rspPayload);
 
 #endif //IOTVT_SRM_RM_H
 

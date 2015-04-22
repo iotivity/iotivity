@@ -31,7 +31,7 @@
 
 #define TAG  PCF("SRM-PSI")
 
-/* TODO Consolidate all macros in one file */
+// TODO Consolidate all macros in one file
 #define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
             {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
 
@@ -40,7 +40,7 @@
 
 
 #ifdef WITH_ARDUINO
-/* Mega 2560 have 4 KB of EEPROM. */
+// Mega 2560 have 4 KB of EEPROM.
 const size_t MAX_DB_FILE_SIZE = 1023;
 #else
 const size_t MAX_DB_FILE_SIZE = 4095;
@@ -61,10 +61,10 @@ char * GetSVRDatabase()
     FILE * fp = NULL;
     OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
 
-    /* TODO Do we need a GetFileSize API ? */
-    if (ps && ps->open)
+    // TODO Do we need a GetFileSize API ?
+    if (ps)
     {
-        /* TODO Build consensus on location of SRM database file on Ubuntu */
+        // TODO Build consensus on location of SRM database file on Ubuntu
         fp = ps->open(SVR_DB_FILE_NAME, "r");
         if (fp)
         {
@@ -103,10 +103,50 @@ exit:
  */
 OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
 {
-    /* Read SVR database from PS */
-    /* Use cJSON_Parse to parse the SVR database */
-    /* Use cJSON_ReplaceItemInObject to replace the 'rsrcName' passed */
-    /* Use cJSON_PrintUnformatted to write back the SVR database in PS */
+    OCStackResult ret = OC_STACK_ERROR;
+    cJSON *jsonSVRDb = NULL;
 
-    return OC_STACK_NOTIMPL;
+    // Read SVR database from PS
+    char* jsonSVRDbStr = GetSVRDatabase();
+    VERIFY_NON_NULL(jsonSVRDbStr, ERROR);
+
+    // Use cJSON_Parse to parse the existing SVR database
+    jsonSVRDb = cJSON_Parse(jsonSVRDbStr);
+    VERIFY_NON_NULL(jsonSVRDb, ERROR);
+
+    OCFree(jsonSVRDbStr);
+    jsonSVRDbStr = NULL;
+
+    // Replace the modified json object in existing SVR database json
+    cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonObj);
+    // Generate string representation of updated SVR database json object
+    jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
+
+    // Update the persistent storage with new SVR database
+    OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
+    if (ps)
+    {
+        FILE* fp = ps->open(SVR_DB_FILE_NAME, "w");
+        if (fp)
+        {
+            size_t bytesWritten = ps->write(jsonSVRDbStr, 1, strlen(jsonSVRDbStr), fp);
+            if (bytesWritten == strlen(jsonSVRDbStr))
+            {
+                ret = OC_STACK_OK;
+            }
+            OC_LOG_V(INFO, TAG, PCF("Written %d bytes into SVR database file"), bytesWritten);
+            ps->close(fp);
+            fp = NULL;
+        }
+        else
+        {
+            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
+        }
+    }
+
+exit:
+    OCFree(jsonSVRDbStr);
+    cJSON_Delete(jsonSVRDb);
+
+    return ret;
 }

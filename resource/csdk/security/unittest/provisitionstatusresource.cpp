@@ -25,7 +25,9 @@
 #include "ocmalloc.h"
 #include "cJSON.h"
 #include "base64.h"
-
+#include "cainterface.h"
+#include "securityresourcemanager.h"
+#include <unistd.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,19 +42,7 @@ extern char* JSON_FILE_NAME;
 #ifdef __cplusplus
 }
 #endif
-char* gjsonPstat = NULL;
 
-class PstatTests : public testing::Test {
-    protected:
-    virtual void SetUp()
-    {
-    }
-
-    virtual void TearDown()
-    {
-        OCFree(gjsonPstat);
-    }
-};
 //InitPstatResource Tests
 TEST(InitPstatResourceTest, InitPstatResource)
 {
@@ -79,6 +69,14 @@ TEST(PstatEntityHandlerTest, PstatEntityHandlerWithDummyRequest)
     EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
 }
 
+TEST(PstatEntityHandlerTest, PstatEntityHandlerWithPostRequest)
+{
+    OCEntityHandlerRequest req;
+    req.method = OC_REST_POST;
+    req.reqJSONPayload = (unsigned char*)"{ \"pstat\": { \"tm\": 0, \"om\": 3 }}";
+    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+}
+
 TEST(PstatEntityHandlerTest, PstatEntityHandlerInvalidRequest)
 {
     EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, NULL));
@@ -91,8 +89,14 @@ TEST(BinToJSONTest, BinToNullJSON)
     EXPECT_TRUE(value == NULL);
 }
 
+TEST(JSONToBinTest, NullJSONToBin)
+{
+    OicSecPstat_t *pstat1 = JSONToPstatBin(NULL);
+    EXPECT_TRUE(pstat1 == NULL);
+}
+
 //TODO: update valid values when the OicSecPstat_t is finalized
-TEST(BinToJSONTest, BinToValidJSON)
+TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
 {
     const char* id = "ZGV2aWNlaWQAAAAAABhanw==";
     OicSecPstat_t pstat;
@@ -114,23 +118,14 @@ TEST(BinToJSONTest, BinToValidJSON)
             pstat.sms[i] = (OicSecDpom_t)i;
         }
     }
-    gjsonPstat = BinToPstatJSON(&pstat);
-    printf("BinToJSON Dump:\n%s\n\n", gjsonPstat);
-    EXPECT_TRUE(gjsonPstat != NULL);
-}
-
-//JSONToBin Tests
-TEST(JSONToBinTest, ValidJSONToBin)
-{
-    OicSecPstat_t *pstat1 = JSONToPstatBin(gjsonPstat);
+    char* jsonPstat = BinToPstatJSON(&pstat);
+    printf("BinToJSON Dump:\n%s\n\n", jsonPstat);
+    EXPECT_TRUE(jsonPstat != NULL);
+    OicSecPstat_t *pstat1 = JSONToPstatBin(jsonPstat);
     EXPECT_TRUE(pstat1 != NULL);
     OCFree(pstat1->sms);
-}
-
-TEST(JSONToBinTest, NullJSONToBin)
-{
-    OicSecPstat_t *pstat1 = JSONToPstatBin(NULL);
-    EXPECT_TRUE(pstat1 == NULL);
+    OCFree(pstat1);
+    OCFree(jsonPstat);
 }
 
 TEST(PstatTests, JSONMarshalliingTests)
@@ -151,15 +146,16 @@ TEST(PstatTests, JSONMarshalliingTests)
         }
         jsonStr1[len + 1] = 0;
 
-        OicSecPstat_t * pstat = JSONToPstatBin(jsonStr1);
+        OicSecPstat_t* pstat = JSONToPstatBin(jsonStr1);
         EXPECT_TRUE(NULL != pstat);
 
-        char * jsonStr2 = BinToPstatJSON(pstat);
+        char* jsonStr2 = BinToPstatJSON(pstat);
         printf("BinToPstatJSON Dump:\n%s\n\n", jsonStr2);
-        EXPECT_STREQ(gjsonPstat, jsonStr2);
+        EXPECT_STRNE(jsonStr1, jsonStr2);
 
         OCFree(jsonStr1);
         OCFree(jsonStr2);
+        OCFree(pstat);
    }
     else
     {

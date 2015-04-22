@@ -39,14 +39,15 @@
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest, const char *rspPayload)
+OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
+        OCEntityHandlerResult ehRet, const char *rspPayload)
 {
     OCEntityHandlerResponse response;
     if (ehRequest)
     {
         response.requestHandle = ehRequest->requestHandle;
         response.resourceHandle = ehRequest->resource;
-        response.ehResult = OC_EH_OK;
+        response.ehResult = ehRet;
         response.payload = (unsigned char *)rspPayload;
         response.payloadSize = (rspPayload ? strlen(rspPayload) : 0);
         response.persistentBufferFlag = 0;
