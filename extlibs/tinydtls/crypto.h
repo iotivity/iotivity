@@ -69,11 +69,11 @@ typedef enum {
 /** Crypto context for TLS_PSK_WITH_AES_128_CCM_8 cipher suite. */
 typedef struct {
   rijndael_ctx ctx;		       /**< AES-128 encryption context */
-} aes128_ccm_t;
+} aes128_t;
 
 typedef struct dtls_cipher_context_t {
   /** numeric identifier of this cipher suite in host byte order. */
-  aes128_ccm_t data;		/**< The crypto context */
+  aes128_t data;		/**< The crypto context */
 } dtls_cipher_context_t;
 
 typedef struct {
@@ -82,7 +82,8 @@ typedef struct {
   uint8 other_eph_pub_y[32];
   uint8 other_pub_x[32];
   uint8 other_pub_y[32];
-} dtls_handshake_parameters_ecdsa_t;
+} dtls_handshake_parameters_ecc_t;
+
 
 /* This is the maximal supported length of the psk client identity and psk
  * server identity hint */
@@ -129,7 +130,7 @@ typedef struct {
   unsigned int do_client_auth:1;
   union {
 #ifdef DTLS_ECC
-    dtls_handshake_parameters_ecdsa_t ecdsa;
+    dtls_handshake_parameters_ecc_t ecc;
 #endif /* DTLS_ECC */
 #ifdef DTLS_PSK
     dtls_handshake_parameters_psk_t psk;
@@ -265,7 +266,8 @@ int dtls_encrypt(const unsigned char *src, size_t length,
 		 unsigned char *buf,
 		 unsigned char *nounce,
 		 unsigned char *key, size_t keylen,
-		 const unsigned char *aad, size_t aad_length);
+		 const unsigned char *aad, size_t aad_length,
+		 const dtls_cipher_t cipher);
 
 /** 
  * Decrypts the given buffer \p src of given \p length, writing the
@@ -289,7 +291,8 @@ int dtls_decrypt(const unsigned char *src, size_t length,
 		 unsigned char *buf,
 		 unsigned char *nounce,
 		 unsigned char *key, size_t keylen,
-		 const unsigned char *a_data, size_t a_data_length);
+		 const unsigned char *a_data, size_t a_data_length,
+		 const dtls_cipher_t cipher);
 
 /* helper functions */
 
