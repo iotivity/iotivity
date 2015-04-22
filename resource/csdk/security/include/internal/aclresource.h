@@ -48,6 +48,16 @@ void DeInitACLResource();
  */
 const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId);
 
+/**
+ * This function converts ACL data into JSON format.
+ * Caller needs to invoke 'free' when done using
+ * returned string.
+ * @param acl  instance of OicSecAcl_t structure.
+ *
+ * @retval  pointer to ACL in json format.
+ */
+char* BinToAclJSON(const OicSecAcl_t * acl);
+
 #ifdef __cplusplus
 }
 #endif
