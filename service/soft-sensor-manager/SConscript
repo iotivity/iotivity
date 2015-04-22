@@ -1,23 +1,3 @@
-#******************************************************************
-#
-# Copyright 2014 Samsung Electronics All Rights Reserved.
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
 ##
 # soft-sensor-manager project build script
 ##
@@ -40,17 +20,13 @@ if target_os == 'arduino':
 # Build flags
 ######################################################################
 if target_os not in ['windows', 'winrt']:
-	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-Wall', '-DLINUX','-std=c++0x'])
+	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-Wall', '-DLINUX', '-DNDEBUG'])
 	if target_os != 'android':
 		soft_sensor_manager_env.AppendUnique(LIBS = ['pthread'])
-		soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
 if target_os == 'android':
 	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_static'])
-
-	if not env.get('RELEASE'):
-		soft_sensor_manager_env.AppendUnique(LIBS = ['log'])
+	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 
 #######################################################################
 ## build SSM SDK
@@ -68,7 +44,7 @@ env.AppendTarget('libSSMSDK')
 libssmsdk = sdk_env.StaticLibrary(
 		target = 'libSSMSDK',
 		source = [ssm_sdk_cpp_src]
-		)
+		)		
 sdk_env.InstallTarget(libssmsdk, 'libSSMCORE')
 
 ######################################################################
@@ -152,10 +128,7 @@ static_libssmcore = ssmcore_env.StaticLibrary(
 		)
 
 ssmcore_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger',
-            'connectivity_abstraction', 'coap'])
-
-ssmcore_env.ParseConfig('pkg-config --libs glib-2.0');
+ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'coap', 'oc_logger'])
 
 shared_libssmcore = ssmcore_env.SharedLibrary(
 		target = 'SSMCore',
