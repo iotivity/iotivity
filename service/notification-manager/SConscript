@@ -37,8 +37,10 @@ NOTI_SRC_DIR = 'NotificationManager/src/'
 notimgr_src = [
 		NOTI_SRC_DIR + 'hosting.c',
 		NOTI_SRC_DIR + 'requestHandler.c',
-		NOTI_SRC_DIR + 'virtualResource.c',
-		NOTI_SRC_DIR + 'resourceCoordinator_JNI.cpp']
+		NOTI_SRC_DIR + 'virtualResource.c']
+
+if target_os == 'android':
+		notimgr_src.append(NOTI_SRC_DIR + 'resourceCoordinator_JNI.cpp')
 
 static_libResourceHosting = notimgr_env.StaticLibrary(
 		target = 'NotificationManager',

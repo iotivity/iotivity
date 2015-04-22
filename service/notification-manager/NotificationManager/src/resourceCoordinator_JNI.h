@@ -23,19 +23,17 @@
 #define RESOURCECOORDINATOR_JNI_H_
 
 #include <jni.h>
-#include <android/log.h>
 #include <boost/lexical_cast.hpp>
 #include <thread>
 #include <atomic>
 #include <unistd.h>
-#define PRINT_LOG(strError) __android_log_print(ANDROID_LOG_ERROR, "[HM_JNI]", "%s:%d %s", __PRETTY_FUNCTION__, __LINE__, strError)
 
 #define TAG "OIC-JNI"
 
 #define JNI_CURRENT_VERSION JNI_VERSION_1_6
-#define int OCSTACK_OK = 0
-#define int OCSTACK_ERROR = 255
-#define int RESOURCEHOSTING_DO_NOT_THREADRUNNING = -2
+#define OCSTACK_OK  0
+#define OCSTACK_ERROR  255
+#define HOSTING_THREAD_ERROR  -2
 
 #ifdef __cplusplus
 extern "C" {

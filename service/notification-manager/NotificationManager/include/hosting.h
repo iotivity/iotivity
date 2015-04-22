@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <android/log.h>
 // Iotivity Base CAPI
 #include "ocstack.h"
 #include "ocsocket.h"

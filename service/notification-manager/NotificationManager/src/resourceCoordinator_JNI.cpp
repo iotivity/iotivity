@@ -65,7 +65,7 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     {
 
         messageCallback(env,obj,"already execute OICCoordinatorStart");
-        result = (jint)RESOURCEHOSTING_DO_NOT_THREADRUNNING;
+        result = (jint)HOSTING_THREAD_ERROR;
         return result;
     }
     else
@@ -97,7 +97,7 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     else
     {
             messageCallback(env,obj,"The thread may be not running.");
-            result = (jint)RESOURCEHOSTING_DO_NOT_THREADRUNNING;
+            result = (jint)HOSTING_THREAD_ERROR;
             return result;
     }
     result = (jint)OICStopCoordinate();
@@ -113,7 +113,6 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
 {
     messageCallback(env,obj,"ResourceHostingInit");
     const char* addr = env->GetStringUTFChars(j_addr,NULL);
-    __android_log_print(ANDROID_LOG_ERROR,"DOIL","addr : %s",addr);
     uint8_t interfaceAddress[20] = {0};
     uint8_t *coordinatingAddress = NULL;
     uint8_t interfaceName[] = "eth0";
@@ -152,7 +151,7 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     else
     {
         messageCallback(env,obj,"The thread may be not running.");
-        result  = (jint)RESOURCEHOSTING_DO_NOT_THREADRUNNING;
+        result  = (jint)HOSTING_THREAD_ERROR;
         return result;
     }
 }

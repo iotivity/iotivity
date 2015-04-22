@@ -26,7 +26,6 @@ MirrorResourceList *createMirrorResourceList()
     MirrorResourceList *mirrorResourceList = (MirrorResourceList *)malloc(sizeof(MirrorResourceList));
     if (!mirrorResourceList)
     {
-        __android_log_print(ANDROID_LOG_ERROR, "DOIL", "Virtual Resource List Creation Fail.");
         OC_LOG_V(DEBUG, VR_TAG, "Virtual Resource List Creation Fail.");
     }
     else
@@ -43,7 +42,6 @@ MirrorResource *createMirrorResource()
     MirrorResource *mirrorResource = (MirrorResource *)malloc(sizeof(MirrorResource));
     if (!mirrorResource)
     {
-        __android_log_print(ANDROID_LOG_ERROR, "DOIL", "Virtual Resource List Creation Fail.");
         OC_LOG_V(DEBUG, VR_TAG, "Virtual Resource List Creation Fail.");
     }
     else
@@ -68,7 +66,6 @@ MirrorResource *createMirrorResource()
 
 OCStackResult destroyMirrorResourceList(MirrorResourceList *mirrorResourceList)
 {
-    __android_log_print(ANDROID_LOG_ERROR, "DOIL", "enter destroyVirtualResourceList");
     OC_LOG_V(DEBUG, VR_TAG, "enter destroyVirtualResourceList");
     if (mirrorResourceList)
     {
