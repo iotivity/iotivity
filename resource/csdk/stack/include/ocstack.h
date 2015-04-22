@@ -35,10 +35,14 @@ extern "C" {
 //TODO: May want to refactor this in upcoming sprints.
 //Don't want to expose to application layer that lower level stack is using CoAP.
 
+/// Authority + URI string to prefix well known queries
 #define OC_WELL_KNOWN_QUERY                  "224.0.1.187:5683/oc/core"
 #define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5683/oc/core/d?rt=core.led"
+/// Multicast address and port string to prefix multicast queries
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
+/// IP Multicast address to use for multicast requests
 #define OC_MULTICAST_IP                      "224.0.1.187"
+/// IP Multicast port to use for multicast requests
 #define OC_MULTICAST_PORT                    5683
 
 #ifdef WITH_PRESENCE
