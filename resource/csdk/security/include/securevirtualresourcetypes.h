@@ -34,7 +34,8 @@
  * will have to be written by hand to marshal these structures (e.g. to/from
  * Persistent Storage, or across memory boundaries).
  *
- * Last reconciled against Spec v0.95.
+ * TODO reconcile against latest OIC Security Spec to ensure all fields correct.
+ * (Last checked against v0.95)
  */
 
 /**
@@ -160,7 +161,7 @@ typedef struct OicSecCred OicSecCred_t;
 
 /**
  * @brief   /oic/sec/credtype (Credential Type) data type.
- *          Derived from OIC Security Spec; see Spec for details.
+ *          Derived from OIC Security Spec /oic/sec/cred; see Spec for details.
  *              0:  no security mode
  *              1:  symmetric pair-wise key
  *              2:  symmetric group key
@@ -170,9 +171,28 @@ typedef struct OicSecCred OicSecCred_t;
  */
 typedef uint16_t OicSecCredType_t;
 
+/**
+ * Aid for assigning/testing vals with OicSecCredType_t.
+ * Example:
+ *  OicSecCredType_t ct = PIN_PASSWORD | ASYMMETRIC_KEY;
+ *  if((ct & PIN_PASSWORD) == PIN_PASSWORD)
+ *  {
+ *      // ct contains PIN_PASSWORD flag.
+ *  }
+ */
+typedef enum OSCTBitmask
+{
+    NO_SECURITY_MODE                = 0x0,
+    SYMMETRIC_PAIR_WISE_KEY         = (0x1 << 0),
+    SYMMETRIC_GROUP_KEY             = (0x1 << 1),
+    ASYMMETRIC_KEY                  = (0x1 << 2),
+    SIGNED_ASYMMETRIC_KEY           = (0x1 << 3),
+    PIN_PASSWORD                    = (0x1 << 4),
+} OSCTBitmask_t;
+
 typedef struct OicSecDoxm OicSecDoxm_t;
 
-typedef enum
+typedef enum OicSecDpm
 {
     NORMAL                          = 0x0,
     RESET                           = (0x1 << 0),
@@ -184,7 +204,7 @@ typedef enum
     // << 6 THROUGH 15 RESERVED
 } OicSecDpm_t;
 
-typedef enum
+typedef enum OicSecDpom
 {
     MULTIPLE_SERVICE_SERVER_DRIVEN  = 0x0,
     SINGLE_SERVICE_SERVER_DRIVEN    = 0x1,

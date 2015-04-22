@@ -108,11 +108,7 @@ void CopyParamsToContext(
     size_t length = 0;
 
     // Free any existing subject.
-    if(NULL != context->subject)
-    {
-        OCFree(context->subject);
-        context->subject = NULL;
-    }
+    OCFree(context->subject);
     // Copy the subjectId into context.
     context->subject = OCMalloc(sizeof(OicUuid_t));
     // TODO check context->subject for NULL and error out
@@ -122,11 +118,7 @@ void CopyParamsToContext(
     length = strlen(resource) + 1;
     if(0 < length)
     {
-        if(NULL != context->resource)
-        {
-            OCFree(context->resource);
-            context->resource = NULL;
-        }
+        OCFree(context->resource);
         context->resource = OCMalloc(length);
         // TODO check context->resource for NULL and error out
         strncpy(context->resource, resource, length);
@@ -214,7 +206,7 @@ SRMAccessResponse_t CheckPermission(
     const char      *resource,
     const uint16_t  requestedPermission)
 {
-    // TODO: check all args for NULL
+    // TODO check all args for NULL
 
     // Each state machine context can only be processing one request at a time.
     // Therefore if the context is not in AWAITING_REQUEST state, return error.
@@ -228,11 +220,9 @@ SRMAccessResponse_t CheckPermission(
         if((false == context->matchingAclFound) && \
             (false == IsWildCardSubject(context->subject)))
         {
-            if(NULL == context->subject)
-            {
-                OCFree(context->subject);
-            }
+            OCFree(context->subject);
             context->subject = OCMalloc(sizeof(OicUuid_t));
+            // TODO check context->subject for NULL and error out
             memcpy(context->subject, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
             ProcessAccessRequest(context);  // TODO anonymous subject can result
                                             // in confusing error code return.
@@ -242,8 +232,8 @@ SRMAccessResponse_t CheckPermission(
     {
         context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
     }
-
     context->state = AWAITING_REQUEST;
+
     return context->retVal;
 }
 
@@ -255,11 +245,6 @@ SRMAccessResponse_t CheckPermission(
 OCStackResult InitPolicyEngine(PEContext_t *context) {
     if(NULL != context)
     {
-        if(NULL == context->subject)
-        {
-            context->subject = OCMalloc(sizeof(OicUuid_t));
-        }
-        // context->resource is malloc'd elsewhere, just prior to strcpy
         context->permission = 0x0;
         context->matchingAclFound = false;
         context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
@@ -278,16 +263,10 @@ OCStackResult InitPolicyEngine(PEContext_t *context) {
 void DeInitPolicyEngine(PEContext_t *context) {
     if(NULL != context)
     {
-        if(NULL != context->subject)
-        {
-            OCFree(context->subject);
-            context->subject = NULL;
-        }
-        if(NULL != context->resource)
-        {
-            OCFree(context->resource);
-            context->resource = NULL;
-        }
+        OCFree(context->subject);
+        context->subject = NULL;
+        OCFree(context->resource);
+        context->resource = NULL;
         context->permission = 0x0;
         context->matchingAclFound = false;
         context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;

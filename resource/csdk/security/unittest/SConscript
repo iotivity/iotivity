@@ -65,10 +65,10 @@ if not env.get('RELEASE'):
 # Source files and Targets
 ######################################################################
 unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
-                                            'policyengine.cpp',
                                             'provisitionstatusresource.cpp',
-                                            'securityresourcemanager.cpp',
-                                            'doxmresource.cpp'])
+                                            'doxmresource.cpp',
+                                            'policyengine.cpp',
+                                            'securityresourcemanager.cpp'])
 
 Alias("test", [unittest])
 
