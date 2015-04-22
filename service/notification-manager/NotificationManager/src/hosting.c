@@ -383,11 +383,11 @@ int requestCoordinateeCandidateDiscovery(char *sourceResourceAddress)
     char queryUri[OIC_STRING_MAX_VALUE] = { '\0' };
     if (sourceResourceAddress == NULL)
     {
-        strcpy(queryUri, OC_WELL_KNOWN_COORDINATING_QUERY);
+        strncpy(queryUri, OIC_STRING_MAX_VALUE,  OC_WELL_KNOWN_COORDINATING_QUERY);
     }
     else
     {
-        sprintf(queryUri, "coap://%s%s", sourceResourceAddress , OC_COORDINATING_QUERY);
+        snprintf(queryUri, OIC_STRING_MAX_VALUE, "coap://%s%s", sourceResourceAddress , OC_COORDINATING_QUERY);
     }
 
     cbData.cb = requestCoordinateeCandidateDiscoveryCB;
@@ -422,7 +422,7 @@ OCStackResult requestPresence(char *sourceResourceAddress)
     cbData.cd = NULL;
 
     char queryUri[OIC_STRING_MAX_VALUE] = { '\0' };
-    sprintf(queryUri, "coap://%s%s", sourceResourceAddress , OC_PRESENCE_URI);
+    snprintf(queryUri, OIC_STRING_MAX_VALUE, "coap://%s%s", sourceResourceAddress , OC_PRESENCE_URI);
     OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s", queryUri);
 
     result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
@@ -462,7 +462,7 @@ OCStackApplicationResult requestPresenceCB(void *context, OCDoHandle handle,
                  clientResponse->resJSONPayload, remoteIpAddress[0], remoteIpAddress[1],
                  remoteIpAddress[2], remoteIpAddress[3], remotePortNumber);
 
-        sprintf(address, "%d.%d.%d.%d:%d", remoteIpAddress[0], remoteIpAddress[1],
+        snprintf(address, OIC_STRING_MAX_VALUE, "%d.%d.%d.%d:%d", remoteIpAddress[0], remoteIpAddress[1],
                 remoteIpAddress[2], remoteIpAddress[3], remotePortNumber);
         if (clientResponse->result == OC_STACK_OK)
         {
@@ -576,7 +576,7 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
     OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNum);
 
     char sourceaddr[OIC_STRING_MAX_VALUE] = {'\0'};
-    sprintf(sourceaddr, "%d.%d.%d.%d:%d", remoteIpAddr[0], remoteIpAddr[1],
+    snprintf(sourceaddr, OIC_STRING_MAX_VALUE, "%d.%d.%d.%d:%d", remoteIpAddr[0], remoteIpAddr[1],
             remoteIpAddr[2], remoteIpAddr[3], remotePortNum);
 
     OC_LOG_V(DEBUG, HOSTING_TAG, "Host Device =============> Discovered %s @ %s",
@@ -594,10 +594,10 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
             continue;
         }
         mirrorResource->address[OIC_SOURCE_ADDRESS] = (char *)malloc(sizeof(char) * OIC_STRING_MAX_VALUE);
-        sprintf(mirrorResource->address[OIC_SOURCE_ADDRESS], "%s", sourceaddr);
+        snprintf(mirrorResource->address[OIC_SOURCE_ADDRESS], OIC_STRING_MAX_VALUE, "%s", sourceaddr);
 
         mirrorResource->address[OIC_MIRROR_ADDRESS] = (char *)malloc(sizeof(char) * OIC_STRING_MAX_VALUE);
-        sprintf(mirrorResource->address[OIC_MIRROR_ADDRESS], "0.0.0.0:00");
+        snprintf(mirrorResource->address[OIC_MIRROR_ADDRESS], OIC_STRING_MAX_VALUE, "0.0.0.0:00");
 
         if (OC_STACK_OK != insertMirrorResource(retList, mirrorResource))
         {
@@ -751,7 +751,7 @@ OCStackResult requestResourceObservation(MirrorResource *mirrorResource)
     cbData.cd = NULL;
 
     char query[OIC_STRING_MAX_VALUE] = {'\0'};
-    sprintf(query, "coap://%s%s%s", mirrorResource->address[OIC_SOURCE_ADDRESS], mirrorResource->uri,
+    snprintf(query, OIC_STRING_MAX_VALUE, "coap://%s%s%s", mirrorResource->address[OIC_SOURCE_ADDRESS], mirrorResource->uri,
             OIC_COORDINATING_FLAG);
 
     result = OCDoResource(&mirrorResource->resourceHandle[OIC_REQUEST_HANDLE], OC_REST_OBSERVE, query,
@@ -937,7 +937,7 @@ char *buildResponsePayload (OCEntityHandlerRequest *entityHandlerRequest)
     cJSON *jsonObject = cJSON_CreateObject();
 
     char uriString[OIC_STRING_MAX_VALUE] = {'\0'};
-    sprintf(uriString, "%s", mirrorResource->uri);
+    snprintf(uriString, OIC_STRING_MAX_VALUE, "%s", mirrorResource->uri);
     cJSON_AddStringToObject(jsonObject, "href", uriString);
 
     cJSON *itemRep = cJSON_Parse(cJSON_PrintUnformatted(mirrorResource->rep));
@@ -1109,6 +1109,10 @@ OCEntityHandlerResult handleGetRequest (OCEntityHandlerRequest *entityHandlerReq
 
     OCEntityHandlerResult entityHandlerResult;
     char *responsePayload = buildResponsePayload(entityHandlerRequest);
+    if(!responsePayload)
+    {
+        return OC_EH_ERROR;
+    }
 
     if (maxPayloadSize > strlen ((char *)responsePayload))
     {
@@ -1436,20 +1440,24 @@ OCEntityHandlerResult handleRequestPayload (OCEntityHandlerRequest *entityHandle
         char *payload, uint16_t maxPayloadSize)
 {
     OC_LOG_V(DEBUG, HOSTING_TAG, "enter handleRequestPayload");
-    OCEntityHandlerResult entityHandlerResult;
+    OCEntityHandlerResult entityHandlerResult = OC_EH_ERROR;
 
     if (entityHandlerRequest->method == OC_REST_DELETE)
     {
-        sprintf(payload,"");
+        snprintf(payload, MAX_RESPONSE_LENGTH, "");
         OC_LOG_V(DEBUG, HOSTING_TAG, "DELETE");
         return OC_EH_RESOURCE_DELETED;
     }
 
     char *responsePayload = buildResponsePayload(entityHandlerRequest);
+    if(!responsePayload)
+    {
+        return OC_EH_ERROR;
+    }
 
     if (maxPayloadSize > strlen ((char *)responsePayload))
     {
-        strncpy(payload, responsePayload, strlen((char *)responsePayload));
+        strncpy(payload, responsePayload, MAX_RESPONSE_LENGTH);
         entityHandlerResult = OC_EH_OK;
     }
     else
