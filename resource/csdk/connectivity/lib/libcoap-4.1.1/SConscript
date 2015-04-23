@@ -66,5 +66,9 @@ libcoap_src = [
 	'block.c'
 	]
 
-libcoap = libcoap_env.StaticLibrary('libcoap', libcoap_src, OBJPREFIX='libcoap_')
-libcoap_env.InstallTarget(libcoap, 'libcoap')
+if target_os in ['android', 'tizen'] :
+	libcoap = libcoap_env.SharedLibrary('libcoap', libcoap_src, OBJPREFIX='libcoap_')
+else :
+	libcoap = libcoap_env.StaticLibrary('libcoap', libcoap_src, OBJPREFIX='libcoap_')
+
+libcoap_env.InstallTarget([libcoap], 'libcoap')

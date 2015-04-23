@@ -6,6 +6,7 @@
         <icon>tmsampleapp.png</icon>
     </ui-application>
     <privileges>
+        <privilege>http://tizen.org/privilege/network.get</privilege>
         <privilege>http://tizen.org/privilege/internet</privilege>
     </privileges>
     <feature name="http://tizen.org/feature/network.wifi">true</feature>
