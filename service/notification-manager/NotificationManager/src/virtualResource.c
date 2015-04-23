@@ -350,10 +350,9 @@ MirrorResourceList *findMirrorResourceListUsingAddress(MirrorResourceList *mirro
 {
 
     MirrorResource *tempNode = mirrorResourceList->headerNode;
-    int i = 0;
     while (tempNode != NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "%d's uri = %s", i++, tempNode->uri);
+        OC_LOG_V(DEBUG, VR_TAG, "uri = %s", tempNode->uri);
         tempNode = tempNode->next;
     }
 
@@ -397,10 +396,9 @@ OCStackResult printMirrorResourceList(MirrorResourceList *mirrorResourceList)
     }
     OC_LOG_V(DEBUG, VR_TAG, "==============================================================");
     MirrorResource *mirrorResource = mirrorResourceList->headerNode;
-    int i = 0;
     while (mirrorResource != NULL)
     {
-        OC_LOG_V(DEBUG, VR_TAG, "%d's uri = %s", i++, mirrorResource->uri);
+        OC_LOG_V(DEBUG, VR_TAG, "uri = %s", mirrorResource->uri);
         mirrorResource = mirrorResource->next;
     }
     OC_LOG_V(DEBUG, VR_TAG, "==============================================================");
