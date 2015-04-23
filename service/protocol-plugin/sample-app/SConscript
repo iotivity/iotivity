@@ -8,5 +8,4 @@ Import('env')
 target_os = env.get('TARGET_OS')
 
 if target_os == 'linux':
-    if env.get('TARGET_ARCH') == platform.machine():
-        SConscript('linux/SConscript')
+      SConscript('linux/SConscript')
