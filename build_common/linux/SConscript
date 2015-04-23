@@ -24,7 +24,7 @@ env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 env.ParseConfig("pkg-config glib-2.0 gthread-2.0 --cflags --libs")
 
 if env.get('TARGET_OS') == 'tizen':
-    env.AppendUnique(CFLAGS = ['-D__TIZEN__', '-DSLP_SDK_LOG', '-D_GNU_SOURCE', '-DTIZEN_DEBUG_ENABLE'])
+    env.AppendUnique(CCFLAGS = ['-D__TIZEN__', '-DSLP_SDK_LOG', '-D_GNU_SOURCE', '-DTIZEN_DEBUG_ENABLE'])
     env.ParseConfig("pkg-config dlog --cflags --libs")
 
 # Set arch flags

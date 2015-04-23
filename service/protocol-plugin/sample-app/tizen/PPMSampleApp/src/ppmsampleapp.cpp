@@ -112,7 +112,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
     if (eCode == OC_STACK_OK)
     {
         std::cout << "OBSERVE RESULT:" << std::endl;
-        std::cout << "\tSequenceNumber: " << sequenceNumber << endl;
+        std::cout << "\tSequenceNumber: " << sequenceNumber << std::endl;
 
         rep.getValue("state", myfan.m_state);
         rep.getValue("power", myfan.m_power);
@@ -187,9 +187,9 @@ void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, co
         }
 
         if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
-            std::cout << endl << "Observe is used." << endl << endl;
+            std::cout << std::endl << "Observe is used." << std::endl;
         else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
-            std::cout << endl << "ObserveAll is used." << endl << endl;
+            std::cout << std::endl << "ObserveAll is used." << std::endl;
 
         // curFanResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
 
@@ -541,7 +541,7 @@ send_msg_clicked_cb(void *data , Evas_Object *obj , void *event_info)
             std::cout << "Before find Resource... " << std::endl;
 
             // Find fan resources
-            OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.fan",
+            OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.fan", OC_WIFI,
                                      &foundResourceFan);
             std::cout << "Finding Resource... " << std::endl;
         }
