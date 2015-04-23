@@ -351,6 +351,11 @@ namespace OC
         * Start Presence announcements.
         *
         * @param ttl - time to live
+        * Note: If ttl is '0', then the default stack value will be used (60 Seconds).
+        *
+        *       If ttl is greater than OC_MAX_PRESENCE_TTL_SECONDS, then the ttl will be set to
+        *       OC_MAX_PRESENCE_TTL_SECONDS.
+        *
         * @return OCStackResult - Returns OCSTACK_OK if success <br>
         *
         * Server can call this function when it comes online for the

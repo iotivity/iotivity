@@ -59,6 +59,10 @@
 #include <arpa/inet.h>
 #endif
 
+#ifndef UINT32_MAX
+#define UINT32_MAX   (0xFFFFFFFFUL)
+#endif
+
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
@@ -103,6 +107,7 @@ OCDeviceEntityHandler defaultDeviceHandler;
 //TODO: we should allow the server to define this
 #define MAX_OBSERVE_AGE (0x2FFFFUL)
 
+#define MILLISECONDS_PER_SECOND   (1000)
 /**
  * Parse the presence payload and extract various parameters.
  * Note: Caller should invoke OCFree after done with resType pointer.
@@ -294,13 +299,13 @@ static OCStackResult getResourceType(const char * query, char** resourceType);
 static CAResult_t OCSelectNetwork();
 
 /**
- * Get the CoAP ticks after the specified number of seconds.
+ * Get the CoAP ticks after the specified number of milli-seconds.
  *
- * @param afterSeconds Seconds.
+ * @param afterMilliSeconds Milli-seconds.
  * @return
  *     CoAP ticks
  */
-static uint32_t GetTime(float afterSeconds);
+static uint32_t GetTicks(uint32_t afterMilliSeconds);
 
 /**
  * This method is used to create the IPv4 dev_addr structure.
@@ -435,11 +440,21 @@ static const ServerID OCGetServerInstanceID(void);
 // Internal functions
 //-----------------------------------------------------------------------------
 
-uint32_t GetTime(float afterSeconds)
+uint32_t GetTicks(uint32_t afterMilliSeconds)
 {
     coap_tick_t now;
     coap_ticks(&now);
-    return now + (uint32_t)(afterSeconds * COAP_TICKS_PER_SECOND);
+
+    // Guard against overflow of uint32_t
+    if (afterMilliSeconds <= ((UINT32_MAX - (uint32_t)now) * MILLISECONDS_PER_SECOND) /
+                             COAP_TICKS_PER_SECOND)
+    {
+        return now + (afterMilliSeconds * COAP_TICKS_PER_SECOND)/MILLISECONDS_PER_SECOND;
+    }
+    else
+    {
+        return now;
+    }
 }
 
 OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
@@ -727,14 +742,36 @@ static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds)
         return OC_STACK_INVALID_PARAM;
     }
 
-    OC_LOG_V(INFO, TAG, "Update presence TTL, time is %u", GetTime(0));
+    OC_LOG_V(INFO, TAG, "Update presence TTL, time is %u", GetTicks(0));
 
     cbNode->presence->TTL = maxAgeSeconds;
 
     for(int index = 0; index < PresenceTimeOutSize; index++)
     {
-        lowerBound = GetTime(PresenceTimeOut[index]/ 100.0f*cbNode->presence->TTL);
-        higherBound = GetTime(PresenceTimeOut[index + 1]/100.0f*cbNode->presence->TTL);
+        // Guard against overflow
+        if (cbNode->presence->TTL < (UINT32_MAX/(MILLISECONDS_PER_SECOND*PresenceTimeOut[index]))
+                                     * 100)
+        {
+            lowerBound = GetTicks((PresenceTimeOut[index] *
+                                  cbNode->presence->TTL *
+                                  MILLISECONDS_PER_SECOND)/100);
+        }
+        else
+        {
+            lowerBound = GetTicks(UINT32_MAX);
+        }
+
+        if (cbNode->presence->TTL < (UINT32_MAX/(MILLISECONDS_PER_SECOND*PresenceTimeOut[index+1]))
+                                     * 100)
+        {
+            higherBound = GetTicks((PresenceTimeOut[index + 1] *
+                                   cbNode->presence->TTL *
+                                   MILLISECONDS_PER_SECOND)/100);
+        }
+        else
+        {
+            higherBound = GetTicks(UINT32_MAX);
+        }
 
         cbNode->presence->timeOut[index] = OCGetRandomRange(lowerBound, higherBound);
 
@@ -2172,7 +2209,7 @@ OCStackResult OCProcessPresence()
         {
             if(cbNode->presence)
             {
-                uint32_t now = GetTime(0);
+                uint32_t now = GetTicks(0);
                 OC_LOG_V(DEBUG, TAG, "this TTL level %d",
                                                         cbNode->presence->TTLlevel);
                 OC_LOG_V(DEBUG, TAG, "current ticks %d", now);
@@ -2290,12 +2327,23 @@ OCStackResult OCStartPresence(const uint32_t ttl)
             &(((OCResource *)presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 1);
 
-    if(ttl > 0)
+    if (OC_MAX_PRESENCE_TTL_SECONDS < ttl)
+    {
+        presenceResource.presenceTTL = OC_MAX_PRESENCE_TTL_SECONDS;
+        OC_LOG(INFO, TAG, PCF("Setting Presence TTL to max value"));
+    }
+    else if (0 == ttl)
+    {
+        presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL_SECONDS;
+        OC_LOG(INFO, TAG, PCF("Setting Presence TTL to default value"));
+    }
+    else
     {
         presenceResource.presenceTTL = ttl;
     }
+    OC_LOG_V(DEBUG, TAG, "Presence TTL is %lu seconds", presenceResource.presenceTTL);
 
-    if(OC_PRESENCE_UNINITIALIZED == presenceState)
+    if (OC_PRESENCE_UNINITIALIZED == presenceState)
     {
         presenceState = OC_PRESENCE_INITIALIZED;
 
@@ -3257,7 +3305,7 @@ OCStackResult initResources()
     tailResource = NULL;
     // Init Virtual Resources
     #ifdef WITH_PRESENCE
-    presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL;
+    presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL_SECONDS;
     //presenceResource.token = OCGenerateCoAPToken();
     result = OCCreateResource(&presenceResource.handle,
             OC_RSRVD_RESOURCE_TYPE_PRESENCE,

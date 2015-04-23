@@ -46,7 +46,8 @@ extern "C" {
 #define OC_MULTICAST_PORT                    5683
 
 #ifdef WITH_PRESENCE
-#define OC_DEFAULT_PRESENCE_TTL (60)
+#define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
+#define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24) // 60 sec/min * 60 min/hr * 24 hr/day
 #define OC_PRESENCE_URI                      "/oc/presence"
 #endif
 
@@ -524,6 +525,9 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
  *
  * @param ttl Time To Live in seconds.
  * Note: If ttl is '0', then the default stack value will be used (60 Seconds).
+ *
+ *       If ttl is greater than OC_MAX_PRESENCE_TTL_SECONDS, then the ttl will be set to
+ *       OC_MAX_PRESENCE_TTL_SECONDS.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
