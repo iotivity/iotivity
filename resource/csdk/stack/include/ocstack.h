@@ -63,8 +63,8 @@ extern "C" {
  */
 typedef struct OCDevAddr
 {
-    uint32_t     size;                    // length of the address stored in addr field.
-    uint8_t      addr[DEV_ADDR_SIZE_MAX]; // device address.
+    uint32_t     size;                    ///< length of the address stored in addr field.
+    uint8_t      addr[DEV_ADDR_SIZE_MAX]; ///< device address.
 } OCDevAddr;
 
 /**
@@ -72,13 +72,13 @@ typedef struct OCDevAddr
  */
 typedef enum
 {
-    OC_WELL_KNOWN_URI= 0,       // "/oc/core"
-    OC_DEVICE_URI,              // "/oc/core/d"
-    OC_RESOURCE_TYPES_URI,      // "/oc/core/d/type"
+    OC_WELL_KNOWN_URI= 0,       ///< "/oc/core"
+    OC_DEVICE_URI,              ///< "/oc/core/d"
+    OC_RESOURCE_TYPES_URI,      ///< "/oc/core/d/type"
     #ifdef WITH_PRESENCE
-    OC_PRESENCE,                // "/oc/presence"
+    OC_PRESENCE,                ///< "/oc/presence"
     #endif
-    OC_MAX_VIRTUAL_RESOURCES    // Max items in the list
+    OC_MAX_VIRTUAL_RESOURCES    ///<s Max items in the list
 } OCVirtualResources;
 
 /**
@@ -87,18 +87,18 @@ typedef enum
 typedef enum
 {
     OC_REST_NOMETHOD    = 0,
-    OC_REST_GET         = (1 << 0),     // Read
-    OC_REST_PUT         = (1 << 1),     // Write
-    OC_REST_POST        = (1 << 2),     // Update
-    OC_REST_DELETE      = (1 << 3),     // Delete
-    // Register observe request for most up date notifications ONLY.
+    OC_REST_GET         = (1 << 0),     ///< Read
+    OC_REST_PUT         = (1 << 1),     ///< Write
+    OC_REST_POST        = (1 << 2),     ///< Update
+    OC_REST_DELETE      = (1 << 3),     ///< Delete
+    /// Register observe request for most up date notifications ONLY.
     OC_REST_OBSERVE     = (1 << 4),
-    // Register observe request for all notifications, including stale notifications.
+    /// Register observe request for all notifications, including stale notifications.
     OC_REST_OBSERVE_ALL = (1 << 5),
-    // Deregister observation, intended for internal use
+    /// Deregister observation, intended for internal use
     OC_REST_CANCEL_OBSERVE = (1 << 6),
     #ifdef WITH_PRESENCE
-    // Subscribe for all presence notifications of a particular resource.
+    /// Subscribe for all presence notifications of a particular resource.
     OC_REST_PRESENCE    = (1 << 7)
     #endif
 } OCMethod;
@@ -314,17 +314,17 @@ typedef struct
  */
 typedef struct
 {
-    // Address of remote server
+    /// Address of remote server
     OCDevAddr * addr;
-    // Indicates adaptor type on which the response was received
+    /// Indicates adaptor type on which the response was received
     OCConnectivityType connType;
-    // the is the result of our stack, OCStackResult should contain coap/other error codes;
+    /// the is the result of our stack, OCStackResult should contain coap/other error codes;
     OCStackResult result;
-    // If associated with observe, this will represent the sequence of notifications from server.
+    /// If associated with observe, this will represent the sequence of notifications from server.
     uint32_t sequenceNumber;
-    // resJSONPayload is retrieved from the payload of the received request PDU
+    /// resJSONPayload is retrieved from the payload of the received request PDU
     const char * resJSONPayload;
-    // An array of the received vendor specific header options
+    /// An array of the received vendor specific header options
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 } OCClientResponse;
@@ -405,13 +405,15 @@ typedef OCStackApplicationResult (* OCClientResponseHandler)(void *context, OCDo
  */
 typedef void (* OCClientContextDeleter)(void *context);
 
-/*
+/**
  * This info is passed from application to OC Stack when initiating a request to Server.
  */
 typedef struct
 {
     void *context;
+    /// The pointer to a function the stack will call to handle the requests
     OCClientResponseHandler cb;
+    /// A pointer to a function to delete the context when this callback is removed
     OCClientContextDeleter cd;
 } OCCallbackData;
 
