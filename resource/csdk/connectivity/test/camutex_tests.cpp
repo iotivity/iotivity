@@ -51,8 +51,10 @@ TEST(MutexTests, TC_01_CREATE)
     ca_mutex mymutex = ca_mutex_new();
 
     EXPECT_TRUE(mymutex != NULL);
-
-    ca_mutex_free(mymutex);
+    if (mymutex != NULL)
+    {
+        ca_mutex_free(mymutex);
+    }
 }
 
 TEST(MutexTests, TC_02_TRY_LOCK)
@@ -60,18 +62,23 @@ TEST(MutexTests, TC_02_TRY_LOCK)
     ca_mutex mymutex = ca_mutex_new();
 
     EXPECT_TRUE(mymutex != NULL);
+    if (mymutex != NULL)
+    {
+        EXPECT_TRUE(ca_mutex_trylock(mymutex)); // acquire it
 
-    EXPECT_TRUE(ca_mutex_trylock(mymutex)); // acquire it
+        ca_mutex_unlock(mymutex); // release it
 
-    ca_mutex_unlock(mymutex); // release it
+        ca_mutex_lock(mymutex); // acquire it
 
-    ca_mutex_lock(mymutex); // acquire it
+        EXPECT_FALSE(ca_mutex_trylock(mymutex)); // he should be lock
 
-    EXPECT_FALSE(ca_mutex_trylock(mymutex)); // he should be lock
+        EXPECT_FALSE(ca_mutex_trylock(NULL));
 
-    ca_mutex_free(mymutex);
+        ca_mutex_unlock(mymutex); // release it
+        ca_mutex_free(mymutex);
 
-    EXPECT_FALSE(ca_mutex_trylock(NULL));
+        EXPECT_FALSE(ca_mutex_trylock(NULL));
+    }
 }
 
 typedef struct _tagFunc1
@@ -102,29 +109,34 @@ TEST(MutexTests, DISABLED_TC_03_THREAD_LOCKING)
     pData.mutex = ca_mutex_new();
 
     EXPECT_TRUE(pData.mutex != NULL);
+    if (pData.mutex != NULL)
+    {
+        printf("Holding mutex for 5 seconds\n");
+        ca_mutex_lock(pData.mutex);
 
-    printf("Holding mutex for 5 seconds\n");
-    ca_mutex_lock(pData.mutex);
+        printf("starting thread\n");
+        //start thread
+        EXPECT_EQ(CA_STATUS_OK,
+                  u_thread_pool_add_task(mythreadpool, mutexFunc, &pData));
 
-    printf("starting thread\n");
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_add_task(mythreadpool, mutexFunc, &pData)); //start thread
+        printf("test: sleeping\n");
 
-    printf("test: sleeping\n");
+        sleep(5);
 
-    sleep(5);
+        printf("test: unlocking\n");
 
-    printf("test: unlocking\n");
+        ca_mutex_unlock(pData.mutex);
 
-    ca_mutex_unlock(pData.mutex);
+        printf("test: waiting for thread to release\n");
+        sleep(1);
 
-    printf("test: waiting for thread to release\n");
-    sleep(1);
+        ca_mutex_lock(pData.mutex);
 
-    ca_mutex_lock(pData.mutex);
+        // Cleanup Everything
 
-    // Cleanup Everything
-
-    ca_mutex_free(pData.mutex);
+        ca_mutex_unlock(pData.mutex);
+        ca_mutex_free(pData.mutex);
+    }
 
     u_thread_pool_free(mythreadpool);
 }
@@ -134,8 +146,10 @@ TEST(ConditionTests, TC_01_CREATE)
     ca_cond mycond = ca_cond_new();
 
     EXPECT_TRUE(mycond != NULL);
-
-    ca_cond_free(mycond);
+    if (mycond != NULL)
+    {
+        ca_cond_free(mycond);
+    }
 }
 
 typedef struct _tagFunc2
@@ -177,45 +191,54 @@ TEST(ConditionTests, DISABLED_TC_02_SIGNAL)
     { 2, sharedMutex, sharedCond, false };
 
     EXPECT_TRUE(pData1.mutex != NULL);
+    if (pData1.mutex != NULL)
+    {
+        printf("starting thread\n");
+        //start thread
+        EXPECT_EQ(CA_STATUS_OK,
+                  u_thread_pool_add_task(mythreadpool, condFunc, &pData1));
 
-    printf("starting thread\n");
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_add_task(mythreadpool, condFunc, &pData1)); //start thread
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_add_task(mythreadpool, condFunc, &pData2)); //start thread
+        //start thread
+        EXPECT_EQ(CA_STATUS_OK,
+                  u_thread_pool_add_task(mythreadpool, condFunc, &pData2));
 
-    printf("test: sleeping\n");
+        printf("test: sleeping\n");
 
-    sleep(2);
+        sleep(2);
 
-    printf("test: signaling first thread\n");
+        printf("test: signaling first thread\n");
 
-    ca_mutex_lock(sharedMutex);
-    ca_cond_signal(sharedCond);
-    ca_mutex_unlock(sharedMutex);
+        ca_mutex_lock(sharedMutex);
+        ca_cond_signal(sharedCond);
+        ca_mutex_unlock(sharedMutex);
 
-    sleep(1);
+        sleep(1);
 
-    EXPECT_FALSE(pData1.bFinished && pData2.bFinished); // only one should be finished
+        // only one should be finished
+        EXPECT_FALSE(pData1.bFinished && pData2.bFinished);
 
-    printf("test: signaling another thread\n");
+        printf("test: signaling another thread\n");
 
-    ca_mutex_lock(sharedMutex);
-    ca_cond_signal(sharedCond);
-    ca_mutex_unlock(sharedMutex);
+        ca_mutex_lock(sharedMutex);
+        ca_cond_signal(sharedCond);
+        ca_mutex_unlock(sharedMutex);
 
-    sleep(1);
+        sleep(1);
 
-    EXPECT_TRUE(pData2.bFinished && pData2.bFinished); // both should finally be finished
+        // both should finally be finished
+        EXPECT_TRUE(pData2.bFinished && pData2.bFinished);
 
-    // Cleanup Everything
+        // Cleanup Everything
 
-    ca_mutex_free(pData1.mutex);
+        ca_mutex_free(pData1.mutex);
+    }
 
     ca_cond_free(pData1.condition);
 
     u_thread_pool_free(mythreadpool);
 }
 
-TEST(ConditionTests, DISABLE_TC_03_BROADCAST)
+TEST(ConditionTests, DISABLED_TC_03_BROADCAST)
 {
     u_thread_pool_t mythreadpool;
 
@@ -230,28 +253,36 @@ TEST(ConditionTests, DISABLE_TC_03_BROADCAST)
     { 2, sharedMutex, sharedCond, false };
 
     EXPECT_TRUE(pData1.mutex != NULL);
+    if (pData1.mutex != NULL)
+    {
+        printf("starting thread\n");
+        //start thread
+        EXPECT_EQ(CA_STATUS_OK,
+                  u_thread_pool_add_task(mythreadpool, condFunc, &pData1));
 
-    printf("starting thread\n");
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_add_task(mythreadpool, condFunc, &pData1)); //start thread
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_add_task(mythreadpool, condFunc, &pData2)); //start thread
+        //start thread
+        EXPECT_EQ(CA_STATUS_OK,
+                  u_thread_pool_add_task(mythreadpool, condFunc, &pData2));
 
-    printf("test: sleeping\n");
+        printf("test: sleeping\n");
 
-    sleep(2);
+        sleep(2);
 
-    printf("test: signaling all threads\n");
+        printf("test: signaling all threads\n");
 
-    ca_mutex_lock(sharedMutex);
-    ca_cond_broadcast(sharedCond);
-    ca_mutex_unlock(sharedMutex);
+        ca_mutex_lock(sharedMutex);
+        ca_cond_broadcast(sharedCond);
+        ca_mutex_unlock(sharedMutex);
 
-    sleep(1);
+        sleep(1);
 
-    EXPECT_TRUE(pData1.bFinished && pData2.bFinished); // both should finally be finished
+        // both should finally be finished
+        EXPECT_TRUE(pData1.bFinished && pData2.bFinished);
 
-    // Cleanup Everything
+        // Cleanup Everything
 
-    ca_mutex_free(sharedMutex);
+        ca_mutex_free(sharedMutex);
+    }
 
     ca_cond_free(sharedCond);
 
@@ -281,7 +312,8 @@ void timedFunc(void *context)
     abs += 2 * USECS_PER_SEC; // 2 seconds
 
     // test UTIMEDOUT
-    CAWaitResult_t ret = ca_cond_wait_until(pData->condition, pData->mutex, abs);
+    CAWaitResult_t ret = ca_cond_wait_until(pData->condition,
+                                            pData->mutex, abs);
     EXPECT_EQ(CA_WAIT_TIMEDOUT, ret);
 
     printf("Thread %d: waiting for signal \n", pData->id);
@@ -313,32 +345,36 @@ TEST(ConditionTests, DISABLED_TC_05_WAIT)
     { 1, sharedMutex, sharedCond, false };
 
     EXPECT_TRUE(sharedMutex != NULL);
+    if (sharedMutex != NULL)
+    {
+        printf("starting thread\n");
+        //start thread
+        EXPECT_EQ(CA_STATUS_OK,
+                  u_thread_pool_add_task(mythreadpool, timedFunc, &pData1));
 
-    printf("starting thread\n");
-    EXPECT_EQ(CA_STATUS_OK, u_thread_pool_add_task(mythreadpool, timedFunc, &pData1)); //start thread
+        printf("test: sleeping for 3\n");
 
-    printf("test: sleeping for 3\n");
+        sleep(4);
 
-    sleep(4);
+        printf("test: signaling first thread\n");
 
-    printf("test: signaling first thread\n");
+        ca_mutex_lock(sharedMutex);
+        ca_cond_signal(sharedCond);
+        ca_mutex_unlock(sharedMutex);
 
-    ca_mutex_lock(sharedMutex);
-    ca_cond_signal(sharedCond);
-    ca_mutex_unlock(sharedMutex);
+        sleep(1);
 
-    sleep(1);
+        EXPECT_TRUE(pData1.bFinished); // both should finally be finished
 
-    EXPECT_TRUE(pData1.bFinished); // both should finally be finished
+        // Cleanup Everything
 
-    // Cleanup Everything
-
-    ca_mutex_free(sharedMutex);
+        ca_mutex_free(sharedMutex);
+    }
 
     ca_cond_free(sharedCond);
 
     u_thread_pool_free(mythreadpool);
-}
+ }
 
 TEST(ConditionTests, TC_06_INVALIDWAIT)
 {
