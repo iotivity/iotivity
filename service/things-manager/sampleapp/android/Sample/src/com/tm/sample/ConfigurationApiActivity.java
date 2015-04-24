@@ -20,7 +20,6 @@
 package com.tm.sample;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResourceHandle;
-import org.iotivity.base.ResourceProperty;
 import org.iotivity.service.tm.IConfigurationListener;
 import org.iotivity.service.tm.IDiagnosticsListener;
 import org.iotivity.service.tm.IFindCandidateResourceListener;
@@ -71,11 +69,11 @@ public class ConfigurationApiActivity extends Activity {
                                                                                             + this.getClass()
                                                                                                     .getSimpleName();
 
-    private final String                     CONFIGURATION_COLLECTION_RESOURCE_URI  = "/core/a/configuration/resourceset";
+    private final String                     CONFIGURATION_COLLECTION_RESOURCE_URI  = "/core/configuration/resourceset";
     private final String                     CONFIGURATION_COLLECTION_RESOURCE_TYPE = "core.configuration.resourceset";
-    private final String                     DIAGNOSTIC_COLLECTION_RESOURCE_URI     = "/core/a/diagnostics/resourceset";
+    private final String                     DIAGNOSTIC_COLLECTION_RESOURCE_URI     = "/core/diagnostics/resourceset";
     private final String                     DIAGNOSTIC_COLLECTION_RESOURCE_TYPE    = "core.diagnostics.resourceset";
-    private final String                     FACTORYSET_COLLECTION_RESOURCE_URI     = "/core/a/factoryset/resourceset";
+    private final String                     FACTORYSET_COLLECTION_RESOURCE_URI     = "/core/factoryset/resourceset";
     private final String                     FACTORYSET_COLLECTION_RESOURCE_TYPE    = "core.factoryset.resourceset";
 
     private final String                     CONFIGURATION_RESOURCE_URI             = "/oic/con";
@@ -676,11 +674,16 @@ public class ConfigurationApiActivity extends Activity {
                 return;
             }
 
-            resourceInfo.resourceHandle = OcPlatform.registerResource(resource);
-            OcPlatform.bindResource(collectionResource.resourceHandle,
-                    resourceInfo.resourceHandle);
-            resourceList.put(uri + host, resourceInfo);
+            ResourceInformation resourceInfoCollection;
+            resourceInfoCollection = collectionList
+                    .get(CONFIGURATION_COLLECTION_RESOURCE_URI);
+            OcResourceHandle handle;
+            handle = resourceInfoCollection.resourceHandle;
+            resourceInfo.resourceHandle = handle;
+            resourceInfo.resourceHandle = thingsManager.bindResourceToGroup(
+                    resource, handle);
 
+            resourceList.put(uri + host, resourceInfo);
             configurationResourceFlag = true;
         } else if (uri.equalsIgnoreCase("/oic/diag")) {
             ResourceInformation diagnosticResource = collectionList
@@ -691,9 +694,15 @@ public class ConfigurationApiActivity extends Activity {
                 return;
             }
 
-            resourceInfo.resourceHandle = OcPlatform.registerResource(resource);
-            OcPlatform.bindResource(diagnosticResource.resourceHandle,
-                    resourceInfo.resourceHandle);
+            ResourceInformation resourceInfoCollection;
+            resourceInfoCollection = collectionList
+                    .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
+            OcResourceHandle handle;
+            handle = resourceInfoCollection.resourceHandle;
+            resourceInfo.resourceHandle = handle;
+            resourceInfo.resourceHandle = thingsManager.bindResourceToGroup(
+                    resource, handle);
+
             resourceList.put(uri + host, resourceInfo);
             diagnosticsResourceFlag = true;
         } else if (uri.equalsIgnoreCase("/factorySet")) {
@@ -705,9 +714,15 @@ public class ConfigurationApiActivity extends Activity {
                 return;
             }
 
-            resourceInfo.resourceHandle = OcPlatform.registerResource(resource);
-            OcPlatform.bindResource(factorysetResource.resourceHandle,
-                    resourceInfo.resourceHandle);
+            ResourceInformation resourceInfoCollection;
+            resourceInfoCollection = collectionList
+                    .get(FACTORYSET_COLLECTION_RESOURCE_URI);
+            OcResourceHandle handle;
+            handle = resourceInfoCollection.resourceHandle;
+            resourceInfo.resourceHandle = handle;
+            resourceInfo.resourceHandle = thingsManager.bindResourceToGroup(
+                    resource, handle);
+
             resourceList.put(uri + host, resourceInfo);
             factorySetResourceFlag = true;
         } else {
@@ -718,40 +733,49 @@ public class ConfigurationApiActivity extends Activity {
 
     private void createResourceCollection(String uri, String typename)
             throws OcException {
-        Log.i(LOG_TAG, "createResourceCollection: " + uri);
 
+        Map<String, OcResourceHandle> groupList = new HashMap<String, OcResourceHandle>();
+
+        Log.i(LOG_TAG, "createGroup: " + typename);
         // Check if the resource collection is already created
         if (null != collectionList.get(uri)) {
             Log.e(LOG_TAG, "Collection is already exist!");
             return;
         }
 
-        // Crate resource collection
-        EnumSet<ResourceProperty> propertySet = EnumSet
-                .of(ResourceProperty.DISCOVERABLE);
         OcResourceHandle resourceHandle = null;
-        resourceHandle = OcPlatform.registerResource(uri, typename,
-                OcPlatform.BATCH_INTERFACE, null, propertySet);
-        if (null == resourceHandle) {
-            Log.e(LOG_TAG, "Failed to register resource collection! " + uri);
+
+        // Crate group
+        OCStackResult result = thingsManager.createGroup(typename);
+        if ((OCStackResult.OC_STACK_OK != result)) {
+            Log.e(LOG_TAG, "createGroup returned error: " + result.name());
             return;
+        } else {
+            Log.e(LOG_TAG, "createGroup returned: " + result.name());
+        }
+        groupList = thingsManager.getGroupList();
+        if (groupList.containsKey(typename)) {
+            resourceHandle = groupList.get(typename);
+        } else {
+            Log.e(LOG_TAG, "group does not contain groupResourceType: "
+                    + result.name());
         }
 
-        OcPlatform.bindInterfaceToResource(resourceHandle,
-                OcPlatform.GROUP_INTERFACE);
-        OcPlatform.bindInterfaceToResource(resourceHandle,
-                OcPlatform.DEFAULT_INTERFACE);
+        if (null == resourceHandle) {
+            Log.e(LOG_TAG, " createResourceCollection : resourceHandle is NULL");
 
+        }
         // Add the collection resource to map table
         ResourceInformation resourceInfo = new ResourceInformation();
         resourceInfo.resourceHandle = resourceHandle;
         collectionList.put(uri, resourceInfo);
+        Log.i(LOG_TAG, "size of collectionList : " + collectionList.size());
     }
 
     private void deleteResources() {
         Log.i(LOG_TAG, "deleteResources: enter");
         try {
-            // unbind and unregister all resources
+            // unregister all resources
             for (ResourceInformation resource : resourceList.values()) {
                 if (null != resource.resourceHandle) {
                     if (resource.resource.getUri().equalsIgnoreCase(
@@ -760,11 +784,11 @@ public class ConfigurationApiActivity extends Activity {
                                 .get(CONFIGURATION_COLLECTION_RESOURCE_URI);
                         if (null != collectionResource
                                 && null != collectionResource.resourceHandle) {
-                            OcPlatform.unbindResource(
-                                    collectionResource.resourceHandle,
-                                    resource.resourceHandle);
                             OcPlatform
                                     .unregisterResource(resource.resourceHandle);
+                            Log.i(LOG_TAG, "unregistered resource"
+                                    + CONFIGURATION_COLLECTION_RESOURCE_URI);
+
                         }
                     } else if (resource.resource.getUri().equalsIgnoreCase(
                             DIAGNOSTIC_RESOURCE_URI)) {
@@ -772,11 +796,10 @@ public class ConfigurationApiActivity extends Activity {
                                 .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
                         if (null != diagnosticResource
                                 && null != diagnosticResource.resourceHandle) {
-                            OcPlatform.unbindResource(
-                                    diagnosticResource.resourceHandle,
-                                    resource.resourceHandle);
                             OcPlatform
                                     .unregisterResource(resource.resourceHandle);
+                            Log.i(LOG_TAG, "unregistered resource"
+                                    + CONFIGURATION_COLLECTION_RESOURCE_URI);
                         }
                     } else if (resource.resource.getUri().equalsIgnoreCase(
                             FACTORYSET_RESOURCE_URI)) {
@@ -784,24 +807,20 @@ public class ConfigurationApiActivity extends Activity {
                                 .get(FACTORYSET_COLLECTION_RESOURCE_URI);
                         if (null != factorysetResource
                                 && null != factorysetResource.resourceHandle) {
-                            OcPlatform.unbindResource(
-                                    factorysetResource.resourceHandle,
-                                    resource.resourceHandle);
                             OcPlatform
                                     .unregisterResource(resource.resourceHandle);
+                            Log.i(LOG_TAG, "unregistered resource"
+                                    + CONFIGURATION_COLLECTION_RESOURCE_URI);
+
                         }
                     }
                 }
             }
 
-            // unregister all resource collections
-            for (ResourceInformation collectionResource : collectionList
-                    .values()) {
-                if (null != collectionResource.resourceHandle) {
-                    OcPlatform
-                            .unregisterResource(collectionResource.resourceHandle);
-                }
-            }
+            // delete all the groups
+            thingsManager.deleteGroup(CONFIGURATION_COLLECTION_RESOURCE_TYPE);
+            thingsManager.deleteGroup(DIAGNOSTIC_COLLECTION_RESOURCE_TYPE);
+            thingsManager.deleteGroup(FACTORYSET_COLLECTION_RESOURCE_TYPE);
         } catch (OcException e) {
             Log.e(LOG_TAG, "OcException occured! " + e.toString());
         }

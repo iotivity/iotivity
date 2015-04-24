@@ -19,7 +19,6 @@
  ******************************************************************/
 package com.tm.sample;
 
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,6 @@ import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResource.OnObserveListener;
 import org.iotivity.base.OcResourceHandle;
-import org.iotivity.base.ResourceProperty;
 import org.iotivity.service.tm.Action;
 import org.iotivity.service.tm.ActionSet;
 import org.iotivity.service.tm.Capability;
@@ -56,8 +54,7 @@ public class GroupClient {
     private static Message          msg;
     public String                   logMessage;
 
-    private final String            groupResourceURI    = "/core/b/collection";
-    private final String            groupResourceType   = "b.collection";
+    private final String groupResourceType = "b.collection";
 
     private final ThingsManager     thingsManagerObj;
     private final ActionListener    actionListener;
@@ -96,7 +93,7 @@ public class GroupClient {
             Log.i(LOG_TAG, "onGroupFindCallback invoked");
             if (resource != null) {
                 String uri = resource.getUri();
-                if (uri.equals(groupResourceURI) == true) {
+                if (uri.equals("/b/collection") == true) {
                     String hostAddress = resource.getHost();
                     Log.d("URI: onGroupFindCallback", uri);
                     Log.d("HOST: onGroupFindCallback", hostAddress);
@@ -116,6 +113,8 @@ public class GroupClient {
                 } else {
                     Log.d("onGroupFindCallback URI : ", uri);
                 }
+            } else {
+                Log.i(LOG_TAG, "Resource is NULL");
             }
         }
     };
@@ -160,19 +159,15 @@ public class GroupClient {
                                 msg.what = 1;
                                 groupApiActivityObj.getHandler().sendMessage(
                                         msg);
+                                try {
+                                    foundLightHandle = thingsManagerObj
+                                            .bindResourceToGroup(ocResource,
+                                                    groupResourceHandle);
 
-                            }
-
-                            try {
-                                Log.i(LOG_TAG, "Registering Resource Handle");
-                                foundLightHandle = OcPlatform
-                                        .registerResource(ocResource);
-
-                                Log.i(LOG_TAG, "Binding Resource Handle");
-                                OcPlatform.bindResource(groupResourceHandle,
-                                        foundLightHandle);
-                            } catch (OcException e) {
-                                e.printStackTrace();
+                                } catch (OcException e) {
+                                    Log.i(LOG_TAG,
+                                            "bindResourceToGroup Exception!");
+                                }
                             }
                         } else {
                             Log.i(LOG_TAG, "Resource is already registered!");
@@ -224,27 +219,24 @@ public class GroupClient {
      * resources.
      */
     public void createGroup() {
-        Log.d(LOG_TAG, "Creating group for handling light resources");
+        Map<String, OcResourceHandle> groupList = new HashMap<String, OcResourceHandle>();
 
-        try {
-            Log.d(LOG_TAG, "registering group to stack");
-            EnumSet<ResourceProperty> tempResourceProperty = EnumSet.of(
-                    ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE);
+        // creating group of type b.collection
+        OCStackResult result = thingsManagerObj.createGroup(groupResourceType);
+        if ((OCStackResult.OC_STACK_OK != result)) {
+            Log.e(LOG_TAG, "createGroup returned error: " + result.name());
+            return;
+        } else {
+            Log.e(LOG_TAG, "createGroup success: " + result.name());
+        }
 
-            // Registering the group with stack
-            groupResourceHandle = OcPlatform.registerResource(groupResourceURI,
-                    groupResourceType, OcPlatform.BATCH_INTERFACE, null,
-                    tempResourceProperty);
-
-            OcPlatform.bindInterfaceToResource(groupResourceHandle,
-                    OcPlatform.GROUP_INTERFACE);
-            OcPlatform.bindInterfaceToResource(groupResourceHandle,
-                    OcPlatform.DEFAULT_INTERFACE);
-
-        } catch (OcException e) {
-            Log.e(LOG_TAG,
-                    "Exception in bindInterfaceToResource DEFAULT_INTERFACE");
-            e.printStackTrace();
+        // getting the Created group Handle
+        groupList = thingsManagerObj.getGroupList();
+        if (groupList.containsKey(groupResourceType)) {
+            groupResourceHandle = groupList.get(groupResourceType);
+        } else {
+            Log.e(LOG_TAG, "group does not contain groupResourceType: "
+                    + result.name());
         }
     }
 
@@ -702,32 +694,21 @@ public class GroupClient {
         thingsManagerObj.setFindCandidateResourceListener(null);
         thingsManagerObj.setActionListener(null);
 
-        try {
-            Log.i(LOG_TAG, "UnRegistering Light Resource");
-            if (null != foundLightHandle) {
+        if (null != foundLightHandle) {
+            try {
                 OcPlatform.unregisterResource(foundLightHandle);
-                lights.clear();
-            } else {
-                Log.i(LOG_TAG, "No resouceHandle found to unregister");
+            } catch (OcException e) {
+                e.printStackTrace();
+                Log.i(LOG_TAG, "Resource Unregister Exception");
             }
-        } catch (OcException e) {
-            e.printStackTrace();
+        } else {
+            Log.i(LOG_TAG, "foundLightHandle is NULL");
         }
+        if (null != groupResourceHandle) {
 
-        try {
-            if (null != groupResourceHandle) {
-                if (null != foundLightHandle) {
-                    Log.i(LOG_TAG, "Resource Unbind Done");
-                    OcPlatform.unbindResource(groupResourceHandle,
-                            foundLightHandle);
-                }
-                Log.i(LOG_TAG, "Group Unregistered");
-                OcPlatform.unregisterResource(groupResourceHandle);
-            } else {
-                Log.i(LOG_TAG, "foundLightHandle is NULL");
-            }
-        } catch (OcException e) {
-            Log.e(LOG_TAG, "OcException occured! " + e.toString());
+            thingsManagerObj.deleteGroup(groupResourceType);
+        } else {
+            Log.i(LOG_TAG, "groupResourceHandle is NULL");
         }
     }
 
