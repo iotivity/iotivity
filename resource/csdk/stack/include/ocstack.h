@@ -47,6 +47,9 @@ extern "C" {
 
 #ifdef WITH_PRESENCE
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
+/// OC_MAX_PRESENCE_TTL_SECONDS sets the maximum time to live (TTL) for presence.
+/// NOTE: Changing the setting to a longer duration may lead to unsupported and untested
+/// operation.
 #define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24) // 60 sec/min * 60 min/hr * 24 hr/day
 #define OC_PRESENCE_URI                      "/oc/presence"
 #endif

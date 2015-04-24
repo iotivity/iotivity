@@ -453,7 +453,7 @@ uint32_t GetTicks(uint32_t afterMilliSeconds)
     }
     else
     {
-        return now;
+        return UINT32_MAX;
     }
 }
 
