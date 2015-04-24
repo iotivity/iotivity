@@ -74,15 +74,6 @@ public class MainActivity extends Activity {
         edtQuery = (EditText) findViewById(R.id.editQuery);
         edtUnregisterQuery = (EditText) findViewById(R.id.editUnregisterQuery);
 
-        findViewById(R.id.btnRegisterQuery).setOnClickListener(clickHandler);
-        findViewById(R.id.btnUnregisterQuery).setOnClickListener(clickHandler);
-        findViewById(R.id.btFullDevice).setOnClickListener(textAddHandler);
-        findViewById(R.id.btDiscomfortIndex).setOnClickListener(textAddHandler);
-        findViewById(R.id.btPlus).setOnClickListener(clickHandler);
-        findViewById(R.id.btMinus).setOnClickListener(clickHandler);
-        findViewById(R.id.btClear).setOnClickListener(textAddHandler);
-        findViewById(R.id.btLogClear).setOnClickListener(textAddHandler);
-
         mQueryEngineEventListener = new IQueryEngineEvent() {
             @Override
             public void onQueryEngineEvent(int cqid, DataReader result) {
@@ -231,6 +222,15 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        findViewById(R.id.btnRegisterQuery).setOnClickListener(clickHandler);
+        findViewById(R.id.btnUnregisterQuery).setOnClickListener(clickHandler);
+        findViewById(R.id.btFullDevice).setOnClickListener(textAddHandler);
+        findViewById(R.id.btDiscomfortIndex).setOnClickListener(textAddHandler);
+        findViewById(R.id.btPlus).setOnClickListener(clickHandler);
+        findViewById(R.id.btMinus).setOnClickListener(clickHandler);
+        findViewById(R.id.btClear).setOnClickListener(textAddHandler);
+        findViewById(R.id.btLogClear).setOnClickListener(textAddHandler);
     }
 
     @Override

@@ -17,8 +17,9 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "SSMCore.h"
 #include "SSMInterface/SSMCore_JNI.h"
+
+#include "SSMCore.h"
 #include "Common/PlatformLayer.h"
 
 #define JNI_E_INVALIDARG -1001
@@ -37,7 +38,6 @@ jclass                      g_ClassQueryEngine = NULL;
 jclass                      g_ClassDataReader = NULL;
 jclass                      g_ClassModelData = NULL;
 jclass                      g_ClassQueryEngineEvent = NULL;
-
 jclass                      g_ClassReportReceiver = NULL;
 jobject                     g_objReportReceiver = NULL;
 
@@ -254,7 +254,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQuery
     IQueryEngine        *pQueryEngine = NULL;
 
     jmethodID mid_GetQueryEngineInstance = env->GetMethodID(g_ClassQueryEngine,
-                                           "GetQueryEngineInstance", "()I");
+                                           "getQueryEngineInstance", "()I");
 
     if (mid_GetQueryEngineInstance == NULL)
         return JNI_E_METHODID;
