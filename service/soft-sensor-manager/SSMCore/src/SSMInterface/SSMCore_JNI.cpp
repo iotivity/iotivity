@@ -17,8 +17,9 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "SSMCore.h"
 #include "SSMInterface/SSMCore_JNI.h"
+
+#include "SSMCore.h"
 #include "Common/PlatformLayer.h"
 
 #define JNI_E_INVALIDARG -1001
@@ -37,7 +38,6 @@ jclass                      g_ClassQueryEngine = NULL;
 jclass                      g_ClassDataReader = NULL;
 jclass                      g_ClassModelData = NULL;
 jclass                      g_ClassQueryEngineEvent = NULL;
-
 jclass                      g_ClassReportReceiver = NULL;
 jobject                     g_objReportReceiver = NULL;
 
@@ -190,6 +190,13 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_initializeSSMCore
 (JNIEnv *env, jclass clz, jstring jstrXmlDescription)
 {
+    if (jstrXmlDescription == NULL)
+    {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"),
+                      "InitializeSSMCore failed with Invalid parameter");
+        return;
+    }
+
     SSMRESULT res = SSM_E_FAIL;
     const char *xmlDescription = env->GetStringUTFChars(jstrXmlDescription, NULL);
 
@@ -247,7 +254,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQuery
     IQueryEngine        *pQueryEngine = NULL;
 
     jmethodID mid_GetQueryEngineInstance = env->GetMethodID(g_ClassQueryEngine,
-                                           "GetQueryEngineInstance", "()I");
+                                           "getQueryEngineInstance", "()I");
 
     if (mid_GetQueryEngineInstance == NULL)
         return JNI_E_METHODID;
@@ -260,7 +267,14 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQuery
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_executeContextQuery
 (JNIEnv *env, jclass clz, jint pQueryEngineInstance, jstring jstrContextQuery)
 {
-    int                 cqid = 0;
+    int                 cqid = -1;
+    if (jstrContextQuery == NULL)
+    {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"),
+                      "ExecuteContextQuery with Invalid context query");
+        return cqid;
+    }
+
     IQueryEngine        *pQueryEngine = (IQueryEngine *)pQueryEngineInstance;
 
     const char *contextQuery = env->GetStringUTFChars(jstrContextQuery, NULL);
