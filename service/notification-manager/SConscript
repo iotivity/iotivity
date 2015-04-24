@@ -68,7 +68,10 @@ notimgr_src = [
         NOTI_SRC_DIR + 'requestHandler.c',
         NOTI_SRC_DIR + 'virtualResource.c']
 
-notificationsdk = notimgr_env.StaticLibrary('NOTISDKLibrary', notimgr_src)
+if target_os in ['tizen'] :
+    notificationsdk = notimgr_env.SharedLibrary('NOTISDKLibrary', notimgr_src)
+else :
+    notificationsdk = notimgr_env.StaticLibrary('NOTISDKLibrary', notimgr_src)
 
 notimgr_env.InstallTarget(notificationsdk, 'libNMSDK')
 
