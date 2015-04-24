@@ -21,8 +21,15 @@
 #ifndef IOTVT_SRM_RSRC_STRINGS_H
 #define IOTVT_SRM_RSRC_STRINGS_H
 
+#include "securevirtualresourcetypes.h"
+
 extern const char * SVR_DB_FILE_NAME;
 extern const char * OIC_MI_DEF;
+
+extern const char * OIC_RSRC_CORE_URI;
+extern const char * OIC_RSRC_CORE_D_URI;
+extern const char * OIC_RSRC_PRESENCE_URI;
+extern const char * OIC_RSRC_TYPES_D_URI;
 
 extern const char * OIC_RSRC_TYPE_SEC_ACL;
 extern const char * OIC_RSRC_ACL_URI;
@@ -43,6 +50,8 @@ extern const char * OIC_JSON_CM_NAME;
 extern const char * OIC_JSON_TM_NAME;
 extern const char * OIC_JSON_OM_NAME;
 extern const char * OIC_JSON_SMS_NAME;
+
+extern const OicUuid_t WILDCARD_SUBJECT_ID;
 
 #endif //IOTVT_SRM_RSRC_STRINGS_H
 

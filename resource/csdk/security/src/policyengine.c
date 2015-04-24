@@ -22,6 +22,7 @@
 #include "policyengine.h"
 #include "resourcemanager.h"
 #include "securevirtualresourcetypes.h"
+#include "srmresourcestrings.h"
 #include "logger.h"
 #include <string.h>
 

@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-static const OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 
 typedef enum PEState
 {

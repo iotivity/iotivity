@@ -18,8 +18,17 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <stdlib.h>
+#include "securevirtualresourcetypes.h"
+
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
 const char * OIC_MI_DEF = "oic.mi.def";
+
+const char * OIC_RSRC_CORE_URI =  "/oc/core";
+const char * OIC_RSRC_CORE_D_URI =  "/oc/core/d";
+const char * OIC_RSRC_PRESENCE_URI =  "/oc/presence";
+const char * OIC_RSRC_TYPES_D_URI =  "/oc/core/types/d";
+
 //ACL
 const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
@@ -41,3 +50,6 @@ const char * OIC_JSON_CM_NAME = "cm";
 const char * OIC_JSON_TM_NAME = "tm";
 const char * OIC_JSON_OM_NAME = "om";
 const char * OIC_JSON_SMS_NAME = "sms";
+
+
+const const OicUuid_t WILDCARD_SUBJECT_ID = {"*"};

@@ -39,11 +39,15 @@ extern "C" {
 extern char * BinToAclJSON(const OicSecAcl_t * acl);
 extern OicSecAcl_t * JSONToAclBin(const char * jsonStr);
 char* ReadFile(const char* filename);
+extern void DeleteACLList(OicSecAcl_t* acl);
+OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl);
 #ifdef __cplusplus
 }
 #endif
 
 const char* JSON_FILE_NAME = "oic_unittest.json";
+const char* DEFAULT_ACL_JSON_FILE_NAME = "oic_unittest_default_acl.json";
+const char* ACL1_JSON_FILE_NAME = "oic_unittest_acl1.json";
 
 char* ReadFile(const char* filename)
 {
@@ -78,60 +82,82 @@ char* ReadFile(const char* filename)
 
 
 //ACLResource Tests
-#if 0
-TEST(ACLResourceTest, InitACLResource)
-{
-    OCPersistentStorage *psi = (OCPersistentStorage*) OCMalloc(sizeof(OCPersistentStorage));
-    psi->open = utopen;
-    psi->read = utread;
-    psi->write = utwrite;
-    psi->close = utclose;
-    psi->unlink = utunlink;
-#if 1
-    EXPECT_EQ(OC_STACK_OK, SRMRegisterPersistentStorageHandler(psi));
-    EXPECT_EQ(OC_STACK_OK, InitACLResource());
-    DeInitACLResource();
-#else
-    EXPECT_EQ(OC_STACK_OK, OCRegisterPersistentStorageHandler(psi));
-    /* This should read SVR database and read ACL resource */
-    EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, OC_SERVER));
-    EXPECT_EQ(OC_STACK_OK, OCStop());
-#endif
-    OCFree(psi);
-}
-#endif
-
 TEST(ACLResourceTest, JSONMarshalliingTests)
 {
-    char *jsonStr1 = ReadFile(JSON_FILE_NAME);
-    if (NULL != jsonStr1)
+    char *jsonStr1 = ReadFile(ACL1_JSON_FILE_NAME);
+    EXPECT_TRUE(NULL != jsonStr1);
+    if (NULL == jsonStr1)
     {
-        cJSON_Minify(jsonStr1);
-        /* Workaround : cJSON_Minify does not remove all the unwanted characters
-         from the end. Here is an attempt to remove those characters */
-        int len = strlen(jsonStr1);
-        while (len > 0)
+        printf("Please copy %s into unittest folder\n", ACL1_JSON_FILE_NAME);
+    }
+
+    cJSON_Minify(jsonStr1);
+    /* Workaround : cJSON_Minify does not remove all the unwanted characters
+       from the end. Here is an attempt to remove those characters */
+    int len = strlen(jsonStr1);
+    while (len > 0)
+    {
+        if (jsonStr1[--len] == '}')
         {
-            if (jsonStr1[--len] == '}')
-            {
-                break;
-            }
+            break;
         }
-        jsonStr1[len + 1] = 0;
-
-        OicSecAcl_t * acl = JSONToAclBin(jsonStr1);
-        EXPECT_TRUE(NULL != acl);
-
-        char * jsonStr2 = BinToAclJSON(acl);
-        EXPECT_STREQ(jsonStr1, jsonStr2);
-
-        OCFree(jsonStr1);
-        OCFree(jsonStr2);
     }
-    else
+    jsonStr1[len + 1] = 0;
+
+    OicSecAcl_t * acl = JSONToAclBin(jsonStr1);
+    EXPECT_TRUE(NULL != acl);
+
+    char * jsonStr2 = BinToAclJSON(acl);
+    EXPECT_TRUE(NULL != jsonStr2);
+
+    if( jsonStr1 && jsonStr2)
     {
-        printf("Please copy %s into unittest folder\n", JSON_FILE_NAME);
+        EXPECT_STREQ(jsonStr1, jsonStr2);
     }
+
+    OCFree(jsonStr1);
+    OCFree(jsonStr2);
+    DeleteACLList(acl);
+}
+
+
+TEST(ACLResourceTest, GetDefaultACLTests)
+{
+    char *jsonStr = ReadFile(DEFAULT_ACL_JSON_FILE_NAME);
+    EXPECT_TRUE(NULL != jsonStr);
+    if (NULL == jsonStr)
+    {
+        printf("Please copy %s into unittest folder\n", DEFAULT_ACL_JSON_FILE_NAME);
+    }
+
+    /* Read from the file */
+    OicSecAcl_t * acl = JSONToAclBin(jsonStr);
+    EXPECT_TRUE(NULL != acl);
+
+    /* Invoke API to generate default ACL */
+    OicSecAcl_t * defaultAcl = NULL;
+    OCStackResult ret = GetDefaultACL(&defaultAcl);
+
+    EXPECT_TRUE(NULL != defaultAcl);
+    EXPECT_TRUE(OC_STACK_OK == ret);
+
+    /* Verify if the source code generated what is stored in file */
+    if (acl && defaultAcl)
+    {
+        EXPECT_TRUE(memcmp(&(acl->subject), &(defaultAcl->subject), sizeof(OicUuid_t)) == 0);
+        EXPECT_EQ(acl->resourcesLen, defaultAcl->resourcesLen);
+        for (size_t i =0; i < acl->resourcesLen; i++)
+        {
+            EXPECT_EQ(strlen(acl->resources[i]), strlen(defaultAcl->resources[i]));
+            EXPECT_TRUE(memcmp(acl->resources[i], defaultAcl->resources[i], strlen(acl->resources[i])) == 0);
+        }
+        EXPECT_EQ(acl->permission, defaultAcl->permission);
+    }
+
+    /* Perform cleanup */
+    DeleteACLList(acl);
+    DeleteACLList(defaultAcl);
+    OCFree(jsonStr);
 }
 
 

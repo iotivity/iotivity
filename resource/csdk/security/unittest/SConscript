@@ -69,9 +69,17 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'securityresourcemanager.cpp'])
 
 Alias("test", [unittest])
-srmtest_env.Alias("install",
-    srmtest_env.Install( env.get('BUILD_DIR') +'/resource/csdk/security/unittest',
-        src_dir + '/resource/csdk/security/unittest/oic_unittest.json'))
+
+unittest_src_dir = src_dir + '/resource/csdk/security/unittest/'
+unittest_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/unittest'
+
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_unittest.json'))
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_unittest_acl1.json'))
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_unittest_default_acl.json'))
+
 env.AppendTarget('test')
 if env.get('TEST') == '1':
 	target_os = env.get('TARGET_OS')

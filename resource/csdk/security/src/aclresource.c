@@ -44,7 +44,7 @@
 OicSecAcl_t        *gAcl = NULL;
 OCResourceHandle    gAclHandle = NULL;
 
-static void DeleteACLList(OicSecAcl_t* acl)
+void DeleteACLList(OicSecAcl_t* acl)
 {
     if (acl)
     {
@@ -317,7 +317,7 @@ OCStackResult CreateACLResource()
     /* TODO : Does these resources needs to be OC_DISCOVERABLE */
     ret = OCCreateResource(&gAclHandle,
                            OIC_RSRC_TYPE_SEC_ACL,
-                           "oic.mi.def",
+                           OIC_MI_DEF,
                            OIC_RSRC_ACL_URI,
                            ACLEntityHandler,
                            OC_DISCOVERABLE | OC_OBSERVABLE);
@@ -330,6 +330,94 @@ OCStackResult CreateACLResource()
     return ret;
 }
 
+
+/*
+ * This internal method is to retrieve the default ACL.
+ * If SVR database in persistent storage got corrupted or
+ * is not available for some reason, a default ACL is created
+ * which allows user to initiate ACL provisioning again.
+ */
+OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    /*
+     * TODO In future, when new virtual resources will be added in OIC
+     * specification, Iotivity stack should be able to add them in
+     * existing SVR database. To support this, we need to add 'versioning'
+     * mechanism in SVR database.
+     */
+
+    const char *rsrcs[] = {
+        OIC_RSRC_CORE_URI,
+        OIC_RSRC_CORE_D_URI,
+        OIC_RSRC_TYPES_D_URI,
+        OIC_RSRC_PRESENCE_URI,
+        OIC_RSRC_ACL_URI,
+        "/oic/sec/doxm",   //TODO Update this when doxm is defined
+        OIC_RSRC_PSTAT_URI,
+    };
+
+    if (!defaultAcl)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OicSecAcl_t *acl = OCCalloc(1, sizeof(OicSecAcl_t));
+    VERIFY_NON_NULL(acl, ERROR);
+
+    /* Subject -- Mandatory */
+    memcpy(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(acl->subject));
+
+    /* Resources -- Mandatory */
+    acl->resourcesLen = sizeof(rsrcs)/sizeof(rsrcs[0]);
+
+    acl->resources = (char**)OCCalloc(acl->resourcesLen, sizeof(char*));
+    VERIFY_NON_NULL(acl->resources, ERROR);
+
+    for (int i = 0; i <  acl->resourcesLen; i++)
+    {
+        size_t len = strlen(rsrcs[i]) + 1;
+        acl->resources[i] = (char*)OCMalloc(len * sizeof(char));
+        VERIFY_NON_NULL(acl->resources[i], ERROR);
+        strncpy(acl->resources[i], rsrcs[i], len);
+    }
+
+    acl->permission = PERMISSION_READ;
+    acl->periodsLen = 0;
+    acl->periods = NULL;
+    acl->recurrences = NULL;
+
+    /*
+     * TODO Doxm resource should expose an API to retrieve the ID of
+     * the owner of this device.
+     */
+    OicUuid_t ownerId = {.id = {0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1} };
+
+    acl->ownersLen = 1;
+    acl->owners = (OicUuid_t*)OCMalloc(sizeof(OicUuid_t));
+    VERIFY_NON_NULL(acl->owners, ERROR);
+    memcpy(acl->owners, &ownerId, sizeof(OicUuid_t));
+
+    acl->next = NULL;
+
+    *defaultAcl = acl;
+    ret = OC_STACK_OK;
+
+exit:
+
+    if (ret != OC_STACK_OK)
+    {
+        DeleteACLList(acl);
+        acl = NULL;
+    }
+
+    return ret;
+}
+
+
+
 /**
  * Initialize ACL resource by loading data from persistent storage.
  *
@@ -341,17 +429,30 @@ OCStackResult InitACLResource()
 
     /* Read ACL resource from PS */
     char* jsonSVRDatabase = GetSVRDatabase();
-    VERIFY_NON_NULL(jsonSVRDatabase, FATAL);
 
-    /* Convert JSON ACL into binary format */
-    gAcl = JSONToAclBin(jsonSVRDatabase);
+    if (jsonSVRDatabase)
+    {
+        /* Convert JSON ACL into binary format */
+        gAcl = JSONToAclBin(jsonSVRDatabase);
+        OCFree(jsonSVRDatabase);
+    }
+
+    /*
+     * If SVR database in persistent storage got corrupted or
+     * is not available for some reason, a default ACL is created
+     * which allows user to initiate ACL provisioning again.
+     */
+    if (!gAcl)
+    {
+        GetDefaultACL(&gAcl);
+        /* TODO Needs to update persistent storage */
+    }
     VERIFY_NON_NULL(gAcl, FATAL);
 
     /* Instantiate 'oic.sec.acl' */
     ret = CreateACLResource();
 
 exit:
-    OCFree(jsonSVRDatabase);
     if (OC_STACK_OK != ret)
     {
         DeInitACLResource();
@@ -393,7 +494,7 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId)
     LL_FOREACH(gAcl, acl)
     {
         /* TODO : Need to synch on 'Subject' data type */
-        if (memcmp(acl->subject.id, subjectId, sizeof(OicUuid_t)) == 0)
+        if (memcmp(&(acl->subject), subjectId, sizeof(OicUuid_t)) == 0)
         {
              return acl;
         }

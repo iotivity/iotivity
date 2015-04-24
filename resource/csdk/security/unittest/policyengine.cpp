@@ -24,6 +24,7 @@
 #include <linux/limits.h>
 #include "ocstack.h"
 #include "cainterface.h"
+#include "srmresourcestrings.h"
 
 using namespace std;
 
