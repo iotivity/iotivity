@@ -1229,7 +1229,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
             //Need to send ACK when the response is CON
             if(responseInfo->info.type == CA_MSG_CONFIRM)
             {
-                SendResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
+                SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
                         CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0);
             }
         }
@@ -1277,7 +1277,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
             {
                 OC_LOG(INFO, TAG, PCF("Received a response or notification,\
                         but I do not have callback. Sending RESET"));
-                SendResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
+                SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
                         CA_MSG_RESET, 0, NULL, NULL, 0);
             }
         }
@@ -1303,8 +1303,12 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
     OC_LOG(INFO, TAG, PCF("Exit HandleCAResponses"));
 }
 
-
-OCStackResult SendResponse(const CARemoteEndpoint_t* endPoint, const uint16_t coapID,
+/*
+ * This function sends out Direct Stack Responses. These are responses that are not coming
+ * from the application entity handler. These responses have no payload and are usually ACKs,
+ * RESETs or some error conditions that were caught by the stack.
+ */
+OCStackResult SendDirectStackResponse(const CARemoteEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
         CAToken_t token, uint8_t tokenLength)
@@ -1436,7 +1440,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
         default:
             {
                 OC_LOG(ERROR, TAG, PCF("Received CA method %d not supported"));
-                SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
+                SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
                         requestInfo->info.type, requestInfo->info.numOptions,
                         requestInfo->info.options, requestInfo->info.token,
                         requestInfo->info.tokenLength);
@@ -1454,7 +1458,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     if (!serverRequest.requestToken)
     {
         OC_LOG(FATAL, TAG, "Server Request Token is NULL");
-        SendResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
+        SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
@@ -1488,7 +1492,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         OC_LOG(ERROR, TAG,
                 PCF("The request info numOptions is greater than MAX_HEADER_OPTIONS"));
-        SendResponse(endPoint, requestInfo->info.messageId, CA_BAD_OPT,
+        SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_OPT,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
@@ -1506,12 +1510,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     // Send ACK to client as precursor to slow response
     if(requestResult == OC_STACK_SLOW_RESOURCE)
     {
-        SendResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
-                    CA_MSG_ACKNOWLEDGE,
-                    0,      // numptions
-                    NULL,   // *options
-                    NULL,   // token
-                    0);
+        SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
+                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0);
     }
     else if(requestResult != OC_STACK_OK)
     {
@@ -1519,7 +1519,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 
         CAResponseResult_t stackResponse = OCToCAStackResult(requestResult);
 
-        SendResponse(endPoint, requestInfo->info.messageId, stackResponse,
+        SendDirectStackResponse(endPoint, requestInfo->info.messageId, stackResponse,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
