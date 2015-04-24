@@ -32,8 +32,6 @@ JniOnGetListener::JniOnGetListener(JNIEnv *env, jobject jListener, JniOcResource
 
 JniOnGetListener::~JniOnGetListener()
 {
-    LOGD("~JniOnGetListener()");
-
     if (m_jwListener)
     {
         jint ret;
@@ -53,43 +51,69 @@ void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
     JNIEnv *env = GetJNIEnv(envRet);
     if (NULL == env) return;
 
-    if (OC_STACK_OK != eCode)
-    {
-        ThrowOcException(eCode, "GetCallback has failed");
-        m_ownerResource->removeOnGetListener(env, m_jwListener);
-
-        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
-        return;
-    }
-
-    jobject jHeaderOptionList = JniUtils::convertHeaderOptionsVectorToJavaList(env, headerOptions);
-
-    OCRepresentation * rep= new OCRepresentation(ocRepresentation);
-    jlong handle = reinterpret_cast<jlong>(rep);
-    jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool, handle, true);
-
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
-        m_ownerResource->removeOnGetListener(env, m_jwListener);
-
+        checkExAndRemoveListener(env);
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return;
     }
-
     jclass clsL = env->GetObjectClass(jListener);
-    jmethodID midL = env->GetMethodID(clsL, "onGetCompleted", 
-        "(Ljava/util/List;Lorg/iotivity/base/OcRepresentation;)V");
 
-    env->CallVoidMethod(jListener, midL, jHeaderOptionList, jRepresentation);
-
-    if (env->ExceptionCheck())
+    if (OC_STACK_OK != eCode)
     {
-        env->ExceptionClear();
-        LOGE("Exception is thrown in Java onGetCompleted handler");
+        jobject ex = GetOcException(eCode, "stack error in onGetCallback");
+        jmethodID midL = env->GetMethodID(clsL, "onGetFailed", "(Ljava/lang/Throwable;)V");
+        env->CallVoidMethod(jListener, midL, ex);
+    }
+    else
+    {
+        jobject jHeaderOptionList = JniUtils::convertHeaderOptionsVectorToJavaList(env, headerOptions);
+        if (!jHeaderOptionList) 
+        {
+            checkExAndRemoveListener(env);
+            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            return;
+        }
+
+        OCRepresentation * rep = new OCRepresentation(ocRepresentation);
+        jlong handle = reinterpret_cast<jlong>(rep);
+        jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool, 
+            handle, true);
+        if (!jRepresentation)
+        {
+            delete rep;
+            checkExAndRemoveListener(env);
+            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            return;
+        }
+
+        jmethodID midL = env->GetMethodID(clsL, "onGetCompleted",
+            "(Ljava/util/List;Lorg/iotivity/base/OcRepresentation;)V");
+
+        env->CallVoidMethod(jListener, midL, jHeaderOptionList, jRepresentation);
+        if (env->ExceptionCheck())
+        {
+            LOGE("Java exception is thrown");
+            delete rep;
+        }
     }
 
-    m_ownerResource->removeOnGetListener(env, m_jwListener);
-
+    checkExAndRemoveListener(env);
     if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+}
+
+void JniOnGetListener::checkExAndRemoveListener(JNIEnv* env)
+{
+    if (env->ExceptionCheck())
+    {
+        jthrowable ex = env->ExceptionOccurred();
+        env->ExceptionClear();
+        m_ownerResource->removeOnGetListener(env, m_jwListener);
+        env->Throw((jthrowable)ex);
+    }
+    else
+    {
+        m_ownerResource->removeOnGetListener(env, m_jwListener);
+    }
 }

@@ -23,9 +23,6 @@ PLATFORM := arduinomega
 
 ROOT_DIR = ../../..
 include $(ROOT_DIR)/local.properties
-LIBCOAP_DIR = $(ROOT_DIR)/libcoap-4.1.1
-OCSOCK_DIR = $(ROOT_DIR)/ocsocket
-OCCOAP_DIR = $(ROOT_DIR)/occoap
 LOGGER_DIR = $(ROOT_DIR)/logger
 RANDOM_DIR = $(ROOT_DIR)/ocrandom
 JSON_DIR = $(ROOT_DIR)/../../extlibs/cjson
@@ -40,7 +37,7 @@ SDIR_ARD_ETH = $(ARDUINO_DIR)/libraries/Ethernet
 SDIR_ARD_ETH_UTIL = $(ARDUINO_DIR)/libraries/Ethernet/utility
 SDIR_ARD_TIME = $(ARDUINO_DIR)/libraries/Time
 
-VPATH = $(SDIR_ARD_CORE):$(SDIR_ARD_SPI):$(SDIR_ARD_ETH):$(SDIR_ARD_ETH_UTIL):$(SDIR_ARD_TIME):$(RANDOM_DIR)/src:$(OCSTACK_DIR)/src:$(OCCOAP_DIR)/src:$(JSON_DIR)
+VPATH = $(SDIR_ARD_CORE):$(SDIR_ARD_SPI):$(SDIR_ARD_ETH):$(SDIR_ARD_ETH_UTIL):$(SDIR_ARD_TIME):$(RANDOM_DIR)/src:$(OCSTACK_DIR)/src:$(JSON_DIR)
 
 #include directories
 IDIR_ARD_CORE = $(ARDUINO_DIR)/hardware/arduino/cores/arduino
@@ -54,7 +51,7 @@ INC_DIRS = -I$(IDIR_ARD_CORE) -I$(IDIR_ARD_VARIANT) -I$(IDIR_ARD_SPI) \
 	-I$(IDIR_ARD_ETH) -I$(IDIR_ARD_ETH_UTIL) -I$(IDIR_ARD_TIME) \
 	-I$(OCSOCK_DIR)/include -I$(LOGGER_DIR)/include -I$(RANDOM_DIR)/include \
 	-I$(OCSTACK_DIR)/include -I$(OCSTACK_DIR)/include/internal \
-	 -I$(LIBCOAP_DIR)/ -I$(OCCOAP_DIR)/include -I$(JSON_DIR)
+	 -I$(-I$(JSON_DIR)
 
 #Compiler/Linker flags
 COPTIONS_ARDUINO = -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=156 -DARDUINO_AVR_MEGA2560 -DARDUINO_ARCH_AVR -MMD -DNDEBUG
@@ -72,7 +69,7 @@ CORE_COBJ = WInterrupts.o wiring.o wiring_digital.o
 CORE_CPPOBJ = main.o Stream.o WMath.o WString.o HardwareSerial.o Print.o SPI.o IPAddress.o wiring_analog.o
 ETH_CPPOBJ = Dhcp.o Dns.o Ethernet.o EthernetUdp.o
 ETH_UTIL_CPPOBJ = socket.o w5100.o
-OCSTACK_CPPOBJ = ocrandom.o ocresource.o occollection.o ocobserve.o ocserverrequest.o ocstack.o occoaphelper.o occoap.o occlientcb.o
+OCSTACK_CPPOBJ = ocrandom.o ocresource.o occollection.o ocobserve.o ocserverrequest.o ocstack.o occlientcb.o
 OCDEPENDENT_CPPOBJ = wiring_analog.o
 CJSON_COBJ = cJSON.o
 
@@ -91,11 +88,11 @@ all: core.a $(TESTAPP).o $(TESTAPP).elf $(TESTAPP).hex
 %.o: %.cpp
 	$(CXX) $(CFLAGS) $(COPTIONS_ARDUINO) $(INC_DIRS) $< -o $@
 
-core.a: $(CORE_COBJ) $(CORE_CPPOBJ) $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ) $(LIBCOAP_DIR)/$(BUILD)/libcoap.a
+core.a: $(CORE_COBJ) $(CORE_CPPOBJ) $(ETH_CPPOBJ) $(ETH_UTIL_CPPOBJ)
 	$(AR) rcs $@ $^
 	$(RANLIB) $@
 
-$(TESTAPP).elf: $(TESTAPP).o core.a $(OCSTACK_CPPOBJ) $(OCDEPENDENT_CPPOBJ) $(LIBCOAP_DIR)/$(BUILD)/libcoap.a $(CJSON_COBJ)
+$(TESTAPP).elf: $(TESTAPP).o core.a $(OCSTACK_CPPOBJ) $(OCDEPENDENT_CPPOBJ) $(CJSON_COBJ)
 	$(CC) -Os -Wl,--gc-sections,--relax $(COPTIONS_ARDUINO) $^ -lm -o $@
 
 $(TESTAPP).hex: $(TESTAPP).elf
@@ -111,4 +108,5 @@ clean:
 	rm -f *.o *.d *.elf *.eep *.a *.hex *-
 	rm -fr $(BIN_DIR)
 	rm -fr $(OBJ_DIR)
+
 

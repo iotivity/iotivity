@@ -75,7 +75,6 @@ void onFindResource(std::shared_ptr< OCResource > resource)
 
 int main(int argc, char* argv[])
 {
-
     // Create PlatformConfig object
     PlatformConfig cfg
     { OC::ServiceType::InProc, OC::ModeType::Both/*OC::ModeType::Server*/, "0.0.0.0", 0,
@@ -113,8 +112,20 @@ int main(int argc, char* argv[])
             }
             else if (selectedMenu == 11)
             {
+                ostringstream query;
+                query << OC_WELL_KNOWN_QUERY << "?rt=core.musicplayer";
+
+                cout << query.str() << endl;
                 result = OCPlatform::findResource("",
-                        "coap://224.0.1.187/oc/core?rt=core.musicplayer", onFindResource);
+                            query.str(),
+                            OC_ETHERNET,
+                            onFindResource);
+
+                result = OCPlatform::findResource("",
+                            "coap://224.0.1.187/oc/core?rt=core.musicplayer",
+                            OC_WIFI,
+                            onFindResource);
+
                 if (OC_STACK_OK == result)
                 {
                     cout << "Finding music player was successful\n";
@@ -126,8 +137,18 @@ int main(int argc, char* argv[])
             }
             else if (selectedMenu == 12)
             {
-                result = OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.speaker",
-                        onFindResource);
+                ostringstream query;
+                query << OC_WELL_KNOWN_QUERY << "?rt=core.speaker";
+                result = OCPlatform::findResource("",
+                            query.str(),
+                            OC_ETHERNET,
+                            onFindResource);
+
+                result = OCPlatform::findResource("",
+                            "coap://224.0.1.187/oc/core?rt=core.speaker",
+                            OC_WIFI,
+                            onFindResource);
+
                 if (OC_STACK_OK == result)
                 {
                     cout << "Finding speaker was successful\n";

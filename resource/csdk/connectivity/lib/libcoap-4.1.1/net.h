@@ -3,11 +3,15 @@
  * Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #ifndef _COAP_NET_H_
 #define _COAP_NET_H_
+
+#ifdef WITH_ARDUINO
+#include "Time.h"
+#endif /* WITH_ARDUINO */
 
 #ifdef __cplusplus
 extern "C"
@@ -104,14 +108,14 @@ extern "C"
         /** list of asynchronous transactions */
         struct coap_async_state_t *async_state;
 #endif /* WITHOUT_ASYNC */
-        /**
-         * The time stamp in the first element of the sendqeue is relative
-         * to sendqueue_basetime. */
-        coap_tick_t sendqueue_basetime;
-        coap_queue_t *sendqueue, *recvqueue;
-#if WITH_POSIX
-        int sockfd; /**< send/receive socket */
-#endif /* WITH_POSIX */
+    /**
+     * The time stamp in the first element of the sendqeue is relative
+     * to sendqueue_basetime. */
+    coap_tick_t sendqueue_basetime;
+    coap_queue_t *sendqueue, *recvqueue;
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+    int sockfd; /**< send/receive socket */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
         struct uip_udp_conn *conn; /**< uIP connection object */
 
@@ -146,8 +150,8 @@ extern "C"
 
     /**
      * Registers a new message handler that is called whenever a response
-     * was received that matches an ongoing transaction. 
-     * 
+     * was received that matches an ongoing transaction.
+     *
      * @param context The context to register the handler for.
      * @param handler The response handler to register.
      */
@@ -157,10 +161,10 @@ extern "C"
         context->response_handler = handler;
     }
 
-    /** 
+    /**
      * Registers the option type @p type with the given context object @p
      * ctx.
-     * 
+     *
      * @param ctx  The context to use.
      * @param type The option type to register.
      */
@@ -185,20 +189,23 @@ extern "C"
     /** Creates a new coap_context_t object that will hold the CoAP stack status.  */
     coap_context_t *coap_new_context(const coap_address_t *listen_addr);
 
-    /** 
-     * Returns a new message id and updates @p context->message_id
-     * accordingly. The message id is returned in network byte order
-     * to make it easier to read in tracing tools. 
-     *
-     * @param context the current coap_context_t object
-     * @return incremented message id in network byte order
-     */
-    static inline unsigned short coap_new_message_id(coap_context_t *context)
-    {
-#ifndef WITH_CONTIKI
-        return htons(++(context->message_id));
+/**
+ * Returns a new message id and updates @p context->message_id
+ * accordingly. The message id is returned in network byte order
+ * to make it easier to read in tracing tools.
+ *
+ * @param context the current coap_context_t object
+ * @return incremented message id in network byte order
+ */
+static inline unsigned short coap_new_message_id(coap_context_t *context)
+{
+    ++(context->message_id);
+#if defined(WITH_ARDUINO)
+    return ((context->message_id << 8) | ((context->message_id >> 8) & (0xFF)));
+#elif defined(WITH_CONTIKI)
+    return uip_htons(context->message_id);
 #else /* WITH_CONTIKI */
-        return uip_htons(++context->message_id);
+    return htons(context->message_id);
 #endif
     }
 
@@ -218,7 +225,7 @@ extern "C"
     coap_tid_t coap_send_confirmed(coap_context_t *context, const coap_address_t *dst,
             coap_pdu_t *pdu);
 
-    /** 
+    /**
      * Creates a new ACK PDU with specified error @p code. The options
      * specified by the filter expression @p opts will be copied from the
      * original request contained in @p request.  Unless @c
@@ -227,12 +234,12 @@ extern "C"
      * 0.  This function returns a pointer to the new response message, or
      * @c NULL on error. The storage allocated for the new message must be
      * relased with coap_free().
-     * 
+     *
      * @param request Specification of the received (confirmable) request.
      * @param code The error code to set.
      * @param opts An option filter that specifies which options to copy
      *             from the original request in @p node.
-     * 
+     *
      * @return A pointer to the new message or @c NULL on error.
      */
     coap_pdu_t *coap_new_error_response(coap_pdu_t *request, unsigned char code,
@@ -249,27 +256,27 @@ extern "C"
      */
     coap_tid_t coap_send(coap_context_t *context, const coap_address_t *dst, coap_pdu_t *pdu);
 
-    /** 
+    /**
      * Sends an error response with code @p code for request @p request to
      * @p dst.  @p opts will be passed to coap_new_error_response() to
      * copy marked options from the request. This function returns the
      * transaction id if the message was sent, or @c COAP_INVALID_TID
      * otherwise.
-     * 
+     *
      * @param context The context to use.
      * @param request The original request to respond to.
      * @param dst     The remote peer that sent the request.
      * @param code    The reponse code.
-     * @param opts    A filter that specifies the options to copy from the 
+     * @param opts    A filter that specifies the options to copy from the
      *                @p request.
-     * 
+     *
      * @return The transaction id if the message was sent, or @c
      * COAP_INVALID_TID otherwise.
      */
     coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request,
             const coap_address_t *dst, unsigned char code, coap_opt_filter_t opts);
 
-    /** 
+    /**
      * Helper funktion to create and send a message with @p type (usually
      * ACK or RST).  This function returns @c COAP_INVALID_TID when the
      * message was not sent, a valid transaction id otherwise.
@@ -283,30 +290,30 @@ extern "C"
     coap_tid_t
     coap_send_message_type(coap_context_t *context, const coap_address_t *dst, coap_pdu_t *request,
             unsigned char type);
-    /** 
+    /**
      * Sends an ACK message with code @c 0 for the specified @p request to
      * @p dst. This function returns the corresponding transaction id if
      * the message was sent or @c COAP_INVALID_TID on error.
-     * 
+     *
      * @param context The context to use.
      * @param dst     The destination address.
      * @param request The request to be acknowledged.
-     * 
+     *
      * @return The transaction id if ACK was sent or @c COAP_INVALID_TID
      * on error.
      */
     coap_tid_t coap_send_ack(coap_context_t *context, const coap_address_t *dst,
             coap_pdu_t *request);
 
-    /** 
+    /**
      * Sends an RST message with code @c 0 for the specified @p request to
      * @p dst. This function returns the corresponding transaction id if
      * the message was sent or @c COAP_INVALID_TID on error.
-     * 
+     *
      * @param context The context to use.
      * @param dst     The destination address.
      * @param request The request to be reset.
-     * 
+     *
      * @return The transaction id if RST was sent or @c COAP_INVALID_TID
      * on error.
      */
@@ -324,9 +331,9 @@ extern "C"
      * and a new node with the parsed PDU is added to the receive queue in the specified context
      * object.
      */
-    int coap_read(coap_context_t *context, char* data);
+    int coap_read(coap_context_t *context);
 
-    /** 
+    /**
      * Calculates a unique transaction id from given arguments @p peer and
      * @p pdu. The id is returned in @p id.
      * 
@@ -336,33 +343,33 @@ extern "C"
      */
     void coap_transaction_id(const coap_address_t *peer, const coap_pdu_t *pdu, coap_tid_t *id);
 
-    /** 
+    /**
      * This function removes the element with given @p id from the list
      * given list. If @p id was found, @p node is updated to point to the
-     * removed element. Note that the storage allocated by @p node is 
+     * removed element. Note that the storage allocated by @p node is
      * @b not released. The caller must do this manually using
      * coap_delete_node(). This function returns @c 1 if the element with
      * id @p id was found, @c 0 otherwise. For a return value of @c 0,
      * the contents of @p node is undefined.
-     * 
+     *
      * @param queue The queue to search for @p id.
      * @param id    The node id to look for.
-     * @param node  If found, @p node is updated to point to the 
+     * @param node  If found, @p node is updated to point to the
      *   removed node. You must release the storage pointed to by
      *   @p node manually.
-     * 
+     *
      * @return @c 1 if @p id was found, @c 0 otherwise.
      */
     int coap_remove_from_queue(coap_queue_t **queue, coap_tid_t id, coap_queue_t **node);
 
-    /** 
+    /**
      * Removes the transaction identified by @p id from given @p queue.
      * This is a convenience function for coap_remove_from_queue() with
      * automatic deletion of the removed node.
-     * 
+     *
      * @param queue The queue to search for @p id.
      * @param id    The transaction id.
-     * 
+     *
      * @return @c 1 if node was found, removed and destroyed, @c 0 otherwise.
      */
     inline static int coap_remove_transaction(coap_queue_t **queue, coap_tid_t id)
@@ -384,13 +391,13 @@ extern "C"
     coap_queue_t *coap_find_transaction(coap_queue_t *queue, coap_tid_t id);
 
     /**
-     * Cancels all outstanding messages for peer @p dst that have the 
+     * Cancels all outstanding messages for peer @p dst that have the
      * specified token.
      *
      * @param context The context in use
      * @param dst     Destination address of the messages to remove.
      * @param token   Message token
-     * @param token_length Actual length of @p token 
+     * @param token_length Actual length of @p token
      */
     void coap_cancel_all_messages(coap_context_t *context, const coap_address_t *dst,
             const unsigned char *token, size_t token_length);
@@ -403,11 +410,11 @@ extern "C"
 
     /**
      * Returns the current value of an internal tick counter. The counter
-     * counts \c COAP_TICKS_PER_SECOND ticks every second. 
+     * counts \c COAP_TICKS_PER_SECOND ticks every second.
      */
     void coap_ticks(coap_tick_t *);
 
-    /** 
+    /**
      * Verifies that @p pdu contains no unknown critical options. Options
      * must be registered at @p ctx, using the function
      * coap_register_option(). A basic set of options is registered
@@ -415,7 +422,7 @@ extern "C"
      * @p pdu is ok, @c 0 otherwise. The given filter object @p unknown
      * will be updated with the unknown options. As only @c COAP_MAX_OPT
      * options can be signalled this way, remaining options must be
-     * examined manually. 
+     * examined manually.
      *
      * @code
      coap_opt_filter_t f = COAP_OPT_NONE;
@@ -430,13 +437,13 @@ extern "C"
      }
      }
      }
-     * @endcode 
+     * @endcode
      *
      * @param ctx      The context where all known options are registered.
      * @param pdu      The PDU to check.
      * @param unknown  The output filter that will be updated to indicate the
      *                 unknown critical options found in @p pdu.
-     * 
+     *
      * @return @c 1 if everything was ok, @c 0 otherwise.
      */
     int coap_option_check_critical(coap_context_t *ctx, coap_pdu_t *pdu, coap_opt_filter_t unknown);

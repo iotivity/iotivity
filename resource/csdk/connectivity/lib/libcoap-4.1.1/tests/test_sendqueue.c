@@ -3,7 +3,7 @@
  * Copyright (C) 2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include <stdio.h>
@@ -291,7 +291,7 @@ void t_sendqueue10(void)
 
 /* This function creates a set of nodes for testing. These nodes
  * will exist for all tests and are modified by coap_insert_node()
- * and 
+ * and
  */
 int t_sendqueue_tests_create(void)
 {
@@ -357,10 +357,10 @@ CU_pSuite t_init_sendqueue_tests(void)
         return NULL;
     }
 
-#define SENDQUEUE_TEST(s,t)					      \
-  if (!CU_ADD_TEST(s,t)) {					      \
-    fprintf(stderr, "W: cannot add sendqueue test (%s)\n",	      \
-	    CU_get_error_msg());				      \
+#define SENDQUEUE_TEST(s,t)                       \
+  if (!CU_ADD_TEST(s,t)) {                        \
+    fprintf(stderr, "W: cannot add sendqueue test (%s)\n",        \
+        CU_get_error_msg());                      \
   }
 
     SENDQUEUE_TEST(suite, t_sendqueue1);

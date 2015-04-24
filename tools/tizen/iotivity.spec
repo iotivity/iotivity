@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 0.9
+Version: 0.9.0
 Release: 0
 Summary: IoTivity Base Stack & IoTivity Services
 Group: System Environment/Libraries
@@ -56,13 +56,24 @@ scons -j 4 TARGET_OS=tizen TARGET_ARCH=$RPM_ARCH
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_includedir}
+mkdir -p %{buildroot}%{_includedir}/targets
 mkdir -p %{buildroot}%{_libdir}
 mkdir -p %{buildroot}%{_sbindir}
 
 cp out/tizen/*/release/lib*.so %{buildroot}%{_libdir}
 cp out/tizen/*/release/lib*.a %{buildroot}%{_libdir}
+cp out/tizen/*/release/service/protocol-plugin/plugins/mqtt-fan/*.so %{buildroot}%{_libdir}
+cp out/tizen/*/release/service/protocol-plugin/plugins/mqtt-light/*.so %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/ocstack.h %{buildroot}%{_includedir}
+cp resource/csdk/stack/include/ocstackconfig.h %{buildroot}%{_includedir}
+cp resource/csdk/ocsocket/include/ocsocket.h %{buildroot}%{_includedir}
+cp resource/oc_logger/include/oc_logger.hpp %{buildroot}%{_includedir}
+cp resource/oc_logger/include/oc_log_stream.hpp %{buildroot}%{_includedir}
+cp resource/oc_logger/include/oc_logger.h %{buildroot}%{_includedir}
+cp resource/oc_logger/include/oc_logger_types.h %{buildroot}%{_includedir}
+cp resource/oc_logger/include/targets/oc_console_logger.h %{buildroot}%{_includedir}/targets
+cp resource/oc_logger/include/targets/oc_ostream_logger.h %{buildroot}%{_includedir}/targets
 cp resource/include/*.h %{buildroot}%{_includedir}
 
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
@@ -80,7 +91,9 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %{_libdir}/lib*.so
 %{_libdir}/lib*.a
+%{_libdir}/fanserver*.so
+%{_libdir}/lightserver*.so
 
 %files devel
 %defattr(-,root,root,-)
-%{_includedir}/*.h
+%{_includedir}/*

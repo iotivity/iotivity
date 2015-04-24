@@ -74,6 +74,7 @@ void foundResource(std::shared_ptr< OCResource > resource)
                 g_resource = resource;
                 resource->get("", DEFAULT_INTERFACE, QueryParamsMap(), onGet);
             }
+            printf("HOST :: %s\n", resource->host().c_str());
         }
     }
     catch (std::exception& e)
@@ -137,8 +138,6 @@ void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, con
 string buildActionSetDesc()
 {
     string actionsetDesc = "";
-    //"movieTime*uri=coap://10.251.44.228:49858/a/light|power=10*uri=coap:
-    //10.251.44.228:49858/a/light|power=10|";
     actionsetDesc = "allbulboff";
     actionsetDesc.append("*");
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
@@ -159,8 +158,55 @@ bool isResourceReady()
 {
     return isReady;
 }
-int main()
+
+int main(int argc, char* argv[])
 {
+    ostringstream requestURI;
+    requestURI << OC_WELL_KNOWN_QUERY << "?rt=a.collection";
+
+    OCConnectivityType connectivityType = OC_WIFI;
+
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<<"Usage: groupclient <ConnectivityType(0|1)>\n";
+        std::cout<<"ConnectivityType: Default WIFI\n";
+        std::cout<<"ConnectivityType 0: ETHERNET\n";
+        std::cout<<"ConnectivityType 1: WIFI\n";
+    }
+
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 
@@ -171,28 +217,29 @@ int main()
         OCPlatform::Configure(config);
 
         string resourceTypeName = "a.collection";
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=a.collection", &foundResource);
 
-        //Non-intensive block util foundResource callback is called by OCPlatform
+        OCPlatform::findResource("", requestURI.str(),
+                                 connectivityType, &foundResource);
+
+        //Non-intensive block until foundResource callback is called by OCPlatform
         //and onGet gets resource.
         //isResourceReady takes care of spurious wake-up
 
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock, isResourceReady);
 
+        isReady = false;
         while (isRun)
         {
-            usleep(100);
             int selectedMenu;
 
-            cout << endl
-                 << "0 :: Quit 1 :: CREATE ACTIONSET 2 :: EXECUTE ACTION SET \n";
+            cout << endl <<  "0 :: Quit 1 :: CREATE ACTIONSET 2 :: EXECUTE ACTION SET \n";
             cout << "3 :: GET ACTIONSET 4 :: DELETE ACTIONSET \n" << endl;
 
             cin >> selectedMenu;
-
             OCRepresentation rep;
             string actionsetDesc;
+
             switch(selectedMenu)
             {
                 case 0:
@@ -200,17 +247,15 @@ int main()
                     break;
                 case 1:
                     actionsetDesc = buildActionSetDesc();
-
                     if(!actionsetDesc.empty())
                     {
                         cout << "ActionSet :: " << actionsetDesc << endl;
                         rep.setValue("ActionSet", actionsetDesc);
                     }
-
                     if (g_resource)
                     {
                         g_resource->put("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                                &onPut);
+                        &onPut);
                     }
                     break;
                 case 2:
@@ -218,15 +263,15 @@ int main()
                     if (g_resource)
                     {
                         g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                            &onPost);
-                    }
-                    break;
+                                         &onPost);
+                     }
+                     break;
                 case 3:
                     rep.setValue("GetActionSet", std::string("allbulboff"));
                     if (g_resource)
                     {
                         g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                            &onPost);
+                                &onPost);
                     }
                     break;
                 case 4:
@@ -234,13 +279,12 @@ int main()
                     if (g_resource)
                     {
                         g_resource->put("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                            &onPut);
+                                &onPut);
                     }
                     break;
                 default:
-                    cout << "Incorrect option" << endl;
+                    cout << "Invalid option" << endl;
                     break;
-
             }
             fflush(stdin);
         }
@@ -249,6 +293,6 @@ int main()
     {
         cout << e.what() << endl;
     }
-
     return 0;
 }
+

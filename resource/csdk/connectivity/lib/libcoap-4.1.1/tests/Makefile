@@ -55,3 +55,4 @@ distclean:	clean
 dist:	$(FILES)
 	test -d $(DISTDIR)/tests || mkdir $(DISTDIR)/tests
 	cp $(FILES) $(DISTDIR)/tests
+

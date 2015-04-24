@@ -3,7 +3,7 @@
  * Copyright (C) 2013--2014 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include <assert.h>
@@ -296,7 +296,7 @@ int t_wkc_tests_create(void)
         }
 
     }
-#endif  
+#endif
     return ctx == NULL || pdu == NULL;
 }
 
@@ -319,10 +319,10 @@ CU_pSuite t_init_wellknown_tests(void)
         return NULL;
     }
 
-#define WKC_TEST(s,t)						      \
-  if (!CU_ADD_TEST(s,t)) {					      \
-    fprintf(stderr, "W: cannot add .well-known/core test (%s)\n",	      \
-	    CU_get_error_msg());				      \
+#define WKC_TEST(s,t)                             \
+  if (!CU_ADD_TEST(s,t)) {                        \
+    fprintf(stderr, "W: cannot add .well-known/core test (%s)\n",         \
+        CU_get_error_msg());                      \
   }
 
     WKC_TEST(suite, t_wellknown1);

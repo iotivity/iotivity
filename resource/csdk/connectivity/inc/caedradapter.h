@@ -21,124 +21,152 @@
 /**
  * @file
  *
- * This file contains the APIs for EDR adapters to be implemented.
+ * This file contains the APIs for EDR adapters.
  */
 
 #ifndef __CA_EDRADAPTER_H_
 #define __CA_EDRADAPTER_H_
 
 /**
- * BT Interface AP
+ * EDR Interface AP
  **/
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#include "uthreadpool.h" /* for thread pool */
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#ifndef BLUETOOTH_ADAPTER_TAG
-#define BLUETOOTH_ADAPTER_TAG "CA_EDR"
-#endif //BLUETOOTH_ADAPTER_TAG
 /**
- * @brief Initialize EDR connectivity interface.
- * @param registerCallback [IN] To register EDR interfaces to Connectivity Abstraction Layer
- * @param reqRespCallback [IN] sending responses and discovery messages from unicast , multicast servers
- * @param netCallback [IN] Intimate the network additions to Connectivity Abstraction Layer.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief  Initialize EDR Interface.
+ * @param  registerCallback  [IN] Callback to register EDR interface to Connectivity
+ *                                Abstraction Layer
+ * @param  reqRespCallback   [IN] Callback to notify request and response messages from server(s)
+ *                                started at Connectivity Abstraction Layer.
+ * @param  netCallback       [IN] Callback to notify the network additions to Connectivity
+ *                                Abstraction Layer.
+ * @param  handle            [IN] Threadpool Handle
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_STATUS_INVALID_PARAM  Invalid input parameters
+ * @retval  #CA_ADAPTER_NOT_ENABLED Initialization is successful, but bluetooth adapter is
+ *                                  not enabled
+ * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback);
+                           CANetworkPacketReceivedCallback reqRespCallback,
+                           CANetworkChangeCallback netCallback,
+                           u_thread_pool_t handle);
 
 /**
- * @brief Starting EDR connectivity adapters .As its peer to peer it doesnot require to start any servers
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief  Starts EDR connectivity adapters. As its peer to peer it doesnot require to start
+ *         any servers.
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval  #CA_STATUS_OK  Successful
+ * @retval  #CA_ADAPTER_NOT_ENABLED Bluetooth adapter is not enabled
+ * @retval  #CA_STATUS_FAILED Operation failed
+ *
  */
 CAResult_t CAStartEDR();
 
 /**
- * @brief Starting listening server for receiving multicast search requests
- * Transport Specific Behavior:
- *   EDR  Starts RFCOMM Server with prefixed UUID as per specification.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief  Starts listening server for receiving multicast search requests.
+ * Starts  RFCOMM Server with prefixed UUID as per OIC specification.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_SERVER_STARTED_ALREADY  Server is already started and running for the predefined
+ *                                     service UUID
+ * @retval #CA_STATUS_FAILED Operation failed
+ *
  */
 CAResult_t CAStartEDRListeningServer();
 
 /**
- * @brief for starting discovery servers for receiving multicast advertisements
- * Transport Specific Behavior:
- *   EDR Starts RFCOMM server with prefixed UUID as per OIC Specification.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief  Starting discovery server for receiving multicast advertisements.
+ * Starts  RFCOMM Server with prefixed UUID as per OIC specification.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_SERVER_STARTED_ALREADY  Server is already started and running for the predefined
+ *                                     service UUID
+ * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAStartEDRDiscoveryServer();
 
 /**
- * @brief Sends data to the endpoint using the adapter connectivity.
- * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri and connectivity type) to
- *                              which the unicast data has to be sent.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
+ * @brief  Sends data to the peer bluetooth OIC device using the adapter connectivity.
+ * @param  remoteEndpoint  [IN] Remote Endpoint information (like ipaddress, port, reference uri and
+ *                              connectivity type) to which the unicast data has to be sent.
+ * @param  data            [IN] Data to be sent.
+ * @param  dataLength      [IN] Size of data to be sent.
+ * @return The number of bytes sent on the network. Returns -1 on error.
+ *
  */
-uint32_t CASendEDRUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen);
+int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+                              uint32_t dataLength);
 
 /**
- * @brief Sends Multicast data to the endpoint using the EDR connectivity.
- * Note: length must be > 0.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
+ * @brief  Sends multicast data to all discovered bluetooth OIC devices using the adapter
+ *         connectivity.
+ * @param  data         [IN]  Data which needs to be sent to all discovered bluetooth OIC device.
+ * @param  dataLength   [IN]  Length of data in bytes.
+ * @return Number of bytes sent on the network. Returns -1 on error.
  */
-uint32_t CASendEDRMulticastData(void* data, uint32_t dataLen);
+int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength);
 
 /**
- * @brief Starts notification server on EDR adapters.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief  Get EDR Connectivity network information.
+ *
+ * @param  info [OUT] Array of local connectivity information structures.
+ * @param  size [OUT] Size of the array @info.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input parameters
+ * @retval #CA_MEMORY_ALLOC_FAILED  Failed to allocate memory
+ * @retval #CA_STATUS_FAILED Operation failed
+ * @remarks info is allocated in this API and should be freed by the caller.
  */
-CAResult_t CAStartEDRNotifyServer();
+CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
- * @brief Send notification information.
- * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri and connectivity type) to
- *                              which the unicast data has to be sent.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return - The number of bytes sent on the network. Return value equal to zero indicates error.
- */
-uint32_t CASendEDRNotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen);
-
-/**
- * @brief Get EDR Connectivity network information
- * @param   info        [OUT]   Local connectivity information structures
- * @param   size        [OUT]   Number of local connectivity structures.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
- */
-CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size);
-
-/**
- * @brief Read Synchronous API callback.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief  Read Synchronous API callback.
+ * @return #CA_STATUS_OK on success otherwise proper error code.
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAReadEDRData();
 
 /**
- * @brief Stopping the adapters and close socket connections
- *   EDR Stops all RFCOMM servers and close sockets.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * @brief  EDR Stops all RFCOMM servers and close sockets.
+ * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAStopEDR();
 
 /**
- * @brief Terminate the EDR connectivity adapter.
- * Configuration information will be deleted from further use
+ * @brief  Terminate the EDR connectivity adapter.
+ * Configuration information will be deleted from further use.
+ * @return NONE
  */
 void CATerminateEDR();
+
+/**
+ * @brief  Initializes the adapter queues.
+ * This will initiates both server and receiver adapter queues.
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input parameters
+ * @retval #CA_MEMORY_ALLOC_FAILED  Failed to allocate memory
+ * @retval #CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAAdapterStartQueue();
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 #endif  //__CA_EDRADAPTER_H_
+

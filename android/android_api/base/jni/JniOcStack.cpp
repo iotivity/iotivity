@@ -27,6 +27,18 @@
 
 JavaVM* g_jvm = NULL;
 
+jclass g_cls_Integer = NULL;
+jclass g_cls_int1DArray = NULL;
+jclass g_cls_int2DArray = NULL;
+jclass g_cls_Double = NULL;
+jclass g_cls_double1DArray = NULL;
+jclass g_cls_double2DArray = NULL;
+jclass g_cls_Boolean = NULL;
+jclass g_cls_boolean1DArray = NULL;
+jclass g_cls_boolean2DArray = NULL;
+jclass g_cls_String = NULL;
+jclass g_cls_String1DArray = NULL;
+jclass g_cls_String2DArray = NULL;
 jclass g_cls_LinkedList = NULL;
 jclass g_cls_Map = NULL;
 jclass g_cls_MapEntry = NULL;
@@ -36,6 +48,8 @@ jclass g_cls_HashMap = NULL;
 jclass g_cls_OcException = NULL;
 jclass g_cls_OcResource = NULL;
 jclass g_cls_OcRepresentation = NULL;
+jclass g_cls_OcRepresentation1DArray = NULL;
+jclass g_cls_OcRepresentation2DArray = NULL;
 jclass g_cls_OcResourceRequest = NULL;
 jclass g_cls_OcResourceResponse = NULL;
 jclass g_cls_OcResourceHandle = NULL;
@@ -44,7 +58,11 @@ jclass g_cls_OcRequestHandle = NULL;
 jclass g_cls_OcPresenceStatus = NULL;
 jclass g_cls_OcHeaderOption = NULL;
 jclass g_cls_ObservationInfo = NULL;
+jclass g_cls_OcResourceIdentifier = NULL;
 
+jmethodID g_mid_Integer_ctor = NULL;
+jmethodID g_mid_Double_ctor = NULL;
+jmethodID g_mid_Boolean_ctor = NULL;
 jmethodID g_mid_LinkedList_ctor = NULL;
 jmethodID g_mid_LinkedList_add_object = NULL;
 jmethodID g_mid_Map_entrySet = NULL;
@@ -70,8 +88,9 @@ jmethodID g_mid_OcHeaderOption_get_id = NULL;
 jmethodID g_mid_OcHeaderOption_get_data = NULL;
 jmethodID g_mid_ObservationInfo_N_ctor = NULL;
 jmethodID g_mid_OcPresenceStatus_get = NULL;
+jmethodID g_mid_OcResourceIdentifier_N_ctor = NULL;
 
-void throwOcException(JNIEnv* env, const char* file, const char* functionName,
+jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
 {
     std::string codeStr = JniUtils::stackResultToStr(code);
@@ -89,9 +108,12 @@ void throwOcException(JNIEnv* env, const char* file, const char* functionName,
         env->NewStringUTF(file),
         env->NewStringUTF(functionName),
         line);
+    return ex;
+}
 
+void throwOcException(JNIEnv* env, jobject ex)
+{
     env->Throw((jthrowable)ex);
-    env->DeleteLocalRef(ex);
 }
 
 // JNI OnLoad
@@ -107,8 +129,83 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
         return JNI_ERR;
     }
 
+    jclass clazz = nullptr;
+
+    //Integer
+    clazz = env->FindClass("java/lang/Integer");
+    if (!clazz) return JNI_ERR;
+    g_cls_Integer = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_Integer_ctor = env->GetMethodID(g_cls_Integer, "<init>", "(I)V");
+    if (!g_mid_Integer_ctor) return JNI_ERR;
+
+    clazz = env->FindClass("[I");
+    if (!clazz) return JNI_ERR;
+    g_cls_int1DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[I");
+    if (!clazz) return JNI_ERR;
+    g_cls_int2DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    //Double
+    clazz = env->FindClass("java/lang/Double");
+    if (!clazz) return JNI_ERR;
+    g_cls_Double = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_Double_ctor = env->GetMethodID(g_cls_Double, "<init>", "(D)V");
+    if (!g_mid_Double_ctor) return JNI_ERR;
+
+    clazz = env->FindClass("[D");
+    if (!clazz) return JNI_ERR;
+    g_cls_double1DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[D");
+    if (!clazz) return JNI_ERR;
+    g_cls_double2DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    //Boolean
+    clazz = env->FindClass("java/lang/Boolean");
+    if (!clazz) return JNI_ERR;
+    g_cls_Boolean = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_Boolean_ctor = env->GetMethodID(g_cls_Boolean, "<init>", "(Z)V");
+    if (!g_mid_Boolean_ctor) return JNI_ERR;
+
+    clazz = env->FindClass("[Z");
+    if (!clazz) return JNI_ERR;
+    g_cls_boolean1DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[Z");
+    if (!clazz) return JNI_ERR;
+    g_cls_boolean2DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    //String
+    clazz = env->FindClass("java/lang/String");
+    if (!clazz) return JNI_ERR;
+    g_cls_String = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[Ljava/lang/String;");
+    if (!clazz) return JNI_ERR;
+    g_cls_String1DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[Ljava/lang/String;");
+    if (!clazz) return JNI_ERR;
+    g_cls_String2DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
     //LinkedList
-    jclass clazz = env->FindClass("java/util/LinkedList");
+    clazz = env->FindClass("java/util/LinkedList");
     if (!clazz) return JNI_ERR;
     g_cls_LinkedList = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
@@ -206,6 +303,16 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     g_mid_OcRepresentation_N_ctor_bool = env->GetMethodID(g_cls_OcRepresentation, "<init>", "(JZ)V");
     if (!g_mid_OcRepresentation_N_ctor_bool) return JNI_ERR;
 
+    clazz = env->FindClass("[Lorg/iotivity/base/OcRepresentation;");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcRepresentation1DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[Lorg/iotivity/base/OcRepresentation;");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcRepresentation2DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
     //HeaderOptions
     clazz = env->FindClass("org/iotivity/base/OcHeaderOption");
     if (!clazz) return JNI_ERR;
@@ -278,6 +385,14 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     env->DeleteLocalRef(clazz);
     g_mid_ObservationInfo_N_ctor = env->GetMethodID(g_cls_ObservationInfo, "<init>", "(IB)V");
     if (!g_mid_ObservationInfo_N_ctor) return JNI_ERR;
+
+    clazz = env->FindClass("org/iotivity/base/OcResourceIdentifier");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcResourceIdentifier = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+    g_mid_OcResourceIdentifier_N_ctor = env->GetMethodID(g_cls_OcResourceIdentifier, "<init>", "(J)V");
+    if (!g_mid_OcResourceIdentifier_N_ctor) return JNI_ERR;
+
     return JNI_CURRENT_VERSION;
 }
 
@@ -292,6 +407,18 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
         return;
     }
 
+    env->DeleteGlobalRef(g_cls_Integer);
+    env->DeleteGlobalRef(g_cls_int1DArray);
+    env->DeleteGlobalRef(g_cls_int2DArray);
+    env->DeleteGlobalRef(g_cls_Double);
+    env->DeleteGlobalRef(g_cls_double1DArray);
+    env->DeleteGlobalRef(g_cls_double2DArray);
+    env->DeleteGlobalRef(g_cls_Boolean);
+    env->DeleteGlobalRef(g_cls_boolean1DArray);
+    env->DeleteGlobalRef(g_cls_boolean2DArray);
+    env->DeleteGlobalRef(g_cls_String);
+    env->DeleteGlobalRef(g_cls_String1DArray);
+    env->DeleteGlobalRef(g_cls_String2DArray);
     env->DeleteGlobalRef(g_cls_LinkedList);
     env->DeleteGlobalRef(g_cls_Map);
     env->DeleteGlobalRef(g_cls_MapEntry);
@@ -301,6 +428,8 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_OcResource);
     env->DeleteGlobalRef(g_cls_OcException);
     env->DeleteGlobalRef(g_cls_OcRepresentation);
+    env->DeleteGlobalRef(g_cls_OcRepresentation1DArray);
+    env->DeleteGlobalRef(g_cls_OcRepresentation2DArray);
     env->DeleteGlobalRef(g_cls_OcResourceRequest);
     env->DeleteGlobalRef(g_cls_OcResourceResponse);
     env->DeleteGlobalRef(g_cls_OcResourceHandle);
@@ -309,6 +438,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_OcPresenceStatus);
     env->DeleteGlobalRef(g_cls_OcHeaderOption);
     env->DeleteGlobalRef(g_cls_ObservationInfo);
+    env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
 
     //TODO currently all JniOcResources are destroyed by the GC, add code to implicitly destroy them on JNI_OnUnload
     //TODO add code to clear OnResourceFoundListener map

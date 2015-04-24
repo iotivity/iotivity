@@ -339,7 +339,7 @@ public class OcResource {
      *
      * @param onDeleteListener event handler The event handler will have headerOptionList
      */
-    public native void deleteResource(OnDeleteListener onDeleteListener);
+    public native void deleteResource(OnDeleteListener onDeleteListener) throws OcException;
 
     /**
      * Method to perform DELETE operation
@@ -348,13 +348,13 @@ public class OcResource {
      * @param qualityOfService the quality of communication
      */
     public void deleteResource(OnDeleteListener onDeleteListener,
-                               QualityOfService qualityOfService) {
+                               QualityOfService qualityOfService) throws OcException {
         this.deleteResource1(onDeleteListener,
                 qualityOfService.getValue());
     }
 
     private native void deleteResource1(OnDeleteListener onDeleteListener,
-                                        int qualityOfService);
+                                        int qualityOfService) throws OcException;
 
     /**
      * Method to set observation on the resource
@@ -374,9 +374,9 @@ public class OcResource {
                 onObserveListener);
     }
 
-    private native void observe(int observeType,
-                                Map<String, String> queryParamsMap,
-                                OnObserveListener onObserveListener) throws OcException;
+    private synchronized native void observe(int observeType,
+                                             Map<String, String> queryParamsMap,
+                                             OnObserveListener onObserveListener) throws OcException;
 
     /**
      * Method to set observation on the resource
@@ -399,10 +399,10 @@ public class OcResource {
                 qualityOfService.getValue());
     }
 
-    private native void observe1(int observeType,
-                                 Map<String, String> queryParamsMap,
-                                 OnObserveListener onObserveListener,
-                                 int qualityOfService) throws OcException;
+    private synchronized native void observe1(int observeType,
+                                              Map<String, String> queryParamsMap,
+                                              OnObserveListener onObserveListener,
+                                              int qualityOfService) throws OcException;
 
     /**
      * Method to cancel the observation on the resource
@@ -458,6 +458,19 @@ public class OcResource {
     public native String getUri();
 
     /**
+     * Method to get the connectivity type of this resource
+     *
+     * @return OcConnectivityType connectivity type
+     */
+    public OcConnectivityType getConnectivityType() {
+        return OcConnectivityType.get(
+                this.getConnectivityTypeN()
+        );
+    }
+
+    private native int getConnectivityTypeN();
+
+    /**
      * Method to provide ability to check if this resource is observable or not
      *
      * @return true indicates resource is observable; false indicates resource is not observable
@@ -479,43 +492,74 @@ public class OcResource {
     public native List<String> getResourceInterfaces();
 
     /**
+     * Method to get a unique identifier for this resource across network interfaces.  This will
+     * be guaranteed unique for every resource-per-server independent of how this was discovered.
      *
+     * @return OcResourceIdentifier object, which can be used for all comparison and hashing
+     */
+    public native OcResourceIdentifier getUniqueIdentifier();
+
+    /**
+     * Method to get a string representation of the resource's server ID.
+     * * This is unique per- server independent on how it was discovered.
+     *
+     * @return server ID
+     */
+    public native String getServerId();
+
+    /**
+     * An OnGetListener can be registered via the resource get call.
+     * Event listeners are notified asynchronously
      */
     public interface OnGetListener {
         public void onGetCompleted(List<OcHeaderOption> headerOptionList,
                                    OcRepresentation ocRepresentation);
+
+        public void onGetFailed(Throwable ex);
     }
 
     /**
-     *
+     * An OnPutListener can be registered via the resource put call.
+     * Event listeners are notified asynchronously
      */
     public interface OnPutListener {
         public void onPutCompleted(List<OcHeaderOption> headerOptionList,
                                    OcRepresentation ocRepresentation);
+
+        public void onPutFailed(Throwable ex);
     }
 
     /**
-     *
+     * An OnPostListener can be registered via the resource post call.
+     * Event listeners are notified asynchronously
      */
     public interface OnPostListener {
         public void onPostCompleted(List<OcHeaderOption> headerOptionList,
                                     OcRepresentation ocRepresentation);
+
+        public void onPostFailed(Throwable ex);
     }
 
     /**
-     *
+     * An OnDeleteListener can be registered via the resource delete call.
+     * Event listeners are notified asynchronously
      */
     public interface OnDeleteListener {
         public void onDeleteCompleted(List<OcHeaderOption> headerOptionList);
+
+        public void onDeleteFailed(Throwable ex);
     }
 
     /**
-     *
+     * An OnObserveListener can be registered via the resource observe call.
+     * Event listeners are notified asynchronously
      */
     public interface OnObserveListener {
         public void onObserveCompleted(List<OcHeaderOption> headerOptionList,
                                        OcRepresentation ocRepresentation,
                                        int sequenceNumber);
+
+        public void onObserveFailed(Throwable ex);
     }
 
     @Override

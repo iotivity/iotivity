@@ -84,7 +84,11 @@ public class LightResource extends Resource implements IMessageLogger {
      * @return light is on or off
      */
     private void updateRepresentationValues() {
-        mRepresentation.setValueBool(StringConstants.ON, mIsOn);
+        try {
+            mRepresentation.setValue(StringConstants.ON, mIsOn);
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     /**
@@ -93,7 +97,11 @@ public class LightResource extends Resource implements IMessageLogger {
      * @param representation get current state of light
      */
     private void put(OcRepresentation representation) {
-        mIsOn = representation.getValueBool(StringConstants.ON);
+        try {
+            mIsOn = representation.getValue(StringConstants.ON);
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     /**
@@ -113,29 +121,28 @@ public class LightResource extends Resource implements IMessageLogger {
 
                     switch (request.getRequestType()) {
                         case GET:
-                            response.setErrorCode(StringConstants.ERROR_CODE);
+                            response.setErrorCode(StringConstants.OK);
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
+                            response.setResponseResult(EntityHandlerResult.OK);
                             OcPlatform.sendResponse(response);
+                            result = EntityHandlerResult.OK;
                             break;
                         case PUT:
-                            response.setErrorCode(StringConstants.ERROR_CODE);
+                            response.setErrorCode(StringConstants.OK);
                             put(request.getResourceRepresentation());
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
+                            response.setResponseResult(EntityHandlerResult.OK);
                             OcPlatform.sendResponse(response);
-                            break;
-                        case POST:
-                        case DELETE:
-                            response.setResponseResult(EntityHandlerResult.ERROR);
-                            OcPlatform.sendResponse(response);
+                            result = EntityHandlerResult.OK;
                             break;
                     }
-                    result = EntityHandlerResult.OK;
                 }
             } catch (OcException e) {
                 logMessage(TAG + e.getMessage());
                 Log.e(TAG, e.getMessage());
+                return EntityHandlerResult.ERROR;
             }
         }
         return result;

@@ -241,7 +241,7 @@ void createREFERResource()
 {
 
     OCStackResult res = OCCreateResource(&REFER.m_handle,
-                                         "SoftSensorManager.Sensor",
+                                         "SSManager.Sensor",
                                          "oc.mi.def",
                                          "/Reference_Thing",
                                          OCEntityHandlerCb,

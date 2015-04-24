@@ -269,6 +269,10 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
                 {
                     ehResult = OC_EH_OK;
                 }
+                else
+                {
+                    cout << "put request Error\n";
+                }
             }
 
             else if (requestType == "POST")
@@ -344,6 +348,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
 void quitProcess()
 {
+    unregisterResource(myResource.m_resourceHandle);
     stopPresence();
     exit(0);
 }
@@ -359,7 +364,6 @@ void handleSigInt(int signum)
 
 int main()
 {
-
     PlatformConfig cfg
     {
         OC::ServiceType::InProc,
@@ -437,4 +441,3 @@ int main()
 
 
 }
-

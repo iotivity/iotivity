@@ -31,16 +31,13 @@ JniEntityHandler::JniEntityHandler(JNIEnv *env, jobject entityHandler)
 
 JniEntityHandler::~JniEntityHandler()
 {
-    LOGD("~JniEntityHandler()");
-
+    LOGD("~JniEntityHandler");
     if (m_jListener)
     {
         jint ret;
         JNIEnv *env = GetJNIEnv(ret);
         if (NULL == env) return;
-
         env->DeleteGlobalRef(m_jListener);
-
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
@@ -54,40 +51,47 @@ OCEntityHandlerResult JniEntityHandler::handleEntity(const std::shared_ptr<OCRes
 
     JniOcResourceRequest* jniResReq = new JniOcResourceRequest(request);
     jlong reqHandle = reinterpret_cast<jlong>(jniResReq);
-    jobject jResourceRequest = env->NewObject(g_cls_OcResourceRequest, g_mid_OcResourceRequest_N_ctor, reqHandle);
-    if (env->ExceptionCheck())
+    jobject jResourceRequest = env->NewObject(g_cls_OcResourceRequest, g_mid_OcResourceRequest_N_ctor,
+        reqHandle);
+    if (!jResourceRequest)
     {
         LOGE("Failed to create OcResourceRequest");
         delete jniResReq;
-        jniResReq = NULL;
+        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return OC_EH_ERROR;
     }
 
     jclass clsL = env->GetObjectClass(m_jListener);
-    jmethodID midL = env->GetMethodID(clsL, "handleEntity", "(Lorg/iotivity/base/OcResourceRequest;)Lorg/iotivity/base/EntityHandlerResult;");
+    jmethodID midL = env->GetMethodID(clsL, "handleEntity",
+        "(Lorg/iotivity/base/OcResourceRequest;)Lorg/iotivity/base/EntityHandlerResult;");
     jobject entityHandlerResult = env->CallObjectMethod(m_jListener, midL, jResourceRequest);
     if (env->ExceptionCheck())
     {
-        env->ExceptionClear();
+        LOGE("Java exception is thrown");
         delete jniResReq;
-        jniResReq = NULL;
+        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+        return OC_EH_ERROR;
+    }
+
+    if (!entityHandlerResult)
+    {
+        delete jniResReq;
+        ThrowOcException(JNI_INVALID_VALUE, "EntityHandlerResult cannot be null");
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return OC_EH_ERROR;
     }
 
     jclass clsResult = env->GetObjectClass(entityHandlerResult);
+    jmethodID getValue_ID = env->GetMethodID(clsResult, "getValue", "()I");
+    jint jResult = env->CallIntMethod(entityHandlerResult, getValue_ID);
     if (env->ExceptionCheck())
     {
-        env->ExceptionClear();
+        LOGE("Java exception is thrown");
         delete jniResReq;
-        jniResReq = NULL;
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return OC_EH_ERROR;
     }
 
-    jmethodID getValue_ID = env->GetMethodID(clsResult, "getValue", "()I");
-    jint jResult = (jint)env->CallIntMethod(entityHandlerResult, getValue_ID);
-
     if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
-    return JniUtils::getOCEntityHandlerResult(env, (int)jResult);
+    return JniUtils::getOCEntityHandlerResult(env, static_cast<int>(jResult));
 }

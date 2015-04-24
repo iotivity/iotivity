@@ -23,14 +23,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-oic_log_ctx_t *oic_log_make_ctx(void* world, const oic_log_level level, oic_log_init_t init,
-        oic_log_destroy_t destroy, oic_log_flush_t flush, oic_log_set_level_t set_level,
-        oic_log_write_level_t write_level, oic_log_set_module_t set_module)
+oic_log_ctx_t *oic_log_make_ctx(void *world, const oic_log_level level, oic_log_init_t init,
+                                oic_log_destroy_t destroy, oic_log_flush_t flush,
+                                oic_log_set_level_t set_level,oic_log_write_level_t write_level,
+                                oic_log_set_module_t set_module)
 {
     oic_log_ctx_t *log_ctx;
 
     if (0 == init || 0 == destroy || 0 == flush || 0 == set_level || 0 == write_level
-            || 0 == set_module)
+        || 0 == set_module)
         return 0;
 
     if (__OIC_LOG_MIN__ > level || __OIC_LOG_MAX__ < level)
@@ -133,7 +134,11 @@ int oic_log_set_module(oic_log_ctx_t *ctx, const char *module_name)
     mn = (char *) malloc(1 + l);
 
     if (0 == mn)
+    {
+        if (0 != ctx->module_name)
+            free(ctx->module_name);
         return 0;
+    }
 
     memcpy(mn, module_name, 1 + l);
 
@@ -145,4 +150,5 @@ int oic_log_set_module(oic_log_ctx_t *ctx, const char *module_name)
     /* Notify: */
     return ctx->set_module(ctx, ctx->module_name);
 }
+
 

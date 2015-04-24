@@ -3,10 +3,10 @@
  * Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
-/** 
+/**
  * @file coap_time.h
  * @brief Clock Handling
  */
@@ -106,20 +106,52 @@ extern "C"
     extern time_t clock_offset;
 #endif /* WITH_POSIX */
 
+#ifdef WITH_ARDUINO
+#include "Time.h"
+#ifdef ARDUINO_ARCH_SAM
+#include <sys/types.h>  // time_t is defined in sys/types.h for ARM compiler
+#else
+typedef unsigned long time_t; //AVR compiler doesnt define time_t
+#endif
+typedef time_t coap_tick_t;
+
+/**
+ * This data type is used to represent the difference between two
+ * clock_tick_t values. This data type must have the same size in
+ * memory as coap_tick_t to allow wrapping.
+ */
+typedef int coap_tick_diff_t;
+
+/* TODO: Ticks per second value for Arduino needs verification from
+ * documentation */
+#define COAP_TICKS_PER_SECOND 1000
+
+extern time_t clock_offset;
+
+#endif /* WITH_ARDUINO */
+
 #ifndef coap_clock_init
     static inline void coap_clock_init_impl(void)
     {
 #ifdef HAVE_TIME_H
         clock_offset = time(NULL);
 #else
-#  ifdef __GNUC__
-        /* Issue a warning when using gcc. Other prepropressors do 
-         *  not seem to have a similar feature. */
-#   warning "cannot initialize clock"
-#  endif
-        clock_offset = 0;
+#  ifdef WITH_ARDUINO
+#ifdef __AVR__
+    clock_offset = 1; //now();
+#else
+    clock_offset = now();
 #endif
-    }
+#  else
+#    ifdef __GNUC__
+    /* Issue a warning when using gcc. Other prepropressors do
+     *  not seem to have a similar feature. */
+#     warning "cannot initialize clock"
+#    endif
+    clock_offset = 0;
+#  endif /* WITH_ARDUINO */
+#endif /* HAVE_TIME */
+}
 #define coap_clock_init coap_clock_init_impl
 #endif /* coap_clock_init */
 
@@ -132,9 +164,19 @@ extern "C"
         *t = (tv.tv_sec - clock_offset) * COAP_TICKS_PER_SECOND
                 + (tv.tv_usec * COAP_TICKS_PER_SECOND / 1000000);
 #else
-#error "clock not implemented"
+#  ifdef WITH_ARDUINO
+    coap_tick_t tv;
+#ifdef __AVR__
+    tv = 1; //now();
+#else
+    tv = now();
 #endif
-    }
+    *t = (tv - clock_offset) * COAP_TICKS_PER_SECOND;
+#  else
+#    error "clock not implemented"
+#  endif /* WITH_ARDUINO */
+#endif /* HAVE_SYS_TIME_H */
+}
 #define coap_ticks coap_ticks_impl
 #endif /* coap_ticks */
 

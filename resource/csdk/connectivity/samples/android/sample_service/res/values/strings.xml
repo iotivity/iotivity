@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CA Android Sample</string>
+    <string name="find">Find</string>
+    <string name="sendresponse">Send Response</string>
+    <string name="notify">Send Notification</string>
+    <string name="advertise">Advertise</string>
+    <string name="request_setting">Request Setting</string>
+    <string name="request">Request</string>
+    <string name="request_to_all">Request to All</string>
+    <string name="response">Response</string>
+    <string name="uri">/a/light</string>
+    <string name="notification"></string>
+    <string name="req_data"></string>
+    <string name="resp_data">resourceUri/response</string>
+    <string name="get_network_info">Network Info</string>
+    <string name="receive">Receive</string>
+    <string name="received">Received Message</string>
+    <string name="action_settings">Settings</string>
+    <string name="payload_data_client">PayloadData</string>
+    <string name="payload_data_server">PayloadData</string>
+</resources>

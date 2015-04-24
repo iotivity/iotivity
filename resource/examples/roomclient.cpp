@@ -33,7 +33,7 @@ using namespace OC;
 
 const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
-std::mutex curResourceLock;
+std::mutex resourceLock;
 
 int observe_count()
 {
@@ -162,7 +162,7 @@ void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
-    std::lock_guard<std::mutex> lock(curResourceLock);
+    std::lock_guard<std::mutex> lock(resourceLock);
     if(curResource)
     {
         std::cout << "Found another resource, ignoring"<<std::endl;
@@ -221,6 +221,50 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
 int main(int argc, char* argv[]) {
 
+    std::ostringstream requestURI;
+
+    OCConnectivityType connectivityType = OC_WIFI;
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = std::stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "Usage roomclient <connectivityType(0|1)>" << std::endl;
+        std::cout<<"connectivityType: Default WIFI" << std::endl;
+        std::cout << "connectivityType 0: ETHERNET" << std::endl;
+        std::cout << "connectivityType 1: WIFI" << std::endl;
+    }
+
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
@@ -235,7 +279,9 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core", &foundResource);
+        requestURI << OC_WELL_KNOWN_QUERY;
+
+        OCPlatform::findResource("", requestURI.str(), connectivityType, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-
@@ -249,9 +295,10 @@ int main(int argc, char* argv[]) {
 
     }catch(OCException& e)
     {
-        //log(e.what());
+        oclog() << "Exception in main: "<< e.what();
     }
 
     return 0;
 }
+
 

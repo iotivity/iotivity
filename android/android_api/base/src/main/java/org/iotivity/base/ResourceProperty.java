@@ -23,11 +23,11 @@
 package org.iotivity.base;
 
 public enum ResourceProperty {
-    ACTIVE      (1 << 0),
+    ACTIVE(1 << 0),
     DISCOVERABLE(1 << 1),
-    OBSERVABLE  (1 << 2),
-    SLOW        (1 << 3),
-    SECURE      (1 << 4);
+    OBSERVABLE(1 << 2),
+    SLOW(1 << 3),
+    SECURE(1 << 4);
 
     private int value;
 

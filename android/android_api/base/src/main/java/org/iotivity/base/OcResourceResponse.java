@@ -94,9 +94,10 @@ public class OcResourceResponse {
 
     /**
      * This API allows to set the EntityHandler response result
+     *
      * @param responseResult OcEntityHandlerResult type to set the result value
      */
-    public void setResponseResult(EntityHandlerResult responseResult){
+    public void setResponseResult(EntityHandlerResult responseResult) {
         this.setResponseResult(responseResult.getValue());
     }
 

@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
 #include "OCPlatform.h"
 #include "OCApi.h"
 
@@ -40,13 +41,15 @@ const uint16_t TOKEN = 3000;
 class ClientFridge
 {
     public:
-    ClientFridge()
+    ClientFridge(OCConnectivityType ct): m_callbackCount(0),
+        m_callsMade(0),m_connectivityType(ct)
     {
+        std::ostringstream requestURI;
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=intel.fridge";
         std::cout << "Fridge Client has started " <<std::endl;
         FindCallback f (std::bind(&ClientFridge::foundDevice, this, PH::_1));
-
         OCStackResult result = OCPlatform::findResource(
-                "", "coap://224.0.1.187/oc/core?rt=intel.fridge", f);
+                "", requestURI.str(), m_connectivityType, f);
 
         if(OC_STACK_OK != result)
         {
@@ -59,7 +62,7 @@ class ClientFridge
             // its duties, so we block on the CV until we have completed
             // what we are looking to do
             std::unique_lock<std::mutex> lk(m_mutex);
-            m_cv.wait(lk);
+            m_cv.wait(lk, [this]{ return m_callbackCount!=0 && m_callbackCount == m_callsMade;});
         }
     }
 
@@ -80,7 +83,7 @@ class ClientFridge
         std::vector<std::string> lightTypes = {"intel.fridge.light"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
         OCResource::Ptr light = constructResourceObject(resource->host(),
-                                "/light", false, lightTypes, ifaces);
+                                "/light", m_connectivityType, false, lightTypes, ifaces);
 
         if(!light)
         {
@@ -89,9 +92,9 @@ class ClientFridge
         }
 
         std::vector<std::string> doorTypes = {"intel.fridge.door"};
-
         OCResource::Ptr leftdoor = constructResourceObject(resource->host(),
-                                "/door/left", false, doorTypes, ifaces);
+                                "/door/left", m_connectivityType, false, doorTypes, ifaces);
+
         if(!leftdoor)
         {
             std::cout << "Error: Left Door Resource Object construction returned null\n";
@@ -99,7 +102,8 @@ class ClientFridge
         }
 
         OCResource::Ptr rightdoor = constructResourceObject(resource->host(),
-                                "/door/right", false, doorTypes, ifaces);
+                                "/door/right", m_connectivityType, false, doorTypes, ifaces);
+
         if(!rightdoor)
         {
             std::cout << "Error: Right Door Resource Object construction returned null\n";
@@ -107,7 +111,7 @@ class ClientFridge
         }
 
         OCResource::Ptr randomdoor = constructResourceObject(resource->host(),
-                                "/door/random", false, doorTypes, ifaces);
+                                "/door/random", m_connectivityType, false, doorTypes, ifaces);
         if(!randomdoor)
         {
             std::cout << "Error: Random Door Resource Object construction returned null\n";
@@ -135,26 +139,32 @@ class ClientFridge
         // Below, header options are set only for device resource
         resource->setHeaderOptions(headerOptions);
 
+        ++m_callsMade;
         resource->get(QueryParamsMap(), GetCallback(
                 std::bind(&ClientFridge::getResponse, this, "Device", PH::_1,
                     PH::_2, PH::_3, resource, 0)
                 ));
+        ++m_callsMade;
         light->get(QueryParamsMap(), GetCallback(
                 std::bind(&ClientFridge::getResponse, this, "Fridge Light", PH::_1,
                     PH::_2, PH::_3, light, 1)
                 ));
+        ++m_callsMade;
         leftdoor->get(QueryParamsMap(), GetCallback(
                 std::bind(&ClientFridge::getResponse, this, "Left Door", PH::_1,
                     PH::_2, PH::_3, leftdoor, 2)
                 ));
+        ++m_callsMade;
         rightdoor->get(QueryParamsMap(), GetCallback(
                 std::bind(&ClientFridge::getResponse, this, "Right Door", PH::_1,
                     PH::_2, PH::_3, rightdoor, 3)
                 ));
+        ++m_callsMade;
         randomdoor->get(QueryParamsMap(), GetCallback(
                 std::bind(&ClientFridge::getResponse, this, "Random Door", PH::_1,
                     PH::_2, PH::_3, randomdoor, 4)
                 ));
+        ++m_callsMade;
         resource->deleteResource(DeleteCallback(
                 std::bind(&ClientFridge::deleteResponse, this, "Device", PH::_1,
                     PH::_2, resource, 0)
@@ -211,6 +221,12 @@ class ClientFridge
                     break;
                 }
         }
+        ++m_callbackCount;
+
+        if(m_callbackCount == m_callsMade)
+        {
+            m_cv.notify_all();
+        }
     }
 
     //Callback function to handle response for deleteResource call.
@@ -220,6 +236,13 @@ class ClientFridge
         std::cout << "Got a response from delete from the "<< resourceName << std::endl;
         std::cout << "Delete ID is "<<deleteId<<" and resource URI is "<<resource->uri()<<std::endl;
         printHeaderOptions(headerOptions);
+
+        ++m_callbackCount;
+
+        if(m_callbackCount == m_callsMade)
+        {
+            m_cv.notify_all();
+        }
     }
 
     //Function to print the headerOptions received from the server
@@ -237,10 +260,55 @@ class ClientFridge
 
     std::mutex m_mutex;
     std::condition_variable m_cv;
+    std::atomic<int> m_callbackCount;
+    std::atomic<int> m_callsMade;
+    OCConnectivityType m_connectivityType;
 };
 
-int main()
+int main(int argc, char* argv[])
 {
+    OCConnectivityType connectivityType = OC_WIFI;
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = std::stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<<"Usage: fridgeclient <ConnectivityType(0|1)>\n";
+        std::cout<<"ConnectivityType: Default WIFI\n";
+        std::cout<<"ConnectivityType 0: ETHERNET\n";
+        std::cout<<"ConnectivityType 1: WIFI\n";
+    }
+
     PlatformConfig cfg
     {
         ServiceType::InProc,
@@ -251,6 +319,7 @@ int main()
     };
 
     OCPlatform::Configure(cfg);
-    ClientFridge cf;
+    ClientFridge cf(connectivityType);
     return 0;
 }
+

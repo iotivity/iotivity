@@ -22,11 +22,14 @@
 # override with `make PLATFORM=arduinomega` or `make PLATFORM=arduinodue`
 # default to release build
 # default to build for linux
+# default to ETHERNET for transport
 BUILD	 := release
 PLATFORM := linux
+TRANSPORT := ETHERNET
 
 # override with `make PLATFORM=arduinomega ARDUINOWIFI=1` to enable Arduino WiFi shield
 ARDUINOWIFI := 0
+CA_INT_DTLS := 0
 
 ifeq ($(ROOT_DIR), )
 ROOT_DIR	= ./
@@ -39,7 +42,7 @@ ifeq ($(PLATFORM),linux)
     CC=gcc
     AR=ar
     RANLIB=ranlib
-    CFLAGS_PLATFORM = -DWITH_POSIX -std=c99
+    CFLAGS_PLATFORM = -DWITH_POSIX -std=gnu99
     PLATFORM_TYPE=linux
 else ifeq ($(PLATFORM),arduinomega)
     include local.properties
@@ -80,59 +83,57 @@ ifeq ($(OBJ_DIR), )
 OBJ_DIR	= $(OUT_DIR)/obj
 endif
 
-OCLOGGER_DIR	= logger
-OC_LOG_DIR      = ../oc_logger
-OCRANDOM_DIR	= ocrandom
-OCSOCKET_DIR	= ocsocket
-LCOAP_DIR	= libcoap-4.1.1
-OCCOAP_DIR	= occoap
-OCTBSTACK_DIR	= stack
-OCMALLOC_DIR 	= ocmalloc
-EXTLIBS_DIR	= ../../extlibs
-CJSON_DIR	= $(EXTLIBS_DIR)/cjson
+OCLOGGER_DIR		= logger
+OC_LOG_DIR      	= ../oc_logger
+OCRANDOM_DIR		= ocrandom
+OCTBSTACK_DIR		= stack
+OCMALLOC_DIR 		= ocmalloc
+OCSECURITY_DIR  = security
+EXTLIBS_DIR		= ../../extlibs
+CJSON_DIR		= $(EXTLIBS_DIR)/cjson
 TIMER_DIR	= $(EXTLIBS_DIR)/timer
 TINYDTLS_DIR	= $(EXTLIBS_DIR)/tinydtls
+CONNECTIVITY_DIR	= connectivity
 
-OCCOAP_SRC	= $(OCCOAP_DIR)/src
-OCTBSTACK_SRC	= $(OCTBSTACK_DIR)/src
-OCMALLOC_SRC 	= $(OCMALLOC_DIR)/src
-CJSON_SRC	= $(CJSON_DIR)
-TIMER_SRC	= $(TIMER_DIR)
-
-OCLOGGER_INC	= $(OCLOGGER_DIR)/include
-OC_LOG_INC	= $(OC_LOG_DIR)/include
-OCRANDOM_INC	= $(OCRANDOM_DIR)/include
-OCSOCKET_INC	= $(OCSOCKET_DIR)/include
-LCOAP_INC	= $(LCOAP_DIR)
-OCCOAP_INC	= $(OCCOAP_DIR)/include
-OCTBSTACK_INC	= $(OCTBSTACK_DIR)/include
-OCMALLOC_INC	= $(OCMALLOC_DIR)/include
-CJSON_INC	= $(CJSON_DIR)
-TIMER_INC	= $(TIMER_DIR)
+OCTBSTACK_SRC		= $(OCTBSTACK_DIR)/src
+OCMALLOC_SRC 		= $(OCMALLOC_DIR)/src
+OCSECURITY_SRC    = $(OCSECURITY_DIR)/src
+CJSON_SRC		= $(CJSON_DIR)
+CONNECTIVITY_SRC	= $(CONNECTIVITY_DIR)
+OCLOGGER_SRC		= $(OCLOGGER_DIR)/src
+OCRANDOM_SRC		= $(OCRANDOM_DIR)/src
+OCLOGGER_INC		= $(OCLOGGER_DIR)/include
+OC_LOG_INC		= $(OC_LOG_DIR)/include
+OCRANDOM_INC		= $(OCRANDOM_DIR)/include
+OCTBSTACK_INC		= $(OCTBSTACK_DIR)/include
+OCMALLOC_INC		= $(OCMALLOC_DIR)/include
+OCSECURITY_INC	= $(OCSECURITY_DIR)/include
+CJSON_INC		= $(CJSON_DIR)
+CONNECTIVITY_INC	= $(CONNECTIVITY_DIR)/inc
+LIBCOAP_INC         = $(CONNECTIVITY_DIR)/lib/libcoap-4.1.1
 
 INC_DIRS	:= -I$(OCLOGGER_INC)
 INC_DIRS	+= -I$(OC_LOG_INC)
 INC_DIRS	+= -I$(OCRANDOM_INC)
-INC_DIRS	+= -I$(OCSOCKET_INC)
-INC_DIRS	+= -I$(LCOAP_INC)
-INC_DIRS	+= -I$(OCCOAP_INC)
 INC_DIRS	+= -I$(OCMALLOC_INC)
+INC_DIRS	+= -I$(OCSECURITY_INC)
+INC_DIRS	+= -I$(OCSECURITY_INC)/internal
 INC_DIRS	+= -I$(OCTBSTACK_INC)
 INC_DIRS	+= -I$(OCTBSTACK_INC)/internal
 INC_DIRS	+= -I$(CJSON_INC)
-INC_DIRS	+= -I$(TIMER_INC)
+INC_DIRS	+= -I$(CONNECTIVITY_INC)
+INC_DIRS	+= -I$(CONNECTIVITY_DIR)/api
+INC_DIRS    += -I$(LIBCOAP_INC)
 
-CC_FLAGS.debug		:= -O0 -g3 -Wall -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
-CC_FLAGS.release	:= -Os -Wall -c -fmessage-length=0 -fpic
+# TODO-CA Remove -fstack-protector-all before merging to master
+CC_FLAGS.debug		:= -O0 -g3 -Wall -fstack-protector-all -c -fmessage-length=0 -pedantic -fpic -DTB_LOG
+# TODO-CA Remove -fstack-protector-all before merging to master
+CC_FLAGS.release	:= -Os -Wall -fstack-protector-all -c -fmessage-length=0 -fpic
 
 CFLAGS		+= $(CC_FLAGS.$(BUILD)) $(INC_DIRS) $(CFLAGS_PLATFORM) $(INC_DIR_PLATFORM)
-LDLIBS		+= -lcoap
 
 CJSON_SOURCES		:= $(CJSON_SRC)/cJSON.c
 TIMER_SOURCES		:= $(TIMER_SRC)/timer.c
-
-OCCOAP_SOURCES		:= $(OCCOAP_SRC)/occoap.c
-OCCOAP_SOURCES		+= $(OCCOAP_SRC)/occoaphelper.c
 
 OCTBSTACK_SOURCES	:= $(OCTBSTACK_SRC)/ocstack.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/occlientcb.c
@@ -141,19 +142,18 @@ OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocobserve.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocserverrequest.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/occollection.c
 OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/oicgroup.c
-OCTBSTACK_SOURCES	+= $(OCTBSTACK_SRC)/ocsecurity.c
+OCTBSTACK_SOURCES	+= $(OCSECURITY_SRC)/ocsecurity.c
+OCTBSTACK_SOURCES	+= $(OCMALLOC_SRC)/ocmalloc.c
+OCTBSTACK_SOURCES	+= $(OCLOGGER_SRC)/logger.c
+OCTBSTACK_SOURCES	+= $(OCRANDOM_SRC)/ocrandom.c
 
 SOURCES			:= $(CJSON_SOURCES)
 SOURCES			+= $(TIMER_SOURCES)
-SOURCES			+= $(OCCOAP_SOURCES)
 SOURCES			+= $(OCTBSTACK_SOURCES)
 
-all:	make_lcoap objdirs obj_build liboctbstack.a
+all:	objdirs obj_build ca liboctbstack.a
 
-buildScript_all: objdirs obj_build liboctbstack.a
-
-make_lcoap:
-	$(MAKE) -C $(LCOAP_DIR) "BUILD=$(BUILD)" "PLATFORM=$(PLATFORM)" "ARDUINOWIFI=$(ARDUINOWIFI)"
+buildScript_all: objdirs obj_build ca liboctbstack.a
 
 objdirs:
 	mkdir -p $(PLATFORM)
@@ -166,19 +166,27 @@ obj_build:
 	# Output all *.o files to $(OUT_DIR)/$(BUILD)/$(OBJ_DIR)
 	$(foreach source,$(SOURCES), $(CC) $(CFLAGS) $(source) -o $(patsubst %.c, %.o, $(patsubst %, $(OBJ_DIR)/%, $(notdir $(source))));)
 
-liboctbstack.a: obj_build
+ca:
 	@echo "Building $@"
-	# Unpackage libcoap.a to $(OBJ_DIR)/$(BUILD). The output objects from OCStack and OCCoap are already at this location
-	@cd $(OBJ_DIR) && $(AR) -x $(PLATFORM_SPECIFIC_BACKOUT)$(LCOAP_DIR)/$(PLATFORM)$(ARDUINO_SHIELD_TYPE)/$(BUILD)/libcoap.a
-	# Repackage all the objects at this location into a single archive. This is OCStack, OCCoap, and LibCoap (LibCoap contains OCRandom, OCLogger, and OCSocket.).
+        ifeq ($(PLATFORM),linux)
+	    @cd $(CONNECTIVITY_SRC)/lib/libcoap-4.1.1 && $(MAKE)
+	    @cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE) "BUILD=$(BUILD)" "PLATFORM=linux"
+	    @cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE)
+        else
+	    @cd $(CONNECTIVITY_SRC)/build/ && $(MAKE) "PLATFORM=$(PLATFORM)" "ARDUINO_DIR=$(ARDUINO_DIR)" "TRANSPORT=$(TRANSPORT)"
+        endif
+liboctbstack.a:
+	@echo "Building $@"
 	$(AR) -r $(OUT_DIR)/$@ $(OBJ_DIR)/*.o
 
-    ifeq ($(PLATFORM),linux)
-     ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
+    ifeq ($(CA_INT_DTLS),0)
+     ifeq ($(PLATFORM),linux)
+      ifneq ($(wildcard $(TINYDTLS_DIR)/libtinydtls.a),)
 			$(info "Building liboctbstack with DTLS support")
 			mkdir -p $(OBJ_DIR)/tinydtls
 			@cd $(OBJ_DIR)/tinydtls && $(AR) -x ../$(PLATFORM_SPECIFIC_BACKOUT)$(TINYDTLS_DIR)/libtinydtls.a
 			$(AR) -q $(OUT_DIR)/$@ $(OBJ_DIR)/tinydtls/*.o
+      endif
      endif
     endif
 
@@ -188,6 +196,8 @@ clean: legacy_clean
 	-rm -rf linux
 	-rm -rf arduinomega
 	-rm -rf arduinodue
+	@cd $(CONNECTIVITY_SRC)/build/ && $(MAKE) clean "PLATFORM=arduinomega"
+	@cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE) "clean"
 
 deepclean: legacy_deepclean
 	-rm -rf linux
@@ -198,6 +208,9 @@ legacy_clean:
 	@echo "Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/$(BUILD)/liboctbstack.a
+	cd $(CONNECTIVITY_SRC)/lib/libcoap-4.1.1 && $(MAKE) clean
+	cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE) clean
+	cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE) clean
 	rm -rf $(OBJ_DIR)
 	rm -rf release
 	rm -rf debug
@@ -206,7 +219,10 @@ legacy_deepclean:
 	@echo "Deep-Cleaning all."
 	rm -f $(OBJ_DIR)/$(BUILD)/*.o
 	rm -f $(ROOT_DIR)/liboctbstack.a
+	cd $(CONNECTIVITY_SRC)/lib/libcoap-4.1.1 && $(MAKE) clean
+	cd $(CONNECTIVITY_SRC)/build/linux && $(MAKE) clean
+	cd $(CONNECTIVITY_SRC)/samples/linux && $(MAKE) clean
 	rm -rf $(OBJ_DIR)
-	$(MAKE) clean -C $(LCOAP_DIR)
 	rm -rf release
 	rm -rf debug
+

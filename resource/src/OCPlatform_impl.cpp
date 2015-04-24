@@ -85,7 +85,7 @@ namespace OC
     OCPlatform_impl::OCPlatform_impl(const PlatformConfig& config)
      : m_cfg             { config },
        m_WrapperInstance { make_unique<WrapperFactory>() },
-       m_csdkLock        { make_shared<std::recursive_mutex>() }
+       m_csdkLock        { std::make_shared<std::recursive_mutex>() }
     {
         init(m_cfg);
     }
@@ -134,12 +134,13 @@ namespace OC
         return result_guard(
                    OCNotifyListOfObservers(resourceHandle,
                             &observationIds[0], observationIds.size(),
-                            reinterpret_cast<unsigned char *>(const_cast<char *>(payload.c_str())),
+                            payload.c_str(),
                             static_cast<OCQualityOfService>(QoS)));
     }
 
     OCResource::Ptr OCPlatform_impl::constructResourceObject(const std::string& host,
                                                 const std::string& uri,
+                                                OCConnectivityType connectivityType,
                                                 bool isObservable,
                                                 const std::vector<std::string>& resourceTypes,
                                                 const std::vector<std::string>& interfaces)
@@ -151,7 +152,7 @@ namespace OC
 
         return std::shared_ptr<OCResource>(new OCResource(m_client,
                                             host,
-                                            uri,
+                                            uri, "", connectivityType,
                                             isObservable,
                                             resourceTypes,
                                             interfaces));
@@ -159,33 +160,39 @@ namespace OC
 
     OCStackResult OCPlatform_impl::findResource(const std::string& host,
                                             const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
                                             FindCallback resourceHandler)
     {
-        return findResource(host, resourceName, resourceHandler, m_cfg.QoS);
+        return findResource(host, resourceName, connectivityType, resourceHandler, m_cfg.QoS);
     }
 
     OCStackResult OCPlatform_impl::findResource(const std::string& host,
                                             const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
                                             FindCallback resourceHandler, QualityOfService QoS)
     {
+
         return checked_guard(m_client, &IClientWrapper::ListenForResource,
-                             host, resourceName, resourceHandler, QoS);
+                             host, resourceName, connectivityType, resourceHandler, QoS);
     }
 
     OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
                                             const std::string& deviceURI,
+                                            OCConnectivityType connectivityType,
                                             FindDeviceCallback deviceInfoHandler)
     {
-        return result_guard(getDeviceInfo(host, deviceURI, deviceInfoHandler, m_cfg.QoS));
+        return result_guard(getDeviceInfo(host, deviceURI, connectivityType,
+               deviceInfoHandler, m_cfg.QoS));
     }
 
     OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
                                             const std::string& deviceURI,
+                                            OCConnectivityType connectivityType,
                                             FindDeviceCallback deviceInfoHandler,
                                             QualityOfService QoS)
     {
         return checked_guard(m_client, &IClientWrapper::ListenForDevice,
-                             host, deviceURI, deviceInfoHandler, QoS);
+                             host, deviceURI, connectivityType, deviceInfoHandler, QoS);
     }
 
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
@@ -196,7 +203,7 @@ namespace OC
                                             uint8_t resourceProperty)
     {
         return checked_guard(m_server, &IServerWrapper::registerResource,
-                             ref(resourceHandle), resourceURI, resourceTypeName,
+                             std::ref(resourceHandle), resourceURI, resourceTypeName,
                              resourceInterface, entityHandler, resourceProperty);
     }
 
@@ -212,7 +219,8 @@ namespace OC
         std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
         return checked_guard(m_server, &IServerWrapper::registerResourceWithHost,
-                ref(resourceHandle), resource->host(), resource->uri(), resourceTypes[0]/*"core.remote"*/, "oc.mi.def",
+                std::ref(resourceHandle), resource->host(), resource->uri(),
+                resourceTypes[0]/*"core.remote"*/, "oc.mi.def",
                 (EntityHandler) nullptr, resourceProperty);
     }
 
@@ -225,7 +233,7 @@ namespace OC
     OCStackResult OCPlatform_impl::unbindResource(OCResourceHandle collectionHandle,
                                             OCResourceHandle resourceHandle)
     {
-        return result_guard(OCUnBindResource(ref(collectionHandle), ref(resourceHandle)));
+        return result_guard(OCUnBindResource(std::ref(collectionHandle), std::ref(resourceHandle)));
     }
 
     OCStackResult OCPlatform_impl::unbindResources(const OCResourceHandle collectionHandle,
@@ -293,24 +301,28 @@ namespace OC
 
     OCStackResult OCPlatform_impl::subscribePresence(OCPresenceHandle& presenceHandle,
                                             const std::string& host,
+                                            OCConnectivityType connectivityType,
                                             SubscribeCallback presenceHandler)
     {
-        return subscribePresence(presenceHandle, host, "", presenceHandler);
+        return subscribePresence(presenceHandle, host, "", connectivityType, presenceHandler);
     }
+
 
     OCStackResult OCPlatform_impl::subscribePresence(OCPresenceHandle& presenceHandle,
                                             const std::string& host,
                                             const std::string& resourceType,
+                                            OCConnectivityType connectivityType,
                                             SubscribeCallback presenceHandler)
     {
         return checked_guard(m_client, &IClientWrapper::SubscribePresence,
-                             &presenceHandle, host, resourceType, presenceHandler);
+                             &presenceHandle, host, resourceType, connectivityType,
+                             presenceHandler);
     }
 
     OCStackResult OCPlatform_impl::unsubscribePresence(OCPresenceHandle presenceHandle)
     {
         return checked_guard(m_client, &IClientWrapper::UnsubscribePresence,
-                             ref(presenceHandle));
+                             std::ref(presenceHandle));
     }
 
     OCStackResult OCPlatform_impl::sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
@@ -319,3 +331,4 @@ namespace OC
                              pResponse);
     }
 } //namespace OC
+

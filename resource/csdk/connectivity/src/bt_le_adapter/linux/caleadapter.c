@@ -27,14 +27,17 @@
 
 #define TAG PCF("CA")
 
-static CANetworkPacketReceivedCallback gLEReceivedCallback = NULL;
+static CANetworkPacketReceivedCallback g_leReceivedCallback = NULL;
+static u_thread_pool_t g_threadPoolHandle = NULL;
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback)
+                          CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
+                          u_thread_pool_t handle)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAInitializeLE");
+    OIC_LOG(DEBUG, TAG, "CAInitializeLE");
 
-    gLEReceivedCallback = reqRespCallback;
+    g_leReceivedCallback = reqRespCallback;
+    g_threadPoolHandle = handle;
 
     // register handlers
     CAConnectivityHandler_t handler;
@@ -42,11 +45,9 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
     handler.startAdapter = CAStartLE;
     handler.startListenServer = CAStartLEListeningServer;
-    handler.startDiscoverServer = CAStartLEDiscoveryServer;
+    handler.startDiscoveryServer = CAStartLEDiscoveryServer;
     handler.sendData = CASendLEUnicastData;
     handler.sendDataToAll = CASendLEMulticastData;
-    handler.startNotifyServer = CAStartLENotifyServer;
-    handler.sendNotification = CASendLENotification;
     handler.GetnetInfo = CAGetLEInterfaceInformation;
     handler.readData = CAReadLEData;
     handler.stopAdapter = CAStopLE;
@@ -59,75 +60,62 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLE");
+    OIC_LOG(DEBUG, TAG, "CAStartLE");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartLEListeningServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLEListeningServer");
+    OIC_LOG(DEBUG, TAG, "CAStartLEListeningServer");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartLEDiscoveryServer()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLEDiscoveryServer");
+    OIC_LOG(DEBUG, TAG, "CAStartLEDiscoveryServer");
 
     return CA_STATUS_OK;
 }
 
-uint32_t CASendLEUnicastData(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
+int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendLEUnicastData");
+    OIC_LOG(DEBUG, TAG, "CASendLEUnicastData");
 
-    return 0;
+    return -1;
 }
 
-uint32_t CASendLEMulticastData(void* data, uint32_t dataLen)
+int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendLEMulticastData");
+    OIC_LOG(DEBUG, TAG, "CASendLEMulticastData");
 
-    return 0;
+    return -1;
 }
 
-CAResult_t CAStartLENotifyServer()
+CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStartLENotifyServer");
-
-    return CA_STATUS_OK;
-}
-
-uint32_t CASendLENotification(const CARemoteEndpoint_t* endpoint, void* data, uint32_t dataLen)
-{
-    OIC_LOG_V(DEBUG, TAG, "CASendLENotification");
-
-    return 0;
-}
-
-CAResult_t CAGetLEInterfaceInformation(CALocalConnectivityt_t** info, uint32_t* size)
-{
-    OIC_LOG_V(DEBUG, TAG, "CAGetLEInterfaceInformation");
+    OIC_LOG(DEBUG, TAG, "CAGetLEInterfaceInformation");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAReadLEData()
 {
-    OIC_LOG_V(DEBUG, TAG, "Read LE Data");
+    OIC_LOG(DEBUG, TAG, "Read LE Data");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStopLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "CAStopLE");
+    OIC_LOG(DEBUG, TAG, "CAStopLE");
 
     return CA_STATUS_OK;
 }
 
 void CATerminateLE()
 {
-    OIC_LOG_V(DEBUG, TAG, "TerminatLE");
+    OIC_LOG(DEBUG, TAG, "TerminatLE");
 }
+

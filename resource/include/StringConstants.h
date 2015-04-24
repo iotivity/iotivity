@@ -61,7 +61,6 @@ namespace OC
         static const char RESOURCE_UNREG_FAILED[]      = "Unregistering resource failed";
         static const char OPTION_ID_RANGE_INVALID[]    =
                             "Error: OptionID valid only from 2048 to 3000 inclusive.";
-
         static const char NO_ERROR[]                   = "No Error";
         static const char RESOURCE_CREATED[]           = "Resource Created";
         static const char RESOURCE_DELETED[]           = "Resource Deleted";
@@ -75,11 +74,12 @@ namespace OC
         static const char INVALID_OBESERVE[]           = "Invalid Observe Param";
         static const char NO_MEMORY[]                  = "No Memory";
         static const char COMM_ERROR[]                 = "Communication Error";
+        static const char TIMEOUT[]                    = "Timeout";
+        static const char ADAPTER_NOT_ENABLED[]        = "Adapter Not Enabled";
         static const char NOT_IMPL[]                   = "Not Implemented";
         static const char NOT_FOUND[]                  = "Resource Not Found";
         static const char RESOURCE_ERROR[]             = "Resource Error";
         static const char SLOW_RESOURCE[]              = "Slow Resource";
-        static const char DUPLICATE_REQUEST[]          = "Duplicate Request";
         static const char NO_OBSERVERS[]               = "No Observers";
         static const char OBSV_NO_FOUND[]              = "Stack observer not found";
         static const char OBSV_NOT_ADDED[]             = "Stack observer not added";
@@ -95,8 +95,6 @@ namespace OC
         static const char PERSISTENT_BUFFER_REQUIRED[] = "Persistent response buffer required";
         static const char STACK_CONTINUE[]             = "Stack continue";
         static const char INVALID_REQUEST_HANDLE[]     = "Invalid request handle";
-        static const char INVALID_DEVICE_INFO[]        = "Invalid device info";
-        static const char INVALID_JSON[]               = "Invalid JSON";
         static const char UNKNOWN_ERROR[]              = "Unknown Error";
         static const char INVALID_REPRESENTATION[]     = "Invalid Payload JSON";
         static const char INVALID_JSON_TYPE[]          = "Unrecognized JSON Type ";
@@ -104,6 +102,8 @@ namespace OC
         static const char INVALID_JSON_ARRAY_DEPTH[]   = "Max JSON Array Depth exceeded";
         static const char INVALID_JSON_TYPE_TAG[]      = "Invalid JSON Type Tag";
         static const char INVALID_ATTRIBUTE[]          = "Invalid Attribute: ";
+        static const char INVALID_DEVICE_INFO[]        = "Invalid Device Information";
+
     }
 
     namespace Error
@@ -113,25 +113,27 @@ namespace OC
 
     namespace PlatformCommands
     {
-        static const std::string GET                   = "GET";
-        static const std::string PUT                   = "PUT";
-        static const std::string POST                  = "POST";
-        static const std::string DELETE                = "DELETE";
+        static const std::string GET                        = "GET";
+        static const std::string PUT                        = "PUT";
+        static const std::string POST                       = "POST";
+        static const std::string DELETE                     = "DELETE";
     }
 
     namespace Key
     {
-        static const std::string OCKEY                 = "oc";
-        static const std::string URIKEY                = "href";
-        static const std::string OBSERVABLEKEY         = "obs";
-        static const std::string RESOURCETYPESKEY      = "rt";
-        static const std::string INTERFACESKEY         = "if";
-        static const std::string PROPERTYKEY           = "prop";
-        static const std::string REPKEY                = "rep";
-        static const std::string SECUREKEY             = "sec";
-        static const std::string PORTKEY               = "port";
-  }
+        static const std::string OCKEY                      = "oc";
+        static const std::string URIKEY                     = "href";
+        static const std::string OBSERVABLEKEY              = "obs";
+        static const std::string RESOURCETYPESKEY           = "rt";
+        static const std::string INTERFACESKEY              = "if";
+        static const std::string PROPERTYKEY                = "prop";
+        static const std::string REPKEY                     = "rep";
+        static const std::string SECUREKEY                  = "sec";
+        static const std::string PORTKEY                    = "port";
+        static const std::string SERVERIDKEY                = "sid";
+    }
 
 }
 
 #endif // _STRING_CONSTANTS_H_
+

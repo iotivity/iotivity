@@ -20,7 +20,7 @@ Note: add the following to the ./jni/Android.mk file
 LOCAL_SRC_FILES += logger.c
 LOCAL_SRC_FILES += loggertests.cpp
 LOCAL_SRC_FILES += ocstack.c
-LOCAL_SRC_FILES += occoap.c
 LOCAL_SRC_FILES += stacktests.cpp
+
 
 

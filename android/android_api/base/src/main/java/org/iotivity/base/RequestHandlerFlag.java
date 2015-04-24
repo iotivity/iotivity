@@ -39,22 +39,21 @@ public enum RequestHandlerFlag {
         return this.value;
     }
 
-    public static EnumSet<RequestHandlerFlag> convertToEnumSet(int value){
+    public static EnumSet<RequestHandlerFlag> convertToEnumSet(int value) {
         EnumSet<RequestHandlerFlag> flagSet = null;
 
         for (RequestHandlerFlag v : values()) {
             if (0 != (value & v.getValue())) {
-                if(flagSet == null) {
+                if (flagSet == null) {
                     flagSet = EnumSet.of(v);
-                }
-                else {
+                } else {
                     flagSet.add(v);
                 }
             }
         }
 
-        if(flagSet.isEmpty()){
-            throw new  IllegalArgumentException("Unexpected RequestHandlerFlag value");
+        if (flagSet.isEmpty()) {
+            throw new IllegalArgumentException("Unexpected RequestHandlerFlag value");
         }
 
         return flagSet;

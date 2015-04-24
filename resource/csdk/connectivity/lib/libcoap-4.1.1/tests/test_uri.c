@@ -3,7 +3,7 @@
  * Copyright (C) 2012 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include <stdio.h>
@@ -371,10 +371,10 @@ CU_pSuite t_init_uri_tests(void)
         return NULL;
     }
 
-#define URI_TEST(s,t)						      \
-  if (!CU_ADD_TEST(s,t)) {					      \
-    fprintf(stderr, "W: cannot add uri parser test (%s)\n",	      \
-	    CU_get_error_msg());				      \
+#define URI_TEST(s,t)                             \
+  if (!CU_ADD_TEST(s,t)) {                        \
+    fprintf(stderr, "W: cannot add uri parser test (%s)\n",       \
+        CU_get_error_msg());                      \
   }
 
     URI_TEST(suite, t_parse_uri1);

@@ -1,7 +1,7 @@
 
 
-OIC_ROOT=../../../../..
-IOT_BASE=${OIC_ROOT}/resource
+#OIC_ROOT=../../../resource/
+IOT_BASE=../../../../../resource
 #BOOST=${BOOST_DIR}
 RST_NAME=.
 
@@ -16,14 +16,11 @@ CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -ldl
 
 
 CXX_INC	:= -I../../ -I../../inc/ -I../../src/
-CXX_INC += -I${OIC_ROOT}/extlibs/timer
-CXX_INC	+= -I${IOT_BASE}/include/ 
+CXX_INC	+= -I${IOT_BASE}/include/
 CXX_INC += -I${IOT_BASE}/oc_logger/include
-CXX_INC	+= -I${IOT_BASE}/csdk/stack/include 
-CXX_INC	+= -I${IOT_BASE}/csdk/ocsocket/include 
-CXX_INC	+= -I${IOT_BASE}/csdk/ocrandom/include 
-CXX_INC	+= -I${IOT_BASE}/csdk/logger/include 
-CXX_INC	+= -I${IOT_BASE}/dependencies/cereal/include
+CXX_INC	+= -I${IOT_BASE}/csdk/stack/include
+CXX_INC	+= -I${IOT_BASE}/csdk/ocrandom/include
+CXX_INC	+= -I${IOT_BASE}/csdk/logger/include
 
 CXX_LIB=-L""
 
@@ -47,13 +44,13 @@ GAR=ar
 # Force metatargets to build:
 .PHONY: all clean
 
-all: pre_job ${TARGET} post_job  
+all: pre_job ${TARGET} post_job
 
 pre_job:
-	@echo " " 
-	@echo "Build Begin." 
 	@echo " "
-	
+	@echo "Build Begin."
+	@echo " "
+
 ${TARGET}: ${CXX_OBJLIST}
 	#$(CXX) $(LD_FLAGS) -o ./${RST_NAME}/$@ $^ ${LD_LIB}		// shared object.
 	@for sublib in ${LD_LIB} ; do \
@@ -67,17 +64,18 @@ ${TARGET}: ${CXX_OBJLIST}
 
 
 
-		
-%.o : ../../src/%.cpp 
+
+%.o : ../../src/%.cpp
 	${CXX} ${CXX_FLAGS} -c $< ${CXX_INC} -o ./${RST_NAME}/$@
-	@echo " " 
-	
+	@echo " "
+
 post_job:
-	@echo " " 
+	@echo " "
 	@echo "Build Successful."
-	@echo " " 
+	@echo " "
 
 
 clean:
 	rm -f -v *.o ${TARGET}
-	
+
+

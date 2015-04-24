@@ -37,7 +37,7 @@ static int quit = 0;
 
 #define COAP_OPT_BLOCK_SZX_MAX 6 /**< allowed maximum for block szx value */
 
-#define REQUIRE_ETAG 0x01 	/* flag for coap_payload_t: require ETag option  */
+#define REQUIRE_ETAG 0x01   /* flag for coap_payload_t: require ETag option  */
 typedef struct
 {
     UT_hash_handle hh;
@@ -76,7 +76,7 @@ void handle_sigint(int signum)
 }
 
 #define INDEX "libcoap server for ETSI CoAP Plugtest, March 2012, Paris\n" \
-   	      "Copyright (C) 2012 Olaf Bergmann <bergmann@tzi.org>\n\n"
+          "Copyright (C) 2012 Olaf Bergmann <bergmann@tzi.org>\n\n"
 
 coap_payload_t *
 coap_new_payload(size_t size)

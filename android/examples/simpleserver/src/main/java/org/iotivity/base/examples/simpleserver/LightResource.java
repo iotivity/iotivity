@@ -70,9 +70,13 @@ public class LightResource implements IMessageLogger {
         mPower = 0;
         mObservationIds = new LinkedList<>();
         mLightRep = new OcRepresentation();
-        mLightRep.setValueBool(StringConstants.STATE, mState);
-        mLightRep.setValueInt(StringConstants.POWER, mPower);
-        mLightRep.setValueString(StringConstants.NAME, mName);
+        try {
+            mLightRep.setValue(StringConstants.STATE, mState);
+            mLightRep.setValue(StringConstants.POWER, mPower);
+            mLightRep.setValue(StringConstants.NAME, mName);
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
         doOnce = true; // used in post
         lightRepThread = null;
     }
@@ -149,7 +153,11 @@ public class LightResource implements IMessageLogger {
         if (true == doOnce) {
             createResource1();
             OcRepresentation representation = rep;
-            representation.setValueString(StringConstants.CREATED_URI, StringConstants.RESOURCE_URI1);
+            try {
+                representation.setValue(StringConstants.CREATED_URI, StringConstants.RESOURCE_URI1);
+            } catch (OcException e) {
+                Log.e(TAG, e.getMessage());
+            }
             doOnce = false;
             return representation;
         }
@@ -163,9 +171,12 @@ public class LightResource implements IMessageLogger {
      * @param rep current OcRepresentation of the object
      */
     private void put(OcRepresentation rep) {
-        mState = rep.getValueBool(StringConstants.STATE);
-        mName = rep.getValueString(StringConstants.NAME);
-        mPower = rep.getValueInt(StringConstants.POWER);
+        try {
+            mState = rep.getValue(StringConstants.STATE);
+            mPower = rep.getValue(StringConstants.POWER);
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
         logMessage(TAG + "Put State: " +  mState + " Name: " + mName + " Power: " + mPower);
     }
 
@@ -174,8 +185,13 @@ public class LightResource implements IMessageLogger {
      * @return OcRepresentation after updating the values of the lightRepresentation
      */
     protected OcRepresentation get() {
-        mLightRep.setValueBool(StringConstants.STATE, mState);
-        mLightRep.setValueInt(StringConstants.POWER, mPower);
+        try {
+            mLightRep.setValue(StringConstants.STATE, mState);
+            mLightRep.setValue(StringConstants.POWER, mPower);
+            mLightRep.setValue(StringConstants.NAME, mName);
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
         return mLightRep;
     }
 
@@ -212,7 +228,6 @@ public class LightResource implements IMessageLogger {
                             break;
                         // handle PUT request
                         case PUT:
-                            logMessage(TAG + "PUT");
                             OcRepresentation rep = request.getResourceRepresentation();
                             put(rep);
                             ocResourceResponse.setErrorCode(StringConstants.ERROR_CODE);
@@ -222,25 +237,26 @@ public class LightResource implements IMessageLogger {
                             break;
                         // handle POST request
                         case POST:
-                            logMessage(TAG + "POST");
                             rep = request.getResourceRepresentation();
                             OcRepresentation rep_post = post(rep);
                             ocResourceResponse.setResourceRepresentation(rep_post);
                             ocResourceResponse.setErrorCode(StringConstants.ERROR_CODE);
-                            if (rep_post.getValueString(StringConstants.CREATED_URI)
-                                    .equals(StringConstants.RESOURCE_URI1)) {
-                                ocResourceResponse.setNewResourceUri
-                                        (rep_post.getValueString(StringConstants.CREATED_URI));
-                                ocResourceResponse.setResponseResult
-                                        (EntityHandlerResult.RESOURCE_CREATED);
-                            } else {
-                                ocResourceResponse.setResponseResult(EntityHandlerResult.OK);
+                            if (rep_post.hasAttribute(StringConstants.CREATED_URI)) {
+                                String createdUri = rep_post.getValue(StringConstants.CREATED_URI);
+                                if (createdUri.equals(StringConstants.RESOURCE_URI1)) {
+                                    ocResourceResponse.setNewResourceUri(createdUri);
+                                    ocResourceResponse.setResponseResult
+                                            (EntityHandlerResult.RESOURCE_CREATED);
+                                } else {
+                                    ocResourceResponse.setResponseResult(EntityHandlerResult.OK);
+                                }
                             }
                             OcPlatform.sendResponse(ocResourceResponse);
                             break;
                         // handle DELETE request
                         case DELETE:
                             logMessage(TAG + "DELETE");
+                            OcPlatform.unregisterResource(getHandle());
                             OcPlatform.unregisterResource(getHandle());
                             break;
 
@@ -256,6 +272,7 @@ public class LightResource implements IMessageLogger {
             if (requestFlag.contains(RequestHandlerFlag.OBSERVER)) {
                 logMessage(TAG + "OBSERVER");
                 ObservationInfo observationInfo = request.getObservationInfo();
+
                 switch (observationInfo.getObserveAction()) {
                     case REGISTER:
                         synchronized (mObservationIds) {

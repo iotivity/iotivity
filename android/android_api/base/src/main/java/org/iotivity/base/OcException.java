@@ -22,59 +22,22 @@
 
 package org.iotivity.base;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class OcException extends Exception {
 
-    private static final Map<String, String> errorCodes = new HashMap<String, String>();
+    private ErrorCode errorCode;
 
-    private static void addCode(String error, String message) {
-        errorCodes.put(error, error + ": " + message);
-    }
-
-    static {
-        /* Success status code - START HERE */
-        addCode("OK", "");
-        addCode("RESOURCE_CREATED", "");
-        addCode("RESOURCE_DELETED", "");
-        addCode("CONTINUE", "");
-        /* Success status code - END HERE */
-        /* Error status code - START HERE */
-        addCode("INVALID_URI", "");
-        addCode("INVALID_QUERY", "");
-        addCode("INVALID_IP", "");
-        addCode("INVALID_PORT", "");
-        addCode("INVALID_CALLBACK", "");
-        addCode("INVALID_METHOD", "");
-        addCode("INVALID_PARAM", "");
-        addCode("INVALID_OBSERVE_PARAM", "");
-        addCode("NO_MEMORY", "");
-        addCode("COMM_ERROR", "");
-        addCode("NOTIMPL", "");
-        addCode("NO_RESOURCE", "Resource not found");
-        addCode("RESOURCE_ERROR", "Not supported method or interface");
-        addCode("SLOW_RESOURCE", "");
-        addCode("NO_OBSERVERS", "Resource has no registered observers");
-        addCode("OBSERVER_NOT_FOUND", "");
-        addCode("PRESENCE_STOPPED", "");
-        addCode("PRESENCE_TIMEOUT", "");
-        addCode("PRESENCE_DO_NOT_HANDLE", "");
-        addCode("VIRTUAL_DO_NOT_HANDLE", "");
-        addCode("INVALID_OPTION", "");
-        addCode("MALFORMED_RESPONSE", "Remote reply contained malformed data");
-        addCode("PERSISTENT_BUFFER_REQUIRED", "");
-        addCode("INVALID_REQUEST_HANDLE", "");
-        addCode("INVALID_DEVICE_INFO", "");
-        addCode("ERROR", "Generic error");
-
-        addCode("JNI_EXCEPTION", "Generic Java binder error");
-        addCode("JNI_NO_NATIVE_OBJECT", "");
-        addCode("JNI_INVALID_VALUE", "");
+    public OcException(ErrorCode errorCode, String errMessage) {
+        super(errMessage + " " + errorCode.toString());
+        this.errorCode = errorCode;
     }
 
     private OcException(String error, String errMessage) {
-        super(errMessage + " (" + error + ": " + errorCodes.get(error) + ")");
+        super(errMessage + " " + error);
+        this.errorCode = ErrorCode.get(error);
+    }
+
+    public ErrorCode getErrorCode() {
+        return errorCode;
     }
 
     private static void addStackTrace(Throwable throwable,

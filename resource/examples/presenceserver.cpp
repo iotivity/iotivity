@@ -245,9 +245,9 @@ int main()
         std::unique_lock<std::mutex> lock(blocker);
         cv.wait(lock);
     }
-    catch(OCException e)
+    catch(OCException& e)
     {
-        //log(e.what());
+        oclog() << "Exception in main: "<< e.what();
     }
 
     // No explicit call to stop the platform.
@@ -255,3 +255,4 @@ int main()
 
     return 0;
 }
+

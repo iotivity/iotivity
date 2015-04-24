@@ -22,6 +22,8 @@
 
 package org.iotivity.base;
 
+import org.iotivity.ca.CaInterface;
+
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -36,15 +38,39 @@ public final class OcPlatform {
     static {
         System.loadLibrary("oc_logger");
         System.loadLibrary("octbstack");
-        System.loadLibrary("coap");
+        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
         System.loadLibrary("ocstack-jni");
     }
 
+    /**
+     * Default interface
+     */
     public static final String DEFAULT_INTERFACE = "oc.mi.def";
+
+    /**
+     * Used in discovering (GET) links to other resources of a collection
+     */
     public static final String LINK_INTERFACE = "oc.mi.ll";
+
+    /**
+     * Used in GET, PUT, POST, DELETE methods on links to other resources of a collection
+     */
     public static final String BATCH_INTERFACE = "oc.mi.b";
+
+    /**
+     * Used in GET, PUT, POST methods on links to other remote resources of a group
+     */
     public static final String GROUP_INTERFACE = "oc.mi.grp";
+
+    public static final String WELL_KNOWN_QUERY = "224.0.1.187:5683/oc/core";
+    public static final String MULTICAST_PREFIX = "224.0.1.187:5683";
+    public static final String MULTICAST_IP = "224.0.1.187";
+    public static final int MULTICAST_PORT = 5683;
+    public static final int DEFAULT_PRESENCE_TTL = 60;
+    public static final String PRESENCE_URI = "/oc/presence";
+
+    private static volatile boolean sIsPlatformInitialized = false;
 
     private OcPlatform() {
     }
@@ -55,14 +81,20 @@ public final class OcPlatform {
      *
      * @param platformConfig platform configuration
      */
-    public static void Configure(PlatformConfig platformConfig) {
-        OcPlatform.configure(
-                platformConfig.getServiceType().getValue(),
-                platformConfig.getModeType().getValue(),
-                platformConfig.getIpAddress(),
-                platformConfig.getPort(),
-                platformConfig.getQualityOfService().getValue()
-        );
+    public synchronized static void Configure(PlatformConfig platformConfig) {
+        if(!sIsPlatformInitialized) {
+            CaInterface.initialize(platformConfig.getContext());
+
+            OcPlatform.configure(
+                    platformConfig.getServiceType().getValue(),
+                    platformConfig.getModeType().getValue(),
+                    platformConfig.getIpAddress(),
+                    platformConfig.getPort(),
+                    platformConfig.getQualityOfService().getValue()
+            );
+
+            sIsPlatformInitialized = true;
+        }
     }
 
     private static native void configure(int serviceType,
@@ -77,7 +109,13 @@ public final class OcPlatform {
      * @param ocResourceHandle resource handle of the resource
      * @throws OcException
      */
-    public static native void notifyAllObservers(
+    public static void notifyAllObservers(
+            OcResourceHandle ocResourceHandle) throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.notifyAllObservers0(ocResourceHandle);
+    }
+
+    private static native void notifyAllObservers0(
             OcResourceHandle ocResourceHandle) throws OcException;
 
     /**
@@ -90,6 +128,7 @@ public final class OcPlatform {
     public static void notifyAllObservers(
             OcResourceHandle ocResourceHandle,
             QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
         OcPlatform.notifyAllObservers1(ocResourceHandle, qualityOfService.getValue());
     }
 
@@ -111,6 +150,8 @@ public final class OcPlatform {
             OcResourceHandle ocResourceHandle,
             List<Byte> ocObservationIdList,
             OcResourceResponse ocResourceResponse) throws OcException {
+        OcPlatform.initCheck();
+
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
         int i = 0;
@@ -145,6 +186,8 @@ public final class OcPlatform {
             List<Byte> ocObservationIdList,
             OcResourceResponse ocResourceResponse,
             QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
         int i = 0;
@@ -173,14 +216,30 @@ public final class OcPlatform {
      *                                If empty, performs multicast resource discovery query
      * @param resourceUri             name of the resource. If null or empty, performs search for all
      *                                resource names
+     * @param connectivityType        a type of connectivity indicating the interface. Example: WIFI,
+     *                                ETHERNET, ALL
      * @param onResourceFoundListener Handles events, success states and failure states.
      * @throws OcException
      */
-    public static native void findResource(
+    public static void findResource(
             String host,
             String resourceUri,
-            OnResourceFoundListener onResourceFoundListener) throws OcException;
+            OcConnectivityType connectivityType,
+            OnResourceFoundListener onResourceFoundListener) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.findResource0(
+                host,
+                resourceUri,
+                connectivityType.getValue(),
+                onResourceFoundListener
+        );
+    }
 
+    private static native void findResource0(
+            String host,
+            String resourceUri,
+            int connectivityType,
+            OnResourceFoundListener onResourceFoundListener) throws OcException;
 
     /**
      * API for Service and Resource Discovery. NOTE: This API applies to client side only
@@ -189,6 +248,8 @@ public final class OcPlatform {
      *                                If empty, performs multicast resource discovery query
      * @param resourceUri             name of the resource. If null or empty, performs search for all
      *                                resource names
+     * @param connectivityType        a type of connectivity indicating the interface. Example: WIFI,
+     *                                ETHERNET, ALL
      * @param onResourceFoundListener Handles events, success states and failure states.
      * @param qualityOfService        the quality of communication
      * @throws OcException
@@ -196,10 +257,13 @@ public final class OcPlatform {
     public static void findResource(
             String host,
             String resourceUri,
+            OcConnectivityType connectivityType,
             OnResourceFoundListener onResourceFoundListener,
             QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
         OcPlatform.findResource1(host,
                 resourceUri,
+                connectivityType.getValue(),
                 onResourceFoundListener,
                 qualityOfService.getValue()
         );
@@ -208,6 +272,7 @@ public final class OcPlatform {
     private static native void findResource1(
             String host,
             String resourceUri,
+            int connectivityType,
             OnResourceFoundListener onResourceFoundListener,
             int qualityOfService) throws OcException;
 
@@ -216,12 +281,29 @@ public final class OcPlatform {
      *
      * @param host                  Host IP Address. If null or empty, Multicast is performed.
      * @param deviceUri             Uri containing address to the virtual device
+     * @param connectivityType      a type of connectivity indicating the interface. Example: WIFI,
+     *                              ETHERNET, ALL
      * @param onDeviceFoundListener Handles events, success states and failure states.
      * @throws OcException
      */
-    public static native void getDeviceInfo(
+    public static void getDeviceInfo(
             String host,
             String deviceUri,
+            OcConnectivityType connectivityType,
+            OnDeviceFoundListener onDeviceFoundListener) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.getDeviceInfo0(
+                host,
+                deviceUri,
+                connectivityType.getValue(),
+                onDeviceFoundListener
+        );
+    }
+
+    private static native void getDeviceInfo0(
+            String host,
+            String deviceUri,
+            int connectivityType,
             OnDeviceFoundListener onDeviceFoundListener) throws OcException;
 
     /**
@@ -229,6 +311,8 @@ public final class OcPlatform {
      *
      * @param host                  Host IP Address. If null or empty, Multicast is performed.
      * @param deviceUri             Uri containing address to the virtual device
+     * @param connectivityType      a type of connectivity indicating the interface. Example: WIFI,
+     *                              ETHERNET, ALL
      * @param onDeviceFoundListener Handles events, success states and failure states.
      * @param qualityOfService      the quality of communication
      * @throws OcException
@@ -236,11 +320,14 @@ public final class OcPlatform {
     public static void getDeviceInfo(
             String host,
             String deviceUri,
+            OcConnectivityType connectivityType,
             OnDeviceFoundListener onDeviceFoundListener,
             QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
         OcPlatform.getDeviceInfo1(
                 host,
                 deviceUri,
+                connectivityType.getValue(),
                 onDeviceFoundListener,
                 qualityOfService.getValue()
         );
@@ -249,6 +336,7 @@ public final class OcPlatform {
     private static native void getDeviceInfo1(
             String host,
             String deviceUri,
+            int connectivityType,
             OnDeviceFoundListener onDeviceFoundListener,
             int qualityOfService) throws OcException;
 
@@ -259,7 +347,13 @@ public final class OcPlatform {
      * @return resource handle
      * @throws OcException
      */
-    public static native OcResourceHandle registerResource(
+    public static OcResourceHandle registerResource(
+            OcResource ocResource) throws OcException{
+        OcPlatform.initCheck();
+        return OcPlatform.registerResource0(ocResource);
+    }
+
+    private static native OcResourceHandle registerResource0(
             OcResource ocResource) throws OcException;
 
     /**
@@ -279,6 +373,8 @@ public final class OcPlatform {
             String resourceInterface,
             EntityHandler entityHandler,
             EnumSet<ResourceProperty> resourcePropertySet) throws OcException {
+        OcPlatform.initCheck();
+
         int resProperty = 0;
 
         for (ResourceProperty prop : ResourceProperty.values()) {
@@ -308,8 +404,8 @@ public final class OcPlatform {
      */
     public static void registerDeviceInfo(
             OcDeviceInfo ocDeviceInfo) throws OcException {
-
-        OcPlatform.registerDeviceInfo(
+        OcPlatform.initCheck();
+        OcPlatform.registerDeviceInfo0(
                 ocDeviceInfo.getDeviceName(),
                 ocDeviceInfo.getHostName(),
                 ocDeviceInfo.getDeviceUuid(),
@@ -325,7 +421,7 @@ public final class OcPlatform {
         );
     }
 
-    private static native void registerDeviceInfo(
+    private static native void registerDeviceInfo0(
             String deviceName,
             String hostName,
             String deviceUUID,
@@ -346,8 +442,15 @@ public final class OcPlatform {
      *                         server
      * @throws OcException
      */
-    public static native void unregisterResource(
+    public static void unregisterResource(
+            OcResourceHandle ocResourceHandle) throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.unregisterResource0(ocResourceHandle);
+    }
+
+    private static native void unregisterResource0(
             OcResourceHandle ocResourceHandle) throws OcException;
+
 
     /**
      * Add a resource to a collection resource
@@ -356,10 +459,16 @@ public final class OcPlatform {
      * @param ocResourceHandle           handle to resource to be added to the collection resource
      * @throws OcException
      */
-    public static native void bindResource(
+    public static void bindResource(
+            OcResourceHandle ocResourceCollectionHandle,
+            OcResourceHandle ocResourceHandle) throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.bindResource0(ocResourceCollectionHandle, ocResourceHandle);
+    }
+
+    private static native void bindResource0(
             OcResourceHandle ocResourceCollectionHandle,
             OcResourceHandle ocResourceHandle) throws OcException;
-
     /**
      * Add multiple resources to a collection resource.
      *
@@ -371,14 +480,15 @@ public final class OcPlatform {
     public static void bindResources(
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
-        OcPlatform.bindResources(
+        OcPlatform.initCheck();
+        OcPlatform.bindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
                         new OcResourceHandle[ocResourceHandleList.size()])
         );
     }
 
-    private static native void bindResources(
+    private static native void bindResources0(
             OcResourceHandle ocResourceCollectionHandle,
             OcResourceHandle[] ocResourceHandleArray) throws OcException;
 
@@ -389,7 +499,14 @@ public final class OcPlatform {
      * @param ocResourceHandle           resource handle to be unbound from the collection resource
      * @throws OcException
      */
-    public static native void unbindResource(
+    public static void unbindResource(
+            OcResourceHandle ocResourceCollectionHandle,
+            OcResourceHandle ocResourceHandle) throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.unbindResource0(ocResourceCollectionHandle, ocResourceHandle);
+    }
+
+    private static native void unbindResource0(
             OcResourceHandle ocResourceCollectionHandle,
             OcResourceHandle ocResourceHandle) throws OcException;
 
@@ -404,14 +521,15 @@ public final class OcPlatform {
     public static void unbindResources(
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
-        OcPlatform.unbindResources(
+        OcPlatform.initCheck();
+        OcPlatform.unbindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
                         new OcResourceHandle[ocResourceHandleList.size()])
         );
     }
 
-    private static native void unbindResources(
+    private static native void unbindResources0(
             OcResourceHandle ocResourceCollectionHandle,
             OcResourceHandle[] ocResourceHandleArray) throws OcException;
 
@@ -422,7 +540,14 @@ public final class OcPlatform {
      * @param resourceTypeName new typename to bind to the resource
      * @throws OcException
      */
-    public static native void bindTypeToResource(
+    public static void bindTypeToResource(
+            OcResourceHandle ocResourceHandle,
+            String resourceTypeName) throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.bindTypeToResource0(ocResourceHandle, resourceTypeName);
+    }
+
+    private static native void bindTypeToResource0(
             OcResourceHandle ocResourceHandle,
             String resourceTypeName) throws OcException;
 
@@ -433,7 +558,14 @@ public final class OcPlatform {
      * @param resourceInterfaceName new interface to bind to the resource
      * @throws OcException
      */
-    public static native void bindInterfaceToResource(
+    public static void bindInterfaceToResource(
+            OcResourceHandle ocResourceHandle,
+            String resourceInterfaceName) throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.bindInterfaceToResource0(ocResourceHandle, resourceInterfaceName);
+    }
+
+    private static native void bindInterfaceToResource0(
             OcResourceHandle ocResourceHandle,
             String resourceInterfaceName) throws OcException;
 
@@ -443,27 +575,52 @@ public final class OcPlatform {
      * @param ttl time to live in seconds
      * @throws OcException
      */
-    public static native void startPresence(int ttl) throws OcException;
+    public static void startPresence(int ttl) throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.startPresence0(ttl);
+    }
+
+    private static native void startPresence0(int ttl) throws OcException;
 
     /**
      * Stop Presence announcements.
      *
      * @throws OcException
      */
-    public static native void stopPresence() throws OcException;
+    public static void stopPresence() throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.stopPresence0();
+    }
+
+    private static native void stopPresence0() throws OcException;
 
     /**
      * Subscribes to a server's presence change events. By making this subscription, every time a
      * server adds/removes/alters a resource, starts or is intentionally stopped
      *
      * @param host               The IP address/addressable name of the server to subscribe to
+     * @param connectivityType   a type of connectivity indicating the interface. Example: WIFI,
+     *                           ETHERNET, ALL
      * @param onPresenceListener listener that will receive notifications/subscription events
      * @return a handle object that can be used to identify this subscription request. It can be
      * used to unsubscribe from these events in the future
      * @throws OcException
      */
-    public static native OcPresenceHandle subscribePresence(
+    public static OcPresenceHandle subscribePresence(
             String host,
+            OcConnectivityType connectivityType,
+            OnPresenceListener onPresenceListener) throws OcException {
+        OcPlatform.initCheck();
+        return OcPlatform.subscribePresence0(
+                host,
+                connectivityType.getValue(),
+                onPresenceListener
+        );
+    }
+
+    private static native OcPresenceHandle subscribePresence0(
+            String host,
+            int connectivityType,
             OnPresenceListener onPresenceListener) throws OcException;
 
     /**
@@ -472,6 +629,8 @@ public final class OcPlatform {
      *
      * @param host               The IP address/addressable name of the server to subscribe to
      * @param resourceType       a resource type specified as a filter for subscription events.
+     * @param connectivityType   a type of connectivity indicating the interface. Example: WIFI,
+     *                           ETHERNET, ALL
      * @param onPresenceListener listener that will receive notifications/subscription events
      * @return a handle object that can be used to identify this subscription request. It can be
      * used to unsubscribe from these events in the future
@@ -480,17 +639,20 @@ public final class OcPlatform {
     public static OcPresenceHandle subscribePresence(
             String host,
             String resourceType,
+            OcConnectivityType connectivityType,
             OnPresenceListener onPresenceListener) throws OcException {
-
+        OcPlatform.initCheck();
         return OcPlatform.subscribePresence1(
                 host,
                 resourceType,
+                connectivityType.getValue(),
                 onPresenceListener);
     }
 
     private static native OcPresenceHandle subscribePresence1(
             String host,
             String resourceType,
+            int connectivityType,
             OnPresenceListener onPresenceListener) throws OcException;
 
     /**
@@ -502,7 +664,13 @@ public final class OcPlatform {
      *                         identifies this subscription
      * @throws OcException
      */
-    public static native void unsubscribePresence(
+    public static void unsubscribePresence(
+            OcPresenceHandle ocPresenceHandle) throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.unsubscribePresence0(ocPresenceHandle);
+    }
+
+    private static native void unsubscribePresence0(
             OcPresenceHandle ocPresenceHandle) throws OcException;
 
     /**
@@ -518,6 +686,8 @@ public final class OcPlatform {
      * @param uri              the rest of the resource's URI that will permit messages to be
      *                         properly routed.
      *                         Example: /a/light
+     * @param connectivityType a type of connectivity indicating the interface. Example: WIFI,
+     *                         ETHERNET, ALL
      * @param isObservable     a boolean containing whether the resource supports observation
      * @param resourceTypeList a collection of resource types implemented by the resource
      * @param interfaceList    a collection of interfaces that the resource supports/implements
@@ -527,21 +697,25 @@ public final class OcPlatform {
     public static OcResource constructResourceObject(
             String host,
             String uri,
+            OcConnectivityType connectivityType,
             boolean isObservable,
             List<String> resourceTypeList,
             List<String> interfaceList) throws OcException {
-        return OcPlatform.constructResourceObject(
+        OcPlatform.initCheck();
+        return OcPlatform.constructResourceObject0(
                 host,
                 uri,
+                connectivityType.getValue(),
                 isObservable,
                 resourceTypeList.toArray(new String[resourceTypeList.size()]),
                 interfaceList.toArray(new String[interfaceList.size()])
         );
     }
 
-    private static native OcResource constructResourceObject(
+    private static native OcResource constructResourceObject0(
             String host,
             String uri,
+            int connectivityType,
             boolean isObservable,
             String[] resourceTypes,
             String[] interfaces) throws OcException;
@@ -552,7 +726,14 @@ public final class OcPlatform {
      * @param ocResourceResponse resource response
      * @throws OcException
      */
-    public static native void sendResponse(OcResourceResponse ocResourceResponse) throws OcException;
+    public static void sendResponse(OcResourceResponse ocResourceResponse)
+            throws OcException{
+        OcPlatform.initCheck();
+        OcPlatform.sendResponse0(ocResourceResponse);
+    }
+
+    private static native void sendResponse0(OcResourceResponse ocResourceResponse)
+            throws OcException;
 
     /**
      * An OnResourceFoundListener can be registered via the OcPlatform.findResource call.
@@ -584,5 +765,12 @@ public final class OcPlatform {
      */
     public interface EntityHandler {
         public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest);
+    }
+
+    private static void initCheck(){
+        if(!sIsPlatformInitialized) {
+            throw new IllegalStateException("OcPlatform must be configured by making a call to " +
+                    "OcPlatform.Configure before any other API calls are permitted");
+        }
     }
 }

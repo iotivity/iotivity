@@ -150,7 +150,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcResourceRequest_getRequestHandle
 {
     LOGD("OcResourceRequest_getRequestHandlerFlagNative");
     JniOcResourceRequest *request = getJniOcResourceRequestPtr(env, thiz);
-    return (jint)request->getRequestHandlerFlag();
+    return static_cast<jint>(request->getRequestHandlerFlag());
 }
 
 /*

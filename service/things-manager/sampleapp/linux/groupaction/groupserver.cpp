@@ -59,6 +59,8 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
 void allBulbOn();
 void allBulbOff();
 
+shared_ptr<OCResource> g_light;
+
 void foundResources(
         std::vector<std::shared_ptr<OC::OCResource> > listOfResource)
 {
@@ -89,6 +91,8 @@ void foundResources(
             }
 
             lights.push_back((hostAddress + resourceURI));
+
+            g_light = (*rsrc);
         }
     }
 
@@ -100,10 +104,10 @@ void foundResource(std::shared_ptr<OCResource> resource)
     std::string resourceURI;
     std::string hostAddress;
 
+    cout << "FOUND RESOURCE" << endl;
+
     try
     {
-        cout << "FOUND RESOURCE" << endl;
-
         if (resource)
         {
             resourceURI = resource->uri();
@@ -114,16 +118,14 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
                 // g_resource->get("", DEFAULT_INTERFACE, QueryParamsMap(), onGet);
 
-                printf("\tHOST :: %s\n", resource->host().c_str());
+                cout << "FOUND " << resourceURI << endl;
+                // printf("\tHOST :: %s\n", resource->host().c_str());
             }
             else if (resourceURI == "/core/bookmark")
             {
                 resource->observe(ObserveType::Observe, QueryParamsMap(),
                         &onObserve);
             }
-
-            // p_platform.bindResource(resourceHandle, foundResourceHandle);
-
         }
     }
     catch (std::exception& e)
@@ -222,8 +224,11 @@ void allBulbOn()
 
     if (g_resource)
     {
-        g_resource->post("a.collection", GROUP_INTERFACE, rep, QueryParamsMap(),
-                &onPost);
+        OCStackResult res = g_resource->post("a.collection", GROUP_INTERFACE,
+            rep, QueryParamsMap(), &onPost);
+
+        if( res != OC_STACK_OK )
+            cout << "failed" << endl;
     }
 }
 
@@ -431,8 +436,14 @@ int main()
         types.push_back("core.light");
         thingsMgr->findCandidateResources(types, &foundResources, 5);
 
-        OCPlatform::registerResource(resourceHandle, resourceURI,
+        OCStackResult res = OCPlatform::registerResource(resourceHandle, resourceURI,
                 resourceTypeName, resourceInterface, NULL, OC_DISCOVERABLE);
+
+        if( res != OC_STACK_OK )
+        {
+            cout << "Resource registeration failed." << endl;
+            return 0;
+        }
 
         cout << "registerResource is called." << endl;
 
@@ -462,20 +473,39 @@ int main()
                 cout << "0 :: FIND BOOKMARK TO OBSERVE"
                         << endl;
 
-                fflush(stdin);
+                //fflush(stdin);
                 cin >> n;
 
                 if (n == 9)
                 {
+                    std::string query = OC_WELL_KNOWN_QUERY;
+                    query.append("?rt=");
+                    query.append(resourceTypeName);
+
                     OCPlatform::findResource("",
-                            "coap://224.0.1.187/oc/core?rt=a.collection",
+                            query,
+                            OC_ETHERNET,
                             &foundResource);
+
+                    // OCPlatform::findResource("",
+                    //         query,
+                    //         OC_WIFI,
+                    //         &foundResource);
                 }
                 else if (n == 0)
                 {
+                    std::string query = OC_WELL_KNOWN_QUERY;
+                    query.append("?rt=");
+                    query.append("core.bookmark");
+
                     OCPlatform::findResource("",
-                            "coap://224.0.1.187/oc/core?rt=core.bookmark",
+                            query,
+                            OC_ETHERNET,
                             &foundResource);
+                    // OCPlatform::findResource("",
+                    //         query,
+                    //         OC_WIFI,
+                    //         &foundResource);
                 }
                 else if (n == 1)
                 {
@@ -536,8 +566,19 @@ int main()
                     isRun = false;
                     break;
                 }
+                else if(n == 100)
+                {
+
+                    OCRepresentation rep;
+
+                    rep.setValue("power", std::string("on"));
+
+                    g_light->put(rep, QueryParamsMap(), &onPut);
+
+                }
             }
         }
+        usleep(500*1000);
     }
     catch (OCException& e)
     {

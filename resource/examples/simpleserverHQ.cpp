@@ -79,7 +79,8 @@ public:
     void createResource()
     {
         std::string resourceURI = m_lightUri; // URI of the resource
-        std::string resourceTypeName = "core.light"; // resource type name. In this case, it is light
+        // resource type name. In this case, it is light
+        std::string resourceTypeName = "core.light";
         std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
         // OCResourceProperty is defined ocstack.h
@@ -410,7 +411,7 @@ void * ChangeLightRepresentation (void *param)
 void PrintUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : simplserver <isListOfObservers>\n";
+    std::cout << "Usage : simpleserverHQ <ObserveType>\n";
     std::cout << "   ObserveType : 0 - Observe All\n";
     std::cout << "   ObserveType : 1 - Observe List of observers\n\n";
 }
@@ -450,7 +451,8 @@ int main(int argc, char* argv[])
 
     try
     {
-        // Create the instance of the resource class (in this case instance of class 'LightResource').
+        // Create the instance of the resource class
+        // (in this case instance of class 'LightResource').
         LightResource myLight(cfg);
 
         // Invoke createResource function of class light.
@@ -466,11 +468,11 @@ int main(int argc, char* argv[])
         std::mutex blocker;
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
-        cv.wait(lock);
+        cv.wait(lock, []{return false;});
     }
-    catch(OCException e)
+    catch(OCException& e)
     {
-        //log(e.what());
+        oclog() << "Exception in main: "<< e.what();
     }
 
     // No explicit call to stop the platform.
@@ -478,3 +480,4 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+

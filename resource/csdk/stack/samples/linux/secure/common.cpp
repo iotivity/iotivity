@@ -46,7 +46,7 @@ OCStackResult SetCredentials(const char* filename) {
                 if (fread(data, 1, st.st_size, fp) == (size_t)st.st_size)
                 {
                     // Provide credentials to OC Stack
-                    ret = OCSetDtlsPskCredentials((OCDtlsPskCredsBlob *)data,
+                    ret = OCSecSetConfigData((OCSecConfigData *)data,
                             st.st_size);
                 }
                 else
@@ -104,8 +104,6 @@ const char *getResult(OCStackResult result) {
     case OC_STACK_NO_OBSERVERS:
         return "OC_STACK_NO_OBSERVERS";
     #ifdef WITH_PRESENCE
-    case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
-        return "OC_STACK_VIRTUAL_DO_NOT_HANDLE";
     case OC_STACK_PRESENCE_STOPPED:
         return "OC_STACK_PRESENCE_STOPPED";
     #endif
@@ -115,3 +113,17 @@ const char *getResult(OCStackResult result) {
         return "UNKNOWN";
     }
 }
+
+void StripNewLineChar(char* str) {
+    int i = 0;
+    if (str)
+    {
+        while( str[i])
+        {
+            if (str[i] == '\n')
+                str[i] = '\0';
+            i++;
+        }
+    }
+}
+

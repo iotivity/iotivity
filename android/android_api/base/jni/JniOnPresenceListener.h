@@ -20,6 +20,7 @@
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 #include "JniOcStack.h"
+#include <mutex>
 
 #ifndef _Included_org_iotivity_base_OcPlatform_OnPresenceListener
 #define _Included_org_iotivity_base_OcPlatform_OnPresenceListener
@@ -27,14 +28,16 @@
 class JniOnPresenceListener
 {
 public:
-    JniOnPresenceListener(JNIEnv *env, jobject jListener);
+    JniOnPresenceListener(JNIEnv *env, jobject jListener, RemoveListenerCallback removeListener);
     ~JniOnPresenceListener();
 
     void onPresenceCallback(OCStackResult result, const unsigned int nonce, const std::string& hostAddress);
     jweak getJWListener();
 
 private:
+    RemoveListenerCallback m_removeListenerCallback;
     jweak m_jwListener;
+    void checkExAndRemoveListener(JNIEnv* env);
 };
 
 #endif

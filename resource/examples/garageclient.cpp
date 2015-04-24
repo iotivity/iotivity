@@ -286,6 +286,51 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
 int main(int argc, char* argv[]) {
 
+    std::ostringstream requestURI;
+
+    OCConnectivityType connectivityType = OC_WIFI;
+
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = std::stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<<"Usage: garageclient <ConnectivityType(0|1)>\n";
+        std::cout<<"ConnectivityType: Default WIFI\n";
+        std::cout<<"ConnectivityType 0: ETHERNET\n";
+        std::cout<<"ConnectivityType 1: WIFI\n";
+    }
+
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
@@ -299,8 +344,11 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.garage",
-                    &foundResource);
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.garage";
+
+        OCPlatform::findResource("", requestURI.str(),
+                connectivityType, &foundResource);
+
         std::cout<< "Finding Resource... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-
@@ -319,4 +367,5 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
 

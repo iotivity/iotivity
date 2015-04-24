@@ -1,34 +1,71 @@
+#******************************************************************
+#
+# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 ##
 # 'resource' sub-project main build script
 #
 ##
 
+import os
+
 Import('env')
-Import('targets_csdk_only')
 
 target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
 
 # Build libcoap
-SConscript('csdk/libcoap/SConscript')
+SConscript('csdk/connectivity/lib/libcoap-4.1.1/SConscript')
+
+# Build connectivity
+SConscript('csdk/connectivity/SConscript')
 
 # Build liboctbstack
 SConscript('csdk/SConscript')
 
-if target_os == 'android':
-	SConscript('android/SConscript')
-
-if target_os not in targets_csdk_only:
+if target_os not in ['arduino','darwin']:
 	# Build liboc_logger
 	SConscript('oc_logger/SConscript')
 
 	# Build liboc
 	SConscript('src/SConscript')
 
+if target_os not in ['arduino','darwin', 'android']:
 	# Build examples
 	SConscript('examples/SConscript')
 
 if target_os == 'linux':
-	# Build c samples
+	# Build C Samples
 	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
+
+	# Build secure samples
+	SConscript('csdk/stack/samples/linux/secure/SConscript')
+
+	# Build C/C++ unit tests
+	SConscript('unit_tests.scons')
+
+elif target_os == 'darwin':
+	# Build linux samples for now.
+	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
+
+	# Build C stack's unit tests.
+	SConscript('unit_tests.scons')
+
 elif target_os == 'arduino':
 	SConscript('csdk/stack/samples/arduino/SimpleClientServer/ocserver/SConscript')

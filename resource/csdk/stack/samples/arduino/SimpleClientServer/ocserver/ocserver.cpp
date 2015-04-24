@@ -57,16 +57,15 @@ typedef struct LIGHTRESOURCE{
 
 static LightResource Light;
 
-static char responsePayloadGet[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"on\",\"power\":10}}";
-static char responsePayloadPut[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":\"off\",\"power\":0}}";
-
-/// This is the port which Arduino Server will use for all unicast communication with it's peers
-static uint16_t OC_WELL_KNOWN_PORT = 5683;
+static char responsePayloadGet[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":true,\"power\":10}}";
+static char responsePayloadPut[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":false,\"power\":0}}";
 
 #ifdef ARDUINOWIFI
 // Arduino WiFi Shield
 // Note : Arduino WiFi Shield currently does NOT support multicast and therefore
 // this server will NOT be listening on 224.0.1.187 multicast address.
+
+static const char ARDUINO_WIFI_SHIELD_UDP_FW_VER[] = "1.1.0";
 
 /// WiFi Shield firmware with Intel patches
 static const char INTEL_WIFI_SHIELD_FW_VER[] = "1.2.0";
@@ -89,7 +88,7 @@ int ConnectToNetwork()
     // Verify that WiFi Shield is running the firmware with all UDP fixes
     fwVersion = WiFi.firmwareVersion();
     OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
-    if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) !=0 )
+    if ( strncmp(fwVersion, ARDUINO_WIFI_SHIELD_UDP_FW_VER, sizeof(ARDUINO_WIFI_SHIELD_UDP_FW_VER)) !=0 )
     {
         OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
         return -1;
@@ -192,10 +191,11 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             response.requestHandle = entityHandlerRequest->requestHandle;
             response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehRet;
-            response.payload = (unsigned char *)payload;
+            response.payload = payload;
             response.payloadSize = strlen(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
-            memset(response.sendVendorSpecificHeaderOptions, 0, sizeof response.sendVendorSpecificHeaderOptions);
+            memset(response.sendVendorSpecificHeaderOptions, 0,
+                    sizeof response.sendVendorSpecificHeaderOptions);
             memset(response.resourceUri, 0, sizeof response.resourceUri);
             // Indicate that response is NOT in a persistent buffer
             response.persistentBufferFlag = 0;
@@ -231,7 +231,8 @@ void *ChangeLightRepresentation (void *param)
     (void)param;
     OCStackResult result = OC_STACK_ERROR;
     modCounter += 1;
-    if(modCounter % 10 == 0)  // Matching the timing that the Linux Sample Server App uses for the same functionality.
+    // Matching the timing that the Linux Sample Server App uses for the same functionality.
+    if(modCounter % 10 == 0)
     {
         Light.power += 5;
         if (gLightUnderObservation)
@@ -254,7 +255,6 @@ void setup()
     // Note : This will initialize Serial port on Arduino at 115200 bauds
     OC_LOG_INIT();
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
-    uint16_t port = OC_WELL_KNOWN_PORT;
 
     // Connect to Ethernet or WiFi network
     if (ConnectToNetwork() != 0)
@@ -264,7 +264,7 @@ void setup()
     }
 
     // Initialize the OC Stack in Server mode
-    if (OCInit(NULL, port, OC_SERVER) != OC_STACK_OK)
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("OCStack init error"));
         return;
@@ -278,7 +278,7 @@ void setup()
 void loop()
 {
     // This artificial delay is kept here to avoid endless spinning
-    // of Arduino microcontroller. Modify it as per specfic application needs.
+    // of Arduino microcontroller. Modify it as per specific application needs.
     delay(2000);
 
     // This call displays the amount of free SRAM available on Arduino
@@ -343,3 +343,4 @@ const char *getResult(OCStackResult result) {
         return "UNKNOWN";
     }
 }
+

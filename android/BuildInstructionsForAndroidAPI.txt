@@ -3,44 +3,51 @@ Build Instructions for Android-API:
 1.Download the latest android SDK and android NDK (r10d or above) and install
 2.Verify that you have the latest JDK (you might need to set the JDK_HOME variable)
 3.Clone the latest iotivity codebase.
-4.set environment variables:
+4.Follow the instructions in <iotivity>/resource/csdk/connectivity/lib/android/glibpatch_Readme to build the glib library for android
+5.set environment variables:
     a.export ANDROID_NDK_HOME=<path to Android NDK>
     b.export ANDROID_NDK=$ANDROID_NDK_HOME
     c.export ANDROID_HOME=<path to Android SDK>
-    d.export PATH =<path to NDK>/toolchains/<your build platform with the latest version>/prebuilt/<your OS>/bin:$PATH
-    e.platform=android
-    f.You might need to install openjdk if it doesn't exist
-        sudo apt-get install openjdk-7-jdk
-
-    g.If running in windows, change the following line in the build.gradle file (./android/android_api/base/build.gradle):
+    d.platform=android
+    e.If running in windows, change the following line in the build.gradle file (<iotivity>/android/android_api/base/build.gradle):
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
             to
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
 
-5.Build scons for android and your targeted architecture (This will also build Android API):
-    a.scons TARGET_OS=android TARGET_ARCH=<target arch> RELEASE=1
+6.Build scons for android and your targeted architecture (This will also build Android API):
+    a.scons TARGET_OS=android TARGET_ARCH=<target arch> TARGET_TRANSPORT=WIFI RELEASE=1 
                where <target arch> can be armeabi, armeabi-v7a, x86.
-               Note: To build in debug mode, use RELEASE=0
-             Note: The minimum SDK version supported is 19.
-    b. If this is the first time building the scons script, you might be prompted to install 'cereal'. Follow the instructions from the scons error message and re-run the above scons command.
-    c. If gradle fails, ensure that you are running gradle 2.2.1 or above. Also, check your firewall settings if you see a connection timed out exception.
-    d. If the project is setup correctly, you should see a BUILD SUCCESSFUL message on the terminal
-    e. You should see the .aar files generated inside of '<iotivity base>/android/android_api/base/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
+               Note: To build in debug mode, use RELEASE=0.
+               Note: The minimum SDK version supported is 21.
+               Note: Only TARGET_TRANSPORT currently supported is WIFI.
+    b.If this is the first time building the scons script, you might be prompted to install 'cereal'. Follow the instructions from the scons message on the screen and re-run the above scons command.
+    c.If gradle fails, ensure that you are running gradle 2.2.1 or above. Also, check your firewall settings if you see a connection timed out exception. You can set your path variable to pick up gradle 2.2.1
+       export PATH=<path to gradle 2.2.1>:$PATH
+    d.If the project is setup correctly, you should see a BUILD SUCCESSFUL message on the terminal
+    e.You should see the .aar files generated inside of '<iotivity>/android/android_api/base/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
+
 
 TO RUN UNIT TESTS IN ANDROID-API
-7.The '<iotivity base>/android/android_api/base/src/androidTest/...' directory contains sample test app (SmokeTest.java) which can be used to get an idea about the Android API usage.
+
+7.The '<iotivity>/android/android_api/base/src/androidTest/...' directory contains tests which can be used to get an idea about the Android API usage.
+
+
+TO USE THE .AAR FILE IN <iotivity>/android/examples project
+
+8. Verify that 9 different *.so files exist inside <iotivity>/android/android-api/base/libs/<TARGET_ARCH> directory. (They should already be present in the *.aar file.)
+9. Import Project 'Examples' into android-studio.
+10.To add an .aar file to the 'Examples' project,
+   a.Right click on Examples->New->Module->Import .JAR or .AAR Package
+   b.Select the .aar file from the location in step 6e above
+   c.Right click on Examples->Open Module Settings
+   d.Select each sample app module under 'Modules'->Dependencies->Add->Module Dependency
+   e.The .aar file selected in step 10b above should be present. Select it.
+   f.Repeat steps d and e for each sample app module.
+
 
 TO USE THE .AAR FILE IN A DIFFERENT PROJECT
-8. Verify that 6 different *.so files exist inside <iotivity base>/android/android-api/base/libs/<TARGET_ARCH> directory.
-9. Import the .aar file in your project to use it
- (you might need to add the following to the build.gradle file to provide the right .aar file name in dependencies)
 
-    ...
-    dependencies {
-        compile 'com.android.support:appcompat-v7:21.0.3'
-            compile project(':base-armv7-release') // might need to change this name
-        }
-    ...
-
+11. Verify that 9 different *.so files exist inside <iotivity base>/android/android-api/base/libs/<TARGET_ARCH> directory.
+12. Import the .aar file in your project to use it
 
 

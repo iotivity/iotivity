@@ -84,40 +84,43 @@ namespace OC
         virtual ~InProcClientWrapper();
 
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
-            const std::string& resourceType, FindCallback& callback,
-            QualityOfService QoS);
+            const std::string& resourceType, OCConnectivityType connectivityType,
+            FindCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
-            const std::string& deviceURI, FindDeviceCallback& callback,
-            QualityOfService QoS);
+            const std::string& deviceURI, OCConnectivityType connectivityType,
+            FindDeviceCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult GetResourceRepresentation(const std::string& host,
-            const std::string& uri, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions,
+            const std::string& uri, OCConnectivityType connectivityType,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             GetCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PutResourceRepresentation(const std::string& host,
-            const std::string& uri, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            PutCallback& callback, QualityOfService QoS);
+            const std::string& uri, OCConnectivityType connectivityType,
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions, PutCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PostResourceRepresentation(const std::string& host,
-            const std::string& uri, const OCRepresentation& attributes,
-            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
-            PostCallback& callback, QualityOfService QoS);
+            const std::string& uri, OCConnectivityType connectivityType,
+            const OCRepresentation& attributes, const QueryParamsMap& queryParams,
+            const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult DeleteResource(const std::string& host, const std::string& uri,
-             const HeaderOptions& headerOptions, DeleteCallback& callback, QualityOfService QoS);
+            OCConnectivityType connectivityType, const HeaderOptions& headerOptions,
+            DeleteCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ObserveResource(ObserveType observeType, OCDoHandle* handle,
-            const std::string& host, const std::string& uri, const QueryParamsMap& queryParams,
-            const HeaderOptions& headerOptions, ObserveCallback& callback, QualityOfService QoS);
+            const std::string& host, const std::string& uri, OCConnectivityType connectivityType,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            ObserveCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult CancelObserveResource(OCDoHandle handle, const std::string& host,
             const std::string& uri, const HeaderOptions& headerOptions, QualityOfService QoS);
 
         virtual OCStackResult SubscribePresence(OCDoHandle* handle, const std::string& host,
-            const std::string& resourceType, SubscribeCallback& presenceHandler);
+            const std::string& resourceType, OCConnectivityType connectivityType,
+            SubscribeCallback& presenceHandler);
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle);
         OCStackResult GetDefaultQos(QualityOfService& QoS);
@@ -125,8 +128,8 @@ namespace OC
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
         std::string assembleSetResourcePayload(const OCRepresentation& attributes);
-        void assembleHeaderOptions(OCHeaderOption options[],
-            const HeaderOptions& headerOptions);
+        OCHeaderOption* assembleHeaderOptions(OCHeaderOption options[],
+           const HeaderOptions& headerOptions);
         std::thread m_listeningThread;
         bool m_threadRun;
         std::weak_ptr<std::recursive_mutex> m_csdkLock;
@@ -137,3 +140,4 @@ namespace OC
 }
 
 #endif
+

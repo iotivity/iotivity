@@ -51,7 +51,6 @@ public:
                 break;
             }
         }
-        
         if (!onEventListener)
         {
             onEventListener = new T(env, jListener, owner);
@@ -60,18 +59,13 @@ public:
             m_listenerMap.insert(std::pair<jobject, std::pair<T*, int>>(jgListener, std::pair<T*, int>(onEventListener, 1)));
             LOGD("OnEventListener: new listener");
         }
-        
         m_mapMutex.unlock();
-        
         return onEventListener;
     }
 
     void removeListener(JNIEnv* env, jobject jListener)
     {
         m_mapMutex.lock();
-
-        bool isFound = false;
-
         for (auto it = m_listenerMap.begin(); it != m_listenerMap.end(); ++it)
         {
             if (env->IsSameObject(jListener, it->first))
@@ -93,12 +87,9 @@ public:
 
                     LOGI("OnEventListener is removed");
                 }
-
-                isFound = true;
                 break;
             }
         }
-
         m_mapMutex.unlock();
     }
 

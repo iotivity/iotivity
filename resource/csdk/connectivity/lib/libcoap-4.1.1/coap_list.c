@@ -3,7 +3,7 @@
  * Copyright (C) 2010,2011 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -75,7 +75,7 @@ void coap_delete_list(coap_list_t *queue)
 coap_list_t *
 coap_new_listnode(void *data, void (*delete_func)(void *))
 {
-    coap_list_t *node = coap_malloc( sizeof(coap_list_t) );
+    coap_list_t *node = (coap_list_t *) coap_malloc( sizeof(coap_list_t) );
     if (!node)
     {
 #ifndef NDEBUG

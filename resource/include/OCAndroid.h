@@ -33,9 +33,15 @@ namespace std {
 	unsigned long long stoull(const std::string& s);
 	long double stold(const string& s);
 
-	std::string to_string(int i);
-	std::string to_string(uint32_t i);
-	std::string to_string(double d);
+	std::string to_string(int val);
+	std::string to_string(long val);
+	std::string to_string(long long val);
+	std::string to_string(unsigned val);
+	std::string to_string(unsigned long val);
+	std::string to_string(unsigned long long val);
+	std::string to_string(float val);
+	std::string to_string(double val);
+	std::string to_string(long double val);
 }
 
 #endif

@@ -22,8 +22,8 @@
 extern "C"
 {
     #include "ocstack.h"
-    #include "ocstackinternal.h"
     #include "logger.h"
+    #include "ocmalloc.h"
 }
 
 #include "gtest/gtest.h"
@@ -42,13 +42,21 @@ extern "C"
 
 #include <iostream>
 #include <stdint.h>
+
+#include "gtest_helper.h"
+
 using namespace std;
 
+namespace itst = iotivity::test;
+
 #define DEFAULT_CONTEXT_VALUE 0x99
+
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
 static const char TAG[] = "TestHarness";
+
+std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 
 //-----------------------------------------------------------------------------
 // Callback functions
@@ -83,13 +91,8 @@ OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerReq
 void InitStack(OCMode mode)
 {
     OC_LOG(INFO, TAG, "Entering InitStack");
-    uint8_t addr[20];
-    uint16_t port = USE_RANDOM_PORT;
 
-    OCGetInterfaceAddress(NULL, 0, AF_INET, addr, sizeof(addr));
-    OC_LOG_V(INFO, TAG, "InitStack on address %s",addr);
-
-    EXPECT_EQ(OC_STACK_OK, OCInit((char *) addr, port, mode));
+    EXPECT_EQ(OC_STACK_OK, OCInit(NULL, 0, mode));
     OC_LOG(INFO, TAG, "Leaving InitStack");
 }
 
@@ -122,48 +125,56 @@ uint8_t InitResourceIndex()
 
 TEST(StackInit, StackInitNullAddr)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackInit, StackInitNullPort)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 0, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackInit, StackInitNullAddrAndPort)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 0, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackInit, StackInitInvalidMode)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_ERROR, OCInit(0, 0, (OCMode)10));
     EXPECT_EQ(OC_STACK_ERROR, OCStop());
 }
 
 TEST(StackStart, StackStartSuccessClient)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackStart, StackStartSuccessServer)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackStart, StackStartSuccessClientServer)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackStart, StackStartSuccessiveInits)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.2", 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -171,6 +182,7 @@ TEST(StackStart, StackStartSuccessiveInits)
 
 TEST(StackDiscovery, DoResourceDeviceDiscovery)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OCCallbackData cbData;
     OCDoHandle handle;
 
@@ -183,13 +195,22 @@ TEST(StackDiscovery, DoResourceDeviceDiscovery)
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle,
+                                        OC_REST_GET,
+                                        szQueryUri,
+                                        0,
+                                        0,
+                                        OC_WIFI,
+                                        OC_LOW_QOS,
+                                        &cbData,
+                                        NULL,
+                                        0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackStop, StackStopWithoutInit)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCStop());
     EXPECT_EQ(OC_STACK_ERROR, OCStop());
@@ -197,6 +218,7 @@ TEST(StackStop, StackStopWithoutInit)
 
 TEST(StackResource, UpdateResourceNullURI)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OCCallbackData cbData;
     OCDoHandle handle;
 
@@ -209,12 +231,22 @@ TEST(StackResource, UpdateResourceNullURI)
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0));
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle,
+                                        OC_REST_GET,
+                                        szQueryUri,
+                                        0,
+                                        0,
+                                        OC_WIFI,
+                                        OC_LOW_QOS,
+                                        &cbData,
+                                        NULL,
+                                        0));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
 TEST(StackResource, CreateResourceBadParams)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting CreateResourceBadParams test");
     InitStack(OC_SERVER);
 
@@ -248,6 +280,7 @@ TEST(StackResource, CreateResourceBadParams)
 
 TEST(StackResource, CreateResourceSuccess)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting CreateResourceSuccess test");
     InitStack(OC_SERVER);
 
@@ -266,6 +299,7 @@ TEST(StackResource, CreateResourceSuccess)
 
 TEST(StackResource, CreateResourceFailDuplicateUri)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting CreateResourceFailDuplicateUri test");
     InitStack(OC_SERVER);
 
@@ -291,6 +325,7 @@ TEST(StackResource, CreateResourceFailDuplicateUri)
 
 TEST(StackResource, CreateResourceMultipleResources)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting CreateResourceMultipleResources test");
     InitStack(OC_SERVER);
 
@@ -331,6 +366,7 @@ TEST(StackResource, CreateResourceMultipleResources)
 
 TEST(StackResource, CreateResourceBadResoureType)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting CreateResourceBadResoureType test");
     InitStack(OC_SERVER);
 
@@ -347,6 +383,7 @@ TEST(StackResource, CreateResourceBadResoureType)
 
 TEST(StackResource, CreateResourceGoodResourceType)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting CreateResourceGoodResourceType test");
     InitStack(OC_SERVER);
 
@@ -363,6 +400,7 @@ TEST(StackResource, CreateResourceGoodResourceType)
 
 TEST(StackResource, ResourceTypeName)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting ResourceTypeName test");
     InitStack(OC_SERVER);
 
@@ -392,6 +430,7 @@ TEST(StackResource, ResourceTypeName)
 
 TEST(StackResource, ResourceTypeAttrRepresentation)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting ResourceTypeAttrRepresentation test");
     InitStack(OC_SERVER);
 
@@ -412,6 +451,7 @@ TEST(StackResource, ResourceTypeAttrRepresentation)
 
 TEST(StackResource, ResourceTypeInterface)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting ResourceTypeInterface test");
     InitStack(OC_SERVER);
 
@@ -441,6 +481,7 @@ TEST(StackResource, ResourceTypeInterface)
 
 TEST(StackResource, ResourceTypeInterfaceMethods)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting ResourceTypeInterfaceMethods test");
     InitStack(OC_SERVER);
 
@@ -461,6 +502,7 @@ TEST(StackResource, ResourceTypeInterfaceMethods)
 
 TEST(StackResource, GetResourceProperties)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting GetResourceProperties test");
     InitStack(OC_SERVER);
 
@@ -480,6 +522,7 @@ TEST(StackResource, GetResourceProperties)
 
 TEST(StackResource, StackTestResourceDiscoverOneResourceBad)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting StackTestResourceDiscoverOneResourceBad test");
     InitStack(OC_SERVER);
 
@@ -506,6 +549,7 @@ TEST(StackResource, StackTestResourceDiscoverOneResourceBad)
 
 TEST(StackResource, StackTestResourceDiscoverOneResource)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting StackTestResourceDiscoverOneResource test");
     InitStack(OC_SERVER);
 
@@ -527,6 +571,7 @@ TEST(StackResource, StackTestResourceDiscoverOneResource)
 
 TEST(StackResource, StackTestResourceDiscoverManyResources)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting StackTestResourceDiscoverManyResources test");
     InitStack(OC_SERVER);
 
@@ -587,6 +632,7 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
 
 TEST(StackBind, BindResourceTypeNameBad)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindResourceTypeNameBad test");
     InitStack(OC_SERVER);
 
@@ -611,6 +657,7 @@ TEST(StackBind, BindResourceTypeNameBad)
 
 TEST(StackBind, BindResourceTypeNameGood)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindResourceTypeNameGood test");
     InitStack(OC_SERVER);
 
@@ -645,6 +692,7 @@ TEST(StackBind, BindResourceTypeNameGood)
 
 TEST(StackBind, BindResourceTypeAttribRepGood)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindResourceTypeAttribRepGood test");
     InitStack(OC_SERVER);
 
@@ -674,6 +722,7 @@ TEST(StackBind, BindResourceTypeAttribRepGood)
 
 TEST(StackBind, BindResourceInterfaceNameBad)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindResourceInterfaceNameBad test");
     InitStack(OC_SERVER);
 
@@ -698,6 +747,7 @@ TEST(StackBind, BindResourceInterfaceNameBad)
 
 TEST(StackBind, BindResourceInterfaceNameGood)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindResourceInterfaceNameGood test");
     InitStack(OC_SERVER);
 
@@ -727,6 +777,7 @@ TEST(StackBind, BindResourceInterfaceNameGood)
 
 TEST(StackBind, BindResourceInterfaceMethodsBad)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindResourceInterfaceMethodsBad test");
     InitStack(OC_SERVER);
 
@@ -749,6 +800,7 @@ TEST(StackBind, BindResourceInterfaceMethodsBad)
 
 TEST(StackBind, BindResourceInterfaceMethodsGood)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindResourceInterfaceMethodsGood test");
     InitStack(OC_SERVER);
 
@@ -774,6 +826,7 @@ TEST(StackBind, BindResourceInterfaceMethodsGood)
 
 TEST(StackBind, BindContainedResourceBad)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindContainedResourceBad test");
     InitStack(OC_SERVER);
 
@@ -802,6 +855,7 @@ TEST(StackBind, BindContainedResourceBad)
 
 TEST(StackBind, BindContainedResourceGood)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindContainedResourceGood test");
     InitStack(OC_SERVER);
 
@@ -903,6 +957,7 @@ TEST(StackBind, BindContainedResourceGood)
 
 TEST(StackBind, BindEntityHandlerBad)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindEntityHandlerBad test");
     InitStack(OC_SERVER);
 
@@ -921,6 +976,7 @@ TEST(StackBind, BindEntityHandlerBad)
 
 TEST(StackBind, BindEntityHandlerGood)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting BindEntityHandlerGood test");
     InitStack(OC_SERVER);
 
@@ -943,6 +999,7 @@ TEST(StackBind, BindEntityHandlerGood)
 
 TEST(StackResourceAccess, GetResourceByIndex)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting GetResourceByIndex test");
     InitStack(OC_SERVER);
 
@@ -1036,6 +1093,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
 
 TEST(StackResourceAccess, DeleteHeadResource)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting DeleteHeadResource test");
     InitStack(OC_SERVER);
 
@@ -1064,6 +1122,7 @@ TEST(StackResourceAccess, DeleteHeadResource)
 
 TEST(StackResourceAccess, DeleteHeadResource2)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting DeleteHeadResource2 test");
     InitStack(OC_SERVER);
 
@@ -1106,6 +1165,7 @@ TEST(StackResourceAccess, DeleteHeadResource2)
 
 TEST(StackResourceAccess, DeleteLastResource)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting DeleteLastResource test");
     InitStack(OC_SERVER);
 
@@ -1157,6 +1217,7 @@ TEST(StackResourceAccess, DeleteLastResource)
 
 TEST(StackResourceAccess, DeleteMiddleResource)
 {
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting DeleteMiddleResource test");
     InitStack(OC_SERVER);
 
@@ -1214,55 +1275,75 @@ TEST(StackResourceAccess, DeleteMiddleResource)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
-#if 0
-TEST(StackTest, StackTestResourceDiscoverIfFilteringBad) {
-    uint8_t addr[20];
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
-    char uri[] = "/oc/core";
-    char query[] = "if";
-    char req[1024] = {};
-    char rsp[1024] = {};
-    //OCServerRequestResult res;
 
-    //EXPECT_EQ(OC_STACK_INVALID_QUERY, OCHandleServerRequest(&res, uri, query, req, rsp));
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+    void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType);
+#ifdef __cplusplus
 }
+#endif // __cplusplus
 
-TEST(StackTest, StackTestResourceDiscoverRtFilteringBad) {
-    uint8_t addr[20];
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
-    char uri[] = "/oc/core";
-    char query[] = "rt";
-    char req[1024] = {};
-    char rsp[1024] = {};
-    //OCServerRequestResult res;
+TEST(StackPresence, ParsePresencePayload)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OC_LOG(INFO, TAG, "Starting ParsePresencePayload test");
 
-    //EXPECT_EQ(OC_STACK_INVALID_QUERY, OCHandleServerRequest(&res, uri, query, req, rsp));
+    char payload[100];
+    uint32_t seqNum = 0, maxAge = 0;
+    char * resType = NULL;
+
+    //Good Scenario
+    strncpy(payload, "{\"oc\":[100:99:presence]}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(100 == seqNum);
+    EXPECT_TRUE(99 == maxAge);
+    EXPECT_STREQ("presence", resType);
+    OCFree(resType);
+
+    //Bad Scenario -- should not result in Seg Fault
+    parsePresencePayload(payload, NULL, &maxAge, &resType);
+
+    //Bad Scenario
+    seqNum = 0; maxAge = 0; resType = NULL;
+    strncpy(payload, "{abracadabra}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(0 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+    //Bad Scenario
+    seqNum = 0; maxAge = 0; resType = NULL;
+    strncpy(payload, "{\"oc\":[100]}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(100 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+    //Bad Scenario
+    seqNum = 0; maxAge = 0; resType = NULL;
+    strncpy(payload, "{\"oc\":[]}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(0 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+    //Bad Scenario
+    strncpy(payload, "{:]}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(0 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
+
+    //Bad Scenario
+    strncpy(payload, "{:[presence}", sizeof(payload));
+    parsePresencePayload(payload, &seqNum, &maxAge, &resType);
+    EXPECT_TRUE(0 == seqNum);
+    EXPECT_TRUE(0 == maxAge);
+    EXPECT_EQ(NULL, resType);
+    OCFree(resType);
 }
-TEST(StackTest, StackTestResourceDiscoverIfFiltering) {
-    uint8_t addr[20];
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
-    char uri[] = "/oc/core";
-    char query[] = "if=oc.mi.ll";
-    char req[1024] = {};
-    char rsp[1024] = {};
-    //OCServerRequestResult res;
-
-    //EXPECT_EQ(OC_STACK_OK, OCHandleServerRequest(&res, uri, query, req, rsp));
-}
-
-TEST(StackTest, StackTestResourceDiscoverRtFiltering) {
-    uint8_t addr[20];
-    uint16_t port = USE_RANDOM_PORT;
-    uint8_t ifname[] = "eth0";
-    char uri[] = "/oc/core";
-    char query[] = "rt=core.brightled";
-    char req[1024] = {};
-    char rsp[1024] = {};
-    //OCServerRequestResult res;
-
-    //EXPECT_EQ(OC_STACK_OK, OCHandleServerRequest(&res, uri, query, req, rsp));
-}
-#endif

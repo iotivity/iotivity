@@ -33,21 +33,9 @@ void handleSigInt(int signum);
 */
 int main()
 {
-
-    uint8_t interfaceAddress[20] = {0};
-    uint8_t *coordinatingAddress = NULL;
-    uint8_t interfaceName[] = "eth0";
-
     printf("OCResourceHosting is starting...\n");
 
-    if ( OCGetInterfaceAddress(interfaceName, sizeof(interfaceName), AF_INET, interfaceAddress,
-                               sizeof(interfaceAddress)) == ERR_SUCCESS)
-    {
-        printf("Starting OIC resource hosting on address %s\n", interfaceAddress);
-        coordinatingAddress = interfaceAddress;
-    }
-
-    if (OCInit((char *) coordinatingAddress, USE_RANDOM_PORT, OC_CLIENT_SERVER) != OC_STACK_OK)
+    if (OCInit((char *) NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
     {
         printf("OCStack init error\n");
         return 0;

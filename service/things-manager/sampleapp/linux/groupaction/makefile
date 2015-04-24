@@ -1,6 +1,5 @@
 
 TGMROOT=../../../
-OIC_ROOT=${TGMROOT}../..
 IOT_BASE=${TGMROOT}../../resource
 RST_NAME=.
 
@@ -11,17 +10,13 @@ CXX=g++
 CXX_FLAGS=-std=c++0x -Wall -pthread -DLINUX -ldl
 
 DEPEND_DIR:= ../../../../../resource/dependencies/
-CEREAL_DIR:= $(DEPEND_DIR)/cereal
 
 CXX_INC	:= -I../../ -I../../inc/
-CXX_INC += -I${OIC_ROOT}/extlibs/timer
 CXX_INC	+= -I${IOT_BASE}/include/
 CXX_INC	+= -I${IOT_BASE}/oc_logger/include
 CXX_INC	+= -I${IOT_BASE}/csdk/stack/include
-CXX_INC	+= -I${IOT_BASE}/csdk/ocsocket/include
 CXX_INC	+= -I${IOT_BASE}/csdk/ocrandom/include
 CXX_INC	+= -I${IOT_BASE}/csdk/logger/include
-CXX_INC	+= -I$(CEREAL_DIR)/include
 CXX_INC	+= -I../../../sdk/inc
 CXX_INC	+= -I../../../sdk/src
 
@@ -70,3 +65,4 @@ clean:
 	rm -f groupclient
 	rm -f lightserver
 	rm -f bookmark
+

@@ -38,6 +38,7 @@ public:
 private:
     jweak m_jwListener;
     JniOcResource* m_ownerResource;
+    void checkExAndRemoveListener(JNIEnv *env);
 };
 
 #endif

@@ -86,8 +86,12 @@ public class DeviceResource extends Resource implements IMessageLogger {
      * @return device representation
      */
     private void updateRepresentationValues() {
-        mRepresentation.setValueString(StringConstants.DEVICE_NAME,
-                "Intel Powered 2 door, 1 light refrigerator");
+        try {
+            mRepresentation.setValue(StringConstants.DEVICE_NAME,
+                    "Intel Powered 2 door, 1 light refrigerator");
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     /**
@@ -142,7 +146,7 @@ public class DeviceResource extends Resource implements IMessageLogger {
 
                         switch (request.getRequestType()) {
                             case GET:
-                                response.setErrorCode(StringConstants.ERROR_CODE);
+                                response.setErrorCode(StringConstants.OK);
                                 response.setResponseResult(EntityHandlerResult.OK);
                                 updateRepresentationValues();
                                 response.setResourceRepresentation(mRepresentation);
@@ -150,10 +154,9 @@ public class DeviceResource extends Resource implements IMessageLogger {
                                 break;
                             case DELETE:
                                 deleteDeviceResource();
-                                response.setErrorCode(StringConstants.ERROR_CODE);
+                                response.setErrorCode(StringConstants.OK);
                                 response.setResponseResult(EntityHandlerResult.OK);
                                 break;
-                            case PUT:
                             case POST:
                                 response.setResponseResult(EntityHandlerResult.ERROR);
                                 OcPlatform.sendResponse(response);

@@ -167,15 +167,7 @@ void foundResource(std::shared_ptr< OCResource > resource)
 
     try
     {
-        /*std::lock_guard<std::mutex> lock(curResourceLock);
-        if (g_curResource)
-        {
-            std::cout << "Found another resource, ignoring" << std::endl;
-            return;
-        }*/
-
         std::cout << "mutex lock passed" << std::endl;
-
         if (resource)
         {
             std::cout << resource->uri() << std::endl;
@@ -207,7 +199,7 @@ void foundResource(std::shared_ptr< OCResource > resource)
 
 OCStackResult nmfindResource(const std::string &host , const std::string &resourceName)
 {
-    return OCPlatform::findResource(host , resourceName , &foundResource);
+    return OCPlatform::findResource(host , resourceName , OC_ETHERNET, &foundResource);
 }
 
 void getRepresentation(std::shared_ptr< OCResource > resource)
@@ -325,14 +317,32 @@ int main(int argc , char *argv[])
     OCPlatform::Configure(cfg);
 
     std::cout << "Created Platform..." << std::endl;
+
+    g_curResource = NULL;
+
     findResourceCandidate();
 
     while (1)
     {
+        sleep(2);
+        if(g_curResource == NULL)
+        {
+            continue;
+        }
         PRINT();
 
+        in = 0;
         std::cin >> in;
-        switch (in)
+
+        if(std::cin.fail())
+        {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Invalid input type, please try again" << std::endl;
+            continue;
+        }
+
+        switch ((int)in)
         {
             case OBSERVE:
                 startObserve(g_curResource);
@@ -354,4 +364,3 @@ int main(int argc , char *argv[])
 
     return 0;
 }
-

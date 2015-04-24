@@ -19,6 +19,7 @@
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
+
 #include "JniOcStack.h"
 #include "OCResource.h"
 #include "JniListenerManager.h"
@@ -27,6 +28,7 @@
 #include "JniOnPostListener.h"
 #include "JniOnDeleteListener.h"
 #include "JniOnObserveListener.h"
+#include "JniOcResourceIdentifier.h"
 
 #ifndef _Included_org_iotivity_base_OcResource
 #define _Included_org_iotivity_base_OcResource
@@ -80,9 +82,12 @@ public:
     void unsetHeaderOptions();
     std::string host();
     std::string uri();
+    OCConnectivityType connectivityType() const;
     bool isObservable();
     std::vector< std::string > 	getResourceTypes() const;
     std::vector< std::string > 	getResourceInterfaces(void) const;
+    OCResourceIdentifier uniqueIdentifier() const;
+    std::string sid() const;
 
     JniOnGetListener* addOnGetListener(JNIEnv* env, jobject jListener);
     JniOnPutListener* addOnPutListener(JNIEnv* env, jobject jListener);
@@ -294,6 +299,14 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcResource
+    * Method:    getConnectivityTypeN
+    * Signature: ()I
+    */
+    JNIEXPORT jint JNICALL Java_org_iotivity_base_OcResource_getConnectivityTypeN
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
     * Method:    isObservable
     * Signature: ()Z
     */
@@ -314,6 +327,22 @@ extern "C" {
     * Signature: ()Ljava/util/List;
     */
     JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getResourceInterfaces
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    getUniqueIdentifier
+    * Signature: ()Lorg/iotivity/base/OcResourceIdentifier;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getUniqueIdentifier
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcResource
+    * Method:    getServerId
+    * Signature: ()Ljava/lang/String;
+    */
+    JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getServerId
         (JNIEnv *, jobject);
 
     /*

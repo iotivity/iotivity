@@ -352,6 +352,10 @@ OCStackResult OICStartCoordinate()
     s_mirrorResourceList = createMirrorResourceList();
     s_requestHandleList = createRequestHandleList();
     result = requestPresence(OC_DEFAULT_ADDRESS);
+    if(result != OC_STACK_OK)
+    {
+        return OC_STACK_ERROR;
+    }
 
     if (result != OC_STACK_OK)
     {
@@ -395,8 +399,8 @@ int requestCoordinateeCandidateDiscovery(char *sourceResourceAddress)
     cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    result = OCDoResource(&handle, OC_REST_GET, queryUri, OIC_COORDINATING_FLAG, 0, OC_LOW_QOS, &cbData,
-                          NULL, 0);
+    result = OCDoResource(&handle, OC_REST_GET, queryUri, OIC_COORDINATING_FLAG, 0,
+            OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(DEBUG, HOSTING_TAG, "OCStack resource error");
@@ -426,7 +430,7 @@ OCStackResult requestPresence(char *sourceResourceAddress)
     sprintf(queryUri, "coap://%s%s", sourceResourceAddress , OC_PRESENCE_URI);
     OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s", queryUri);
 
-    result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0, OC_LOW_QOS, &cbData, NULL, 0);
+    result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
 
     if (result != OC_STACK_OK)
     {
@@ -757,7 +761,7 @@ OCStackResult requestResourceObservation(MirrorResource *mirrorResource)
             OIC_COORDINATING_FLAG);
 
     result = OCDoResource(&mirrorResource->resourceHandle[OIC_REQUEST_HANDLE], OC_REST_OBSERVE, query,
-                          0, NULL,
+                          0, NULL, OC_ETHERNET,
                           OC_HIGH_QOS, &cbData, NULL, 0);
 
     if (result != OC_STACK_OK)
@@ -896,7 +900,7 @@ MirrorResource *updateMirrorResource(OCDoHandle handle, const char *payload)
     cJSON *json = cJSON_CreateObject();
 
     char nodeData[OIC_STRING_MAX_VALUE] = {'\0'};
-    snprintf(nodeData, sizeof(nodeData) - 1, "%s", foundMirrorResource->uri);
+    snprintf(nodeData, sizeof(foundMirrorResource->uri), "%s", foundMirrorResource->uri);
     cJSON_AddStringToObject(json, "href", nodeData);
 
     cJSON *nodeRep = cJSON_Parse(cJSON_PrintUnformatted(foundMirrorResource->rep));
@@ -1296,8 +1300,7 @@ OCStackResult requestQuery(RequestHandle *request, OCMethod method,
     }
     else
     {
-        snprintf(queryFullUri, sizeof(queryFullUri) - 1 , "coap://%s%s%s", queryAddress , queryUri,
-                 OIC_COORDINATING_FLAG);
+        snprintf(queryFullUri, sizeof(queryFullUri) ,"coap://%s%s%s", queryAddress , queryUri, OIC_COORDINATING_FLAG);
     }
 
     cbData.cb = requestQueryCB;
@@ -1307,16 +1310,16 @@ OCStackResult requestQuery(RequestHandle *request, OCMethod method,
     if (method == OC_REST_PUT)
     {
         char payload[OIC_STRING_MAX_VALUE] = {'\0'};
-        snprintf(payload , sizeof(payload) - 1, "%s" ,
+        snprintf(payload , OIC_STRING_MAX_VALUE, "%s" ,
                  ((OCEntityHandlerRequest *)request->requestHandle[OIC_REQUEST_BY_CLIENT])->reqJSONPayload);
 
         result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
-                              method, queryFullUri, NULL, payload, OC_LOW_QOS, &cbData, NULL, 0);
+                              method, queryFullUri, NULL, payload, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
     {
         result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
-                              method, queryFullUri, NULL, 0, OC_LOW_QOS, &cbData, NULL, 0);
+                              method, queryFullUri, NULL, 0, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
     }
 
     if (result != OC_STACK_OK)

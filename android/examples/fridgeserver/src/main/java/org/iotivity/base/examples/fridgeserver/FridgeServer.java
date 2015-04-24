@@ -56,6 +56,7 @@ public class FridgeServer extends Activity implements IMessageLogger {
     private static String TAG = "FridgeServer: ";
     private TextView mEventsTextView;
     private MessageReceiver mMessageReceiver = new MessageReceiver();
+    private Refrigerator refrigerator;
 
     /**
      * configure OIC platform and call findResource
@@ -63,6 +64,7 @@ public class FridgeServer extends Activity implements IMessageLogger {
     private void initOICStack() {
         //create platform config
         PlatformConfig cfg = new PlatformConfig(
+                this,
                 ServiceType.IN_PROC,
                 ModeType.SERVER,
                 "0.0.0.0", // bind to all available interfaces
@@ -70,19 +72,8 @@ public class FridgeServer extends Activity implements IMessageLogger {
                 QualityOfService.LOW);
         OcPlatform.Configure(cfg);
         logMessage(TAG + "Creating refrigerator resources");
-        // calling Refrigerator on a different thread so that it doesn't block the UI thread
-        new Thread() {
-            public void run() {
-                new Refrigerator(mContext);
-                try {
-                    // keep the server alive for 300 seconds for the client to make request
-                    Thread.sleep(300000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
 
+        refrigerator = new Refrigerator(mContext);
     }
 
     @Override

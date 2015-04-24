@@ -90,10 +90,14 @@ public class DoorResource extends Resource implements IMessageLogger {
      * @return door representation
      */
     private void updateRepresentationValues() {
-        mRepresentation.setValueString(StringConstants.SIDE, mSide);
-        mRepresentation.setValueBool(StringConstants.OPEN, mOpen);
-        mRepresentation.setValueString(StringConstants.DEVICE_NAME,
-                "Intel Powered 2 door, 1 light refrigerator");
+        try {
+            mRepresentation.setValue(StringConstants.SIDE, mSide);
+            mRepresentation.setValue(StringConstants.OPEN, mOpen);
+            mRepresentation.setValue(StringConstants.DEVICE_NAME,
+                    "Intel Powered 2 door, 1 light refrigerator");
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     /**
@@ -102,7 +106,11 @@ public class DoorResource extends Resource implements IMessageLogger {
      * @param representation get current state of door
      */
     private void put(OcRepresentation representation) {
-        mOpen = representation.getValueBool(StringConstants.OPEN);
+        try {
+            mOpen = representation.getValue(StringConstants.OPEN);
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
         // Note, we won't let the user change the door side!
     }
 
@@ -123,28 +131,32 @@ public class DoorResource extends Resource implements IMessageLogger {
 
                     switch (request.getRequestType()) {
                         case GET:
-                            response.setErrorCode(StringConstants.ERROR_CODE);
+                            response.setErrorCode(StringConstants.OK);
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
+                            response.setResponseResult(EntityHandlerResult.OK);
                             OcPlatform.sendResponse(response);
                             break;
                         case PUT:
-                            response.setErrorCode(StringConstants.ERROR_CODE);
+                            response.setErrorCode(StringConstants.OK);
                             put(request.getResourceRepresentation());
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
+                            response.setResponseResult(EntityHandlerResult.OK);
                             OcPlatform.sendResponse(response);
                             break;
-                        case POST:
                         case DELETE:
-                            response.setResponseResult(EntityHandlerResult.ERROR);
+                            response.setResponseResult(EntityHandlerResult.RESOURCE_DELETED);
+                            response.setErrorCode(204);
                             OcPlatform.sendResponse(response);
+                            break;
                     }
                     result = EntityHandlerResult.OK;
                 }
             } catch (OcException e) {
                 logMessage(TAG + e.getMessage());
                 Log.e(TAG, e.getMessage());
+                return EntityHandlerResult.ERROR;
             }
         }
         return result;

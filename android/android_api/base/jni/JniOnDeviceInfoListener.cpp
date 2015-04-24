@@ -22,23 +22,22 @@
 #include "JniOnDeviceInfoListener.h"
 #include "JniOcRepresentation.h"
 
-JniOnDeviceInfoListener::JniOnDeviceInfoListener(JNIEnv *env, jobject jListener)
+JniOnDeviceInfoListener::JniOnDeviceInfoListener(JNIEnv *env, jobject jListener,
+    RemoveListenerCallback removeListenerCallback)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
+    m_removeListenerCallback = removeListenerCallback;
 }
 
 JniOnDeviceInfoListener::~JniOnDeviceInfoListener()
 {
-    LOGI("JniOnDeviceInfoListener - destr.");
-
+    LOGI("~JniOnDeviceInfoListener");
     if (m_jwListener)
     {
         jint ret;
         JNIEnv *env = GetJNIEnv(ret);
         if (NULL == env) return;
-
         env->DeleteWeakGlobalRef(m_jwListener);
-
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
@@ -52,16 +51,20 @@ void JniOnDeviceInfoListener::foundDeviceCallback(const OC::OCRepresentation& oc
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
+        LOGI("Java onDeviceInfoListener object is already destroyed, quiting");
+        checkExAndRemoveListener(env);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;
     }
 
-    jlong handle = reinterpret_cast<jlong>(&ocRepresentation);
-
-    jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor, handle);
-    if (env->ExceptionCheck())
+    OCRepresentation * rep = new OCRepresentation(ocRepresentation);
+    jlong handle = reinterpret_cast<jlong>(rep);
+    jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool,
+        handle, true);
+    if (!jRepresentation)
     {
-        LOGE("Failed to create OcRepresentation");
+        delete rep;
+        checkExAndRemoveListener(env);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;
     }
@@ -70,9 +73,32 @@ void JniOnDeviceInfoListener::foundDeviceCallback(const OC::OCRepresentation& oc
     jmethodID midL = env->GetMethodID(clsL, "onDeviceFound", "(Lorg/iotivity/base/OcRepresentation;)V");
 
     env->CallVoidMethod(jListener, midL, jRepresentation);
+    if (env->ExceptionCheck())
+    {
+        LOGE("Java exception is thrown");
+        delete rep;
+        checkExAndRemoveListener(env);
+        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        return;
+    }
 
     env->DeleteLocalRef(jListener);
     env->DeleteLocalRef(jRepresentation);
 
     if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+}
+
+void JniOnDeviceInfoListener::checkExAndRemoveListener(JNIEnv* env)
+{
+    if (env->ExceptionCheck())
+    {
+        jthrowable ex = env->ExceptionOccurred();
+        env->ExceptionClear();
+        m_removeListenerCallback(env, m_jwListener);
+        env->Throw((jthrowable)ex);
+    }
+    else
+    {
+        m_removeListenerCallback(env, m_jwListener);
+    }
 }

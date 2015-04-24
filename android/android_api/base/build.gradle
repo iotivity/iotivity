@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 21
     buildToolsVersion "20.0.0"
     archivesBaseName = "iotivity"
 
@@ -9,15 +9,15 @@ android {
         variant.outputs.each { output ->
             def outputFile = output.outputFile
             if (outputFile != null && outputFile.name.endsWith('.aar')) {
-                def fileName = "${archivesBaseName}-${outputFile.name}"
+                def fileName = "${archivesBaseName}-${TARGET_ARCH}-${outputFile.name}"
                 output.outputFile = new File(outputFile.parent, fileName)
             }
         }
     }
 
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 19
+        minSdkVersion 21
+        targetSdkVersion 21
         versionCode 1
         versionName "0.9"
     }
@@ -26,28 +26,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    productFlavors {
-        armv7 {
-            ndk {
-                abiFilter "armeabi-v7a"
-            }
-        }
-        arm {
-            ndk {
-                abiFilter "armeabi"
-            }
-        }
-        x86 {
-            ndk {
-                abiFilter "x86"
-            }
-        }
-        x86_64 {
-            ndk {
-                abiFilter "x86_64"
-            }
-        }
-    }
+
     sourceSets {
         main {
             manifest.srcFile 'src/main/AndroidManifest.xml'
@@ -90,7 +69,7 @@ dependencies {
 //If using this, Android studio will fail run the following to set the environment variable for android studio:
 //launchctl setenv ANDROID_NDK_HOME /Users/boos_patrick/Development/Android/android-ndk-r8e
 //otherwise remove the dependsOn part and run ./gradlew buildNative from the command line
-//
+
 task copyNativeLibs(type: Copy, dependsOn: 'buildNative') {
     dependsOn 'buildNative'
     from(new File('libs')) { include '**/*.so' }
@@ -111,13 +90,22 @@ task buildNative(type: Exec) {
         //for windows use 'ndk-build.cmd'
         //def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
-        commandLine ndkBuild
+        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE"
     } else {
-        doLast {
-            println '##################'
-            println 'Skipping NDK build'
-            println 'Reason: ANDROID_NDK_HOME not set.'
-            println '##################'
-        }
+        println '##################'
+        println 'Skipping NDK build'
+        println 'Reason: ANDROID_NDK_HOME not set.'
+        println '##################'
     }
 }
+//
+//task (copyARR, type: Copy) {
+//    copy {
+//        from 'build/outputs/aar/'
+//        into '../../../out/android/'
+//        include '**/*.aar'
+//    }
+//}
+//build.finalizedBy(copyARR)
+
+

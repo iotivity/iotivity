@@ -1,6 +1,6 @@
 #//******************************************************************
 #//
-#// Copyright 2014 Intel Corporation.
+#// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
 #//
 #//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #//
@@ -34,7 +34,7 @@ OBJS	  := OICMiddle.o \
 				WrapResource.o \
 				LineInput.o \
 				RestInput.o
-				
+
 CXX_FLAGS.debug     := -O0 -g3 -std=c++0x -Wall -pthread
 
 CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
@@ -42,24 +42,23 @@ CXX_FLAGS.release   := -O3 -std=c++0x -Wall -pthread
 CXX_INC	  := -I$(OIC_RES)/include/
 CXX_INC   += -I$(OIC_RES)/oc_logger/include
 CXX_INC	  += -I$(OIC_RES)/csdk/stack/include
-CXX_INC	  += -I$(OIC_RES)/csdk/ocsocket/include
 CXX_INC	  += -I$(OIC_RES)/csdk/ocrandom/include
 CXX_INC	  += -I$(OIC_RES)/csdk/logger/include
-CXX_INC	  += -I$(OIC_RES)/csdk/libcoap
-CXX_INC   += -I$(OIC_RES)/../extlibs/cereal/include
+CXX_INC   += -I$(OIC_RES)/csdk/connectivity/lib/libcoap-4.1.1
 
 CXX_LIBS  := -L${OIC_LIB}
 CXX_LIBS  += -loc
 CXX_LIBS  += -loctbstack
 CXX_LIBS  += -loc_logger
-CXX_LIBS  += -loc_logger_core
+#CXX_LIBS  += -loc_logger_core
+CXX_LIBS  += -lconnectivity_abstraction
 CXX_LIBS  += -lcoap
 
 all: prep_dirs OICMiddle
 
 prep_dirs:
 	-mkdir -p $(OUT_DIR)
-	
+
 OICMiddle: $(OBJS)
 	$(CXX) $(CXX_FLAGS.$(BUILD)) -o $(OUT_DIR)/$@ $(OBJS) $(CXX_LIBS)
 
@@ -74,15 +73,16 @@ Server.o: Server.cpp Server.h OICMiddle.h
 
 WrapResource.o: WrapResource.cpp WrapResource.h OICMiddle.h
 	$(CXX) -c $(CXX_FLAGS.$(BUILD)) WrapResource.cpp $(CXX_INC)
-	
+
 LineInput.o: LineInput.cpp LineInput.h OICMiddle.h
 	$(CXX) -c $(CXX_FLAGS.$(BUILD)) LineInput.cpp $(CXX_INC)
-	
+
 RestInput.o: RestInput.cpp RestInput.h OICMiddle.h
 	$(CXX) -c $(CXX_FLAGS.$(BUILD)) RestInput.cpp $(CXX_INC)
-	
+
 clean:
 	rm $(OBJS)
 	rm -rf debug
 	rm -rf release
+
 

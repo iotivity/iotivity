@@ -7,127 +7,50 @@ boost_env = env.Clone()
 modules = ['thread','program_options']
 
 target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
 
-boost_version   = '1.57.0'
-boost_base_name  = 'boost_'+string.replace(boost_version,'.','_')
-boost_arch_name  = boost_base_name+'.zip'
-boost_url       = 'http://downloads.sourceforge.net/project/boost/boost/'+boost_version+'/'+boost_arch_name+'?r=&ts=1421801329&use_mirror=iweb'
+if 'linux' == target_os :
+    # Check for Boost libraries in /usr/boost
+    print 'TODO: Perform platform check for linux'
+    raise SCons.Errors.EnvironmentError('Unsupported platform')
 
-host_os = sys.platform
+if 'android' == target_os :
+    env.Tool('URLDownload',    toolpath=['../../tools/scons'])
+    env.Tool('UnpackAll',      toolpath=['../../tools/scons'])
+    env.Tool('BoostBootstrap', toolpath=['../../tools/scons'])
+    env.Tool('BoostBuild',     toolpath=['../../tools/scons'])
 
-if host_os == 'linux2' :
-    boost_bootstrap = boost_base_name+os.sep+'bootstrap.sh'
-    boost_b2_name    = boost_base_name+os.sep+'b2'
-else :
-    msg="Host platform (%s) is currently not supported for boost builds" % host_os
-    raise SCons.Errors.EnvironmentError(msg)
+    boost_version   = '1.57.0'
+    boost_base_name  = 'boost_'+string.replace(boost_version,'.','_')
+    boost_arch_name  = boost_base_name+'.zip'
+    boost_url       = 'http://downloads.sourceforge.net/project/boost/boost/'+boost_version+'/'+boost_arch_name+'?r=&ts=1421801329&use_mirror=iweb'
 
-# Download source code
-boost_zip = boost_env.Download(boost_arch_name, boost_url)
+    host_os = sys.platform
 
-# Unpack source code
-if not os.path.exists(boost_bootstrap):
-	boost_env.UnpackAll(boost_bootstrap, boost_zip)
+    if host_os == 'linux2' :
+        boost_bootstrap = boost_base_name+os.sep+'bootstrap.sh'
+        boost_b2_name    = boost_base_name+os.sep+'b2'
+    else :
+        msg="Host platform (%s) is currently not supported for boost builds" % host_os
+        raise SCons.Errors.EnvironmentError(msg)
 
-# Run bootstrap.sh
-if not os.path.exists(boost_b2_name):
-	boost_env.Configure(boost_base_name, './bootstrap.sh')
+    boost_zip = env.URLDownload(boost_arch_name, boost_url)
+    boost_dir = env.UnpackAll(boost_bootstrap, boost_zip)
+    boost_b2  = env.BoostBootstrap(boost_b2_name, boost_dir)
 
-cmd = None
+    dep_sys_root = env['DEP_SYS_ROOT']
+    dep_src_dir =  dep_sys_root + os.sep + 'include'
+    dep_lib_dir =  dep_sys_root + os.sep + 'lib'
 
-# Windows...
-if boost_env["PLATFORM"] in ["win32"] :
-	if boost_env.WhereIs("cmd") :
-		# TODO: Add Windows Support
-		cmd = None
+    boost_targets = [
+        os.path.join(dep_src_dir, 'boost', 'config.hpp'),
+        os.path.join(dep_src_dir, 'boost', 'variant.hpp'),
+        os.path.join(dep_src_dir, 'boost', 'program_options.hpp'),
+        os.path.join(dep_src_dir, 'libboost_thread.a'),
+        os.path.join(dep_src_dir, 'libboost_atomic.a'),
+        os.path.join(dep_src_dir, 'libboost_system.a'),
+        os.path.join(dep_src_dir, 'libboost_program_options.a')
+        ]
 
-# read the tools on *nix systems and sets the default parameters
-elif boost_env["PLATFORM"] in ["darwin", "linux", "posix"] :
-	if boost_env.WhereIs("sh") :
-		cmd = ['./b2']
-
-if not cmd :
-	raise SCons.Errors.StopError("Boost build system not supported on this platform [%s]" % (boost_env["PLATFORM"]))
-
-# We need to be in the target's directory
-cwd = boost_base_name
-
-# Gather all of the path, bin and flags
-version     = boost_env.get('VERSION','')
-target_os   = boost_env['TARGET_OS']
-target_arch = boost_env['TARGET_ARCH']
-tool_path   = os.path.dirname(boost_env['CXX'])
-cxx_bin     = os.path.basename(boost_env['CXX'])
-ar_bin      = os.path.basename(boost_env['AR'])
-ranlib_bin  = os.path.basename(boost_env['RANLIB'])
-ccflags     = list(boost_env['CFLAGS'])
-cxxflags    = list(boost_env['CXXFLAGS'])
-
-try:
-	cxxflags.remove('-fno-rtti')
-except ValueError:
-	pass
-try:
-	cxxflags.remove('-fno-exceptions')
-except ValueError:
-	pass
-
-# Write a user-config for this variant
-user_config_name = os.path.join(cwd, 'tools', 'build', 'src', 'user-config.jam')
-user_config_file = open(user_config_name, 'w')
-user_config_file.write('import os ;\n')
-user_config_file.write('using gcc :')
-user_config_file.write(' '+version+' :')
-#user_config_file.write(' :')
-#user_config_file.write(' '+os.path.basename(toolchain['CXX']['BIN'])+' :\n')
-user_config_file.write(' '+cxx_bin+' :\n')
-user_config_file.write('    <archiver>'+ar_bin+'\n')
-user_config_file.write('    <ranlib>'+ranlib_bin+'\n')
-for value in boost_env['CPPDEFINES'] :
-	if len(value) > 1 :
-		user_config_file.write('    <compileflags>-D'+value[0]+'='+value[1]+'\n')
-	else :
-		user_config_file.write('    <compileflags>-D'+value[0]+'\n')
-for value in boost_env['CPPPATH'] :
-	user_config_file.write('    <compileflags>-I'+value+'\n')
-for flag in ccflags :
-	user_config_file.write('    <compileflags>'+flag+'\n')
-for flag in cxxflags :
-	user_config_file.write('    <cxxflags>'+flag+'\n')
-user_config_file.write('    ;\n')
-user_config_file.close();
-
-# Ensure that the toolchain is in the PATH
-penv = os.environ.copy()
-penv["PATH"] = tool_path + ":" + env['ENV'].get('PATH', '') + ':' + penv["PATH"]
-
-build_path = os.path.join('build', target_os, target_arch)
-
-cmd.append('-q')
-cmd.append('target-os=linux')
-cmd.append('link=static')
-cmd.append('threading=multi')
-cmd.append('--layout=system')
-cmd.append('--build-type=minimal')
-cmd.append('--prefix='+ build_path + os.sep + 'install_tmp')
-cmd.append('--build-dir='+build_path)
-for module in modules :
-	cmd.append('--with-'+module)
-cmd.append('headers')
-cmd.append('install')
-
-# build it now (we need the shell, because some programs need it)
-devnull = open(os.devnull, "wb")
-print "Building boost [%s] on the source [%s]" % (cmd, boost_b2_name)
-handle  = subprocess.Popen(cmd, env=penv, cwd=cwd)#, stdout=devnull )
-
-if handle.wait() <> 0 :
-	raise SCons.Errors.BuildError( "Building boost [%s] on the source [%s]" % (cmd, boost_b2_name) )
-
-# Use Copy instead of InstallXXX to make sure boost is installed immediately
-Execute(Copy(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include'),
-	os.path.join(boost_base_name, build_path, 'install_tmp', 'include')))
-
-Execute(Copy(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch),
-	os.path.join(boost_base_name, build_path, 'install_tmp', 'lib')))
+    boost_build = env.BoostBuild(boost_targets, boost_b2, PREFIX=dep_sys_root, MODULES=modules)
 

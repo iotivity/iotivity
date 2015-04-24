@@ -1,0 +1,289 @@
+diff -rupN glibref/glib-2.40.2/config.h glibpatch/glib-2.40.2/config.h
+--- glibref/glib-2.40.2/config.h	2015-03-31 16:25:56.882894898 +0900
++++ glibpatch/glib-2.40.2/config.h	2015-04-01 13:21:19.593558693 +0900
+@@ -31,8 +31,9 @@
+ /* #undef ENABLE_GC_FRIENDLY_DEFAULT */
+ 
+ /* always defined to indicate that i18n is enabled */
++#ifndef _GLIB_ANDROID_
+ #define ENABLE_NLS 1
+-
++#endif /* _GLIB_ANDROID__ */
+ /* Define the gettext package to be used */
+ #define GETTEXT_PACKAGE "glib20"
+ 
+@@ -100,8 +101,9 @@
+ /* #undef HAVE_COCOA */
+ 
+ /* Have nl_langinfo (CODESET) */
++#ifndef _GLIB_ANDROID_
+ #define HAVE_CODESET 1
+-
++#endif /* _GLIB_ANDROID_ */
+ /* Define to 1 if you have the <crt_externs.h> header file. */
+ /* #undef HAVE_CRT_EXTERNS_H */
+ 
+@@ -130,8 +132,10 @@
+ /* we have the eventfd(2) system call */
+ #define HAVE_EVENTFD 1
+ 
++#ifndef _GLIB_ANDROID_
+ /* Define to 1 if you have the `fallocate' function. */
+ #define HAVE_FALLOCATE 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define if we have FAM */
+ /* #undef HAVE_FAM */
+@@ -224,6 +228,7 @@
+ /* Define to 1 if you have the `kqueue' function. */
+ /* #undef HAVE_KQUEUE */
+ 
++#ifndef _GLIB_ANDROID_
+ /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
+ #define HAVE_LANGINFO_CODESET 1
+ 
+@@ -232,6 +237,7 @@
+ 
+ /* Have nl_langinfo (PM_STR) */
+ #define HAVE_LANGINFO_TIME 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the `lchmod' function. */
+ /* #undef HAVE_LCHMOD */
+@@ -283,9 +289,10 @@
+ 
+ /* Define to 1 if you have the <memory.h> header file. */
+ #define HAVE_MEMORY_H 1
+-
++#ifndef _GLIB_ANDROID_
+ /* Define to 1 if you have the `mmap' function. */
+ #define HAVE_MMAP 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the <mntent.h> header file. */
+ #define HAVE_MNTENT_H 1
+@@ -317,8 +324,10 @@
+ /* Have POSIX function getgrgid_r */
+ #define HAVE_POSIX_GETGRGID_R 1
+ 
++#ifndef _GLIB_ANDROID_
+ /* Have POSIX function getpwuid_r */
+ #define HAVE_POSIX_GETPWUID_R 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the `posix_memalign' function. */
+ #define HAVE_POSIX_MEMALIGN 1
+@@ -333,8 +342,11 @@
+ #define HAVE_PTHREAD_CONDATTR_SETCLOCK 1
+ 
+ /* Have function pthread_cond_timedwait_relative_np */
++#ifndef _GLIB_ANDROID_
+ /* #undef HAVE_PTHREAD_COND_TIMEDWAIT_RELATIVE_NP */
+-
++#else
++#define HAVE_PTHREAD_COND_TIMEDWAIT_RELATIVE_NP 0
++#endif /* _GLIB_ANDROID_ */
+ /* Define to 1 if the system has the type `ptrdiff_t'. */
+ #define HAVE_PTRDIFF_T 1
+ 
+@@ -384,8 +396,10 @@
+ /* Define to 1 if you have the <stdlib.h> header file. */
+ #define HAVE_STDLIB_H 1
+ 
++#ifndef _GLIB_ANDROID_
+ /* Define to 1 if you have the `stpcpy' function. */
+ #define HAVE_STPCPY 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the `strcasecmp' function. */
+ #define HAVE_STRCASECMP 1
+@@ -532,10 +546,10 @@
+ 
+ /* Define to 1 if you have the <sys/xattr.h> header file. */
+ #define HAVE_SYS_XATTR_H 1
+-
++#ifndef _GLIB_ANDROID_
+ /* Define to 1 if you have the `timegm' function. */
+ #define HAVE_TIMEGM 1
+-
++#endif /* _GLIB_ANDROID_ */
+ /* Define to 1 if you have the <unistd.h> header file. */
+ #define HAVE_UNISTD_H 1
+ 
+@@ -563,7 +577,7 @@
+ 
+ /* Define to 1 if you have the `vsnprintf' function. */
+ #define HAVE_VSNPRINTF 1
+-
++#ifndef _GLIB_ANDROID_
+ /* Define if you have the 'wchar_t' type. */
+ #define HAVE_WCHAR_T 1
+ 
+@@ -575,12 +589,14 @@
+ 
+ /* Define to 1 if xattr is available */
+ #define HAVE_XATTR 1
+-
++#endif
+ /* Define to 1 if xattr API uses XATTR_NOFOLLOW */
+ /* #undef HAVE_XATTR_NOFOLLOW */
+ 
+ /* Define to 1 if you have the <xlocale.h> header file. */
++#ifndef _GLIB_ANDROID_
+ #define HAVE_XLOCALE_H 1
++#endif /* _GLIB_ANDROID_ */
+ 
+ /* Define to 1 if you have the `_NSGetEnviron' function. */
+ /* #undef HAVE__NSGETENVIRON */
+diff -rupN glibref/glib-2.40.2/glib/gconvert.c glibpatch/glib-2.40.2/glib/gconvert.c
+--- glibref/glib-2.40.2/glib/gconvert.c	2015-03-31 16:25:56.946894901 +0900
++++ glibpatch/glib-2.40.2/glib/gconvert.c	2015-03-31 16:40:50.546926503 +0900
+@@ -22,7 +22,11 @@
+ #include "glibconfig.h"
+ 
+ #ifndef G_OS_WIN32
++
++#ifndef _GLIB_ANDROID_
+ #include <iconv.h>
++#endif /* _GLIB_ANDROID_ */
++
+ #endif
+ #include <errno.h>
+ #include <stdio.h>
+@@ -168,6 +172,7 @@
+ 
+ G_DEFINE_QUARK (g_convert_error, g_convert_error)
+ 
++#ifndef _GLIB_ANDROID_
+ static gboolean
+ try_conversion (const char *to_codeset,
+ 		const char *from_codeset,
+@@ -197,9 +202,9 @@ try_to_aliases (const char **to_aliases,
+ 	  p++;
+ 	}
+     }
+-
+   return FALSE;
+ }
++#endif /* _GLIB_ANDROID_ */
+ 
+ /**
+  * g_iconv_open:
+@@ -220,6 +225,7 @@ GIConv
+ g_iconv_open (const gchar  *to_codeset,
+ 	      const gchar  *from_codeset)
+ {
++#ifndef _GLIB_ANDROID_
+   iconv_t cd;
+   
+   if (!try_conversion (to_codeset, from_codeset, &cd))
+@@ -248,6 +254,9 @@ g_iconv_open (const gchar  *to_codeset,
+ 
+  out:
+   return (cd == (iconv_t)-1) ? (GIConv)-1 : (GIConv)cd;
++#else
++  return (GIConv)-1;
++#endif /* _GLIB_ANDROID_ */
+ }
+ 
+ /**
+@@ -274,9 +283,13 @@ g_iconv (GIConv   converter,
+ 	 gchar  **outbuf,
+ 	 gsize   *outbytes_left)
+ {
++#ifndef _GLIB_ANDROID_
+   iconv_t cd = (iconv_t)converter;
+ 
+   return iconv (cd, inbuf, inbytes_left, outbuf, outbytes_left);
++#else
++  return -1;
++#endif /* _GLIB_ANDROID_ */
+ }
+ 
+ /**
+@@ -297,9 +310,13 @@ g_iconv (GIConv   converter,
+ gint
+ g_iconv_close (GIConv converter)
+ {
++#ifndef _GLIB_ANDROID_
+   iconv_t cd = (iconv_t)converter;
+ 
+   return iconv_close (cd);
++#else
++  return -1;
++#endif /* _GLIB_ANDROID_ */
+ }
+ 
+ static GIConv
+diff -rupN glibref/glib-2.40.2/glib/gfileutils.c glibpatch/glib-2.40.2/glib/gfileutils.c
+--- glibref/glib-2.40.2/glib/gfileutils.c	2015-03-31 16:25:57.170894910 +0900
++++ glibpatch/glib-2.40.2/glib/gfileutils.c	2015-03-31 16:37:29.594919396 +0900
+@@ -54,7 +54,9 @@
+ 
+ #ifdef HAVE_LINUX_MAGIC_H /* for btrfs check */
+ #include <linux/magic.h>
++#ifndef _GLIB_ANDROID_
+ #include <sys/vfs.h>
++#endif /* _GLIB_ANDROID_ */
+ #endif
+ 
+ 
+diff -rupN glibref/glib-2.40.2/glib/ggettext.c glibpatch/glib-2.40.2/glib/ggettext.c
+--- glibref/glib-2.40.2/glib/ggettext.c	2015-03-31 16:25:57.182894907 +0900
++++ glibpatch/glib-2.40.2/glib/ggettext.c	2015-03-31 16:37:55.538920314 +0900
+@@ -40,7 +40,10 @@
+ 
+ #include <string.h>
+ #include <locale.h>
++
++#ifndef _GLIB_ANDROID_
+ #include <libintl.h>
++#endif /* _GLIB_ANDROID_ */
+ 
+ #ifdef G_OS_WIN32
+ 
+diff -rupN glibref/glib-2.40.2/glib/glibconfig.h glibpatch/glib-2.40.2/glib/glibconfig.h
+--- glibref/glib-2.40.2/glib/glibconfig.h	2015-03-31 16:25:57.166894909 +0900
++++ glibpatch/glib-2.40.2/glib/glibconfig.h	2015-03-31 16:38:06.954920717 +0900
+@@ -154,7 +154,9 @@ typedef unsigned int guintptr;
+ #define G_THREADS_ENABLED
+ #define G_THREADS_IMPL_POSIX
+ 
++#ifndef _GLIB_ANDROID_
+ #define G_ATOMIC_LOCK_FREE
++#endif /* _GLIB_ANDROID_ */
+ 
+ #define GINT16_TO_LE(val)	((gint16) (val))
+ #define GUINT16_TO_LE(val)	((guint16) (val))
+diff -rupN glibref/glib-2.40.2/glib/gslice.c glibpatch/glib-2.40.2/glib/gslice.c
+--- glibref/glib-2.40.2/glib/gslice.c	2015-03-31 16:25:56.946894901 +0900
++++ glibpatch/glib-2.40.2/glib/gslice.c	2015-03-31 16:38:38.302921827 +0900
+@@ -388,7 +388,9 @@ slice_config_init (SliceConfig *config)
+        * This way it's possible to force gslice to be enabled under
+        * valgrind just by setting G_SLICE to the empty string.
+        */
++ #ifndef _GLIB_ANDROID_
+       if (RUNNING_ON_VALGRIND)
++#endif /* _GLIB_ANDROID_ */
+         config->always_malloc = TRUE;
+     }
+ }
+diff -rupN glibref/glib-2.40.2/glib/gstrfuncs.c glibpatch/glib-2.40.2/glib/gstrfuncs.c
+--- glibref/glib-2.40.2/glib/gstrfuncs.c	2015-03-31 16:25:56.950894901 +0900
++++ glibpatch/glib-2.40.2/glib/gstrfuncs.c	2015-03-31 16:39:00.154922598 +0900
+@@ -309,6 +309,7 @@ static const guint16 ascii_table_data[25
+ 
+ const guint16 * const g_ascii_table = ascii_table_data;
+ 
++#ifndef _GLIB_ANDROID_
+ #if defined (HAVE_NEWLOCALE) && \
+     defined (HAVE_USELOCALE) && \
+     defined (HAVE_STRTOD_L) && \
+@@ -316,6 +317,7 @@ const guint16 * const g_ascii_table = as
+     defined (HAVE_STRTOLL_L)
+ #define USE_XLOCALE 1
+ #endif
++#endif /* _GLIB_ANDROID_ */
+ 
+ #ifdef USE_XLOCALE
+ static locale_t

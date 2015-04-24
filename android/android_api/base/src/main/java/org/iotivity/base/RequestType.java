@@ -43,6 +43,6 @@ public enum RequestType {
                 return v;
             }
         }
-        return null;
+        throw new IllegalArgumentException("Unexpected RequestType value");
     }
 }

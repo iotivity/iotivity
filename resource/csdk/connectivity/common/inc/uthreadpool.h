@@ -27,10 +27,7 @@
 #ifndef __UTHREAD_POOL_H_
 #define __UTHREAD_POOL_H_
 
-#include <stdio.h>
-#include <malloc.h>
 #include <glib.h>
-#include <glib/gthreadpool.h>
 
 #include "cacommon.h"
 
@@ -73,20 +70,21 @@ CAResult_t u_thread_pool_init(uint32_t num_of_threads, u_thread_pool_t *thread_p
 /**
  * This function adds a routine to be executed by the thread pool at some future time.
  *
- * @param pool The thread pool structure.
- * @param routine The routine to be executed.
+ * @param thread_pool The thread pool structure.
+ * @param method The routine to be executed.
  * @param data The data to be passed to the routine.
  *
  * @return CA_STATUS_OK on success.
  * @return Error on failure.
  */
-CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, void (*routine)(void *), void *data);
+CAResult_t u_thread_pool_add_task(u_thread_pool_t thread_pool, u_thread_func method,
+                    void *data);
 
 /**
  * This function stops all the worker threads (stop & exit). And frees all the allocated memory.
  * Function will return only after joining all threads executing the currently scheduled tasks.
  *
- * @param pool The thread pool structure.
+ * @param thread_pool The thread pool structure.
  */
 void u_thread_pool_free(u_thread_pool_t thread_pool);
 
@@ -95,3 +93,4 @@ void u_thread_pool_free(u_thread_pool_t thread_pool);
 #endif /* __cplusplus */
 
 #endif /* __UTHREAD_POOL_H_ */
+

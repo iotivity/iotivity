@@ -35,9 +35,11 @@ class GccConfiguration(Configuration):
         def_config = DefaultConfiguration(self._context)
 
         return """
+#ifndef __clang__
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Werror"
 #pragma GCC diagnostic error "-pedantic"
+#endif
 """ + def_config._c99_test_program()
 
     # -------------------------------------------------------------

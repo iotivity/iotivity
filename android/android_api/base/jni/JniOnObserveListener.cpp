@@ -19,10 +19,10 @@
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
-
 #include "JniOnObserveListener.h"
 #include "JniOcResource.h"
 #include "JniOcRepresentation.h"
+#include "JniUtils.h"
 
 JniOnObserveListener::JniOnObserveListener(JNIEnv *env, jobject jListener, JniOcResource* owner)
     : m_ownerResource(owner)
@@ -32,8 +32,6 @@ JniOnObserveListener::JniOnObserveListener(JNIEnv *env, jobject jListener, JniOc
 
 JniOnObserveListener::~JniOnObserveListener()
 {
-    LOGD("~JniOnObserveListener()");
-
     if (m_jwListener)
     {
         jint ret;
@@ -52,52 +50,74 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
     jint envRet;
     JNIEnv *env = GetJNIEnv(envRet);
     if (NULL == env) return;
-    LOGD("JniOnObserveListener::onObserveCallback");
-
-    if (OC_STACK_OK != eCode && OC_STACK_RESOURCE_CREATED != eCode && OC_STACK_RESOURCE_DELETED != eCode)
-    {
-        ThrowOcException(eCode, "ObserveCallback has failed");
-
-        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
-        return;
-    }
-
-    jobject jHeaderOptionList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
-    for (int i = 0; i < headerOptions.size(); i++)
-    {
-        jobject jHeaderOption = env->NewObject(
-            g_cls_OcHeaderOption,
-            g_mid_OcHeaderOption_ctor,
-            (jint)headerOptions[i].getOptionID(),
-            env->NewStringUTF(headerOptions[i].getOptionData().c_str())
-            );
-
-        env->CallObjectMethod(jHeaderOptionList, g_mid_LinkedList_add_object, jHeaderOption);
-        env->DeleteLocalRef(jHeaderOption);
-    }
-
-    OCRepresentation * rep = new OCRepresentation(ocRepresentation);
-    jlong handle = reinterpret_cast<jlong>(rep);
-    jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool, handle, true);
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
-        m_ownerResource->removeOnObserveListener(env, m_jwListener);
-
+        checkExAndRemoveListener(env);
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return;
     }
-
     jclass clsL = env->GetObjectClass(jListener);
-    jmethodID midL = env->GetMethodID(clsL, "onObserveCompleted",
-        "(Ljava/util/List;Lorg/iotivity/base/OcRepresentation;I)V");
-    env->CallVoidMethod(jListener, midL, jHeaderOptionList, jRepresentation, (jint)sequenceNumber);
-    if (env->ExceptionCheck())
+
+    if (OC_STACK_OK != eCode && OC_STACK_RESOURCE_CREATED != eCode && OC_STACK_RESOURCE_DELETED != eCode)
     {
-        env->ExceptionClear();
-        LOGE("Exception is thrown in Java onObserveCompleted handler");
+        jobject ex = GetOcException(eCode, "stack error in onObserveCallback");
+        jmethodID midL = env->GetMethodID(clsL, "onObserveFailed", "(Ljava/lang/Throwable;)V");
+        env->CallVoidMethod(jListener, midL, ex);
+    }
+    else
+    {
+        jobject jHeaderOptionList = JniUtils::convertHeaderOptionsVectorToJavaList(env, headerOptions);
+        if (!jHeaderOptionList)
+        {
+            checkExAndRemoveListener(env);
+            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            return;
+        }
+
+        OCRepresentation * rep = new OCRepresentation(ocRepresentation);
+        jlong handle = reinterpret_cast<jlong>(rep);
+        jobject jRepresentation = env->NewObject(g_cls_OcRepresentation,
+            g_mid_OcRepresentation_N_ctor_bool, handle, true);
+        if (!jRepresentation)
+        {
+            delete rep;
+            checkExAndRemoveListener(env);
+            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            return;
+        }
+
+        jmethodID midL = env->GetMethodID(clsL, "onObserveCompleted",
+            "(Ljava/util/List;Lorg/iotivity/base/OcRepresentation;I)V");
+
+        env->CallVoidMethod(jListener, midL, jHeaderOptionList, jRepresentation, 
+            static_cast<jint>(sequenceNumber));
+        if (env->ExceptionCheck())
+        {
+            LOGE("Java exception is thrown");
+            delete rep;
+            jthrowable ex = env->ExceptionOccurred();
+            env->ExceptionClear();
+            m_ownerResource->removeOnObserveListener(env, m_jwListener);
+            env->Throw((jthrowable)ex);
+        }
     }
 
     if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+}
+
+void JniOnObserveListener::checkExAndRemoveListener(JNIEnv* env)
+{
+    if (env->ExceptionCheck())
+    {
+        jthrowable ex = env->ExceptionOccurred();
+        env->ExceptionClear();
+        m_ownerResource->removeOnObserveListener(env, m_jwListener);
+        env->Throw((jthrowable)ex);
+    }
+    else
+    {
+        m_ownerResource->removeOnObserveListener(env, m_jwListener);
+    }
 }

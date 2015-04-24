@@ -103,7 +103,7 @@ OCStackResult SetDeviceInfo(std::string contentType, std::string dateOfManufactu
         DuplicateString(&deviceInfo.platformVersion, platformVersion);
         DuplicateString(&deviceInfo.supportUrl, supportUrl);
         DuplicateString(&deviceInfo.version, version);
-    }catch(exception &e)
+    }catch(std::exception &e)
     {
         std::cout<<"String Copy failed!!\n";
         return OC_STACK_ERROR;
@@ -168,6 +168,7 @@ int main()
     return 0;
 
 }
+
 
 
 

@@ -111,7 +111,7 @@ public:
     OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
             std::string actionsetName, PostCallback cb);
     OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
-            std::string actionsetName, unsigned int delay, PostCallback cb);
+            std::string actionsetName, long int delay, PostCallback cb);
     OCStackResult cancelActionSet(std::shared_ptr< OCResource > resource,
             std::string actionsetName, PostCallback cb);
     OCStackResult getActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName,

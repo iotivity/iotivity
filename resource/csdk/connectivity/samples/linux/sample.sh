@@ -18,14 +18,14 @@
 # *
 #******************************************************************/
 
-cd ../../lib/libcoap-4.1.1
+cd ../../build/linux
 make clean
+if echo $1 | grep -q -i "WITH_DTLS"
+then
+make DTLS=1
+else
 make
-
-cd ../../build/linux 
-make clean
-make
-
+fi
 
 cd ../../samples/linux
 make clean
@@ -33,3 +33,4 @@ make
 
 cd out
 LD_LIBRARY_PATH=../../../build/out ./sample_main
+

@@ -1,0 +1,83 @@
+#******************************************************************
+#
+# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Import('env')
+import os
+import os.path
+stacktest_env = env.Clone()
+
+src_dir = stacktest_env.get('SRC_DIR')
+
+######################################################################
+# Build flags
+######################################################################
+stacktest_env.PrependUnique(CPPPATH = [
+		'../../ocsocket/include',
+		'../../logger/include',
+		'../../stack/include',
+		'../../ocmalloc/include',
+		'../../extlibs/cjson',
+		'../../../oc_logger/include',
+		'../../../../extlibs/gtest/gtest-1.7.0/include'
+		])
+
+stacktest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
+stacktest_env.AppendUnique(LIBS = ['-lpthread'])
+stacktest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+stacktest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
+stacktest_env.PrependUnique(LIBS = ['m',
+                                    'octbstack',
+                                    'connectivity_abstraction',
+                                    'coap',
+                                    'gtest',
+                                    'gtest_main'])
+
+target_os = env.get('TARGET_OS')
+if target_os != 'darwin':
+    stacktest_env.PrependUnique(LIBS = ['oc_logger'])
+
+
+if env.get('SECURED') == '1':
+    stacktest_env.AppendUnique(LIBS = ['tinydtls'])
+stacktest_env.ParseConfig('pkg-config --libs glib-2.0');
+
+if env.get('LOGGING'):
+	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+stacktests = stacktest_env.Program('stacktests', ['stacktests.cpp'])
+
+Alias("test", [stacktests])
+
+env.AppendTarget('test')
+if env.get('TEST') == '1':
+	target_os = env.get('TARGET_OS')
+	if target_os == 'linux':
+		out_dir = env.get('BUILD_DIR')
+		result_dir = env.get('BUILD_DIR') + '/test_out/'
+		if not os.path.isdir(result_dir):
+			os.makedirs(result_dir)
+		stacktest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
+		stacktest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
+		stacktest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
+		ut = stacktest_env.Command ('ut', None, 'valgrind -q --leak-check=full --xml=yes --xml-file=resource_csdk_stack_test.memcheck ' + out_dir + 'resource/csdk/stack/test/stacktests')
+		AlwaysBuild ('ut')

@@ -125,6 +125,25 @@ public:
         };
     }
 
+    static OCConnectivityType getConnectivityType(JNIEnv *env, int type)
+    {
+        switch (type) {
+        case 0:
+            return OCConnectivityType::OC_ETHERNET;
+        case 1:
+            return OCConnectivityType::OC_WIFI;
+        case 2:
+            return OCConnectivityType::OC_EDR;
+        case 3:
+            return OCConnectivityType::OC_LE;
+        case 4:
+            return OCConnectivityType::OC_ALL;
+        default:
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected connectivity type");
+            return OCConnectivityType::OC_ALL;
+        };
+    }
+
     static std::string stackResultToStr(const int result)
     {
         switch (result)

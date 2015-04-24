@@ -3,7 +3,7 @@
  * Copyright (C) 2010--2012 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #ifndef _COAP_ENCODE_H_
@@ -12,7 +12,9 @@
 #if (BSD >= 199103) || defined(WITH_CONTIKI)
 # include <string.h>
 #else
+#ifndef WITH_ARDUINO
 # include <strings.h>
+#endif
 #endif
 
 #define Nn 8  /* duplicate definition of N if built on sky motes */

@@ -1,8 +1,13 @@
-
-
 import os
 import platform
+Import('env')
+
+ANDROID_TARGET_ARCH = env.get('TARGET_ARCH')
+if env.get('RELEASE'):
+	ANDROID_RELEASE="release"
+else:
+	ANDROID_RELEASE="debug"
 
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = 'gradle build -b' + os.getcwd()+'/build.gradle')
+jdk_env['BUILDERS']['Gradle'] = Builder(action = 'gradle build -b' + os.getcwd()+'/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE))
 jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")

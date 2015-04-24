@@ -32,6 +32,7 @@ PROJECT_COMMON_SRC_PATH		= $(PROJECT_ROOT_PATH)/common/src
 PROJECT_COMMON_PATH			= $(PROJECT_ROOT_PATH)/common
 PROJECT_OUT_PATH			= $(PROJECT_ROOT_PATH)/build/out
 PROJECT_LIB_PATH			= $(PROJECT_ROOT_PATH)/lib
+PROJECT_SEC_PATH			= $(PROJECT_ROOT_PATH)/../stack/include
 
 ##
 ##	macro
@@ -56,4 +57,5 @@ LD			= ld
 LN			= ln
 CD			= cd
 RANLIB		= ranlib
+
 

@@ -44,25 +44,53 @@ JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jLis
             refPair.second++;
             it->second = refPair;
             onResourceFoundListenerMap.insert(*it);
-            LOGD("OnResourceFoundListener: ref. count is incremented");
+            LOGD("OnResourceFoundListener: ref. count incremented");
             break;
         }
     }
 
     if (!onResourceFoundListener)
     {
-        onResourceFoundListener = new JniOnResourceFoundListener(env, jListener);
+        onResourceFoundListener = new JniOnResourceFoundListener(env, jListener, RemoveOnResourceFoundListener);
         jobject jgListener = env->NewGlobalRef(jListener);
 
-        onResourceFoundListenerMap.insert(std::pair<jobject, std::pair<JniOnResourceFoundListener*, int>>(jgListener, std::pair<JniOnResourceFoundListener*, int>(onResourceFoundListener, 1)));
+        onResourceFoundListenerMap.insert(std::pair<jobject, std::pair<JniOnResourceFoundListener*,
+            int>>(jgListener, std::pair<JniOnResourceFoundListener*, int>(onResourceFoundListener, 1)));
         LOGI("OnResourceFoundListener: new listener");
     }
-
     resourceFoundMapMutex.unlock();
-
     return onResourceFoundListener;
 }
 
+void RemoveOnResourceFoundListener(JNIEnv* env, jobject jListener)
+{
+    resourceFoundMapMutex.lock();
+
+    for (auto it = onResourceFoundListenerMap.begin(); it != onResourceFoundListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                onResourceFoundListenerMap.insert(*it);
+                LOGI("OnResourceFoundListener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniOnResourceFoundListener* listener = refPair.first;
+                delete listener;
+                onResourceFoundListenerMap.erase(it);
+                LOGI("OnResourceFoundListener removed");
+            }
+            break;
+        }
+    }
+    resourceFoundMapMutex.unlock();
+}
 
 JniOnDeviceInfoListener* AddOnDeviceInfoListener(JNIEnv* env, jobject jListener)
 {
@@ -79,22 +107,22 @@ JniOnDeviceInfoListener* AddOnDeviceInfoListener(JNIEnv* env, jobject jListener)
             refPair.second++;
             it->second = refPair;
             onDeviceInfoListenerMap.insert(*it);
-            LOGD("OnDeviceInfoListener: ref. count is incremented");
+            LOGD("OnDeviceInfoListener: ref. count incremented");
             break;
         }
     }
 
     if (!onDeviceInfoListener)
     {
-        onDeviceInfoListener = new JniOnDeviceInfoListener(env, jListener);
+        onDeviceInfoListener = new JniOnDeviceInfoListener(env, jListener, RemoveOnDeviceInfoListener);
         jobject jgListener = env->NewGlobalRef(jListener);
 
-        onDeviceInfoListenerMap.insert(std::pair<jobject, std::pair<JniOnDeviceInfoListener*, int>>(jgListener, std::pair<JniOnDeviceInfoListener*, int>(onDeviceInfoListener, 1)));
+        onDeviceInfoListenerMap.insert(std::pair<jobject, std::pair<JniOnDeviceInfoListener*,
+            int>>(jgListener, std::pair<JniOnDeviceInfoListener*, int>(onDeviceInfoListener, 1)));
         LOGI("OnDeviceInfoListener: new listener");
     }
 
     deviceInfoMapLock.unlock();
-
     return onDeviceInfoListener;
 }
 
@@ -114,7 +142,7 @@ void RemoveOnDeviceInfoListener(JNIEnv* env, jobject jListener)
                 refPair.second--;
                 it->second = refPair;
                 onDeviceInfoListenerMap.insert(*it);
-                LOGI("OnDeviceInfoListener: ref. count is decremented");
+                LOGI("OnDeviceInfoListener: ref. count decremented");
             }
             else
             {
@@ -123,7 +151,7 @@ void RemoveOnDeviceInfoListener(JNIEnv* env, jobject jListener)
                 delete listener;
                 onDeviceInfoListenerMap.erase(it);
 
-                LOGI("OnDeviceInfoListener is removed");
+                LOGI("OnDeviceInfoListener removed");
             }
 
             isFound = true;
@@ -133,9 +161,8 @@ void RemoveOnDeviceInfoListener(JNIEnv* env, jobject jListener)
 
     if (!isFound)
     {
-        ThrowOcException(JNI_EXCEPTION, "OnDeviceInfoListenet isn't found");
+        ThrowOcException(JNI_EXCEPTION, "OnDeviceInfoListenet not found");
     }
-
     deviceInfoMapLock.unlock();
 }
 
@@ -154,17 +181,17 @@ JniOnPresenceListener* AddOnPresenceListener(JNIEnv* env, jobject jListener)
             refPair.second++;
             it->second = refPair;
             onPresenceListenerMap.insert(*it);
-            LOGD("OnPresenceListener: ref. count is incremented");
+            LOGD("OnPresenceListener: ref. count incremented");
             break;
         }
     }
 
     if (!onPresenceListener)
     {
-        onPresenceListener = new JniOnPresenceListener(env, jListener);
+        onPresenceListener = new JniOnPresenceListener(env, jListener, RemoveOnPresenceListener);
         jobject jgListener = env->NewGlobalRef(jListener);
-
-        onPresenceListenerMap.insert(std::pair<jobject, std::pair<JniOnPresenceListener*, int>>(jgListener, std::pair<JniOnPresenceListener*, int>(onPresenceListener, 1)));
+        onPresenceListenerMap.insert(std::pair<jobject, std::pair<JniOnPresenceListener*,
+            int>>(jgListener, std::pair<JniOnPresenceListener*, int>(onPresenceListener, 1)));
         LOGI("OnPresenceListener: new listener");
     }
 
@@ -189,7 +216,7 @@ void RemoveOnPresenceListener(JNIEnv* env, jobject jListener)
                 refPair.second--;
                 it->second = refPair;
                 onPresenceListenerMap.insert(*it);
-                LOGI("OnPresenceListener: ref. count is decremented");
+                LOGI("OnPresenceListener: ref. count decremented");
             }
             else
             {
@@ -200,7 +227,6 @@ void RemoveOnPresenceListener(JNIEnv* env, jobject jListener)
 
                 LOGI("OnPresenceListener is removed");
             }
-
             isFound = true;
             break;
         }
@@ -208,12 +234,11 @@ void RemoveOnPresenceListener(JNIEnv* env, jobject jListener)
 
     if (!isFound)
     {
-        ThrowOcException(JNI_EXCEPTION, "OnPresenceListenet isn't found");
+        ThrowOcException(JNI_EXCEPTION, "OnPresenceListener not found");
     }
 
     onPresenceMapLock.unlock();
 }
-
 
 /*
 * Class:     org_iotivity_base_OcPlatform
@@ -233,14 +258,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
     uint16_t port;
     if (jPort > 0)
     {
-        port = (uint16_t)jPort;
+        port = static_cast<uint16_t>(jPort);
     }
     PlatformConfig cfg{
         JniUtils::getServiceType(env, jServiceType),
         JniUtils::getModeType(env, jModeType),
         ipAddress,
         port,
-        JniUtils::getQOS(env, jQOS)
+        JniUtils::getQOS(env, static_cast<int>(jQOS))
     };
        
     OCPlatform::Configure(cfg);
@@ -248,10 +273,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    notifyAllObservers
+* Method:    notifyAllObservers0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers0
     (JNIEnv *env, jclass clazz, jobject jResourceHandle)
 {
     LOGI("OcPlatform_notifyAllObservers");
@@ -270,17 +295,13 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to notify all observers");
+            return;
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (jniOcResourceHandle)
-        {
-            delete jniOcResourceHandle;
-            jniOcResourceHandle = NULL;
-        }
     }
 }
 
@@ -307,22 +328,18 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers1
 
         OCStackResult result = OCPlatform::notifyAllObservers(
             jniOcResourceHandle->getOCResourceHandle(),
-            JniUtils::getQOS(env, jQoS));
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to notify all observers");
+            return;
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (jniOcResourceHandle)
-        {
-            delete jniOcResourceHandle;
-            jniOcResourceHandle = NULL;
-        }
     }
 }
 
@@ -361,7 +378,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers2
     uint8_t* bArr = (uint8_t*)env->GetByteArrayElements(jObservationIdArr, 0);
 
     ObservationIds observationIds;
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < len; ++i)
     {
         observationIds.push_back(bArr[i]);
     }
@@ -421,7 +438,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers3
     uint8_t* bArr = (uint8_t*)env->GetByteArrayElements(jObservationIdArr, 0);
 
     ObservationIds observationIds;
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < len; ++i)
     {
         observationIds.push_back(bArr[i]);
     }
@@ -433,7 +450,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers3
             jniOcResourceHandle->getOCResourceHandle(),
             observationIds,
             jniOcResourceResponse->getOCResourceResponse(),
-            JniUtils::getQOS(env, (int)jQoS));
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
         if (OC_STACK_OK != result)
         {
@@ -449,11 +466,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers3
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    findResource
-* Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnResourceFoundListener;)V
+* Method:    findResource0
+* Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourceFoundListener;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource
-    (JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jobject jListener)
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0
+(JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jint jConnectivityType, jobject jListener)
 {
     LOGD("OcPlatform_findResource");
     string host;
@@ -481,17 +498,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource
 
     try
     {
-        OCStackResult result = OCPlatform::findResource(host, resourceUri, findCallback);
+        OCStackResult result = OCPlatform::findResource(
+            host,
+            resourceUri,
+            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            findCallback);
 
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Find resource has failed");
-
-            if (onResFoundListener)
-            {
-                delete onResFoundListener;
-                onResFoundListener = NULL;
-            }
+            return;
         }
 
     }
@@ -499,11 +515,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (onResFoundListener)
-        {
-            delete onResFoundListener;
-            onResFoundListener = NULL;
-        }
     }
 }
 
@@ -511,10 +522,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    findResource1
-* Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnResourceFoundListener;I)V
+* Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourceFoundListener;I)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1
-    (JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jobject jListener, jint jQoS)
+(JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jint jConnectivityType, jobject jListener, jint jQoS)
 {
     LOGD("OcPlatform_findResource");
     string host;
@@ -544,41 +555,32 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1
         OCStackResult result = OCPlatform::findResource(
             host, 
             resourceUri,
+            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
             findCallback,
-            JniUtils::getQOS(env, (int)jQoS));
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Find resource has failed");
-
-            if (onResFoundListener)
-            {
-                delete onResFoundListener;
-                onResFoundListener = NULL;
-            }
+            return;
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (onResFoundListener)
-        {
-            delete onResFoundListener;
-            onResFoundListener = NULL;
-        }
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    getDeviceInfo
-* Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnDeviceFoundListener;)V
+* Method:    getDeviceInfo0
+* Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnDeviceFoundListener;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo
-    (JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jobject jListener)
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo0
+(JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jint jConnectivityType, jobject jListener)
 {
-    LOGD("OcPlatform_getDeviceInfo");
+    LOGD("OcPlatform_getDeviceInfo0");
     string host;
     if (jHost)
     {
@@ -606,38 +608,28 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo
         OCStackResult result = OCPlatform::getDeviceInfo(
             host,
             resourceUri,
+            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
             findDeviceCallback);
 
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Find device has failed");
-
-            if (onDeviceInfoListener)
-            {
-                delete onDeviceInfoListener;
-                onDeviceInfoListener = NULL;
-            }
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (onDeviceInfoListener)
-        {
-            delete onDeviceInfoListener;
-            onDeviceInfoListener = NULL;
-        }
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    getDeviceInfo1
-* Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnDeviceFoundListener;I)V
+* Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnDeviceFoundListener;I)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1
-    (JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jobject jListener, jint jQoS)
+(JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jint jConnectivityType, jobject jListener, jint jQoS)
 {
     LOGD("OcPlatform_getDeviceInfo1");
     string host;
@@ -667,38 +659,28 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1
         OCStackResult result = OCPlatform::getDeviceInfo(
             host,
             resourceUri,
+            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
             findDeviceCallback,
-            JniUtils::getQOS(env, jQoS));
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Find device has failed");
-
-            if (onDeviceInfoListener)
-            {
-                delete onDeviceInfoListener;
-                onDeviceInfoListener = NULL;
-            }
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (onDeviceInfoListener)
-        {
-            delete onDeviceInfoListener;
-            onDeviceInfoListener = NULL;
-        }
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    registerResource
+* Method:    registerResource0
 * Signature: (Lorg/iotivity/base/OcResource;)Lorg/iotivity/base/OcResourceHandle;
 */
-JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0
 (JNIEnv *env, jclass clazz, jobject jResource)
 {
     LOGD("OcPlatform_registerResource");
@@ -791,11 +773,12 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource1
             resourceTypeName,
             resourceInterface,
             handleEntityCallback,
-            (int)jResourceProperty);
+            static_cast<int>(jResourceProperty));
 
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "register resource");
+            return NULL;
         }
     }
     catch (OCException& e)
@@ -823,10 +806,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource1
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    registerDeviceInfo
+* Method:    registerDeviceInfo0
 * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0
 (	JNIEnv *env, 
     jclass clazz, 
     jstring jDeviceName, 
@@ -924,6 +907,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo
     catch (exception &e)
     {
         ThrowOcException(JNI_EXCEPTION, "Failed to register device info");
+        return;
     }
 
     try
@@ -933,6 +917,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to register device info");
+            return;
         }
     }
     catch (OCException& e)
@@ -944,10 +929,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    unregisterResource
+* Method:    unregisterResource0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource0
     (JNIEnv *env, jclass clazz, jobject jResourceHandle)
 {
     LOGI("OcPlatform_unregisterResource");
@@ -966,31 +951,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to unregister resource");
-            if (jniOcResourceHandle)
-            {
-                delete jniOcResourceHandle;
-                jniOcResourceHandle = NULL;
-            }
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (jniOcResourceHandle)
-        {
-            delete jniOcResourceHandle;
-            jniOcResourceHandle = NULL;
-        }
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    bindResource
+* Method:    bindResource0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResourceHandle;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource0
     (JNIEnv *env, jclass clazz, jobject jResourceCollectionHandle, jobject jResourceHandle)
 {
     LOGI("OcPlatform_bindResource");
@@ -1020,42 +995,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to bind resource");
-
-            if (jniOcResourceHandle)
-            {
-                delete jniOcResourceHandle;
-                jniOcResourceHandle = NULL;
-            }
-            if (jniOcResourceCollectionHandle)
-            {
-                delete jniOcResourceCollectionHandle;
-                jniOcResourceCollectionHandle = NULL;
-            }
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (jniOcResourceHandle)
-        {
-            delete jniOcResourceHandle;
-            jniOcResourceHandle = NULL;
-        }
-        if (jniOcResourceCollectionHandle)
-        {
-            delete jniOcResourceCollectionHandle;
-            jniOcResourceCollectionHandle = NULL;
-        }
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    bindResources
+* Method:    bindResources0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;[Lorg/iotivity/base/OcResourceHandle;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources0
     (JNIEnv *env, jclass clazz, jobject jResourceCollectionHandle, jobjectArray jResourceHandleArray)
 {
     LOGI("OcPlatform_bindResources");
@@ -1076,7 +1030,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources
 
     std::vector<OCResourceHandle> resourceHandleList;
     int len = env->GetArrayLength(jResourceHandleArray);
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < len; ++i)
     {
         jobject jResourceHandle = env->GetObjectArrayElement(jResourceHandleArray, i);
         if (!jResourceHandle) continue;
@@ -1109,10 +1063,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    unbindResource
+* Method:    unbindResource0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResourceHandle;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResource
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResource0
     (JNIEnv *env, jclass clazz, jobject jResourceCollectionHandle, jobject jResourceHandle)
 {
     LOGI("OcPlatform_unbindResource");
@@ -1143,45 +1097,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResource
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to unbind resource");
-
-            if (jniOcResourceHandle)
-            {
-                delete jniOcResourceHandle;
-                jniOcResourceHandle = NULL;
-            }
-
-            if (jniOcResourceCollectionHandle)
-            {
-                delete jniOcResourceCollectionHandle;
-                jniOcResourceCollectionHandle = NULL;
-            }
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-
-        if (jniOcResourceHandle)
-        {
-            delete jniOcResourceHandle;
-            jniOcResourceHandle = NULL;
-        }
-
-        if (jniOcResourceCollectionHandle)
-        {
-            delete jniOcResourceCollectionHandle;
-            jniOcResourceCollectionHandle = NULL;
-        }
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    unbindResources
+* Method:    unbindResources0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;[Lorg/iotivity/base/OcResourceHandle;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources0
     (JNIEnv *env, jclass clazz, jobject jResourceCollectionHandle, jobjectArray jResourceHandleArray)
 {
     LOGI("OcPlatform_unbindResources");
@@ -1201,7 +1131,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources
 
     std::vector<OCResourceHandle> resourceHandleList;
     int len = env->GetArrayLength(jResourceHandleArray);
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < len; ++i)
     {
         jobject jResourceHandle = env->GetObjectArrayElement(jResourceHandleArray, i);
         if (!jResourceHandle) continue;
@@ -1234,10 +1164,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    bindTypeToResource
+* Method:    bindTypeToResource0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;Ljava/lang/String;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0
     (JNIEnv *env, jclass clazz, jobject jResourceHandle, jstring jResourceTypeName)
 {
     LOGI("OcPlatform_bindTypeToResource");
@@ -1265,31 +1195,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to bind type to resource");
-            if (jniOcResourceHandle)
-            {
-                delete jniOcResourceHandle;
-                jniOcResourceHandle = NULL;
-            }
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        if (jniOcResourceHandle)
-        {
-            delete jniOcResourceHandle;
-            jniOcResourceHandle = NULL;
-        }
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    bindInterfaceToResource
+* Method:    bindInterfaceToResource0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;Ljava/lang/String;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource0
     (JNIEnv *env, jclass clazz, jobject jResourceHandle, jstring jResourceInterfaceName)
 {
     LOGI("OcPlatform_bindInterfaceToResource");
@@ -1317,33 +1237,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to bind interface to resource");
-
-            if (jniOcResourceHandle)
-            {
-                delete jniOcResourceHandle;
-                jniOcResourceHandle = NULL;
-            }
         }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-
-        if (jniOcResourceHandle)
-        {
-            delete jniOcResourceHandle;
-            jniOcResourceHandle = NULL;
-        }
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    startPresence
+* Method:    startPresence0
 * Signature: (I)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence0
     (JNIEnv *env, jclass clazz, jint ttl)
 {
     LOGI("OcPlatform_startPresence");
@@ -1366,10 +1274,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    stopPresence
+* Method:    stopPresence0
 * Signature: ()V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stopPresence
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stopPresence0
     (JNIEnv *env, jclass clazz)
 {
     LOGI("OcPlatform_stopPresence");
@@ -1392,11 +1300,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stopPresence
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    subscribePresence
-* Signature: (Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnPresenceListener;)Lorg/iotivity/base/OcPresenceHandle;
+* Method:    subscribePresence0
+* Signature: (Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPresenceListener;)Lorg/iotivity/base/OcPresenceHandle;
 */
-JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence
-    (JNIEnv *env, jclass clazz, jstring jHost, jobject jListener)
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence0
+(JNIEnv *env, jclass clazz, jstring jHost, jint jConnectivityType, jobject jListener)
 {
     LOGD("OcPlatform_subscribePresence");
     string host;
@@ -1424,17 +1332,12 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence
         OCStackResult result = OCPlatform::subscribePresence(
             presenceHandle,
             host,
+            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
             subscribeCallback);
 
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "subscribe presence has failed");
-
-            if (onPresenceListener)
-            {
-                delete onPresenceListener;
-                onPresenceListener = NULL;
-            }
         }
     }
     catch (OCException& e)
@@ -1452,12 +1355,6 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence
     if (env->ExceptionCheck())
     {
         LOGE("Failed to create OcPresenceHandle");
-
-        if (jniPresenceHandle)
-        {
-            delete jniPresenceHandle;
-            jniPresenceHandle = NULL;
-        }
         return NULL;
     }
 
@@ -1467,11 +1364,11 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    subscribePresence1
-* Signature: (Ljava/lang/String;Ljava/lang/String;
+* Signature: (Ljava/lang/String;Ljava/lang/String;I
 Lorg/iotivity/base/OcPlatform/OnPresenceListener;)Lorg/iotivity/base/OcPresenceHandle;
 */
 JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1
-    (JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceType, jobject jListener)
+(JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceType, jint jConnectivityType, jobject jListener)
 {
     LOGD("OcPlatform_subscribePresence1");
     string host;
@@ -1505,17 +1402,12 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1
             presenceHandle,
             host,
             resourceType,
+            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
             subscribeCallback);
 
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "subscribe presence has failed");
-
-            if (onPresenceListener)
-            {
-                delete onPresenceListener;
-                onPresenceListener = NULL;
-            }
         }
     }
     catch (OCException& e)
@@ -1533,12 +1425,6 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1
     if (env->ExceptionCheck())
     {
         LOGE("Failed to create OcPresenceHandle");
-
-        if (jniPresenceHandle)
-        {
-            delete jniPresenceHandle;
-            jniPresenceHandle = NULL;
-        }
         return NULL;
     }
 
@@ -1547,10 +1433,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    unsubscribePresence
+* Method:    unsubscribePresence0
 * Signature: (Lorg/iotivity/base/OcPresenceHandle;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0
     (JNIEnv *env, jclass clazz, jobject jPresenceHandle)
 {
     LOGD("OcPlatform_unsubscribePresence");
@@ -1570,30 +1456,30 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "unsubscribe presence has failed");
+            return;
         }
-
-        RemoveOnPresenceListener(env, jniPresenceHandle->getJniOnPresenceListener()->getJWListener());
-
-        delete jniPresenceHandle;
-        jniPresenceHandle = NULL;
+        jweak jwOnPresenceListener = jniPresenceHandle->getJniOnPresenceListener()->getJWListener();
+        if (jwOnPresenceListener)
+        {
+            RemoveOnPresenceListener(env, jwOnPresenceListener);
+        }
     }
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        return;
     }
 }
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    constructResourceObject
-* Signature: (Ljava/lang/String;Ljava/lang/String;Z[Ljava/lang/String;[Ljava/lang/String;)
+* Method:    constructResourceObject0
+* Signature: (Ljava/lang/String;Ljava/lang/String;IZ[Ljava/lang/String;[Ljava/lang/String;)
 Lorg/iotivity/base/OcResource;
 */
-JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObject
-    (JNIEnv *env, jclass clazz, jstring jHost, jstring jUri, jboolean jIsObservable, 
-    jobjectArray jResourceTypeArray, jobjectArray jInterfaceArray)
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObject0
+(JNIEnv *env, jclass clazz, jstring jHost, jstring jUri, jint jConnectivityType,
+    jboolean jIsObservable, jobjectArray jResourceTypeArray, jobjectArray jInterfaceArray)
 {
     LOGD("OcPlatform_constructResourceObject");
     string host;
@@ -1626,7 +1512,8 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObj
     std::shared_ptr<OCResource> resource = OCPlatform::constructResourceObject(
         host,
         uri,
-        (bool)jIsObservable,
+        JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+        static_cast<bool>(jIsObservable),
         resourceTypes,
         interfaces);
 
@@ -1648,10 +1535,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObj
 
 /*
 * Class:     org_iotivity_base_OcPlatform
-* Method:    sendResponse
+* Method:    sendResponse0
 * Signature: (Lorg/iotivity/base/OcResourceResponse;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0
     (JNIEnv *env, jclass clazz, jobject jResourceResponse)
 {
     LOGD("OcPlatform_sendResponse");
@@ -1677,7 +1564,5 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
-        return;
     }
 }
-

@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="base.iotivity.org.examples.message">
+    package="base.iotivity.org.examples.message"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-sdk tools:overrideLibrary="org.iotivity.base"></uses-sdk>
 
     <application android:allowBackup="true" ></application>
 

@@ -325,8 +325,10 @@ namespace OIC
             // For this reason, we create the resource objects.
 
             std::string host = getHostFromURI(oit->getUri());
-            tempResource = OCPlatform::constructResourceObject(host, uri, true,
+            tempResource = OCPlatform::constructResourceObject(host, uri, OC_ETHERNET, true,
                     oit->getResourceTypes(), m_if);
+            // tempResource = OCPlatform::constructResourceObject(host, uri, OC_WIFI, true,
+            //         oit->getResourceTypes(), m_if);
 
             p_resources.push_back(tempResource);
         }

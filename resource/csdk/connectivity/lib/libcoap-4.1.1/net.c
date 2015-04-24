@@ -3,7 +3,7 @@
  * Copyright (C) 2010--2014 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -18,7 +18,9 @@
 #elif HAVE_SYS_UNISTD_H
 #include <sys/unistd.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -45,9 +47,9 @@
 #include "block.h"
 #include "net.h"
 
-#if defined(WITH_POSIX)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
 
-time_t clock_offset;
+time_t clock_offset=0;
 
 static inline coap_queue_t *
 coap_malloc_node()
@@ -60,7 +62,7 @@ coap_free_node(coap_queue_t *node)
 {
     coap_free(node);
 }
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_LWIP
 
 #include <lwip/memp.h>
@@ -135,8 +137,7 @@ static void received_package(void *arg, struct udp_pcb *upcb, struct pbuf *p, ip
     context->pending_address.addr = addr->addr; /* FIXME: this has to become address-type independent, probably there'll be an lwip function for that */
     context->pending_port = port;
 
-    char* data;
-    coap_read(context, data);
+    coap_read(context);
 }
 
 #endif /* WITH_LWIP */
@@ -296,7 +297,7 @@ coap_pop_next(coap_context_t *context)
 
 #ifdef COAP_DEFAULT_WKC_HASHKEY
 /** Checks if @p Key is equal to the pre-defined hash key for.well-known/core. */
-#define is_wkc(Key)							\
+#define is_wkc(Key)                         \
   (memcmp((Key), COAP_DEFAULT_WKC_HASHKEY, sizeof(coap_key_t)) == 0)
 #else
 /* Implements a singleton to store a hash key for the .wellknown/core
@@ -315,10 +316,12 @@ is_wkc(coap_key_t k)
 }
 #endif
 
+
+#ifndef WITH_ARDUINO
 coap_context_t *
 coap_new_context(const coap_address_t *listen_addr)
 {
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX)
     coap_context_t *c = coap_malloc( sizeof( coap_context_t ) );
     int reuse = 1;
 #endif /* WITH_POSIX */
@@ -380,7 +383,7 @@ coap_new_context(const coap_address_t *listen_addr)
     coap_register_option(c, COAP_OPTION_BLOCK2);
     coap_register_option(c, COAP_OPTION_BLOCK1);
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     c->sockfd = socket(listen_addr->addr.sa.sa_family, SOCK_DGRAM, 0);
     if ( c->sockfd < 0 )
     {
@@ -413,7 +416,7 @@ coap_new_context(const coap_address_t *listen_addr)
     coap_free( c );
     return NULL;
 
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
     c->conn = udp_new(NULL, 0, NULL);
     udp_bind(c->conn, listen_addr->port);
@@ -462,7 +465,7 @@ void coap_free_context(coap_context_t *context)
     coap_retransmittimer_restart(context);
 #endif
 
-#if defined(WITH_POSIX) || defined(WITH_LWIP)
+#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO)
 #ifdef COAP_RESOURCES_NOHASH
     LL_FOREACH(context->resources, res)
     {
@@ -488,7 +491,7 @@ void coap_free_context(coap_context_t *context)
     initialized = 0;
 #endif /* WITH_CONTIKI */
 }
-
+#endif //ifndef WITH_ARDUINO
 int coap_option_check_critical(coap_context_t *ctx, coap_pdu_t *pdu, coap_opt_filter_t unknown)
 {
 
@@ -548,6 +551,11 @@ void coap_transaction_id(const coap_address_t *peer, const coap_pdu_t *pdu, coap
         return;
     }
 #endif
+
+#ifdef WITH_ARDUINO
+    coap_hash((const unsigned char *)peer->addr, peer->size, h);
+#endif /* WITH_ARDUINO */
+
 #if defined(WITH_LWIP) || defined(WITH_CONTIKI)
     /* FIXME: with lwip, we can do better */
     coap_hash((const unsigned char *)&peer->port, sizeof(peer->port), h);
@@ -576,16 +584,23 @@ coap_tid_t coap_send_ack(coap_context_t *context, const coap_address_t *dst, coa
     return result;
 }
 
-#ifdef WITH_POSIX
+#if defined(WITH_ARDUINO)
+coap_tid_t
+coap_send_impl(coap_context_t *context,
+               const coap_address_t *dst,
+               coap_pdu_t *pdu)
+{
+    return 0;
+}
+#endif
+
+#if defined(WITH_POSIX)
 /* releases space allocated by PDU if free_pdu is set */
 coap_tid_t
 coap_send_impl(coap_context_t *context,
         const coap_address_t *dst,
         coap_pdu_t *pdu)
 {
-
-    char* z = inet_ntoa(*(struct in_addr *)&(dst->addr));
-
     ssize_t bytes_written;
     coap_tid_t id = COAP_INVALID_TID;
 
@@ -606,7 +621,7 @@ coap_send_impl(coap_context_t *context,
 
     return id;
 }
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
 /* releases space allocated by PDU if free_pdu is set */
 coap_tid_t
@@ -688,7 +703,9 @@ coap_send_impl(coap_context_t *context,
 
 coap_tid_t coap_send(coap_context_t *context, const coap_address_t *dst, coap_pdu_t *pdu)
 {
+#ifndef WITH_ARDUINO
     return coap_send_impl(context, dst, pdu);
+#endif
 }
 
 coap_tid_t coap_send_error(coap_context_t *context, coap_pdu_t *request, const coap_address_t *dst,
@@ -826,7 +843,7 @@ coap_tid_t coap_retransmit(coap_context_t *context, coap_queue_t *node)
 
     /* no more retransmissions, remove node from system */
 
-#ifndef WITH_CONTIKI
+#if !defined(WITH_CONTIKI) && !defined(WITH_ARDUINO)
     debug("** removed transaction %d\n", ntohs(node->id));
 #endif
 
@@ -865,9 +882,10 @@ static inline int check_opt_size(coap_opt_t *opt, unsigned char *maxpos)
     return 0;
 }
 
-int coap_read(coap_context_t *ctx, char* data)
+#ifndef WITH_ARDUINO
+int coap_read(coap_context_t *ctx)
 {
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX)
     static char buf[COAP_MAX_PDU_SIZE];
 #endif
 #if defined(WITH_LWIP) || defined(WITH_CONTIKI)
@@ -891,10 +909,10 @@ int coap_read(coap_context_t *ctx, char* data)
 
     coap_address_init(&src);
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX)
     bytes_read = recvfrom(ctx->sockfd, buf, sizeof(buf), 0, &src.addr.sa, &src.size);
 
-#endif /* WITH_POSIX */
+#endif /* WITH_POSIX || WITH_ARDUINO */
 #ifdef WITH_CONTIKI
     if(uip_newdata())
     {
@@ -991,6 +1009,7 @@ int coap_read(coap_context_t *ctx, char* data)
 #endif
     return -1;
 }
+#endif //#ifndef WITH_ARDUINO
 
 int coap_remove_from_queue(coap_queue_t **queue, coap_tid_t id, coap_queue_t **node)
 {
@@ -1050,7 +1069,7 @@ static inline int token_match(const unsigned char *a, size_t alen, const unsigne
 void coap_cancel_all_messages(coap_context_t *context, const coap_address_t *dst,
         const unsigned char *token, size_t token_length)
 {
-    /* cancel all messages in sendqueue that are for dst 
+    /* cancel all messages in sendqueue that are for dst
      * and use the specified token */
     coap_queue_t *p, *q;
 
@@ -1269,7 +1288,7 @@ wellknown_response(coap_context_t *context, coap_pdu_t *request)
         need_block2 = 1;
     }
 
-    /* Check if there is sufficient space to add Content-Format option 
+    /* Check if there is sufficient space to add Content-Format option
      * and data. We do this before adding the Content-Format option to
      * avoid sending error responses with that option but no actual
      * content. */
@@ -1346,7 +1365,7 @@ wellknown_response(coap_context_t *context, coap_pdu_t *request)
     return resp;
 }
 
-#define WANT_WKC(Pdu,Key)					\
+#define WANT_WKC(Pdu,Key)                   \
   (((Pdu)->hdr->code == COAP_REQUEST_GET) && is_wkc(Key))
 
 void handle_request(coap_context_t *context, coap_queue_t *node, const char* responseData)
@@ -1429,8 +1448,7 @@ void handle_request(coap_context_t *context, coap_queue_t *node, const char* res
             str token =
             { node->pdu->hdr->token_length, node->pdu->hdr->token };
 
-            //h(context, resource, &node->remote, 
-            //node->pdu, &token, response);
+            h(context, resource, &node->remote, node->pdu, &token, response);
 
             unsigned char buf[3];
             response->hdr->code = COAP_RESPONSE_CODE(205);
@@ -1519,7 +1537,7 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
         str token =
         { 0, NULL };
 
-        /* remove observer for this resource, if any 
+        /* remove observer for this resource, if any
          * get token from sent and try to find a matching resource. Uh!
          */
 
@@ -1547,7 +1565,7 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
             }
         }
 #endif /* WITH_CONTIKI */
-#endif /* WITOUT_OBSERVE */  
+#endif /* WITOUT_OBSERVE */
     }
 
     void coap_dispatch(coap_context_t *context, const char* responseData)
@@ -1584,7 +1602,7 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                     if (rcvd->pdu->hdr->code == 0)
                         goto cleanup;
 
-                    /* FIXME: if sent code was >= 64 the message might have been a 
+                    /* FIXME: if sent code was >= 64 the message might have been a
                      * notification. Then, we must flag the observer to be alive
                      * by setting obs->fail_cnt = 0. */
                     if (sent && COAP_RESPONSE_CLASS(sent->pdu->hdr->code) == 2)
@@ -1618,7 +1636,7 @@ handle_locally(coap_context_t *context __attribute__ ((unused)),
                     if (coap_option_check_critical(context, rcvd->pdu, opt_filter) == 0)
                     {
 
-                        /* FIXME: send response only if we have received a request. Otherwise, 
+                        /* FIXME: send response only if we have received a request. Otherwise,
                          * send RST. */
                         response = coap_new_error_response(rcvd->pdu, COAP_RESPONSE_CODE(402),
                                 opt_filter);

@@ -11,7 +11,7 @@ TARGET=THSensorApp
 
 CXX=g++
 CXX_FLAGS=-std=c++0x -Wall -DLINUX
-CXX_INC=-I${INC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocsocket/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
+CXX_INC=-I${INC_PATH}/ -I${IOT_BASE}/include/ -I${IOT_LOG_DIR}/include/ -I${IOT_BASE}/csdk/stack/include -I${IOT_BASE}/csdk/ocrandom/include -I${IOT_BASE}/csdk/logger/include -I${BOOST}
 
 CXX_LIB+=${IOT_RELEASE}/${IOT_LIB}
 CXX_LIB+=${IOT_CSDK_RELEASE}/${IOT_CSDK_LIB} 
@@ -53,3 +53,4 @@ clean:
 	rm -f -v *.o ${TARGET}
 	rm -rf ./${RST_NAME}
 	
+

@@ -50,10 +50,20 @@ public class OcHeaderOption {
         this.mOptionData = optionData;
     }
 
+    /**
+     * API to get Option ID
+     *
+     * @return option ID
+     */
     public int getOptionId() {
         return mOptionId;
     }
 
+    /**
+     * API to get Option data
+     *
+     * @return option data
+     */
     public String getOptionData() {
         return mOptionData;
     }

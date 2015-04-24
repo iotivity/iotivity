@@ -1,27 +1,7 @@
-//******************************************************************
-//
-// Copyright 2014 MediaTek All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
 /*
 * //******************************************************************
 * //
-* // Portions Copyright 2015 Intel Corporation.
+* // Copyright 2015 Intel Corporation.
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 * //
@@ -305,7 +285,6 @@ OCStackResult JniOcResource::observe(JNIEnv* env, ObserveType observeType,
 
 OCStackResult JniOcResource::cancelObserve(JNIEnv* env)
 {
-    //TODO confirm behavior
     this->m_onObserveManager.removeAllListeners(env);
     return m_sharedResource->cancelObserve();
 }
@@ -338,6 +317,11 @@ std::string JniOcResource::uri()
     return m_sharedResource->uri();
 }
 
+OCConnectivityType JniOcResource::connectivityType() const
+{
+    return m_sharedResource->connectivityType();
+}
+
 bool JniOcResource::isObservable()
 {
     return m_sharedResource->isObservable();
@@ -351,6 +335,16 @@ std::vector< std::string > JniOcResource::getResourceTypes() const
 std::vector< std::string > JniOcResource::getResourceInterfaces(void) const
 {
     return m_sharedResource->getResourceInterfaces();
+}
+
+OCResourceIdentifier JniOcResource::uniqueIdentifier() const
+{
+    return m_sharedResource->uniqueIdentifier();
+}
+
+std::string JniOcResource::sid() const
+{
+    return m_sharedResource->sid();
 }
 
 JniOnGetListener* JniOcResource::addOnGetListener(JNIEnv* env, jobject jListener)
@@ -446,14 +440,22 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_get
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->get(
-        env,
-        qpm,
-        jListener);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_get");
+        OCStackResult result = resource->get(
+            env,
+            qpm,
+            jListener);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_get");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -481,15 +483,23 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_get1
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->get(
-        env,
-        qpm,
-        jListener,
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_get");
+        OCStackResult result = resource->get(
+            env,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_get");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -528,17 +538,24 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_get2
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
-
-    OCStackResult result = resource->get(
-        env,
-        resourceType,
-        resourceInterface,
-        qpm,
-        jListener);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_get");
+        OCStackResult result = resource->get(
+            env,
+            resourceType,
+            resourceInterface,
+            qpm,
+            jListener);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_get");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -578,17 +595,25 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_get3
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->get(
-        env,
-        resourceType,
-        resourceInterface,
-        qpm,
-        jListener,
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_get");
+        OCStackResult result = resource->get(
+            env,
+            resourceType,
+            resourceInterface,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_get");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -623,15 +648,24 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_put
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->put(
-        env,
-        *representation,
-        qpm,
-        jListener);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_put");
+        OCStackResult result = resource->put(
+            env,
+            *representation,
+            qpm,
+            jListener);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_put");
+        }
+
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -667,16 +701,25 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_put1
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->put(
-        env,
-        *representation,
-        qpm,
-        jListener,
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_put");
+        OCStackResult result = resource->put(
+            env,
+            *representation,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_put");
+        }
+
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -722,17 +765,25 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_put2
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->put(
-        env,
-        resourceType,
-        resourceInterface,
-        *representation,
-        qpm,
-        jListener);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_put");
+        OCStackResult result = resource->put(
+            env,
+            resourceType,
+            resourceInterface,
+            *representation,
+            qpm,
+            jListener);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_put");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -779,18 +830,26 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_put3
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->put(
-        env,
-        resourceType,
-        resourceInterface,
-        *representation,
-        qpm,
-        jListener,
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_put");
+        OCStackResult result = resource->put(
+            env,
+            resourceType,
+            resourceInterface,
+            *representation,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_put");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -824,15 +883,23 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->post(
-        env,
-        *representation,
-        qpm,
-        jListener);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_post");
+        OCStackResult result = resource->post(
+            env,
+            *representation,
+            qpm,
+            jListener);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_post");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -866,16 +933,24 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post1
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->post(
-        env,
-        *representation,
-        qpm,
-        jListener,
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_post");
+        OCStackResult result = resource->post(
+            env,
+            *representation,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_post");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
     
@@ -922,17 +997,25 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post2
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->post(
-        env,
-        resourceType,
-        resourceInterface,
-        *representation,
-        qpm,
-        jListener);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_post");
+        OCStackResult result = resource->post(
+            env,
+            resourceType,
+            resourceInterface,
+            *representation,
+            qpm,
+            jListener);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_post");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -979,18 +1062,26 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post3
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->post(
-        env,
-        resourceType,
-        resourceInterface,
-        *representation,
-        qpm,
-        jListener,
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_post");
+        OCStackResult result = resource->post(
+            env,
+            resourceType,
+            resourceInterface,
+            *representation,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_post");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1010,13 +1101,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_deleteResource
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
 
-    OCStackResult result = resource->deleteResource(
-        env,
-        jListener);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_deleteResource");
+        OCStackResult result = resource->deleteResource(
+            env,
+            jListener);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_deleteResource");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1036,14 +1135,22 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_deleteResource1
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
 
-    OCStackResult result = resource->deleteResource(
-        env,
-        jListener,
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_deleteResource");
+        OCStackResult result = resource->deleteResource(
+            env,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_deleteResource");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1072,15 +1179,23 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_observe
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->observe(
-        env,
-        JniUtils::getObserveType(env, (int)observeType),
-        qpm,
-        jListener);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_observe");
+        OCStackResult result = resource->observe(
+            env,
+            JniUtils::getObserveType(env, static_cast<int>(observeType)),
+            qpm,
+            jListener);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_observe");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1110,16 +1225,24 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_observe1
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
 
-    OCStackResult result = resource->observe(
-        env,
-        JniUtils::getObserveType(env, (int)observeType),
-        qpm,
-        jListener,
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_observe");
+        OCStackResult result = resource->observe(
+            env,
+            JniUtils::getObserveType(env, static_cast<int>(observeType)),
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_observe");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1133,11 +1256,20 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_cancelObserve
 {
     LOGD("OcResource_cancelObserve");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    OCStackResult result = resource->cancelObserve(env);
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_cancelObserve");
+        OCStackResult result = resource->cancelObserve(env);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_cancelObserve");
+        }
+
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1151,13 +1283,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_cancelObserve1
 {
     LOGD("OcResource_cancelObserve1");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    OCStackResult result = resource->cancelObserve(
-        env, 
-        JniUtils::getQOS(env, (int)jQoS));
-
-    if (OC_STACK_OK != result)
+    try
     {
-        ThrowOcException(result, "OcResource_cancelObserve");
+        OCStackResult result = resource->cancelObserve(
+            env, 
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_cancelObserve");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1224,6 +1364,21 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getUri
 
 /*
 * Class:     org_iotivity_base_OcResource
+* Method:    getConnectivityTypeN
+* Signature: ()I
+*/
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcResource_getConnectivityTypeN
+(JNIEnv *env, jobject thiz)
+{
+    LOGD("OcResource_getConnectivityType");
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+
+    OCConnectivityType connectivityType = resource->connectivityType();
+    return static_cast<jint>(connectivityType);
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
 * Method:    isObservable
 * Signature: ()Z
 */
@@ -1264,7 +1419,40 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getResourceInterface
 
     return JniUtils::convertStrVectorToJavaStrList(env, resourceInterfaces);
 }
-    
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    getUniqueIdentifier
+* Signature: ()Lorg/iotivity/base/OcResourceIdentifier;
+*/
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getUniqueIdentifier
+(JNIEnv *env, jobject thiz)
+{
+    LOGD("OcResource_getUniqueIdentifier");
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    JniOcResourceIdentifier *jniResourceIdentifier =
+        new JniOcResourceIdentifier(resource->uniqueIdentifier());
+
+    jlong handle = reinterpret_cast<jlong>(jniResourceIdentifier);
+    jobject jResourceIdentifier = env->NewObject(g_cls_OcResourceIdentifier,
+        g_mid_OcResourceIdentifier_N_ctor, handle);
+
+    return jResourceIdentifier;
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    getServerId
+* Signature: ()Ljava/lang/String;
+*/
+JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getServerId
+(JNIEnv *env, jobject thiz)
+{
+    LOGD("OcResource_getServerId");
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    return env->NewStringUTF(resource->sid().c_str());
+}
+
 /*
 * Class:     org_iotivity_base_OcResource
 * Method:    dispose

@@ -34,6 +34,7 @@ namespace OC {
     namespace Utilities {
 
         typedef std::map<std::string, std::string> QueryParamsKeyVal;
+
         /*
          * @brief helper function that parses the query parameters component
          * of a URI into a key-value map.  This function expects the uri
@@ -48,8 +49,8 @@ namespace OC {
 
 /* The C++11 standard unfortunately forgot to provide make_unique<>! However, if we're
 using C++14 or later, we want to take the standard library's implementation: */
-#if defined(__cplusplus) && __cplusplus < 201300
 namespace OC {
+#if defined(__cplusplus) && __cplusplus < 201300
 
     template<typename T, typename ...XS>
     std::unique_ptr<T> make_unique(XS&& ...xs)
@@ -57,14 +58,12 @@ namespace OC {
         return std::unique_ptr<T>(new T(std::forward<XS>(xs)...));
     }
 
-} // namespace OC
 #else
     using std::make_unique;
 #endif
+} // namespace OC
 
 namespace OC {
-
-    using OC::make_unique;
 
     /* Examine an OCStackResult, and either forward its value or raise an exception: */
     OCStackResult result_guard(const OCStackResult r);
@@ -113,3 +112,4 @@ namespace OC
 } // namespace OC
 
 #endif
+

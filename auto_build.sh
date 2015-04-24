@@ -22,26 +22,33 @@ function build()
 	# Note: for android, as oic-resource uses C++11 feature stoi and to_string,
 	# it requires gcc-4.9, currently only android-ndk-r10(for linux)
 	# and windows android-ndk-r10(64bit target version) support these features.
-	echo "*********** Build for android x86 *************"
-	scons TARGET_OS=android TARGET_ARCH=x86 ANDROID_NDK=$1 RELEASE=$3
+	if [ "$BUILD_FOR_ANDROID" = "true" ]
+		then
+		echo "*********** Build Boost for android ***********"
+		pushd extlibs
+		.//buildDependencies.sh
+		popd
 
-	echo "*********** Build for android armeabi *************"
-	scons TARGET_OS=android TARGET_ARCH=armeabi ANDROID_NDK=$1 RELEASE=$3
+		echo "*********** Build for android x86 *************"
+		scons TARGET_OS=android TARGET_ARCH=x86 ANDROID_NDK=$1 RELEASE=$3
 
-	echo "*********** Build for android armeabi-v7a *************"
-	scons TARGET_OS=android TARGET_ARCH=armeabi-v7a ANDROID_NDK=$1 RELEASE=$3
+		echo "*********** Build for android armeabi *************"
+		scons TARGET_OS=android TARGET_ARCH=armeabi ANDROID_NDK=$1 RELEASE=$3
 
-	echo "*********** Build for android armeabi-v7a-hard *************"
-	scons TARGET_OS=android TARGET_ARCH=armeabi-v7a-hard ANDROID_NDK=$1 RELEASE=$3
-	
+		echo "*********** Build for android armeabi-v7a *************"
+		scons TARGET_OS=android TARGET_ARCH=armeabi-v7a ANDROID_NDK=$1 RELEASE=$3
+
+		echo "*********** Build for android armeabi-v7a-hard *************"
+		scons TARGET_OS=android TARGET_ARCH=armeabi-v7a-hard ANDROID_NDK=$1 RELEASE=$3
+	fi
+
 	echo "*********** Build for arduino avr *************"
-	scons TARGET_OS=arduino TARGET_ARCH=avr ARDUINO_HOME=$2 RELEASE=$3
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=ETHERNET NET=Ethernet RELEASE=$3
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=WIFI NET=Wifi RELEASE=$3
 
 	echo "*********** Build for arduino arm *************"
-	scons TARGET_OS=arduino TARGET_ARCH=arm ARDUINO_HOME=$2 RELEASE=$3
-
-	echo "*********** Build for arduino mega w/WiFi *************"
-        scons TARGET_OS=arduino BOARD=mega NET=Wifi ARDUINO_HOME=$2 RELEASE=$3
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=ETHERNET NET=Ethernet RELEASE=$3
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=WIFI NET=Wifi RELEASE=$3
 
 	if [ $(uname -s) = "Darwin" ]
 	then
@@ -69,7 +76,7 @@ function  help()
 {
 	echo "Usage:"
         echo "  build:"
-        echo "     `basename $0` <path-to-android-ndk> <path-to-arduino-home>"
+        echo "     `basename $0` <path-to-android-ndk>"
         echo "  clean:"
         echo "     `basename $0` -c"
 }
@@ -94,4 +101,8 @@ fi
 export SCONSFLAGS="-Q -j 4"
 build $1 $2 true
 build $1 $2 false
+scons resource RELEASE=false -c
+scons resource LOGGING=false RELEASE=false
+scons resource TEST=1 RELEASE=false
 echo "===================== done ====================="
+

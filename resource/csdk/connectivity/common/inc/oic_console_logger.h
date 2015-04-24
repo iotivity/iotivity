@@ -42,3 +42,4 @@ int oic_console_logger_set_module(oic_log_ctx_t *ctx, const char *module_name);
 #endif
 
 #endif
+

@@ -3,7 +3,7 @@
  * Copyright (C) 2010,2011 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -23,6 +23,10 @@
 #include "pdu.h"
 #include "option.h"
 #include "encode.h"
+
+#ifdef WITH_ARDUINO
+#include "util.h"
+#endif
 
 #ifdef WITH_CONTIKI
 #include "memb.h"
@@ -93,8 +97,8 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id, size_t 
         return NULL;
 
     /* size must be large enough for hdr */
-#ifdef WITH_POSIX
-    pdu = coap_malloc(sizeof(coap_pdu_t) + size);
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+    pdu = (coap_pdu_t *) coap_malloc(sizeof(coap_pdu_t) + size);
 #endif
 #ifdef WITH_CONTIKI
     pdu = (coap_pdu_t *)memb_alloc(&pdu_storage);
@@ -147,12 +151,12 @@ coap_new_pdu()
 
 void coap_delete_pdu(coap_pdu_t *pdu)
 {
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     coap_free( pdu );
 #endif
 #ifdef WITH_LWIP
     if (pdu != NULL) /* accepting double free as the other implementation accept that too */
-    pbuf_free(pdu->pbuf);
+        pbuf_free(pdu->pbuf);
 #endif
 #ifdef WITH_CONTIKI
     memb_free(&pdu_storage, pdu);
@@ -299,7 +303,7 @@ typedef struct
     char *phrase;
 } error_desc_t;
 
-/* if you change anything here, make sure, that the longest string does not 
+/* if you change anything here, make sure, that the longest string does not
  * exceed COAP_ERROR_PHRASE_LENGTH. */
 error_desc_t coap_error[] =
 {
@@ -340,7 +344,7 @@ coap_response_phrase(unsigned char code)
 #endif
 
 /**
- * Advances *optp to next option if still in PDU. This function 
+ * Advances *optp to next option if still in PDU. This function
  * returns the number of bytes opt has been advanced or @c 0
  * on error.
  */
@@ -367,9 +371,6 @@ static size_t next_option_safe(coap_opt_t **optp, size_t *length, coap_option_t*
 int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu)
 {
     coap_opt_t *opt;
-
-    char optionResult[256] =
-    { 0, };
 
     assert(data);
     assert(pdu);

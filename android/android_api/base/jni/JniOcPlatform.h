@@ -19,7 +19,6 @@
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
-#include <jni.h>
 #include "JniOcStack.h"
 #include "JniOnResourceFoundListener.h"
 #include "JniOnDeviceInfoListener.h"
@@ -32,6 +31,7 @@
 using namespace OC;
 
 JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jListener);
+void RemoveOnResourceFoundListener(JNIEnv* env, jobject jListener);
 
 JniOnDeviceInfoListener* AddOnDeviceInfoListener(JNIEnv* env, jobject jListener);
 void RemoveOnDeviceInfoListener(JNIEnv* env, jobject jListener);
@@ -61,10 +61,10 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    notifyAllObservers
+    * Method:    notifyAllObservers0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers0
         (JNIEnv *, jclass, jobject);
 
     /*
@@ -93,42 +93,42 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    findResource
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnResourceFoundListener;)V
+    * Method:    findResource0
+    * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourceFoundListener;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource
-        (JNIEnv *, jclass, jstring, jstring, jobject);
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    findResource1
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnResourceFoundListener;I)V
+    * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnResourceFoundListener;I)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1
-        (JNIEnv *, jclass, jstring, jstring, jobject, jint);
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject, jint);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    getDeviceInfo
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnDeviceFoundListener;)V
+    * Method:    getDeviceInfo0
+    * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnDeviceFoundListener;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo
-        (JNIEnv *, jclass, jstring, jstring, jobject);
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo0
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    getDeviceInfo1
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnDeviceFoundListener;I)V
+    * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnDeviceFoundListener;I)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1
-        (JNIEnv *, jclass, jstring, jstring, jobject, jint);
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject, jint);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    registerResource
+    * Method:    registerResource0
     * Signature: (Lorg/iotivity/base/OcResource;)Lorg/iotivity/base/OcResourceHandle;
     */
-    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0
         (JNIEnv *, jclass, jobject);
 
     /*
@@ -141,122 +141,122 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    registerDeviceInfo
+    * Method:    registerDeviceInfo0
     * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0
         (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    unregisterResource
+    * Method:    unregisterResource0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource0
         (JNIEnv *, jclass, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    bindResource
+    * Method:    bindResource0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResourceHandle;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource0
         (JNIEnv *, jclass, jobject, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    bindResources
+    * Method:    bindResources0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;[Lorg/iotivity/base/OcResourceHandle;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources0
         (JNIEnv *, jclass, jobject, jobjectArray);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    unbindResource
+    * Method:    unbindResource0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;Lorg/iotivity/base/OcResourceHandle;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResource
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResource0
         (JNIEnv *, jclass, jobject, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    unbindResources
+    * Method:    unbindResources0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;[Lorg/iotivity/base/OcResourceHandle;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources0
         (JNIEnv *, jclass, jobject, jobjectArray);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    bindTypeToResource
+    * Method:    bindTypeToResource0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;Ljava/lang/String;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0
         (JNIEnv *, jclass, jobject, jstring);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    bindInterfaceToResource
+    * Method:    bindInterfaceToResource0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;Ljava/lang/String;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource0
         (JNIEnv *, jclass, jobject, jstring);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    startPresence
+    * Method:    startPresence0
     * Signature: (I)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence0
         (JNIEnv *, jclass, jint);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    stopPresence
+    * Method:    stopPresence0
     * Signature: ()V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stopPresence
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stopPresence0
         (JNIEnv *, jclass);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    subscribePresence
-    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnPresenceListener;)Lorg/iotivity/base/OcPresenceHandle;
+    * Method:    subscribePresence0
+    * Signature: (Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPresenceListener;)Lorg/iotivity/base/OcPresenceHandle;
     */
-    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence
-        (JNIEnv *, jclass, jstring, jobject);
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence0
+        (JNIEnv *, jclass, jstring, jint, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    subscribePresence1
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/iotivity/base/OcPlatform/OnPresenceListener;)Lorg/iotivity/base/OcPresenceHandle;
+    * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPresenceListener;)Lorg/iotivity/base/OcPresenceHandle;
     */
     JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1
-        (JNIEnv *, jclass, jstring, jstring, jobject);
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    unsubscribePresence
+    * Method:    unsubscribePresence0
     * Signature: (Lorg/iotivity/base/OcPresenceHandle;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0
         (JNIEnv *, jclass, jobject);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
-    * Method:    constructResourceObject
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Z[Ljava/lang/String;[Ljava/lang/String;)Lorg/iotivity/base/OcResource;
+    * Method:    constructResourceObject0
+    * Signature: (Ljava/lang/String;Ljava/lang/String;IZ[Ljava/lang/String;[Ljava/lang/String;)Lorg/iotivity/base/OcResource;
     */
-    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObject
-        (JNIEnv *, jclass, jstring, jstring, jboolean, jobjectArray, jobjectArray);
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObject0
+        (JNIEnv *, jclass, jstring, jstring, jint, jboolean, jobjectArray, jobjectArray);
 
     /*
-    * Class:     org_iotivity_base_OcPlatform
-    * Method:    sendResponse
+    * Class:     org_iotivity_base_OcPlatform0
+    * Method:    sendResponse0
     * Signature: (Lorg/iotivity/base/OcResourceResponse;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0
         (JNIEnv *, jclass, jobject);
 
 #ifdef __cplusplus

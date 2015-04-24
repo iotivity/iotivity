@@ -25,10 +25,10 @@ package org.iotivity.base;
 import java.security.InvalidParameterException;
 
 public enum OcPresenceStatus {
-    OK              ("OK"),
-    STOPPED         ("PRESENCE_STOPPED"),
-    TIMEOUT         ("PRESENCE_TIMEOUT"),
-    DO_NOT_HANDLE   ("PRESENCE_DO_NOT_HANDLE");
+    OK("OK"),
+    STOPPED("PRESENCE_STOPPED"),
+    TIMEOUT("PRESENCE_TIMEOUT"),
+    DO_NOT_HANDLE("PRESENCE_DO_NOT_HANDLE");
 
     private String value;
 
@@ -36,9 +36,9 @@ public enum OcPresenceStatus {
         this.value = value;
     }
 
-    public static OcPresenceStatus get(String val){
-        for(OcPresenceStatus v : OcPresenceStatus.values()){
-            if(v.getValue().equals(val))
+    public static OcPresenceStatus get(String val) {
+        for (OcPresenceStatus v : OcPresenceStatus.values()) {
+            if (v.getValue().equals(val))
                 return v;
         }
         throw new InvalidParameterException("Unexpected OcPresenceStatus value");

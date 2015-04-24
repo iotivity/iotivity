@@ -22,23 +22,22 @@
 #include "JniOnResourceFoundListener.h"
 #include "JniOcResource.h"
 
-JniOnResourceFoundListener::JniOnResourceFoundListener(JNIEnv *env, jobject jListener)
+JniOnResourceFoundListener::JniOnResourceFoundListener(JNIEnv *env, jobject jListener,
+    RemoveListenerCallback removeListenerCallback)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
+    m_removeListenerCallback = removeListenerCallback;
 }
 
 JniOnResourceFoundListener::~JniOnResourceFoundListener()
 {
     LOGI("~JniOnResourceFoundListener()");
-
     if (m_jwListener)
     {
         jint ret;
         JNIEnv *env = GetJNIEnv(ret);
         if (NULL == env) return;
-
         env->DeleteWeakGlobalRef(m_jwListener);
-
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
@@ -52,29 +51,50 @@ void JniOnResourceFoundListener::foundResourceCallback(std::shared_ptr<OC::OCRes
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
+        checkExAndRemoveListener(env);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
         return;
     }
 
-    jclass clsL = env->GetObjectClass(jListener);
-    jmethodID midL = env->GetMethodID(clsL, "onResourceFound", "(Lorg/iotivity/base/OcResource;)V");
-
     jobject jResource = env->NewObject(g_cls_OcResource, g_mid_OcResource_ctor);
+    if (!jResource)
+    {
+        checkExAndRemoveListener(env);
+        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        return;
+    }
 
     JniOcResource *jniOcResource = new JniOcResource(resource);
-
     SetHandle<JniOcResource>(env, jResource, jniOcResource);
 
+    jclass clsL = env->GetObjectClass(jListener);
+    jmethodID midL = env->GetMethodID(clsL, "onResourceFound", "(Lorg/iotivity/base/OcResource;)V");
     env->CallVoidMethod(jListener, midL, jResource);
-
     if (env->ExceptionCheck())
     {
-        env->ExceptionClear();
-        LOGE("Exception is thrown in Java onResourceFound handler");
+        LOGE("Java exception is thrown");
+        delete jniOcResource;
+        checkExAndRemoveListener(env);
+        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        return;
     }
 
     env->DeleteLocalRef(jListener);
     env->DeleteLocalRef(jResource);
-
     if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+}
+
+void JniOnResourceFoundListener::checkExAndRemoveListener(JNIEnv* env)
+{
+    if (env->ExceptionCheck())
+    {
+        jthrowable ex = env->ExceptionOccurred();
+        env->ExceptionClear();
+        m_removeListenerCallback(env, m_jwListener);
+        env->Throw((jthrowable)ex);
+    }
+    else
+    {
+        m_removeListenerCallback(env, m_jwListener);
+    }
 }

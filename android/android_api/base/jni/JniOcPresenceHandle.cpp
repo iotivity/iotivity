@@ -30,7 +30,7 @@ JniOcPresenceHandle::~JniOcPresenceHandle()
 {
     LOGD("~JniOcPresenceHandle()");
 
-    delete m_jniListener;
+    //delete m_jniListener;
     m_presenceHandle = nullptr;
 }
 

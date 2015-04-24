@@ -37,7 +37,9 @@ import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.iotivity.base.ErrorCode;
 import org.iotivity.base.ModeType;
+import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
@@ -69,12 +71,14 @@ public class FridgeClient extends Activity implements
     private String mDeviceName;
     private int mDeviceCode;
     private List<String> ifaces;
+    private final List<OcResource> resourceList = new LinkedList<OcResource>();
 
     /**
      * configure OIC platform and call findResource
      */
     private void initOICStack() {
         PlatformConfig cfg = new PlatformConfig(
+                this,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT,
                 "0.0.0.0", // bind to all available interfaces
@@ -83,7 +87,8 @@ public class FridgeClient extends Activity implements
 
         OcPlatform.Configure(cfg);
         try {
-            OcPlatform.findResource("", "coap://224.0.1.187/oc/core?rt=intel.fridge", this);
+            OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "intel.fridge",
+                    OcConnectivityType.WIFI, this);
         } catch (OcException e) {
             logMessage(TAG + " init Error. " + e.getMessage());
             Log.e(TAG, e.getMessage());
@@ -100,25 +105,43 @@ public class FridgeClient extends Activity implements
         switch (value) {
             case 0:
                 // Get on device
-                logMessage(TAG + "Name of device: " +
-                        representation.getValueString(StringConstants.DEVICE_NAME));
+                try {
+                    logMessage(TAG + "Name of device: " +
+                            representation.getValue(StringConstants.DEVICE_NAME));
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
                 break;
             case 1:
                 // get on fridge light
-                logMessage(TAG + "The fridge light is " +
-                        (representation.getValueBool(StringConstants.ON) ? "" : "not " + "on"));
+                try {
+                    boolean lightOn = representation.getValue(StringConstants.ON);
+                    logMessage(TAG + "The fridge light is " +
+                            (lightOn ? "" : "not " + "on"));
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
                 break;
             case 2:
             case 3:
                 // get on fridge door(s)
-                logMessage(TAG + "Door is " + (representation.getValueBool(StringConstants.OPEN) ?
-                        "open" : "not open") + " and is on the " +
-                        representation.getValueString(StringConstants.SIDE) + " side");
+                try {
+                    boolean doorOpen = representation.getValue(StringConstants.OPEN);
+                    logMessage(TAG + "Door is " + (doorOpen ?
+                            "open" : "not open") + " and is on the " +
+                            representation.getValue(StringConstants.SIDE) + " side");
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
                 break;
             case 4:
                 // get on fridge random door
-                logMessage("Name of fridge: " +
-                        representation.getValueString(StringConstants.DEVICE_NAME));
+                try {
+                    logMessage("Name of fridge: " +
+                            representation.getValue(StringConstants.DEVICE_NAME));
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
                 break;
             default:
                 logMessage("Unexpected State");
@@ -145,81 +168,101 @@ public class FridgeClient extends Activity implements
      */
     synchronized public void onResourceFound(OcResource ocResource) {
         // eventHandler for onGetListener
-        synchronized (this) {
-            OcResource.OnGetListener onGetListener = new OcResource.OnGetListener() {
-                @Override
-                public void onGetCompleted(List<OcHeaderOption> headerOptionList, OcRepresentation rep) {
-                    logMessage(TAG + " Got a response from " + getClientDeviceName());
-                    getResponse(rep, getClientDeviceCode());
+        resourceList.add(ocResource);
+        OcResource.OnGetListener onGetListener = new OcResource.OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> headerOptionList, OcRepresentation rep) {
+                logMessage(TAG + " Got a response from " + getClientDeviceName());
+                getResponse(rep, getClientDeviceCode());
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+                if (throwable instanceof OcException) {
+                    OcException ocEx = (OcException) throwable;
+                    ErrorCode errCode = ocEx.getErrorCode();
+                    //do something based on errorCode
                 }
-            };
-
-            if (ocResource.getUri().equals(StringConstants.RESOURCE_URI)) {
-                logMessage(TAG + "Discovered a device with \nHost: " + ocResource.getHost() +
-                        ", Uri: " + ocResource.getUri());
+                Log.e(TAG, throwable.toString());
             }
-            List<String> lightTypes = new LinkedList<>();
-            lightTypes.add("intel.fridge.light");
-            try {
-                OcResource light = OcPlatform.constructResourceObject(ocResource.getHost(),
-                        StringConstants.LIGHT, false, lightTypes, ifaces);
+        };
 
-                List<String> doorTypes = new LinkedList<>();
-                doorTypes.add("intel.fridge.door");
-                OcResource leftDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
-                        StringConstants.LEFT_DOOR, false, doorTypes, ifaces);
+        if (ocResource.getUri().equals(StringConstants.RESOURCE_URI)) {
+            logMessage(TAG + "Discovered a device with \nHost: " + ocResource.getHost() +
+                    ", Uri: " + ocResource.getUri());
+        }
+        List<String> lightTypes = new LinkedList<>();
+        lightTypes.add("intel.fridge.light");
+        try {
+            OcResource light = OcPlatform.constructResourceObject(ocResource.getHost(),
+                    StringConstants.LIGHT, OcConnectivityType.WIFI, false, lightTypes, ifaces);
 
-                OcResource rightDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
-                        StringConstants.RIGHT_DOOR, false, doorTypes, ifaces);
+            List<String> doorTypes = new LinkedList<>();
+            doorTypes.add("intel.fridge.door");
+            OcResource leftDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
+                    StringConstants.LEFT_DOOR, OcConnectivityType.WIFI, false, doorTypes, ifaces);
 
-                OcResource randomDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
-                        StringConstants.RANDOM_DOOR, false, doorTypes, ifaces);
+            OcResource rightDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
+                    StringConstants.RIGHT_DOOR, OcConnectivityType.WIFI, false, doorTypes, ifaces);
 
-                List<OcHeaderOption> headerOptions = new LinkedList<>();
-                OcHeaderOption apiVersion = new OcHeaderOption(StringConstants.API_VERSION_KEY,
-                        StringConstants.API_VERSION);
-                OcHeaderOption clientToken = new OcHeaderOption(StringConstants.CLIENT_VERSION_KEY,
-                        StringConstants.CLIENT_TOKEN);
-                headerOptions.add(apiVersion);
-                headerOptions.add(clientToken);
-                ocResource.setHeaderOptions(headerOptions);
-                /**
-                 *  wait for 1 second before calling get on different resources.
-                 *  It is done for better readability.
-                 *  doWait() is called before each call to get
-                 */
-                doWait();
+            OcResource randomDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
+                    StringConstants.RANDOM_DOOR, OcConnectivityType.WIFI, false, doorTypes, ifaces);
 
-                setupClientOptions("Device", 0);
-                ocResource.get(new HashMap<String, String>(), onGetListener);
-                doWait();
+            List<OcHeaderOption> headerOptions = new LinkedList<>();
+            OcHeaderOption apiVersion = new OcHeaderOption(StringConstants.API_VERSION_KEY,
+                    StringConstants.API_VERSION);
+            OcHeaderOption clientToken = new OcHeaderOption(StringConstants.CLIENT_VERSION_KEY,
+                    StringConstants.CLIENT_TOKEN);
+            headerOptions.add(apiVersion);
+            headerOptions.add(clientToken);
+            ocResource.setHeaderOptions(headerOptions);
+            /**
+             *  wait for 1 second before calling get on different resources.
+             *  It is done for better readability.
+             *  doWait() is called before each call to get
+             */
+            doWait();
 
-                setupClientOptions("Fridge Light", 1);
-                light.get(new HashMap<String, String>(), onGetListener);
-                doWait();
+            setupClientOptions("Device", 0);
+            ocResource.get(new HashMap<String, String>(), onGetListener);
+            doWait();
 
-                setupClientOptions("Left Door", 2);
-                leftDoor.get(new HashMap<String, String>(), onGetListener);
-                doWait();
+            setupClientOptions("Fridge Light", 1);
+            light.get(new HashMap<String, String>(), onGetListener);
+            doWait();
 
-                setupClientOptions("Right Door", 3);
-                rightDoor.get(new HashMap<String, String>(), onGetListener);
-                doWait();
+            setupClientOptions("Left Door", 2);
+            leftDoor.get(new HashMap<String, String>(), onGetListener);
+            doWait();
 
-                setupClientOptions("Random Door", 4);
-                randomDoor.get(new HashMap<String, String>(), onGetListener);
-                doWait();
+            setupClientOptions("Right Door", 3);
+            rightDoor.get(new HashMap<String, String>(), onGetListener);
+            doWait();
 
-                ocResource.deleteResource(new OcResource.OnDeleteListener() {
-                    @Override
-                    public void onDeleteCompleted(List<OcHeaderOption> ocHeaderOptions) {
+            setupClientOptions("Random Door", 4);
+            randomDoor.get(new HashMap<String, String>(), onGetListener);
+            doWait();
+
+            resourceList.add(leftDoor);
+            leftDoor.deleteResource(new OcResource.OnDeleteListener() {
+                @Override
+                public void onDeleteCompleted(List<OcHeaderOption> ocHeaderOptions) {
+                    logMessage(TAG + "Delete resource successful");
+                }
+
+                @Override
+                public void onDeleteFailed(Throwable throwable) {
+                    if (throwable instanceof OcException) {
+                        OcException ocEx = (OcException) throwable;
+                        ErrorCode errCode = ocEx.getErrorCode();
+                        //do something based on errorCode
                     }
-                });
-                logMessage(TAG + "Delete resource successful");
-            } catch (OcException e) {
-                logMessage(TAG + "onResourceFound Error. " + e.getMessage());
-                Log.e(TAG, e.getMessage());
-            }
+                    Log.e(TAG, throwable.toString());
+                }
+            });
+        } catch (OcException e) {
+            logMessage(TAG + "onResourceFound Error. " + e.getMessage());
+            Log.e(TAG, e.getMessage());
         }
     }
 

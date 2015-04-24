@@ -22,6 +22,7 @@
 
 #include "JniOnDeleteListener.h"
 #include "JniOcResource.h"
+#include "JniUtils.h"
 
 JniOnDeleteListener::JniOnDeleteListener(JNIEnv *env, jobject jListener, JniOcResource* owner)
     : m_ownerResource(owner)
@@ -31,8 +32,6 @@ JniOnDeleteListener::JniOnDeleteListener(JNIEnv *env, jobject jListener, JniOcRe
 
 JniOnDeleteListener::~JniOnDeleteListener()
 {
-    LOGD("~JniOnDeleteListener()");
-
     if (m_jwListener)
     {
         jint ret;
@@ -51,51 +50,51 @@ void JniOnDeleteListener::onDeleteCallback(const HeaderOptions& headerOptions, c
     JNIEnv *env = GetJNIEnv(envRet);
     if (NULL == env) return;
 
-    if (OC_STACK_OK != eCode)
-    {
-        ThrowOcException(eCode, "DeleteCallback has failed");
-        m_ownerResource->removeOnDeleteListener(env, m_jwListener);
-
-        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
-        return;
-    }
-
-    jobject jHeaderOptionList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
-    for (int i = 0; i < headerOptions.size(); i++)
-    {
-        jobject jHeaderOption = env->NewObject(
-            g_cls_OcHeaderOption,
-            g_mid_OcHeaderOption_ctor,
-            (jint)headerOptions[i].getOptionID(),
-            env->NewStringUTF(headerOptions[i].getOptionData().c_str())
-            );
-
-        env->CallObjectMethod(jHeaderOptionList, g_mid_LinkedList_add_object, jHeaderOption);
-        env->DeleteLocalRef(jHeaderOption);
-    }
-
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
-        m_ownerResource->removeOnDeleteListener(env, m_jwListener);
-
+        checkExAndRemoveListener(env);
         if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
         return;
     }
-
     jclass clsL = env->GetObjectClass(jListener);
-    jmethodID midL = env->GetMethodID(clsL, "onDeleteCompleted",
-        "(Ljava/util/List;)V");
 
-    env->CallVoidMethod(jListener, midL, jHeaderOptionList);
-
-    if (env->ExceptionCheck())
+    if (OC_STACK_RESOURCE_DELETED != eCode)
     {
-        env->ExceptionClear();
-        LOGE("Exception is thrown in Java onDeleteCompleted handler");
+        jobject ex = GetOcException(eCode, "stack error in onDeleteCallback");
+        jmethodID midL = env->GetMethodID(clsL, "onDeleteFailed", "(Ljava/lang/Throwable;)V");
+        env->CallVoidMethod(jListener, midL, ex);
+    }
+    else
+    {
+        jobject jHeaderOptionList = JniUtils::convertHeaderOptionsVectorToJavaList(env, headerOptions);
+        if (!jHeaderOptionList)
+        {
+            checkExAndRemoveListener(env);
+            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            return;
+        }
+
+        jmethodID midL = env->GetMethodID(clsL, "onDeleteCompleted","(Ljava/util/List;)V");
+
+        env->CallVoidMethod(jListener, midL, jHeaderOptionList);
     }
 
-    m_ownerResource->removeOnDeleteListener(env, m_jwListener);
-
+    checkExAndRemoveListener(env);
     if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+}
+
+void JniOnDeleteListener::checkExAndRemoveListener(JNIEnv* env)
+{
+    if (env->ExceptionCheck())
+    {
+        jthrowable ex = env->ExceptionOccurred();
+        env->ExceptionClear();
+        m_ownerResource->removeOnDeleteListener(env, m_jwListener);
+        env->Throw((jthrowable)ex);
+    }
+    else
+    {
+        m_ownerResource->removeOnDeleteListener(env, m_jwListener);
+    }
 }

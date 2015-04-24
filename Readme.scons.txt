@@ -157,7 +157,7 @@ toools/tizen directory. gbs is default build tool for Tizen platfrom, we can
 refer the following wiki to setup Tizen development environment:
 https://source.tizen.org/documentation/developer-guide/getting-started-guide)
 
-=== Build IoTivity project on Windows ===
+=== Build IoTivity project on Android ===
 
 1. Build IoTivity project for Android(It's the same as on Ubuntu)
       $ cd <top directory of the project>
@@ -207,7 +207,7 @@ Note:
 at once. Following is the usage:
 
 To build:
-     $ auto_build.sh <path-to-android-ndk> <path-to-arduino-home>
+     $ auto_build.sh <path-to-android-ndk>
 To clean:
      $ auto_build.sh -c
 

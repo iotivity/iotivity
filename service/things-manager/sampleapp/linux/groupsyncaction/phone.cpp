@@ -249,7 +249,9 @@ int main(int argc, char* argv[])
                 std::string resourceInterface = DEFAULT_INTERFACE;
 
                 result = OCPlatform::registerResource(gPhoneResourceHandle, resourceURi,
-                        resourceTypeName, resourceInterface, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+                        resourceTypeName, resourceInterface,
+                        NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+
                 if (OC_STACK_OK == result)
                 {
                     cout << "To register phone resource was successful\n";

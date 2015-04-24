@@ -37,12 +37,27 @@
 #define JNI_EXCEPTION 1000
 #define JNI_NO_NATIVE_POINTER 1001
 #define JNI_INVALID_VALUE 1002
+#define JNI_NO_SUCH_KEY 1003
 
-void throwOcException(JNIEnv* env, const char* file, const char* functionName, const int line, const int code, const char* message);
-#define ThrowOcException(code, message) throwOcException (env, __FILE__, __func__,__LINE__, code, message)
+jobject getOcException(JNIEnv* env, const char* file, const char* functionName, const int line, const int code, const char* message);
+void throwOcException(JNIEnv* env, jobject ex);
+#define GetOcException(code, message) getOcException (env, __FILE__, __func__,__LINE__, code, message)
+#define ThrowOcException(code, message) throwOcException (env, GetOcException(code, message))
 
 extern JavaVM* g_jvm;
 
+extern jclass g_cls_Integer;
+extern jclass g_cls_int1DArray;
+extern jclass g_cls_int2DArray;
+extern jclass g_cls_Double;
+extern jclass g_cls_double1DArray;
+extern jclass g_cls_double2DArray;
+extern jclass g_cls_Boolean;
+extern jclass g_cls_boolean1DArray;
+extern jclass g_cls_boolean2DArray;
+extern jclass g_cls_String;
+extern jclass g_cls_String1DArray;
+extern jclass g_cls_String2DArray;
 extern jclass g_cls_LinkedList;
 extern jclass g_cls_Map;
 extern jclass g_cls_MapEntry;
@@ -52,6 +67,8 @@ extern jclass g_cls_HashMap;
 extern jclass g_cls_OcException;
 extern jclass g_cls_OcResource;
 extern jclass g_cls_OcRepresentation;
+extern jclass g_cls_OcRepresentation1DArray;
+extern jclass g_cls_OcRepresentation2DArray;
 extern jclass g_cls_OcResourceRequest;
 extern jclass g_cls_OcResourceResponse;
 extern jclass g_cls_OcResourceHandle;
@@ -60,7 +77,11 @@ extern jclass g_cls_OcRequestHandle;
 extern jclass g_cls_OcPresenceStatus;
 extern jclass g_cls_OcHeaderOption;
 extern jclass g_cls_ObservationInfo;
+extern jclass g_cls_OcResourceIdentifier;
 
+extern jmethodID g_mid_Integer_ctor;
+extern jmethodID g_mid_Double_ctor;
+extern jmethodID g_mid_Boolean_ctor;
 extern jmethodID g_mid_LinkedList_ctor;
 extern jmethodID g_mid_LinkedList_add_object;
 extern jmethodID g_mid_Map_entrySet;
@@ -86,6 +107,9 @@ extern jmethodID g_mid_OcHeaderOption_get_id;
 extern jmethodID g_mid_OcHeaderOption_get_data;
 extern jmethodID g_mid_ObservationInfo_N_ctor;
 extern jmethodID g_mid_OcPresenceStatus_get;
+extern jmethodID g_mid_OcResourceIdentifier_N_ctor;
+
+typedef void(*RemoveListenerCallback)(JNIEnv* env, jobject jListener);
 
 static jfieldID GetHandleField(JNIEnv *env, jobject jobj)
 {

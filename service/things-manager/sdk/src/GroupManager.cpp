@@ -36,9 +36,8 @@
 #define ATTR_DELIMITER "="
 
 using namespace OC;
+using namespace OIC;
 
-namespace OIC
-{
 std::map< std::vector< std::string >, CandidateCallback > candidateRequest;
 std::map< std::vector< std::string >, CandidateCallback > candidateRequestForTimer;
 std::map< std::string, std::map< std::string, std::shared_ptr< OCResource > > > rtForResourceList;
@@ -194,7 +193,8 @@ void GroupManager::lazyCallback(int second)
 
 }
 
-OCStackResult GroupManager::findCandidateResources(std::vector< std::string > resourceTypes,
+OCStackResult GroupManager::findCandidateResources(
+        std::vector< std::string > resourceTypes,
         CandidateCallback callback, int waitsec)
 {
     if (resourceTypes.size() < 1)
@@ -223,23 +223,23 @@ OCStackResult GroupManager::findCandidateResources(std::vector< std::string > re
     {
         // std::cout << "resourceTypes : " << resourceTypes.at(i) << std::endl;
 
-#ifdef CA_INT
-        std::string query = "coap://224.0.1.187:5298/oc/core?rt=";
+        std::string query = OC_WELL_KNOWN_QUERY;
+        query.append("?rt=");
         query.append(resourceTypes.at(i));
 
-        OCPlatform::findResource("", query.c_str(),
-                OC_ETHERNET | OC_WIFI,
+        OCPlatform::findResource("",
+                query,
+                OC_ETHERNET,
                 std::function < void(std::shared_ptr < OCResource > resource)
                         > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
                                 waitsec)));
-#else
-        std::string query = "coap://224.0.1.187/oc/core?rt=";
-        query.append(resourceTypes.at(i));
-        OCPlatform::findResource("", query.c_str(),
+
+        OCPlatform::findResource("",
+                query,
+                OC_WIFI,
                 std::function < void(std::shared_ptr < OCResource > resource)
                         > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
                                 waitsec)));
-#endif
     }
 
     if (waitsec >= 0)
@@ -363,32 +363,30 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
         OCPlatform::OCPresenceHandle presenceHandle;
         OCStackResult result = OC_STACK_ERROR;
 
-#ifdef CA_INT
         result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                 // resourceType,
                 resourceTypes.front(),
-                OC_ETHERNET | OC_WIFI,
+                OC_ETHERNET,
                 std::function<
                         void(OCStackResult result, const unsigned int nonce,
                                 const std::string& hostAddress) >(
                         std::bind(&GroupManager::collectionPresenceHandler, this,
                                 std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3, hostAddress, oit->getUri())));
-#else
+
         result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                 // resourceType,
                 resourceTypes.front(),
+                OC_WIFI,
                 std::function<
                         void(OCStackResult result, const unsigned int nonce,
                                 const std::string& hostAddress) >(
                         std::bind(&GroupManager::collectionPresenceHandler, this,
                                 std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3, hostAddress, oit->getUri())));
-#endif
 
         if (result == OC_STACK_OK)
         {
-            // std::cout << "\t\tOK!" << std::endl;
             presenceCallbacks.insert(std::make_pair(oit->getUri(), callback));
         }
         else
@@ -494,7 +492,6 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
 
 ActionSet* GroupManager::getActionSetfromString(std::string description)
 {
-
     char *token = NULL;
     char *plainText = NULL;
     char *plainPtr = NULL;
@@ -502,6 +499,16 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
 
     Capability *capa = NULL;
     ActionSet *actionset = new ActionSet();
+
+    if(description.empty())
+    {
+        goto exit;
+    }
+    else if(description.at(0) == '*')
+    {
+        goto exit;
+    }
+
     plainText = new char[(description.length() + 1)];
     strcpy(plainText, description.c_str());
 
@@ -629,6 +636,11 @@ OCStackResult GroupManager::addActionSet(std::shared_ptr< OCResource > resource,
     // BUILD message of ActionSet which it is included delimiter.
     if ((resource != NULL) && (newActionSet != NULL))
     {
+        if(newActionSet->mDelay < 0)
+        {
+            return OC_STACK_INVALID_PARAM; 
+        }
+
         std::string message = getStringFromActionSet(newActionSet);
 
         OCRepresentation rep;
@@ -660,9 +672,9 @@ OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resou
 }
 
 OCStackResult GroupManager::executeActionSet(std::shared_ptr< OCResource > resource,
-        std::string actionsetName, unsigned int delay, PostCallback cb)
+        std::string actionsetName, long int delay, PostCallback cb)
 {
-    if(delay == 0 )
+    if(delay <= 0 )
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -734,5 +746,4 @@ OCStackResult GroupManager::deleteActionSet(std::shared_ptr< OCResource > resour
     {
         return OC_STACK_ERROR;
     }
-}
 }

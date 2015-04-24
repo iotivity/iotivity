@@ -13,12 +13,27 @@ notimgr_env = lib_env.Clone()
 ######################################################################
 notimgr_env.AppendUnique(CPPPATH = ['../../NotificationManager/include'])
 notimgr_env.AppendUnique(CPPPATH = ['../../../../extlibs/cjson'])
-notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
+notimgr_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/connectivity/api'])
+notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 notimgr_c_env = notimgr_env.Clone()
-notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'coap', 'pthread','NOTISDKLibrary'])
-notimgr_c_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'coap', 'pthread','NOTISDKLibrary'])
+notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread', 'NOTISDKLibrary'])
+notimgr_c_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread','NOTISDKLibrary'])
 
-######################################################################
+if env.get('SECURED') == '1':
+    notimgr_env.AppendUnique(LIBS = ['tinydtls'])
+notimgr_env.ParseConfig('pkg-config --libs glib-2.0')
+notimgr_env.ParseConfig('pkg-config --cflags glib-2.0')
+if 'rt' in notimgr_env.get('LIBS'):
+    notimgr_env.Append(LIBS = ['rt'])
+
+if env.get('SECURED') == '1':
+    notimgr_c_env.AppendUnique(LIBS = ['tinydtls'])
+notimgr_c_env.ParseConfig('pkg-config --libs glib-2.0')
+notimgr_c_env.ParseConfig('pkg-config --cflags glib-2.0')
+if 'rt' in notimgr_c_env.get('LIBS'):
+    notimgr_c_env.Append(LIBS = ['rt'])
+
+####################################################################
 # Source files and Targets
 ######################################################################
 sampleprovider = notimgr_env.Program('sampleprovider', 'sampleProvider/SampleProvider.cpp')

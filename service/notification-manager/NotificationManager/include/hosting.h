@@ -27,7 +27,6 @@
 #include <stdlib.h>
 // Iotivity Base CAPI
 #include "ocstack.h"
-#include "ocsocket.h"
 #include "logger.h"
 
 

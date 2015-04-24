@@ -1,26 +1,7 @@
-//******************************************************************
-//
-// Copyright 2014 MediaTek All Rights Reserved.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 /*
 * //******************************************************************
 * //
-* // Portions Copyright 2015 Intel Corporation.
+* // Copyright 2015 Intel Corporation.
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 * //
@@ -45,7 +26,6 @@ using namespace OC;
 using namespace std;
 
 
-
 OCRepresentation* JniOcRepresentation::getOCRepresentationPtr(JNIEnv *env, jobject thiz)
 {
     OCRepresentation *rep = GetHandle<OCRepresentation>(env, thiz);
@@ -62,129 +42,645 @@ OCRepresentation* JniOcRepresentation::getOCRepresentationPtr(JNIEnv *env, jobje
 
 /*
 * Class:     org_iotivity_base_OcRepresentation
-* Method:    getValueInt
-* Signature: (Ljava/lang/String;)I
+* Method:    getValueN
+* Signature: (Ljava/lang/String;)Ljava/lang/Object;
 */
-JNIEXPORT jint JNICALL Java_org_iotivity_base_OcRepresentation_getValueInt
-(JNIEnv *env, jobject thiz, jstring jstr)
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getValueN
+(JNIEnv *env, jobject thiz, jstring jKey)
 {
-    LOGD("OcRepresentation_getValueInt");
-    if (!jstr)
+    LOGD("OcRepresentation_getValue");
+    if (!jKey)
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, "attributeKey cannot be null");
-        return -1;
+        return nullptr;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    string str = env->GetStringUTFChars(jstr, NULL);
-    int val;
-    rep->getValue(str.c_str(), val);
-    return val;
+    string key = env->GetStringUTFChars(jKey, NULL);
+
+    AttributeValue attrValue;
+    if (!rep->getAttributeValue(key.c_str(), attrValue))
+    {
+        ThrowOcException(JNI_NO_SUCH_KEY, " attribute key does not exist");
+        return nullptr;
+    }
+    return boost::apply_visitor(JObjectConverter(env), attrValue);
 }
 
 /*
 * Class:     org_iotivity_base_OcRepresentation
-* Method:    setValueInt
+* Method:    setValueInteger
 * Signature: (Ljava/lang/String;I)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInt
-(JNIEnv *env, jobject thiz, jstring jstr, jint jval)
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger
+(JNIEnv *env, jobject thiz, jstring jKey, jint jValue)
 {
-    LOGD("OcRepresentation_setValueInt");
-    if (!jstr)
+    LOGD("OcRepresentation_setValueInteger");
+    if (!jKey)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "attributeKey cannot be null");
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    
+    string str = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(str, static_cast<int>(jValue));
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueDouble
+* Signature: (Ljava/lang/String;D)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble
+(JNIEnv *env, jobject thiz, jstring jKey, jdouble jValue)
+{
+    LOGD("OcRepresentation_setValueDouble");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
 
-    string str = env->GetStringUTFChars(jstr, NULL);
-    rep->setValue(str, static_cast<int>(jval));
+    string str = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(str, static_cast<double>(jValue));
 }
 
 /*
 * Class:     org_iotivity_base_OcRepresentation
-* Method:    getValueBool
-* Signature: (Ljava/lang/String;)Z
-*/
-JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_getValueBool
-(JNIEnv *env, jobject thiz, jstring jstr)
-{
-    LOGD("OcRepresentation_getValueBool");
-    if (!jstr)
-    {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "attributeKey cannot be null");
-        return false;
-    }
-    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-
-    string str = env->GetStringUTFChars(jstr, NULL);
-    bool value;
-    rep->getValue(str, value);
-    return static_cast<jboolean>(value);
-}
-
-/*
-* Class:     org_iotivity_base_OcRepresentation
-* Method:    getValueString
-* Signature: (Ljava/lang/String;)Ljava/lang/String;
-*/
-JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getValueString
-(JNIEnv *env, jobject thiz, jstring jstr)
-{
-    LOGD("OcRepresentation_getValueString");
-    if (!jstr)
-    {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "attributeKey cannot be null");
-        return NULL;
-    }
-    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-
-    string str = env->GetStringUTFChars(jstr, NULL);
-    string get_val;
-    rep->getValue(str, get_val);
-    return env->NewStringUTF(get_val.c_str());
-}
-
-/*
-* Class:     org_iotivity_base_OcRepresentation
-* Method:    setValueBool
+* Method:    setValueBoolean
 * Signature: (Ljava/lang/String;Z)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBool
-(JNIEnv *env, jobject thiz, jstring jstr, jboolean jval)
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean
+(JNIEnv *env, jobject thiz, jstring jKey, jboolean jValue)
 {
-    LOGD("OcRepresentation_setValueBool");
-    if (!jstr)
+    LOGD("OcRepresentation_setValueBoolean");
+    if (!jKey)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "attributeKey cannot be null");
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-
-    string str = env->GetStringUTFChars(jstr, NULL);
-    rep->setValue(str, static_cast<jboolean>(jval));
+    
+    string str = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(str, static_cast<bool>(jValue));
 }
 
 /*
 * Class:     org_iotivity_base_OcRepresentation
-* Method:    setValueString
+* Method:    setValueStringN
 * Signature: (Ljava/lang/String;Ljava/lang/String;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueString
-(JNIEnv *env, jobject thiz, jstring jstr, jstring jval)
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueStringN
+(JNIEnv *env, jobject thiz, jstring jKey, jstring jValue)
 {
     LOGD("OcRepresentation_setValueString");
-    if (!jstr)
+    if (!jKey)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "attributeKey cannot be null");
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    
+    string key = env->GetStringUTFChars(jKey, NULL);
+    string value = env->GetStringUTFChars(jValue, NULL);
+    
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueRepresentation
+* Signature: (Ljava/lang/String;Lorg/iotivity/base/OcRepresentation;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentation
+(JNIEnv *env, jobject thiz, jstring jKey, jobject jValue)
+{
+    LOGD("OcRepresentation_setValueRepresentation");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
 
-    string str = env->GetStringUTFChars(jstr, NULL);
-    string val = env->GetStringUTFChars(jval, NULL);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    OCRepresentation *value = JniOcRepresentation::getOCRepresentationPtr(env, jValue);
+    rep->setValue(key, *value);
+}
 
-    rep->setValue(str, val);
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueIntegerArray
+* Signature: (Ljava/lang/String;[I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueIntegerArray
+(JNIEnv *env, jobject thiz, jstring jKey, jintArray jValue)
+{
+    LOGD("OcRepresentation_setValueIntegerArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+
+    const jsize len = env->GetArrayLength(jValue);
+    jint* ints = env->GetIntArrayElements(jValue, NULL);
+
+    std::vector<int> value;
+    for (jsize i = 0; i < len; ++i) 
+    {
+        value.push_back(static_cast<int>(ints[i]));
+    }
+    env->ReleaseIntArrayElements(jValue, ints, JNI_ABORT);
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueInteger2DArray
+* Signature: (Ljava/lang/String;[[I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger2DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation__setValueInteger2DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<int>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize j = 0; j < lenOuter; ++j)
+    {
+        jintArray jInnerArray = static_cast<jintArray>(env->GetObjectArrayElement(jValue, j));
+        jint* ints = env->GetIntArrayElements(jInnerArray, NULL);
+        std::vector<int> innerVector;
+        const jsize lenInner = env->GetArrayLength(jInnerArray);
+        for (jsize i = 0; i < lenInner; ++i)
+        {
+            innerVector.push_back(static_cast<int>(ints[i]));
+        }
+        env->ReleaseIntArrayElements(jInnerArray, ints, JNI_ABORT);
+        env->DeleteLocalRef(jInnerArray);
+        value.push_back(innerVector);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueInteger3DArray
+* Signature: (Ljava/lang/String;[[[I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger3DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueInteger3DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<std::vector<int>>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize k = 0; k < lenOuter; ++k)
+    {
+        jobjectArray jMiddleArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jValue, k));
+        const jsize lenMiddle = env->GetArrayLength(jMiddleArray);
+        std::vector<std::vector<int>> middleArray;
+        for (jsize j = 0; j < lenMiddle; ++j)
+        {
+            jintArray jInnerArray = static_cast<jintArray>(env->GetObjectArrayElement(jMiddleArray, j));
+            jint* ints = env->GetIntArrayElements(jInnerArray, NULL);
+            std::vector<int> innerVector;
+            const jsize lenInner = env->GetArrayLength(jInnerArray);
+            for (jsize i = 0; i < lenInner; ++i)
+            {
+                innerVector.push_back(static_cast<int>(ints[i]));
+            }
+            env->ReleaseIntArrayElements(jInnerArray, ints, JNI_ABORT);
+            env->DeleteLocalRef(jInnerArray);
+            middleArray.push_back(innerVector);
+        }
+        env->DeleteLocalRef(jMiddleArray);
+        value.push_back(middleArray);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueDoubleArray
+* Signature: (Ljava/lang/String;[D)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDoubleArray
+(JNIEnv *env, jobject thiz, jstring jKey, jdoubleArray jValue)
+{
+    LOGD("OcRepresentation_setValueDoubleArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+
+    const jsize len = env->GetArrayLength(jValue);
+    jdouble* doubles = env->GetDoubleArrayElements(jValue, NULL);
+
+    std::vector<double> value;
+    for (jsize i = 0; i < len; ++i)
+    {
+        value.push_back(static_cast<double>(doubles[i]));
+    }
+    env->ReleaseDoubleArrayElements(jValue, doubles, JNI_ABORT);
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueDouble2DArray
+* Signature: (Ljava/lang/String;[[D)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble2DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueDouble2DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<double>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize j = 0; j < lenOuter; ++j)
+    {
+        jdoubleArray jInnerArray = static_cast<jdoubleArray>(env->GetObjectArrayElement(jValue, j));
+        jdouble* doubles = env->GetDoubleArrayElements(jInnerArray, NULL);
+        std::vector<double> innerVector;
+        const jsize lenInner = env->GetArrayLength(jInnerArray);
+        for (jsize i = 0; i < lenInner; ++i)
+        {
+            innerVector.push_back(static_cast<double>(doubles[i]));
+        }
+        env->ReleaseDoubleArrayElements(jInnerArray, doubles, JNI_ABORT);
+        env->DeleteLocalRef(jInnerArray);
+        value.push_back(innerVector);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueDouble3DArray
+* Signature: (Ljava/lang/String;[[[D)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble3DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueDouble3DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<std::vector<double>>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize k = 0; k < lenOuter; ++k)
+    {
+        jobjectArray jMiddleArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jValue, k));
+        const jsize lenMiddle = env->GetArrayLength(jMiddleArray);
+        std::vector<std::vector<double>> middleArray;
+        for (jsize j = 0; j < lenMiddle; ++j)
+        {
+            jdoubleArray jInnerArray = static_cast<jdoubleArray>(env->GetObjectArrayElement(jMiddleArray, j));
+            jdouble* doubles = env->GetDoubleArrayElements(jInnerArray, NULL);
+            std::vector<double> innerVector;
+            const jsize lenInner = env->GetArrayLength(jInnerArray);
+            for (jsize i = 0; i < lenInner; ++i)
+            {
+                innerVector.push_back(static_cast<double>(doubles[i]));
+            }
+            env->ReleaseDoubleArrayElements(jInnerArray, doubles, JNI_ABORT);
+            env->DeleteLocalRef(jInnerArray);
+            middleArray.push_back(innerVector);
+        }
+        env->DeleteLocalRef(jMiddleArray);
+        value.push_back(middleArray);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueBooleanArray
+* Signature: (Ljava/lang/String;[Z)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBooleanArray
+(JNIEnv *env, jobject thiz, jstring jKey, jbooleanArray jValue)
+{
+    LOGD("OcRepresentation_setValueBooleanArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+
+    const jsize len = env->GetArrayLength(jValue);
+    jboolean* booleans = env->GetBooleanArrayElements(jValue, NULL);
+
+    std::vector<bool> value;
+    for (jsize i = 0; i < len; ++i)
+    {
+        value.push_back(static_cast<bool>(booleans[i]));
+    }
+    env->ReleaseBooleanArrayElements(jValue, booleans, JNI_ABORT);
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueBoolean2DArray
+* Signature: (Ljava/lang/String;[[Z)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean2DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueBoolean2DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<bool>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize j = 0; j < lenOuter; ++j)
+    {
+        jbooleanArray jInnerArray = static_cast<jbooleanArray>(env->GetObjectArrayElement(jValue, j));
+        const jsize lenInner = env->GetArrayLength(jInnerArray);
+        jboolean* booleans = env->GetBooleanArrayElements(jInnerArray, NULL);
+
+        std::vector<bool> innerVector;
+        for (jsize i = 0; i < lenInner; ++i)
+        {
+            innerVector.push_back(static_cast<bool>(booleans[i]));
+        }
+        env->ReleaseBooleanArrayElements(jInnerArray, booleans, JNI_ABORT);
+        env->DeleteLocalRef(jInnerArray);
+        value.push_back(innerVector);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueBoolean3DArray
+* Signature: (Ljava/lang/String;[[[Z)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean3DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueBoolean3DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<std::vector<bool>>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize k = 0; k < lenOuter; ++k)
+    {
+        jobjectArray jMiddleArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jValue, k));
+        const jsize lenMiddle = env->GetArrayLength(jMiddleArray);
+        std::vector<std::vector<bool>> middleArray;
+        for (jsize j = 0; j < lenMiddle; ++j)
+        {
+            jbooleanArray jInnerArray = static_cast<jbooleanArray>(env->GetObjectArrayElement(jMiddleArray, j));
+            const jsize lenInner = env->GetArrayLength(jInnerArray);
+            jboolean* booleans = env->GetBooleanArrayElements(jInnerArray, NULL);
+
+            std::vector<bool> innerVector;
+            for (jsize i = 0; i < lenInner; ++i)
+            {
+                innerVector.push_back(static_cast<bool>(booleans[i]));
+            }
+            env->ReleaseBooleanArrayElements(jInnerArray, booleans, JNI_ABORT);
+            env->DeleteLocalRef(jInnerArray);
+            middleArray.push_back(innerVector);
+        }
+        env->DeleteLocalRef(jMiddleArray);
+        value.push_back(middleArray);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueStringArray
+* Signature: (Ljava/lang/String;[Ljava/lang/String;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueStringArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueStringArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+
+    std::vector<string> value;
+    JniUtils::convertJavaStrArrToStrVector(env, jValue, value);
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueString2DArray
+* Signature: (Ljava/lang/String;[[Ljava/lang/String;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueString2DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueString2DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<std::string>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize j = 0; j < lenOuter; ++j)
+    {
+        jobjectArray jInnerArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jValue, j));
+        std::vector<std::string> innerVector;
+        JniUtils::convertJavaStrArrToStrVector(env, jInnerArray, innerVector);
+        env->DeleteLocalRef(jInnerArray);
+        value.push_back(innerVector);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueString3DArray
+* Signature: (Ljava/lang/String;[[[Ljava/lang/String;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueString3DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueString3DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<std::vector<std::string>>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize k = 0; k < lenOuter; ++k)
+    {
+        jobjectArray jMiddleArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jValue, k));
+        const jsize lenMiddle = env->GetArrayLength(jMiddleArray);
+        std::vector<std::vector<std::string>> middleArray;
+        for (jsize j = 0; j < lenMiddle; ++j)
+        {
+            jobjectArray jInnerArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jMiddleArray, j));
+            std::vector<std::string> innerVector;
+            JniUtils::convertJavaStrArrToStrVector(env, jInnerArray, innerVector);
+            env->DeleteLocalRef(jInnerArray);
+            middleArray.push_back(innerVector);
+        }
+        env->DeleteLocalRef(jMiddleArray);
+        value.push_back(middleArray);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueRepresentationArray
+* Signature: (Ljava/lang/String;[Lorg/iotivity/base/OcRepresentation;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentationArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueRepresentationArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+
+    std::vector<OCRepresentation> value;
+    JniUtils::convertJavaRepresentationArrToVector(env, jValue, value);
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueRepresentation2DArray
+* Signature: (Ljava/lang/String;[[Lorg/iotivity/base/OcRepresentation;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentation2DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueRepresentation2DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<OCRepresentation>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize j = 0; j < lenOuter; ++j)
+    {
+        jobjectArray jInnerArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jValue, j));
+        std::vector<OCRepresentation> innerVector;
+        JniUtils::convertJavaRepresentationArrToVector(env, jInnerArray, innerVector);
+        env->DeleteLocalRef(jInnerArray);
+        value.push_back(innerVector);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueRepresentation3DArray
+* Signature: (Ljava/lang/String;[[[Lorg/iotivity/base/OcRepresentation;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentation3DArray
+(JNIEnv *env, jobject thiz, jstring jKey, jobjectArray jValue)
+{
+    LOGD("OcRepresentation_setValueRepresentation3DArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+    std::vector<std::vector<std::vector<OCRepresentation>>> value;
+    const jsize lenOuter = env->GetArrayLength(jValue);
+    for (jsize k = 0; k < lenOuter; ++k)
+    {
+        jobjectArray jMiddleArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jValue, k));
+        const jsize lenMiddle = env->GetArrayLength(jMiddleArray);
+        std::vector<std::vector<OCRepresentation>> middleArray;
+        for (jsize j = 0; j < lenMiddle; ++j)
+        {
+            jobjectArray jInnerArray = static_cast<jobjectArray>(env->GetObjectArrayElement(jMiddleArray, j));
+            std::vector<OCRepresentation> innerVector;
+            JniUtils::convertJavaRepresentationArrToVector(env, jInnerArray, innerVector);
+            env->DeleteLocalRef(jInnerArray);
+            middleArray.push_back(innerVector);
+        }
+        env->DeleteLocalRef(jMiddleArray);
+        value.push_back(middleArray);
+    }
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    string key = env->GetStringUTFChars(jKey, NULL);
+    rep->setValue(key, value);
 }
 
 /*
@@ -484,14 +980,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_dispose
     LOGD("OcRepresentation_dispose");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
 
-    if (env->ExceptionCheck())
-    {
-        LOGE("Failed to get native handle from OcRepresentation");
-    }
-
     if (jNeedsDelete)
     {
-        //TODO uncomment when OCRepresentation is fixed
-        //delete rep;
+        delete rep;
     }
 }

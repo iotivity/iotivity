@@ -28,13 +28,16 @@
 class JniOnResourceFoundListener
 {
 public:
-    JniOnResourceFoundListener(JNIEnv *env, jobject jListener);
+    JniOnResourceFoundListener(JNIEnv *env, jobject jListener, 
+        RemoveListenerCallback removeListenerCallback);
     ~JniOnResourceFoundListener();
 
     void foundResourceCallback(std::shared_ptr<OC::OCResource> resource);
 
 private:
+    RemoveListenerCallback m_removeListenerCallback;
     jweak m_jwListener;
+    void checkExAndRemoveListener(JNIEnv* env);
 };
 
 #endif

@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "ocstack.h"
-#include "ocsocket.h"
 #include "logger.h"
 
 #include "cJSON.h"

@@ -34,6 +34,7 @@ using namespace OIC;
 
 int g_Steps = 0;
 int isWaiting = 0; //0: none to wait, 1: wait for the response of "getConfigurationValue"
+pthread_mutex_t mutex_lock;
 
 const int SUCCESS_RESPONSE = 0;
 
@@ -67,12 +68,16 @@ typedef std::string ConfigurationValue;
 void timeCheck(int timeSec)
 {
     sleep(timeSec);
+    pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
+    pthread_mutex_unlock(&mutex_lock);
 }
 
 void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
+    pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
+    pthread_mutex_unlock(&mutex_lock);
 
     if (eCode != SUCCESS_RESPONSE)
     {
@@ -86,7 +91,9 @@ void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
 void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& rep,
         const int eCode)
 {
+    pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
+    pthread_mutex_unlock(&mutex_lock);
 
     if (eCode != SUCCESS_RESPONSE)
     {
@@ -99,7 +106,9 @@ void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& 
 
 void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
+    pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
+    pthread_mutex_unlock(&mutex_lock);
 
     if (eCode != SUCCESS_RESPONSE)
     {
@@ -120,7 +129,9 @@ void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
 
 void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
+    pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
+    pthread_mutex_unlock(&mutex_lock);
 
     if (eCode != SUCCESS_RESPONSE)
     {
@@ -184,7 +195,6 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
 // Callback to found resources
 void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resources)
 {
-
     std::string resourceURI;
     std::string hostAddress;
 
@@ -262,6 +272,8 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
 
 int main(int argc, char* argv[])
 {
+    std::string str_steps;
+    pthread_mutex_init(&mutex_lock, NULL);
 
     //**************************************************************
     // STEP 0
@@ -275,11 +287,15 @@ int main(int argc, char* argv[])
 
     while (true)
     {
-
+        pthread_mutex_lock(&mutex_lock);
         if (isWaiting > 0)
+        {
+            pthread_mutex_unlock(&mutex_lock);
             continue;
+        }
 
         isWaiting = 0;
+        pthread_mutex_unlock(&mutex_lock);
 
         cout << endl << endl << "(0) Quit" << std::endl;
         cout << "(1) Find all resources(URI: /oic/con, /oic/diag, /factoryset)" << std::endl;
@@ -290,10 +306,29 @@ int main(int argc, char* argv[])
         cout << "(6) Reboot (for the group)" << std::endl;
         cout << "(10) Show Configuration Units" << std::endl;
 
-        cin >> g_Steps;
-        //
+        try
+        {
+            std::getline (std::cin, str_steps);
+
+            if(str_steps == "")
+            {
+                continue;
+            }
+            else
+            {
+                g_Steps = std::stoi(str_steps);
+            }
+        }
+        catch(std::invalid_argument&)
+        {
+            std::cout << "Please put a digit, not string" << std::endl;
+            continue;
+        }
+
         if (g_Steps == 0)
+        {
             break;
+        }
         else if (g_Steps == 1)
         {
             std::vector< std::string > types;
@@ -392,7 +427,11 @@ int main(int argc, char* argv[])
 
             if (g_thingsmanager->getConfigurations(g_configurationCollection, configurations, &onGet)
                     != OC_STACK_ERROR)
-                isWaiting = 1;
+            {
+                pthread_mutex_lock(&mutex_lock);
+                isWaiting = 0;
+                pthread_mutex_unlock(&mutex_lock);
+            }
         }
         else if (g_Steps == 4)
         {
@@ -414,7 +453,11 @@ int main(int argc, char* argv[])
 
             if (g_thingsmanager->updateConfigurations(g_configurationCollection, configurations,
                     &onUpdate) != OC_STACK_ERROR)
-                isWaiting = 1;
+            {
+                pthread_mutex_lock(&mutex_lock);
+                isWaiting = 0;
+                pthread_mutex_unlock(&mutex_lock);
+            }
         }
         else if (g_Steps == 5)
         {
@@ -427,7 +470,11 @@ int main(int argc, char* argv[])
 
             if (g_thingsmanager->factoryReset(g_diagnosticsCollection, &onFactoryReset)
                     != OC_STACK_ERROR)
-                isWaiting = 1;
+            {
+                pthread_mutex_lock(&mutex_lock);
+                isWaiting = 0;
+                pthread_mutex_unlock(&mutex_lock);
+            }
         }
         else if (g_Steps == 6)
         {
@@ -439,7 +486,11 @@ int main(int argc, char* argv[])
             }
 
             if (g_thingsmanager->reboot(g_diagnosticsCollection, &onReboot) != OC_STACK_ERROR)
-                isWaiting = 1;
+            {
+                pthread_mutex_lock(&mutex_lock);
+                isWaiting = 0;
+                pthread_mutex_unlock(&mutex_lock);
+            }
         }
         else if (g_Steps == 10)
         {

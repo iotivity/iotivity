@@ -33,8 +33,6 @@
 #include <ocstack.h>
 #include <OCRepresentation.h>
 
-using namespace std;
-
 namespace OC
 {
     class InProcServerWrapper;
@@ -147,7 +145,7 @@ namespace OC
 
         /**
         *  API to set the entire resource attribute representation
-        *  @param rep reference to the to the resource's representation
+        *  @param rep reference to the resource's representation
         */
         void setResourceRepresentation(OCRepresentation& rep) {
             // Call the default
@@ -275,3 +273,4 @@ namespace OC
 } // namespace OC
 
 #endif //__OCRESOURCERESPONSE_H
+

@@ -23,12 +23,12 @@
 package org.iotivity.base;
 
 public enum EntityHandlerResult {
-    OK              (0),
-    ERROR           (1),
+    OK(0),
+    ERROR(1),
     RESOURCE_CREATED(2),
     RESOURCE_DELETED(3),
-    SLOW            (4),
-    FORBIDDEN       (5);
+    SLOW(4),
+    FORBIDDEN(5);
 
     private int value;
 

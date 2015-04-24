@@ -20,6 +20,7 @@
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 #include "JniOcStack.h"
+#include <AttributeValue.h>
 
 #ifndef _Included_org_iotivity_base_OcRepresentation
 #define _Included_org_iotivity_base_OcRepresentation
@@ -32,57 +33,551 @@ public:
     static OCRepresentation* getOCRepresentationPtr(JNIEnv *env, jobject thiz);
 };
 
+struct JObjectConverter : boost::static_visitor<jobject>
+{
+    JObjectConverter(JNIEnv *env) : env(env){}
+
+    jobject operator()(const NullType&) const {return nullptr;}
+    jobject operator()(const int& val) const
+    { 
+        jobject jobj = env->NewObject(
+            g_cls_Integer, 
+            g_mid_Integer_ctor, 
+            static_cast<jint>(val));
+        return jobj; 
+    }
+    jobject operator()(const double& val) const
+    { 
+        jobject jobj = env->NewObject(
+            g_cls_Double,
+            g_mid_Double_ctor,
+            static_cast<jdouble>(val));
+        return jobj;
+    }
+    jobject operator()(const bool& val) const
+    {
+        jobject jobj = env->NewObject(
+            g_cls_Boolean,
+            g_mid_Boolean_ctor,
+            static_cast<jboolean>(val));
+        return jobj;
+    }
+    jobject operator()(const std::string& val) const
+    { 
+        jstring jstr = env->NewStringUTF(val.c_str());
+        return static_cast<jobject>(jstr);
+    }
+    jobject operator()(const OC::OCRepresentation& val) const
+    {
+        OCRepresentation * rep = new OCRepresentation(val);
+        jlong handle = reinterpret_cast<jlong>(rep);
+        jobject jRepresentation = env->NewObject(
+            g_cls_OcRepresentation, 
+            g_mid_OcRepresentation_N_ctor_bool, 
+            handle, true);
+        return jRepresentation;
+    }
+
+        // Sequences:
+    jobject operator()(const std::vector<int>& val) const
+    {
+        size_t len = val.size();
+        jintArray jIntArray = env->NewIntArray(len);
+        if (env->ExceptionCheck()) return nullptr;
+
+        const int* ints = &val[0];
+        env->SetIntArrayRegion(jIntArray, 0, len, reinterpret_cast<const jint*>(ints));
+        if (env->ExceptionCheck()) return nullptr;
+
+        return jIntArray;
+    }
+    jobject operator()(const std::vector<double>& val) const
+    {
+        size_t len = val.size();
+        jdoubleArray jDoubleArray = env->NewDoubleArray(len);
+        if (env->ExceptionCheck()) return nullptr;
+
+        const double* doubles = &val[0];
+        env->SetDoubleArrayRegion(jDoubleArray, 0, len, reinterpret_cast<const jdouble*>(doubles));
+        if (env->ExceptionCheck()) return nullptr;
+
+        return jDoubleArray;
+    }
+    jobject operator()(const std::vector<bool>& val) const
+    {
+        size_t len = val.size();
+        jbooleanArray jBooleanArray = env->NewBooleanArray(len);
+        if (env->ExceptionCheck()) return nullptr;
+
+        jboolean* booleans = new jboolean[len];
+        for (size_t i = 0; i < len; ++i) {
+            booleans[i] = val[i];
+        }
+        env->SetBooleanArrayRegion(jBooleanArray, 0, len, booleans);
+
+        if (env->ExceptionCheck()) return nullptr;
+        return jBooleanArray;
+    }
+    jobject operator()(const std::vector<std::string>& val) const
+    {
+        size_t len = val.size();
+        jobjectArray strArr = env->NewObjectArray(len, g_cls_String, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (size_t i = 0; i < len; ++i)
+        {
+            jstring jString = env->NewStringUTF(val[i].c_str());
+            env->SetObjectArrayElement(strArr, static_cast<jsize>(i), jString);
+            if (env->ExceptionCheck()) return nullptr;
+            env->DeleteLocalRef(jString);
+        }
+        return strArr;
+    }
+    jobject operator()(const std::vector<OC::OCRepresentation>& val) const
+    {
+        jsize len = static_cast<jsize>(val.size());
+        jobjectArray repArr = env->NewObjectArray(len, g_cls_OcRepresentation, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize i = 0; i < len; ++i)
+        {
+            OCRepresentation* rep = new OCRepresentation(val[i]);
+            jlong handle = reinterpret_cast<jlong>(rep);
+            jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool, handle, true);
+            if (env->ExceptionCheck()) return nullptr;
+            env->SetObjectArrayElement(repArr, i, jRepresentation);
+            if (env->ExceptionCheck()) return nullptr;
+            env->DeleteLocalRef(jRepresentation);
+        }
+
+        return repArr;
+    }
+
+    // Nested sequences:
+    jobject operator()(const std::vector<std::vector<int>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_int1DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize i = 0; i < lenOuter; ++i)
+        {
+            size_t lenInner = val[i].size();
+            jintArray jIntArray = env->NewIntArray(lenInner);
+            if (env->ExceptionCheck()) return nullptr;
+            const int* ints = &val[i][0];
+            env->SetIntArrayRegion(jIntArray, 0, lenInner, reinterpret_cast<const jint*>(ints));
+            if (env->ExceptionCheck()) return nullptr;
+            env->SetObjectArrayElement(jOuterArr, i, static_cast<jobject>(jIntArray));
+            if (env->ExceptionCheck()) return nullptr;
+            env->DeleteLocalRef(jIntArray);
+        }
+        return jOuterArr;
+    }
+    jobject operator()(const std::vector<std::vector<std::vector<int>>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_int2DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize k = 0; k < lenOuter; ++k)
+        {
+            jsize lenMiddle = static_cast<jsize>(val[k].size());
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_int1DArray, NULL);
+            if (env->ExceptionCheck()) return nullptr;
+            for (jsize i = 0; i < lenMiddle; ++i)
+            {
+                jsize lenInner = static_cast<jsize>(val[k][i].size());
+                jintArray jIntArray = env->NewIntArray(lenInner);
+                const int* ints = &val[k][i][0];
+                env->SetIntArrayRegion(jIntArray, 0, lenInner, reinterpret_cast<const jint*>(ints));
+                env->SetObjectArrayElement(jMiddleArr, i, jIntArray);
+                if (env->ExceptionCheck()) return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+        return jOuterArr;
+    }
+
+    jobject operator()(const std::vector<std::vector<double>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_double1DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize i = 0; i < lenOuter; ++i)
+        {
+            size_t lenInner = val[i].size();
+            jdoubleArray jDoubleArray = env->NewDoubleArray(lenInner);
+
+            const double* doubles = &val[i][0];
+            env->SetDoubleArrayRegion(jDoubleArray, 0, lenInner, reinterpret_cast<const jdouble*>(doubles));
+            env->SetObjectArrayElement(jOuterArr, i, jDoubleArray);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+
+        return jOuterArr;
+    }
+    jobject operator()(const std::vector<std::vector<std::vector<double>>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_double2DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize k = 0; k < lenOuter; ++k)
+        {
+            jsize lenMiddle = static_cast<jsize>(val[k].size());
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_double1DArray, NULL);
+            if (env->ExceptionCheck()) return nullptr;
+            for (jsize i = 0; i < lenMiddle; ++i)
+            {
+                jsize lenInner = static_cast<jsize>(val[k][i].size());
+                jdoubleArray jDoubleArray = env->NewDoubleArray(lenInner);
+
+                const double* doubles = &val[k][i][0];
+                env->SetDoubleArrayRegion(jDoubleArray, 0, lenInner, reinterpret_cast<const jdouble*>(doubles));
+                env->SetObjectArrayElement(jMiddleArr, i, jDoubleArray);
+                if (env->ExceptionCheck()) return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+        return jOuterArr;
+    }
+
+    jobject operator()(const std::vector<std::vector<bool>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_boolean1DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize i = 0; i < lenOuter; ++i)
+        {
+            size_t lenInner = val[i].size();
+            jbooleanArray jBooleanArray = env->NewBooleanArray(lenInner);
+
+            jboolean* booleans = new jboolean[lenInner];
+            for (size_t j = 0; j < lenInner; ++j) {
+                booleans[j] = val[i][j];
+            }
+            env->SetBooleanArrayRegion(jBooleanArray, 0, lenInner, booleans);
+            env->SetObjectArrayElement(jOuterArr, i, jBooleanArray);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+
+        return jOuterArr;
+    }
+    jobject operator()(const std::vector<std::vector<std::vector<bool>>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_boolean2DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize k = 0; k < lenOuter; ++k)
+        {
+            jsize lenMiddle = static_cast<jsize>(val[k].size());
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_boolean1DArray, NULL);
+            if (env->ExceptionCheck()) return nullptr;
+            for (jsize i = 0; i < lenMiddle; ++i)
+            {
+                size_t lenInner = val[k][i].size();
+                jbooleanArray jBooleanArray = env->NewBooleanArray(lenInner);
+                jboolean* booleans = new jboolean[lenInner];
+                for (size_t j = 0; j < lenInner; ++j) {
+                    booleans[j] = val[k][i][j];
+                }
+                env->SetBooleanArrayRegion(jBooleanArray, 0, lenInner, booleans);
+                env->SetObjectArrayElement(jMiddleArr, i, jBooleanArray);
+                if (env->ExceptionCheck()) return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+        return jOuterArr;
+    }
+
+    jobject operator()(const std::vector<std::vector<std::string>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_String1DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize i = 0; i < lenOuter; ++i)
+        {
+            jsize lenInner = static_cast<jsize>(val[i].size());
+            jobjectArray strArr = env->NewObjectArray(lenInner, g_cls_String, NULL);
+            if (env->ExceptionCheck()) return nullptr;
+            for (jsize j = 0; j < lenInner; ++j)
+            {
+                jstring jString = env->NewStringUTF(val[i][j].c_str());
+                env->SetObjectArrayElement(strArr, j, jString);
+                env->DeleteLocalRef(jString);
+            }
+            env->SetObjectArrayElement(jOuterArr, i, strArr);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+
+        return jOuterArr;
+    }
+    jobject operator()(const std::vector<std::vector<std::vector<std::string>>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_String2DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize k = 0; k < lenOuter; ++k)
+        {
+            jsize lenMiddle = static_cast<jsize>(val[k].size());
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_String1DArray, NULL);
+            if (env->ExceptionCheck()) return nullptr;
+            for (jsize i = 0; i < lenMiddle; ++i)
+            {
+                jsize lenInner = static_cast<jsize>(val[k][i].size());
+                jobjectArray strArr = env->NewObjectArray(lenInner, g_cls_String, NULL);
+                if (env->ExceptionCheck()) return nullptr;
+                for (jsize j = 0; j < lenInner; ++j)
+                {
+                    jstring jString = env->NewStringUTF(val[k][i][j].c_str());
+                    env->SetObjectArrayElement(strArr, j, jString);
+                    env->DeleteLocalRef(jString);
+                    if (env->ExceptionCheck()) return nullptr;
+                }
+                env->SetObjectArrayElement(jMiddleArr, i, strArr);
+                if (env->ExceptionCheck()) return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+        return jOuterArr;
+    }
+
+    jobject operator()(const std::vector<std::vector<OC::OCRepresentation>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_OcRepresentation1DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize i = 0; i < lenOuter; ++i)
+        {
+            jsize lenInner = static_cast<jsize>(val[i].size());
+            jobjectArray repArr = env->NewObjectArray(lenInner, g_cls_OcRepresentation, NULL);
+            if (env->ExceptionCheck()) return nullptr;
+            for (jsize j = 0; j < lenInner; ++j)
+            {
+                OCRepresentation* rep = new OCRepresentation(val[i][j]);
+                jlong handle = reinterpret_cast<jlong>(rep);
+                jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool, handle, true);
+
+                env->SetObjectArrayElement(repArr, j, jRepresentation);
+                env->DeleteLocalRef(jRepresentation);
+                if (env->ExceptionCheck()) return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, i, repArr);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+        return jOuterArr;
+    }
+    jobject operator()(const std::vector<std::vector<std::vector<OC::OCRepresentation>>>& val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_OcRepresentation2DArray, NULL);
+        if (env->ExceptionCheck()) return nullptr;
+        for (jsize k = 0; k < lenOuter; ++k)
+        {
+            jsize lenMiddle = static_cast<jsize>(val[k].size());
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_OcRepresentation1DArray, NULL);
+            if (env->ExceptionCheck()) return nullptr;
+            for (jsize i = 0; i < lenMiddle; ++i)
+            {
+                jsize lenInner = static_cast<jsize>(val[k][i].size());
+                jobjectArray repArr = env->NewObjectArray(lenInner, g_cls_OcRepresentation, NULL);
+                if (env->ExceptionCheck()) return nullptr;
+                for (jsize j = 0; j < lenInner; ++j)
+                {
+                    OCRepresentation* rep = new OCRepresentation(val[k][i][j]);
+                    jlong handle = reinterpret_cast<jlong>(rep);
+                    jobject jRepresentation = env->NewObject(g_cls_OcRepresentation, g_mid_OcRepresentation_N_ctor_bool, handle, true);
+
+                    env->SetObjectArrayElement(repArr, j, jRepresentation);
+                    env->DeleteLocalRef(jRepresentation);
+                    if (env->ExceptionCheck()) return nullptr;
+                }
+                env->SetObjectArrayElement(jMiddleArr, i, repArr);
+                if (env->ExceptionCheck()) return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
+            if (env->ExceptionCheck()) return nullptr;
+        }
+        return jOuterArr;
+    }
+
+private:
+    JNIEnv *env;
+
+};
+
+
 #ifdef __cplusplus
     extern "C" {
 #endif
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
-    * Method:    getValueInt
-    * Signature: (Ljava/lang/String;)I
+    * Method:    getValueN
+    * Signature: (Ljava/lang/String;)Ljava/lang/Object;
     */
-    JNIEXPORT jint JNICALL Java_org_iotivity_base_OcRepresentation_getValueInt
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getValueN
         (JNIEnv *, jobject, jstring);
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
-    * Method:    getValueBool
-    * Signature: (Ljava/lang/String;)Z
-    */
-    JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_getValueBool
-        (JNIEnv *, jobject, jstring);
-
-    /*
-    * Class:     org_iotivity_base_OcRepresentation
-    * Method:    getValueString
-    * Signature: (Ljava/lang/String;)Ljava/lang/String;
-    */
-    JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getValueString
-        (JNIEnv *, jobject, jstring);
-
-    /*
-    * Class:     org_iotivity_base_OcRepresentation
-    * Method:    setValueInt
+    * Method:    setValueInteger
     * Signature: (Ljava/lang/String;I)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInt
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger
         (JNIEnv *, jobject, jstring, jint);
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
-    * Method:    setValueBool
+    * Method:    setValueDouble
+    * Signature: (Ljava/lang/String;D)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble
+        (JNIEnv *, jobject, jstring, jdouble);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueBoolean
     * Signature: (Ljava/lang/String;Z)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBool
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean
         (JNIEnv *, jobject, jstring, jboolean);
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
-    * Method:    setValueString
+    * Method:    setValueStringN
     * Signature: (Ljava/lang/String;Ljava/lang/String;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueString
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueStringN
         (JNIEnv *, jobject, jstring, jstring);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueRepresentation
+    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcRepresentation;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentation
+        (JNIEnv *, jobject, jstring, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueIntegerArray
+    * Signature: (Ljava/lang/String;[I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueIntegerArray
+        (JNIEnv *, jobject, jstring, jintArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueInteger2DArray
+    * Signature: (Ljava/lang/String;[[I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger2DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueInteger3DArray
+    * Signature: (Ljava/lang/String;[[[I)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger3DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueDoubleArray
+    * Signature: (Ljava/lang/String;[D)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDoubleArray
+        (JNIEnv *, jobject, jstring, jdoubleArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueDouble2DArray
+    * Signature: (Ljava/lang/String;[[D)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble2DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueDouble3DArray
+    * Signature: (Ljava/lang/String;[[[D)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble3DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueBooleanArray
+    * Signature: (Ljava/lang/String;[Z)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBooleanArray
+        (JNIEnv *, jobject, jstring, jbooleanArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueBoolean2DArray
+    * Signature: (Ljava/lang/String;[[Z)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean2DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueBoolean3DArray
+    * Signature: (Ljava/lang/String;[[[Z)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean3DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueStringArray
+    * Signature: (Ljava/lang/String;[Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueStringArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueString2DArray
+    * Signature: (Ljava/lang/String;[[Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueString2DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueString3DArray
+    * Signature: (Ljava/lang/String;[[[Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueString3DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueRepresentationArray
+    * Signature: (Ljava/lang/String;[Lorg/iotivity/base/OcRepresentation;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentationArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueRepresentation2DArray
+    * Signature: (Ljava/lang/String;[[Lorg/iotivity/base/OcRepresentation;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentation2DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueRepresentation3DArray
+    * Signature: (Ljava/lang/String;[[[Lorg/iotivity/base/OcRepresentation;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentation3DArray
+        (JNIEnv *, jobject, jstring, jobjectArray);
 
     /*
     * Class:     org_iotivity_base_OcRepresentation

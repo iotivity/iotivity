@@ -3,13 +3,18 @@
  * Copyright (C) 2010--2012 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
+#endif
+
+#ifdef WITH_ARDUINO
+/* On Arduino the abort function, needed for assert, is defined in std lib */
+#include <stdlib.h>
 #endif
 
 #include "debug.h"

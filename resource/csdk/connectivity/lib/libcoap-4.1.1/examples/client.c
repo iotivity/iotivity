@@ -3,7 +3,7 @@
  * Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -284,10 +284,10 @@ get_block(coap_pdu_t *pdu, coap_opt_iterator_t *opt_iter)
     return coap_option_next(opt_iter);
 }
 
-#define HANDLE_BLOCK1(Pdu)						\
-  ((method == COAP_REQUEST_PUT || method == COAP_REQUEST_POST) &&	\
-   ((flags & FLAGS_BLOCK) == 0) &&					\
-   ((Pdu)->hdr->code == COAP_RESPONSE_CODE(201) ||			\
+#define HANDLE_BLOCK1(Pdu)                      \
+  ((method == COAP_REQUEST_PUT || method == COAP_REQUEST_POST) &&   \
+   ((flags & FLAGS_BLOCK) == 0) &&                  \
+   ((Pdu)->hdr->code == COAP_RESPONSE_CODE(201) ||          \
     (Pdu)->hdr->code == COAP_RESPONSE_CODE(204)))
 
 inline int check_token(coap_pdu_t *received)
@@ -761,7 +761,7 @@ int cmdline_blocksize(char *arg)
     return 1;
 }
 
-/* Called after processing the options from the commandline to set 
+/* Called after processing the options from the commandline to set
  * Block1 or Block2 depending on method. */
 void set_blocksize()
 {

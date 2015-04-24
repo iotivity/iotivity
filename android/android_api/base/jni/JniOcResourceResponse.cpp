@@ -112,7 +112,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setErrorCode
     LOGD("OcResourceResponse_setErrorCode");
 
     JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    response->setErrorCode((int)eCode);
+    response->setErrorCode(static_cast<int>(eCode));
 }
 
 /*
@@ -219,7 +219,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setResponseResu
     JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
 
     response->setResponseResult(
-        JniUtils::getOCEntityHandlerResult(env, (int)responseResult));
+        JniUtils::getOCEntityHandlerResult(env, static_cast<int>(responseResult)));
 }
 
 /*

@@ -3,7 +3,7 @@
  * Copyright (C) 2010--2014 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include "config.h"
@@ -27,7 +27,7 @@
 #define COAP_FREE_TYPE(Type, Object) memp_free(MEMP_COAP_##Type, Object)
 
 #endif
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
 #include "utlist.h"
 #include "mem.h"
 
@@ -74,21 +74,21 @@ coap_free_subscription(coap_subscription_t *subscription)
  * Adds Char to Buf if Offset is zero. Otherwise, Char is not written
  * and Offset is decremented.
  */
-#define PRINT_WITH_OFFSET(Buf,Offset,Char)		\
-  if ((Offset) == 0) {					\
-    (*(Buf)++) = (Char);				\
-  } else {						\
-    (Offset)--;						\
-  }							\
+#define PRINT_WITH_OFFSET(Buf,Offset,Char)      \
+  if ((Offset) == 0) {                  \
+    (*(Buf)++) = (Char);                \
+  } else {                      \
+    (Offset)--;                     \
+  }                         \
 
 /**
  * Adds Char to Buf if Offset is zero and Buf is less than Bufend.
  */
-#define PRINT_COND_WITH_OFFSET(Buf,Bufend,Offset,Char,Result) {		\
-    if ((Buf) < (Bufend)) {						\
-      PRINT_WITH_OFFSET(Buf,Offset,Char);				\
-    }									\
-    (Result)++;								\
+#define PRINT_COND_WITH_OFFSET(Buf,Bufend,Offset,Char,Result) {     \
+    if ((Buf) < (Bufend)) {                     \
+      PRINT_WITH_OFFSET(Buf,Offset,Char);               \
+    }                                   \
+    (Result)++;                             \
   }
 
 /**
@@ -96,11 +96,11 @@ coap_free_subscription(coap_subscription_t *subscription)
  * characters are skipped. Output may be truncated to Bufend - Buf
  * characters.
  */
-#define COPY_COND_WITH_OFFSET(Buf,Bufend,Offset,Str,Length,Result) {	\
-    size_t i;								\
-    for (i = 0; i < (Length); i++) {					\
+#define COPY_COND_WITH_OFFSET(Buf,Bufend,Offset,Str,Length,Result) {    \
+    size_t i;                               \
+    for (i = 0; i < (Length); i++) {                    \
       PRINT_COND_WITH_OFFSET((Buf), (Bufend), (Offset), (Str)[i], (Result)); \
-    }									\
+    }                                   \
   }
 
 int match(const str *text, const str *pattern, int match_prefix, int match_substring)
@@ -119,7 +119,7 @@ int match(const str *text, const str *pattern, int match_prefix, int match_subst
         {
             size_t token_length;
             unsigned char *token = next_token;
-            next_token = memchr(token, ' ', remaining_length);
+            next_token = (unsigned char *) memchr(token, ' ', remaining_length);
 
             if (next_token)
             {
@@ -144,22 +144,22 @@ int match(const str *text, const str *pattern, int match_prefix, int match_subst
             && memcmp(text->s, pattern->s, pattern->length) == 0;
 }
 
-/** 
+/**
  * Prints the names of all known resources to @p buf. This function
  * sets @p buflen to the number of bytes actually written and returns
  * @c 1 on succes. On error, the value in @p buflen is undefined and
  * the return value will be @c 0.
- * 
+ *
  * @param context The context with the resource map.
  * @param buf     The buffer to write the result.
  * @param buflen  Must be initialized to the maximum length of @p buf and will be
  *                set to the length of the well-known response on return.
  * @param offset  The offset in bytes where the output shall start and is
  *                shifted accordingly with the characters that have been
- *                processed. This parameter is used to support the block 
- *                option. 
+ *                processed. This parameter is used to support the block
+ *                option.
  * @param query_filter A filter query according to <a href="http://tools.ietf.org/html/draft-ietf-core-link-format-11#section-4.1">Link Format</a>
- * 
+ *
  * @return COAP_PRINT_STATUS_ERROR on error. Otherwise, the lower 28 bits are
  *         set to the number of bytes that have actually been written to
  *         @p buf. COAP_PRINT_STATUS_TRUNC is set when the output has been
@@ -339,7 +339,7 @@ coap_resource_init(const unsigned char *uri, size_t len, int flags)
 {
     coap_resource_t *r;
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     r = (coap_resource_t *)coap_malloc(sizeof(coap_resource_t));
 #endif
 #ifdef WITH_LWIP
@@ -381,7 +381,7 @@ coap_add_attr(coap_resource_t *resource, const unsigned char *name, size_t nlen,
     if (!resource || !name)
         return NULL;
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     attr = (coap_attr_t *)coap_malloc(sizeof(coap_attr_t));
 #endif
 #ifdef WITH_LWIP
@@ -431,7 +431,7 @@ coap_find_attr(coap_resource_t *resource, const unsigned char *name, size_t nlen
         for (attr = list_head(resource->link_attr); attr;
                 attr = list_item_next(attr))
         {
-#endif /* WITH_CONTIKI */    
+#endif /* WITH_CONTIKI */
         if (attr->name.length == nlen && memcmp(attr->name.s, name, nlen) == 0)
             return attr;
     }
@@ -501,7 +501,7 @@ int coap_delete_resource(coap_context_t *context, coap_key_t key)
     if (!resource)
         return 0;
 
-#if defined(WITH_POSIX) || defined(WITH_LWIP)
+#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO)
 #ifdef COAP_RESOURCES_NOHASH
     LL_DELETE(context->resources, resource);
 #else
@@ -512,15 +512,15 @@ int coap_delete_resource(coap_context_t *context, coap_key_t key)
     LL_FOREACH_SAFE(resource->link_attr, attr, tmp) coap_delete_attr(attr);
 
     if (resource->flags & COAP_RESOURCE_FLAGS_RELEASE_URI)
-    coap_free(resource->uri.s);
+        coap_free(resource->uri.s);
 
-#ifdef WITH_POSIX
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
     coap_free(resource);
 #endif
 #ifdef WITH_LWIP
     memp_free(MEMP_COAP_RESOURCE, resource);
 #endif
-#else /* not (WITH_POSIX || WITH_LWIP) */
+#else /* not (WITH_POSIX || WITH_LWIP || WITH_ARDUINO) */
     /* delete registered attributes */
     while ((attr = list_pop(resource->link_attr)))
         memb_free(&attribute_storage, attr);
@@ -637,7 +637,8 @@ coap_find_observer(coap_resource_t *resource, const coap_address_t *peer, const 
     assert(resource);
     assert(peer);
 
-    for (s = list_head(resource->subscribers); s; s = list_item_next(s))
+    for (s = (coap_subscription_t *) list_head(resource->subscribers);
+            s; s = (coap_subscription_t *) list_item_next((void *) s))
     {
         if (coap_address_equals(&s->subscriber, peer)
                 && (!token
@@ -752,7 +753,8 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
         assert(h); /* we do not allow subscriptions if no
          * GET handler is defined */
 
-        for (obs = list_head(r->subscribers); obs; obs = list_item_next(obs))
+        for (obs = (coap_subscription_t *) list_head(r->subscribers);
+                obs; obs = (coap_subscription_t *) list_item_next((void *) obs))
         {
             if (r->dirty == 0 && obs->dirty == 0)
                 /* running this resource due to partiallydirty, but this observation's notification was already enqueued */
@@ -866,7 +868,8 @@ static void coap_remove_failed_observers(coap_context_t *context, coap_resource_
 {
     coap_subscription_t *obs;
 
-    for (obs = list_head(resource->subscribers); obs; obs = list_item_next(obs))
+    for (obs = (coap_subscription_t *) list_head(resource->subscribers);
+            obs; obs = (coap_subscription_t *) list_item_next((void *) obs))
     {
         if (coap_address_equals(peer, &obs->subscriber) && token->length == obs->token_length
                 && memcmp(token->s, obs->token, token->length) == 0)

@@ -33,8 +33,10 @@ import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.iotivity.base.ErrorCode;
 import org.iotivity.base.ModeType;
 import org.iotivity.base.ObserveType;
+import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
@@ -53,10 +55,12 @@ import base.iotivity.org.examples.message.IMessageLogger;
  * SimpleClient
  * <p/>
  * SimpleClient is a sample client app which should be started after the simpleServer is started.
- * It finds resources advertised by the server and calls different operations on it (GET, PUT, POST and OBSERVE).
+ * It finds resources advertised by the server and calls different operations on it (GET, PUT,
+ * POST and OBSERVE).
  * This implements IMessageLogger to display messages on the screen
  */
-public class SimpleClient extends Activity implements OcPlatform.OnResourceFoundListener, IMessageLogger {
+public class SimpleClient extends Activity implements OcPlatform.OnResourceFoundListener,
+        IMessageLogger {
     private static final String TAG = "SimpleClient: ";
 
     private Light myLight;
@@ -72,6 +76,7 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
     private void initOICStack() {
         //create platform config
         PlatformConfig cfg = new PlatformConfig(
+                this,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT,
                 "0.0.0.0", // bind to all available interfaces
@@ -82,7 +87,8 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
             /**
              * find all resources
              */
-            OcPlatform.findResource("", "coap://224.0.1.187/oc/core?rt=core.light", this);
+            OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "core.light",
+                    OcConnectivityType.WIFI, this);
         } catch (OcException e) {
             logMessage(TAG + "findResource error: " + e.getMessage());
             Log.e(TAG, e.getMessage());
@@ -91,7 +97,8 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
 
     @Override
     /**
-     *  callback when a resource is found. This method calls doGetLightRepresentation to get the current values of myLight
+     *  callback when a resource is found. This method calls doGetLightRepresentation to get the
+     *  current values of myLight
      */
     synchronized public void onResourceFound(OcResource ocResource) {
         /**
@@ -118,25 +125,43 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         // eventhandler for observe()
         OcResource.OnObserveListener onObserveListener = new OcResource.OnObserveListener() {
             @Override
-            public void onObserveCompleted(List<OcHeaderOption> ocHeaderOptions, OcRepresentation ocRepresentation, int seqNum) {
+            public void onObserveCompleted(List<OcHeaderOption> ocHeaderOptions,
+                                           OcRepresentation ocRepresentation, int seqNum) {
                 if (printOnce) {
                     logMessage(TAG + "OBSERVE request was successful");
                     printOnce = false;
                 }
-                myLight.setState(ocRepresentation.getValueBool(StringConstants.STATE));
-                myLight.setPower(ocRepresentation.getValueInt(StringConstants.POWER));
-                myLight.setName(ocRepresentation.getValueString(StringConstants.NAME));
+                try {
+                    boolean state = ocRepresentation.getValue(StringConstants.STATE);
+                    int power = ocRepresentation.getValue(StringConstants.POWER);
+                    String name = ocRepresentation.getValue(StringConstants.NAME);
+                    myLight.setState(state);
+                    myLight.setPower(power);
+                    myLight.setName(name);
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
                 logMessage(TAG + "onObserve: Power: " + myLight.getPower());
                 if (seqNum > 20) {
                     try {
                         curResource.cancelObserve();
                         logMessage(TAG + "Successfully cancelled observe");
-                    } catch (OcException e) {
+                   } catch (OcException e) {
                         logMessage(TAG + "cancelObserve error. " + e.getMessage());
                         Log.e(TAG, e.getMessage());
                     }
                 }
 
+            }
+
+            @Override
+            public void onObserveFailed(Throwable throwable) {
+                if (throwable instanceof OcException) {
+                    OcException ocEx = (OcException) throwable;
+                    ErrorCode errCode = ocEx.getErrorCode();
+                    //do something based on errorCode
+                }
+                Log.e(TAG, throwable.toString());
             }
         };
         try {
@@ -158,15 +183,34 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
             @Override
             public void onPostCompleted(List<OcHeaderOption> ocHeaderOptions, OcRepresentation rep) {
                 logMessage(TAG + "POST request was successful");
-                if (rep.getValueString(StringConstants.CREATED_URI).equals(StringConstants.RESOURCE_URI1)) {
-                    logMessage(TAG + "Uri of the created resource: " + rep.getValueString(StringConstants.CREATED_URI));
+                String createdUri = rep.getUri();
+                if (createdUri.equals(StringConstants.RESOURCE_URI1)) {
+                    logMessage(TAG + "Uri of the created resource: " + createdUri);
                 } else {
-                    myLight.setState(rep.getValueBool(StringConstants.STATE));
-                    myLight.setPower(rep.getValueInt(StringConstants.POWER));
-                    myLight.setName(rep.getValueString(StringConstants.NAME));
-                    logMessage(TAG + "onPost\nState: " + myLight.getState() + "\nPower: " + myLight.getPower() + "\nName: " + myLight.getName());
+                    try {
+                        boolean state = rep.getValue(StringConstants.STATE);
+                        int power = rep.getValue(StringConstants.POWER);
+                        String name = rep.getValue(StringConstants.NAME);
+                        myLight.setState(state);
+                        myLight.setPower(power);
+                        myLight.setName(name);
+                    } catch (OcException e) {
+                        Log.e(TAG, e.getMessage());
+                    }
+                    logMessage(TAG + "onPost\nState: " + myLight.getState() + "\nPower: " +
+                            myLight.getPower() + "\nName: " + myLight.getName());
                 }
                 doObserveLightRepresentation();
+            }
+
+            @Override
+            public void onPostFailed(Throwable throwable) {
+                if (throwable instanceof OcException) {
+                    OcException ocEx = (OcException) throwable;
+                    ErrorCode errCode = ocEx.getErrorCode();
+                    //do something based on errorCode
+                }
+                Log.e(TAG, throwable.toString());
             }
         };
         try {
@@ -184,28 +228,61 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         // eventhandler for post()
         OcResource.OnPostListener onPostListener = new OcResource.OnPostListener() {
             @Override
-            public void onPostCompleted(List<OcHeaderOption> ocHeaderOptions, OcRepresentation ocRepresentation) {
-                if (ocRepresentation.getValueString(StringConstants.CREATED_URI).equals(StringConstants.RESOURCE_URI1)) {
-                    logMessage(TAG + "Uri of the created resource: " + ocRepresentation.getValueString(StringConstants.CREATED_URI));
+            public void onPostCompleted(List<OcHeaderOption> ocHeaderOptions,
+                                        OcRepresentation ocRepresentation) {
+                String createdUri = "";
+                try {
+                    createdUri = ocRepresentation.getValue(StringConstants.CREATED_URI);
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+                if (createdUri.equals(StringConstants.RESOURCE_URI1)) {
+                    logMessage(TAG + "Uri of the created resource: " + createdUri);
                 } else {
-                    myLight.setState(ocRepresentation.getValueBool(StringConstants.STATE));
-                    myLight.setPower(ocRepresentation.getValueInt(StringConstants.POWER));
-                    myLight.setName(ocRepresentation.getValueString(StringConstants.NAME));
+                    boolean state = false;
+                    try {
+                        state = ocRepresentation.getValue(StringConstants.STATE);
+                        int power = ocRepresentation.getValue(StringConstants.POWER);
+                        String name = ocRepresentation.getValue(StringConstants.NAME);
+                        myLight.setState(state);
+                        myLight.setPower(power);
+                        myLight.setName(name);
+                    } catch (OcException e) {
+                        Log.e(TAG, e.getMessage());
+                    }
                 }
                 OcRepresentation rep = new OcRepresentation();
                 myLight.setState(true);
                 myLight.setPower(55);
-                rep.setValueInt(StringConstants.POWER, myLight.getPower());
-                rep.setValueBool(StringConstants.STATE, myLight.getState());
+                try {
+                    rep.setValue(StringConstants.POWER, myLight.getPower());
+                    rep.setValue(StringConstants.STATE, myLight.getState());
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
                 doOnPost2(rep);
+            }
+
+            @Override
+            public void onPostFailed(Throwable throwable) {
+                if (throwable instanceof OcException) {
+                    OcException ocEx = (OcException) throwable;
+                    ErrorCode errCode = ocEx.getErrorCode();
+                    //do something based on errorCode
+                }
+                Log.e(TAG, throwable.toString());
             }
         };
 
         OcRepresentation rep = new OcRepresentation();
         myLight.setState(false);
         myLight.setPower(105);
-        rep.setValueBool(StringConstants.STATE, myLight.getState());
-        rep.setValueInt(StringConstants.POWER, myLight.getPower());
+        try {
+            rep.setValue(StringConstants.STATE, myLight.getState());
+            rep.setValue(StringConstants.POWER, myLight.getPower());
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
         try {
             curResource.post(rep, new HashMap<String, String>(), onPostListener);
         } catch (OcException e) {
@@ -221,27 +298,56 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         // eventhandler for put()
         OcResource.OnPutListener onPutListener = new OcResource.OnPutListener() {
             @Override
-            public void onPutCompleted(List<OcHeaderOption> ocHeaderOptions, OcRepresentation ocRepresentation) {
+            public void onPutCompleted(List<OcHeaderOption> ocHeaderOptions,
+                                       OcRepresentation ocRepresentation) {
                 logMessage(TAG + "PUT resource was successful");
-                myLight.setState(ocRepresentation.getValueBool(StringConstants.STATE));
-                myLight.setPower(ocRepresentation.getValueInt(StringConstants.POWER));
-                myLight.setName(ocRepresentation.getValueString(StringConstants.NAME));
-                logMessage(TAG + "onPutCompleted:\nState:" + myLight.getState() + "\nPower: " + myLight.getPower() + "\nName: " + myLight.getName());
+                try {
+                    boolean state = ocRepresentation.getValue(StringConstants.STATE);
+                    int power = ocRepresentation.getValue(StringConstants.POWER);
+                    String name = ocRepresentation.getValue(StringConstants.NAME);
+                    myLight.setState(state);
+                    myLight.setPower(power);
+                    myLight.setName(name);
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+
+                logMessage(TAG + "onPutCompleted:\nState:" + myLight.getState() + "\nPower: " +
+                        myLight.getPower() + "\nName: " + myLight.getName());
                 doPostLightRepresentation();
+            }
+
+            @Override
+            public void onPutFailed(Throwable throwable) {
+
+                if (throwable instanceof OcException) {
+                    OcException ocEx = (OcException) throwable;
+                    ErrorCode errCode = ocEx.getErrorCode();
+                    //do something based on errorCode
+                }
+                Log.e(TAG, throwable.toString());
             }
         };
 
         OcRepresentation rep = new OcRepresentation();
+        Log.d(TAG, "myLight settings: power = 15");
         myLight.setState(true);
         myLight.setPower(15);
-        rep.setValueBool(StringConstants.STATE, myLight.getState());
-        rep.setValueInt(StringConstants.POWER, myLight.getPower());
         try {
+            rep.setValue(StringConstants.STATE, myLight.getState());
+            rep.setValue(StringConstants.POWER, myLight.getPower());
+            rep.setValue(StringConstants.NAME, myLight.getName());
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        try {
+            Log.d(TAG, "before calling put");
             curResource.put(rep, new HashMap<String, String>(), onPutListener);
         } catch (OcException e) {
             logMessage(TAG + e.getMessage());
             Log.e(TAG, e.getMessage());
         }
+        Log.d(TAG, "end of put call");
     }
 
     /**
@@ -251,13 +357,32 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         // eventhandler for get()
         OcResource.OnGetListener onGetListener = new OcResource.OnGetListener() {
             @Override
-            public void onGetCompleted(List<OcHeaderOption> headerOptionList, OcRepresentation ocRepresentation) {
-                logMessage(TAG + "GET resource was successful");
-                myLight.setState(ocRepresentation.getValueBool(StringConstants.STATE));
-                myLight.setPower(ocRepresentation.getValueInt(StringConstants.POWER));
-                myLight.setName(ocRepresentation.getValueString(StringConstants.NAME));
-                logMessage(TAG + "onGetCompleted\nState: " + myLight.getState() + "\nPower: " + myLight.getPower() + "\nName: " + myLight.getName());
+            public void onGetCompleted(List<OcHeaderOption> headerOptionList,
+                                       OcRepresentation ocRepresentation) {
+                logMessage(TAG + "GET resource was successful " + StringConstants.STATE);
+                try {
+                    boolean state = ocRepresentation.getValue(StringConstants.STATE);
+                    int power = ocRepresentation.getValue(StringConstants.POWER);
+                    String name = ocRepresentation.getValue(StringConstants.NAME);
+                    myLight.setState(state);
+                    myLight.setPower(power);
+                    myLight.setName(name);
+                } catch (OcException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+                logMessage(TAG + "onGetCompleted\nState: " + myLight.getState() + "\nPower: " +
+                        myLight.getPower() + "\nName: " + myLight.getName());
                 doPutLightRepresentation();
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+                if (throwable instanceof OcException) {
+                    OcException ocEx = (OcException) throwable;
+                    ErrorCode errCode = ocEx.getErrorCode();
+                    //do something based on errorCode
+                }
+                Log.e(TAG, throwable.toString());
             }
         };
 
@@ -287,7 +412,9 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         mEventsTextView = new TextView(this);
         mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
         LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
-        layout.addView(mEventsTextView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        layout.addView(mEventsTextView, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+        );
         myLight = new Light();
 
         initOICStack();

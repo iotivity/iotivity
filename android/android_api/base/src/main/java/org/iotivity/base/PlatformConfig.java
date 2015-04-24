@@ -22,31 +22,48 @@
 
 package org.iotivity.base;
 
+import android.content.Context;
+
 /**
- * Data structure to provide the configuration. ServiceType: indicate IN_PROC or OUT_OF_PROC
- * ModeType : indicate whether we want to do server, client or both ipAddress : ip address of
- * server. if you specify 0.0.0.0 : it listens on any interface. port : port of server. : if you
- * specify 0 : next available random port is used. : if you specify 5683 : client discovery can
- * work even if they don't specify port.
+ * Data structure to provide the configuration.
  */
 public class PlatformConfig {
 
+    private Context mContext;
     private ServiceType mServiceType;
     private ModeType mModeType;
     private String mIpAddress;
     private int mPort;
     private QualityOfService mQualityOfService;
 
-    public PlatformConfig(ServiceType serviceType,
+    /**
+     * @param context          app context
+     * @param serviceType      indicate IN_PROC or OUT_OF_PROC
+     * @param modeType         indicate whether we want to do server, client or both
+     * @param ipAddress        ip address of server
+     *                         if you specify 0.0.0.0 : it listens on any interface
+     * @param port             port of server
+     *                         if you specifiy 0 : next available random port is used
+     *                         if you specify 5683 : client discovery can work even if they don't
+     *                         specify port
+     * @param qualityOfService
+     */
+    public PlatformConfig(Context context,
+                          ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,
                           int port,
                           QualityOfService qualityOfService) {
+        this.mContext = context;
         this.mServiceType = serviceType;
         this.mModeType = modeType;
         this.mIpAddress = ipAddress;
         this.mPort = port;
         this.mQualityOfService = qualityOfService;
+    }
+
+    public Context getContext() {
+        return mContext;
     }
 
     public ServiceType getServiceType() {

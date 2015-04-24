@@ -27,6 +27,17 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef _POSIX_C_SOURCE
+// Defining _POSIX_C_SOURCE macro with 199309L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1b, Real-time extensions
+// (IEEE Std 1003.1b-1993) specification
+//
+// For this specific file, see use of clock_gettime,
+// Refer http://man7.org/linux/man-pages/man2/clock_gettime.2.html
+#define _POSIX_C_SOURCE 199309L // needed for clock_gettime
+#endif
+
 #ifdef __APPLE__
 #include <mach/mach.h>
 #include <mach/mach_time.h>

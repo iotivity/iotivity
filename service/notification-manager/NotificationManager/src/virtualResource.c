@@ -89,7 +89,7 @@ OCStackResult destroyMirrorResource(MirrorResource *mirrorResource)
     OC_LOG_V(DEBUG, VR_TAG, "enter destroy virtual resource.");
     if (mirrorResource)
     {
-        if (mirrorResource->next)
+        if(mirrorResource->next)
         {
             mirrorResource->next = NULL;
         }

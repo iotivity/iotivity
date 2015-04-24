@@ -39,6 +39,7 @@ import android.widget.TextView;
 
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
@@ -69,6 +70,10 @@ public class SimpleServer extends Activity implements IMessageLogger {
         LinearLayout layout = (LinearLayout)findViewById(R.id.linearLayout);
         layout.addView(mEventsTextView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
+        OcRepresentation rep = new OcRepresentation();
+        rep.setValueBool("test", false);
+        boolean result = rep.getValueBool("test");
+
         initOICStack();
     }
 
@@ -78,6 +83,7 @@ public class SimpleServer extends Activity implements IMessageLogger {
     private void initOICStack() {
         //create platform config
         PlatformConfig cfg = new PlatformConfig(
+                this,
                 ServiceType.IN_PROC,
                 ModeType.SERVER,
                 "0.0.0.0", // bind to all available interfaces

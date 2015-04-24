@@ -27,6 +27,19 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef _POSIX_C_SOURCE
+// Defining _POSIX_C_SOURCE macro with 200112L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1-2001 base
+// specification (excluding the XSI extension).
+// For POSIX.1-2001 base specification,
+// Refer http://pubs.opengroup.org/onlinepubs/009695399/
+//
+// For this specific file, see use of getaddrinfo & structs,
+// Refer http://man7.org/linux/man-pages/man3/getaddrinfo.3.html
+#define _POSIX_C_SOURCE 200112L // needed for getaddrinfo & structs
+#endif
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>

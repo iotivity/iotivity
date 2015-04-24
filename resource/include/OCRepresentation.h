@@ -42,6 +42,9 @@
 #endif
 
 #include <OCException.h>
+#ifdef __ANDROID__
+#include "android_cpp11_compat.h"
+#endif
 
 namespace cereal
 {
@@ -77,7 +80,7 @@ namespace OC
         public:
             void setJSONRepresentation(const std::string& payload);
 
-            void setJSONRepresentation(const unsigned char* payload);
+            void setJSONRepresentation(const char* payload);
 
             std::string getJSONRepresentation(OCInfoFormat f) const;
 
@@ -196,6 +199,29 @@ namespace OC
                     val = boost::get<T>(x->second);
                 }
                 return val;
+            }
+
+            /**
+            *  Retrieve the attributevalue structure associated with the supplied name
+            *
+            *  @param str Name of the attribute
+            *  @param attrValue Attribute Value structure
+            *  @return The getAttributeValue method returns true if the attribute was
+            *        found in the representation.  Otherwise it returns false.
+            */
+            bool getAttributeValue(const std::string& str, AttributeValue& attrValue) const
+            {
+                auto x = m_values.find(str);
+
+                if (x != m_values.end())
+                {
+                    attrValue = x->second;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
 
             std::string getValueToString(const std::string& key) const;
@@ -426,3 +452,4 @@ namespace OC
 
 
 #endif //__OCREPRESENTATION_H
+

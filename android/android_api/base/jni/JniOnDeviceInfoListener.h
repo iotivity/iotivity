@@ -28,13 +28,15 @@
 class JniOnDeviceInfoListener
 {
 public:
-    JniOnDeviceInfoListener(JNIEnv *env, jobject jListener);
+    JniOnDeviceInfoListener(JNIEnv *env, jobject jListener, RemoveListenerCallback removeListener);
     ~JniOnDeviceInfoListener();
 
     void foundDeviceCallback(const OC::OCRepresentation& ocRepresentation);
 
 private:
     jweak m_jwListener;
+    RemoveListenerCallback m_removeListenerCallback;
+    void checkExAndRemoveListener(JNIEnv* env);
 };
 
 #endif

@@ -67,9 +67,6 @@ void foundResource(std::shared_ptr< OCResource > resource)
                     cout << "\tresource Error!" << endl;
                 }
             }
-
-            // p_platform.bindResource(resourceHandle, foundResourceHandle);
-
         }
     }
     catch (std::exception& e)
@@ -79,8 +76,53 @@ void foundResource(std::shared_ptr< OCResource > resource)
 
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    ostringstream requestURI;
+
+    OCConnectivityType connectivityType = OC_WIFI;
+
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = OC_ETHERNET;
+                }
+                else if(optionSelected == 1)
+                {
+                    connectivityType = OC_WIFI;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+            }
+        }
+        catch(exception& e)
+        {
+            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<<"Usage: groupclient <ConnectivityType(0|1)>\n";
+        std::cout<<"ConnectivityType: Default WIFI\n";
+        std::cout<<"ConnectivityType 0: ETHERNET\n";
+        std::cout<<"ConnectivityType 1: WIFI\n";
+    }
+
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 
@@ -101,7 +143,11 @@ int main()
 
         cout << "registerResource is called." << endl;
 
-        OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.light", &foundResource);
+        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+
+        OCPlatform::findResource("", requestURI.str(),
+                                 connectivityType, &foundResource);
+
         OCPlatform::bindInterfaceToResource(resourceHandle, GROUP_INTERFACE);
         OCPlatform::bindInterfaceToResource(resourceHandle, DEFAULT_INTERFACE);
 
@@ -109,31 +155,32 @@ int main()
         bool isRun = true;
         while (isRun)
         {
-            cout << endl
-                 << "0 :: Quit 1 :: UNREGISTER RESOURCES\n" << endl;
-
+            cout << endl << "0 :: Quit 1 :: UNREGISTER RESOURCES\n" << endl;
             std::cin >> selectedMenu;
 
             switch(selectedMenu)
             {
-                case 0:
-                    isRun = false;
-                    break;
-                case 1:
-                    std::cout << "Unregistering resources" << std::endl;
-                    for (unsigned int i = 0; i < resourceHandleVector.size(); ++i)
-                    {
-                        OCPlatform::unregisterResource(resourceHandleVector.at(i));
-                    }
-                    break;
+            case 0:
+                isRun = false;
+                break;
+            case 1:
+                std::cout << "Unregistering resources" << std::endl;
+                for (unsigned int i = 0; i < resourceHandleVector.size(); ++i)
+                {
+                    OCPlatform::unregisterResource(resourceHandleVector.at(i));
+                }
+                break;
+            default:
+                cout << "Invalid option" << endl;
             }
 
         }
     }
     catch (OCException& e)
     {
-
+        oclog() << "Exception in main: "<< e.what();
     }
 
     return 0;
 }
+

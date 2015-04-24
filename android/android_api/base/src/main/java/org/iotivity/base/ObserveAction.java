@@ -36,12 +36,12 @@ public enum ObserveAction {
         return this.value;
     }
 
-    public static ObserveAction get(int val){
-        for(ObserveAction observeAction : ObserveAction.values()){
-            if(observeAction.getValue() == val)
+    public static ObserveAction get(int val) {
+        for (ObserveAction observeAction : ObserveAction.values()) {
+            if (observeAction.getValue() == val)
                 return observeAction;
         }
 
-        throw new  IllegalArgumentException("Unexpected ObserveAction value");
+        throw new IllegalArgumentException("Unexpected ObserveAction value");
     }
 }
