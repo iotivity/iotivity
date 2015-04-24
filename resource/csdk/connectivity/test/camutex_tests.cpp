@@ -258,10 +258,6 @@ TEST(ConditionTests, TC_02_SIGNAL)
         EXPECT_EQ(CA_STATUS_OK,
                   ca_thread_pool_add_task(mythreadpool, condFunc, &pData2));
 
-        //start thread
-        EXPECT_EQ(CA_STATUS_OK,
-                  ca_thread_pool_add_task(mythreadpool, condFunc, &pData2));
-
         DBG_printf("test    : sleeping\n");
 
         while (!pData1.thread_up || !pData2.thread_up)
@@ -356,10 +352,6 @@ TEST(ConditionTests, TC_03_BROADCAST)
         // start threads
         EXPECT_EQ(CA_STATUS_OK,
                   ca_thread_pool_add_task(mythreadpool, condFunc, &pData1));
-        EXPECT_EQ(CA_STATUS_OK,
-                  ca_thread_pool_add_task(mythreadpool, condFunc, &pData2));
-
-        //start thread
         EXPECT_EQ(CA_STATUS_OK,
                   ca_thread_pool_add_task(mythreadpool, condFunc, &pData2));
 
