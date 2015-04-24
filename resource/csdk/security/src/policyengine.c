@@ -24,6 +24,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "logger.h"
+#include "aclresource.h"
 #include <string.h>
 
 #define TAG PCF("SRM-PE")
@@ -160,6 +161,7 @@ void CopyParamsToContext(
  */
 void ProcessAccessRequest(PEContext_t *context)
 {
+    OC_LOG(INFO, TAG, PCF("Entering ProcessAccessRequest()"));
     if(NULL != context)
     {
         OicSecAcl_t *currentAcl = NULL;
@@ -169,13 +171,24 @@ void ProcessAccessRequest(PEContext_t *context)
         // TODO use RM API: RMSetAclSubject(context->subject);
         do
         {
+            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): getting ACL..."));
             // TODO use RM API: currentAcl = RMGetNextAcl();
+            currentAcl = GetACLResourceData(context->subject); // TODO remove
+            char *tmp = OCMalloc(sizeof(OicUuid_t) +1);
+            memcpy(tmp, context->subject, sizeof(OicUuid_t));
+            tmp[sizeof(OicUuid_t) + 1] = '\0';
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
+                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+                    found ACL matching subject."));
                 context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
+                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+                    Searching for resource..."));
                 if(IsResourceInAcl(context->resource, currentAcl))
                 {
+                    OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+                        found matching resource in ACL."));
                     context->matchingAclFound = true;
                     // Found the resource, so it's down to permission.
                     context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
@@ -186,8 +199,23 @@ void ProcessAccessRequest(PEContext_t *context)
                     }
                 }
             }
+            else
+            {
+                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+                    no ACL found matching subject ."));
+            }
         }
         while((NULL != currentAcl) && (false == context->matchingAclFound));
+    }
+    if(IsAccessGranted(context->retVal))
+    {
+        OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+            Leaving ProcessAccessRequest(ACCESS_GRANTED)"));
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+            Leaving ProcessAccessRequest(ACCESS_DENIED)"));
     }
 }
 
