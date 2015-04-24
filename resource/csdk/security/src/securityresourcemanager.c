@@ -24,6 +24,7 @@
 #include "securityresourcemanager.h"
 #include "resourcemanager.h"
 #include "policyengine.h"
+#include <string.h>
 
 #define TAG  PCF("SRM")
 
@@ -49,9 +50,48 @@ PEContext_t g_policyEngineContext;
 void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
 {
     OC_LOG(INFO, TAG, PCF("Received request from remote device"));
-    if (gRequestHandler)
+
+    if (!endPoint || !requestInfo)
     {
-        gRequestHandler(endPoint, requestInfo);
+        OC_LOG(ERROR, TAG, PCF("Invalid arguments"));
+        return;
+    }
+
+    /*
+     * TODO Update this when Peer Id propagation task is merged
+     */
+    OicUuid_t subjectId = {.id = {0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
+                                  0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2} };
+
+    SRMAccessResponse_t  response = CheckPermission( &g_policyEngineContext, &subjectId,
+        endPoint->resourceUri, GetPermissionFromOCMethod(requestInfo->method));
+
+    if (IsAccessGranted(response) && gRequestHandler)
+    {
+        return (gRequestHandler(endPoint, requestInfo));
+    }
+
+    /* Form a 'access deny' or 'Error' response and send to peer */
+    CAResponseInfo_t responseInfo = {};
+    memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
+    responseInfo.info.payload = NULL;
+    if (!gRequestHandler)
+    {
+        responseInfo.result = CA_INT_SRV_ERROR;
+    }
+    else
+    {
+        /*
+         * TODO Enhance this logic more to decide between
+         * CA_UNAUTHORIZED_REQ or CA_FORBIDDEN_REQ depending
+         * upon SRMAccessResponseReasonCode_t
+         */
+        responseInfo.result = CA_UNAUTHORIZED_REQ;
+    }
+
+    if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
+    {
+        OC_LOG(ERROR, TAG, PCF("Failed in sending response to a unauthorized request!"));
     }
 }
 

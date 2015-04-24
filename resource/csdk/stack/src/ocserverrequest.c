@@ -316,7 +316,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             responseInfo.result = CA_SUCCESS;
             break;
         case OC_EH_FORBIDDEN:
-            responseInfo.result = CA_BAD_REQ;
+            responseInfo.result = CA_UNAUTHORIZED_REQ;
             break;
         default:
             responseInfo.result = CA_BAD_REQ;

@@ -247,8 +247,11 @@ typedef enum
     CA_DELETED = 202,           /**< Deleted */
     CA_EMPTY = 231,             /**< Empty */
     CA_BAD_REQ = 400,           /**< Bad Request */
+    CA_UNAUTHORIZED_REQ = 401,  /**< Unauthorized Request */
     CA_BAD_OPT = 402,           /**< Bad Option */
+    CA_FORBIDDEN_REQ = 403,     /**< Forbidden Request */
     CA_NOT_FOUND = 404,         /**< Not found */
+    CA_INT_SRV_ERROR = 500,     /**< Internal Server Error */
     CA_RETRANSMIT_TIMEOUT = 531 /**< Retransmit timeout */
     /* Response status code - END HERE */
 } CAResponseResult_t;
