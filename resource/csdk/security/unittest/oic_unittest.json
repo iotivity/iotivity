@@ -33,6 +33,23 @@
 		"tm":	0,
 		"om":	3,
 		"sms":	[0, 1]
+	},
+	
+    "cred":	[
+	{
+		"credid":1234,
+		"sub":"ODg4ODg4ODg4ODg4ODg4OA==",
+		"credtyp":1,
+		"pvdata":"QUFBQUFBQUFBQUFBQUFBQQ==",
+		"ownrs":["b3duZXJzSWQxMQAAAAAAAA=="]
+	},
+	{
+		"credid":5678,
+		"sub":"OTk5OTk5OTk5OTk5OTk5OQ==",
+		"credtyp":1,
+		"pvdata":"QkJCQkJCQkJCQkJCQkJCQg==",
+		"ownrs":["b3duZXJzSWQyMQAAAAAAAA==","ODg4ODg4ODg4ODg4ODg4OA=="]
 	}
-
+		]
+	
 }

@@ -22,6 +22,8 @@
 #include "securevirtualresourcetypes.h"
 #include "aclresource.h"
 #include "pstatresource.h"
+#include "doxmresource.h"
+#include "credresource.h"
 #include "ocmalloc.h"
 #include "logger.h"
 #include "utlist.h"
@@ -55,7 +57,7 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest, const cha
 }
 
 /* TODO: This global should be in doxmresource.c once it is defined. */
-uint16_t gOicSecDoxmJustWorks = 0x0;
+OicSecOxm_t gOicSecDoxmJustWorks = OIC_JUST_WORKS;
 OicSecDoxm_t gDefaultDoxm =
 {
     NULL,                   /* OicUrn_t *oxmType */
@@ -63,9 +65,9 @@ OicSecDoxm_t gDefaultDoxm =
     &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     false,                  /* bool owned */
-    0,                      /* uint8_t deviceIDFormat */
-    {0},                    /* OicUuid_t deviceID */
-    {0},                    /* OicUuid_t owner */
+ // 0,                      /* uint8_t deviceIDFormat */
+    {},                     /* OicUuid_t deviceID */
+    {},                     /* OicUuid_t owner */
 };
 
 /* TODO: These globals should be in pstatresource.c once it is defined. */
@@ -77,7 +79,7 @@ OicSecPstat_t gDefaultPstat =
     | PROVISION_CREDENTIALS | PROVISION_ACLS,   /* OicSecDpm_t cm */
     TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES \
     | PROVISION_CREDENTIALS | PROVISION_ACLS,   /* OicSecDpm_t tm */
-    {0},                                        /* OicUuid_t deviceID */
+    {},                                         /* OicUuid_t deviceID */
     SINGLE_SERVICE_CLIENT_DRIVEN,               /* OicSecDpom_t om */
     1,                                          /* the number of elts in Sms */
     &gSm,                                       /* OicSecDpom_t        *sms */
@@ -94,14 +96,21 @@ OCStackResult InitSecureResources( )
     OCStackResult ret;
 
     ret = InitACLResource();
+
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitDoxmResource();
+    }
+
     if(OC_STACK_OK == ret)
     {
         ret = InitPstatResource();
     }
-    /*
-     * TODO : Update this method for all other resources
-     * InitCredentialResource();
-     */
+
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitCredResource();
+    }
 
     if(OC_STACK_OK != ret)
     {
@@ -127,12 +136,9 @@ OCStackResult InitSecureResources( )
 OCStackResult DestroySecureResources( )
 {
     DeInitACLResource();
-    /*
-     * TODO : Update this method for all other resources
-     * DeInitPstatResource();
-     * DeInitCredentialResource();
-     */
+    DeInitCredResource();
+    DeInitDoxmResource();
+    DeInitPstatResource();
+
     return OC_STACK_OK;
 }
-
-

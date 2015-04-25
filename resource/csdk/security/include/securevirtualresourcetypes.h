@@ -248,6 +248,8 @@ typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
  * @brief   /oic/uuid (Universal Unique Identifier) data type.
  */
 #define UUID_LENGTH 128/8 // 128-bit GUID length
+//TODO: Confirm the lenght and type of ROLEID.
+#define ROLEID_LENGTH 128/8 // 128-bit ROLEID length
 struct OicUuid
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
@@ -318,9 +320,11 @@ struct OicSecCred
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     uint16_t            credId;         // 0:R:S:Y:UINT16
-    OicUuid_t           subjectId;      // 1:R:S:Y:oic.uuid
+    OicUuid_t           subject;        // 1:R:S:Y:oic.uuid
     size_t              roleIdsLen;     // the number of elts in RoleIds
-    OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
+    //Note: Need further clarification on roleID data type
+    //NOTE: Need further clarification on roleId datatype.
+    //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
     OicSecJwk_t         publicData;     // 5:R:S:N:oic.sec.jwk
     OicSecJwk_t         privateData;    // 6:R:S:N:oic.sec.jwk*
@@ -384,6 +388,7 @@ struct OicSecRole
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     //TODO fill in with Role definition
+    uint8_t             id[ROLEID_LENGTH];
 };
 
 /**

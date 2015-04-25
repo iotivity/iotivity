@@ -1,0 +1,169 @@
+// Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+#include "gtest/gtest.h"
+#include "ocstack.h"
+#include "resourcemanager.h"
+#include "securevirtualresourcetypes.h"
+#include "credresource.h"
+#include "ocmalloc.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Declare Cred resource methods for testing
+OCStackResult CreateCredResource();
+OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
+                OCEntityHandlerRequest * ehRequest);
+char * BinToCredJSON(const OicSecCred_t * pstat);
+OicSecCred_t * JSONToCredBin(const char * jsonStr);
+void InitSecCredInstance(OicSecCred_t * cred);
+void DeleteCredList(OicSecCred_t* cred);
+#ifdef __cplusplus
+}
+#endif
+
+OicSecCred_t * getCredList()
+{
+    OicSecCred_t * cred = (OicSecCred_t*)OCCalloc(1, sizeof(OicSecCred_t));
+    cred->credId = 1234;
+    strcpy((char *)cred->subject.id, "subject1");
+    cred->roleIdsLen = 0;
+
+#if 0
+    cred->roleIdsLen = 2;
+    cred->roleIds = (OicSecRole_t *)OCCalloc(cred->roleIdsLen, sizeof(OicSecRole_t));
+    strcpy((char *)cred->roleIds[0].id, "role11");
+    strcpy((char *)cred->roleIds[1].id, "role12");
+#endif
+
+    cred->credType = 1;
+    cred->ownersLen = 1;
+    cred->owners = (OicUuid_t*)OCCalloc(cred->ownersLen, sizeof(OicUuid_t));
+    strcpy((char *)cred->owners[0].id, "ownersId11");
+
+    cred->next = (OicSecCred_t*)OCCalloc(1, sizeof(OicSecCred_t));
+    cred->next->credId = 5678;
+    strcpy((char *)cred->next->subject.id, "subject2");
+    cred->next->roleIdsLen = 0;
+    cred->next->credType = 1;
+    cred->next->privateData.data = (char *)OCCalloc(1, strlen("My private Key21") + 1);
+    strcpy(cred->next->privateData.data, "My private Key21");
+#if 0
+    cred->next->publicData.data = (char *)OCCalloc(1, strlen("My Public Key123") + 1);
+    strcpy(cred->next->publicData.data, "My Public Key123");
+#endif
+    cred->next->ownersLen = 2;
+    cred->next->owners = (OicUuid_t*)OCCalloc(cred->next->ownersLen, sizeof(OicUuid_t));
+    strcpy((char *)cred->next->owners[0].id, "ownersId21");
+    strcpy((char *)cred->next->owners[1].id, "ownersId22");
+    return cred;
+}
+
+ //InitCredResource Tests
+TEST(InitCredResourceTest, InitCredResource)
+{
+    EXPECT_EQ(OC_STACK_ERROR, InitCredResource());
+}
+
+//DeInitCredResource Tests
+TEST(DeInitCredResourceTest, DeInitCredResource)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, DeInitCredResource());
+}
+
+//CreateCredResource Tests
+TEST(CreateCredResourceTest, CreateCredResource)
+{
+    EXPECT_EQ(OC_STACK_ERROR, CreateCredResource());
+}
+
+ //CredEntityHandler Tests
+TEST(CredEntityHandlerTest, CredEntityHandlerWithDummyRequest)
+{
+    OCEntityHandlerRequest req;
+    EXPECT_EQ(OC_EH_ERROR, CredEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+}
+
+TEST(CredEntityHandlerTest, CredEntityHandlerWithNULLRequest)
+{
+    EXPECT_EQ(OC_EH_ERROR, CredEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, NULL));
+}
+
+TEST(CredEntityHandlerTest, CredEntityHandlerInvalidFlag)
+{
+    OCEntityHandlerRequest req;
+    EXPECT_EQ(OC_EH_ERROR, CredEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, &req));
+}
+
+//BinToCredJSON Tests
+TEST(BinToCredJSONTest, BinToCredJSONNullCred)
+{
+    char* value = BinToCredJSON(NULL);
+    EXPECT_TRUE(value == NULL);
+}
+
+TEST(BinToCredJSONTest, BinToCredJSONValidCred)
+{
+    char* json = NULL;
+    OicSecCred_t * cred = getCredList();
+
+    json = BinToCredJSON(cred);
+
+    printf("BinToCredJSON:%s\n", json);
+    EXPECT_TRUE(json != NULL);
+    DeleteCredList(cred);
+    OCFree(json);
+}
+
+//JSONToCredBin Tests
+TEST(JSONToCredBinTest, JSONToCredBinValidJSON)
+{
+    OicSecCred_t* cred1 = getCredList();
+    char* json = BinToCredJSON(cred1);
+
+    EXPECT_TRUE(json != NULL);
+    OicSecCred_t *cred2 = JSONToCredBin(json);
+    EXPECT_TRUE(cred2 != NULL);
+    DeleteCredList(cred1);
+    DeleteCredList(cred2);
+    OCFree(json);
+}
+
+TEST(JSONToCredBinTest, JSONToCredBinNullJSON)
+{
+    OicSecCred_t *cred = JSONToCredBin(NULL);
+    EXPECT_TRUE(cred == NULL);
+}
+
+//GetCredResourceData Test
+TEST(CredGetResourceDataTest, GetCredResourceDataNULLSubject)
+{
+    EXPECT_TRUE(NULL == GetCredResourceData(NULL));
+}
+
+#if 0
+TEST(CredGetResourceDataTest, GetCredResourceDataValidSubject)
+{
+    OicSecCred_t* cred = getCredList();
+    EXPECT_TRUE(NULL != GetCredResourceData(cred->subject));
+}
+#endif
+
+

@@ -41,10 +41,16 @@ extern const char * OIC_RSRC_TYPE_SEC_PSTAT;
 extern const char * OIC_RSRC_PSTAT_URI;
 extern const char * OIC_JSON_PSTAT_NAME;
 
+
 //DOXM
 extern const char * OIC_RSRC_TYPE_SEC_DOXM;
 extern const char * OIC_RSRC_DOXM_URI;
 extern const char * OIC_JSON_DOXM_NAME;
+
+//cred
+extern const char * OIC_RSRC_TYPE_SEC_CRED;
+extern const char * OIC_RSRC_CRED_URI;
+extern const char * OIC_JSON_CRED_NAME;
 
 extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
@@ -55,6 +61,12 @@ extern const char * OIC_JSON_OWNED_NAME;
 extern const char * OIC_JSON_OXM_NAME;
 extern const char * OIC_JSON_OXM_TYPE_NAME;
 extern const char * OIC_JSON_DEVICE_ID_FORMAT_NAME;
+extern const char * OIC_JSON_CREDID_NAME;
+extern const char * OIC_JSON_ROLEIDS_NAME;
+extern const char * OIC_JSON_CREDTYPE_NAME;
+extern const char * OIC_JSON_PUBLICDATA_NAME;
+extern const char * OIC_JSON_PRIVATEDATA_NAME;
+extern const char * OIC_JSON_PERIOD_NAME;
 extern const char * OIC_JSON_ISOP_NAME;
 extern const char * OIC_JSON_COMMIT_HASH_NAME;
 extern const char * OIC_JSON_DEVICE_ID_NAME;

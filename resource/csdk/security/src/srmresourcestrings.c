@@ -44,6 +44,11 @@ const char * OIC_RSRC_TYPE_SEC_DOXM = "oic.sec.doxm";
 const char * OIC_RSRC_DOXM_URI =  "/oic/sec/doxm";
 const char * OIC_JSON_DOXM_NAME = "doxm";
 
+//cred
+const char * OIC_RSRC_TYPE_SEC_CRED = "oic.sec.cred";
+const char * OIC_RSRC_CRED_URI =  "/oic/sec/cred";
+const char * OIC_JSON_CRED_NAME = "cred";
+
 const char * OIC_JSON_SUBJECT_NAME = "sub";
 const char * OIC_JSON_RESOURCES_NAME = "rsrc";
 const char * OIC_JSON_PERMISSION_NAME = "perms";
@@ -60,6 +65,13 @@ const char * OIC_JSON_CM_NAME = "cm";
 const char * OIC_JSON_TM_NAME = "tm";
 const char * OIC_JSON_OM_NAME = "om";
 const char * OIC_JSON_SMS_NAME = "sms";
-
+const char * OIC_JSON_CREDID_NAME = "credid";
+const char * OIC_JSON_SUBJECTID_NAME = "subid";
+const char * OIC_JSON_ROLEIDS_NAME = "roleid";
+const char * OIC_JSON_CREDTYPE_NAME = "credtyp";
+const char * OIC_JSON_PUBLICDATA_NAME = "pbdata";
+const char * OIC_JSON_PRIVATEDATA_NAME = "pvdata";
+const char * OIC_JSON_PERIOD_NAME = "period";
 
 const const OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
+

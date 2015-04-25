@@ -88,6 +88,7 @@ libocsrm_src = [
 	OCSRM_SRC + 'aclresource.c',
 	OCSRM_SRC + 'pstatresource.c',
 	OCSRM_SRC + 'doxmresource.c',
+	OCSRM_SRC + 'credresource.c',
 	OCSRM_SRC + 'ocsecurity.c',
 	OCSRM_SRC + 'policyengine.c',
 	OCSRM_SRC + 'psinterface.c',
