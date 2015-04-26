@@ -112,6 +112,9 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
         }
     }
 
+    //OxmSel -- Mandatory
+    cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_OXM_SEL_NAME, (int)doxm->oxmSel);
+
     //Owned -- Mandatory
     cJSON_AddBoolToObject(jsonDoxm, OIC_JSON_OWNED_NAME, doxm->owned);
 
@@ -210,6 +213,12 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
             doxm->oxm[i] = jsonOxm->valueint;
         }
     }
+
+    //OxmSel -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_SEL_NAME);
+    VERIFY_NON_NULL(jsonObj, ERROR);
+    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR)
+    doxm->oxmSel = jsonObj->valueint;
 
     //Owned -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNED_NAME);

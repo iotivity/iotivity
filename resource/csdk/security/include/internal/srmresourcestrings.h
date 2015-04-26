@@ -59,6 +59,7 @@ extern const char * OIC_JSON_OWNERS_NAME;
 extern const char * OIC_JSON_OWNER_NAME;
 extern const char * OIC_JSON_OWNED_NAME;
 extern const char * OIC_JSON_OXM_NAME;
+extern const char * OIC_JSON_OXM_SEL_NAME;
 extern const char * OIC_JSON_OXM_TYPE_NAME;
 extern const char * OIC_JSON_DEVICE_ID_FORMAT_NAME;
 extern const char * OIC_JSON_CREDID_NAME;

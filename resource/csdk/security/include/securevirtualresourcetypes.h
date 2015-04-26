@@ -349,11 +349,12 @@ struct OicSecDoxm
     size_t              oxmTypeLen;     // the number of elts in OxmType
     OicSecOxm_t         *oxm;           // 1:R:M:N:UINT16
     size_t              oxmLen;         // the number of elts in Oxm
-    bool                owned;          // 2:R:S:Y:Boolean
+    OicSecOxm_t         oxmSel;         // 2:R/W:S:Y:UINT16
+    bool                owned;          // 3:R:S:Y:Boolean
     //TODO: Need more clarification on deviceIDFormat field type.
-    //OicSecDvcIdFrmt_t   deviceIDFormat; // 3:R:S:Y:UINT8
-    OicUuid_t           deviceID;       // 4:R:S:Y:oic.uuid
-    OicUuid_t           owner;         // 5:R:S:Y:oic.uuid
+    //OicSecDvcIdFrmt_t   deviceIDFormat; // 4:R:S:Y:UINT8
+    OicUuid_t           deviceID;       // 5:R:S:Y:oic.uuid
+    OicUuid_t           owner;         // 6:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owner instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
     //OicSecSvc_t       Owner;        // 5:R:S:Y:oic.sec.svc

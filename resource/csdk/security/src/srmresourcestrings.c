@@ -56,6 +56,7 @@ const char * OIC_JSON_OWNERS_NAME = "ownrs";
 const char * OIC_JSON_OWNER_NAME = "ownr";
 const char * OIC_JSON_OWNED_NAME = "owned";
 const char * OIC_JSON_OXM_NAME = "oxm";
+const char * OIC_JSON_OXM_SEL_NAME = "oxmsel";
 const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype";
 const char * OIC_JSON_DEVICE_ID_FORMAT_NAME = "dvcidfrmt";
 const char * OIC_JSON_ISOP_NAME = "isop";
