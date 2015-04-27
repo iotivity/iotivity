@@ -205,7 +205,9 @@ void ProcessAccessRequest(PEContext_t *context)
                     no ACL found matching subject ."));
             }
         }
-        while((NULL != currentAcl) && (false == context->matchingAclFound));
+        while(false); //TODO: remove this line when RMGetNextAcl is available
+        // TODO use RM API: currentAcl = RMGetNextAcl();
+        //while((NULL != currentAcl) && (false == context->matchingAclFound));
     }
     if(IsAccessGranted(context->retVal))
     {
