@@ -43,7 +43,7 @@ SPResult SPGenerateCredentials(OicSecCredType_t type, const SPDevInfo_t *pDevInf
                     return SP_RESULT_MEM_ALLOCATION_FAIL;
                 }
                 //credInstance->CredID = // TODO value from SRM DB.
-                credInstance->subjectId = pDevInfo->deviceId;
+                credInstance->subject = pDevInfo->deviceId;
                 credInstance->credType = type;
                 memcpy(credInstance->owners, deviceId, UUID_LENGTH); // in accordance with beach head version.
                 cred = &credInstance;
