@@ -32,7 +32,7 @@ extern "C" {
  * Macro to calculate the size of 'output' buffer required for
  * a 'input' buffer of length x during Base64 encoding operation.
  */
-#define B64ENCODE_OUT_SAFESIZE(x) ((((x) + 3 - 1)/3) * 4)
+#define B64ENCODE_OUT_SAFESIZE(x) ((((x) + 3 - 1)/3) * 4 + 1)
 
 /**
  * Macro to calculate the size of 'output' buffer required for
