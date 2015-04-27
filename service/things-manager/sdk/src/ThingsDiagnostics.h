@@ -162,6 +162,8 @@ namespace OIC
 
         void onExecuteForGroupAction(const HeaderOptions& headerOptions,
                 const OCRepresentation& rep, const int eCode, std::string conf);
+        void onDeleteGroupAction(const HeaderOptions& headerOptions,
+                const OCRepresentation& rep, const int eCode, std::string conf);
         void onGetChildInfoForUpdate(const HeaderOptions& headerOptions,
                 const OCRepresentation& rep, const int eCode, std::string conf);
         void onCreateActionSet(const HeaderOptions& headerOptions, const OCRepresentation& rep,

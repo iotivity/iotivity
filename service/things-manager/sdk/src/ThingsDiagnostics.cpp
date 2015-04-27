@@ -299,8 +299,32 @@ namespace OIC
         }
 
         std::cout << "PUT request was successful" << std::endl;
-
         getCallback(diag)(headerOptions, rep, eCode);
+
+        // Delete the created actionset
+        std::shared_ptr < OCResource > resource = getResource(diag);
+        if (resource)
+        {
+            g_groupmanager->deleteActionSet(resource, diag,
+                    std::function<
+                            void(const HeaderOptions& headerOptions,
+                                    const OCRepresentation& rep, const int eCode) >(
+                            std::bind(&ThingsDiagnostics::onDeleteGroupAction, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, diag)));
+        }
+    }
+
+    void ThingsDiagnostics::onDeleteGroupAction(const HeaderOptions& headerOptions,
+            const OCRepresentation& rep, const int eCode, std::string diag)
+    {
+        if (eCode != OC_STACK_OK)
+        {
+            std::cout << "Delete actionset returned with error: " << eCode << diag << std::endl;
+            return;
+        }
+
+        std::cout << "Deleted the actionset created!" << diag<< std::endl;
     }
 
     void ThingsDiagnostics::onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
