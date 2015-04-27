@@ -11,11 +11,8 @@ print "Reading BLE adapter script for", target_os
 
 src_dir = os.path.join(os.curdir, 'bt_le_adapter')
 
-# Source files to build common for all platforms.
-common_files = None
-common_files = [ os.path.join(src_dir,
-                                      'caleadapter.c') ]
-
+# Source files common to all platforms.
+common_files = [ os.path.join(src_dir, 'caleadapter.c') ]
 
 # Get list of target-specific source file base names, i.e. no parent
 # directories prepended to the path.
@@ -40,4 +37,3 @@ target_files = [ os.path.join(src_dir, target_os, f) for f in target_files ]
 # The list of BLE adapter source files is a combination of both the
 # common and target-specific source file lists.
 env.AppendUnique(CA_SRC = common_files + target_files)
-

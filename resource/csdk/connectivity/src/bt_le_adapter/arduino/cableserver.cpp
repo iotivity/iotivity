@@ -41,7 +41,7 @@
  * @brief  Maintains the callback to be notified on receival of network packets from other
  *           BLE devices
  */
-static CABLEServerDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
+static CABLEDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
 
 /**
  * @def MAX_EVENT_COUNT
@@ -113,7 +113,7 @@ void CACheckLEDataInternal()
                     OIC_LOG_V(DEBUG, TAG, "recv dataLen=%d", g_receivedDataLen);
                     uint32_t sentLength = 0;
                     // g_coapBuffer getting freed by CAMesssageHandler
-                    g_bleServerDataReceivedCallback("", "", g_coapBuffer,
+                    g_bleServerDataReceivedCallback("", g_coapBuffer,
                                                     g_receivedDataLen, &sentLength);
                 }
 
@@ -188,7 +188,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *char_value,
     return CA_STATUS_OK;
 }
 
-void CASetLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
+void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     g_bleServerDataReceivedCallback = callback;

@@ -103,6 +103,7 @@ extlibs/arduino/arduino-1.5.8
 build_common/arduino/extlibs/arduino/arduino-1.5.8
 extlibs/tinydtls/dtls-client
 extlibs/tinydtls/dtls-server
+extlibs/bluez/bluez
 
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~

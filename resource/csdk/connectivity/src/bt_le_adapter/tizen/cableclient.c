@@ -35,6 +35,7 @@
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
 #include "cafragmentation.h"
+#include "cagattservice.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 
@@ -44,12 +45,8 @@
 #define TZ_BLE_CLIENT_TAG "TZ_BLE_GATT_CLIENT"
 
 /**
- * Its the constant value for characteristic descriptor from spec.
- */
-#define BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG "2902"
-
-/**
- * This contains the list of OIC services a client connect tot.
+ * @var g_bLEServiceList
+ * @brief This contains the list of OIC services a client connect to.
  */
 static BLEServiceList *g_bLEServiceList = NULL;
 
@@ -101,7 +98,7 @@ static ca_mutex g_bleClientThreadPoolMutex = NULL;
  * Maintains the callback to be notified on receival of network packets
  *    from other BLE devices
  */
-static CABLEClientDataReceivedCallback g_bleClientDataReceivedCallback = NULL;
+static CABLEDataReceivedCallback g_bleClientDataReceivedCallback = NULL;
 
 /**
  * callback to update the error to le adapter
@@ -152,8 +149,8 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
 
     ca_mutex_lock(g_bleServerBDAddressMutex);
     uint32_t sentLength = 0;
-    g_bleClientDataReceivedCallback(g_remoteAddress, OIC_BLE_SERVICE_ID,
-                                     value, valueLen, &sentLength);
+    g_bleClientDataReceivedCallback(g_remoteAddress, value, valueLen,
+                                    &sentLength);
 
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Sent data Length is %d", sentLength);
     ca_mutex_unlock(g_bleServerBDAddressMutex);
@@ -262,7 +259,7 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "New Characteristics[%s] of uuid[%s] is obtained",
               (char *)characteristic, uuid);
 
-    if(0 == strcasecmp(uuid, CA_BLE_READ_CHAR_UUID)) // Server will read on this characterisctics
+    if(0 == strcasecmp(uuid, CA_GATT_RESPONSE_CHRC_UUID)) // Server will read on this characterisctics
     {
         OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG , "Read characteristics is obtained");
         OICFree(uuid);
@@ -314,7 +311,7 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
         }
         ca_mutex_unlock(g_bleClientThreadPoolMutex);
     }
-    else if (0 == strcasecmp(uuid, CA_BLE_WRITE_CHAR_UUID)) // Server will write on this characteristics.
+    else if (0 == strcasecmp(uuid, CA_GATT_REQUEST_CHRC_UUID)) // Server will write on this characteristics.
     {
         OICFree(uuid);
         OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG , "Write characteristics is obtained");
@@ -634,7 +631,7 @@ void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
+void CASetLEReqRespClientCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -1352,9 +1349,9 @@ CAResult_t CASetCharacteristicDescriptorValue(stGattCharDescriptor_t *stGattChar
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "desc x3 [%x]", stGattCharDescInfo->desc[3]);
 
 
-    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG strUUID is [%s]",
+    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "CA_GATT_CONFIGURATION_DESC_UUID strUUID is [%s]",
               strUUID);
-    //if (!strncmp(strUUID, BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG, 2))
+    //if (!strncmp(strUUID, CA_GATT_CONFIGURATION_DESC_UUID, 2))
     {
         OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "setting notification/indication for descriptor");
 
@@ -1377,8 +1374,8 @@ CAResult_t CASetCharacteristicDescriptorValue(stGattCharDescriptor_t *stGattChar
 }
 
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
-        const char  *data, const uint32_t dataLen,
-        CALETransferType_t type, const int32_t position)
+        const char  *data, uint32_t dataLen,
+        CALETransferType_t type, int32_t position)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 

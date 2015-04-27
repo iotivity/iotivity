@@ -31,6 +31,7 @@
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
 #include "cafragmentation.h"
+#include "cagattservice.h"
 #include "cableutil.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
@@ -76,7 +77,7 @@ static bt_advertiser_h g_hAdvertiser = NULL;
  * @brief  Maintains the callback to be notified on receival of network packets from other
  *           BLE devices
  */
-static CABLEServerDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
+static CABLEDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
 
 /**
  * @var g_serverErrorCallback
@@ -207,7 +208,7 @@ void CAStartBleGattServerThread(void *data)
 
     sleep(5); // Sleep is must because of the platform issue.
 
-    char *serviceUUID = OIC_BLE_SERVICE_ID;
+    char *serviceUUID = CA_GATT_SERVICE_UUID;
 
     ret  = CAAddNewBleServiceInGattServer(serviceUUID);
     if (CA_STATUS_OK != ret )
@@ -218,7 +219,7 @@ void CAStartBleGattServerThread(void *data)
         return;
     }
 
-    char *charReadUUID = CA_BLE_READ_CHAR_UUID;
+    char *charReadUUID = CA_GATT_RESPONSE_CHRC_UUID;
     char charReadValue[] = {33, 44, 55, 66}; // These are initial random values
 
     ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charReadUUID, charReadValue,
@@ -231,7 +232,7 @@ void CAStartBleGattServerThread(void *data)
         return;
     }
 
-    char *charWriteUUID = CA_BLE_WRITE_CHAR_UUID;
+    char *charWriteUUID = CA_GATT_REQUEST_CHRC_UUID;
     char charWriteValue[] = {33, 44, 55, 66}; // These are initial random values
 
 
@@ -610,8 +611,8 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "Sending data up !");
     uint32_t sentLength = 0;
-    g_bleServerDataReceivedCallback(remoteAddress, OIC_BLE_SERVICE_ID,
-                                     data, charValueLen, &sentLength);
+    g_bleServerDataReceivedCallback(remoteAddress, data, charValueLen,
+                                    &sentLength);
 
     ca_mutex_unlock(g_bleReqRespCbMutex);
 
@@ -705,8 +706,9 @@ CAResult_t CARemoveCharacteristicsFromGattServer(const char *charPath)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *charValue,
-        const uint32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
+                                               const char *charValue,
+                                               uint32_t charValueLen)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -800,7 +802,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue, uint32
     return CA_STATUS_OK;
 }
 
-void CASetLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
+void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 

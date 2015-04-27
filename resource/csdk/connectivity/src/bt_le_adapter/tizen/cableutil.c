@@ -30,6 +30,7 @@
 
 
 #include "caadapterutils.h"
+#include "cagattservice.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 
@@ -329,7 +330,7 @@ CAResult_t CAVerifyOICServiceByUUID(const char* serviceUUID)
 
     VERIFY_NON_NULL(serviceUUID, TZ_BLE_CLIENT_UTIL_TAG, "Param serviceHandle is NULL");
 
-    if (strcasecmp(serviceUUID, OIC_BLE_SERVICE_ID) != 0)
+    if (strcasecmp(serviceUUID, CA_GATT_SERVICE_UUID) != 0)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "It is not OIC service!");
         return CA_STATUS_FAILED;
@@ -353,7 +354,7 @@ CAResult_t CAVerifyOICServiceByServiceHandle(bt_gatt_attribute_h serviceHandle)
         return CA_STATUS_FAILED;
     }
 
-    if (strcasecmp(uuid, OIC_BLE_SERVICE_ID) != 0)
+    if (strcasecmp(uuid, CA_GATT_SERVICE_UUID) != 0)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "It is not OIC service!");
         OICFree(uuid);

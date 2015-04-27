@@ -52,7 +52,7 @@ static ca_thread_pool_t g_threadPoolHandle = NULL;
 static bool g_isStartServer = false;
 static bool g_isInitializedServer = false;
 
-static CABLEServerDataReceivedCallback g_CABLEServerDataReceivedCallback = NULL;
+static CABLEDataReceivedCallback g_CABLEServerDataReceivedCallback = NULL;
 static ca_mutex g_bleReqRespCbMutex = NULL;
 static ca_mutex g_bleClientBDAddressMutex = NULL;
 static ca_mutex g_connectedDeviceListMutex = NULL;
@@ -2264,7 +2264,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteReques
 
     ca_mutex_lock(g_bleClientBDAddressMutex);
     uint32_t sentLength = 0;
-    g_CABLEServerDataReceivedCallback(address, OIC_GATT_SERVICE_UUID, requestData, length,
+    g_CABLEServerDataReceivedCallback(address, requestData, length,
                                       &sentLength);
     ca_mutex_unlock(g_bleClientBDAddressMutex);
 
@@ -2374,7 +2374,7 @@ void CATerminateLEGattServer()
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CASetLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
+void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -2390,8 +2390,9 @@ void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
     g_serverErrorCallback = callback;
 }
 
-CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *charValue,
-                                               const uint32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
+                                               const char *charValue,
+                                               uint32_t charValueLen)
 {
     CAResult_t result = CA_SEND_FAILED;
     OIC_LOG(DEBUG, TAG, "IN");

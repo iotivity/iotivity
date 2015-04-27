@@ -125,6 +125,13 @@ CAResult_t CAInitializeLEAdapter()
     return CA_STATUS_OK;
 }
 
+CAResult_t CAStartLEAdapter()
+{
+    // Nothing to do.
+
+    return CA_STATUS_OK;
+}
+
 CAResult_t CAGetLEAdapterState()
 {
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");

@@ -78,7 +78,7 @@ static ca_mutex g_deviceListMutex = NULL;
 static ca_mutex g_gattObjectMutex = NULL;
 static ca_mutex g_deviceStateListMutex = NULL;
 
-static CABLEClientDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
+static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
 //getting jvm
 void CALEClientJniInit()
@@ -3127,8 +3127,8 @@ void CATerminateLEGattClient()
 }
 
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
-                                                const uint32_t dataLen, CALETransferType_t type,
-                                                const int32_t position)
+                                                uint32_t dataLen, CALETransferType_t type,
+                                                int32_t position)
 {
     OIC_LOG(DEBUG, TAG, "call CALEClientSendUnicastMessage");
     VERIFY_NON_NULL(data, TAG, "data is null");
@@ -3145,7 +3145,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattServers(const char *data, uint32_t da
     return CALEClientSendMulticastMessage(data, dataLen);
 }
 
-void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
+void CASetLEReqRespClientCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -3574,7 +3574,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
 
     ca_mutex_lock(g_bleServerBDAddressMutex);
     uint32_t sentLength = 0;
-    g_CABLEClientDataReceivedCallback(address, OIC_GATT_SERVICE_UUID, receivedData, length,
+    g_CABLEClientDataReceivedCallback(address, receivedData, length,
                                       &sentLength);
     ca_mutex_unlock(g_bleServerBDAddressMutex);
 

@@ -39,16 +39,45 @@
  */
 #define CALEADAPTER_TAG "LAD"
 
+
+/**
+ * Stores the information of the Data to be sent from the queues.
+ *
+ * This structure will be pushed to the sender/receiver queue for
+ * processing.
+ */
+typedef struct
+{
+    CAEndpoint_t *remoteEndpoint;   /**< Remote endpoint contains the
+                                       information of remote device. */
+    void *data;        /**< Data to be transmitted over LE transport. */
+    uint32_t dataLen;  /**< Length of the data being transmitted. */
+} CALEData_t;
+
+/**
+ * Stores information of all the senders.
+ *
+ * This structure will be used to track and defragment all incoming
+ * data packet.
+ */
+typedef struct
+{
+    uint32_t recvDataLen;
+    uint32_t totalDataLen;
+    char *defragData;
+    CAEndpoint_t *remoteEndpoint;
+ } CABLESenderInfo_t;
+
 /**
  * Callback to provide the status of the network change to CA layer.
  */
 static CANetworkChangeCallback g_networkCallback = NULL;
 
 /**
- * bleAddress of the local adapter. Value will be initialized to zero, and will
- *        be updated later.
+ * bleAddress of the local adapter. Value will be initialized to zero,
+ * and will be updated later.
  */
-static char g_localBLEAddress[18] = {0};
+static char g_localBLEAddress[18] = { 0 };
 
 /**
  * Variable to differentiate btw GattServer and GattClient.
@@ -56,23 +85,25 @@ static char g_localBLEAddress[18] = {0};
 static bool g_isServer = false;
 
 /**
- * Mutex to synchronize the task to be executed on the GattServer function
- * calls.
+ * Mutex to synchronize the task to be executed on the GattServer
+ * function calls.
  */
 static ca_mutex g_bleIsServerMutex = NULL;
 
 /**
- * Mutex to synchronize the callback to be called for the network changes.
+ * Mutex to synchronize the callback to be called for the network
+ * changes.
  */
 static ca_mutex g_bleNetworkCbMutex = NULL;
 
 /**
- * Mutex to synchronize the updation of the local LE address of the adapter.
+ * Mutex to synchronize the updates of the local LE address of the
+ * adapter.
  */
 static ca_mutex g_bleLocalAddressMutex = NULL;
 
 /**
- * reference to threadpool.
+ * Reference to thread pool.
  */
 static ca_thread_pool_t g_bleAdapterThreadPool = NULL;
 
@@ -98,12 +129,13 @@ static ca_mutex g_bleReceiveDataMutex = NULL;
 static ca_mutex g_bleServerSendDataMutex = NULL;
 
 /**
- * Mutex to synchronize the callback to be called for the adapterReqResponse.
+ * Mutex to synchronize the callback to be called for the
+ * adapterReqResponse.
  */
 static ca_mutex g_bleAdapterReqRespCbMutex = NULL;
 
 /**
- * Callback to be called when network packet recieved from either
+ * Callback to be called when network packet received from either
  * GattServer or GattClient.
  */
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
@@ -119,8 +151,9 @@ static CAErrorHandleCallback g_errorHandler = NULL;
 static CAAdapterState_t g_bleAdapterState = CA_ADAPTER_DISABLED;
 
 /**
- * status of BLE Server Status.
- * This ENUM provides information of LE Adapter Server status.
+ * BLE Server Status.
+ *
+ * This enumeration provides information of LE Adapter Server status.
  */
 typedef enum
 {
@@ -130,65 +163,68 @@ typedef enum
 } CALeServerStatus;
 
 /**
- * structure to maintain the status of the server.
+ * Structure to maintain the status of the server.
  */
 static CALeServerStatus gLeServerStatus = CA_SERVER_NOTSTARTED;
 
 /**
-* This function is used to register network change notification callback.
-*
-* @param[in]  netCallback CANetworkChangeCallback callback which will be
-* set for the change in nwk.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful.
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets.
-* @retval  CA_STATUS_FAILED Operation failed.
-*
-*/
-CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
+ * Register network change notification callback.
+ *
+ * @param[in]  netCallback CANetworkChangeCallback callback which will
+ *                         be set for the change in network.
+ *
+ * @return  0 on success otherwise a positive error value.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ *
+ */
+static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
 
 /**
-* Used to Set the gThreadPool handle which is required for spawning new thread.
-*
-* @param[in] handle - Thread pool handle which is given by above layer for
-* using thread creation task.
-*
-*/
-void CASetLEAdapterThreadPoolHandle(ca_thread_pool_t handle);
+ * Set the thread pool handle which is required for spawning new
+ * thread.
+ *
+ * @param[in] handle Thread pool handle which is given by above layer
+ *                   for using thread creation task.
+ *
+ */
+static void CASetLEAdapterThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
-* This function is used to call the callback to the upper layer when the
-* device state gets changed.
-*
-* @param[in]  adapter_state New state of the adapter to be notified to the
-* upper layer.
-*
-*/
-void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state);
+ * Call the callback to the upper layer when the device state gets
+ * changed.
+ *
+ * @param[in] adapter_state New state of the adapter to be notified to
+ *                          the upper layer.
+ */
+static void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state);
 
 /**
-* Used to initialize all required mutex variable for LE Adapter implementation.
-*
-* @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful.
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets.
-* @retval  CA_STATUS_FAILED Operation failed.
-*
-*/
-CAResult_t CAInitLEAdapterMutex();
+ * Used to initialize all required mutex variable for LE Adapter
+ * implementation.
+ *
+ * @return  0 on success otherwise a positive error value.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
+ *
+ */
+static CAResult_t CAInitLEAdapterMutex();
 
 /**
-* Used to terminate all required mutex variable for LE adapter implementation.
-*
-*/
-void CATerminateLEAdapterMutex();
+ * Terminate all required mutex variables for LE adapter
+ * implementation.
+ */
+static void CATerminateLEAdapterMutex();
 
 /**
-* prepares and notify error through error callback.
-*
-*/
-static void CALEErrorHandler(const char *remoteAddress, const void *data, uint32_t dataLen,
+ * Prepares and notify error through error callback.
+ *
+ */
+static void CALEErrorHandler(const char *remoteAddress,
+                             const void *data,
+                             uint32_t dataLen,
                              CAResult_t result);
 
 #ifndef SINGLE_THREAD
@@ -198,7 +234,7 @@ static void CALEErrorHandler(const char *remoteAddress, const void *data, uint32
 static bool g_dataReceiverHandlerState = false;
 
 /**
- * Sender informations to be stored here
+ * Sender information.
  */
 static u_arraylist_t *g_senderInfo = NULL;
 
@@ -218,33 +254,343 @@ static CAQueueingThread_t *g_bleReceiverQueue = NULL;
 static CAQueueingThread_t *g_bleServerSendQueueHandle = NULL;
 
 /**
-* Used to free data.
-*
-*/
+ * Starting LE connectivity adapters.
+ *
+ * As its peer to peer it does not require to start any servers.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAStartLE();
+
+/**
+ * Start listening server for receiving multicast search requests.
+ *
+ * Transport Specific Behavior:
+ *   LE  Starts GATT Server with prefixed UUID and Characteristics
+ *   per OIC Specification.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAStartLEListeningServer();
+
+/**
+ * Sarting discovery of servers for receiving multicast
+ * advertisements.
+ *
+ * Transport Specific Behavior:
+ *   LE  Starts GATT Server with prefixed UUID and Characteristics
+ *   per OIC Specification.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code
+ */
+static CAResult_t CAStartLEDiscoveryServer();
+
+/**
+ * Send data to the endpoint using the adapter connectivity.
+ *
+ * @param[in] endpoint Remote Endpoint information (like MAC address,
+ *                     reference URI and connectivity type) to which
+ *                     the unicast data has to be sent.
+ * @param[in] data     Data which required to be sent.
+ * @param[in] dataLen  Size of data to be sent.
+ *
+ * @note  dataLen must be > 0.
+ *
+ * @return The number of bytes sent on the network, or -1 on error.
+ */
+static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
+                                   const void *data,
+                                   uint32_t dataLen);
+
+/**
+ * Send multicast data to the endpoint using the LE connectivity.
+ *
+ * @param[in] endpoint Remote Endpoint information to which the
+ *                     multicast data has to be sent.
+ * @param[in] data     Data which required to be sent.
+ * @param[in] dataLen  Size of data to be sent.
+ *
+ * @note  dataLen must be > 0.
+ *
+ * @return The number of bytes sent on the network, or -1 on error.
+ */
+static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
+                                     const void *data,
+                                     uint32_t dataLen);
+
+/**
+ * Get LE Connectivity network information.
+ *
+ * @param[out] info Local connectivity information structures.
+ * @param[out] size Number of local connectivity structures.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info,
+                                              uint32_t *size);
+
+/**
+ * Read Synchronous API callback.
+ *
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAReadLEData();
+
+/**
+ * Stopping the adapters and close socket connections.
+ *
+ * LE Stops all GATT servers and GATT Clients.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAStopLE();
+
+/**
+ * Terminate the LE connectivity adapter.
+ *
+ * Configuration information will be deleted from further use.
+ */
+static void CATerminateLE();
+
+/**
+ * This function will receive the data from the GattServer and add the
+ * data to the Server receiver queue.
+ *
+ * @param[in] remoteAddress Remote address of the device from where
+ *                          data is received.
+ * @param[in] data          Actual data recevied from the remote
+ *                          device.
+ * @param[in] dataLength    Length of the data received from the
+ *                          remote device.
+ * @param[in] sentLength    Length of the data sent from the remote
+ *                          device.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ *
+ */
+static CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress,
+                                                const void *data,
+                                                uint32_t dataLength,
+                                                uint32_t *sentLength);
+
+/**
+ * This function will receive the data from the GattClient and add the
+ * data into the Client receiver queue.
+ *
+ * @param[in] remoteAddress Remote address of the device from where
+ *                          data is received.
+ * @param[in] data          Actual data recevied from the remote
+ *                          device.
+ * @param[in] dataLength    Length of the data received from the
+ *                          remote device.
+ * @param[in] sentLength    Length of the data sent from the remote
+ *                          device.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress,
+                                                const void *data,
+                                                uint32_t dataLength,
+                                                uint32_t *sentLength);
+
+/**
+ * Set the NetworkPacket received callback to CA layer from adapter
+ * layer.
+ *
+ * @param[in] callback Callback handle sent from the upper layer.
+ */
+static void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
+
+/**
+ * Push the data from CA layer to the Sender processor queue.
+ *
+ * @param[in] remoteEndpoint Remote endpoint information of the
+ *                           server.
+ * @param[in] data           Data to be transmitted from LE.
+ * @param[in] dataLen        Length of the Data being transmitted.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
+                                            const void *data,
+                                            uint32_t dataLen);
+
+/**
+ * Push the data from CA layer to the Sender processor queue.
+ *
+ * @param[in] remoteEndpoint Remote endpoint information of the
+ *                           server.
+ * @param[in] data           Data to be transmitted from LE.
+ * @param[in] dataLen        Length of the Data being transmitted.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
+                                            const void *data,
+                                            uint32_t dataLen);
+
+/**
+ * This function will be associated with the sender queue for
+ * GattServer.
+ *
+ * This function will fragment the data to the MTU of the transport
+ * and send the data in fragments to the adapters. The function will
+ * be blocked until all data is sent out from the adapter.
+ *
+ * @param[in] threadData Data pushed to the queue which contains the
+ *                       info about RemoteEndpoint and Data.
+ */
+static void CALEServerSendDataThread(void *threadData);
+
+/**
+ * This function will be associated with the sender queue for
+ * GattClient.
+ *
+ * This function will fragment the data to the MTU of the transport
+ * and send the data in fragments to the adapters. The function will
+ * be blocked until all data is sent out from the adapter.
+ *
+ * @param[in] threadData Data pushed to the queue which contains the
+ *                       info about RemoteEndpoint and Data.
+ */
+static void CALEClientSendDataThread(void *threadData);
+
+/**
+ * This function will be associated with the receiver queue.
+ *
+ * This function will defragment the received data from each sender
+ * respectively and will send it up to CA layer.  Respective sender's
+ * header will provide the length of the data sent.
+ *
+ * @param[in] threadData Data pushed to the queue which contains the
+ *                       info about RemoteEndpoint and Data.
+ */
+static void CALEDataReceiverHandler(void *threadData);
+
+/**
+ * This function will stop all queues created for GattServer and
+ * GattClient. All four queues will be be stopped with this function
+ * invocations.
+ */
+static void CAStopLEQueues();
+
+/**
+ * This function will terminate all queues created for GattServer and
+ * GattClient. All four queues will be be terminated with this
+ * function invocations.
+ */
+static void CATerminateLEQueues();
+
+/**
+ * This function will initalize the Receiver and Sender queues for
+ * GattServer. This function will in turn call the functions
+ * CAInitBleServerReceiverQueue() and CAInitBleServerSenderQueue() to
+ * initialize the queues.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CAInitLEServerQueues();
+
+/**
+ * This function will initalize the Receiver and Sender queues for
+ * GattClient. This function will inturn call the functions
+ * CAInitBleClientReceiverQueue() and CAInitBleClientSenderQueue() to
+ * initialize the queues.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ *
+ */
+static CAResult_t CAInitLEClientQueues();
+
+/**
+ * This function will initalize the Receiver queue for
+ * GattServer. This will initialize the queue to process the function
+ * CABLEServerSendDataThread() when ever the task is added to this
+ * queue.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CAInitLEServerSenderQueue();
+
+/**
+ * This function will initalize the Receiver queue for
+ * GattClient. This will initialize the queue to process the function
+ * CABLEClientSendDataThread() when ever the task is added to this
+ * queue.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CAInitLEClientSenderQueue();
+
+/**
+ * This function will initialize the Receiver queue for
+ * LEAdapter. This will initialize the queue to process the function
+ * CABLEDataReceiverHandler() when ever the task is added to this
+ * queue.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code
+ * @retval ::CA_STATUS_OK  Successful
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
+ * @retval ::CA_STATUS_FAILED Operation failed
+ *
+ */
+static CAResult_t CAInitLEReceiverQueue();
+
+/**
+ * This function will create the Data required to send it in the
+ * queue.
+ *
+ * @param[in] remoteEndpoint Remote endpoint information of the
+ *                           server.
+ * @param[in] data           Data to be transmitted from LE.
+ * @param[in] dataLength     Length of the Data being transmitted.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CALEData_t *CACreateLEData(const CAEndpoint_t *remoteEndpoint,
+                                  const void *data,
+                                  uint32_t dataLength);
+
+/**
+ * Used to free the BLE information stored in the sender/receiver
+ * queues.
+ *
+ * @param[in] bleData Information for a particular data segment.
+ */
+static void CAFreeLEData(CALEData_t *bleData);
+
+/**
+ * Free data.
+ */
 static void CALEDataDestroyer(void *data, uint32_t size);
 
-void CAInitLEQueues()
-{
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
-    CAResult_t result = CAInitLEServerQueues();
-    if (CA_STATUS_OK != result)
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitBleServerQueues failed");
-        return;
-    }
-
-    result = CAInitLEClientQueues();
-    if (CA_STATUS_OK != result)
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitBleClientQueues failed");
-        return;
-    }
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-}
-
-CAResult_t CAInitLEServerQueues()
+static CAResult_t CAInitLEServerQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -274,7 +620,7 @@ CAResult_t CAInitLEServerQueues()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitLEClientQueues()
+static CAResult_t CAInitLEClientQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -304,7 +650,7 @@ CAResult_t CAInitLEClientQueues()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitLEReceiverQueue()
+static CAResult_t CAInitLEReceiverQueue()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
     // Check if the message queue is already initialized
@@ -354,7 +700,7 @@ CAResult_t CAInitLEReceiverQueue()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitLEServerSenderQueue()
+static CAResult_t CAInitLEServerSenderQueue()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
     // Check if the message queue is already initialized
@@ -394,7 +740,7 @@ CAResult_t CAInitLEServerSenderQueue()
     return CA_STATUS_OK;
 }
 
-void CALEClearSenderInfo()
+static void CALEClearSenderInfo()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -416,7 +762,7 @@ void CALEClearSenderInfo()
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-CAResult_t CAInitLEClientSenderQueue()
+static CAResult_t CAInitLEClientSenderQueue()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -456,7 +802,7 @@ CAResult_t CAInitLEClientSenderQueue()
     return CA_STATUS_OK;
 }
 
-void CAStopLEQueues()
+static void CAStopLEQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -484,7 +830,7 @@ void CAStopLEQueues()
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-void CATerminateLEQueues()
+static void CATerminateLEQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -505,8 +851,9 @@ void CATerminateLEQueues()
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-CAResult_t CALEGetSenderInfo(char *leAddress, CABLESenderInfo_t **senderInfo,
-                                        uint32_t *senderIndex)
+static CAResult_t CALEGetSenderInfo(char *leAddress,
+                                    CABLESenderInfo_t **senderInfo,
+                                    uint32_t *senderIndex)
 {
     VERIFY_NON_NULL_RET(leAddress, CALEADAPTER_TAG, "Ble-Address in-param NULL", CA_STATUS_FAILED);
     VERIFY_NON_NULL_RET(senderIndex, CALEADAPTER_TAG, "Index in-param NULL", CA_STATUS_FAILED);
@@ -535,7 +882,7 @@ CAResult_t CALEGetSenderInfo(char *leAddress, CABLESenderInfo_t **senderInfo,
     return CA_STATUS_FAILED;
 }
 
-void CALEDataReceiverHandler(void *threadData)
+static void CALEDataReceiverHandler(void *threadData)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -686,7 +1033,7 @@ void CALEDataReceiverHandler(void *threadData)
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-void CALEServerSendDataThread(void *threadData)
+static void CALEServerSendDataThread(void *threadData)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -848,7 +1195,7 @@ void CALEServerSendDataThread(void *threadData)
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-void CALEClientSendDataThread(void *threadData)
+static void CALEClientSendDataThread(void *threadData)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1018,8 +1365,9 @@ void CALEClientSendDataThread(void *threadData)
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT - CABLEClientSendDataThread");
 }
 
-CALEData_t *CACreateLEData(const CAEndpoint_t *remoteEndpoint, const void *data,
-                           uint32_t dataLength)
+static CALEData_t *CACreateLEData(const CAEndpoint_t *remoteEndpoint,
+                                  const void *data,
+                                  uint32_t dataLength)
 {
     CALEData_t *bleData = (CALEData_t *) OICMalloc(sizeof(CALEData_t));
     if (!bleData)
@@ -1042,7 +1390,7 @@ CALEData_t *CACreateLEData(const CAEndpoint_t *remoteEndpoint, const void *data,
     return bleData;
 }
 
-void CAFreeLEData(CALEData_t *bleData)
+static void CAFreeLEData(CALEData_t *bleData)
 {
     VERIFY_NON_NULL_VOID(bleData, CALEADAPTER_TAG, "Param bleData is NULL");
 
@@ -1051,7 +1399,7 @@ void CAFreeLEData(CALEData_t *bleData)
     OICFree(bleData);
 }
 
-void CALEDataDestroyer(void *data, uint32_t size)
+static void CALEDataDestroyer(void *data, uint32_t size)
 {
     CALEData_t *ledata = (CALEData_t *) data;
 
@@ -1059,7 +1407,7 @@ void CALEDataDestroyer(void *data, uint32_t size)
 }
 #endif
 
-CAResult_t CAInitLEAdapterMutex()
+static CAResult_t CAInitLEAdapterMutex()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1153,7 +1501,7 @@ CAResult_t CAInitLEAdapterMutex()
     return CA_STATUS_OK;
 }
 
-void CATerminateLEAdapterMutex()
+static void CATerminateLEAdapterMutex()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1187,7 +1535,8 @@ void CATerminateLEAdapterMutex()
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CANetworkChangeCallback netCallback,
-                          CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
+                          CAErrorHandleCallback errorCallback,
+                          ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1225,16 +1574,19 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
     g_errorHandler = errorCallback;
 
-    CAConnectivityHandler_t connHandler;
-    connHandler.startAdapter = CAStartLE;
-    connHandler.stopAdapter = CAStopLE;
-    connHandler.startListenServer = CAStartLEListeningServer;
-    connHandler.startDiscoveryServer = CAStartLEDiscoveryServer;
-    connHandler.sendData = CASendLEUnicastData;
-    connHandler.sendDataToAll = CASendLEMulticastData;
-    connHandler.GetnetInfo = CAGetLEInterfaceInformation;
-    connHandler.readData = CAReadLEData;
-    connHandler.terminate = CATerminateLE;
+    static const CAConnectivityHandler_t connHandler =
+        {
+            .startAdapter = CAStartLE,
+            .stopAdapter = CAStopLE,
+            .startListenServer = CAStartLEListeningServer,
+            .startDiscoveryServer = CAStartLEDiscoveryServer,
+            .sendData = CASendLEUnicastData,
+            .sendDataToAll = CASendLEMulticastData,
+            .GetnetInfo = CAGetLEInterfaceInformation,
+            .readData = CAReadLEData,
+            .terminate = CATerminateLE
+        };
+
     registerCallback(connHandler, CA_ADAPTER_GATT_BTLE);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
@@ -1242,15 +1594,14 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartLE()
+static CAResult_t CAStartLE()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAStartLE, not implemented");
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, __func__);
+
+    return CAStartLEAdapter();
 }
 
-CAResult_t CAStopLE()
+static CAResult_t CAStopLE()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 #ifndef SINGLE_THREAD
@@ -1273,7 +1624,7 @@ CAResult_t CAStopLE()
     return CA_STATUS_OK;
 }
 
-void CATerminateLE()
+static void CATerminateLE()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1302,7 +1653,7 @@ void CATerminateLE()
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-CAResult_t CAStartLEListeningServer()
+static CAResult_t CAStartLEListeningServer()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
     CAResult_t result = CA_STATUS_OK;
@@ -1339,7 +1690,7 @@ CAResult_t CAStartLEListeningServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartLEDiscoveryServer()
+static CAResult_t CAStartLEDiscoveryServer()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
     CAResult_t result = CA_STATUS_OK;
@@ -1375,24 +1726,7 @@ CAResult_t CAStartLEDiscoveryServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartLENotifyServer()
-{
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-uint32_t CASendLENotification(const CAEndpoint_t *endpoint, const void *data,
-                              uint32_t dataLen)
-{
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return 0;
-}
-
-CAResult_t CAReadLEData()
+static CAResult_t CAReadLEData()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 #ifdef SINGLE_THREAD
@@ -1402,7 +1736,9 @@ CAResult_t CAReadLEData()
     return CA_STATUS_OK;
 }
 
-int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
+                                   const void *data,
+                                   uint32_t dataLen)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1447,7 +1783,9 @@ int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint, const void *data, uint
     return dataLen;
 }
 
-int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
+                                     const void *data,
+                                     uint32_t dataLen)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1498,7 +1836,7 @@ int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint, const void *data, ui
     return dataLen;
 }
 
-CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1552,7 +1890,7 @@ CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     return CA_STATUS_OK;
 }
 
-CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
+static CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1581,7 +1919,7 @@ CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
     return res;
 }
 
-void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
+static void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1620,9 +1958,9 @@ void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
-                                     const void *data,
-                                     uint32_t dataLen)
+static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
+                                            const void *data,
+                                            uint32_t dataLen)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1655,10 +1993,9 @@ CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
     return CA_STATUS_OK;
 }
 
-
-CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
-                                     const void *data,
-                                     uint32_t dataLen)
+static CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
+                                            const void *data,
+                                            uint32_t dataLen)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1743,14 +2080,14 @@ CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
     return CA_STATUS_OK;
 }
 
-CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress, const char *serviceUUID,
-                                         const void *data, uint32_t dataLength,
-                                         uint32_t *sentLength)
+static CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress,
+                                                const void *data,
+                                                uint32_t dataLength,
+                                                uint32_t *sentLength)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     //Input validation
-    VERIFY_NON_NULL(serviceUUID, CALEADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, CALEADAPTER_TAG, "Data is null");
     VERIFY_NON_NULL(sentLength, CALEADAPTER_TAG, "Sent data length holder is null");
 
@@ -1787,7 +2124,7 @@ CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress, const char *
     }
 
     CAFreeEndpoint(remoteEndpoint);
-    // Add message to send queue
+    // Add message to receiver queue
     CAQueueingThreadAddData(g_bleReceiverQueue, bleData, sizeof(CALEData_t));
 
     *sentLength = dataLength;
@@ -1796,14 +2133,14 @@ CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress, const char *
     return CA_STATUS_OK;
 }
 
-CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress, const char *serviceUUID,
-                                         const void *data, uint32_t dataLength,
-                                         uint32_t *sentLength)
+static CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress,
+                                                const void *data,
+                                                uint32_t dataLength,
+                                                uint32_t *sentLength)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     //Input validation
-    VERIFY_NON_NULL(serviceUUID, CALEADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, CALEADAPTER_TAG, "Data is null");
     VERIFY_NON_NULL(sentLength, CALEADAPTER_TAG, "Sent data length holder is null");
 #ifndef SINGLE_THREAD
@@ -1832,7 +2169,7 @@ CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress, const char *
     }
 
     CAFreeEndpoint(remoteEndpoint);
-    // Add message to send queue
+    // Add message to receiver queue
     CAQueueingThreadAddData(g_bleReceiverQueue, bleData, sizeof(CALEData_t));
 
     *sentLength = dataLength;
@@ -1841,18 +2178,18 @@ CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress, const char *
     return CA_STATUS_OK;
 }
 
-void CASetLEAdapterThreadPoolHandle(ca_thread_pool_t handle)
+static void CASetLEAdapterThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
+    ca_mutex_lock(g_bleAdapterThreadPoolMutex);
     g_bleAdapterThreadPool = handle;
     ca_mutex_unlock(g_bleAdapterThreadPoolMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback)
+static void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
@@ -1865,14 +2202,18 @@ void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback)
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
-void CALEErrorHandler(const char *remoteAddress, const void *data, uint32_t dataLen,
-                      CAResult_t result)
+static void CALEErrorHandler(const char *remoteAddress,
+                             const void *data,
+                             uint32_t dataLen,
+                             CAResult_t result)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEErrorHandler IN");
 
     VERIFY_NON_NULL_VOID(data, CALEADAPTER_TAG, "Data is null");
-    CAEndpoint_t *rep = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_GATT_BTLE,
-                                               remoteAddress, 0);
+    CAEndpoint_t *rep = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+                                               CA_ADAPTER_GATT_BTLE,
+                                               remoteAddress,
+                                               0);
     //if required, will be used to build remote end point
     g_errorHandler(rep, data, dataLen, result);
 

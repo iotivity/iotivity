@@ -25,7 +25,7 @@ if 'ALL' in transport:
 	if with_ra == True:
 			env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
 	if target_os == 'linux':
-		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
+		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os in['darwin','ios']:
@@ -45,12 +45,8 @@ else:
 		env.AppendUnique(CPPDEFINES = ['NO_EDR_ADAPTER'])
 
 	if 'BLE' in transport:
-		if target_os == 'linux':
-			print "CA Transport BLE is not supported in Linux"
-			Exit(1)
-		else:
-			env.AppendUnique(CPPDEFINES = ['LE_ADAPTER'])
-			print "CA Transport is BLE"
+		env.AppendUnique(CPPDEFINES = ['LE_ADAPTER'])
+		print "CA Transport is BLE"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_LE_ADAPTER'])
 
