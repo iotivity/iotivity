@@ -42,7 +42,7 @@ static B64Result b64EncodeBlk(const uint8_t* in, char* out, uint32_t len)
     }
 
     out[0] = g_b64TransTbl[in[0] >> 2];
-    
+
     if(1 == len)
     {
         out[1] = g_b64TransTbl[((in[0] & 0x03) << 4)];
@@ -220,7 +220,7 @@ B64Result b64Decode(const char* in, const size_t inLen,
     uint32_t i;
     uint32_t minBufSize;
 
-    if (NULL == in || 0 != (inLen & 0x03) || NULL == outBuf || NULL == outLen)
+    if (NULL == in || 0 == inLen || 0 != (inLen & 0x03) || NULL == outBuf || NULL == outLen)
     {
         return B64_INVALID_PARAM;
     }

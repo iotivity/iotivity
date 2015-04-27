@@ -65,7 +65,7 @@ OicSecDoxm_t gDefaultDoxm =
     0,                      /* size_t oxmTypeLen */
     &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
-    0,                      /* uint16_t oxmSel */
+    OIC_JUST_WORKS,         /* OicSecOxm_t oxmsel */
     false,                  /* bool owned */
  // 0,                      /* uint8_t deviceIDFormat */
     {},                     /* OicUuid_t deviceID */
