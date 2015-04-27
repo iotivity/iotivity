@@ -62,7 +62,7 @@ char * GetSVRDatabase()
     OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
 
     // TODO Do we need a GetFileSize API ?
-    if (ps)
+    if (ps && ps->open)
     {
         // TODO Build consensus on location of SRM database file on Ubuntu
         fp = ps->open(SVR_DB_FILE_NAME, "r");
@@ -93,11 +93,11 @@ exit:
 
 
 /**
- * This method can be used by a Secure Virtual Resource entity handler
- * to update SVR database.
+ * This method is used by a entity handlers of SVR's to update
+ * SVR database.
  *
- * @param rsrcName - string denoting the SVR name ("acl", "cred", "pstat" etc).
- * @param jsonObj - JSON object containing the SVR contents.
+ * @param rsrcName string denoting the SVR name ("acl", "cred", "pstat" etc).
+ * @param jsonObj JSON object containing the SVR contents.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
@@ -106,41 +106,50 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
     OCStackResult ret = OC_STACK_ERROR;
     cJSON *jsonSVRDb = NULL;
 
-    // Read SVR database from PS
+    /* Read SVR database from PS */
     char* jsonSVRDbStr = GetSVRDatabase();
     VERIFY_NON_NULL(jsonSVRDbStr, ERROR);
 
-    // Use cJSON_Parse to parse the existing SVR database
+    /* Use cJSON_Parse to parse the existing SVR database */
     jsonSVRDb = cJSON_Parse(jsonSVRDbStr);
     VERIFY_NON_NULL(jsonSVRDb, ERROR);
 
     OCFree(jsonSVRDbStr);
     jsonSVRDbStr = NULL;
 
-    // Replace the modified json object in existing SVR database json
-    cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonObj);
-    // Generate string representation of updated SVR database json object
-    jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
-
-    // Update the persistent storage with new SVR database
-    OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
-    if (ps)
+    if (jsonObj->child &&
+        (NULL != cJSON_GetObjectItem(jsonSVRDb, rsrcName)) )
     {
-        FILE* fp = ps->open(SVR_DB_FILE_NAME, "w");
-        if (fp)
+        /* Create a duplicate of the JSON object which was passed. */
+        cJSON* jsonDuplicateObj = cJSON_Duplicate(jsonObj, 1);
+        VERIFY_NON_NULL(jsonDuplicateObj, ERROR);
+
+        /* Replace the modified json object in existing SVR database json */
+        cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
+        /* Generate string representation of updated SVR database json object */
+        jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
+        VERIFY_NON_NULL(jsonSVRDbStr, ERROR);
+
+        /* Update the persistent storage with new SVR database */
+        OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
+        if (ps && ps->open)
         {
-            size_t bytesWritten = ps->write(jsonSVRDbStr, 1, strlen(jsonSVRDbStr), fp);
-            if (bytesWritten == strlen(jsonSVRDbStr))
+            FILE* fp = ps->open(SVR_DB_FILE_NAME, "w");
+            if (fp)
             {
-                ret = OC_STACK_OK;
+                size_t bytesWritten = ps->write(jsonSVRDbStr, 1, strlen(jsonSVRDbStr), fp);
+                if (bytesWritten == strlen(jsonSVRDbStr))
+                {
+                    ret = OC_STACK_OK;
+                }
+                OC_LOG_V(INFO, TAG, PCF("Written %d bytes into SVR database file"), bytesWritten);
+                ps->close(fp);
+                fp = NULL;
             }
-            OC_LOG_V(INFO, TAG, PCF("Written %d bytes into SVR database file"), bytesWritten);
-            ps->close(fp);
-            fp = NULL;
-        }
-        else
-        {
-            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
+            else
+            {
+                OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
+            }
         }
     }
 

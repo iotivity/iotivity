@@ -160,8 +160,11 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAcl_t * headAcl = NULL;
     OicSecAcl_t * prevAcl = NULL;
+    cJSON *jsonRoot = NULL;
 
-    cJSON *jsonRoot = cJSON_Parse(jsonStr);
+    VERIFY_NON_NULL(jsonStr, ERROR);
+
+    jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(jsonRoot, ERROR);
 
     cJSON *jsonAclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
@@ -274,36 +277,107 @@ exit:
 }
 
 
+
+static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest * ehRequest)
+{
+    /* Convert ACL data into JSON for transmission */
+    char* jsonStr = BinToAclJSON(gAcl);
+
+    /*
+     * A device should 'always' have a default ACL. Therefore,
+     * jsonStr should never be NULL.
+     */
+    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
+
+    /* Send response payload to request originator */
+    SendSRMResponse(ehRequest, ehRet, jsonStr);
+
+    OCFree(jsonStr);
+
+    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    return ehRet;
+}
+
+
+static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest * ehRequest)
+{
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+
+    /* Convert JSON ACL data into binary. This will also validate the ACL data received. */
+    OicSecAcl_t* newAcl = JSONToAclBin((char *)(ehRequest->reqJSONPayload));
+
+    if (newAcl)
+    {
+        /* Append the new ACL to existing ACL */
+        if (gAcl)
+        {
+            gAcl->next = newAcl;
+        }
+        else
+        {
+            gAcl = newAcl;
+        }
+
+        /* Convert ACL data into JSON for update to persistent storage */
+        char *jsonStr = BinToAclJSON(gAcl);
+        if (jsonStr)
+        {
+            cJSON *jsonAcl = cJSON_Parse(jsonStr);
+            OCFree(jsonStr);
+
+            if ((jsonAcl) &&
+                (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl)))
+            {
+                ehRet = OC_EH_OK;
+            }
+            cJSON_Delete(jsonAcl);
+        }
+    }
+
+    /* Send payload to request originator */
+    SendSRMResponse(ehRequest, ehRet, NULL);
+
+    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    return ehRet;
+}
+
+
+
 /*
- * This internal method is the entity handler for ACL resources.
+ * This internal method is the entity handler for ACL resources and
+ * will handle REST request (GET/PUT/POST/DEL) for them.
  */
 OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest)
 {
-    OCEntityHandlerResult ret = OC_EH_ERROR;
-    char *jsonRsp = NULL;
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
-    /*
-     * This method will handle REST request (GET/PUT/POST/DEL) for
-     * virtual resources such as: /oic/sec/cred, /oic/sec/acl etc
-     */
+    if (!ehRequest)
+    {
+        return ehRet;
+    }
 
     if (flag & OC_REQUEST_FLAG)
     {
-        /* TODO :  Handle PUT/POST/DEL methods */
+        /* TODO :  Handle PUT and DEL methods */
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
-        if (OC_REST_GET == ehRequest->method)
+        switch (ehRequest->method)
         {
-            /* Convert ACL data into JSON for transmission */
-            jsonRsp = BinToAclJSON(gAcl);
+            case OC_REST_GET:
+                ehRet = HandleACLGetRequest(ehRequest);
+                break;
 
-            /* Send payload to request originator */
-            ret = (SendSRMResponse(ehRequest, OC_EH_OK, jsonRsp) == OC_STACK_OK ?
-                   OC_EH_OK : OC_EH_ERROR);
+            case OC_REST_POST:
+                ehRet = HandleACLPostRequest(ehRequest);
+                break;
+
+            default:
+                ehRet = OC_EH_ERROR;
+                SendSRMResponse(ehRequest, ehRet, NULL);
         }
     }
-    OCFree(jsonRsp);
-    return ret;
+
+    return ehRet;
 }
 
 
@@ -354,7 +428,7 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
         OIC_RSRC_TYPES_D_URI,
         OIC_RSRC_PRESENCE_URI,
         OIC_RSRC_ACL_URI,
-        "/oic/sec/doxm",   //TODO Update this when doxm is defined
+        OIC_RSRC_DOXM_URI,
         OIC_RSRC_PSTAT_URI,
     };
 

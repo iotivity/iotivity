@@ -41,6 +41,8 @@ extern OicSecAcl_t * JSONToAclBin(const char * jsonStr);
 char* ReadFile(const char* filename);
 extern void DeleteACLList(OicSecAcl_t* acl);
 OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl);
+OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
+                                        OCEntityHandlerRequest * ehRequest);
 #ifdef __cplusplus
 }
 #endif
@@ -80,9 +82,26 @@ char* ReadFile(const char* filename)
     return data;
 }
 
+void SetPersistentHandler(OCPersistentStorage *ps, bool set)
+{
+    if (set)
+    {
+        ps->open = fopen;
+        ps->read = fread;
+        ps->write = fwrite;
+        ps->close = fclose;
+        ps->unlink = unlink;
+    }
+    else
+    {
+        memset(ps, 0, sizeof(OCPersistentStorage));
+    }
+    EXPECT_EQ(OC_STACK_OK,
+            SRMRegisterPersistentStorageHandler(ps));
+}
 
-//ACLResource Tests
-TEST(ACLResourceTest, JSONMarshalliingTests)
+// JSON Marshalling Tests
+TEST(ACLResourceTest, JSONMarshallingTests)
 {
     char *jsonStr1 = ReadFile(ACL1_JSON_FILE_NAME);
     EXPECT_TRUE(NULL != jsonStr1);
@@ -120,9 +139,10 @@ TEST(ACLResourceTest, JSONMarshalliingTests)
     DeleteACLList(acl);
 }
 
-
+// Default ACL tests
 TEST(ACLResourceTest, GetDefaultACLTests)
 {
+    // Read default ACL from the file
     char *jsonStr = ReadFile(DEFAULT_ACL_JSON_FILE_NAME);
     EXPECT_TRUE(NULL != jsonStr);
     if (NULL == jsonStr)
@@ -130,18 +150,17 @@ TEST(ACLResourceTest, GetDefaultACLTests)
         printf("Please copy %s into unittest folder\n", DEFAULT_ACL_JSON_FILE_NAME);
     }
 
-    /* Read from the file */
     OicSecAcl_t * acl = JSONToAclBin(jsonStr);
     EXPECT_TRUE(NULL != acl);
 
-    /* Invoke API to generate default ACL */
+    // Invoke API to generate default ACL
     OicSecAcl_t * defaultAcl = NULL;
     OCStackResult ret = GetDefaultACL(&defaultAcl);
 
     EXPECT_TRUE(NULL != defaultAcl);
     EXPECT_TRUE(OC_STACK_OK == ret);
 
-    /* Verify if the source code generated what is stored in file */
+    // Verify if the SRM generated default ACL matches with unit test default
     if (acl && defaultAcl)
     {
         EXPECT_TRUE(memcmp(&(acl->subject), &(defaultAcl->subject), sizeof(OicUuid_t)) == 0);
@@ -154,10 +173,50 @@ TEST(ACLResourceTest, GetDefaultACLTests)
         EXPECT_EQ(acl->permission, defaultAcl->permission);
     }
 
-    /* Perform cleanup */
+    // Perform cleanup
     DeleteACLList(acl);
     DeleteACLList(defaultAcl);
     OCFree(jsonStr);
 }
+
+
+
+TEST(ACLResourceTest, ACLPostTest)
+{
+    OCEntityHandlerRequest ehReq = {};
+
+    // Read an ACL from the file
+    char *jsonStr = ReadFile(ACL1_JSON_FILE_NAME);
+    EXPECT_TRUE(NULL != jsonStr);
+    if (NULL == jsonStr)
+    {
+        printf("Please copy %s into unittest folder\n", ACL1_JSON_FILE_NAME);
+    }
+
+    static OCPersistentStorage ps = {};
+    SetPersistentHandler(&ps, true);
+
+    // Create Entity Handler POST request payload
+    ehReq.method = OC_REST_POST;
+    ehReq.reqJSONPayload = (unsigned char*)jsonStr;
+
+    OCEntityHandlerResult ehRet =  ACLEntityHandler (OC_REQUEST_FLAG, &ehReq);
+    EXPECT_TRUE(OC_EH_OK == ehRet);
+
+    // Convert JSON into OicSecAcl_t for verification
+    OicSecAcl_t * acl = JSONToAclBin(jsonStr);
+    EXPECT_TRUE(NULL != acl);
+
+    // Verify if SRM contains ACL for the subject
+    const OicSecAcl_t* subjectAcl = GetACLResourceData(&(acl->subject));
+    EXPECT_TRUE(NULL != subjectAcl);
+
+    // Perform cleanup
+    SetPersistentHandler(&ps, false);
+    DeleteACLList(acl);
+    DeInitACLResource();
+    OCFree(jsonStr);
+}
+
 
 

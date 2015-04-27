@@ -42,8 +42,9 @@ OCStackResult DestroySecureResources();
 /**
  * This method is used by all secure resource modules to send responses to REST queries.
  *
- * @param ehRequest - pointer to entity handler request data structure.
- * @param rspPayload - response payload in JSON.
+ * @param ehRequest pointer to entity handler request data structure.
+ * @param ehRet result code from entity handler.
+ * @param rspPayload response payload in JSON.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */

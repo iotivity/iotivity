@@ -34,11 +34,11 @@
 char * GetSVRDatabase();
 
 /**
- * This method can be used by a Secure Virtual Resource entity handler
- * to update SVR database.
+ * This method is used by a entity handlers of SVR's to update
+ * SVR database.
  *
- * @param rsrcName - string denoting the SVR name ("acl", "cred", "pstat" etc).
- * @param jsonObj - JSON object containing the SVR contents.
+ * @param rsrcName string denoting the SVR name ("acl", "cred", "pstat" etc).
+ * @param jsonObj JSON object containing the SVR contents.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
