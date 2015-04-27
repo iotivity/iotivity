@@ -541,8 +541,9 @@ send_msg_clicked_cb(void *data , Evas_Object *obj , void *event_info)
             std::cout << "Before find Resource... " << std::endl;
 
             // Find fan resources
-            OCPlatform::findResource("", "coap://224.0.1.187/oc/core?rt=core.fan", OC_WIFI,
-                                     &foundResourceFan);
+            std::ostringstream requestURI;
+            requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.fan";
+            OCPlatform::findResource("", requestURI.str(), OC_WIFI, &foundResourceFan);
             std::cout << "Finding Resource... " << std::endl;
         }
         catch (OCException &e)
