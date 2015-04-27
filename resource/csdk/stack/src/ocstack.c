@@ -1224,6 +1224,12 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
                 {
                     FindAndDeleteClientCB(cbNode);
                 }
+                else
+                {
+                    // To keep discovery callbacks active.
+                    cbNode->TTL = GetTicks(MAX_CB_TIMEOUT_SECONDS *
+                                            MILLISECONDS_PER_SECOND);
+                }
             }
 
             //Need to send ACK when the response is CON
@@ -2047,8 +2053,10 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    if((result = AddClientCB(&clientCB, cbData, token, tokenLength,  &resHandle, method,
-                             requestUri, resourceType, conType)) != OC_STACK_OK)
+    result = AddClientCB(&clientCB, cbData, token, tokenLength, &resHandle, method,
+                             requestUri, resourceType, conType,
+                             GetTicks(MAX_CB_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND));
+    if(result != OC_STACK_OK)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;

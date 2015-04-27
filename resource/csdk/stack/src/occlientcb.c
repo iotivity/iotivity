@@ -25,6 +25,13 @@
 #include "ocmalloc.h"
 #include <string.h>
 
+#ifdef WITH_ARDUINO
+#include "Time.h"
+#else
+#include <sys/time.h>
+#endif
+#include "coap_time.h"
+
 #include "cacommon.h"
 #include "cainterface.h"
 
@@ -38,7 +45,7 @@ OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
              CAToken_t token, uint8_t tokenLength,
              OCDoHandle *handle, OCMethod method,
-             char * requestUri, char * resourceTypeName, OCConnectivityType conType)
+             char * requestUri, char * resourceTypeName, OCConnectivityType conType, uint32_t ttl)
 {
     if(!clientCB || !cbData || !handle || !requestUri || tokenLength > CA_MAX_TOKEN_LEN)
     {
@@ -78,6 +85,17 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             cbNode->presence = NULL;
             cbNode->filterResourceType = NULL;
             #endif // WITH_PRESENCE
+
+            if (method == OC_REST_PRESENCE ||
+                method == OC_REST_OBSERVE  ||
+                method == OC_REST_OBSERVE_ALL)
+            {
+                cbNode->TTL = 0;
+            }
+            else
+            {
+                cbNode->TTL = ttl;
+            }
             cbNode->requestUri = requestUri;
             cbNode->conType = conType;
             LL_APPEND(cbList, cbNode);
@@ -123,7 +141,8 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
 
 void DeleteClientCB(ClientCB * cbNode)
 {
-    if(cbNode) {
+    if(cbNode)
+    {
         LL_DELETE(cbList, cbNode);
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, cbNode->tokenLength);
@@ -136,7 +155,8 @@ void DeleteClientCB(ClientCB * cbNode)
         }
 
         #ifdef WITH_PRESENCE
-        if(cbNode->presence) {
+        if(cbNode->presence)
+        {
             OCFree(cbNode->presence->timeOut);
             OCFree(cbNode->presence);
         }
@@ -158,25 +178,52 @@ void DeleteClientCB(ClientCB * cbNode)
     }
 }
 
+/*
+ * This function checks if the node is past its time to live and
+ * deletes it if timed-out. Calling this function with a  presence or observe
+ * callback with ttl set to 0 will not delete anything as presence nodes have
+ * their own mechanisms for timeouts. A null argument will cause the function to
+ * silently return.
+ */
+static void CheckAndDeleteTimedOutCB(ClientCB* cbNode)
+{
+    if (!cbNode)
+    {
+        return;
+    }
+    if (cbNode->TTL == 0)
+    {
+        return;
+    }
+    coap_tick_t now;
+    coap_ticks(&now);
+
+    if (cbNode->TTL < now)
+    {
+        OC_LOG(INFO, TAG, PCF("Deleting timed-out callback"));
+        DeleteClientCB(cbNode);
+    }
+}
+
 ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
         OCDoHandle handle, const char * requestUri)
 {
 
     ClientCB* out = NULL;
 
-    if(token && *token &&
-            tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
+    if(token && *token && tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
     {
         LL_FOREACH(cbList, out)
         {
             OC_LOG(INFO, TAG, PCF("comparing tokens"));
             OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
             OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
+
             if(memcmp(out->token, token, tokenLength) == 0)
-            if(memcmp(out->token, token, CA_MAX_TOKEN_LEN) == 0)
             {
                 return out;
             }
+            CheckAndDeleteTimedOutCB(out);
         }
     }
     else if(handle)
@@ -187,6 +234,7 @@ ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
             {
                 return out;
             }
+            CheckAndDeleteTimedOutCB(out);
         }
     }
     else if(requestUri)
@@ -197,6 +245,7 @@ ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
             {
                 return out;
             }
+            CheckAndDeleteTimedOutCB(out);
         }
     }
     OC_LOG(INFO, TAG, PCF("Callback Not found !!"));
@@ -226,16 +275,19 @@ OCStackResult InsertResourceTypeFilter(ClientCB * cbNode, char * resourceTypeNam
 }
 #endif // WITH_PRESENCE
 
-void DeleteClientCBList() {
+void DeleteClientCBList()
+{
     ClientCB* out;
     ClientCB* tmp;
-    LL_FOREACH_SAFE(cbList, out, tmp) {
+    LL_FOREACH_SAFE(cbList, out, tmp)
+    {
         DeleteClientCB(out);
     }
     cbList = NULL;
 }
 
-void FindAndDeleteClientCB(ClientCB * cbNode) {
+void FindAndDeleteClientCB(ClientCB * cbNode)
+{
     ClientCB* tmp;
     if(cbNode)
     {
@@ -261,7 +313,8 @@ OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, char* uri, uint32_t n
 
     node = (OCMulticastNode*) OCMalloc(sizeof(OCMulticastNode));
 
-    if (node) {
+    if (node)
+    {
         node->nonce = nonce;
         node->uri = uri;
         LL_APPEND(mcPresenceNodes, node);
@@ -272,12 +325,16 @@ OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, char* uri, uint32_t n
     return OC_STACK_NO_MEMORY;
 }
 
-OCMulticastNode* GetMCPresenceNode(const char * uri) {
+OCMulticastNode* GetMCPresenceNode(const char * uri)
+{
     OCMulticastNode* out = NULL;
 
-    if(uri) {
-        LL_FOREACH(mcPresenceNodes, out) {
-            if(out->uri && strcmp(out->uri, uri) == 0) {
+    if(uri)
+    {
+        LL_FOREACH(mcPresenceNodes, out)
+        {
+            if(out->uri && strcmp(out->uri, uri) == 0)
+            {
                 return out;
             }
         }

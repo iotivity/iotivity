@@ -69,6 +69,11 @@ typedef struct ClientCB {
     #endif
     // The connectivity type on which the request was sent on.
     OCConnectivityType conType;
+    // The TTL for this callback. Holds the time till when this callback can
+    // still be used. TTL is set to 0 when the callback is for presence and observe.
+    // Presence has ttl mechanism in the "presence" member of this struct and observes
+    // can be explicitly cancelled.
+    uint32_t TTL;
     // next node in this list
     struct ClientCB    *next;
 } ClientCB;
@@ -95,7 +100,8 @@ extern struct ClientCB *cbList;
  *              the resourceType associated with a presence request.
  * @param[in] conType
  *              the connectivity type on which the associated request for this clientCB was sent on.
- *
+ * @param[in] ttl
+ *              time to live in coap_ticks for the callback.
  * @brief If the handle you're looking for does not exist, the stack will reply with a RST message.
  *
  * @return OC_STACK_OK for Success, otherwise some error value
@@ -104,7 +110,7 @@ OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
              CAToken_t token, uint8_t tokenLength,
              OCDoHandle *handle, OCMethod method,
-             char * requestUri, char * resourceTypeName, OCConnectivityType conType);
+             char * requestUri, char * resourceTypeName, OCConnectivityType conType, uint32_t ttl);
 
 /** @ingroup ocstack
  *
