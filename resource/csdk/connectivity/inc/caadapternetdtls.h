@@ -35,7 +35,7 @@
 /**
  * @brief The implementation will be provided by OIC RI layer.
  */
-extern void OCGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
+extern void OCGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
 
 typedef void (*CAPacketReceivedCallback)(const char *ipAddress, const uint16_t port,
          const void *data, const uint32_t dataLength, const bool isSecured);

@@ -150,7 +150,7 @@ CAResult_t CAGetLEAdapterState()
     return CA_STATUS_OK;
 }
 
-void CAGetLEAddress(char **local_address)
+CAResult_t CAGetLEAddress(char **local_address)
 {
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
 
@@ -163,7 +163,7 @@ void CAGetLEAddress(char **local_address)
     {
         OIC_LOG_V(ERROR, TZ_LE_NWK_MONITOR_TAG, "bt_adapter_get_address failed!, error num [%x]",
                   ret);
-        return;
+        return CA_STATUS_FAILED;
     }
 
     OIC_LOG_V(DEBUG, TZ_LE_NWK_MONITOR_TAG, "bd address[%s]", address);
@@ -171,6 +171,8 @@ void CAGetLEAddress(char **local_address)
     *local_address = address;
 
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
+
+    return CA_STATUS_OK;
 }
 
 CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)

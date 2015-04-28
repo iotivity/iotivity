@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @file
- *
- * API to control the Bluetooth adapter and devices and communications.
- *
- * @ingroup CAPI_NETWORK_BLUETOOTH_MODULE
- */
 
 #ifndef __TIZEN_NETWORK_BLUETOOTH_H__
 #define __TIZEN_NETWORK_BLUETOOTH_H__
@@ -36,6 +29,13 @@
 extern "C"
 {
 #endif /* __cplusplus */
+
+/**
+ * @file        bluetooth.h
+ * @brief       API to control the Bluetooth adapter and devices and communications.
+ * @ingroup     CAPI_NETWORK_BLUETOOTH_MODULE
+ */
+
 
 /**
  * @addtogroup CAPI_NETWORK_BLUETOOTH_MODULE
@@ -4213,6 +4213,8 @@ int bt_gatt_register_service(const char *svc_path,
  * @param[in]  char_path	characteristic path registered on the interface.
  * @param[in]  char_value	Gatt characteristic value.
  * @param[in]  value_length	Characteristic value length.
+ * @param[in]  address Remote device address, for which
+ *			  Notification/Indication need to be sent.
  *
  * @return	0 on success, otherwise a negative error value.
  * @retval	#BT_ERROR_NONE	Successful
@@ -4225,7 +4227,8 @@ int bt_gatt_register_service(const char *svc_path,
  * @see  bt_adapter_enable()
  */
 int bt_gatt_update_characteristic(const char *char_path,
-			const char *char_value, int value_length);
+			const char *char_value, int value_length,
+			const char *address);
 /**
  * @internal
  * @ingroup  CAPI_NETWORK_BLUETOOTH_GATT_MODULE

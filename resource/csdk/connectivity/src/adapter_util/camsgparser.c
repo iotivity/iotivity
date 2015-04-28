@@ -26,18 +26,20 @@
 #include "cacommon.h"
 #include "caadapterutils.h"
 
+/**
+ * @var CA_MSG_PARSER_TAG
+ * @brief debugging tag for parser module
+ */
 #define CA_MSG_PARSER_TAG "CA_MSG_PARSER"
-
-#define MAX_PARSE_DATA_LENGTH 4095
 
 CAResult_t CAGenerateHeader(char *header, uint32_t length)
 {
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "IN");
 
     VERIFY_NON_NULL(header, CA_MSG_PARSER_TAG, "header is NULL");
-    memset(header, 0x0, sizeof(char) * 2);
+    memset(header, 0x0, sizeof(char) * CA_HEADER_LENGTH);
 
-    if(length > MAX_PARSE_DATA_LENGTH)
+    if(length > MAX_DATA_LENGTH_SUPPORTED)
     {
         OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "Given length is more than 4095.It will be truncated");
     }
@@ -45,6 +47,7 @@ CAResult_t CAGenerateHeader(char *header, uint32_t length)
     header[1] = length & 0xFF;
     length >>= 8;
     header[0] = length & 0x0F;
+    header[0] = header[0] | 0x40; // Adding version 0100.(Not used. Future use)
 
     OIC_LOG(DEBUG, CA_MSG_PARSER_TAG, "OUT");
     return CA_STATUS_OK;

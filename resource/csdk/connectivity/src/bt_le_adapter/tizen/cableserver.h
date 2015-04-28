@@ -165,12 +165,14 @@ CAResult_t CARemoveCharacteristicsFromGattServer(const char *charPath);
  *                            identifier for added characteristics.
  * @param  charValue     [IN] data which is send by client.
  * @param  charValueLen  [IN] length of the data.
+ * @param  remoteAddress [IN] remote device bluetooth address in which data is received.
  * @param  userData      [IN] user data
  *
  * @return NONE
  */
 void CABleGattRemoteCharacteristicWriteCb(char *charPath, unsigned char *charValue,
-                                          int charValueLen, void *userData);
+                                          int charValueLen, const char  *remoteAddress,
+                                          void *userData);
 
 /**
  * @brief  This is the callback which will be called whenever there is change in gatt connection

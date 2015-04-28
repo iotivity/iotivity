@@ -46,7 +46,7 @@ static CANetworkChangeCallback g_networkCallback = NULL;
  * @var g_localBLEAddress
  * @brief bleAddress of the local adapter. Value will be initialized to zero, and will be updated later.
  */
-static char g_localBLEAddress[16] = { 0, };
+static char g_localBLEAddress[16] = {0};
 
 /**
  * @var g_isServer
@@ -73,7 +73,7 @@ static ca_mutex g_bleNetworkCbMutex = NULL;
 static ca_mutex g_bleLocalAddressMutex = NULL;
 
 /**
- * @var gBleClientThreadPool
+ * @var g_bleAdapterThreadPool
  * @brief reference to threadpool
  */
 static ca_thread_pool_t g_bleAdapterThreadPool = NULL;
@@ -85,10 +85,10 @@ static ca_thread_pool_t g_bleAdapterThreadPool = NULL;
 static ca_mutex g_bleAdapterThreadPoolMutex = NULL;
 
 /**
- * @var g_bLEClientSendQueueHandle
+ * @var g_bleClientSendQueueHandle
  * @brief Queue to process the outgoing packets from GATTClient.
  */
-static CAQueueingThread_t *g_bLEClientSendQueueHandle = NULL;
+static CAQueueingThread_t *g_bleClientSendQueueHandle = NULL;
 
 /**
  * @var g_bleClientReceiverQueue
@@ -102,7 +102,6 @@ static CAQueueingThread_t *g_bleClientReceiverQueue = NULL;
  */
 static ca_mutex g_bleClientSendDataMutex = NULL;
 
-
 /**
  * @var g_bleClientReceiveDataMutex
  * @brief Mutex to synchronize the queing of the data from ReceiverQueue.
@@ -111,7 +110,7 @@ static ca_mutex g_bleClientReceiveDataMutex = NULL;
 
 /**
  * @var g_dataReceiverHandlerState
- * @brief Stop condition of redvhandler.
+ * @brief Stop condition of recvhandler.
  */
 static bool g_dataReceiverHandlerState = false;
 
@@ -147,14 +146,13 @@ static ca_mutex g_bleAdapterReqRespCbMutex = NULL;
 
 /**
  * @var g_networkPacketReceivedCallback
- * @brief Callback to be called when the network packet recieved from either GattServer or GattClient.
+ * @brief Callback to be called when network packet recieved from either GattServer or GattClient.
  */
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
 /**
  * @ENUM CALeServerStatus
  * @brief status of BLE Server Status
- *
  *  This ENUM provides information of LE Adapter Server status
  */
 typedef enum
@@ -176,10 +174,13 @@ static CALeServerStatus gLeServerStatus = CA_SERVER_NOTSTARTED;
 *
 * @param[in]  netCallback CANetworkChangeCallback callback which will be set for the change in nwk.
 *
-* @return  0 for success.
+* @return  0 on success otherwise a positive error value.
+* @retval  CA_STATUS_OK  Successful
+* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
+* @retval  CA_STATUS_FAILED Operation failed
 *
 */
-int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
+CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
 
 /**
 * @fn  CASetBleAdapterThreadPoolHandle
@@ -194,7 +195,8 @@ void CASetBleAdapterThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
 * @fn  CALEDeviceStateChangedCb
-* @brief  This function is used to call the callback to the upper layer when the device state gets changed.
+* @brief  This function is used to call the callback to the upper layer when the device state gets
+*         changed.
 *
 * @param[in]  adapter_state New state of the adapter to be notified to the upper layer.
 *
@@ -220,9 +222,15 @@ CAResult_t CAInitBleAdapterMutex();
 * @brief  Used to terminate all required mutex variable for LE adapter implementation.
 *
 * @return  void
-*
 */
 void CATerminateBleAdapterMutex();
+
+/**
+* @fn  CALEDataDestroyer
+* @brief  Used to free data
+*
+* @return  void
+*/
 static void CALEDataDestroyer(void *data, uint32_t size);
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
@@ -253,8 +261,8 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
     CAInitializeLEAdapter();
 
-    CASetBleServerThreadPoolHandle(handle);
     CASetBleClientThreadPoolHandle(handle);
+    CASetBleServerThreadPoolHandle(handle);
     CASetBleAdapterThreadPoolHandle(handle);
     CASetBLEReqRespServerCallback(CABLEServerReceivedData);
     CASetBLEReqRespClientCallback(CABLEClientReceivedData);
@@ -263,7 +271,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     CALERegisterNetworkNotifications(netCallback);
 
     CAConnectivityHandler_t connHandler;
-    connHandler.startAdapter = NULL;
+    connHandler.startAdapter = CAStartLE;
     connHandler.stopAdapter = CAStopLE;
     connHandler.startListenServer = CAStartLEListeningServer;
     connHandler.startDiscoveryServer = CAStartLEDiscoveryServer;
@@ -276,6 +284,15 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStartLE()
+{
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG,
+        "There is no concept of unicast/multicast in LE. So This function is not implemented");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -327,7 +344,6 @@ void CATerminateLE()
     CATerminateBleAdapterMutex();
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return;
 }
 
 CAResult_t CAStartLEListeningServer()
@@ -357,10 +373,11 @@ CAResult_t CAStartLEListeningServer()
 
     CAStartBleGattServer();
 
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     ca_mutex_lock(g_bleIsServerMutex);
     g_isServer = true;
     ca_mutex_unlock(g_bleIsServerMutex);
+
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -412,7 +429,7 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, const void *da
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
+    return 0;
 }
 
 CAResult_t CAReadLEData()
@@ -514,10 +531,16 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
 
     char *local_address = NULL;
 
-    CAGetLEAddress(&local_address);
+    CAResult_t res = CAGetLEAddress(&local_address);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAGetLEAddress has failed");
+        return res;
+    }
+
     if (NULL == local_address)
     {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "Get local bt adapter address failed");
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "local_address is NULL");
         return CA_STATUS_FAILED;
     }
 
@@ -526,6 +549,7 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     if (NULL == (*info))
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Malloc failure!");
+        OICFree(local_address);
         return CA_STATUS_FAILED;
     }
 
@@ -542,17 +566,17 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     return CA_STATUS_OK;
 }
 
-int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
+CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     ca_mutex_lock(g_bleNetworkCbMutex);
     g_networkCallback = netCallback;
     ca_mutex_unlock(g_bleNetworkCbMutex);
-
+    CAResult_t res = CA_STATUS_OK;
     if (netCallback)
     {
-        CAResult_t res = CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCb);
+        res = CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCb);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CASetLEAdapterStateChangedCb failed!");
@@ -560,7 +584,7 @@ int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
     }
     else
     {
-        CAResult_t res = CAUnSetLEAdapterStateChangedCb();
+        res = CAUnSetLEAdapterStateChangedCb();
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "CASetLEAdapterStateChangedCb failed!");
@@ -568,13 +592,14 @@ int32_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback)
     }
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
+    return res;
 }
 
 void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
+    VERIFY_NON_NULL_VOID(g_localBLEAddress, NULL, "g_localBLEAddress is null");
     CALocalConnectivity_t localEndpoint = {};
 
     ca_mutex_lock(g_bleLocalAddressMutex);
@@ -606,7 +631,6 @@ void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
     ca_mutex_unlock(g_bleNetworkCbMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return;
 }
 
 CAResult_t CAInitBleAdapterMutex()
@@ -739,7 +763,6 @@ void CATerminateBleAdapterMutex()
     g_bleAdapterReqRespCbMutex = NULL;
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return;
 }
 
 void CAInitBleQueues()
@@ -761,7 +784,6 @@ void CAInitBleQueues()
     }
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return;
 }
 
 CAResult_t CAInitBleServerQueues()
@@ -867,34 +889,34 @@ CAResult_t CAInitBleClientSenderQueue()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    if (g_bLEClientSendQueueHandle)
+    if (g_bleClientSendQueueHandle)
     {
         OIC_LOG(DEBUG, CALEADAPTER_TAG, "Already queue is initialized!");
         return CA_STATUS_OK;
     }
 
     // Create send message queue
-    g_bLEClientSendQueueHandle = (CAQueueingThread_t *) OICMalloc(sizeof(CAQueueingThread_t));
-    if (!g_bLEClientSendQueueHandle)
+    g_bleClientSendQueueHandle = (CAQueueingThread_t *) OICMalloc(sizeof(CAQueueingThread_t));
+    if (!g_bleClientSendQueueHandle)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Memory allocation failed!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    if (CA_STATUS_OK != CAQueueingThreadInitialize(g_bLEClientSendQueueHandle, g_bleAdapterThreadPool,
+    if (CA_STATUS_OK != CAQueueingThreadInitialize(g_bleClientSendQueueHandle, g_bleAdapterThreadPool,
             CABLEClientSendDataThread, CALEDataDestroyer))
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to Initialize send queue thread");
-        OICFree(g_bLEClientSendQueueHandle);
-        g_bLEClientSendQueueHandle = NULL;
+        OICFree(g_bleClientSendQueueHandle);
+        g_bleClientSendQueueHandle = NULL;
         return CA_STATUS_FAILED;
     }
 
-    if (CA_STATUS_OK != CAQueueingThreadStart(g_bLEClientSendQueueHandle))
+    if (CA_STATUS_OK != CAQueueingThreadStart(g_bleClientSendQueueHandle))
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_thread_pool_add_task failed ");
-        OICFree(g_bLEClientSendQueueHandle);
-        g_bLEClientSendQueueHandle = NULL;
+        OICFree(g_bleClientSendQueueHandle);
+        g_bleClientSendQueueHandle = NULL;
         return CA_STATUS_FAILED;
     }
 
@@ -958,7 +980,7 @@ CAResult_t CAInitBleClientReceiverQueue()
         if (!g_bleClientReceiverQueue)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "Memory allocation failed!");
-            OICFree(g_bLEClientSendQueueHandle);
+            OICFree(g_bleClientSendQueueHandle);
             return CA_MEMORY_ALLOC_FAILED;
         }
 
@@ -966,7 +988,7 @@ CAResult_t CAInitBleClientReceiverQueue()
                 CABLEClientDataReceiverHandler, NULL))
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to Initialize send queue thread");
-            OICFree(g_bLEClientSendQueueHandle);
+            OICFree(g_bleClientSendQueueHandle);
             OICFree(g_bleClientReceiverQueue);
             g_bleClientReceiverQueue = NULL;
             return CA_STATUS_FAILED;
@@ -989,9 +1011,9 @@ void CAStopBleQueues()
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     ca_mutex_lock(g_bleClientSendDataMutex);
-    if (NULL != g_bLEClientSendQueueHandle)
+    if (NULL != g_bleClientSendQueueHandle)
     {
-        CAQueueingThreadStop(g_bLEClientSendQueueHandle);
+        CAQueueingThreadStop(g_bleClientSendQueueHandle);
     }
     ca_mutex_unlock(g_bleClientSendDataMutex);
 
@@ -1023,9 +1045,9 @@ void CATerminateBleQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    CAQueueingThreadDestroy(g_bLEClientSendQueueHandle);
-    OICFree(g_bLEClientSendQueueHandle);
-    g_bLEClientSendQueueHandle = NULL;
+    CAQueueingThreadDestroy(g_bleClientSendQueueHandle);
+    OICFree(g_bleClientSendQueueHandle);
+    g_bleClientSendQueueHandle = NULL;
 
 
     CAQueueingThreadDestroy(g_bleClientReceiverQueue);
@@ -1054,7 +1076,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
     static bool isHeaderAvailable = false;
     static CARemoteEndpoint_t *remoteEndpoint = NULL;
 
-    ca_mutex_lock(g_bleClientReceiveDataMutex);
+    ca_mutex_lock(g_bleServerReceiveDataMutex);
 
     if (g_dataReceiverHandlerState)
     {
@@ -1063,7 +1085,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
         CALEData_t *bleData = (CALEData_t *) threadData;
         if (!bleData)
         {
-            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Invalid wifidata!");
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Invalid bleData!");
             return;
         }
 
@@ -1130,11 +1152,11 @@ void CABLEServerDataReceiverHandler(void *threadData)
             isHeaderAvailable = false;
             OICFree(defragData);
             CAAdapterFreeRemoteEndpoint(remoteEndpoint);
-            ca_mutex_unlock(g_bleClientReceiveDataMutex);
+            u_mutex_unlock(g_bleServerReceiveDataMutex);
             return;
         }
     }
-    ca_mutex_unlock(g_bleClientReceiveDataMutex);
+    u_mutex_unlock(g_bleServerReceiveDataMutex);
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
@@ -1247,7 +1269,10 @@ void CABLEServerSendDataThread(void *threadData)
     char *header = (char *) OICCalloc(CA_HEADER_LENGTH, sizeof(char));
     VERIFY_NON_NULL_VOID(header, CALEADAPTER_TAG, "Malloc failed");
 
-    char *dataSegment = (char *) OICCalloc(bleData->dataLen + CA_HEADER_LENGTH + 1, sizeof(char));
+    int32_t totalLength = bleData->dataLen + CA_HEADER_LENGTH;
+
+    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server total Data length with header is [%d]", totalLength);
+    char *dataSegment = (char *) OICCalloc(totalLength + 1, sizeof(char));
     if (NULL == dataSegment)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Malloc failed");
@@ -1268,67 +1293,118 @@ void CABLEServerSendDataThread(void *threadData)
     OICFree(header);
 
     int32_t length = 0;
-    if (CA_SUPPORTED_BLE_MTU_SIZE >= bleData->dataLen)
+    if (CA_SUPPORTED_BLE_MTU_SIZE > totalLength)
     {
-        length = bleData->dataLen + CA_HEADER_LENGTH;
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "length [%d]", length);
+        length = totalLength;
         memcpy(dataSegment + CA_HEADER_LENGTH, bleData->data, bleData->dataLen);
     }
     else
     {
         length =  CA_SUPPORTED_BLE_MTU_SIZE;
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "length [%d]", length);
         memcpy(dataSegment + CA_HEADER_LENGTH, bleData->data,
                CA_SUPPORTED_BLE_MTU_SIZE - CA_HEADER_LENGTH);
     }
 
-    int32_t iter = bleData->dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
+    int32_t iter = totalLength / CA_SUPPORTED_BLE_MTU_SIZE;
     int32_t index = 0;
-    ca_mutex_lock(g_bleServerSendDataMutex);
     // Send the first segment with the header.
-    result = CAUpdateCharacteristicsInGattServer(dataSegment, length);
-    if (CA_STATUS_OK != result )
+     if (NULL != bleData->remoteEndpoint) //Sending Unicast Data
     {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsInGattServer failed");
-        OICFree(dataSegment);
-        ca_mutex_unlock(g_bleServerSendDataMutex);
-        return ;
-    }
-
-    for (index = 1; index < iter; index++)
-    {
-        // Send the remaining header.
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Sending the chunk number [%d]", index);
-        result = CAUpdateCharacteristicsInGattServer(
-                     bleData->data + ((index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH),
-                     CA_SUPPORTED_BLE_MTU_SIZE);
-        if (CA_STATUS_OK != result )
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Server Sending Unicast Data");
+        result = CAUpdateCharacteristicsToGattClient(
+                    bleData->remoteEndpoint->addressInfo.LE.leMacAddress, dataSegment, length);
+        if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsInGattServer failed");
+            OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]", result);
             OICFree(dataSegment);
-            ca_mutex_unlock(g_bleServerSendDataMutex);
-            return ;
+            return;
+        }
+
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]", length);
+        for (index = 1; index < iter; index++)
+        {
+            // Send the remaining header.
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Sending the chunk number [%d]", index);
+            result = CAUpdateCharacteristicsToGattClient(
+                         bleData->remoteEndpoint->addressInfo.LE.leMacAddress,
+                         bleData->data + ((index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH),
+                         CA_SUPPORTED_BLE_MTU_SIZE);
+            if (CA_STATUS_OK != result)
+            {
+                OIC_LOG_V(ERROR, CALEADAPTER_TAG,
+                            "Update characteristics failed, result [%d]", result);
+                OICFree(dataSegment);
+                return;
+            }
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]",
+                                               CA_SUPPORTED_BLE_MTU_SIZE);
+        }
+
+        int32_t remainingLen = totalLength % CA_SUPPORTED_BLE_MTU_SIZE;
+        if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
+        {
+            // send the last segment of the data (Ex: 22 bytes of 622 bytes of data when MTU is 200)
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
+            result = CAUpdateCharacteristicsToGattClient(
+                         bleData->remoteEndpoint->addressInfo.LE.leMacAddress,
+                         bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
+                         remainingLen);
+            if (CA_STATUS_OK != result)
+            {
+                OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
+                                                   result);
+                OICFree(dataSegment);
+                return;
+            }
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]", remainingLen);
+        }
+     }
+    else
+    {
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Server Sending Multicast data");
+        result = CAUpdateCharacteristicsToAllGattClients(dataSegment, length);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]", result);
+            OICFree(dataSegment);
+            return;
+        }
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]", length);
+        for (index = 1; index < iter; index++)
+        {
+            // Send the remaining header.
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Sending the chunk number [%d]", index);
+            result = CAUpdateCharacteristicsToAllGattClients(
+                         bleData->data + ((index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH),
+                         CA_SUPPORTED_BLE_MTU_SIZE);
+            if (CA_STATUS_OK != result)
+            {
+                OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]", result);
+                OICFree(dataSegment);
+                return;
+            }
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]", CA_SUPPORTED_BLE_MTU_SIZE);
+        }
+
+        int32_t remainingLen = totalLength % CA_SUPPORTED_BLE_MTU_SIZE;
+        if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
+        {
+            // send the last segment of the data (Ex: 22 bytes of 622 bytes of data when MTU is 200)
+            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
+            result = CAUpdateCharacteristicsToAllGattClients(
+                         bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
+                         remainingLen);
+            if (CA_STATUS_OK != result)
+            {
+                OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
+                                                   result);
+                OICFree(dataSegment);
+                return;
+            }
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]", remainingLen);
         }
     }
-
-    if (bleData->dataLen / CA_SUPPORTED_BLE_MTU_SIZE)
-    {
-        // send the last segment of the data (Ex: 22 bytes of 622 bytes of data when MTU is 200)
-        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
-        result = CAUpdateCharacteristicsInGattServer(
-                     bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
-                     bleData->dataLen % CA_SUPPORTED_BLE_MTU_SIZE + CA_HEADER_LENGTH);
-        if (CA_STATUS_OK != result )
-        {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsInGattServer failed");
-            OICFree(dataSegment);
-            ca_mutex_unlock(g_bleServerSendDataMutex);
-            return ;
-        }
-    }
-
     OICFree(dataSegment);
-    ca_mutex_unlock(g_bleServerSendDataMutex); // TODO: this mutex required  ?
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
@@ -1347,7 +1423,8 @@ void CABLEClientSendDataThread(void *threadData)
     char *header = (char *) OICCalloc(CA_HEADER_LENGTH, sizeof(char));
     VERIFY_NON_NULL_VOID(header, CALEADAPTER_TAG, "Malloc failed");
 
-    char *dataSegment = (char *) OICCalloc(bleData->dataLen + CA_HEADER_LENGTH + 1, sizeof(char));
+    uint32_t totalLength = bleData->dataLen + CA_HEADER_LENGTH;
+    char *dataSegment = (char *) OICCalloc(totalLength + 1, sizeof(char));
     if (NULL == dataSegment)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Malloc failed");
@@ -1366,119 +1443,130 @@ void CABLEClientSendDataThread(void *threadData)
     memcpy(dataSegment, header, CA_HEADER_LENGTH);
     OICFree(header);
 
-    int32_t length = 0;
-    if (CA_SUPPORTED_BLE_MTU_SIZE >= bleData->dataLen)
+    uint32_t length = 0;
+    if (CA_SUPPORTED_BLE_MTU_SIZE > totalLength)
     {
-        length = bleData->dataLen + CA_HEADER_LENGTH;
+        length = totalLength;
         OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "length [%d]", length);
         memcpy(dataSegment + CA_HEADER_LENGTH, bleData->data, bleData->dataLen);
     }
     else
     {
         length = CA_SUPPORTED_BLE_MTU_SIZE;
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "length [%d]", length);
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "length  [%d]", length);
         memcpy(dataSegment + CA_HEADER_LENGTH, bleData->data,
                CA_SUPPORTED_BLE_MTU_SIZE - CA_HEADER_LENGTH);
     }
 
-    int32_t iter = bleData->dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
-    int32_t index = 0;
-    ca_mutex_lock(g_bleClientSendDataMutex);
-    if (NULL != bleData->remoteEndpoint)
+    uint32_t iter = totalLength / CA_SUPPORTED_BLE_MTU_SIZE;
+    uint32_t index = 0;
+    if (NULL != bleData->remoteEndpoint) //Sending Unicast Data
     {
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending Unicast Data");
         // Send the first segment with the header.
         result = CAUpdateCharacteristicsToGattServer(bleData->remoteEndpoint->addressInfo.LE.leMacAddress,
                  dataSegment,
                  length,
                  LE_UNICAST, 0);
-        if (CA_STATUS_OK != result )
+
+        if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
+            OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]", result);
             OICFree(dataSegment);
-            ca_mutex_unlock(g_bleClientSendDataMutex);
             return ;
         }
 
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]", length);
         for (index = 1; index < iter; index++)
         {
             // Send the remaining header.
-            result = CAUpdateCharacteristicsToGattServer(bleData->remoteEndpoint->addressInfo.LE.leMacAddress,
+            result = CAUpdateCharacteristicsToGattServer(
+                     bleData->remoteEndpoint->addressInfo.LE.leMacAddress,
                      bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
                      CA_SUPPORTED_BLE_MTU_SIZE,
                      LE_UNICAST, 0);
-            if (CA_STATUS_OK != result )
+            if (CA_STATUS_OK != result)
             {
-                OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
+                OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
+                                                   result);
                 OICFree(dataSegment);
-                ca_mutex_unlock(g_bleClientSendDataMutex);
-                return ;
+                return;
             }
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]",
+                                               CA_SUPPORTED_BLE_MTU_SIZE);
         }
 
-        if (bleData->dataLen / CA_SUPPORTED_BLE_MTU_SIZE)
+        uint32_t remainingLen = totalLength % CA_SUPPORTED_BLE_MTU_SIZE;
+        if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
         {
             // send the last segment of the data (Ex: 22 bytes of 622 bytes of data when MTU is 200)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
-            result = CAUpdateCharacteristicsToGattServer(bleData->remoteEndpoint->addressInfo.LE.leMacAddress,
+            result = CAUpdateCharacteristicsToGattServer(
+                     bleData->remoteEndpoint->addressInfo.LE.leMacAddress,
                      bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
-                     bleData->dataLen % CA_SUPPORTED_BLE_MTU_SIZE + CA_HEADER_LENGTH,
+                     remainingLen,
                      LE_UNICAST, 0);
-            if (CA_STATUS_OK != result )
+
+            if (CA_STATUS_OK != result)
             {
-                OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
+                OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
+                                                   result);
                 OICFree(dataSegment);
-                ca_mutex_unlock(g_bleClientSendDataMutex);
-                return ;
+                return;
             }
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]", remainingLen);
         }
     }
     else
     {
+        //Sending Mulitcast Data
         // Send the first segment with the header.
-        result = CAUpdateCharacteristicsToAllGattServers(dataSegment + (index * length),
-                 length);
-        if (CA_STATUS_OK != result )
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending Multicast Data");
+        result = CAUpdateCharacteristicsToAllGattServers(dataSegment, length);
+        if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
+            OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed (all), result [%d]", result);
             OICFree(dataSegment);
-            ca_mutex_unlock(g_bleClientSendDataMutex);
             return ;
         }
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]", length);
         // Send the remaining header.
         for (index = 1; index < iter; index++)
         {
             result = CAUpdateCharacteristicsToAllGattServers(
                          bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
                          CA_SUPPORTED_BLE_MTU_SIZE);
-            if (CA_STATUS_OK != result )
+            if (CA_STATUS_OK != result)
             {
-                OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
+                OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics (all) failed, result [%d]", result);
                 OICFree(dataSegment);
-                ca_mutex_unlock(g_bleClientSendDataMutex);
-                return ;
+                return;
             }
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]", CA_SUPPORTED_BLE_MTU_SIZE);
         }
-        if (bleData->dataLen / CA_SUPPORTED_BLE_MTU_SIZE)
+
+        uint32_t remainingLen = totalLength % CA_SUPPORTED_BLE_MTU_SIZE;
+        if ( remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
         {
             // send the last segment of the data (Ex: 22 bytes of 622 bytes of data when MTU is 200)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
             result = CAUpdateCharacteristicsToAllGattServers(
                          bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
-                         bleData->dataLen % CA_SUPPORTED_BLE_MTU_SIZE + CA_HEADER_LENGTH);
-             if (CA_STATUS_OK != result )
+                          remainingLen);
+            if (CA_STATUS_OK != result)
             {
-                OIC_LOG(ERROR, CALEADAPTER_TAG, "CAUpdateCharacteristicsToGattServer failed");
+                OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics (all) failed, result [%d]", result);
                 OICFree(dataSegment);
-                ca_mutex_unlock(g_bleClientSendDataMutex);
-                return ;
+                return;
             }
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]", remainingLen);
         }
+
     }
 
     OICFree(dataSegment);
-    ca_mutex_unlock(g_bleClientSendDataMutex);
 
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT - CABLEClientSendDataThread");
 }
 
 CALEData_t *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
@@ -1507,8 +1595,7 @@ CALEData_t *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, const void
 
 void CAFreeBLEData(CALEData_t *bleData)
 {
-    if (!bleData)
-        return;
+    VERIFY_NON_NULL_VOID(bleData, NULL, "Param bleData is NULL");
 
     CAAdapterFreeRemoteEndpoint(bleData->remoteEndpoint);
     OICFree(bleData->data);
@@ -1531,14 +1618,14 @@ CAResult_t CABLEClientSendData(const CARemoteEndpoint_t *remoteEndpoint,
 
     VERIFY_NON_NULL(data, NULL, "Param data is NULL");
 
-    VERIFY_NON_NULL_RET(g_bLEClientSendQueueHandle, CALEADAPTER_TAG,
-                        "g_bLEClientSendQueueHandle is  NULL",
+    VERIFY_NON_NULL_RET(g_bleClientSendQueueHandle, CALEADAPTER_TAG,
+                        "g_bleClientSendQueueHandle is  NULL",
                         CA_STATUS_FAILED);
     VERIFY_NON_NULL_RET(g_bleClientSendDataMutex, CALEADAPTER_TAG,
                         "g_bleClientSendDataMutex is NULL",
                         CA_STATUS_FAILED);
 
-    VERIFY_NON_NULL_RET(g_bLEClientSendQueueHandle, CALEADAPTER_TAG, "g_bLEClientSendQueueHandle",
+    VERIFY_NON_NULL_RET(g_bleClientSendQueueHandle, CALEADAPTER_TAG, "g_bleClientSendQueueHandle",
                         CA_STATUS_FAILED);
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Data Sending to LE layer [%d]", dataLen);
@@ -1551,7 +1638,7 @@ CAResult_t CABLEClientSendData(const CARemoteEndpoint_t *remoteEndpoint,
     }
     // Add message to send queue
     ca_mutex_lock(g_bleClientSendDataMutex);
-    CAQueueingThreadAddData(g_bLEClientSendQueueHandle, bleData, sizeof(CALEData_t));
+    CAQueueingThreadAddData(g_bleClientSendQueueHandle, bleData, sizeof(CALEData_t));
     ca_mutex_unlock(g_bleClientSendDataMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
@@ -1570,7 +1657,7 @@ CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
     VERIFY_NON_NULL_RET(g_sendQueueHandle, CALEADAPTER_TAG,
                         "BleClientReceiverQueue is NULL",
                         CA_STATUS_FAILED);
-    VERIFY_NON_NULL_RET(g_bleClientSendDataMutex, CALEADAPTER_TAG,
+    VERIFY_NON_NULL_RET(g_bleServerSendDataMutex, CALEADAPTER_TAG,
                         "BleClientSendDataMutex is NULL",
                         CA_STATUS_FAILED);
 

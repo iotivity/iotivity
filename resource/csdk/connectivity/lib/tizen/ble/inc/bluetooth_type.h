@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @file
- *
- * API to control the Bluetooth adapter, devices and communications.
- *
- * @ingroup CAPI_NETWORK_BLUETOOTH_TYPE_MODULE
- */
 
 #ifndef __TIZEN_NETWORK_BLUETOOTH_TYPE_H__
 #define __TIZEN_NETWORK_BLUETOOTH_TYPE_H__
@@ -29,6 +22,13 @@
 extern "C"
 {
 #endif /* __cplusplus */
+
+/**
+ * @file bluetooth_type.h
+ * @brief API to control the Bluetooth adapter, devices and communications.
+ * @ingroup     CAPI_NETWORK_BLUETOOTH_TYPE_MODULE
+ */
+
 
 /**
  * @ingroup CAPI_NETWORK_BLUETOOTH_MODULE
@@ -1451,11 +1451,13 @@ typedef void (*bt_gatt_connection_state_changed_cb)(int result, bool connected, 
  * @param[in] char_path Characteristic path for which the value is writtten.
  * @param[in] char_value The characteristic value
  * @param[in] value_length The length of the characteristic value written.
+ * @param[in] remote_address remote client device bd address.
  *
  * @see bt_gatt_connect()
  */
 typedef void (*bt_gatt_remote_characteristic_write_cb) (char *char_path,
 					unsigned char* char_value, int value_length,
+					const char *remote_address,
 					void *user_data);
 
 /**

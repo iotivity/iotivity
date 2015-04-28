@@ -161,8 +161,6 @@ CAResult_t CAAddBLEServiceInfoToList(BLEServiceList **serviceList,
     if (NULL == node)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "Malloc failed!");
-        OICFree(bleServiceInfo->bdAddress);
-        OICFree(bleServiceInfo);
         return CA_STATUS_FAILED;
     }
 

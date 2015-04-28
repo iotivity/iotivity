@@ -299,53 +299,48 @@ CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
     return CA_STATUS_FAILED;
 }
 
-bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
-                           const char *netMask)
+bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2, const char *netMask)
 {
     VERIFY_NON_NULL_RET(ipAddress1, CA_ADAPTER_UTILS_TAG, "First address", false);
     VERIFY_NON_NULL_RET(ipAddress2, CA_ADAPTER_UTILS_TAG, "Second address", false);
     VERIFY_NON_NULL_RET(netMask, CA_ADAPTER_UTILS_TAG, "netMask", false);
 
-    uint8_t ipList1[IPV4_ADDR_ONE_OCTECT_LEN] = {0};
-    uint8_t ipList2[IPV4_ADDR_ONE_OCTECT_LEN] = {0};
-    uint8_t maskList[IPV4_ADDR_ONE_OCTECT_LEN] = {0};
+    uint8_t ipList1[IPV4_ADDR_ONE_OCTECT_LEN] = { 0 };
+    uint8_t ipList2[IPV4_ADDR_ONE_OCTECT_LEN] = { 0 };
+    uint8_t maskList[IPV4_ADDR_ONE_OCTECT_LEN] = { 0 };
     CAResult_t ret = CA_STATUS_OK;
 
     /* Local Loopback Address */
-    if (0 == strncmp(ipAddress1, "127.", 4)
-        || 0 == strncmp(ipAddress2, "127.", 4))
+    if (0 == strncmp(ipAddress1, "127.", 4) || 0 == strncmp(ipAddress2, "127.", 4))
     {
         return true;
     }
 
     uint16_t parsedPort = 0;
-    ret = CAParseIPv4AddressInternal(ipAddress1, ipList1, sizeof(ipList1),
-                                     &parsedPort);
+    ret = CAParseIPv4AddressInternal(ipAddress1, ipList1, sizeof(ipList1), &parsedPort);
     if (ret != CA_STATUS_OK)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "First ip address parse fail %d", ret);
         return false;
     }
 
-    ret = CAParseIPv4AddressInternal(ipAddress2, ipList2, sizeof(ipList2),
-                                     &parsedPort);
+    ret = CAParseIPv4AddressInternal(ipAddress2, ipList2, sizeof(ipList2), &parsedPort);
     if (ret != CA_STATUS_OK)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Second ip address parse fail %d", ret);
         return false;
     }
 
-    ret = CAParseIPv4AddressInternal(netMask, maskList, sizeof(maskList),
-                                     &parsedPort);
+    ret = CAParseIPv4AddressInternal(netMask, maskList, sizeof(maskList), &parsedPort);
     if (ret != CA_STATUS_OK)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "Net mask parse fail %d", ret);
         return false;
     }
 
-    return ((ipList1[0] & maskList[0]) == (ipList2[0] & maskList[0]))
-        && ((ipList1[1] & maskList[1]) == (ipList2[1] & maskList[1]))
-        && ((ipList1[2] & maskList[2]) == (ipList2[2] & maskList[2]))
-        && ((ipList1[3] & maskList[3]) == (ipList2[3] & maskList[3]));
+    return ((ipList1[0] & maskList[0]) == (ipList2[0] & maskList[0])) && ((ipList1[1] & maskList[1])
+            == (ipList2[1] & maskList[1]))
+           && ((ipList1[2] & maskList[2]) == (ipList2[2] & maskList[2]))
+           && ((ipList1[3] & maskList[3]) == (ipList2[3] & maskList[3]));
 }
 

@@ -151,23 +151,12 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
 
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Changed characteristic is  [%s]", (char *)characteristic);
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Changed characteristic value length [%d]", valueLen);
-    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Changed characteristic value [%s]", value);
-
-    char *data = (char *)OICMalloc(sizeof(char) * (valueLen + 1));
-    if (NULL == data)
-    {
-        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "Malloc failed!");
-        return;
-    }
-
-    strncpy(data, (char *)value, valueLen + 1);
 
     ca_mutex_lock(g_bleReqRespClientCbMutex);
     if (NULL == g_bleClientDataReceivedCallback)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "gReqRespCallback is NULL!");
         ca_mutex_unlock(g_bleReqRespClientCbMutex);
-        OICFree(data);
         return;
     }
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "Sending data up !");
@@ -175,17 +164,14 @@ void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
     ca_mutex_lock(g_bleServerBDAddressMutex);
     uint32_t sentLength = 0;
     g_bleClientDataReceivedCallback(g_remoteAddress, OIC_BLE_SERVICE_ID,
-                                     data, strlen(data), &sentLength);
+                                     value, valueLen, &sentLength);
 
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Sent data Length is %d", sentLength);
     ca_mutex_unlock(g_bleServerBDAddressMutex);
 
     ca_mutex_unlock(g_bleReqRespClientCbMutex);
 
-    OICFree(data);
-
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
-    return;
 }
 
 void CABleGattCharacteristicWriteCb(int result, void *userData)
@@ -359,7 +345,6 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
     }
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
     return true;
-
 }
 
 void CABtGattBondCreatedCb(int result, bt_device_info_s *device_info, void *user_data)
@@ -384,8 +369,8 @@ void CABtGattBondCreatedCb(int result, bt_device_info_s *device_info, void *user
         BLEServiceInfo *bleServiceInfo = NULL;
 
         ca_mutex_lock(g_bleServiceListMutex);
-        CAResult_t retVal = CAGetBLEServiceInfo(g_bLEServiceList, device_info->remote_address, &bleServiceInfo);
-        ca_mutex_unlock(g_bleServiceListMutex);
+        CAResult_t retVal = CAGetBLEServiceInfo(g_bLEServiceList, device_info->remote_address,
+                                                &bleServiceInfo);
         if (CA_STATUS_OK != retVal)
         {
             OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "CAGetBLEServiceInfo failed! ");
@@ -470,12 +455,12 @@ bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int index, int count
     {
         OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "Its OIC service");
 
-        OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG , "Registering to watch characteristics changes  \n");
+        OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG , "Registering to watch characteristics changes");
 
         result = CABleGattWatchCharacteristicChanges(service);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
+            OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG,
                       "CABleGattWatchCharacteristicChanges failed!");
             return false;
         }
@@ -529,7 +514,6 @@ bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int index, int count
             OICFree(stTemp->address);
             OICFree(stTemp);
             CAFreeBLEServiceInfo(bleServiceInfo);
-            bleServiceInfo = NULL;
             return false;
         }
 
@@ -669,7 +653,7 @@ void CABtAdapterLeDeviceDiscoveryStateChangedCb(int result,
         }
         else
         {
-            for (int32_t i = discoveryInfo->service_count - 1; i > 0; i--)
+            for (int32_t i = discoveryInfo->service_count - 1; i >= 0; i--)
             {
                 OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "uuid[%d]: [%s]",
                           i, discoveryInfo->service_uuid[i]);
@@ -878,15 +862,6 @@ void CAStopBLEGattClient()
         ca_mutex_unlock(g_bleClientStateMutex);
         return;
     }
-    ca_mutex_unlock(g_bleClientStateMutex);
-
-    OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "OUT");
-}
-
-void CATerminateBLEGattClient()
-{
-    OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
-    ca_mutex_lock(g_bleClientStateMutex);
 
     GMainContext  *context_event_loop = NULL;
     // Required for waking up the thread which is running in gmain loop
@@ -907,7 +882,16 @@ void CATerminateBLEGattClient()
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "g_eventLoop context is NULL");
     }
 
-    ca_mutex_lock(g_bleServerBDAddressMutex);
+    u_mutex_unlock(g_bleClientStateMutex);
+
+    OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "OUT");
+}
+
+void CATerminateBLEGattClient()
+{
+    OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
+    u_mutex_lock(g_bleClientStateMutex);
+
 
     OICFree(g_remoteAddress);
 
@@ -1091,7 +1075,7 @@ CAResult_t CABleGattSetCallbacks()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "Setting bt_device_set_bond_created_cb \n");
+    OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "Setting bt_device_set_bond_created_cb");
 
     ret = bt_device_set_bond_created_cb(CABtGattBondCreatedCb, NULL);
     if (BT_ERROR_NONE != ret)
@@ -1128,7 +1112,7 @@ CAResult_t CABleGattWatchCharacteristicChanges(bt_gatt_attribute_h service)
     if (BT_ERROR_NONE != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
-                  "bt_gatt_watch_characteristic_changes failed  with [%s] \n",
+                  "bt_gatt_watch_characteristic_changes failed  with [%s]",
                   CABTGetErrorMsg(ret));
 
         return CA_STATUS_FAILED;
@@ -1376,7 +1360,7 @@ void CADiscoverDescriptorThread(void *stServiceInfo)
     CAResult_t result = CABleGattDiscoverDescriptor(stTemp->serviceInfo, NULL);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG,
                   "bt_gatt_discover_characteristic_descriptor failed");
         bt_gatt_destroy_attribute_handle(stTemp->serviceInfo);
         OICFree(stTemp->address);
@@ -1402,7 +1386,7 @@ CAResult_t CABleGattDiscoverDescriptor(bt_gatt_attribute_h service, const char *
     if (BT_ERROR_NONE != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
-                  "bt_gatt_discover_characteristic_descriptor failed with returns[%s] \n",
+                  "bt_gatt_discover_characteristic_descriptor failed with returns[%s]",
                   CABTGetErrorMsg(ret));
         return CA_STATUS_FAILED;
     }
@@ -1469,7 +1453,7 @@ CAResult_t CASetCharacteristicDescriptorValue(stGattCharDescriptor_t *stGattChar
         if (BT_ERROR_NONE != ret)
         {
             OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
-                      "bt_gatt_set_characteristic_desc_value_request failed with return[%s] \n",
+                      "bt_gatt_set_characteristic_desc_value_request failed with return[%s]",
                       CABTGetErrorMsg(ret));
             OICFree(strUUID);
             return CA_STATUS_FAILED;
@@ -1497,7 +1481,7 @@ void CAGATTCreateBondThread(void *stServiceInfo)
     CAResult_t  result = CABleGATTCreateBond(stTemp->address);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG ,
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG ,
                   "CABleGattDiscoverCharacteristics failed!");
         OICFree(stTemp->address);
         OICFree(stTemp);
@@ -1535,7 +1519,7 @@ CAResult_t CABleGATTCreateBond(const char *remoteAddress)
 }
 
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
-        const char  *data, const int32_t dataLen,
+        const char  *data, const uint32_t dataLen,
         CALETransferType_t type, const int32_t position)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
@@ -1579,15 +1563,11 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Updating to write char [%s]",
               bleServiceInfo->read_char);
 
-    char *value = (char *) OICMalloc(sizeof(char) * (dataLen + 1));
-    VERIFY_NON_NULL_RET(value, TZ_BLE_CLIENT_TAG, "malloc failed", CA_STATUS_FAILED);
-    strncpy((char *)value, data, dataLen + 1);
-
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG,
-              "Updating the data of length [%d] to [%s] and size of data is [%d] ", dataLen,
-              bleServiceInfo->bdAddress, strlen(value));
+              "Updating the data of length [%d] to [%s]", dataLen,
+              bleServiceInfo->bdAddress);
 
-    int result = bt_gatt_set_characteristic_value_request(bleServiceInfo->read_char, (unsigned char *)value,
+    int result = bt_gatt_set_characteristic_value_request(bleServiceInfo->read_char, (unsigned char *)data,
                      dataLen,
                      CABleGattCharacteristicWriteCb);
     if (BT_ERROR_NONE != result)
@@ -1595,18 +1575,15 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
         OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
                   "bt_gatt_set_characteristic_value_request Failed with return val [%d]",
                   result);
-        OICFree(value);
         return CA_STATUS_FAILED;
     }
-
-    OICFree(value);
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
-            int32_t dataLen)
+            uint32_t dataLen)
 {
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
 
