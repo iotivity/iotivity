@@ -59,10 +59,6 @@ TEST(PolicyEngineCore, CheckPermissionNoAcls)
                         &g_subjectIdA,
                         g_resource1,
                         PERMISSION_READ));
-    EXPECT_EQ(0, memcmp(g_peContext.subject,
-                        &WILDCARD_SUBJECT_ID,
-                        sizeof(OicUuid_t)));
-    EXPECT_EQ(0, strcmp(g_peContext.resource, g_resource1));
 }
 
 TEST(PolicyEngineCore, DeInitPolicyEngine)

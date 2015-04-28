@@ -248,7 +248,7 @@ typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
  * @brief   /oic/uuid (Universal Unique Identifier) data type.
  */
 #define UUID_LENGTH 128/8 // 128-bit GUID length
-//TODO: Confirm the lenght and type of ROLEID.
+//TODO: Confirm the length and type of ROLEID.
 #define ROLEID_LENGTH 128/8 // 128-bit ROLEID length
 struct OicUuid
 {

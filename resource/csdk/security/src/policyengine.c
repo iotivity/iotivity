@@ -62,6 +62,24 @@ inline uint16_t GetPermissionFromOCMethod(const OCMethod method)
 }
 
 /**
+ * Set the state and clear other stateful context vars.
+ */
+void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
+{
+    // Clear stateful context variables.
+    OCFree(context->subject);
+    context->subject = NULL;
+    OCFree(context->resource);
+    context->resource = NULL;
+    context->permission = 0x0;
+    context->matchingAclFound = false;
+    context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+
+    // Set state.
+    context->state = state;
+}
+
+/**
  * Bitwise check to see if 'permission' contains 'request'.
  * @param   permission  The allowed CRUDN permission.
  * @param   request     The CRUDN permission being requested.
@@ -237,13 +255,14 @@ SRMAccessResponse_t CheckPermission(
     const uint16_t  requestedPermission)
 {
     // TODO check all args for NULL
+    SRMAccessResponse_t retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
 
     // Each state machine context can only be processing one request at a time.
     // Therefore if the context is not in AWAITING_REQUEST state, return error.
     // Otherwise, change to BUSY state and begin processing request.
     if(AWAITING_REQUEST == context->state)
     {
-        context->state = BUSY;
+        SetPolicyEngineState(context, BUSY);
         CopyParamsToContext(context, subjectId, resource, requestedPermission);
         ProcessAccessRequest(context);
         // If matching ACL not found, and subject != wildcard, try wildcard.
@@ -262,9 +281,12 @@ SRMAccessResponse_t CheckPermission(
     {
         context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
     }
-    context->state = AWAITING_REQUEST;
 
-    return context->retVal;
+    // Capture retVal before resetting state for next request.
+    retVal = context->retVal;
+    SetPolicyEngineState(context, AWAITING_REQUEST);
+
+    return retVal;
 }
 
 /**
@@ -275,10 +297,7 @@ SRMAccessResponse_t CheckPermission(
 OCStackResult InitPolicyEngine(PEContext_t *context) {
     if(NULL != context)
     {
-        context->permission = 0x0;
-        context->matchingAclFound = false;
-        context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-        context->state = AWAITING_REQUEST;
+        SetPolicyEngineState(context, AWAITING_REQUEST);
     }
 
     return OC_STACK_OK;
@@ -293,14 +312,7 @@ OCStackResult InitPolicyEngine(PEContext_t *context) {
 void DeInitPolicyEngine(PEContext_t *context) {
     if(NULL != context)
     {
-        OCFree(context->subject);
-        context->subject = NULL;
-        OCFree(context->resource);
-        context->resource = NULL;
-        context->permission = 0x0;
-        context->matchingAclFound = false;
-        context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-        context->state = STOPPED;
+        SetPolicyEngineState(context, STOPPED);
     }
 
     return;
