@@ -29,6 +29,7 @@
 #include "cainterface.h"
 #include "securityresourcemanager.h"
 #include "securevirtualresourcetypes.h"
+#include "srmresourcestrings.h"
 #include "aclresource.h"
 
 using namespace std;
@@ -50,6 +51,8 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
 const char* JSON_FILE_NAME = "oic_unittest.json";
 const char* DEFAULT_ACL_JSON_FILE_NAME = "oic_unittest_default_acl.json";
 const char* ACL1_JSON_FILE_NAME = "oic_unittest_acl1.json";
+
+#define NUM_ACE_FOR_WILDCARD_IN_ACL1_JSON (2)
 
 char* ReadFile(const char* filename)
 {
@@ -180,7 +183,7 @@ TEST(ACLResourceTest, GetDefaultACLTests)
 }
 
 
-
+// 'POST' ACL tests
 TEST(ACLResourceTest, ACLPostTest)
 {
     OCEntityHandlerRequest ehReq = {};
@@ -208,7 +211,8 @@ TEST(ACLResourceTest, ACLPostTest)
     EXPECT_TRUE(NULL != acl);
 
     // Verify if SRM contains ACL for the subject
-    const OicSecAcl_t* subjectAcl = GetACLResourceData(&(acl->subject));
+    OicSecAcl_t* savePtr = NULL;
+    const OicSecAcl_t* subjectAcl = GetACLResourceData(&(acl->subject), &savePtr);
     EXPECT_TRUE(NULL != subjectAcl);
 
     // Perform cleanup
@@ -219,4 +223,40 @@ TEST(ACLResourceTest, ACLPostTest)
 }
 
 
+// GetACLResource tests
+TEST(ACLResourceTest, GetACLResourceTests)
+{
+    // gAcl is a pointer to the the global ACL used by SRM
+    extern OicSecAcl_t  *gAcl;
+
+    // Read an ACL from the file
+    char *jsonStr = ReadFile(ACL1_JSON_FILE_NAME);
+    EXPECT_TRUE(NULL != jsonStr);
+    if (NULL == jsonStr)
+    {
+        printf("Please copy %s into unittest folder\n", ACL1_JSON_FILE_NAME);
+    }
+
+    gAcl = JSONToAclBin(jsonStr);
+    EXPECT_TRUE(NULL != gAcl);
+
+    // Verify that ACL file contains 2 ACE entries for 'WILDCARD' subject
+    const OicSecAcl_t* acl = NULL;
+    OicSecAcl_t* savePtr = NULL;
+    OicUuid_t subject = WILDCARD_SUBJECT_ID;
+    int count = 0;
+
+    do
+    {
+        acl = GetACLResourceData(&subject, &savePtr);
+        count = (NULL != acl) ? count + 1 : count;
+    } while (acl != NULL);
+
+    EXPECT_EQ(count, NUM_ACE_FOR_WILDCARD_IN_ACL1_JSON);
+
+    /* Perform cleanup */
+    DeleteACLList(gAcl);
+    gAcl = NULL;
+    OCFree(jsonStr);
+}
 

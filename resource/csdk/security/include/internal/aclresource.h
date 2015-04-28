@@ -42,11 +42,15 @@ void DeInitACLResource();
 /**
  * This method is used by PolicyEngine to retrieve ACL for a Subject.
  *
- * @param subjectId - ID of the subject for which ACL is required.
+ * @param subjectId ID of the subject for which ACL is required.
+ * @param savePtr is used internally by @ref GetACLResourceData to maintain index between
+ *                successive calls for same subjectId.
  *
  * @retval  reference to @ref OicSecAcl_t if ACL is found, else NULL
+ *
+ * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL
  */
-const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId);
+const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **savePtr);
 
 /**
  * This function converts ACL data into JSON format.

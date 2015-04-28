@@ -1,6 +1,31 @@
 {
     "acl": [
         {
+            "sub": "Kg==",
+            "rsrc": [
+                "/oc/core",
+                "/oc/core/d",
+                "/oc/core/types/d",
+                "/oc/presence",
+                "/oic/sec/acl"
+			],
+			"perms": 2,
+			"ownrs" : [
+				"MjIyMjIyMjIyMjIyMjIyMg=="
+			]
+		},
+        {
+            "sub": "Kg==",
+            "rsrc": [
+                "/oic/sec/doxm",
+                "/oic/sec/pstat"
+			],
+			"perms": 6,
+			"ownrs" : [
+				"MjIyMjIyMjIyMjIyMjIyMg=="
+			]
+		},
+        {
             "sub": "MTExMTExMTExMTExMTExMQ==",
             "rsrc": [
 				"/oic/light",

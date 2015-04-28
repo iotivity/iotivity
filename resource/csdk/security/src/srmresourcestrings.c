@@ -74,5 +74,6 @@ const char * OIC_JSON_PUBLICDATA_NAME = "pbdata";
 const char * OIC_JSON_PRIVATEDATA_NAME = "pvdata";
 const char * OIC_JSON_PERIOD_NAME = "period";
 
-const const OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
+const OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
+const size_t WILDCARD_SUBJECT_ID_LEN = 1 ;
 

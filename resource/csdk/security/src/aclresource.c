@@ -96,13 +96,22 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
         {
             char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
             uint32_t outLen = 0;
+            size_t inLen = 0;
             B64Result b64Ret = B64_OK;
 
             cJSON *jsonAcl = cJSON_CreateObject();
 
             /* Subject -- Mandatory */
             outLen = 0;
-            b64Ret = b64Encode(acl->subject.id, sizeof(acl->subject.id), base64Buff,
+            if (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
+            {
+                inLen = WILDCARD_SUBJECT_ID_LEN;
+            }
+            else
+            {
+                inLen =  sizeof(OicUuid_t);
+            }
+            b64Ret = b64Encode(acl->subject.id, inLen, base64Buff,
                 sizeof(base64Buff), &outLen);
             VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
             cJSON_AddStringToObject(jsonAcl, OIC_JSON_SUBJECT_NAME, base64Buff );
@@ -551,27 +560,59 @@ void DeInitACLResource()
 /**
  * This method is used by PolicyEngine to retrieve ACL for a Subject.
  *
- * @param subjectId - ID of the subject for which ACL is required.
- * @param subjectIdLen - length of subjectId field.
+ * @param subjectId ID of the subject for which ACL is required.
+ * @param savePtr is used internally by @ref GetACLResourceData to maintain index between
+ *                successive calls for same subjectId.
  *
  * @retval  reference to @ref OicSecAcl_t if ACL is found, else NULL
+ *
+ * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL
  */
-const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId)
+const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **savePtr)
 {
     OicSecAcl_t *acl = NULL;
+    OicSecAcl_t *begin = NULL;
 
     if ( NULL == subjectId)
     {
         return NULL;
     }
 
-    LL_FOREACH(gAcl, acl)
+    /*
+     * savePtr MUST point to NULL if this is the 'first' call to retrieve ACL for
+     * subjectID.
+     */
+    if (NULL == *savePtr)
     {
-        /* TODO : Need to synch on 'Subject' data type */
-        if (memcmp(&(acl->subject), subjectId, sizeof(OicUuid_t)) == 0)
+        begin = gAcl;
+    }
+    else
+    {
+        /*
+         * If this is a 'successive' call, search for location pointed by
+         * savePtr and assign 'begin' to the next ACL after it in the linked
+         * list and start searching from there.
+         */
+        LL_FOREACH(gAcl, acl)
         {
-             return acl;
+            if (acl == *savePtr)
+            {
+                begin = acl->next;
+            }
         }
     }
+
+    // Find the next ACL corresponding to the 'subjectID' and return it.
+    LL_FOREACH(begin, acl)
+    {
+        if (memcmp(&(acl->subject), subjectId, sizeof(OicUuid_t)) == 0)
+        {
+            *savePtr = acl;
+            return acl;
+        }
+    }
+
+    // Cleanup in case no ACL is found
+    *savePtr = NULL;
     return NULL;
 }

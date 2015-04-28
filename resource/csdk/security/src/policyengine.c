@@ -183,15 +183,14 @@ void ProcessAccessRequest(PEContext_t *context)
     if(NULL != context)
     {
         OicSecAcl_t *currentAcl = NULL;
+        OicSecAcl_t *savePtr = NULL;
 
         // Start out assuming subject not found.
         context->retVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
-        // TODO use RM API: RMSetAclSubject(context->subject);
         do
         {
             OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): getting ACL..."));
-            // TODO use RM API: currentAcl = RMGetNextAcl();
-            currentAcl = GetACLResourceData(context->subject); // TODO remove
+            currentAcl = GetACLResourceData(context->subject, &savePtr);
             char *tmp = OCMalloc(sizeof(OicUuid_t) +1);
             memcpy(tmp, context->subject, sizeof(OicUuid_t));
             tmp[sizeof(OicUuid_t) + 1] = '\0';
@@ -223,9 +222,7 @@ void ProcessAccessRequest(PEContext_t *context)
                     no ACL found matching subject ."));
             }
         }
-        while(false); //TODO: remove this line when RMGetNextAcl is available
-        // TODO use RM API: currentAcl = RMGetNextAcl();
-        //while((NULL != currentAcl) && (false == context->matchingAclFound));
+        while((NULL != currentAcl) && (false == context->matchingAclFound));
     }
     if(IsAccessGranted(context->retVal))
     {

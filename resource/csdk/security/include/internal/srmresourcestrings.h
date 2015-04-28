@@ -77,6 +77,7 @@ extern const char * OIC_JSON_OM_NAME;
 extern const char * OIC_JSON_SMS_NAME;
 
 extern const OicUuid_t WILDCARD_SUBJECT_ID;
+extern const size_t WILDCARD_SUBJECT_ID_LEN;
 
 #endif //IOTVT_SRM_RSRC_STRINGS_H
 
