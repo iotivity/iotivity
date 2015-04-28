@@ -18,8 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-// OCClient.cpp : Defines the entry point for the console application.
-//
+/**
+ * @file SampleConsumer.cpp
+ * @brief Defines the entry point for the sample consumer application about Resource Hosting.
+ */
 
 #include <string>
 #include <cstdlib>
@@ -27,11 +29,12 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include <mutex>
+
 using namespace OC;
 
 const int SUCCESS_RESPONSE = OC_STACK_OK;
 
-#define OC_WELL_KNOWN_COORDINATING_QUERY "coap://224.0.1.187:5683/oc/core?rt=Resource.Hosting"
+#define OC_WELL_KNOWN_COORDINATING_QUERY "224.0.1.187:5683/oc/core?rt=Resource.Hosting"
 
 #define OBSERVE 1
 #define GET     2
@@ -39,7 +42,9 @@ const int SUCCESS_RESPONSE = OC_STACK_OK;
 #define DELETE  4
 
 std::shared_ptr< OCResource > g_curResource;
+std::shared_ptr< OCResource > g_curObserveResource;
 std::mutex curResourceLock;
+
 OCStackResult nmfindResource(const std::string &host , const std::string &resourceName);
 void onObserve(const HeaderOptions &headerOption , const OCRepresentation &rep , const int &eCode,
                const int &sequenceNumber);
@@ -59,6 +64,7 @@ void findResourceCandidate()
     }
     catch (OCException &e)
     {
+        std::cout << "Exception for find resource : " << e.reason() << std::endl;
     }
 }
 
@@ -68,6 +74,23 @@ void startObserve(std::shared_ptr< OCResource > resource)
     {
         std::cout << "startObserve() error : resource == null" << std::endl;
         return;
+    }
+
+    if(g_curObserveResource == NULL)
+    {
+        g_curObserveResource = resource;
+        std::cout << "request for new observation" << std::endl;
+    }
+    else if(g_curObserveResource == g_curResource)
+    {
+        std::cout << "already registered same observation" << std::endl;
+        return;
+    }
+    else
+    {
+        std::cout << "change observed resource" << std::endl;
+        g_curObserveResource->cancelObserve();
+        g_curObserveResource = resource;
     }
 
     QueryParamsMap test;
@@ -321,6 +344,7 @@ int main(int argc , char *argv[])
     std::cout << "Created Platform..." << std::endl;
 
     g_curResource = NULL;
+    g_curObserveResource = NULL;
 
     findResourceCandidate();
 
