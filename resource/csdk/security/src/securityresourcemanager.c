@@ -63,9 +63,35 @@ void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t
     OicUuid_t subjectId = {.id = {0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
                                   0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2} };
 
-    SRMAccessResponse_t  response = CheckPermission( &g_policyEngineContext, &subjectId,
-        endPoint->resourceUri, GetPermissionFromOCMethod(requestInfo->method));
+    //Check the URI has the query and skip it before checking the permission
+    char *uri = strstr(endPoint->resourceUri, "?");
+    int position = 0;
+    if (uri)
+    {
+        position = uri - endPoint->resourceUri;
+    }
+    if (position > MAX_URI_LENGTH)
+    {
+        OC_LOG(ERROR, TAG, PCF("URI length is too long"));
+        return;
+    }
+    SRMAccessResponse_t response = ACCESS_DENIED;
+    if (position > 0)
+    {
+        char newUri[MAX_URI_LENGTH + 1];
+        strncpy(newUri, endPoint->resourceUri, (position));
+        newUri[position] = '\0';
+        //Skip query and pass the newUri.
+        response = CheckPermission(&g_policyEngineContext, &subjectId, newUri,
+                GetPermissionFromOCMethod(requestInfo->method));
 
+    }
+    else
+    {
+        //Pass endPoint->resourceUri if there is no query info.
+        response = CheckPermission(&g_policyEngineContext, &subjectId, endPoint->resourceUri,
+                GetPermissionFromOCMethod(requestInfo->method));
+    }
     if (IsAccessGranted(response) && gRequestHandler)
     {
         return (gRequestHandler(endPoint, requestInfo));
