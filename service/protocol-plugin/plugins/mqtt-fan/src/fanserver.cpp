@@ -498,8 +498,12 @@ void *start_fanserver(void *d)      // 2
             printf("Mosquitto is working\n");
         }
 
-        mosquitto_connect(myMosquitto, "127.0.0.1", 1883, 60);
-        printf("Mosquitto Connection is done\n");
+        if (mosquitto_connect(myMosquitto, "127.0.0.1", 1883, 60) != MOSQ_ERR_SUCCESS)
+        {
+            printf("Mosquitto Connection is failed.\n");
+            pthread_exit((void *)0);
+        }
+        printf("Mosquitto Connection is done.\n");
         myFanResource.createResource();
         // Get time of day
         timer = time(NULL);
