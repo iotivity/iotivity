@@ -70,6 +70,11 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest);
  */
 void *ChangeLightRepresentation (void *param);
 
+/* This method check the validity of resourceTypeName and resource interfaces
+ * Entity Handler has to parse the query string in order to process it
+ */
+OCEntityHandlerResult ValidateQueryParams (OCEntityHandlerRequest *entityHandlerRequest);
+
 /* Following methods process the PUT, GET, POST, Delete,
  * & Observe requests */
 OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,

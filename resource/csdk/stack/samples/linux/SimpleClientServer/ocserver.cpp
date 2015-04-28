@@ -80,6 +80,11 @@ const char *platformVersion = "myPlatformVersion";
 const char *supportUrl = "mySupportUrl";
 const char *version = "myVersion";
 
+// Entity handler should check for resourceTypeName and ResourceInterface in order to GET
+// the existence of a known resource
+const char *resourceTypeName = "core.light";
+const char *resourceInterface = "oc.mi.def";
+
 OCDeviceInfo deviceInfo;
 
 //This function takes the request as an input and returns the response
@@ -169,10 +174,53 @@ bool checkIfQueryForPowerPassed(char * query)
     return true;
 }
 
+/* This method check the validity of resourceTypeName and resource interfaces
+ * Entity Handler has to parse the query string in order to process it
+ */
+
+OCEntityHandlerResult ValidateQueryParams (OCEntityHandlerRequest *entityHandlerRequest)
+{
+    bool resourceList = true;
+    uint8_t resourceIndex = 0;
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+
+    // Validate pointer
+    if (!entityHandlerRequest)
+    {
+        OC_LOG (ERROR, TAG, "Invalid request pointer");
+        return ehResult;
+    }
+    //Added check for resource type & interface in server entity handle
+
+    while(resourceList)
+    {
+        const char* typeName = OCGetResourceTypeName(entityHandlerRequest->resource,
+                                                      resourceIndex);
+        const char* interfaceName = OCGetResourceInterfaceName(entityHandlerRequest->resource,
+                                                                resourceIndex);
+        if(typeName && interfaceName)
+        {
+            if(strcmp(typeName,resourceTypeName) == 0 &&
+               strcmp(interfaceName,resourceInterface) == 0)
+            {
+                ehResult = OC_EH_OK;
+                break;
+            }
+            resourceIndex++;
+        }
+        else
+        {
+            resourceList = false;
+        }
+    }
+    return ehResult;
+}
+
 OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
         char *payload, uint16_t maxPayloadSize)
 {
     OCEntityHandlerResult ehResult;
+    char *getResp = constructJsonResponse(ehRequest);
 
     bool queryPassed = checkIfQueryForPowerPassed(ehRequest->query);
 
@@ -462,7 +510,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
 {
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
-    OCEntityHandlerResult ehResult = OC_EH_OK;
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCEntityHandlerResponse response;
     char payload[MAX_RESPONSE_LENGTH] = {0};
 
@@ -472,12 +520,16 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         OC_LOG (ERROR, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
-
     // Initialize certain response fields
     response.numSendVendorSpecificHeaderOptions = 0;
     memset(response.sendVendorSpecificHeaderOptions, 0,
             sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof response.resourceUri);
+
+    // Entity handler to check the validity of resourceTypeName and resource interfaces
+    // It is Entity handler's responsibility to keep track of the list of resources prior to call
+    // Requested method
+    ehResult = ValidateQueryParams(entityHandlerRequest);
 
     if (flag & OC_INIT_FLAG)
     {
@@ -486,34 +538,43 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
-        if (entityHandlerRequest->resource == NULL)
+        // Entity handler to check the validity of resourceType and resource interface
+        if( ehResult == OC_EH_OK )
         {
-            OC_LOG (INFO, TAG, "Received request from client to a non-existing resource");
-            ehResult = ProcessNonExistingResourceRequest(entityHandlerRequest,
-                    payload, sizeof(payload) - 1);
-        }
-        else if (OC_REST_GET == entityHandlerRequest->method)
-        {
-            OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
-            ehResult = ProcessGetRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
-        }
-        else if (OC_REST_PUT == entityHandlerRequest->method)
-        {
-            OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
-            ehResult = ProcessPutRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
-        }
-        else if (OC_REST_DELETE == entityHandlerRequest->method)
-        {
-            OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
-            ehResult = ProcessDeleteRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+            if (entityHandlerRequest->resource == NULL)
+            {
+                OC_LOG (INFO, TAG, "Received request from client to a non-existing resource");
+                ehResult = ProcessNonExistingResourceRequest(entityHandlerRequest,
+                               payload, sizeof(payload) - 1);
+            }
+            else if (OC_REST_GET == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+                ehResult = ProcessGetRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+            }
+            else if (OC_REST_PUT == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+                ehResult = ProcessPutRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+            }
+            else if (OC_REST_DELETE == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
+                ehResult = ProcessDeleteRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+            }
+            else
+            {
+                OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+                          entityHandlerRequest->method);
+                ehResult = OC_EH_ERROR;
+            }
         }
         else
         {
-            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
-                    entityHandlerRequest->method);
-            ehResult = OC_EH_ERROR;
+            OC_LOG_V (INFO, TAG,
+                      "Invalid ResourceInterface Type & Name received from client for method: %d ",
+                      entityHandlerRequest->method);
         }
-
         // If the result isn't an error or forbidden, send response
         if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
         {
@@ -582,6 +643,12 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             0, sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof response.resourceUri);
 
+    // Entity handler to check the validity of resourceTypeName and resource interfaces
+    // It is Entity handler's responsibility to keep track of the list of resources prior to call
+    // Requested method
+
+    ehResult = ValidateQueryParams(entityHandlerRequest);
+
     if (flag & OC_INIT_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");
@@ -589,33 +656,44 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
-        if (OC_REST_GET == entityHandlerRequest->method)
+
+        // Entity handler to check the validity of resourceType and resource interface
+        // Entity handler to check the validity of resourceType and resource interface
+        if(ehResult == OC_EH_OK)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
-            ehResult = ProcessGetRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
-        }
-        else if (OC_REST_PUT == entityHandlerRequest->method)
-        {
-            OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
-            ehResult = ProcessPutRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
-        }
-        else if (OC_REST_POST == entityHandlerRequest->method)
-        {
-            OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
-            ehResult = ProcessPostRequest (entityHandlerRequest,
-                    &response, payload, sizeof(payload) - 1);
-        }
-        else if (OC_REST_DELETE == entityHandlerRequest->method)
-        {
-            OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
-            ehResult = ProcessDeleteRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+            if (OC_REST_GET == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+                ehResult = ProcessGetRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+            }
+            else if (OC_REST_PUT == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+                ehResult = ProcessPutRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+            }
+            else if (OC_REST_POST == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
+                ehResult = ProcessPostRequest (entityHandlerRequest, &response, payload, sizeof(payload) - 1);
+            }
+            else if (OC_REST_DELETE == entityHandlerRequest->method)
+            {
+                OC_LOG (INFO, TAG, "Received OC_REST_DELETE from client");
+                ehResult = ProcessDeleteRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
+            }
+            else
+            {
+                OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+                          entityHandlerRequest->method);
+                ehResult = OC_EH_ERROR;
+            }
         }
         else
         {
-            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
-                    entityHandlerRequest->method);
+            OC_LOG_V (INFO, TAG,
+                      "Invalid ResourceInterface Type & Name received from client for method: %d ",
+                      entityHandlerRequest->method);
         }
-
         // If the result isn't an error or forbidden, send response
         if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
         {
@@ -791,7 +869,7 @@ void *presenceNotificationGenerator(void *param)
             sleep(1);
             res = OCCreateResource(&presenceNotificationHandles[i],
                     presenceNotificationResources.at(i).c_str(),
-                    "oc.mi.def",
+                    resourceInterface,
                     presenceNotificationUris.at(i).c_str(),
                     OCNOPEntityHandlerCb,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
@@ -962,8 +1040,8 @@ int createLightResource (char *uri, LightResource *lightResource)
     lightResource->state = false;
     lightResource->power= 0;
     OCStackResult res = OCCreateResource(&(lightResource->handle),
-            "core.light",
-            "oc.mi.def",
+            resourceTypeName,
+            resourceInterface,
             uri,
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
