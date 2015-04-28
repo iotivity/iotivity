@@ -389,17 +389,25 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         memcpy(optionsPointer, ehResponse->sendVendorSpecificHeaderOptions,
                         sizeof(OCHeaderOption) * ehResponse->numSendVendorSpecificHeaderOptions);
     }
-
+    // Check the payload size with OC_JSON_PREFIX and OC_JSON_SUFFIX including NULL terminated
+    // string is less than MAX_RESPONSE_LENGTH.
+    int len = ehResponse->payloadSize + strlen(OC_JSON_PREFIX) + strlen(OC_JSON_SUFFIX) + 1;
+    if(len > MAX_RESPONSE_LENGTH)
+    {
+        return OC_STACK_ERROR;
+    }
     // Allocate memory for the payload.
     char *payload = (char *)OCCalloc(1, MAX_RESPONSE_LENGTH);
     if(!payload)
     {
         return OC_STACK_NO_MEMORY;
     }
-
     // Put the JSON prefix and suffix around the payload
     strcpy(payload, (const char *)OC_JSON_PREFIX);
-    strcat(payload, (const char *)ehResponse->payload);
+    if(ehResponse->payloadSize)
+    {
+        strncat(payload, (const char *)ehResponse->payload, ehResponse->payloadSize);
+    }
     strcat(payload, (const char *)OC_JSON_SUFFIX);
     responseInfo.info.payload = (CAPayload_t)payload;
 
