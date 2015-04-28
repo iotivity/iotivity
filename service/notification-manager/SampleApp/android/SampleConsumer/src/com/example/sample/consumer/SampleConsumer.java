@@ -108,8 +108,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             tv_select_method_type = (TextView) findViewById(R.id.tv_selected_method_type);
             tv_receive_result = (TextView) findViewById(R.id.tv_receive_result);
             tv_current_log_result = (TextView) findViewById(R.id.tv_current_log_result);
-
-
             btn_observe.setOnClickListener(this);
             btn_get.setOnClickListener(this);
             btn_put.setOnClickListener(this);
@@ -144,7 +142,10 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             found_uri = "";
             select_method_type = "";
             receive_result = "";
-
+            btn_observe.setClickable(true);
+            btn_get.setClickable(true);
+            btn_put.setClickable(true);
+            btn_delete.setClickable(true);
         }
 
         public void cleanLogString()
@@ -162,7 +163,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
 
         public void initOICStack()
         {
-
             PlatformConfig cfg = new PlatformConfig(ServiceType.IN_PROC,
                                                     ModeType.CLIENT, "0.0.0.0", 0, QualityOfService.HIGH);
             OcPlatform.Configure(cfg);
@@ -170,12 +170,10 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             tv_current_log_result.setText(current_log_result);
             findResourceCandidate();
             PRINT();
-
         }
 
         public void findResourceCandidate()
         {
-
             nmfindResource("", "coap://224.0.1.187/oc/core?rt=Resource.Hosting");
             current_log_result += "Finding Resource... \n";
             tv_current_log_result.setText(current_log_result);
@@ -183,8 +181,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
 
         public void nmfindResource(String host, String resourceName)
         {
-
-            // FoundResource foundResource = new FoundResource();
             try
             {
                 OcPlatform.findResource(host, resourceName, this);
@@ -203,7 +199,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
          */
         public void getRepresentation(OcResource resource)
         {
-
             if (resource != null)
             {
                 current_log_result += "Getting Light Representation...\n";
@@ -216,7 +211,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
          */
         public void getLightRepresentation(OcResource resource)
         {
-
             if (resource != null)
             {
                 current_log_result += "Getting Light Representation...\n";
@@ -238,7 +232,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
 
         public void PRINT()
         {
-
             current_log_result += "********************************************\n";
             current_log_result += "*  method Type : 1 - Observe               *\n";
             current_log_result += "*  method Type : 2 - Get                   *\n";
@@ -249,7 +242,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
 
         public void startObserve(OcResource resource)
         {
-
             if (resource != null)
             {
                 Map<String, String> queryParamsMap = new HashMap<String, String>();
@@ -271,7 +263,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
 
         public void startGet(OcResource resource)
         {
-
             if (resource != null)
             {
                 Map<String, String> queryParamsMap = new HashMap<String, String>();
@@ -293,7 +284,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
 
         public void startPut(OcResource resource)
         {
-
             if (resource != null)
             {
                 curResource = resource;
@@ -319,7 +309,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
 
         public void startDelete(OcResource resource)
         {
-
             curResource = resource;
             if (resource != null)
             {
@@ -330,20 +319,22 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
         @Override
         public void onClick(View v)
         {
-
             switch (v.getId())
             {
                 case R.id.btn_observe:
                     tv_select_method_type.setText(OBSERVE);
                     startObserve(curResource);
+                    btn_observe.setClickable(false);
                     break;
                 case R.id.btn_get:
                     tv_select_method_type.setText(GET);
                     startGet(curResource);
+                    btn_get.setClickable(false);
                     break;
                 case R.id.btn_put:
                     tv_select_method_type.setText(PUT);
                     startPut(curResource);
+                    btn_put.setClickable(false);
                     break;
                 case R.id.btn_post:
                     tv_select_method_type.setText(POST);
@@ -353,6 +344,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                 case R.id.btn_delete:
                     tv_select_method_type.setText(DELETE);
                     startDelete(curResource);
+                    btn_delete.setClickable(false);
                     break;
                 case R.id.btn_clean:
                     cleanLogString();
@@ -373,11 +365,8 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
         {
             SampleConsumer.this.runOnUiThread(new Runnable()
             {
-
                 public void run()
                 {
-
-
                     if (receive_result != null)
                     {
                         tv_receive_result.setText(receive_result);
@@ -398,21 +387,16 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
         @Override
         public synchronized void onResourceFound(OcResource resource)
         {
-
             // synchronized (this) {
             receive_result = "FoundResource";
-
             String resourceURI;
             String hostAddress;
-
             if (SampleConsumer.curResource != null)
             {
                 current_log_result += "Found another resource, ignoring\n";
             }
-
             if (resource != null)
             {
-
                 if (resource.getUri().equals("/a/TempHumSensor"))
                 {
                     current_log_result += "==============================\n";
@@ -423,7 +407,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                                           + "\n";
                     current_log_result += "Host address of the resource: "
                                           + hostAddress + "\n";
-
                     SampleConsumer.curResource = resource;
                 }
                 else
@@ -434,7 +417,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             else
             {
                 current_log_result += "Resource is invalid\n";
-
             }
 
             viewText();
@@ -495,7 +477,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
         public void onGetCompleted(List<OcHeaderOption> options,
                                    OcRepresentation rep)
         {
-
             setReceive_result("onGet");
             setCurrent_log_result(getCurrent_log_result()
                                   + "GET request was successful\n"
@@ -504,6 +485,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                                   + "Temperature: " + rep.getValueInt("temperature") + "\n"
                                   + "Humidity: " + rep.getValueInt("humidity") + "\n");
             viewText();
+            btn_get.setClickable(true);
         }
 
         @Override
@@ -523,13 +505,13 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             setCurrent_log_result(getCurrent_log_result() + "humidity: " + humidity
                                   + "\n");
             viewText();
+            btn_put.setClickable(true);
         }
 
         @Override
         public void onObserveCompleted(List<OcHeaderOption> options,
                                        OcRepresentation rep, int seqNum)
         {
-
             setReceive_result("onObserve");
             setCurrent_log_result(getCurrent_log_result() + "SequenceNumber : "
                                   + seqNum + "\n");
@@ -563,7 +545,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                 }
             }
             viewText();
-
         }
 
         @Override
@@ -571,7 +552,6 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
         {
             setReceive_result("onDelete");
             viewText();
+            btn_delete.setClickable(true);
         }
-
-        // }
 }
