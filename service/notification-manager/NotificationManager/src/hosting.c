@@ -351,17 +351,32 @@ OCStackResult registerResourceAsCoordinatable(OCResourceHandle *handle,
  */
 OCStackResult OICStartCoordinate()
 {
-    s_mirrorResourceList = createMirrorResourceList();
-    s_requestHandleList = createRequestHandleList();
+    OCStackResult ret = OC_STACK_ERROR;
+    if (OCInit((char *) NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, HOSTING_TAG, PCF("OCStack init ERROR"));
+    }
+    else
+    {
+        s_mirrorResourceList = createMirrorResourceList();
+        s_requestHandleList = createRequestHandleList();
+        ret = requestPresence(OC_MULTICAST_PREFIX);
+    }
 
-    return requestPresence(OC_MULTICAST_PREFIX);
+    return ret;
 }
 
 OCStackResult OICStopCoordinate()
 {
     OCStackResult result = OC_STACK_ERROR;
 
+    if (OCStop() == OC_STACK_OK)
+    {
+        OC_LOG_V(DEBUG, HOSTING_TAG, "OCStack Stop OK");
+    }
+
     result = destroyMirrorResourceList(s_mirrorResourceList);
+    s_mirrorResourceList = NULL;
     if(result != OC_STACK_OK)
     {
         return OC_STACK_ERROR;

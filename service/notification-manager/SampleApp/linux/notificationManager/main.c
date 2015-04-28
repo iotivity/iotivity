@@ -41,7 +41,11 @@ int main()
         return 0;
     }
 
-    OICStartCoordinate();
+    if (OICStartCoordinate() != OC_STACK_OK)
+    {
+        printf("OIC coordinate start fail\n");
+        return 0;
+    }
 
     signal(SIGINT, handleSigInt);
     while (!g_quitFlag)
@@ -56,7 +60,14 @@ int main()
         sleep(2);
     }
 
-    OICStopCoordinate();
+    if (OICStopCoordinate() != OC_STACK_OK)
+    {
+        printf("OIC coordinate stop error\n");
+    }
+    else
+    {
+        printf("OIC coordinate stop success\n");
+    }
 
     printf("Exiting occlient main loop...\n");
 
