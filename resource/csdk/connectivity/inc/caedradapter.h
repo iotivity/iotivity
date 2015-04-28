@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -40,34 +40,24 @@ extern "C"
 #endif
 
 /**
- * @brief  Initialize EDR Interface.
- * @param  registerCallback  [IN] Callback to register EDR interface to Connectivity
- *                                Abstraction Layer
- * @param  reqRespCallback   [IN] Callback to notify request and response messages from server(s)
- *                                started at Connectivity Abstraction Layer.
- * @param  netCallback       [IN] Callback to notify the network additions to Connectivity
- *                                Abstraction Layer.
- * @param  handle            [IN] Threadpool Handle
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM  Invalid input parameters
- * @retval  #CA_ADAPTER_NOT_ENABLED Initialization is successful, but bluetooth adapter is
- *                                  not enabled
- * @retval  #CA_STATUS_FAILED Operation failed
+ * @brief   Initialize EDR Interface.
+ * @param   registerCallback  [IN] Callback to register EDR interface to Connectivity
+ *                                 Abstraction Layer
+ * @param   reqRespCallback   [IN] Callback to notify request and response messages from server(s)
+ *                                 started at Connectivity Abstraction Layer.
+ * @param   netCallback       [IN] Callback to notify the network additions to Connectivity
+ *                                 Abstraction Layer.
+ * @param   handle            [IN] Threadpool Handle
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback reqRespCallback,
-                           CANetworkChangeCallback netCallback,
-                           ca_thread_pool_t handle);
+                           CANetworkChangeCallback netCallback, ca_thread_pool_t handle);
 
 /**
- * @brief  Starts EDR connectivity adapters. As its peer to peer it doesnot require to start
- *         any servers.
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_ADAPTER_NOT_ENABLED Bluetooth adapter is not enabled
- * @retval  #CA_STATUS_FAILED Operation failed
- *
+ * @brief   Starts EDR connectivity adapters. As its peer to peer it doesnot require to start
+ *          any servers.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAStartEDR();
 
@@ -75,12 +65,7 @@ CAResult_t CAStartEDR();
  * @brief  Starts listening server for receiving multicast search requests.
  * Starts  RFCOMM Server with prefixed UUID as per OIC specification.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_SERVER_STARTED_ALREADY  Server is already started and running for the predefined
- *                                     service UUID
- * @retval #CA_STATUS_FAILED Operation failed
- *
+ * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAStartEDRListeningServer();
 
@@ -88,11 +73,7 @@ CAResult_t CAStartEDRListeningServer();
  * @brief  Starting discovery server for receiving multicast advertisements.
  * Starts  RFCOMM Server with prefixed UUID as per OIC specification.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_SERVER_STARTED_ALREADY  Server is already started and running for the predefined
- *                                     service UUID
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAStartEDRDiscoveryServer();
 
@@ -106,7 +87,7 @@ CAResult_t CAStartEDRDiscoveryServer();
  *
  */
 int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
-                              uint32_t dataLength);
+                             uint32_t dataLength);
 
 /**
  * @brief  Sends multicast data to all discovered bluetooth OIC devices using the adapter
@@ -123,26 +104,19 @@ int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength);
  * @param  info [OUT] Array of local connectivity information structures.
  * @param  size [OUT] Size of the array @info.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input parameters
- * @retval #CA_MEMORY_ALLOC_FAILED  Failed to allocate memory
- * @retval #CA_STATUS_FAILED Operation failed
- * @remarks info is allocated in this API and should be freed by the caller.
+ * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
  * @brief  Read Synchronous API callback.
- * @return #CA_STATUS_OK on success otherwise proper error code.
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAReadEDRData();
 
 /**
  * @brief  EDR Stops all RFCOMM servers and close sockets.
- * @return #CA_STATUS_OK or Appropriate error code
+ * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAStopEDR();
 
@@ -156,11 +130,7 @@ void CATerminateEDR();
 /**
  * @brief  Initializes the adapter queues.
  * This will initiates both server and receiver adapter queues.
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input parameters
- * @retval #CA_MEMORY_ALLOC_FAILED  Failed to allocate memory
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAAdapterStartQueue();
 

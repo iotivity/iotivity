@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -26,6 +26,7 @@
 
 #include <string.h>
 #include <bluetooth.h>
+
 #include "caedrinterface.h"
 #include "caedrdevicelist.h"
 #include "caedrutils.h"
@@ -45,7 +46,7 @@ static CAEDRNetworkStatusCallback g_edrNetworkChangeCallback = NULL;
 static void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState,
                                             void *userData);
 
-CAResult_t CAEDRInitializeNetworkMonitor()
+CAResult_t CAEDRInitializeNetworkMonitor(const u_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 

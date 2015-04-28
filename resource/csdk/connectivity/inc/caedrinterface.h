@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -41,29 +41,30 @@ extern "C"
 
 typedef enum
 {
-    STATE_DISCONNECTED,    /**< State is Disconnected */
-    STATE_CONNECTED        /**< State is Connected */
+    STATE_DISCONNECTED, /**< State is Disconnected */
+    STATE_CONNECTED /**< State is Connected */
 } CAConnectedState_t;
 
-typedef struct connected_state {
+typedef struct connected_state
+{
     uint8_t address[CA_MACADDR_SIZE];
     CAConnectedState_t state;
 } state_t;
 
 /**
- * @enum CAAdapterServerType_t
+ * @enum  CAAdapterServerType_t
  * @brief Enum for defining different server types.
  */
 typedef enum
 {
-    CA_UNICAST_SERVER = 0,      /**< Unicast Server */
-    CA_MULTICAST_SERVER,        /**< Multicast Server */
-    CA_SECURED_UNICAST_SERVER   /**< Secured Unicast Server */
+    CA_UNICAST_SERVER = 0,    /**< Unicast Server */
+    CA_MULTICAST_SERVER,      /**< Multicast Server */
+    CA_SECURED_UNICAST_SERVER /**< Secured Unicast Server */
 } CAAdapterServerType_t;
 
 /**
  * @struct CAEDRData
- * @brief Structure to maintain the information of data in message queue.
+ * @brief  Structure to maintain the information of data in message queue.
  */
 typedef struct
 {
@@ -74,12 +75,12 @@ typedef struct
 
 /**
  * @struct CAEDRNetworkEvent
- * @brief Structure to maintain the adapter information and its status.
+ * @brief  Structure to maintain the adapter information and its status.
  */
 typedef struct
 {
-    CALocalConnectivity_t *info;    /**< Local Connectivity Information */
-    CANetworkStatus_t status;       /**< Network Status */
+    CALocalConnectivity_t *info; /**< Local Connectivity Information */
+    CANetworkStatus_t status;    /**< Network Status */
 } CAEDRNetworkEvent;
 
 /**
@@ -91,19 +92,19 @@ typedef struct
  * @return NONE
  * @pre Callback must be registered using CAEDRSetPacketReceivedCallback()
  */
-typedef void (*CAEDRDataReceivedCallback)(const char *remoteAddress,
-                                    const void *data, uint32_t dataLength, uint32_t *sentLength);
+typedef void (*CAEDRDataReceivedCallback)(const char *remoteAddress, const void *data,
+                                          uint32_t dataLength, uint32_t *sentLength);
 
 /**
  * @brief This will be used during change in network status.
- * @param status [IN] Network Status of the adapter
+ * @param status        [IN] Network Status of the adapter
  * @return NONE
  */
 typedef void (*CAEDRNetworkStatusCallback)(CANetworkStatus_t status);
 
 /**
  * @brief  Initialize the network monitor module
- *
+ * @param  threadPool   [IN] Threadpool Handle
  * @return #CA_STATUS_OK or Appropriate error code
  * @retval #CA_STATUS_OK  Successful
  * @retval #CA_ADAPTER_NOT_ENABLED Initialization is successful, but bluetooth adapter is
@@ -111,24 +112,24 @@ typedef void (*CAEDRNetworkStatusCallback)(CANetworkStatus_t status);
  * @retval #CA_STATUS_FAILED Operation failed
  * @see  CAEDRTerminateNetworkMonitor()
  */
-CAResult_t CAEDRInitializeNetworkMonitor();
+CAResult_t CAEDRInitializeNetworkMonitor(const ca_thread_pool_t threadPool);
 
 /**
  * @brief  Deinitialize with bluetooth adapter.
  * @return NONE
- * @pre  CAEDRInitializeNetworkMonitor() should be invoked before using this API.
- * @see  CAEDRInitializeNetworkMonitor()
+ * @pre    CAEDRInitializeNetworkMonitor() should be invoked before using this API.
+ * @see    CAEDRInitializeNetworkMonitor()
  */
-void CAEDRTerminateNetworkMonitor(void);
+void CAEDRTerminateNetworkMonitor();
 
 /**
- * @brief Start Network Monitoring Process
+ * @brief  Start Network Monitoring Process
  * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAEDRStartNetworkMonitor();
 
 /**
- * @brief Stop Network Monitoring Process
+ * @brief  Stop Network Monitoring Process
  * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAEDRStopNetworkMonitor();
@@ -140,33 +141,33 @@ CAResult_t CAEDRStopNetworkMonitor();
  * @retval #CA_STATUS_OK  Successful
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAEDRClientSetCallbacks(void);
+CAResult_t CAEDRClientSetCallbacks();
 
 /**
  * @brief  Resetting callbacks with bluetooth framework and stop OIC device discovery.
  * @return NONE
- * @pre  CAEDRClientSetCallbacks() should be invoked before using this API.
- * @see  CAEDRClientSetCallbacks()
+ * @pre    CAEDRClientSetCallbacks() should be invoked before using this API.
+ * @see    CAEDRClientSetCallbacks()
  */
-void CAEDRClientUnsetCallbacks(void);
+void CAEDRClientUnsetCallbacks();
 
 /**
- * @brief Used to initialize the EDR client module where mutex is initialized
+ * @brief  Used to initialize the EDR client module where mutex is initialized
  * @return NONE
  */
 void CAEDRInitializeClient(ca_thread_pool_t handle);
 
 /**
- * @brief Destroys the Device list and mutex.
+ * @brief  Destroys the Device list and mutex.
  * @return NONE
  */
 void CAEDRClientTerminate();
 
 /**
- * @brief Closes all the client connection to peer bluetooth devices.
+ * @brief  Closes all the client connection to peer bluetooth devices.
  * @return NONE
  */
-void CAEDRClientDisconnectAll(void);
+void CAEDRClientDisconnectAll();
 
 /**
  * @brief  Register callback to send the received packets from remote bluetooth device to BTAdapter.
@@ -186,11 +187,10 @@ void CAEDRSetPacketReceivedCallback(CAEDRDataReceivedCallback packetReceivedCall
  */
 void CAEDRSetNetworkChangeCallback(CAEDRNetworkStatusCallback networkStateChangeCallback);
 
-
 /**
  * @brief  Get the local bluetooth adapter information.
  *
- * @param  info [IN] Local bluetooth adapter information
+ * @param  info [OUT] Local bluetooth adapter information
  *
  * @return #CA_STATUS_OK or Appropriate error code
  * @retval #CA_STATUS_OK  Successful
@@ -207,6 +207,7 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info);
  *
  * @param  serviceUUID  [IN] The UUID of service with which RFCOMM server needs to be started.
  * @param  serverFD     [IN] The RFCOMM server socket file descriptor.
+ * @param  handle       [IN] Threadpool Handle
  *
  * @return #CA_STATUS_OK or Appropriate error code
  * @retval #CA_STATUS_OK  Successful
@@ -241,42 +242,47 @@ void CAEDRServerTerminate();
  * @retval #CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CAEDRManagerReadData(void);
+CAResult_t CAEDRManagerReadData();
 
 /**
- * @brief This function gets bluetooth adapter enable state.
- * @param state    [OUT] State of the Adapter.
+ * @brief  This function gets bluetooth adapter enable state.
+ * @param  state    [OUT] State of the Adapter.
  * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAEDRGetAdapterEnableState(bool *state);
 
 /**
- * @brief This function sends data to specified remote bluetooth device.
- * @param remoteAddress   [IN] Remote EDR Address
- * @param serviceUUID     [IN] Service UUID of the device
- * @param data            [IN] Data to be sent
- * @param dataLength      [IN] Length of the data to be sent
- * @param sentLength      [OUT] Length of the actual sent data
+ * @brief  This function sends data to specified remote bluetooth device.
+ * @param  remoteAddress   [IN] Remote EDR Address
+ * @param  serviceUUID     [IN] Service UUID of the device
+ * @param  data            [IN] Data to be sent
+ * @param  dataLength      [IN] Length of the data to be sent
+ * @param  sentLength      [OUT] Length of the actual sent data
  * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
                                       const void *data, uint32_t dataLength, uint32_t *sentLength);
 
 /**
- * @brief This function sends data to all bluetooth devices running OIC service.
- * @param serviceUUID     [IN] Service UUID of the device
- * @param data            [IN] Data to be sent
- * @param dataLength      [IN] Length of the data to be sent
- * @param sentLength      [OUT] Length of the actual sent data
+ * @brief  This function sends data to all bluetooth devices running OIC service.
+ * @param  serviceUUID     [IN] Service UUID of the device
+ * @param  data            [IN] Data to be sent
+ * @param  dataLength      [IN] Length of the data to be sent
+ * @param  sentLength      [OUT] Length of the actual sent data
  * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
                                         uint32_t dataLength, uint32_t *sentLength);
+
+/**
+ * @brief This function gets bonded bluetooth device list
+ * @return #CA_STATUS_OK or Appropriate error code
+ */
+CAResult_t CAEDRGetBondedDeviceList();
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 #endif //__CA_EDR_INTERFACE_H_
-
 

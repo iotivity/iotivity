@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -24,11 +24,10 @@
  * This file provides the APIs to start and stop RFCOMM server.
  */
 
-
 #include <string.h>
 #include <bluetooth.h>
-#include "caedrinterface.h"
 
+#include "caedrinterface.h"
 #include "caadapterutils.h"
 #include "caedrutils.h"
 #include "logger.h"
@@ -55,8 +54,8 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, ca_thread_po
     bt_error_e err = bt_adapter_is_service_used(serviceUUID, &isRunning);
     if (BT_ERROR_NONE != err)
     {
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG,
-                  "Unable to find whether service is already running or not! erorr num[%x]", err);
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG,
+                  "Unable to find whether service is already running or not! error num[%x]", err);
         return CA_STATUS_FAILED;
     }
 
@@ -71,18 +70,15 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, ca_thread_po
     err = bt_socket_create_rfcomm(serviceUUID, &socketFD);
     if (BT_ERROR_NONE != err)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to create rfcomm socket!, error num [%x]",
-                  err);
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to create rfcomm socket!, error num [%x]", err);
         return CA_STATUS_FAILED;
     }
 
     // Start listening and accepting
-    err = bt_socket_listen_and_accept_rfcomm(socketFD,
-                                g_maxPendingConnections);
+    err = bt_socket_listen_and_accept_rfcomm(socketFD, g_maxPendingConnections);
     if (BT_ERROR_NONE != err)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed in listen rfcomm socket!, error num [%x]",
-                  err);
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed in listen rfcomm socket!, error num [%x]", err);
 
         bt_socket_destroy_rfcomm(socketFD);
         return CA_STATUS_FAILED;
@@ -101,8 +97,7 @@ CAResult_t CAEDRServerStop(int serverFD)
     bt_error_e err = bt_socket_destroy_rfcomm(serverFD);
     if (BT_ERROR_NONE != err)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed close server socket!, error num [%x]",
-                  err);
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed close server socket!, error num [%x]", err);
         return CA_STATUS_FAILED;
     }
 
