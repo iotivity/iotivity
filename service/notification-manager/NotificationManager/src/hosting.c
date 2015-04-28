@@ -600,7 +600,7 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
             continue;
         }
         snprintf(mirrorResource->address[OIC_SOURCE_ADDRESS],
-                sizeof(mirrorResource->address[OIC_SOURCE_ADDRESS]), "%s", sourceaddr);
+                sizeof(char) * OIC_STRING_MAX_VALUE, "%s", sourceaddr);
 
         mirrorResource->address[OIC_MIRROR_ADDRESS] =
                 (char *)malloc(sizeof(char) * OIC_STRING_MAX_VALUE);
@@ -611,7 +611,7 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
             continue;
         }
         snprintf(mirrorResource->address[OIC_MIRROR_ADDRESS],
-                sizeof(mirrorResource->address[OIC_MIRROR_ADDRESS]), "0.0.0.0:00");
+                sizeof(char) * OIC_STRING_MAX_VALUE, "0.0.0.0:00");
 
         if (OC_STACK_OK != insertMirrorResource(retList, mirrorResource))
         {
@@ -680,7 +680,7 @@ MirrorResource *buildMirrorResource(cJSON *ocArray_sub)
                 memset(mirrorResource->prop.resourceType[k], '\0', OIC_STRING_MAX_VALUE);
                 strncpy(mirrorResource->prop.resourceType[k],
                         cJSON_GetArrayItem(tmpJSON, k)->valuestring,
-                        sizeof(mirrorResource->prop.resourceType[k]));
+                        sizeof(char) * OIC_STRING_MAX_VALUE);
             }
         }
 
@@ -709,7 +709,7 @@ MirrorResource *buildMirrorResource(cJSON *ocArray_sub)
             memset(mirrorResource->prop.resourceInterfaceName[k], '\0', OIC_STRING_MAX_VALUE);
             strncpy(mirrorResource->prop.resourceInterfaceName[k],
                     cJSON_GetArrayItem(tmpJSON, k)->valuestring,
-                    sizeof(mirrorResource->prop.resourceInterfaceName[k]));
+                    sizeof(char) * OIC_STRING_MAX_VALUE);
         }
     }
 
