@@ -52,6 +52,16 @@ OCStackResult DeInitCredResource();
  */
 const OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 
+/**
+ * This function converts credential data into JSON format.
+ * Caller needs to invoke 'free' when done using
+ * returned string.
+ * @param cred  pointer to instance of OicSecCred_t structure.
+ *
+ * @retval  pointer to credential in json format.
+ */
+char* BinToCredJSON(const OicSecCred_t* cred);
+
 #ifdef __cplusplus
 }
 #endif

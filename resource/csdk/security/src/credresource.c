@@ -75,12 +75,6 @@ void DeleteCredList(OicSecCred_t* cred)
     }
 }
 
-/*
- * This internal method converts Cred data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished done using
- * return string.
- */
 char * BinToCredJSON(const OicSecCred_t * cred)
 {
     cJSON *jsonRoot = NULL;
