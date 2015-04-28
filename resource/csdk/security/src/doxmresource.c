@@ -42,8 +42,21 @@
 #define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, PCF(#arg " is NULL")); goto exit; } }
 
-OicSecDoxm_t        *gDoxm = NULL;
-OCResourceHandle    gDoxmHandle = NULL;
+static OicSecDoxm_t        *gDoxm = NULL;
+static OCResourceHandle    gDoxmHandle = NULL;
+
+static OicSecOxm_t gOicSecDoxmJustWorks = OIC_JUST_WORKS;
+static OicSecDoxm_t gDefaultDoxm =
+{
+    NULL,                   /* OicUrn_t *oxmType */
+    0,                      /* size_t oxmTypeLen */
+    &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
+    1,                      /* size_t oxmLen */
+    OIC_JUST_WORKS,         /* uint16_t oxmSel */
+    false,                  /* bool owned */
+    {},                     /* OicUuid_t deviceID */
+    {},                     /* OicUuid_t owner */
+};
 
 static void DeleteDoxmBinData(OicSecDoxm_t* doxm)
 {
@@ -298,7 +311,6 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
     return bRet;
 }
 
-
 static OCEntityHandlerResult HandleDoxmGetRequest (
             const OCEntityHandlerRequest * ehRequest)
 {
@@ -318,7 +330,6 @@ static OCEntityHandlerResult HandleDoxmGetRequest (
 
     return ehRet;
 }
-
 
 static OCEntityHandlerResult HandleDoxmPostRequest (
             const OCEntityHandlerRequest * ehRequest)
@@ -397,9 +408,6 @@ exit:
     return ehRet;
 }
 
-
-
-
 /*
  * This internal method is the entity handler for DOXM resources.
  */
@@ -475,7 +483,27 @@ void CheckDeviceID()
     {
         OCFillRandomMem(gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id));
     }
- }
+}
+
+/**
+ * Get the default value.
+ * @retval  the gDefaultDoxm pointer;
+ */
+static OicSecDoxm_t* GetDoxmDefault()
+{
+    OC_LOG (INFO, TAG, PCF("GetDoxmToDefault"));
+    return &gDefaultDoxm;
+}
+
+/**
+ * This method is used by SRM to retrieve DOXM resource data.
+ *
+ * @retval  reference to @ref OicSecDoxm_t, binary format of Doxm resource data
+ */
+const OicSecDoxm_t* GetDoxmResourceData()
+{
+    return gDoxm;
+}
 
 /**
  * Initialize DOXM resource by loading data from persistent storage.
@@ -488,17 +516,23 @@ OCStackResult InitDoxmResource()
 
     //Read DOXM resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
-    VERIFY_NON_NULL(jsonSVRDatabase, FATAL);
-
-    //Convert JSON DOXM into binary format
-    gDoxm = JSONToDoxmBin(jsonSVRDatabase);
-    VERIFY_NON_NULL(gDoxm, FATAL);
+    if(jsonSVRDatabase)
+    {
+        //Convert JSON DOXM into binary format
+        gDoxm = JSONToDoxmBin(jsonSVRDatabase);
+    }
+    /*
+     * If SVR database in persistent storage got corrupted or
+     * is not available for some reason, a default doxm is created
+     * which allows user to initiate doxm provisioning again.
+     */
+    if(!jsonSVRDatabase || !gDoxm)
+    {
+        gDoxm = GetDoxmDefault();
+    }
     CheckDeviceID();
-
     //Instantiate 'oic.sec.doxm'
     ret = CreateDoxmResource();
-
-exit:
     OCFree(jsonSVRDatabase);
     return ret;
 }
@@ -514,7 +548,10 @@ exit:
 OCStackResult DeInitDoxmResource()
 {
     OCStackResult ret = OCDeleteResource(gDoxmHandle);
-    DeleteDoxmBinData(gDoxm);
+    if(gDoxm  != &gDefaultDoxm)
+    {
+        DeleteDoxmBinData(gDoxm);
+    }
     gDoxm = NULL;
 
     if(OC_STACK_OK == ret)
@@ -527,12 +564,3 @@ OCStackResult DeInitDoxmResource()
     }
 }
 
-/**
- * This method is used by PolicyEngine to retrieve DOXM resource data.
- *
- * @retval  reference to @ref OicSecDoxm_t, binary format of Doxm resource data
- */
-const OicSecDoxm_t* GetDoxmResourceData()
-{
-    return gDoxm;
-}

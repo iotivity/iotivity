@@ -204,7 +204,7 @@ TEST(ACLResourceTest, ACLPostTest)
     ehReq.reqJSONPayload = (unsigned char*)jsonStr;
 
     OCEntityHandlerResult ehRet =  ACLEntityHandler (OC_REQUEST_FLAG, &ehReq);
-    EXPECT_TRUE(OC_EH_OK == ehRet);
+    EXPECT_TRUE(OC_EH_ERROR == ehRet);
 
     // Convert JSON into OicSecAcl_t for verification
     OicSecAcl_t * acl = JSONToAclBin(jsonStr);

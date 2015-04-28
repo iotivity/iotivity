@@ -39,8 +39,8 @@
 #define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, PCF(#arg " is NULL")); goto exit; } }
 
-OicSecCred_t        *gCred = NULL;
-OCResourceHandle    gCredHandle = NULL;
+static OicSecCred_t        *gCred = NULL;
+static OCResourceHandle    gCredHandle = NULL;
 
 void DeleteCredList(OicSecCred_t* cred)
 {
@@ -437,6 +437,16 @@ OCStackResult CreateCredResource()
 }
 
 /**
+ * Get the default value
+ * @retval  NULL for now. Update it when we finalize the default info.
+ */
+static OicSecCred_t* GetCredDefault()
+{
+    //TODO: return NULL for the default cred for now. Update it when we finalize the default info.
+    return NULL;
+}
+
+/**
  * Initialize Cred resource by loading data from persistent storage.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
@@ -446,18 +456,23 @@ OCStackResult InitCredResource()
     OCStackResult ret = OC_STACK_ERROR;
 
     //Read Cred resource from PS
-
     char* jsonSVRDatabase = GetSVRDatabase();
-    VERIFY_NON_NULL(jsonSVRDatabase, FATAL);
-
-    //Convert JSON Cred into binary format
-    gCred = JSONToCredBin(jsonSVRDatabase);
-    VERIFY_NON_NULL(gCred, FATAL);
-
+    if (jsonSVRDatabase)
+    {
+        //Convert JSON Cred into binary format
+        gCred = JSONToCredBin(jsonSVRDatabase);
+    }
+    /*
+     * If SVR database in persistent storage got corrupted or
+     * is not available for some reason, a default Cred is created
+     * which allows user to initiate Cred provisioning again.
+     */
+    if (!jsonSVRDatabase || !gCred)
+    {
+        gCred = GetCredDefault();
+    }
     //Instantiate 'oic.sec.cred'
     ret = CreateCredResource();
-
-exit:
     OCFree(jsonSVRDatabase);
     return ret;
 }
@@ -471,7 +486,6 @@ exit:
  *     OC_STACK_NO_RESOURCE     - resource not found
  *     OC_STACK_INVALID_PARAM   - invalid param
  */
-
 OCStackResult DeInitCredResource()
 {
     OCStackResult result = OCDeleteResource(gCredHandle);
@@ -501,7 +515,6 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
         /* TODO : Need to synch on 'Subject' data type */
         if(memcmp(cred->subject.id, subject->id, sizeof(subject->id)) == 0)
         {
-
              return cred;
         }
     }

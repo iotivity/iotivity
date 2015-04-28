@@ -35,11 +35,7 @@ OCStackResult InitPstatResource();
 /**
  * Perform cleanup for Pstat resources.
  *
- * @retval
- *     OC_STACK_OK              - no errors
- *     OC_STACK_ERROR           - stack process error
- *     OC_STACK_NO_RESOURCE     - resource not found
- *     OC_STACK_INVALID_PARAM   - invalid param
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DeInitPstatResource();
 

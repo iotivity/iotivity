@@ -42,7 +42,7 @@
              TAG, PCF(#arg " is NULL")); goto exit; } }
 
 OicSecAcl_t        *gAcl = NULL;
-OCResourceHandle    gAclHandle = NULL;
+static OCResourceHandle    gAclHandle = NULL;
 
 void DeleteACLList(OicSecAcl_t* acl)
 {
@@ -70,7 +70,6 @@ void DeleteACLList(OicSecAcl_t* acl)
         }
     }
 }
-
 
 /*
  * This internal method converts ACL data into JSON format.
@@ -158,8 +157,6 @@ exit:
     }
     return jsonStr;
 }
-
-
 
 /*
  * This internal method converts JSON ACL into binary ACL.
@@ -285,8 +282,6 @@ exit:
     return headAcl;
 }
 
-
-
 static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
     /* Convert ACL data into JSON for transmission */
@@ -306,7 +301,6 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
     OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
     return ehRet;
 }
-
 
 static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest * ehRequest)
 {
@@ -342,8 +336,6 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
     return ehRet;
 }
-
-
 
 /*
  * This internal method is the entity handler for ACL resources and
@@ -382,7 +374,6 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-
 /*
  * This internal method is used to create '/oic/sec/acl' resource.
  */
@@ -405,7 +396,6 @@ OCStackResult CreateACLResource()
     }
     return ret;
 }
-
 
 /*
  * This internal method is to retrieve the default ACL.
@@ -492,8 +482,6 @@ exit:
     return ret;
 }
 
-
-
 /**
  * Initialize ACL resource by loading data from persistent storage.
  *
@@ -512,13 +500,12 @@ OCStackResult InitACLResource()
         gAcl = JSONToAclBin(jsonSVRDatabase);
         OCFree(jsonSVRDatabase);
     }
-
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default ACL is created
      * which allows user to initiate ACL provisioning again.
      */
-    if (!gAcl)
+    if (!jsonSVRDatabase || !gAcl)
     {
         GetDefaultACL(&gAcl);
         /* TODO Needs to update persistent storage */

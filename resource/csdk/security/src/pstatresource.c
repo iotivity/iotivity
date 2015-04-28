@@ -58,7 +58,7 @@ static OicSecPstat_t gDefaultPstat =
 static OicSecPstat_t    *gPstat = NULL;
 static OCResourceHandle gPstatHandle = NULL;
 
-/*
+/**
  * This internal method converts pstat data into JSON format.
  *
  * Note: Caller needs to invoke 'free' when finished done using
@@ -105,7 +105,7 @@ exit:
     return jsonStr;
 }
 
-/*
+/**
  * This internal method converts JSON pstat into binary pstat.
  */
 OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
@@ -180,7 +180,7 @@ exit:
     return pstat;
 }
 
-/*
+/**
  * The entity handler determines how to process a GET request.
  */
 static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest * ehRequest)
@@ -197,7 +197,7 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
     return ehRet;
 }
 
-/*
+/**
  * The entity handler determines how to process a POST request.
  * Per the REST paradigm, POST can also be used to update representation of existing
  * resource or create a new resource.
@@ -273,7 +273,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
     return ehRet;
 }
 
-/*
+/**
  * This internal method is the entity handler for pstat resources.
  */
 OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
@@ -301,7 +301,7 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-/*
+/**
  * This internal method is used to create '/oic/sec/pstat' resource.
  */
 OCStackResult CreatePstatResource()
@@ -324,10 +324,21 @@ OCStackResult CreatePstatResource()
     return ret;
 }
 
-//Post ACL hander update the commitHash during ACL provisioning.
+/**
+ * Post ACL hander update the commitHash during ACL provisioning.
+ */
 void SetCommitHash(uint16_t commitHash)
 {
     gPstat->commitHash = commitHash;
+}
+
+/**
+ * Get the default value
+ * @retval  the gDefaultPstat pointer
+ */
+static OicSecPstat_t* GetPstatDefault()
+{
+    return &gDefaultPstat;;
 }
 
 /**
@@ -341,22 +352,23 @@ OCStackResult InitPstatResource()
 
     // Read Pstat resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
-    VERIFY_NON_NULL(jsonSVRDatabase, FATAL);
-
-    // Convert JSON Pstat into binary format
-    gPstat = JSONToPstatBin(jsonSVRDatabase);
-    if(!gPstat)
+    if (jsonSVRDatabase)
     {
-        /*
-         * TODO: The device to fall back to the default doxm and acl as well
-         * if pstat is fail safe to default.
-         */
-        gPstat = &gDefaultPstat;
+        // Convert JSON Pstat into binary format
+        gPstat = JSONToPstatBin(jsonSVRDatabase);
+    }
+    /*
+     * If SVR database in persistent storage got corrupted or
+     * is not available for some reason, a default pstat is created
+     * which allows user to initiate pstat provisioning again.
+     */
+    if(!jsonSVRDatabase || !gPstat)
+    {
+        gPstat = GetPstatDefault();
     }
     // Instantiate 'oic.sec.pstat'
     ret = CreatePstatResource();
 
-exit:
     OCFree(jsonSVRDatabase);
     return ret;
 }

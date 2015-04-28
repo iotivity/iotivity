@@ -102,32 +102,21 @@ OCStackResult InitSecureResources( )
 
     if(OC_STACK_OK == ret)
     {
-        ret = InitDoxmResource();
-    }
-
-    if(OC_STACK_OK == ret)
-    {
         ret = InitPstatResource();
     }
-
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitDoxmResource();
+    }
     if(OC_STACK_OK == ret)
     {
         ret = InitCredResource();
     }
-
     if(OC_STACK_OK != ret)
     {
-        /* Something has gone wrong with restoring Secure Virtual Resources.
-         * TODO: design secure behavior.
-         * For now: Fall back to default un-initialized state.
-         */
-        /* NOTE TO SACHIN:
-         * TODO: Do an OCCreateResource for gDefaultDoxm and gDefaultPstat.
-         * TODO: Create the binary SVR DB using gDefaultDoxm and gDefaultPstat.
-         */
-         ret = OC_STACK_OK;
+        //TODO: Update the default behavior if one of the SVR fails
+        DestroySecureResources();
     }
-
     return ret;
 }
 

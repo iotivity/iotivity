@@ -35,15 +35,12 @@ OCStackResult InitDoxmResource();
 /**
  * Perform cleanup for DOXM resources.
  *
- * @return
- * OC_STACK_OK    - no error
- * OC_STACK_ERROR - stack process error
- *
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DeInitDoxmResource();
 
 /**
- * This method is used by PolicyEngine to retrieve DOXM resource data..
+ * This method is used by SRM to retrieve DOXM resource data..
  *
  * @retval  reference to @ref OicSecDoxm_t, binary format of Doxm resource data
  */
