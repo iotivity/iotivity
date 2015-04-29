@@ -1373,7 +1373,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     OC_LOG_V(INFO, TAG, PCF("Endpoint URI : %s\n"), (char*)endPoint->resourceUri);
 
     char * newUri = NULL;
-    char * query = NULL;
+    char * query  = NULL;
 
     requestResult = getQueryFromUri(endPoint->resourceUri, &query, &newUri);
 
@@ -3699,45 +3699,62 @@ OCStackResult getResourceType(const char * query, char** resourceType)
     return result;
 }
 
-OCStackResult getQueryFromUri(const char * uri, char** query, char ** newURI)
+/*
+ * This function splits the uri using the '?' delimiter.
+ * "uriWithoutQuery" is the block of characters between the beginning
+ * till the delimiter or '\0' which ever comes first.
+ * "query" is whatever is to the right of the delimiter if present.
+ * No delimiter sets the query to NULL.
+ * If either are present, they will be malloc'ed into the params 2, 3.
+ * The first param, *uri is left untouched.
+
+ * NOTE: This function does not account for whitespace at the end of the uri NOR
+ *       malformed uri's with '??'. Whitespace at the end will be assumed to be
+ *       part of the query.
+ */
+OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithoutQuery)
 {
     if(!uri)
     {
         return OC_STACK_INVALID_URI;
     }
-    if(!query || !newURI)
+    if(!query || !uriWithoutQuery)
     {
         return OC_STACK_INVALID_PARAM;
     }
-    char* strTokPtr = NULL;
-    char * leftToken = NULL;
-    char * tempURI = (char *) OCMalloc(strlen(uri) + 1);
-    if(!tempURI)
-    {
-        goto exit;
-    }
-    strcpy(tempURI, uri);
-    strTokPtr = NULL;
-    leftToken = strtok_r(tempURI, "?", &strTokPtr);
 
-    //TODO-CA: This could be simplified. Clean up required.
-    while(leftToken != NULL)
+    *query           = NULL;
+    *uriWithoutQuery = NULL;
+
+    size_t uriWithoutQueryLen = 0;
+    size_t queryLen = 0;
+    size_t uriLen = strlen(uri);
+
+    char *pointerToDelimiter = strstr(uri, "?");
+
+    uriWithoutQueryLen = pointerToDelimiter == NULL ? uriLen : pointerToDelimiter - uri;
+    queryLen = pointerToDelimiter == NULL ? 0 : uriLen - uriWithoutQueryLen - 1;
+
+    if (uriWithoutQueryLen)
     {
-        if(strncmp(leftToken, "rt=", 3) == 0 || strncmp(leftToken, "if=", 3) == 0)
+        *uriWithoutQuery =  (char *) OCCalloc(uriWithoutQueryLen + 1, 1);
+        if (!*uriWithoutQuery)
         {
-            *query = (char *) OCMalloc(strlen(leftToken) + 1);
-            if(!*query)
-            {
-                OCFree(tempURI);
-                goto exit;
-            }
-            strcpy(*query, leftToken);
-            break;
+            goto exit;
         }
-        leftToken = strtok_r(NULL, "?", &strTokPtr);
+        strncpy(*uriWithoutQuery, uri, uriWithoutQueryLen);
     }
-
-    *newURI = tempURI;
+    if (queryLen)
+    {
+        *query = (char *) OCCalloc(queryLen + 1, 1);
+        if (!*query)
+        {
+            OCFree(*uriWithoutQuery);
+            *uriWithoutQuery = NULL;
+            goto exit;
+        }
+        strncpy(*query, pointerToDelimiter + 1, queryLen);
+    }
 
     return OC_STACK_OK;
 
