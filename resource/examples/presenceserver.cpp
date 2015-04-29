@@ -210,29 +210,33 @@ int main()
 
         // Invoke createResource function of class light.
         myLightResource.createResource();
-        printf("Created first resource of type \"core.light\"");
+        std :: cout << "Creating first resource of type \"core.light\"" << std :: endl;
 
-        printf("\nEnter a key to create the second resource of type \"core.light\"\n");
-        getchar();
+        std :: cout << "Will start creating/deleting resources for presence in 10 seconds.\n";
+
+        sleep(10);
+
+        std :: cout << "\nCreating the second resource of type \"core.light\"" <<  std :: endl;
+        sleep(1);
 
         myLightResource.createResource2();
 
-        printf("\nEnter a key to stop the presence\n");
-        getchar();
+        std :: cout << "Stopping presence\n" << std :: endl;
+        sleep(1);
         stopPresence();
 
-        printf("\nEnter a key to restart the presence\n");
-        getchar();
+        std :: cout << "Restarting presence\n" << std :: endl;
+        sleep(1);
 
         startPresence(30);
 
-        printf("\nEnter a key to create the third resource of type \"core.light\"\n");
-        getchar();
+        std :: cout << "Creating a third resource of type \"core.light\"\n" << std :: endl;
+        sleep(1);
 
         myLightResource.createResource3();
 
-        printf("\nEnter a key to create two non-operational resources.\"\n");
-        getchar();
+        std :: cout << "Creating two non-operational resources.\"\n" << std :: endl;
+        sleep(1);
 
         createPresenceResources();
 

@@ -666,7 +666,7 @@ void *ChangeLightRepresentation (void *param)
 
     while (!gQuitFlag)
     {
-        sleep(10);
+        sleep(3);
         Light.power += 5;
         if (gLightUnderObservation)
         {

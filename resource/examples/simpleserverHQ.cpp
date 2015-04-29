@@ -363,7 +363,7 @@ void * ChangeLightRepresentation (void *param)
     // This function continuously monitors for the changes
     while (1)
     {
-        sleep (5);
+        sleep (3);
 
         if (gObservation)
         {
