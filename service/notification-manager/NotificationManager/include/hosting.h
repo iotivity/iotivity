@@ -30,6 +30,18 @@
 #include "ocstack.h"
 #include "logger.h"
 
+// TODO: Selecting OC_WIFI for android, tizen and OC_ETHERNET for linux platform
+// is temporary change as OC_ALL is not working currently. Remove this code and use OC_ALL
+// once it is functioning.
+#if defined(__ANDROID__) || defined(__TIZEN__)
+#define OC_TRANSPORT OC_WIFI
+#else
+#define OC_TRANSPORT OC_ETHERNET
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 #define HOSTING_TAG  PCF("Hosting")
 
@@ -49,6 +61,8 @@ OCStackResult OICStartCoordinate();
  */
 OCStackResult OICStopCoordinate();
 
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
-
-#endif
+#endif //_HOSTING_H_

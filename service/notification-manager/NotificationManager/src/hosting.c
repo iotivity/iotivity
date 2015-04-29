@@ -408,7 +408,7 @@ int requestCoordinateeCandidateDiscovery(char *sourceResourceAddress)
     cbData.cd = NULL;
 
     result = OCDoResource(&handle, OC_REST_GET, queryUri, OIC_COORDINATING_FLAG, 0,
-            OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
+            OC_TRANSPORT, OC_LOW_QOS, &cbData, NULL, 0);
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(DEBUG, HOSTING_TAG, "OCStack resource error");
@@ -441,7 +441,7 @@ OCStackResult requestPresence(char *sourceResourceAddress)
     OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s", queryUri);
 
     result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0,
-            OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
+            OC_TRANSPORT, OC_LOW_QOS, &cbData, NULL, 0);
 
     if (result != OC_STACK_OK)
     {
@@ -827,7 +827,7 @@ OCStackResult requestResourceObservation(MirrorResource *mirrorResource)
             OIC_COORDINATING_FLAG);
 
     result = OCDoResource(&mirrorResource->resourceHandle[OIC_REQUEST_HANDLE], OC_REST_OBSERVE, query,
-                          0, NULL, OC_ETHERNET,
+                          0, NULL, OC_TRANSPORT,
                           OC_HIGH_QOS, &cbData, NULL, 0);
 
     if (result != OC_STACK_OK)
@@ -1386,12 +1386,12 @@ OCStackResult requestQuery(RequestHandle *request, OCMethod method,
          ((OCEntityHandlerRequest*)request->requestHandle[OIC_REQUEST_BY_CLIENT])->reqJSONPayload);
 
         result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
-                method, queryFullUri, NULL, payload, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
+                method, queryFullUri, NULL, payload, OC_TRANSPORT, OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
     {
         result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
-                method, queryFullUri, NULL, 0, OC_ETHERNET, OC_LOW_QOS, &cbData, NULL, 0);
+                method, queryFullUri, NULL, 0, OC_TRANSPORT, OC_LOW_QOS, &cbData, NULL, 0);
     }
 
     if (result != OC_STACK_OK)
