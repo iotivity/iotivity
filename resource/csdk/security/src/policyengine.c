@@ -182,7 +182,7 @@ void ProcessAccessRequest(PEContext_t *context)
     OC_LOG(INFO, TAG, PCF("Entering ProcessAccessRequest()"));
     if(NULL != context)
     {
-        OicSecAcl_t *currentAcl = NULL;
+        const OicSecAcl_t *currentAcl = NULL;
         OicSecAcl_t *savePtr = NULL;
 
         // Start out assuming subject not found.
