@@ -32,7 +32,7 @@
 /**
  * Return the uint16_t CRUDN permission corresponding to passed OCMethod.
  */
-inline uint16_t GetPermissionFromOCMethod(const OCMethod method)
+uint16_t GetPermissionFromOCMethod(const OCMethod method)
 {
     uint16_t perm = 0;
     switch(method)

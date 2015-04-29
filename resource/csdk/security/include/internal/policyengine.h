@@ -82,6 +82,6 @@ void DeInitPolicyEngine(PEContext_t *context);
 /**
  * Return the uint16_t CRUDN permission corresponding to passed OCMethod.
  */
-extern inline uint16_t GetPermissionFromOCMethod(const OCMethod method);
+uint16_t GetPermissionFromOCMethod(const OCMethod method);
 
 #endif //IOTVT_SRM_PE_H
