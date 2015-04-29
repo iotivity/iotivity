@@ -66,12 +66,18 @@
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
-typedef enum {
-    OC_STACK_UNINITIALIZED = 0, OC_STACK_INITIALIZED, OC_STACK_UNINIT_IN_PROGRESS
+typedef enum
+{
+    OC_STACK_UNINITIALIZED = 0,
+    OC_STACK_INITIALIZED,
+    OC_STACK_UNINIT_IN_PROGRESS
 } OCStackState;
+
 #ifdef WITH_PRESENCE
-typedef enum {
-    OC_PRESENCE_UNINITIALIZED = 0, OC_PRESENCE_INITIALIZED
+typedef enum
+{
+    OC_PRESENCE_UNINITIALIZED = 0,
+    OC_PRESENCE_INITIALIZED
 } OCPresenceState;
 #endif
 
@@ -1623,7 +1629,8 @@ bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
     }
     ipAddrStr = itr;
 
-    while (*ipAddrStr) {
+    while (*ipAddrStr)
+    {
         if (isdigit(*ipAddrStr))
         {
             ipAddr[index] *= 10;
@@ -2467,7 +2474,8 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     // Make sure resourceProperties bitmask has allowed properties specified
     if (resourceProperties
-            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW | OC_SECURE)) {
+            > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW | OC_SECURE))
+    {
         OC_LOG(ERROR, TAG, PCF("Invalid property"));
         return OC_STACK_INVALID_PARAM;
     }
@@ -3331,7 +3339,8 @@ OCStackResult initResources()
 
 void insertResource(OCResource *resource)
 {
-    if (!headResource) {
+    if (!headResource)
+    {
         headResource = resource;
         tailResource = resource;
     }
@@ -3801,11 +3810,8 @@ CAResult_t OCSelectNetwork()
     CAResult_t retResult = CA_STATUS_FAILED;
     CAResult_t caResult = CA_STATUS_OK;
 
-    CAConnectivityType_t connTypes[] = {
-            CA_ETHERNET,
-            CA_WIFI,
-            CA_EDR,
-            CA_LE};
+    CAConnectivityType_t connTypes[] = {CA_ETHERNET, CA_WIFI, CA_EDR, CA_LE};
+
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
 
     for(int i = 0; i<numConnTypes; i++)

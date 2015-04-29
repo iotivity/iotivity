@@ -51,7 +51,8 @@
 extern OCResource *headResource;
 static cJSON *savedDeviceInfo = NULL;
 
-static const char * VIRTUAL_RSRCS[] = {
+static const char * VIRTUAL_RSRCS[] =
+{
        "/oc/core",
        "/oc/core/d",
        "/oc/core/types/d",
@@ -64,7 +65,8 @@ static const char * VIRTUAL_RSRCS[] = {
 // Default resource entity handler function
 //-----------------------------------------------------------------------------
 OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * request) {
+        OCEntityHandlerRequest * request)
+{
     //TODO ("Implement me!!!!");
     // TODO:  remove silence unused param warnings
     (void) flag;
@@ -444,8 +446,10 @@ OCResource *FindResourceByUri(const char* resourceUri)
     }
 
     OCResource * pointer = headResource;
-    while (pointer) {
-        if (strcmp(resourceUri, pointer->uri) == 0) {
+    while (pointer)
+    {
+        if (strcmp(resourceUri, pointer->uri) == 0)
+        {
             return pointer;
         }
         pointer = pointer->next;
