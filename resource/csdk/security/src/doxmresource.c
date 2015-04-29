@@ -36,7 +36,7 @@
 
 #define TAG  PCF("SRM-DOXM")
 
-#define VERIFY_SUCCESS(op, logLevel) { if ((!op)) \
+#define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
             {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
 
 #define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
