@@ -106,31 +106,47 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
     OCStackResult ret = OC_STACK_ERROR;
     cJSON *jsonSVRDb = NULL;
 
-    /* Read SVR database from PS */
+    // Read SVR database from PS
     char* jsonSVRDbStr = GetSVRDatabase();
     VERIFY_NON_NULL(jsonSVRDbStr, ERROR);
 
-    /* Use cJSON_Parse to parse the existing SVR database */
+    // Use cJSON_Parse to parse the existing SVR database
     jsonSVRDb = cJSON_Parse(jsonSVRDbStr);
     VERIFY_NON_NULL(jsonSVRDb, ERROR);
 
     OCFree(jsonSVRDbStr);
     jsonSVRDbStr = NULL;
 
-    if (jsonObj->child &&
-        (NULL != cJSON_GetObjectItem(jsonSVRDb, rsrcName)) )
+    if (jsonObj->child )
     {
-        /* Create a duplicate of the JSON object which was passed. */
+        // Create a duplicate of the JSON object which was passed.
         cJSON* jsonDuplicateObj = cJSON_Duplicate(jsonObj, 1);
         VERIFY_NON_NULL(jsonDuplicateObj, ERROR);
 
-        /* Replace the modified json object in existing SVR database json */
-        cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
-        /* Generate string representation of updated SVR database json object */
+        cJSON* jsonObj = cJSON_GetObjectItem(jsonSVRDb, rsrcName);
+
+        /*
+         ACL, PStat & Doxm resources at least have default entries in the database but
+         Cred resource may have no entries. The first cred resource entry (for provisioning tool)
+         is created when the device is owned by provisioning tool and it's ownerpsk is generated.*/
+        if((strcmp(rsrcName, OIC_JSON_CRED_NAME) == 0) && (!jsonObj))
+        {
+            // Add the fist cred object in existing SVR database json
+            cJSON_AddItemToObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
+        }
+        else
+        {
+            VERIFY_NON_NULL(jsonObj, ERROR);
+
+            // Replace the modified json object in existing SVR database json
+            cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
+        }
+
+        // Generate string representation of updated SVR database json object
         jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
         VERIFY_NON_NULL(jsonSVRDbStr, ERROR);
 
-        /* Update the persistent storage with new SVR database */
+        // Update the persistent storage with new SVR database
         OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
         if (ps && ps->open)
         {

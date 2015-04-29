@@ -31,6 +31,8 @@
 #include "base64.h"
 #include "ocrandom.h"
 #include "cainterface.h"
+#include "credresource.h"
+#include "ocserverrequest.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -58,7 +60,7 @@ static OicSecDoxm_t gDefaultDoxm =
     {},                     /* OicUuid_t owner */
 };
 
-static void DeleteDoxmBinData(OicSecDoxm_t* doxm)
+void DeleteDoxmBinData(OicSecDoxm_t* doxm)
 {
     if (doxm)
     {
@@ -164,6 +166,8 @@ exit:
 
 /*
  * This internal method converts JSON DOXM into binary DOXM.
+ * The JSON DOXM can be from persistent database or
+ * or received as PUT/POST request
  */
 OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 {
@@ -228,15 +232,29 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 
     //OxmSel -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_SEL_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR)
-    doxm->oxmSel = jsonObj->valueint;
+    if(jsonObj)
+    {
+        VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR)
+        doxm->oxmSel = jsonObj->valueint;
+    }
+    else // PUT/POST JSON may not have oxmsel so set it to the gDoxm->oxmSel
+    {
+        VERIFY_NON_NULL(gDoxm, ERROR);
+        doxm->oxmSel = gDoxm->oxmSel;
+    }
 
     //Owned -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNED_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS((cJSON_True == jsonObj->type) || (cJSON_False == jsonObj->type), ERROR)
-    doxm->owned = jsonObj->valueint;
+    if(jsonObj)
+    {
+        VERIFY_SUCCESS((cJSON_True == jsonObj->type) || (cJSON_False == jsonObj->type), ERROR)
+        doxm->owned = jsonObj->valueint;
+    }
+    else // PUT/POST JSON may not have owned so set it to the gDomx->owned
+    {
+        VERIFY_NON_NULL(gDoxm, ERROR);
+        doxm->owned = gDoxm->owned;
+    }
 
     //TODO: Need more clarification on deviceIDFormat field type.
 #if 0
@@ -249,16 +267,27 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
-    //Check for empty string, in case DeviceId field has not been set yet
-    if (jsonObj->valuestring[0])
+    if(jsonObj)
     {
-        outLen = 0;
-        b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                sizeof(base64Buff), &outLen);
-        VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(doxm->deviceID.id)), ERROR);
-        memcpy(doxm->deviceID.id, base64Buff, outLen);
+        VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
+        if(jsonObj && cJSON_String == jsonObj->type)
+        {
+            //Check for empty string, in case DeviceId field has not been set yet
+            if (jsonObj->valuestring[0])
+            {
+                outLen = 0;
+                b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
+                        sizeof(base64Buff), &outLen);
+                VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(doxm->deviceID.id)), ERROR);
+                memcpy(doxm->deviceID.id, base64Buff, outLen);
+            }
+        }
+    }
+    else // PUT/POST JSON will not have deviceID so set it to the gDoxm->deviceID.id
+    {
+        VERIFY_NON_NULL(gDoxm, ERROR);
+        VERIFY_SUCCESS((strcmp((char *)gDoxm->deviceID.id, "") != 0), ERROR);
+        strncpy((char *)doxm->deviceID.id, (char *)gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
     }
 
     // Owner -- will be empty when device state is unowned.
@@ -311,8 +340,7 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
     return bRet;
 }
 
-static OCEntityHandlerResult HandleDoxmGetRequest (
-            const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
     // Convert Doxm data into JSON for transmission
     char* jsonStr = BinToDoxmJSON(gDoxm);
@@ -331,8 +359,8 @@ static OCEntityHandlerResult HandleDoxmGetRequest (
     return ehRet;
 }
 
-static OCEntityHandlerResult HandleDoxmPostRequest (
-            const OCEntityHandlerRequest * ehRequest)
+
+static OCEntityHandlerResult HandleDoxmPostRequest (const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {};
@@ -353,8 +381,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest (
              * anonymous ECDH cipher in tinyDTLS so that Provisioning
              * tool can initiate JUST_WORKS ownership transfer process.
              */
-            if ((false == gDoxm->owned) &&
-                (false == newDoxm->owned))
+            if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
 #ifdef __WITH_DTLS__
                 ehRet = (CAEnablesAnonEcdh(1) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
@@ -367,20 +394,52 @@ static OCEntityHandlerResult HandleDoxmPostRequest (
              * Tool is attempting to change the state to 'Owned' with a
              * qualified value for the field 'Owner'
              */
-            if ((false == gDoxm->owned) &&
-                (true == newDoxm->owned) &&
+            if ((false == gDoxm->owned) && (true == newDoxm->owned) &&
                 (memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) != 0))
             {
                 /*
-                 * TODO To avoid inconsistency between RAM and persistent storage ,
-                 * Use a temporary copy to update in persistent storage.
+                 * Generate OwnerPSK and create credential for Provisioning
+                 * tool with the generated OwnerPSK.
+                 * Update persistent storage and disable anonymous ECDH cipher
+                 *
                  */
+#ifdef __WITH_DTLS__
+                CAResult_t pskRet;
+
+                //TODO: Accessing RI layer internal variable. Need an API in RI
+                //to get the addressInfo and connectivityType for the ehRequest.
+                OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
+                uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {};
+
+                //Generating OwnerPSK
+                pskRet = CAGenerateOwnerPSK(&request->addressInfo,
+                                            request->connectivityType,
+                                     (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS),
+                                     gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
+                                     gDoxm->owner.id, sizeof(gDoxm->owner.id),
+                                     ownerPSK, OWNER_PSK_LENGTH_128);
+
+                VERIFY_SUCCESS(pskRet == CA_STATUS_OK, ERROR);
+
+                //Generating new credential for provisioning tool
+                size_t ownLen = 1;
+                uint32_t outLen = 0;
+
+                char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(ownerPSK)) + 1] = {};
+                B64Result b64Ret = b64Encode(ownerPSK, sizeof(ownerPSK), base64Buff,
+                                sizeof(base64Buff), &outLen);
+                VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+
+                OicSecCred_t *cred = GenerateCredential(&newDoxm->owner, SYMMETRIC_PAIR_WISE_KEY,
+                                        NULL, base64Buff, ownLen, &newDoxm->owner);
+                VERIFY_NON_NULL(cred, ERROR);
+
+                //Adding provisioning tool credential to cred Resource.
+                VERIFY_SUCCESS(OC_STACK_OK == AddCredential(cred), ERROR);
 
                 /*
-                 * TODO Invoke 'CAGenerateOwnerPSK' API to derive OwnerPSK
-                 * and update /oic/sec/cred resource with it. Owned state
-                 * to 'true' should ONLY be updated when OwnerPSK has been
-                 * derived successfully.
+                 * TODO To avoid inconsistency between RAM and persistent storage ,
+                 * Use a temporary copy to update in persistent storage.
                  */
                 gDoxm->owned = true;
                 memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
@@ -392,7 +451,6 @@ static OCEntityHandlerResult HandleDoxmPostRequest (
                  * Disable anonymous ECDH cipher in tinyDTLS since device is now
                  * in owned state.
                  */
-#ifdef __WITH_DTLS__
                 CAEnablesAnonEcdh(0);
 #endif //__WITH_DTLS__
             }

@@ -250,6 +250,9 @@ typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 #define UUID_LENGTH 128/8 // 128-bit GUID length
 //TODO: Confirm the length and type of ROLEID.
 #define ROLEID_LENGTH 128/8 // 128-bit ROLEID length
+#define OWNER_PSK_LENGTH_128 128/8 //byte size of 128-bit key size
+#define OWNER_PSK_LENGTH_256 256/8 //byte size of 256-bit key size
+
 struct OicUuid
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
@@ -321,13 +324,13 @@ struct OicSecCred
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     uint16_t            credId;         // 0:R:S:Y:UINT16
     OicUuid_t           subject;        // 1:R:S:Y:oic.uuid
-    size_t              roleIdsLen;     // the number of elts in RoleIds
     //Note: Need further clarification on roleID data type
     //NOTE: Need further clarification on roleId datatype.
+    //size_t              roleIdsLen;     // the number of elts in RoleIds
     //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
     OicSecJwk_t         publicData;     // 5:R:S:N:oic.sec.jwk
-    OicSecJwk_t         privateData;    // 6:R:S:N:oic.sec.jwk*
+    OicSecJwk_t         privateData;    // 6:R:S:N:oic.sec.jwk
     char                *period;        // 7:R:S:N:String
     size_t              ownersLen;      // the number of elts in Owners
     OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid

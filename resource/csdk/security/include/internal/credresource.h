@@ -28,14 +28,16 @@ extern "C" {
 /**
  * Initialize credential resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @retval
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
  */
 OCStackResult InitCredResource();
 
 /**
  * Perform cleanup for credential resources.
  *
- * @return
+ * @retval
  *     OC_STACK_OK              - no errors
  *     OC_STACK_ERROR           - stack process error
  *     OC_STACK_NO_RESOURCE     - resource not found
@@ -48,7 +50,9 @@ OCStackResult DeInitCredResource();
  *
  * @param subject - subject for which credential is required.
  *
- * @retval  reference to @ref OicSecCred_t if credential is found, else NULL
+ * @retval
+ *     reference to OicSecCred_t - if credential is found
+ *     NULL                      - if credential not found
  */
 const OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 
@@ -58,10 +62,40 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
  * returned string.
  * @param cred  pointer to instance of OicSecCred_t structure.
  *
- * @retval  pointer to credential in json format.
+ * @retval
+ *      pointer to JSON credential representation - if credential for subjectId found
+ *      NULL                                      - if credential for subjectId not found
  */
 char* BinToCredJSON(const OicSecCred_t* cred);
 
+/**
+ * This function generates the bin credential data.
+ *
+ * @param subject pointer to subject of this credential.
+ * @param credType credential type.
+ * @param publicData public data such as public key.
+ * @param privateData private data such as private key.
+ * @param ownersLen length of owners array
+ * @param owners array of owners.
+ *
+ * @retval
+ *      pointer to instance of OicSecCred_t  - success
+ *      NULL                                 - error
+ */
+OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
+                     const char * publicData, const char * privateData, size_t ownersLen,
+                     const OicUuid_t * owners);
+
+/**
+ * This function adds the new cred to the credential list.
+ *
+ * @param cred pointer to new credential.
+ *
+ * @retval
+ *      OC_STACK_OK     - cred not NULL and persistent storage gets updated
+ *      OC_STACK_ERROR  - cred is NULL or fails to update persistent storage
+ */
+OCStackResult AddCredential(OicSecCred_t * cred);
 #ifdef __cplusplus
 }
 #endif

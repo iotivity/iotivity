@@ -77,3 +77,10 @@ const char * OIC_JSON_PERIOD_NAME = "period";
 const OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 const size_t WILDCARD_SUBJECT_ID_LEN = 1 ;
 
+//Ownership Transfer Methods
+const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
+const char * OXM_MODE_SWITCH = "oic.sec.doxm.ms";
+const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
+const char * OXM_PRE_PROVISIONED_DEVICE_PIN = "oic.sec.doxm.ppdp";
+const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL = "oic.sec.doxm.ppsc";
+

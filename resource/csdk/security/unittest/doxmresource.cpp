@@ -20,7 +20,9 @@
 #include "ocstack.h"
 #include "resourcemanager.h"
 #include "securevirtualresourcetypes.h"
+#include "srmresourcestrings.h"
 #include "doxmresource.h"
+#include "ocserverrequest.h"
 #include "ocmalloc.h"
 
 #ifdef __cplusplus
@@ -34,11 +36,30 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
 char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
 OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
 void InitSecDoxmInstance(OicSecDoxm_t * doxm);
+OCEntityHandlerResult HandleDoxmPostRequest (const OCEntityHandlerRequest * ehRequest);
+void DeleteDoxmBinData(OicSecDoxm_t* doxm);
 #ifdef __cplusplus
 }
 #endif
 
-char* gjsonDoxm = NULL;
+OicSecDoxm_t * getBinDoxm()
+{
+    OicSecDoxm_t * doxm = (OicSecDoxm_t*)OCCalloc(1, sizeof(OicSecDoxm_t));
+    doxm->oxmTypeLen =  1;
+    doxm->oxmType    = (OicUrn_t *)OCCalloc(doxm->oxmTypeLen, sizeof(char *));
+    doxm->oxmType[0] = (char*)OCMalloc(strlen(OXM_JUST_WORKS) + 1);
+    strcpy(doxm->oxmType[0], OXM_JUST_WORKS);
+    doxm->oxmLen     = 1;
+    doxm->oxm        = (OicSecOxm_t *)OCCalloc(doxm->oxmLen, sizeof(short));
+    doxm->oxm[0]     = OIC_JUST_WORKS;
+    doxm->oxmSel     = OIC_JUST_WORKS;
+    doxm->owned      = true;
+    //TODO: Need more clarification on deviceIDFormat field type.
+    //doxm.deviceIDFormat = URN;
+    strcpy((char *) doxm->deviceID.id, "deviceId");
+    strcpy((char *)doxm->owner.id, "ownersId");
+    return doxm;
+}
 
  //InitDoxmResource Tests
 TEST(InitDoxmResourceTest, InitDoxmResource)
@@ -85,33 +106,28 @@ TEST(BinToDoxmJSONTest, BinToDoxmJSONNullDoxm)
 
 TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
 {
-    OicSecDoxm_t doxm =  {};
+    OicSecDoxm_t * doxm =  getBinDoxm();
 
-    doxm.oxmTypeLen     = 1;
-    doxm.oxmType = (OicUrn_t *)OCCalloc(doxm.oxmTypeLen, sizeof(char *));
-    doxm.oxmType[0] = (char*)OCMalloc(strlen("oic.sec.otm.jw") + 1);
-    strcpy(doxm.oxmType[0],"oic.sec.otm.jw");
-    doxm.oxmLen         = 1;
-    doxm.oxm = (OicSecOxm_t *)OCCalloc(doxm.oxmLen, sizeof(short));
-    doxm.oxm[0]         = OIC_JUST_WORKS;
-    doxm.owned          = true;
-    //TODO: Need more clarification on deviceIDFormat field type.
-    //doxm.deviceIDFormat = URN;
-    strcpy((char *) doxm.deviceID.id, "deviceId");
-    strcpy((char *)doxm.owner.id, "ownersId");
+    char * json = BinToDoxmJSON(doxm);
+    printf("BinToDoxmJSON:%s\n", json);
+    EXPECT_TRUE(json != NULL);
 
-    gjsonDoxm = BinToDoxmJSON(&doxm);
-
-    printf("BinToDoxmJSON:%s\n", gjsonDoxm);
-    EXPECT_TRUE(gjsonDoxm != NULL);
+    DeleteDoxmBinData(doxm);
+    OCFree(json);
 }
 
 //JSONToDoxmBin Tests
 TEST(JSONToDoxmBinTest, JSONToDoxmBinValidJSON)
 {
-    EXPECT_TRUE(gjsonDoxm != NULL);
-    OicSecDoxm_t *doxm = JSONToDoxmBin(gjsonDoxm);
-    EXPECT_TRUE(doxm != NULL);
+    OicSecDoxm_t * doxm1 =  getBinDoxm();
+    char * json = BinToDoxmJSON(doxm1);
+    EXPECT_TRUE(json != NULL);
+
+    OicSecDoxm_t *doxm2 = JSONToDoxmBin(json);
+    EXPECT_TRUE(doxm2 != NULL);
+
+    DeleteDoxmBinData(doxm1);
+    OCFree(json);
 }
 
 TEST(JSONToDoxmBinTest, JSONToDoxmBinNullJSON)
@@ -125,5 +141,23 @@ TEST(DoxmGetResourceDataTest, GetDoxmResourceData)
 {
     EXPECT_TRUE(NULL == GetDoxmResourceData());
 }
+#if 0
+TEST(HandleDoxmPostRequestTest, HandleDoxmPostRequestValidInput)
+{
+    OCEntityHandlerRequest ehRequest = {};
+    OCServerRequest svRequest = {};
 
+    OicSecDoxm_t * doxm =  getBinDoxm();
 
+    strcpy(svRequest.addressInfo.IP.ipAddress, "10.10.10.10");
+    svRequest.addressInfo.IP.port = 2345;
+    svRequest.connectivityType = CA_ETHERNET;
+
+    ehRequest.reqJSONPayload = (unsigned char *) BinToDoxmJSON(doxm);
+    ehRequest.requestHandle = (OCRequestHandle) &svRequest;
+
+    EXPECT_EQ(OC_EH_ERROR, HandleDoxmPostRequest(&ehRequest));
+    DeleteDoxmBinData(doxm);
+    OCFree(ehRequest.reqJSONPayload);
+}
+#endif

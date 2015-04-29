@@ -38,6 +38,7 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../../logger/include',
 		'../../ocmalloc/include',
 		'../../stack/include',
+		'../../stack/include/internal',
 		'../../../oc_logger/include',
 		'../../../../extlibs/gtest/gtest-1.7.0/include',
 		'../../../../extlibs/cjson/',

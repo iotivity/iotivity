@@ -27,6 +27,7 @@
 #include "utlist.h"
 #include "srmresourcestrings.h"
 #include "credresource.h"
+#include "ocrandom.h"
 #include "base64.h"
 #include <stdlib.h>
 #include <string.h>
@@ -75,6 +76,16 @@ void DeleteCredList(OicSecCred_t* cred)
     }
 }
 
+/**
+ * This function converts credential data into JSON format.
+ * Caller needs to invoke 'free' when done using
+ * returned string.
+ * @param cred  pointer to instance of OicSecCred_t structure.
+ *
+ * @retval
+ *      pointer to JSON credential representation - if credential for subjectId found
+ *      NULL                                      - if credential for subjectId not found
+ */
 char * BinToCredJSON(const OicSecCred_t * cred)
 {
     cJSON *jsonRoot = NULL;
@@ -249,7 +260,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 cred->roleIdsLen = cJSON_GetArraySize(jsonObj);
                 VERIFY_SUCCESS(cred->roleIdsLen > 0, ERROR);
                 cred->roleIds = (OicSecRole_t *)OCCalloc(cred->roleIdsLen, sizeof(OicSecRole_t));
-                VERIFY_NON_NULL(cred->roleIds, FATAL);
+                VERIFY_NON_NULL(cred->roleIds, ERROR);
                 for(size_t i = 0; i < cred->roleIdsLen; i++)
                 {
                     cJSON *jsonRole = cJSON_GetArrayItem(jsonObj, i);
@@ -273,7 +284,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             {
                 jsonObjLen = strlen(jsonObj->valuestring) + 1;
                 cred->publicData.data = (char *)OCMalloc(jsonObjLen);
-                VERIFY_NON_NULL(cred->publicData.data, FATAL);
+                VERIFY_NON_NULL(cred->publicData.data, ERROR);
                 strncpy((char *)cred->publicData.data, (char *)jsonObj->valuestring, jsonObjLen);
             }
 #endif
@@ -284,7 +295,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             {
                 jsonObjLen = strlen(jsonObj->valuestring) + 1;
                 cred->privateData.data = (char *)OCMalloc(jsonObjLen);
-                VERIFY_NON_NULL(cred->privateData.data, FATAL);
+                VERIFY_NON_NULL(cred->privateData.data, ERROR);
                 strncpy((char *)cred->privateData.data, (char *)jsonObj->valuestring, jsonObjLen);
             }
 
@@ -294,7 +305,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             {
                 jsonObjLen = strlen(jsonObj->valuestring) + 1;
                 cred->period = (char *)OCMalloc(jsonObjLen);
-                VERIFY_NON_NULL(cred->period, FATAL);
+                VERIFY_NON_NULL(cred->period, ERROR);
                 strncpy(cred->period, jsonObj->valuestring, jsonObjLen);
             }
 
@@ -305,7 +316,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             cred->ownersLen = cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(cred->ownersLen > 0, ERROR);
             cred->owners = (OicUuid_t*)OCCalloc(cred->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NON_NULL(cred->owners, FATAL);
+            VERIFY_NON_NULL(cred->owners, ERROR);
             for(size_t i = 0; i < cred->ownersLen; i++)
             {
                 cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, i);
@@ -335,6 +346,114 @@ exit:
     }
     return headCred;
 }
+
+/**
+ * This function generates the bin credential data.
+ *
+ * @param subject pointer to subject of this credential.
+ * @param credType credential type.
+ * @param publicData public data such as public key.
+ * @param privateData private data such as private key.
+ * @param ownersLen length of owners array
+ * @param owners array of owners.
+ *
+ * @retval
+ *      pointer to instance of OicSecCred_t  - success
+ *      NULL                                 - error
+ */
+OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
+                                 const char * publicData, const char * privateData,
+                                 size_t ownersLen, const OicUuid_t * owners)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    OicSecCred_t *cred = (OicSecCred_t*)OCCalloc(1, sizeof(OicSecCred_t));
+    VERIFY_NON_NULL(cred, ERROR);
+
+    //TODO:Need more clarification on credId
+    OCFillRandomMem((uint8_t*)&cred->credId, sizeof(cred->credId));
+
+    VERIFY_NON_NULL(subject, ERROR);
+    memcpy(cred->subject.id, subject->id , sizeof(cred->subject.id));
+
+    //TODO: check credType has one of the values {0, 1, 2, 4, 6, 8, 16}
+    cred->credType = credType;
+
+#if 0
+    if(publicData)
+    {
+        cred->publicData.data = (char *)OCMalloc(strlen(publicData)+1);
+        VERIFY_NON_NULL(cred->publicData.data, ERROR);
+        strncpy((char *)cred->publicData.data, publicData, strlen(publicData)+1);
+    }
+#endif
+
+    if(privateData)
+    {
+        cred->privateData.data = (char *)OCMalloc(strlen(privateData)+1);
+        VERIFY_NON_NULL(cred->privateData.data, ERROR);
+        strncpy((char *)cred->privateData.data, privateData, strlen(privateData)+1);
+    }
+
+    VERIFY_SUCCESS(ownersLen > 0, ERROR);
+    cred->ownersLen = ownersLen;
+
+    cred->owners = (OicUuid_t*)OCCalloc(cred->ownersLen, sizeof(OicUuid_t));
+    VERIFY_NON_NULL(cred->owners, ERROR);
+    for(size_t i = 0; i < cred->ownersLen; i++)
+    {
+        memcpy(cred->owners[i].id, owners[i].id, sizeof(cred->owners[i].id));
+    }
+
+    ret = OC_STACK_OK;
+exit:
+    if (OC_STACK_OK != ret)
+    {
+        DeleteCredList(cred);
+        cred = NULL;
+    }
+    return cred;
+}
+
+/**
+ * This function adds the new cred to the credential list.
+ *
+ * @param cred pointer to new credential.
+ *
+ * @retval
+ *      OC_STACK_OK     - cred not NULL and persistent storage gets updated
+ *      OC_STACK_ERROR  - cred is NULL or fails to update persistent storage
+ */
+OCStackResult AddCredential(OicSecCred_t * newCred)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    if(NULL == newCred)
+    {
+        return OC_STACK_ERROR;
+    }
+
+    //Append the new Cred to existing list
+    LL_APPEND(gCred, newCred);
+
+    //Convert CredList to JSON and update the persistent Storage
+    char * jsonStr = BinToCredJSON(gCred);
+
+    if(jsonStr)
+    {
+        cJSON *jsonCred = cJSON_Parse(jsonStr);
+        OCFree(jsonStr);
+
+        if((jsonCred) && (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, jsonCred)))
+        {
+            ret = OC_STACK_OK;
+        }
+        cJSON_Delete(jsonCred);
+    }
+
+    return ret;
+}
+
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
@@ -344,34 +463,8 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 
     if(cred)
     {
-
         //Append the new Cred to existing list
-        if(gCred)
-        {
-            gCred->next = cred;
-        }
-        else
-        {
-            gCred = cred;
-        }
-
-        //Convert CredList to JSON and update the persistent Storage
-        char * jsonStr = BinToCredJSON(gCred);
-
-        if(jsonStr)
-        {
-
-            cJSON *jsonCred = cJSON_Parse(jsonStr);
-
-            OCFree(jsonStr);
-
-            if((jsonCred) && (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, jsonCred)))
-            {
-                ret = OC_EH_OK;
-            }
-            cJSON_Delete(jsonCred);
-
-        }
+        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_OK : OC_EH_ERROR;
     }
 
     return ret;
@@ -449,7 +542,9 @@ static OicSecCred_t* GetCredDefault()
 /**
  * Initialize Cred resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @retval
+ *     OC_STACK_OK    - no errors
+ *     OC_STACK_ERROR - stack process error
  */
 OCStackResult InitCredResource()
 {
@@ -457,6 +552,7 @@ OCStackResult InitCredResource()
 
     //Read Cred resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
+
     if (jsonSVRDatabase)
     {
         //Convert JSON Cred into binary format
@@ -497,9 +593,11 @@ OCStackResult DeInitCredResource()
 /**
  * This method is used by tinydtls/SRM to retrieve credential for given Subject.
  *
- * @param subject - subject for which Cred is required.
+ * @param subject - subject for which credential is required.
  *
- * @retval  reference to @ref OicSecCred_t if Cred is found, else NULL
+ * @retval
+ *     reference to OicSecCred_t - if credential is found
+ *     NULL                      - if credential not found
  */
 const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
 {

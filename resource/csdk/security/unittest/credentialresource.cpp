@@ -44,7 +44,6 @@ OicSecCred_t * getCredList()
     OicSecCred_t * cred = (OicSecCred_t*)OCCalloc(1, sizeof(OicSecCred_t));
     cred->credId = 1234;
     strcpy((char *)cred->subject.id, "subject1");
-    cred->roleIdsLen = 0;
 
 #if 0
     cred->roleIdsLen = 2;
@@ -61,7 +60,9 @@ OicSecCred_t * getCredList()
     cred->next = (OicSecCred_t*)OCCalloc(1, sizeof(OicSecCred_t));
     cred->next->credId = 5678;
     strcpy((char *)cred->next->subject.id, "subject2");
+#if 0
     cred->next->roleIdsLen = 0;
+#endif
     cred->next->credType = 1;
     cred->next->privateData.data = (char *)OCCalloc(1, strlen("My private Key21") + 1);
     strcpy(cred->next->privateData.data, "My private Key21");
@@ -158,6 +159,52 @@ TEST(CredGetResourceDataTest, GetCredResourceDataNULLSubject)
     EXPECT_TRUE(NULL == GetCredResourceData(NULL));
 }
 
+TEST(CredGenerateCredentialTest, GenerateCredentialValidInput)
+{
+    OicUuid_t owners[1];
+   strcpy((char *)owners[0].id, "ownersId21");
+
+    OicUuid_t subject = {};
+    strcpy((char *)subject.id, "subject11");
+
+    char privateKey[] = "My private Key11";
+
+    OicSecCred_t * cred  = NULL;
+
+    cred = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
+                             privateKey, 1, owners);
+    printf("cred->credId = %d\n", cred->credId);
+    printf("cred->subject.id = %s\n", cred->subject.id);
+    printf("cred->credType = %d\n", cred->credType);
+    printf("cred->privateData.data = %s\n", cred->privateData.data);
+    printf("cred->ownersLen = %zd\n", cred->ownersLen);
+    printf("cred->owners[0].id = %s\n", cred->owners[0].id);
+
+    EXPECT_TRUE(NULL != cred);
+    DeleteCredList(cred);
+}
+
+TEST(CredAddCredentialTest, GenerateCredentialValidInput)
+{
+    OicUuid_t owners[1];
+    strcpy((char *)owners[0].id, "ownersId21");
+
+    OicUuid_t subject = {};
+    strcpy((char *)subject.id, "subject11");
+
+    char privateKey[] = "My private Key11";
+
+    OicSecCred_t * cred  = NULL;
+
+    cred = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
+                                 privateKey, 1, owners);
+    EXPECT_TRUE(NULL != cred);
+
+    EXPECT_EQ(OC_STACK_ERROR, AddCredential(cred));
+
+    DeleteCredList(cred);
+
+}
 #if 0
 TEST(CredGetResourceDataTest, GetCredResourceDataValidSubject)
 {

@@ -79,5 +79,12 @@ extern const char * OIC_JSON_SMS_NAME;
 extern const OicUuid_t WILDCARD_SUBJECT_ID;
 extern const size_t WILDCARD_SUBJECT_ID_LEN;
 
+//Ownership Transfer Methods
+extern const char * OXM_JUST_WORKS;
+extern const char * OXM_MODE_SWITCH;
+extern const char * RANDOM_DEVICE_PIN;
+extern const char * PRE_PROVISIONED_DEVICE_PIN;
+extern const char * PRE_PROVISIONED_STRONG_CREDENTIAL;
+
 #endif //IOTVT_SRM_RSRC_STRINGS_H
 
