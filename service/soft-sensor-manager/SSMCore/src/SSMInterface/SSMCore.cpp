@@ -65,7 +65,9 @@ CLEANUP:
         res != SSM_E_INITIALIZED)
     {
         SAFE_RELEASE(g_pSoftSensorManager);
+        DestroyGlobalInstanceRepo();
     }
+
     return res;
 }
 
