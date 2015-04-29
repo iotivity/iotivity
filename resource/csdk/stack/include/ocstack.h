@@ -115,13 +115,22 @@ typedef enum
 
 /**
  * Quality of Service.
+ *
+ * OCQualityOfService attempts to abstract the guarantees provided by the underlying transport
+ * protocol.  The precise definitions of each quality of service level depend on the
+ * implementation.  In descriptions below are for the current implementation and may changed
+ * over time.
  */
 typedef enum
 {
+    /// Packet delivery is best effort
     OC_LOW_QOS = 0,
+    /// Packet delivery is best effort
     OC_MEDIUM_QOS,
+    /// Acknowledgements are used to confirm delivery
     OC_HIGH_QOS,
-    OC_NA_QOS // No Quality is defined, let the stack decide
+    /// No Quality is defined, let the stack decide
+    OC_NA_QOS
 } OCQualityOfService;
 
 /**
