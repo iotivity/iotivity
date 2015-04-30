@@ -28,7 +28,7 @@
 #include <memory>
 #include <iterator>
 
-#include "ocstack.h"
+#include "octypes.h"
 #include "OCHeaderOption.h"
 #include <OCException.h>
 #include "StringConstants.h"
