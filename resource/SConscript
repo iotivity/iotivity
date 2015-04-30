@@ -19,10 +19,6 @@ SConscript('csdk/connectivity/SConscript')
 # Build libocsrm
 SConscript('csdk/security/SConscript')
 
-# Build provisioning
-if env.get('SECURED') == '1' and env.get('PROVISIONING') == '1':
-	SConscript('csdk/security/provisioning/SConscript')
-
 # Build liboctbstack
 SConscript('csdk/SConscript')
 

@@ -99,3 +99,7 @@ libocsrm_src = [
 libocsrm = libocsrm_env.StaticLibrary('libocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'libocsrm')
+
+if env.get('SECURED') == '1':
+        SConscript('provisioning/SConscript')
+

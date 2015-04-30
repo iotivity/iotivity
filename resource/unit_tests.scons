@@ -31,6 +31,6 @@ if target_os == 'linux':
 	SConscript('unittests/SConscript')
 
 	# Build Provisioning API unit test
-	if env.get('SECURED') == '1' and env.get('PROVISIONING') == '1':
+	if env.get('SECURED') == '1':
 		SConscript('csdk/security/provisioning/unittest/SConscript')
 
