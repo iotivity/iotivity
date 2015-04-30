@@ -50,7 +50,7 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         ca_mutex_lock(thread->threadMutex);
 
         // if queue is empty, thread will wait
-        if (u_queue_get_size(thread->dataQueue) <= 0)
+        if (!thread->isStop && u_queue_get_size(thread->dataQueue) <= 0)
         {
             OIC_LOG(DEBUG, TAG, "wait..");
 
@@ -114,7 +114,9 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
         }
     }
 
+    ca_mutex_lock(thread->threadMutex);
     ca_cond_signal(thread->threadCond);
+    ca_mutex_unlock(thread->threadMutex);
 
     OIC_LOG(DEBUG, TAG, "message handler main thread end..");
 }

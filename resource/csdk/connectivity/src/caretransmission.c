@@ -214,7 +214,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
         // mutex lock
         ca_mutex_lock(context->threadMutex);
 
-        if (u_arraylist_length(context->dataList) <= 0)
+        if (!context->isStop && u_arraylist_length(context->dataList) <= 0)
         {
             // if list is empty, thread will wait
             OIC_LOG(DEBUG, TAG, "wait..there is no retransmission data.");
@@ -247,7 +247,9 @@ static void CARetransmissionBaseRoutine(void *threadValue)
         CACheckRetransmissionList(context);
     }
 
+    ca_mutex_lock(context->threadMutex);
     ca_cond_signal(context->threadCond);
+    ca_mutex_unlock(context->threadMutex);
 
     OIC_LOG(DEBUG, TAG, "retransmission main thread end..");
 
