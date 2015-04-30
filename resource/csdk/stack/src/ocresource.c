@@ -680,33 +680,6 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                 result = OCDoResponse(&response);
             }
         }
-        else if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_DEVICE_URI)) == 0)
-        {
-            remaining = MAX_RESPONSE_LENGTH;
-            ptr = discoveryResBuf;
-
-            result = BuildVirtualResourceResponseForDevice(filterOn, filterValue,
-                    (char*)ptr, &remaining);
-
-            if(result == OC_STACK_OK)
-            {
-                ptr += strlen((char*)ptr);
-            }
-
-            if(remaining < MAX_RESPONSE_LENGTH)
-            {
-                OCEntityHandlerResponse response = {0};
-
-                response.ehResult = OC_EH_OK;
-                response.payload = discoveryResBuf;
-                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
-                response.persistentBufferFlag = 0;
-                response.requestHandle = (OCRequestHandle) request;
-                response.resourceHandle = (OCResourceHandle) resource;
-
-                result = OCDoResponse(&response);
-            }
-        }
         #ifdef WITH_PRESENCE
         else
         {
