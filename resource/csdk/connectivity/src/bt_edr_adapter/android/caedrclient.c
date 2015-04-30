@@ -547,7 +547,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data,
             OIC_LOG(DEBUG, TAG, "AttachCurrentThread failed");
             return CA_STATUS_INVALID_PARAM;
         }
-        isAttached = TRUE;
+        isAttached = JNI_TRUE;
     }
 
     OIC_LOG(DEBUG, TAG, "[EDR][Native] set byteArray for data");

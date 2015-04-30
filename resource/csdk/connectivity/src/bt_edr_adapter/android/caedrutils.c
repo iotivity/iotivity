@@ -226,7 +226,7 @@ jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env)
     if(!jni_cid_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "[EDR][Native] jni_cid_BTAdapter: jni_cid_BTAdapter is null");
-        return FALSE;
+        return JNI_FALSE;
     }
 
     jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env,
@@ -234,7 +234,7 @@ jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env)
     if(!jni_mid_getDefaultAdapter)
     {
         OIC_LOG(ERROR, TAG, "[EDR][Native] jni_mid_getDefaultAdapter is null");
-        return FALSE;
+        return JNI_FALSE;
     }
 
     jobject jni_obj_BTAdapter = (*env)->CallStaticObjectMethod(env,
@@ -242,7 +242,7 @@ jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env)
     if(!jni_obj_BTAdapter)
     {
         OIC_LOG(ERROR, TAG, "[EDR][Native] jni_obj_BTAdapter is null");
-        return FALSE;
+        return JNI_FALSE;
     }
 
     // isEnable()
@@ -251,7 +251,7 @@ jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env)
     if(!jni_mid_isEnable)
     {
         OIC_LOG(ERROR, TAG, "[EDR][Native] jni_mid_isEnable is null");
-        return FALSE;
+        return JNI_FALSE;
     }
 
     jboolean jni_isEnable = (*env)->CallBooleanMethod(env, jni_obj_BTAdapter, jni_mid_isEnable);

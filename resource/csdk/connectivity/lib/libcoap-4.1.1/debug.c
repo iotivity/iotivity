@@ -148,7 +148,11 @@ size_t coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, si
 {
 #ifdef HAVE_ARPA_INET_H
     const void *addrptr = NULL;
+#if defined(__ANDROID__)
+    __uint16_t port;
+#else
     in_port_t port;
+#endif
     unsigned char *p = buf;
 
     switch (addr->addr.sa.sa_family)

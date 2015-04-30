@@ -42,9 +42,6 @@
 #endif
 
 #include <OCException.h>
-#ifdef __ANDROID__
-#include "android_cpp11_compat.h"
-#endif
 
 namespace cereal
 {

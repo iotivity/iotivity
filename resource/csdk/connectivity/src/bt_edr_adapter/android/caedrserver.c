@@ -246,9 +246,9 @@ CAResult_t CAEDRServerStop(int serverFD)
     CAEDRStopUnicastServer(-1);
     CAEDRStopMulticastServer(-1);
 
-    g_stopAccept = TRUE;
-    g_stopMulticast = TRUE;
-    g_stopUnicast = TRUE;
+    g_stopAccept = true;
+    g_stopMulticast = true;
+    g_stopUnicast = true;
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;

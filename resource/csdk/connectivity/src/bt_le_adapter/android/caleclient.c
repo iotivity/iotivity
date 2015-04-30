@@ -235,8 +235,8 @@ void CALETerminate()
 
     CANativeRemoveAllDevices(env);
     CANativeRemoveAllGattObjsList(env);
-    g_isStartServer = FALSE;
-    g_isFinishSendData = FALSE;
+    g_isStartServer = JNI_FALSE;
+    g_isFinishSendData = JNI_FALSE;
 
     if (isAttached)
     {
@@ -442,7 +442,7 @@ CAResult_t CALESendUnicastMessageImpl(const char* address, const char* data, con
 
         if (jni_obj_bluetoothDevice)
         {
-            jboolean autoConnect = FALSE;
+            jboolean autoConnect = JNI_FALSE;
             CANativeLEConnect(env, jni_obj_bluetoothDevice, g_context, autoConnect,
                               g_leGattCallback);
         }
@@ -621,7 +621,7 @@ void CANativeLEStartScan()
         return;
     }
 
-    jboolean isAttached = FALSE;
+    jboolean isAttached = JNI_FALSE;
     JNIEnv* env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
@@ -634,7 +634,7 @@ void CANativeLEStartScan()
             OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
-        isAttached = TRUE;
+        isAttached = JNI_TRUE;
     }
 
     OIC_LOG(DEBUG, TAG, "[BLE][Native] CANativeLEStartScan");
@@ -808,7 +808,7 @@ void CANativeLEStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobject ca
 
 void CANativeLEStopScan()
 {
-    jboolean isAttached = FALSE;
+    jboolean isAttached = JNI_FALSE;
     JNIEnv* env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
@@ -820,7 +820,7 @@ void CANativeLEStopScan()
             OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
-        isAttached = TRUE;
+        isAttached = JNI_TRUE;
     }
 
     CANativeLEStopScanImpl(env, g_leScanCallback);
@@ -1166,7 +1166,7 @@ CAResult_t CANativeSetCharacteristicNotification(JNIEnv *env, jobject bluetoothG
         return CA_STATUS_FAILED;
     }
 
-    jboolean enable = TRUE;
+    jboolean enable = JNI_TRUE;
     jboolean ret = (*env)->CallBooleanMethod(env, bluetoothGatt, jni_mid_setNotification,
                                              jni_obj_GattCharacteristic, enable);
     if (1 == ret)
@@ -1333,7 +1333,7 @@ jbyteArray CANativeGetValueFromCharacteristic(JNIEnv *env, jobject characteristi
 
 void CANativeCreateUUIDList()
 {
-    jboolean isAttached = FALSE;
+    jboolean isAttached = JNI_FALSE;
     JNIEnv* env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (res != JNI_OK)
@@ -1346,7 +1346,7 @@ void CANativeCreateUUIDList()
             OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
             return;
         }
-        isAttached = TRUE;
+        isAttached = JNI_TRUE;
     }
 
     // create new object array
@@ -1436,14 +1436,14 @@ jboolean CANativeIsDeviceInList(JNIEnv *env, const char* remoteAddress)
         if (!jarrayObj)
         {
             OIC_LOG(ERROR, TAG, "[BLE][Native] jarrayObj is null");
-            return TRUE;
+            return JNI_TRUE;
         }
 
         jstring jni_setAddress = CALEGetAddressFromBTDevice(env, jarrayObj);
         if (!jni_setAddress)
         {
             OIC_LOG(ERROR, TAG, "[BLE][Native] jni_setAddress is null");
-            return TRUE;
+            return JNI_TRUE;
         }
 
         const char* setAddress = (*env)->GetStringUTFChars(env, jni_setAddress, NULL);
@@ -1451,12 +1451,12 @@ jboolean CANativeIsDeviceInList(JNIEnv *env, const char* remoteAddress)
         if (!strcmp(remoteAddress, setAddress))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
-            return TRUE;
+            return JNI_TRUE;
         }
     }
 
     OIC_LOG(DEBUG, TAG, "there are no the device in list. we can add");
-    return FALSE;
+    return JNI_FALSE;
 }
 
 void CANativeRemoveAllDevices(JNIEnv *env)
@@ -1605,14 +1605,14 @@ jboolean CANativeIsGattObjInList(JNIEnv *env, const char* remoteAddress)
         if (!jarrayObj)
         {
             OIC_LOG(ERROR, TAG, "[BLE][Native] jarrayObj is null");
-            return TRUE;
+            return JNI_TRUE;
         }
 
         jstring jni_setAddress = CANativeGetAddressFromGattObj(env, jarrayObj);
         if (!jni_setAddress)
         {
             OIC_LOG(ERROR, TAG, "[BLE][Native] jni_setAddress is null");
-            return TRUE;
+            return JNI_TRUE;
         }
 
         const char* setAddress = (*env)->GetStringUTFChars(env, jni_setAddress, NULL);
@@ -1620,7 +1620,7 @@ jboolean CANativeIsGattObjInList(JNIEnv *env, const char* remoteAddress)
         if (!strcmp(remoteAddress, setAddress))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
-            return TRUE;
+            return JNI_TRUE;
         }
         else
         {
@@ -1629,7 +1629,7 @@ jboolean CANativeIsGattObjInList(JNIEnv *env, const char* remoteAddress)
     }
 
     OIC_LOG(DEBUG, TAG, "there are no the gatt obejct in list. we can add");
-    return FALSE;
+    return JNI_FALSE;
 }
 
 void CANativeRemoveAllGattObjsList(JNIEnv *env)
@@ -1746,7 +1746,7 @@ void CANativeupdateSendCnt(JNIEnv *env)
         }
         // notity the thread
         ca_cond_signal(g_threadCond);
-        g_isFinishSendData = TRUE;
+        g_isFinishSendData = JNI_TRUE;
         OIC_LOG(DEBUG, TAG, "set signal for send data");
     }
     // mutex unlock
