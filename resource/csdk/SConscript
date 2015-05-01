@@ -71,12 +71,15 @@ if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
 elif target_os not in ['darwin','ios']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
-if target_os == 'android':	
+if target_os in ['android', 'linux']:
 	liboctbstack_env.AppendUnique(LIBS = ['connectivity_abstraction'])
 if target_os in ['darwin', 'ios']:
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	liboctbstack_env.AppendUnique(LIBS = ['coap'])
+
+if env.get('SECURED') == '1':
+	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
 
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
