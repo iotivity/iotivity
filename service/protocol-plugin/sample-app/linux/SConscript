@@ -35,10 +35,10 @@ sample_env.AppendUnique(CPPPATH = [
 				'../../plugin-manager/src/',
 				'../../lib/cpluff/libcpluff/',
 				env.get('SRC_DIR') + '/extlibs/rapidxml/'])
+
 if target_os not in ['windows', 'winrt']:
 	sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-pthread', '-std=c++0x'])
 
-sample_env.AppendUnique(LIBS = ['pthread'])
 sample_env.AppendUnique(LIBS = ['oc', 'oc_logger', 'octbstack',
                                 'connectivity_abstraction', 'coap',
                                 'ppm', 'pmimpl', 'dl'])
@@ -51,6 +51,7 @@ if env.get('SECURED') == '1':
 if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS = ['rt'])
 
+sample_env.AppendUnique(LIBS = ['pthread'])
 ######################################################################
 # Source files and Targets
 ######################################################################
