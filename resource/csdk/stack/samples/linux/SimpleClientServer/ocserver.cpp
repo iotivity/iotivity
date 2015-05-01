@@ -138,25 +138,67 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     return jsonResponse;
 }
 
+/*
+ * Very simple example of query parsing.
+ * The query may have multiple filters separated by '&'.
+ * It is upto the entity handler to parse the query for the individual filters,
+ * VALIDATE them and respond as it sees fit.
+
+ * This function only returns false if the query is exactly "power<X" and
+ * current power is greater than X. If X cannot be parsed for an int,
+ * true is returned.
+ */
+bool checkIfQueryForPowerPassed(char * query)
+{
+    if (query && strcmp(query, "power<") == 0)
+    {
+        char * pointerToOperator = strstr(query, "<");
+
+        if (pointerToOperator)
+        {
+            int powerRequested = atoi(pointerToOperator + 1);
+
+            if (Light.power > powerRequested)
+            {
+                OC_LOG_V(INFO, TAG, "Current power: %d. Requested: <%d", Light.power
+                            , powerRequested);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
         char *payload, uint16_t maxPayloadSize)
 {
     OCEntityHandlerResult ehResult;
-    char *getResp = constructJsonResponse(ehRequest);
 
-    if (maxPayloadSize > strlen ((char *)getResp))
+    bool queryPassed = checkIfQueryForPowerPassed(ehRequest->query);
+
+    // Empty payload if the query has no match.
+    if (queryPassed)
     {
-        strncpy(payload, getResp, strlen((char *)getResp));
-        ehResult = OC_EH_OK;
+        char *getResp = constructJsonResponse(ehRequest);
+
+        if (maxPayloadSize > strlen ((char *)getResp))
+        {
+            strncpy(payload, getResp, strlen((char *)getResp));
+            ehResult = OC_EH_OK;
+        }
+        else
+        {
+            OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
+                    maxPayloadSize);
+            ehResult = OC_EH_ERROR;
+        }
+
+        free(getResp);
     }
     else
     {
-        OC_LOG_V (INFO, TAG, "Response buffer: %d bytes is too small",
-                maxPayloadSize);
-        ehResult = OC_EH_ERROR;
+        ehResult = OC_EH_OK;
     }
-
-    free(getResp);
 
     return ehResult;
 }

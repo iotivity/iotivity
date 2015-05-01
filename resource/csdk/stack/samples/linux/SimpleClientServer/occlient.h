@@ -43,6 +43,7 @@
 typedef enum {
     TEST_DISCOVER_REQ = 1,
     TEST_GET_REQ_NON,
+    TEST_GET_REQ_NON_WITH_FILTERS,
     TEST_PUT_REQ_NON,
     TEST_POST_REQ_NON,
     TEST_DELETE_REQ_NON,
@@ -91,7 +92,7 @@ std::string getQueryStrForGetPut(OCClientResponse * clientResponse);
 int InitGetRequestToUnavailableResource(OCQualityOfService qos);
 int InitObserveRequest(OCQualityOfService qos);
 int InitPutRequest(OCQualityOfService qos);
-int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions);
+int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions, bool getWithQuery);
 int InitPostRequest(OCQualityOfService qos);
 int InitDeleteRequest(OCQualityOfService qos);
 int InitGetRequest(OCQualityOfService qos);

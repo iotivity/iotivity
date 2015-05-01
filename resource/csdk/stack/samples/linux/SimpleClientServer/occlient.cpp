@@ -77,32 +77,34 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
-    OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Put Requests");
-    OC_LOG(INFO, TAG, "-t 4  :  Discover Resources and Initiate Nonconfirmable Post Requests");
-    OC_LOG(INFO, TAG, "-t 5  :  Discover Resources and Initiate Nonconfirmable Delete Requests");
-    OC_LOG(INFO, TAG, "-t 6  :  Discover Resources and Initiate Nonconfirmable Observe Requests");
-    OC_LOG(INFO, TAG, "-t 7  :  Discover Resources and Initiate Nonconfirmable Get Request "\
+    OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request"
+            " with query filter.");
+    OC_LOG(INFO, TAG, "-t 4  :  Discover Resources and Initiate Nonconfirmable Put Requests");
+    OC_LOG(INFO, TAG, "-t 5  :  Discover Resources and Initiate Nonconfirmable Post Requests");
+    OC_LOG(INFO, TAG, "-t 6  :  Discover Resources and Initiate Nonconfirmable Delete Requests");
+    OC_LOG(INFO, TAG, "-t 7  :  Discover Resources and Initiate Nonconfirmable Observe Requests");
+    OC_LOG(INFO, TAG, "-t 8  :  Discover Resources and Initiate Nonconfirmable Get Request "\
             "for a resource which is unavailable");
-    OC_LOG(INFO, TAG, "-t 8  :  Discover Resources and Initiate Confirmable Get Request");
-    OC_LOG(INFO, TAG, "-t 9  :  Discover Resources and Initiate Confirmable Post Request");
-    OC_LOG(INFO, TAG, "-t 10 :  Discover Resources and Initiate Confirmable Delete Requests");
-    OC_LOG(INFO, TAG, "-t 11 :  Discover Resources and Initiate Confirmable Observe Requests"\
+    OC_LOG(INFO, TAG, "-t 9  :  Discover Resources and Initiate Confirmable Get Request");
+    OC_LOG(INFO, TAG, "-t 10  :  Discover Resources and Initiate Confirmable Post Request");
+    OC_LOG(INFO, TAG, "-t 11 :  Discover Resources and Initiate Confirmable Delete Requests");
+    OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Confirmable Observe Requests"\
             " and cancel with Low QoS");
 
 #ifdef WITH_PRESENCE
-    OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Nonconfirmable presence");
-    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence with "\
-            "filter");
+    OC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence");
     OC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable presence with "\
+            "filter");
+    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable presence with "\
             "2 filters");
-    OC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable multicast presence.");
+    OC_LOG(INFO, TAG, "-t 16 :  Discover Resources and Initiate Nonconfirmable multicast presence.");
 #endif
 
-    OC_LOG(INFO, TAG, "-t 16 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
+    OC_LOG(INFO, TAG, "-t 17 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
             "then cancel immediately with High QOS");
-    OC_LOG(INFO, TAG, "-t 17 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
+    OC_LOG(INFO, TAG, "-t 18 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
             "add  vendor specific header options");
-    OC_LOG(INFO, TAG, "-t 18 :  Discover Devices");
+    OC_LOG(INFO, TAG, "-t 19 :  Discover Devices");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -362,7 +364,10 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         switch(TEST_CASE)
         {
             case TEST_GET_REQ_NON:
-                InitGetRequest(OC_LOW_QOS, 0);
+                InitGetRequest(OC_LOW_QOS, 0, 0);
+                break;
+            case TEST_GET_REQ_NON_WITH_FILTERS:
+                InitGetRequest(OC_LOW_QOS, 0, 1);
                 break;
             case TEST_PUT_REQ_NON:
                 InitPutRequest(OC_LOW_QOS);
@@ -381,7 +386,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 InitGetRequestToUnavailableResource(OC_LOW_QOS);
                 break;
             case TEST_GET_REQ_CON:
-                InitGetRequest(OC_HIGH_QOS, 0);
+                InitGetRequest(OC_HIGH_QOS, 0, 0);
                 break;
             case TEST_POST_REQ_CON:
                 InitPostRequest(OC_HIGH_QOS);
@@ -401,7 +406,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 break;
 #endif
             case TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS:
-                InitGetRequest(OC_LOW_QOS, 1);
+                InitGetRequest(OC_LOW_QOS, 1, 0);
                 break;
             case TEST_DISCOVER_DEV_REQ:
                 InitDeviceDiscovery(OC_LOW_QOS);
@@ -603,13 +608,21 @@ int InitDeleteRequest(OCQualityOfService qos)
     return result;
 }
 
-int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions)
+int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions, bool getWithQuery)
 {
+
     OCHeaderOption options[MAX_HEADER_OPTIONS];
 
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+
+    // ocserver is written to only process "power<X" query.
+    if (getWithQuery)
+    {
+        OC_LOG(INFO, TAG, "Using query power<30");
+        query << "?power<30";
+    }
 
     if (withVendorSpecificHeaderOptions)
     {
