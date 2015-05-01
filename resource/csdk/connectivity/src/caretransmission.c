@@ -224,7 +224,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
 
             OIC_LOG(DEBUG, TAG, "wake up..");
         }
-        else
+        else if (!context->isStop)
         {
             // check each RETRANSMISSION_CHECK_PERIOD_SEC time.
             OIC_LOG_V(DEBUG, TAG, "wait..(%d)microseconds",
@@ -233,6 +233,10 @@ static void CARetransmissionBaseRoutine(void *threadValue)
             // wait
             uint64_t absTime = RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC;
             ca_cond_wait_for(context->threadCond, context->threadMutex, absTime );
+        }
+        else
+        {
+            // we are stopping, so we want to unlock and finish stopping
         }
 
         // mutex unlock
