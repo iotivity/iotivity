@@ -62,6 +62,31 @@ uint16_t GetPermissionFromOCMethod(const OCMethod method)
 }
 
 /**
+ * Return the uint16_t CRUDN permission corresponding to passed CAMethod_t.
+ */
+uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
+{
+    uint16_t perm = 0;
+    switch(method)
+    {
+        case CA_GET:
+            perm = (uint16_t)PERMISSION_READ;
+            break;
+        case CA_POST: // For now we treat all PUT & POST as Write
+        case CA_PUT:  // because we don't know if resource exists yet.
+            perm = (uint16_t)PERMISSION_WRITE;
+            break;
+        case CA_DELETE:
+            perm = (uint16_t)PERMISSION_DELETE;
+            break;
+        default: // if not recognized, must assume requesting full control
+            perm = (uint16_t)PERMISSION_FULL_CONTROL;
+            break;
+    }
+    return perm;
+}
+
+/**
  * Set the state and clear other stateful context vars.
  */
 void SetPolicyEngineState(PEContext_t *context, const PEState_t state)

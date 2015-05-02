@@ -83,14 +83,14 @@ void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t
         newUri[position] = '\0';
         //Skip query and pass the newUri.
         response = CheckPermission(&g_policyEngineContext, &subjectId, newUri,
-                GetPermissionFromOCMethod(requestInfo->method));
+                GetPermissionFromCAMethod_t(requestInfo->method));
 
     }
     else
     {
         //Pass endPoint->resourceUri if there is no query info.
         response = CheckPermission(&g_policyEngineContext, &subjectId, endPoint->resourceUri,
-                GetPermissionFromOCMethod(requestInfo->method));
+                GetPermissionFromCAMethod_t(requestInfo->method));
     }
     if (IsAccessGranted(response) && gRequestHandler)
     {

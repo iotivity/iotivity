@@ -24,6 +24,7 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "securevirtualresourcetypes.h"
+#include "cainterface.h"
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -83,5 +84,10 @@ void DeInitPolicyEngine(PEContext_t *context);
  * Return the uint16_t CRUDN permission corresponding to passed OCMethod.
  */
 uint16_t GetPermissionFromOCMethod(const OCMethod method);
+
+/**
+ * Return the uint16_t CRUDN permission corresponding to passed CAMethod_t.
+ */
+uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method);
 
 #endif //IOTVT_SRM_PE_H
