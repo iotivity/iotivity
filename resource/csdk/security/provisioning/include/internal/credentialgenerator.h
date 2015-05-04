@@ -25,16 +25,6 @@
 #include "securevirtualresourcetypes.h"
 #include "provisioningmanager.h"
 
-/*
- * following are temp defines. Values will be define in securedvirtualresourcetypes.h in future.
- */
-#define NO_SECURITY             (0)
-#define SYMMETRIC_PAIR_WISE_KEY (1)
-#define SYMMETRIC_GROUP_KEY     (2)
-#define ASYMMETRIC_KEY          (4)
-#define CERTIFICATE             (8)
-#define PIN                     (16)
-
 /**
  * Function to generate credentials according to the type.
  *

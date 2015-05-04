@@ -59,12 +59,12 @@ SPResult SPGenerateCredentials(OicSecCredType_t type, const SPDevInfo_t *pDevInf
                 //TODO
                 break;
             }
-        case CERTIFICATE:
+        case SIGNED_ASYMMETRIC_KEY:
             {
                 //TODO
                 break;
             }
-        case PIN:
+        case PIN_PASSWORD:
             {
                 //TODO
                 break;
